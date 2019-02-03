@@ -351,6 +351,7 @@ void OGRWalkLayer::LookupSpatialRef( const char * pszMemo )
     if ( strlen(pszProj4) > 0 )
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         if( poSRS->importFromProj4( pszProj4 ) != OGRERR_NONE )
         {

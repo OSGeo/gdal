@@ -1,12 +1,11 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  CS WKT parser
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Project:  GDAL
+ * Purpose:  Private header
+ * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2018, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,33 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef OSR_CS_WKT_H_INCLUDED_
-#define OSR_CS_WKT_H_INCLUDED_
+#ifndef OGR_PROJ_P_H_INCLUDED
+#define OGR_PROJ_P_H_INCLUDED
 
-#ifndef DOXYGEN_SKIP
+#include "proj.h"
 
-#ifdef __cplusplus
-extern "C" {
+/*! @cond Doxygen_Suppress */
+
+PJ_CONTEXT* OSRGetProjTLSContext();
+void OSRCleanupTLSContext();
+
+/*! @endcond Doxygen_Suppress */
+
 #endif
-
-typedef struct
-{
-    const char *pszInput;
-    const char *pszLastSuccess;
-    const char *pszNext;
-    char        szErrorMsg[512];
-} osr_cs_wkt_parse_context;
-
-#include "osr_cs_wkt_parser.h"
-
-void osr_cs_wkt_error( osr_cs_wkt_parse_context *context, const char *msg );
-int osr_cs_wkt_lex(YYSTYPE* pNode, osr_cs_wkt_parse_context *context);
-int osr_cs_wkt_parse(osr_cs_wkt_parse_context *context);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* #ifndef DOXYGEN_SKIP */
-
-#endif /*  OSR_CS_WKT_H_INCLUDED_ */

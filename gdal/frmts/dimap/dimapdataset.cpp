@@ -85,10 +85,16 @@ class DIMAPDataset : public GDALPamDataset
     DIMAPDataset();
     ~DIMAPDataset() override;
 
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     CPLErr GetGeoTransform( double * ) override;
     int GetGCPCount() override;
-    const char *GetGCPProjection() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP *GetGCPs() override;
     char **GetMetadataDomainList() override;
     char **GetMetadata( const char *pszDomain ) override;
@@ -214,13 +220,13 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *DIMAPDataset::GetProjectionRef()
+const char *DIMAPDataset::_GetProjectionRef()
 
 {
     if( !osProjection.empty() && bHaveGeoTransform )
         return osProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -1565,7 +1571,7 @@ int DIMAPDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *DIMAPDataset::GetGCPProjection()
+const char *DIMAPDataset::_GetGCPProjection()
 
 {
     return pszGCPProjection;

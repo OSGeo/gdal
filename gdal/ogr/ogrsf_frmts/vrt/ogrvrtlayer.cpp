@@ -1408,13 +1408,13 @@ void OGRVRTLayer::ClipAndAssignSRS(OGRFeature *poFeature)
             poGeom != nullptr )
         {
             poGeom = poGeom->Intersection(apoGeomFieldProps[i]->poSrcRegion);
-            if( poGeom != nullptr && apoGeomFieldProps[i]->poSRS != nullptr )
-                poGeom->assignSpatialReference(apoGeomFieldProps[i]->poSRS);
+            if( poGeom != nullptr )
+                poGeom->assignSpatialReference(GetLayerDefn()->GetGeomFieldDefn(i)->GetSpatialRef());
 
             poFeature->SetGeomFieldDirectly(i, poGeom);
         }
-        else if( poGeom != nullptr && apoGeomFieldProps[i]->poSRS != nullptr )
-            poGeom->assignSpatialReference(apoGeomFieldProps[i]->poSRS);
+        else if( poGeom != nullptr )
+            poGeom->assignSpatialReference(GetLayerDefn()->GetGeomFieldDefn(i)->GetSpatialRef());
     }
 }
 
@@ -1837,8 +1837,8 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
         }
 
         OGRGeometry *poGeom = poSrcFeat->GetGeomFieldRef(i);
-        if( poGeom != nullptr && apoGeomFieldProps[i]->poSRS != nullptr )
-            poGeom->assignSpatialReference(apoGeomFieldProps[i]->poSRS);
+        if( poGeom != nullptr )
+            poGeom->assignSpatialReference(GetLayerDefn()->GetGeomFieldDefn(i)->GetSpatialRef());
     }
 
     // Copy fields.
@@ -2097,29 +2097,6 @@ int OGRVRTLayer::TestCapability( const char *pszCap )
         return poSrcLayer->TestCapability(pszCap);
 
     return FALSE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
-
-{
-    if( (CPLGetXMLValue(psLTree, "LayerSRS", nullptr) != nullptr ||
-         CPLGetXMLValue(psLTree, "GeometryField.SRS", nullptr) != nullptr) &&
-        !apoGeomFieldProps.empty() )
-        return apoGeomFieldProps[0]->poSRS;
-
-    if( !bHasFullInitialized )
-        FullInitialize();
-    if( !poSrcLayer || poDS->GetRecursionDetected() )
-        return nullptr;
-
-    if( apoGeomFieldProps.size() >= 1 )
-        return apoGeomFieldProps[0]->poSRS;
-    else
-        return nullptr;
 }
 
 /************************************************************************/

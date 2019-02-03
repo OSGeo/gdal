@@ -234,13 +234,13 @@ char  **GIFAbstractDataset::GetMetadata( const char * pszDomain )
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 
-const char *GIFAbstractDataset::GetProjectionRef()
+const char *GIFAbstractDataset::_GetProjectionRef()
 
 {
     if ( pszProjection && bGeoTransformValid )
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -276,13 +276,13 @@ int GIFAbstractDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *GIFAbstractDataset::GetGCPProjection()
+const char *GIFAbstractDataset::_GetGCPProjection()
 
 {
     if ( pszProjection && nGCPCount > 0 )
         return pszProjection;
 
-    return GDALPamDataset::GetGCPProjection();
+    return GDALPamDataset::_GetGCPProjection();
 }
 
 /************************************************************************/

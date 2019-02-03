@@ -56,7 +56,7 @@ class PCIDSK2Dataset final: public GDALPamDataset
 {
     friend class PCIDSK2Band;
 
-    CPLString   osSRS;
+    mutable OGRSpatialReference* m_poSRS = nullptr;
     CPLString   osLastMDValue;
     char      **papszLastMDListValue;
 
@@ -84,8 +84,9 @@ class PCIDSK2Dataset final: public GDALPamDataset
     char              **GetFileList() override;
     CPLErr              GetGeoTransform( double * padfTransform ) override;
     CPLErr              SetGeoTransform( double * ) override;
-    const char         *GetProjectionRef() override;
-    CPLErr              SetProjection( const char * ) override;
+
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual char      **GetMetadataDomainList() override;
     CPLErr              SetMetadata( char **, const char * ) override;

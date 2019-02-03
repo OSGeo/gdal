@@ -262,9 +262,9 @@ static char *ExtractTopic(const char * pszLayerName)
 
 OGRLayer *
 OGRILI1DataSource::ICreateLayer( const char * pszLayerName,
-                               CPL_UNUSED OGRSpatialReference *poSRS,
-                               OGRwkbGeometryType eType,
-                               CPL_UNUSED char ** papszOptions )
+                                OGRSpatialReference * /*poSRS*/,
+                                OGRwkbGeometryType eType,
+                                char ** /* papszOptions */ )
 {
     FeatureDefnInfo featureDefnInfo
         = poImdReader->GetFeatureDefnInfo(pszLayerName);

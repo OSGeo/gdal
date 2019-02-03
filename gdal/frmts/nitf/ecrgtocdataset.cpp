@@ -111,9 +111,12 @@ class ECRGTOCDataset : public GDALPamDataset
         return CE_None;
     }
 
-    virtual const char *GetProjectionRef(void) override
+    virtual const char *_GetProjectionRef(void) override
     {
-        return SRS_WKT_WGS84;
+        return SRS_WKT_WGS84_LAT_LONG;
+    }
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
     }
 
     static GDALDataset* Build(  const char* pszTOCFilename,
@@ -416,8 +419,8 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
 class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
 {
     /* The following parameters are only for sanity checking */
-    int checkDone;
-    int checkOK;
+    mutable int checkDone;
+    mutable int checkOK;
     double dfMinX;
     double dfMaxY;
     double dfPixelXSize;
@@ -430,7 +433,7 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
                                    double dfMinX, double dfMaxY,
                                    double dfPixelXSize, double dfPixelYSize );
 
-        GDALDataset* RefUnderlyingDataset() override
+        GDALDataset* RefUnderlyingDataset() const override
         {
             GDALDataset* poSourceDS = GDALProxyPoolDataset::RefUnderlyingDataset();
             if (poSourceDS)
@@ -446,12 +449,12 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
             return poSourceDS;
         }
 
-        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) override
+        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) const override
         {
             GDALProxyPoolDataset::UnrefUnderlyingDataset(poUnderlyingDataset);
         }
 
-        int SanityCheckOK(GDALDataset* poSourceDS);
+        int SanityCheckOK(GDALDataset* poSourceDS) const;
 };
 
 /************************************************************************/
@@ -467,7 +470,7 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
     // Mark as shared since the VRT will take several references if we are in
     // RGBA mode (4 bands for this dataset).
     GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly,
-                         TRUE, SRS_WKT_WGS84),
+                         TRUE, SRS_WKT_WGS84_LAT_LONG),
     checkDone(FALSE),
     checkOK(FALSE),
     dfMinX(dfMinXIn),
@@ -492,7 +495,7 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
              "For %s, assert '" #x "' failed",                        \
              GetDescription()); checkOK = FALSE; } } while( false )
 
-int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS )
+int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS ) const
 {
     // int nSrcBlockXSize;
     // int nSrcBlockYSize;
@@ -515,7 +518,7 @@ int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS )
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == nRasterYSize);
-    WARN_CHECK_DS(EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84));
+    WARN_CHECK_DS(EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84_LAT_LONG));
     // poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize,
     //                                            &nSrcBlockYSize);
     // GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -597,7 +600,7 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
     /* ------------------------------------ */
     ECRGTOCSubDataset *poVirtualDS = new ECRGTOCSubDataset( nSizeX, nSizeY );
 
-    poVirtualDS->SetProjection(SRS_WKT_WGS84);
+    poVirtualDS->SetProjection(SRS_WKT_WGS84_LAT_LONG);
 
     double adfGeoTransform[6] = {
       dfGlobalMinX,

@@ -1759,9 +1759,11 @@ void OGRCouchDBTableLayer::SetInfoAfterCreation(OGRwkbGeometryType eGType,
     bGeoJSONDocument = bGeoJSONDocumentIn;
 
     CPLAssert(poSRS == nullptr);
-    poSRS = poSRSIn;
-    if (poSRS)
-        poSRS->Reference();
+    if (poSRSIn)
+    {
+        poSRS = poSRS->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
 }
 
 /************************************************************************/
@@ -1823,6 +1825,7 @@ void OGRCouchDBTableLayer::LoadMetadata()
     if (pszSRS != nullptr)
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poSRS->importFromWkt(pszSRS) != OGRERR_NONE)
         {
             delete poSRS;

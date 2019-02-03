@@ -44,7 +44,6 @@ from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
 import webserver
-from osr import osr_ct
 
 ###############################################################################
 # Test underlying OGR drivers
@@ -1789,18 +1788,15 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(with_and_without_st
     lyr = ds.GetLayer(1)
     assert lyr.GetExtent() == (-170.0, 170.0, -80.0, 80.0)
 
-    osr_ct.test_osr_ct_1()
-    if gdaltest.have_proj4 == 1:
+    gdal.SetConfigOption('OGR_WFS_TRUST_CAPABILITIES_BOUNDS', 'YES')
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    gdal.SetConfigOption('OGR_WFS_TRUST_CAPABILITIES_BOUNDS', None)
 
-        gdal.SetConfigOption('OGR_WFS_TRUST_CAPABILITIES_BOUNDS', 'YES')
-        ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
-        gdal.SetConfigOption('OGR_WFS_TRUST_CAPABILITIES_BOUNDS', None)
-
-        lyr = ds.GetLayer(2)
-        expected_extent = (-20037508.342789248, 20037508.342789248, -20037508.342789154, 20037508.342789147)
-        got_extent = lyr.GetExtent()
-        for i in range(4):
-            assert abs(expected_extent[i] - got_extent[i]) <= 1e-5
+    lyr = ds.GetLayer(2)
+    expected_extent = (-20037508.342789248, 20037508.342789248, -20037508.342789154, 20037508.342789147)
+    got_extent = lyr.GetExtent()
+    for i in range(4):
+        assert abs(expected_extent[i] - got_extent[i]) <= 1e-5
 
     
 ###############################################################################

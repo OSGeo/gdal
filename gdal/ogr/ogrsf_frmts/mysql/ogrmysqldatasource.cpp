@@ -526,6 +526,7 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
     hResult = nullptr;
 
     poSRS = new OGRSpatialReference();
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( pszWKT == nullptr || poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
     {
         delete poSRS;

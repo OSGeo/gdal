@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- original file at http://pds-geosciences.wustl.edu/messenger/mess-e_v_h-xrs-2-edr-rawdata-v1/messxrs_1001/data/mercury_orbit_year_5/2015/apr/xrs2015091.xml -->
+<!-- to keep it short we have kept only a few Field_Binary and Group_Field_Binary, and keep only one record -->
+
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1A10.sch"
+  schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/mission/messenger/v1/PDS4_MESS_1900_1010.sch"
+  schematypens="http://purl.oclc.org/dsdl/schematron"?>
+
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1" 
+    xmlns:mess="http://pds.nasa.gov/pds4/mission/mess/v1" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1A10.xsd   http://pds.nasa.gov/pds4/mission/mess/v1 https://pds.nasa.gov/pds4/mission/messenger/v1/PDS4_MESS_1900_1010.xsd">
+  <Identification_Area>
+    <logical_identifier>urn:nasa:pds:mess_xrs_raw:data_edr:xrs2015091_dat</logical_identifier>
+    <version_id>1.0</version_id>
+    <title>MESSENGER XRS Raw Spectra product: xrs2015091_dat</title>
+    <information_model_version>1.10.1.0</information_model_version>
+    <product_class>Product_Observational</product_class>
+    <Modification_History>
+      <Modification_Detail>
+        <modification_date>2018-06-08</modification_date>
+        <version_id>1.0</version_id>
+        <description>PDS4 migrated product</description>
+      </Modification_Detail>
+    </Modification_History>
+  </Identification_Area>
+  <Observation_Area>
+    <Time_Coordinates>
+      <start_date_time>2015-04-01T00:01:20Z</start_date_time>
+      <stop_date_time>2015-04-01T23:57:41Z</stop_date_time>
+    </Time_Coordinates>
+    <Investigation_Area>
+      <name>MESSENGER</name>
+      <type>Mission</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:investigation:mission.messenger</lid_reference>
+        <reference_type>data_to_investigation</reference_type>
+      </Internal_Reference>
+    </Investigation_Area>
+    <Observing_System>
+      <Observing_System_Component>
+        <name>MESSENGER</name>
+        <type>Spacecraft</type>
+        <Internal_Reference>
+          <lid_reference>urn:nasa:pds:context:instrument_host:spacecraft.mess</lid_reference>
+          <reference_type>is_instrument_host</reference_type>
+        </Internal_Reference>
+      </Observing_System_Component>
+      <Observing_System_Component>
+        <name>X-Ray Spectrometer</name>
+        <type>Instrument</type>
+        <Internal_Reference>
+          <lid_reference>urn:nasa:pds:context:instrument:xrs.mess</lid_reference>
+          <reference_type>is_instrument</reference_type>
+        </Internal_Reference>
+      </Observing_System_Component>
+    </Observing_System>
+    <Target_Identification>
+      <name>Mercury</name>
+      <type>Planet</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:target:planet.mercury</lid_reference>
+        <reference_type>data_to_target</reference_type>
+      </Internal_Reference>
+    </Target_Identification>
+    <Mission_Area>
+      <mess:MESSENGER>
+        <mess:mission_phase_name>Mercury Orbit Year 5</mess:mission_phase_name>
+        <mess:spacecraft_clock_start_count>2/070170476</mess:spacecraft_clock_start_count>
+        <mess:spacecraft_clock_stop_count>2/070256656</mess:spacecraft_clock_stop_count>
+        <mess:standard_data_product_id>xrsedr</mess:standard_data_product_id>
+        <mess:software_name>pipe-xrs2edr</mess:software_name>
+        <mess:software_version_id>1.1</mess:software_version_id>
+      </mess:MESSENGER>
+    </Mission_Area>
+  </Observation_Area>
+  <File_Area_Observational>
+    <File>
+      <file_name>xrs2015091_truncated.dat</file_name>
+      <creation_date_time>2015-04-05T01:26:12Z</creation_date_time>
+    </File>
+    <Table_Binary>
+      <offset unit="byte">0</offset>
+      <records>1</records>
+      <description>
+		This table contains X-ray spectra and associated instrument
+        parameters, as observed by the MESSENGER X-Ray Spectrometer (XRS).
+        Detailed descriptions for the parameters defined below are contained
+        in the EDR SIS document.
+      
+        An XRS flight software upload was implemented on 2007-08-17 UTC
+        that affects COLUMN 40 of the XRS raw binary table. Prior to 2007-08-17,
+        column 40 was named LVPS_SPARE2 and was a spare, unused data column. On
+        and after 2007-08-17 the column is used to indicate the SAX_TEMP_MODE.
+	  </description>
+      <Record_Binary>
+        <fields>170</fields>
+        <groups>5</groups>
+        <record_length unit="byte">2258</record_length>
+        <Field_Binary>
+          <name>met</name>
+          <field_number>1</field_number>
+          <field_location unit="byte">1</field_location>
+          <data_type>UnsignedMSB4</data_type>
+          <field_length unit="byte">4</field_length>
+          <description>Mission Elapsed Time in seconds.</description>
+        </Field_Binary>
+
+        <Group_Field_Binary>
+          <group_number>2</group_number>
+          <repetitions>231</repetitions>
+          <fields>1</fields>
+          <groups>0</groups>
+          <group_location unit="byte">333</group_location>
+          <group_length unit="byte">462</group_length>
+          <Field_Binary>
+            <name>solar_mon_spectrum_23_253</name>
+            <field_number>1</field_number>
+            <field_location unit="byte">1</field_location>
+            <data_type>UnsignedMSB2</data_type>
+            <field_length unit="byte">2</field_length>
+            <description>Solar monitor spectra channels (23-253).</description>
+          </Field_Binary>
+        </Group_Field_Binary>
+
+      </Record_Binary>
+    </Table_Binary>
+  </File_Area_Observational>
+</Product_Observational>

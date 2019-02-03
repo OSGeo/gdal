@@ -1222,23 +1222,20 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
  *      SRSNAME_FORMAT in GDAL &gt;=2.2). Defaults to YES.
  *      If YES, SRS with EPSG authority will be written with the
  *      "urn:ogc:def:crs:EPSG::" prefix.
- *      In the case the SRS is a SRS without explicit AXIS order, but that the
- *      same SRS authority code
- *      imported with ImportFromEPSGA() should be treated as lat/long or
+ *      In the case the SRS should be treated as lat/long or
  *      northing/easting, then the function will take care of coordinate order
- *      swapping.
+ *      swapping if the data axis to CRS axis mapping indicates it.
  *      If set to NO, SRS with EPSG authority will be written with the "EPSG:"
  *      prefix, even if they are in lat/long order.
  * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3, added
  *      in GDAL 2.2). Defaults to OGC_URN.  If SHORT, then srsName will be in
- *      the form AUTHORITY_NAME:AUTHORITY_CODE If OGC_URN, then srsName will be
- *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE If OGC_URL,
+ *      the form AUTHORITY_NAME:AUTHORITY_CODE. If OGC_URN, then srsName will be
+ *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE. If OGC_URL,
  *      then srsName will be in the form
- *      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE For
- *      OGC_URN and OGC_URL, in the case the SRS is a SRS without explicit AXIS
- *      order, but that the same SRS authority code imported with
- *      ImportFromEPSGA() should be treated as lat/long or northing/easting,
- *      then the function will take care of coordinate order swapping.
+ *      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE. For
+ *      OGC_URN and OGC_URL, in the case the SRS should be treated as lat/long or
+ *      northing/easting, then the function will take care of coordinate order
+ *      swapping if the data axis to CRS axis mapping indicates it.
  * <li> GMLID=astring. If specified, a gml:id attribute will be written in the
  *      top-level geometry element with the provided value.
  *      Required for GML 3.2 compatibility.
@@ -1358,25 +1355,12 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         {
             const OGRSpatialReference* poSRS =
                 poGeometry->getSpatialReference();
-            if( poSRS != nullptr )
+            if( poSRS != nullptr && eSRSNameFormat != SRSNAME_SHORT )
             {
-                const char* pszTarget =
-                    poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
-                const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
-                const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-                if( nullptr != pszAuthName && nullptr != pszAuthCode &&
-                    EQUAL( pszAuthName, "EPSG" ) &&
-                    eSRSNameFormat != SRSNAME_SHORT &&
-                    !(poSRS->EPSGTreatsAsLatLong() ||
-                      poSRS->EPSGTreatsAsNorthingEasting()) )
+                const auto& map = poSRS->GetDataAxisToSRSAxisMapping();
+                if( map.size() >= 2 && map[0] == 2 && map[1] == 1 )
                 {
-                    OGRSpatialReference oSRS;
-                    if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
-                    {
-                        if (oSRS.EPSGTreatsAsLatLong() ||
-                            oSRS.EPSGTreatsAsNorthingEasting())
-                            bCoordSwap = true;
-                    }
+                    bCoordSwap = true;
                 }
             }
         }

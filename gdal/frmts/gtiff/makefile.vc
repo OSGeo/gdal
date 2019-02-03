@@ -1,8 +1,8 @@
 
-OBJ	=	geotiff.obj gt_wkt_srs.obj gt_overview.obj \
-		tifvsi.obj tif_float.obj gt_citation.obj gt_jpeg_copy.obj
+OBJ		=	geotiff.obj gt_wkt_srs.obj gt_overview.obj \
+			tifvsi.obj tif_float.obj gt_citation.obj gt_jpeg_copy.obj
 
-EXTRAFLAGS = 	-I.. $(JPEG_FLAGS) $(TIFF_OPTS) $(TIFF_INC) $(GEOTIFF_INC) $(LERC_INC) $(ZSTD_FLAGS) $(WEBP_FLAGS) $(ZLIB_FLAGS)
+EXTRAFLAGS	= 	-I.. $(PROJ_FLAGS) $(PROJ_INCLUDE) $(TIFF_OPTS) $(TIFF_INC) $(GEOTIFF_INC) $(JPEG_FLAGS) $(LERC_INC) $(ZSTD_FLAGS) $(WEBP_FLAGS) $(ZLIB_FLAGS)
 
 GDAL_ROOT	=	..\..
 
@@ -11,7 +11,7 @@ GDAL_ROOT	=	..\..
 !IFDEF TIFF_INC
 SUB_TIFF_TARGET =
 !ELSE
-TIFF_INC   =	-Ilibtiff -DINTERNAL_LIBTIFF -DBIGTIFF_SUPPORT
+TIFF_INC   =   -Ilibtiff -DINTERNAL_LIBTIFF -DBIGTIFF_SUPPORT
 SUB_TIFF_TARGET =	tiff
 
 !IF "$(HAVE_LERC)" == "1"

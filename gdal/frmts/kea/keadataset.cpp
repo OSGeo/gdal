@@ -527,7 +527,7 @@ CPLErr KEADataset::GetGeoTransform( double * padfTransform )
 }
 
 // read in the projection ref
-const char *KEADataset::GetProjectionRef()
+const char *KEADataset::_GetProjectionRef()
 {
     try
     {
@@ -568,7 +568,7 @@ CPLErr KEADataset::SetGeoTransform (double *padfTransform )
 }
 
 // set the projection
-CPLErr KEADataset::SetProjection( const char *pszWKT )
+CPLErr KEADataset::_SetProjection( const char *pszWKT )
 {
     try
     {
@@ -774,7 +774,7 @@ int KEADataset::GetGCPCount()
     }
 }
 
-const char* KEADataset::GetGCPProjection()
+const char* KEADataset::_GetGCPProjection()
 {
     if( m_pszGCPProjection == nullptr )
     {
@@ -827,7 +827,7 @@ const GDAL_GCP* KEADataset::GetGCPs()
     return m_pGCPs;
 }
 
-CPLErr KEADataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection)
+CPLErr KEADataset::_SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection)
 {
     this->DestroyGCPs();
     CPLFree( m_pszGCPProjection );

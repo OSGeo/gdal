@@ -482,7 +482,8 @@ void OGRMongoDBLayer::AddOrUpdateField(const char* pszAttrName,
                 {
                     OGRGeomFieldDefn fldDefn( pszAttrName, eGeomType );
                     OGRSpatialReference* poSRS = new OGRSpatialReference();
-                    poSRS->SetFromUserInput(SRS_WKT_WGS84);
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
                     fldDefn.SetSpatialRef(poSRS);
                     poSRS->Release();
                     m_poFeatureDefn->AddGeomFieldDefn( &fldDefn );
@@ -533,7 +534,8 @@ void OGRMongoDBLayer::AddOrUpdateField(const char* pszAttrName,
         {
             OGRGeomFieldDefn fldDefn( pszAttrName, wkbPoint );
             OGRSpatialReference* poSRS = new OGRSpatialReference();
-            poSRS->SetFromUserInput(SRS_WKT_WGS84);
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
             fldDefn.SetSpatialRef(poSRS);
             poSRS->Release();
             m_poFeatureDefn->AddGeomFieldDefn( &fldDefn );
@@ -700,7 +702,8 @@ int OGRMongoDBLayer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapIndice
                             OGRwkbGeometryType eType(OGRFromOGCGeomType(type.String().c_str()));
                             OGRGeomFieldDefn oFieldDefn(name.String().c_str(), eType);
                             OGRSpatialReference* poSRS = new OGRSpatialReference();
-                            poSRS->SetFromUserInput(SRS_WKT_WGS84);
+                            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
                             oFieldDefn.SetSpatialRef(poSRS);
                             poSRS->Release();
                             m_poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
@@ -1370,6 +1373,10 @@ OGRErr OGRMongoDBLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     }
 
     OGRGeomFieldDefn oFieldDefn(poFieldIn);
+    if( oFieldDefn.GetSpatialRef() )
+    {
+        oFieldDefn.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     if( EQUAL(oFieldDefn.GetNameRef(), "") )
         oFieldDefn.SetName("geometry");
 
@@ -1392,7 +1399,8 @@ OGRErr OGRMongoDBLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     if( oFieldDefn.GetSpatialRef() != nullptr )
     {
         OGRSpatialReference oSRS_WGS84;
-        oSRS_WGS84.SetFromUserInput(SRS_WKT_WGS84);
+        oSRS_WGS84.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( !oSRS_WGS84.IsSame(oFieldDefn.GetSpatialRef()) )
         {
             poCT = OGRCreateCoordinateTransformation( oFieldDefn.GetSpatialRef(), &oSRS_WGS84 );
@@ -2506,7 +2514,13 @@ OGRLayer* OGRMongoDBDataSource::ICreateLayer( const char *pszName,
     {
         const char* pszGeometryName = CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "geometry");
         OGRGeomFieldDefn oFieldDefn(pszGeometryName, eGType);
-        oFieldDefn.SetSpatialRef(poSpatialRef);
+        if( poSpatialRef )
+        {
+            auto poSpatialRefClone = poSpatialRef->Clone();
+            poSpatialRefClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            oFieldDefn.SetSpatialRef(poSpatialRefClone);
+            poSpatialRefClone->Release();
+        }
         poLayer->CreateGeomField(&oFieldDefn, FALSE);
     }
 

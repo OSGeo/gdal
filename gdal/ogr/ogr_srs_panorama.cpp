@@ -33,6 +33,8 @@
 #include "cpl_csv.h"
 #include "ogr_p.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$")
 
 constexpr double TO_DEGREES = 57.2957795130823208766;
@@ -459,9 +461,8 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to lookup ellipsoid code %ld, likely due to "
-                          "missing GDAL gcs.csv "
-                          "file.  Falling back to use Pulkovo 42.", iEllips );
+                          "Failed to lookup ellipsoid code %ld. "
+                          "Falling back to use Pulkovo 42.", iEllips );
                 SetWellKnownGeogCS( "EPSG:4284" );
             }
 
@@ -482,8 +483,6 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /* -------------------------------------------------------------------- */
     if( IsLocal() || IsProjected() )
         SetLinearUnits( SRS_UL_METER, 1.0 );
-
-    FixupOrdering();
 
     if( bProjAllocated && padfPrjParams )
         CPLFree( padfPrjParams );
@@ -805,8 +804,8 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
                 if( OSRGetEllipsoidInfo( aoEllips[i], nullptr,
                                          &dfSM, &dfIF ) == OGRERR_NONE
-                    && CPLIsEqual(dfSemiMajor, dfSM)
-                    && CPLIsEqual(dfInvFlattening, dfIF) )
+                    && std::abs(dfSemiMajor - dfSM) < 1e-10 * dfSemiMajor
+                    && std::abs(dfInvFlattening - dfIF) < 1e-10 * dfInvFlattening )
                 {
                     *piEllips = i;
                     break;

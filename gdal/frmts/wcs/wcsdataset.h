@@ -139,7 +139,10 @@ class WCSDataset : public GDALPamDataset
     static int Identify( GDALOpenInfo * );
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
+    virtual const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual char **GetFileList(void) override;
 
     virtual char      **GetMetadataDomainList() override;

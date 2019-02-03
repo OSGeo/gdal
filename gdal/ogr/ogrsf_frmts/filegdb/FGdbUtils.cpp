@@ -499,6 +499,7 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
     }
 
     *ppSR = new OGRSpatialReference(wkt.c_str());
+    (*ppSR)->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     OGRErr result = (*ppSR)->morphFromESRI();
 
@@ -514,6 +515,7 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
             {
                 (*ppSR)->Release();
                 (*ppSR) = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                (*ppSR)->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 CPLFree(pahSRS);
             }
             else

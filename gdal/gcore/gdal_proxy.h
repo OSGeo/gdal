@@ -48,8 +48,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
   protected:
     GDALProxyDataset() {}
 
-    virtual GDALDataset *RefUnderlyingDataset() = 0;
-    virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset);
+    virtual GDALDataset *RefUnderlyingDataset() const = 0;
+    virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) const;
 
     CPLErr IBuildOverviews( const char *, int, int *,
                             int, int *, GDALProgressFunc, void * ) override;
@@ -71,8 +71,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
 
     void FlushCache() override;
 
-    const char *GetProjectionRef(void) override;
-    CPLErr SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
@@ -82,10 +82,10 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     char **GetFileList() override;
 
     int GetGCPCount() override;
-    const char *GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
     CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const char *pszGCPProjection ) override;
+                    const OGRSpatialReference * poGCP_SRS ) override;
 
     CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                        int nBufXSize, int nBufYSize,
@@ -94,6 +94,13 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                        char **papszOptions ) override;
 
     CPLErr          CreateMaskBand( int nFlags ) override;
+
+  protected:
+    const char *_GetProjectionRef(void) override;
+    CPLErr _SetProjection( const char * ) override;
+    const char *_GetGCPProjection() override;
+    CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection ) override;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyDataset)
@@ -210,24 +217,27 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
   private:
         GIntBig          responsiblePID = -1;
 
-        char            *pszProjectionRef = nullptr;
+        mutable char            *pszProjectionRef = nullptr;
+        mutable OGRSpatialReference* m_poSRS = nullptr;
+        mutable OGRSpatialReference* m_poGCPSRS = nullptr;
         double           adfGeoTransform[6]{0,1,0,0,0,1};
-        int              bHasSrcProjection = false;
-        int              bHasSrcGeoTransform = false;
+        bool             bHasSrcProjection = false;
+        bool             m_bHasSrcSRS = false;
+        bool             bHasSrcGeoTransform = false;
         char            *pszGCPProjection = nullptr;
         int              nGCPCount = 0;
         GDAL_GCP        *pasGCPList = nullptr;
         CPLHashSet      *metadataSet = nullptr;
         CPLHashSet      *metadataItemSet = nullptr;
 
-        GDALProxyPoolCacheEntry* cacheEntry = nullptr;
+        mutable GDALProxyPoolCacheEntry* cacheEntry = nullptr;
         char            *m_pszOwner = nullptr;
 
-        GDALDataset *RefUnderlyingDataset(bool bForceOpen);
+        GDALDataset *RefUnderlyingDataset(bool bForceOpen) const;
 
   protected:
-    GDALDataset *RefUnderlyingDataset() override;
-    void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) override;
+    GDALDataset *RefUnderlyingDataset() const override;
+    void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) const override;
 
     friend class     GDALProxyPoolRasterBand;
 
@@ -252,8 +262,11 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
                                 int nBlockYSize );
     void FlushCache() override;
 
-    const char *GetProjectionRef() override;
-    CPLErr SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
+
+    const char *_GetProjectionRef() override;
+    CPLErr _SetProjection( const char * ) override;
 
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
@@ -267,7 +280,8 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
 
     void *GetInternalHandle( const char * pszRequest ) override;
 
-    const char *GetGCPProjection() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
   private:

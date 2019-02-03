@@ -100,6 +100,7 @@ def test_gdalinfo_lib_5():
     assert 'computedMin' in band
     assert 'histogram' in band
     assert 'checksum' in band
+    assert ret['coordinateSystem']['dataAxisToSRSAxisMapping'] == [1, 2]
 
     ds = None
 

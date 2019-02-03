@@ -454,5 +454,18 @@ def test_ogr_ods_boolean():
 
     gdal.Unlink(out_filename)
 
+###############################################################################
+# Test number-columns-repeated at end of row.
 
+def test_ogr_ods_number_columns_repeated_at_end_of_row():
 
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        pytest.skip()
+
+    ds = ogr.Open('data/testrepeatedcolatendofrow.ods')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
+    assert f['vbz'] == 1002
+    assert f['b'] == 0

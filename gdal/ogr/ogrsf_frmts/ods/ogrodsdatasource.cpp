@@ -787,12 +787,71 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
 }
 
 /************************************************************************/
+/*                           FillRepeatedCells()                        */
+/************************************************************************/
+
+void OGRODSDataSource::FillRepeatedCells(bool wasLastCell)
+{
+    if( wasLastCell && osValue.empty() && osFormula.empty() )
+    {
+        nCellsRepeated = 0;
+        return;
+    }
+
+    if (nCellsRepeated < 0 || nCellsRepeated > 10000)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Invalid value for number-columns-repeated = %d",
+                    nCellsRepeated);
+        bEndTableParsing = true;
+        nCellsRepeated = 0;
+        return;
+    }
+    const int nFields = nCellsRepeated +
+        (poCurLayer != nullptr ?
+            poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
+    if( nFields > 0 && nRowsRepeated > 100000 / nFields )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Too big gap with previous valid row");
+        bEndTableParsing = true;
+        nCellsRepeated = 0;
+        return;
+    }
+
+    const size_t nCellMemSize =
+        (!osValue.empty()) ? osValue.size() : osFormula.size();
+    if( nCellMemSize > static_cast<size_t>(10 * 1024 * 1024) /
+            (std::max(nCellsRepeated, 1) * nRowsRepeated) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Too much memory for row/cell repetition");
+        bEndTableParsing = true;
+        nCellsRepeated = 0;
+        return;
+    }
+    for(int i = 0; i < nCellsRepeated; i++)
+    {
+        if( !osValue.empty() )
+            apoCurLineValues.push_back(osValue);
+        else
+            apoCurLineValues.push_back(osFormula);
+        apoCurLineTypes.push_back(osValueType);
+    }
+
+    nCurCol += nCellsRepeated;
+    nCellsRepeated = 0;
+}
+
+/************************************************************************/
 /*                            startElementRow()                         */
 /************************************************************************/
 
 void OGRODSDataSource::startElementRow(const char *pszNameIn,
                                        const char **ppszAttr)
 {
+    FillRepeatedCells(false);
+
     if (strcmp(pszNameIn, "table:table-cell") == 0)
     {
         PushState(STATE_CELL);
@@ -838,38 +897,6 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
 
         nCellsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-columns-repeated", "1"));
-        if (nCellsRepeated < 0 || nCellsRepeated > 10000)
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Invalid value for number-columns-repeated = %d",
-                     nCellsRepeated);
-            bEndTableParsing = true;
-            nCellsRepeated = 0;
-            return;
-        }
-        const int nFields = nCellsRepeated +
-            (poCurLayer != nullptr ?
-                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
-        if( nFields > 0 && nRowsRepeated > 100000 / nFields )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Too big gap with previous valid row");
-            bEndTableParsing = true;
-            nCellsRepeated = 0;
-            return;
-        }
-
-        const size_t nCellMemSize =
-            (!osValue.empty()) ? osValue.size() : osFormula.size();
-        if( nCellMemSize > static_cast<size_t>(10 * 1024 * 1024) /
-                (std::max(nCellsRepeated, 1) * nRowsRepeated) )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Too much memory for row/cell repetition");
-            bEndTableParsing = true;
-            nCellsRepeated = 0;
-            return;
-        }
     }
     else if (strcmp(pszNameIn, "table:covered-table-cell") == 0)
     {
@@ -890,6 +917,8 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
         CPLAssert(strcmp(pszNameIn, "table:table-row") == 0);
+
+        FillRepeatedCells(true);
 
         /* Remove blank columns at the right to defer type evaluation */
         /* until necessary */
@@ -1141,17 +1170,6 @@ void OGRODSDataSource::endElementCell( CPL_UNUSED /*in non-DEBUG*/ const char * 
     if (stateStack[nStackDepth].nBeginDepth == nDepth)
     {
         CPLAssert(strcmp(pszNameIn, "table:table-cell") == 0);
-
-        for(int i = 0; i < nCellsRepeated; i++)
-        {
-            if( !osValue.empty() )
-                apoCurLineValues.push_back(osValue);
-            else
-                apoCurLineValues.push_back(osFormula);
-            apoCurLineTypes.push_back(osValueType);
-        }
-
-        nCurCol += nCellsRepeated;
     }
 }
 

@@ -427,6 +427,7 @@ void OGRCloudantTableLayer::LoadMetadata()
     if (pszSRS != nullptr)
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poSRS->importFromURN(pszSRS) != OGRERR_NONE)
         {
             delete poSRS;

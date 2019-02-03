@@ -51,6 +51,8 @@ OGRVFKLayer::OGRVFKLayer( const char *pszName,
     poDataBlock(poDSIn->GetReader()->GetDataBlock(pszName)),
     m_iNextFeature(0)
 {
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     if( poSRSIn == nullptr ) {
         // Default is S-JTSK (EPSG: 5514).
         if( poSRS->importFromEPSG(5514) != OGRERR_NONE )

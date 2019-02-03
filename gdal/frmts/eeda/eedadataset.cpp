@@ -187,7 +187,7 @@ GDALEEDALayer::GDALEEDALayer(GDALEEDADataset* poDS,
     m_poFeatureDefn->Reference();
     m_poFeatureDefn->SetGeomType(wkbMultiPolygon);
     OGRSpatialReference* poSRS = new OGRSpatialReference();
-    poSRS->SetFromUserInput(SRS_WKT_WGS84);
+    poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poSRS->Release();
 

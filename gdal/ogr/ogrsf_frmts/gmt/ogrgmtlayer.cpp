@@ -122,6 +122,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
     if( osWKT.length() )
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE )
         {
             delete poSRS;
@@ -131,6 +132,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
     else if( osEPSG.length() )
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromEPSG( atoi(osEPSG) ) != OGRERR_NONE )
         {
             delete poSRS;
@@ -140,6 +142,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
     else if( osProj4.length() )
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromProj4( osProj4 ) != OGRERR_NONE )
         {
             delete poSRS;

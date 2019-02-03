@@ -191,8 +191,15 @@ public:
                                     void* pProgressData );
     CPLErr GetGeoTransform( double* padfTransform ) override;
     CPLErr SetGeoTransform( double* padfTransform ) override;
-    const char *GetProjectionRef() override;
-    CPLErr SetProjection( const char* pszProjString ) override;
+    const char *_GetProjectionRef() override;
+    CPLErr _SetProjection( const char* pszProjString ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
+
     char **GetMetadataDomainList() override;
     char **GetMetadata( const char* pszDomain ) override;
     void FlushCache() override;
@@ -205,13 +212,23 @@ public:
                       GSpacing nBandSpace,
                       GDALRasterIOExtraArg* psExtraArg ) override;
     int GetGCPCount() override;
-    const char* GetGCPProjection() override;
+    const char* _GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP*
                 GetGCPs() override;
-    CPLErr SetGCPs(
+    CPLErr _SetGCPs(
                int nGCPCount,
                const GDAL_GCP *pasGCPList,
                const char *pszGCPProjection ) override;
+    using GDALDataset::SetGCPs;
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const OGRSpatialReference* poSRS ) override {
+        return OldSetGCPsFromNew(nGCPCount, pasGCPList, poSRS);
+    }
+
+
     CPLErr IBuildOverviews(
                const char* pszResampling,
                int nOverviews,

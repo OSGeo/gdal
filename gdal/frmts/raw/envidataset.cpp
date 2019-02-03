@@ -1137,13 +1137,13 @@ bool ENVIDataset::WritePseudoGcpInfo()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *ENVIDataset::GetProjectionRef() { return pszProjection; }
+const char *ENVIDataset::_GetProjectionRef() { return pszProjection; }
 
 /************************************************************************/
 /*                          SetProjection()                             */
 /************************************************************************/
 
-CPLErr ENVIDataset::SetProjection( const char *pszNewProjection )
+CPLErr ENVIDataset::_SetProjection( const char *pszNewProjection )
 
 {
     CPLFree(pszProjection);
@@ -1227,11 +1227,11 @@ CPLErr ENVIDataset::SetMetadataItem( const char *pszName,
 /************************************************************************/
 
 CPLErr ENVIDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                             const char *pszGCPProjection )
+                            const OGRSpatialReference *poSRS )
 {
     bHeaderDirty = true;
 
-    return RawDataset::SetGCPs(nGCPCount, pasGCPList, pszGCPProjection);
+    return RawDataset::SetGCPs(nGCPCount, pasGCPList, poSRS);
 }
 
 /************************************************************************/
@@ -1430,6 +1430,7 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     // TODO(schwehr): Symbolic constants for the fields.
     // Capture projection.
     OGRSpatialReference oSRS;
+    bool bGeogCRSSet = false;
     if ( oSRS.importFromESRI(papszCSS) != OGRERR_NONE )
     {
         oSRS.Clear();
@@ -1441,16 +1442,19 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
                 SetENVIDatum(&oSRS, papszFields[9]);
             else
                 oSRS.SetWellKnownGeogCS("NAD27");
+            bGeogCRSSet = true;
         }
         else if( STARTS_WITH_CI(papszFields[0], "State Plane (NAD 27)") &&
                  nCount > 7 )
         {
             oSRS.SetStatePlane(ITTVISToUSGSZone(atoi(papszFields[7])), FALSE);
+            bGeogCRSSet = true;
         }
         else if( STARTS_WITH_CI(papszFields[0], "State Plane (NAD 83)") &&
                  nCount > 7 )
         {
             oSRS.SetStatePlane(ITTVISToUSGSZone(atoi(papszFields[7])), TRUE);
+            bGeogCRSSet = true;
         }
         else if( STARTS_WITH_CI(papszFields[0], "Geographic Lat") &&
                  nCount > 7 )
@@ -1459,6 +1463,7 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
                 SetENVIDatum(&oSRS, papszFields[7]);
             else
                 oSRS.SetWellKnownGeogCS("WGS84");
+            bGeogCRSSet = true;
         }
         else if( nPICount > 8 && atoi(papszPI[0]) == 3 )  // TM
         {
@@ -1523,6 +1528,10 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
                        CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]) );
         }
     }
+    else
+    {
+        bGeogCRSSet = CPL_TO_BOOL(oSRS.IsProjected());
+    }
 
     CSLDestroy(papszCSS);
 
@@ -1533,9 +1542,8 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         oSRS.SetLocalCS(papszFields[0]);
 
     // Try to set datum from projection info line if we have a
-    // projected coordinate system without a GEOGCS.
-    if( oSRS.IsProjected() && oSRS.GetAttrNode("GEOGCS") == nullptr
-        && nPICount > 3 )
+    // projected coordinate system without a GEOGCS explicitly set.
+    if( oSRS.IsProjected() && !bGeogCRSSet && nPICount > 3 )
     {
         // Do we have a datum on the projection info line?
         int iDatum = nPICount - 1;
@@ -1611,7 +1619,6 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     // Turn back into WKT.
     if( oSRS.GetRoot() != nullptr )
     {
-        oSRS.Fixup();
         if ( pszProjection )
         {
             CPLFree(pszProjection);

@@ -3731,7 +3731,7 @@ CPL_C_END
 void GDALSerializeGCPListToXML( CPLXMLNode* psParentNode,
                                 GDAL_GCP* pasGCPList,
                                 int nGCPCount,
-                                const char* pszGCPProjection )
+                                const OGRSpatialReference* poGCP_SRS )
 {
     CPLString oFmt;
 
@@ -3740,12 +3740,25 @@ void GDALSerializeGCPListToXML( CPLXMLNode* psParentNode,
 
     CPLXMLNode* psLastChild = nullptr;
 
-    if( pszGCPProjection != nullptr
-        && strlen(pszGCPProjection) > 0 )
+    if( poGCP_SRS != nullptr && !poGCP_SRS->IsEmpty() )
     {
+        char* pszWKT = nullptr;
+        poGCP_SRS->exportToWkt(&pszWKT);
         CPLSetXMLValue( psPamGCPList, "#Projection",
-                        pszGCPProjection );
-        psLastChild = psPamGCPList->psChild;
+                        pszWKT );
+        CPLFree(pszWKT);
+        const auto& mapping = poGCP_SRS->GetDataAxisToSRSAxisMapping();
+        CPLString osMapping;
+        for( size_t i = 0; i < mapping.size(); ++i )
+        {
+            if( !osMapping.empty() )
+                osMapping += ",";
+            osMapping += CPLSPrintf("%d", mapping[i]);
+        }
+        CPLSetXMLValue(psPamGCPList, "#dataAxisToSRSAxisMapping",
+                      osMapping.c_str());
+
+        psLastChild = psPamGCPList->psChild->psNext;
     }
 
     for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
@@ -3791,18 +3804,36 @@ void GDALSerializeGCPListToXML( CPLXMLNode* psParentNode,
 void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
                                     GDAL_GCP** ppasGCPList,
                                     int* pnGCPCount,
-                                    char** ppszGCPProjection )
+                                    OGRSpatialReference** ppoGCP_SRS )
 {
-    if( ppszGCPProjection )
+    if( ppoGCP_SRS )
     {
-        const char *pszRawProj = CPLGetXMLValue(psGCPList, "Projection", "");
+        const char *pszRawProj = CPLGetXMLValue(psGCPList, "Projection", nullptr);
 
-        OGRSpatialReference oSRS;
-        if( strlen(pszRawProj) > 0
-            && oSRS.SetFromUserInput( pszRawProj ) == OGRERR_NONE )
-            oSRS.exportToWkt( ppszGCPProjection );
-        else
-            *ppszGCPProjection = CPLStrdup("");
+        *ppoGCP_SRS = nullptr;
+        if( pszRawProj && pszRawProj[0] )
+        {
+            *ppoGCP_SRS = new OGRSpatialReference();
+            (*ppoGCP_SRS)->SetFromUserInput( pszRawProj );
+
+            const char* pszMapping =
+                CPLGetXMLValue(psGCPList, "dataAxisToSRSAxisMapping", nullptr);
+            if( pszMapping )
+            {
+                char** papszTokens = CSLTokenizeStringComplex( pszMapping, ",", FALSE, FALSE);
+                std::vector<int> anMapping;
+                for( int i = 0; papszTokens && papszTokens[i]; i++ )
+                {
+                    anMapping.push_back(atoi(papszTokens[i]));
+                }
+                CSLDestroy(papszTokens);
+                (*ppoGCP_SRS)->SetDataAxisToSRSAxisMapping(anMapping);
+            }
+            else
+            {
+                (*ppoGCP_SRS)->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            }
+        }
     }
 
     // Count GCPs.

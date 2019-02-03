@@ -506,7 +506,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /*      We have an earthmodel string, look it up in the datum list.     */
 /* -------------------------------------------------------------------- */
     if( strlen(szEarthModel) > 0
-        && (poRoot == nullptr || IsProjected() || IsGeographic()) )
+        && (GetRoot() == nullptr || IsProjected() || IsGeographic()) )
     {
         const PCIDatums *pasDatum = asDatums;
 
@@ -711,8 +711,6 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         else
             SetLinearUnits( SRS_UL_METER, 1.0 );
     }
-
-    FixupOrdering();
 
     if( bProjAllocated && padfPrjParams )
         CPLFree( padfPrjParams );

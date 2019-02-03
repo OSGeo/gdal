@@ -396,7 +396,7 @@ CPLErr BYNDataset::SetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *BYNDataset::GetProjectionRef()
+const char *BYNDataset::_GetProjectionRef()
 
 {
     if( pszProjection )
@@ -485,7 +485,7 @@ const char *BYNDataset::GetProjectionRef()
 /*                          SetProjectionRef()                          */
 /************************************************************************/
 
-CPLErr BYNDataset::SetProjection( const char* pszProjString )
+CPLErr BYNDataset::_SetProjection( const char* pszProjString )
 
 {
     OGRSpatialReference oSRS;

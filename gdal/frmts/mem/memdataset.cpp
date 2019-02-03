@@ -799,8 +799,8 @@ MEMDataset::MEMDataset() :
     GDALDataset(FALSE),
     bGeoTransformSet(FALSE),
     pszProjection(nullptr),
-    nGCPCount(0),
-    pasGCPs(nullptr),
+    m_nGCPCount(0),
+    m_pasGCPs(nullptr),
     m_nOverviewDSCount(0),
     m_papoOverviewDS(nullptr)
 {
@@ -823,8 +823,8 @@ MEMDataset::~MEMDataset()
     FlushCache();
     CPLFree( pszProjection );
 
-    GDALDeinitGCPs( nGCPCount, pasGCPs );
-    CPLFree( pasGCPs );
+    GDALDeinitGCPs( m_nGCPCount, m_pasGCPs );
+    CPLFree( m_pasGCPs );
 
     for(int i=0;i<m_nOverviewDSCount;++i)
         delete m_papoOverviewDS[i];
@@ -854,7 +854,7 @@ void MEMDataset::LeaveReadWrite()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *MEMDataset::GetProjectionRef()
+const char *MEMDataset::_GetProjectionRef()
 
 {
     if( pszProjection == nullptr )
@@ -867,7 +867,7 @@ const char *MEMDataset::GetProjectionRef()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr MEMDataset::SetProjection( const char *pszProjectionIn )
+CPLErr MEMDataset::_SetProjection( const char *pszProjectionIn )
 
 {
     CPLFree( pszProjection );
@@ -939,14 +939,14 @@ void *MEMDataset::GetInternalHandle( const char * pszRequest )
 int MEMDataset::GetGCPCount()
 
 {
-    return nGCPCount;
+    return m_nGCPCount;
 }
 
 /************************************************************************/
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *MEMDataset::GetGCPProjection()
+const char *MEMDataset::_GetGCPProjection()
 
 {
     return osGCPProjection;
@@ -959,27 +959,27 @@ const char *MEMDataset::GetGCPProjection()
 const GDAL_GCP *MEMDataset::GetGCPs()
 
 {
-    return pasGCPs;
+    return m_pasGCPs;
 }
 
 /************************************************************************/
 /*                              SetGCPs()                               */
 /************************************************************************/
 
-CPLErr MEMDataset::SetGCPs( int nNewCount, const GDAL_GCP *pasNewGCPList,
+CPLErr MEMDataset::_SetGCPs( int nNewCount, const GDAL_GCP *pasNewGCPList,
                             const char *pszGCPProjection )
 
 {
-    GDALDeinitGCPs( nGCPCount, pasGCPs );
-    CPLFree( pasGCPs );
+    GDALDeinitGCPs( m_nGCPCount, m_pasGCPs );
+    CPLFree( m_pasGCPs );
 
     if( pszGCPProjection == nullptr )
         osGCPProjection = "";
     else
         osGCPProjection = pszGCPProjection;
 
-    nGCPCount = nNewCount;
-    pasGCPs = GDALDuplicateGCPs( nGCPCount, pasNewGCPList );
+    m_nGCPCount = nNewCount;
+    m_pasGCPs = GDALDuplicateGCPs( m_nGCPCount, pasNewGCPList );
 
     return CE_None;
 }

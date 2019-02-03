@@ -67,6 +67,7 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
         if( oMValue.length() > 0 )
         {
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( poSRS->SetFromUserInput( oMValue.c_str() ) != OGRERR_NONE )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,

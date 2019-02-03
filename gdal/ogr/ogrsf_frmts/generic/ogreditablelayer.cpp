@@ -342,6 +342,19 @@ OGRErr      OGREditableLayer::ISetFeature( OGRFeature *poFeature )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
+    if( !m_bStructureModified &&
+        m_oSetDeleted.empty() &&
+        m_oSetEdited.empty() &&
+        m_oSetCreated.empty() &&
+        m_poDecoratedLayer->TestCapability(OLCRandomWrite) )
+    {
+        OGRFeature* poTargetFeature = Translate(m_poDecoratedLayer->GetLayerDefn(),
+                                                poFeature, false, false);
+        OGRErr eErr = m_poDecoratedLayer->SetFeature(poTargetFeature);
+        delete poTargetFeature;
+        return eErr;
+    }
+
     OGRFeature* poMemFeature = Translate(m_poMemLayer->GetLayerDefn(),
                                          poFeature, false, false);
     OGRErr eErr = m_poMemLayer->SetFeature(poMemFeature);
@@ -370,11 +383,15 @@ OGRErr      OGREditableLayer::ICreateFeature( OGRFeature *poFeature )
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
     if( !m_bStructureModified &&
+        m_oSetDeleted.empty() &&
+        m_oSetCreated.empty() &&
         m_poDecoratedLayer->TestCapability(OLCSequentialWrite) )
     {
         OGRFeature* poTargetFeature = Translate(m_poDecoratedLayer->GetLayerDefn(),
                                                 poFeature, false, false);
         OGRErr eErr = m_poDecoratedLayer->CreateFeature(poTargetFeature);
+        if( poFeature->GetFID() < 0 )
+            poFeature->SetFID(poTargetFeature->GetFID());
         delete poTargetFeature;
         return eErr;
     }
@@ -622,7 +639,8 @@ int         OGREditableLayer::TestCapability( const char * pszCap )
         EQUAL(pszCap, OLCAlterFieldDefn) ||
         EQUAL(pszCap, OLCDeleteFeature) )
     {
-        return TRUE;
+        return m_poDecoratedLayer->TestCapability(OLCCreateField) == TRUE ||
+               m_poDecoratedLayer->TestCapability(OLCSequentialWrite) == TRUE;
     }
     if( EQUAL(pszCap, OLCCreateGeomField) )
         return m_bSupportsCreateGeomField;

@@ -1085,22 +1085,6 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         CPLDebug( "GMLJP2", "Suppressed axis flipping based on GDAL_IGNORE_AXIS_ORIENTATION." );
     }
 
-    if( pszSRSName && bNeedAxisFlip )
-    {
-        // Suppress explicit axis order in SRS definition
-
-        OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode( "GEOGCS" );
-        if( poGEOGCS != nullptr )
-            poGEOGCS->StripNodes( "AXIS" );
-
-        OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
-        if (poPROJCS != nullptr && oSRS.EPSGTreatsAsNorthingEasting())
-            poPROJCS->StripNodes( "AXIS" );
-
-        CPLFree(pszProjection);
-        oSRS.exportToWkt( &pszProjection );
-    }
-
     /* Some Pleiades files have explicit <gml:axisName>Easting</gml:axisName> */
     /* <gml:axisName>Northing</gml:axisName> to override default EPSG order */
     if( bNeedAxisFlip && psRG != nullptr )

@@ -34,7 +34,7 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
-                    <xs:element name="SRS" type="xs:string"/>
+                    <xs:element name="SRS" type="SRSType"/>
                     <xs:element name="GeoTransform" type="xs:string"/>
                     <xs:element name="GCPList" type="GCPListType"/>
                     <xs:element name="BlockXSize" type="nonNegativeInteger32"/>
@@ -51,6 +51,14 @@
             <xs:attribute name="rasterYSize" type="nonNegativeInteger32" use="required"/>
         </xs:complexType>
     </xs:element>
+
+    <xs:complexType name="SRSType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="dataAxisToSRSAxisMapping" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
 
     <xs:simpleType name="nonNegativeInteger32">
         <xs:restriction base="xs:nonNegativeInteger">

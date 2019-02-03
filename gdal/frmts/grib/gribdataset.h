@@ -89,7 +89,10 @@ class GRIBDataset : public GDALPamDataset
                                     void * pProgressData );
 
     CPLErr      GetGeoTransform( double *padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
   private:
     void SetGribMetaData(grib_MetaData *meta);

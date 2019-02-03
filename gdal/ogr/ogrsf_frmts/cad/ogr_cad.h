@@ -85,10 +85,13 @@ public:
     OGRLayer      *GetLayer( int ) override;
     int            TestCapability( const char * ) override;
     virtual char **GetFileList() override;
-    virtual const char  *GetProjectionRef(void) override;
+    virtual const char  *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
     virtual int CloseDependentDatasets() override;
 

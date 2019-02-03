@@ -35,7 +35,6 @@ import sys
 
 from osgeo import gdal
 from osgeo import ogr
-from osgeo import osr
 
 
 def Usage():
@@ -237,11 +236,7 @@ except:
 
 if dst_layer is None:
 
-    srs = None
-    if src_ds.GetProjectionRef() != '':
-        srs = osr.SpatialReference()
-        srs.ImportFromWkt(src_ds.GetProjectionRef())
-
+    srs = src_ds.GetSpatialRef()
     dst_layer = dst_ds.CreateLayer(dst_layername, geom_type=ogr.wkbPolygon, srs=srs)
 
     if dst_fieldname is None:

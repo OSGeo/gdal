@@ -221,7 +221,8 @@ void OGRElasticLayer::AddGeomFieldDefn( const char* pszName,
     m_abIsGeoPoint.push_back(bIsGeoPoint);
 
     OGRSpatialReference* poSRS_WGS84 = new OGRSpatialReference();
-    poSRS_WGS84->SetFromUserInput(SRS_WKT_WGS84);
+    poSRS_WGS84->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+    poSRS_WGS84->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     oFieldDefn.SetSpatialRef(poSRS_WGS84);
     poSRS_WGS84->Dereference();
 
@@ -2452,6 +2453,10 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn,
     }
 
     OGRGeomFieldDefn oFieldDefn(poFieldIn);
+    if( oFieldDefn.GetSpatialRef() )
+    {
+        oFieldDefn.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     if( EQUAL(oFieldDefn.GetNameRef(), "") )
         oFieldDefn.SetName("geometry");
 
@@ -2488,7 +2493,8 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn,
     if( oFieldDefn.GetSpatialRef() != nullptr )
     {
         OGRSpatialReference oSRS_WGS84;
-        oSRS_WGS84.SetFromUserInput(SRS_WKT_WGS84);
+        oSRS_WGS84.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( !oSRS_WGS84.IsSame(oFieldDefn.GetSpatialRef()) )
         {
             poCT = OGRCreateCoordinateTransformation( oFieldDefn.GetSpatialRef(), &oSRS_WGS84 );

@@ -71,7 +71,10 @@ class GRASSDataset : public GDALDataset
     GRASSDataset();
     ~GRASSDataset() override;
 
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -414,7 +417,7 @@ GRASSDataset::~GRASSDataset()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *GRASSDataset::GetProjectionRef()
+const char *GRASSDataset::_GetProjectionRef()
 {
     if( pszProjection == NULL )
         return "";

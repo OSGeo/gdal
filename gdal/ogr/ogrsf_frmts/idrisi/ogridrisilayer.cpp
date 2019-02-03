@@ -60,6 +60,7 @@ OGRIdrisiLayer::OGRIdrisiLayer( const char* pszFilename,
     if (pszWTKString)
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         poSRS->importFromWkt(pszWTKString);
     }
 

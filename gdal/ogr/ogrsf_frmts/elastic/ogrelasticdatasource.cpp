@@ -486,7 +486,13 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     {
         const char* pszGeometryName = CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "geometry");
         OGRGeomFieldDefn oFieldDefn(pszGeometryName, eGType);
-        oFieldDefn.SetSpatialRef(poSRS);
+        if( poSRS )
+        {
+            OGRSpatialReference* poSRSClone = poSRS->Clone();
+            poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            oFieldDefn.SetSpatialRef(poSRSClone);
+            poSRSClone->Release();
+        }
         poLayer->CreateGeomField(&oFieldDefn, FALSE);
     }
     if( pszLayerMapping )

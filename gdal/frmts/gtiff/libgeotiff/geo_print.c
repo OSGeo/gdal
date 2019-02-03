@@ -38,7 +38,7 @@
 #define FMT_SHORT   "%-11hu"
 
 static int DefaultPrint(char *string, void *aux);
-static void PrintKey(GeoKey *key, GTIFPrintMethod print,void *aux);
+static void PrintKey(GTIF *gtif,GeoKey *key, GTIFPrintMethod print,void *aux);
 static void PrintGeoTags(GTIF *gtif,GTIFReadMethod scan,void *aux);
 static void PrintTag(int tag, int nrows, double *data, int ncols,
 					GTIFPrintMethod print,void *aux);
@@ -79,7 +79,10 @@ void GTIFPrint(GTIF *gtif, GTIFPrintMethod print,void *aux)
 
     sprintf(message,"   %s\n",FMT_KEYS); print(message,aux);
     for (i=0; i<numkeys; i++)
-        PrintKey(++key,print,aux);
+    {
+        ++key;
+        PrintKey(gtif, key,print,aux);
+    }
     sprintf(message,"      %s\n",FMT_KEYEND); print(message,aux);
 
     sprintf(message,"   %s\n",FMT_GEOEND); print(message,aux);
@@ -130,7 +133,7 @@ static void PrintTag(int tag, int nrows, double *dptr, int ncols,
 }
 
 
-static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
+static void PrintKey(GTIF *gtif, GeoKey *key, GTIFPrintMethod print, void *aux)
 {
     char *data;
     geokey_t keyid = (geokey_t) key->gk_key;
@@ -211,7 +214,7 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
         sptr = (pinfo_t *)data;
         if (count==1)
         {
-            print( GTIFValueName(keyid,*sptr), aux );
+            print( (char*)GTIFValueNameEx(gtif,keyid,*sptr), aux );
             print( "\n", aux );
         }
         else if( sptr == NULL && count > 0 )
@@ -510,7 +513,7 @@ static int DefaultRead(char *string, void *aux)
     int num_read;
     /* 1023 comes from char message[1024]; in GTIFFImport */
     num_read = fscanf((FILE *)aux, "%1023[^\n]\n", string);
-    if (num_read != 0) {
+    if (num_read == 0) {
       fprintf(stderr, "geo_print.c DefaultRead failed to read anything.\n");
     }
     return 1;

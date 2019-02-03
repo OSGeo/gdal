@@ -38,14 +38,15 @@ from osgeo import osr
 ###############################################################################
 # Write a HFA/Imagine and read it back to check its SRS
 epsg_list = [
-    [2758, False],  # tmerc
+    [3814, False],  # tmerc
     [2036, True],  # sterea   # failure caused by revert done in r22803
-    [2046, False],  # tmerc
+    # [2046, False],  # tmerc south oriented DISABLED. Not sure about the axis
     [3031, True],  # stere
     [32661, True],  # stere
-    [3035, False],  # laea
+    [3408, False],  # laea
     [2062, False],  # lcc
-    [2065, False],  # krovak
+    #[2065, True],  # krovak South-West
+    [5221, True],  # krovak east-north
     [2066, False],  # cass
     [2964, False],  # aea
     [3410, True],  # cea
@@ -95,3 +96,12 @@ def test_hfa_srs(epsg_code, epsg_broken):
         print(sr)
         print(sr2)
         assert False, 'did not get expected SRS'
+
+
+def test_hfa_srs_wisconsin_tmerc():
+
+    ds = gdal.Open('data/esri_103300_NAD_1983_HARN_WISCRS_Adams_County_Meters_transverse_mercator.img')
+    wkt = ds.GetProjectionRef()
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput(wkt)
+    assert sr.GetAuthorityCode(None) == '103300'

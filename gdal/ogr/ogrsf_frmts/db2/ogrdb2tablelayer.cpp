@@ -347,6 +347,7 @@ CPLErr OGRDB2TableLayer::Initialize( const char *pszSchema,
     {
         /* Process srtext directly if specified */
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromWkt( (char**)&pszSRText ) != OGRERR_NONE )
         {
             delete poSRS;

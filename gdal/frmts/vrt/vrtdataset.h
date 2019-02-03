@@ -158,14 +158,14 @@ class CPL_DLL VRTDataset : public GDALDataset
     friend struct VRTFlushCacheStruct<VRTWarpedDataset>;
     friend struct VRTFlushCacheStruct<VRTPansharpenedDataset>;
 
-    char           *m_pszProjection;
+    OGRSpatialReference* m_poSRS = nullptr;
 
     int            m_bGeoTransformSet;
     double         m_adfGeoTransform[6];
 
     int            m_nGCPCount;
     GDAL_GCP      *m_pasGCPList;
-    char          *m_pszGCPProjection;
+    OGRSpatialReference *m_poGCP_SRS = nullptr;
 
     int            m_bNeedsFlush;
     int            m_bWritable;
@@ -202,8 +202,9 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual CPLErr          CreateMaskBand( int nFlags ) override;
     void SetMaskBand(VRTRasterBand* poMaskBand);
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override { return m_poSRS; }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
+
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
 
@@ -215,10 +216,11 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual char** GetMetadata( const char *pszDomain = "" ) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override { return m_poGCP_SRS; }
     virtual const GDAL_GCP *GetGCPs() override;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
+    using GDALDataset::SetGCPs;
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const OGRSpatialReference* poSRS ) override;
 
     virtual CPLErr AddBand( GDALDataType eType,
                             char **papszOptions=nullptr ) override;

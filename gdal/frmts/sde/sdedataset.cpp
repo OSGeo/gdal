@@ -231,7 +231,7 @@ CPLErr SDEDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *SDEDataset::GetProjectionRef()
+const char *SDEDataset::_GetProjectionRef()
 
 {
     long nSDEErr;

@@ -66,7 +66,7 @@ OGRSelafinLayer::OGRSelafinLayer(
     nStepNumber(nStepNumberP),
     poHeader(poHeaderP),
     poFeatureDefn(new OGRFeatureDefn(CPLGetBasename(pszLayerNameP))),
-    poSpatialRef(poSpatialRefP),
+    poSpatialRef(nullptr),
     nCurrentId(-1)
 {
 #ifdef DEBUG_VERBOSE
@@ -76,6 +76,12 @@ OGRSelafinLayer::OGRSelafinLayer(
     poFeatureDefn->Reference();
     if( eType == POINTS ) poFeatureDefn->SetGeomType( wkbPoint );
     else poFeatureDefn->SetGeomType(wkbPolygon);
+    if( poSpatialRefP )
+    {
+        poSpatialRef = poSpatialRefP->Clone();
+        poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+    }
     for( int i = 0; i < poHeader->nVar; ++i )
     {
         OGRFieldDefn oFieldDefn(poHeader->papszVariables[i],OFTReal);
@@ -92,6 +98,8 @@ OGRSelafinLayer::~OGRSelafinLayer()
     CPLDebug("Selafin", "Closing layer %s", GetName());
 #endif
     poFeatureDefn->Release();
+    if( poSpatialRef )
+        poSpatialRef->Release();
     // poHeader->nRefCount--;
     // if (poHeader->nRefCount==0) delete poHeader;
 }

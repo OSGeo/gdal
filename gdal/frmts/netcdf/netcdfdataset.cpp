@@ -2226,12 +2226,12 @@ char **netCDFDataset::GetMetadata( const char *pszDomain )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *netCDFDataset::GetProjectionRef()
+const char *netCDFDataset::_GetProjectionRef()
 {
     if( bSetProjection )
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -3626,15 +3626,21 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 // Set datum to unknown or else datums will not match, see bug
                 // #4281.
                 if( oSRSGDAL.GetAttrNode("DATUM") )
-                    oSRSGDAL.GetAttrNode("DATUM")->GetChild(0)->SetValue("unknown");
+                    oSRSGDAL.GetAttrNode("DATUM")->GetChild(0)->SetValue("unnamed");
                 // Need this for setprojection autotest.
                 if( oSRSGDAL.GetAttrNode("PROJCS") )
                     oSRSGDAL.GetAttrNode("PROJCS")->GetChild(0)->SetValue("unnamed");
                 if( oSRSGDAL.GetAttrNode("GEOGCS") )
-                    oSRSGDAL.GetAttrNode("GEOGCS")->GetChild(0)->SetValue("unknown");
-                oSRSGDAL.GetRoot()->StripNodes("UNIT");
+                    oSRSGDAL.GetAttrNode("GEOGCS")->GetChild(0)->SetValue("unnamed");
+
                 OGRSpatialReference oSRSForComparison(oSRS);
-                oSRSForComparison.GetRoot()->StripNodes("UNIT");
+                if( oSRSForComparison.GetAttrNode("DATUM") )
+                    oSRSForComparison.GetAttrNode("DATUM")->GetChild(0)->SetValue("unnamed");
+                if( oSRSForComparison.GetAttrNode("PROJCS") )
+                    oSRSForComparison.GetAttrNode("PROJCS")->GetChild(0)->SetValue("unnamed");
+                if( oSRSForComparison.GetAttrNode("GEOGCS") )
+                    oSRSForComparison.GetAttrNode("GEOGCS")->GetChild(0)->SetValue("unnamed");
+
                 if( oSRSForComparison.IsSame(&oSRSGDAL) )
                 {
 #ifdef NCDF_DEBUG
@@ -3875,7 +3881,7 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
                              "using variables %s and %s for GEOLOCATION",
                              pszGeolocXFullName, pszGeolocYFullName);
 
-                    SetMetadataItem("SRS", SRS_WKT_WGS84, "GEOLOCATION");
+                    SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG, "GEOLOCATION");
 
                     CPLString osTMP;
                     osTMP.Printf("NETCDF:\"%s\":%s",
@@ -3973,7 +3979,7 @@ double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName,
 /************************************************************************/
 /*                          SetProjection()                           */
 /************************************************************************/
-CPLErr netCDFDataset::SetProjection( const char * pszNewProjection )
+CPLErr netCDFDataset::_SetProjection( const char * pszNewProjection )
 {
     CPLMutexHolderD(&hNCMutex);
 
@@ -3987,7 +3993,7 @@ CPLErr netCDFDataset::SetProjection( const char * pszNewProjection )
     if( bSetProjection && (GetAccess() == GA_Update) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                  "netCDFDataset::SetProjection() should only be called once "
+                  "netCDFDataset::_SetProjection() should only be called once "
                   "in update mode!\npszNewProjection=\n%s",
                   pszNewProjection);
     }
@@ -4694,6 +4700,7 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             OGRCoordinateTransformation *poTransform = nullptr;
 
             OGRSpatialReference oSRS2;
+            oSRS2.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             oSRS2.importFromWkt(pszProjection);
 
             size_t startX[1];
@@ -4762,8 +4769,11 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             {
                 poLatLonSRS = oSRS2.CloneGeogCS();
                 if( poLatLonSRS != nullptr )
+                {
+                    poLatLonSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poTransform =
                         OGRCreateCoordinateTransformation(&oSRS2, poLatLonSRS);
+                }
                 // If no OGR transform, then don't write CF lon/lat.
                 if( poTransform == nullptr )
                 {
@@ -5451,7 +5461,10 @@ OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
     // that destroys the passed SRS instead of releasing it .
     OGRSpatialReference *poSRS = poSpatialRef;
     if( poSRS != nullptr )
+    {
         poSRS = poSRS->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     netCDFLayer *poLayer =
         new netCDFLayer(poLayerDataset ? poLayerDataset : this, nLayerCDFId,
                         osNetCDFLayerName, eGType, poSRS);
@@ -10994,6 +11007,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
     if( pszProjection != nullptr )
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromWkt(pszProjection) != OGRERR_NONE )
         {
             delete poSRS;

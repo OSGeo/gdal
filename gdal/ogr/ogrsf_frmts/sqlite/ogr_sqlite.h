@@ -865,10 +865,13 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     virtual char**      GetMetadata(const char* pszDomain = "") override;
 
     virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
-    virtual const char* GetProjectionRef() override;
+    virtual const char* _GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     char               *LaunderName( const char * );
-    int                 FetchSRSId( OGRSpatialReference * poSRS );
+    int                 FetchSRSId( const OGRSpatialReference * poSRS );
     OGRSpatialReference*FetchSRS( int nSRID );
 
     void                SetUpdate(int bUpdateIn) { bUpdate = bUpdateIn; }

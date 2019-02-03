@@ -834,6 +834,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
 /*      Turn into a spatial reference.                                  */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference* poSRS = new OGRSpatialReference();
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( poSRS->importFromWkt( papszResult[0] ) != OGRERR_NONE )
     {
         delete poSRS;
@@ -948,8 +949,6 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference *poSRS2 = poSRS->Clone();
 
-    poSRS2->StripCTParms();
-
 /* -------------------------------------------------------------------- */
 /*      Convert any degree type unit names to "Decimal Degree".         */
 /* -------------------------------------------------------------------- */
@@ -960,7 +959,8 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Translate SRS to WKT.                                           */
 /* -------------------------------------------------------------------- */
-    if( poSRS2->exportToWkt( &pszWKT ) != OGRERR_NONE )
+    const char* const apszOptions[] = { "FORMAT=SFSQL", nullptr };
+    if( poSRS2->exportToWkt( &pszWKT, apszOptions ) != OGRERR_NONE )
     {
         delete poSRS2;
         return -1;

@@ -45,7 +45,7 @@ def test_lcp_1():
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
     assert ds.RasterCount == 8, 'wrong number of bands'
 
-    assert ds.GetProjectionRef().find('NAD_1983_UTM_Zone_12N') != -1, \
+    assert ds.GetProjectionRef().find('NAD83 / UTM zone 12N') != -1, \
         ("didn't get expect projection. Got : %s" % (ds.GetProjectionRef()))
 
     metadata = [('LATITUDE', '49'),

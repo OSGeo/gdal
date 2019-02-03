@@ -160,7 +160,12 @@ def test_gdalbuildvrt_4():
         pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
-    wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
+    wkt = """GEOGCS["WGS 72",
+    DATUM["WGS_1972",
+        SPHEROID["WGS 72",6378135,298.26],
+        TOWGS84[0,0,4.5,0,0,0.554,0.2263]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]"""
 
     ds = drv.Create('tmp/gdalbuildvrt5.tif', 10, 10, 1)
     ds.SetProjection(wkt)

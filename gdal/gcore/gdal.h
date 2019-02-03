@@ -662,15 +662,20 @@ CPLErr CPL_DLL CPL_STDCALL GDALDatasetAdviseRead( GDALDatasetH hDS,
     int nBandCount, int *panBandCount, CSLConstList papszOptions );
 
 const char CPL_DLL * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH );
+OGRSpatialReferenceH CPL_DLL GDALGetSpatialRef( GDALDatasetH );
 CPLErr CPL_DLL CPL_STDCALL GDALSetProjection( GDALDatasetH, const char * );
+CPLErr CPL_DLL GDALSetSpatialRef( GDALDatasetH, OGRSpatialReferenceH );
 CPLErr CPL_DLL CPL_STDCALL GDALGetGeoTransform( GDALDatasetH, double * );
 CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform( GDALDatasetH, double * );
 
 int CPL_DLL CPL_STDCALL  GDALGetGCPCount( GDALDatasetH );
 const char CPL_DLL * CPL_STDCALL GDALGetGCPProjection( GDALDatasetH );
+OGRSpatialReferenceH CPL_DLL GDALGetGCPSpatialRef( GDALDatasetH );
 const GDAL_GCP CPL_DLL * CPL_STDCALL GDALGetGCPs( GDALDatasetH );
 CPLErr CPL_DLL CPL_STDCALL GDALSetGCPs( GDALDatasetH, int, const GDAL_GCP *,
                                         const char * );
+CPLErr CPL_DLL GDALSetGCPs2( GDALDatasetH, int, const GDAL_GCP *,
+                                         OGRSpatialReferenceH );
 
 void CPL_DLL * CPL_STDCALL GDALGetInternalHandle( GDALDatasetH, const char * );
 int CPL_DLL CPL_STDCALL GDALReferenceDataset( GDALDatasetH );

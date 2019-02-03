@@ -381,6 +381,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         {
             OGRSpatialReference oSRSWGS84;
             oSRSWGS84.SetWellKnownGeogCS( "WGS84" );
+            oSRSWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( !poSRS->IsSame(&oSRSWGS84) )
             {
                 poCT = OGRCreateCoordinateTransformation( poSRS, &oSRSWGS84 );

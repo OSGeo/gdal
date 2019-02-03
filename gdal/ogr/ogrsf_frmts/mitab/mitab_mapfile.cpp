@@ -1149,22 +1149,26 @@ int TABMAPFile::MoveToObjId(int nObjId)
  **********************************************************************/
 int TABMAPFile::MarkAsDeleted()
 {
-    if (m_eAccessMode == TABRead || m_poCurObjBlock == nullptr)
+    if (m_eAccessMode == TABRead)
         return -1;
 
     if ( m_nCurObjPtr <= 0 )
         return 0;
 
-    /* Goto offset for object id */
-    if ( m_poCurObjBlock->GotoByteInFile(m_nCurObjPtr + 1, TRUE) != 0)
-        return -1;
-
-    /* Mark object as deleted */
-    m_poCurObjBlock->WriteInt32(m_nCurObjId | 0x40000000);
-
     int ret = 0;
-    if( m_poCurObjBlock->CommitToFile() != 0 )
-        ret = -1;
+    if( m_nCurObjType != TAB_GEOM_NONE  )
+    {
+        /* Goto offset for object id */
+        if ( m_poCurObjBlock == nullptr ||
+            m_poCurObjBlock->GotoByteInFile(m_nCurObjPtr + 1, TRUE) != 0)
+            return -1;
+
+        /* Mark object as deleted */
+        m_poCurObjBlock->WriteInt32(m_nCurObjId | 0x40000000);
+
+        if( m_poCurObjBlock->CommitToFile() != 0 )
+            ret = -1;
+    }
 
     /* Update index entry to reflect delete state as well */
     if( m_poIdIndex->SetObjPtr(m_nCurObjId, 0) != 0 )

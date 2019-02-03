@@ -47,6 +47,7 @@ namespace tut
             : err_(OGRERR_NONE), srs_(nullptr)
         {
             srs_ = OSRNewSpatialReference(nullptr);
+            OSRSetAxisMappingStrategy(srs_, OAMS_TRADITIONAL_GIS_ORDER);
         }
 
         ~test_osr_proj4_data()
@@ -68,8 +69,8 @@ namespace tut
     {
         ensure("SRS handle is NULL", nullptr != srs_);
 
-        std::string wkt("+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000"
-              "+k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000"
+        std::string wkt("+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000 "
+              "+k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000 "
               "+a=6377340.189000 +rf=299.324965 +towgs84=482.530,"
               "-130.596,564.557,-1.042,-0.214,-0.631,8.15");
 
@@ -95,8 +96,8 @@ namespace tut
     {
         ensure("SRS handle is NULL", nullptr != srs_);
 
-        std::string wkt("+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0"
-            "+lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n"
+        std::string wkt("+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 "
+            "+lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n "
             "+a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat");
 
         err_ = OSRImportFromProj4(srs_, wkt.c_str());

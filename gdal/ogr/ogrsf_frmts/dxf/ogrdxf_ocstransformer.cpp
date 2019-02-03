@@ -117,11 +117,11 @@ OGRDXFOCSTransformer::OGRDXFOCSTransformer( double adfNIn[3],
 }
 
 /************************************************************************/
-/*                            TransformEx()                             */
+/*                            Transform()                               */
 /************************************************************************/
 
-int OGRDXFOCSTransformer::TransformEx( int nCount,
-    double *adfX, double *adfY, double *adfZ,
+int OGRDXFOCSTransformer::Transform( int nCount,
+    double *adfX, double *adfY, double *adfZ, double * /* adfT */,
     int *pabSuccess /* = nullptr */ ) 
 {
     for( int i = 0; i < nCount; i++ )

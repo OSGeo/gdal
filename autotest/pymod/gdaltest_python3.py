@@ -167,7 +167,7 @@ def read_in_thread(f, q):
     f.close()
 
 
-def runexternal_out_and_err(cmd, check_memleak=True):
+def runexternal_out_and_err(cmd, check_memleak=True, encoding='ascii'):
     # pylint: disable=unused-argument
     command = shlex.split(cmd)
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -189,9 +189,9 @@ def runexternal_out_and_err(cmd, check_memleak=True):
         ret_stderr = ''
 
     if q_stdout is not None:
-        ret_stdout = q_stdout.get().decode('ascii')
+        ret_stdout = q_stdout.get().decode(encoding)
     if q_stderr is not None:
-        ret_stderr = q_stderr.get().decode('ascii')
+        ret_stderr = q_stderr.get().decode(encoding)
 
     waitcode = p.wait()
     if waitcode != 0:

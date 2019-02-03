@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?> 
-<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
-<?xml-model href="https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1800.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
-<?xml-model href="https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1B00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
     xmlns:pds="http://pds.nasa.gov/pds4/pds/v1"
     xmlns:disp="http://pds.nasa.gov/pds4/disp/v1"
     xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="
-    http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd
-    http://pds.nasa.gov/pds4/disp/v1 https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1800.xsd
-    http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd">
+    http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd
+    http://pds.nasa.gov/pds4/disp/v1 https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1B00.xsd
+    http://pds.nasa.gov/pds4/cart/v1 https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd">
     <Identification_Area>
         <logical_identifier>${LOGICAL_IDENTIFIER}</logical_identifier>
         <version_id>1.0</version_id>
         <title>${TITLE}</title>
-        <information_model_version>1.8.0.0</information_model_version>
+        <information_model_version>1.B.0.0</information_model_version>
         <product_class>Product_Observational</product_class>
     </Identification_Area>
     <Observation_Area>

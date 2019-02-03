@@ -150,7 +150,7 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
 
         if( poFeature->GetGeometryRef() != nullptr )
             poFeature->GetGeometryRef()->assignSpatialReference(
-                poDS->GetSpatialRef() );
+                poDS->DSGetSpatialRef() );
 
         poFeature->SetField( 0, poReader->GetShortModule() );
 
@@ -228,7 +228,7 @@ OGRFeatureDefn *OGRTigerLayer::GetLayerDefn()
     if( poFDefn != nullptr )
     {
         if( poFDefn->GetGeomFieldCount() > 0 )
-            poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSpatialRef());
+            poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->DSGetSpatialRef());
     }
     return poFDefn;
 }

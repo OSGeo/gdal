@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c 2741 2016-09-04 18:50:49Z rouault $
+ * $Id$
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -1343,37 +1343,7 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     return CPLStrdup( szProjection );
 }
 
-#if !defined(HAVE_LIBPROJ)
-
-int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
-                        double *padfX, double *padfY )
-{
-    (void) psDefn;
-    (void) nPoints;
-    (void) padfX;
-    (void) padfY;
-#ifdef DEBUG
-    fprintf( stderr,
-             "GTIFProj4ToLatLong() - PROJ.4 support not compiled in.\n" );
-#endif
-    return FALSE;
-}
-
-int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
-                          double *padfX, double *padfY )
-{
-    (void) psDefn;
-    (void) nPoints;
-    (void) padfX;
-    (void) padfY;
-#ifdef DEBUG
-    fprintf( stderr,
-             "GTIFProj4FromLatLong() - PROJ.4 support not compiled in.\n" );
-#endif
-    return FALSE;
-}
-#else
-
+#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 #include "proj_api.h"
 
 /************************************************************************/
@@ -1495,5 +1465,3 @@ int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
 
     return TRUE;
 }
-
-#endif /* has proj_api.h and -lproj */

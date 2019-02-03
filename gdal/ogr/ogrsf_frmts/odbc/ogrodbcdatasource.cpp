@@ -525,6 +525,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
                     }
                     panSRID[nKnownSRID] = atoi( pszSRID );
                     papoSRS[nKnownSRID] = new OGRSpatialReference();
+                    papoSRS[nKnownSRID]->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     if ( papoSRS[nKnownSRID]->importFromWkt( pszSRText )
                          != OGRERR_NONE )
                     {

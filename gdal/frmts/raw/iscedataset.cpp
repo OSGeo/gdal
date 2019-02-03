@@ -769,7 +769,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
 
         /* ISCE format seems not to have a projection field, but uses   */
         /* WGS84.                                                       */
-        poDS->SetProjection( SRS_WKT_WGS84 );
+        poDS->SetProjection( SRS_WKT_WGS84_LAT_LONG );
     }
 
 /* -------------------------------------------------------------------- */

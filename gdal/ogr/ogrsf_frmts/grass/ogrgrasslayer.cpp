@@ -213,6 +213,7 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
         if ( srsWkt )
         {
             poSRS = new OGRSpatialReference ( srsWkt );
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             G_free ( srsWkt );
         }
 

@@ -558,7 +558,7 @@ class OGRNTFDataSource : public OGRDataSource
     int                  GetFCCount() { return nFCCount; }
     int                  GetFeatureClass( int, char **, char ** );
 
-    OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
+    OGRSpatialReference *DSGetSpatialRef() { return poSpatialRef; }
 
     NTFGenericClass     *GetGClass( int i ) { return aoGenericClass + i; }
     void                WorkupGeneric( NTFFileReader * );

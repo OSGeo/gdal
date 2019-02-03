@@ -166,10 +166,19 @@ class HDF4ImageDataset final: public HDF4Dataset
     virtual void        FlushCache( void ) override;
     CPLErr              GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr      SetGeoTransform( double * ) override;
-    const char          *GetProjectionRef() override;
-    virtual CPLErr      SetProjection( const char * ) override;
+    const char          *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    virtual CPLErr      _SetProjection( const char * ) override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
     virtual int         GetGCPCount() override;
-    virtual const char  *GetGCPProjection() override;
+    virtual const char  *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     virtual const GDAL_GCP *GetGCPs() override;
 };
 
@@ -797,6 +806,7 @@ HDF4ImageDataset::HDF4ImageDataset() :
     nBlockPreferredYSize(-1),
     bReadTile(false)
 {
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset(aiDimSizes, 0, sizeof(aiDimSizes));
     papszLocalMetadata = nullptr;
     memset(aiPaletteData, 0, sizeof(aiPaletteData));
@@ -907,7 +917,7 @@ CPLErr HDF4ImageDataset::SetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *HDF4ImageDataset::GetProjectionRef()
+const char *HDF4ImageDataset::_GetProjectionRef()
 
 {
     return pszProjection;
@@ -917,7 +927,7 @@ const char *HDF4ImageDataset::GetProjectionRef()
 /*                          SetProjection()                             */
 /************************************************************************/
 
-CPLErr HDF4ImageDataset::SetProjection( const char *pszNewProjection )
+CPLErr HDF4ImageDataset::_SetProjection( const char *pszNewProjection )
 
 {
     CPLFree( pszProjection );
@@ -940,7 +950,7 @@ int HDF4ImageDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *HDF4ImageDataset::GetGCPProjection()
+const char *HDF4ImageDataset::_GetGCPProjection()
 
 {
     if( nGCPCount > 0 )
@@ -1099,8 +1109,13 @@ long HDF4ImageDataset::USGSMnemonicToCode( const char* pszMnemonic )
 void HDF4ImageDataset::ToGeoref( double *pdfGeoX, double *pdfGeoY )
 {
     OGRSpatialReference* poLatLong = oSRS.CloneGeogCS();
-    OGRCoordinateTransformation* poTransform =
-        OGRCreateCoordinateTransformation( poLatLong, &oSRS );
+    OGRCoordinateTransformation* poTransform = nullptr;
+    if( poLatLong )
+    {
+        poLatLong->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        poTransform =
+            OGRCreateCoordinateTransformation( poLatLong, &oSRS );
+    }
 
     if( poTransform != nullptr )
         poTransform->Transform( 1, pdfGeoX, pdfGeoY, nullptr );
@@ -1500,6 +1515,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         OGRSpatialReference oWGS84;
 
         oWGS84.SetWellKnownGeogCS( "WGS84" );
+        oWGS84.SetAxisMappingStrategy( OAMS_TRADITIONAL_GIS_ORDER );
 
         OGRCoordinateTransformation *poCT =
             OGRCreateCoordinateTransformation( &oWGS84, &oSRS );
@@ -2042,7 +2058,7 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
 /*      We found geolocation information.  Record it as metadata.       */
 /* -------------------------------------------------------------------- */
 
-    SetMetadataItem( "SRS", SRS_WKT_WGS84, "GEOLOCATION" );
+    SetMetadataItem( "SRS", SRS_WKT_WGS84_LAT_LONG, "GEOLOCATION" );
 
     CPLString  osWrk;
     osWrk.Printf( "HDF4_SDS:UNKNOWN:\"%s\":%d",
@@ -2595,7 +2611,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         else if( eProduct == PROD_MODIS_L1B
                  || eProduct == PROD_MODIS_L2 )
         {
-            pszGCPProjection = CPLStrdup( SRS_WKT_WGS84 );
+            pszGCPProjection = CPLStrdup( SRS_WKT_WGS84_LAT_LONG );
         }
 
 /* -------------------------------------------------------------------- */

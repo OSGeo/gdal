@@ -55,34 +55,36 @@ CPL_CVSID("$Id$")
 /*                       OGRVRTGetGeometryType()                        */
 /************************************************************************/
 
-typedef struct
-{
-    OGRwkbGeometryType  eType;
-    const char          *pszName;
-} OGRGeomTypeName;
+#define STRINGIFY(x)  x, #x
 
-// 25D versions are implicit.
-static const OGRGeomTypeName asGeomTypeNames[] = {
-    { wkbUnknown, "wkbUnknown" },
-    { wkbPoint, "wkbPoint" },
-    { wkbLineString, "wkbLineString" },
-    { wkbPolygon, "wkbPolygon" },
-    { wkbMultiPoint, "wkbMultiPoint" },
-    { wkbMultiLineString, "wkbMultiLineString" },
-    { wkbMultiPolygon, "wkbMultiPolygon" },
-    { wkbGeometryCollection, "wkbGeometryCollection" },
-    { wkbCircularString, "wkbCircularString" },
-    { wkbCompoundCurve, "wkbCompoundCurve" },
-    { wkbCurvePolygon, "wkbCurvePolygon" },
-    { wkbMultiCurve, "wkbMultiCurve" },
-    { wkbMultiSurface, "wkbMultiSurface" },
-    { wkbCurve, "wkbCurve" },
-    { wkbSurface, "wkbSurface" },
-    { wkbPolyhedralSurface, "wkbPolyhedralSurface" },
-    { wkbTIN, "wkbTIN" },
-    { wkbTriangle, "wkbTriangle" },
-    { wkbNone, "wkbNone" },
-    { wkbNone, nullptr }
+static const struct {
+    OGRwkbGeometryType eType;
+    const char        *pszName;
+    bool               bIsoFlags;
+} asGeomTypeNames[] = {
+    { STRINGIFY(wkbUnknown), false },
+
+    { STRINGIFY(wkbPoint), false },
+    { STRINGIFY(wkbLineString), false },
+    { STRINGIFY(wkbPolygon), false },
+    { STRINGIFY(wkbMultiPoint), false },
+    { STRINGIFY(wkbMultiLineString), false },
+    { STRINGIFY(wkbMultiPolygon), false },
+    { STRINGIFY(wkbGeometryCollection), false },
+
+    { STRINGIFY(wkbCircularString), true },
+    { STRINGIFY(wkbCompoundCurve), true },
+    { STRINGIFY(wkbCurvePolygon), true },
+    { STRINGIFY(wkbMultiCurve), true },
+    { STRINGIFY(wkbMultiSurface), true },
+    { STRINGIFY(wkbCurve), true },
+    { STRINGIFY(wkbSurface), true },
+    { STRINGIFY(wkbPolyhedralSurface), true },
+    { STRINGIFY(wkbTIN), true },
+    { STRINGIFY(wkbTriangle), true },
+
+    { STRINGIFY(wkbNone), false },
+    { STRINGIFY(wkbLinearRing), false },
 };
 
 OGRwkbGeometryType OGRVRTGetGeometryType( const char *pszGType, int *pbError )
@@ -90,15 +92,12 @@ OGRwkbGeometryType OGRVRTGetGeometryType( const char *pszGType, int *pbError )
     if( pbError )
         *pbError = FALSE;
 
-    OGRwkbGeometryType eGeomType = wkbUnknown;
-    int iType = 0;  // Used after for.
-
-    for( ; asGeomTypeNames[iType].pszName != nullptr; iType++ )
+    for( const auto& entry: asGeomTypeNames )
     {
-        if( EQUALN(pszGType, asGeomTypeNames[iType].pszName,
-                   strlen(asGeomTypeNames[iType].pszName)) )
+        if( EQUALN(pszGType, entry.pszName,
+                   strlen(entry.pszName)) )
         {
-            eGeomType = asGeomTypeNames[iType].eType;
+            OGRwkbGeometryType eGeomType = entry.eType;
 
             if( strstr(pszGType, "25D") != nullptr ||
                 strstr(pszGType, "Z") != nullptr )
@@ -106,17 +105,45 @@ OGRwkbGeometryType OGRVRTGetGeometryType( const char *pszGType, int *pbError )
             if( pszGType[strlen(pszGType) - 1] == 'M' ||
                 pszGType[strlen(pszGType) - 2] == 'M' )
                 eGeomType = wkbSetM(eGeomType);
-            break;
+            return eGeomType;
         }
     }
 
-    if( asGeomTypeNames[iType].pszName == nullptr )
-    {
-        if( pbError )
-            *pbError = TRUE;
-    }
+    if( pbError )
+        *pbError = TRUE;
+    return wkbUnknown;
+}
 
-    return eGeomType;
+/************************************************************************/
+/*                     OGRVRTGetSerializedGeometryType()                */
+/************************************************************************/
+
+CPLString OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType)
+{
+    for( const auto& entry: asGeomTypeNames )
+    {
+        if( entry.eType == wkbFlatten(eGeomType) )
+        {
+            CPLString osRet(entry.pszName);
+            if( entry.bIsoFlags || OGR_GT_HasM(eGeomType) )
+            {
+                if( OGR_GT_HasZ(eGeomType) )
+                {
+                    osRet += "Z";
+                }
+                if( OGR_GT_HasM(eGeomType) )
+                {
+                    osRet += "M";
+                }
+            }
+            else if(OGR_GT_HasZ(eGeomType) )
+            {
+                osRet += "25D";
+            }
+            return osRet;
+        }
+    }
+    return CPLString();
 }
 
 /************************************************************************/
@@ -250,6 +277,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(
     else
     {
         poSrcSRS = new OGRSpatialReference();
+        poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSrcSRS->SetFromUserInput(pszSourceSRS) != OGRERR_NONE )
         {
             delete poSrcSRS;
@@ -265,6 +293,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(
     }
 
     OGRSpatialReference *poTargetSRS = new OGRSpatialReference();
+    poTargetSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( poTargetSRS->SetFromUserInput(pszTargetSRS) != OGRERR_NONE )
     {
         delete poTargetSRS;

@@ -66,8 +66,14 @@ class BTDataset final: public GDALPamDataset
     BTDataset();
     ~BTDataset() override;
 
-    const char *GetProjectionRef(void) override;
-    CPLErr SetProjection( const char * ) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr _SetProjection( const char * ) override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
 
@@ -475,7 +481,7 @@ CPLErr BTDataset::SetGeoTransform( double *padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *BTDataset::GetProjectionRef()
+const char *BTDataset::_GetProjectionRef()
 
 {
     if( pszProjection == nullptr )
@@ -488,7 +494,7 @@ const char *BTDataset::GetProjectionRef()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr BTDataset::SetProjection( const char *pszNewProjection )
+CPLErr BTDataset::_SetProjection( const char *pszNewProjection )
 
 {
     CPLErr eErr = CE_None;

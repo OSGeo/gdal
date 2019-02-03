@@ -116,6 +116,8 @@ OGRCoordinateTransformation* OGRSQLiteExtensionData::GetTransform(int nSrcSRSId,
     {
         OGRCoordinateTransformation* poCT = nullptr;
         OGRSpatialReference oSrcSRS, oDstSRS;
+        oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (oSrcSRS.importFromEPSG(nSrcSRSId) == OGRERR_NONE &&
             oDstSRS.importFromEPSG(nDstSRSId) == OGRERR_NONE )
         {

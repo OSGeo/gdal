@@ -89,14 +89,14 @@ class GDALDatasetPamInfo
 public:
     char        *pszPamFilename = nullptr;
 
-    char        *pszProjection = nullptr;
+    OGRSpatialReference* poSRS = nullptr;
 
     int         bHaveGeoTransform = false;
     double      adfGeoTransform[6]{0,0,0,0,0,0};
 
     int         nGCPCount = 0;
     GDAL_GCP   *pasGCPList = nullptr;
-    char       *pszGCPProjection = nullptr;
+    OGRSpatialReference* poGCP_SRS = nullptr;
 
     CPLString   osPhysicalFilename{};
     CPLString   osSubdatasetName{};
@@ -125,6 +125,12 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     int         nPamFlags = 0;
     GDALDatasetPamInfo *psPam = nullptr;
 
+    virtual const char *_GetProjectionRef() override;
+    virtual const char *_GetGCPProjection() override;
+    virtual CPLErr _SetProjection( const char * pszProjection ) override;
+    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection ) override;
+
     virtual CPLXMLNode *SerializeToXML( const char *);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
 
@@ -150,17 +156,18 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     void FlushCache(void) override;
 
-    const char *GetProjectionRef(void) override;
-    CPLErr SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
 
     int GetGCPCount() override;
-    const char *GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
+    using GDALDataset::SetGCPs;
     CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const char *pszGCPProjection ) override;
+                    const OGRSpatialReference* poSRS ) override;
 
     CPLErr SetMetadata( char ** papszMetadata,
                         const char * pszDomain = "" ) override;

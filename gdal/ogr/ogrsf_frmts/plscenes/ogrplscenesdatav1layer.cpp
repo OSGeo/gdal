@@ -51,7 +51,7 @@ OGRPLScenesDataV1Layer::OGRPLScenesDataV1Layer( OGRPLScenesDataV1Dataset* poDS,
                                                 const char* pszName ) :
     m_poDS(poDS),
     m_bFeatureDefnEstablished(false),
-    m_poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    m_poSRS(new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG)),
     m_nTotalFeatures(-1),
     m_nNextFID(1),
     m_bEOF(false),
@@ -64,6 +64,8 @@ OGRPLScenesDataV1Layer::OGRPLScenesDataV1Layer( OGRPLScenesDataV1Dataset* poDS,
     m_poAttributeFilter(nullptr),
     m_bFilterMustBeClientSideEvaluated(false)
 {
+    m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
     m_poFeatureDefn = new OGRPLScenesDataV1FeatureDefn(this, pszName);
 

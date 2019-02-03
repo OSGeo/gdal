@@ -81,7 +81,10 @@ class SRPDataset : public GDALPamDataset
     SRPDataset();
     ~SRPDataset() override;
 
-    const char *GetProjectionRef(void) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     CPLErr GetGeoTransform( double * padfGeoTransform ) override;
 
     char **GetMetadata( const char * pszDomain = "" ) override;
@@ -387,7 +390,7 @@ CPLString SRPDataset::ResetTo01( const char* str )
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 
-const char* SRPDataset::GetProjectionRef()
+const char* SRPDataset::_GetProjectionRef()
 {
     return osSRS;
 }
@@ -794,7 +797,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
 /* -------------------------------------------------------------------- */
     if( EQUAL(osProduct,"ASRP") )
     {
-        osSRS = SRS_WKT_WGS84;
+        osSRS = SRS_WKT_WGS84_LAT_LONG;
 
         if( ZNA == 9 )
         {
@@ -806,7 +809,8 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 "PARAMETER[\"latitude_of_center\",90],"
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
-                "PARAMETER[\"false_northing\",0]]";
+                "PARAMETER[\"false_northing\",0],"
+                "UNIT[\"metre\",1]]";
         }
 
         if (ZNA == 18)
@@ -819,7 +823,8 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 "PARAMETER[\"latitude_of_center\",-90],"
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
-                "PARAMETER[\"false_northing\",0]]";
+                "PARAMETER[\"false_northing\",0],"
+                "UNIT[\"metre\",1]]";
         }
     }
     else

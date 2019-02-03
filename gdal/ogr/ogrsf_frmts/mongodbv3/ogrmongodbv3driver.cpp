@@ -448,7 +448,8 @@ void OGRMongoDBv3Layer::AddOrUpdateField(const char* pszAttrName,
                 {
                     OGRGeomFieldDefn fldDefn( pszAttrName, eGeomType );
                     OGRSpatialReference* poSRS = new OGRSpatialReference();
-                    poSRS->SetFromUserInput(SRS_WKT_WGS84);
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
                     fldDefn.SetSpatialRef(poSRS);
                     poSRS->Release();
                     m_poFeatureDefn->AddGeomFieldDefn( &fldDefn );
@@ -500,7 +501,8 @@ void OGRMongoDBv3Layer::AddOrUpdateField(const char* pszAttrName,
         {
             OGRGeomFieldDefn fldDefn( pszAttrName, wkbPoint );
             OGRSpatialReference* poSRS = new OGRSpatialReference();
-            poSRS->SetFromUserInput(SRS_WKT_WGS84);
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
             fldDefn.SetSpatialRef(poSRS);
             poSRS->Release();
             m_poFeatureDefn->AddGeomFieldDefn( &fldDefn );
@@ -693,7 +695,8 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapInd
                             OGRwkbGeometryType eType(OGRFromOGCGeomType(std::string(type.get_utf8().value).c_str()));
                             OGRGeomFieldDefn oFieldDefn(std::string(name.get_utf8().value).c_str(), eType);
                             OGRSpatialReference* poSRS = new OGRSpatialReference();
-                            poSRS->SetFromUserInput(SRS_WKT_WGS84);
+                            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
                             oFieldDefn.SetSpatialRef(poSRS);
                             poSRS->Release();
                             m_poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
@@ -1420,7 +1423,8 @@ OGRErr OGRMongoDBv3Layer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, int )
     if( oFieldDefn.GetSpatialRef() != nullptr )
     {
         OGRSpatialReference oSRS_WGS84;
-        oSRS_WGS84.SetFromUserInput(SRS_WKT_WGS84);
+        oSRS_WGS84.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( !oSRS_WGS84.IsSame(oFieldDefn.GetSpatialRef()) )
         {
             poCT.reset(OGRCreateCoordinateTransformation( oFieldDefn.GetSpatialRef(), &oSRS_WGS84 ));

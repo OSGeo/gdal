@@ -72,7 +72,7 @@ def test_ogr_gml_fgd_1():
     # check the SRS
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(6668)   # JGD2011
-    assert sr.IsSame(lyr.GetSpatialRef()), 'Wrong SRS'
+    assert sr.IsSame(lyr.GetSpatialRef(), options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), 'Wrong SRS'
 
     # check the first feature
     feat = lyr.GetNextFeature()
@@ -100,7 +100,7 @@ def test_ogr_gml_fgd_2():
     # check the SRS
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(6668)   # JGD2011
-    assert sr.IsSame(lyr.GetSpatialRef()), 'Wrong SRS'
+    assert sr.IsSame(lyr.GetSpatialRef(), options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), 'Wrong SRS'
 
     wkt = 'POLYGON ((139.718509733734 35.6952171397133,139.718444177734 35.6953121947133,139.718496754142 35.6953498949667,139.718550483734 35.6952359447133,139.718509733734 35.6952171397133))'
 

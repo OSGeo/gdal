@@ -91,8 +91,8 @@ except AttributeError:
 
 
 
-_osr.SRS_WKT_WGS84_swigconstant(_osr)
-SRS_WKT_WGS84 = _osr.SRS_WKT_WGS84
+_osr.SRS_WKT_WGS84_LAT_LONG_swigconstant(_osr)
+SRS_WKT_WGS84_LAT_LONG = _osr.SRS_WKT_WGS84_LAT_LONG
 
 _osr.SRS_PT_ALBERS_CONIC_EQUAL_AREA_swigconstant(_osr)
 SRS_PT_ALBERS_CONIC_EQUAL_AREA = _osr.SRS_PT_ALBERS_CONIC_EQUAL_AREA
@@ -610,6 +610,15 @@ OAO_Up = _osr.OAO_Up
 _osr.OAO_Down_swigconstant(_osr)
 OAO_Down = _osr.OAO_Down
 
+_osr.OAMS_TRADITIONAL_GIS_ORDER_swigconstant(_osr)
+OAMS_TRADITIONAL_GIS_ORDER = _osr.OAMS_TRADITIONAL_GIS_ORDER
+
+_osr.OAMS_AUTHORITY_COMPLIANT_swigconstant(_osr)
+OAMS_AUTHORITY_COMPLIANT = _osr.OAMS_AUTHORITY_COMPLIANT
+
+_osr.OAMS_CUSTOM_swigconstant(_osr)
+OAMS_CUSTOM = _osr.OAMS_CUSTOM
+
 def GetUseExceptions(*args):
     """GetUseExceptions() -> int"""
     return _osr.GetUseExceptions(*args)
@@ -653,9 +662,14 @@ class SpatialReference(_object):
         return _osr.SpatialReference___str__(self, *args)
 
 
-    def IsSame(self, *args):
-        """IsSame(SpatialReference self, SpatialReference rhs) -> int"""
-        return _osr.SpatialReference_IsSame(self, *args)
+    def GetName(self, *args):
+        """GetName(SpatialReference self) -> char const *"""
+        return _osr.SpatialReference_GetName(self, *args)
+
+
+    def IsSame(self, *args, **kwargs):
+        """IsSame(SpatialReference self, SpatialReference rhs, char ** options=None) -> int"""
+        return _osr.SpatialReference_IsSame(self, *args, **kwargs)
 
 
     def IsSameGeogCS(self, *args):
@@ -786,6 +800,21 @@ class SpatialReference(_object):
     def GetAxisOrientation(self, *args):
         """GetAxisOrientation(SpatialReference self, char const * target_key, int iAxis) -> OGRAxisOrientation"""
         return _osr.SpatialReference_GetAxisOrientation(self, *args)
+
+
+    def GetAxisMappingStrategy(self, *args):
+        """GetAxisMappingStrategy(SpatialReference self) -> OSRAxisMappingStrategy"""
+        return _osr.SpatialReference_GetAxisMappingStrategy(self, *args)
+
+
+    def SetAxisMappingStrategy(self, *args):
+        """SetAxisMappingStrategy(SpatialReference self, OSRAxisMappingStrategy strategy)"""
+        return _osr.SpatialReference_SetAxisMappingStrategy(self, *args)
+
+
+    def GetDataAxisToSRSAxisMapping(self, *args):
+        """GetDataAxisToSRSAxisMapping(SpatialReference self)"""
+        return _osr.SpatialReference_GetDataAxisToSRSAxisMapping(self, *args)
 
 
     def SetUTM(self, *args):
@@ -1174,7 +1203,7 @@ class SpatialReference(_object):
 
 
     def ExportToWkt(self, *args):
-        """ExportToWkt(SpatialReference self) -> OGRErr"""
+        """ExportToWkt(SpatialReference self, char ** options=None) -> OGRErr"""
         return _osr.SpatialReference_ExportToWkt(self, *args)
 
 
@@ -1223,21 +1252,6 @@ class SpatialReference(_object):
         return _osr.SpatialReference_Validate(self, *args)
 
 
-    def StripCTParms(self, *args):
-        """StripCTParms(SpatialReference self) -> OGRErr"""
-        return _osr.SpatialReference_StripCTParms(self, *args)
-
-
-    def FixupOrdering(self, *args):
-        """FixupOrdering(SpatialReference self) -> OGRErr"""
-        return _osr.SpatialReference_FixupOrdering(self, *args)
-
-
-    def Fixup(self, *args):
-        """Fixup(SpatialReference self) -> OGRErr"""
-        return _osr.SpatialReference_Fixup(self, *args)
-
-
     def MorphToESRI(self, *args):
         """MorphToESRI(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_MorphToESRI(self, *args)
@@ -1254,7 +1268,37 @@ class SpatialReference(_object):
 
 SpatialReference_swigregister = _osr.SpatialReference_swigregister
 SpatialReference_swigregister(SpatialReference)
-GetProjectionMethods = _osr.GetProjectionMethods
+
+class CoordinateTransformationOptions(_object):
+    """Proxy of C++ OGRCoordinateTransformationOptions class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, CoordinateTransformationOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, CoordinateTransformationOptions, name)
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        """__init__(OGRCoordinateTransformationOptions self) -> CoordinateTransformationOptions"""
+        this = _osr.new_CoordinateTransformationOptions(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+    __swig_destroy__ = _osr.delete_CoordinateTransformationOptions
+    __del__ = lambda self: None
+
+    def SetAreaOfInterest(self, *args):
+        """SetAreaOfInterest(CoordinateTransformationOptions self, double westLongitudeDeg, double southLatitudeDeg, double eastLongitudeDeg, double northLatitudeDeg) -> bool"""
+        return _osr.CoordinateTransformationOptions_SetAreaOfInterest(self, *args)
+
+
+    def SetOperation(self, *args):
+        """SetOperation(CoordinateTransformationOptions self, char const * operation) -> bool"""
+        return _osr.CoordinateTransformationOptions_SetOperation(self, *args)
+
+CoordinateTransformationOptions_swigregister = _osr.CoordinateTransformationOptions_swigregister
+CoordinateTransformationOptions_swigregister(CoordinateTransformationOptions)
 
 class CoordinateTransformation(_object):
     """Proxy of C++ OSRCoordinateTransformationShadow class."""
@@ -1266,7 +1310,10 @@ class CoordinateTransformation(_object):
     __repr__ = _swig_repr
 
     def __init__(self, *args):
-        """__init__(OSRCoordinateTransformationShadow self, SpatialReference src, SpatialReference dst) -> CoordinateTransformation"""
+        """
+        __init__(OSRCoordinateTransformationShadow self, SpatialReference src, SpatialReference dst) -> CoordinateTransformation
+        __init__(OSRCoordinateTransformationShadow self, SpatialReference src, SpatialReference dst, CoordinateTransformationOptions options) -> CoordinateTransformation
+        """
         this = _osr.new_CoordinateTransformation(*args)
         try:
             self.this.append(this)
@@ -1278,7 +1325,9 @@ class CoordinateTransformation(_object):
     def TransformPoint(self, *args):
         """
         TransformPoint(CoordinateTransformation self, double [3] inout)
+        TransformPoint(CoordinateTransformation self, double [4] inout)
         TransformPoint(CoordinateTransformation self, double x, double y, double z=0.0)
+        TransformPoint(CoordinateTransformation self, double x, double y, double z, double t)
         """
         return _osr.CoordinateTransformation_TransformPoint(self, *args)
 
@@ -1292,7 +1341,7 @@ CoordinateTransformation_swigregister(CoordinateTransformation)
 
 
 def CreateCoordinateTransformation(*args):
-    """CreateCoordinateTransformation(SpatialReference src, SpatialReference dst) -> CoordinateTransformation"""
+    """CreateCoordinateTransformation(SpatialReference src, SpatialReference dst, CoordinateTransformationOptions options=None) -> CoordinateTransformation"""
     return _osr.CreateCoordinateTransformation(*args)
 # This file is compatible with both classic and new-style classes.
 

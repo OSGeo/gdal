@@ -52,7 +52,6 @@
 #include <vector>
 
 #include "cpl_conv.h"
-#include "cpl_csv.h"
 #include "cpl_error.h"
 #include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
@@ -67,6 +66,9 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 #include "sqlite3.h"
+
+#include "proj.h"
+#include "ogr_proj_p.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -1098,30 +1100,18 @@ int OGRSQLiteDataSource::InitWithEPSG()
     if( SoftStartTransaction() != OGRERR_NONE )
         return FALSE;
 
+    OGRSpatialReference oSRS;
     int rc = SQLITE_OK;
     for( int i = 0; i < 2 && rc == SQLITE_OK; i++ )
     {
-        const char* pszFilename = (i == 0) ? "gcs.csv" : "pcs.csv";
-        FILE *fp = VSIFOpen(CSVFilename(pszFilename), "rt");
-        if( fp == nullptr )
+        PROJ_STRING_LIST crsCodeList =
+            proj_get_codes_from_database(
+                OSRGetProjTLSContext(), "EPSG",
+                i == 0 ? PJ_TYPE_GEOGRAPHIC_2D_CRS : PJ_TYPE_PROJECTED_CRS,
+                true);
+        for( auto iterCode = crsCodeList; iterCode && *iterCode; ++iterCode )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                "Unable to open EPSG support file %s.\n"
-                "Try setting the GDAL_DATA environment variable to point to the\n"
-                "directory containing EPSG csv files.",
-                pszFilename );
-
-            continue;
-        }
-
-        OGRSpatialReference oSRS;
-        CSLDestroy(CSVReadParseLine( fp ));
-
-        char **papszTokens = nullptr;
-        while ( (papszTokens = CSVReadParseLine( fp )) != nullptr && rc == SQLITE_OK)
-        {
-            int nSRSId = atoi(papszTokens[0]);
-            CSLDestroy(papszTokens);
+            int nSRSId = atoi(*iterCode);
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
             oSRS.importFromEPSG(nSRSId);
@@ -1133,14 +1123,16 @@ int OGRSQLiteDataSource::InitWithEPSG()
 
                 CPLPushErrorHandler(CPLQuietErrorHandler);
                 OGRErr eErr = oSRS.exportToProj4( &pszProj4 );
-                CPLPopErrorHandler();
 
                 char    *pszWKT = nullptr;
-                if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
+                if( eErr == OGRERR_NONE &&
+                    oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
                 {
                     CPLFree(pszWKT);
                     pszWKT = nullptr;
+                    eErr = OGRERR_FAILURE;
                 }
+                CPLPopErrorHandler();
 
                 if( eErr == OGRERR_NONE )
                 {
@@ -1236,7 +1228,10 @@ int OGRSQLiteDataSource::InitWithEPSG()
             else
             {
                 char    *pszWKT = nullptr;
-                if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                bool bSuccess = ( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE );
+                CPLPopErrorHandler();
+                if( bSuccess )
                 {
                     osCommand.Printf(
                         "INSERT INTO spatial_ref_sys "
@@ -1272,7 +1267,8 @@ int OGRSQLiteDataSource::InitWithEPSG()
                 CPLFree(pszWKT);
             }
         }
-        VSIFClose(fp);
+
+        proj_string_list_destroy(crsCodeList);
     }
 
     if( rc == SQLITE_OK )
@@ -2693,8 +2689,16 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     OGRSQLiteTableLayer *poLayer = new OGRSQLiteTableLayer( this );
 
     poLayer->Initialize( pszLayerName, FALSE, TRUE ) ;
+    OGRSpatialReference* poSRSClone = poSRS;
+    if( poSRSClone )
+    {
+        poSRSClone = poSRSClone->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     poLayer->SetCreationParameters( osFIDColumnName, eType, pszGeomFormat,
-                                    osGeometryName, poSRS, nSRSId );
+                                    osGeometryName, poSRSClone, nSRSId );
+    if( poSRSClone )
+        poSRSClone->Release();
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -3127,7 +3131,7 @@ void OGRSQLiteDataSource::AddSRIDToCache(int nId, OGRSpatialReference * poSRS )
 /*      it to the table.                                                */
 /************************************************************************/
 
-int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
+int OGRSQLiteDataSource::FetchSRSId( const OGRSpatialReference * poSRS )
 
 {
     int nSRSId = nUndefinedSRID;
@@ -3250,7 +3254,11 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                 sqlite3_free_table(papszResult);
 
                 if( nSRSId != nUndefinedSRID)
-                    AddSRIDToCache(nSRSId, new OGRSpatialReference(oSRS));
+                {
+                    auto poCachedSRS = new OGRSpatialReference(oSRS);
+                    poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    AddSRIDToCache(nSRSId, poCachedSRS);
+                }
 
                 return nSRSId;
             }
@@ -3558,7 +3566,11 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     sqlite3_finalize( hInsertStmt );
 
     if( nSRSId != nUndefinedSRID)
-        AddSRIDToCache(nSRSId, new OGRSpatialReference(oSRS));
+    {
+        auto poCachedSRS = new OGRSpatialReference(oSRS);
+        poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        AddSRIDToCache(nSRSId, poCachedSRS);
+    }
 
     return nSRSId;
 }
@@ -3621,6 +3633,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 /*      Translate into a spatial reference.                             */
 /* -------------------------------------------------------------------- */
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( poSRS->importFromWkt( osWKT.c_str() ) != OGRERR_NONE )
             {
                 delete poSRS;
@@ -3672,6 +3685,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
             const char* pszWKT = (pszSRTEXTColName != nullptr) ? papszRow[3] : nullptr;
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             /* Try first from EPSG code */
             if (pszAuthName != nullptr &&

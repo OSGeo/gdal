@@ -113,6 +113,7 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
                   char **papszPRJ = AVCBinReadNextPrj( hFile );
 
                   poSRS = new OGRSpatialReference();
+                  poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                   if( poSRS->importFromESRI( papszPRJ ) != OGRERR_NONE )
                   {
                       CPLError( CE_Warning, CPLE_AppDefined,

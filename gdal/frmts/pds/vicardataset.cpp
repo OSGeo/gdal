@@ -70,7 +70,10 @@ public:
     virtual ~VICARDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
+    virtual const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     virtual char **GetFileList() override;
 
@@ -129,13 +132,13 @@ char **VICARDataset::GetFileList()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *VICARDataset::GetProjectionRef()
+const char *VICARDataset::_GetProjectionRef()
 
 {
     if( !osProjection.empty() )
         return osProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/

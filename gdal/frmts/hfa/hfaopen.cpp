@@ -1202,6 +1202,9 @@ char *HFAGetPEString( HFAHandle hHFA )
 CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 
 {
+    if( !CPLTestBool(CPLGetConfigOption("HFA_WRITE_PE_STRING", "YES")) )
+        return CE_None;
+
     // Loop over bands, setting information on each one.
     for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {

@@ -1364,19 +1364,12 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                     if (oSRS.SetFromUserInput(pszDefaultSRS) == OGRERR_NONE)
                     {
                         poSRS = oSRS.Clone();
-                        if( bInvertAxisOrderIfLatLong &&
-                            GML_IsSRSLatLongOrder(pszDefaultSRS) )
+                        poSRS->SetAxisMappingStrategy(
+                            bInvertAxisOrderIfLatLong ? OAMS_TRADITIONAL_GIS_ORDER : OAMS_AUTHORITY_COMPLIANT);
+                        if( GML_IsSRSLatLongOrder(pszDefaultSRS) &&
+                            bInvertAxisOrderIfLatLong )
                         {
                             bAxisOrderAlreadyInverted = true;
-
-                            OGR_SRSNode *poGEOGCS =
-                                            poSRS->GetAttrNode( "GEOGCS" );
-                            if( poGEOGCS != nullptr )
-                                poGEOGCS->StripNodes( "AXIS" );
-
-                            OGR_SRSNode *poPROJCS = poSRS->GetAttrNode( "PROJCS" );
-                            if (poPROJCS != nullptr && poSRS->EPSGTreatsAsNorthingEasting())
-                                poPROJCS->StripNodes( "AXIS" );
                         }
                     }
                 }
@@ -1498,8 +1491,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                                     "FALSE")));
 
                         if (((bTrustBounds || (dfMinX == -180 && dfMinY == -90 && dfMaxX == 180 && dfMaxY == 90)) &&
-                            (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0 ||
-                             strcmp(pszProj4, "+proj=longlat +datum=WGS84 +no_defs ") == 0)) ||
+                            strcmp(pszProj4, "+proj=longlat +datum=WGS84 +no_defs") == 0) ||
                             strcmp(pszDefaultSRS, "urn:ogc:def:crs:OGC:1.3:CRS84") == 0)
                         {
                             poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
@@ -1509,6 +1501,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                         {
                             OGRSpatialReference oWGS84;
                             oWGS84.SetWellKnownGeogCS("WGS84");
+                            oWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                             CPLPushErrorHandler(CPLQuietErrorHandler);
                             OGRCoordinateTransformation* poCT =
                                 OGRCreateCoordinateTransformation(&oWGS84,

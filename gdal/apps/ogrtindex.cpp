@@ -226,6 +226,7 @@ MAIN_START(nArgc, papszArgv)
                     "when -t_srs is requested.\n");
         }
         poTargetSRS = new OGRSpatialReference();
+        poTargetSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         // coverity[tainted_data]
         if( poTargetSRS->SetFromUserInput( pszTargetSRS ) != CE_None )
         {

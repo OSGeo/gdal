@@ -706,8 +706,11 @@ bool GetExtent(const std::string &osUrl, const std::string &osResourceId,
     adfCoordinatesX[3] = dfMaxX;
     adfCoordinatesY[3] = dfMinY;
 
-    OGRSpatialReference *po4326SRS = OGRSpatialReference::GetWGS84SRS();
+    OGRSpatialReference o4326SRS;
+    o4326SRS.SetWellKnownGeogCS( "WGS84" );
+    o4326SRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRSpatialReference o3857SRS;
+    o3857SRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( o3857SRS.importFromEPSG(nEPSG) != OGRERR_NONE )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Project extent SRS to EPSG:3857 failed");
@@ -715,7 +718,7 @@ bool GetExtent(const std::string &osUrl, const std::string &osResourceId,
     }
 
     OGRCoordinateTransformation *poTransform =
-        OGRCreateCoordinateTransformation( po4326SRS, &o3857SRS );
+        OGRCreateCoordinateTransformation( &o4326SRS, &o3857SRS );
     if( poTransform )
     {
         poTransform->Transform( 4, adfCoordinatesX, adfCoordinatesY );

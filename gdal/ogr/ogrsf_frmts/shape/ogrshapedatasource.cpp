@@ -777,7 +777,6 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         CPLString osPrjFile =
             CPLFormFilename( nullptr, pszFilenameWithoutExt, "prj");
 
-        // The shape layer needs its own copy.
         poSRS = poSRS->Clone();
         poSRS->morphToESRI();
 
@@ -807,6 +806,10 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
     OGRShapeLayer *poLayer =
         new OGRShapeLayer( this, pszFilename, hSHP, hDBF, poSRS,
                            true, true, eType );
+    if( poSRS != nullptr )
+    {
+        poSRS->Release();
+    }
 
     CPLFree( pszFilenameWithoutExt );
     CPLFree( pszFilename );

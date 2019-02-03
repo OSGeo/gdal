@@ -483,6 +483,7 @@ OGRNGWLayer::OGRNGWLayer( OGRNGWDataset *poDSIn,
         oResourceJsonObject.GetString("vector_layer/geometry_type")) );
 
     OGRSpatialReference *poSRS = new OGRSpatialReference;
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     int nEPSG = oResourceJsonObject.GetInteger("vector_layer/srs/id", 3857); // Default NGW SRS is Web mercator EPSG:3857.
     if( poSRS->importFromEPSG( nEPSG ) == OGRERR_NONE )
     {

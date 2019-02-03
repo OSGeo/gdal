@@ -15,6 +15,7 @@
 #include "geo_tiffp.h" /* external TIFF interface */
 #include "geo_keyp.h"  /* private interface       */
 
+#include "proj.h"
 
 /**********************************************************************
  *
@@ -57,6 +58,11 @@ void GTIFFree(GTIF* gtif)
         _GTIFFree (gtif->gt_keys);
     }
     if (gtif->gt_keyindex) _GTIFFree (gtif->gt_keyindex);
+
+    if (gtif->own_pj_context)
+    {
+        proj_context_destroy(gtif->pj_context);
+    }
 
     _GTIFFree (gtif);
 }

@@ -2188,6 +2188,8 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
     {
         const char *pszWKT = PQgetvalue(hResult,0,0);
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
         if( poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
         {
             delete poSRS;

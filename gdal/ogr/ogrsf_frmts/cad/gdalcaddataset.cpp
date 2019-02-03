@@ -366,6 +366,8 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
     {
         CPLString sESRISpatRef;
         poSpatialReference = new OGRSpatialReference();
+        poSpatialReference->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
         CADDictionary oNOD = poCADFile->GetNOD();
         CPLString sESRISpatRefData = oNOD.getRecordByName("ESRI_PRJ");
         if( !sESRISpatRefData.empty() )
@@ -433,7 +435,7 @@ const char* GDALCADDataset::GetPrjFilePath()
     return "";
 }
 
-const char *GDALCADDataset::GetProjectionRef(void)
+const char *GDALCADDataset::_GetProjectionRef(void)
 {
     return soWKT;
 }
@@ -451,11 +453,11 @@ int GDALCADDataset::GetGCPCount()
     return poRasterDS->GetGCPCount();
 }
 
-const char *GDALCADDataset::GetGCPProjection()
+const OGRSpatialReference *GDALCADDataset::GetGCPSpatialRef() const
 {
     if( nullptr == poRasterDS )
-        return "";
-    return poRasterDS->GetGCPProjection();
+        return nullptr;
+    return poRasterDS->GetGCPSpatialRef();
 }
 
 const GDAL_GCP *GDALCADDataset::GetGCPs()

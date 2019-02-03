@@ -1586,6 +1586,7 @@ OGRSpatialReference *OGRDB2DataSource::FetchSRS( int nId )
             if ( oStatement.GetColData( 0 ) )
             {
                 poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 char* pszWKT = (char*)oStatement.GetColData( 0 );
                 CPLDebug("OGR_DB2DataSource::FetchSRS", "SRS = %s", pszWKT);
                 if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
@@ -1603,6 +1604,7 @@ OGRSpatialReference *OGRDB2DataSource::FetchSRS( int nId )
     if (!poSRS)
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromEPSG( nId ) != OGRERR_NONE )
         {
             delete poSRS;
@@ -2831,7 +2833,7 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
 /*                         GetProjectionRef()                           */
 /************************************************************************/
 
-const char* OGRDB2DataSource::GetProjectionRef()
+const char* OGRDB2DataSource::_GetProjectionRef()
 {
     return (m_pszProjection) ? m_pszProjection : "";
 }
@@ -2840,7 +2842,7 @@ const char* OGRDB2DataSource::GetProjectionRef()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr OGRDB2DataSource::SetProjection( const char* pszProjection )
+CPLErr OGRDB2DataSource::_SetProjection( const char* pszProjection )
 {
     CPLDebug("OGRDB2DataSource::SetProjection",
             "pszProjection: '%s'", pszProjection);

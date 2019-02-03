@@ -307,19 +307,9 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
         {
             // epsg codes are supported in Cloudant
             const char * pszEpsg = nullptr;
-            const char * pszAuthName = nullptr;
-            if (poSpatialRef->IsProjected())
-            {
-                pszAuthName = poSpatialRef->GetAuthorityName("PROJCS");
-                if ((pszAuthName != nullptr) && (STARTS_WITH(pszAuthName, "EPSG")))
-                    pszEpsg = poSpatialRef->GetAuthorityCode("PROJCS");
-            }
-            else
-            {
-                pszAuthName = poSpatialRef->GetAuthorityName("GEOGCS");
-                if ((pszAuthName != nullptr) && (STARTS_WITH(pszAuthName, "EPSG")))
-                    pszEpsg = poSpatialRef->GetAuthorityCode("GEOGCS");
-            }
+            const char * pszAuthName = poSpatialRef->GetAuthorityName(nullptr);
+            if ((pszAuthName != nullptr) && (STARTS_WITH(pszAuthName, "EPSG")))
+                pszEpsg = poSpatialRef->GetAuthorityCode(nullptr);
 
             if (pszEpsg != nullptr)
             {

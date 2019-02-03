@@ -1999,7 +1999,7 @@ class GDALColorReliefDataset : public GDALDataset
         { return pafSourceBuf != nullptr || panSourceBuf != nullptr; }
 
     CPLErr      GetGeoTransform( double * padfGeoTransform ) override;
-    const char *GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -2081,9 +2081,9 @@ CPLErr GDALColorReliefDataset::GetGeoTransform( double * padfGeoTransform )
     return GDALGetGeoTransform(hSrcDS, padfGeoTransform);
 }
 
-const char *GDALColorReliefDataset::GetProjectionRef()
+const OGRSpatialReference *GDALColorReliefDataset::GetSpatialRef() const
 {
-    return GDALGetProjectionRef(hSrcDS);
+    return GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
 }
 
 GDALColorReliefRasterBand::GDALColorReliefRasterBand(
@@ -2701,7 +2701,7 @@ class GDALGeneric3x3Dataset : public GDALDataset
                                                 apafSourceBuf[2] != nullptr; }
 
     CPLErr      GetGeoTransform( double * padfGeoTransform ) override;
-    const char *GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -2778,9 +2778,9 @@ CPLErr GDALGeneric3x3Dataset<T>::GetGeoTransform( double * padfGeoTransform )
 }
 
 template<class T>
-const char *GDALGeneric3x3Dataset<T>::GetProjectionRef()
+const OGRSpatialReference* GDALGeneric3x3Dataset<T>::GetSpatialRef() const
 {
-    return GDALGetProjectionRef(hSrcDS);
+    return GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
 }
 
 template<class T>

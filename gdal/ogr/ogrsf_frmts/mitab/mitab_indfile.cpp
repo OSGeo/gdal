@@ -1045,7 +1045,7 @@ GInt32 TABINDNode::ReadIndexEntry(int nEntryNo, GByte *pKeyValue)
  * nEntryNo is the 0-based index of the index entry that we are interested
  * in inside the current node.
  **********************************************************************/
-int   TABINDNode::IndexKeyCmp(GByte *pKeyValue, int nEntryNo)
+int   TABINDNode::IndexKeyCmp(const GByte *pKeyValue, int nEntryNo)
 {
     CPLAssert(pKeyValue);
     CPLAssert(nEntryNo >= 0 && nEntryNo < m_numEntriesInNode);
@@ -1117,7 +1117,14 @@ int TABINDNode::SetFieldType(TABFieldType eType)
  *  - 0 if the key was not found
  *  - or -1 if an error happened
  **********************************************************************/
-GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
+GInt32 TABINDNode::FindFirst(const GByte *pKeyValue)
+{
+    std::set<int> oSetVisitedNodePtr;
+    return FindFirst(pKeyValue, oSetVisitedNodePtr);
+}
+
+GInt32 TABINDNode::FindFirst(const GByte *pKeyValue,
+                             std::set<int>& oSetVisitedNodePtr)
 {
     if (m_poDataBlock == nullptr)
     {
@@ -1255,6 +1262,13 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                         nRetValue = 0;
                         continue;
                     }
+                    else if( oSetVisitedNodePtr.find(nChildNodePtr) !=
+                                oSetVisitedNodePtr.end() )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Invalid child node pointer structure");
+                        return -1;
+                    }
                     else if( (nChildNodePtr % 512) != 0 )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1285,7 +1299,9 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                         return -1;
                     }
 
-                    nRetValue = m_poCurChildNode->FindFirst(pKeyValue);
+                    oSetVisitedNodePtr.insert(nChildNodePtr);
+                    nRetValue = m_poCurChildNode->FindFirst(pKeyValue,
+                                                            oSetVisitedNodePtr);
                 }/*for iChild*/
 
                 return nRetValue;

@@ -658,9 +658,6 @@ GDAL_VER
 GDAL_VERSION_REV
 GDAL_VERSION_MINOR
 GDAL_VERSION_MAJOR
-PROJ_VERSION
-PROJ_INCLUDE
-PROJ_STATIC
 PDFIUM_PLUGIN_LIB
 PDFIUM_INC
 HAVE_PDFIUM
@@ -839,6 +836,7 @@ HAVE_PG
 PG_CONFIG
 ZSTD_SETTING
 LIBLZMA_SETTING
+PROJ_INCLUDE
 LTLIBICONV
 LIBICONV
 LIBZ_SETTING
@@ -983,6 +981,7 @@ with_threads
 with_libz
 enable_rpath
 with_libiconv_prefix
+with_proj
 with_liblzma
 with_zstd
 with_pg
@@ -1070,9 +1069,6 @@ with_podofo_extra_lib_for_test
 with_pdfium
 with_pdfium_lib
 with_pdfium_extra_lib_for_test
-with_proj
-with_proj5_api
-with_static_proj4
 with_gdal_ver
 with_macosx_framework
 with_perl
@@ -1779,6 +1775,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
+  --with-proj=ARG Compile with PROJ.x (ARG=yes or path)
   --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
   --with-zstd=ARG       Include zstd support (ARG=yes/no/installation_prefix)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=path to
@@ -1875,9 +1872,6 @@ Optional Packages:
   --with-pdfium=ARG    Include pdfium (for PDF) support (ARG=no(default), yes or pdfium install path)
   --with-pdfium-lib=ARG   pdfium Link Flags (i.e. -L/xxx -lpdfium ...). Mainly for static libpdfium
   --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpdfium
-  --with-proj=ARG Compile with PROJ.x (ARG=no or path)
-  --with-proj5-api=ARG Allow using PROJ.5 new API  (ARG=no/yes, default to yes)
-  --with-static-proj4=ARG Compile with PROJ.4 statically (deprecated, use --with-proj instead) (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
   --with-perl           Enable perl bindings
@@ -23539,6 +23533,587 @@ _ACEOF
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PROJ >= 6 library" >&5
+$as_echo_n "checking for PROJ >= 6 library... " >&6; }
+
+
+# Check whether --with-proj was given.
+if test "${with_proj+set}" = set; then :
+  withval=$with_proj;
+fi
+
+
+PROJ_INCLUDE=""
+if test "x$with_proj" = "xno" ; then
+
+  as_fn_error $? "PROJ 6 is a required dependency." "$LINENO" 5
+
+else
+
+  if test "x$with_proj" = "xyes" -o "x$with_proj" = "x"; then
+    ORIG_LIBS="$LIBS"
+    LIBS="-lproj $ORIG_LIBS"
+    ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create_from_wkt in -lproj" >&5
+$as_echo_n "checking for proj_create_from_wkt in -lproj... " >&6; }
+if ${ac_cv_lib_proj_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char proj_create_from_wkt ();
+int
+main ()
+{
+return proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_proj_proj_create_from_wkt=yes
+else
+  ac_cv_lib_proj_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_proj_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_proj_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    if test "$PROJ_FOUND" = "no"; then
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -lproj" >&5
+$as_echo_n "checking for internal_proj_create_from_wkt in -lproj... " >&6; }
+if ${ac_cv_lib_proj_internal_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char internal_proj_create_from_wkt ();
+int
+main ()
+{
+return internal_proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_proj_internal_proj_create_from_wkt=yes
+else
+  ac_cv_lib_proj_internal_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_internal_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_proj_internal_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_proj_internal_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        if test "$PROJ_FOUND" = "yes"; then
+            PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
+        fi
+    fi
+    if test "$PROJ_FOUND" = "no"; then
+        LIBS="-linternalproj $ORIG_LIBS"
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -linternalproj" >&5
+$as_echo_n "checking for internal_proj_create_from_wkt in -linternalproj... " >&6; }
+if ${ac_cv_lib_internalproj_internal_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-linternalproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char internal_proj_create_from_wkt ();
+int
+main ()
+{
+return internal_proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_internalproj_internal_proj_create_from_wkt=yes
+else
+  ac_cv_lib_internalproj_internal_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_internalproj_internal_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_internalproj_internal_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_internalproj_internal_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        if test "$PROJ_FOUND" = "yes"; then
+            PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
+        fi
+    fi
+    if test "$PROJ_FOUND" = "no"; then
+        as_fn_error $? "PROJ 6 symbols not found" "$LINENO" 5
+    fi
+    for ac_header in proj.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "proj.h" "ac_cv_header_proj_h" "$ac_includes_default"
+if test "x$ac_cv_header_proj_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PROJ_H 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_proj_h" = "yes" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: proj.h found" >&5
+$as_echo "$as_me: proj.h found" >&6;}
+    else
+        as_fn_error $? "proj.h not found" "$LINENO" 5
+    fi
+  else
+
+    ORIG_LIBS="$LIBS"
+    LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+    ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create_from_wkt in -lproj" >&5
+$as_echo_n "checking for proj_create_from_wkt in -lproj... " >&6; }
+if ${ac_cv_lib_proj_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char proj_create_from_wkt ();
+int
+main ()
+{
+return proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_proj_proj_create_from_wkt=yes
+else
+  ac_cv_lib_proj_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_proj_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_proj_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    if test "$PROJ_FOUND" = "no"; then
+        LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+        unset ac_cv_lib_proj_proj_create_from_wkt
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create_from_wkt in -lproj" >&5
+$as_echo_n "checking for proj_create_from_wkt in -lproj... " >&6; }
+if ${ac_cv_lib_proj_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char proj_create_from_wkt ();
+int
+main ()
+{
+return proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_proj_proj_create_from_wkt=yes
+else
+  ac_cv_lib_proj_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_proj_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_proj_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    fi
+    if test "$PROJ_FOUND" = "no"; then
+        LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -lproj" >&5
+$as_echo_n "checking for internal_proj_create_from_wkt in -lproj... " >&6; }
+if ${ac_cv_lib_proj_internal_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char internal_proj_create_from_wkt ();
+int
+main ()
+{
+return internal_proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_proj_internal_proj_create_from_wkt=yes
+else
+  ac_cv_lib_proj_internal_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_internal_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_proj_internal_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_proj_internal_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        if test "$PROJ_FOUND" = "no"; then
+            LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+            unset ac_cv_lib_proj_internal_proj_create_from_wkt
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -lproj" >&5
+$as_echo_n "checking for internal_proj_create_from_wkt in -lproj... " >&6; }
+if ${ac_cv_lib_proj_internal_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char internal_proj_create_from_wkt ();
+int
+main ()
+{
+return internal_proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_proj_internal_proj_create_from_wkt=yes
+else
+  ac_cv_lib_proj_internal_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_internal_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_proj_internal_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_proj_internal_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+            ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        fi
+        if test "$PROJ_FOUND" = "yes"; then
+            PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
+        fi
+    fi
+    if test "$PROJ_FOUND" = "no"; then
+        LIBS="-L$with_proj/lib -linternalproj $ORIG_LIBS"
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -linternalproj" >&5
+$as_echo_n "checking for internal_proj_create_from_wkt in -linternalproj... " >&6; }
+if ${ac_cv_lib_internalproj_internal_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-linternalproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char internal_proj_create_from_wkt ();
+int
+main ()
+{
+return internal_proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_internalproj_internal_proj_create_from_wkt=yes
+else
+  ac_cv_lib_internalproj_internal_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_internalproj_internal_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_internalproj_internal_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_internalproj_internal_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        if test "$PROJ_FOUND" = "no"; then
+            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $ORIG_LIBS"
+            unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal_proj_create_from_wkt in -linternalproj" >&5
+$as_echo_n "checking for internal_proj_create_from_wkt in -linternalproj... " >&6; }
+if ${ac_cv_lib_internalproj_internal_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-linternalproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char internal_proj_create_from_wkt ();
+int
+main ()
+{
+return internal_proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_internalproj_internal_proj_create_from_wkt=yes
+else
+  ac_cv_lib_internalproj_internal_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_internalproj_internal_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_internalproj_internal_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_internalproj_internal_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+            ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        fi
+        if test "$PROJ_FOUND" = "yes"; then
+            PROJ_INCLUDE="-DPROJ_RENAME_SYMBOLS"
+        fi
+    fi
+    if test "$PROJ_FOUND" = "no"; then
+        as_fn_error $? "PROJ 6 symbols not found" "$LINENO" 5
+    fi
+    if test -r "$with_proj/include/proj.h" ; then
+        PROJ_INCLUDE="$PROJ_INCLUDE -I$with_proj/include"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: proj.h found" >&5
+$as_echo "$as_me: proj.h found" >&6;}
+    else
+        as_fn_error $? "proj.h not found" "$LINENO" 5
+    fi
+  fi
+fi
+
+
+
 
 
 # Check whether --with-liblzma was given.
@@ -24800,9 +25375,9 @@ if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
   if test "$TIFF_SETTING" = "internal" ; then
     GEOTIFF_SETTING=internal
   else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XTIFFClientOpen in -lgeotiff" >&5
-$as_echo_n "checking for XTIFFClientOpen in -lgeotiff... " >&6; }
-if ${ac_cv_lib_geotiff_XTIFFClientOpen+:} false; then :
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTIFAttachPROJContext in -lgeotiff" >&5
+$as_echo_n "checking for GTIFAttachPROJContext in -lgeotiff... " >&6; }
+if ${ac_cv_lib_geotiff_GTIFAttachPROJContext+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -24816,27 +25391,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char XTIFFClientOpen ();
+char GTIFAttachPROJContext ();
 int
 main ()
 {
-return XTIFFClientOpen ();
+return GTIFAttachPROJContext ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_geotiff_XTIFFClientOpen=yes
+  ac_cv_lib_geotiff_GTIFAttachPROJContext=yes
 else
-  ac_cv_lib_geotiff_XTIFFClientOpen=no
+  ac_cv_lib_geotiff_GTIFAttachPROJContext=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geotiff_XTIFFClientOpen" >&5
-$as_echo "$ac_cv_lib_geotiff_XTIFFClientOpen" >&6; }
-if test "x$ac_cv_lib_geotiff_XTIFFClientOpen" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geotiff_GTIFAttachPROJContext" >&5
+$as_echo "$ac_cv_lib_geotiff_GTIFAttachPROJContext" >&6; }
+if test "x$ac_cv_lib_geotiff_GTIFAttachPROJContext" = xyes; then :
   GEOTIFF_SETTING=external
 else
   GEOTIFF_SETTING=internal
@@ -24894,9 +25469,9 @@ else
 
   GEOTIFF_SETTING=external
 
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XTIFFClientOpen in -lgeotiff" >&5
-$as_echo_n "checking for XTIFFClientOpen in -lgeotiff... " >&6; }
-if ${ac_cv_lib_geotiff_XTIFFClientOpen+:} false; then :
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTIFAttachPROJContext in -lgeotiff" >&5
+$as_echo_n "checking for GTIFAttachPROJContext in -lgeotiff... " >&6; }
+if ${ac_cv_lib_geotiff_GTIFAttachPROJContext+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -24910,27 +25485,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char XTIFFClientOpen ();
+char GTIFAttachPROJContext ();
 int
 main ()
 {
-return XTIFFClientOpen ();
+return GTIFAttachPROJContext ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_geotiff_XTIFFClientOpen=yes
+  ac_cv_lib_geotiff_GTIFAttachPROJContext=yes
 else
-  ac_cv_lib_geotiff_XTIFFClientOpen=no
+  ac_cv_lib_geotiff_GTIFAttachPROJContext=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geotiff_XTIFFClientOpen" >&5
-$as_echo "$ac_cv_lib_geotiff_XTIFFClientOpen" >&6; }
-if test "x$ac_cv_lib_geotiff_XTIFFClientOpen" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geotiff_GTIFAttachPROJContext" >&5
+$as_echo "$ac_cv_lib_geotiff_GTIFAttachPROJContext" >&6; }
+if test "x$ac_cv_lib_geotiff_GTIFAttachPROJContext" = xyes; then :
   GEOTIFF_SETTING=external
 else
   GEOTIFF_SETTING=not_found
@@ -24943,9 +25518,9 @@ fi
       EXTRA_INCLUDES="-I$with_geotiff/include $EXTRA_INCLUDES"
     fi
   else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XTIFFClientOpen in -lgeotiff" >&5
-$as_echo_n "checking for XTIFFClientOpen in -lgeotiff... " >&6; }
-if ${ac_cv_lib_geotiff_XTIFFClientOpen+:} false; then :
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTIFAttachPROJContext in -lgeotiff" >&5
+$as_echo_n "checking for GTIFAttachPROJContext in -lgeotiff... " >&6; }
+if ${ac_cv_lib_geotiff_GTIFAttachPROJContext+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -24959,30 +25534,30 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char XTIFFClientOpen ();
+char GTIFAttachPROJContext ();
 int
 main ()
 {
-return XTIFFClientOpen ();
+return GTIFAttachPROJContext ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_geotiff_XTIFFClientOpen=yes
+  ac_cv_lib_geotiff_GTIFAttachPROJContext=yes
 else
-  ac_cv_lib_geotiff_XTIFFClientOpen=no
+  ac_cv_lib_geotiff_GTIFAttachPROJContext=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geotiff_XTIFFClientOpen" >&5
-$as_echo "$ac_cv_lib_geotiff_XTIFFClientOpen" >&6; }
-if test "x$ac_cv_lib_geotiff_XTIFFClientOpen" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geotiff_GTIFAttachPROJContext" >&5
+$as_echo "$ac_cv_lib_geotiff_GTIFAttachPROJContext" >&6; }
+if test "x$ac_cv_lib_geotiff_GTIFAttachPROJContext" = xyes; then :
   GEOTIFF_SETTING=external
 else
-  as_fn_error $? "We require at least GeoTIFF 1.2.1. Consider using the one supplied with GDAL" "$LINENO" 5
+  as_fn_error $? "We require at least GeoTIFF 1.5.0. Consider using the one supplied with GDAL" "$LINENO" 5
 fi
 
     if test $GEOTIFF_SETTING = "external" ; then
@@ -31699,7 +32274,7 @@ if ${ac_cv_lib_spatialite_spatialite_init+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lspatialite  $LIBS"
+LIBS="-lspatialite -lsqlite3 -lproj $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -31737,7 +32312,7 @@ fi
 
             if test "$SPATIALITE_INIT_FOUND" = "yes"; then
                 HAVE_SPATIALITE=yes
-                SPATIALITE_LIBS="-lspatialite -lsqlite3"
+                SPATIALITE_LIBS="-lspatialite -lsqlite3 -lproj"
                 LIBS="$LIBS $SPATIALITE_LIBS"
                 HAVE_SQLITE3=yes
             fi
@@ -35521,486 +36096,6 @@ PDFIUM_PLUGIN_LIB=$PDFIUM_PLUGIN_LIB
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking how to link PROJ library" >&5
-$as_echo_n "checking how to link PROJ library... " >&6; }
-
-
-# Check whether --with-proj was given.
-if test "${with_proj+set}" = set; then :
-  withval=$with_proj;
-fi
-
-
-
-# Check whether --with-proj5_api was given.
-if test "${with_proj5_api+set}" = set; then :
-  withval=$with_proj5_api;
-fi
-
-
-
-# Check whether --with-static_proj4 was given.
-if test "${with_static_proj4+set}" = set; then :
-  withval=$with_static_proj4;
-fi
-
-if test "x$with_static_proj4" != "x" -a "x$with_proj" != "x" ; then
-    as_fn_error $? "only one of --static-proj4 and --proj can be used" "$LINENO" 5
-fi
-if test "x$with_static_proj4" != "x"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-static-proj4 is deprecated. Please use --with-proj" >&5
-$as_echo "$as_me: WARNING: --with-static-proj4 is deprecated. Please use --with-proj" >&2;}
-    with_proj=$with_static_proj4
-fi
-
-if test "x$with_proj" = "xno" -o "x$with_proj" = "x"; then
-
-  PROJ_STATIC=no
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: link dynamically." >&5
-$as_echo "link dynamically." >&6; }
-
-else
-
-  PROJ_STATIC=no
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: link statically." >&5
-$as_echo "link statically." >&6; }
-
-  ORIG_LIBS="$LIBS"
-  PROJ_LIB="-lproj"
-
-  if test "x$with_proj" = "xyes" ; then
-    LIBS="$PROJ_LIB $ORIG_LIBS"
-    if test "$with_proj5_api" = "yes" -o "$with_proj5_api" = ""; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create in -lproj" >&5
-$as_echo_n "checking for proj_create in -lproj... " >&6; }
-if ${ac_cv_lib_proj_proj_create+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char proj_create ();
-int
-main ()
-{
-return proj_create ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_proj_create=yes
-else
-  ac_cv_lib_proj_proj_create=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_proj_create" >&5
-$as_echo "$ac_cv_lib_proj_proj_create" >&6; }
-if test "x$ac_cv_lib_proj_proj_create" = xyes; then :
-  PROJ_STATIC=yes
-else
-  PROJ_STATIC=no
-fi
-
-    fi
-    if test "$PROJ_STATIC" = "yes"; then
-        for ac_header in proj.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "proj.h" "ac_cv_header_proj_h" "$ac_includes_default"
-if test "x$ac_cv_header_proj_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PROJ_H 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_proj_h" = "yes" ; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: proj >= 5 detected" >&5
-$as_echo "$as_me: proj >= 5 detected" >&6;}
-            PROJ_VERSION=5
-        else
-            PROJ_STATIC=no
-        fi
-    else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pj_init in -lproj" >&5
-$as_echo_n "checking for pj_init in -lproj... " >&6; }
-if ${ac_cv_lib_proj_pj_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pj_init ();
-int
-main ()
-{
-return pj_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_pj_init=yes
-else
-  ac_cv_lib_proj_pj_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_pj_init" >&5
-$as_echo "$ac_cv_lib_proj_pj_init" >&6; }
-if test "x$ac_cv_lib_proj_pj_init" = xyes; then :
-  PROJ_STATIC=yes
-else
-  PROJ_STATIC=no
-fi
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: proj 4.x detected" >&5
-$as_echo "$as_me: proj 4.x detected" >&6;}
-        PROJ_VERSION=4
-    fi
-  else
-
-    LIBS="-L$with_proj/lib $PROJ_LIB $ORIG_LIBS"
-    if test "$with_proj5_api" = "yes" -o "$with_proj5_api" = ""; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create in -lproj" >&5
-$as_echo_n "checking for proj_create in -lproj... " >&6; }
-if ${ac_cv_lib_proj_proj_create+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char proj_create ();
-int
-main ()
-{
-return proj_create ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_proj_create=yes
-else
-  ac_cv_lib_proj_proj_create=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_proj_create" >&5
-$as_echo "$ac_cv_lib_proj_proj_create" >&6; }
-if test "x$ac_cv_lib_proj_proj_create" = xyes; then :
-  PROJ_STATIC=yes
-else
-  PROJ_STATIC=no
-fi
-
-    fi
-    if test "$PROJ_STATIC" = "yes"; then
-        if test -r "$with_proj/include/proj.h" ; then
-          PROJ_INCLUDE="-I$with_proj/include"
-          { $as_echo "$as_me:${as_lineno-$LINENO}: proj >= 5 detected" >&5
-$as_echo "$as_me: proj >= 5 detected" >&6;}
-          PROJ_VERSION=5
-        else
-          as_fn_error $? "proj.h not found" "$LINENO" 5
-        fi
-    else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pj_init in -lproj" >&5
-$as_echo_n "checking for pj_init in -lproj... " >&6; }
-if ${ac_cv_lib_proj_pj_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pj_init ();
-int
-main ()
-{
-return pj_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_pj_init=yes
-else
-  ac_cv_lib_proj_pj_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_pj_init" >&5
-$as_echo "$ac_cv_lib_proj_pj_init" >&6; }
-if test "x$ac_cv_lib_proj_pj_init" = xyes; then :
-  PROJ_STATIC=yes
-else
-  PROJ_STATIC=no
-fi
-
-
-        if test "$PROJ_STATIC" = "no"; then
-
-            unset ac_cv_lib_proj_pj_init
-
-            LIBS="-L$with_proj/src $PROJ_LIB $ORIG_LIBS"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pj_init in -lproj" >&5
-$as_echo_n "checking for pj_init in -lproj... " >&6; }
-if ${ac_cv_lib_proj_pj_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pj_init ();
-int
-main ()
-{
-return pj_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_pj_init=yes
-else
-  ac_cv_lib_proj_pj_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_pj_init" >&5
-$as_echo "$ac_cv_lib_proj_pj_init" >&6; }
-if test "x$ac_cv_lib_proj_pj_init" = xyes; then :
-  PROJ_STATIC=yes
-else
-  PROJ_STATIC=no
-fi
-
-        fi
-
-        if test "$PROJ_STATIC" = "no"; then
-            unset ac_cv_lib_proj_pj_init
-            LIBS="-L$with_proj/src/.libs $PROJ_LIB $ORIG_LIBS"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pj_init in -lproj" >&5
-$as_echo_n "checking for pj_init in -lproj... " >&6; }
-if ${ac_cv_lib_proj_pj_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pj_init ();
-int
-main ()
-{
-return pj_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_pj_init=yes
-else
-  ac_cv_lib_proj_pj_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_pj_init" >&5
-$as_echo "$ac_cv_lib_proj_pj_init" >&6; }
-if test "x$ac_cv_lib_proj_pj_init" = xyes; then :
-  PROJ_STATIC=yes
-else
-  PROJ_STATIC=no
-fi
-
-        fi
-
-        if test "$PROJ_STATIC" = "no"; then
-            unset ac_cv_lib_proj_pj_init
-            LIBS="-L$with_proj $PROJ_LIB $ORIG_LIBS"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pj_init in -lproj" >&5
-$as_echo_n "checking for pj_init in -lproj... " >&6; }
-if ${ac_cv_lib_proj_pj_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pj_init ();
-int
-main ()
-{
-return pj_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_pj_init=yes
-else
-  ac_cv_lib_proj_pj_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_pj_init" >&5
-$as_echo "$ac_cv_lib_proj_pj_init" >&6; }
-if test "x$ac_cv_lib_proj_pj_init" = xyes; then :
-  PROJ_STATIC=yes
-else
-  PROJ_STATIC=no
-fi
-
-        fi
-
-        if test "$PROJ_STATIC" = "no"; then
-            unset ac_cv_lib_proj_pj_init
-            LIBS="$PROJ_LIB $ORIG_LIBS"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pj_init in -lproj" >&5
-$as_echo_n "checking for pj_init in -lproj... " >&6; }
-if ${ac_cv_lib_proj_pj_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lproj  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pj_init ();
-int
-main ()
-{
-return pj_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_proj_pj_init=yes
-else
-  ac_cv_lib_proj_pj_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_pj_init" >&5
-$as_echo "$ac_cv_lib_proj_pj_init" >&6; }
-if test "x$ac_cv_lib_proj_pj_init" = xyes; then :
-  PROJ_STATIC=yes
-else
-  PROJ_STATIC=no
-fi
-
-        fi
-
-        if test "$PROJ_STATIC" = "yes"; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: proj 4.x detected" >&5
-$as_echo "$as_me: proj 4.x detected" >&6;}
-            PROJ_VERSION=4
-        fi
-    fi
-  fi
-  if test "$PROJ_STATIC" = "no"; then
-      LIBS="$ORIG_LIBS"
-  fi
-
-  if test "$PROJ_VERSION" = "4"; then
-      if test -r "$with_proj/src/proj_api.h" ; then
-          PROJ_INCLUDE="-I$with_proj/src"
-      elif test -r "$with_proj/include/proj_api.h" ; then
-          PROJ_INCLUDE="-I$with_proj/include"
-      elif test -r "$with_proj/proj_api.h" ; then
-          PROJ_INCLUDE="-I$with_proj"
-      fi
-  fi
-  if test "$PROJ_STATIC" = "no"; then
-    as_fn_error $? "cannot find proj" "$LINENO" 5
-  fi
-fi
-
-
-
-
-
-
 
 
 # Check whether --with-gdal-ver was given.
@@ -37326,10 +37421,6 @@ $as_echo "no" >&6; }
     *)
         ;;
 esac
-
-if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
-    as_fn_error $? "--without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI" "$LINENO" 5
-fi
 
 ac_config_files="$ac_config_files GDALmake.opt"
 
@@ -39932,7 +40023,7 @@ echo "  SWIG Bindings:             ${WHAT_BINDINGS}"
 echo ""
 
 
-echo "  Statically link PROJ:      ${PROJ_STATIC}"
+echo "  PROJ >= 6:                 yes"
 
 
 echo "  enable GNM building:       ${GNM_ENABLED}"
