@@ -57,7 +57,7 @@ bool VSILFileIO::Eof() const
 bool VSILFileIO::Open(int mode)
 {
     // NOTE: now support only read mode
-    if( mode & OpenMode::write )
+    if( mode & OpenMode::out )
         return false;
 
     std::string sOpenMode = "r";

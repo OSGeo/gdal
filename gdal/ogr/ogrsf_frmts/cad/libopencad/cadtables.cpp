@@ -31,9 +31,9 @@
 #include "cadtables.h"
 #include "opencad_api.h"
 
-#include <memory>
 #include <cassert>
 #include <iostream>
+#include <memory>
 #include <set>
 
 using namespace std;

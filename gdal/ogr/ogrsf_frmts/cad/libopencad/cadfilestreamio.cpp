@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2019 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,7 @@ bool CADFileStreamIO::Open( int mode )
     if( mode & OpenMode::binary )
         io_mode = std::ifstream::binary; // In set by default
 
-    if( mode & OpenMode::write )
+    if( mode & OpenMode::out )
         //io_mode |= std::ifstream::out;
         return false;
 
