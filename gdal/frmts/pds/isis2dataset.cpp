@@ -71,7 +71,7 @@ class ISIS2Dataset : public RawDataset
 
     CPLString   oTempResult;
 
-    void        CleanString( CPLString &osInput );
+    static void CleanString( CPLString &osInput );
 
     const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
