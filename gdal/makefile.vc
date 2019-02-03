@@ -259,7 +259,6 @@ devinstall: install libinstall
 	copy alg\*.h $(INCDIR)
 	copy ogr\*.h $(INCDIR)
 	copy frmts\mem\memdataset.h $(INCDIR)
-	copy frmts\raw\rawdataset.h $(INCDIR)
 	copy frmts\vrt\*.h $(INCDIR)
 !IFDEF INCLUDE_OGR_FRMTS
 	copy ogr\ogrsf_frmts\*.h $(INCDIR)

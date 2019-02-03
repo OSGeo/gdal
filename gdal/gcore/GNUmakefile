@@ -13,7 +13,7 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdalgeorefpamdataset.o gdaljp2abstractdataset.o gdalvirtualmem.o \
 		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o \
 		gdal_mdreader.o gdaljp2metadatagenerator.o gdalabstractbandblockcache.o \
-		gdalarraybandblockcache.o gdalhashsetbandblockcache.o
+		gdalarraybandblockcache.o gdalhashsetbandblockcache.o rawdataset.o
 
 CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/generic -I../gnm/ -I../gnm/gnm_frmts/ $(JSON_INCLUDE) -I../ogr/ogrsf_frmts/geojson $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
 
@@ -68,6 +68,7 @@ INST_H_FILES = \
 	gdal_priv.h \
 	gdal_proxy.h \
 	gdal_rat.h \
+	rawdataset.h \
 	gdal_version.h
 
 install:
