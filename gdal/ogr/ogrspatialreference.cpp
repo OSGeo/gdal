@@ -8395,8 +8395,7 @@ void OSRFreeSRSArray(OGRSpatialReferenceH* pahSRS)
  * \brief Set the Bursa-Wolf conversion to WGS84.
  *
  * This will create the TOWGS84 node as a child of the DATUM.  It will fail
- * if there is no existing DATUM node.  Unlike most OGRSpatialReference
- * methods it will insert itself in the appropriate order, and will replace
+ * if there is no existing DATUM node. It will replace
  * an existing TOWGS84 node if there is one.
  *
  * The parameters have the same meaning as EPSG transformation 9606
@@ -8421,6 +8420,10 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
 {
     d->refreshProjObj();
+    if( d->m_pj_crs == nullptr )
+    {
+        return OGRERR_FAILURE;
+    }
 
     // Remove existing BoundCRS
     if( d->m_pjType == PJ_TYPE_BOUND_CRS ) {
