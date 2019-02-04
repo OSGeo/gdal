@@ -863,9 +863,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if( !psOptions->bQuiet && !(psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 && psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0)  )
     {
         if( psOptions->dfMinX >= psOptions->dfMaxX )
-            CPLError(CE_Warning, CPLE_AppDefined, "-ts values have minx >= maxx. This will result in a horizontally flipped image.");
+            CPLError(CE_Warning, CPLE_AppDefined, "-te values have minx >= maxx. This will result in a horizontally flipped image.");
         if( psOptions->dfMinY >= psOptions->dfMaxY )
-            CPLError(CE_Warning, CPLE_AppDefined, "-ts values have miny >= maxy. This will result in a vertically flipped image.");
+            CPLError(CE_Warning, CPLE_AppDefined, "-te values have miny >= maxy. This will result in a vertically flipped image.");
     }
 
     if( psOptions->dfErrorThreshold < 0 )
