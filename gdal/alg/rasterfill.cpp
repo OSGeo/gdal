@@ -348,7 +348,7 @@ inline void QUAD_CHECK(double& dfQuadDist, float& fQuadValue,
                        float fTargetValue,
                        GUInt32 nNoDataVal)
 {
-    if( fQuadValue != nNoDataVal )
+    if( target_y != nNoDataVal )
     {
         const double dfDx =
             static_cast<double>(target_x) - static_cast<double>(origin_x);
