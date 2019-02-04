@@ -342,24 +342,27 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 /*      existing closest point.                                         */
 /************************************************************************/
 
-// TODO(schwehr): Convert to an inline function.
-#define QUAD_CHECK(quad_dist, quad_value,                               \
-target_x, target_y, origin_x, origin_y, target_value )                  \
-                                                                        \
-if( quad_value != nNoDataVal )                                          \
-{                                                                       \
-    const double dfDx =                                                 \
-        static_cast<double>(target_x) - static_cast<double>(origin_x);  \
-    const double dfDy =                                                 \
-        static_cast<double>(target_y) - static_cast<double>(origin_y);  \
-    double dfDistSq = dfDx * dfDx + dfDy * dfDy;                        \
-                                                                        \
-    if( dfDistSq < quad_dist*quad_dist )                                \
-    {                                                                   \
-        CPLAssert( dfDistSq > 0.0 );                                    \
-        quad_dist = sqrt(dfDistSq);                                     \
-        quad_value = target_value;                                      \
-    }                                                                   \
+inline void QUAD_CHECK(double& dfQuadDist, float& fQuadValue,
+                       int target_x, GUInt32 target_y,
+                       int origin_x, int origin_y,
+                       float fTargetValue,
+                       GUInt32 nNoDataVal)
+{
+    if( fQuadValue != nNoDataVal )
+    {
+        const double dfDx =
+            static_cast<double>(target_x) - static_cast<double>(origin_x);
+        const double dfDy =
+            static_cast<double>(target_y) - static_cast<double>(origin_y);
+        double dfDistSq = dfDx * dfDx + dfDy * dfDy;
+
+        if( dfDistSq < dfQuadDist*dfQuadDist )
+        {
+            CPLAssert( dfDistSq > 0.0 );
+            dfQuadDist = sqrt(dfDistSq);
+            fQuadValue = fTargetValue;
+        }
+    }
 }
 
 /************************************************************************/
@@ -761,12 +764,12 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                 // Top left includes current line.
                 QUAD_CHECK(adfQuadDist[0], fQuadValue[0],
                            iLeftX, panTopDownY[iLeftX], iX, iY,
-                           pafTopDownValue[iLeftX] );
+                           pafTopDownValue[iLeftX], nNoDataVal );
 
                 // Bottom left.
                 QUAD_CHECK(adfQuadDist[1], fQuadValue[1],
                            iLeftX, panLastY[iLeftX], iX, iY,
-                           pafLastValue[iLeftX] );
+                           pafLastValue[iLeftX], nNoDataVal );
 
                 // Top right and bottom right do no include center pixel.
                 if( iStep == 0 )
@@ -775,12 +778,12 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                 // Top right includes current line.
                 QUAD_CHECK(adfQuadDist[2], fQuadValue[2],
                            iRightX, panTopDownY[iRightX], iX, iY,
-                           pafTopDownValue[iRightX] );
+                           pafTopDownValue[iRightX], nNoDataVal );
 
                 // Bottom right.
                 QUAD_CHECK(adfQuadDist[3], fQuadValue[3],
                            iRightX, panLastY[iRightX], iX, iY,
-                           pafLastValue[iRightX] );
+                           pafLastValue[iRightX], nNoDataVal );
 
                 // Every four steps, recompute maximum distance.
                 if( (iStep & 0x3) == 0 )
