@@ -761,7 +761,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
             // Step left and right by one pixel searching for the closest
             // target value for each quadrant.
-            for( int iStep = 0; iStep < nThisMaxSearchDist; iStep++ )
+            for( int iStep = 0; iStep <= nThisMaxSearchDist; iStep++ )
             {
                 const int iLeftX = std::max(0, iX - iStep);
                 const int iRightX = std::min(nXSize - 1, iX + iStep);
