@@ -1209,6 +1209,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
     if( poGeog )
     {
         poGeog->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        poGeog->SetAngularUnits(SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV));
 
         auto poCT = OGRCreateCoordinateTransformation(&oSrcSRSHoriz, poGeog);
         if( poCT )
@@ -1244,7 +1245,9 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
                 dfWestLongitudeDeg = x[0];
                 dfEastLongitudeDeg = x[1];
             }
-            if( ret ) 
+            if( ret &&
+                std::fabs(dfWestLongitudeDeg) <= 180 &&
+                std::fabs(dfEastLongitudeDeg) <= 180 )
             {
                 CPLDebug("GDAL", "Computing area of interest: %g, %g, %g, %g",
                         dfWestLongitudeDeg, dfSouthLatitudeDeg,
