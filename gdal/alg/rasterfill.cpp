@@ -672,6 +672,11 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         }
     }
 
+    for( int iX = 0; iX < nXSize; iX++ )
+    {
+        panLastY[iX] = nNoDataVal;
+    }
+
 /* ==================================================================== */
 /*      Now we will do collect similar this/last information from       */
 /*      bottom to top and use it in combination with the top to         */
