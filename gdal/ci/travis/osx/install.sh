@@ -22,7 +22,7 @@ esac
 $SCRIPT_DIR/../common_install.sh
 
 # Build proj
-(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure --prefix=/tmp/install && make -j3 && make -j3 install)
+(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' PKG_CONFIG_PATH="/usr/local/opt/sqlite/lib/pkgconfig" ./configure --prefix=/tmp/install && make -j3 && make -j3 install)
 rm /tmp/install/lib/libproj.dylib
 mv /tmp/install/lib/libproj.13.dylib /tmp/install/lib/libinternalproj.13.dylib
 ln -s libinternalproj.13.dylib /tmp/install/lib/libinternalproj.dylib
