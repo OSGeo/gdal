@@ -164,10 +164,6 @@ class CPL_DLL OGRSpatialReference
                                   const char* pszCode,
                                   const char* pszURN);
 
-    static const std::vector<OGRSpatialReference*>* GetSRSCache(
-                    const char* pszSRSType,
-                    const std::map<CPLString, int>*& poMapESRICSNameToCodeOut);
-
     static CPLString   lookupInDict( const char *pszDictFile,
                                      const char *pszCode );
 
