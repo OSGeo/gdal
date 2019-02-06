@@ -2447,7 +2447,47 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
 {
     CPLXMLNode* psGO = CPLGetXMLNode(psRoot, "=kml.GroundOverlay");
     if( psGO == nullptr )
-        return nullptr;
+    {
+        // Otherwise look for kml.Document.Folder.GroundOverlay if there's
+        // a single occurence of Folder and GroundOverlay
+        auto psDoc = CPLGetXMLNode(psRoot, "=kml.Document");
+        if( psDoc == nullptr )
+        {
+            return nullptr;
+        }
+        CPLXMLNode* psFolder = nullptr;
+        for( auto psIter = psDoc->psChild; psIter; psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                strcmp(psIter->pszValue, "Folder") == 0 )
+            {
+                if( psFolder == nullptr )
+                    psFolder = psIter;
+                else
+                    return nullptr;
+            }
+        }
+        if( psFolder == nullptr )
+        {
+            return nullptr;
+        }
+        for( auto psIter = psFolder->psChild; psIter; psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                strcmp(psIter->pszValue, "GroundOverlay") == 0 )
+            {
+                if( psGO == nullptr )
+                    psGO = psIter;
+                else
+                    return nullptr;
+            }
+        }
+        if( psGO == nullptr )
+        {
+            return nullptr;
+        }
+    }
+
     const char* pszHref = CPLGetXMLValue(psGO, "Icon.href", nullptr);
     if( pszHref == nullptr )
         return nullptr;
@@ -2480,6 +2520,10 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
 
         poDS->GetRasterBand(i)->SetColorInterpretation(
                     poImageDS->GetRasterBand(i)->GetColorInterpretation() );
+
+        auto poCT = poImageDS->GetRasterBand(i)->GetColorTable();
+        if( poCT )
+            poDS->GetRasterBand(i)->SetColorTable(poCT);
     }
     poImageDS->Dereference();
     double adfGeoTransform[6] = {
