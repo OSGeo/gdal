@@ -11,7 +11,9 @@ is available through the GDALDataset::ExecuteSQL() method by specifying the pszD
 utility, you must specify the "-dialect SQLITE" option.<p>
 
 This is mainly aimed to execute SELECT statements, but, for datasources that support
-update, INSERT/UPDATE/DELETE statements can also be run.<p>
+update, INSERT/UPDATE/DELETE statements can also be run. GDAL is internally using  
+<b><a href="https://sqlite.org/vtab.html">the Virtual Table Mechanism of SQLite</a></b> 
+and therefore operations like ALTER TABLE are not supported.<p>
 
 The syntax of the SQL statements is fully the one of the SQLite SQL engine. You can
 refer to the following pages:
