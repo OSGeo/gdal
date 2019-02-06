@@ -359,7 +359,7 @@ typedef GIntBig GSpacing;
  */
 #define GDAL_DCAP_VECTOR     "DCAP_VECTOR"
 
-/** Capability set by a driver having vector capability.
+/** Capability set by a driver having geographical network model capability.
  * @since GDAL 2.1
  */
 #define GDAL_DCAP_GNM         "DCAP_GNM"
