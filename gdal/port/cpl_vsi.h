@@ -406,6 +406,49 @@ GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename,
 typedef size_t (*VSIWriteFunction)(const void* ptr, size_t size, size_t nmemb, FILE* stream);
 void CPL_DLL VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream );
 
+typedef int            (*VSIFilesystemPluginStatCallback)          ( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
+typedef int            (*VSIFilesystemPluginUnlinkCallback)        ( const char *pszFilename );
+typedef int            (*VSIFilesystemPluginRenameCallback)        ( const char *oldpath, const char *newpath );
+typedef int            (*VSIFilesystemPluginMkdirCallback)         ( const char *pszDirname, long nMode );
+typedef int            (*VSIFilesystemPluginRmdirCallback)         ( const char *pszDirname );
+typedef char**         (*VSIFilesystemPluginReadDirCallback)       ( const char *pszDirname, int nMaxFiles );
+typedef const void*    (*VSIFilesystemPluginOpenCallback)          ( const char *pszFilename, const char *pszAccess );
+typedef vsi_l_offset   (*VSIFilesystemPluginTellCallback)          ( const void *psData );
+typedef int            (*VSIFilesystemPluginSeekCallback)          ( const void *psData, vsi_l_offset nOffset, int nWhence );
+typedef size_t         (*VSIFilesystemPluginReadCallback)          ( const void *psData, void *pBuffer, size_t nSize, size_t nCount );
+typedef int            (*VSIFilesystemPluginReadMultiRangeCallback)( const void *psData, int nRanges, void ** ppData,
+                                                                     const vsi_l_offset* panOffsets, const size_t* panSizes );
+typedef VSIRangeStatus (*VSIFilesystemPluginGetRangeStatusCallback)( const void *psData, vsi_l_offset nOffset, vsi_l_offset nLength );
+typedef int            (*VSIFilesystemPluginEofCallback)           ( const void *psData );
+typedef size_t         (*VSIFilesystemPluginWriteCallback)         ( const void *psData, const void *pBuffer, size_t nSize,size_t nCount);
+typedef int            (*VSIFilesystemPluginFlushCallback)         ( const void *psData );
+typedef int            (*VSIFilesystemPluginTruncateCallback)      ( const void *psData, vsi_l_offset nNewSize );
+typedef int            (*VSIFilesystemPluginCloseCallback)         ( const void *psData );
+
+typedef struct {
+    VSIFilesystemPluginStatCallback             stat;
+    VSIFilesystemPluginUnlinkCallback           unlink;
+    VSIFilesystemPluginRenameCallback           rename;
+    VSIFilesystemPluginMkdirCallback            mkdir;
+    VSIFilesystemPluginRmdirCallback            rmdir;
+    VSIFilesystemPluginReadDirCallback          read_dir;
+    VSIFilesystemPluginOpenCallback             open;
+    VSIFilesystemPluginTellCallback             tell;
+    VSIFilesystemPluginSeekCallback             seek;
+    VSIFilesystemPluginReadCallback             read;
+    VSIFilesystemPluginReadMultiRangeCallback   read_multi_range;
+    VSIFilesystemPluginGetRangeStatusCallback   get_range_status;
+    VSIFilesystemPluginEofCallback              eof;
+    VSIFilesystemPluginWriteCallback            write;
+    VSIFilesystemPluginFlushCallback            flush;
+    VSIFilesystemPluginTruncateCallback         truncate;
+    VSIFilesystemPluginCloseCallback            close;
+} VSIFilesystemPluginCallbacksStruct;
+
+VSIFilesystemPluginCallbacksStruct* VSIAllocFilesystemPluginCallbacksStruct();
+void VSIFreeFilesystemPluginCallbacksStruct(VSIFilesystemPluginCallbacksStruct* poCb);
+int CPL_DLL VSIInstallPluginHandler( const char* pszPrefix, const VSIFilesystemPluginCallbacksStruct* poCb);
+
 /* ==================================================================== */
 /*      Time querying.                                                  */
 /* ==================================================================== */
