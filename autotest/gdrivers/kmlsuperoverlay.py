@@ -285,6 +285,22 @@ def test_kmlsuperoverlay_7():
     assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand
 
 ###############################################################################
+# Test raster KML with single Overlay (such as https://issues.qgis.org/issues/20173)
+
+
+def test_kmlsuperoverlay_single_overlay_document_folder_pct():
+
+    ds = gdal.Open('data/small_world_in_document_folder_pct.kml')
+    assert ds.GetProjectionRef().find('WGS_1984') >= 0
+    got_gt = ds.GetGeoTransform()
+    ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
+    for i in range(6):
+        assert abs(got_gt[i] - ref_gt[i]) <= 1e-6
+
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_PaletteIndex
+    assert ds.GetRasterBand(1).GetColorTable()
+
+###############################################################################
 # Test that a raster with lots of blank space doesn't have unnecessary child
 # KML/PNG files in transparent areas
 
