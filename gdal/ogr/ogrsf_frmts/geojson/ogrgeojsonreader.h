@@ -37,6 +37,7 @@
 
 #include "ogrgeojsonutils.h"
 
+#include <utility>
 #include <set>
 
 /************************************************************************/
@@ -160,6 +161,7 @@ class OGRGeoJSONReader: public OGRGeoJSONBaseReader
 
     void ResetReading();
     OGRFeature* GetNextFeature(OGRGeoJSONLayer* poLayer);
+    OGRFeature* GetFeature(OGRGeoJSONLayer* poLayer, GIntBig nFID);
     bool IngestAll(OGRGeoJSONLayer* poLayer);
 
     VSILFILE* GetFP() { return fp_; }
@@ -182,6 +184,8 @@ class OGRGeoJSONReader: public OGRGeoJSONBaseReader
 
     GIntBig nTotalFeatureCount_;
     GUIntBig nTotalOGRFeatureMemEstimate_;
+
+    std::map<GIntBig, std::pair<vsi_l_offset, vsi_l_offset>> oMapFIDToOffsetSize_;
     //
     // Copy operations not supported.
     //
