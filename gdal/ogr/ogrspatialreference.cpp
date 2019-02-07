@@ -9440,10 +9440,7 @@ OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
  * \brief Import PROJ coordinate string.
  *
  * The OGRSpatialReference is initialized from the passed PROJs style
- * coordinate system string.  In addition to many +proj formulations which
- * have OGC equivalents, it is also possible to import "+init=epsg:n" style
- * definitions.  These are passed to importFromEPSG().  Other init strings
- * (such as the state plane zones) are not currently supported.
+ * coordinate system string.
  *
  * Example:
  *   pszProj4 = "+proj=utm +zone=11 +datum=WGS84"
@@ -9508,6 +9505,11 @@ OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
  *     EXTENSION["PROJ4","+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +nodefs"]]
  * \endcode
  *
+ * It is also possible to import "+init=epsg:n" style definitions. Those are
+ * a legacy syntax that should be avoided in the future. In particular they will
+ * result in CRS objects whose axis order might not correspond to the official
+ * EPSG axis order.
+ *
  * This method is the equivalent of the C function OSRImportFromProj4().
  *
  * @param pszProj4 the PROJ style string.
@@ -9528,7 +9530,22 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         osProj4 += " +type=crs";
     }
+
+    if( osProj4.find("+init=epsg:") != std::string::npos &&
+        getenv("PROJ_USE_PROJ4_INIT_RULES") == nullptr )
+    {
+        static bool bHasWarned = false;
+        if( !bHasWarned )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "+init=epsg:XXXX syntax is deprecated. It might return "
+                     "a CRS with a non-EPSG compliant axis order.");
+            bHasWarned = true;
+        }
+    }
+    proj_context_use_proj4_init_rules(d->getPROJContext(), true);
     d->setPjCRS(proj_create(d->getPROJContext(), osProj4.c_str()));
+    proj_context_use_proj4_init_rules(d->getPROJContext(), false);
     return d->m_pj_crs ? OGRERR_NONE : OGRERR_CORRUPT_DATA;
 }
 

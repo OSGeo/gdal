@@ -333,9 +333,6 @@ def test_osr_proj4_11():
 
 def test_osr_proj4_12():
 
-    print('FIXME !!')
-    return
-
     expect_wkt = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
@@ -741,6 +738,8 @@ def test_osr_proj4_28():
     got = srs.ExportToWkt()
 
     assert '32631' not in got
+    assert 'Transverse_Mercator' in got
+    assert 'UNIT["centimetre",0.01' in got
 
 
 def test_osr_proj4_error_cases_export_mercator():
