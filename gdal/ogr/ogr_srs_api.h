@@ -596,6 +596,14 @@ const char CPL_DLL *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
                                          const char * pszTargetKey );
 const char CPL_DLL *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
                                          const char * pszTargetKey );
+
+int CPL_DLL OSRGetAreaOfUse(  OGRSpatialReferenceH hSRS,
+                              double* pdfWestLongitudeDeg,
+                              double* pdfSouthLatitudeDeg,
+                              double* pdfEastLongitudeDeg,
+                              double* pdfNorthLatitudeDeg,
+                              const char **ppszAreaName );
+
 OGRErr CPL_DLL OSRSetProjection( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
@@ -930,6 +938,74 @@ double CPL_DLL OSRCalcInvFlattening( double dfSemiMajor, double dfSemiMinor );
 double CPL_DLL OSRCalcSemiMinorFromInvFlattening( double dfSemiMajor, double dfInvFlattening );
 
 void CPL_DLL OSRCleanup( void );
+
+/** \brief Type of Coordinate Reference System (CRS). */
+typedef enum
+{
+    /** Geographic 2D CRS */
+    OSR_CRS_TYPE_GEOGRAPHIC_2D,
+    /** Geographic 3D CRS */
+    OSR_CRS_TYPE_GEOGRAPHIC_3D,
+    /** Geocentric CRS */
+    OSR_CRS_TYPE_GEOCENTRIC,
+    /** Projected CRS */
+    OSR_CRS_TYPE_PROJECTED,
+    /** Vertical CRS */
+    OSR_CRS_TYPE_VERTICAL,
+    /** Compound CRS */
+    OSR_CRS_TYPE_COMPOUND,
+    /** Other */
+    OSR_CRS_TYPE_OTHER,
+} OSRCRSType;
+
+/** \brief Structure given overall description of a CRS.
+ *
+ * This structure may grow over time, and should not be directly allocated by
+ * client code.
+ */
+typedef struct
+{
+    /** Authority name. */
+    char* pszAuthName;
+    /** Object code. */
+    char* pszCode;
+    /** Object name. */
+    char* pszName;
+    /** Object type. */
+    OSRCRSType eType;
+    /** Whether the object is deprecated */
+    int bDeprecated;
+    /** Whereas the west_lon_degree, south_lat_degree, east_lon_degree and
+     * north_lat_degree fields are valid. */
+    int bBboxValid;
+    /** Western-most longitude of the area of use, in degrees. */
+    double dfWestLongitudeDeg;
+    /** Southern-most latitude of the area of use, in degrees. */
+    double dfSouthLatitudeDeg;
+    /** Eastern-most longitude of the area of use, in degrees. */
+    double dfEastLongitudeDeg;
+    /** Northern-most latitude of the area of use, in degrees. */
+    double dfNorthLatitudeDeg;
+    /** Name of the area of use. */
+    char* pszAreaName;
+    /** Name of the projection method for a projected CRS. Might be NULL even
+     *for projected CRS in some cases. */
+    char* pszProjectionMethod;
+} OSRCRSInfo;
+
+/** \brief Structure to describe optional parameters to OSRGetCRSInfoListFromDatabase()
+ * 
+ * Unused for now.
+ */
+typedef struct OSRCRSListParameters OSRCRSListParameters;
+
+OSRCRSInfo CPL_DLL **OSRGetCRSInfoListFromDatabase(
+                                      const char *pszAuthName,
+                                      const OSRCRSListParameters* params,
+                                      int *pnOutResultCount);
+
+void CPL_DLL OSRDestroyCRSInfoList(OSRCRSInfo** list);
+
 
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */

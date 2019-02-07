@@ -405,4 +405,35 @@ def test_osr_epsg_geoccs_deprecated():
 ###############################################################################
 
 
+def test_osr_epsg_area_of_use():
 
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(2154)
+    area = srs.GetAreaOfUse()
+    assert area.west_lon_degree == -9.86
+    assert area.south_lat_degree == 41.15
+    assert area.east_lon_degree == 10.38
+    assert area.north_lat_degree == 51.56
+    assert area.name == 'France'
+
+###############################################################################
+
+
+def test_osr_GetCRSInfoListFromDatabase():
+
+    l = osr.GetCRSInfoListFromDatabase('EPSG')
+    found = False
+    for record in l:
+        if record.auth_name == 'EPSG' and record.code == '2154':
+            assert record.name == 'RGF93 / Lambert-93'
+            assert record.type == osr.OSR_CRS_TYPE_PROJECTED
+            assert not record.deprecated
+            assert record.bbox_valid
+            assert record.west_lon_degree == -9.86
+            assert record.south_lat_degree == 41.15
+            assert record.east_lon_degree == 10.38
+            assert record.north_lat_degree == 51.56
+            assert record.area_name == 'France'
+            assert record.projection_method == 'Lambert Conic Conformal (2SP)'
+            found = True
+    assert found

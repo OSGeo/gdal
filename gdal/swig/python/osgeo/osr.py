@@ -638,6 +638,62 @@ def GetWellKnownGeogCSAsWKT(*args):
 def GetUserInputAsWKT(*args):
     """GetUserInputAsWKT(char const * name) -> OGRErr"""
     return _osr.GetUserInputAsWKT(*args)
+class AreaOfUse(_object):
+    """Proxy of C++ OSRAreaOfUse class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, AreaOfUse, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, AreaOfUse, name)
+    __repr__ = _swig_repr
+    __swig_getmethods__["west_lon_degree"] = _osr.AreaOfUse_west_lon_degree_get
+    if _newclass:
+        west_lon_degree = _swig_property(_osr.AreaOfUse_west_lon_degree_get)
+    __swig_getmethods__["south_lat_degree"] = _osr.AreaOfUse_south_lat_degree_get
+    if _newclass:
+        south_lat_degree = _swig_property(_osr.AreaOfUse_south_lat_degree_get)
+    __swig_getmethods__["east_lon_degree"] = _osr.AreaOfUse_east_lon_degree_get
+    if _newclass:
+        east_lon_degree = _swig_property(_osr.AreaOfUse_east_lon_degree_get)
+    __swig_getmethods__["north_lat_degree"] = _osr.AreaOfUse_north_lat_degree_get
+    if _newclass:
+        north_lat_degree = _swig_property(_osr.AreaOfUse_north_lat_degree_get)
+    __swig_getmethods__["name"] = _osr.AreaOfUse_name_get
+    if _newclass:
+        name = _swig_property(_osr.AreaOfUse_name_get)
+
+    def __init__(self, *args):
+        """__init__(OSRAreaOfUse self, double west_lon_degree, double south_lat_degree, double east_lon_degree, double north_lat_degree, char * name) -> AreaOfUse"""
+        this = _osr.new_AreaOfUse(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+    __swig_destroy__ = _osr.delete_AreaOfUse
+    __del__ = lambda self: None
+AreaOfUse_swigregister = _osr.AreaOfUse_swigregister
+AreaOfUse_swigregister(AreaOfUse)
+
+
+def OSRAreaOfUse_west_lon_degree_get(*args):
+    """OSRAreaOfUse_west_lon_degree_get(AreaOfUse area) -> double"""
+    return _osr.OSRAreaOfUse_west_lon_degree_get(*args)
+
+def OSRAreaOfUse_south_lat_degree_get(*args):
+    """OSRAreaOfUse_south_lat_degree_get(AreaOfUse area) -> double"""
+    return _osr.OSRAreaOfUse_south_lat_degree_get(*args)
+
+def OSRAreaOfUse_east_lon_degree_get(*args):
+    """OSRAreaOfUse_east_lon_degree_get(AreaOfUse area) -> double"""
+    return _osr.OSRAreaOfUse_east_lon_degree_get(*args)
+
+def OSRAreaOfUse_north_lat_degree_get(*args):
+    """OSRAreaOfUse_north_lat_degree_get(AreaOfUse area) -> double"""
+    return _osr.OSRAreaOfUse_north_lat_degree_get(*args)
+
+def OSRAreaOfUse_name_get(*args):
+    """OSRAreaOfUse_name_get(AreaOfUse area) -> char const *"""
+    return _osr.OSRAreaOfUse_name_get(*args)
 class SpatialReference(_object):
     """Proxy of C++ OSRSpatialReferenceShadow class."""
 
@@ -790,6 +846,11 @@ class SpatialReference(_object):
     def GetAuthorityName(self, *args):
         """GetAuthorityName(SpatialReference self, char const * target_key) -> char const *"""
         return _osr.SpatialReference_GetAuthorityName(self, *args)
+
+
+    def GetAreaOfUse(self, *args):
+        """GetAreaOfUse(SpatialReference self) -> AreaOfUse"""
+        return _osr.SpatialReference_GetAreaOfUse(self, *args)
 
 
     def GetAxisName(self, *args):
@@ -1343,6 +1404,136 @@ CoordinateTransformation_swigregister(CoordinateTransformation)
 def CreateCoordinateTransformation(*args):
     """CreateCoordinateTransformation(SpatialReference src, SpatialReference dst, CoordinateTransformationOptions options=None) -> CoordinateTransformation"""
     return _osr.CreateCoordinateTransformation(*args)
+
+_osr.OSR_CRS_TYPE_GEOGRAPHIC_2D_swigconstant(_osr)
+OSR_CRS_TYPE_GEOGRAPHIC_2D = _osr.OSR_CRS_TYPE_GEOGRAPHIC_2D
+
+_osr.OSR_CRS_TYPE_GEOGRAPHIC_3D_swigconstant(_osr)
+OSR_CRS_TYPE_GEOGRAPHIC_3D = _osr.OSR_CRS_TYPE_GEOGRAPHIC_3D
+
+_osr.OSR_CRS_TYPE_GEOCENTRIC_swigconstant(_osr)
+OSR_CRS_TYPE_GEOCENTRIC = _osr.OSR_CRS_TYPE_GEOCENTRIC
+
+_osr.OSR_CRS_TYPE_PROJECTED_swigconstant(_osr)
+OSR_CRS_TYPE_PROJECTED = _osr.OSR_CRS_TYPE_PROJECTED
+
+_osr.OSR_CRS_TYPE_VERTICAL_swigconstant(_osr)
+OSR_CRS_TYPE_VERTICAL = _osr.OSR_CRS_TYPE_VERTICAL
+
+_osr.OSR_CRS_TYPE_COMPOUND_swigconstant(_osr)
+OSR_CRS_TYPE_COMPOUND = _osr.OSR_CRS_TYPE_COMPOUND
+
+_osr.OSR_CRS_TYPE_OTHER_swigconstant(_osr)
+OSR_CRS_TYPE_OTHER = _osr.OSR_CRS_TYPE_OTHER
+class CRSInfo(_object):
+    """Proxy of C++ OSRCRSInfo class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, CRSInfo, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, CRSInfo, name)
+    __repr__ = _swig_repr
+    __swig_getmethods__["auth_name"] = _osr.CRSInfo_auth_name_get
+    if _newclass:
+        auth_name = _swig_property(_osr.CRSInfo_auth_name_get)
+    __swig_getmethods__["code"] = _osr.CRSInfo_code_get
+    if _newclass:
+        code = _swig_property(_osr.CRSInfo_code_get)
+    __swig_getmethods__["name"] = _osr.CRSInfo_name_get
+    if _newclass:
+        name = _swig_property(_osr.CRSInfo_name_get)
+    __swig_getmethods__["type"] = _osr.CRSInfo_type_get
+    if _newclass:
+        type = _swig_property(_osr.CRSInfo_type_get)
+    __swig_getmethods__["deprecated"] = _osr.CRSInfo_deprecated_get
+    if _newclass:
+        deprecated = _swig_property(_osr.CRSInfo_deprecated_get)
+    __swig_getmethods__["bbox_valid"] = _osr.CRSInfo_bbox_valid_get
+    if _newclass:
+        bbox_valid = _swig_property(_osr.CRSInfo_bbox_valid_get)
+    __swig_getmethods__["west_lon_degree"] = _osr.CRSInfo_west_lon_degree_get
+    if _newclass:
+        west_lon_degree = _swig_property(_osr.CRSInfo_west_lon_degree_get)
+    __swig_getmethods__["south_lat_degree"] = _osr.CRSInfo_south_lat_degree_get
+    if _newclass:
+        south_lat_degree = _swig_property(_osr.CRSInfo_south_lat_degree_get)
+    __swig_getmethods__["east_lon_degree"] = _osr.CRSInfo_east_lon_degree_get
+    if _newclass:
+        east_lon_degree = _swig_property(_osr.CRSInfo_east_lon_degree_get)
+    __swig_getmethods__["north_lat_degree"] = _osr.CRSInfo_north_lat_degree_get
+    if _newclass:
+        north_lat_degree = _swig_property(_osr.CRSInfo_north_lat_degree_get)
+    __swig_getmethods__["area_name"] = _osr.CRSInfo_area_name_get
+    if _newclass:
+        area_name = _swig_property(_osr.CRSInfo_area_name_get)
+    __swig_getmethods__["projection_method"] = _osr.CRSInfo_projection_method_get
+    if _newclass:
+        projection_method = _swig_property(_osr.CRSInfo_projection_method_get)
+
+    def __init__(self, *args):
+        """__init__(OSRCRSInfo self, char const * auth_name, char const * code, char const * name, OSRCRSType type, bool deprecated, bool bbox_valid, double west_lon_degree, double south_lat_degree, double east_lon_degree, double north_lat_degree, char const * area_name, char const * projection_method) -> CRSInfo"""
+        this = _osr.new_CRSInfo(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+    __swig_destroy__ = _osr.delete_CRSInfo
+    __del__ = lambda self: None
+CRSInfo_swigregister = _osr.CRSInfo_swigregister
+CRSInfo_swigregister(CRSInfo)
+
+
+def OSRCRSInfo_auth_name_get(*args):
+    """OSRCRSInfo_auth_name_get(CRSInfo crsInfo) -> char const *"""
+    return _osr.OSRCRSInfo_auth_name_get(*args)
+
+def OSRCRSInfo_code_get(*args):
+    """OSRCRSInfo_code_get(CRSInfo crsInfo) -> char const *"""
+    return _osr.OSRCRSInfo_code_get(*args)
+
+def OSRCRSInfo_name_get(*args):
+    """OSRCRSInfo_name_get(CRSInfo crsInfo) -> char const *"""
+    return _osr.OSRCRSInfo_name_get(*args)
+
+def OSRCRSInfo_type_get(*args):
+    """OSRCRSInfo_type_get(CRSInfo crsInfo) -> OSRCRSType"""
+    return _osr.OSRCRSInfo_type_get(*args)
+
+def OSRCRSInfo_deprecated_get(*args):
+    """OSRCRSInfo_deprecated_get(CRSInfo crsInfo) -> bool"""
+    return _osr.OSRCRSInfo_deprecated_get(*args)
+
+def OSRCRSInfo_bbox_valid_get(*args):
+    """OSRCRSInfo_bbox_valid_get(CRSInfo crsInfo) -> bool"""
+    return _osr.OSRCRSInfo_bbox_valid_get(*args)
+
+def OSRCRSInfo_west_lon_degree_get(*args):
+    """OSRCRSInfo_west_lon_degree_get(CRSInfo crsInfo) -> double"""
+    return _osr.OSRCRSInfo_west_lon_degree_get(*args)
+
+def OSRCRSInfo_south_lat_degree_get(*args):
+    """OSRCRSInfo_south_lat_degree_get(CRSInfo crsInfo) -> double"""
+    return _osr.OSRCRSInfo_south_lat_degree_get(*args)
+
+def OSRCRSInfo_east_lon_degree_get(*args):
+    """OSRCRSInfo_east_lon_degree_get(CRSInfo crsInfo) -> double"""
+    return _osr.OSRCRSInfo_east_lon_degree_get(*args)
+
+def OSRCRSInfo_north_lat_degree_get(*args):
+    """OSRCRSInfo_north_lat_degree_get(CRSInfo crsInfo) -> double"""
+    return _osr.OSRCRSInfo_north_lat_degree_get(*args)
+
+def OSRCRSInfo_area_name_get(*args):
+    """OSRCRSInfo_area_name_get(CRSInfo crsInfo) -> char const *"""
+    return _osr.OSRCRSInfo_area_name_get(*args)
+
+def OSRCRSInfo_projection_method_get(*args):
+    """OSRCRSInfo_projection_method_get(CRSInfo crsInfo) -> char const *"""
+    return _osr.OSRCRSInfo_projection_method_get(*args)
+
+def GetCRSInfoListFromDatabase(*args):
+    """GetCRSInfoListFromDatabase(char const * authName)"""
+    return _osr.GetCRSInfoListFromDatabase(*args)
 # This file is compatible with both classic and new-style classes.
 
 
