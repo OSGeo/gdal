@@ -382,6 +382,12 @@ class CPL_DLL OGRSpatialReference
     const char *GetAuthorityCode( const char * pszTargetKey ) const;
     const char *GetAuthorityName( const char * pszTargetKey ) const;
 
+    bool        GetAreaOfUse( double* pdfWestLongitudeDeg,
+                              double* pdfSouthLatitudeDeg,
+                              double* pdfEastLongitudeDeg,
+                              double* pdfNorthLatitudeDeg,
+                              const char **ppszAreaName ) const;
+
     const char *GetExtension( const char *pszTargetKey,
                               const char *pszName,
                               const char *pszDefault = nullptr ) const;

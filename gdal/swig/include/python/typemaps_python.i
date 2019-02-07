@@ -2213,3 +2213,44 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
     CPLFree( *($1) );
     CPLFree( *($3) );
 }
+
+
+/*
+ * Typemap argout for GetCRSInfoListFromDatabase()
+ */
+%typemap(in,numinputs=0) (OSRCRSInfo*** pList, int* pnListCount) ( OSRCRSInfo **list=0, int count=0 )
+{
+  /* %typemap(in,numinputs=0) (OSRCRSInfo*** pList, int* pnListCount) */
+  $1 = &list;
+  $2 = &count;
+}
+%typemap(argout) (OSRCRSInfo*** pList, int* pnListCount)
+{
+  /* %typemap(argout) (OSRCRSInfo*** pList, int* pnListCount) */
+  PyObject *dict = PyTuple_New( *$2 );
+  for( int i = 0; i < *$2; i++ ) {
+    OSRCRSInfo *o = new_OSRCRSInfo( (*$1)[i]->pszAuthName,
+                                    (*$1)[i]->pszCode,
+                                    (*$1)[i]->pszName,
+                                    (*$1)[i]->eType,
+                                    (*$1)[i]->bDeprecated,
+                                    (*$1)[i]->bBboxValid,
+                                    (*$1)[i]->dfWestLongitudeDeg,
+                                    (*$1)[i]->dfSouthLatitudeDeg,
+                                    (*$1)[i]->dfEastLongitudeDeg,
+                                    (*$1)[i]->dfNorthLatitudeDeg,
+                                    (*$1)[i]->pszAreaName,
+                                    (*$1)[i]->pszProjectionMethod );
+
+    PyTuple_SetItem(dict, i,
+       SWIG_NewPointerObj((void*)o,SWIGTYPE_p_OSRCRSInfo,1) );
+  }
+  Py_DECREF($result);
+  $result = dict;
+}
+
+%typemap(freearg) (OSRCRSInfo*** pList, int* pnListCount)
+{
+  /* %typemap(freearg) (OSRCRSInfo*** pList, int* pnListCount) */
+  OSRDestroyCRSInfoList( *($1) );
+}

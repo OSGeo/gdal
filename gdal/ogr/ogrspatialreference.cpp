@@ -86,6 +86,7 @@ struct OGRSpatialReference::Private
 
     std::vector<std::string> m_wktImportWarnings{};
     std::vector<std::string> m_wktImportErrors{};
+    CPLString           m_osAreaName{};
 
     bool                m_bNodesChanged = false;
     OGR_SRSNode        *m_poRoot = nullptr;
@@ -10452,4 +10453,189 @@ OGRErr OGRSpatialReference::SetDataAxisToSRSAxisMapping(const std::vector<int>& 
     d->m_axisMappingStrategy = OAMS_CUSTOM;
     d->m_axisMapping = mapping;
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               GetAreaOfUse()                         */
+/************************************************************************/
+
+/** \brief Return the area of use of the CRS.
+ *
+ * This method is the same as the OSRGetAreaOfUse() function.
+ *
+ * @param pdfWestLongitudeDeg Pointer to a double to receive the western-most
+ * longitude, expressed in degree. Might be NULL. If the returned value is -1000,
+ * the bounding box is unknown.
+ * @param pdfSouthLatitudeDeg Pointer to a double to receive the southern-most
+ * latitude, expressed in degree. Might be NULL. If the returned value is -1000,
+ * the bounding box is unknown.
+ * @param pdfEastLongitudeDeg Pointer to a double to receive the eastern-most
+ * longitude, expressed in degree. Might be NULL. If the returned value is -1000,
+ * the bounding box is unknown.
+ * @param pdfNorthLatitudeDeg Pointer to a double to receive the northern-most
+ * latitude, expressed in degree. Might be NULL. If the returned value is -1000,
+ * the bounding box is unknown.
+ * @param ppszAreaName Pointer to a string to receive the name of the area of
+ * use. Might be NULL. Note that *ppszAreaName is short-lived and might be invalidated
+ * by further calls.
+ * @return true in case of success
+ * @since GDAL 2.5
+ */
+bool OGRSpatialReference::GetAreaOfUse( double* pdfWestLongitudeDeg,
+                                        double* pdfSouthLatitudeDeg,
+                                        double* pdfEastLongitudeDeg,
+                                        double* pdfNorthLatitudeDeg,
+                                        const char **ppszAreaName ) const
+{
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+    {
+        return false;
+    }
+    d->demoteFromBoundCRS();
+    const char* pszAreaName = nullptr;
+    int bSuccess = proj_get_area_of_use(
+                          d->getPROJContext(),
+                          d->m_pj_crs,
+                          pdfWestLongitudeDeg,
+                          pdfSouthLatitudeDeg,
+                          pdfEastLongitudeDeg,
+                          pdfNorthLatitudeDeg,
+                          &pszAreaName);
+    d->undoDemoteFromBoundCRS();
+    d->m_osAreaName = pszAreaName ? pszAreaName : "";
+    if( ppszAreaName )
+        *ppszAreaName = d->m_osAreaName.c_str();
+    return CPL_TO_BOOL(bSuccess);
+}
+
+/************************************************************************/
+/*                               GetAreaOfUse()                         */
+/************************************************************************/
+
+/** \brief Return the area of use of the CRS.
+ *
+ * This function is the same as the OGRSpatialReference::GetAreaOfUse() method.
+ *
+ * @since GDAL 2.5
+ */
+int OSRGetAreaOfUse( OGRSpatialReferenceH hSRS,
+                     double* pdfWestLongitudeDeg,
+                     double* pdfSouthLatitudeDeg,
+                     double* pdfEastLongitudeDeg,
+                     double* pdfNorthLatitudeDeg,
+                     const char **ppszAreaName )
+{
+    VALIDATE_POINTER1( hSRS, "OSRGetAreaOfUse", FALSE );
+
+    return OGRSpatialReference::FromHandle(hSRS)->GetAreaOfUse(
+        pdfWestLongitudeDeg, pdfSouthLatitudeDeg,
+        pdfEastLongitudeDeg, pdfNorthLatitudeDeg,
+        ppszAreaName);
+}
+
+/************************************************************************/
+/*                     OSRGetCRSInfoListFromDatabase()                  */
+/************************************************************************/
+
+/** \brief Enumerate CRS objects from the database.
+ *
+ * The returned object is an array of OSRCRSInfo* pointers, whose last
+ * entry is NULL. This array should be freed with OSRDestroyCRSInfoList()
+ *
+ * @param pszAuthName Authority name, used to restrict the search.
+ * Or NULL for all authorities.
+ * @param params Additional criteria. Must be set to NULL for now.
+ * @param pnOutResultCount Output parameter pointing to an integer to receive
+ * the size of the result list. Might be NULL
+ * @return an array of OSRCRSInfo* pointers to be freed with
+ * OSRDestroyCRSInfoList(), or NULL in case of error.
+ *
+ * @since GDAL 2.5
+ */
+OSRCRSInfo **OSRGetCRSInfoListFromDatabase(
+                                      const char *pszAuthName,
+                                      CPL_UNUSED const OSRCRSListParameters* params,
+                                      int *pnOutResultCount)
+{
+    int nResultCount = 0;
+    auto projList = proj_get_crs_info_list_from_database(OSRGetProjTLSContext(),
+                                         pszAuthName,
+                                         nullptr,
+                                         &nResultCount);
+    if( pnOutResultCount )
+        *pnOutResultCount = nResultCount;
+    if( !projList )
+    {
+        return nullptr;
+    }
+    auto res = new OSRCRSInfo*[nResultCount + 1];
+    for( int i = 0; i < nResultCount; i++ )
+    {
+        res[i] = new OSRCRSInfo;
+        res[i]->pszAuthName = projList[i]->auth_name ?
+            CPLStrdup(projList[i]->auth_name) : nullptr;
+        res[i]->pszCode = projList[i]->code ?
+            CPLStrdup(projList[i]->code) : nullptr;
+        res[i]->pszName = projList[i]->name ?
+            CPLStrdup(projList[i]->name) : nullptr;
+        res[i]->eType = OSR_CRS_TYPE_OTHER;
+        switch(  projList[i]->type )
+        {
+            case PJ_TYPE_GEOGRAPHIC_2D_CRS:
+                res[i]->eType = OSR_CRS_TYPE_GEOGRAPHIC_2D; break;
+            case PJ_TYPE_GEOGRAPHIC_3D_CRS:
+                res[i]->eType = OSR_CRS_TYPE_GEOGRAPHIC_3D; break;
+            case PJ_TYPE_GEOCENTRIC_CRS:
+                res[i]->eType = OSR_CRS_TYPE_GEOCENTRIC; break;
+            case PJ_TYPE_PROJECTED_CRS:
+                res[i]->eType = OSR_CRS_TYPE_PROJECTED; break;
+            case PJ_TYPE_VERTICAL_CRS:
+                res[i]->eType = OSR_CRS_TYPE_VERTICAL; break;
+            case PJ_TYPE_COMPOUND_CRS:
+                res[i]->eType = OSR_CRS_TYPE_COMPOUND; break;
+            default:
+                break;
+        }
+        res[i]->bDeprecated = projList[i]->deprecated;
+        res[i]->bBboxValid = projList[i]->bbox_valid;
+        res[i]->dfWestLongitudeDeg = projList[i]->west_lon_degree;
+        res[i]->dfSouthLatitudeDeg = projList[i]->south_lat_degree;
+        res[i]->dfEastLongitudeDeg = projList[i]->east_lon_degree;
+        res[i]->dfNorthLatitudeDeg = projList[i]->north_lat_degree;
+        res[i]->pszAreaName = projList[i]->area_name ?
+        CPLStrdup(projList[i]->area_name) : nullptr;
+        res[i]->pszProjectionMethod = projList[i]->projection_method_name ?
+            CPLStrdup(projList[i]->projection_method_name) : nullptr;
+    }
+    res[nResultCount] = nullptr;
+    proj_crs_info_list_destroy(projList);
+    return res;
+}
+
+/************************************************************************/
+/*                        OSRDestroyCRSInfoList()                       */
+/************************************************************************/
+
+
+/** \brief Destroy the result returned by
+ * OSRGetCRSInfoListFromDatabase().
+ *
+ * @since GDAL 2.5
+ */
+void OSRDestroyCRSInfoList(OSRCRSInfo** list)
+{
+    if (list)
+    {
+        for (int i = 0; list[i] != nullptr; i++)
+        {
+            CPLFree(list[i]->pszAuthName);
+            CPLFree(list[i]->pszCode);
+            CPLFree(list[i]->pszName);
+            CPLFree(list[i]->pszAreaName);
+            CPLFree(list[i]->pszProjectionMethod);
+            delete list[i];
+        }
+        delete[] list;
+    }
 }

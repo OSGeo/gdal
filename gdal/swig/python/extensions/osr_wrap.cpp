@@ -3012,18 +3012,21 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 /* -------- TYPES TABLE (BEGIN) -------- */
 
 #define SWIGTYPE_p_OGRCoordinateTransformationOptions swig_types[0]
-#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[1]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[2]
-#define SWIGTYPE_p_char swig_types[3]
-#define SWIGTYPE_p_double swig_types[4]
-#define SWIGTYPE_p_int swig_types[5]
-#define SWIGTYPE_p_long swig_types[6]
-#define SWIGTYPE_p_p_char swig_types[7]
-#define SWIGTYPE_p_p_double swig_types[8]
-#define SWIGTYPE_p_p_int swig_types[9]
-#define SWIGTYPE_p_p_p_OSRSpatialReferenceShadow swig_types[10]
-static swig_type_info *swig_types[12];
-static swig_module_info swig_module = {swig_types, 11, 0, 0, 0, 0};
+#define SWIGTYPE_p_OSRAreaOfUse swig_types[1]
+#define SWIGTYPE_p_OSRCRSInfo swig_types[2]
+#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[3]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[4]
+#define SWIGTYPE_p_char swig_types[5]
+#define SWIGTYPE_p_double swig_types[6]
+#define SWIGTYPE_p_int swig_types[7]
+#define SWIGTYPE_p_long swig_types[8]
+#define SWIGTYPE_p_p_char swig_types[9]
+#define SWIGTYPE_p_p_double swig_types[10]
+#define SWIGTYPE_p_p_int swig_types[11]
+#define SWIGTYPE_p_p_p_OSRCRSInfo swig_types[12]
+#define SWIGTYPE_p_p_p_OSRSpatialReferenceShadow swig_types[13]
+static swig_type_info *swig_types[15];
+static swig_module_info swig_module = {swig_types, 14, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3560,6 +3563,98 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
   return rcode;
 }
 
+
+typedef struct
+{
+  double west_lon_degree;
+  double south_lat_degree;
+  double east_lon_degree;
+  double north_lat_degree;
+  char* name;
+} OSRAreaOfUse;
+
+
+SWIGINTERN int
+SWIG_AsVal_double (PyObject *obj, double *val)
+{
+  int res = SWIG_TypeError;
+  if (PyFloat_Check(obj)) {
+    if (val) *val = PyFloat_AsDouble(obj);
+    return SWIG_OK;
+#if PY_VERSION_HEX < 0x03000000
+  } else if (PyInt_Check(obj)) {
+    if (val) *val = PyInt_AsLong(obj);
+    return SWIG_OK;
+#endif
+  } else if (PyLong_Check(obj)) {
+    double v = PyLong_AsDouble(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    double d = PyFloat_AsDouble(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = d;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      long v = PyLong_AsLong(obj);
+      if (!PyErr_Occurred()) {
+	if (val) *val = v;
+	return SWIG_AddCast(SWIG_AddCast(SWIG_OK));
+      } else {
+	PyErr_Clear();
+      }
+    }
+  }
+#endif
+  return res;
+}
+
+SWIGINTERN OSRAreaOfUse *new_OSRAreaOfUse(double west_lon_degree,double south_lat_degree,double east_lon_degree,double north_lat_degree,char *name){
+    OSRAreaOfUse *self = (OSRAreaOfUse*) CPLMalloc( sizeof( OSRAreaOfUse ) );
+    self->west_lon_degree = west_lon_degree;
+    self->south_lat_degree = south_lat_degree;
+    self->east_lon_degree = east_lon_degree;
+    self->north_lat_degree = north_lat_degree;
+    self->name = name ? CPLStrdup(name) : NULL;
+    return self;
+  }
+SWIGINTERN void delete_OSRAreaOfUse(OSRAreaOfUse *self){
+    CPLFree( self->name );
+    CPLFree( self );
+  }
+
+
+double OSRAreaOfUse_west_lon_degree_get( OSRAreaOfUse *area ) {
+  return area->west_lon_degree;
+}
+
+double OSRAreaOfUse_south_lat_degree_get( OSRAreaOfUse *area ) {
+  return area->south_lat_degree;
+}
+
+double OSRAreaOfUse_east_lon_degree_get( OSRAreaOfUse *area ) {
+  return area->east_lon_degree;
+}
+
+double OSRAreaOfUse_north_lat_degree_get( OSRAreaOfUse *area ) {
+  return area->north_lat_degree;
+}
+
+const char* OSRAreaOfUse_name_get( OSRAreaOfUse *area ) {
+  return area->name;
+}
+
+
 SWIGINTERN OSRSpatialReferenceShadow *new_OSRSpatialReferenceShadow(char const *wkt=""){
     return (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
   }
@@ -3618,52 +3713,6 @@ SWIGINTERN int OSRSpatialReferenceShadow_EPSGTreatsAsNorthingEasting(OSRSpatialR
 #   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
 # endif
 #endif
-
-
-SWIGINTERN int
-SWIG_AsVal_double (PyObject *obj, double *val)
-{
-  int res = SWIG_TypeError;
-  if (PyFloat_Check(obj)) {
-    if (val) *val = PyFloat_AsDouble(obj);
-    return SWIG_OK;
-#if PY_VERSION_HEX < 0x03000000
-  } else if (PyInt_Check(obj)) {
-    if (val) *val = PyInt_AsLong(obj);
-    return SWIG_OK;
-#endif
-  } else if (PyLong_Check(obj)) {
-    double v = PyLong_AsDouble(obj);
-    if (!PyErr_Occurred()) {
-      if (val) *val = v;
-      return SWIG_OK;
-    } else {
-      PyErr_Clear();
-    }
-  }
-#ifdef SWIG_PYTHON_CAST_MODE
-  {
-    int dispatch = 0;
-    double d = PyFloat_AsDouble(obj);
-    if (!PyErr_Occurred()) {
-      if (val) *val = d;
-      return SWIG_AddCast(SWIG_OK);
-    } else {
-      PyErr_Clear();
-    }
-    if (!dispatch) {
-      long v = PyLong_AsLong(obj);
-      if (!PyErr_Occurred()) {
-	if (val) *val = v;
-	return SWIG_AddCast(SWIG_AddCast(SWIG_OK));
-      } else {
-	PyErr_Clear();
-      }
-    }
-  }
-#endif
-  return res;
-}
 
 
 #include <float.h>
@@ -3818,6 +3867,22 @@ SWIGINTERN char const *OSRSpatialReferenceShadow_GetAuthorityCode(OSRSpatialRefe
   }
 SWIGINTERN char const *OSRSpatialReferenceShadow_GetAuthorityName(OSRSpatialReferenceShadow *self,char const *target_key){
     return OSRGetAuthorityName( self, target_key );
+  }
+SWIGINTERN OSRAreaOfUse *OSRSpatialReferenceShadow_GetAreaOfUse(OSRSpatialReferenceShadow *self){
+    OSRAreaOfUse* pArea = new_OSRAreaOfUse(0,0,0,0,NULL);
+    const char* name = NULL;
+    if( !OSRGetAreaOfUse(self,
+                    &pArea->west_lon_degree,
+                    &pArea->south_lat_degree,
+                    &pArea->east_lon_degree,
+                    &pArea->north_lat_degree,
+                    &name) )
+    {
+        delete_OSRAreaOfUse(pArea);
+        return NULL;
+    }
+    pArea->name = name ? CPLStrdup(name) : NULL;
+    return pArea;
   }
 SWIGINTERN char const *OSRSpatialReferenceShadow_GetAxisName(OSRSpatialReferenceShadow *self,char const *target_key,int iAxis){
     return OSRGetAxis( self, target_key, iAxis, NULL );
@@ -4328,6 +4393,103 @@ SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoints(OSRCoordinateT
   OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {
     return (OSRCoordinateTransformationShadow*) 
         options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_bool (PyObject *obj, bool *val)
+{
+  int r;
+  if (!PyBool_Check(obj))
+    return SWIG_ERROR;
+  r = PyObject_IsTrue(obj);
+  if (r == -1)
+    return SWIG_ERROR;
+  if (val) *val = r ? true : false;
+  return SWIG_OK;
+}
+
+SWIGINTERN OSRCRSInfo *new_OSRCRSInfo(char const *auth_name,char const *code,char const *name,OSRCRSType type,bool deprecated,bool bbox_valid,double west_lon_degree,double south_lat_degree,double east_lon_degree,double north_lat_degree,char const *area_name,char const *projection_method){
+    OSRCRSInfo *self = (OSRCRSInfo*) CPLMalloc( sizeof( OSRCRSInfo ) );
+    self->pszAuthName = auth_name ? CPLStrdup(auth_name) : NULL;
+    self->pszCode = code ? CPLStrdup(code) : NULL;
+    self->pszName = name ? CPLStrdup(name) : NULL;
+    self->eType = type;
+    self->bDeprecated = deprecated;
+    self->bBboxValid = bbox_valid;
+    self->dfWestLongitudeDeg = west_lon_degree;
+    self->dfSouthLatitudeDeg = south_lat_degree;
+    self->dfEastLongitudeDeg = east_lon_degree;
+    self->dfNorthLatitudeDeg = north_lat_degree;
+    self->pszAreaName = area_name ? CPLStrdup(area_name) : NULL;
+    self->pszProjectionMethod = projection_method ? CPLStrdup(projection_method) : NULL;
+    return self;
+  }
+SWIGINTERN void delete_OSRCRSInfo(OSRCRSInfo *self){
+    CPLFree( self->pszAuthName );
+    CPLFree( self->pszCode );
+    CPLFree( self->pszName );
+    CPLFree( self->pszAreaName );
+    CPLFree( self->pszProjectionMethod );
+    CPLFree( self );
+  }
+
+
+const char* OSRCRSInfo_auth_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszAuthName;
+}
+
+const char* OSRCRSInfo_code_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszCode;
+}
+
+const char* OSRCRSInfo_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszName;
+}
+
+OSRCRSType OSRCRSInfo_type_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->eType;
+}
+
+bool OSRCRSInfo_deprecated_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->bDeprecated;
+}
+
+bool OSRCRSInfo_bbox_valid_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->bBboxValid;
+}
+
+double OSRCRSInfo_west_lon_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfWestLongitudeDeg;
+}
+
+double OSRCRSInfo_south_lat_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfSouthLatitudeDeg;
+}
+
+double OSRCRSInfo_east_lon_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfEastLongitudeDeg;
+}
+
+double OSRCRSInfo_north_lat_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfNorthLatitudeDeg;
+}
+
+const char* OSRCRSInfo_area_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszAreaName;
+}
+
+const char* OSRCRSInfo_projection_method_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszProjectionMethod;
+}
+
+
+
+void GetCRSInfoListFromDatabase( const char *authName,
+                                 OSRCRSInfo*** pList,
+                                 int* pnListCount)
+{
+    *pList = OSRGetCRSInfoListFromDatabase(authName, NULL, pnListCount);
 }
 
 #ifdef __cplusplus
@@ -6485,6 +6647,508 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_AreaOfUse_west_lon_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:AreaOfUse_west_lon_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "AreaOfUse_west_lon_degree_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRAreaOfUse_west_lon_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_AreaOfUse_south_lat_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:AreaOfUse_south_lat_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "AreaOfUse_south_lat_degree_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRAreaOfUse_south_lat_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_AreaOfUse_east_lon_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:AreaOfUse_east_lon_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "AreaOfUse_east_lon_degree_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRAreaOfUse_east_lon_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_AreaOfUse_north_lat_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:AreaOfUse_north_lat_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "AreaOfUse_north_lat_degree_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRAreaOfUse_north_lat_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_AreaOfUse_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:AreaOfUse_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "AreaOfUse_name_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRAreaOfUse_name_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_AreaOfUse(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  double arg1 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  char *arg5 = (char *) 0 ;
+  double val1 ;
+  int ecode1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  int res5 ;
+  char *buf5 = 0 ;
+  int alloc5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  OSRAreaOfUse *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:new_AreaOfUse",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  ecode1 = SWIG_AsVal_double(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "new_AreaOfUse" "', argument " "1"" of type '" "double""'");
+  } 
+  arg1 = static_cast< double >(val1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "new_AreaOfUse" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "new_AreaOfUse" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "new_AreaOfUse" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  res5 = SWIG_AsCharPtrAndSize(obj4, &buf5, NULL, &alloc5);
+  if (!SWIG_IsOK(res5)) {
+    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "new_AreaOfUse" "', argument " "5"" of type '" "char *""'");
+  }
+  arg5 = reinterpret_cast< char * >(buf5);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OSRAreaOfUse *)new_OSRAreaOfUse(arg1,arg2,arg3,arg4,arg5);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRAreaOfUse, SWIG_POINTER_NEW |  0 );
+  if (alloc5 == SWIG_NEWOBJ) delete[] buf5;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc5 == SWIG_NEWOBJ) delete[] buf5;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_AreaOfUse(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_AreaOfUse",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_AreaOfUse" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    delete_OSRAreaOfUse(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *AreaOfUse_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_OSRAreaOfUse, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_OSRAreaOfUse_west_lon_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRAreaOfUse_west_lon_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRAreaOfUse_west_lon_degree_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRAreaOfUse_west_lon_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRAreaOfUse_south_lat_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRAreaOfUse_south_lat_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRAreaOfUse_south_lat_degree_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRAreaOfUse_south_lat_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRAreaOfUse_east_lon_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRAreaOfUse_east_lon_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRAreaOfUse_east_lon_degree_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRAreaOfUse_east_lon_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRAreaOfUse_north_lat_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRAreaOfUse_north_lat_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRAreaOfUse_north_lat_degree_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRAreaOfUse_north_lat_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRAreaOfUse_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRAreaOfUse *arg1 = (OSRAreaOfUse *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRAreaOfUse_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRAreaOfUse, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRAreaOfUse_name_get" "', argument " "1"" of type '" "OSRAreaOfUse *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRAreaOfUse * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRAreaOfUse_name_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_new_SpatialReference(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) "" ;
@@ -7994,6 +8658,42 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetAuthorityName(PyObject *SWIGUNUSE
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_GetAreaOfUse(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OSRAreaOfUse *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_GetAreaOfUse",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_GetAreaOfUse" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OSRAreaOfUse *)OSRSpatialReferenceShadow_GetAreaOfUse(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRAreaOfUse, SWIG_POINTER_OWN |  0 );
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -16938,6 +17638,1282 @@ fail:
 }
 
 
+SWIGINTERN PyObject *OSR_CRS_TYPE_GEOGRAPHIC_2D_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "OSR_CRS_TYPE_GEOGRAPHIC_2D",SWIG_From_int(static_cast< int >(OSR_CRS_TYPE_GEOGRAPHIC_2D)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *OSR_CRS_TYPE_GEOGRAPHIC_3D_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "OSR_CRS_TYPE_GEOGRAPHIC_3D",SWIG_From_int(static_cast< int >(OSR_CRS_TYPE_GEOGRAPHIC_3D)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *OSR_CRS_TYPE_GEOCENTRIC_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "OSR_CRS_TYPE_GEOCENTRIC",SWIG_From_int(static_cast< int >(OSR_CRS_TYPE_GEOCENTRIC)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *OSR_CRS_TYPE_PROJECTED_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "OSR_CRS_TYPE_PROJECTED",SWIG_From_int(static_cast< int >(OSR_CRS_TYPE_PROJECTED)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *OSR_CRS_TYPE_VERTICAL_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "OSR_CRS_TYPE_VERTICAL",SWIG_From_int(static_cast< int >(OSR_CRS_TYPE_VERTICAL)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *OSR_CRS_TYPE_COMPOUND_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "OSR_CRS_TYPE_COMPOUND",SWIG_From_int(static_cast< int >(OSR_CRS_TYPE_COMPOUND)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *OSR_CRS_TYPE_OTHER_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "OSR_CRS_TYPE_OTHER",SWIG_From_int(static_cast< int >(OSR_CRS_TYPE_OTHER)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_auth_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_auth_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_auth_name_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_auth_name_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_code_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_code_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_code_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_code_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_name_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_name_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_type_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OSRCRSType result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_type_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_type_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OSRCRSType)OSRCRSInfo_type_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_deprecated_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_deprecated_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_deprecated_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)OSRCRSInfo_deprecated_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_bbox_valid_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_bbox_valid_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_bbox_valid_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)OSRCRSInfo_bbox_valid_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_west_lon_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_west_lon_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_west_lon_degree_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRCRSInfo_west_lon_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_south_lat_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_south_lat_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_south_lat_degree_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRCRSInfo_south_lat_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_east_lon_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_east_lon_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_east_lon_degree_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRCRSInfo_east_lon_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_north_lat_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_north_lat_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_north_lat_degree_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRCRSInfo_north_lat_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_area_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_area_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_area_name_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_area_name_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CRSInfo_projection_method_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CRSInfo_projection_method_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CRSInfo_projection_method_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_projection_method_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_CRSInfo(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  OSRCRSType arg4 ;
+  bool arg5 ;
+  bool arg6 ;
+  double arg7 ;
+  double arg8 ;
+  double arg9 ;
+  double arg10 ;
+  char *arg11 = (char *) 0 ;
+  char *arg12 = (char *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  bool val5 ;
+  int ecode5 = 0 ;
+  bool val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  double val8 ;
+  int ecode8 = 0 ;
+  double val9 ;
+  int ecode9 = 0 ;
+  double val10 ;
+  int ecode10 = 0 ;
+  int res11 ;
+  char *buf11 = 0 ;
+  int alloc11 = 0 ;
+  int res12 ;
+  char *buf12 = 0 ;
+  int alloc12 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  PyObject * obj9 = 0 ;
+  PyObject * obj10 = 0 ;
+  PyObject * obj11 = 0 ;
+  OSRCRSInfo *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOOOOOOO:new_CRSInfo",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_CRSInfo" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "new_CRSInfo" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "new_CRSInfo" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = reinterpret_cast< char * >(buf3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "new_CRSInfo" "', argument " "4"" of type '" "OSRCRSType""'");
+  } 
+  arg4 = static_cast< OSRCRSType >(val4);
+  ecode5 = SWIG_AsVal_bool(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "new_CRSInfo" "', argument " "5"" of type '" "bool""'");
+  } 
+  arg5 = static_cast< bool >(val5);
+  ecode6 = SWIG_AsVal_bool(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "new_CRSInfo" "', argument " "6"" of type '" "bool""'");
+  } 
+  arg6 = static_cast< bool >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "new_CRSInfo" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  ecode8 = SWIG_AsVal_double(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "new_CRSInfo" "', argument " "8"" of type '" "double""'");
+  } 
+  arg8 = static_cast< double >(val8);
+  ecode9 = SWIG_AsVal_double(obj8, &val9);
+  if (!SWIG_IsOK(ecode9)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "new_CRSInfo" "', argument " "9"" of type '" "double""'");
+  } 
+  arg9 = static_cast< double >(val9);
+  ecode10 = SWIG_AsVal_double(obj9, &val10);
+  if (!SWIG_IsOK(ecode10)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode10), "in method '" "new_CRSInfo" "', argument " "10"" of type '" "double""'");
+  } 
+  arg10 = static_cast< double >(val10);
+  res11 = SWIG_AsCharPtrAndSize(obj10, &buf11, NULL, &alloc11);
+  if (!SWIG_IsOK(res11)) {
+    SWIG_exception_fail(SWIG_ArgError(res11), "in method '" "new_CRSInfo" "', argument " "11"" of type '" "char const *""'");
+  }
+  arg11 = reinterpret_cast< char * >(buf11);
+  res12 = SWIG_AsCharPtrAndSize(obj11, &buf12, NULL, &alloc12);
+  if (!SWIG_IsOK(res12)) {
+    SWIG_exception_fail(SWIG_ArgError(res12), "in method '" "new_CRSInfo" "', argument " "12"" of type '" "char const *""'");
+  }
+  arg12 = reinterpret_cast< char * >(buf12);
+  {
+    if (!arg3) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OSRCRSInfo *)new_OSRCRSInfo((char const *)arg1,(char const *)arg2,(char const *)arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,(char const *)arg11,(char const *)arg12);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRCRSInfo, SWIG_POINTER_NEW |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  if (alloc11 == SWIG_NEWOBJ) delete[] buf11;
+  if (alloc12 == SWIG_NEWOBJ) delete[] buf12;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  if (alloc11 == SWIG_NEWOBJ) delete[] buf11;
+  if (alloc12 == SWIG_NEWOBJ) delete[] buf12;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_CRSInfo(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_CRSInfo",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_CRSInfo" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    delete_OSRCRSInfo(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *CRSInfo_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_OSRCRSInfo, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_auth_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_auth_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_auth_name_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_auth_name_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_code_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_code_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_code_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_code_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_name_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_name_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_type_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OSRCRSType result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_type_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_type_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OSRCRSType)OSRCRSInfo_type_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_deprecated_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_deprecated_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_deprecated_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)OSRCRSInfo_deprecated_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_bbox_valid_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_bbox_valid_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_bbox_valid_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)OSRCRSInfo_bbox_valid_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_west_lon_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_west_lon_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_west_lon_degree_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRCRSInfo_west_lon_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_south_lat_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_south_lat_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_south_lat_degree_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRCRSInfo_south_lat_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_east_lon_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_east_lon_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_east_lon_degree_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRCRSInfo_east_lon_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_north_lat_degree_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_north_lat_degree_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_north_lat_degree_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRCRSInfo_north_lat_degree_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_area_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_area_name_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_area_name_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_area_name_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_OSRCRSInfo_projection_method_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCRSInfo *arg1 = (OSRCRSInfo *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OSRCRSInfo_projection_method_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCRSInfo, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSRCRSInfo_projection_method_get" "', argument " "1"" of type '" "OSRCRSInfo *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCRSInfo * >(argp1);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char *)OSRCRSInfo_projection_method_get(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetCRSInfoListFromDatabase(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  OSRCRSInfo ***arg2 = (OSRCRSInfo ***) 0 ;
+  int *arg3 = (int *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  OSRCRSInfo **list2 = 0 ;
+  int count2 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  {
+    /* %typemap(in,numinputs=0) (OSRCRSInfo*** pList, int* pnListCount) */
+    arg2 = &list2;
+    arg3 = &count2;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O:GetCRSInfoListFromDatabase",&obj0)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetCRSInfoListFromDatabase" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    GetCRSInfoListFromDatabase((char const *)arg1,arg2,arg3);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout) (OSRCRSInfo*** pList, int* pnListCount) */
+    PyObject *dict = PyTuple_New( *arg3 );
+    for( int i = 0; i < *arg3; i++ ) {
+      OSRCRSInfo *o = new_OSRCRSInfo( (*arg2)[i]->pszAuthName,
+        (*arg2)[i]->pszCode,
+        (*arg2)[i]->pszName,
+        (*arg2)[i]->eType,
+        (*arg2)[i]->bDeprecated,
+        (*arg2)[i]->bBboxValid,
+        (*arg2)[i]->dfWestLongitudeDeg,
+        (*arg2)[i]->dfSouthLatitudeDeg,
+        (*arg2)[i]->dfEastLongitudeDeg,
+        (*arg2)[i]->dfNorthLatitudeDeg,
+        (*arg2)[i]->pszAreaName,
+        (*arg2)[i]->pszProjectionMethod );
+      
+      PyTuple_SetItem(dict, i,
+        SWIG_NewPointerObj((void*)o,SWIGTYPE_p_OSRCRSInfo,1) );
+    }
+    Py_DECREF(resultobj);
+    resultobj = dict;
+  }
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (OSRCRSInfo*** pList, int* pnListCount) */
+    OSRDestroyCRSInfoList( *(arg2) );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (OSRCRSInfo*** pList, int* pnListCount) */
+    OSRDestroyCRSInfoList( *(arg2) );
+  }
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"SRS_WKT_WGS84_LAT_LONG_swigconstant", SRS_WKT_WGS84_LAT_LONG_swigconstant, METH_VARARGS, NULL},
@@ -17121,6 +19097,19 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
 	 { (char *)"GetWellKnownGeogCSAsWKT", _wrap_GetWellKnownGeogCSAsWKT, METH_VARARGS, (char *)"GetWellKnownGeogCSAsWKT(char const * name) -> OGRErr"},
 	 { (char *)"GetUserInputAsWKT", _wrap_GetUserInputAsWKT, METH_VARARGS, (char *)"GetUserInputAsWKT(char const * name) -> OGRErr"},
+	 { (char *)"AreaOfUse_west_lon_degree_get", _wrap_AreaOfUse_west_lon_degree_get, METH_VARARGS, (char *)"AreaOfUse_west_lon_degree_get(AreaOfUse self) -> double"},
+	 { (char *)"AreaOfUse_south_lat_degree_get", _wrap_AreaOfUse_south_lat_degree_get, METH_VARARGS, (char *)"AreaOfUse_south_lat_degree_get(AreaOfUse self) -> double"},
+	 { (char *)"AreaOfUse_east_lon_degree_get", _wrap_AreaOfUse_east_lon_degree_get, METH_VARARGS, (char *)"AreaOfUse_east_lon_degree_get(AreaOfUse self) -> double"},
+	 { (char *)"AreaOfUse_north_lat_degree_get", _wrap_AreaOfUse_north_lat_degree_get, METH_VARARGS, (char *)"AreaOfUse_north_lat_degree_get(AreaOfUse self) -> double"},
+	 { (char *)"AreaOfUse_name_get", _wrap_AreaOfUse_name_get, METH_VARARGS, (char *)"AreaOfUse_name_get(AreaOfUse self) -> char *"},
+	 { (char *)"new_AreaOfUse", _wrap_new_AreaOfUse, METH_VARARGS, (char *)"new_AreaOfUse(double west_lon_degree, double south_lat_degree, double east_lon_degree, double north_lat_degree, char * name) -> AreaOfUse"},
+	 { (char *)"delete_AreaOfUse", _wrap_delete_AreaOfUse, METH_VARARGS, (char *)"delete_AreaOfUse(AreaOfUse self)"},
+	 { (char *)"AreaOfUse_swigregister", AreaOfUse_swigregister, METH_VARARGS, NULL},
+	 { (char *)"OSRAreaOfUse_west_lon_degree_get", _wrap_OSRAreaOfUse_west_lon_degree_get, METH_VARARGS, (char *)"OSRAreaOfUse_west_lon_degree_get(AreaOfUse area) -> double"},
+	 { (char *)"OSRAreaOfUse_south_lat_degree_get", _wrap_OSRAreaOfUse_south_lat_degree_get, METH_VARARGS, (char *)"OSRAreaOfUse_south_lat_degree_get(AreaOfUse area) -> double"},
+	 { (char *)"OSRAreaOfUse_east_lon_degree_get", _wrap_OSRAreaOfUse_east_lon_degree_get, METH_VARARGS, (char *)"OSRAreaOfUse_east_lon_degree_get(AreaOfUse area) -> double"},
+	 { (char *)"OSRAreaOfUse_north_lat_degree_get", _wrap_OSRAreaOfUse_north_lat_degree_get, METH_VARARGS, (char *)"OSRAreaOfUse_north_lat_degree_get(AreaOfUse area) -> double"},
+	 { (char *)"OSRAreaOfUse_name_get", _wrap_OSRAreaOfUse_name_get, METH_VARARGS, (char *)"OSRAreaOfUse_name_get(AreaOfUse area) -> char const *"},
 	 { (char *)"new_SpatialReference", (PyCFunction) _wrap_new_SpatialReference, METH_VARARGS | METH_KEYWORDS, (char *)"new_SpatialReference(char const * wkt) -> SpatialReference"},
 	 { (char *)"delete_SpatialReference", _wrap_delete_SpatialReference, METH_VARARGS, (char *)"delete_SpatialReference(SpatialReference self)"},
 	 { (char *)"SpatialReference___str__", _wrap_SpatialReference___str__, METH_VARARGS, (char *)"SpatialReference___str__(SpatialReference self) -> retStringAndCPLFree *"},
@@ -17150,6 +19139,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_GetLinearUnitsName", _wrap_SpatialReference_GetLinearUnitsName, METH_VARARGS, (char *)"SpatialReference_GetLinearUnitsName(SpatialReference self) -> char const *"},
 	 { (char *)"SpatialReference_GetAuthorityCode", _wrap_SpatialReference_GetAuthorityCode, METH_VARARGS, (char *)"SpatialReference_GetAuthorityCode(SpatialReference self, char const * target_key) -> char const *"},
 	 { (char *)"SpatialReference_GetAuthorityName", _wrap_SpatialReference_GetAuthorityName, METH_VARARGS, (char *)"SpatialReference_GetAuthorityName(SpatialReference self, char const * target_key) -> char const *"},
+	 { (char *)"SpatialReference_GetAreaOfUse", _wrap_SpatialReference_GetAreaOfUse, METH_VARARGS, (char *)"SpatialReference_GetAreaOfUse(SpatialReference self) -> AreaOfUse"},
 	 { (char *)"SpatialReference_GetAxisName", _wrap_SpatialReference_GetAxisName, METH_VARARGS, (char *)"SpatialReference_GetAxisName(SpatialReference self, char const * target_key, int iAxis) -> char const *"},
 	 { (char *)"SpatialReference_GetAxisOrientation", _wrap_SpatialReference_GetAxisOrientation, METH_VARARGS, (char *)"SpatialReference_GetAxisOrientation(SpatialReference self, char const * target_key, int iAxis) -> OGRAxisOrientation"},
 	 { (char *)"SpatialReference_GetAxisMappingStrategy", _wrap_SpatialReference_GetAxisMappingStrategy, METH_VARARGS, (char *)"SpatialReference_GetAxisMappingStrategy(SpatialReference self) -> OSRAxisMappingStrategy"},
@@ -17265,6 +19255,41 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"CoordinateTransformation_TransformPoints", _wrap_CoordinateTransformation_TransformPoints, METH_VARARGS, (char *)"CoordinateTransformation_TransformPoints(CoordinateTransformation self, int nCount)"},
 	 { (char *)"CoordinateTransformation_swigregister", CoordinateTransformation_swigregister, METH_VARARGS, NULL},
 	 { (char *)"CreateCoordinateTransformation", _wrap_CreateCoordinateTransformation, METH_VARARGS, (char *)"CreateCoordinateTransformation(SpatialReference src, SpatialReference dst, CoordinateTransformationOptions options=None) -> CoordinateTransformation"},
+	 { (char *)"OSR_CRS_TYPE_GEOGRAPHIC_2D_swigconstant", OSR_CRS_TYPE_GEOGRAPHIC_2D_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"OSR_CRS_TYPE_GEOGRAPHIC_3D_swigconstant", OSR_CRS_TYPE_GEOGRAPHIC_3D_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"OSR_CRS_TYPE_GEOCENTRIC_swigconstant", OSR_CRS_TYPE_GEOCENTRIC_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"OSR_CRS_TYPE_PROJECTED_swigconstant", OSR_CRS_TYPE_PROJECTED_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"OSR_CRS_TYPE_VERTICAL_swigconstant", OSR_CRS_TYPE_VERTICAL_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"OSR_CRS_TYPE_COMPOUND_swigconstant", OSR_CRS_TYPE_COMPOUND_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"OSR_CRS_TYPE_OTHER_swigconstant", OSR_CRS_TYPE_OTHER_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"CRSInfo_auth_name_get", _wrap_CRSInfo_auth_name_get, METH_VARARGS, (char *)"CRSInfo_auth_name_get(CRSInfo self) -> char *"},
+	 { (char *)"CRSInfo_code_get", _wrap_CRSInfo_code_get, METH_VARARGS, (char *)"CRSInfo_code_get(CRSInfo self) -> char *"},
+	 { (char *)"CRSInfo_name_get", _wrap_CRSInfo_name_get, METH_VARARGS, (char *)"CRSInfo_name_get(CRSInfo self) -> char *"},
+	 { (char *)"CRSInfo_type_get", _wrap_CRSInfo_type_get, METH_VARARGS, (char *)"CRSInfo_type_get(CRSInfo self) -> OSRCRSType"},
+	 { (char *)"CRSInfo_deprecated_get", _wrap_CRSInfo_deprecated_get, METH_VARARGS, (char *)"CRSInfo_deprecated_get(CRSInfo self) -> bool"},
+	 { (char *)"CRSInfo_bbox_valid_get", _wrap_CRSInfo_bbox_valid_get, METH_VARARGS, (char *)"CRSInfo_bbox_valid_get(CRSInfo self) -> bool"},
+	 { (char *)"CRSInfo_west_lon_degree_get", _wrap_CRSInfo_west_lon_degree_get, METH_VARARGS, (char *)"CRSInfo_west_lon_degree_get(CRSInfo self) -> double"},
+	 { (char *)"CRSInfo_south_lat_degree_get", _wrap_CRSInfo_south_lat_degree_get, METH_VARARGS, (char *)"CRSInfo_south_lat_degree_get(CRSInfo self) -> double"},
+	 { (char *)"CRSInfo_east_lon_degree_get", _wrap_CRSInfo_east_lon_degree_get, METH_VARARGS, (char *)"CRSInfo_east_lon_degree_get(CRSInfo self) -> double"},
+	 { (char *)"CRSInfo_north_lat_degree_get", _wrap_CRSInfo_north_lat_degree_get, METH_VARARGS, (char *)"CRSInfo_north_lat_degree_get(CRSInfo self) -> double"},
+	 { (char *)"CRSInfo_area_name_get", _wrap_CRSInfo_area_name_get, METH_VARARGS, (char *)"CRSInfo_area_name_get(CRSInfo self) -> char *"},
+	 { (char *)"CRSInfo_projection_method_get", _wrap_CRSInfo_projection_method_get, METH_VARARGS, (char *)"CRSInfo_projection_method_get(CRSInfo self) -> char *"},
+	 { (char *)"new_CRSInfo", _wrap_new_CRSInfo, METH_VARARGS, (char *)"new_CRSInfo(char const * auth_name, char const * code, char const * name, OSRCRSType type, bool deprecated, bool bbox_valid, double west_lon_degree, double south_lat_degree, double east_lon_degree, double north_lat_degree, char const * area_name, char const * projection_method) -> CRSInfo"},
+	 { (char *)"delete_CRSInfo", _wrap_delete_CRSInfo, METH_VARARGS, (char *)"delete_CRSInfo(CRSInfo self)"},
+	 { (char *)"CRSInfo_swigregister", CRSInfo_swigregister, METH_VARARGS, NULL},
+	 { (char *)"OSRCRSInfo_auth_name_get", _wrap_OSRCRSInfo_auth_name_get, METH_VARARGS, (char *)"OSRCRSInfo_auth_name_get(CRSInfo crsInfo) -> char const *"},
+	 { (char *)"OSRCRSInfo_code_get", _wrap_OSRCRSInfo_code_get, METH_VARARGS, (char *)"OSRCRSInfo_code_get(CRSInfo crsInfo) -> char const *"},
+	 { (char *)"OSRCRSInfo_name_get", _wrap_OSRCRSInfo_name_get, METH_VARARGS, (char *)"OSRCRSInfo_name_get(CRSInfo crsInfo) -> char const *"},
+	 { (char *)"OSRCRSInfo_type_get", _wrap_OSRCRSInfo_type_get, METH_VARARGS, (char *)"OSRCRSInfo_type_get(CRSInfo crsInfo) -> OSRCRSType"},
+	 { (char *)"OSRCRSInfo_deprecated_get", _wrap_OSRCRSInfo_deprecated_get, METH_VARARGS, (char *)"OSRCRSInfo_deprecated_get(CRSInfo crsInfo) -> bool"},
+	 { (char *)"OSRCRSInfo_bbox_valid_get", _wrap_OSRCRSInfo_bbox_valid_get, METH_VARARGS, (char *)"OSRCRSInfo_bbox_valid_get(CRSInfo crsInfo) -> bool"},
+	 { (char *)"OSRCRSInfo_west_lon_degree_get", _wrap_OSRCRSInfo_west_lon_degree_get, METH_VARARGS, (char *)"OSRCRSInfo_west_lon_degree_get(CRSInfo crsInfo) -> double"},
+	 { (char *)"OSRCRSInfo_south_lat_degree_get", _wrap_OSRCRSInfo_south_lat_degree_get, METH_VARARGS, (char *)"OSRCRSInfo_south_lat_degree_get(CRSInfo crsInfo) -> double"},
+	 { (char *)"OSRCRSInfo_east_lon_degree_get", _wrap_OSRCRSInfo_east_lon_degree_get, METH_VARARGS, (char *)"OSRCRSInfo_east_lon_degree_get(CRSInfo crsInfo) -> double"},
+	 { (char *)"OSRCRSInfo_north_lat_degree_get", _wrap_OSRCRSInfo_north_lat_degree_get, METH_VARARGS, (char *)"OSRCRSInfo_north_lat_degree_get(CRSInfo crsInfo) -> double"},
+	 { (char *)"OSRCRSInfo_area_name_get", _wrap_OSRCRSInfo_area_name_get, METH_VARARGS, (char *)"OSRCRSInfo_area_name_get(CRSInfo crsInfo) -> char const *"},
+	 { (char *)"OSRCRSInfo_projection_method_get", _wrap_OSRCRSInfo_projection_method_get, METH_VARARGS, (char *)"OSRCRSInfo_projection_method_get(CRSInfo crsInfo) -> char const *"},
+	 { (char *)"GetCRSInfoListFromDatabase", _wrap_GetCRSInfoListFromDatabase, METH_VARARGS, (char *)"GetCRSInfoListFromDatabase(char const * authName)"},
 	 { NULL, NULL, 0, NULL }
 };
 
@@ -17272,6 +19297,8 @@ static PyMethodDef SwigMethods[] = {
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
 static swig_type_info _swigt__p_OGRCoordinateTransformationOptions = {"_p_OGRCoordinateTransformationOptions", "OGRCoordinateTransformationOptions *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_OSRAreaOfUse = {"_p_OSRAreaOfUse", "OSRAreaOfUse *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_OSRCRSInfo = {"_p_OSRCRSInfo", "OSRCRSInfo *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRCoordinateTransformationShadow = {"_p_OSRCoordinateTransformationShadow", "OSRCoordinateTransformationShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
@@ -17281,10 +19308,13 @@ static swig_type_info _swigt__p_long = {"_p_long", "long *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_double = {"_p_p_double", "double **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_p_OSRCRSInfo = {"_p_p_p_OSRCRSInfo", "OSRCRSInfo ***", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_p_OSRSpatialReferenceShadow = {"_p_p_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow ***", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_OGRCoordinateTransformationOptions,
+  &_swigt__p_OSRAreaOfUse,
+  &_swigt__p_OSRCRSInfo,
   &_swigt__p_OSRCoordinateTransformationShadow,
   &_swigt__p_OSRSpatialReferenceShadow,
   &_swigt__p_char,
@@ -17294,10 +19324,13 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_p_char,
   &_swigt__p_p_double,
   &_swigt__p_p_int,
+  &_swigt__p_p_p_OSRCRSInfo,
   &_swigt__p_p_p_OSRSpatialReferenceShadow,
 };
 
 static swig_cast_info _swigc__p_OGRCoordinateTransformationOptions[] = {  {&_swigt__p_OGRCoordinateTransformationOptions, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_OSRAreaOfUse[] = {  {&_swigt__p_OSRAreaOfUse, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_OSRCRSInfo[] = {  {&_swigt__p_OSRCRSInfo, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OSRCoordinateTransformationShadow[] = {  {&_swigt__p_OSRCoordinateTransformationShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_OSRSpatialReferenceShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
@@ -17307,10 +19340,13 @@ static swig_cast_info _swigc__p_long[] = {  {&_swigt__p_long, 0, 0, 0},{0, 0, 0,
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_double[] = {  {&_swigt__p_p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_p_OSRCRSInfo[] = {  {&_swigt__p_p_p_OSRCRSInfo, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_p_p_OSRSpatialReferenceShadow, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_OGRCoordinateTransformationOptions,
+  _swigc__p_OSRAreaOfUse,
+  _swigc__p_OSRCRSInfo,
   _swigc__p_OSRCoordinateTransformationShadow,
   _swigc__p_OSRSpatialReferenceShadow,
   _swigc__p_char,
@@ -17320,6 +19356,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_p_char,
   _swigc__p_p_double,
   _swigc__p_p_int,
+  _swigc__p_p_p_OSRCRSInfo,
   _swigc__p_p_p_OSRSpatialReferenceShadow,
 };
 
