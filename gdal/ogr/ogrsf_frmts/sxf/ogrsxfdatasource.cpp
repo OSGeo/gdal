@@ -10,6 +10,7 @@
  * Copyright (c) 2011, Ben Ahmed Daho Ali
  * Copyright (c) 2013, NextGIS
  * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2019, NextGIS, <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,7 +78,7 @@ constexpr long aoVCS[] =
 
 // EPSG code range http://gis.stackexchange.com/a/18676/9904
 constexpr int MIN_EPSG = 1000;
-constexpr int MAX_EPSG = 3768;
+constexpr int MAX_EPSG = 32768;
 
 /************************************************************************/
 /*                         OGRSXFDataSource()                           */
