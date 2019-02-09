@@ -1034,7 +1034,10 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             break;
           default:
             if( oSRS.IsProjected() )
-                oSRS.GetRoot()->SetValue( "LOCAL_CS" );
+            {
+                const char* pszName = oSRS.GetName();
+                oSRS.SetLocalCS( pszName ? pszName : "unnamed" );
+            }
             break;
         }
     }
