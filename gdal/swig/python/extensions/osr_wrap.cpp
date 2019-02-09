@@ -4292,8 +4292,9 @@ SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoint__SWIG_3(OSRCoor
   }
 
 static int
-DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *y, double *z, double *t )
+DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *y, double *z, double *t, int *pbFoundTime )
 {
+  *pbFoundTime = FALSE;
   for( int i = 0; i<nCount; ++i )
   {
 
@@ -4362,6 +4363,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 
                 return FALSE;
             }
+            *pbFoundTime = TRUE;
             t[i] = PyFloat_AsDouble(o1);
             Py_DECREF(o1);
         }
@@ -17489,6 +17491,7 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoints(PyObject *SW
   double *arg6 = (double *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
+  int foundTime2 = FALSE ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
@@ -17521,7 +17524,7 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoints(PyObject *SW
       SWIG_fail;
     }
     
-    if (!DecomposeSequenceOf4DCoordinates(obj1,arg2,arg3,arg4,arg5,arg6)) {
+    if (!DecomposeSequenceOf4DCoordinates(obj1,arg2,arg3,arg4,arg5,arg6, &foundTime2)) {
       SWIG_fail;
     }
   }
@@ -17544,11 +17547,13 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoints(PyObject *SW
     /* %typemap(argout)  (int nCount, double *x, double *y, double *z, double *t) */
     Py_DECREF(resultobj);
     PyObject *out = PyList_New( arg2 );
+    int foundTime = foundTime2;
     for( int i=0; i< arg2; i++ ) {
-      PyObject *tuple = PyTuple_New( 4 );
+      PyObject *tuple = PyTuple_New( foundTime ? 4 : 3 );
       PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( (arg3)[i] ) );
       PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( (arg4)[i] ) );
       PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( (arg5)[i] ) );
+      if( foundTime )
       PyTuple_SetItem( tuple, 3, PyFloat_FromDouble( (arg6)[i] ) );
       PyList_SetItem( out, i, tuple );
     }

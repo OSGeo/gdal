@@ -134,6 +134,8 @@ def test_osr_ct_4():
     ct = osr.CoordinateTransformation(ll_srs, utm_srs)
 
     result = ct.TransformPoints([(-117.5, 32.0, 0.0), (-117.5, 32.0)])
+    assert len(result) == 2
+    assert len(result[0]) == 3
 
     for i in range(2):
         assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
