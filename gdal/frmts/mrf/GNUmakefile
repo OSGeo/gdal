@@ -25,6 +25,7 @@ CPPFLAGS        :=      $(GDAL_INCLUDE) $(CPPFLAGS)
 ifeq ($(JPEG12_ENABLED),yes)
 FILES	:= $(FILES) JPEG12_band
 XTRA_OPT := $(XTRA_OPT) -DJPEG12_SUPPORTED
+PREDEPEND 	=	libjpeg12
 endif
 
 ifeq ($(JPEG_SETTING),internal)
@@ -50,13 +51,13 @@ endif
 
 CPPFLAGS        :=  $(XTRA_OPT)  $(CPPFLAGS)
 
-default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
+default:  $(PREDEPEND)	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
 clean:
 	rm -rf *.o *.lo .libs/$(OBJ) .libs $(O_OBJ) $(LO_O_OBJ) gdal_mrf.so.1
 	(cd libLERC; $(MAKE) clean)
 
-install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
+install-obj:	$(PREDEPEND) $(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
 lib-libLERC:
 	(cd libLERC; $(MAKE) install-obj)
@@ -69,3 +70,6 @@ plugin: $(OBJ)
 iplugin: gdal_mrf.so.1 plugin
 	mkdir -p $(PLUGIN_PATH)
 	cp $< $(PLUGIN_PATH)/gdal_mrf.so
+	
+libjpeg12:
+	(cd ../jpeg; $(MAKE) libjpeg12/jcapimin12.c)

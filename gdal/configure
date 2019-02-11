@@ -995,6 +995,7 @@ enable_driver_airsar
 enable_driver_arg
 enable_driver_blx
 enable_driver_bmp
+enable_driver_bsb
 enable_driver_cals
 enable_driver_ceos
 enable_driver_ceos2
@@ -1009,6 +1010,7 @@ enable_driver_envisat
 enable_driver_ers
 enable_driver_fit
 enable_driver_gff
+enable_driver_grib
 enable_driver_gsg
 enable_driver_gxf
 enable_driver_hf2
@@ -1024,6 +1026,7 @@ enable_driver_kmlsuperoverlay
 enable_driver_l1b
 enable_driver_leveller
 enable_driver_map
+enable_driver_mrf
 enable_driver_msgn
 enable_driver_ngsgeoid
 enable_driver_nitf
@@ -1138,11 +1141,9 @@ with_jp2mrsid
 with_mrsid_lidar
 with_jp2lura
 with_msg
-with_bsb
 with_oci
 with_oci_include
 with_oci_lib
-with_grib
 with_gnm
 with_mysql
 with_ingres
@@ -1201,7 +1202,6 @@ with_rasdaman
 with_armadillo
 with_cryptopp
 with_crypto
-with_mrf
 with_lerc
 with_null
 '
@@ -1875,6 +1875,7 @@ Optional Features:
   --disable-driver-arg    disable arg driver support (enabled by default)
   --disable-driver-blx    disable blx driver support (enabled by default)
   --disable-driver-bmp    disable bmp driver support (enabled by default)
+  --disable-driver-bsb    disable bsb driver support (enabled by default)
   --disable-driver-cals   disable cals driver support (enabled by default)
   --disable-driver-ceos   disable ceos driver support (enabled by default)
   --disable-driver-ceos2  disable ceos2 driver support (enabled by default)
@@ -1891,6 +1892,7 @@ Optional Features:
   --disable-driver-ers    disable ers driver support (enabled by default)
   --disable-driver-fit    disable fit driver support (enabled by default)
   --disable-driver-gff    disable gff driver support (enabled by default)
+  --disable-driver-grib   disable grib driver support (enabled by default)
   --disable-driver-gsg    disable gsg driver support (enabled by default)
   --disable-driver-gxf    disable gxf driver support (enabled by default)
   --disable-driver-hf2    disable hf2 driver support (enabled by default)
@@ -1911,6 +1913,7 @@ Optional Features:
   --disable-driver-leveller
                           disable leveller driver support (enabled by default)
   --disable-driver-map    disable map driver support (enabled by default)
+  --disable-driver-mrf    disable mrf driver support (enabled by default)
   --disable-driver-msgn   disable msgn driver support (enabled by default)
   --disable-driver-ngsgeoid
                           disable ngsgeoid driver support (enabled by default)
@@ -2098,14 +2101,12 @@ Optional Packages:
   --with-mrsid_lidar=ARG      Include MrSID/MG4 LiDAR support (ARG=path to LizardTech LiDAR SDK or no)
   --with-j2lura=ARG    Include JP2Lua support (ARG=no, lura SDK install path)
   --with-msg=ARG          Enable MSG driver (ARG=yes or no)
-  --without-bsb           Disable BSB driver (legal issues pending
   --with-oci=[ARG]        use Oracle OCI API from given Oracle home
                           (ARG=path); use existing ORACLE_HOME (ARG=yes);
                           disable Oracle OCI support (ARG=no)
   --with-oci-include=[DIR]
                           use Oracle OCI API headers from given path
   --with-oci-lib=[DIR]    use Oracle OCI API libraries from given path
-  --without-grib          Disable GRIB driver
   --with-gnm            Build GNM into shared library
   --with-mysql=ARG      Include MySQL (ARG=path to mysql_config) [default=no]
   --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)
@@ -2169,7 +2170,6 @@ Optional Packages:
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
   --with-crypto=ARG       Include crypto (from openssl) support (ARG=yes, no or path)
-  --without-mrf           Disable MRF driver
   --without-lerc          Disable LERC library
   --with-null             Enable NULL driver (only useful for development
                           purposes
@@ -24816,6 +24816,34 @@ else
   INTERNAL_FORMAT_bmp_ENABLED=no
 fi
 
+# Check whether --enable-driver-bsb was given.
+if test "${enable_driver_bsb+set}" = set; then :
+  enableval=$enable_driver_bsb;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_bsb
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED bsb"
+  INTERNAL_FORMAT_bsb_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED bsb"
+  INTERNAL_FORMAT_bsb_ENABLED=no
+fi
+
 # Check whether --enable-driver-cals was given.
 if test "${enable_driver_cals+set}" = set; then :
   enableval=$enable_driver_cals;
@@ -25206,6 +25234,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED gff"
   INTERNAL_FORMAT_gff_ENABLED=no
+fi
+
+# Check whether --enable-driver-grib was given.
+if test "${enable_driver_grib+set}" = set; then :
+  enableval=$enable_driver_grib;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_grib
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED grib"
+  INTERNAL_FORMAT_grib_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED grib"
+  INTERNAL_FORMAT_grib_ENABLED=no
 fi
 
 # Check whether --enable-driver-gsg was given.
@@ -25626,6 +25682,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED map"
   INTERNAL_FORMAT_map_ENABLED=no
+fi
+
+# Check whether --enable-driver-mrf was given.
+if test "${enable_driver_mrf+set}" = set; then :
+  enableval=$enable_driver_mrf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_mrf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED mrf"
+  INTERNAL_FORMAT_mrf_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED mrf"
+  INTERNAL_FORMAT_mrf_ENABLED=no
 fi
 
 # Check whether --enable-driver-msgn was given.
@@ -33037,25 +33121,6 @@ fi
 
 
 
-
-# Check whether --with-bsb was given.
-if test "${with_bsb+set}" = set; then :
-  withval=$with_bsb;
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for BSB" >&5
-$as_echo_n "checking for BSB... " >&6; }
-if test "$with_bsb" = yes -o x"$with_bsb" = x ; then
-    OPT_GDAL_FORMATS="bsb $OPT_GDAL_FORMATS"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
-$as_echo "disabled by user" >&6; }
-fi
-
-
 ORACLE_OCI_REQ_VERSION="10.0.1"
 
 
@@ -33397,27 +33462,6 @@ if test "$HAVE_ORACLE_OCI" = "yes"; then
     HAVE_GEORASTER=yes
 else
     HAVE_GEORASTER=no
-fi
-
-
-
-# Check whether --with-grib was given.
-if test "${with_grib+set}" = set; then :
-  withval=$with_grib;
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GRIB" >&5
-$as_echo_n "checking for GRIB... " >&6; }
-if test "$with_grib" = yes -o x"$with_grib" = x ; then
-    OPT_GDAL_FORMATS="grib $OPT_GDAL_FORMATS"
-    HAVE_GRIB=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-else
-    HAVE_GRIB=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
-$as_echo "disabled by user" >&6; }
 fi
 
 
@@ -41008,27 +41052,6 @@ HAVE_OPENSSL_CRYPTO=$HAVE_OPENSSL_CRYPTO
 
 
 
-# Check whether --with-mrf was given.
-if test "${with_mrf+set}" = set; then :
-  withval=$with_mrf;
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MRF" >&5
-$as_echo_n "checking for MRF... " >&6; }
-if test "$with_mrf" = yes -o x"$with_mrf" = x ; then
-    OPT_GDAL_FORMATS="mrf $OPT_GDAL_FORMATS"
-    HAVE_MRF=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-else
-    HAVE_MRF=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
-$as_echo "disabled by user" >&6; }
-fi
-
-
-
 # Check whether --with-lerc was given.
 if test "${with_lerc+set}" = set; then :
   withval=$with_lerc;
@@ -43560,9 +43583,6 @@ echo "  JP2Lura support:           ${HAVE_JP2LURA}"
 echo "  MSG support:               ${HAVE_MSG}"
 
 
-echo "  GRIB support:              ${HAVE_GRIB}"
-
-
 echo "  EPSILON support:           ${EPSILON_SETTING}"
 
 
@@ -43573,9 +43593,6 @@ echo "  cURL support (wms/wcs/...):${CURL_SETTING}"
 
 
 echo "  PostgreSQL support:        ${HAVE_PG}"
-
-
-echo "  MRF support:               ${HAVE_MRF}"
 
 
 echo "  LERC support:              ${HAVE_LERC}"

@@ -1353,7 +1353,7 @@ OGRFORMATS_ENABLED=
 OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
-AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen til tsx usgsdem xpm xyz zmap])
+AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers fit gff grib gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen til tsx usgsdem xpm xyz zmap])
 AC_DEFUN([INTERNAL_OPT_FORMATS],[eeda plmosaic ozi pdf rda rik wcs wms wmts])
 AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo geoconcept georss gml gmt gpsbabel gpx gtm htf jml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
 AC_DEFUN([INTERNAL_CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic gft ngw plscenes wfs])dnl
@@ -3532,22 +3532,6 @@ fi
 
 
 dnl ---------------------------------------------------------------------------
-dnl Check for BSB in the local tree.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH([bsb],
-	    AS_HELP_STRING([--without-bsb],
-	       [Disable BSB driver (legal issues pending]),,)
-
-AC_MSG_CHECKING([for BSB])
-if test "$with_bsb" = yes -o x"$with_bsb" = x ; then
-    OPT_GDAL_FORMATS="bsb $OPT_GDAL_FORMATS"
-    AC_MSG_RESULT([enabled])
-else
-    AC_MSG_RESULT([disabled by user])
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl Check for GeoRaster in the local tree.
 dnl ---------------------------------------------------------------------------
 
@@ -3559,24 +3543,6 @@ if test "$HAVE_ORACLE_OCI" = "yes"; then
     HAVE_GEORASTER=yes
 else
     HAVE_GEORASTER=no
-fi
-
-dnl ---------------------------------------------------------------------------
-dnl Check for GRIB in the local tree.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH([grib],
-	    AS_HELP_STRING([--without-grib],
-	       [Disable GRIB driver]),,)
-
-AC_MSG_CHECKING([for GRIB])
-if test "$with_grib" = yes -o x"$with_grib" = x ; then
-    OPT_GDAL_FORMATS="grib $OPT_GDAL_FORMATS"
-    HAVE_GRIB=yes
-    AC_MSG_RESULT([enabled])
-else
-    HAVE_GRIB=no
-    AC_MSG_RESULT([disabled by user])
 fi
 
 
@@ -5738,24 +5704,6 @@ fi
 AC_SUBST(HAVE_OPENSSL_CRYPTO,$HAVE_OPENSSL_CRYPTO)
 
 dnl ---------------------------------------------------------------------------
-dnl Whether to include MRF in the build
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH([mrf],
-            AS_HELP_STRING([--without-mrf],
-               [Disable MRF driver]),,)
-
-AC_MSG_CHECKING([for MRF])
-if test "$with_mrf" = yes -o x"$with_mrf" = x ; then
-    OPT_GDAL_FORMATS="mrf $OPT_GDAL_FORMATS"
-    HAVE_MRF=yes
-    AC_MSG_RESULT([enabled])
-else
-    HAVE_MRF=no
-    AC_MSG_RESULT([disabled by user])
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl Whether to include LERC in the build
 dnl ---------------------------------------------------------------------------
 
@@ -5893,12 +5841,10 @@ LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
 LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])
-LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
 LOC_MSG([  EPSILON support:           ${EPSILON_SETTING}])
 LOC_MSG([  WebP support:              ${WEBP_SETTING}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
-LOC_MSG([  MRF support:               ${HAVE_MRF}])
 LOC_MSG([  LERC support:              ${HAVE_LERC}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  Ingres support:            ${HAVE_INGRES}])

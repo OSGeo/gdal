@@ -1,6 +1,9 @@
 MIGRATION GUIDE FROM GDAL 2.4 to GDAL 2.5
 -----------------------------------------
 
+- Unix Build: ./configure arguments --without-bsb, --without-grib,
+  and --without-mrf have been renamed to --disable-driver-bsb,
+  --disable-driver-grib and --disable-driver-mrf
 - OSRImportFromEPSG() takes into account official axis order.
 - removal of OPTGetProjectionMethods(), OPTGetParameterList() and OPTGetParameterInfo()
   No equivalent.
