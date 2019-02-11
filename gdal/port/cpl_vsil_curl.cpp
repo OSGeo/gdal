@@ -1015,8 +1015,7 @@ retry:
         }
         else if( response_code != 200 )
         {
-            // If HTTP 429, 500, 502, 503, 504 error retry after a
-            // pause.
+            // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
                 sWriteFuncHeaderData.pBuffer);
@@ -1371,8 +1370,7 @@ retry:
             return DownloadRegion(startOffset, nBlocks);
         }
 
-        // If HTTP 429, 500, 502, 503, 504 error retry after a
-        // pause.
+        // Look if we should attempt a retry
         const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
             static_cast<int>(response_code), dfRetryDelay,
             sWriteFuncHeaderData.pBuffer);

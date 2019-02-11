@@ -520,101 +520,135 @@ char** VSISwiftFSHandler::GetFileList( const char *pszDirname,
 
     while( true )
     {
-        poS3HandleHelper->ResetQueryParameters();
-        CPLString osBaseURL(poS3HandleHelper->GetURL());
-
-        CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
-        CURL* hCurlHandle = curl_easy_init();
-
-        if( !osBucket.empty() )
+        bool bRetry;
+        int nRetryCount = 0;
+        const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
+                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+        double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                    CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+        do
         {
-            poS3HandleHelper->AddQueryParameter("delimiter", "/");
-            if( !osNextMarker.empty() )
-                poS3HandleHelper->AddQueryParameter("marker", osNextMarker);
-            poS3HandleHelper->AddQueryParameter("limit",
-                                        CPLSPrintf("%d", nMaxFilesThisQuery));
-            if( !osPrefix.empty() )
-                poS3HandleHelper->AddQueryParameter("prefix", osPrefix);
-        }
+            bRetry = false;
+            poS3HandleHelper->ResetQueryParameters();
+            CPLString osBaseURL(poS3HandleHelper->GetURL());
 
-        struct curl_slist* headers =
-            VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), nullptr);
-        // Disable automatic redirection
-        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
+            CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
+            CURL* hCurlHandle = curl_easy_init();
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
+            if( !osBucket.empty() )
+            {
+                poS3HandleHelper->AddQueryParameter("delimiter", "/");
+                if( !osNextMarker.empty() )
+                    poS3HandleHelper->AddQueryParameter("marker", osNextMarker);
+                poS3HandleHelper->AddQueryParameter("limit",
+                                            CPLSPrintf("%d", nMaxFilesThisQuery));
+                if( !osPrefix.empty() )
+                    poS3HandleHelper->AddQueryParameter("prefix", osPrefix);
+            }
 
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
+            struct curl_slist* headers =
+                VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), nullptr);
+            // Disable automatic redirection
+            curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
 
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
+            curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+            VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
+            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                            VSICurlHandleWriteFunc);
 
-        headers = VSICurlMergeHeaders(headers,
-                               poS3HandleHelper->GetCurlHeaders("GET", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+            WriteFuncStruct sWriteFuncHeaderData;
+            VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+            curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+            curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                            VSICurlHandleWriteFunc);
 
-        MultiPerform(hCurlMultiHandle, hCurlHandle);
+            char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+            curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
+            headers = VSICurlMergeHeaders(headers,
+                                poS3HandleHelper->GetCurlHeaders("GET", headers));
+            curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        if( headers != nullptr )
-            curl_slist_free_all(headers);
+            MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-        if( sWriteFuncData.pBuffer == nullptr)
-        {
-            delete poS3HandleHelper;
-            curl_easy_cleanup(hCurlHandle);
-            CPLFree(sWriteFuncHeaderData.pBuffer);
-            return nullptr;
-        }
+            VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
-        if( response_code != 200 )
-        {
-            CPLDebug(GetDebugKey(), "%s",
-                        sWriteFuncData.pBuffer
-                        ? sWriteFuncData.pBuffer : "(null)");
-            CPLFree(sWriteFuncData.pBuffer);
-            CPLFree(sWriteFuncHeaderData.pBuffer);
-            delete poS3HandleHelper;
-            curl_easy_cleanup(hCurlHandle);
-            return nullptr;
-        }
-        else
-        {
-            *pbGotFileList = true;
-            bool bIsTruncated;
-            AnalyseSwiftFileList( osBaseURL,
-                                  osPrefix,
-                                  sWriteFuncData.pBuffer,
-                                  osFileList,
-                                  nMaxFilesThisQuery,
-                                  nMaxFiles,
-                                  bIsTruncated,
-                                  osNextMarker );
+            if( headers != nullptr )
+                curl_slist_free_all(headers);
 
-            CPLFree(sWriteFuncData.pBuffer);
-            CPLFree(sWriteFuncHeaderData.pBuffer);
-
-            if( osNextMarker.empty() )
+            if( sWriteFuncData.pBuffer == nullptr)
             {
                 delete poS3HandleHelper;
                 curl_easy_cleanup(hCurlHandle);
-                return osFileList.StealList();
+                CPLFree(sWriteFuncHeaderData.pBuffer);
+                return nullptr;
             }
-        }
 
-        curl_easy_cleanup(hCurlHandle);
+            long response_code = 0;
+            curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+            if( response_code != 200 )
+            {
+                // Look if we should attempt a retry
+                const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                    static_cast<int>(response_code), dfRetryDelay,
+                    sWriteFuncHeaderData.pBuffer);
+                if( dfNewRetryDelay > 0 &&
+                    nRetryCount < nMaxRetry )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                                "HTTP error code: %d - %s. "
+                                "Retrying again in %.1f secs",
+                                static_cast<int>(response_code),
+                                poS3HandleHelper->GetURL().c_str(),
+                                dfRetryDelay);
+                    CPLSleep(dfRetryDelay);
+                    dfRetryDelay = dfNewRetryDelay;
+                    nRetryCount++;
+                    bRetry = true;
+                    CPLFree(sWriteFuncData.pBuffer);
+                    CPLFree(sWriteFuncHeaderData.pBuffer);
+                }
+                else
+                {
+                    CPLDebug(GetDebugKey(), "%s",
+                                sWriteFuncData.pBuffer
+                                ? sWriteFuncData.pBuffer : "(null)");
+                    CPLFree(sWriteFuncData.pBuffer);
+                    CPLFree(sWriteFuncHeaderData.pBuffer);
+                    delete poS3HandleHelper;
+                    curl_easy_cleanup(hCurlHandle);
+                    return nullptr;
+                }
+            }
+            else
+            {
+                *pbGotFileList = true;
+                bool bIsTruncated;
+                AnalyseSwiftFileList( osBaseURL,
+                                    osPrefix,
+                                    sWriteFuncData.pBuffer,
+                                    osFileList,
+                                    nMaxFilesThisQuery,
+                                    nMaxFiles,
+                                    bIsTruncated,
+                                    osNextMarker );
+
+                CPLFree(sWriteFuncData.pBuffer);
+                CPLFree(sWriteFuncHeaderData.pBuffer);
+
+                if( osNextMarker.empty() )
+                {
+                    delete poS3HandleHelper;
+                    curl_easy_cleanup(hCurlHandle);
+                    return osFileList.StealList();
+                }
+            }
+
+            curl_easy_cleanup(hCurlHandle);
+        }
+        while(bRetry);
     }
 }
 

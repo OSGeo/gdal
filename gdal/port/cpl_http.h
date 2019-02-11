@@ -43,8 +43,13 @@
  */
 
 /*! @cond Doxygen_Suppress */
+#ifndef CPL_HTTP_MAX_RETRY
 #define CPL_HTTP_MAX_RETRY      0
+#endif
+
+#ifndef CPL_HTTP_RETRY_DELAY
 #define CPL_HTTP_RETRY_DELAY    30.0
+#endif
 /*! @endcond */
 
 CPL_C_START

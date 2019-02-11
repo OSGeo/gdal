@@ -77,7 +77,7 @@ endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ): cpl_vsi_virtual.h
+$(OBJ): cpl_vsi_virtual.h cpl_vsil_curl_class.h
 
 clean:
 	$(RM) *.o $(O_OBJ)
