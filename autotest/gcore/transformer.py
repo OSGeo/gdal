@@ -701,3 +701,18 @@ def test_transformer_17():
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/i/donot/exist/dem.tif'])
     assert tr is None
+
+
+def test_transformer_longlat_wrap_outside_180():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 360, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([-180, 1, 0, 0, 0, -1])
+    tr = gdal.Transformer(ds, ds, [])
+
+    (success, pnt) = tr.TransformPoint(0, -0.5, 0.5, 0)
+    assert success
+    assert abs(pnt[0] - 359.5) <= 0.000001, pnt
+    assert abs(pnt[1] - 0.5) <= 0.000001, pnt
