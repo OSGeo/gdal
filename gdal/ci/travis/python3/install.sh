@@ -22,7 +22,7 @@ esac
 $SCRIPT_DIR/../common_install.sh
 
 # Build proj
-(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure --prefix=/usr/local && make -j3 && sudo make -j3 install)
+(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure --prefix=/usr/local && make -j3 && sudo make -j3 install && sudo mv /usr/local/lib/libproj.so.13.1.1 /usr/local/lib/libinternalproj.so.13.1.1 && sudo rm /usr/local/lib/libproj.so* && sudo rm /usr/local/lib/libproj.a && sudo rm /usr/local/lib/libproj.la && sudo ln -s libinternalproj.so.13.1.1  /usr/local/lib/libinternalproj.so.13 && sudo ln -s libinternalproj.so.13.1.1  /usr/local/lib/libinternalproj.so)
 
 cd gdal
 # --with-mongocxx=/usr/local
