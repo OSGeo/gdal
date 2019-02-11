@@ -1250,6 +1250,54 @@ def test_vsis3_4():
     assert gdal.GetLastErrorMsg() == ''
 
 ###############################################################################
+# Test simple PUT support with retry logic
+
+
+def test_vsis3_write_single_put_retry():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    with gdaltest.config_options({'GDAL_HTTP_MAX_RETRY': '2',
+                                  'GDAL_HTTP_RETRY_DELAY': '0.01'}):
+
+        with webserver.install_http_handler(webserver.SequentialHandler()):
+            f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/put_with_retry.bin', 'wb')
+            assert f is not None
+            assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            if request.headers['Content-Length'] != '3':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+
+            request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+
+            content = request.rfile.read(3).decode('ascii')
+            if content != 'foo':
+                sys.stderr.write('Did not get expected content: %s\n' % content)
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+
+            request.send_response(200)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+
+        handler.add('PUT', '/s3_fake_bucket3/put_with_retry.bin', 502)
+        handler.add('PUT', '/s3_fake_bucket3/put_with_retry.bin', custom_method=method)
+
+        with webserver.install_http_handler(handler):
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
 # Test simple DELETE support with a fake AWS server
 
 
@@ -1517,7 +1565,61 @@ def test_vsis3_6():
                 gdal.VSIFCloseL(f)
             assert gdal.GetLastErrorMsg() != '', filename
 
-    
+
+###############################################################################
+# Test multipart upload with retry logic
+
+
+def test_vsis3_write_multipart_retry():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    with gdaltest.config_options({'GDAL_HTTP_MAX_RETRY': '2',
+                                  'GDAL_HTTP_RETRY_DELAY': '0.01'}):
+
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
+            with webserver.install_http_handler(webserver.SequentialHandler()):
+                f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket4/large_file.bin', 'wb')
+        assert f is not None
+        size = 1024 * 1024 + 1
+        big_buffer = 'a' * size
+
+        handler = webserver.SequentialHandler()
+
+        response = '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>'
+        handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', 502)
+        handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', 200,
+                    {'Content-type': 'application/xml',
+                    'Content-Length': len(response),
+                    'Connection': 'close'},
+                    response)
+
+        handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', 502)
+        handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', 200,
+                    {'Content-Length': '0',
+                    'ETag': '"first_etag"',
+                    'Connection': 'close'}, {})
+
+        with webserver.install_http_handler(handler):
+            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
+        assert ret == size
+        handler = webserver.SequentialHandler()
+
+        handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id', 200,
+                    {'Content-Length': '0',
+                    'ETag': '"second_etag"',
+                    'Connection': 'close'}, {})
+
+        handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploadId=my_id', 502)
+        handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploadId=my_id', 200,
+                    {'Content-Length': '0',
+                    'Connection': 'close'}, {})
+
+        with webserver.install_http_handler(handler):
+            gdal.VSIFCloseL(f)
+
+
 ###############################################################################
 # Test Mkdir() / Rmdir()
 

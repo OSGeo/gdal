@@ -88,31 +88,31 @@ typedef struct
 
 typedef struct
 {
-    char*           pBuffer;
-    size_t          nSize;
-    bool            bIsHTTP;
-    bool            bIsInHeader;
-    bool            bMultiRange;
-    vsi_l_offset    nStartOffset;
-    vsi_l_offset    nEndOffset;
-    int             nHTTPCode;
-    vsi_l_offset    nContentLength;
-    bool            bFoundContentRange;
-    bool            bError;
-    bool            bDownloadHeaderOnly;
-    bool            bDetectRangeDownloadingError;
-    GIntBig         nTimestampDate; // Corresponds to Date: header field
+    char*           pBuffer = nullptr;
+    size_t          nSize = 0;
+    bool            bIsHTTP = false;
+    bool            bIsInHeader = false;
+    bool            bMultiRange = false;
+    vsi_l_offset    nStartOffset = 0;
+    vsi_l_offset    nEndOffset = 0;
+    int             nHTTPCode = 0;
+    vsi_l_offset    nContentLength = 0;
+    bool            bFoundContentRange = false;
+    bool            bError = false;
+    bool            bDownloadHeaderOnly = false;
+    bool            bDetectRangeDownloadingError = false;
+    GIntBig         nTimestampDate = 0; // Corresponds to Date: header field
 
-    VSILFILE           *fp;
-    VSICurlReadCbkFunc  pfnReadCbk;
-    void               *pReadCbkUserData;
-    bool                bInterrupted;
+    VSILFILE           *fp = nullptr;
+    VSICurlReadCbkFunc  pfnReadCbk = nullptr;
+    void               *pReadCbkUserData = nullptr;
+    bool                bInterrupted = false;
 
 #if LIBCURL_VERSION_NUM < 0x073600
     // Workaround to ignore extra HTTP response headers from
     // proxies in older versions of curl.
     // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
-    bool            bIsProxyConnectHeader;
+    bool            bIsProxyConnectHeader = false;
 #endif
 } WriteFuncStruct;
 
@@ -461,6 +461,10 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     CPLString           m_osCurlErrBuf{};
     size_t              m_nChunkedBufferOff = 0;
     size_t              m_nChunkedBufferSize = 0;
+
+    int                 m_nMaxRetry = 0;
+    double              m_dfRetryDelay = 0.0;
+    WriteFuncStruct     m_sWriteFuncHeaderData{};
 
     static size_t       ReadCallBackBuffer( char *buffer, size_t size,
                                             size_t nitems, void *instream );
