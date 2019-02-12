@@ -1010,7 +1010,6 @@ enable_driver_envisat
 enable_driver_ers
 enable_driver_fit
 enable_driver_gff
-enable_driver_grib
 enable_driver_gsg
 enable_driver_gxf
 enable_driver_hf2
@@ -1052,6 +1051,7 @@ enable_driver_xpm
 enable_driver_xyz
 enable_driver_zmap
 enable_driver_eeda
+enable_driver_grib
 enable_driver_plmosaic
 enable_driver_ozi
 enable_driver_pdf
@@ -1892,7 +1892,6 @@ Optional Features:
   --disable-driver-ers    disable ers driver support (enabled by default)
   --disable-driver-fit    disable fit driver support (enabled by default)
   --disable-driver-gff    disable gff driver support (enabled by default)
-  --disable-driver-grib   disable grib driver support (enabled by default)
   --disable-driver-gsg    disable gsg driver support (enabled by default)
   --disable-driver-gxf    disable gxf driver support (enabled by default)
   --disable-driver-hf2    disable hf2 driver support (enabled by default)
@@ -1945,6 +1944,8 @@ Optional Features:
   --disable-driver-xyz    disable xyz driver support (enabled by default)
   --disable-driver-zmap   disable zmap driver support (enabled by default)
   --disable-driver-eeda   disable eeda format support (enabled by default,
+                          requires dependency)
+  --disable-driver-grib   disable grib format support (enabled by default,
                           requires dependency)
   --disable-driver-plmosaic
                           disable plmosaic format support (enabled by default,
@@ -25236,34 +25237,6 @@ else
   INTERNAL_FORMAT_gff_ENABLED=no
 fi
 
-# Check whether --enable-driver-grib was given.
-if test "${enable_driver_grib+set}" = set; then :
-  enableval=$enable_driver_grib;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_grib
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED grib"
-  INTERNAL_FORMAT_grib_ENABLED=yes
-else
-  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED grib"
-  INTERNAL_FORMAT_grib_ENABLED=no
-fi
-
 # Check whether --enable-driver-gsg was given.
 if test "${enable_driver_gsg+set}" = set; then :
   enableval=$enable_driver_gsg;
@@ -26411,6 +26384,33 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED eeda"
   INTERNAL_FORMAT_eeda_ENABLED=no
+fi
+
+# Check whether --enable-driver-grib was given.
+if test "${enable_driver_grib+set}" = set; then :
+  enableval=$enable_driver_grib;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_grib
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_grib_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED grib"
+  INTERNAL_FORMAT_grib_ENABLED=no
 fi
 
 # Check whether --enable-driver-plmosaic was given.
@@ -28683,6 +28683,9 @@ PNG_SETTING=$PNG_SETTING
 
 if test "$PNG_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="png $OPT_GDAL_FORMATS"
+  if test "x$INTERNAL_FORMAT_grib_ENABLED" = "xyes"; then
+  	GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED grib"
+  fi
 fi
 
 
