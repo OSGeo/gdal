@@ -139,7 +139,8 @@ install:
       exec { vcpkg install sqlite3:$env:VCPKG_PLATFORM }
       appveyor DownloadFile https://sqlite.org/2018/sqlite-tools-win32-x86-3250100.zip
       exec { 7z x sqlite-tools-win32-x86-3250100.zip }
-      exec { copy sqlite-tools-win32-x86-3250100/sqlite3.exe . }
+      exec { copy sqlite-tools-win32-x86-3250100/sqlite3.exe $env:APPVEYOR_BUILD_FOLDER }
+      $env:PATH="$env:APPVEYOR_BUILD_FOLDER;$env:PATH"
       $env:PROJ_INSTALL_DIR="$env:APPVEYOR_BUILD_FOLDER"+"\install-proj"
       $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:PROJ_INSTALL_DIR
       exec { cmake -G $env:VS_FULL .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake }
