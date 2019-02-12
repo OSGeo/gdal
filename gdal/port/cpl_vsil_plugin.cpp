@@ -313,7 +313,7 @@ int VSIInstallPluginHandler( const char* pszPrefix, const VSIFilesystemPluginCal
     return 0;
 }
 
-VSIFilesystemPluginCallbacksStruct* VSIAllocFilesystemPluginCallbacksStruct() {
+VSIFilesystemPluginCallbacksStruct* VSIAllocFilesystemPluginCallbacksStruct( void ) {
     return static_cast<VSIFilesystemPluginCallbacksStruct*>(VSI_CALLOC_VERBOSE(1, sizeof(VSIFilesystemPluginCallbacksStruct)));
 }
 void VSIFreeFilesystemPluginCallbacksStruct(VSIFilesystemPluginCallbacksStruct* poCb) {

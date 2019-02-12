@@ -425,6 +425,11 @@ typedef int            (*VSIFilesystemPluginFlushCallback)         ( void *pFile
 typedef int            (*VSIFilesystemPluginTruncateCallback)      ( void *pFile, vsi_l_offset nNewSize );
 typedef int            (*VSIFilesystemPluginCloseCallback)         ( void *pFile );
 
+/* 
+    Callbacks are defined as a struct allocated by a call to VSIAllocFilesystemPluginCallbacksStruct
+    in order to try to maintain ABI stability when eventually adding a new member.
+    Any callbacks added to this struct SHOULD be added to the END of this struct
+*/
 typedef struct {
     void                                        *pUserData;
     VSIFilesystemPluginStatCallback             stat;
@@ -446,7 +451,7 @@ typedef struct {
     VSIFilesystemPluginCloseCallback            close;
 } VSIFilesystemPluginCallbacksStruct;
 
-VSIFilesystemPluginCallbacksStruct* VSIAllocFilesystemPluginCallbacksStruct();
+VSIFilesystemPluginCallbacksStruct* VSIAllocFilesystemPluginCallbacksStruct( void );
 void VSIFreeFilesystemPluginCallbacksStruct(VSIFilesystemPluginCallbacksStruct* poCb);
 int CPL_DLL VSIInstallPluginHandler( const char* pszPrefix, const VSIFilesystemPluginCallbacksStruct* poCb);
 
