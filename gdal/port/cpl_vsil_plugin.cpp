@@ -175,8 +175,7 @@ VSIVirtualHandle* VSIPluginFilesystemHandler::Open( const char *pszFilename,
     const void *cbData = open_cb(GetCallbackFilename(pszFilename), pszAccess);
     if (cbData == nullptr) {
         if (bSetError) {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                 "plugin callback failed to open %s", GetCallbackFilename(pszFilename));
+            VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(errno));
         }
         return nullptr;
     }
