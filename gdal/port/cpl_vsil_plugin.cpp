@@ -39,7 +39,7 @@ namespace cpl {
 /************************************************************************/
 
 VSIPluginHandle::VSIPluginHandle( VSIPluginFilesystemHandler* poFSIn,
-                                  const void *cbDataIn) :
+                                  void *cbDataIn) :
     poFS(poFSIn),
     cbData(cbDataIn)
 {
@@ -119,46 +119,16 @@ int VSIPluginHandle::Truncate( vsi_l_offset nNewSize ) {
 /************************************************************************/
 
 VSIPluginFilesystemHandler::VSIPluginFilesystemHandler( const char *pszPrefix,
-                                VSIFilesystemPluginStatCallback             stat,
-                                VSIFilesystemPluginUnlinkCallback           unlink,
-                                VSIFilesystemPluginRenameCallback           rename,
-                                VSIFilesystemPluginMkdirCallback            mkdir,
-                                VSIFilesystemPluginRmdirCallback            rmdir,
-                                VSIFilesystemPluginReadDirCallback          read_dir,
-                                VSIFilesystemPluginOpenCallback             open,
-                                VSIFilesystemPluginTellCallback             tell,
-                                VSIFilesystemPluginSeekCallback             seek,
-                                VSIFilesystemPluginReadCallback             read,
-                                VSIFilesystemPluginReadMultiRangeCallback   read_multi_range,
-                                VSIFilesystemPluginGetRangeStatusCallback   get_range_status,
-                                VSIFilesystemPluginEofCallback              eof,
-                                VSIFilesystemPluginWriteCallback            write,
-                                VSIFilesystemPluginFlushCallback            flush,
-                                VSIFilesystemPluginTruncateCallback         truncate,
-                                VSIFilesystemPluginCloseCallback            close) :
+                                const VSIFilesystemPluginCallbacksStruct *cbIn):
     m_Prefix(pszPrefix),
-    stat_cb(stat),
-    unlink_cb(unlink),
-    rename_cb(rename),
-    mkdir_cb(mkdir),
-    rmdir_cb(rmdir),
-    read_dir_cb(read_dir),
-    open_cb(open),
-    tell_cb(tell),
-    seek_cb(seek),
-    read_cb(read),
-    read_multi_range_cb(read_multi_range),
-    get_range_status_cb(get_range_status),
-    eof_cb(eof),
-    write_cb(write),
-    flush_cb(flush),
-    truncate_cb(truncate),
-    close_cb(close)
+    m_cb(nullptr)
 {
+    m_cb = new VSIFilesystemPluginCallbacksStruct(*cbIn);
 }
 
 VSIPluginFilesystemHandler::~VSIPluginFilesystemHandler()
 {
+    delete m_cb;
 }
 
 
@@ -172,7 +142,7 @@ VSIVirtualHandle* VSIPluginFilesystemHandler::Open( const char *pszFilename,
 {
     if( !IsValidFilename(pszFilename) )
         return nullptr;
-    const void *cbData = open_cb(GetCallbackFilename(pszFilename), pszAccess);
+    void *cbData = m_cb->open(m_cb->pUserData, GetCallbackFilename(pszFilename), pszAccess);
     if (cbData == nullptr) {
         if (bSetError) {
             VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(errno));
@@ -209,95 +179,95 @@ int VSIPluginFilesystemHandler::Stat( const char *pszFilename,
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     int nRet = 0;
-    if ( stat_cb != nullptr ) {
-        nRet = stat_cb(GetCallbackFilename(pszFilename), pStatBuf, nFlags);
+    if ( m_cb->stat != nullptr ) {
+        nRet = m_cb->stat(m_cb->pUserData, GetCallbackFilename(pszFilename), pStatBuf, nFlags);
     } else {
         nRet = -1;
     }
     return nRet;
 }
 
-int VSIPluginFilesystemHandler::Seek(const void *psData, vsi_l_offset nOffset, int nWhence) {
-    if (seek_cb != nullptr) {
-        return seek_cb(psData,static_cast<size_t>(nOffset),nWhence);
+int VSIPluginFilesystemHandler::Seek(void *pFile, vsi_l_offset nOffset, int nWhence) {
+    if (m_cb->seek != nullptr) {
+        return m_cb->seek(pFile,nOffset,nWhence);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Seek not implemented for %s plugin", m_Prefix);
     return -1;
 }
 
-vsi_l_offset VSIPluginFilesystemHandler::Tell(const void *psData) {
-    if (tell_cb != nullptr) {
-        return tell_cb(psData);
+vsi_l_offset VSIPluginFilesystemHandler::Tell(void *pFile) {
+    if (m_cb->tell != nullptr) {
+        return m_cb->tell(pFile);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Tell not implemented for %s plugin", m_Prefix);
     return -1;
 }
 
-size_t VSIPluginFilesystemHandler::Read(const void *psData, void *pBuffer, size_t nSize, size_t nCount) {
-    if (read_cb != nullptr) {
-        return read_cb(psData, pBuffer, nSize, nCount);
+size_t VSIPluginFilesystemHandler::Read(void *pFile, void *pBuffer, size_t nSize, size_t nCount) {
+    if (m_cb->read != nullptr) {
+        return m_cb->read(pFile, pBuffer, nSize, nCount);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Read not implemented for %s plugin", m_Prefix);
     return -1;
 }
 
 int VSIPluginFilesystemHandler::HasOptimizedReadMultiRange(const char* /*pszPath*/ ) {
-    if (read_multi_range_cb != nullptr) {
+    if (m_cb->read_multi_range != nullptr) {
         return TRUE;
     }
     return FALSE;
 }
 
-VSIRangeStatus VSIPluginFilesystemHandler::GetRangeStatus( const void *psData, vsi_l_offset nOffset, vsi_l_offset nLength) {
-    if (get_range_status_cb != nullptr) {
-        return get_range_status_cb(psData,nOffset,nLength);
+VSIRangeStatus VSIPluginFilesystemHandler::GetRangeStatus( void *pFile, vsi_l_offset nOffset, vsi_l_offset nLength) {
+    if (m_cb->get_range_status != nullptr) {
+        return m_cb->get_range_status(pFile,nOffset,nLength);
     }
     return VSI_RANGE_STATUS_UNKNOWN;
 }
 
-int VSIPluginFilesystemHandler::ReadMultiRange( const void *psData, int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes ) {
-    if (read_multi_range_cb != nullptr) {
-        return read_multi_range_cb(psData, nRanges, ppData, panOffsets, panSizes);
+int VSIPluginFilesystemHandler::ReadMultiRange( void *pFile, int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes ) {
+    if (m_cb->read_multi_range != nullptr) {
+        return m_cb->read_multi_range(pFile, nRanges, ppData, panOffsets, panSizes);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Read not implemented for %s plugin", m_Prefix);
     return -1;
 }
 
-int VSIPluginFilesystemHandler::Eof(const void *psData) {
-    if (eof_cb != nullptr) {
-        return eof_cb(psData);
+int VSIPluginFilesystemHandler::Eof(void *pFile) {
+    if (m_cb->eof != nullptr) {
+        return m_cb->eof(pFile);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Eof not implemented for %s plugin", m_Prefix);
     return -1;
 }
 
-int VSIPluginFilesystemHandler::Close(const void *psData) {
-    if (close_cb != nullptr) {
-        return close_cb(psData);
+int VSIPluginFilesystemHandler::Close(void *pFile) {
+    if (m_cb->close != nullptr) {
+        return m_cb->close(pFile);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Close not implemented for %s plugin", m_Prefix);
     return -1;
 }
 
-size_t VSIPluginFilesystemHandler::Write(const void *psData, const void *psBuffer, size_t nSize, size_t nCount) {
-    if (write_cb != nullptr) {
-        return write_cb(psData,psBuffer,nSize,nCount);
+size_t VSIPluginFilesystemHandler::Write(void *pFile, const void *psBuffer, size_t nSize, size_t nCount) {
+    if (m_cb->write != nullptr) {
+        return m_cb->write(pFile,psBuffer,nSize,nCount);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Write not implemented for %s plugin", m_Prefix);
     return -1;
 }
 
-int VSIPluginFilesystemHandler::Flush(const void *psData) {
-    if (flush_cb != nullptr) {
-        return flush_cb(psData);
+int VSIPluginFilesystemHandler::Flush(void *pFile) {
+    if (m_cb->flush != nullptr) {
+        return m_cb->flush(pFile);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Flush not implemented for %s plugin", m_Prefix);
     return -1;
 }
 
-int VSIPluginFilesystemHandler::Truncate(const void *psData, vsi_l_offset nNewSize) {
-    if (truncate_cb != nullptr) {
-        return truncate_cb(psData, nNewSize);
+int VSIPluginFilesystemHandler::Truncate(void *pFile, vsi_l_offset nNewSize) {
+    if (m_cb->truncate != nullptr) {
+        return m_cb->truncate(pFile, nNewSize);
     }
     CPLError(CE_Failure, CPLE_AppDefined, "Truncate not implemented for %s plugin", m_Prefix);
     return -1;
@@ -307,54 +277,37 @@ int VSIPluginFilesystemHandler::Truncate(const void *psData, vsi_l_offset nNewSi
 char ** VSIPluginFilesystemHandler::ReadDirEx( const char * pszDirname, int nMaxFiles ) {
     if( !IsValidFilename(pszDirname) )
         return nullptr;
-    if (read_dir_cb != nullptr) {
-        return read_dir_cb(GetCallbackFilename(pszDirname),nMaxFiles);
+    if (m_cb->read_dir != nullptr) {
+        return m_cb->read_dir(m_cb->pUserData, GetCallbackFilename(pszDirname),nMaxFiles);
     }
     return nullptr;
 }
 
 int VSIPluginFilesystemHandler::Unlink(const char *pszFilename) {
-    if( unlink_cb == nullptr || !IsValidFilename(pszFilename) )
+    if( m_cb->unlink == nullptr || !IsValidFilename(pszFilename) )
         return -1;
-    return unlink_cb(GetCallbackFilename(pszFilename));
+    return unlink(GetCallbackFilename(pszFilename));
 }
 int VSIPluginFilesystemHandler::Rename(const char *oldpath, const char *newpath) {
-    if( rename_cb == nullptr || !IsValidFilename(oldpath) || !IsValidFilename(newpath) )
+    if( m_cb->rename == nullptr || !IsValidFilename(oldpath) || !IsValidFilename(newpath) )
         return -1;
-    return rename_cb(GetCallbackFilename(oldpath), GetCallbackFilename(newpath));
+    return m_cb->rename(m_cb->pUserData, GetCallbackFilename(oldpath), GetCallbackFilename(newpath));
 }
 int VSIPluginFilesystemHandler::Mkdir(const char *pszDirname, long nMode) {
-    if( mkdir_cb == nullptr || !IsValidFilename(pszDirname) )
+    if( m_cb->mkdir == nullptr || !IsValidFilename(pszDirname) )
         return -1;
-    return mkdir_cb(GetCallbackFilename(pszDirname), nMode);
+    return m_cb->mkdir(m_cb->pUserData, GetCallbackFilename(pszDirname), nMode);
 }
 int VSIPluginFilesystemHandler::Rmdir(const char *pszDirname) {
-    if( rmdir_cb == nullptr || !IsValidFilename(pszDirname) )
+    if( m_cb->rmdir == nullptr || !IsValidFilename(pszDirname) )
         return -1;
-    return rmdir_cb(GetCallbackFilename(pszDirname));
+    return m_cb->rmdir(m_cb->pUserData, GetCallbackFilename(pszDirname));
 }
 }
 #endif
 
 int VSIInstallPluginHandler( const char* pszPrefix, const VSIFilesystemPluginCallbacksStruct *poCb) {
-    VSIFilesystemHandler* poHandler = new cpl::VSIPluginFilesystemHandler(pszPrefix,
-                poCb->stat,
-                poCb->unlink,
-                poCb->rename,
-                poCb->mkdir,
-                poCb->rmdir,
-                poCb->read_dir,
-                poCb->open,
-                poCb->tell,
-                poCb->seek,
-                poCb->read,
-                poCb->read_multi_range,
-                poCb->get_range_status,
-                poCb->eof,
-                poCb->write,
-                poCb->flush,
-                poCb->truncate,
-                poCb->close);
+    VSIFilesystemHandler* poHandler = new cpl::VSIPluginFilesystemHandler(pszPrefix, poCb);
     //TODO: check pszPrefix starts and ends with a /
     VSIFileManager::InstallHandler( pszPrefix, poHandler );
     return 0;

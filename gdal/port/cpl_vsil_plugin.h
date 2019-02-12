@@ -50,23 +50,7 @@ class VSIPluginFilesystemHandler : public VSIFilesystemHandler
 
 private:
     const char*         m_Prefix;
-    VSIFilesystemPluginStatCallback             stat_cb;
-    VSIFilesystemPluginUnlinkCallback           unlink_cb;
-    VSIFilesystemPluginRenameCallback           rename_cb;
-    VSIFilesystemPluginMkdirCallback            mkdir_cb;
-    VSIFilesystemPluginRmdirCallback            rmdir_cb;
-    VSIFilesystemPluginReadDirCallback          read_dir_cb;
-    VSIFilesystemPluginOpenCallback             open_cb;
-    VSIFilesystemPluginTellCallback             tell_cb;
-    VSIFilesystemPluginSeekCallback             seek_cb;
-    VSIFilesystemPluginReadCallback             read_cb;
-    VSIFilesystemPluginReadMultiRangeCallback   read_multi_range_cb;
-    VSIFilesystemPluginGetRangeStatusCallback   get_range_status_cb;
-    VSIFilesystemPluginEofCallback              eof_cb;
-    VSIFilesystemPluginWriteCallback            write_cb;
-    VSIFilesystemPluginFlushCallback            flush_cb;
-    VSIFilesystemPluginTruncateCallback         truncate_cb;
-    VSIFilesystemPluginCloseCallback            close_cb;
+    const VSIFilesystemPluginCallbacksStruct* m_cb;
 
 protected:
     friend class VSIPluginHandle;
@@ -74,36 +58,20 @@ protected:
     const char* GetCallbackFilename(const char* pszFilename);
     bool IsValidFilename(const char *pszFilename);
 
-    vsi_l_offset    Tell( const void *psData );
-    int             Seek( const void *psData, vsi_l_offset nOffset, int nWhence );
-    size_t          Read( const void *psData, void *pBuffer, size_t nSize, size_t nCount );
-    int             ReadMultiRange( const void *psData, int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes );
-    VSIRangeStatus  GetRangeStatus( const void *psData, vsi_l_offset nOffset, vsi_l_offset nLength );
-    int             Eof( const void *psData );
-    size_t          Write( const void *psData, const void *pBuffer, size_t nSize,size_t nCount);
-    int             Flush( const void *psData );
-    int             Truncate( const void *psData, vsi_l_offset nNewSize );
-    int             Close( const void *psData );
+    vsi_l_offset    Tell( void *pFile );
+    int             Seek( void *pFile, vsi_l_offset nOffset, int nWhence );
+    size_t          Read( void *pFile, void *pBuffer, size_t nSize, size_t nCount );
+    int             ReadMultiRange( void *pFile, int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes );
+    VSIRangeStatus  GetRangeStatus( void *pFile, vsi_l_offset nOffset, vsi_l_offset nLength );
+    int             Eof( void *pFile );
+    size_t          Write( void *pFile, const void *pBuffer, size_t nSize,size_t nCount);
+    int             Flush( void *pFile );
+    int             Truncate( void *pFile, vsi_l_offset nNewSize );
+    int             Close( void *pFile );
 
 public:
     VSIPluginFilesystemHandler( const char *pszPrefix,
-                                VSIFilesystemPluginStatCallback             stat,
-                                VSIFilesystemPluginUnlinkCallback           unlink,
-                                VSIFilesystemPluginRenameCallback           rename,
-                                VSIFilesystemPluginMkdirCallback            mkdir,
-                                VSIFilesystemPluginRmdirCallback            rmdir,
-                                VSIFilesystemPluginReadDirCallback          read_dir,
-                                VSIFilesystemPluginOpenCallback             open,
-                                VSIFilesystemPluginTellCallback             tell,
-                                VSIFilesystemPluginSeekCallback             seek,
-                                VSIFilesystemPluginReadCallback             read,
-                                VSIFilesystemPluginReadMultiRangeCallback   read_multi_range,
-                                VSIFilesystemPluginGetRangeStatusCallback   get_range_status,
-                                VSIFilesystemPluginEofCallback              eof,
-                                VSIFilesystemPluginWriteCallback            write,
-                                VSIFilesystemPluginFlushCallback            fush,
-                                VSIFilesystemPluginTruncateCallback         truncate,
-                                VSIFilesystemPluginCloseCallback            close);
+                                const VSIFilesystemPluginCallbacksStruct *cb);
     ~VSIPluginFilesystemHandler() override;
 
     VSIVirtualHandle *Open( const char *pszFilename,
@@ -132,11 +100,11 @@ class VSIPluginHandle : public VSIVirtualHandle
 
   protected:
     VSIPluginFilesystemHandler* poFS;
-    const void *cbData;
+    void *cbData;
 
   public:
 
-    VSIPluginHandle( VSIPluginFilesystemHandler* poFS, const void *cbData);
+    VSIPluginHandle( VSIPluginFilesystemHandler* poFS, void *cbData);
     ~VSIPluginHandle() override;
 
     vsi_l_offset    Tell() override;
