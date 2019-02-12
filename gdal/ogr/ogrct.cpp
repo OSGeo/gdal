@@ -860,10 +860,32 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
 
 static PJ* op_to_pj(PJ_CONTEXT* ctx, PJ* op, CPLString* osOutProjString = nullptr )
 {
-    const char* pszUseETMERC = CPLGetConfigOption("OSR_USE_ETMERC", "");
+    // OSR_USE_ETMERC is here just for legacy
+    bool bForceApproxTMerc = false;
+    const char* pszUseETMERC = CPLGetConfigOption("OSR_USE_ETMERC", nullptr);
+    if( pszUseETMERC && pszUseETMERC[0] )
+    {
+        static bool bHasWarned = false;
+        if( !bHasWarned )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "OSR_USE_ETMERC is a legacy configuration option, which "
+                     "now has only effect when set to NO (YES is the default). "
+                     "Use OSR_USE_APPROX_TMERC=YES instead");
+            bHasWarned = true;
+        }
+        bForceApproxTMerc = !CPLTestBool(pszUseETMERC);
+    }
+    else
+    {
+        const char* pszUseApproxTMERC = CPLGetConfigOption("OSR_USE_APPROX_TMERC", nullptr);
+        if( pszUseApproxTMERC && pszUseApproxTMERC[0] )
+        {
+            bForceApproxTMerc = CPLTestBool(pszUseApproxTMERC);
+        }
+    }
     const char* options[] = {
-        pszUseETMERC[0] && CPLTestBool(pszUseETMERC) ? "USE_ETMERC=YES" :
-        pszUseETMERC[0] && !CPLTestBool(pszUseETMERC) ? "USE_ETMERC=NO" : nullptr,
+        bForceApproxTMerc ? "USE_APPROX_TMERC=YES" : nullptr,
         nullptr
     };
     auto proj_string = proj_as_proj_string(ctx, op, PJ_PROJ_5, options);
