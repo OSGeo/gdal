@@ -34,9 +34,6 @@
 
 namespace cpl {
 
-/************************************************************************/
-/*                           VSIPluginHandle()                            */
-/************************************************************************/
 
 VSIPluginHandle::VSIPluginHandle( VSIPluginFilesystemHandler* poFSIn,
                                   void *cbDataIn) :
@@ -45,9 +42,6 @@ VSIPluginHandle::VSIPluginHandle( VSIPluginFilesystemHandler* poFSIn,
 {
 }
 
-/************************************************************************/
-/*                          ~VSIPluginHandle()                            */
-/************************************************************************/
 
 VSIPluginHandle::~VSIPluginHandle()
 {
@@ -57,9 +51,6 @@ VSIPluginHandle::~VSIPluginHandle()
 }
 
 
-/************************************************************************/
-/*                                Seek()                                */
-/************************************************************************/
 
 int VSIPluginHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
@@ -67,9 +58,6 @@ int VSIPluginHandle::Seek( vsi_l_offset nOffset, int nWhence )
 }
 
 
-/************************************************************************/
-/*                                  Tell()                              */
-/************************************************************************/
 
 vsi_l_offset VSIPluginHandle::Tell()
 {
@@ -114,9 +102,6 @@ int VSIPluginHandle::Truncate( vsi_l_offset nNewSize ) {
     return poFS->Truncate(cbData,nNewSize);
 }
 
-/************************************************************************/
-/*                   VSIPluginFilesystemHandler()                         */
-/************************************************************************/
 
 VSIPluginFilesystemHandler::VSIPluginFilesystemHandler( const char *pszPrefix,
                                 const VSIFilesystemPluginCallbacksStruct *cbIn):
@@ -132,9 +117,6 @@ VSIPluginFilesystemHandler::~VSIPluginFilesystemHandler()
 }
 
 
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
 
 VSIVirtualHandle* VSIPluginFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
@@ -162,9 +144,6 @@ bool VSIPluginFilesystemHandler::IsValidFilename(const char *pszFilename) {
     return true;
 }
 
-/************************************************************************/
-/*                                Stat()                                */
-/************************************************************************/
 
 int VSIPluginFilesystemHandler::Stat( const char *pszFilename,
                                       VSIStatBufL *pStatBuf,
@@ -303,7 +282,7 @@ int VSIPluginFilesystemHandler::Rmdir(const char *pszDirname) {
         return -1;
     return m_cb->rmdir(m_cb->pUserData, GetCallbackFilename(pszDirname));
 }
-}
+} // namespace cpl
 #endif
 
 int VSIInstallPluginHandler( const char* pszPrefix, const VSIFilesystemPluginCallbacksStruct *poCb) {
