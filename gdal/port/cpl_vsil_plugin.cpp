@@ -283,7 +283,9 @@ int VSIPluginFilesystemHandler::Rmdir(const char *pszDirname) {
     return m_cb->rmdir(m_cb->pUserData, GetCallbackFilename(pszDirname));
 }
 } // namespace cpl
-#endif
+
+#endif //DOXYGEN_SKIP
+//! @endcond
 
 int VSIInstallPluginHandler( const char* pszPrefix, const VSIFilesystemPluginCallbacksStruct *poCb) {
     VSIFilesystemHandler* poHandler = new cpl::VSIPluginFilesystemHandler(pszPrefix, poCb);
