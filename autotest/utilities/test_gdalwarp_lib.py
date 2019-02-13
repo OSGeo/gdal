@@ -1756,6 +1756,53 @@ def test_gdalwarp_lib_ct_wkt():
 
     assert dstDS.GetRasterBand(1).Checksum() == 4705, 'Bad checksum'
 
+
+###############################################################################
+# Test warping from a RPC dataset to a new dataset larger than needed
+
+def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_new():
+
+    dstDS = gdal.Warp('', 'data/unstable_rpc_with_dem_source.tif',
+              options = '-f MEM -et 0 -to RPC_DEM=data/unstable_rpc_with_dem_elevation.tif -to RPC_MAX_ITERATIONS=40 -to RPC_DEM_MISSING_VALUE=0 -t_srs EPSG:3857 -te 12693400.445 2547311.740 12700666.740 2553269.051 -ts 380 311')
+    cs = dstDS.GetRasterBand(1).Checksum()
+    assert cs == 53230
+
+    with gdaltest.config_option('RESTRICT_OUTPUT_DATASET_UPDATE', 'NO'):
+        dstDS = gdal.Warp('', 'data/unstable_rpc_with_dem_source.tif',
+                options = '-f MEM -et 0 -to RPC_DEM=data/unstable_rpc_with_dem_elevation.tif -to RPC_MAX_ITERATIONS=40 -to RPC_DEM_MISSING_VALUE=0 -t_srs EPSG:3857 -te 12693400.445 2547311.740 12700666.740 2553269.051 -ts 380 311')
+    cs = dstDS.GetRasterBand(1).Checksum()
+    assert cs != 53230
+
+
+###############################################################################
+# Test warping from a RPC dataset to an existing dataset
+
+def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing():
+
+    dstDS = gdal.Translate('', 'data/unstable_rpc_with_dem_blank_output.tif',
+                           format = 'MEM')
+    gdal.Warp(dstDS, 'data/unstable_rpc_with_dem_source.tif',
+              options = '-et 0 -to RPC_DEM=data/unstable_rpc_with_dem_elevation.tif -to RPC_MAX_ITERATIONS=40 -to RPC_DEM_MISSING_VALUE=0')
+    cs = dstDS.GetRasterBand(1).Checksum()
+    assert cs == 53230
+
+
+###############################################################################
+# Test warping from a RPC dataset to an existing dataset, with using RPC_FOOTPRINT
+
+def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_RPC_FOOTPRINT():
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    with gdaltest.config_option('RESTRICT_OUTPUT_DATASET_UPDATE', 'NO'):
+        dstDS = gdal.Translate('', 'data/unstable_rpc_with_dem_blank_output.tif',
+                            format = 'MEM')
+        gdal.Warp(dstDS, 'data/unstable_rpc_with_dem_source.tif',
+                options = '-et 0 -to RPC_DEM=data/unstable_rpc_with_dem_elevation.tif -to RPC_MAX_ITERATIONS=40 -to RPC_DEM_MISSING_VALUE=0 -to "RPC_FOOTPRINT=POLYGON ((114.070906445526 22.329620213341,114.085953272341 22.3088955493586,114.075520805749 22.3027084861851,114.060942102434 22.3236815197571,114.060942102434 22.3236815197571,114.060942102434 22.3236815197571,114.060942102434 22.3236815197571,114.070906445526 22.329620213341))"')
+        cs = dstDS.GetRasterBand(1).Checksum()
+        assert cs == 53230
+
 ###############################################################################
 # Cleanup
 
