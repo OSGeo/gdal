@@ -6922,6 +6922,31 @@ def test_tiff_write_184_create_append_subdataset():
     gdal.Unlink(tmpfilename)
 
 ###############################################################################
+# Test LERC compression with Create() and BuildOverviews()
+# Fixes https://github.com/OSGeo/gdal/issues/1257
+
+
+def test_tiff_write_185_lerc_create_and_overview():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        pytest.skip()
+
+    filename = '/vsimem/test_tiff_write_185_lerc_create_and_overview.tif'
+    ds = gdaltest.tiff_drv.Create(filename, 20, 20, options=['COMPRESS=LERC_DEFLATE'])
+    src_ds = gdal.Open('data/byte.tif')
+    ds.WriteRaster(0,0,20,20,src_ds.ReadRaster())
+    gdal.ErrorReset()
+    ds.BuildOverviews('NEAR', [2])
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+    ds = gdal.Open(filename)
+    cs = ds.GetRasterBand(1).Checksum()
+    cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    gdal.Unlink(filename)
+    assert (cs, cs_ovr) == (4672, 1087)
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 

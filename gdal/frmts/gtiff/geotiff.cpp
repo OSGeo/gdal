@@ -16496,6 +16496,21 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
             TIFFSetField(l_hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
     }
 
+#ifdef HAVE_LERC
+    if( poDS->nCompression == COMPRESSION_LERC )
+    {
+        uint32 nLercParamCount = 0;
+        uint32* panLercParms = nullptr;
+        if( TIFFGetField( l_hTIFF, TIFFTAG_LERC_PARAMETERS, &nLercParamCount,
+                          &panLercParms ) &&
+            nLercParamCount == 2 )
+        {
+            memcpy( poDS->anLercAddCompressionAndVersion, panLercParms,
+                    sizeof(poDS->anLercAddCompressionAndVersion) );
+        }
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Read palette back as a color table if it has one.               */
 /* -------------------------------------------------------------------- */
