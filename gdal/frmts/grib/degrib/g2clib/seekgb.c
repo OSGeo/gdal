@@ -53,7 +53,7 @@ void seekgb(FILE *lugb,g2int iseek,g2int mseek,g2int *lskip,g2int *lgrib)
 
         /* ret= */ fseek(lugb,ipos,SEEK_SET);
         nread=(int)fread(cbuf,sizeof(unsigned char),mseek,lugb);
-        lim=nread-8;
+        lim = nread - (vers == 2 ? 16 : 8);
 
 //  LOOK FOR 'GRIB...' IN PARTIAL SECTION
 
