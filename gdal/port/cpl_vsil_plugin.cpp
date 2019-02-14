@@ -256,12 +256,12 @@ int VSIPluginFilesystemHandler::ReadMultiRange( void *pFile, int nRanges, void *
         }
     }
 
-    delete mOffsets;
-    delete mSizes;
+    delete[] mOffsets;
+    delete[] mSizes;
     for ( int i=0; i<nMergedRanges; i++ ) {
-        delete mData[i];
+        delete[] mData[i];
     }
-    delete mData;
+    delete[] mData;
 
     return ret;
 }
