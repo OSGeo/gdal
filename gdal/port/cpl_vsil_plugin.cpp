@@ -205,11 +205,65 @@ VSIRangeStatus VSIPluginFilesystemHandler::GetRangeStatus( void *pFile, vsi_l_of
 }
 
 int VSIPluginFilesystemHandler::ReadMultiRange( void *pFile, int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes ) {
-    if (m_cb->read_multi_range != nullptr) {
+    if (m_cb->read_multi_range == nullptr) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Read not implemented for %s plugin", m_Prefix);
+        return -1;
+    }
+    int iRange;
+    int nMergedRanges = 1;
+    for ( iRange=0; iRange<nRanges-1; iRange++ ) {
+        if ( panOffsets[iRange] + panSizes[iRange] != panOffsets[iRange+1] ) {
+            nMergedRanges++;
+        }
+    }
+    if ( nMergedRanges == nRanges ) {
         return m_cb->read_multi_range(pFile, nRanges, ppData, panOffsets, panSizes);
     }
-    CPLError(CE_Failure, CPLE_AppDefined, "Read not implemented for %s plugin", m_Prefix);
-    return -1;
+    
+    vsi_l_offset *mOffsets = new vsi_l_offset[nMergedRanges];
+    size_t *mSizes = new size_t[nMergedRanges];
+    char **mData = new char*[nMergedRanges];
+
+    int curRange = 0;
+    mSizes[curRange] = panSizes[0];
+    mOffsets[curRange] = panOffsets[0];
+    for ( iRange=0; iRange<nRanges-1; iRange++ ) {
+        if ( panOffsets[iRange] + panSizes[iRange] == panOffsets[iRange+1] ) {
+            mSizes[curRange] += panSizes[iRange+1];
+        } else {
+            mData[curRange] = new char[mSizes[curRange]];
+            //start a new range
+            curRange++;
+            mSizes[curRange] = panSizes[iRange+1];
+            mOffsets[curRange] = panOffsets[iRange+1];
+        }
+    }
+    mData[curRange] = new char[mSizes[curRange]];
+
+    int ret = m_cb->read_multi_range(pFile, nMergedRanges, reinterpret_cast<void**>(mData), mOffsets, mSizes);
+    
+    curRange = 0;
+    size_t curOffset = panSizes[0];
+    memcpy(ppData[0],mData[0],panSizes[0]);
+    for ( iRange=0; iRange<nRanges-1; iRange++ ) {
+        if ( panOffsets[iRange] + panSizes[iRange] == panOffsets[iRange+1] ) {
+            memcpy(ppData[iRange+1], mData[curRange]+curOffset, panSizes[iRange+1]);
+            curOffset += panSizes[iRange+1];
+        } else {
+            curRange++;
+            memcpy(ppData[iRange+1], mData[curRange], panSizes[iRange+1]);
+            curOffset = panSizes[iRange+1];
+        }
+    }
+
+    delete mOffsets;
+    delete mSizes;
+    for ( int i=0; i<nMergedRanges; i++ ) {
+        delete mData[i];
+    }
+    delete mData;
+
+    return ret;
 }
 
 int VSIPluginFilesystemHandler::Eof(void *pFile) {
