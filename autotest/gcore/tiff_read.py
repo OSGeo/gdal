@@ -508,9 +508,6 @@ def test_tiff_linearparmunits2():
 
 def test_tiff_g4_split():
 
-    if 'GetBlockSize' not in dir(gdal.Band):
-        pytest.skip()
-
     ds = gdal.Open('data/slim_g4.tif')
 
     (_, blocky) = ds.GetRasterBand(1).GetBlockSize()
@@ -3128,3 +3125,22 @@ def test_tiff_read_ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero():
     ds = gdal.Open('data/ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero.tif')
     assert ds.GetRasterBand(1).GetScale() == 1
     assert ds.GetRasterBand(1).GetOffset() == 0
+
+
+###############################################################################
+# Test strip chopping on uncompressed fies with strips larger than 2 GB
+
+def test_tiff_read_strip_larger_than_2GB():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    ds = gdal.Open('data/strip_larger_than_2GB_header.tif')
+    assert ds
+    assert ds.GetRasterBand(1).GetBlockSize() == [50000, 10737]
+    assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') == '264'
+    assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF') == '536850000'
+    assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_1', 'TIFF') == '536850264'
+    assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_1', 'TIFF') == '536850000'
+    assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_5', 'TIFF') == '2684250264'
+    assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_5', 'TIFF') == '65750000'
