@@ -1210,6 +1210,14 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
 
     if (err==Z_OK)
         zi->in_opened_file_inzip = 1;
+    else
+    {
+        free(zi->ci.central_header);
+        zi->ci.central_header = nullptr;
+        free(zi->ci.local_header);
+        zi->ci.local_header = nullptr;
+    }
+
     return err;
 }
 
