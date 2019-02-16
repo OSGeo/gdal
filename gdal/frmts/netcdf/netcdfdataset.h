@@ -250,6 +250,18 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 #define CF_PP_GRID_NORTH_POLE_LATITUDE  "grid_north_pole_latitude"
 #define CF_PP_NORTH_POLE_GRID_LONGITUDE "north_pole_grid_longitude"
 
+/* Simple Geometries Special Names from CF-1.8 Draft - Chapter 7 section Geometries */
+#define CF_SG_GEOMETRY               "geometry"
+#define CF_SG_GEOMETRY_TYPE          "geometry_type"
+#define CF_SG_INTERIOR_RING          "interior_ring"
+#define CF_SG_NODES                  "nodes"
+#define CF_SG_NODE_COORDINATES       "node_coordinates"
+#define CF_SG_NODE_COUNT             "node_count"
+#define CF_SG_PART_NODE_COUNT        "part_node_count"	
+#define CF_SG_TYPE_LINE              "line"
+#define CF_SG_TYPE_POINT             "point"
+#define CF_SG_TYPE_POLY              "polygon"
+
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
 /* -------------------------------------------------------------------- */
