@@ -57,6 +57,9 @@ typedef struct {
     int nYSize;
     int nBands;
     GDALDataType eType;
+    int nPixelSpace;
+    int nLineSpace;
+    int nBandSpace;
     double *padfBurnValue;
     GDALBurnValueSrc eBurnValueSource;
     GDALRasterMergeAlg eMergeAlg;
