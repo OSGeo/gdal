@@ -3175,6 +3175,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
                 oHorizSRS.d->refreshProjObj();
                 oVertSRS.d->refreshProjObj();
+                if( !oHorizSRS.d->m_pj_crs || !oVertSRS.d->m_pj_crs )
+                    return OGRERR_FAILURE;
+
                 const char* pszHorizName = proj_get_name(oHorizSRS.d->m_pj_crs);
                 const char* pszVertName = proj_get_name(oVertSRS.d->m_pj_crs);
 
@@ -3665,6 +3668,9 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
         oHorizSRS.d->refreshProjObj();
         oVertSRS.d->refreshProjObj();
+        if( !oHorizSRS.d->m_pj_crs || !oVertSRS.d->m_pj_crs )
+            return OGRERR_FAILURE;
+
         const char* pszHorizName = proj_get_name(oHorizSRS.d->m_pj_crs);
         const char* pszVertName = proj_get_name(oVertSRS.d->m_pj_crs);
 
