@@ -1633,8 +1633,9 @@ static bool RPCIsValidLongLat( const GDALRPCTransformInfo *psTransform,
         return true;
 
     OGRPoint p(dfLong, dfLat);
-    return OGRPreparedGeometryContains(psTransform->poRPCFootprintPreparedGeom,
-                                       &p);
+    return CPL_TO_BOOL(
+        OGRPreparedGeometryContains(psTransform->poRPCFootprintPreparedGeom,
+                                       &p));
 }
 
 /************************************************************************/
