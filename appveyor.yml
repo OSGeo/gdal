@@ -147,7 +147,7 @@ install:
       exec { cmake --build . --config Release --target install }
       cd $env:APPVEYOR_BUILD_FOLDER\install-proj\share
       appveyor DownloadFile https://download.osgeo.org/proj/proj-datumgrid-1.8.zip
-      exec { 7z x proj-datumgrid-1.8.zip }
+      exec { 7z x proj-datumgrid-1.8.zip -aoa }
       #
       cd $env:APPVEYOR_BUILD_FOLDER\gdal
       exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\proj_6_0.dll . }
