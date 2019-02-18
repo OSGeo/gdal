@@ -37,21 +37,21 @@ CPL_CVSID("$Id$")
 
 void GDALUnrolledCopy_GByte_2_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
-                                             int nIters );
+                                             GInt64 nIters );
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
-                                             int nIters );
+                                             GInt64 nIters );
 
 void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
-                                             int nIters );
+                                             GInt64 nIters );
 
 void GDALUnrolledCopy_GByte_2_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
-                                             int nIters )
+                                             GInt64 nIters )
 {
-    int i;
+    decltype(nIters) i;
     const __m128i xmm_shuffle0 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
                                               -1  ,-1  ,-1  ,-1,
                                               14  ,12  ,10  ,8,
@@ -87,9 +87,9 @@ void GDALUnrolledCopy_GByte_2_1_SSSE3( GByte* CPL_RESTRICT pDest,
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
-                                             int nIters )
+                                             GInt64 nIters )
 {
-    int i;
+    decltype(nIters) i;
     const __m128i xmm_shuffle0 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
                                               -1  ,-1  ,-1  ,-1,
                                               -1  ,-1  ,15  ,12,
@@ -133,9 +133,9 @@ void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
 
 void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
-                                             int nIters )
+                                             GInt64 nIters )
 {
-    int i;
+    decltype(nIters) i;
     const __m128i xmm_shuffle0 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
                                               -1  ,-1  ,-1  ,-1,
                                               -1  ,-1  ,-1  ,-1,
