@@ -4103,8 +4103,12 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                 std::vector<size_t> anSizes;
                 std::vector<void*> apData;
                 size_t nAccOffset = 0;
+                bool bCanMergeConsecutiveRanges = false;
                 for( size_t i = 0; i < aOffsetSize.size(); i++ )
                 {
+                    if( i>0 && aOffsetSize[i-1].first+aOffsetSize[i-1].second == aOffsetSize[i].first ) {
+                        bCanMergeConsecutiveRanges = true;
+                    }
                     anOffsets.push_back(aOffsetSize[i].first);
                     anSizes.push_back(aOffsetSize[i].second);
                     apData.push_back(static_cast<GByte*>(pBufferedData) + nAccOffset);
@@ -4113,7 +4117,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                 int nMultiRet;
                 VSILFILE* fp = VSI_TIFFGetVSILFile(th);
 
-                if( aOffsetSize.size() > 1 )
+                if( bCanMergeConsecutiveRanges )
                 {
                     nAccOffset = 0;
                     std::vector<vsi_l_offset> anMergedOffsets;
