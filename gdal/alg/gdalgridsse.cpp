@@ -106,13 +106,13 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
     size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
     for( i = 0; i < nPointsRound; i += LOOP_SIZE )
     {
-        __m128 xmm_rx = _mm_sub_ps(_mm_load_ps((float*)pafX + i), xmm_x);           /* rx = pafX[i] - fXPoint */
-        __m128 xmm_ry = _mm_sub_ps(_mm_load_ps((float*)pafY + i), xmm_y);           /* ry = pafY[i] - fYPoint */
+        __m128 xmm_rx = _mm_sub_ps(_mm_load_ps(pafX + i), xmm_x);           /* rx = pafX[i] - fXPoint */
+        __m128 xmm_ry = _mm_sub_ps(_mm_load_ps(pafY + i), xmm_y);           /* ry = pafY[i] - fYPoint */
         __m128 xmm_r2 = _mm_add_ps(_mm_mul_ps(xmm_rx, xmm_rx),              /* r2 = rx * rx + ry * ry */
                                    _mm_mul_ps(xmm_ry, xmm_ry));
         __m128 xmm_invr2 = _mm_rcp_ps(xmm_r2);                              /* invr2 = 1.0f / r2 */
         xmm_nominator = _mm_add_ps(xmm_nominator,                           /* nominator += invr2 * pafZ[i] */
-                            _mm_mul_ps(xmm_invr2, _mm_load_ps((float*)pafZ + i)));
+                            _mm_mul_ps(xmm_invr2, _mm_load_ps(pafZ + i)));
         xmm_denominator = _mm_add_ps(xmm_denominator, xmm_invr2);           /* denominator += invr2 */
         mask = _mm_movemask_ps(_mm_cmplt_ps(xmm_r2, xmm_small));            /* if( r2 < fEpsilon) */
         if( mask )
