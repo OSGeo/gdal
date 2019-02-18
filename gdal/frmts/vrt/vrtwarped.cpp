@@ -1633,7 +1633,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
             = poBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
 
         const GByte* pabyDstBandBuffer = 
-            pabyDstBuffer + i*nReqXSize*nReqYSize*nWordSize;
+            pabyDstBuffer + static_cast<GPtrDiff_t>(i)*nReqXSize*nReqYSize*nWordSize;
 
         if( poBlock != nullptr )
         {
@@ -1641,13 +1641,13 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
             {
                 if( nReqXSize == m_nBlockXSize && nReqYSize == m_nBlockYSize )
                 {
-                    GDALCopyWords(
+                    GDALCopyWords64(
                         pabyDstBandBuffer,
                         psWO->eWorkingDataType, nWordSize,
                         poBlock->GetDataRef(),
                         poBlock->GetDataType(),
                         GDALGetDataTypeSizeBytes(poBlock->GetDataType()),
-                        m_nBlockXSize * m_nBlockYSize );
+                        static_cast<GPtrDiff_t>(m_nBlockXSize) * m_nBlockYSize );
                 }
                 else
                 {
@@ -1744,8 +1744,8 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( eErr == CE_None && pImage != poBlock->GetDataRef() )
     {
-        const int nDataBytes
-            = (GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
+        const GPtrDiff_t nDataBytes
+            = static_cast<GPtrDiff_t>(GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
             * poBlock->GetXSize() * poBlock->GetYSize();
         memcpy( pImage, poBlock->GetDataRef(), nDataBytes );
     }

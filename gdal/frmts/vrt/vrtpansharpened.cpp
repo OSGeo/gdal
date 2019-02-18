@@ -1351,7 +1351,7 @@ CPLErr VRTPansharpenedDataset::IRasterIO( GDALRWFlag eRWFlag,
             return eErr;
     }
 
-    const int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if( nXSize == nBufXSize &&
         nYSize == nBufYSize &&
         nDataTypeSize == nPixelSpace &&
@@ -1526,7 +1526,7 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             return eErr;
     }
 
-    const int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if( nXSize == nBufXSize &&
         nYSize == nBufYSize &&
         nDataTypeSize == nPixelSpace &&
@@ -1537,7 +1537,7 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         // Have we already done this request for another band ?
         // If so use the cached result
         const size_t nBufferSizePerBand
-            = static_cast<size_t>( nXSize * nYSize * nDataTypeSize );
+            = static_cast<size_t>(nXSize) * nYSize * nDataTypeSize;
         if( nXOff == poGDS->m_nLastBandRasterIOXOff &&
             nYOff >= poGDS->m_nLastBandRasterIOYOff &&
             nXSize == poGDS->m_nLastBandRasterIOXSize &&
@@ -1553,7 +1553,7 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             memcpy(pData,
                    poGDS->m_pabyLastBufferBandRasterIO +
                         nBufferSizePerBandCached * m_nIndexAsPansharpenedBand +
-                        (nYOff - poGDS->m_nLastBandRasterIOYOff) * nXSize * nDataTypeSize,
+                        static_cast<size_t>(nYOff - poGDS->m_nLastBandRasterIOYOff) * nXSize * nDataTypeSize,
                    nBufferSizePerBand);
             return CE_None;
         }
@@ -1563,17 +1563,17 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             //{static int bDone = 0; if (!bDone) printf("(7)\n"); bDone = 1; }
             // For efficiency, try to cache at leak 256 K
-            nYSizeToCache = (256 * 1024) / (nXSize * nDataTypeSize);
+            nYSizeToCache = (256 * 1024) / nXSize / nDataTypeSize;
             if( nYSizeToCache == 0 )
                 nYSizeToCache = 1;
             else if( nYOff + nYSizeToCache > nRasterYSize )
                 nYSizeToCache = nRasterYSize - nYOff;
         }
-        const GIntBig nBufferSize
-            = static_cast<GIntBig>( nXSize ) * nYSizeToCache * nDataTypeSize
+        const GUIntBig nBufferSize
+            = static_cast<GUIntBig>( nXSize ) * nYSizeToCache * nDataTypeSize
             * psOptions->nOutPansharpenedBands;
-        // TODO: This double static cast seems bogus.
-        if( static_cast<GIntBig>( static_cast<size_t>( nBufferSize ) )
+        // Check the we don't overflow (for 32 bit platforms)
+        if( static_cast<GUIntBig>( static_cast<size_t>( nBufferSize ) )
             != nBufferSize )
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
