@@ -93,13 +93,14 @@ def test_fits_nodata():
     ds2 = gdal.Open('tmp/nodata_byte.fits')
     nd = ds2.GetRasterBand(1).GetNoDataValue()
     ds2 = None
+    driver.Delete('tmp/nodata_byte.fits')
 
     assert nd == 0
 
 def test_fits_offscale():
     driver = gdal.GetDriverByName('FITS')
 
-    ds = gdal.Open('../gcore/data/offscale_byte.tif')
+    ds = gdal.Open('../gdrivers/data/offscale_byte.tif')
     ds2 = driver.CreateCopy('tmp/offscale_byte.fits', ds)
     ds2 = None
     gdal.Unlink('tmp/offscale_byte.fits.aux.xml')
@@ -108,6 +109,7 @@ def test_fits_offscale():
     offset = ds2.GetRasterBand(1).GetOffset()
     scale = ds2.GetRasterBand(1).GetScale()
     ds2 = None
+    driver.Delete('tmp/offscale_byte.fits')
 
     assert offset == -0.0039525691699605
     assert scale == 1.00395256917
