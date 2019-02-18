@@ -416,9 +416,9 @@ void GDALGPKGMBTilesLikePseudoDataset::FillBuffer(GByte* pabyData,
     }
     else
     {
-        GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
-                      pabyData, m_eDT, m_nDTSize,
-                      static_cast<int>(nPixels));
+        GDALCopyWords64(&dfNoDataValue, GDT_Float64, 0,
+                        pabyData, m_eDT, m_nDTSize,
+                        nPixels);
     }
 }
 
@@ -527,7 +527,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
         if( m_eDT == GDT_Int16 )
         {
             CPLAssert( eRequestDT == GDT_UInt16 );
-            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            for( size_t i = 0; i < static_cast<size_t>(nBlockXSize) * nBlockYSize; i++ )
             {
                 const GUInt16 nVal =
                     *reinterpret_cast<GUInt16*>(pabyTileData +
@@ -549,7 +549,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                   dfTileOffset != 0.0 || dfTileScale != 1.0) )
         {
             CPLAssert( eRequestDT == GDT_UInt16 );
-            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            for( size_t i = 0; i < static_cast<size_t>(nBlockXSize) * nBlockYSize; i++ )
             {
                 const GUInt16 nVal =
                     *reinterpret_cast<GUInt16*>(pabyTileData +
@@ -570,7 +570,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
         {
             // Due to non identical data type size, we need to start from the
             // end of the buffer.
-            for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; i-- )
+            for( GPtrDiff_t i = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize - 1; i >= 0; i-- )
             {
                 const GUInt16 nVal =
                     *reinterpret_cast<GUInt16*>(pabyTileData +
@@ -604,6 +604,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
               (poCT != nullptr && poCT->GetColorEntryCount() == 256) /* PNG8 */;
 
     /* Map RGB(A) tile to single-band color indexed */
+    const GPtrDiff_t nBlockPixels = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
     if( nBands == 1 && m_poCT != nullptr && nTileBandCount != 1 )
     {
         std::map< GUInt32, int > oMapEntryToIndex;
@@ -619,12 +620,12 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             oMapEntryToIndex[nVal] = i;
         }
         int iBestEntryFor0 = GPKGFindBestEntry(m_poCT, 0, 0, 0, 0, nTileBandCount);
-        for(int i=0;i<nBlockXSize*nBlockYSize;i++)
+        for(GPtrDiff_t i=0;i<nBlockPixels;i++)
         {
             const GByte c1 = pabyTileData[i];
-            const GByte c2 = pabyTileData[i + nBlockXSize * nBlockYSize];
-            const GByte c3 = pabyTileData[i + 2 * nBlockXSize * nBlockYSize];
-            const GByte c4 = pabyTileData[i + 3 * nBlockXSize * nBlockYSize];
+            const GByte c2 = pabyTileData[i + nBlockPixels];
+            const GByte c3 = pabyTileData[i + 2 * nBlockPixels];
+            const GByte c4 = pabyTileData[i + 3 * nBlockPixels];
             GUInt32 nVal = c1 + (c2 << 8) + (c3 << 16);
             if( nTileBandCount == 4 ) nVal += (c4 << 24);
             if( nVal == 0 )
@@ -670,27 +671,27 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
         if( nTileBandCount == 1 || nTileBandCount == 3 )
         {
             /* Create fully opaque alpha */
-            memset(pabyTileData + 1 * nBlockXSize * nBlockYSize,
-                   255, nBlockXSize * nBlockYSize);
+            memset(pabyTileData + 1 * nBlockPixels,
+                   255, nBlockPixels);
         }
         else if( nTileBandCount == 4 )
         {
             /* Transfer alpha band */
-            memcpy(pabyTileData + 1 * nBlockXSize * nBlockYSize,
-                   pabyTileData + 3 * nBlockXSize * nBlockYSize,
-                   nBlockXSize * nBlockYSize);
+            memcpy(pabyTileData + 1 * nBlockPixels,
+                   pabyTileData + 3 * nBlockPixels,
+                   nBlockPixels);
         }
     }
     else if( nTileBandCount == 2 )
     {
         /* Do Grey+Alpha -> RGBA */
-        memcpy(pabyTileData + 3 * nBlockXSize * nBlockYSize,
-               pabyTileData + 1 * nBlockXSize * nBlockYSize,
-               nBlockXSize * nBlockYSize);
-        memcpy(pabyTileData + 1 * nBlockXSize * nBlockYSize,
-               pabyTileData, nBlockXSize * nBlockYSize);
-        memcpy(pabyTileData + 2 * nBlockXSize * nBlockYSize,
-               pabyTileData, nBlockXSize * nBlockYSize);
+        memcpy(pabyTileData + 3 * nBlockPixels,
+               pabyTileData + 1 * nBlockPixels,
+               nBlockPixels);
+        memcpy(pabyTileData + 1 * nBlockPixels,
+               pabyTileData, nBlockPixels);
+        memcpy(pabyTileData + 2 * nBlockPixels,
+               pabyTileData, nBlockPixels);
     }
     else if( nTileBandCount == 1 && !(nBands == 1 && m_poCT != nullptr) )
     {
@@ -714,33 +715,33 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                 abyCT[4*i+2] = 0;
                 abyCT[4*i+3] = 0;
             }
-            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            for( GPtrDiff_t i = 0; i < nBlockPixels; i++ )
             {
                 const GByte byVal = pabyTileData[i];
                 pabyTileData[i] = abyCT[4*byVal];
-                pabyTileData[i + 1 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+1];
-                pabyTileData[i + 2 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+2];
-                pabyTileData[i + 3 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+3];
+                pabyTileData[i + 1 * nBlockPixels] = abyCT[4*byVal+1];
+                pabyTileData[i + 2 * nBlockPixels] = abyCT[4*byVal+2];
+                pabyTileData[i + 3 * nBlockPixels] = abyCT[4*byVal+3];
             }
         }
         else
         {
-            memcpy(pabyTileData + 1 * nBlockXSize * nBlockYSize,
-                pabyTileData, nBlockXSize * nBlockYSize);
-            memcpy(pabyTileData + 2 * nBlockXSize * nBlockYSize,
-                pabyTileData, nBlockXSize * nBlockYSize);
+            memcpy(pabyTileData + 1 * nBlockPixels,
+                pabyTileData, nBlockPixels);
+            memcpy(pabyTileData + 2 * nBlockPixels,
+                pabyTileData, nBlockPixels);
             if( nBands == 4 )
             {
-                memset(pabyTileData + 3 * nBlockXSize * nBlockYSize,
-                    255, nBlockXSize * nBlockYSize);
+                memset(pabyTileData + 3 * nBlockPixels,
+                    255, nBlockPixels);
             }
         }
     }
     else if( nTileBandCount == 3 && nBands == 4 )
     {
         /* Create fully opaque alpha */
-        memset(pabyTileData + 3 * nBlockXSize * nBlockYSize,
-                255, nBlockXSize * nBlockYSize);
+        memset(pabyTileData + 3 * nBlockPixels,
+                255, nBlockPixels);
     }
 
     GDALClose( poDSTile );
@@ -1144,7 +1145,7 @@ retry:
                         {
                             for(int x=0;x<nBlockXSize;x++)
                             {
-                                if( pabyDest[y*nBlockXSize+x] != 0 && !bFoundNonZero )
+                                if( pabyDest[static_cast<GPtrDiff_t>(y)*nBlockXSize+x] != 0 && !bFoundNonZero )
                                 {
                                     CPLDebug("GPKG", "IReadBlock(): Found non-zero content in ghost part of tile(nBand=%d,nBlockXOff=%d,nBlockYOff=%d,m_nZoomLevel=%d)\n",
                                             iBand,nBlockXOff,nBlockYOff,m_poTPD->m_nZoomLevel);
@@ -1196,10 +1197,10 @@ retry:
                               nDstXOffset, nDstYOffset);
 #endif
 
-                    for( int y=0; y<nSrcYSize; y++ )
+                    for( GPtrDiff_t y=0; y<nSrcYSize; y++ )
                     {
                         GByte *pSrc =
-                          pabyTileData + ((iBand - 1) * nBlockXSize * nBlockYSize
+                          pabyTileData + (static_cast<GPtrDiff_t>(iBand - 1) * nBlockXSize * nBlockYSize
                           + (y + nSrcYOffset) * nBlockXSize + nSrcXOffset) * m_nDTSize;
                         GByte *pDst =
                           pabyDest + ((y + nDstYOffset) * nBlockXSize
@@ -1319,7 +1320,7 @@ bool GDALGPKGMBTilesLikePseudoDataset::DeleteFromGriddedTileAncillary(
 
 template<class T>
 static void ProcessInt16UInt16Tile( const void* pabyData,
-                                    int nPixels,
+                                    GPtrDiff_t nPixels,
                                     bool bIsInt16,
                                     bool bHasNoData,
                                     double dfNoDataValue,
@@ -1333,7 +1334,7 @@ static void ProcessInt16UInt16Tile( const void* pabyData,
                                     double& dfTileMax,
                                     double& dfTileMean,
                                     double& dfTileStdDev,
-                                    int& nValidPixels )
+                                    GPtrDiff_t& nValidPixels )
 {
     const T* pSrc = reinterpret_cast<const T*>(pabyData);
     T nMin = 0;
@@ -1401,7 +1402,7 @@ static void ProcessInt16UInt16Tile( const void* pabyData,
         dfTileScale = 1.0;
     }
 
-    for( int i = 0; i < nPixels; i++ )
+    for( GPtrDiff_t i = 0; i < nPixels; i++ )
     {
         const T nVal = pSrc[i];
         if( bHasNoData && nVal == dfNoDataValue )
@@ -1526,7 +1527,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             for(int i = 0; i < nBands; i++ )
             {
                 bool bFoundNonZero = false;
-                for(int y = nRasterYSize - nBlockYOff * nBlockYSize; y < nBlockYSize; y++)
+                for(GPtrDiff_t y = nRasterYSize - nBlockYOff * nBlockYSize; y < nBlockYSize; y++)
                 {
                     for(int x=0;x<nBlockXSize;x++)
                     {
@@ -1545,7 +1546,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
 
     /* Validity area of tile data in intra-tile coordinate space */
     int iXOff = 0;
-    int iYOff = 0;
+    GPtrDiff_t iYOff = 0;
     int iXCount = nBlockXSize;
     int iYCount = nBlockYSize;
 
@@ -1603,13 +1604,13 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     if( m_eDT == GDT_Byte && m_poCT == nullptr && nAlphaBand != 0 )
     {
         GByte byFirstAlphaVal =  m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize];
-        int i = 1;
-        for( ; i < nBlockXSize * nBlockYSize; i++ )
+        GPtrDiff_t i = 1;
+        for( ; i < static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize; i++ )
         {
-            if( m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize + i] != byFirstAlphaVal )
+            if( m_pabyCachedTiles[static_cast<GPtrDiff_t>(nAlphaBand-1) * nBlockXSize * nBlockYSize + i] != byFirstAlphaVal )
                 break;
         }
-        if( i == nBlockXSize * nBlockYSize )
+        if( i == static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize )
         {
             // If tile is fully transparent, don't serialize it and remove it if it exists
             if( byFirstAlphaVal == 0 )
@@ -1626,10 +1627,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     else if( m_eDT == GDT_Float32 )
     {
         const float* pSrc = reinterpret_cast<float*>(m_pabyCachedTiles);
-        int i;
+        GPtrDiff_t i;
         const float fNoDataValueOrZero =
             bHasNoData ? static_cast<float>(dfNoDataValue) : 0.0f;
-        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+        for( i = 0; i < static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize; i++ )
         {
             const float fVal = pSrc[i];
             if( bHasNanNoData )
@@ -1643,7 +1644,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             }
             break;
         }
-        if( i == nBlockXSize * nBlockYSize )
+        if( i == static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize )
         {
             // If tile is fully transparent, don't serialize it and remove it if it exists
             DeleteTile(nRow, nCol);
@@ -1775,7 +1776,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             int nTargetAlphaBand = nTileBands;
             memset(m_pabyCachedTiles + (nTargetAlphaBand-1) * nBandBlockSize, 0,
                    nBandBlockSize);
-            for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
+            for(GPtrDiff_t iY = iYOff; iY < iYOff + iYCount; iY ++)
             {
                 memset(m_pabyCachedTiles + (static_cast<size_t>(nTargetAlphaBand-1) * nBlockYSize + iY) * nBlockXSize + iXOff,
                        255, iXCount);
@@ -1783,7 +1784,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         }
 
         GUInt16* pTempTileBuffer = nullptr;
-        int nValidPixels = 0;
+        GPtrDiff_t nValidPixels = 0;
         double dfTileMin = 0.0;
         double dfTileMax = 0.0;
         double dfTileMean = 0.0;
@@ -1798,7 +1799,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             if( m_eDT == GDT_Int16 )
             {
                 ProcessInt16UInt16Tile<GInt16>( m_pabyCachedTiles,
-                                                nBlockXSize * nBlockYSize,
+                                                static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize,
                                                 true,
                                                 CPL_TO_BOOL(bHasNoData),
                                                 dfNoDataValue,
@@ -1817,7 +1818,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             else if( m_eDT == GDT_UInt16 )
             {
                 ProcessInt16UInt16Tile<GUInt16>( m_pabyCachedTiles,
-                                                nBlockXSize * nBlockYSize,
+                                                static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize,
                                                 false,
                                                 CPL_TO_BOOL(bHasNoData),
                                                 dfNoDataValue,
@@ -1840,7 +1841,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 float fMin = 0.0f;
                 float fMax = 0.0f;
                 double dfM2 = 0.0;
-                for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize; i++ )
                 {
                     const float fVal = pSrc[i];
                     if( bHasNanNoData )
@@ -1899,7 +1900,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     }
                 }
 
-                for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize; i++ )
                 {
                     const float fVal = pSrc[i];
                     if( bHasNanNoData )
@@ -1950,7 +1951,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             float fMin = 0.0f;
             float fMax = 0.0f;
             double dfM2 = 0.0;
-            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize; i++ )
             {
                 const float fVal = pSrc[i];
                 if( bHasNanNoData )
@@ -2121,8 +2122,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 memset(m_pabyCachedTiles + 2 * nBandBlockSize, 0, nBlockXSize * iYOff);
                 memset(m_pabyCachedTiles + 3 * nBandBlockSize, 0, nBlockXSize * iYOff);
             }
-            int i = 0;  // TODO: Rename variable to make it clear what it is.
-            for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
+            GPtrDiff_t i = 0;  // TODO: Rename variable to make it clear what it is.
+            for(GPtrDiff_t iY = iYOff; iY < iYOff + iYCount; iY ++)
             {
                 if( iXOff > 0 )
                 {
@@ -2554,7 +2555,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                                                         ((static_cast<size_t>(nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
                                                     m_pabyCachedTiles +
                                                         ((static_cast<size_t>(4 + nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
-                                                    nXSize * m_nDTSize );
+                                                    static_cast<size_t>(nXSize) * m_nDTSize );
                                         }
                                     }
                                 }
@@ -3159,7 +3160,7 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                         {
                             for(int x=0;x<nBlockXSize;x++)
                             {
-                                if( pabySrc[y*nBlockXSize+x] != 0 && !bFoundNonZero )
+                                if( pabySrc[static_cast<GPtrDiff_t>(y)*nBlockXSize+x] != 0 && !bFoundNonZero )
                                 {
                                     CPLDebug("GPKG", "IWriteBlock(): Found non-zero content in ghost part of tile(nBand=%d,nBlockXOff=%d,nBlockYOff=%d,m_nZoomLevel=%d)\n",
                                             iBand,nBlockXOff,nBlockYOff,m_poTPD->m_nZoomLevel);
@@ -3198,7 +3199,7 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                             for( int iY = 0; iY < nYEndValidity; iY++ )
                             {
                                 m_poTPD->FillBuffer( m_poTPD->m_pabyCachedTiles +
-                                        (((iBand - 1) * nBlockYSize + iY) *
+                                        ((static_cast<size_t>(iBand - 1) * nBlockYSize + iY) *
                                             nBlockXSize + nXEndValidity) * m_nDTSize,
                                         nBlockXSize - nXEndValidity);
                             }
@@ -3206,9 +3207,9 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                         if( nYEndValidity < nBlockYSize )
                         {
                             m_poTPD->FillBuffer( m_poTPD->m_pabyCachedTiles +
-                                        ((iBand - 1) * nBlockYSize +
+                                        (static_cast<size_t>(iBand - 1) * nBlockYSize +
                                             nYEndValidity) * nBlockXSize * m_nDTSize,
-                                    (nBlockYSize - nYEndValidity) * nBlockXSize );
+                                    static_cast<size_t>(nBlockYSize - nYEndValidity) * nBlockXSize );
                         }
                     }
                 }
@@ -3270,11 +3271,11 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
 
                     if( nDstXSize > 0 && nDstYSize > 0 )
                     {
-                        for( int y=0; y<nDstYSize; y++ )
+                        for( GPtrDiff_t y=0; y<nDstYSize; y++ )
                         {
                             GByte* pDst =
                                 m_poTPD->m_pabyCachedTiles +
-                                ((iBand - 1) * nBlockXSize * nBlockYSize +
+                                (static_cast<size_t>(iBand - 1) * nBlockXSize * nBlockYSize +
                                 (y + nDstYOffset) * nBlockXSize + nDstXOffset)
                                     * m_nDTSize;
                             GByte* pSrc =
