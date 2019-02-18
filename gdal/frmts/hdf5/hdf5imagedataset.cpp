@@ -338,10 +338,11 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     HDF5ImageDataset *poGDS = static_cast<HDF5ImageDataset *>(poDS);
 
+    memset(pImage, 0,
+            static_cast<size_t>(nBlockXSize) * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType));
+
     if( poGDS->eAccess == GA_Update )
     {
-        memset(pImage, 0,
-               nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eDataType) / 8);
         return CE_None;
     }
 
@@ -370,9 +371,6 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     offset[poGDS->GetXIndex()] = nBlockXOff * static_cast<hsize_t>(nBlockXSize);
     count[poGDS->GetYIndex()] = nBlockYSize;
     count[poGDS->GetXIndex()] = nBlockXSize;
-
-    const int nSizeOfData = static_cast<int>(H5Tget_size(poGDS->native));
-    memset(pImage, 0, nBlockXSize * nBlockYSize * nSizeOfData);
 
     // Blocksize may not be a multiple of imagesize.
     count[poGDS->GetYIndex()] =
