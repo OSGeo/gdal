@@ -2144,7 +2144,10 @@ def test_tiff_read_scanline_more_than_2GB():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/scanline_more_than_2GB.tif')
-    assert ds is None
+    if sys.maxsize > 2**32:
+        assert ds is not None
+    else:
+        assert ds is None
 
 ###############################################################################
 # Test that we are at least robust to wrong number of ExtraSamples and warn
