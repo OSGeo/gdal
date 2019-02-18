@@ -1021,7 +1021,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             if( iBand == 4 )
             {
                 const OPJ_INT32* pSrcA = psImage->comps[3].data;
-                for(int j=0;j<nHeightToRead;j++)
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
                 {
                     memcpy(pDst + j*nBlockXSize,
                             pSrcA + j * psImage->comps[0].w,
@@ -1033,7 +1033,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
                 const OPJ_INT32* pSrcY = psImage->comps[0].data;
                 const OPJ_INT32* pSrcCb = psImage->comps[1].data;
                 const OPJ_INT32* pSrcCr = psImage->comps[2].data;
-                for(int j=0;j<nHeightToRead;j++)
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
                 {
                     for(int i=0;i<nWidthToRead;i++)
                     {
@@ -1052,7 +1052,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
             if( bPromoteTo8Bit )
             {
-                for(int j=0;j<nHeightToRead;j++)
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
                 {
                     for(int i=0;i<nWidthToRead;i++)
                     {
@@ -1077,7 +1077,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
             if( bPromoteTo8Bit )
             {
-                for(int j=0;j<nHeightToRead;j++)
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
                 {
                     for(int i=0;i<nWidthToRead;i++)
                     {
@@ -1089,12 +1089,12 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
                 (int)psImage->comps[iBand-1].h == nBlockYSize)
             {
-                GDALCopyWords(psImage->comps[iBand-1].data, GDT_Int32, 4,
-                            pDstBuffer, eDataType, nDataTypeSize, nBlockXSize * nBlockYSize);
+                GDALCopyWords64(psImage->comps[iBand-1].data, GDT_Int32, 4,
+                            pDstBuffer, eDataType, nDataTypeSize, static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
             }
             else
             {
-                for(int j=0;j<nHeightToRead;j++)
+                for(GPtrDiff_t j=0;j<nHeightToRead;j++)
                 {
                     GDALCopyWords(psImage->comps[iBand-1].data + j * psImage->comps[iBand-1].w, GDT_Int32, 4,
                                 (GByte*)pDstBuffer + j * nBlockXSize * nDataTypeSize, eDataType, nDataTypeSize,
