@@ -760,6 +760,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
     const int nBands = IGetRasterCount();
     const size_t nBandBlockSize = static_cast<size_t>(nBlockXSize) *
                                                 nBlockYSize * m_nDTSize;
+    const int nTileBands = m_eDT == GDT_Byte ? 4 : 1;
     if( m_nShiftXPixelsMod || m_nShiftYPixelsMod )
     {
         GByte* pabyData = nullptr;
@@ -772,7 +773,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
                 if( m_asCachedTilesDesc[i].nIdxWithinTileData >= 0 )
                 {
                     return m_pabyCachedTiles +
-                        m_asCachedTilesDesc[i].nIdxWithinTileData * 4 *
+                        m_asCachedTilesDesc[i].nIdxWithinTileData * nTileBands *
                         nBandBlockSize;
                 }
                 else
@@ -790,7 +791,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
                         m_asCachedTilesDesc[i].nIdxWithinTileData =
                             (m_asCachedTilesDesc[2].nIdxWithinTileData == 2 ) ? 3 : 2;
                     pabyData = m_pabyCachedTiles +
-                        m_asCachedTilesDesc[i].nIdxWithinTileData * 4 *
+                        m_asCachedTilesDesc[i].nIdxWithinTileData * nTileBands *
                         nBandBlockSize;
                     break;
                 }
@@ -801,7 +802,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
     }
     else
     {
-        GByte* pabyDest = m_pabyCachedTiles + 8 * nBandBlockSize;
+        GByte* pabyDest = m_pabyCachedTiles;
         bool bAllNonDirty = true;
         for( int i = 0; i < nBands; i++ )
         {
@@ -815,13 +816,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
 
         /* If some bands of the blocks are dirty/written we need to fetch */
         /* the tile in a temporary buffer in order not to override dirty bands*/
-        for( int i = 1; i <= 3; i++ )
-        {
-            m_asCachedTilesDesc[i].nRow = -1;
-            m_asCachedTilesDesc[i].nCol = -1;
-            m_asCachedTilesDesc[i].nIdxWithinTileData = -1;
-        }
-        GByte* pabyTemp = m_pabyCachedTiles + 12 * nBandBlockSize;
+        GByte* pabyTemp = m_pabyCachedTiles + nTileBands * nBandBlockSize;
         if( ReadTile(nRow, nCol, pabyTemp) != nullptr )
         {
             for( int i = 0; i < nBands; i++ )
@@ -1018,6 +1013,9 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     CPLDebug( "GPKG", "IReadBlock(nBand=%d,nBlockXOff=%d,nBlockYOff=%d,m_nZoomLevel=%d)",
               nBand,nBlockXOff,nBlockYOff,m_poTPD->m_nZoomLevel);
 #endif
+
+    if( m_poTPD->m_pabyCachedTiles == nullptr )
+        return CE_Failure;
 
     const int nRowMin = nBlockYOff + m_poTPD->m_nShiftYTiles;
     int nRowMax = nRowMin;
@@ -1490,14 +1488,16 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             m_asCachedTilesDesc[i].nCol = -1;
             m_asCachedTilesDesc[i].nIdxWithinTileData = -1;
         }
-        ReadTile(nRow, nCol, m_pabyCachedTiles + 4 * nBandBlockSize,
+        const int nTileBands = m_eDT == GDT_Byte ? 4 : 1;
+        GByte* pabyTemp = m_pabyCachedTiles + nTileBands * nBandBlockSize;
+        ReadTile(nRow, nCol, pabyTemp,
                  &bIsLossyFormat);
         for( int i = 0; i < nBands; i++ )
         {
             if( !m_asCachedTilesDesc[0].abBandDirty[i] )
             {
                 memcpy(m_pabyCachedTiles + i * nBandBlockSize,
-                       m_pabyCachedTiles + (4 + i) * nBandBlockSize,
+                       pabyTemp + i * nBandBlockSize,
                        nBandBlockSize);
             }
         }
@@ -2503,8 +2503,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                         double dfTileScale = 1.0;
                         GetTileOffsetAndScale(nTileId,
                                               dfTileOffset, dfTileScale);
+                        const int nTileBands = m_eDT == GDT_Byte ? 4 : 1;
+                        GByte* pabyTemp = m_pabyCachedTiles + nTileBands * nBandBlockSize;
                         ReadTile(osMemFileName,
-                                 m_pabyCachedTiles + 4 * nBandBlockSize,
+                                 pabyTemp,
                                  dfTileOffset, dfTileScale);
                         VSIUnlink(osMemFileName);
 
@@ -2553,8 +2555,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                                         {
                                             memcpy( m_pabyCachedTiles +
                                                         ((static_cast<size_t>(nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
-                                                    m_pabyCachedTiles +
-                                                        ((static_cast<size_t>(4 + nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
+                                                    pabyTemp +
+                                                        ((static_cast<size_t>(nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
                                                     static_cast<size_t>(nXSize) * m_nDTSize );
                                         }
                                     }
@@ -2828,6 +2830,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
     }
 
     rc = sqlite3_step(hStmt);
+    const int nTileBands = m_eDT == GDT_Byte ? 4 : 1;
+    GByte* pabyTemp = m_pabyCachedTiles + nTileBands * nBandBlockSize;
     if ( rc == SQLITE_ROW )
     {
         nExistingId = sqlite3_column_int(hStmt, 0);
@@ -2838,21 +2842,20 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
         CPLAssert(nOldFlags != 0);
         if( (nOldFlags & (((1 << 4)-1) << (4*(nBand - 1)))) == 0 )
         {
-            FillEmptyTileSingleBand( m_pabyCachedTiles + (4 + nBand - 1) *
-                                                            nBandBlockSize );
+            FillEmptyTileSingleBand( pabyTemp + (nBand - 1) * nBandBlockSize );
         }
         else
         {
             CPLAssert( sqlite3_column_bytes(hStmt, 2) ==
                                     static_cast<int>(nBandBlockSize) );
-            memcpy( m_pabyCachedTiles + (4 + nBand - 1) * nBandBlockSize,
+            memcpy( pabyTemp + (nBand - 1) * nBandBlockSize,
                     sqlite3_column_blob(hStmt, 2),
                     nBandBlockSize );
         }
     }
     else
     {
-        FillEmptyTileSingleBand( m_pabyCachedTiles + (4 + nBand - 1) *
+        FillEmptyTileSingleBand( pabyTemp + (nBand - 1) *
                                  nBandBlockSize );
     }
     sqlite3_finalize(hStmt);
@@ -2861,7 +2864,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
     /* Copy the updated rectangle into the full tile */
     for(int iY = nDstYOffset; iY < nDstYOffset + nDstYSize; iY ++ )
     {
-        memcpy( m_pabyCachedTiles + (static_cast<size_t>(4 + nBand - 1) *
+        memcpy( pabyTemp + (static_cast<size_t>(nBand - 1) *
                     nBlockXSize * nBlockYSize +
                     iY * nBlockXSize + nDstXOffset) * m_nDTSize,
                 m_pabyCachedTiles + (static_cast<size_t>(nBand - 1) *
@@ -2876,7 +2879,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
                 CPLSPrintf("/tmp/partial_band_%d_%d.tif", 1, nCounter++),
                 nBlockXSize, nBlockYSize, nBands, m_eDT, NULL);
     poLogDS->RasterIO(GF_Write, 0, 0, nBlockXSize, nBlockYSize,
-                      m_pabyCachedTiles + (4 + nBand - 1) * nBandBlockSize,
+                      pabyTemp + (nBand - 1) * nBandBlockSize,
                       nBlockXSize, nBlockYSize,
                       m_eDT,
                       1, NULL,
@@ -2930,7 +2933,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
             else
             {
                 memcpy( m_pabyCachedTiles + (iBand - 1) * nBandBlockSize,
-                        m_pabyCachedTiles + (4 + iBand - 1) * nBandBlockSize,
+                        pabyTemp + (iBand - 1) * nBandBlockSize,
                         nBandBlockSize );
             }
         }
@@ -3014,7 +3017,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
     }
 
     sqlite3_bind_blob( hStmt, 1,
-                       m_pabyCachedTiles + (4 + nBand - 1) * nBandBlockSize,
+                       pabyTemp + (nBand - 1) * nBandBlockSize,
                        static_cast<int>(nBandBlockSize),
                        SQLITE_TRANSIENT );
     rc = sqlite3_step( hStmt );
