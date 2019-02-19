@@ -67,6 +67,127 @@ inline bool CPLIsDoubleAnInt(double d)
     return d == static_cast<double>(static_cast<int>(d));
 }
 
+namespace
+{
+
+// Remove trailing zeros except the last one.
+std::string removeTrailingZeros(std::string s)
+{
+    auto pos = s.find('.');
+    if (pos == std::string::npos)
+        return s;
+
+    // Remove zeros at the end.  We know this won't be npos because we
+    // have a decimal point.
+    auto nzpos = s.find_last_not_of('0');
+    s = s.substr(0, nzpos + 1);
+
+    // Make sure there is one 0 after the decimal point.
+    if (s.back() == '.')
+        s += '0';
+    return s;
+}
+
+// Round a string representing a number by 1 in the least significant digit.
+std::string roundup(std::string s)
+{
+    bool negative(false);
+    if (s[0] == '-')
+    {
+        negative = true;
+        s = s.substr(1);
+    }
+
+    for (int pos = static_cast<int>(s.size() - 1); pos >= 0; pos--)
+    {
+        if (s[pos] == '.')
+            continue;
+        s[pos]++;
+
+        // Incrementing past 9 gets you a colon in ASCII.
+        if (s[pos] != ':')
+            break;
+        else
+            s[pos] = '0';
+        if (pos == 0)
+            s = '1' + s;
+    }
+    if (negative)
+        s = '-' + s;
+    return s;
+}
+
+std::string intelliround(std::string& s)
+{
+    // If there is no decimal point, just return.
+    auto dotPos = s.find(".");
+    if (dotPos == std::string::npos)
+        return s;
+
+    // Don't mess with exponential formatting.
+    if (s.find_first_of("eE") != std::string::npos)
+        return s;
+    size_t iDotPos = static_cast<size_t>(dotPos);
+    size_t nCountBeforeDot = iDotPos - 1;
+    if (s[0] == '-')
+        nCountBeforeDot--;
+    size_t i = s.size();
+
+    // If we don't have ten characters, don't do anything.
+    if (i <= 10)
+        return s;
+
+    /* -------------------------------------------------------------------- */
+    /*      Trim trailing 00000x's as they are likely roundoff error.       */
+    /* -------------------------------------------------------------------- */
+    if (s[i-2] == '0' && s[i-3] == '0' && s[i-4] == '0' &&
+            s[i-5] == '0' && s[i-6] == '0')
+    {
+        s.resize(s.size() - 1);
+    }
+    // I don't understand this case exactly.  It's like saying if the
+    // value is large enough and there are sufficient sig digits before
+    // a bunch of zeros, remove the zeros and any digits at the end that
+    // may be nonzero.  Perhaps if we can't exactly explain in words what
+    // we're doing here, we shouldn't do it?  Perhaps it should
+    // be generalized?
+    // The value "12345.000000011" invokes this case, if anyone
+    // is interested.
+    else if (iDotPos < i - 8 &&
+            (nCountBeforeDot >= 4 || s[i-3] == '0') &&
+            (nCountBeforeDot >= 5 || s[i-4] == '0') &&
+            (nCountBeforeDot >= 6 || s[i-5] == '0') &&
+            (nCountBeforeDot >= 7 || s[i-6] == '0') &&
+            (nCountBeforeDot >= 8 || s[i-7] == '0') &&
+            s[i-8] == '0' && s[i-9] == '0')
+    {
+        s.resize(s.size() - 8);
+    }
+    /* -------------------------------------------------------------------- */
+    /*      Trim trailing 99999x's as they are likely roundoff error.       */
+    /* -------------------------------------------------------------------- */
+    else if (s[i-2] == '9' && s[i-3] == '9' && s[i-4] == '9' &&
+            s[i-5] == '9' && s[i-6] == '9' )
+    {
+        s.resize(i - 6);
+        s = roundup(s);
+    }
+    else if (iDotPos < i - 9 &&
+            (nCountBeforeDot >= 4 || s[i-3] == '9') &&
+            (nCountBeforeDot >= 5 || s[i-4] == '9') &&
+            (nCountBeforeDot >= 6 || s[i-5] == '9') &&
+            (nCountBeforeDot >= 7 || s[i-6] == '9') &&
+            (nCountBeforeDot >= 8 || s[i-7] == '9') &&
+            s[i-8] == '9' && s[i-9] == '9')
+    {
+        s.resize(i - 9);
+        s = roundup(s);
+    }
+    return s;
+}
+
+} // unnamed namespace
+
 /************************************************************************/
 /*                        OGRFormatDouble()                             */
 /************************************************************************/
@@ -243,19 +364,9 @@ std::string OGRFormatDouble(double val, OGRWktOptions opts)
 
     std::string sval = oss.str();
 
-    // Round off 0's if the round option is set, but leave one '0' after the
-    // decimal point.  I'm not sure why we do that.
     if (opts.round)
-    {
-        auto pos = sval.find('.');
-        // Should always be a '.' in fixed output.
-        assert(pos != std::string::npos);
-        auto nzpos = sval.find_last_not_of('0');
-        if (pos == nzpos)
-            nzpos++;
-        sval = sval.substr(0, nzpos + 1);
-    }
-    return sval;
+        sval = intelliround(sval);
+    return removeTrailingZeros(sval);
 }
 
 /************************************************************************/
