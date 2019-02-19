@@ -66,7 +66,7 @@ class FITSDataset final : public GDALPamDataset {
 
   CPLErr Init(fitsfile* hFITS_, bool isExistingFile_);
 
-  char        *pszProjection;
+  OGRSpatialReference oSRS{};
 
   double      adfGeoTransform[6];
   bool        m_bReadGeoTransform;
@@ -87,8 +87,8 @@ public:
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
                               char** papszParmList );
-  virtual const char *GetProjectionRef();
-  virtual CPLErr SetProjection( const char * );
+  const OGRSpatialReference* GetSpatialRef() const override;
+  CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
   virtual CPLErr GetGeoTransform( double * ) override;
   virtual CPLErr SetGeoTransform( double * ) override;
 
@@ -295,11 +295,12 @@ FITSDataset::FITSDataset():
     bNoDataSet(false),
     dfNoDataValue(-9999.0),
     bMetadataChanged(false),
-    pszProjection(CPLStrdup("")),
     m_bReadGeoTransform(false),
     bGeoTransformValid(false),
     m_bLoadPam(false)
-{}
+{
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                           ~FITSDataset()                            */
@@ -384,7 +385,7 @@ FITSDataset::~FITSDataset() {
       }
 
       // Copy georeferencing info to PAM if the profile is not FITS
-      FITSDataset::SetProjection(GDALPamDataset::GetProjectionRef());
+      GDALPamDataset::SetSpatialRef(GDALPamDataset::GetSpatialRef());
 
       // Write geographic info
       if (bFITSInfoChanged) {
@@ -741,12 +742,9 @@ void FITSDataset::WriteFITSInfo()
 /* -------------------------------------------------------------------- */
 /*      Write out projection definition.                                */
 /* -------------------------------------------------------------------- */
-    const bool bHasProjection =
-        pszProjection != nullptr && strlen(pszProjection) > 0;
+    const bool bHasProjection = !oSRS.IsEmpty();
     if( bHasProjection )
     {
-        OGRSpatialReference oSRS;
-        oSRS.importFromWkt( pszProjection );
 
         // Set according to coordinate system (thanks to Trent Hare - USGS)
 
@@ -917,43 +915,39 @@ void FITSDataset::WriteFITSInfo()
 
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *FITSDataset::GetProjectionRef()
+const OGRSpatialReference* FITSDataset::GetSpatialRef() const
 
 {
-        LoadGeoreferencingAndPamIfNeeded();
-        return pszProjection;
+    const_cast<FITSDataset*>(this)->LoadGeoreferencingAndPamIfNeeded();
+    return oSRS.IsEmpty() ? nullptr : &oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr FITSDataset::SetProjection( const char * pszNewProjection )
+CPLErr FITSDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 
 {
 
     LoadGeoreferencingAndPamIfNeeded();
 
-    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
-        && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
-        && !STARTS_WITH_CI(pszNewProjection, "LOCAL_CS")
-        && !STARTS_WITH_CI(pszNewProjection, "COMPD_CS")
-        && !STARTS_WITH_CI(pszNewProjection, "GEOCCS")
-        && !EQUAL(pszNewProjection,"") )
+    if( poSRS == nullptr || poSRS->IsEmpty() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Only OGC WKT Projections supported for writing to FITS.  "
-                "%s not supported.",
-                  pszNewProjection );
-
-        return CE_Failure;
+        /*if( !oSRS.IsEmpty() )
+        {
+            bForceUnsetProjection = true;
+        }*/
+        oSRS.Clear();
     }
-
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszNewProjection );
+    else
+    {
+        oSRS = *poSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
 
     bFITSInfoChanged = true;
 
@@ -1162,8 +1156,6 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
     {
         m_bReadGeoTransform = false;
 
-        OGRSpatialReference oSRS;
-
         fits_read_key(hFITS, TSTRING, "OBJECT", target, nullptr, &status);
         if( status )
         {
@@ -1191,9 +1183,6 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 invFlattening = aRadius / ( aRadius - cRadius );
             }
         }
-
-        CPLFree( pszProjection );
-        pszProjection = nullptr;
 
         /* Waiting for linear keywords standardization only deg ctype are used */
         /* Check if WCS are there */
@@ -1347,7 +1336,6 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
         oSRS.SetGeogCS(pszGeogName, pszDatumName, target, aRadius, invFlattening,
             "Reference_Meridian", 0.0, "degree", 0.0174532925199433);
 
-        oSRS.exportToWkt( &pszProjection );
     }
 
     if( m_bLoadPam )
