@@ -4102,68 +4102,41 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                 std::vector<vsi_l_offset> anOffsets;
                 std::vector<size_t> anSizes;
                 std::vector<void*> apData;
+                anOffsets.push_back(aOffsetSize[0].first);
+                apData.push_back(static_cast<GByte *>(pBufferedData));
+                size_t nChunkSize = aOffsetSize[0].second;
                 size_t nAccOffset = 0;
-                bool bCanMergeConsecutiveRanges = false;
-                for( size_t i = 0; i < aOffsetSize.size(); i++ )
+                for( size_t i = 0; i < aOffsetSize.size()-1; i++ )
                 {
-                    if( i>0 && aOffsetSize[i-1].first+aOffsetSize[i-1].second == aOffsetSize[i].first ) {
-                        bCanMergeConsecutiveRanges = true;
+                    if ( aOffsetSize[i].first + aOffsetSize[i].second == aOffsetSize[i+1].first ) 
+                    {
+                        nChunkSize += aOffsetSize[i+1].second;
+                    } else 
+                    {
+                        //terminate current block
+                        anSizes.push_back(nChunkSize);
+                        nAccOffset += nChunkSize;
+                        //start a new range
+                        anOffsets.push_back(aOffsetSize[i+1].first);
+                        apData.push_back(static_cast<GByte*>(pBufferedData) + nAccOffset);
+                        nChunkSize = aOffsetSize[i+1].second;
                     }
-                    anOffsets.push_back(aOffsetSize[i].first);
-                    anSizes.push_back(aOffsetSize[i].second);
-                    apData.push_back(static_cast<GByte*>(pBufferedData) + nAccOffset);
-                    nAccOffset += aOffsetSize[i].second;
                 }
-                int nMultiRet;
+                //terminate last block 
+                anSizes.push_back(nChunkSize);
+
                 VSILFILE* fp = VSI_TIFFGetVSILFile(th);
 
-                if( bCanMergeConsecutiveRanges )
-                {
-                    nAccOffset = 0;
-                    std::vector<vsi_l_offset> anMergedOffsets;
-                    std::vector<size_t> anMergedSizes;
-                    std::vector<void*> apMergedData;
-                    anMergedOffsets.push_back(aOffsetSize[0].first);
-                    apMergedData.push_back(static_cast<GByte*>(pBufferedData));
-                    size_t nChunkSize = aOffsetSize[0].second;
-                    for ( size_t iRange=0; iRange<aOffsetSize.size()-1; iRange++ ) {
-                        if ( aOffsetSize[iRange].first + aOffsetSize[iRange].second == aOffsetSize[iRange+1].first ) 
-                        {
-                            nChunkSize += aOffsetSize[iRange+1].second;
-                        } else 
-                        {
-                            //terminate current block
-                            anMergedSizes.push_back(nChunkSize);
-                            nAccOffset += nChunkSize;
-                            //start a new range
-                            anMergedOffsets.push_back(aOffsetSize[iRange+1].first);
-                            apMergedData.push_back(static_cast<GByte*>(pBufferedData) + nAccOffset);
-                            nChunkSize = aOffsetSize[iRange+1].second;
-                        }
-                    }
-                    //terminate last block 
-                    anMergedSizes.push_back(nChunkSize);
 
-                    nMultiRet = VSIFReadMultiRangeL(
-                                    static_cast<int>(anMergedOffsets.size()),
-                                    &apMergedData[0],
-                                    &anMergedOffsets[0],
-                                    &anMergedSizes[0],
-                                    fp );
-                } else 
-                {
-                    nMultiRet = VSIFReadMultiRangeL(
-                                    static_cast<int>(aOffsetSize.size()),
+                if( VSIFReadMultiRangeL(
+                                    static_cast<int>(anSizes.size()),
                                     &apData[0],
                                     &anOffsets[0],
                                     &anSizes[0],
-                                    fp );
-                }
-
-                if( nMultiRet == 0 )
+                                    fp ) == 0 )
                 {
                     VSI_TIFFSetCachedRanges( th,
-                                             static_cast<int>(aOffsetSize.size()),
+                                             static_cast<int>(anSizes.size()),
                                              &apData[0],
                                              &anOffsets[0],
                                              &anSizes[0] );
