@@ -219,9 +219,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
     {
         auto pos = s.find('.');
         if (pos != std::string::npos)
-            s.replace(pos, 1, chDecimalSep);
+            s.replace(pos, 1, std::string(1, chDecimalSep));
     }
-    if (s.size() + 1 > nBufferLen)
+    if (s.size() + 1 > static_cast<size_t>(nBufferLen))
     {
         CPLError(CE_Warning, CPLE_AppDefined, "Truncated double value %s to "
             "%s.", s.data(), s.substr(0, nBufferLen - 1).data());
