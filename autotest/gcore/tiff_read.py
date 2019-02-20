@@ -3147,3 +3147,25 @@ def test_tiff_read_strip_larger_than_2GB():
     assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_1', 'TIFF') == '536850000'
     assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_5', 'TIFF') == '2684250264'
     assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_5', 'TIFF') == '65750000'
+
+###############################################################################
+# Test reading a deflate compressed file with a uncompressed strip larger than 4 GB
+
+def test_tiff_read_deflate_4GB():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    ds = gdal.Open('/vsizip/data/test_deflate_4GB.tif.zip/test_deflate_4GB.tif')
+    if sys.maxsize < 2**32:
+        assert ds is None
+        return
+    assert ds is not None
+
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+
+    data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
+    ref_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    ref_ds.GetRasterBand(1).Fill(127)
+    assert data == ref_ds.ReadRaster()
