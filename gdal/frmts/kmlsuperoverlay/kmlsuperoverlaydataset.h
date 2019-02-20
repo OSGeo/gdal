@@ -92,7 +92,10 @@ class KmlSuperOverlayReadDataset final: public GDALDataset
     static int DetectTransparency( int rxsize, int rysize, int rx, int ry, int dxsize, int dysize, GDALDataset* poSrcDs );
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef() override;
+    virtual const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,

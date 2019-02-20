@@ -81,7 +81,7 @@ static bool CheckPoints( OGRLineString *poLine1, int iPoint1,
 /************************************************************************/
 
 static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
-                           bool bReverse )
+                           bool bReverse, double dfTolerance )
 
 {
 /* -------------------------------------------------------------------- */
@@ -98,7 +98,7 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /* -------------------------------------------------------------------- */
     if( poRing->getNumPoints() > 0
         && CheckPoints( poRing, poRing->getNumPoints()-1,
-                        poLine, iStart, nullptr ) )
+                        poLine, iStart, &dfTolerance ) )
     {
         iStart += iStep;
     }
@@ -207,7 +207,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /* -------------------------------------------------------------------- */
         OGRLinearRing *poRing = new OGRLinearRing();
 
-        AddEdgeToRing( poRing, poLine, FALSE );
+        AddEdgeToRing( poRing, poLine, FALSE, 0 );
 
 /* ==================================================================== */
 /*      Loop adding edges to this ring until we make a whole pass       */
@@ -264,7 +264,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             if( iBestEdge != -1 )
             {
                 poLine = poLines->getGeometryRef(iBestEdge)->toLineString();
-                AddEdgeToRing( poRing, poLine, bReverse );
+                AddEdgeToRing( poRing, poLine, bReverse, dfTolerance );
 
                 oEdgeConsumed[iBestEdge] = true;
                 nRemainingEdges--;
@@ -294,12 +294,26 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /* -------------------------------------------------------------------- */
 /*      Do we need to auto-close this ring?                             */
 /* -------------------------------------------------------------------- */
-        if( bAutoClose &&
-            !CheckPoints(poRing, 0, poRing, poRing->getNumPoints() - 1, nullptr) )
+        dfBestDist = dfTolerance;
+
+        if( bAutoClose )
         {
-            poRing->addPoint(poRing->getX(0),
-                             poRing->getY(0),
-                             poRing->getZ(0));
+            if ( !CheckPoints(poRing, 0, poRing, poRing->getNumPoints() - 1,
+                              &dfBestDist) )
+            {
+                poRing->addPoint(poRing->getX(0),
+                                 poRing->getY(0),
+                                 poRing->getZ(0));
+            }
+            else if ( !CheckPoints(poRing, 0, poRing,
+                                   poRing->getNumPoints() - 1, nullptr) )
+            {
+                // The endpoints are very close but do not exactly match.
+                // Alter the last one so it is equal to the first, to prevent
+                // invalid self-intersecting rings.
+                poRing->setPoint( poRing->getNumPoints() - 1, poRing->getX(0),
+                    poRing->getY(0), poRing->getZ(0) );
+            }
         }
 
         apoRings.push_back(poRing);

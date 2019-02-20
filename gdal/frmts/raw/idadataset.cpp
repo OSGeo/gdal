@@ -135,7 +135,7 @@ class IDADataset final: public RawDataset
 
     VSILFILE   *fpRaw;
 
-    char       *pszProjection;
+    OGRSpatialReference* m_poSRS = nullptr;
     double      adfGeoTransform[6];
 
     void        ProcessGeoref();
@@ -152,8 +152,9 @@ class IDADataset final: public RawDataset
     ~IDADataset() override;
 
     void FlushCache() override;
-    const char *GetProjectionRef(void) override;
-    CPLErr SetProjection( const char * ) override;
+
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
@@ -371,7 +372,6 @@ IDADataset::IDADataset() :
     dfM(0.0),
     dfB(0.0),
     fpRaw(nullptr),
-    pszProjection(nullptr),
     bHeaderDirty(false)
 {
     memset( szTitle, 0, sizeof(szTitle) );
@@ -400,7 +400,8 @@ IDADataset::~IDADataset()
             CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
         }
     }
-    CPLFree( pszProjection );
+    if( m_poSRS )
+        m_poSRS->Release();
 }
 
 /************************************************************************/
@@ -445,12 +446,11 @@ void IDADataset::ProcessGeoref()
                         6370997.0, 0.0 );
     }
 
-    if( oSRS.GetRoot() != nullptr )
+    if( !oSRS.IsEmpty() )
     {
-        CPLFree( pszProjection );
-        pszProjection = nullptr;
-
-        oSRS.exportToWkt( &pszProjection );
+        if( m_poSRS )
+            m_poSRS->Release();
+        m_poSRS = oSRS.Clone();
     }
 
     adfGeoTransform[0] = 0 - dfDX * dfXCenter;
@@ -522,31 +522,24 @@ CPLErr IDADataset::SetGeoTransform( double *padfGeoTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *IDADataset::GetProjectionRef()
+const OGRSpatialReference *IDADataset::GetSpatialRef() const
 
 {
-    if( pszProjection )
-        return pszProjection;
-
-    return "";
+    return m_poSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr IDADataset::SetProjection( const char *pszWKTIn )
+CPLErr IDADataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    OGRSpatialReference oSRS;
-
-    oSRS.importFromWkt( pszWKTIn );
-
-    if( !oSRS.IsGeographic() && !oSRS.IsProjected() )
-        GDALPamDataset::SetProjection( pszWKTIn );
+    if( !poSRS || (!poSRS->IsGeographic() && !poSRS->IsProjected()) )
+        return GDALPamDataset::SetSpatialRef( poSRS );
 
 /* -------------------------------------------------------------------- */
 /*      Clear projection parameters.                                    */
@@ -559,7 +552,7 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
 /* -------------------------------------------------------------------- */
 /*      Geographic.                                                     */
 /* -------------------------------------------------------------------- */
-    if( oSRS.IsGeographic() )
+    if( poSRS->IsGeographic() )
     {
         // If no change, just return.
         if( nProjection == 3 )
@@ -572,8 +565,8 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
 /*      Verify we don't have a false easting or northing as these       */
 /*      will be ignored for the projections we do support.              */
 /* -------------------------------------------------------------------- */
-    if( oSRS.GetProjParm( SRS_PP_FALSE_EASTING ) != 0.0
-        || oSRS.GetProjParm( SRS_PP_FALSE_NORTHING ) != 0.0 )
+    if( poSRS->GetProjParm( SRS_PP_FALSE_EASTING ) != 0.0
+        || poSRS->GetProjParm( SRS_PP_FALSE_NORTHING ) != 0.0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to set a projection on an IDA file with a non-zero "
@@ -585,7 +578,7 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
 /*      Lambert Conformal Conic.  Note that we don't support false      */
 /*      eastings or nothings.                                           */
 /* -------------------------------------------------------------------- */
-    const char *l_pszProjection = oSRS.GetAttrValue( "PROJECTION" );
+    const char *l_pszProjection = poSRS->GetAttrValue( "PROJECTION" );
 
     if( l_pszProjection == nullptr )
     {
@@ -594,33 +587,33 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
     else if( EQUAL(l_pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
     {
         nProjection = 4;
-        dfParallel1 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
-        dfParallel2 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        dfParallel1 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        dfParallel2 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        dfLatCenter = poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        dfLongCenter = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
     }
     else if( EQUAL(l_pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         nProjection = 6;
-        dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        dfLatCenter = poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        dfLongCenter = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
     }
     else if( EQUAL(l_pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
         nProjection = 8;
-        dfParallel1 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
-        dfParallel2 = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        dfLatCenter = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        dfParallel1 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        dfParallel2 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        dfLatCenter = poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        dfLongCenter = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
     }
     else if( EQUAL(l_pszProjection, SRS_PT_GOODE_HOMOLOSINE) )
     {
         nProjection = 9;
-        dfLongCenter = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+        dfLongCenter = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
     }
     else
     {
-        return GDALPamDataset::SetProjection( pszWKTIn );
+        return GDALPamDataset::SetSpatialRef( poSRS );
     }
 
 /* -------------------------------------------------------------------- */

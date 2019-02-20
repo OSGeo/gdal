@@ -1149,8 +1149,6 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
                         "usesPrimeMeridian.PrimeMeridian.meridianID",
                         "GEOGCS|PRIMEM" );
 
-    poSRS->Fixup();
-
     return OGRERR_NONE;
 }
 
@@ -1239,10 +1237,8 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
         return OGRERR_CORRUPT_DATA;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    poSRS->Fixup();
+    // Re-set authority as all editions above will have removed it
+    importXMLAuthority( psCRS, poSRS, "srsID", "PROJCS" );
 
     // Need to get linear units here!
 

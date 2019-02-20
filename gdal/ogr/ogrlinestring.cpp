@@ -2353,8 +2353,8 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
 /* -------------------------------------------------------------------- */
 /*      Transform and reapply.                                          */
 /* -------------------------------------------------------------------- */
-    poCT->TransformEx( nPointCount, xyz, xyz + nPointCount,
-                       xyz+nPointCount*2, pabSuccess );
+    poCT->Transform( nPointCount, xyz, xyz + nPointCount,
+                     xyz+nPointCount*2, nullptr, pabSuccess );
 
     const char* pszEnablePartialReprojection = nullptr;
 

@@ -30,7 +30,7 @@
 ###############################################################################
 
 from osgeo import gdal
-
+from osgeo import osr
 
 import gdaltest
 import pytest
@@ -50,7 +50,7 @@ def test_kea_1():
         pytest.skip()
 
     tst = gdaltest.GDALTest('KEA', 'byte.tif', 1, 4672, options=['IMAGEBLOCKSIZE=15', 'THEMATIC=YES'])
-    return tst.testCreateCopy(check_srs=True, check_gt=1)
+    return tst.testCreateCopy(check_srs=True, check_gt=1, new_filename='tmp/byte.kea')
 
 ###############################################################################
 # Test CreateCopy() for various data types
@@ -258,11 +258,14 @@ def test_kea_7():
     if gdaltest.kea_driver is None:
         pytest.skip()
 
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+
     # Geotransform
     ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
     assert ds.GetGCPCount() == 0
     assert ds.SetGeoTransform([1, 2, 3, 4, 5, 6]) == 0
-    assert ds.SetProjection('foo') == 0
+    assert ds.SetProjection(sr.ExportToWkt()) == 0
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
@@ -270,7 +273,7 @@ def test_kea_7():
     ds = None
     assert out2_ds.GetGCPCount() == 0
     assert out2_ds.GetGeoTransform() == (1, 2, 3, 4, 5, 6)
-    assert out2_ds.GetProjectionRef() == 'foo'
+    assert out2_ds.GetProjectionRef() != ''
     out2_ds = None
 
     gdaltest.kea_driver.Delete('tmp/out.kea')
@@ -283,7 +286,7 @@ def test_kea_7():
     gcp1.Info = "info"
     gcp2 = gdal.GCP(0, 1, 2, 3, 4)
     gcps = [gcp1, gcp2]
-    ds.SetGCPs(gcps, "foo")
+    ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
     ds = gdal.Open('tmp/out.kea')
@@ -291,7 +294,7 @@ def test_kea_7():
     ds = None
 
     assert out2_ds.GetGCPCount() == 2
-    assert out2_ds.GetGCPProjection() == 'foo'
+    assert out2_ds.GetGCPProjection() != ''
     got_gcps = out2_ds.GetGCPs()
     for i in range(2):
         assert (got_gcps[i].GCPX == gcps[i].GCPX and got_gcps[i].GCPY == gcps[i].GCPY and \
@@ -607,4 +610,29 @@ def test_kea_14():
     gdaltest.kea_driver.Delete('tmp/out2.kea')
 
 
+###############################################################################
+# Test /vsi functionality
 
+
+def test_kea_15():
+    if gdaltest.kea_driver is None:
+        pytest.skip()
+
+    # create an temp image
+    ds = gdaltest.kea_driver.Create('tmp/vsitest.kea', 1, 1)
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    # load it into /vsimem and try and open it
+    gdal.FileFromMemBuffer('/vsimem/foo.kea', open('tmp/vsitest.kea', 'rb').read())
+    ds = gdal.Open('/vsimem/foo.kea')
+    assert ds.GetDriver().ShortName == "KEA"
+    ds = None
+
+    gdal.Unlink('/vsimem/foo.kea')
+    gdaltest.kea_driver.Delete('tmp/vsitest.kea')
+
+def test_kea_destroy():
+    # there is always a 'tmp/out.kea.aux.xml' left behind by
+    # a few of the tests
+    gdal.Unlink('tmp/out.kea.aux.xml')

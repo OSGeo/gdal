@@ -615,14 +615,14 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
-const char *GDALWMSDataset::GetProjectionRef() {
+const char *GDALWMSDataset::_GetProjectionRef() {
     return m_projection.c_str();
 }
 
 /************************************************************************/
 /*                           SetProjection()                            */
 /************************************************************************/
-CPLErr GDALWMSDataset::SetProjection(CPL_UNUSED const char *proj) {
+CPLErr GDALWMSDataset::_SetProjection(const char*) {
     return CE_Failure;
 }
 

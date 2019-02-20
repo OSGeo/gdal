@@ -117,7 +117,7 @@ namespace tut
     {
         ensure("SRS handle is NULL", nullptr != srs_);
 
-        const char* wkt = "\"\"PROJCS[\"unnamed\",GEOGCS[\"NAD27\","
+        const char* wkt = "PROJCS[\"unnamed\",GEOGCS[\"NAD27\","
             "DATUM[\"North_American_Datum_1927\","
             "SPHEROID[\"Clarke 1866\",6378206.4,294.9786982139006,"
             "AUTHORITY[\"EPSG\",\"7008\"]],AUTHORITY[\"EPSG\",\"6267\"]],"
@@ -128,7 +128,7 @@ namespace tut
             "PARAMETER[\"latitude_of_origin\",33.76446202777777],"
             "PARAMETER[\"central_meridian\",-117.4745428888889],"
             "PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],"
-            "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]]]\"\"";
+            "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]]]";
 
         err_ = OSRImportFromWkt(srs_, (char**) &wkt);
         ensure_equals("Can't import Lambert Conformal Conic projection",

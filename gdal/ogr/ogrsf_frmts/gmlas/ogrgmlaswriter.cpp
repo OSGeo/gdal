@@ -1861,22 +1861,12 @@ bool GMLASWriter::GetCoordSwap( const OGRSpatialReference* poSRS )
         return oIter->second;
 
     bool bCoordSwap = false;
-    const char* pszTarget = poSRS->IsProjected() ?
-                                                "PROJCS" : "GEOGCS";
-    const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
-    const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-    if( nullptr != pszAuthName && nullptr != pszAuthCode &&
-        EQUAL( pszAuthName, "EPSG" ) &&
-        m_osSRSNameFormat != "SHORT" &&
-        !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
-        ((OGRSpatialReference*)poSRS)->EPSGTreatsAsNorthingEasting()))
+    if( m_osSRSNameFormat != "SHORT" )
     {
-        OGRSpatialReference oSRS;
-        if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
+        const auto& map = poSRS->GetDataAxisToSRSAxisMapping();
+        if( map.size() >= 2 && map[0] == 2 && map[1] == 1 )
         {
-            if (oSRS.EPSGTreatsAsLatLong() ||
-                oSRS.EPSGTreatsAsNorthingEasting())
-                bCoordSwap = true;
+            bCoordSwap = true;
         }
     }
     m_oMapSRSToCoordSwap[poSRS] = bCoordSwap;

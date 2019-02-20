@@ -899,7 +899,8 @@ def test_wmts_16():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
-    assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
+    assert ds.GetProjectionRef().find('4326') >= 0
+    assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
 
 ###############################################################################
 # AOI from layer BoundingBox
@@ -973,7 +974,7 @@ def test_wmts_17():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
-    assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
+    assert ds.GetProjectionRef().find('4326') >= 0
 
 ###############################################################################
 # AOI from TileMatrixSet BoundingBox
@@ -1047,7 +1048,7 @@ def test_wmts_18():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
-    assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
+    assert ds.GetProjectionRef().find('4326') >= 0
 
 ###############################################################################
 # AOI from TileMatrixSetLimits
@@ -1126,7 +1127,7 @@ def test_wmts_19():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
-    assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
+    assert ds.GetProjectionRef().find('4326') >= 0
 
 ###############################################################################
 # AOI from layer BoundingBox but restricted with TileMatrixSetLimits
@@ -1209,7 +1210,7 @@ def test_wmts_20():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
-    assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
+    assert ds.GetProjectionRef().find('4326') >= 0
 
 ###############################################################################
 # Test ExtendBeyondDateLine
@@ -1288,7 +1289,7 @@ def test_wmts_21():
     expected_gt = (90, 0.3515625, 0.0, 0.0, 0.0, -0.3515625)
     for i in range(6):
         assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
-    assert ds.GetProjectionRef().find('4326') >= 0 and ds.GetProjectionRef().find('AXIS') < 0
+    assert ds.GetProjectionRef().find('4326') >= 0
 
     tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
     for i in range(4):

@@ -84,10 +84,16 @@ class RS2Dataset final: public GDALPamDataset
     virtual ~RS2Dataset();
 
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    virtual const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void) override;
+    virtual const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual CPLErr GetGeoTransform( double * ) override;
 
     virtual char      **GetMetadataDomainList() override;
@@ -1422,7 +1428,7 @@ int RS2Dataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *RS2Dataset::GetGCPProjection()
+const char *RS2Dataset::_GetGCPProjection()
 
 {
     return pszGCPProjection;
@@ -1442,7 +1448,7 @@ const GDAL_GCP *RS2Dataset::GetGCPs()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *RS2Dataset::GetProjectionRef()
+const char *RS2Dataset::_GetProjectionRef()
 
 {
     return pszProjection;

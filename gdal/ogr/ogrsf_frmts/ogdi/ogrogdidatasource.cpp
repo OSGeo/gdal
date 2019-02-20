@@ -169,6 +169,7 @@ int OGROGDIDataSource::Open( const char * pszNewName )
     }
 
     m_poSpatialRef = new OGRSpatialReference;
+    m_poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
     {

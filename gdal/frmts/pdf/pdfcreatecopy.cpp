@@ -710,12 +710,14 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(pszWKT);
     if( hSRS == nullptr )
         return 0;
+    OSRSetAxisMappingStrategy(hSRS, OAMS_TRADITIONAL_GIS_ORDER);
     OGRSpatialReferenceH hSRSGeog = OSRCloneGeogCS(hSRS);
     if( hSRSGeog == nullptr )
     {
         OSRDestroySpatialReference(hSRS);
         return 0;
     }
+    OSRSetAxisMappingStrategy(hSRSGeog, OAMS_TRADITIONAL_GIS_ORDER);
     OGRCoordinateTransformationH hCT = OCTNewCoordinateTransformation( hSRS, hSRSGeog);
     if( hCT == nullptr )
     {
@@ -1218,6 +1220,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(pszWKT);
     if( hSRS == nullptr )
         return 0;
+    OSRSetAxisMappingStrategy(hSRS, OAMS_TRADITIONAL_GIS_ORDER);
 
     const OGRSpatialReference* poSRS = (const OGRSpatialReference*)hSRS;
     GDALPDFDictionaryRW* poProjectionDict = GDALPDFBuildOGC_BP_Projection(poSRS);
@@ -2035,10 +2038,8 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS,
                                                   bWriteOGRAttributes);
     OGRLayerH hLyr = OGR_DS_GetLayer(hDS, iLayer);
 
-    const char* pszWKT = poClippingDS->GetProjectionRef();
-    OGRSpatialReferenceH hGDAL_SRS = nullptr;
-    if( pszWKT && pszWKT[0] != '\0' )
-        hGDAL_SRS = OSRNewSpatialReference(pszWKT);
+    OGRSpatialReferenceH hGDAL_SRS = OGRSpatialReference::ToHandle(
+        const_cast<OGRSpatialReference*>(poClippingDS->GetSpatialRef()));
     OGRSpatialReferenceH hOGR_SRS = OGR_L_GetSpatialRef(hLyr);
     OGRCoordinateTransformationH hCT = nullptr;
 
@@ -2095,8 +2096,6 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS,
 
     if( hCT != nullptr )
         OCTDestroyCoordinateTransformation(hCT);
-    if( hGDAL_SRS != nullptr )
-        OSRDestroySpatialReference(hGDAL_SRS);
 
     return TRUE;
 }
@@ -4479,9 +4478,9 @@ class GDALPDFClippingDataset: public GDALDataset
             return CE_None;
         }
 
-        virtual const char* GetProjectionRef() override
+        virtual const OGRSpatialReference* GetSpatialRef() const override
         {
-            return poSrcDS->GetProjectionRef();
+            return poSrcDS->GetSpatialRef();
         }
 };
 

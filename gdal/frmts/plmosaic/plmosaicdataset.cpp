@@ -132,7 +132,10 @@ class PLMosaicDataset final: public GDALPamDataset
 
     virtual void FlushCache(void) override;
 
-    virtual const char *GetProjectionRef() override;
+    virtual const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual CPLErr      GetGeoTransform(double* padfGeoTransform) override;
 
     GDALDataset        *GetMetaTile(int tile_x, int tile_y);
@@ -1161,7 +1164,7 @@ std::vector<CPLString> PLMosaicDataset::ListSubdatasets()
 /*                            GetProjectionRef()                       */
 /************************************************************************/
 
-const char* PLMosaicDataset::GetProjectionRef()
+const char* PLMosaicDataset::_GetProjectionRef()
 {
     return (pszWKT) ? pszWKT : "";
 }

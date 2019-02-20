@@ -487,6 +487,7 @@ OGRSpatialReference *OGRIDBTableLayer::GetSpatialRef()
                     delete poSRS;
                 }
                 poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if ( poSRS->importFromWkt( wkt ) != OGRERR_NONE )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,

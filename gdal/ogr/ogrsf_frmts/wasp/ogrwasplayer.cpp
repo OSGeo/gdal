@@ -702,7 +702,12 @@ OGRErr OGRWAsPLayer::CreateField( OGRFieldDefn *poField,
 OGRErr OGRWAsPLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                       CPL_UNUSED int bApproxOK )
 {
-    poLayerDefn->AddGeomFieldDefn( poGeomFieldIn, FALSE );
+    OGRGeomFieldDefn oFieldDefn(poGeomFieldIn);
+    if( oFieldDefn.GetSpatialRef() )
+    {
+        oFieldDefn.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    poLayerDefn->AddGeomFieldDefn( &oFieldDefn, FALSE );
 
     /* Update geom field index */
     if ( -1 == iGeomFieldIdx )

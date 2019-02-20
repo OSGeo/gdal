@@ -144,6 +144,7 @@ static CPLErr NCDFResolveAttInt( int nStartGroupId, int nStartVarId,
 static CPLErr NCDFGetCoordAndBoundVarFullNames( int nCdfId,
                                                 char ***ppapszVars );
 
+static bool NCDFIsUserDefinedType(int ncid, int type);
 // Uncomment this for more debug output.
 // #define NCDF_DEBUG 1
 
@@ -187,7 +188,10 @@ class netCDFRasterBand final: public GDALPamRasterBand
                                         size_t nTmpBlockXSize,
                                         size_t nTmpBlockYSize,
                                         bool bCheckIsNan=false ) ;
-
+    template <class T> void CheckDataCpx ( void *pImage, void *pImageNC,
+                                        size_t nTmpBlockXSize,
+                                        size_t nTmpBlockYSize,
+                                        bool bCheckIsNan=false );
   protected:
     CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
 
@@ -292,35 +296,92 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         return;
     }
 
-    if( nc_datatype == NC_BYTE )
-        eDataType = GDT_Byte;
-    else if( nc_datatype == NC_CHAR )
-        eDataType = GDT_Byte;
-    else if( nc_datatype == NC_SHORT )
-        eDataType = GDT_Int16;
-    else if( nc_datatype == NC_INT )
-        eDataType = GDT_Int32;
-    else if( nc_datatype == NC_FLOAT )
-        eDataType = GDT_Float32;
-    else if( nc_datatype == NC_DOUBLE )
-        eDataType = GDT_Float64;
 #ifdef NETCDF_HAS_NC4
-    // NC_UBYTE (unsigned byte) is only available for NC4.
-    else if( nc_datatype == NC_UBYTE )
-        eDataType = GDT_Byte;
-    else if( nc_datatype == NC_USHORT )
-        eDataType = GDT_UInt16;
-    else if( nc_datatype == NC_UINT )
-        eDataType = GDT_UInt32;
-#endif
-    else
+    if (NCDFIsUserDefinedType(cdfid, nc_datatype))
     {
-        if( nBand == 1 )
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Unsupported netCDF datatype (%d), treat as Float32.",
-                     static_cast<int>(nc_datatype));
-        eDataType = GDT_Float32;
-        nc_datatype = NC_FLOAT;
+        //First enquire and check that the number of fields is 2
+        size_t nfields, compoundsize;
+        if( nc_inq_compound(cdfid, nc_datatype, nullptr, &compoundsize, &nfields) != NC_NOERR)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Error in nc_inq_compound() on 'z'.");
+            return;
+        }
+
+        if (nfields != 2)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Unsupported data type encountered in nc_inq_compound() on 'z'.");
+            return;
+        }
+
+        //Now check that that two types are the same in the struct.
+        nc_type field_type1, field_type2;
+        int field_dims1, field_dims2;
+        if ( nc_inq_compound_field(cdfid, nc_datatype, 0, nullptr, nullptr, &field_type1, &field_dims1, nullptr) != NC_NOERR)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Error in querying Field 1 in nc_inq_compound_field() on 'z'.");
+            return;
+        }
+
+        if ( nc_inq_compound_field(cdfid, nc_datatype, 0, nullptr, nullptr, &field_type2, &field_dims2, nullptr) != NC_NOERR)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Error in querying Field 2 in nc_inq_compound_field() on 'z'.");
+            return;
+        }
+
+        if ((field_type1 != field_type2) || (field_dims1 != field_dims2) || (field_dims1 != 0))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Error in interpreting compound data type on 'z'.");
+            return;
+        }
+
+        if (field_type1 == NC_SHORT)
+            eDataType = GDT_CInt16;
+        else if (field_type1 == NC_INT)
+            eDataType = GDT_CInt32;
+        else if (field_type1 == NC_FLOAT)
+            eDataType = GDT_CFloat32;
+        else if (field_type1 == NC_DOUBLE)
+            eDataType = GDT_CFloat64;
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Unsupported netCDF compound data type encountered.");
+            return;
+        }
+    }
+    else
+#endif
+    {
+        if( nc_datatype == NC_BYTE )
+            eDataType = GDT_Byte;
+        else if( nc_datatype == NC_CHAR )
+            eDataType = GDT_Byte;
+        else if( nc_datatype == NC_SHORT )
+            eDataType = GDT_Int16;
+        else if( nc_datatype == NC_INT )
+            eDataType = GDT_Int32;
+        else if( nc_datatype == NC_FLOAT )
+            eDataType = GDT_Float32;
+        else if( nc_datatype == NC_DOUBLE )
+            eDataType = GDT_Float64;
+#ifdef NETCDF_HAS_NC4
+        // NC_UBYTE (unsigned byte) is only available for NC4.
+        else if( nc_datatype == NC_UBYTE )
+            eDataType = GDT_Byte;
+        else if( nc_datatype == NC_USHORT )
+            eDataType = GDT_UInt16;
+        else if( nc_datatype == NC_UINT )
+            eDataType = GDT_UInt32;
+#endif
+        else
+        {
+            if( nBand == 1 )
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Unsupported netCDF datatype (%d), treat as Float32.",
+                        static_cast<int>(nc_datatype));
+            eDataType = GDT_Float32;
+            nc_datatype = NC_FLOAT;
+        }
     }
 
     // Find and set No Data for this variable.
@@ -1457,8 +1518,8 @@ void netCDFRasterBand::CheckData( void *pImage, void *pImageNC,
     // netcdf and gdal.
     if( nTmpBlockXSize != static_cast<size_t>(nBlockXSize) )
     {
-        T *ptrWrite = (T *)pImage;
-        T *ptrRead = (T *)pImageNC;
+        T *ptrWrite = static_cast<T*>(pImage);
+        T *ptrRead = static_cast<T*>(pImageNC);
         for( size_t j = 0;
              j < nTmpBlockYSize;
              j++, ptrWrite += nBlockXSize, ptrRead += nTmpBlockXSize)
@@ -1471,6 +1532,7 @@ void netCDFRasterBand::CheckData( void *pImage, void *pImageNC,
     if( bValidRangeValid ||
         bCheckIsNan )
     {
+        T *ptrImage = static_cast<T*>(pImage);
         for( size_t j = 0; j < nTmpBlockYSize; j++ )
         {
             // k moves along the gdal block, skipping the out-of-range pixels.
@@ -1478,24 +1540,23 @@ void netCDFRasterBand::CheckData( void *pImage, void *pImageNC,
             for( size_t i = 0; i < nTmpBlockXSize; i++, k++ )
             {
                 // Check for nodata and nan.
-                // TODO(schwehr): static_casts.
-                if( CPLIsEqual((double)((T *)pImage)[k], dfNoDataValue) )
+                if( CPLIsEqual((double) ptrImage[k], dfNoDataValue) )
                     continue;
-                if( bCheckIsNan && CPLIsNan((double)(((T *)pImage))[k]) )
+                if( bCheckIsNan && CPLIsNan((double) ptrImage[k]) )
                 {
-                    ((T *)pImage)[k] = (T)dfNoDataValue;
+                    ptrImage[k] = (T)dfNoDataValue;
                     continue;
                 }
                 // Check for valid_range.
                 if( bValidRangeValid )
                 {
                     if( ((adfValidRange[0] != dfNoDataValue) &&
-                        (((T *)pImage)[k] < (T)adfValidRange[0]))
+                        (ptrImage[k] < (T)adfValidRange[0]))
                         ||
                         ((adfValidRange[1] != dfNoDataValue) &&
-                        (((T *)pImage)[k] > (T)adfValidRange[1])) )
+                        (ptrImage[k] > (T)adfValidRange[1])) )
                     {
-                        ((T *)pImage)[k] = (T)dfNoDataValue;
+                        ptrImage[k] = (T)dfNoDataValue;
                     }
                 }
             }
@@ -1509,19 +1570,80 @@ void netCDFRasterBand::CheckData( void *pImage, void *pImageNC,
     if( bCheckLongitude && bIsSigned &&
         std::min(((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize - 1]) > 180.0 )
     {
+        T *ptrImage = static_cast<T*>(pImage);
         for( size_t j = 0; j < nTmpBlockYSize; j++ )
         {
             size_t k = j * nBlockXSize;
             for( size_t i = 0; i < nTmpBlockXSize; i++, k++ )
             {
-                if( !CPLIsEqual((double)((T *)pImage)[k], dfNoDataValue) )
-                    ((T *)pImage)[k] = static_cast<T>(((T *)pImage)[k] - 360);
+                if( !CPLIsEqual((double)ptrImage[k], dfNoDataValue) )
+                    ptrImage[k] = static_cast<T>(ptrImage[k] - 360);
             }
         }
     }
     else
     {
         bCheckLongitude = false;
+    }
+}
+
+/************************************************************************/
+/*                             CheckDataCpx()                              */
+/************************************************************************/
+template <class T>
+void netCDFRasterBand::CheckDataCpx( void *pImage, void *pImageNC,
+                                  size_t nTmpBlockXSize, size_t nTmpBlockYSize,
+                                  bool bCheckIsNan )
+{
+    CPLAssert(pImage != nullptr && pImageNC != nullptr);
+
+    // If this block is not a full block (in the x axis), we need to re-arrange
+    // the data this is because partial blocks are not arranged the same way in
+    // netcdf and gdal.
+    if( nTmpBlockXSize != static_cast<size_t>(nBlockXSize) )
+    {
+        T *ptrWrite = static_cast<T*>(pImage);
+        T *ptrRead = static_cast<T*>(pImageNC);
+        for( size_t j = 0;
+             j < nTmpBlockYSize;
+             j++, ptrWrite += (2*nBlockXSize), ptrRead += (2*nTmpBlockXSize))
+        {
+            memmove(ptrWrite, ptrRead, nTmpBlockXSize * sizeof(T) * 2);
+        }
+    }
+
+    // Is valid data checking needed or requested?
+    if( bValidRangeValid ||
+        bCheckIsNan )
+    {
+        T *ptrImage = static_cast<T*>(pImage);
+        for( size_t j = 0; j < nTmpBlockYSize; j++ )
+        {
+            // k moves along the gdal block, skipping the out-of-range pixels.
+            size_t k = 2 * j * nBlockXSize;
+            for( size_t i = 0; i < (2 * nTmpBlockXSize); i++, k++ )
+            {
+                // Check for nodata and nan.
+                if( CPLIsEqual((double) ptrImage[k], dfNoDataValue) )
+                    continue;
+                if( bCheckIsNan && CPLIsNan((double) ptrImage[k]) )
+                {
+                    ptrImage[k] = (T)dfNoDataValue;
+                    continue;
+                }
+                // Check for valid_range.
+                if( bValidRangeValid )
+                {
+                    if( ((adfValidRange[0] != dfNoDataValue) &&
+                        (ptrImage[k] < (T)adfValidRange[0])) ||
+                        ((adfValidRange[1] != dfNoDataValue) &&
+                        (ptrImage[k] > (T)adfValidRange[1])) )
+                    {
+                        ptrImage[k] = (T)dfNoDataValue;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1731,6 +1853,40 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             CheckData<unsigned int>(pImage, pImageNC, edge[nBandXPos],
                                     edge[nBandYPos], false);
     }
+    else if ( eDataType == GDT_CInt16 )
+    {
+        status = nc_get_vara(cdfid, nZId, start, edge,
+                              pImageNC);
+        if ( status == NC_NOERR )
+            CheckDataCpx<short>(pImage, pImageNC, edge[nBandXPos],
+                    edge[nBandYPos], false);
+    }
+    else if ( eDataType == GDT_CInt32 )
+    {
+        status = nc_get_vara(cdfid, nZId, start, edge,
+                              pImageNC);
+        if (status == NC_NOERR)
+            CheckDataCpx<int>(pImage, pImageNC, edge[nBandXPos],
+                            edge[nBandYPos], false);
+    }
+    else if ( eDataType == GDT_CFloat32 )
+    {
+        status = nc_get_vara(cdfid, nZId, start, edge,
+                              pImageNC);
+        if (status == NC_NOERR)
+            CheckDataCpx<float>(pImage, pImageNC, edge[nBandXPos],
+                            edge[nBandYPos], false);
+    }
+    else if ( eDataType == GDT_CFloat64 )
+    {
+        status = nc_get_vara(cdfid, nZId, start, edge,
+                              pImageNC);
+        if (status == NC_NOERR)
+            CheckDataCpx<double>(pImage, pImageNC, edge[nBandXPos],
+                            edge[nBandYPos], false);
+    }
+
+
 #endif
     else
         status = NC_EBADTYPE;
@@ -2070,12 +2226,12 @@ char **netCDFDataset::GetMetadata( const char *pszDomain )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *netCDFDataset::GetProjectionRef()
+const char *netCDFDataset::_GetProjectionRef()
 {
     if( bSetProjection )
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -3470,15 +3626,21 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 // Set datum to unknown or else datums will not match, see bug
                 // #4281.
                 if( oSRSGDAL.GetAttrNode("DATUM") )
-                    oSRSGDAL.GetAttrNode("DATUM")->GetChild(0)->SetValue("unknown");
+                    oSRSGDAL.GetAttrNode("DATUM")->GetChild(0)->SetValue("unnamed");
                 // Need this for setprojection autotest.
                 if( oSRSGDAL.GetAttrNode("PROJCS") )
                     oSRSGDAL.GetAttrNode("PROJCS")->GetChild(0)->SetValue("unnamed");
                 if( oSRSGDAL.GetAttrNode("GEOGCS") )
-                    oSRSGDAL.GetAttrNode("GEOGCS")->GetChild(0)->SetValue("unknown");
-                oSRSGDAL.GetRoot()->StripNodes("UNIT");
+                    oSRSGDAL.GetAttrNode("GEOGCS")->GetChild(0)->SetValue("unnamed");
+
                 OGRSpatialReference oSRSForComparison(oSRS);
-                oSRSForComparison.GetRoot()->StripNodes("UNIT");
+                if( oSRSForComparison.GetAttrNode("DATUM") )
+                    oSRSForComparison.GetAttrNode("DATUM")->GetChild(0)->SetValue("unnamed");
+                if( oSRSForComparison.GetAttrNode("PROJCS") )
+                    oSRSForComparison.GetAttrNode("PROJCS")->GetChild(0)->SetValue("unnamed");
+                if( oSRSForComparison.GetAttrNode("GEOGCS") )
+                    oSRSForComparison.GetAttrNode("GEOGCS")->GetChild(0)->SetValue("unnamed");
+
                 if( oSRSForComparison.IsSame(&oSRSGDAL) )
                 {
 #ifdef NCDF_DEBUG
@@ -3719,7 +3881,7 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
                              "using variables %s and %s for GEOLOCATION",
                              pszGeolocXFullName, pszGeolocYFullName);
 
-                    SetMetadataItem("SRS", SRS_WKT_WGS84, "GEOLOCATION");
+                    SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG, "GEOLOCATION");
 
                     CPLString osTMP;
                     osTMP.Printf("NETCDF:\"%s\":%s",
@@ -3817,7 +3979,7 @@ double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName,
 /************************************************************************/
 /*                          SetProjection()                           */
 /************************************************************************/
-CPLErr netCDFDataset::SetProjection( const char * pszNewProjection )
+CPLErr netCDFDataset::_SetProjection( const char * pszNewProjection )
 {
     CPLMutexHolderD(&hNCMutex);
 
@@ -3831,7 +3993,7 @@ CPLErr netCDFDataset::SetProjection( const char * pszNewProjection )
     if( bSetProjection && (GetAccess() == GA_Update) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                  "netCDFDataset::SetProjection() should only be called once "
+                  "netCDFDataset::_SetProjection() should only be called once "
                   "in update mode!\npszNewProjection=\n%s",
                   pszNewProjection);
     }
@@ -4538,6 +4700,7 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             OGRCoordinateTransformation *poTransform = nullptr;
 
             OGRSpatialReference oSRS2;
+            oSRS2.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             oSRS2.importFromWkt(pszProjection);
 
             size_t startX[1];
@@ -4606,8 +4769,11 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             {
                 poLatLonSRS = oSRS2.CloneGeogCS();
                 if( poLatLonSRS != nullptr )
+                {
+                    poLatLonSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poTransform =
                         OGRCreateCoordinateTransformation(&oSRS2, poLatLonSRS);
+                }
                 // If no OGR transform, then don't write CF lon/lat.
                 if( poTransform == nullptr )
                 {
@@ -5295,7 +5461,10 @@ OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
     // that destroys the passed SRS instead of releasing it .
     OGRSpatialReference *poSRS = poSpatialRef;
     if( poSRS != nullptr )
+    {
         poSRS = poSRS->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     netCDFLayer *poLayer =
         new netCDFLayer(poLayerDataset ? poLayerDataset : this, nLayerCDFId,
                         osNetCDFLayerName, eGType, poSRS);
@@ -10838,6 +11007,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
     if( pszProjection != nullptr )
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromWkt(pszProjection) != OGRERR_NONE )
         {
             delete poSRS;
@@ -10963,3 +11133,40 @@ static CPLErr NCDFGetCoordAndBoundVarFullNames( int nCdfId,
 
     return CE_None;
 }
+
+//Check if give type is user defined
+static bool NCDFIsUserDefinedType(int ncid, int type)
+{
+    //Adapted from OPENDAP netcdf_handler
+    //To circumvent use of NC_FIRSTUSERTYPEID
+    //Which is not a part of netcdf 4.1.1 installed on RH
+    //In all later version, type >= NC_FIRSTUSERTYPEID works
+#if NETCDF_HAS_NC4
+    int ntypes;
+    int typeids[NC_MAX_VARS];  // It's likely safe to assume there are
+    int rootid; //For nested datasets
+
+    if (NCDFGetRootGroup(ncid, &rootid) != CE_None)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Could not get root group information for user defined types");
+        return false;
+    }
+
+    int err = nc_inq_typeids(rootid, &ntypes, typeids);
+    if (err != NC_NOERR)
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Could not get user defined type information");
+
+    for (int i = 0; i < ntypes; ++i) {
+        if (type == typeids[i])
+            return true;
+    }
+
+    return false;
+#else
+    return false;
+#endif
+}
+
+

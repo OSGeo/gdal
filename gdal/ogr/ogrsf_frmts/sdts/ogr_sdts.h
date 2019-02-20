@@ -89,7 +89,7 @@ class OGRSDTSDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int ) override;
     int                 TestCapability( const char * ) override;
 
-    OGRSpatialReference *GetSpatialRef() { return poSRS; }
+    OGRSpatialReference *DSGetSpatialRef() { return poSRS; }
 };
 
 #endif /* ndef OGR_SDTS_H_INCLUDED */

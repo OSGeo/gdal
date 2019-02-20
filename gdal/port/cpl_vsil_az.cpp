@@ -653,8 +653,17 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
     const bool bSingleBlock = bIsLastBlock &&
                 ( m_nCurOffset <= static_cast<vsi_l_offset>(m_nBufferSize) );
 
-    for( int i = 0; i < 2; i++ )
+    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
+                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    int nRetryCount = 0;
+    bool bHasAlreadyHandled409 = false;
+    bool bRetry;
+    do
     {
+        bRetry = false;
+
         m_nBufferOffReadCallback = 0;
         CURL* hCurlHandle = curl_easy_init();
 
@@ -708,6 +717,12 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                             VSICurlHandleWriteFunc);
 
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
         MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poHandleHelper->GetURL()),
                      hCurlHandle);
 
@@ -716,9 +731,9 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-        bool bRetry = false;
-        if( i == 0 && response_code == 409 )
+        if( !bHasAlreadyHandled409 && response_code == 409 )
         {
+            bHasAlreadyHandled409 = true;
             CPLDebug(cpl::down_cast<VSIAzureFSHandler*>(m_poFS)->GetDebugKey(),
                      "%s",
                         sWriteFuncData.pBuffer
@@ -735,15 +750,36 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         }
         else if( response_code != 201 )
         {
-            CPLDebug(cpl::down_cast<VSIAzureFSHandler*>(m_poFS)->GetDebugKey(),
-                     "%s",
-                        sWriteFuncData.pBuffer
-                        ? sWriteFuncData.pBuffer
-                        : "(null)");
-            CPLError(CE_Failure, CPLE_AppDefined,
-                        "PUT of %s failed",
-                        m_osFilename.c_str());
-            bSuccess = false;
+            // Look if we should attempt a retry
+            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                static_cast<int>(response_code), dfRetryDelay,
+                sWriteFuncHeaderData.pBuffer);
+            if( dfNewRetryDelay > 0 &&
+                nRetryCount < nMaxRetry )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "HTTP error code: %d - %s. "
+                            "Retrying again in %.1f secs",
+                            static_cast<int>(response_code),
+                            m_poHandleHelper->GetURL().c_str(),
+                            dfRetryDelay);
+                CPLSleep(dfRetryDelay);
+                dfRetryDelay = dfNewRetryDelay;
+                nRetryCount++;
+                bRetry = true;
+            }
+            else
+            {
+                CPLDebug(cpl::down_cast<VSIAzureFSHandler*>(m_poFS)->GetDebugKey(),
+                        "%s",
+                            sWriteFuncData.pBuffer
+                            ? sWriteFuncData.pBuffer
+                            : "(null)");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "PUT of %s failed",
+                            m_osFilename.c_str());
+                bSuccess = false;
+            }
         }
         else
         {
@@ -751,12 +787,10 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         }
 
         CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
-
-        if( !bRetry )
-            break;
-    }
+    } while( bRetry );
 
     return bSuccess;
 }

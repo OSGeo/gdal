@@ -71,10 +71,16 @@ class SAFEDataset final: public GDALPamDataset
     virtual ~SAFEDataset();
 
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    virtual const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void) override;
+    virtual const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual CPLErr GetGeoTransform( double * ) override;
 
 #ifdef notdef
@@ -1133,7 +1139,7 @@ int SAFEDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *SAFEDataset::GetGCPProjection()
+const char *SAFEDataset::_GetGCPProjection()
 {
     return pszGCPProjection;
 }
@@ -1152,7 +1158,7 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *SAFEDataset::GetProjectionRef()
+const char *SAFEDataset::_GetProjectionRef()
 {
     return pszProjection;
 }

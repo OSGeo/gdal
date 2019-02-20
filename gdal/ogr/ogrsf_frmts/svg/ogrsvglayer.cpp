@@ -99,6 +99,7 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
     "AUTHORITY[\"EPSG\",\"3857\"],"
     "AXIS[\"X\",EAST],"
     "AXIS[\"Y\",NORTH]]");
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     fpSVG = VSIFOpenL( pszFilename, "r" );
     if( fpSVG == nullptr )

@@ -484,7 +484,8 @@ OGRWFS3Layer::OGRWFS3Layer(OGRWFS3Dataset* poDS,
     if( !oCRS.IsValid() || oCRS.Size() == 0 )
     {
         OGRSpatialReference* poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_WKT_WGS84);
+        poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
         poSRS->Release();
     }
@@ -518,7 +519,8 @@ OGRWFS3Layer::OGRWFS3Layer(OGRWFS3Dataset* poDS,
     }
 
     OGRSpatialReference* poSRS = new OGRSpatialReference();
-    poSRS->SetFromUserInput(SRS_WKT_WGS84);
+    poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poSRS->Release();
 

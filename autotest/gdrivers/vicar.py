@@ -51,7 +51,8 @@ def test_vicar_1():
     PROJECTION["Sinusoidal"],
     PARAMETER["longitude_of_center",137],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],
+    UNIT["meter",1]]]"""
     tst.testOpen(check_prj=expected_prj, skip_checksum=True)
 
     ds = gdal.Open('data/test_vicar_truncated.bin')

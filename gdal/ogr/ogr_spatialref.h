@@ -37,6 +37,7 @@
 
 #include <cstddef>
 #include <map>
+#include <memory>
 #include <vector>
 
 /**
@@ -64,21 +65,20 @@
 
 class CPL_DLL OGR_SRSNode
 {
-    char        *pszValue;
-
-    OGR_SRSNode **papoChildNodes;
-    OGR_SRSNode *poParent;
-
-    int         nChildren;
-
-    int         NeedsQuoting() const;
-    OGRErr      importFromWkt( const char **, int nRecLevel, int* pnNodes );
-
-    CPL_DISALLOW_COPY_ASSIGN(OGR_SRSNode)
-
   public:
+    /** Listener that is notified of modification to nodes. */
+    struct Listener
+    {
+        virtual ~Listener();
+        /** Method triggered when a node is modified. */
+        virtual void notifyChange(OGR_SRSNode*) = 0;
+    };
+
     explicit     OGR_SRSNode(const char * = nullptr);
                 ~OGR_SRSNode();
+
+    /** Register a (single) listener. */
+    void        RegisterListener(const std::shared_ptr<Listener>& listener);
 
     /** Return whether this is a leaf node.
      * @return TRUE or FALSE
@@ -103,7 +103,6 @@ class CPL_DLL OGR_SRSNode
     void        SetValue( const char * );
 
     void        MakeValueSafe();
-    OGRErr      FixupOrdering();
 
     OGR_SRSNode *Clone() const;
 
@@ -116,11 +115,21 @@ class CPL_DLL OGR_SRSNode
     OGRErr      exportToWkt( char ** ) const;
     OGRErr      exportToPrettyWkt( char **, int = 1) const;
 
-    OGRErr      applyRemapper( const char *pszNode,
-                               const char * const *papszSrcValues,
-                               const char * const *papszDstValues,
-                               int nStepSize = 1,
-                               int bChildOfHit = FALSE );
+  private:
+    char        *pszValue;
+
+    OGR_SRSNode **papoChildNodes;
+    OGR_SRSNode *poParent;
+
+    int         nChildren;
+
+    int         NeedsQuoting() const;
+    OGRErr      importFromWkt( const char **, int nRecLevel, int* pnNodes );
+
+    std::weak_ptr<Listener> m_listener{};
+    void        notifyChange();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGR_SRSNode)
 };
 
 /************************************************************************/
@@ -146,34 +155,17 @@ class CPL_DLL OGR_SRSNode
 
 class CPL_DLL OGRSpatialReference
 {
-    mutable double      dfFromGreenwich;
-    mutable double      dfToMeter;
-    mutable double      dfToDegrees;
+    struct Private;
+    std::unique_ptr<Private> d;
 
-    OGR_SRSNode *poRoot;
-
-    int         nRefCount;
-    mutable int         bNormInfoSet;
-
-    static OGRErr Validate(OGR_SRSNode *poRoot);
-    static OGRErr ValidateAuthority(OGR_SRSNode *poRoot);
-    static OGRErr ValidateAxis(OGR_SRSNode *poRoot);
-    static OGRErr ValidateUnit(OGR_SRSNode *poRoot);
-    static OGRErr ValidateVertDatum(OGR_SRSNode *poRoot);
-    static OGRErr ValidateProjection( OGR_SRSNode* poRoot );
-    static int  IsAliasFor( const char *, const char * );
     void        GetNormInfo() const;
 
     OGRErr      importFromURNPart(const char* pszAuthority,
                                   const char* pszCode,
                                   const char* pszURN);
 
-    OGRErr      importFromEPSGAInternal(int nCode,
-                                        const char* pszSRSType);
-
-    static const std::vector<OGRSpatialReference*>* GetSRSCache(
-                    const char* pszSRSType,
-                    const std::map<CPLString, int>*& poMapESRICSNameToCodeOut);
+    static CPLString   lookupInDict( const char *pszDictFile,
+                                     const char *pszCode );
 
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
@@ -187,14 +179,17 @@ class CPL_DLL OGRSpatialReference
 
     int         Reference();
     int         Dereference();
-    int         GetReferenceCount() const { return nRefCount; }
+    int         GetReferenceCount() const;
     void        Release();
+
+    const char* GetName() const;
 
     OGRSpatialReference *Clone() const;
     OGRSpatialReference *CloneGeogCS() const;
 
     void        dumpReadable();
     OGRErr      exportToWkt( char ** ) const;
+    OGRErr      exportToWkt( char ** ppszWKT, const char* const* papszOptions ) const;
     OGRErr      exportToPrettyWkt( char **, int = FALSE) const;
     OGRErr      exportToProj4( char ** ) const;
     OGRErr      exportToPCI( char **, char **, double ** ) const;
@@ -247,13 +242,11 @@ class CPL_DLL OGRSpatialReference
                                     const char* const* papszOptions = nullptr ) const;
 
     OGRErr      Validate() const;
-    OGRErr      StripCTParms( OGR_SRSNode * = nullptr );
     OGRErr      StripVertical();
-    OGRErr      FixupOrdering();
-    OGRErr      Fixup();
 
     int         EPSGTreatsAsLatLong() const;
     int         EPSGTreatsAsNorthingEasting() const;
+    int         GetAxesCount() const;
     const char *GetAxis( const char *pszTargetKey, int iAxis,
                          OGRAxisOrientation *peOrientation ) const;
     OGRErr      SetAxes( const char *pszTargetKey,
@@ -262,12 +255,17 @@ class CPL_DLL OGRSpatialReference
                          const char *pszYAxisName,
                          OGRAxisOrientation eYAxisOrientation );
 
+    OSRAxisMappingStrategy GetAxisMappingStrategy() const;
+    void                   SetAxisMappingStrategy(OSRAxisMappingStrategy);
+    const std::vector<int>& GetDataAxisToSRSAxisMapping() const;
+    OGRErr                 SetDataAxisToSRSAxisMapping(const std::vector<int>& mapping);
+
     // Machinery for accessing parse nodes
 
     //! Return root node
-    OGR_SRSNode *GetRoot() { return poRoot; }
+    OGR_SRSNode *GetRoot();
     //! Return root node
-    const OGR_SRSNode *GetRoot() const { return poRoot; }
+    const OGR_SRSNode *GetRoot() const;
     void        SetRoot( OGR_SRSNode * );
 
     OGR_SRSNode *GetAttrNode(const char *);
@@ -278,10 +276,15 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetNode( const char *, double );
 
     OGRErr      SetLinearUnitsAndUpdateParameters( const char *pszName,
-                                                   double dfInMeters );
+                                                   double dfInMeters,
+                                                   const char *pszUnitAuthority = nullptr,
+                                                   const char *pszUnitCode = nullptr );
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
     OGRErr      SetTargetLinearUnits( const char *pszTargetKey,
-                                      const char *pszName, double dfInMeters );
+                                      const char *pszName,
+                                      double dfInMeters,
+                                      const char *pszUnitAuthority = nullptr,
+                                      const char *pszUnitCode = nullptr);
 
     double      GetLinearUnits( char ** ) const CPL_WARN_DEPRECATED("Use GetLinearUnits(const char**) instead");
     double      GetLinearUnits( const char ** = nullptr ) const;
@@ -315,6 +318,7 @@ class CPL_DLL OGRSpatialReference
         { return GetPrimeMeridian( static_cast<const char**>(nullptr) ); }
 /*! @endcond */
 
+    bool        IsEmpty() const;
     int         IsGeographic() const;
     int         IsProjected() const;
     int         IsGeocentric() const;
@@ -377,6 +381,12 @@ class CPL_DLL OGRSpatialReference
 
     const char *GetAuthorityCode( const char * pszTargetKey ) const;
     const char *GetAuthorityName( const char * pszTargetKey ) const;
+
+    bool        GetAreaOfUse( double* pdfWestLongitudeDeg,
+                              double* pdfSouthLatitudeDeg,
+                              double* pdfEastLongitudeDeg,
+                              double* pdfNorthLatitudeDeg,
+                              const char **ppszAreaName ) const;
 
     const char *GetExtension( const char *pszTargetKey,
                               const char *pszName,
@@ -480,19 +490,17 @@ class CPL_DLL OGRSpatialReference
                             double dfScale,
                             double dfFalseEasting, double dfFalseNorthing );
 
-#ifdef undef
-    /** Oblique Mercator */
-    OGRErr      SetOM( double dfCenterLat, double dfCenterLong,
-                       double dfAzimuth, double dfRectToSkew,
-                       double dfScale,
-                       double dfFalseEasting, double dfFalseNorthing );
-#endif
-
     /** Hotine Oblique Mercator Azimuth Center / Variant B */
     OGRErr      SetHOMAC( double dfCenterLat, double dfCenterLong,
                           double dfAzimuth, double dfRectToSkew,
                           double dfScale,
                           double dfFalseEasting, double dfFalseNorthing );
+
+    /** Laborde Oblique Mercator */
+    OGRErr      SetLOM( double dfCenterLat, double dfCenterLong,
+                        double dfAzimuth,
+                        double dfScale,
+                        double dfFalseEasting, double dfFalseNorthing );
 
     /** International Map of the World Polyconic */
     OGRErr      SetIWMPolyconic( double dfLat1, double dfLat2,
@@ -633,12 +641,12 @@ class CPL_DLL OGRSpatialReference
     /** ImportFromESRIStatePlaneWKT */
     OGRErr      ImportFromESRIStatePlaneWKT(
         int nCode, const char* pszDatumName, const char* pszUnitsName,
-        int nPCSCode, const char* pszCSName = nullptr );
+        int nPCSCode, const char* pszCRSName = nullptr );
 
     /** ImportFromESRIWisconsinWKT */
     OGRErr      ImportFromESRIWisconsinWKT(
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin,
-        const char* pszUnitsName, const char* pszCSName = nullptr );
+        const char* pszUnitsName, const char* pszCRSName = nullptr );
 
     static OGRSpatialReference* GetWGS84SRS();
 
@@ -666,8 +674,8 @@ class CPL_DLL OGRSpatialReference
 /**
  * Interface for transforming between coordinate systems.
  *
- * Currently, the only implementation within OGR is OGRProj4CT, which
- * requires the PROJ.4 library to be available at run-time.
+ * Currently, the only implementation within OGR is OGRProjCT, which
+ * requires the PROJ library.
  *
  * Also, see OGRCreateCoordinateTransformation() for creating transformations.
  */
@@ -688,7 +696,7 @@ public:
     virtual OGRSpatialReference *GetTargetCS() = 0;
 
     /** Whether the transformer will emit CPLError */
-    virtual bool GetEmitErrors() { return false; }
+    virtual bool GetEmitErrors() const { return false; }
 
     /** Set if the transformer must emit CPLError */
     virtual void SetEmitErrors(bool /*bEmitErrors*/) {}
@@ -698,39 +706,42 @@ public:
     /**
      * Transform points from source to destination space.
      *
-     * This method is the same as the C function OCTTransform().
-     *
-     * The method TransformEx() allows extended success information to
-     * be captured indicating which points failed to transform.
-     *
-     * @param nCount number of points to transform.
-     * @param x array of nCount X vertices, modified in place.
-     * @param y array of nCount Y vertices, modified in place.
-     * @param z array of nCount Z vertices, modified in place.
-     * @return TRUE on success, or FALSE if some or all points fail to
-     * transform.
-     */
-    virtual int Transform( int nCount,
-                           double *x, double *y, double *z = nullptr ) = 0;
-
-    /**
-     * Transform points from source to destination space.
-     *
      * This method is the same as the C function OCTTransformEx().
      *
      * @param nCount number of points to transform.
-     * @param x array of nCount X vertices, modified in place.
-     * @param y array of nCount Y vertices, modified in place.
-     * @param z array of nCount Z vertices, modified in place.
+     * @param x array of nCount X vertices, modified in place. Should not be NULL.
+     * @param y array of nCount Y vertices, modified in place. Should not be NULL.
+     * @param z array of nCount Z vertices, modified in place. Might be NULL.
      * @param pabSuccess array of per-point flags set to TRUE if that point
-     * transforms, or FALSE if it does not.
+     * transforms, or FALSE if it does not. Might be NULL.
      *
      * @return TRUE if some or all points transform successfully, or FALSE if
      * if none transform.
      */
-    virtual int TransformEx( int nCount,
-                             double *x, double *y, double *z = nullptr,
-                             int *pabSuccess = nullptr ) = 0;
+    int Transform( int nCount,
+                   double *x, double *y, double *z = nullptr,
+                   int *pabSuccess = nullptr );
+
+    /**
+     * Transform points from source to destination space.
+     *
+     * This method is the same as the C function OCTTransform4D().
+     *
+     * @param nCount number of points to transform.
+     * @param x array of nCount X vertices, modified in place. Should not be NULL.
+     * @param y array of nCount Y vertices, modified in place. Should not be NULL.
+     * @param z array of nCount Z vertices, modified in place. Might be NULL.
+     * @param t array of nCount time values, modified in place. Might be NULL.
+     * @param pabSuccess array of per-point flags set to TRUE if that point
+     * transforms, or FALSE if it does not. Might be NULL.
+     *
+     * @return TRUE if some or all points transform successfully, or FALSE if
+     * if none transform.
+     */
+    virtual int Transform( int nCount,
+                           double *x, double *y,
+                           double *z, double *t,
+                           int *pabSuccess ) = 0;
 
     /** Convert a OGRCoordinateTransformation* to a OGRCoordinateTransformationH.
      * @since GDAL 2.3
@@ -746,7 +757,39 @@ public:
 };
 
 OGRCoordinateTransformation CPL_DLL *
-OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
-                                   OGRSpatialReference *poTarget );
+OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
+                                   const OGRSpatialReference *poTarget );
+
+
+/**
+ * Context for coordinate transformation.
+ * 
+ * @since GDAL 2.5
+ */
+
+struct CPL_DLL OGRCoordinateTransformationOptions
+{
+private:
+    friend class OGRProjCT;
+    struct Private;
+    std::unique_ptr<Private> d;
+
+public:
+    OGRCoordinateTransformationOptions();
+    ~OGRCoordinateTransformationOptions();
+
+    bool SetAreaOfInterest(double dfWestLongitudeDeg,
+                           double dfSouthLatitudeDeg,
+                           double dfEastLongitudeDeg,
+                           double dfNorthLatitudeDeg);
+
+    bool SetCoordinateOperation(const char* pszCT, bool bReverseCT);
+};
+
+
+OGRCoordinateTransformation CPL_DLL *
+OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
+                                   const OGRSpatialReference *poTarget,
+                                   const OGRCoordinateTransformationOptions& options );
 
 #endif /* ndef OGR_SPATIALREF_H_INCLUDED */

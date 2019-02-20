@@ -529,17 +529,31 @@ class GDALClientDataset final: public GDALPamDataset
                                 const char * pszValue,
                                 const char * pszDomain = "" ) override;
 
-        const char* GetProjectionRef() override;
-        CPLErr SetProjection( const char * ) override;
+        const char *_GetProjectionRef(void) override;
+        CPLErr _SetProjection( const char * ) override;
+        const OGRSpatialReference* GetSpatialRef() const override {
+            return GetSpatialRefFromOldGetProjectionRef();
+        }
+        CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+            return OldSetProjectionFromSetSpatialRef(poSRS);
+        }
 
         CPLErr GetGeoTransform( double * ) override;
         CPLErr SetGeoTransform( double * ) override;
 
         int GetGCPCount() override;
-        const char *GetGCPProjection() override;
+        const char *_GetGCPProjection() override;
+        const OGRSpatialReference* GetGCPSpatialRef() const override {
+            return GetGCPSpatialRefFromOldGetGCPProjection();
+        }
         const GDAL_GCP *GetGCPs() override;
-        CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+        CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                         const char *pszGCPProjection ) override;
+        using GDALPamDataset::SetGCPs;
+        CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPList,
+                        const OGRSpatialReference* poSRS ) override {
+            return OldSetGCPsFromNew(nGCPCountIn, pasGCPList, poSRS);
+        }
 
         char **GetFileList() override;
 
@@ -3994,10 +4008,10 @@ CPLErr GDALClientDataset::SetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char* GDALClientDataset::GetProjectionRef()
+const char* GDALClientDataset::_GetProjectionRef()
 {
     if( !SupportsInstr(INSTR_GetProjectionRef) )
-        return GDALPamDataset::GetProjectionRef();
+        return GDALPamDataset::_GetProjectionRef();
 
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_GetProjectionRef) )
@@ -4020,10 +4034,10 @@ const char* GDALClientDataset::GetProjectionRef()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr GDALClientDataset::SetProjection(const char* pszProjection)
+CPLErr GDALClientDataset::_SetProjection(const char* pszProjection)
 {
     if( !SupportsInstr(INSTR_SetProjection) )
-        return GDALPamDataset::SetProjection(pszProjection);
+        return GDALPamDataset::_SetProjection(pszProjection);
 
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_SetProjection) ||
@@ -4058,10 +4072,10 @@ int GDALClientDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char * GDALClientDataset::GetGCPProjection()
+const char * GDALClientDataset::_GetGCPProjection()
 {
     if( !SupportsInstr(INSTR_GetGCPProjection) )
-        return GDALPamDataset::GetGCPProjection();
+        return GDALPamDataset::_GetGCPProjection();
 
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_GetGCPProjection) )
@@ -4114,11 +4128,11 @@ const GDAL_GCP * GDALClientDataset::GetGCPs()
 /*                               SetGCPs()                              */
 /************************************************************************/
 
-CPLErr GDALClientDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPList,
+CPLErr GDALClientDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPList,
                                    const char *pszGCPProjection )
 {
     if( !SupportsInstr(INSTR_SetGCPs) )
-        return GDALPamDataset::SetGCPs(nGCPCountIn, pasGCPList, pszGCPProjection);
+        return GDALPamDataset::_SetGCPs(nGCPCountIn, pasGCPList, pszGCPProjection);
 
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_SetGCPs) ||

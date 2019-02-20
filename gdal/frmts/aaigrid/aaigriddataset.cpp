@@ -891,7 +891,7 @@ CPLErr AAIGDataset::GetGeoTransform( double *padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *AAIGDataset::GetProjectionRef() { return pszProjection; }
+const char *AAIGDataset::_GetProjectionRef() { return pszProjection; }
 
 /************************************************************************/
 /*                          CreateCopy()                                */

@@ -411,6 +411,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
                 return FALSE;
             }
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             /* Get coordinate system from SOSI header. */
             int nEPSG = sosi2epsg(oTrans.sKoordsys);

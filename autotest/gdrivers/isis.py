@@ -54,7 +54,8 @@ def test_isis_1():
     PARAMETER["central_meridian",184.4129944],
     PARAMETER["standard_parallel_1",-15.1470003],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]
 """
     gt = (-4766.96484375, 10.102499961853027, 0.0,
           -872623.625, 0.0, -10.102499961853027)
@@ -78,7 +79,8 @@ def test_isis_2():
     PARAMETER["central_meridian",195.92],
     PARAMETER["standard_parallel_1",-38.88],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]
 """
     gt = (653.132641495800044, 0.38, 0,
           -2298409.710162799805403, 0, -0.38)
@@ -102,7 +104,8 @@ def test_isis_3():
     PARAMETER["central_meridian",184.4129944],
     PARAMETER["standard_parallel_1",-15.1470003],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]
 """
     gt = (-4766.96484375, 10.102499961853027, 0.0,
           -872623.625, 0.0, -10.102499961853027)
@@ -440,7 +443,7 @@ def test_isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Equirectangular DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME_localRadius",123455.2424988797,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",1],PARAMETER["standard_parallel_1",2],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'))
+    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Equirectangular DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME_localRadius",123455.2424988797,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",1],PARAMETER["standard_parallel_1",2],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]'))
 
     sr = osr.SpatialReference()
     sr.SetEquirectangular2(123456, 1, 2, 987654, 3210123)
@@ -454,7 +457,7 @@ def test_isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Equirectangular DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME_localRadius",123455.2424988797,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",1],PARAMETER["standard_parallel_1",2],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'))
+    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Equirectangular DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME_localRadius",123455.2424988797,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",1],PARAMETER["standard_parallel_1",2],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]'))
 
     sr = osr.SpatialReference()
     sr.SetOrthographic(1, 2, 0, 0)
@@ -465,7 +468,7 @@ def test_isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Orthographic DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'))
+    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Orthographic DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]'))
 
     sr = osr.SpatialReference()
     sr.SetSinusoidal(1, 0, 0)
@@ -476,10 +479,10 @@ def test_isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Sinusoidal DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Sinusoidal"],PARAMETER["longitude_of_center",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'))
+    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Sinusoidal DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Sinusoidal"],PARAMETER["longitude_of_center",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]'))
 
     sr = osr.SpatialReference()
-    sr.SetMercator(1, 2, 0.9, 0, 0)
+    sr.SetMercator(0, 2, 0.9, 0, 0)
     sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
@@ -487,7 +490,7 @@ def test_isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Mercator DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'))
+    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Mercator DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]')), wkt
 
     sr = osr.SpatialReference()
     sr.SetPS(1, 2, 0.9, 0, 0)
@@ -498,7 +501,7 @@ def test_isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["PolarStereographic DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME_polarRadius",122838.72,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'))
+    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["PolarStereographic DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME_polarRadius",122838.72,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1],AXIS["Easting",SOUTH],AXIS["Northing",SOUTH]]')), wkt
 
     sr = osr.SpatialReference()
     sr.SetTM(1, 2, 0.9, 0, 0)
@@ -509,7 +512,7 @@ def test_isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["TransverseMercator DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'))
+    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["TransverseMercator DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]'))
 
     sr = osr.SpatialReference()
     sr.SetLCC(1, 2, 3, 4, 0, 0)
@@ -520,7 +523,7 @@ def test_isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["LambertConformal DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",1],PARAMETER["standard_parallel_2",2],PARAMETER["latitude_of_origin",3],PARAMETER["central_meridian",4],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'))
+    assert osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["LambertConformal DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",1],PARAMETER["standard_parallel_2",2],PARAMETER["latitude_of_origin",3],PARAMETER["central_meridian",4],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1]]'))
 
     sr = osr.SpatialReference()
     sr.SetEquirectangular2(0, 1, 2, 0, 0)
@@ -1398,5 +1401,23 @@ def test_isis_31():
     assert cs == 1
 
 
+###############################################################################
+def test_isis3_write_utm():
 
+    src_ds = gdal.Open('data/byte.tif')
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('ISIS3').CreateCopy('/vsimem/temp.lbl', src_ds,
+                                            options=['DATA_LOCATION=EXTERNAL'])
+    ds = gdal.Open('/vsimem/temp.lbl')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    f = gdal.VSIFOpenL('/vsimem/temp.lbl', 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert 'MinimumLongitude   = -117.6411686' in data, data
+    assert 'MaximumLongitude   = -117.6281108' in data, data
+    assert 'MaximumLatitude    = 33.90241956' in data, data
+    assert 'MinimumLatitude    = 33.891530168' in data, data
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/temp.lbl')
 

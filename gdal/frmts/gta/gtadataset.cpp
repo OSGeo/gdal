@@ -248,13 +248,28 @@ class GTADataset : public GDALPamDataset
     CPLErr      GetGeoTransform( double * padfTransform ) override;
     CPLErr      SetGeoTransform( double * padfTransform ) override;
 
-    const char *GetProjectionRef( ) override;
-    CPLErr      SetProjection( const char *pszProjection ) override;
+    const char *_GetProjectionRef( ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr      _SetProjection( const char *pszProjection ) override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     int         GetGCPCount( ) override;
-    const char *GetGCPProjection( ) override;
+    const char *_GetGCPProjection( ) override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP *GetGCPs( ) override;
-    CPLErr      SetGCPs( int, const GDAL_GCP *, const char * ) override;
+    CPLErr      _SetGCPs( int, const GDAL_GCP *, const char * ) override;
+    using GDALPamDataset::SetGCPs;
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const OGRSpatialReference* poSRS ) override {
+        return OldSetGCPsFromNew(nGCPCount, pasGCPList, poSRS);
+    }
+
 };
 
 /************************************************************************/
@@ -927,7 +942,7 @@ CPLErr GTADataset::SetGeoTransform( double * )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *GTADataset::GetProjectionRef()
+const char *GTADataset::_GetProjectionRef()
 
 {
     const char *p = oHeader.global_taglist().get("GDAL/PROJECTION");
@@ -938,7 +953,7 @@ const char *GTADataset::GetProjectionRef()
 /*                          SetProjection()                             */
 /************************************************************************/
 
-CPLErr GTADataset::SetProjection( const char * )
+CPLErr GTADataset::_SetProjection( const char * )
 
 {
     CPLError( CE_Warning, CPLE_NotSupported,
@@ -960,7 +975,7 @@ int GTADataset::GetGCPCount( )
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char * GTADataset::GetGCPProjection( )
+const char * GTADataset::_GetGCPProjection( )
 
 {
     return pszGCPProjection ? pszGCPProjection : "";
@@ -980,7 +995,7 @@ const GDAL_GCP * GTADataset::GetGCPs( )
 /*                          SetGCPs()                                   */
 /************************************************************************/
 
-CPLErr GTADataset::SetGCPs( int, const GDAL_GCP *, const char * )
+CPLErr GTADataset::_SetGCPs( int, const GDAL_GCP *, const char * )
 
 {
     CPLError( CE_Warning, CPLE_NotSupported,

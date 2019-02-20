@@ -78,7 +78,9 @@ public:
     virtual ~GNMNetwork();
 
     // GDALDataset Interface
-    virtual const char *GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual char      **GetFileList(void) override;
 
     // GNMNetwork Interface
@@ -168,6 +170,10 @@ protected:
      */
     virtual int CheckNetworkExist( const char* pszFilename,
                                    char** papszOptions ) = 0;
+
+//! @cond Doxygen_Suppress
+    const char *_GetProjectionRef(void) override;
+//! @endcond
 
 protected:
 //! @cond Doxygen_Suppress

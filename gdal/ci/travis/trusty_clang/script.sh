@@ -6,7 +6,7 @@ set -e
 # Run it in isolation
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export PATH=$JAVA_HOME/jre/bin:$PATH
-export PYTEST="pytest -vv -p no:sugar --color=no"
+export PYTEST="pytest -ra -p no:sugar --color=no"
 
 cd gdal
 # Perl unit tests

@@ -59,7 +59,7 @@ def test_ida_2():
         pytest.fail('Aaigrid geotransform wrong.')
 
     prj = ds.GetProjection()
-    assert prj == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]', \
+    assert 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]', \
         ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)
@@ -99,7 +99,8 @@ def test_ida_4():
     PARAMETER["latitude_of_center",17.5],
     PARAMETER["longitude_of_center",-87.5],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],
+    UNIT["meter",1]]"""
 
     return gdaltest.ida_tst.testSetProjection(prj=prj)
 
@@ -120,7 +121,8 @@ def test_ida_5():
     PROJECTION["Goode_Homolosine"],
     PARAMETER["central_meridian",0],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],
+    UNIT["meter",1]]"""
 
     return gdaltest.ida_tst.testSetProjection(prj=prj)
 
@@ -144,7 +146,8 @@ def test_ida_6():
     PARAMETER["latitude_of_origin",33.76446202775696],
     PARAMETER["central_meridian",-117.4745428888127],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],
+    UNIT["meter",1]]"""
 
     return gdaltest.ida_tst.testSetProjection(prj=prj)
 
@@ -166,7 +169,8 @@ def test_ida_7():
     PARAMETER["latitude_of_center",33.76446202775696],
     PARAMETER["longitude_of_center",-117.4745428888127],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],
+    UNIT["meter",1]]"""
 
     return gdaltest.ida_tst.testSetProjection(prj=prj)
 

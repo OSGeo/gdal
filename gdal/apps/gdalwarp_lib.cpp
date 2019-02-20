@@ -50,6 +50,7 @@
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "gdalwarper.h"
 #include "ogr_api.h"
@@ -311,7 +312,7 @@ static const char* GetSrcDSProjection( GDALDatasetH hDS,
     else if( GDALGetMetadata( hDS, "RPC" ) != nullptr &&
              (pszMethod == nullptr || EQUAL(pszMethod,"RPC") ) )
     {
-        pszProjection = SRS_WKT_WGS84;
+        pszProjection = SRS_WKT_WGS84_LAT_LONG;
     }
     else if( (papszMD = GDALGetMetadata( hDS, "GEOLOCATION" )) != nullptr &&
              (pszMethod == nullptr || EQUAL(pszMethod,"GEOLOC_ARRAY") ) )
@@ -349,7 +350,8 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
     if( pszThisSourceSRS != nullptr && pszThisSourceSRS[0] != '\0' )
     {
         hSrcSRS = OSRNewSpatialReference(nullptr);
-        if( OSRImportFromWkt( hSrcSRS, const_cast<char **>(&pszThisSourceSRS) ) != OGRERR_NONE )
+        OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
+        if( OSRSetFromUserInput( hSrcSRS, pszThisSourceSRS ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot compute bounding box of cutline.");
@@ -380,7 +382,8 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
     if ( pszThisTargetSRS != nullptr )
     {
         hDstSRS = OSRNewSpatialReference(nullptr);
-        if( OSRImportFromWkt( hDstSRS, const_cast<char **>(&pszThisTargetSRS) ) != OGRERR_NONE )
+        OSRSetAxisMappingStrategy(hDstSRS, OAMS_TRADITIONAL_GIS_ORDER);
+        if( OSRSetFromUserInput( hDstSRS, pszThisTargetSRS ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             OSRDestroySpatialReference(hSrcSRS);
@@ -860,9 +863,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if( !psOptions->bQuiet && !(psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 && psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0)  )
     {
         if( psOptions->dfMinX >= psOptions->dfMaxX )
-            CPLError(CE_Warning, CPLE_AppDefined, "-ts values have minx >= maxx. This will result in a horizontally flipped image.");
+            CPLError(CE_Warning, CPLE_AppDefined, "-te values have minx >= maxx. This will result in a horizontally flipped image.");
         if( psOptions->dfMinY >= psOptions->dfMaxY )
-            CPLError(CE_Warning, CPLE_AppDefined, "-ts values have miny >= maxy. This will result in a vertically flipped image.");
+            CPLError(CE_Warning, CPLE_AppDefined, "-te values have miny >= maxy. This will result in a vertically flipped image.");
     }
 
     if( psOptions->dfErrorThreshold < 0 )
@@ -887,8 +890,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         else
         {
             OGRSpatialReference oSRSIn;
+            oSRSIn.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             oSRSIn.SetFromUserInput(psOptions->pszTE_SRS);
             OGRSpatialReference oSRSDS;
+            oSRSDS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             bool bOK = false;
             if( CSLFetchNameValue( psOptions->papszTO, "DST_SRS" ) != nullptr )
             {
@@ -916,7 +921,29 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
             if( !oSRSIn.IsSame(&oSRSDS) )
             {
-                OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oSRSIn, &oSRSDS);
+                double dfWestLongitudeDeg = 0.0;
+                double dfSouthLatitudeDeg = 0.0;
+                double dfEastLongitudeDeg = 0.0;
+                double dfNorthLatitudeDeg = 0.0;
+
+                OGRCoordinateTransformationOptions options;
+                if( GDALComputeAreaOfInterest(&oSRSIn,
+                                              psOptions->dfMinX,
+                                              psOptions->dfMinY,
+                                              psOptions->dfMaxX,
+                                              psOptions->dfMaxY,
+                                              dfWestLongitudeDeg,
+                                              dfSouthLatitudeDeg,
+                                              dfEastLongitudeDeg,
+                                              dfNorthLatitudeDeg) )
+                {
+                    options.SetAreaOfInterest(dfWestLongitudeDeg,
+                                            dfSouthLatitudeDeg,
+                                            dfEastLongitudeDeg,
+                                            dfNorthLatitudeDeg);
+                }
+                OGRCoordinateTransformation* poCT =
+                    OGRCreateCoordinateTransformation(&oSRSIn, &oSRSDS, options);
                 if( !(poCT &&
                     poCT->Transform(1, &psOptions->dfMinX, &psOptions->dfMinY) &&
                     poCT->Transform(1, &psOptions->dfMaxX, &psOptions->dfMaxY)) )
@@ -1431,27 +1458,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
 
-        /* We need to recreate the transform when operating on an overview */
-        if( poSrcOvrDS != nullptr )
-        {
-            GDALDestroyGenImgProjTransformer( hTransformArg );
-            hTransformArg =
-                GDALCreateGenImgProjTransformer2( hWrkSrcDS, hDstDS, psOptions->papszTO );
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Warp the transformer with a linear approximator unless the      */
-/*      acceptable error is zero.                                       */
-/* -------------------------------------------------------------------- */
-        if( psOptions->dfErrorThreshold != 0.0 )
-        {
-            hTransformArg =
-                GDALCreateApproxTransformer( GDALGenImgProjTransform,
-                                             hTransformArg, psOptions->dfErrorThreshold);
-            pfnTransformer = GDALApproxTransform;
-            GDALApproxTransformerOwnsSubtransformer(hTransformArg, TRUE);
-        }
-
 /* -------------------------------------------------------------------- */
 /*      Clear temporary INIT_DEST settings after the first image.       */
 /* -------------------------------------------------------------------- */
@@ -1483,9 +1489,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
         psWO->hSrcDS = hWrkSrcDS;
         psWO->hDstDS = hDstDS;
-
-        psWO->pfnTransformer = pfnTransformer;
-        psWO->pTransformerArg = hTransformArg;
 
         if( !bVRT )
         {
@@ -1930,6 +1933,83 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
 
+/* -------------------------------------------------------------------- */
+/*      In some cases, RPC evaluation can find valid input pixel for    */
+/*      output pixels that are outside the footprint of the source      */
+/*      dataset, so limit the area we update in the target dataset from */
+/*      the suggested warp output (only in cases where SKIP_NOSOURCE=YES) */
+/* -------------------------------------------------------------------- */
+        int nWarpDstXOff = 0;
+        int nWarpDstYOff = 0;
+        int nWarpDstXSize = GDALGetRasterXSize( hDstDS );
+        int nWarpDstYSize = GDALGetRasterYSize( hDstDS );
+
+        if( CPLTestBool(CSLFetchNameValueDef(psWO->papszWarpOptions, "SKIP_NOSOURCE", "NO")) &&
+            GDALGetMetadata( hSrcDS, "RPC" ) != nullptr &&
+            EQUAL(CSLFetchNameValueDef( psOptions->papszTO, "METHOD", "RPC"), "RPC") &&
+            CPLTestBool(CPLGetConfigOption("RESTRICT_OUTPUT_DATASET_UPDATE", "YES")) )
+        {
+            double adfSuggestedGeoTransform[6];
+            double adfExtent[4];
+            int    nPixels, nLines;
+            if( GDALSuggestedWarpOutput2(hSrcDS, pfnTransformer, hTransformArg,
+                                         adfSuggestedGeoTransform, &nPixels, &nLines,
+                                         adfExtent, 0) == CE_None )
+            {
+                const double dfMinX = adfExtent[0];
+                const double dfMinY = adfExtent[1];
+                const double dfMaxX = adfExtent[2];
+                const double dfMaxY = adfExtent[3];
+                if( std::fabs(dfMinX) < INT_MAX/2 &&
+                    std::fabs(dfMinY) < INT_MAX/2 &&
+                    std::fabs(dfMaxX) < INT_MAX/2 &&
+                    std::fabs(dfMaxY) < INT_MAX/2 )
+                {
+                    const int nPadding = 5;
+                    nWarpDstXOff = std::max(nWarpDstXOff,
+                        static_cast<int>(std::floor(dfMinX)) - nPadding);
+                    nWarpDstYOff = std::max(nWarpDstYOff,
+                        static_cast<int>(std::floor(dfMinY)) - nPadding);
+                    nWarpDstXSize = std::min(nWarpDstXSize - nWarpDstXOff,
+                        static_cast<int>(std::ceil(dfMaxX)) + nPadding - nWarpDstXOff);
+                    nWarpDstYSize = std::min(nWarpDstYSize - nWarpDstYOff,
+                        static_cast<int>(std::ceil(dfMaxY)) + nPadding - nWarpDstYOff);
+                    if( nWarpDstXOff != 0 || nWarpDstYOff != 0 ||
+                        nWarpDstXSize != GDALGetRasterXSize( hDstDS ) ||
+                        nWarpDstYSize != GDALGetRasterYSize( hDstDS ) )
+                    {
+                        CPLDebug("WARP",
+                                "Restricting warping to output dataset window %d,%d,%dx%d",
+                                nWarpDstXOff, nWarpDstYOff,nWarpDstXSize, nWarpDstYSize );
+                    }
+                }
+            }
+        }
+
+        /* We need to recreate the transform when operating on an overview */
+        if( poSrcOvrDS != nullptr )
+        {
+            GDALDestroyGenImgProjTransformer( hTransformArg );
+            hTransformArg =
+                GDALCreateGenImgProjTransformer2( hWrkSrcDS, hDstDS, psOptions->papszTO );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Warp the transformer with a linear approximator unless the      */
+/*      acceptable error is zero.                                       */
+/* -------------------------------------------------------------------- */
+        if( psOptions->dfErrorThreshold != 0.0 )
+        {
+            hTransformArg =
+                GDALCreateApproxTransformer( GDALGenImgProjTransform,
+                                             hTransformArg, psOptions->dfErrorThreshold);
+            pfnTransformer = GDALApproxTransform;
+            GDALApproxTransformerOwnsSubtransformer(hTransformArg, TRUE);
+        }
+
+        psWO->pfnTransformer = pfnTransformer;
+        psWO->pTransformerArg = hTransformArg;
+
 
 /* -------------------------------------------------------------------- */
 /*      If we have a cutline, transform it into the source              */
@@ -2001,13 +2081,15 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         {
             CPLErr eErr;
             if( psOptions->bMulti )
-                eErr = oWO.ChunkAndWarpMulti( 0, 0,
-                                       GDALGetRasterXSize( hDstDS ),
-                                       GDALGetRasterYSize( hDstDS ) );
+                eErr = oWO.ChunkAndWarpMulti( nWarpDstXOff,
+                                              nWarpDstYOff,
+                                              nWarpDstXSize,
+                                              nWarpDstYSize );
             else
-                eErr = oWO.ChunkAndWarpImage( 0, 0,
-                                       GDALGetRasterXSize( hDstDS ),
-                                       GDALGetRasterYSize( hDstDS ) );
+                eErr = oWO.ChunkAndWarpImage( nWarpDstXOff,
+                                              nWarpDstYOff,
+                                              nWarpDstXSize,
+                                              nWarpDstYSize );
             if (eErr != CE_None)
                 bHasGotErr = true;
         }
@@ -2794,7 +2876,10 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     const char *pszDstMethod = CSLFetchNameValue(papszTO,"DST_METHOD");
     if( pszDstMethod == nullptr || !EQUAL(pszDstMethod, "NO_GEOTRANSFORM") )
     {
-        if( GDALSetProjection( hDstDS, osThisTargetSRS.c_str() ) == CE_Failure ||
+        OGRSpatialReference oTargetSRS;
+        oTargetSRS.SetFromUserInput(osThisTargetSRS);
+        oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if( GDALSetSpatialRef( hDstDS, OGRSpatialReference::ToHandle(&oTargetSRS) ) == CE_Failure ||
             GDALSetGeoTransform( hDstDS, adfDstGeoTransform ) == CE_Failure )
         {
             if( hCT != nullptr )
@@ -2878,18 +2963,10 @@ public:
     virtual OGRSpatialReference *GetSourceCS() override { return nullptr; }
     virtual OGRSpatialReference *GetTargetCS() override { return nullptr; }
 
+
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = nullptr ) override {
-        int *pabSuccess = static_cast<int *>(CPLCalloc(sizeof(int), nCount));
-        const int nResult = TransformEx(nCount, x, y, z, pabSuccess);
-        CPLFree( pabSuccess );
-
-        return nResult;
-    }
-
-    virtual int TransformEx( int nCount,
-                             double *x, double *y, double *z = nullptr,
-                             int *pabSuccess = nullptr ) override {
+                           double *x, double *y, double *z, double* /* t */,
+                           int *pabSuccess ) override {
         return GDALGenImgProjTransform( hSrcImageTransformer, TRUE,
                                         nCount, x, y, z, pabSuccess );
     }
@@ -2965,7 +3042,8 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
     if( pszProjection != nullptr )
     {
         hRasterSRS = OSRNewSpatialReference(nullptr);
-        if( OSRImportFromWkt( hRasterSRS, const_cast<char **>(&pszProjection) ) != OGRERR_NONE )
+        OSRSetAxisMappingStrategy(hRasterSRS, OAMS_TRADITIONAL_GIS_ORDER);
+        if( OSRSetFromUserInput( hRasterSRS, pszProjection ) != OGRERR_NONE )
         {
             OSRDestroySpatialReference(hRasterSRS);
             hRasterSRS = nullptr;
@@ -3236,22 +3314,21 @@ RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
 }
 
 /************************************************************************/
-/*                             SanitizeSRS                              */
+/*                             IsValidSRS                               */
 /************************************************************************/
 
-static char *SanitizeSRS( const char *pszUserInput )
+static bool IsValidSRS( const char *pszUserInput )
 
 {
     OGRSpatialReferenceH hSRS;
-    char *pszResult = nullptr;
+    bool bRes = true;
 
     CPLErrorReset();
 
     hSRS = OSRNewSpatialReference( nullptr );
-    if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
-        OSRExportToWkt( hSRS, &pszResult );
-    else
+    if( OSRSetFromUserInput( hSRS, pszUserInput ) != OGRERR_NONE )
     {
+        bRes = false;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Translating source or target SRS failed:\n%s",
                   pszUserInput );
@@ -3259,7 +3336,7 @@ static char *SanitizeSRS( const char *pszUserInput )
 
     OSRDestroySpatialReference( hSRS );
 
-    return pszResult;
+    return bRes;
 }
 
 /************************************************************************/
@@ -3390,25 +3467,28 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
         }
         else if( EQUAL(papszArgv[i],"-t_srs") && i+1 < argc )
         {
-            char *pszSRS = SanitizeSRS(papszArgv[++i]);
-            if(pszSRS == nullptr)
+            const char *pszSRS = papszArgv[++i];
+            if(!IsValidSRS(pszSRS))
             {
                 GDALWarpAppOptionsFree(psOptions);
                 return nullptr;
             }
             psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "DST_SRS", pszSRS );
-            CPLFree( pszSRS );
         }
         else if( EQUAL(papszArgv[i],"-s_srs") && i+1 < argc )
         {
-            char *pszSRS = SanitizeSRS(papszArgv[++i]);
-            if(pszSRS == nullptr)
+            const char *pszSRS = papszArgv[++i];
+            if(!IsValidSRS(pszSRS))
             {
                 GDALWarpAppOptionsFree(psOptions);
                 return nullptr;
             }
             psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "SRC_SRS", pszSRS );
-            CPLFree( pszSRS );
+        }
+        else if( EQUAL(papszArgv[i],"-ct") && i+1 < argc )
+        {
+            const char *pszCT = papszArgv[++i];
+            psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "COORDINATE_OPERATION", pszCT );
         }
         else if( EQUAL(papszArgv[i],"-order") && i+1 < argc )
         {
@@ -3553,15 +3633,14 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
         }
         else if( EQUAL(papszArgv[i],"-te_srs") && i+1 < argc )
         {
-            char *pszSRS = SanitizeSRS(papszArgv[++i]);
-            if(pszSRS == nullptr)
+            const char *pszSRS = papszArgv[++i];
+            if(!IsValidSRS(pszSRS))
             {
                 GDALWarpAppOptionsFree(psOptions);
                 return nullptr;
             }
             CPLFree(psOptions->pszTE_SRS);
             psOptions->pszTE_SRS = CPLStrdup(pszSRS);
-            CPLFree(pszSRS);
             psOptions->bCreateOutput = true;
         }
         else if( EQUAL(papszArgv[i],"-rn") )

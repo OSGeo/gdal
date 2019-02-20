@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 
 OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth ) :
     poFeatureDefn(nullptr),
-    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG)),
     fpHTF(VSIFOpenL(pszFilename, "rb")),
     bEOF(false),
     nNextFID(0),
@@ -52,6 +52,7 @@ OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth ) :
     dfMaxX(0),
     dfMaxY(0)
 {
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poSRS->SetUTM( nZone, bIsNorth );
 }
 

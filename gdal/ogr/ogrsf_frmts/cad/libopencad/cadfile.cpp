@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2019 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +70,7 @@ int CADFile::ParseFile( enum OpenOptions eOptions, bool bReadUnsupportedGeometri
 
     if( !pFileIO->IsOpened() )
     {
-        if( !pFileIO->Open( CADFileIO::read | CADFileIO::binary ) )
+        if( !pFileIO->Open( CADFileIO::in | CADFileIO::binary ) )
             return CADErrorCodes::FILE_OPEN_FAILED;
     }
 

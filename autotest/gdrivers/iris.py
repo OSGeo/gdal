@@ -70,7 +70,7 @@ def test_iris_2():
     got_gt = ds.GetGeoTransform()
     expected_gt = [16435.721785269096, 1370.4263720754534, 0.0, 5289830.4584420761, 0.0, -1357.6498705837876]
     for i in range(6):
-        assert (not (expected_gt[i] == 0.0 and got_gt[i] != 0.0) or \
+        assert not ((expected_gt[i] == 0.0 and got_gt[i] != 0.0) or \
            (expected_gt[i] != 0.0 and abs(got_gt[i] - expected_gt[i]) / abs(expected_gt[i]) > 1e-5))
 
     expected_metadata = [

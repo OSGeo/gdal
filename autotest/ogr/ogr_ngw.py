@@ -49,7 +49,7 @@ def check_availability(url):
     if now.weekday() == 0:
         if now.hour >= 1 and now.hour < 3:
             return False
-            
+
     version_url = url + '/api/component/pyramid/pkg_version'
 
     if gdaltest.gdalurlopen(version_url) is None:
@@ -230,6 +230,19 @@ def test_ogr_ngw_5():
     assert lyr is not None, 'Create layer failed.'
 
     create_fields(lyr)
+
+    # Test duplicated names.
+    fld_defn = ogr.FieldDefn('STRFIELD', ogr.OFTString)
+    assert lyr.CreateField(fld_defn) != 0, 'Expected not to create duplicated field'
+
+    # Test forbidden field names.
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    fld_defn = ogr.FieldDefn('id', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    gdal.PopErrorHandler()
+    assert gdal.GetLastErrorMsg() != '', 'Expecting a warning'
+
     add_metadata(lyr)
 
     lyr = gdaltest.ngw_ds.CreateLayer('test_ln_layer', srs=sr, geom_type=ogr.wkbMultiLineString, options=['OVERWRITE=YES', 'DESCRIPTION=Test point layer'])

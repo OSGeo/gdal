@@ -65,7 +65,8 @@ OGRNGWDataset::OGRNGWDataset() :
     poRasterDS(nullptr),
     nRasters(0),
     nCacheExpires(604800),  // 7 days
-    nCacheMaxSize(67108864) // 64 MB
+    nCacheMaxSize(67108864),// 64 MB
+    osJsonDepth("32")
 {}
 
 /*
@@ -197,6 +198,9 @@ bool OGRNGWDataset::Open( const std::string &osUrlIn,
 
     bExtInNativeData = CPLFetchBool( papszOpenOptionsIn, "NATIVE_DATA",
         CPLTestBool( CPLGetConfigOption("NGW_NATIVE_DATA", "NO") ) );
+
+    osJsonDepth = CSLFetchNameValueDef( papszOpenOptionsIn, "JSON_DEPTH",
+        CPLGetConfigOption("NGW_JSON_DEPTH", "32"));
 
     return Init( nOpenFlagsIn );
 }
@@ -619,8 +623,16 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
     // Create layer.
     std::string osKey = CSLFetchNameValueDef( papszOptions, "KEY", "");
     std::string osDesc = CSLFetchNameValueDef( papszOptions, "DESCRIPTION", "");
-    OGRNGWLayer *poLayer = new OGRNGWLayer( this, pszNameIn, poSpatialRef, eGType,
+    OGRSpatialReference* poSRSClone = poSpatialRef;
+    if( poSRSClone )
+    {
+        poSRSClone = poSRSClone->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    OGRNGWLayer *poLayer = new OGRNGWLayer( this, pszNameIn, poSRSClone, eGType,
         osKey, osDesc );
+    if( poSRSClone )
+        poSRSClone->Release();
     papoLayers = (OGRNGWLayer**) CPLRealloc(papoLayers, (nLayers + 1) *
         sizeof(OGRNGWLayer*));
     papoLayers[nLayers++] = poLayer;
@@ -790,6 +802,7 @@ char **OGRNGWDataset::GetHeaders() const
 {
     char **papszOptions = nullptr;
     papszOptions = CSLAddString(papszOptions, "HEADERS=Accept: */*");
+    papszOptions = CSLAddNameValue(papszOptions, "JSON_DEPTH", osJsonDepth.c_str());
     if( !osUserPwd.empty() )
     {
         papszOptions = CSLAddString(papszOptions, "HTTPAUTH=BASIC");
@@ -1144,13 +1157,13 @@ OGRLayer *OGRNGWDataset::ExecuteSQL( const char *pszStatement,
 /*
  * GetProjectionRef()
  */
-const char *OGRNGWDataset::GetProjectionRef(void)
+const OGRSpatialReference *OGRNGWDataset::GetSpatialRef() const
 {
     if( poRasterDS != nullptr )
     {
-        return poRasterDS->GetProjectionRef();
+        return poRasterDS->GetSpatialRef();
     }
-    return GDALDataset::GetProjectionRef();
+    return GDALDataset::GetSpatialRef();
 }
 
 /*

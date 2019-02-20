@@ -92,8 +92,10 @@ def test_osr_pci_3():
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
 
     wkt = srs.ExportToWkt()
-    if wkt.find('13, Northern Hemi') == -1:
+    if wkt.find('PARAMETER["false_northing",0]') == -1:
         gdaltest.post_reason('did not default to northern hemisphere!')
+        print(wkt)
+        return 'fail'
 
     srs = osr.SpatialReference()
     srs.ImportFromPCI(
@@ -102,8 +104,10 @@ def test_osr_pci_3():
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
 
     wkt = srs.ExportToWkt()
-    if wkt.find('13, Southern Hemi') == -1:
-        gdaltest.post_reason('did get southern  hemisphere!')
+    if wkt.find('PARAMETER["false_northing",10000000]') == -1:
+        gdaltest.post_reason('did get northern hemisphere!')
+        print(wkt)
+        return 'fail'
 
     srs = osr.SpatialReference()
     srs.ImportFromPCI(
@@ -112,8 +116,10 @@ def test_osr_pci_3():
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
 
     wkt = srs.ExportToWkt()
-    if wkt.find('13, Northern Hemi') == -1:
-        gdaltest.post_reason('did get southern  hemisphere!')
+    if wkt.find('PARAMETER["false_northing",0]') == -1:
+        gdaltest.post_reason('did get southern hemisphere!')
+        print(wkt)
+        return 'fail'
 
     
 ###############################################################################
@@ -168,7 +174,7 @@ def test_osr_pci_6():
     srs = osr.SpatialReference()
     srs.ImportFromPCI('LONG/LAT    D030', 'DEGREE', prj_parms)
 
-    expected = 'GEOGCS["AGD84",DATUM["Australian_Geodetic_Datum_1984",SPHEROID["Australian National Spheroid",6378160,298.25,AUTHORITY["EPSG","7003"]],TOWGS84[-134,-48,149,0,0,0,0],AUTHORITY["EPSG","6203"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4203"]]'
+    expected = 'GEOGCS["AGD84",DATUM["Australian_Geodetic_Datum_1984",SPHEROID["Australian National Spheroid",6378160,298.25,AUTHORITY["EPSG","7003"]],TOWGS84[-117.763,-51.51,139.061,0.292,0.443,0.277,-0.191],AUTHORITY["EPSG","6203"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4203"]]'
 
     assert gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt())
 

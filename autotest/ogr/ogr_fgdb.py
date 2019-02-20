@@ -173,7 +173,7 @@ def test_ogr_fgdb_1():
     for data in datalist:
         lyr = ds.GetLayerByName(data[0])
         if data[1] != ogr.wkbNone:
-            assert lyr.GetSpatialRef().IsSame(srs) == 1
+            assert lyr.GetSpatialRef().IsSame(srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']) == 1
         feat = lyr.GetNextFeature()
         if data[1] != ogr.wkbNone:
             try:

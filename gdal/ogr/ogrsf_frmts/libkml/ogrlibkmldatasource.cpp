@@ -54,19 +54,6 @@ using kmldom::SnippetPtr;
 using kmldom::StyleSelectorPtr;
 using kmlengine::KmzFile;
 
-// This was taken from the kml driver.
-static const char OGRLIBKMLSRSWKT[] =
-    "GEOGCS[\"WGS 84\", "
-    "   DATUM[\"WGS_1984\","
-    "     SPHEROID[\"WGS 84\",6378137,298.257223563,"
-    "           AUTHORITY[\"EPSG\",\"7030\"]],"
-    "           AUTHORITY[\"EPSG\",\"6326\"]],"
-    "       PRIMEM[\"Greenwich\",0,"
-    "           AUTHORITY[\"EPSG\",\"8901\"]],"
-    "       UNIT[\"degree\",0.01745329251994328,"
-    "           AUTHORITY[\"EPSG\",\"9122\"]],"
-    "           AUTHORITY[\"EPSG\",\"4326\"]]";
-
 /************************************************************************/
 /*                           OGRLIBKMLParse()                           */
 /************************************************************************/
@@ -1054,7 +1041,8 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
 
     /***** create a SRS *****/
     OGRSpatialReference *poOgrSRS =
-        new OGRSpatialReference( OGRLIBKMLSRSWKT );
+        new OGRSpatialReference( SRS_WKT_WGS84_LAT_LONG );
+    poOgrSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     /***** parse the kml into the DOM *****/
     std::string oKmlErrors;
@@ -1173,7 +1161,8 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
 
     /***** create a SRS *****/
     OGRSpatialReference *poOgrSRS =
-        new OGRSpatialReference( OGRLIBKMLSRSWKT );
+        new OGRSpatialReference( SRS_WKT_WGS84_LAT_LONG );
+    poOgrSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     /***** parse the kml into the DOM *****/
     std::string oKmlErrors;
@@ -1361,7 +1350,8 @@ int OGRLIBKMLDataSource::OpenDir( const char *pszFilename, int bUpdateIn )
 
     /***** create a SRS *****/
     OGRSpatialReference *poOgrSRS =
-        new OGRSpatialReference( OGRLIBKMLSRSWKT );
+        new OGRSpatialReference( SRS_WKT_WGS84_LAT_LONG );
+    poOgrSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     const int nFiles = CSLCount( papszDirList );
 

@@ -33,23 +33,19 @@
 
 
 from osgeo import osr
+import gdaltest
 import pytest
 
 ###############################################################################
-# Verify that EPSG:26591 picks up the entry from the pcs.override.csv
-# file with the adjusted central_meridian.
+# Verify that deprecated EPSG:26591 ends up picking non-deprecated EPSG:3003
 
 
 def test_osr_epsg_1():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(26591)
+    assert srs.GetAuthorityCode(None) == '3003'
 
-    if abs(srs.GetProjParm('central_meridian') - -3.4523333333333) > 0.000005:
-        print(srs.ExportToPrettyWkt())
-        pytest.fail('Wrong central meridian, override missed?')
-
-    
 ###############################################################################
 # Check that EPSG:4312 lookup has the towgs84 values set properly
 # from gcs.override.csv.
@@ -73,7 +69,7 @@ def test_osr_epsg_2():
 
 def test_osr_epsg_3():
 
-    for epsg in [3120, 2172, 2173, 2174, 2175, 3333, 3334, 3335, 3329, 3330, 3331, 3332, 3328, 4179]:
+    for epsg in [3120, 2172, 2173, 2174, 2175, 3328]:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(epsg)
 
@@ -87,7 +83,7 @@ def test_osr_epsg_3():
 
     
 ###############################################################################
-#   Check that EPSG:4326 is *not* considered as lat/long (#3813)
+#   Check that EPSG:4326 is considered as lat/long
 
 
 def test_osr_epsg_4():
@@ -95,9 +91,9 @@ def test_osr_epsg_4():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
 
-    assert not srs.EPSGTreatsAsLatLong(), 'not supposed to be treated as lat/long'
+    assert srs.EPSGTreatsAsLatLong(), 'supposed to be treated as lat/long'
 
-    assert srs.ExportToWkt().find('AXIS') == -1, 'should not have AXIS node'
+    assert srs.ExportToWkt().find('AXIS') != -1, 'should  have AXIS node'
 
 ###############################################################################
 #   Check that EPSGA:4326 is considered as lat/long
@@ -121,11 +117,11 @@ def test_osr_epsg_6():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4277)
 
-    assert srs.ExportToWkt().find('TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489]') != -1, \
-        'did not get expected TOWGS84'
+    assert srs.ExportToWkt().find('TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489]') == -1, \
+        '# We do not expect a datum shift'
 
 ###############################################################################
-#   Check that EPSG:2193 is *not* considered as N/E
+#   Check that EPSGA:2193 is considered as N/E
 
 
 def test_osr_epsg_7():
@@ -133,9 +129,9 @@ def test_osr_epsg_7():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(2193)
 
-    assert not srs.EPSGTreatsAsNorthingEasting(), 'not supposed to be treated as n/e'
+    assert srs.EPSGTreatsAsNorthingEasting(), 'supposed to be treated as n/e'
 
-    assert srs.ExportToWkt().find('AXIS') == -1, 'should not have AXIS node'
+    assert srs.ExportToWkt().find('AXIS') != -1, 'should  have AXIS node'
 
 ###############################################################################
 #   Check that EPSGA:2193 is considered as N/E
@@ -159,7 +155,7 @@ def test_osr_epsg_9():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
 
-    assert srs.ExportToWkt() == 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]'
+    assert srs.ExportToWkt() == 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]'
 
     assert srs.Validate() == 0, 'Does not validate'
 
@@ -194,7 +190,7 @@ def test_osr_epsg_10():
 
     srs_ref = osr.SpatialReference()
     srs_ref.ImportFromEPSG(3031)
-    assert srs.IsSame(srs_ref) != 0
+    assert srs.IsSame(srs_ref) != 0, "%s vs %s" % (srs.ExportToPrettyWkt(), srs_ref.ExportToPrettyWkt())
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""PROJCS["PS         WGS84",
@@ -232,8 +228,9 @@ def test_osr_epsg_11():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(2065)
 
-    assert srs.ExportToWkt().find('TOWGS84[570.8,85.7,462.8,4.998,1.587,5.261,3.56]') != -1, \
-        'did not get expected TOWGS84'
+    # The override is no longer in proj.db
+    #assert srs.ExportToWkt().find('TOWGS84[570.8,85.7,462.8,4.998,1.587,5.261,3.56]') != -1, \
+    #    'did not get expected TOWGS84'
 
 ###############################################################################
 # Test IsSame() on SRS that differs only by their PROJ4 EXTENSION (besides
@@ -256,28 +253,67 @@ def test_osr_epsg_12():
 
 def test_osr_epsg_13():
 
-    # One exact match (and test PROJCS)
+    # One exact match
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["ETRS89 / UTM zone 32N (N-E)",
+    GEOGCS["ETRS89",
+        DATUM["European_Terrestrial_Reference_System_1989",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6258"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4258"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",9],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Northing",NORTH],
+    AXIS["Easting",EAST]]""")
+    matches = sr.FindMatches()
+    assert len(matches) == 1 and matches[0][1] == 100
+    assert matches[0][0].IsSame(sr)
+
+    # Another one
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3044)
     sr.MorphToESRI()
-    sr.MorphFromESRI()
+    sr.SetFromUserInput(sr.ExportToWkt())
     matches = sr.FindMatches()
     assert len(matches) == 1 and matches[0][1] == 100
-    assert matches[0][0].IsSame(sr) != 0
+    assert not matches[0][0].IsSame(sr)
 
     # Two matches (and test GEOGCS)
-    sr.SetFromUserInput("""GEOGCS["myLKS94",
-    DATUM["Lithuania_1994_ETRS89",
-        SPHEROID["GRS 1980",6378137,298.257222101],
-        TOWGS84[0,0,0,0,0,0,0]],
-    PRIMEM["Greenwich",0],
-    UNIT["degree",0.0174532925199433]]""")
-    matches = sr.FindMatches()
-    assert len(matches) == 2
-    assert matches[0][0].GetAuthorityCode(None) == '4126' and matches[0][1] == 90
-    assert matches[1][0].GetAuthorityCode(None) == '4669' and matches[1][1] == 90
+    # This will now match with 4126 (which is deprecated), since the datum
+    # is identified to 6126 and GetEPSGGeogCS has logic to substract 2000 to it.
+    #sr.SetFromUserInput("""GEOGCS["myLKS94",
+    #DATUM["Lithuania_1994_ETRS89",
+    #    SPHEROID["GRS 1980",6378137,298.257222101],
+    #    TOWGS84[0,0,0,0,0,0,0]],
+    #PRIMEM["Greenwich",0],
+    #UNIT["degree",0.0174532925199433]]""")
+    #matches = sr.FindMatches()
+    #if len(matches) != 2:
+    #    gdaltest.post_reason('fail')
+    #    print(matches)
+    #    return 'fail'
+    #if matches[0][0].GetAuthorityCode(None) != '4126' or matches[0][1] != 90:
+    #    gdaltest.post_reason('fail')
+    #    print(matches)
+    #    return 'fail'
+    #if matches[1][0].GetAuthorityCode(None) != '4669' or matches[1][1] != 90:
+    #    gdaltest.post_reason('fail')
+    #    print(matches)
+    #    return 'fail'
 
-    # Zero match
+    # Very approximate matches
     sr.SetFromUserInput("""GEOGCS["myGEOGCS",
     DATUM["my_datum",
         SPHEROID["WGS 84",6378137,298.257223563]],
@@ -285,7 +321,7 @@ def test_osr_epsg_13():
     UNIT["degree",0.0174532925199433]]
 """)
     matches = sr.FindMatches()
-    assert not matches
+    assert matches
 
     # One single match, but not similar according to IsSame()
     sr = osr.SpatialReference()
@@ -310,7 +346,7 @@ def test_osr_epsg_13():
         AUTHORITY["EPSG","9001"]]]
 """)
     matches = sr.FindMatches()
-    assert len(matches) == 1 and matches[0][1] == 50
+    assert len(matches) == 1 and matches[0][1] == 25
     assert matches[0][0].IsSame(sr) != 1
 
     # WKT has EPSG code but the definition doesn't match with the official
@@ -343,7 +379,7 @@ def test_osr_epsg_13():
     AUTHORITY["EPSG","32122"]]
 """)
     matches = sr.FindMatches()
-    assert len(matches) == 1 and matches[0][1] == 50
+    assert len(matches) == 1 and matches[0][1] == 25
     assert matches[0][0].IsSame(sr) != 1
 
 ###############################################################################
@@ -352,7 +388,8 @@ def test_osr_epsg_13():
 def test_osr_epsg_gcs_deprecated():
 
     sr = osr.SpatialReference()
-    sr.ImportFromEPSG(4268)
+    with gdaltest.config_option('OSR_USE_NON_DEPRECATED', 'NO'):
+        sr.ImportFromEPSG(4268)
     assert sr.ExportToWkt().find('NAD27 Michigan (deprecated)') >= 0
 
 ###############################################################################
@@ -361,10 +398,42 @@ def test_osr_epsg_gcs_deprecated():
 def test_osr_epsg_geoccs_deprecated():
 
     sr = osr.SpatialReference()
-    sr.ImportFromEPSG(4346)
+    with gdaltest.config_option('OSR_USE_NON_DEPRECATED', 'NO'):
+        sr.ImportFromEPSG(4346)
     assert sr.ExportToWkt().find('ETRS89 (geocentric) (deprecated)') >= 0
 
 ###############################################################################
 
 
+def test_osr_epsg_area_of_use():
 
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(2154)
+    area = srs.GetAreaOfUse()
+    assert area.west_lon_degree == -9.86
+    assert area.south_lat_degree == 41.15
+    assert area.east_lon_degree == 10.38
+    assert area.north_lat_degree == 51.56
+    assert area.name == 'France'
+
+###############################################################################
+
+
+def test_osr_GetCRSInfoListFromDatabase():
+
+    l = osr.GetCRSInfoListFromDatabase('EPSG')
+    found = False
+    for record in l:
+        if record.auth_name == 'EPSG' and record.code == '2154':
+            assert record.name == 'RGF93 / Lambert-93'
+            assert record.type == osr.OSR_CRS_TYPE_PROJECTED
+            assert not record.deprecated
+            assert record.bbox_valid
+            assert record.west_lon_degree == -9.86
+            assert record.south_lat_degree == 41.15
+            assert record.east_lon_degree == 10.38
+            assert record.north_lat_degree == 51.56
+            assert record.area_name == 'France'
+            assert record.projection_method == 'Lambert Conic Conformal (2SP)'
+            found = True
+    assert found

@@ -1113,13 +1113,13 @@ int JPIPKAKDataset::ReadFromInput(GByte* pabyData, int nLen, int &bError )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *JPIPKAKDataset::GetProjectionRef()
+const char *JPIPKAKDataset::_GetProjectionRef()
 
 {
     if( pszProjection && *pszProjection )
         return pszProjection;
     else
-        return GDALPamDataset::GetProjectionRef();
+        return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -1153,7 +1153,7 @@ int JPIPKAKDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *JPIPKAKDataset::GetGCPProjection()
+const char *JPIPKAKDataset::_GetGCPProjection()
 
 {
     if( nGCPCount > 0 )

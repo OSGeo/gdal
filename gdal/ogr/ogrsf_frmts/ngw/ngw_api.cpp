@@ -621,9 +621,10 @@ bool UpdateFeature(const std::string &osUrl, const std::string &osResourceId,
     return bResult;
 }
 
-bool PatchFeatures(const std::string &osUrl, const std::string &osResourceId,
+std::vector<GIntBig> PatchFeatures(const std::string &osUrl, const std::string &osResourceId,
     const std::string &osFeaturesJson, char **papszHTTPOptions)
 {
+    std::vector<GIntBig> aoFIDs;
     CPLErrorReset();
     std::string osPayloadInt = "POSTFIELDS=" + osFeaturesJson;
 
@@ -635,21 +636,37 @@ bool PatchFeatures(const std::string &osUrl, const std::string &osResourceId,
     CPLDebug("NGW", "PatchFeatures request payload: %s", osFeaturesJson.c_str());
 
     std::string osUrlInt = GetFeature(osUrl, osResourceId);
-    CPLHTTPResult *psResult = CPLHTTPFetch( osUrlInt.c_str(), papszHTTPOptions );
+    CPLJSONDocument oPatchFeatureReq;
+    bool bResult = oPatchFeatureReq.LoadUrl( osUrlInt, papszHTTPOptions );
     CSLDestroy( papszHTTPOptions );
-    bool bResult = false;
-    if( psResult )
-    {
-        bResult = psResult->nStatus == 0 && psResult->pszErrBuf == nullptr;
 
-        // Get error message.
-        if( !bResult )
+    CPLJSONObject oRoot = oPatchFeatureReq.GetRoot();
+    if( oRoot.IsValid() )
+    {
+        if( bResult )
         {
-            ReportError(psResult->pabyData, psResult->nDataLen);
+            CPLJSONArray aoJSONIDs = oRoot.ToArray();
+            for( int i = 0; i < aoJSONIDs.Size(); ++i)
+            {
+                GIntBig nOutFID = aoJSONIDs[i].GetLong( "id", OGRNullFID );
+                aoFIDs.push_back(nOutFID);
+            }
         }
-        CPLHTTPDestroyResult(psResult);
+        else
+        {
+            std::string osErrorMessage = oRoot.GetString("message");
+            if( osErrorMessage.empty() )
+            {
+                osErrorMessage = "Patch features failed";
+            }
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMessage.c_str());
+        }
     }
-    return bResult;
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Patch features failed");
+    }
+    return aoFIDs;
 }
 
 bool GetExtent(const std::string &osUrl, const std::string &osResourceId,
@@ -689,8 +706,11 @@ bool GetExtent(const std::string &osUrl, const std::string &osResourceId,
     adfCoordinatesX[3] = dfMaxX;
     adfCoordinatesY[3] = dfMinY;
 
-    OGRSpatialReference *po4326SRS = OGRSpatialReference::GetWGS84SRS();
+    OGRSpatialReference o4326SRS;
+    o4326SRS.SetWellKnownGeogCS( "WGS84" );
+    o4326SRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRSpatialReference o3857SRS;
+    o3857SRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( o3857SRS.importFromEPSG(nEPSG) != OGRERR_NONE )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Project extent SRS to EPSG:3857 failed");
@@ -698,7 +718,7 @@ bool GetExtent(const std::string &osUrl, const std::string &osResourceId,
     }
 
     OGRCoordinateTransformation *poTransform =
-        OGRCreateCoordinateTransformation( po4326SRS, &o3857SRS );
+        OGRCreateCoordinateTransformation( &o4326SRS, &o3857SRS );
     if( poTransform )
     {
         poTransform->Transform( 4, adfCoordinatesX, adfCoordinatesY );

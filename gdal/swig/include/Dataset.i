@@ -307,6 +307,11 @@ public:
 
 %rename (Dataset) GDALDatasetShadow;
 
+#ifdef SWIGPYTHON
+%rename (_SetGCPs) SetGCPs;
+%rename (_SetGCPs2) SetGCPs2;
+#endif
+
 class GDALDatasetShadow : public GDALMajorObjectShadow {
 private:
   GDALDatasetShadow();
@@ -344,11 +349,28 @@ public:
     return GDALGetProjectionRef( self );
   }
 
+#ifndef SWIGCSHARP
+  %newobject GetSpatialRef;
+  OSRSpatialReferenceShadow *GetSpatialRef() {
+    OGRSpatialReferenceH ref = GDALGetSpatialRef(self);
+    if( ref )
+       ref = OSRClone( ref );
+    return (OSRSpatialReferenceShadow*) ref;
+  }
+#endif
+
   %apply Pointer NONNULL {char const *prj};
   CPLErr SetProjection( char const *prj ) {
     return GDALSetProjection( self, prj );
   }
   %clear char const *prj;
+
+#ifndef SWIGCSHARP
+  void SetSpatialRef(OSRSpatialReferenceShadow* srs)
+  {
+     GDALSetSpatialRef( self, (OGRSpatialReferenceH)srs );
+  }
+#endif
 
 #ifdef SWIGPYTHON
 %feature("kwargs") GetGeoTransform;
@@ -438,6 +460,16 @@ public:
   }
 
 #ifndef SWIGCSHARP
+  %newobject GetGCPSpatialRef;
+  OSRSpatialReferenceShadow *GetGCPSpatialRef() {
+    OGRSpatialReferenceH ref = GDALGetGCPSpatialRef(self);
+    if( ref )
+       ref = OSRClone( ref );
+    return (OSRSpatialReferenceShadow*) ref;
+  }
+#endif
+
+#ifndef SWIGCSHARP
   void GetGCPs( int *nGCPs, GDAL_GCP const **pGCPs ) {
     *nGCPs = GDALGetGCPCount( self );
     *pGCPs = GDALGetGCPs( self );
@@ -445,6 +477,10 @@ public:
 
   CPLErr SetGCPs( int nGCPs, GDAL_GCP const *pGCPs, const char *pszGCPProjection ) {
     return GDALSetGCPs( self, nGCPs, pGCPs, pszGCPProjection );
+  }
+
+  CPLErr SetGCPs2( int nGCPs, GDAL_GCP const *pGCPs, OSRSpatialReferenceShadow* hSRS ) {
+    return GDALSetGCPs2( self, nGCPs, pGCPs, (OGRSpatialReferenceH)hSRS );
   }
 
 #endif

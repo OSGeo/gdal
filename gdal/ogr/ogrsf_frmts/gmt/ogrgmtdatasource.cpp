@@ -178,19 +178,11 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     if( poSRS != nullptr )
     {
-        if( poSRS->IsProjected()
-            && poSRS->GetAuthorityName("PROJCS")
-            && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG") )
+        if( poSRS->GetAuthorityName(nullptr)
+            && EQUAL(poSRS->GetAuthorityName(nullptr),"EPSG") )
         {
             VSIFPrintfL( fp, "# @Je%s\n",
-                         poSRS->GetAuthorityCode("PROJCS") );
-        }
-        else if( poSRS->IsGeographic()
-                 && poSRS->GetAuthorityName("GEOGCS")
-                 && EQUAL(poSRS->GetAuthorityName("GEOGCS"),"EPSG") )
-        {
-            VSIFPrintfL( fp, "# @Je%s\n",
-                         poSRS->GetAuthorityCode("GEOGCS") );
+                         poSRS->GetAuthorityCode(nullptr) );
         }
 
         char *pszValue = nullptr;

@@ -1870,6 +1870,8 @@ OGRMVTDataset::OGRMVTDataset(GByte* pabyData):
     m_pabyData(pabyData),
     m_poSRS(new OGRSpatialReference())
 {
+    m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     m_bClip = CPLTestBool(CPLGetConfigOption("OGR_MVT_CLIP", "YES"));
 
     // Default WebMercator tiling scheme
@@ -2475,7 +2477,8 @@ static void ConvertFromWGS84(OGRSpatialReference* poTargetSRS,
     else
     {
         OGRSpatialReference oSRS_EPSG4326;
-        oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84);
+        oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        oSRS_EPSG4326.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRCoordinateTransformation* poCT = 
             OGRCreateCoordinateTransformation(&oSRS_EPSG4326, poTargetSRS);
         if( poCT )
@@ -3495,6 +3498,8 @@ OGRMVTWriterDataset::OGRMVTWriterDataset()
 {
     // Default WebMercator tiling scheme
     m_poSRS = new OGRSpatialReference();
+    m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     InitWebMercatorTilingScheme(m_poSRS,
                                 m_dfTopX,
                                 m_dfTopY,
@@ -5485,7 +5490,8 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     else
     {
         OGRSpatialReference oSRS_EPSG4326;
-        oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84);
+        oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        oSRS_EPSG4326.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRCoordinateTransformation* poCT = 
             OGRCreateCoordinateTransformation(m_poSRS, &oSRS_EPSG4326);
         if( poCT )
@@ -5864,8 +5870,16 @@ OGRLayer* OGRMVTWriterDataset::ICreateLayer( const char* pszLayerName,
                                              OGRwkbGeometryType,
                                              char ** papszOptions )
 {
+    OGRSpatialReference* poSRSClone = poSRS;
+    if ( poSRSClone )
+    {
+        poSRSClone = poSRS->Clone();
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     OGRMVTWriterLayer* poLayer =
-        new OGRMVTWriterLayer(this, pszLayerName, poSRS);
+        new OGRMVTWriterLayer(this, pszLayerName, poSRSClone);
+    if( poSRSClone )
+        poSRSClone->Release();
     poLayer->m_nMinZoom = m_nMinZoom;
     poLayer->m_nMaxZoom = m_nMaxZoom;
     poLayer->m_osTargetName = pszLayerName;

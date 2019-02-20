@@ -144,7 +144,12 @@ def test_gdaltindex_3():
         pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
-    wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
+    wkt = """GEOGCS["WGS 72",
+    DATUM["WGS_1972",
+        SPHEROID["WGS 72",6378135,298.26],
+        TOWGS84[0,0,4.5,0,0,0.554,0.2263]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]"""
 
     ds = drv.Create('tmp/gdaltindex5.tif', 10, 10, 1)
     ds.SetProjection(wkt)
@@ -171,7 +176,13 @@ def test_gdaltindex_4():
         pytest.skip()
 
     drv = gdal.GetDriverByName('GTiff')
-    wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
+    wkt = """GEOGCS["WGS 72",
+    DATUM["WGS_1972",
+        SPHEROID["WGS 72",6378135,298.26],
+        TOWGS84[0,0,4.5,0,0,0.554,0.2263]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]"""
+
 
     ds = drv.Create('tmp/gdaltindex5.tif', 10, 10, 1)
     ds.SetProjection(wkt)
@@ -219,7 +230,9 @@ def test_gdaltindex_5():
                 feat.DumpReadable()
                 pytest.fail()
         elif src_srs_format == '-src_srs_format WKT':
-            if feat.GetField('src_srs').find('GEOGCS["WGS 72"') != 0:
+            #if feat.GetField('src_srs').find('GEOGCS["WGS 72"') != 0:
+            # Full definition too long...
+            if feat.GetField('src_srs') is not None:
                 feat.DumpReadable()
                 pytest.fail()
         else:

@@ -51,6 +51,7 @@
 #  include "gdalsse_priv.h"
 #endif
 #include "ogr_api.h"
+#include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
@@ -263,6 +264,11 @@ typedef struct {
 
     bool        bRPCInverseVerbose;
     char       *pszRPCInverseLog;
+
+    char       *pszRPCFootprint;
+    OGRGeometry *poRPCFootprintGeom;
+    OGRPreparedGeometry *poRPCFootprintPreparedGeom;
+
 } GDALRPCTransformInfo;
 
 static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform );
@@ -740,6 +746,14 @@ retry:
  * <li> RPC_MAX_ITERATIONS: maximum number of iterations allowed in the
  * iterative solution of pixel/line to lat/long computations. Default value is
  * 10 in the absence of a DEM, or 20 if there is a DEM.  (GDAL >= 2.1.0)
+ * 
+ * <li> RPC_FOOTPRINT: WKT or GeoJSON polygon (in long / lat coordinate space)
+ * with a validity footprint for the RPC. Any coordinate transformation that
+ * goes from or arrive outside this footprint will be considered invalid. This
+ * is useful in situations where the RPC values become highly unstable outside
+ * of the area on which they have been computed for, potentially leading to
+ * undesirable "echoes" / false positives. This requires GDAL to be built against
+ * GEOS.
  *
  * </ul>
  *
@@ -891,6 +905,38 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         psTransform->pszRPCInverseLog = CPLStrdup(pszRPCInverseLog);
 
 /* -------------------------------------------------------------------- */
+/*      Footprint                                                       */
+/* -------------------------------------------------------------------- */
+    const char* pszFootprint = CSLFetchNameValue(papszOptions, "RPC_FOOTPRINT");
+    if( pszFootprint != nullptr )
+    {
+        psTransform->pszRPCFootprint = CPLStrdup(pszFootprint);
+        if( pszFootprint[0] == '{' )
+        {
+            psTransform->poRPCFootprintGeom =
+                OGRGeometryFactory::createFromGeoJson(pszFootprint);
+        }
+        else
+        {
+            OGRGeometryFactory::createFromWkt(pszFootprint, nullptr,
+                                              &(psTransform->poRPCFootprintGeom));
+        }
+        if( psTransform->poRPCFootprintGeom )
+        {
+            if( OGRHasPreparedGeometrySupport() )
+            {
+                psTransform->poRPCFootprintPreparedGeom =
+                    OGRCreatePreparedGeometry(psTransform->poRPCFootprintGeom);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "GEOS not available. RPC_FOOTPRINT will be ignored");
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Open DEM if needed.                                             */
 /* -------------------------------------------------------------------- */
 
@@ -1023,6 +1069,10 @@ void GDALDestroyRPCTransformer( void *pTransformAlg )
         OCTDestroyCoordinateTransformation(
             reinterpret_cast<OGRCoordinateTransformationH>(psTransform->poCT));
     CPLFree( psTransform->pszRPCInverseLog );
+
+    CPLFree( psTransform->pszRPCFootprint );
+    delete psTransform->poRPCFootprintGeom;
+    OGRDestroyPreparedGeometry(psTransform->poRPCFootprintPreparedGeom);
 
     CPLFree( pTransformAlg );
 }
@@ -1573,6 +1623,22 @@ near_fallback:
 }
 
 /************************************************************************/
+/*                           RPCIsValidLongLat()                        */
+/************************************************************************/
+
+static bool RPCIsValidLongLat( const GDALRPCTransformInfo *psTransform,
+                               double dfLong, double dfLat )
+{
+    if( !psTransform->poRPCFootprintPreparedGeom )
+        return true;
+
+    OGRPoint p(dfLong, dfLat);
+    return CPL_TO_BOOL(
+        OGRPreparedGeometryContains(psTransform->poRPCFootprintPreparedGeom,
+                                       &p));
+}
+
+/************************************************************************/
 /*                    GDALRPCTransformWholeLineWithDEM()                */
 /************************************************************************/
 
@@ -1617,6 +1683,9 @@ GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTransform,
 
     for( int i = 0; i < nPointCount; i++ )
     {
+        if( padfX[i] == HUGE_VAL )
+            continue;
+
         double dfDEMH = 0.0;
         const double dfZ_i = padfZ ? padfZ[i] : 0.0;
 
@@ -1709,6 +1778,13 @@ GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTransform,
                 {
                     if( k_valid_sample >= 0 )
                     {
+                        if( !RPCIsValidLongLat(psTransform, padfX[i], padfY[i]) )
+                        {
+                            panSuccess[i] = FALSE;
+                            padfX[i] = HUGE_VAL;
+                            padfY[i] = HUGE_VAL;
+                            continue;
+                        }
                         dfDEMH = adfElevData[k_valid_sample];
                         RPCTransformPoint( psTransform, padfX[i], padfY[i],
                             dfZ_i + (psTransform->dfHeightOffset + dfDEMH) *
@@ -1720,6 +1796,13 @@ GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTransform,
                     }
                     else if( psTransform->bHasDEMMissingValue )
                     {
+                        if( !RPCIsValidLongLat(psTransform, padfX[i], padfY[i]) )
+                        {
+                            panSuccess[i] = FALSE;
+                            padfX[i] = HUGE_VAL;
+                            padfY[i] = HUGE_VAL;
+                            continue;
+                        }
                         dfDEMH = psTransform->dfDEMMissingValue;
                         RPCTransformPoint( psTransform, padfX[i], padfY[i],
                             dfZ_i + (psTransform->dfHeightOffset + dfDEMH) *
@@ -1732,6 +1815,8 @@ GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTransform,
                     else
                     {
                         panSuccess[i] = FALSE;
+                        padfX[i] = HUGE_VAL;
+                        padfY[i] = HUGE_VAL;
                         continue;
                     }
                 }
@@ -1761,11 +1846,20 @@ GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTransform,
                 else
                 {
                     panSuccess[i] = FALSE;
+                    padfX[i] = HUGE_VAL;
+                    padfY[i] = HUGE_VAL;
                     continue;
                 }
             }
         }
 
+        if( !RPCIsValidLongLat(psTransform, padfX[i], padfY[i]) )
+        {
+            panSuccess[i] = FALSE;
+            padfX[i] = HUGE_VAL;
+            padfY[i] = HUGE_VAL;
+            continue;
+        }
         RPCTransformPoint( psTransform, padfX[i], padfY[i],
                             dfZ_i + (psTransform->dfHeightOffset + dfDEMH) *
                                         psTransform->dfHeightScale,
@@ -1816,16 +1910,38 @@ static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
         psTransform->nBufferHeight = -1;
         psTransform->nLastQueriedX = -1;
         psTransform->nLastQueriedY = -1;
-        const char* pszSpatialRef = psTransform->poDS->GetProjectionRef();
-        if( pszSpatialRef != nullptr && pszSpatialRef[0] != '\0' )
+        auto poDSSpaRefSrc = psTransform->poDS->GetSpatialRef();
+        if( poDSSpaRefSrc )
         {
-            OGRSpatialReference* poWGSSpaRef =
-                    new OGRSpatialReference(SRS_WKT_WGS84);
+            auto poDSSpaRef = poDSSpaRefSrc->Clone();
 
-            OGRSpatialReference* poDSSpaRef =
-                    new OGRSpatialReference(pszSpatialRef);
             if( !psTransform->bApplyDEMVDatumShift )
                 poDSSpaRef->StripVertical();
+
+            auto wkt_EPSG_4979 =
+            "GEODCRS[\"WGS 84\",\n"
+            "    DATUM[\"World Geodetic System 1984\",\n"
+            "        ELLIPSOID[\"WGS 84\",6378137,298.257223563,\n"
+            "            LENGTHUNIT[\"metre\",1]]],\n"
+            "    PRIMEM[\"Greenwich\",0,\n"
+            "        ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "    CS[ellipsoidal,3],\n"
+            "        AXIS[\"geodetic latitude (Lat)\",north,\n"
+            "            ORDER[1],\n"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "        AXIS[\"geodetic longitude (Lon)\",east,\n"
+            "            ORDER[2],\n"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "        AXIS[\"ellipsoidal height (h)\",up,\n"
+            "            ORDER[3],\n"
+            "            LENGTHUNIT[\"metre\",1]],\n"
+            "    AREA[\"World (by country)\"],\n"
+            "    BBOX[-90,-180,90,180],\n"
+            "    ID[\"EPSG\",4979]]";
+            OGRSpatialReference* poWGSSpaRef =
+                    new OGRSpatialReference(
+                        poDSSpaRef->IsCompound() ? wkt_EPSG_4979 : SRS_WKT_WGS84_LAT_LONG);
+            poWGSSpaRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             if( !poWGSSpaRef->IsSame(poDSSpaRef) )
                 psTransform->poCT =
@@ -2024,6 +2140,13 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
 
         for( int i = 0; i < nPointCount; i++ )
         {
+            if( !RPCIsValidLongLat(psTransform, padfX[i], padfY[i]) )
+            {
+                panSuccess[i] = FALSE;
+                padfX[i] = HUGE_VAL;
+                padfY[i] = HUGE_VAL;
+                continue;
+            }
             double dfHeight = 0.0;
             if( !GDALRPCGetHeightAtLongLat( psTransform, padfX[i], padfY[i],
                                             &dfHeight ) )
@@ -2063,6 +2186,13 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
         if( !RPCInverseTransformPoint( psTransform, padfX[i], padfY[i],
                     padfZ[i],
                     &dfResultX, &dfResultY ) )
+        {
+            panSuccess[i] = FALSE;
+            padfX[i] = HUGE_VAL;
+            padfY[i] = HUGE_VAL;
+            continue;
+        }
+        if( !RPCIsValidLongLat(psTransform, padfX[i], padfY[i]) )
         {
             panSuccess[i] = FALSE;
             padfX[i] = HUGE_VAL;

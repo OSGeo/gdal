@@ -121,6 +121,8 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
         OGRSpatialReferenceH hSRS = OSRNewSpatialReference(pszWKT);
         if (hSRS)
         {
+            OSRSetAxisMappingStrategy(hSRS, OAMS_TRADITIONAL_GIS_ORDER);
+
             const char* pszAuthorityName = OSRGetAuthorityName(hSRS, nullptr);
             if (pszAuthorityName) osAuthorityName = pszAuthorityName;
 

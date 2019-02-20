@@ -2971,9 +2971,22 @@ class CPL_DLL OGRGeometryFactory
                                            const char **papszOptions = nullptr);
     static bool haveGEOS();
 
+    /** Opaque class used as argument to transformWithOptions() */
+    class TransformWithOptionsCache
+    {
+        friend class OGRGeometryFactory;
+        struct Private;
+        std::unique_ptr<Private> d;
+
+    public:
+        TransformWithOptionsCache();
+        ~TransformWithOptionsCache();
+    };
+
     static OGRGeometry* transformWithOptions( const OGRGeometry* poSrcGeom,
                                               OGRCoordinateTransformation *poCT,
-                                              char** papszOptions );
+                                              char** papszOptions,
+                                              const TransformWithOptionsCache& cache = TransformWithOptionsCache() );
 
     static OGRGeometry*
         approximateArcAngles( double dfX, double dfY, double dfZ,

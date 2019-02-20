@@ -102,6 +102,9 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
         std::vector<OGRFeature*> m_apoFeatures;
         size_t m_nCurFeatureIdx;
 
+        bool m_bStartFeature = false;
+        bool m_bEndFeature = false;
+
         void AppendObject(json_object* poNewObj);
         void AnalyzeFeature();
         void TooComplex();
@@ -132,10 +135,14 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
 
         OGRFeature* GetNextFeature();
         json_object* StealRootObject();
-        bool IsTypeKnown() const { return m_bIsTypeKnown; }
-        bool IsFeatureCollection() const { return m_bIsFeatureCollection; }
-        GUIntBig GetTotalOGRFeatureMemEstimate() const { return m_nTotalOGRFeatureMemEstimate; }
-        bool CanEasilyAppend() const { return m_bCanEasilyAppend; }
+        inline bool IsTypeKnown() const { return m_bIsTypeKnown; }
+        inline bool IsFeatureCollection() const { return m_bIsFeatureCollection; }
+        inline GUIntBig GetTotalOGRFeatureMemEstimate() const { return m_nTotalOGRFeatureMemEstimate; }
+        inline bool CanEasilyAppend() const { return m_bCanEasilyAppend; }
+
+        inline void ResetFeatureDetectionState() { m_bStartFeature = false; m_bEndFeature = false; }
+        inline bool IsStartFeature() const { return m_bStartFeature; }
+        inline bool IsEndFeature() const { return m_bEndFeature; }
 };
 
 
@@ -409,6 +416,7 @@ void OGRGeoJSONReaderStreamingParser::StartObject()
             m_osJson = "{";
             m_abFirstMember.push_back(true);
         }
+        m_bStartFeature = true;
     }
     else if( m_poCurObj )
     {
@@ -490,6 +498,7 @@ void OGRGeoJSONReaderStreamingParser::EndObject()
         m_nTotalOGRFeatureMemEstimate += sizeof(OGRFeature);
         m_osJson.clear();
         m_abFirstMember.clear();
+        m_bEndFeature = true;
     }
     else if( m_poCurObj )
     {
@@ -978,7 +987,8 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
         {
             // If there is none defined, we use 4326.
             poSRS = new OGRSpatialReference();
-            poSRS->SetFromUserInput(SRS_WKT_WGS84);
+            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
         CPLErrorReset();
 
@@ -1105,6 +1115,123 @@ OGRFeature* OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer* poLayer)
 }
 
 /************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature* OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer* poLayer, GIntBig nFID)
+{
+    CPLAssert( fp_ );
+
+    if( oMapFIDToOffsetSize_.empty() )
+    {
+        CPLDebug("GeoJSON", "Establishing index to features for first GetFeature() call");
+
+        delete poStreamingParser_;
+        poStreamingParser_ = nullptr;
+
+        OGRGeoJSONReaderStreamingParser oParser(*this, poLayer, false, bStoreNativeData_);
+        VSIFSeekL(fp_, 0, SEEK_SET);
+        bFirstSeg_ = true;
+        bJSonPLikeWrapper_ = false;
+        vsi_l_offset nCurOffset = 0;
+        vsi_l_offset nFeatureOffset = 0;
+        GIntBig nSeqFID = 0;
+        while( true )
+        {
+            size_t nRead = VSIFReadL(pabyBuffer_, 1, nBufferSize_, fp_);
+            const bool bFinished = nRead < nBufferSize_;
+            size_t nSkip = 0;
+            if( bFirstSeg_ )
+            {
+                bFirstSeg_ = false;
+                nSkip = SkipPrologEpilogAndUpdateJSonPLikeWrapper(nRead);
+            }
+            if( bFinished && bJSonPLikeWrapper_ && nRead - nSkip > 0 )
+                nRead --;
+            auto pszPtr = reinterpret_cast<const char*>(pabyBuffer_ + nSkip);
+            for( size_t i = 0; i < nRead - nSkip; i++ )
+            {
+                oParser.ResetFeatureDetectionState();
+                if( !oParser.Parse( pszPtr + i,
+                                    1, bFinished && (i + 1 == nRead - nSkip) ) ||
+                    oParser.ExceptionOccurred() )
+                {
+                    return nullptr;
+                }
+                if( oParser.IsStartFeature() )
+                {
+                    nFeatureOffset = nCurOffset + i;
+                }
+                else if( oParser.IsEndFeature() )
+                {
+                    vsi_l_offset nFeatureSize = (nCurOffset + i) - nFeatureOffset + 1;
+                    auto poFeat = oParser.GetNextFeature();
+                    if( poFeat )
+                    {
+                        GIntBig nThisFID = poFeat->GetFID();
+                        if( nThisFID < 0 )
+                        {
+                            nThisFID = nSeqFID;
+                            nSeqFID++;
+                        }
+                        if( oMapFIDToOffsetSize_.find(nThisFID) == oMapFIDToOffsetSize_.end() )
+                        {
+                            oMapFIDToOffsetSize_[nThisFID] =
+                                std::pair<vsi_l_offset, vsi_l_offset>(nFeatureOffset, nFeatureSize);
+                        }
+                        delete poFeat;
+                    }
+                }
+            }
+
+            if( bFinished  )
+                break;
+            nCurOffset += nRead;
+        }
+    }
+
+    auto oIter = oMapFIDToOffsetSize_.find(nFID);
+    if( oIter == oMapFIDToOffsetSize_.end() )
+    {
+        return nullptr;
+    }
+
+    VSIFSeekL(fp_, oIter->second.first, SEEK_SET);
+    if( oIter->second.second > 1000 * 1000 * 1000 )
+    {
+        return nullptr;
+    }
+    size_t nSize = static_cast<size_t>(oIter->second.second);
+    char* pszBuffer = static_cast<char*>(VSIMalloc(nSize + 1));
+    if( !pszBuffer )
+    {
+        return nullptr;
+    }
+    if( VSIFReadL(pszBuffer, 1, nSize, fp_) != nSize )
+    {
+        VSIFree(pszBuffer);
+        return nullptr;
+    }
+    pszBuffer[nSize] = 0;
+    json_object* poObj = nullptr;
+    if( !OGRJSonParse(pszBuffer, &poObj) )
+    {
+        VSIFree(pszBuffer);
+        return nullptr;
+    }
+
+    OGRFeature* poFeat = ReadFeature(poLayer, poObj, pszBuffer);
+    json_object_put(poObj);
+    VSIFree(pszBuffer);
+    if( !poFeat )
+    {
+        return nullptr;
+    }
+    poFeat->SetFID(nFID);
+    return poFeat;
+}
+
+/************************************************************************/
 /*                           IngestAll()                                */
 /************************************************************************/
 
@@ -1183,7 +1310,8 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
     {
         // If there is none defined, we use 4326.
         poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_WKT_WGS84);
+        poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
     CPLErrorReset();
@@ -1322,6 +1450,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             const char* pszName = json_object_get_string( poNameURL );
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( OGRERR_NONE != poSRS->SetFromUserInput( pszName ) )
             {
                 delete poSRS;
@@ -1344,6 +1473,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             int nEPSG = json_object_get_int( poObjCode );
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( OGRERR_NONE != poSRS->importFromEPSG( nEPSG ) )
             {
                 delete poSRS;
@@ -1372,6 +1502,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             const char* pszURL = json_object_get_string( poObjURL );
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( OGRERR_NONE != poSRS->importFromUrl( pszURL ) )
             {
                 delete poSRS;
@@ -1392,6 +1523,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
                 return nullptr;
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( OGRERR_NONE !=
                 poSRS->importFromURN( json_object_get_string(poObjURN) ) )
             {

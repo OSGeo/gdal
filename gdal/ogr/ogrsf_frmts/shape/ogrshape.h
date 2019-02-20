@@ -85,10 +85,13 @@ class OGRShapeGeomFieldDefn final: public OGRGeomFieldDefn
             pszFullName(CPLStrdup(pszFullNameIn)),
             bSRSSet(CPL_TO_BOOL(bSRSSetIn))
         {
-            poSRS = poSRSIn;
+            SetSpatialRef(poSRSIn);
         }
 
-        virtual ~OGRShapeGeomFieldDefn() { CPLFree(pszFullName); }
+        virtual ~OGRShapeGeomFieldDefn()
+        {
+            CPLFree(pszFullName);
+        }
 
         virtual OGRSpatialReference* GetSpatialRef() const override;
 

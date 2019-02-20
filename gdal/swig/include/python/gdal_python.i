@@ -952,6 +952,12 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
             return _gdal.Dataset_DeleteLayer(self, value)
         else:
             raise TypeError("Input %s is not of String or Int type" % type(value))
+
+    def SetGCPs(self, gcps, wkt_or_spatial_ref):
+        if isinstance(wkt_or_spatial_ref, str):
+            return self._SetGCPs(gcps, wkt_or_spatial_ref)
+        else:
+            return self._SetGCPs2(gcps, wkt_or_spatial_ref)
 %}
 }
 
@@ -991,7 +997,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
          stats=False, approxStats=False, computeChecksum=False,
          showGCPs=True, showMetadata=True, showRAT=True, showColorTable=True,
          listMDD=False, showFileList=True, allMetadata=False,
-         extraMDDomains=None):
+         extraMDDomains=None, wktFormat=None):
     """ Create a InfoOptions() object that can be passed to gdal.Info()
         options can be be an array of strings, a string or let empty and filled from other keywords."""
 
@@ -1032,6 +1038,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
             new_options += ['-nofl']
         if allMetadata:
             new_options += ['-mdd', 'all']
+        if wktFormat:
+            new_options += ['-wkt_format', wktFormat]
         if extraMDDomains is not None:
             for mdd in extraMDDomains:
                 new_options += ['-mdd', mdd]
@@ -1210,6 +1218,7 @@ def WarpOptions(options=None, format=None,
          xRes=None, yRes=None, targetAlignedPixels = False,
          width = 0, height = 0,
          srcSRS=None, dstSRS=None,
+         coordinateOperation=None,
          srcAlpha = False, dstAlpha = False,
          warpOptions=None, errorThreshold=None,
          warpMemoryLimit=None, creationOptions=None, outputType = gdalconst.GDT_Unknown,
@@ -1233,6 +1242,7 @@ def WarpOptions(options=None, format=None,
           height --- height of the output raster in pixel
           srcSRS --- source SRS
           dstSRS --- output SRS
+          coordinateOperation -- coordinate operation as a PROJ string or WKT string
           srcAlpha --- whether to force the last band of the input dataset to be considered as an alpha band
           dstAlpha --- whether to force the creation of an output alpha band
           outputType --- output type (gdalconst.GDT_Byte, etc...)
@@ -1286,6 +1296,8 @@ def WarpOptions(options=None, format=None,
             new_options += ['-s_srs', str(srcSRS)]
         if dstSRS is not None:
             new_options += ['-t_srs', str(dstSRS)]
+        if coordinateOperation is not None:
+            new_options += ['-ct', coordinateOperation]
         if targetAlignedPixels:
             new_options += ['-tap']
         if srcAlpha:
@@ -1394,6 +1406,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
 def VectorTranslateOptions(options=None, format=None,
          accessMode=None,
          srcSRS=None, dstSRS=None, reproject=True,
+         coordinateOperation=None,
          SQLStatement=None, SQLDialect=None, where=None, selectFields=None,
          addFields=False,
          forceNullable=False,
@@ -1416,6 +1429,7 @@ def VectorTranslateOptions(options=None, format=None,
           accessMode --- None for creation, 'update', 'append', 'overwrite'
           srcSRS --- source SRS
           dstSRS --- output SRS (with reprojection if reproject = True)
+          coordinateOperation -- coordinate operation as a PROJ string or WKT string
           reproject --- whether to do reprojection
           SQLStatement --- SQL statement to apply to the source dataset
           SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
@@ -1453,6 +1467,8 @@ def VectorTranslateOptions(options=None, format=None,
                 new_options += ['-t_srs', str(dstSRS)]
             else:
                 new_options += ['-a_srs', str(dstSRS)]
+        if coordinateOperation is not None:
+            new_options += ['-ct', coordinateOperation]
         if SQLStatement is not None:
             new_options += ['-sql', str(SQLStatement)]
         if SQLDialect is not None:

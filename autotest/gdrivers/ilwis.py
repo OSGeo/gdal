@@ -45,11 +45,10 @@ def test_ilwis_1():
         DATUM["Provisional_South_American_Datum_1956",
             SPHEROID["International 1924",6378388,297,
                 AUTHORITY["EPSG","7022"]],
-            TOWGS84[-288,175,-376,0,0,0,0],
             AUTHORITY["EPSG","6248"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
-        UNIT["degree",0.01745329251994328,
+        UNIT["degree",0.0174532925199433,
             AUTHORITY["EPSG","9122"]],
         AUTHORITY["EPSG","4248"]],
     PROJECTION["Transverse_Mercator"],
@@ -58,7 +57,9 @@ def test_ilwis_1():
     PARAMETER["scale_factor",0.9996],
     PARAMETER["false_easting",500000],
     PARAMETER["false_northing",10000000],
-    UNIT["Meter",1]]"""
+    UNIT["Meter",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
 
     gt = (795480, 20, 0, 8090520, 0, -20)
 

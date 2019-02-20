@@ -168,12 +168,10 @@ def ogr_georss_test_rss(filename, only_first_feature):
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS84')
 
-    assert lyr.GetSpatialRef() is not None and lyr.GetSpatialRef().IsSame(srs), \
+    assert lyr.GetSpatialRef() is not None and lyr.GetSpatialRef().IsSame(srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), \
         'SRS is not the one expected.'
 
-    if lyr.GetSpatialRef().ExportToWkt().find('AXIS["Latitude",NORTH],AXIS["Longitude",EAST]') != -1:
-        lyr.GetSpatialRef().ExportToWkt()
-        pytest.fail('AXIS definition found with latitude/longitude order!')
+    assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
 
     feat = lyr.GetNextFeature()
     expected_wkt = 'POINT (2 49)'

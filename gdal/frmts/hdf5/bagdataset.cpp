@@ -182,7 +182,10 @@ public:
     virtual ~BAGDataset();
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
+    virtual const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual char      **GetMetadataDomainList() override;
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
@@ -3476,13 +3479,13 @@ CPLErr BAGDataset::GetGeoTransform( double *padfGeoTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *BAGDataset::GetProjectionRef()
+const char *BAGDataset::_GetProjectionRef()
 
 {
     if( pszProjection )
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -3802,14 +3805,17 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
                     std::max(adfGeoTransform[1], fabs(adfGeoTransform[5]))));
 
     const char* pszProjection = poSrcDS->GetProjectionRef();
-    if( pszProjection == nullptr || EQUAL(pszProjection, "") )
+    const OGRSpatialReference* poSrcSRS = poSrcDS->GetSpatialRef();
+    if( pszProjection == nullptr || EQUAL(pszProjection, "") || !poSrcSRS )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "BAG driver requires a source dataset with a projection");
     }
     OGRSpatialReference oSRS;
-    oSRS.SetFromUserInput(pszProjection);
-
+    if( poSrcSRS )
+    {
+        oSRS = *poSrcSRS;
+    }
     osOptions.SetNameValue("VAR_HORIZ_WKT", pszProjection);
 
     if( oSRS.IsCompound() )
@@ -3822,7 +3828,7 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
             char* pszVertWKT = nullptr;
             node->GetChild(2)->exportToWkt(&pszVertWKT);
 
-            oSRS.SetFromUserInput(pszHorizWKT);
+            oSRS.StripVertical();
 
             osOptions.SetNameValue("VAR_HORIZ_WKT", pszHorizWKT);
             if( osOptions.FetchNameValue("VAR_VERT_WKT") == nullptr )
@@ -3864,6 +3870,7 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
     double adfCornerY[4] = { dfMinY, dfMaxY, dfMaxY, dfMinY };
     OGRSpatialReference oSRS_WGS84;
     oSRS_WGS84.SetFromUserInput("WGS84");
+    oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRCoordinateTransformation* poCT =
         OGRCreateCoordinateTransformation(&oSRS, &oSRS_WGS84);
     if( !poCT )

@@ -123,7 +123,10 @@ class AAIGDataset : public GDALPamDataset
                                     void * pProgressData );
 
     CPLErr GetGeoTransform( double * ) override;
-    const char *GetProjectionRef(void) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 };
 
 /************************************************************************/

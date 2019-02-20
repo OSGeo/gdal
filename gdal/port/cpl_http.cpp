@@ -1731,6 +1731,11 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     }
 #endif
 
+    // CURLOPT_SUPPRESS_CONNECT_HEADERS is defined in curl 7.54.0 or newer.
+#if LIBCURL_VERSION_NUM >= 0x073600
+    curl_easy_setopt(http_handle, CURLOPT_SUPPRESS_CONNECT_HEADERS, 1L);
+#endif
+
     // Enable following redirections.  Requires libcurl 7.10.1 at least.
     curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
     curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );

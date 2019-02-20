@@ -31,8 +31,8 @@ such as YCbCr color model files, are automatically translated into RGBA
 
 <p>Most GeoTIFF projections should be supported, with the caveat that in order
 to translate uncommon Projected, and Geographic coordinate systems into
-OGC WKT it is necessary to have the EPSG .csv files available.  They must
-be found at the location pointed to by the GDAL_DATA or GEOTIFF_CSV environment variable.
+OGC WKT it is necessary to have the PROJ proj.db database available.  It must
+be found at the location pointed to by the PROJ_LIB environment variable.
 </p>
 
 <p>Georeferencing from GeoTIFF is supported in the form of one tiepoint and

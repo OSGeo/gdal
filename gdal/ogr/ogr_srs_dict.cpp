@@ -71,22 +71,43 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
                                             const char *pszCode )
 
 {
+    CPLString osWKT(lookupInDict(pszDictFile, pszCode));
+    if( osWKT.empty() )
+        return OGRERR_UNSUPPORTED_SRS;
+
+    OGRErr eErr = importFromWkt( osWKT );
+    if( eErr == OGRERR_NONE && strstr(pszDictFile, "esri_") == nullptr )
+    {
+        morphFromESRI();
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          lookupInDict()                              */
+/************************************************************************/
+
+CPLString OGRSpatialReference::lookupInDict( const char *pszDictFile,
+                                             const char *pszCode )
+
+{
 /* -------------------------------------------------------------------- */
 /*      Find and open file.                                             */
 /* -------------------------------------------------------------------- */
     CPLString osDictFile(pszDictFile);
     const char *pszFilename = CPLFindFile( "gdal", pszDictFile );
     if( pszFilename == nullptr )
-        return OGRERR_UNSUPPORTED_SRS;
+        return CPLString();
 
     VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
     if( fp == nullptr )
-        return OGRERR_UNSUPPORTED_SRS;
+        return CPLString();
 
 /* -------------------------------------------------------------------- */
 /*      Process lines.                                                  */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
+    CPLString osWKT;
     const char *pszLine = nullptr;
 
     while( (pszLine = CPLReadLineL(fp)) != nullptr )
@@ -97,8 +118,8 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 
         if( STARTS_WITH_CI(pszLine, "include ") )
         {
-            eErr = importFromDict( pszLine + 8, pszCode );
-            if( eErr != OGRERR_UNSUPPORTED_SRS )
+            osWKT = lookupInDict( pszLine + 8, pszCode );
+            if( !osWKT.empty() )
                 break;
             continue;
         }
@@ -109,13 +130,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
         if( EQUALN(pszLine, pszCode, strlen(pszCode))
             && pszLine[strlen(pszCode)] == ',' )
         {
-            const char *pszWKT = pszLine + strlen(pszCode)+1;
-
-            eErr = importFromWkt( pszWKT );
-            if( eErr == OGRERR_NONE && osDictFile.find("esri_") == 0 )
-            {
-                morphFromESRI();
-            }
+            osWKT = pszLine + strlen(pszCode)+1;
             break;
         }
     }
@@ -125,7 +140,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /* -------------------------------------------------------------------- */
     VSIFCloseL( fp );
 
-    return eErr;
+    return osWKT;
 }
 
 /************************************************************************/

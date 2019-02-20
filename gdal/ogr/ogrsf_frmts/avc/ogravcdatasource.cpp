@@ -55,7 +55,7 @@ OGRAVCDataSource::~OGRAVCDataSource()
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRAVCDataSource::GetSpatialRef()
+OGRSpatialReference *OGRAVCDataSource::DSGetSpatialRef()
 
 {
     return poSRS;

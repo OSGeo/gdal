@@ -71,6 +71,7 @@ MAIN_START(nArgc, papszArgv)
             int nArgsUsed = 4;
 
             OGRSpatialReference oSourceSRS;
+            oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( oSourceSRS.SetFromUserInput(papszArgv[i+1]) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -80,6 +81,7 @@ MAIN_START(nArgc, papszArgv)
             }
 
             OGRSpatialReference oTargetSRS;
+            oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( oTargetSRS.SetFromUserInput(papszArgv[i+2]) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -143,8 +145,8 @@ MAIN_START(nArgc, papszArgv)
                 printf("\n");
 
                 OGRSpatialReference *poSRS2 = oSRS.Clone();
-                poSRS2->StripCTParms();
-                poSRS2->exportToWkt(&pszWKT);
+                const char* const apszOptions[] = { "FORMAT=SFSQL", nullptr };
+                poSRS2->exportToWkt(&pszWKT, apszOptions);
                 printf("Old Style WKT[%s] = %s\n", papszArgv[i], pszWKT);
                 CPLFree(pszWKT);
                 OGRSpatialReference::DestroySpatialReference(poSRS2);

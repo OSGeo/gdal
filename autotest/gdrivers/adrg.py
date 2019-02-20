@@ -158,7 +158,7 @@ def test_adrg_zna_9():
     assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-5, \
         'Wrong geotransfsorm'
     wkt = ds.GetProjectionRef()
-    assert wkt == """PROJCS["ARC_System_Zone_09",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
+    assert wkt == """PROJCS["ARC_System_Zone_09",GEOGCS["Unknown datum based upon the Authalic Sphere",DATUM["Not_specified_based_on_Authalic_Sphere",SPHEROID["Sphere",6378137,0],AUTHORITY["EPSG","6035"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]""", \
         'Wrong WKT'
 
 ###############################################################################
@@ -173,7 +173,7 @@ def test_adrg_zna_18():
     assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-5, \
         'Wrong geotransfsorm'
     wkt = ds.GetProjectionRef()
-    assert wkt == """PROJCS["ARC_System_Zone_18",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",-90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
+    assert wkt == """PROJCS["ARC_System_Zone_18",GEOGCS["Unknown datum based upon the Authalic Sphere",DATUM["Not_specified_based_on_Authalic_Sphere",SPHEROID["Sphere",6378137,0],AUTHORITY["EPSG","6035"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",-90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]""", \
         'Wrong WKT'
 
 

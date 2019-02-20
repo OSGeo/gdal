@@ -48,7 +48,7 @@ void OGRRegisterAllInternal()
 #ifdef SHAPE_ENABLED
     RegisterOGRShape();
 #endif
-#ifdef TAB_ENABLED
+#ifdef MITAB_ENABLED
     RegisterOGRTAB();
 #endif
 #ifdef NTF_ENABLED
@@ -311,7 +311,7 @@ void OGRRegisterAllInternal()
 #ifdef TIGER_ENABLED
     RegisterOGRTiger();
 #endif
-#ifdef AVCBIN_ENABLED
+#ifdef AVC_ENABLED
     RegisterOGRAVCBin();
     RegisterOGRAVCE00();
 #endif

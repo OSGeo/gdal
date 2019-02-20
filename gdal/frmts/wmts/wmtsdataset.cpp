@@ -115,6 +115,7 @@ class WMTSTileMatrixSet
             oSRS( OGRSpatialReference() ),
             bBoundingBoxValid(false)
         {
+            oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
 };
 
@@ -163,7 +164,10 @@ class WMTSDataset : public GDALPamDataset
     virtual     ~WMTSDataset();
 
     virtual CPLErr GetGeoTransform(double* padfGT) override;
-    virtual const char* GetProjectionRef() override;
+    const char* _GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
     virtual const char* GetMetadataItem(const char* pszName,
                                         const char* pszDomain) override;
 
@@ -515,7 +519,7 @@ CPLErr WMTSDataset::GetGeoTransform(double* padfGT)
 /*                         GetProjectionRef()                           */
 /************************************************************************/
 
-const char* WMTSDataset::GetProjectionRef()
+const char* WMTSDataset::_GetProjectionRef()
 {
     return osProjection.c_str();
 }
@@ -652,7 +656,8 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
                      pszSupportedCRS);
             return FALSE;
         }
-        int bSwap = oTMS.oSRS.EPSGTreatsAsLatLong() || oTMS.oSRS.EPSGTreatsAsNorthingEasting();
+        int bSwap = !STARTS_WITH_CI(pszSupportedCRS, "EPSG:") &&
+            (oTMS.oSRS.EPSGTreatsAsLatLong() || oTMS.oSRS.EPSGTreatsAsNorthingEasting());
         CPLXMLNode* psBB = CPLGetXMLNode(psIter, "BoundingBox");
         oTMS.bBoundingBoxValid = false;
         if( psBB != nullptr )
@@ -1337,11 +1342,13 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 CPLString osLowerCorner = CPLGetXMLValue(psSubIter, "LowerCorner", "");
                 CPLString osUpperCorner = CPLGetXMLValue(psSubIter, "UpperCorner", "");
                 OGRSpatialReference oSRS;
+                oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if( !osCRS.empty() && !osLowerCorner.empty() && !osUpperCorner.empty() &&
                     oSRS.SetFromUserInput(FixCRSName(osCRS)) == OGRERR_NONE )
                 {
-                    int bSwap = oSRS.EPSGTreatsAsLatLong() ||
-                                oSRS.EPSGTreatsAsNorthingEasting();
+                    int bSwap = !STARTS_WITH_CI(osCRS, "EPSG:") &&
+                        (oSRS.EPSGTreatsAsLatLong() ||
+                         oSRS.EPSGTreatsAsNorthingEasting());
                     char** papszLC = CSLTokenizeString(osLowerCorner);
                     char** papszUC = CSLTokenizeString(osUpperCorner);
                     if( CSLCount(papszLC) == 2 && CSLCount(papszUC) == 2 )
@@ -1484,7 +1491,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 bExtendBeyondDateLine = FALSE;
 
                 OGRSpatialReference oWGS84;
-                    oWGS84.SetFromUserInput(SRS_WKT_WGS84);
+                    oWGS84.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+                oWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 OGRCoordinateTransformation* poCT =
                     OGRCreateCoordinateTransformation(&oTMS.oSRS, &oWGS84);
                 if( poCT != nullptr )
@@ -1529,7 +1537,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                     if( oSRS.SetFromUserInput(FixCRSName(oIter->first)) == OGRERR_NONE )
                     {
                         OGRSpatialReference oWGS84;
-                        oWGS84.SetFromUserInput(SRS_WKT_WGS84);
+                        oWGS84.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+                        oWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                         OGRCoordinateTransformation* poCT =
                             OGRCreateCoordinateTransformation(&oSRS, &oWGS84);
                         double dfX1 = oIter->second.MinX;
@@ -1591,6 +1600,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             for(; oIter != aoMapBoundingBox.end(); ++oIter )
             {
                 OGRSpatialReference oSRS;
+                oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if( oSRS.SetFromUserInput(FixCRSName(oIter->first)) == OGRERR_NONE )
                 {
                     // Check if this doesn't match the most precise tile matrix
@@ -1609,17 +1619,17 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                     for( int j = 0; j < (bIsTMerc ? 2 : 1); j++ )
                     {
                         CPLString osOldVal =
-                            CPLGetThreadLocalConfigOption("OSR_USE_ETMERC", "");
+                            CPLGetThreadLocalConfigOption("OSR_USE_APPROX_TMERC", "");
                         if( bIsTMerc )
                         {
-                            CPLSetThreadLocalConfigOption("OSR_USE_ETMERC",
+                            CPLSetThreadLocalConfigOption("OSR_USE_APPROX_TMERC",
                                                       (j==0) ? "NO" : "YES");
                         }
                         OGRCoordinateTransformation* poRevCT =
                             OGRCreateCoordinateTransformation(&oTMS.oSRS, &oSRS);
                         if( bIsTMerc )
                         {
-                            CPLSetThreadLocalConfigOption("OSR_USE_ETMERC",
+                            CPLSetThreadLocalConfigOption("OSR_USE_APPROX_TMERC",
                                 osOldVal.empty() ? nullptr : osOldVal.c_str());
                         }
                         if( poRevCT != nullptr )
@@ -1838,15 +1848,6 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         }
         if( poDS->osProjection.empty() )
         {
-            // Strip AXIS
-            OGR_SRSNode *poGEOGCS = oTMS.oSRS.GetAttrNode( "GEOGCS" );
-            if( poGEOGCS != nullptr )
-                poGEOGCS->StripNodes( "AXIS" );
-
-            OGR_SRSNode *poPROJCS = oTMS.oSRS.GetAttrNode( "PROJCS" );
-            if (poPROJCS != nullptr && oTMS.oSRS.EPSGTreatsAsNorthingEasting())
-                poPROJCS->StripNodes( "AXIS" );
-
             char* pszWKT = nullptr;
             oTMS.oSRS.exportToWkt(&pszWKT);
             poDS->osProjection = pszWKT;

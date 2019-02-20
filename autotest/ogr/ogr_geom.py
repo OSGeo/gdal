@@ -583,6 +583,7 @@ def test_ogr_geom_transform_to():
     # Input SRS is EPSG:4326
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     geom.AssignSpatialReference(sr)
 
     # Output SRS is EPSG:32631
@@ -611,6 +612,7 @@ def test_ogr_geom_transform():
 
     # Input SRS is EPSG:4326
     sr = osr.SpatialReference()
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     sr.ImportFromEPSG(4326)
 
     # Output SRS is EPSG:32631
@@ -3220,6 +3222,13 @@ def test_ogr_geom_force_polygonzm_to_linestring():
     g = ogr.CreateGeometryFromWkt('POLYGON ZM ((0 0 10 20,0 1 30 40,1 1 50 60,0 0 10 70))')
     wkt = ogr.ForceToLineString(g).ExportToIsoWkt()
     assert wkt == 'LINESTRING ZM (0 0 10 20,0 1 30 40,1 1 50 60,0 0 10 70)'
+
+###############################################################################
+
+
+def test_ogr_geom_create_from_wkt_polyhedrasurface():
+    g = ogr.CreateGeometryFromWkt('POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))')
+    assert g.ExportToWkt() == 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))'
 
 ###############################################################################
 # cleanup

@@ -164,7 +164,7 @@ static CPLErr OGRNGWDriverDelete( const char *pszName )
     CPLErrorReset();
     if( !stUri.osNewResourceName.empty() )
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported url %s", pszName);
+        CPLError(CE_Warning, CPLE_NotSupported, "Cannot delete new resource with name %s", pszName);
         return CE_Failure;
     }
 
@@ -433,6 +433,7 @@ void RegisterOGRNGW()
         "   <Option name='NATIVE_DATA' scope='vector' type='boolean' description='Whether to store the native Json representation of extensions key' default='NO'/>"
         "   <Option name='CACHE_EXPIRES' scope='raster' type='integer' description='Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web' default='604800'/>"
         "   <Option name='CACHE_MAX_SIZE' scope='raster' type='integer' description='The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted' default='67108864'/>"
+        "   <Option name='JSON_DEPTH' scope='raster,vector' type='integer' description='The depth of json response that can be parsed. If depth is greater than this value, parse error occurs' default='32'/>"
         "</OpenOptionList>"
     );
 
@@ -447,6 +448,7 @@ void RegisterOGRNGW()
         "   <Option name='NATIVE_DATA' scope='vector' type='boolean' description='Whether to store the native Json representation of extensions key' default='NO'/>"
         "   <Option name='CACHE_EXPIRES' scope='raster' type='integer' description='Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web' default='604800'/>"
         "   <Option name='CACHE_MAX_SIZE' scope='raster' type='integer' description='The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted' default='67108864'/>"
+        "   <Option name='JSON_DEPTH' scope='raster,vector' type='integer' description='The depth of json response that can be parsed. If depth is greater than this value, parse error occurs' default='32'/>"
         "</CreationOptionList>"
     );
 

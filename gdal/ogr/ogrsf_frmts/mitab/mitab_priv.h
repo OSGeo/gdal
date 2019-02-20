@@ -37,6 +37,8 @@
 #include "cpl_string.h"
 #include "ogr_feature.h"
 
+#include <set>
+
 class TABFile;
 class TABFeature;
 class TABMAPToolBlock;
@@ -1542,7 +1544,7 @@ class TABINDNode
 
     int         GotoNodePtr(GInt32 nNewNodePtr);
     GInt32      ReadIndexEntry(int nEntryNo, GByte *pKeyValue);
-    int         IndexKeyCmp(GByte *pKeyValue, int nEntryNo);
+    int         IndexKeyCmp(const GByte *pKeyValue, int nEntryNo);
 
     int         InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
                             GBool bInsertAfterCurChild=FALSE,
@@ -1550,6 +1552,8 @@ class TABINDNode
     int         SetNodeBufferDirectly(int numEntries, GByte *pBuf,
                                       int nCurIndexEntry=0,
                                       TABINDNode *poCurChild=nullptr);
+    GInt32      FindFirst(const GByte *pKeyValue,
+                          std::set<int>& oSetVisitedNodePtr);
 
    public:
     explicit TABINDNode(TABAccess eAccessMode = TABRead);
@@ -1573,7 +1577,7 @@ class TABINDNode
     int         GetNumEntries()         {return m_numEntriesInNode;}
     int         GetMaxNumEntries()      {return (512-12)/(m_nKeyLength+4);}
 
-    GInt32      FindFirst(GByte *pKeyValue);
+    GInt32      FindFirst(const GByte *pKeyValue);
     GInt32      FindNext(GByte *pKeyValue);
 
     int         CommitToFile();

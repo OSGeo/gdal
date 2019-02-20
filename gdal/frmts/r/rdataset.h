@@ -46,7 +46,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
-#include "../raw/rawdataset.h"
+#include "rawdataset.h"
 
 GDALDataset *
 RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,

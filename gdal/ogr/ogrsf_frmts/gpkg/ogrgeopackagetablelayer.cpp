@@ -1490,6 +1490,10 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
     }
 
     OGRGeomFieldDefn oGeomField(poGeomFieldIn);
+    if( oGeomField.GetSpatialRef() )
+    {
+        oGeomField.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     if( EQUAL(oGeomField.GetNameRef(), "") )
     {
         oGeomField.SetName( "geom" );

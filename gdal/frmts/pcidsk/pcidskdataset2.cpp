@@ -828,6 +828,9 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
         apoLayers.pop_back();
     }
 
+    if( m_poSRS )
+        m_poSRS->Release();
+
     try {
         if( poFile != nullptr)
             delete poFile;
@@ -1331,14 +1334,12 @@ CPLErr PCIDSK2Dataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
+CPLErr PCIDSK2Dataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    osSRS = "";
-
     PCIDSKGeoref *poGeoref = nullptr;
 
     try
@@ -1353,20 +1354,18 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
 
     if( poGeoref == nullptr )
     {
-        return GDALPamDataset::SetProjection( pszWKT );
+        return GDALPamDataset::SetSpatialRef( poSRS );
     }
 
     char *pszGeosys = nullptr;
     char *pszUnits = nullptr;
     double *padfPrjParams = nullptr;
 
-    OGRSpatialReference oSRS;
-
-    if( ! (oSRS.importFromWkt(pszWKT ) == OGRERR_NONE
-        && oSRS.exportToPCI( &pszGeosys, &pszUnits,
-                             &padfPrjParams ) == OGRERR_NONE ) )
+    if( poSRS == nullptr ||
+        poSRS->exportToPCI( &pszGeosys, &pszUnits,
+                             &padfPrjParams ) != OGRERR_NONE )
     {
-        return GDALPamDataset::SetProjection( pszWKT );
+        return GDALPamDataset::SetSpatialRef( poSRS );
     }
 
     if( GetAccess() == GA_ReadOnly )
@@ -1427,13 +1426,13 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *PCIDSK2Dataset::GetProjectionRef()
+const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef() const
 {
-    if( osSRS != "" )
-        return osSRS.c_str();
+    if( m_poSRS )
+        return m_poSRS;
 
     PCIDSKGeoref *poGeoref = nullptr;
 
@@ -1449,8 +1448,7 @@ const char *PCIDSK2Dataset::GetProjectionRef()
 
     if( poGeoref == nullptr )
     {
-        osSRS = GDALPamDataset::GetProjectionRef();
-        return osSRS.c_str();
+        return GDALPamDataset::GetSpatialRef();
     }
 
     CPLString osGeosys;
@@ -1482,20 +1480,17 @@ const char *PCIDSK2Dataset::GetProjectionRef()
     }
 
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( oSRS.importFromPCI( osGeosys, pszUnits,
                             &(adfParameters[0]) ) == OGRERR_NONE )
     {
-        char *pszWKT = nullptr;
-        oSRS.exportToWkt( &pszWKT );
-        osSRS = pszWKT;
-        CPLFree( pszWKT );
+        m_poSRS = oSRS.Clone();
+        return m_poSRS;
     }
     else
     {
-        osSRS = GDALPamDataset::GetProjectionRef();
+        return GDALPamDataset::GetSpatialRef();
     }
-
-    return osSRS.c_str();
 }
 
 /************************************************************************/

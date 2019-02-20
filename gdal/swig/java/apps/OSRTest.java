@@ -34,7 +34,7 @@ public class OSRTest {
       public static void main(String[] args) throws Exception {
           SpatialReference srs = new SpatialReference(null);
           srs.ImportFromEPSGA(4326);
-          if( !srs.GetAxisName(null, 0).equals("Latitude"))
+          if( !srs.GetAxisName(null, 0).equals("Geodetic latitude"))
               throw new Exception("srs.GetAxisName(null, 0) = " + srs.GetAxisName(null, 0));
           if( srs.GetAxisOrientation(null, 0) != org.gdal.osr.osr.OAO_North)
               throw new Exception("srs.GetAxisName(null, 0) = " + srs.GetAxisName(null, 0));

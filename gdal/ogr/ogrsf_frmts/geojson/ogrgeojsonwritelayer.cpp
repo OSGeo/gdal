@@ -156,7 +156,8 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
             const char* const apszOptions[] = { "WRAPDATELINE=YES", nullptr };
             OGRGeometry* poNewGeom =
                 OGRGeometryFactory::transformWithOptions(
-                    poGeometry, poCT_, const_cast<char**>(apszOptions));
+                    poGeometry, poCT_, const_cast<char**>(apszOptions),
+                    oTransformCache_);
             if( poNewGeom == nullptr )
             {
                 delete poFeatureToWrite;

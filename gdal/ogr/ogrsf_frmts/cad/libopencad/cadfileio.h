@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2019 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -53,8 +53,8 @@ public:
     enum OpenMode
     {
         binary      = 1L << 2,
-        read        = 1L << 3,
-        write       = 1L << 4
+        in          = 1L << 3,
+        out         = 1L << 4
     };
 
 public:

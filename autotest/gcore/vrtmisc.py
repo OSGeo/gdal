@@ -30,7 +30,7 @@
 ###############################################################################
 
 from osgeo import gdal
-
+from osgeo import osr
 
 
 ###############################################################################
@@ -493,6 +493,25 @@ def test_vrtmisc_histogram():
     ds = None
 
     assert hist == (1.0, 2.0, 2, [3000000000, 4])
+
+    gdal.Unlink(tmpfile)
+
+###############################################################################
+# write SRS with unusual data axis to SRS axis mapping
+
+
+def test_vrtmisc_write_srs():
+
+    tmpfile = '/vsimem/test_vrtmisc_write_srs.vrt'
+    ds = gdal.Translate(tmpfile, 'data/byte.tif', format='VRT')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetSpatialRef(sr)
+    ds = None
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1,2]
+    ds = None
 
     gdal.Unlink(tmpfile)
 

@@ -560,7 +560,7 @@ def test_ogr_mitab_18():
             print(filename)
             pytest.fail(sr_got)
         proj4 = sr_got.ExportToProj4()
-        assert proj4.startswith('+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
+        assert proj4.startswith('+proj=lcc +lat_0=46.5 +lon_0=3 +lat_1=49 +lat_2=44 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
         ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/ogr_mitab_18.tab')
@@ -1556,7 +1556,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys NonEarth Units "m"'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'LOCAL_CS["Nonearth",UNIT["Meter",1.0]]'
+    assert wkt == 'LOCAL_CS["Nonearth",UNIT["Meter",1]]'
 
     # Test units
     for mif_unit in ['mi', 'km', 'in', 'ft', 'yd', 'mm', 'cm', 'm', 'survey ft', 'nmi', 'li', 'ch', 'rd']:
@@ -1573,7 +1573,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 1, 104'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    assert wkt == 'GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 1, 104'
 
@@ -1584,7 +1584,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 8, 104, "m", 3, 0, 0.9996, 500000, 0'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1.0]]'
+    assert wkt == 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 8, 104, "m", 3, 0, 0.9996, 500000, 0'
 
@@ -1637,7 +1637,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 1, 103'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'GEOGCS["unnamed",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26],TOWGS84[0,8,10,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    assert wkt == 'GEOGCS["unnamed",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26],TOWGS84[0,8,10,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 1, 103'
 
@@ -1648,7 +1648,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'PROJCS["RGF93 / Lambert-93",GEOGCS["RGF93",DATUM["Reseau_Geodesique_Francais_1993",SPHEROID["GRS 80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",49],PARAMETER["standard_parallel_2",44],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["Meter",1.0],AUTHORITY["EPSG","2154"]]'
+    assert wkt == 'PROJCS["RGF93 / Lambert-93",GEOGCS["RGF93",DATUM["Reseau_Geodesique_Francais_1993",SPHEROID["GRS 80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6171"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["standard_parallel_1",49],PARAMETER["standard_parallel_2",44],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","2154"]]'
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000'
 
@@ -1663,30 +1663,32 @@ def test_ogr_mitab_35():
     # http://trac.osgeo.org/gdal/ticket/4115
     srs = get_srs_from_coordsys('CoordSys Earth Projection 10, 157, "m", 0')
     wkt = srs.ExportToWkt()
-    assert wkt == 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84 (MAPINFO Datum 157)",6378137.01,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1.0],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"]]'
+    assert wkt == 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"]]'
     # We don't round-trip currently
 
     # MIF 999
     srs = osr.SpatialReference("""GEOGCS["unnamed",
         DATUM["MIF 999,1,1,2,3",
             SPHEROID["WGS 72",6378135,298.26]],
+        PRIMEM["Greenwich",0],
         UNIT["degree",0.0174532925199433]]""")
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 1, 999, 1, 1, 2, 3'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'GEOGCS["unnamed",DATUM["MIF 999,1,1,2,3",SPHEROID["WGS 72",6378135,298.26],TOWGS84[1,2,3,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    assert wkt == 'GEOGCS["unnamed",DATUM["MIF 999,1,1,2,3",SPHEROID["WGS 72",6378135,298.26],TOWGS84[1,2,3,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
 
     # MIF 9999
     srs = osr.SpatialReference("""GEOGCS["unnamed",
         DATUM["MIF 9999,1,1,2,3,4,5,6,7,3",
             SPHEROID["WGS 72",6378135,298.26]],
+        PRIMEM["Greenwich",0],
         UNIT["degree",0.0174532925199433]]""")
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 1, 9999, 1, 1, 2, 3, 4, 5, 6, 7, 3'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'GEOGCS["unnamed",DATUM["MIF 9999,1,1,2,3,4,5,6,7,3",SPHEROID["WGS 72",6378135,298.26],TOWGS84[1,2,3,-4,-5,-6,7]],PRIMEM["non-Greenwich",3],UNIT["degree",0.0174532925199433]]'
+    assert wkt == 'GEOGCS["unnamed",DATUM["MIF 9999,1,1,2,3,4,5,6,7,3",SPHEROID["WGS 72",6378135,298.26],TOWGS84[1,2,3,-4,-5,-6,7]],PRIMEM["non-Greenwich",3],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
 
 ###############################################################################
 # Test opening and modifying a file with polygons created with MapInfo that consists of
@@ -2144,9 +2146,10 @@ def test_ogr_mitab_48():
     PARAMETER["central_meridian",0],
     PARAMETER["scale_factor",0.99994471],
     PARAMETER["false_easting",234.358],
-    PARAMETER["false_northing",4185861.369]]""")
+    PARAMETER["false_northing",4185861.369],
+    UNIT["metre",1]]""")
 
-    assert sr_got.IsSame(sr_expected) != 0
+    assert sr_got.IsSame(sr_expected) != 0, sr_got.ExportToPrettyWkt()
 
 ###############################################################################
 # Test reading an aspatial TAB file.
@@ -2318,6 +2321,37 @@ def test_ogr_mitab_local_encoding_label():
 
         assert feat.GetStyleString() == expectedStyle, (feat.GetStyleString(), expectedStyle)
 
+
+###############################################################################
+# Check fix for https://github.com/OSGeo/gdal/issues/1232
+
+def test_ogr_mitab_delete_feature_no_geometry():
+
+    filename = '/vsimem/test.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 1
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 2
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.DeleteFeature(1) == 0
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['id'] == 2
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
 ###############################################################################
 #
 
@@ -2333,6 +2367,5 @@ def test_ogr_mitab_cleanup():
 
     gdaltest.mapinfo_ds = None
     gdaltest.mapinfo_drv.DeleteDataSource('tmp')
-
 
 

@@ -59,7 +59,7 @@ def test_aigrid_2():
         'Aigrid geotransform wrong.'
 
     prj = ds.GetProjection()
-    assert prj.find('PROJCS["UTM Zone 55, Southern Hemisphere",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994"') != -1, \
+    assert prj.find('PROJCS["unnamed",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994"') != -1, \
         ('Projection does not match expected:\n%s' % prj)
 
     band1 = ds.GetRasterBand(1)

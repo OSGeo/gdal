@@ -88,13 +88,15 @@ setDoubleArrayOneValue(double** vpp, double value, size_t nmemb)
  * Install extra samples information.
  */
 static int
-setExtraSamples(TIFFDirectory* td, va_list ap, uint32* v)
+setExtraSamples(TIFF* tif, va_list ap, uint32* v)
 {
 /* XXX: Unassociated alpha data == 999 is a known Corel Draw bug, see below */
 #define EXTRASAMPLE_COREL_UNASSALPHA 999 
 
 	uint16* va;
 	uint32 i;
+        TIFFDirectory* td = &tif->tif_dir;
+        static const char module[] = "setExtraSamples";
 
 	*v = (uint16) va_arg(ap, uint16_vap);
 	if ((uint16) *v > td->td_samplesperpixel)
@@ -116,6 +118,18 @@ setExtraSamples(TIFFDirectory* td, va_list ap, uint32* v)
 				return 0;
 		}
 	}
+
+        if ( td->td_transferfunction[0] != NULL && (td->td_samplesperpixel - *v > 1) &&
+                !(td->td_samplesperpixel - td->td_extrasamples > 1))
+        {
+                TIFFWarningExt(tif->tif_clientdata,module,
+                    "ExtraSamples tag value is changing, "
+                    "but TransferFunction was read with a different value. Cancelling it");
+                TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
+                _TIFFfree(td->td_transferfunction[0]);
+                td->td_transferfunction[0] = NULL;
+        }
+
 	td->td_extrasamples = (uint16) *v;
 	_TIFFsetShortArray(&td->td_sampleinfo, va, td->td_extrasamples);
 	return 1;
@@ -285,6 +299,18 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
                 _TIFFfree(td->td_smaxsamplevalue);
                 td->td_smaxsamplevalue = NULL;
             }
+            /* Test if 3 transfer functions instead of just one are now needed
+               See http://bugzilla.maptools.org/show_bug.cgi?id=2820 */
+            if( td->td_transferfunction[0] != NULL && (v - td->td_extrasamples > 1) &&
+                !(td->td_samplesperpixel - td->td_extrasamples > 1))
+            {
+                    TIFFWarningExt(tif->tif_clientdata,module,
+                        "SamplesPerPixel tag value is changing, "
+                        "but TransferFunction was read with a different value. Cancelling it");
+                    TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
+                    _TIFFfree(td->td_transferfunction[0]);
+                    td->td_transferfunction[0] = NULL;
+            }
         }
 		td->td_samplesperpixel = (uint16) v;
 		break;
@@ -361,7 +387,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		_TIFFsetShortArray(&td->td_colormap[2], va_arg(ap, uint16*), v32);
 		break;
 	case TIFFTAG_EXTRASAMPLES:
-		if (!setExtraSamples(td, ap, &v))
+		if (!setExtraSamples(tif, ap, &v))
 			goto badvalue;
 		break;
 	case TIFFTAG_MATTEING:

@@ -332,7 +332,7 @@ def test_nitf_14():
         'geotransform differs from expected'
 
     prj = ds.GetProjectionRef()
-    assert prj.find('UTM Zone 11, Southern Hemisphere') != -1, \
+    assert prj.find('PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000]') != -1, \
         'Coordinate system not UTM Zone 11, Southern Hemisphere'
 
     ds = None
@@ -1472,7 +1472,7 @@ def test_nitf_52():
     gt = ds.GetGeoTransform()
     ds = None
 
-    assert wkt == """PROJCS["unnamed",GEOGCS["EUROPEAN 1950, Mean (3 Param)",DATUM["EUROPEAN 1950, Mean (3 Param)",SPHEROID["International 1924            ",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",0],PARAMETER["standard_parallel_2",0],PARAMETER["latitude_of_center",0],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""", \
+    assert wkt == """PROJCS["unnamed",GEOGCS["EUROPEAN 1950, Mean (3 Param)",DATUM["EUROPEAN_1950_Mean_3_Param",SPHEROID["International 1924",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["latitude_of_center",0],PARAMETER["longitude_of_center",0],PARAMETER["standard_parallel_1",0],PARAMETER["standard_parallel_2",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]""", \
         'did not get expected SRS'
 
     assert gt == (100000.0, 10.0, 0.0, 5000000.0, 0.0, -10.0), \
@@ -1504,7 +1504,7 @@ def test_nitf_53():
     gt = ds.GetGeoTransform()
     ds = None
 
-    assert wkt.startswith("""PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84"""), \
+    assert 'PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0]' in wkt, \
         'did not get expected SRS'
 
     assert gt == (205000.0, 10000.0, 0.0, 5445000.0, 0.0, -10000.0), \
@@ -1672,7 +1672,7 @@ def test_nitf_59():
     gt = ds.GetGeoTransform()
     ds = None
 
-    assert wkt.startswith("""PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["WGS 84"""), \
+    assert """PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0]""" in wkt, \
         'did not get expected SRS'
 
     assert gt == (149999.5, 1.0, 0.0, 4500000.5, 0.0, -1.0), \
@@ -1692,7 +1692,7 @@ def test_nitf_60():
     gt = ds.GetGeoTransform()
     ds = None
 
-    assert wkt == """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]""", \
+    assert wkt == """PROJCS["unknown",GEOGCS["unknown",DATUM["unknown",SPHEROID["unknown",6378137,0]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]""", \
         'did not get expected SRS'
 
     ref_gt = [1036422.8453166834, 149.94543479697344, 0.0, 345474.28177222813, 0.0, -149.94543479697404]

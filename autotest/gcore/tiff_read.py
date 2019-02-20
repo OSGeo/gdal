@@ -397,8 +397,8 @@ def test_tiff_grads():
     ds = gdal.Open('data/test_gf.tif')
     srs = ds.GetProjectionRef()
 
-    assert srs.find('PARAMETER["latitude_of_origin",46.8]') != -1, \
-        'Did not get expected latitude of origin.'
+    assert srs.find('PARAMETER["latitude_of_origin",52]') != -1, \
+        ('Did not get expected latitude of origin: wkt=%s' % srs)
 
 ###############################################################################
 # Check Erdas Citation Parsing for coordinate system.
@@ -625,7 +625,7 @@ def test_tiff_ProjectedCSTypeGeoKey_only():
 def test_tiff_GTModelTypeGeoKey_only():
 
     ds = gdal.Open('data/GTModelTypeGeoKey_only.tif')
-    assert ds.GetProjectionRef().find('LOCAL_CS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["unretrievable - using WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT[,0.0174532925199433]],UNIT["unknown",1]]') == 0
+    assert ds.GetProjectionRef().find('LOCAL_CS["unnamed"]') == 0
     ds = None
 
 ###############################################################################
@@ -2462,18 +2462,19 @@ def test_tiff_read_ycbcr_int12():
 
 def test_tiff_read_unit_from_srs():
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_read_unit_from_srs.tif', 1, 1)
+    filename = '/vsimem/tiff_read_unit_from_srs.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('EPSG:4326+3855')
     ds.SetProjection(sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Open('/vsimem/tiff_read_unit_from_srs.tif')
+    ds = gdal.Open(filename)
     unit = ds.GetRasterBand(1).GetUnitType()
     assert unit == 'metre'
     ds = None
 
-    gdal.Unlink('/vsimem/tiff_read_unit_from_srs.tif')
+    gdal.Unlink(filename)
 
 ###############################################################################
 # Test reading ArcGIS 9.3 .aux.xml
@@ -3119,7 +3120,11 @@ def test_tiff_read_overview_of_external_mask():
     assert flags1 == gdal.GMF_PER_DATASET
 
 ###############################################################################
+# Test reading GeoTIFF file ModelTiepointTag(z) != 0 and ModelPixelScaleTag(z) = 0
+# Test https://issues.qgis.org/issues/20493
 
+def test_tiff_read_ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero():
 
-
-
+    ds = gdal.Open('data/ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero.tif')
+    assert ds.GetRasterBand(1).GetScale() == 1
+    assert ds.GetRasterBand(1).GetOffset() == 0

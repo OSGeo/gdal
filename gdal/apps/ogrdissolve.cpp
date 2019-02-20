@@ -338,6 +338,7 @@ MAIN_START(nArgc, papszArgv)
     if( pszOutputSRSDef != NULL )
     {
         poOutputSRS = new OGRSpatialReference();
+        poOutputSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poOutputSRS->SetFromUserInput( pszOutputSRSDef ) != OGRERR_NONE )
         {
             printf( "Failed to process SRS definition: %s\n",
@@ -352,6 +353,7 @@ MAIN_START(nArgc, papszArgv)
     if( pszSourceSRSDef != NULL )
     {
         poSourceSRS = new OGRSpatialReference();
+        poSourceSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSourceSRS->SetFromUserInput( pszSourceSRSDef ) != OGRERR_NONE )
         {
             printf( "Failed to process SRS definition: %s\n",

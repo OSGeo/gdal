@@ -30,8 +30,18 @@
 #include "keadataset.h"
 #include "keaband.h"
 #include "keacopy.h"
+#include "../frmts/hdf5/hdf5vfl.h"
 
 CPL_CVSID("$Id$")
+
+/************************************************************************/
+/*                     KEADatasetDriverUnload()                        */
+/************************************************************************/
+
+void KEADatasetDriverUnload(GDALDriver*)
+{
+    HDF5VFLUnloadFileDriver();
+}
 
 // Function for converting a libkea type into a GDAL type
 GDALDataType KEA_to_GDAL_Type( kealib::KEADataType ekeaType )
@@ -113,10 +123,24 @@ GDALDataset *KEADataset::Open( GDALOpenInfo * poOpenInfo )
             H5::H5File *pH5File;
             if( poOpenInfo->eAccess == GA_ReadOnly )
             {
-                pH5File = kealib::KEAImageIO::openKeaH5RDOnly( poOpenInfo->pszFilename );
+                // use the virtual driver so we can open files using
+                // /vsicurl etc
+                // do this same as libkea
+                H5::FileAccPropList keaAccessPlist = H5::FileAccPropList(H5::FileAccPropList::DEFAULT);
+                keaAccessPlist.setCache(kealib::KEA_MDC_NELMTS, kealib::KEA_RDCC_NELMTS, 
+                            kealib::KEA_RDCC_NBYTES, kealib::KEA_RDCC_W0);
+                keaAccessPlist.setSieveBufSize(kealib::KEA_SIEVE_BUF);
+                hsize_t blockSize = kealib::KEA_META_BLOCKSIZE;
+                keaAccessPlist.setMetaBlockSize(blockSize);
+                // but set the driver
+                keaAccessPlist.setDriver(HDF5VFLGetFileDriver(), nullptr);
+                
+                const H5std_string keaImgFilePath(poOpenInfo->pszFilename);
+                pH5File = new H5::H5File(keaImgFilePath, H5F_ACC_RDONLY, H5::FileCreatPropList::DEFAULT, keaAccessPlist);
             }
             else
             {
+                // Must be a local file
                 pH5File = kealib::KEAImageIO::openKeaH5RW( poOpenInfo->pszFilename );
             }
             // create the KEADataset object
@@ -145,7 +169,6 @@ GDALDataset *KEADataset::Open( GDALOpenInfo * poOpenInfo )
 //
 int KEADataset::Identify( GDALOpenInfo * poOpenInfo )
 {
-    bool bisKEA = false;
 
 /* -------------------------------------------------------------------- */
 /*      Is it an HDF5 file?                                             */
@@ -155,19 +178,15 @@ int KEADataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader == nullptr ||
         memcmp(poOpenInfo->pabyHeader,achSignature,8) != 0 )
     {
-        return false;
+        return 0;
     }
 
-    try
-    {
-        // is this a KEA file?
-        bisKEA = kealib::KEAImageIO::isKEAImage( poOpenInfo->pszFilename );
-    }
-    catch (const kealib::KEAIOException &)
-    {
-        bisKEA = false;
-    }
-    if( bisKEA )
+    // avoid using kealib::KEAImageIO::isKEAImage as this is likely
+    // to be too slow over curl etc (and doesn't take a HDF5 file handle
+    // anyway).
+    // Just test the extension
+    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    if( EQUAL(osExt, "KEA") )
         return 1;
     else
         return 0;
@@ -508,7 +527,7 @@ CPLErr KEADataset::GetGeoTransform( double * padfTransform )
 }
 
 // read in the projection ref
-const char *KEADataset::GetProjectionRef()
+const char *KEADataset::_GetProjectionRef()
 {
     try
     {
@@ -549,7 +568,7 @@ CPLErr KEADataset::SetGeoTransform (double *padfTransform )
 }
 
 // set the projection
-CPLErr KEADataset::SetProjection( const char *pszWKT )
+CPLErr KEADataset::_SetProjection( const char *pszWKT )
 {
     try
     {
@@ -755,7 +774,7 @@ int KEADataset::GetGCPCount()
     }
 }
 
-const char* KEADataset::GetGCPProjection()
+const char* KEADataset::_GetGCPProjection()
 {
     if( m_pszGCPProjection == nullptr )
     {
@@ -808,7 +827,7 @@ const GDAL_GCP* KEADataset::GetGCPs()
     return m_pGCPs;
 }
 
-CPLErr KEADataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection)
+CPLErr KEADataset::_SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection)
 {
     this->DestroyGCPs();
     CPLFree( m_pszGCPProjection );

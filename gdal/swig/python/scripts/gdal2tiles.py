@@ -701,6 +701,7 @@ def setup_input_srs(input_dataset, options):
             input_srs = osr.SpatialReference()
             input_srs.ImportFromWkt(input_srs_wkt)
 
+    input_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     return input_srs, input_srs_wkt
 
 
@@ -709,6 +710,7 @@ def setup_output_srs(input_srs, options):
     Setup the desired SRS (based on options)
     """
     output_srs = osr.SpatialReference()
+    output_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
     if options.profile == 'mercator':
         output_srs.ImportFromEPSG(3857)
@@ -1520,6 +1522,7 @@ class GDAL2Tiles(object):
         self.isepsg4326 = False
         srs4326 = osr.SpatialReference()
         srs4326.ImportFromEPSG(4326)
+        srs4326.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         if self.out_srs and srs4326.ExportToProj4() == self.out_srs.ExportToProj4():
             self.kml = True
             self.isepsg4326 = True
@@ -2638,8 +2641,8 @@ class GDAL2Tiles(object):
               function getURL(bounds) {
                   bounds = this.adjustBounds(bounds);
                   var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tile_size.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tile_size.h));
+                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
                   var z = this.getServerZoom();
                   if (this.map.baseLayer.CLASS_NAME === 'OpenLayers.Layer.Bing') {
                       z+=1;
@@ -2662,8 +2665,8 @@ class GDAL2Tiles(object):
               function getURL(bounds) {
                   bounds = this.adjustBounds(bounds);
                   var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tile_size.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tile_size.h));
+                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
                   var z = this.getServerZoom()%(tmsoffset)s;
                   var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
                   var url = this.url;
@@ -2683,8 +2686,8 @@ class GDAL2Tiles(object):
               function getURL(bounds) {
                   bounds = this.adjustBounds(bounds);
                   var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tile_size.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tile_size.h));
+                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
                   var z = this.getServerZoom();
                   var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
                   var url = this.url;
@@ -2808,8 +2811,10 @@ def get_tile_swne(tile_job_info, options):
     elif options.profile == 'raster':
         srs4326 = osr.SpatialReference()
         srs4326.ImportFromEPSG(4326)
+        srs4326.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         if tile_job_info.kml and tile_job_info.in_srs_wkt:
             in_srs = osr.SpatialReference()
+            in_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
             in_srs.ImportFromWkt(tile_job_info.in_srs_wkt)
             ct = osr.CoordinateTransformation(in_srs, srs4326)
 

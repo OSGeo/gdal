@@ -4,7 +4,7 @@ include ../../GDALmake.opt
 
 OBJ	=	ersdataset.o ershdrnode.o
 
-CPPFLAGS	:=	 -I../raw $(CPPFLAGS)
+CPPFLAGS	:=	  $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
@@ -13,7 +13,7 @@ clean:
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
-$(O_OBJ):	../raw/rawdataset.h
+$(O_OBJ):	../../gcore/rawdataset.h
 
 plugin: gdal_ERS.so
 

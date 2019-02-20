@@ -232,6 +232,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
             pszHandle += 1;
 
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             for( int i = 0; apszURNNames[i*2+0] != nullptr; i++ )
             {

@@ -67,6 +67,7 @@
 
 #ifndef SWIGCSHARP
 typedef int OGRAxisOrientation;
+typedef int OSRAxisMappingStrategy;
 #ifdef SWIGJAVA
 %javaconst(1);
 #endif
@@ -77,6 +78,11 @@ typedef int OGRAxisOrientation;
 %constant OAO_West=4;
 %constant OAO_Up=5;
 %constant OAO_Down=6;
+
+%constant OAMS_TRADITIONAL_GIS_ORDER=0;
+%constant OAMS_AUTHORITY_COMPLIANT=1;
+%constant OAMS_CUSTOM=2;
+
 #ifdef SWIGJAVA
 %javaconst(0);
 #endif
@@ -92,6 +98,15 @@ typedef enum OGRAxisOrientation
     OAO_Up=5,
     OAO_Down=6
 };
+
+%rename (AxisMappingStrategy) OSRAxisMappingStrategy;
+typedef enum
+{
+    OAMS_TRADITIONAL_GIS_ORDER,
+    OAMS_AUTHORITY_COMPLIANT,
+    OAMS_CUSTOM
+} OSRAxisMappingStrategy;
+
 #endif
 
 #if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
@@ -170,44 +185,87 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 }
 %}
 
-/************************************************************************/
-/*                        GetProjectionMethods()                        */
-/************************************************************************/
-/*
- * Python has it's own custom interface to GetProjectionMethods().which returns
- * fairly complex structure.
- *
- * All other languages will have a more simplistic interface which is
- * exactly the same as the C api.
- *
- */
-
-#if !defined(SWIGPYTHON)
-%rename (GetProjectionMethods) OPTGetProjectionMethods;
-%apply (char **CSL) {(char **)};
-char **OPTGetProjectionMethods();
-%clear (char **);
-
-%rename (GetProjectionMethodParameterList) OPTGetParameterList;
 #ifdef SWIGJAVA
-%apply (char **retAsStringArrayAndFree) {(char **)};
-%apply (char **OUTPUT) { char **username };
-#elif defined(SWIGPERL)
-%apply (char **CSL_REF) {(char **)};
-#else
-%apply (char **CSL) {(char **)};
+%{
+typedef int* retIntArray;
+%}
 #endif
-char **OPTGetParameterList( char *method, char **username );
-%clear (char **);
 
-%rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
-#ifdef SWIGJAVA
-%apply (char **OUTPUT) { char **usrname, char **type };
-%apply (double *OUTPUT) { double *defaultval };
-#endif
-void OPTGetParameterInfo( char *method, char *param, char **usrname,
-                          char **type, double *defaultval );
-#endif
+
+/************************************************************************/
+/*                             AreaOfUse()                              */
+/************************************************************************/
+
+%{
+typedef struct
+{
+  double west_lon_degree;
+  double south_lat_degree;
+  double east_lon_degree;
+  double north_lat_degree;
+  char* name;
+} OSRAreaOfUse;
+%}
+
+%rename (AreaOfUse) OSRAreaOfUse;
+
+struct OSRAreaOfUse {
+%extend {
+%immutable;
+  double west_lon_degree;
+  double south_lat_degree;
+  double east_lon_degree;
+  double north_lat_degree;
+  char* name;
+
+public:
+  OSRAreaOfUse( double west_lon_degree,
+             double south_lat_degree,
+             double east_lon_degree,
+             double north_lat_degree,
+             char* name )
+  {
+    OSRAreaOfUse *self = (OSRAreaOfUse*) CPLMalloc( sizeof( OSRAreaOfUse ) );
+    self->west_lon_degree = west_lon_degree;
+    self->south_lat_degree = south_lat_degree;
+    self->east_lon_degree = east_lon_degree;
+    self->north_lat_degree = north_lat_degree;
+    self->name = name ? CPLStrdup(name) : NULL;
+    return self;
+  }
+
+  ~OSRAreaOfUse()
+  {
+    CPLFree( self->name );
+    CPLFree( self );
+  }
+} /* extend */
+}; /* OSRAreaOfUse */
+
+%apply Pointer NONNULL {OSRAreaOfUse *area};
+%inline %{
+
+double OSRAreaOfUse_west_lon_degree_get( OSRAreaOfUse *area ) {
+  return area->west_lon_degree;
+}
+
+double OSRAreaOfUse_south_lat_degree_get( OSRAreaOfUse *area ) {
+  return area->south_lat_degree;
+}
+
+double OSRAreaOfUse_east_lon_degree_get( OSRAreaOfUse *area ) {
+  return area->east_lon_degree;
+}
+
+double OSRAreaOfUse_north_lat_degree_get( OSRAreaOfUse *area ) {
+  return area->north_lat_degree;
+}
+
+const char* OSRAreaOfUse_name_get( OSRAreaOfUse *area ) {
+  return area->name;
+}
+
+%}
 
 /******************************************************************************
  *
@@ -257,9 +315,17 @@ public:
     return buf;
   }
 #endif
+
+  const char* GetName() {
+    return OSRGetName( self );
+  }
+
 %apply Pointer NONNULL {OSRSpatialReferenceShadow* rhs};
-  int IsSame( OSRSpatialReferenceShadow *rhs ) {
-    return OSRIsSame( self, rhs );
+#ifndef SWIGJAVA
+  %feature("kwargs") IsSame;
+#endif
+  int IsSame( OSRSpatialReferenceShadow *rhs, char **options = NULL ) {
+    return OSRIsSameEx( self, rhs, options );
   }
 
   int IsSameGeogCS( OSRSpatialReferenceShadow *rhs ) {
@@ -391,6 +457,24 @@ public:
     return OSRGetAuthorityName( self, target_key );
   }
 
+  %newobject GetAreaOfUse;
+  OSRAreaOfUse* GetAreaOfUse() {
+    OSRAreaOfUse* pArea = new_OSRAreaOfUse(0,0,0,0,NULL);
+    const char* name = NULL;
+    if( !OSRGetAreaOfUse(self,
+                    &pArea->west_lon_degree,
+                    &pArea->south_lat_degree,
+                    &pArea->east_lon_degree,
+                    &pArea->north_lat_degree,
+                    &name) )
+    {
+        delete_OSRAreaOfUse(pArea);
+        return NULL;
+    }
+    pArea->name = name ? CPLStrdup(name) : NULL;
+    return pArea;
+  }
+
   /* Added in GDAL 2.1 */
   const char *GetAxisName( const char *target_key, int iAxis ) {
     return OSRGetAxis( self, target_key, iAxis, NULL );
@@ -402,6 +486,33 @@ public:
     OSRGetAxis( self, target_key, iAxis, &orientation );
     return orientation;
   }
+
+  OSRAxisMappingStrategy GetAxisMappingStrategy() {
+    return OSRGetAxisMappingStrategy(self);
+  }
+
+  void SetAxisMappingStrategy(OSRAxisMappingStrategy strategy) {
+    OSRSetAxisMappingStrategy(self, strategy);
+  }
+
+#if defined(SWIGJAVA)
+  retIntArray GetDataAxisToSRSAxisMapping(int *nLen, const int **pList) {
+      *pList = OSRGetDataAxisToSRSAxisMapping(self, nLen);
+      return (retIntArray)*pList;
+  }
+#elif defined(SWIGCSHARP)
+  %apply (int *intList) {const int *};
+  %apply (int *hasval) {int *count};
+  const int *GetDataAxisToSRSAxisMapping(int *count) {
+      return OSRGetDataAxisToSRSAxisMapping(self, count);
+  }
+  %clear (const int *);
+  %clear (int *count);
+#else
+  void GetDataAxisToSRSAxisMapping(int *nLen, const int **pList) {
+      *pList = OSRGetDataAxisToSRSAxisMapping(self, nLen);
+  }
+#endif
 
   OGRErr SetUTM( int zone, int north =1 ) {
     return OSRSetUTM( self, zone, north );
@@ -893,8 +1004,8 @@ public:
     return OSRImportFromOzi( self, papszLines );
   }
 
-  OGRErr ExportToWkt( char **argout ) {
-    return OSRExportToWkt( self, argout );
+  OGRErr ExportToWkt( char **argout, char **options = NULL ) {
+    return OSRExportToWktEx( self, argout, options );
   }
 
   OGRErr ExportToPrettyWkt( char **argout, int simplify = 0 ) {
@@ -943,18 +1054,6 @@ public:
     return OSRValidate(self);
   }
 
-  OGRErr StripCTParms() {
-    return OSRStripCTParms(self);
-  }
-
-  OGRErr FixupOrdering() {
-    return OSRFixupOrdering(self);
-  }
-
-  OGRErr Fixup() {
-    return OSRFixup(self);
-  }
-
   OGRErr MorphToESRI() {
     return OSRMorphToESRI(self);
   }
@@ -977,6 +1076,36 @@ public:
  *  CoordinateTransformation Object
  *
  */
+ 
+%rename (CoordinateTransformationOptions) OGRCoordinateTransformationOptions;
+class OGRCoordinateTransformationOptions {
+private:
+  OGRCoordinateTransformationOptions();
+public:
+%extend {
+
+  OGRCoordinateTransformationOptions() {
+    return OCTNewCoordinateTransformationOptions();
+  }
+
+  ~OGRCoordinateTransformationOptions() {
+    OCTDestroyCoordinateTransformationOptions( self );
+  }
+  
+  bool SetAreaOfInterest( double westLongitudeDeg,
+                          double southLatitudeDeg,
+                          double eastLongitudeDeg,
+                          double northLatitudeDeg ) {
+    return OCTCoordinateTransformationOptionsSetAreaOfInterest(self,
+        westLongitudeDeg, southLatitudeDeg,
+        eastLongitudeDeg, northLatitudeDeg);
+  }
+
+  bool SetOperation(const char* operation) {
+    return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
+  }
+} /*extend */
+};
 
 // NEEDED
 // Custom python __init__ which takes a tuple.
@@ -990,8 +1119,12 @@ public:
 %extend {
 
   OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst ) {
-    OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
-    return obj;
+    return (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation(src, dst);
+  }
+
+  OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options ) {
+    return (OSRCoordinateTransformationShadow*) 
+        options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
   }
 
   ~OSRCoordinateTransformationShadow() {
@@ -1013,6 +1146,19 @@ public:
   }
 %clear (double inout[3]);
 
+#ifdef SWIGJAVA
+%apply (double argout[ANY]) {(double inout[4])};
+#else
+%apply (double argout[ANY]) {(double inout[4])};
+%apply (double argin[ANY]) {(double inout[4])};
+#endif
+  void TransformPoint( double inout[4] ) {
+    if (self == NULL)
+        return;
+    OCTTransform4D( self, 1, &inout[0], &inout[1], &inout[2], &inout[3], NULL );
+  }
+%clear (double inout[4]);
+
   void TransformPoint( double argout[3], double x, double y, double z = 0.0 ) {
     if (self == NULL)
         return;
@@ -1022,14 +1168,34 @@ public:
     OCTTransform( self, 1, &argout[0], &argout[1], &argout[2] );
   }
 
+  void TransformPoint( double argout[4], double x, double y, double z, double t ) {
+    if (self == NULL)
+        return;
+    argout[0] = x;
+    argout[1] = y;
+    argout[2] = z;
+    argout[3] = t;
+    OCTTransform4D( self, 1, &argout[0], &argout[1], &argout[2], &argout[3], NULL );
+  }
+
 #ifdef SWIGCSHARP
   %apply (double *inout) {(double*)};
 #endif
+
+#ifndef SWIGPYTHON
   void TransformPoints( int nCount, double *x, double *y, double *z ) {
     if (self == NULL)
         return;
     OCTTransform( self, nCount, x, y, z );
   }
+#else
+  void TransformPoints( int nCount, double *x, double *y, double *z, double *t ) {
+    if (self == NULL)
+        return;
+    OCTTransform4D( self, nCount, x, y, z, t, NULL );
+  }
+#endif
+
 #ifdef SWIGCSHARP
   %clear (double*);
 #endif
@@ -1040,11 +1206,172 @@ public:
 /* New in GDAL 1.10 */
 %newobject CreateCoordinateTransformation;
 %inline %{
-  OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst ) {
-    OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
-    return obj;
+  OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {
+    return (OSRCoordinateTransformationShadow*) 
+        options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
 }
 %}
+
+/************************************************************************/
+/*                   GetCRSInfoListFromDatabase()                       */
+/************************************************************************/
+
+#ifdef SWIGPYTHON
+
+%rename (CRSType) OSRCRSType;
+typedef enum OSRCRSType
+{
+    /** Geographic 2D CRS */
+    OSR_CRS_TYPE_GEOGRAPHIC_2D = 0,
+    /** Geographic 3D CRS */
+    OSR_CRS_TYPE_GEOGRAPHIC_3D = 1,
+    /** Geocentric CRS */
+    OSR_CRS_TYPE_GEOCENTRIC = 2,
+    /** Projected CRS */
+    OSR_CRS_TYPE_PROJECTED = 3,
+    /** Vertical CRS */
+    OSR_CRS_TYPE_VERTICAL = 4,
+    /** Compound CRS */
+    OSR_CRS_TYPE_COMPOUND = 5,
+    /** Other */
+    OSR_CRS_TYPE_OTHER = 6,
+};
+
+%rename (CRSInfo) OSRCRSInfo;
+
+struct OSRCRSInfo {
+%extend {
+%immutable;
+    /** Authority name. */
+    char* auth_name;
+    /** Object code. */
+    char* code;
+    /** Object name. */
+    char* name;
+    /** Object type. */
+    OSRCRSType type;
+    /** Whether the object is deprecated */
+    bool deprecated;
+    /** Whereas the west_lon_degree, south_lat_degree, east_lon_degree and
+     * north_lat_degree fields are valid. */
+    bool  bbox_valid;
+    /** Western-most longitude of the area of use, in degrees. */
+    double west_lon_degree;
+    /** Southern-most latitude of the area of use, in degrees. */
+    double south_lat_degree;
+    /** Eastern-most longitude of the area of use, in degrees. */
+    double east_lon_degree;
+    /** Northern-most latitude of the area of use, in degrees. */
+    double north_lat_degree;
+    /** Name of the area of use. */
+    char* area_name;
+    /** Name of the projection method for a projected CRS. Might be NULL even
+     *for projected CRS in some cases. */
+    char* projection_method;
+
+  OSRCRSInfo( const char* auth_name,
+              const char* code,
+              const char* name,
+              OSRCRSType type,
+              bool deprecated,
+              bool bbox_valid,
+              double west_lon_degree,
+              double south_lat_degree,
+              double east_lon_degree,
+              double north_lat_degree,
+              const char* area_name,
+              const char* projection_method)
+    {
+    OSRCRSInfo *self = (OSRCRSInfo*) CPLMalloc( sizeof( OSRCRSInfo ) );
+    self->pszAuthName = auth_name ? CPLStrdup(auth_name) : NULL;
+    self->pszCode = code ? CPLStrdup(code) : NULL;
+    self->pszName = name ? CPLStrdup(name) : NULL;
+    self->eType = type;
+    self->bDeprecated = deprecated;
+    self->bBboxValid = bbox_valid;
+    self->dfWestLongitudeDeg = west_lon_degree;
+    self->dfSouthLatitudeDeg = south_lat_degree;
+    self->dfEastLongitudeDeg = east_lon_degree;
+    self->dfNorthLatitudeDeg = north_lat_degree;
+    self->pszAreaName = area_name ? CPLStrdup(area_name) : NULL;
+    self->pszProjectionMethod = projection_method ? CPLStrdup(projection_method) : NULL;
+    return self;
+  }
+
+  ~OSRCRSInfo() {
+    CPLFree( self->pszAuthName );
+    CPLFree( self->pszCode );
+    CPLFree( self->pszName );
+    CPLFree( self->pszAreaName );
+    CPLFree( self->pszProjectionMethod );
+    CPLFree( self );
+  }
+} /* extend */
+}; /* OSRCRSInfo */
+
+%apply Pointer NONNULL {OSRCRSInfo *crsInfo};
+%inline %{
+
+const char* OSRCRSInfo_auth_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszAuthName;
+}
+
+const char* OSRCRSInfo_code_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszCode;
+}
+
+const char* OSRCRSInfo_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszName;
+}
+
+OSRCRSType OSRCRSInfo_type_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->eType;
+}
+
+bool OSRCRSInfo_deprecated_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->bDeprecated;
+}
+
+bool OSRCRSInfo_bbox_valid_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->bBboxValid;
+}
+
+double OSRCRSInfo_west_lon_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfWestLongitudeDeg;
+}
+
+double OSRCRSInfo_south_lat_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfSouthLatitudeDeg;
+}
+
+double OSRCRSInfo_east_lon_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfEastLongitudeDeg;
+}
+
+double OSRCRSInfo_north_lat_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfNorthLatitudeDeg;
+}
+
+const char* OSRCRSInfo_area_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszAreaName;
+}
+
+const char* OSRCRSInfo_projection_method_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszProjectionMethod;
+}
+
+%}
+
+%inline %{
+void GetCRSInfoListFromDatabase( const char *authName,
+                                 OSRCRSInfo*** pList,
+                                 int* pnListCount)
+{
+    *pList = OSRGetCRSInfoListFromDatabase(authName, NULL, pnListCount);
+}
+%}
+
+#endif // SWIGPYTHON
 
 
 #ifdef SWIGPYTHON

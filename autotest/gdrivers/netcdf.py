@@ -1462,7 +1462,7 @@ def test_netcdf_42():
         'LINE_OFFSET': '0',
         'X_DATASET': 'NETCDF:"tmp/netcdf_42.nc":lon',
         'PIXEL_STEP': '1',
-        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
         'PIXEL_OFFSET': '0',
         'X_BAND': '1',
         'LINE_STEP': '1',
@@ -1492,12 +1492,18 @@ def test_netcdf_43():
         'LINE_OFFSET': '0',
         'X_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lon',
         'PIXEL_STEP': '1',
-        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
         'PIXEL_OFFSET': '0',
         'X_BAND': '1',
         'LINE_STEP': '1',
         'Y_DATASET': 'NETCDF:"tmp/netcdf_43.nc":lat',
             'Y_BAND': '1'})
+
+    tmp_ds = gdal.Warp('', 'tmp/netcdf_43.nc', options = '-f MEM -geoloc')
+    gt = tmp_ds.GetGeoTransform()
+    assert abs(gt[0] - -117.3) < 1, gt
+    assert abs(gt[3] - 33.9) < 1, gt
+
 
 ###############################################################################
 # Test NC_USHORT/UINT read/write - netcdf-4 only (#6337)
@@ -2753,7 +2759,7 @@ def test_netcdf_81():
         'Did not get expected dimensions'
 
     projection = ds.GetProjectionRef()
-    expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["Spheroid",6367470,594.3130483479559]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Rotated_pole"],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+    expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unnamed",SPHEROID["Spheroid",6367470,594.313048347956]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Rotated_pole"],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
     assert projection == expected_projection, 'Did not get expected projection'
 
     gt = ds.GetGeoTransform()
@@ -2794,6 +2800,76 @@ def test_netcdf_82():
     }
     assert md == expected_md, 'Did not get expected metadata'
 
+###############################################################################
+# Test complex data subsets
+
+
+def test_netcdf_83():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/complex.nc')
+    sds_list = ds.GetMetadata('SUBDATASETS')
+
+    assert len(sds_list) == 6, 'Did not get expected complex subdataset count.'
+
+    assert sds_list['SUBDATASET_1_NAME'] == 'NETCDF:"data/complex.nc":f32' and sds_list['SUBDATASET_2_NAME'] == 'NETCDF:"data/complex.nc":f64' and sds_list['SUBDATASET_3_NAME'] == 'NETCDF:"data/complex.nc":/group/fmul', \
+        'did not get expected subdatasets.'
+
+    ds = None
+
+    assert not gdaltest.is_file_open('data/complex.nc'), 'file still opened.'
+
+###############################################################################
+# Confirm complex subset data access and checksum
+# Start with Float32
+
+
+def test_netcdf_84():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('NETCDF:"data/complex.nc":f32')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat32
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 523, 'did not get expected checksum'
+
+# Repeat for Float64
+
+
+def test_netcdf_85():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('NETCDF:"data/complex.nc":f64')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat64
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 511, 'did not get expected checksum'
+
+
+# Check for groups support
+
+def test_netcdf_86():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('NETCDF:"data/complex.nc":/group/fmul')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat32
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 453, 'did not get expected checksum for band 1'
+
+    cs = ds.GetRasterBand(2).Checksum()
+    assert cs == 629, 'did not get expected checksum for band 2'
+
+    cs = ds.GetRasterBand(3).Checksum()
+    assert cs == 473, 'did not get expected checksum for band 3'
 
 ###############################################################################
 def test_netcdf_uffd():

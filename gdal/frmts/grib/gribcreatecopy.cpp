@@ -183,6 +183,7 @@ GRIB2Section3Writer::GRIB2Section3Writer( VSILFILE* fpIn,
     fp(fpIn),
     poSrcDS(poSrcDSIn)
 {
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     oSRS.SetFromUserInput( poSrcDS->GetProjectionRef() );
     pszProjection = oSRS.GetAttrValue("PROJECTION");
 
@@ -312,6 +313,7 @@ bool GRIB2Section3Writer::TransformToGeo(double& dfX, double& dfY)
 {
     OGRSpatialReference oLL;  // Construct the "geographic" part of oSRS.
     oLL.CopyGeogCSFrom(&oSRS);
+    oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRCoordinateTransformation *poTransformSRSToLL =
         OGRCreateCoordinateTransformation( &(oSRS), &(oLL));
     if( poTransformSRSToLL == nullptr ||

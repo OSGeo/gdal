@@ -36,7 +36,6 @@
 
 CPL_CVSID("$Id$")
 
-#ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
 /* Poppler 0.31.0 is the first one that needs to know the file size */
 static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE* f)
 {
@@ -45,7 +44,6 @@ static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE* f)
     VSIFSeekL(f, 0, SEEK_SET);
     return nSize;
 }
-#endif
 
 /************************************************************************/
 /*                         VSIPDFFileStream()                           */
@@ -55,12 +53,10 @@ VSIPDFFileStream::VSIPDFFileStream(
     VSILFILE* fIn, const char* pszFilename,
     makeSubStream_object_type dictA
 ) :
-#ifdef POPPLER_0_58_OR_LATER
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
     BaseStream(std::move(dictA), (Goffset)VSIPDFFileStreamGetSize(fIn)),
-#elif defined(POPPLER_BASE_STREAM_HAS_TWO_ARGS)
-    BaseStream(dictA, (setPos_offset_type)VSIPDFFileStreamGetSize(fIn)),
 #else
-    BaseStream(dictA),
+    BaseStream(dictA, (setPos_offset_type)VSIPDFFileStreamGetSize(fIn)),
 #endif
     poParent(nullptr),
     poFilename(new GooString(pszFilename)),
@@ -83,12 +79,10 @@ VSIPDFFileStream::VSIPDFFileStream( VSIPDFFileStream* poParentIn,
                                     vsi_l_offset startA, GBool limitedA,
                                     vsi_l_offset lengthA,
                                     makeSubStream_object_type dictA) :
-#ifdef POPPLER_0_58_OR_LATER
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
     BaseStream(std::move(dictA), (Goffset)lengthA),
-#elif defined(POPPLER_BASE_STREAM_HAS_TWO_ARGS)
-    BaseStream(dictA, (makeSubStream_offset_type)lengthA),
 #else
-    BaseStream(dictA),
+    BaseStream(dictA, (makeSubStream_offset_type)lengthA),
 #endif
     poParent(poParentIn),
     poFilename(poParentIn->poFilename),
@@ -122,13 +116,13 @@ VSIPDFFileStream::~VSIPDFFileStream()
 /*                                  copy()                              */
 /************************************************************************/
 
-#ifdef POPPLER_0_58_OR_LATER
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
 BaseStream* VSIPDFFileStream::copy()
 {
     return new VSIPDFFileStream(poParent, nStart, bLimited,
                                 nLength, dict.copy());
 }
-#elif defined(POPPLER_0_23_OR_LATER)
+#else
 BaseStream* VSIPDFFileStream::copy()
 {
     return new VSIPDFFileStream(poParent, nStart, bLimited,
@@ -142,7 +136,7 @@ BaseStream* VSIPDFFileStream::copy()
 Stream *VSIPDFFileStream::makeSubStream(makeSubStream_offset_type startA, GBool limitedA,
                                         makeSubStream_offset_type lengthA, makeSubStream_object_type dictA)
 {
-#ifdef POPPLER_0_58_OR_LATER
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
     return new VSIPDFFileStream(this,
                                 startA, limitedA,
                                 lengthA, std::move(dictA));

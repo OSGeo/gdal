@@ -147,7 +147,7 @@ void OGRDXFFeature::ApplyOCSTransformer( OGRDXFAffineTransform* const poCT ) con
 const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
     OGRDXFFeature* const poBlockFeature /* = NULL */ )
 {
-    const CPLString osLayer = GetFieldAsString("Layer");
+    CPLString osLayer = GetFieldAsString("Layer");
 
 /* -------------------------------------------------------------------- */
 /*      Is the layer or object disabled/hidden/frozen/off?              */
@@ -166,32 +166,47 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
         bHidden = pszHidden && EQUAL(pszHidden, "1");
     }
 
+    // Helpful constants
+    const int C_BYLAYER = 256;
+    const int C_BYBLOCK = 0;
+    const int C_TRUECOLOR = -100; // not used in DXF - for our purposes only
+
 /* -------------------------------------------------------------------- */
 /*      MULTILEADER entities store colors by directly outputting        */
 /*      the AcCmEntityColor struct as a 32-bit integer.                 */
 /* -------------------------------------------------------------------- */
 
-    int nColor = 256;
+    int nColor = C_BYLAYER;
+    unsigned int nTrueColor = 0;
 
-    if( oStyleProperties.count("Color") > 0 )
+    if( oStyleProperties.count("TrueColor") > 0 )
+    {
+        nTrueColor = atoi(oStyleProperties["TrueColor"]);
+        nColor = C_TRUECOLOR;
+    }
+    else if( oStyleProperties.count("Color") > 0 )
+    {
         nColor = atoi(oStyleProperties["Color"]);
+    }
 
     const unsigned char byColorMethod = ( nColor & 0xFF000000 ) >> 24;
     switch( byColorMethod )
     {
       // ByLayer
       case 0xC0:
-        nColor = 256;
+        nColor = C_BYLAYER;
         break;
 
       // ByBlock
       case 0xC1:
-        nColor = 0;
+        nColor = C_BYBLOCK;
         break;
 
       // RGB true color
       case 0xC2:
-        return CPLString().Printf( "#%06x", nColor & 0xFFFFFF );
+        nTrueColor = nColor & 0xFFFFFF;
+        nColor = C_TRUECOLOR;
+        break;
 
       // Indexed color
       case 0xC3:
@@ -204,9 +219,20 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
 /* -------------------------------------------------------------------- */
 
     // Use ByBlock color?
-    if( nColor < 1 && poBlockFeature )
+    if( nColor == C_BYBLOCK && poBlockFeature )
     {
-        if( poBlockFeature->oStyleProperties.count("Color") > 0 )
+        if( poBlockFeature->oStyleProperties.count("TrueColor") > 0 )
+        {
+            // Inherit true color from the owning block
+            nTrueColor = atoi(poBlockFeature->oStyleProperties["TrueColor"]);
+            nColor = C_TRUECOLOR;
+
+            // Use the inherited color if we regenerate the style string
+            // again during block insertion
+            oStyleProperties["TrueColor"] =
+                poBlockFeature->oStyleProperties["TrueColor"];
+        }
+        else if( poBlockFeature->oStyleProperties.count("Color") > 0 )
         {
             // Inherit color from the owning block
             nColor = atoi(poBlockFeature->oStyleProperties["Color"]);
@@ -219,34 +245,75 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
         else
         {
             // If the owning block has no explicit color, assume ByLayer
-            nColor = 256;
+            nColor = C_BYLAYER;
         }
     }
 
     // Use layer color?
-    if( nColor > 255 )
+    if( nColor == C_BYLAYER )
     {
-        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != nullptr )
-            nColor = atoi(pszValue);
+        if( poBlockFeature )
+        {
+            // Use the block feature's layer instead
+            osLayer = poBlockFeature->GetFieldAsString( "Layer" );
+        }
+
+        const char *pszTrueColor =
+            poDS->LookupLayerProperty( osLayer, "TrueColor" );
+        if( pszTrueColor != nullptr && *pszTrueColor )
+        {
+            nTrueColor = atoi(pszTrueColor);
+            nColor = C_TRUECOLOR;
+
+            if( poBlockFeature )
+            {
+                // Use the inherited color if we regenerate the style string
+                // again during block insertion
+                oStyleProperties["TrueColor"] = pszTrueColor;
+            }
+        }
+        else
+        {
+            const char *pszColor =
+                poDS->LookupLayerProperty( osLayer, "Color" );
+            if( pszColor != nullptr )
+            {
+                nColor = atoi(pszColor);
+
+                if( poBlockFeature )
+                {
+                    // Use the inherited color if we regenerate the style string
+                    // again during block insertion
+                    oStyleProperties["Color"] = pszColor;
+                }
+            }
+        }
     }
 
     // If no color is available, use the default black/white color
-    if( nColor < 1 || nColor > 255 )
+    if( nColor != C_TRUECOLOR && ( nColor < 1 || nColor > 255 ) )
         nColor = 7;
 
 /* -------------------------------------------------------------------- */
 /*      Translate the DWG/DXF color index to a hex color string.        */
 /* -------------------------------------------------------------------- */
 
-    const unsigned char *pabyDXFColors = ACGetColorTable();
-
     CPLString osResult;
-    osResult.Printf( "#%02x%02x%02x",
-        pabyDXFColors[nColor*3+0],
-        pabyDXFColors[nColor*3+1],
-        pabyDXFColors[nColor*3+2] );
 
+    if( nColor == C_TRUECOLOR )
+    {
+        osResult.Printf( "#%06x", nTrueColor );
+    }
+    else
+    {
+        const unsigned char *pabyDXFColors = ACGetColorTable();
+
+        osResult.Printf( "#%02x%02x%02x",
+            pabyDXFColors[nColor*3+0],
+            pabyDXFColors[nColor*3+1],
+            pabyDXFColors[nColor*3+2] );
+    }
+    
     if( bHidden )
         osResult += "00";
 

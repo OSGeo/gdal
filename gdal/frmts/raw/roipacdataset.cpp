@@ -68,8 +68,15 @@ class ROIPACDataset final: public RawDataset
     void        FlushCache() override;
     CPLErr              GetGeoTransform( double *padfTransform ) override;
     CPLErr      SetGeoTransform( double *padfTransform ) override;
-    const char         *GetProjectionRef( void ) override;
-    CPLErr      SetProjection( const char *pszNewProjection ) override;
+    const char *_GetProjectionRef( void ) override;
+    CPLErr      _SetProjection( const char *pszNewProjection ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
+
     char      **GetFileList() override;
 };
 
@@ -875,7 +882,7 @@ CPLErr ROIPACDataset::SetGeoTransform( double *padfTransform )
 /*                         GetProjectionRef()                           */
 /************************************************************************/
 
-const char *ROIPACDataset::GetProjectionRef( void )
+const char *ROIPACDataset::_GetProjectionRef( void )
 {
     return pszProjection != nullptr ? pszProjection : "";
 }
@@ -884,7 +891,7 @@ const char *ROIPACDataset::GetProjectionRef( void )
 /*                          SetProjection()                             */
 /************************************************************************/
 
-CPLErr ROIPACDataset::SetProjection( const char *pszNewProjection )
+CPLErr ROIPACDataset::_SetProjection( const char *pszNewProjection )
 
 {
     CPLFree( pszProjection );

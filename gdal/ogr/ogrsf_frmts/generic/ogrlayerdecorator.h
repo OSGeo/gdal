@@ -112,7 +112,7 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
                                          const char * pszValue,
                                          const char * pszDomain = "" ) override;
 
-    OGRLayer* GetBaseLayer()    { return m_poDecoratedLayer; }
+    OGRLayer* GetBaseLayer() const { return m_poDecoratedLayer; }
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

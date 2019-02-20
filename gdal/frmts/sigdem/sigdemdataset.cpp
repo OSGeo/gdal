@@ -290,7 +290,7 @@ CPLErr SIGDEMDataset::GetGeoTransform(double * padfTransform) {
     return CE_None;
 }
 
-const char* SIGDEMDataset::GetProjectionRef() {
+const char* SIGDEMDataset::_GetProjectionRef() {
     return pszProjection;
 }
 

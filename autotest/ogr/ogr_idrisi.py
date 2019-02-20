@@ -51,7 +51,7 @@ def test_ogr_idrisi_1():
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTInteger
 
     sr = lyr.GetSpatialRef()
-    assert sr.ExportToWkt().find('PROJCS["UTM Zone 31, Northern Hemisphere"') == 0
+    assert sr.ExportToWkt().find('PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0]') > 0
 
     assert lyr.GetFeatureCount() == 2
 

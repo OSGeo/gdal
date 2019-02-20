@@ -2,6 +2,10 @@ GDAL_ROOT = .
  
 !INCLUDE nmake.opt
 
+!IF !DEFINED(PROJ_INCLUDE)
+!ERROR PROJ_INCLUDE should be defined. PROJ >= 6 is a required dependency
+!ENDIF
+
 ##############################################################################
 # The following determines whether we are linking all the OGR formats 
 # into the DLL, or only the minimum spatial reference related stuff required
@@ -9,11 +13,9 @@ GDAL_ROOT = .
 
 #OGR_BASE_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation@8 \
 #		/INCLUDE:_OSRValidate@4 \
-#		/INCLUDE:_OPTGetProjectionMethods@0 \
 #		/INCLUDE:_OGR_G_GetPointCount@4
 
 OGR_BASE_INCLUDE = /INCLUDE:$(SYM_PREFIX)OSRValidate \
-		/INCLUDE:$(SYM_PREFIX)OPTGetProjectionMethods \
 		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount 
 
 
@@ -257,7 +259,6 @@ devinstall: install libinstall
 	copy alg\*.h $(INCDIR)
 	copy ogr\*.h $(INCDIR)
 	copy frmts\mem\memdataset.h $(INCDIR)
-	copy frmts\raw\rawdataset.h $(INCDIR)
 	copy frmts\vrt\*.h $(INCDIR)
 !IFDEF INCLUDE_OGR_FRMTS
 	copy ogr\ogrsf_frmts\*.h $(INCDIR)

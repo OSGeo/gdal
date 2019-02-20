@@ -432,7 +432,8 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
             osFilter += " srsName=\"";
             osFilter += pszSRSName;
             osFilter += "\"";
-            if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
+            if( !STARTS_WITH_CI(pszSRSName, "EPSG:") &&
+                (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting()) )
                 bAxisSwap = true;
         }
         osFilter += ">";
@@ -466,16 +467,7 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
         papszOptions = CSLSetNameValue(papszOptions, "FORMAT", "GML3");
         if( pszSRSName != nullptr )
         {
-            if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
-            {
-                OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode( "GEOGCS" );
-                if( poGEOGCS != nullptr )
-                    poGEOGCS->StripNodes( "AXIS" );
-
-                OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
-                if (poPROJCS != nullptr && oSRS.EPSGTreatsAsNorthingEasting())
-                    poPROJCS->StripNodes( "AXIS" );
-            }
+            oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             if( STARTS_WITH_CI(pszSRSName, "urn:ogc:def:crs:EPSG::") )
                 papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "YES");

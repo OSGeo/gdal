@@ -759,8 +759,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to lookup datum code %d, likely due to "
-                          "missing GDAL gcs.csv file.  "
+                          "Failed to lookup datum code %d. "
                           "Falling back to use WGS84.",
                           static_cast<int>(iDatum) );
                 SetWellKnownGeogCS("WGS84");
@@ -783,8 +782,6 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
 /* -------------------------------------------------------------------- */
     if( IsLocal() || IsProjected() )
         SetLinearUnits( SRS_UL_METER, 1.0 );
-
-    FixupOrdering();
 
     return OGRERR_NONE;
 }

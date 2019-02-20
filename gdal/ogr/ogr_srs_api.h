@@ -57,40 +57,18 @@ typedef enum {
 
 const char CPL_DLL *OSRAxisEnumToName( OGRAxisOrientation eOrientation );
 
-/* -------------------------------------------------------------------- */
-/*      Datum types (corresponds to CS_DatumType).                      */
-/* -------------------------------------------------------------------- */
-
-/*! @cond Doxygen_Suppress */
-// Unused in the code base. TODO: remove
-typedef enum {
-    ODT_HD_Min=1000,
-    ODT_HD_Other=1000,
-    ODT_HD_Classic=1001,
-    ODT_HD_Geocentric=1002,
-    ODT_HD_Max=1999,
-    ODT_VD_Min=2000,
-    ODT_VD_Other=2000,
-    ODT_VD_Orthometric=2001,
-    ODT_VD_Ellipsoidal=2002,
-    ODT_VD_AltitudeBarometric=2003,
-    ODT_VD_Normal=2004,
-    ODT_VD_GeoidModelDerived=2005,
-    ODT_VD_Depth=2006,
-    ODT_VD_Max=2999,
-    ODT_LD_Min=10000,
-    ODT_LD_Max=32767
-} OGRDatumType;
-/*! @endcond */
-
 #endif // ndef SWIG
 
 /* ==================================================================== */
 /*      Some standard WKT geographic coordinate systems.                */
 /* ==================================================================== */
 
-/** WGS 84 geodetic (long/lat) WKT / EPSG:4326 with long,lat ordering */
+#ifdef USE_DEPRECATED_SRS_WKT_WGS84
 #define SRS_WKT_WGS84 "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]"
+#endif
+
+/** WGS 84 geodetic (lat/long) WKT / EPSG:4326 with lat,long ordering */
+#define SRS_WKT_WGS84_LAT_LONG "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]"
 
 /* ==================================================================== */
 /*      Some "standard" strings.                                        */
@@ -485,6 +463,8 @@ typedef void *OGRCoordinateTransformationH;
 
 #endif
 
+void CPL_DLL OSRSetPROJSearchPaths( const char* const * papszPaths );
+
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL
       OSRNewSpatialReference( const char * /* = NULL */);
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL OSRCloneGeogCS( OGRSpatialReferenceH );
@@ -496,9 +476,6 @@ int CPL_DLL OSRDereference( OGRSpatialReferenceH );
 void CPL_DLL OSRRelease( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL OSRValidate( OGRSpatialReferenceH );
-OGRErr CPL_DLL OSRFixupOrdering( OGRSpatialReferenceH );
-OGRErr CPL_DLL OSRFixup( OGRSpatialReferenceH );
-OGRErr CPL_DLL OSRStripCTParms( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH, int );
@@ -521,6 +498,8 @@ OGRErr CPL_DLL OSRImportFromERM( OGRSpatialReferenceH,
 OGRErr CPL_DLL OSRImportFromUrl( OGRSpatialReferenceH, const char * );
 
 OGRErr CPL_DLL CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH, char ** );
+OGRErr CPL_DLL OSRExportToWktEx( OGRSpatialReferenceH, char ** ppszResult,
+                                 const char* const* papszOptions );
 OGRErr CPL_DLL CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
 OGRErr CPL_DLL CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH, char **);
 OGRErr CPL_DLL OSRExportToPCI( OGRSpatialReferenceH, char **, char **,
@@ -540,6 +519,8 @@ OGRSpatialReferenceH CPL_DLL OSRConvertToOtherProjection(
                                     OGRSpatialReferenceH hSRS,
                                     const char* pszTargetProjection,
                                     const char* const* papszOptions );
+
+const char CPL_DLL* OSRGetName( OGRSpatialReferenceH hSRS );
 
 OGRErr CPL_DLL CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
                                 const char * pszNodePath,
@@ -567,6 +548,8 @@ int CPL_DLL OSRIsVertical( OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameVertCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
+int CPL_DLL OSRIsSameEx( OGRSpatialReferenceH, OGRSpatialReferenceH,
+                         const char* const *papszOptions );
 
 OGRErr CPL_DLL OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char *pszName );
 OGRErr CPL_DLL OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
@@ -613,6 +596,14 @@ const char CPL_DLL *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
                                          const char * pszTargetKey );
 const char CPL_DLL *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
                                          const char * pszTargetKey );
+
+int CPL_DLL OSRGetAreaOfUse(  OGRSpatialReferenceH hSRS,
+                              double* pdfWestLongitudeDeg,
+                              double* pdfSouthLatitudeDeg,
+                              double* pdfEastLongitudeDeg,
+                              double* pdfNorthLatitudeDeg,
+                              const char **ppszAreaName );
+
 OGRErr CPL_DLL OSRSetProjection( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
@@ -652,6 +643,22 @@ OGRErr CPL_DLL OSRSetAxes( OGRSpatialReferenceH hSRS,
                            OGRAxisOrientation eXAxisOrientation,
                            const char *pszYAxisName,
                            OGRAxisOrientation eYAxisOrientation );
+
+/** Data axis to CRS axis mapping strategy. */
+typedef enum
+{
+    OAMS_TRADITIONAL_GIS_ORDER,  /**< Traditional GIS order */
+    OAMS_AUTHORITY_COMPLIANT,    /**< Compliant with the order mandated by the CRS authority */
+    OAMS_CUSTOM                  /**< Custom */
+} OSRAxisMappingStrategy;
+
+OSRAxisMappingStrategy CPL_DLL OSRGetAxisMappingStrategy( OGRSpatialReferenceH hSRS );
+
+void CPL_DLL OSRSetAxisMappingStrategy( OGRSpatialReferenceH hSRS,
+                                        OSRAxisMappingStrategy strategy );
+
+const int CPL_DLL *OSRGetDataAxisToSRSAxisMapping( OGRSpatialReferenceH hSRS, int* pnCount );
+
 /** Albers Conic Equal Area */
 OGRErr CPL_DLL OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,
@@ -932,12 +939,104 @@ double CPL_DLL OSRCalcSemiMinorFromInvFlattening( double dfSemiMajor, double dfI
 
 void CPL_DLL OSRCleanup( void );
 
+/** \brief Type of Coordinate Reference System (CRS). */
+typedef enum
+{
+    /** Geographic 2D CRS */
+    OSR_CRS_TYPE_GEOGRAPHIC_2D,
+    /** Geographic 3D CRS */
+    OSR_CRS_TYPE_GEOGRAPHIC_3D,
+    /** Geocentric CRS */
+    OSR_CRS_TYPE_GEOCENTRIC,
+    /** Projected CRS */
+    OSR_CRS_TYPE_PROJECTED,
+    /** Vertical CRS */
+    OSR_CRS_TYPE_VERTICAL,
+    /** Compound CRS */
+    OSR_CRS_TYPE_COMPOUND,
+    /** Other */
+    OSR_CRS_TYPE_OTHER,
+} OSRCRSType;
+
+/** \brief Structure given overall description of a CRS.
+ *
+ * This structure may grow over time, and should not be directly allocated by
+ * client code.
+ */
+typedef struct
+{
+    /** Authority name. */
+    char* pszAuthName;
+    /** Object code. */
+    char* pszCode;
+    /** Object name. */
+    char* pszName;
+    /** Object type. */
+    OSRCRSType eType;
+    /** Whether the object is deprecated */
+    int bDeprecated;
+    /** Whereas the west_lon_degree, south_lat_degree, east_lon_degree and
+     * north_lat_degree fields are valid. */
+    int bBboxValid;
+    /** Western-most longitude of the area of use, in degrees. */
+    double dfWestLongitudeDeg;
+    /** Southern-most latitude of the area of use, in degrees. */
+    double dfSouthLatitudeDeg;
+    /** Eastern-most longitude of the area of use, in degrees. */
+    double dfEastLongitudeDeg;
+    /** Northern-most latitude of the area of use, in degrees. */
+    double dfNorthLatitudeDeg;
+    /** Name of the area of use. */
+    char* pszAreaName;
+    /** Name of the projection method for a projected CRS. Might be NULL even
+     *for projected CRS in some cases. */
+    char* pszProjectionMethod;
+} OSRCRSInfo;
+
+/** \brief Structure to describe optional parameters to OSRGetCRSInfoListFromDatabase()
+ * 
+ * Unused for now.
+ */
+typedef struct OSRCRSListParameters OSRCRSListParameters;
+
+OSRCRSInfo CPL_DLL **OSRGetCRSInfoListFromDatabase(
+                                      const char *pszAuthName,
+                                      const OSRCRSListParameters* params,
+                                      int *pnOutResultCount);
+
+void CPL_DLL OSRDestroyCRSInfoList(OSRCRSInfo** list);
+
+
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */
 /* -------------------------------------------------------------------- */
 OGRCoordinateTransformationH CPL_DLL CPL_STDCALL
 OCTNewCoordinateTransformation( OGRSpatialReferenceH hSourceSRS,
                                 OGRSpatialReferenceH hTargetSRS );
+
+/** Coordinate transformation options. */
+typedef struct OGRCoordinateTransformationOptions *OGRCoordinateTransformationOptionsH;
+
+OGRCoordinateTransformationOptionsH CPL_DLL OCTNewCoordinateTransformationOptions(void);
+
+int CPL_DLL OCTCoordinateTransformationOptionsSetOperation(
+    OGRCoordinateTransformationOptionsH hOptions,
+    const char* pszCO, int bReverseCO);
+
+int CPL_DLL OCTCoordinateTransformationOptionsSetAreaOfInterest(
+    OGRCoordinateTransformationOptionsH hOptions,
+    double dfWestLongitudeDeg,
+    double dfSouthLatitudeDeg,
+    double dfEastLongitudeDeg,
+    double dfNorthLatitudeDeg);
+
+void CPL_DLL OCTDestroyCoordinateTransformationOptions(OGRCoordinateTransformationOptionsH);
+
+OGRCoordinateTransformationH CPL_DLL
+OCTNewCoordinateTransformationEx( OGRSpatialReferenceH hSourceSRS,
+                                  OGRSpatialReferenceH hTargetSRS,
+                                  OGRCoordinateTransformationOptionsH hOptions );
+
 void CPL_DLL CPL_STDCALL
       OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
 
@@ -950,25 +1049,10 @@ OCTTransformEx( OGRCoordinateTransformationH hCT,
                 int nCount, double *x, double *y, double *z,
                 int *pabSuccess );
 
-/*! @cond Doxygen_Suppress */
-/* this is really private to OGR. */
-char *OCTProj4Normalize( const char *pszProj4Src );
-
-void OCTCleanupProjMutex( void );
-/*! @endcond */
-
-/* -------------------------------------------------------------------- */
-/*      Projection transform dictionary query.                          */
-/* -------------------------------------------------------------------- */
-
-char CPL_DLL ** OPTGetProjectionMethods( void );
-char CPL_DLL ** OPTGetParameterList( const char * pszProjectionMethod,
-                             char ** ppszUserName );
-int CPL_DLL OPTGetParameterInfo( const char * pszProjectionMethod,
-                                 const char * pszParameterName,
-                                 char ** ppszUserName,
-                                 char ** ppszType,
-                                 double *pdfDefaultValue );
+int CPL_DLL
+OCTTransform4D( OGRCoordinateTransformationH hCT,
+                int nCount, double *x, double *y, double *z, double *t,
+                int *pabSuccess );
 
 CPL_C_END
 

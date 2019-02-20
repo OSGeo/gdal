@@ -62,10 +62,16 @@ public:
 
     // virtual methods for dealing with transform and projection
     CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     CPLErr  SetGeoTransform (double *padfTransform ) override;
-    CPLErr SetProjection( const char *pszWKT ) override;
+    CPLErr _SetProjection( const char *pszWKT ) override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     // method to get a pointer to the imageio class
     void *GetInternalHandle (const char *) override;
@@ -82,9 +88,17 @@ public:
 
     // GCPs
     int GetGCPCount() override;
-    const char* GetGCPProjection() override;
+    const char* _GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     const GDAL_GCP* GetGCPs() override;
-    CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection) override;
+    CPLErr _SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection) override;
+    using GDALPamDataset::SetGCPs;
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const OGRSpatialReference* poSRS ) override {
+        return OldSetGCPsFromNew(nGCPCount, pasGCPList, poSRS);
+    }
 
 protected:
     // this method builds overviews for the specified bands.
@@ -109,5 +123,8 @@ private:
 // conversion functions
 GDALDataType KEA_to_GDAL_Type( kealib::KEADataType ekeaType );
 kealib::KEADataType GDAL_to_KEA_Type( GDALDataType egdalType );
+
+// For unloading the VFL
+void KEADatasetDriverUnload(GDALDriver*);
 
 #endif //KEADATASET_H

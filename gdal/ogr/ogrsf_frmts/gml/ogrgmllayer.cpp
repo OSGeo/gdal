@@ -1186,6 +1186,10 @@ OGRErr OGRGMLLayer::CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK )
 /*      Enforce XML naming semantics on element name.                   */
 /* -------------------------------------------------------------------- */
     OGRGeomFieldDefn oCleanCopy(poField);
+    if( oCleanCopy.GetSpatialRef() )
+    {
+        oCleanCopy.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
     char *pszName = CPLStrdup(poField->GetNameRef());
     CPLCleanXMLElementName(pszName);
 

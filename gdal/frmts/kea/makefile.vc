@@ -1,7 +1,7 @@
 
 OBJ	=	keaband.obj keacopy.obj keadataset.obj keadriver.obj keamaskband.obj keaoverview.obj kearat.obj
 
-EXTRAFLAGS 	= 	$(KEA_CFLAGS) 
+EXTRAFLAGS 	= 	$(KEA_CFLAGS) -DH5_BUILT_AS_DYNAMIC_LIB 
 
 GDAL_ROOT	=	..\..
 

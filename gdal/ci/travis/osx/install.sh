@@ -5,21 +5,32 @@ set -e
 ccache -M 1G
 ccache -s
 
-# build proj
-brew list --versions
-curl http://download.osgeo.org/proj/proj-5.0.1.tar.gz > proj-5.0.1.tar.gz
-tar xvzf proj-5.0.1.tar.gz
-cd proj-5.0.1/nad
-curl http://download.osgeo.org/proj/proj-datumgrid-1.5.tar.gz > proj-datumgrid-1.5.tar.gz
-tar xvzf proj-datumgrid-1.5.tar.gz
-cd ..
-./configure --prefix=$HOME/install-proj
-make -j3 > /dev/null
-make install >/dev/null
-cd ..
+export CC="ccache gcc"
+export CXX="ccache g++"
+
+SCRIPT_DIR=$(dirname "$0")
+case $SCRIPT_DIR in
+    "/"*)
+        ;;
+    ".")
+        SCRIPT_DIR=$(pwd)
+        ;;
+    *)
+        SCRIPT_DIR=$(pwd)/$(dirname "$0")
+        ;;
+esac
+$SCRIPT_DIR/../common_install.sh
+
+# Build proj
+(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' PKG_CONFIG_PATH="/usr/local/opt/sqlite/lib/pkgconfig" ./configure --prefix=/tmp/install && make -j3 && make -j3 install)
+rm /tmp/install/lib/libproj.dylib
+mv /tmp/install/lib/libproj.15.dylib /tmp/install/lib/libinternalproj.15.dylib
+ln -s libinternalproj.15.dylib /tmp/install/lib/libinternalproj.dylib
+mv /tmp/install/lib/libproj.a /tmp/install/lib/libinternalproj.a
+
 # build GDAL
 cd gdal
-CC="ccache gcc" CXX="ccache g++" ./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-proj=$HOME/install-proj --with-sqlite3=/usr/local/opt/sqlite
+./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-proj=/tmp/install --with-sqlite3=/usr/local/opt/sqlite
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
@@ -31,7 +42,7 @@ python setup.py build
 cd ../..
 make install
 export PATH=$HOME/install-gdal/bin:$PWD/apps/.libs:$PATH
-export DYLD_LIBRARY_PATH=$HOME/install-gdal/lib
+export DYLD_LIBRARY_PATH=$HOME/install-gdal/lib:/tmp/install/lib
 export GDAL_DATA=$HOME/install-gdal/share/gdal
 export PYTHONPATH=$PWD/swig/python/build/lib.macosx-10.12-intel-2.7:$PWD/swig/python/build/lib.macosx-10.11-x86_64-2.7:$PWD/swig/python/build/lib.macosx-10.12-x86_64-2.7
 
@@ -48,5 +59,7 @@ gdal-config --cflags
 gdal-config --libs
 make -j3
 cd ../../gdal
+
+ln -s /tmp/install/lib/libinternalproj.15.dylib /tmp/install/lib/libproj.15.dylib
 
 ccache -s

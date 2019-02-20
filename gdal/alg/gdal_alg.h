@@ -154,6 +154,14 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
                                   const double *padfSrcGeoTransform,
                                   const char *pszDstWKT,
                                   const double *padfDstGeoTransform );
+
+void CPL_DLL *
+GDALCreateGenImgProjTransformer4( OGRSpatialReferenceH hSrcSRS,
+                                  const double *padfSrcGeoTransform,
+                                  OGRSpatialReferenceH hDstSRS,
+                                  const double *padfDstGeoTransform,
+                                  const char* const *papszOptions );
+
 void CPL_DLL GDALSetGenImgProjTransformerDstGeoTransform( void *,
                                                           const double * );
 void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
@@ -168,6 +176,11 @@ void GDALGetTransformerDstGeoTransform( void*, double* );
 void CPL_DLL *
 GDALCreateReprojectionTransformer( const char *pszSrcWKT,
                                    const char *pszDstWKT );
+void CPL_DLL *
+GDALCreateReprojectionTransformerEx(
+                                   OGRSpatialReferenceH hSrcSRS,
+                                   OGRSpatialReferenceH hDstSRS,
+                                   const char* const *papszOptions);
 void CPL_DLL GDALDestroyReprojectionTransformer( void * );
 int CPL_DLL GDALReprojectionTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,

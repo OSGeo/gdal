@@ -1768,7 +1768,7 @@ def test_tiff_write_55():
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_55.tif',
                                   256, 256, 1)
-    srs_expected = 'PROJCS["Equirectangular Mars",GEOGCS["GCS_Mars",DATUM["unknown",SPHEROID["unnamed",3394813.857975945,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",-2],PARAMETER["central_meridian",184.4129943847656],PARAMETER["standard_parallel_1",-15],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]]]'
+    srs_expected = 'PROJCS["Equirectangular Mars",GEOGCS["GCS_Mars",DATUM["unknown",SPHEROID["unnamed",3394813.85797594,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",-2],PARAMETER["central_meridian",184.412994384766],PARAMETER["standard_parallel_1",-15],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
 
     ds.SetProjection(srs_expected)
 
@@ -2071,7 +2071,7 @@ def test_tiff_write_64():
     wkt = ds.GetProjection()
     ds = None
 
-    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
+    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
 
     assert wkt == expected_wkt, 'coordinate system does not exactly match.'
 
@@ -3557,33 +3557,31 @@ def test_tiff_write_97():
 
 def test_tiff_write_98():
 
-    gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', 'FALSE')
+    with gdaltest.config_option('GTIFF_POINT_GEO_IGNORE', 'FALSE'):
+        src_ds = gdal.Open('data/geomatrix.tif')
 
-    src_ds = gdal.Open('data/geomatrix.tif')
+    with gdaltest.config_option('GTIFF_POINT_GEO_IGNORE', 'TRUE'):
+        new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_98.tif', src_ds)
 
-    gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', 'TRUE')
+        gt = new_ds.GetGeoTransform()
+        md = new_ds.GetMetadataItem('AREA_OR_POINT')
+        new_ds = None
+        src_ds = None
 
-    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_98.tif', src_ds)
-
-    gt = new_ds.GetGeoTransform()
-    md = new_ds.GetMetadataItem('AREA_OR_POINT')
-    new_ds = None
-    src_ds = None
-
-    gt_expected = (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5)
+        gt_expected = (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5)
 
     assert gt == gt_expected, 'did not get expected geotransform'
 
     assert md == 'Point', 'did not get expected AREA_OR_POINT value'
 
-    gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', 'FALSE')
+    with gdaltest.config_option('GTIFF_POINT_GEO_IGNORE', 'FALSE'):
 
-    new_ds = gdal.Open('tmp/test_98.tif')
+        new_ds = gdal.Open('tmp/test_98.tif')
 
-    gt = new_ds.GetGeoTransform()
-    md = new_ds.GetMetadataItem('AREA_OR_POINT')
-    new_ds = None
-    src_ds = None
+        gt = new_ds.GetGeoTransform()
+        md = new_ds.GetMetadataItem('AREA_OR_POINT')
+        new_ds = None
+        src_ds = None
 
     gt_expected = (1841003.5, 1.5, -5.0, 1144006.5, -5.0, -1.5)
 
@@ -3727,14 +3725,14 @@ def test_tiff_write_102():
     ds.SetProjection(wkt)
     ds = None
 
-    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', 'YES')
-    ds = gdal.Open('/vsimem/tiff_write_102.tif')
-    wkt1 = ds.GetProjectionRef()
+    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
+        ds = gdal.Open('/vsimem/tiff_write_102.tif')
+        wkt1 = ds.GetProjectionRef()
     ds = None
 
-    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS', 'NO')
-    ds = gdal.Open('/vsimem/tiff_write_102.tif')
-    wkt2 = ds.GetProjectionRef()
+    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'NO'):
+        ds = gdal.Open('/vsimem/tiff_write_102.tif')
+        wkt2 = ds.GetProjectionRef()
     ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_102.tif')
@@ -5489,7 +5487,7 @@ def test_tiff_write_141():
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert wkt.startswith('PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere"')
+    assert wkt.startswith('PROJCS["WGS 84 / Pseudo-Mercator"')
 
     assert 'EXTENSION["PROJ4"' in wkt
 
@@ -6362,20 +6360,21 @@ def test_tiff_write_165():
 
 def test_tiff_write_166():
 
-    ds = gdal.Open('data/tiff_vertcs_scale_offset.tif')
-    assert ds.GetRasterBand(1).GetScale() == 2.0
-
-    assert ds.GetRasterBand(1).GetOffset() == 10.0
+    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
+        ds = gdal.Open('data/tiff_vertcs_scale_offset.tif')
+        assert ds.GetRasterBand(1).GetScale() == 2.0
+        assert ds.GetRasterBand(1).GetOffset() == 10.0
 
     # Scale + offset through CreateCopy()
     gdal.Translate('/vsimem/tiff_write_166.tif', 'data/byte.tif',
                    options='-a_srs EPSG:26711+5773 -a_scale 2.0 -a_offset 10 -co PROFILE=GEOTIFF')
     assert gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is None
 
-    ds = gdal.Open('/vsimem/tiff_write_166.tif')
-    assert ds.GetRasterBand(1).GetScale() == 2.0
+    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
+        ds = gdal.Open('/vsimem/tiff_write_166.tif')
+        assert ds.GetRasterBand(1).GetScale() == 2.0
+        assert ds.GetRasterBand(1).GetOffset() == 10.0
 
-    assert ds.GetRasterBand(1).GetOffset() == 10.0
     ds = None
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
@@ -6384,10 +6383,11 @@ def test_tiff_write_166():
                    options='-a_srs EPSG:26711+5773 -a_offset 10 -co PROFILE=GEOTIFF')
     assert gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is None
 
-    ds = gdal.Open('/vsimem/tiff_write_166.tif')
-    assert ds.GetRasterBand(1).GetScale() == 1.0
+    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
+        ds = gdal.Open('/vsimem/tiff_write_166.tif')
+        assert ds.GetRasterBand(1).GetScale() == 1.0
+        assert ds.GetRasterBand(1).GetOffset() == 10.0
 
-    assert ds.GetRasterBand(1).GetOffset() == 10.0
     ds = None
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
@@ -6402,9 +6402,10 @@ def test_tiff_write_166():
     ds = None
     assert gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is None
 
-    ds = gdal.Open('/vsimem/tiff_write_166.tif')
-    assert ds.GetRasterBand(1).GetScale() == 2.0
-    assert ds.GetRasterBand(1).GetOffset() == 10.0
+    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
+        ds = gdal.Open('/vsimem/tiff_write_166.tif')
+        assert ds.GetRasterBand(1).GetScale() == 2.0
+        assert ds.GetRasterBand(1).GetOffset() == 10.0
     ds = None
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
@@ -6418,9 +6419,10 @@ def test_tiff_write_166():
     ds = None
     assert gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is None
 
-    ds = gdal.Open('/vsimem/tiff_write_166.tif')
-    assert ds.GetRasterBand(1).GetScale() == 2.0
-    assert ds.GetRasterBand(1).GetOffset() == 0.0
+    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
+        ds = gdal.Open('/vsimem/tiff_write_166.tif')
+        assert ds.GetRasterBand(1).GetScale() == 2.0
+        assert ds.GetRasterBand(1).GetOffset() == 0.0
     ds = None
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
@@ -6434,9 +6436,10 @@ def test_tiff_write_166():
     ds = None
     assert gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is None
 
-    ds = gdal.Open('/vsimem/tiff_write_166.tif')
-    assert ds.GetRasterBand(1).GetScale() == 1.0
-    assert ds.GetRasterBand(1).GetOffset() == 10.0
+    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
+        ds = gdal.Open('/vsimem/tiff_write_166.tif')
+        assert ds.GetRasterBand(1).GetScale() == 1.0
+        assert ds.GetRasterBand(1).GetOffset() == 10.0
     ds = None
     gdal.Unlink('/vsimem/tiff_write_166.tif')
 
@@ -6917,6 +6920,31 @@ def test_tiff_write_184_create_append_subdataset():
 
     ds = None
     gdal.Unlink(tmpfilename)
+
+###############################################################################
+# Test LERC compression with Create() and BuildOverviews()
+# Fixes https://github.com/OSGeo/gdal/issues/1257
+
+
+def test_tiff_write_185_lerc_create_and_overview():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        pytest.skip()
+
+    filename = '/vsimem/test_tiff_write_185_lerc_create_and_overview.tif'
+    ds = gdaltest.tiff_drv.Create(filename, 20, 20, options=['COMPRESS=LERC_DEFLATE'])
+    src_ds = gdal.Open('data/byte.tif')
+    ds.WriteRaster(0,0,20,20,src_ds.ReadRaster())
+    gdal.ErrorReset()
+    ds.BuildOverviews('NEAR', [2])
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+    ds = gdal.Open(filename)
+    cs = ds.GetRasterBand(1).Checksum()
+    cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    gdal.Unlink(filename)
+    assert (cs, cs_ovr) == (4672, 1087)
 
 ###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES

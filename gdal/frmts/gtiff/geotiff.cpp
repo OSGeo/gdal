@@ -63,7 +63,6 @@
 
 #include "cpl_config.h"
 #include "cpl_conv.h"
-#include "cpl_csv.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
@@ -76,7 +75,6 @@
 #include "cpl_worker_thread_pool.h"
 #include "cplkeywordparser.h"
 #include "gdal.h"
-#include "gdal_csv.h"
 #include "gdal_frmts.h"
 #include "gdal_mdreader.h"
 #include "gdal_pam.h"
@@ -90,6 +88,7 @@
 #include "gt_wkt_srs.h"
 #include "gt_wkt_srs_priv.h"
 #include "ogr_spatialref.h"
+#include "ogr_proj_p.h"
 #include "tiff.h"
 #include "tif_float.h"
 #include "tiffio.h"
@@ -307,7 +306,7 @@ class GTiffDataset final : public GDALPamDataset
     CPLErr      FlushBlockBuf();
     bool        bWriteErrorInFlushBlockBuf;
 
-    char        *pszProjection;
+    OGRSpatialReference oSRS{};
     CPLString   m_osVertUnit{};
     bool        bLookedForProjection;
     bool        bLookedForMDAreaOrPoint;
@@ -541,15 +540,17 @@ class GTiffDataset final : public GDALPamDataset
              GTiffDataset();
     virtual ~GTiffDataset();
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
+
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
-    CPLErr         SetGCPs( int, const GDAL_GCP *, const char * ) override;
+    CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                    const OGRSpatialReference* poSRS ) override;
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
@@ -616,8 +617,6 @@ class GTiffDataset final : public GDALPamDataset
 
     static void SaveICCProfile( GTiffDataset *pDS, TIFF *hTIFF,
                                 char **papszParmList, uint32 nBitsPerSample );
-
-    static bool HasVerticalCS(const char* pszProjectionIn);
 };
 
 /************************************************************************/
@@ -4103,24 +4102,41 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                 std::vector<vsi_l_offset> anOffsets;
                 std::vector<size_t> anSizes;
                 std::vector<void*> apData;
+                anOffsets.push_back(aOffsetSize[0].first);
+                apData.push_back(static_cast<GByte *>(pBufferedData));
+                size_t nChunkSize = aOffsetSize[0].second;
                 size_t nAccOffset = 0;
-                for( size_t i = 0; i < aOffsetSize.size(); i++ )
+                for( size_t i = 0; i < aOffsetSize.size()-1; i++ )
                 {
-                    anOffsets.push_back(aOffsetSize[i].first);
-                    anSizes.push_back(aOffsetSize[i].second);
-                    apData.push_back(static_cast<GByte*>(pBufferedData) + nAccOffset);
-                    nAccOffset += aOffsetSize[i].second;
+                    if ( aOffsetSize[i].first + aOffsetSize[i].second == aOffsetSize[i+1].first ) 
+                    {
+                        nChunkSize += aOffsetSize[i+1].second;
+                    } else 
+                    {
+                        //terminate current block
+                        anSizes.push_back(nChunkSize);
+                        nAccOffset += nChunkSize;
+                        //start a new range
+                        anOffsets.push_back(aOffsetSize[i+1].first);
+                        apData.push_back(static_cast<GByte*>(pBufferedData) + nAccOffset);
+                        nChunkSize = aOffsetSize[i+1].second;
+                    }
                 }
+                //terminate last block 
+                anSizes.push_back(nChunkSize);
+
                 VSILFILE* fp = VSI_TIFFGetVSILFile(th);
+
+
                 if( VSIFReadMultiRangeL(
-                                    static_cast<int>(aOffsetSize.size()),
+                                    static_cast<int>(anSizes.size()),
                                     &apData[0],
                                     &anOffsets[0],
                                     &anSizes[0],
                                     fp ) == 0 )
                 {
                     VSI_TIFFSetCachedRanges( th,
-                                             static_cast<int>(aOffsetSize.size()),
+                                             static_cast<int>(anSizes.size()),
                                              &apData[0],
                                              &anOffsets[0],
                                              &anSizes[0] );
@@ -7340,7 +7356,6 @@ GTiffDataset::GTiffDataset() :
     bLoadedBlockDirty(false),
     pabyBlockBuf(nullptr),
     bWriteErrorInFlushBlockBuf(false),
-    pszProjection(CPLStrdup("")),
     bLookedForProjection(false),
     bLookedForMDAreaOrPoint(false),
     bGeoTransformValid(false),
@@ -7437,6 +7452,8 @@ GTiffDataset::GTiffDataset() :
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_IF_ENOUGH_RAM;
     else if( CPLTestBool(pszVirtualMemIO) )
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_YES;
+
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 }
 
 /************************************************************************/
@@ -7614,9 +7631,6 @@ int GTiffDataset::Finalize()
         pasGCPList = nullptr;
         nGCPCount = 0;
     }
-
-    CPLFree( pszProjection );
-    pszProjection = nullptr;
 
     CSLDestroy( papszCreationOptions );
     papszCreationOptions = nullptr;
@@ -10919,8 +10933,6 @@ static void GTiffWriteDummyGeokeyDirectory( TIFF* hTIFF )
     }
 }
 
-#if LIBGEOTIFF_VERSION >= 1430
-
 /************************************************************************/
 /*               GTiffDatasetLibGeotiffErrorCallback()                  */
 /************************************************************************/
@@ -10942,20 +10954,13 @@ static void GTiffDatasetLibGeotiffErrorCallback(GTIF*,
 
 static GTIF* GTiffDatasetGTIFNew( TIFF* hTIFF )
 {
-    return GTIFNewEx(hTIFF, GTiffDatasetLibGeotiffErrorCallback, nullptr);
+    GTIF* gtif = GTIFNewEx(hTIFF, GTiffDatasetLibGeotiffErrorCallback, nullptr);
+    if( gtif )
+    {
+        GTIFAttachPROJContext(gtif, OSRGetProjTLSContext());
+    }
+    return gtif;
 }
-#else
-
-/************************************************************************/
-/*                           GTiffDatasetGTIFNew()                      */
-/************************************************************************/
-
-static GTIF* GTiffDatasetGTIFNew( TIFF* hTIFF )
-{
-    return GTIFNew(hTIFF);
-}
-#endif
-
 
 /************************************************************************/
 /*                          WriteGeoTIFFInfo()                          */
@@ -11037,7 +11042,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
                 int bHasOffset = FALSE;
                 dfOffset = GetRasterBand(1)->GetOffset(&bHasOffset);
                 const bool bApplyScaleOffset =
-                    HasVerticalCS(GetProjectionRef()) &&
+                    oSRS.IsVertical() &&
                     GetRasterCount() == 1;
                 if( bApplyScaleOffset && !bHasScale )
                     dfScale = 1.0;
@@ -11126,8 +11131,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
 /*      Write out projection definition.                                */
 /* -------------------------------------------------------------------- */
-    const bool bHasProjection =
-        pszProjection != nullptr && strlen(pszProjection) > 0;
+    const bool bHasProjection = !oSRS.IsEmpty();
     if( (bHasProjection || bPixelIsPoint)
         && !EQUAL(osProfile,szPROFILE_BASELINE) )
     {
@@ -11142,7 +11146,11 @@ void GTiffDataset::WriteGeoTIFFInfo()
         // Set according to coordinate system.
         if( bHasProjection )
         {
-            GTIFSetFromOGISDefnEx( psGTIF, pszProjection, eGeoTIFFKeysFlavor );
+            char* pszProjection = nullptr;
+            oSRS.exportToWkt(&pszProjection);
+            if( pszProjection && pszProjection[0] )
+                GTIFSetFromOGISDefnEx( psGTIF, pszProjection, eGeoTIFFKeysFlavor );
+            CPLFree(pszProjection);
         }
 
         if( bPixelIsPoint )
@@ -11615,7 +11623,8 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
         if( poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
             adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0
             && adfGeoTransform[5] < 0.0 &&
-            HasVerticalCS(poSrcDS->GetProjectionRef()) &&
+            poSrcDS->GetSpatialRef() &&
+            poSrcDS->GetSpatialRef()->IsVertical() &&
             poSrcDS->GetRasterCount() == 1 )
         {
             bGeoTIFFScaleOffsetInZ = true;
@@ -12627,8 +12636,7 @@ void GTiffDataset::LookForProjection()
 /* -------------------------------------------------------------------- */
 /*      Capture the GeoTIFF projection, if available.                   */
 /* -------------------------------------------------------------------- */
-    CPLFree( pszProjection );
-    pszProjection = nullptr;
+    oSRS.Clear();
 
     GTIF *hGTIF = GTiffDatasetGTIFNew(hTIFF);
 
@@ -12639,23 +12647,36 @@ void GTiffDataset::LookForProjection()
     }
     else
     {
-#if LIBGEOTIFF_VERSION >= 1410
         GTIFDefn *psGTIFDefn = GTIFAllocDefn();
-#else
-        GTIFDefn *psGTIFDefn =
-            static_cast<GTIFDefn *>(CPLCalloc(1, sizeof(GTIFDefn)));
-#endif
 
         if( GTIFGetDefn( hGTIF, psGTIFDefn ) )
         {
-            pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
-
-            if( STARTS_WITH_CI(pszProjection, "COMPD_CS") )
+            char* pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
+            if( pszProjection )
             {
-                OGRSpatialReference oSRS;
+                oSRS.SetFromUserInput(pszProjection);
+                double adfTOWGS84[7];
+                bool bHasTOWGS84 = oSRS.GetTOWGS84(&adfTOWGS84[0], 7) == OGRERR_NONE;
+                const char* pszCode = oSRS.GetAuthorityCode(nullptr);
+                if( pszCode )
+                {
+                    oSRS.importFromEPSG(atoi(pszCode));
+                    if( bHasTOWGS84 )
+                    {
+                        oSRS.SetTOWGS84(adfTOWGS84[0],
+                                        adfTOWGS84[1],
+                                        adfTOWGS84[2],
+                                        adfTOWGS84[3],
+                                        adfTOWGS84[4],
+                                        adfTOWGS84[5],
+                                        adfTOWGS84[6]);
+                    }
+                }
+            }
+            CPLFree(pszProjection);
 
-                oSRS.importFromWkt( pszProjection );
-
+            if( oSRS.IsCompound() )
+            {
                 const char* pszVertUnit = nullptr;
                 oSRS.GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);
                 if( pszVertUnit && !EQUAL(pszVertUnit, "unknown") )
@@ -12670,8 +12691,6 @@ void GTiffDataset::LookForProjection()
                     CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
 
                     oSRS.StripVertical();
-                    CPLFree( pszProjection );
-                    oSRS.exportToWkt( &pszProjection );
                 }
             }
         }
@@ -12681,25 +12700,12 @@ void GTiffDataset::LookForProjection()
         AdjustLinearUnit(psGTIFDefn.UOMLength);
 #endif
 
-#if LIBGEOTIFF_VERSION >= 1410
         GTIFFreeDefn(psGTIFDefn);
-#else
-        CPLFree(psGTIFDefn);
-#endif
 
         GTiffDatasetSetAreaOrPointMD( hGTIF, oGTiffMDMD );
 
         GTIFFree( hGTIF );
     }
-
-    if( pszProjection == nullptr )
-    {
-        pszProjection = CPLStrdup( "" );
-    }
-    // else if( !EQUAL(pszProjection, "") )
-    // {
-    //     m_nProjectionGeorefSrcIndex = m_nINTERNALGeorefSrcIndex;
-    // }
 
     bGeoTIFFInfoChanged = false;
     bForceUnsetGTOrGCPs = false;
@@ -12780,11 +12786,10 @@ void GTiffDataset::ApplyPamInfo()
             (m_nINTERNALGeorefSrcIndex < 0 ||
              m_nPAMGeorefSrcIndex < m_nINTERNALGeorefSrcIndex) )
         {
-            const char *pszPamSRS = GDALPamDataset::GetProjectionRef();
-            if( pszPamSRS != nullptr && strlen(pszPamSRS) > 0 )
+            const auto* poPamSRS = GDALPamDataset::GetSpatialRef();
+            if( poPamSRS )
             {
-                CPLFree( pszProjection );
-                pszProjection = CPLStrdup( pszPamSRS );
+                oSRS = *poPamSRS;
                 bLookedForProjection = true;
                 // m_nProjectionGeorefSrcIndex = m_nPAMGeorefSrcIndex;
             }
@@ -12793,13 +12798,12 @@ void GTiffDataset::ApplyPamInfo()
         {
             if( m_nINTERNALGeorefSrcIndex >= 0 )
                 LookForProjection();
-            if( pszProjection == nullptr || strlen(pszProjection) == 0 )
+            if( oSRS.IsEmpty() )
             {
-                const char *pszPamSRS = GDALPamDataset::GetProjectionRef();
-                if( pszPamSRS != nullptr && strlen(pszPamSRS) > 0 )
+                const auto* poPamSRS = GDALPamDataset::GetSpatialRef();
+                if( poPamSRS )
                 {
-                    CPLFree( pszProjection );
-                    pszProjection = CPLStrdup( pszPamSRS );
+                    oSRS = *poPamSRS;
                     bLookedForProjection = true;
                     // m_nProjectionGeorefSrcIndex = m_nPAMGeorefSrcIndex;
                 }
@@ -12824,15 +12828,13 @@ void GTiffDataset::ApplyPamInfo()
         nGCPCount = nPamGCPCount;
         pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALPamDataset::GetGCPs());
 
-        CPLFree( pszProjection );
-        pszProjection = nullptr;
         // m_nProjectionGeorefSrcIndex = m_nPAMGeorefSrcIndex;
 
-        const char *pszPamGCPProjection = GDALPamDataset::GetGCPProjection();
-        if( pszPamGCPProjection != nullptr && strlen(pszPamGCPProjection) > 0 )
-            pszProjection = CPLStrdup(pszPamGCPProjection);
+        const auto* poPamGCPSRS = GDALPamDataset::GetGCPSpatialRef();
+        if( poPamGCPSRS )
+            oSRS = *poPamGCPSRS;
         else
-            pszProjection = CPLStrdup("");
+            oSRS.Clear();
 
         bLookedForProjection = true;
     }
@@ -14622,19 +14624,23 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                              padfTiePoints[2] != 0.0 ||
                              padfTiePoints[5] != 0.0) )
                         {
-                            /* modelTiePointTag = (pixel, line, z0, X, Y, Z0) */
-                            /* thus Z(some_point) = (z(some_point) - z0) * scaleZ + Z0 */
-                            /* equivalently written as */
-                            /* Z(some_point) = z(some_point) * scaleZ + offsetZ with */
-                            /* offsetZ = - z0 * scaleZ + Z0 */
-                            double dfScale = padfScale[2];
-                            double dfOffset =
-                                -padfTiePoints[2] * dfScale + padfTiePoints[5];
-                            GTiffRasterBand* poBand =
-                                cpl::down_cast<GTiffRasterBand*>(GetRasterBand(1));
-                            poBand->bHaveOffsetScale = true;
-                            poBand->dfScale = dfScale;
-                            poBand->dfOffset = dfOffset;
+                            LookForProjection();
+                            if( !oSRS.IsEmpty() && oSRS.IsVertical() )
+                            {
+                                /* modelTiePointTag = (pixel, line, z0, X, Y, Z0) */
+                                /* thus Z(some_point) = (z(some_point) - z0) * scaleZ + Z0 */
+                                /* equivalently written as */
+                                /* Z(some_point) = z(some_point) * scaleZ + offsetZ with */
+                                /* offsetZ = - z0 * scaleZ + Z0 */
+                                double dfScale = padfScale[2];
+                                double dfOffset =
+                                    -padfTiePoints[2] * dfScale + padfTiePoints[5];
+                                GTiffRasterBand* poBand =
+                                    cpl::down_cast<GTiffRasterBand*>(GetRasterBand(1));
+                                poBand->bHaveOffsetScale = true;
+                                poBand->dfScale = dfScale;
+                                poBand->dfOffset = dfOffset;
+                            }
                         }
                     }
                 }
@@ -14774,12 +14780,9 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 /*      Did we find a tab file?  If so we will use its coordinate       */
 /*      system and give it precedence.                                  */
 /* -------------------------------------------------------------------- */
-        if( pszTabWKT != nullptr
-            && (pszProjection == nullptr || pszProjection[0] == '\0') )
+        if( pszTabWKT != nullptr && oSRS.IsEmpty() )
         {
-            CPLFree( pszProjection );
-            pszProjection = pszTabWKT;
-            pszTabWKT = nullptr;
+            oSRS.SetFromUserInput(pszTabWKT);
             bLookedForProjection = true;
         }
 
@@ -16510,6 +16513,21 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
             TIFFSetField(l_hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
     }
 
+#ifdef HAVE_LERC
+    if( poDS->nCompression == COMPRESSION_LERC )
+    {
+        uint32 nLercParamCount = 0;
+        uint32* panLercParms = nullptr;
+        if( TIFFGetField( l_hTIFF, TIFFTAG_LERC_PARAMETERS, &nLercParamCount,
+                          &panLercParms ) &&
+            nLercParamCount == 2 )
+        {
+            memcpy( poDS->anLercAddCompressionAndVersion, panLercParms,
+                    sizeof(poDS->anLercAddCompressionAndVersion) );
+        }
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Read palette back as a color table if it has one.               */
 /* -------------------------------------------------------------------- */
@@ -17132,14 +17150,14 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Write affine transform if it is meaningful.                     */
 /* -------------------------------------------------------------------- */
-    const char *l_pszProjection = nullptr;
+    const OGRSpatialReference* l_poSRS = nullptr;
     double l_adfGeoTransform[6] = { 0.0 };
 
     if( poSrcDS->GetGeoTransform( l_adfGeoTransform ) == CE_None )
     {
         if( bGeoTIFF )
         {
-            l_pszProjection = poSrcDS->GetProjectionRef();
+            l_poSRS = poSrcDS->GetSpatialRef();
 
             if( l_adfGeoTransform[2] == 0.0 && l_adfGeoTransform[4] == 0.0
                 && l_adfGeoTransform[5] < 0.0 )
@@ -17155,7 +17173,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     dfOffset =
                         poSrcDS->GetRasterBand(1)->GetOffset(&bHasOffset);
                     const bool bApplyScaleOffset =
-                        HasVerticalCS(l_pszProjection) &&
+                        l_poSRS && l_poSRS->IsVertical() &&
                         poSrcDS->GetRasterCount() == 1;
                     if( bApplyScaleOffset && !bHasScale )
                         dfScale = 1.0;
@@ -17251,7 +17269,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       6*poSrcDS->GetGCPCount(), padfTiePoints );
         CPLFree( padfTiePoints );
 
-        l_pszProjection = poSrcDS->GetGCPProjection();
+        l_poSRS = poSrcDS->GetGCPSpatialRef();
 
         if( CPLFetchBool( papszOptions, "TFW", false )
             || CPLFetchBool( papszOptions, "WORLDFILE", false ) )
@@ -17264,22 +17282,24 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     else
     {
-        l_pszProjection = poSrcDS->GetProjectionRef();
+        l_poSRS = poSrcDS->GetSpatialRef();
     }
 
 /* -------------------------------------------------------------------- */
 /*      Write the projection information, if possible.                  */
 /* -------------------------------------------------------------------- */
-    const bool bHasProjection =
-        l_pszProjection != nullptr && strlen(l_pszProjection) > 0;
+    const bool bHasProjection = l_poSRS != nullptr;
     if( (bHasProjection || bPixelIsPoint) && bGeoTIFF )
     {
         GTIF *psGTIF = GTiffDatasetGTIFNew( l_hTIFF );
 
         if( bHasProjection )
         {
-            GTIFSetFromOGISDefnEx( psGTIF, l_pszProjection,
+            char* pszWKT = nullptr;
+            l_poSRS->exportToWkt(&pszWKT);
+            GTIFSetFromOGISDefnEx( psGTIF, pszWKT,
                                    GetGTIFFKeysFlavor(papszOptions) );
+            CPLFree(pszWKT);
         }
 
         if( bPixelIsPoint )
@@ -17488,12 +17508,18 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
+    CPLString osOldGTIFF_REPORT_COMPD_CSVal(
+        CPLGetConfigOption("GTIFF_REPORT_COMPD_CS", ""));
+    CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
     poDS->CloneInfo( poSrcDS, nCloneInfoFlags );
+    CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS",
+        osOldGTIFF_REPORT_COMPD_CSVal.empty() ? nullptr :
+        osOldGTIFF_REPORT_COMPD_CSVal.c_str());
 
     if( !bGeoTIFF && (poDS->GetPamFlags() & GPF_DISABLED) == 0 )
     {
         // Copy georeferencing info to PAM if the profile is not GeoTIFF
-        poDS->GDALPamDataset::SetProjection(poDS->GetProjectionRef());
+        poDS->GDALPamDataset::SetSpatialRef(poDS->GetSpatialRef());
         double adfGeoTransform[6];
         if( poDS->GetGeoTransform(adfGeoTransform) == CE_None )
         {
@@ -17501,7 +17527,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
         poDS->GDALPamDataset::SetGCPs(poDS->GetGCPCount(),
                                       poDS->GetGCPs(),
-                                      poDS->GetGCPProjection());
+                                      poDS->GetGCPSpatialRef());
     }
 
     poDS->papszCreationOptions = CSLDuplicate( papszOptions );
@@ -18013,47 +18039,28 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *GTiffDataset::GetProjectionRef()
+const OGRSpatialReference* GTiffDataset::GetSpatialRef() const
 
 {
     if( nGCPCount == 0 )
     {
-        LoadGeoreferencingAndPamIfNeeded();
-        LookForProjection();
+        const_cast<GTiffDataset*>(this)->LoadGeoreferencingAndPamIfNeeded();
+        const_cast<GTiffDataset*>(this)->LookForProjection();
 
-        return pszProjection;
+        return oSRS.IsEmpty() ? nullptr : &oSRS;
     }
 
-    return "";
-}
-
-
-/************************************************************************/
-/*                           HasVerticalCS()                            */
-/************************************************************************/
-
-bool GTiffDataset::HasVerticalCS(const char *pszProjectionIn)
-{
-    if( pszProjectionIn != nullptr && pszProjectionIn[0] != '\0' )
-    {
-        OGRSpatialReference oSRS;
-        oSRS.SetFromUserInput(pszProjectionIn);
-        return CPL_TO_BOOL(oSRS.IsVertical());
-    }
-    else
-    {
-        return false;
-    }
+    return nullptr;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
+CPLErr GTiffDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 
 {
     if( bStreamingOut && bCrystalized )
@@ -18068,30 +18075,19 @@ CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
     LoadGeoreferencingAndPamIfNeeded();
     LookForProjection();
 
-    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
-        && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
-        && !STARTS_WITH_CI(pszNewProjection, "LOCAL_CS")
-        && !STARTS_WITH_CI(pszNewProjection, "COMPD_CS")
-        && !STARTS_WITH_CI(pszNewProjection, "GEOCCS")
-        && !EQUAL(pszNewProjection,"") )
+    if( poSRS == nullptr || poSRS->IsEmpty() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Only OGC WKT Projections supported for writing to GeoTIFF.  "
-                "%s not supported.",
-                  pszNewProjection );
-
-        return CE_Failure;
+        if( !oSRS.IsEmpty() )
+        {
+            bForceUnsetProjection = true;
+        }
+        oSRS.Clear();
     }
-
-    if( EQUAL(pszNewProjection, "") &&
-        pszProjection != nullptr &&
-        !EQUAL(pszProjection, "") )
+    else
     {
-        bForceUnsetProjection = true;
+        oSRS = *poSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
-
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszNewProjection );
 
     bGeoTIFFInfoChanged = true;
 
@@ -18191,22 +18187,22 @@ int GTiffDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *GTiffDataset::GetGCPProjection()
+const OGRSpatialReference *GTiffDataset::GetGCPSpatialRef() const
 
 {
-    LoadGeoreferencingAndPamIfNeeded();
+    const_cast<GTiffDataset*>(this)->LoadGeoreferencingAndPamIfNeeded();
 
     if( nGCPCount > 0 )
     {
-        LookForProjection();
+        const_cast<GTiffDataset*>(this)->LookForProjection();
     }
-    if( pszProjection != nullptr )
-        return pszProjection;
+    if( !oSRS.IsEmpty() )
+        return &oSRS;
 
-    return "";
+    return nullptr;
 }
 
 /************************************************************************/
@@ -18226,7 +18222,7 @@ const GDAL_GCP *GTiffDataset::GetGCPs()
 /************************************************************************/
 
 CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                              const char *pszGCPProjection )
+                              const OGRSpatialReference *poGCPSRS )
 {
     LoadGeoreferencingAndPamIfNeeded();
 
@@ -18254,11 +18250,19 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
             bForceUnsetGTOrGCPs = true;
         }
 
-        if( pszProjection != nullptr &&
-            !EQUAL(pszProjection, "") &&
-                   (pszGCPProjection == nullptr ||
-                   pszGCPProjection[0] == '\0') )
-            bForceUnsetProjection = true;
+        if( poGCPSRS == nullptr || poGCPSRS->IsEmpty() )
+        {
+            if( !oSRS.IsEmpty() )
+            {
+                bForceUnsetProjection = true;
+            }
+            oSRS.Clear();
+        }
+        else
+        {
+            oSRS = *poGCPSRS;
+            oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        }
 
         if( nGCPCount > 0 )
         {
@@ -18269,8 +18273,6 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         nGCPCount = nGCPCountIn;
         pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPListIn);
 
-        CPLFree( pszProjection );
-        pszProjection = CPLStrdup( pszGCPProjection );
         bGeoTIFFInfoChanged = true;
 
         return CE_None;
@@ -19029,12 +19031,6 @@ static
 void GDALDeregister_GTiff( GDALDriver * )
 
 {
-    CSVDeaccess( nullptr );
-
-#if defined(LIBGEOTIFF_VERSION) && LIBGEOTIFF_VERSION > 1150
-    GTIFDeaccessCSV();
-#endif
- 
 #ifdef HAVE_LERC
     if( pLercCodec )
         TIFFUnRegisterCODEC(pLercCodec);

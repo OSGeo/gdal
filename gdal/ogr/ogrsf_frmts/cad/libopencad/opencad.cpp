@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2019 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -73,7 +73,7 @@ static int CheckCADFile(CADFileIO * pCADFileIO)
 #endif
 
     if( !pCADFileIO->IsOpened() )
-        pCADFileIO->Open( CADFileIO::OpenMode::read | CADFileIO::OpenMode::binary );
+        pCADFileIO->Open( CADFileIO::OpenMode::in | CADFileIO::OpenMode::binary );
     if( !pCADFileIO->IsOpened() )
         return 0;
 

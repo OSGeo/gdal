@@ -125,7 +125,7 @@ def test_ogr_mysql_2():
     assert gdaltest.mysql_lyr.GetFeatureCount() == shp_lyr.GetFeatureCount(), \
         'not matching feature count'
 
-    assert gdaltest.mysql_lyr.GetSpatialRef().IsSame(shp_lyr.GetSpatialRef()), \
+    assert gdaltest.mysql_lyr.GetSpatialRef().GetAuthorityCode(None) == shp_lyr.GetSpatialRef().GetAuthorityCode(None), \
         'not matching spatial ref'
 
 ###############################################################################

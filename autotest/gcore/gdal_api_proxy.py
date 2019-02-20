@@ -33,7 +33,7 @@ import sys
 import subprocess
 import time
 from osgeo import gdal
-
+from osgeo import osr
 
 import pytest
 
@@ -144,12 +144,15 @@ def _gdal_api_proxy_sub():
 
     assert ds.GetGCPCount() == 0
 
-    assert ds.GetGCPProjection() == ''
+    assert ds.GetGCPProjection() == '', ds.GetGCPProjection()
 
     assert not ds.GetGCPs()
 
     gcps = [gdal.GCP(0, 1, 2, 3, 4)]
-    ds.SetGCPs(gcps, "foo")
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    wkt = sr.ExportToWkt()
+    assert ds.SetGCPs(gcps, wkt) == 0
 
     got_gcps = ds.GetGCPs()
     assert len(got_gcps) == 1
@@ -159,7 +162,7 @@ def _gdal_api_proxy_sub():
        got_gcps[0].GCPX == gcps[0].GCPX and \
        got_gcps[0].GCPY == gcps[0].GCPY)
 
-    assert ds.GetGCPProjection() == 'foo'
+    assert ds.GetGCPProjection() == wkt
 
     ds.SetGCPs([], "")
 

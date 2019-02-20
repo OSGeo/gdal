@@ -263,7 +263,7 @@ VRTCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy projection                                                 */
 /* -------------------------------------------------------------------- */
-    poVRTDS->SetProjection( poSrcDS->GetProjectionRef() );
+    poVRTDS->SetSpatialRef( poSrcDS->GetSpatialRef() );
 
 /* -------------------------------------------------------------------- */
 /*      Emit dataset level metadata.                                    */
@@ -292,7 +292,7 @@ VRTCreateCopy( const char * pszFilename,
     {
         poVRTDS->SetGCPs( poSrcDS->GetGCPCount(),
                           poSrcDS->GetGCPs(),
-                          poSrcDS->GetGCPProjection() );
+                          poSrcDS->GetGCPSpatialRef() );
     }
 
 /* -------------------------------------------------------------------- */

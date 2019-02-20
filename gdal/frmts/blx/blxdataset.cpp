@@ -44,7 +44,10 @@ class BLXDataset : public GDALPamDataset
     friend class BLXRasterBand;
 
     CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
+    const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     blxcontext_t *blxcontext;
 
@@ -192,7 +195,7 @@ CPLErr BLXDataset::GetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
-const char *BLXDataset::GetProjectionRef()
+const char *BLXDataset::_GetProjectionRef()
 {
     return
         "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","

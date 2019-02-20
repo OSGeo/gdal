@@ -1582,10 +1582,10 @@ CPLErr WCSDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *WCSDataset::GetProjectionRef()
+const char *WCSDataset::_GetProjectionRef()
 
 {
-    const char* pszPrj = GDALPamDataset::GetProjectionRef();
+    const char* pszPrj = GDALPamDataset::_GetProjectionRef();
     if( pszPrj && strlen(pszPrj) > 0 )
         return pszPrj;
 

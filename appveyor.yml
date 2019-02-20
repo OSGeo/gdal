@@ -2,8 +2,10 @@
 environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    VS_VERSION: Visual Studio 15
     platform: x86
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    VS_VERSION: Visual Studio 14
     platform: x64
 
 shallow_clone: true
@@ -24,6 +26,7 @@ init:
         $env:MSVC_VER=1911
         $env:ARCHITECTURE="x86"
         $env:WIN64_ARG=""
+        $env:VS_FULL="$env:VS_VERSION"
       }
       else
       {
@@ -33,6 +36,7 @@ init:
         $env:MSVC_VER=1900
         $env:ARCHITECTURE="amd64"
         $env:WIN64_ARG="WIN64=YES"
+        $env:VS_FULL="$env:VS_VERSION Win64"
       }
       function exec
       {
@@ -105,10 +109,8 @@ install:
       $env:NMAKE_LOCAL+="LIBKML_LIBS=`$(SDK_LIB)\libkmlbase.lib `$(SDK_LIB)\libkmlconvenience.lib `$(SDK_LIB)\libkmldom.lib `$(SDK_LIB)\libkmlengine.lib `$(SDK_LIB)\libkmlregionator.lib `$(SDK_LIB)\libkmlxsd.lib `$(SDK_LIB)\expat.lib `$(SDK_LIB)\zdll.lib`n"
       $env:NMAKE_LOCAL+="POPPLER_ENABLED = YES`n"
       $env:NMAKE_LOCAL+="POPPLER_CFLAGS = -I`$(SDK_INC) -I`$(SDK_INC)\poppler`n"
-      $env:NMAKE_LOCAL+="POPPLER_HAS_OPTCONTENT = YES`n"
-      $env:NMAKE_LOCAL+="POPPLER_0_20_OR_LATER = YES`n"
-      $env:NMAKE_LOCAL+="POPPLER_0_23_OR_LATER = YES`n"
-      $env:NMAKE_LOCAL+="POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES`n"
+      $env:NMAKE_LOCAL+="POPPLER_MAJOR_VERSION = 0`n"
+      $env:NMAKE_LOCAL+="POPPLER_MINOR_VERSION = 30`n"
       $env:NMAKE_LOCAL+="POPPLER_LIBS = `$(SDK_LIB)\poppler.lib `$(SDK_LIB)\freetype.lib `$(SDK_LIB)\harfbuzz.lib advapi32.lib gdi32.lib`n"
       $env:NMAKE_LOCAL+="OPENJPEG_ENABLED = YES`n"
       $env:NMAKE_LOCAL+="OPENJPEG_CFLAGS = -I`$(SDK_INC)\openjpeg-2.1`n"
@@ -119,14 +121,36 @@ install:
       $env:NMAKE_LOCAL+="HDF5_DIR = `$(SDK_PREFIX)`n"
       $env:NMAKE_LOCAL+="HDF5_LIB = `$(SDK_LIB)\hdf5.lib`n"
       $env:NMAKE_LOCAL+="KEA_CFLAGS = -I`$(SDK_INC)`n"
-      $env:NMAKE_LOCAL+="KEA_LIB = `$(SDK_LIB)\libkea.lib`n"
+      $env:NMAKE_LOCAL+="KEA_LIB = `$(SDK_LIB)\libkea.lib `$(SDK_LIB)\hdf5_cpp.lib`n"
       $env:NMAKE_LOCAL+="NETCDF_SETTING=yes`n"
       $env:NMAKE_LOCAL+="NETCDF_LIB=`$(SDK_LIB)\netcdf.lib`n"
       $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"
       $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
+      $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:APPVEYOR_BUILD_FOLDER\install-proj\include`n"
+      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj_6_0.lib`n"
       $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
       #
+      cd $env:APPVEYOR_BUILD_FOLDER
+      exec { git clone --depth=1 https://github.com/OSGeo/proj.4 proj }
+      cd proj
+      exec { mkdir build }
+      cd build
+      $env:VCPKG_PLATFORM="$env:platform"+"-windows"
+      exec { vcpkg install sqlite3:$env:VCPKG_PLATFORM }
+      appveyor DownloadFile https://sqlite.org/2018/sqlite-tools-win32-x86-3250100.zip
+      exec { 7z x sqlite-tools-win32-x86-3250100.zip }
+      exec { copy sqlite-tools-win32-x86-3250100/sqlite3.exe $env:APPVEYOR_BUILD_FOLDER }
+      $env:PATH="$env:APPVEYOR_BUILD_FOLDER;$env:PATH"
+      $env:PROJ_INSTALL_DIR="$env:APPVEYOR_BUILD_FOLDER"+"\install-proj"
+      $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:PROJ_INSTALL_DIR
+      exec { cmake -G $env:VS_FULL .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake }
+      exec { cmake --build . --config Release --target install }
+      cd $env:APPVEYOR_BUILD_FOLDER\install-proj\share\proj
+      appveyor DownloadFile https://download.osgeo.org/proj/proj-datumgrid-1.8.zip
+      exec { 7z x proj-datumgrid-1.8.zip -aoa }
+      #
       cd $env:APPVEYOR_BUILD_FOLDER\gdal
+      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\proj_6_0.dll . }
       exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
       cd apps
       exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
@@ -147,7 +171,7 @@ test_script:
   - ps: |
       $env:PATH="$env:APPVEYOR_BUILD_FOLDER\gdal;$env:APPVEYOR_BUILD_FOLDER\gdal\apps;$env:SDK_BIN;$env:PATH"
       $env:GDAL_DATA="$env:APPVEYOR_BUILD_FOLDER\gdal\data"
-      $env:PROJ_LIB="$env:SDK_BIN\proj\SHARE"
+      # $env:PROJ_LIB="$env:APPVEYOR_BUILD_FOLDER\install-proj\share"
       $env:DO_NOT_FAIL_ON_RECODE_ERRORS="YES"
       # The ca-bundle.crt file which we could point to is invalid in the current SDK
       # See https://github.com/gisinternals/buildsystem/issues/104

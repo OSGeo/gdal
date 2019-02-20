@@ -2719,6 +2719,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
     {
         int bSuccess = FALSE;
         m_pSRS = new OGRSpatialReference();
+        m_pSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         CPLPushErrorHandler(CPLQuietErrorHandler);
         if( latestwkid.length() > 0 )
         {

@@ -103,7 +103,8 @@ def test_envi_4():
     PARAMETER["latitude_of_origin",33.76446202775696],
     PARAMETER["central_meridian",-117.4745428888127],
     PARAMETER["false_easting",20000],
-    PARAMETER["false_northing",30000]]"""
+    PARAMETER["false_northing",30000],
+    UNIT["Meter",1]]"""
 
     return tst.testSetProjection(prj=prj)
 
@@ -162,16 +163,20 @@ def test_envi_6():
     gdaltest.envi_tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 24)
 
     prj = """PROJCS["unnamed",
-    GEOGCS["Sphere",
-        DATUM["Ellipse Based",
+    GEOGCS["Unknown datum based upon the Authalic Sphere",
+        DATUM["D_Ellipse_Based",
             SPHEROID["Sphere",6370997,0]],
         PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]],
+        UNIT["Degree",0.0174532925199433]],
     PROJECTION["Lambert_Azimuthal_Equal_Area"],
-    PARAMETER["latitude_of_center",33.76446202775696],
-    PARAMETER["longitude_of_center",-117.4745428888127],
+    PARAMETER["latitude_of_center",33.764462027757],
+    PARAMETER["longitude_of_center",-117.474542888813],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]"""
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
 
     return gdaltest.envi_tst.testSetProjection(prj=prj)
 

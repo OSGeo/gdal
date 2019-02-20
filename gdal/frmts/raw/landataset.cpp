@@ -141,7 +141,7 @@ class LANDataset final: public RawDataset
 
     char        pachHeader[ERD_HEADER_SIZE];
 
-    char        *pszProjection;
+    OGRSpatialReference* m_poSRS = nullptr;
 
     double      adfGeoTransform[6];
 
@@ -156,8 +156,9 @@ class LANDataset final: public RawDataset
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
     CPLErr SetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
-    CPLErr SetProjection( const char * ) override;
+
+    const OGRSpatialReference* GetSpatialRef() const override ;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -316,8 +317,7 @@ GDALColorInterp LAN4BitRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 LANDataset::LANDataset() :
-    fpImage(nullptr),
-    pszProjection(nullptr)
+    fpImage(nullptr)
 {
     memset( pachHeader, 0, sizeof(pachHeader) );
     adfGeoTransform[0] =  0.0;
@@ -345,7 +345,8 @@ LANDataset::~LANDataset()
         }
     }
 
-    CPLFree( pszProjection );
+    if( m_poSRS )
+        m_poSRS->Release();
 }
 
 /************************************************************************/
@@ -562,26 +563,27 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     memcpy(&nTmp16, poDS->pachHeader + 88, 2);
     int nCoordSys = nTmp16;
 
+    poDS->m_poSRS = new OGRSpatialReference();
+    poDS->m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( nCoordSys == 0 )
     {
-        poDS->pszProjection = CPLStrdup(SRS_WKT_WGS84);
+        poDS->m_poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
     }
     else if( nCoordSys == 1 )
     {
-        poDS->pszProjection =
-            CPLStrdup( "LOCAL_CS[\"UTM - Zone Unknown\",UNIT[\"Meter\",1]]" );
+        poDS->m_poSRS->SetFromUserInput(
+            "LOCAL_CS[\"UTM - Zone Unknown\",UNIT[\"Meter\",1]]" );
     }
     else if( nCoordSys == 2 )
     {
-        poDS->pszProjection =
-            CPLStrdup(
+        poDS->m_poSRS->SetFromUserInput(
                 "LOCAL_CS[\"State Plane - Zone Unknown\","
                 "UNIT[\"US survey foot\",0.3048006096012192]]" );
     }
     else
     {
-        poDS->pszProjection =
-            CPLStrdup( "LOCAL_CS[\"Unknown\",UNIT[\"Meter\",1]]" );
+        poDS->m_poSRS->SetFromUserInput(
+            "LOCAL_CS[\"Unknown\",UNIT[\"Meter\",1]]" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -687,51 +689,51 @@ CPLErr LANDataset::SetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /*                                                                      */
 /*      Use PAM coordinate system if available in preference to the     */
 /*      generally poor value derived from the file itself.              */
 /************************************************************************/
 
-const char *LANDataset::GetProjectionRef()
+const OGRSpatialReference *LANDataset::GetSpatialRef() const
 
 {
-    const char* pszPamPrj = GDALPamDataset::GetProjectionRef();
+    const auto poSRS = GDALPamDataset::GetSpatialRef();
+    if( poSRS )
+        return poSRS;
 
-    if( pszProjection != nullptr && strlen(pszPamPrj) == 0 )
-        return pszProjection;
-
-    return pszPamPrj;
+    return m_poSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr LANDataset::SetProjection( const char * pszWKT )
+CPLErr LANDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 
 {
+    if( poSRS == nullptr )
+        return GDALPamDataset::SetSpatialRef( poSRS );
+
     unsigned char abyHeader[128] = { '\0' };
 
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
     CPL_IGNORE_RET_VAL(VSIFReadL( abyHeader, 128, 1, fpImage ));
 
-    OGRSpatialReference oSRS( pszWKT );
-
     GUInt16 nProjCode = 0;
 
-    if( oSRS.IsGeographic() )
+    if( poSRS->IsGeographic() )
     {
         nProjCode = 0;
     }
-    else if( oSRS.GetUTMZone() != 0 )
+    else if( poSRS->GetUTMZone() != 0 )
     {
         nProjCode = 1;
     }
     // Too bad we have no way of recognising state plane projections.
     else
     {
-        const char *l_pszProjection = oSRS.GetAttrValue("PROJECTION");
+        const char *l_pszProjection = poSRS->GetAttrValue("PROJECTION");
 
         if( l_pszProjection == nullptr )
             ;
@@ -794,7 +796,7 @@ CPLErr LANDataset::SetProjection( const char * pszWKT )
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
     CPL_IGNORE_RET_VAL(VSIFWriteL( abyHeader, 128, 1, fpImage ));
 
-    return GDALPamDataset::SetProjection( pszWKT );
+    return GDALPamDataset::SetSpatialRef( poSRS );
 }
 
 /************************************************************************/

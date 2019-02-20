@@ -179,7 +179,10 @@ class EnvisatDataset : public RawDataset
     virtual ~EnvisatDataset();
 
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    virtual const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     virtual const GDAL_GCP *GetGCPs() override;
     virtual char      **GetMetadataDomainList() override;
     virtual char **GetMetadata( const char * pszDomain ) override;
@@ -243,11 +246,11 @@ int EnvisatDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *EnvisatDataset::GetGCPProjection()
+const char *EnvisatDataset::_GetGCPProjection()
 
 {
     if( nGCPCount > 0 )
-        return SRS_WKT_WGS84;
+        return SRS_WKT_WGS84_LAT_LONG;
 
     return "";
 }

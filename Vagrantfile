@@ -88,7 +88,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "liblzma-dev",
     "libgeos-dev",
     "libcurl4-gnutls-dev",
-    "libproj-dev",
+    # "libproj-dev",
     "libxml2-dev",
     "libexpat-dev",
     "libxerces-c-dev",
@@ -151,7 +151,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "mingw-w64-tools",
     "gdb-mingw-w64-target",
     "libgeos-mingw-w64-dev",
-    "libproj-mingw-w64-dev",
+    # "libproj-mingw-w64-dev",
     "cmake3-curses-gui",
     "gdb",
     "gdbserver",
@@ -162,6 +162,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libcharls-dev",
     "libgeotiff-dev",
     "libgeotiff-epsg",
+    "sqlite3",
     "sqlite3-pcre",
     "libpcre3-dev",
     "libspatialite-dev",
@@ -196,8 +197,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  pkg_cmd << "apt-get --no-install-recommends install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
+      "install-proj6.sh",
       "gdal.sh",
       "postgis.sh",
+      "install-proj6-mingw.sh",
       "gdal-mingw.sh"
     ];
     scripts.each { |script| config.vm.provision :shell, :privileged => false, :path => "gdal/scripts/vagrant/" << script }

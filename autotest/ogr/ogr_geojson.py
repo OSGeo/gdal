@@ -881,7 +881,8 @@ def test_ogr_geojson_23():
     sr_got = lyr.GetSpatialRef()
     ds = None
 
-    assert sr_got.ExportToWkt() == sr.ExportToWkt(), 'did not get expected SRS'
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    assert sr_got.IsSame(sr), 'did not get expected SRS'
 
     fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_23.json', 'rb')
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
@@ -3603,6 +3604,73 @@ def test_ogr_geojson_non_finite():
         pytest.fail(str(f['nan_prop']))
     ds = None
 
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+def test_ogr_geojson_random_reading_with_id():
+
+    json_content = """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "id": 1, "properties": { "a": "a" }, "geometry": null },
+      { "type": "Feature", "id": 2, "properties": { "a": "bc" }, "geometry": null }
+  ]
+}"""
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, json_content)
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    f1_ref = lyr.GetNextFeature()
+    f2_ref = lyr.GetNextFeature()
+    f1 = lyr.GetFeature(1)
+    f2 = lyr.GetFeature(2)
+    assert f1.Equal(f1_ref)
+    assert f2.Equal(f2_ref)
+    assert not lyr.GetFeature(3)
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+def test_ogr_geojson_random_reading_without_id():
+
+    json_content = """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "properties": { "a": "a" }, "geometry": null },
+      { "type": "Feature", "properties": { "a": "bc" }, "geometry": null }
+  ]
+}"""
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, json_content)
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    f1_ref = lyr.GetNextFeature()
+    f2_ref = lyr.GetNextFeature()
+    f1 = lyr.GetFeature(0)
+    f2 = lyr.GetFeature(1)
+    assert f1.Equal(f1_ref)
+    assert f2.Equal(f2_ref)
+    assert not lyr.GetFeature(2)
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+def test_ogr_geojson_single_feature_random_reading_with_id():
+
+    json_content = """
+      { "type": "Feature", "id": 1, "properties": { "a": "a" }, "geometry": null }
+}"""
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, json_content)
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    f1_ref = lyr.GetNextFeature()
+    f1 = lyr.GetFeature(1)
+    assert f1.Equal(f1_ref)
+    ds = None
     gdal.Unlink(tmpfilename)
 
 ###############################################################################

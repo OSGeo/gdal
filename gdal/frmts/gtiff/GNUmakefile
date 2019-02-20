@@ -51,7 +51,7 @@ ifeq ($(WEBP_SETTING),yes)
 WEBP_FLAGS 	:=	-DWEBP_SUPPORT
 endif
 
-CPPFLAGS	:=	 -I.. $(JPEG_FLAGS) $(ZSTD_FLAGS) $(WEBP_FLAGS) $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
+CPPFLAGS	:=	 -I.. $(JPEG_FLAGS) $(ZSTD_FLAGS) $(WEBP_FLAGS) $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
 # issue with $(WARN_OLD_STYLE_CAST) with x86_64-w64-mingw32-g++. See https://travis-ci.org/OSGeo/gdal/jobs/375654138
@@ -63,12 +63,12 @@ clean:
 	(cd libtiff; $(MAKE) clean)
 	(cd libgeotiff; $(MAKE) clean)
 
-gt_test:	gt_test.$(OBJ_EXT) gt_gs.$(OBJ_EXT) cpl_csv.$(OBJ_EXT)
-	$(CC) gt_test.$(OBJ_EXT) gt_gs.$(OBJ_EXT) cpl_csv.$(OBJ_EXT) ../../port/*.$(OBJ_EXT) \
+gt_test:	gt_test.$(OBJ_EXT) gt_gs.$(OBJ_EXT)
+	$(CC) gt_test.$(OBJ_EXT) gt_gs.$(OBJ_EXT) ../../port/*.$(OBJ_EXT) \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o gt_test
 
-gt_write:	gt_write.$(OBJ_EXT) gt_gs.$(OBJ_EXT) cpl_csv.$(OBJ_EXT)
-	$(CC) gt_write.$(OBJ_EXT) gt_gs.$(OBJ_EXT) cpl_csv.$(OBJ_EXT) ../../port/*.$(OBJ_EXT) \
+gt_write:	gt_write.$(OBJ_EXT) gt_gs.$(OBJ_EXT)
+	$(CC) gt_write.$(OBJ_EXT) gt_gs.$(OBJ_EXT) ../../port/*.$(OBJ_EXT) \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o gt_write
 
 epsg_to_wkt:	epsg_to_wkt.$(OBJ_EXT) gt_wkt_srs.$(OBJ_EXT)

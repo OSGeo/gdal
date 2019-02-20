@@ -313,6 +313,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
  *    char* pszWkt = (char*) wkt;
  *    OGRSpatialReferenceH ref = OSRNewSpatialReference(NULL);
  *    OGRGeometryH new_geom;
+ *    OSRSetAxisMappingStrategy(poSR, OAMS_TRADITIONAL_GIS_ORDER);
  *    OGRErr err = OGR_G_CreateFromWkt(&pszWkt, ref, &new_geom);
  *  </pre>
  *
@@ -3663,6 +3664,38 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry* poGeom)
 #endif
 
 /************************************************************************/
+/*                  TransformWithOptionsCache::Private                  */
+/************************************************************************/
+
+struct OGRGeometryFactory::TransformWithOptionsCache::Private
+{
+    OGRCoordinateTransformation* poRevCT = nullptr;
+    bool bIsPolar = false;
+    bool bIsNorthPolar = false;
+
+    ~Private()
+    {
+        delete poRevCT;
+    }
+};
+
+/************************************************************************/
+/*                     TransformWithOptionsCache()                      */
+/************************************************************************/
+
+OGRGeometryFactory::TransformWithOptionsCache::TransformWithOptionsCache(): d(new Private())
+{
+}
+
+/************************************************************************/
+/*                     ~TransformWithOptionsCache()                      */
+/************************************************************************/
+
+OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
+{
+}
+
+/************************************************************************/
 /*                       transformWithOptions()                         */
 /************************************************************************/
 
@@ -3670,12 +3703,14 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry* poGeom)
  * @param poSrcGeom source geometry
  * @param poCT coordinate transformation object.
  * @param papszOptions options. Including WRAPDATELINE=YES.
+ * @param cache Cache. May increase performance if persisted between invokations
  * @return (new) transformed geometry.
  */
 OGRGeometry* OGRGeometryFactory::transformWithOptions(
     const OGRGeometry* poSrcGeom,
     OGRCoordinateTransformation *poCT,
-    char** papszOptions )
+    char** papszOptions,
+    CPL_UNUSED const TransformWithOptionsCache& cache )
 {
     OGRGeometry* poDstGeom = poSrcGeom->clone();
     if( poCT != nullptr )
@@ -3688,18 +3723,32 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
         {
             OGRSpatialReference oSRSWGS84;
             oSRSWGS84.SetWellKnownGeogCS( "WGS84" );
+            oSRSWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( poCT->GetTargetCS()->IsSame(&oSRSWGS84) )
             {
-                OGRCoordinateTransformation* poRevCT =
-                    OGRCreateCoordinateTransformation( &oSRSWGS84,
+                if( cache.d->poRevCT == nullptr ||
+                    !cache.d->poRevCT->GetTargetCS()->IsSame(poCT->GetSourceCS()) )
+                {
+                    delete cache.d->poRevCT;
+                    cache.d->poRevCT = 
+                        OGRCreateCoordinateTransformation( &oSRSWGS84,
                                                        poCT->GetSourceCS() );
+                    cache.d->bIsNorthPolar = false;
+                    cache.d->bIsPolar = false;
+                    if( cache.d->poRevCT &&
+                        IsPolarToWGS84(poCT, cache.d->poRevCT, cache.d->bIsNorthPolar) )
+                    {
+                        cache.d->bIsPolar = true;
+                    }
+                }
+                auto poRevCT = cache.d->poRevCT;
                 if( poRevCT != nullptr )
                 {
-                    bool bIsNorthPolar = false;
-                    if( IsPolarToWGS84(poCT, poRevCT, bIsNorthPolar) )
+                    if( cache.d->bIsPolar )
                     {
                         poDstGeom = TransformBeforePolarToWGS84(
-                                        poRevCT, bIsNorthPolar, poDstGeom,
+                                        poRevCT, cache.d->bIsNorthPolar,
+                                        poDstGeom,
                                         bNeedPostCorrection);
                     }
                     else if( IsAntimeridianProjToWGS84(poCT, poRevCT,
@@ -3709,8 +3758,6 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
                                         poCT, poRevCT, poDstGeom,
                                         bNeedPostCorrection);
                     }
-
-                    delete poRevCT;
                 }
             }
         }
@@ -3731,6 +3778,22 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
 
     if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")) )
     {
+        if( poDstGeom->getSpatialReference() &&
+            !poDstGeom->getSpatialReference()->IsGeographic() )
+        {
+            static bool bHasWarned = false;
+            if( !bHasWarned )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "WRAPDATELINE is without effect when reprojecting to a "
+                        "non-geographic CRS");
+                bHasWarned = true;
+            }
+            return poDstGeom;
+        }
+        // TODO and we should probably also test that the axis order + data axis mapping
+        // is long-lat...
+
         const OGRwkbGeometryType eType =
             wkbFlatten(poDstGeom->getGeometryType());
         if( eType == wkbPoint )

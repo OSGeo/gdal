@@ -268,6 +268,7 @@ int OGRGTMDataSource::Open(const char* pszFilename, int bUpdate)
 
     /* Create a spatial reference for WGS8*/
     OGRSpatialReference* poSRS = new OGRSpatialReference(nullptr);
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poSRS->SetWellKnownGeogCS( "WGS84" );
 
     /* Waypoint layer */
@@ -437,7 +438,7 @@ OGRLayer* OGRGTMDataSource::GetLayer( int iLayer )
 OGRLayer * OGRGTMDataSource::ICreateLayer( const char * pszLayerName,
                                            OGRSpatialReference *poSRS,
                                            OGRwkbGeometryType eType,
-                                           CPL_UNUSED char ** papszOptions )
+                                           char ** /* papszOptions */ )
 {
     if (eType == wkbPoint || eType == wkbPoint25D)
     {

@@ -611,6 +611,7 @@ void OGRGeoconceptLayer::SetSpatialRef( OGRSpatialReference *poSpatialRef )
     if( !poSpatialRef ) return;
 
     poSRS = poSpatialRef->Clone();
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     GCExportFileH* hGXT = GetSubTypeGCHandle_GCIO(_gcFeature);
     if( !hGXT )
     {

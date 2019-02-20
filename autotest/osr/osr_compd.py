@@ -30,14 +30,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osr import osr_proj4
-
-
 import gdaltest
 from osgeo import osr
 import pytest
 
-example_compd_wkt = 'COMPD_CS["OSGB36 / British National Grid + ODN",PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG",7001]],TOWGS84[375,-111,431,0,0,0,0],AUTHORITY["EPSG",6277]],PRIMEM["Greenwich",0,AUTHORITY["EPSG",8901]],UNIT["DMSH",0.0174532925199433,AUTHORITY["EPSG",9108]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG",4277]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.999601272],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],UNIT["metre_1",1,AUTHORITY["EPSG",9001]],AXIS["E",EAST],AXIS["N",NORTH],AUTHORITY["EPSG",27700]],VERT_CS["Newlyn",VERT_DATUM["Ordnance Datum Newlyn",2005,AUTHORITY["EPSG",5101]],UNIT["metre_2",1,AUTHORITY["EPSG",9001]],AXIS["Up",UP],AUTHORITY["EPSG",5701]],AUTHORITY["EPSG",7405]]'
+example_compd_wkt = 'COMPD_CS["OSGB36 / British National Grid + ODN",PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],TOWGS84[375,-111,431,0,0,0,0],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["DMSH",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4277"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.999601272],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],UNIT["metre_1",1,AUTHORITY["EPSG","9001"]],AXIS["E",EAST],AXIS["N",NORTH],AUTHORITY["EPSG","27700"]],VERT_CS["Newlyn",VERT_DATUM["Ordnance Datum Newlyn",2005,AUTHORITY["EPSG","5101"]],UNIT["metre_2",1,AUTHORITY["EPSG","9001"]],AXIS["Up",UP],AUTHORITY["EPSG","5701"]],AUTHORITY["EPSG","7405"]]'
 
 ###############################################################################
 # Test parsing and a few operations on a compound coordinate system.
@@ -56,7 +53,7 @@ def test_osr_compd_1():
 
     assert srs.IsCompound(), 'COMPD_CS not recognised as compound.'
 
-    expected_proj4 = '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601272 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=375,-111,431,0,0,0,0 +units=m +vunits=m +no_defs '
+    expected_proj4 = '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601272 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=375,-111,431,0,0,0,0 +units=m +vunits=m +no_defs'
     got_proj4 = srs.ExportToProj4()
 
     if expected_proj4 != got_proj4:
@@ -165,8 +162,7 @@ def test_osr_compd_4():
         'did not get expected compound cs for EPSG:7400'
 
 ###############################################################################
-# Test that compound coordinate systems with grid shift files are
-# expanded properly and converted to PROJ.4 format with the grids.
+# Test EPGS:x+y syntax
 
 
 def test_osr_compd_5():
@@ -202,11 +198,10 @@ def test_osr_compd_5():
         AUTHORITY["EPSG","26911"]],
     VERT_CS["NAVD88 height",
         VERT_DATUM["North American Vertical Datum 1988",2005,
-            EXTENSION["PROJ4_GRIDS","g2012a_conus.gtx,g2012a_alaska.gtx,g2012a_guam.gtx,g2012a_hawaii.gtx,g2012a_puertorico.gtx,g2012a_samoa.gtx"],
             AUTHORITY["EPSG","5103"]],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
-        AXIS["Up",UP],
+        AXIS["Gravity-related height",UP],
         AUTHORITY["EPSG","5703"]]]"""
     wkt = srs.ExportToPrettyWkt()
 
@@ -216,9 +211,7 @@ def test_osr_compd_5():
         print('warning they are equivalent, but not completely the same')
         print(wkt)
 
-    assert wkt.find('g2012a_conus.gtx') != -1, 'Did not get PROJ4_GRIDS EXTENSION node'
-
-    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2012a_conus.gtx,g2012a_alaska.gtx,g2012a_guam.gtx,g2012a_hawaii.gtx,g2012a_puertorico.gtx,g2012a_samoa.gtx +vunits=m +no_defs '
+    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +vunits=m +no_defs'
     proj4 = srs.ExportToProj4()
     assert proj4 == exp_proj4, ('Did not get expected proj.4 string, got:' + proj4)
 
@@ -228,34 +221,38 @@ def test_osr_compd_5():
 
 def test_osr_compd_6():
 
-    if not osr_proj4.have_proj480():
-        pytest.skip()
-
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs ')
 
     assert srs.Validate() == 0, 'Does not validate'
 
-    exp_wkt = """COMPD_CS["UTM Zone 11, Northern Hemisphere + Unnamed Vertical Datum",
-    PROJCS["UTM Zone 11, Northern Hemisphere",
-        GEOGCS["GRS 1980(IUGG, 1980)",
-            DATUM["unknown",
-                SPHEROID["GRS80",6378137,298.257222101],
+    exp_wkt = """COMPD_CS["unknown",
+    PROJCS["unknown",
+        GEOGCS["unknown",
+            DATUM["Unknown_based_on_GRS80_ellipsoid",
+                SPHEROID["GRS 1980",6378137,298.257222101,
+                    AUTHORITY["EPSG","7019"]],
                 TOWGS84[0,0,0,0,0,0,0]],
-            PRIMEM["Greenwich",0],
-            UNIT["degree",0.0174532925199433]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
+            UNIT["degree",0.0174532925199433,
+                AUTHORITY["EPSG","9122"]]],
         PROJECTION["Transverse_Mercator"],
         PARAMETER["latitude_of_origin",0],
         PARAMETER["central_meridian",-117],
         PARAMETER["scale_factor",0.9996],
         PARAMETER["false_easting",500000],
         PARAMETER["false_northing",0],
-        UNIT["Meter",1]],
-    VERT_CS["Unnamed",
-        VERT_DATUM["Unnamed",2005,
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
+        AXIS["Easting",EAST],
+        AXIS["Northing",NORTH]],
+    VERT_CS["unknown",
+        VERT_DATUM["unknown",2005,
             EXTENSION["PROJ4_GRIDS","g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx"]],
-        UNIT["Foot_US",0.3048006096012192],
-        AXIS["Up",UP]]]"""
+        UNIT["US survey foot",0.304800609601219,
+            AUTHORITY["EPSG","9003"]],
+        AXIS["Gravity-related height",UP]]]"""
 
     wkt = srs.ExportToPrettyWkt()
 
@@ -267,7 +264,7 @@ def test_osr_compd_6():
 
     assert wkt.find('g2003conus.gtx') != -1, 'Did not get PROJ4_GRIDS EXTENSION node'
 
-    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs '
+    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs'
     proj4 = srs.ExportToProj4()
     assert proj4 == exp_proj4, ('Did not get expected proj.4 string, got:' + proj4)
 
@@ -302,11 +299,9 @@ def test_osr_compd_7():
         AUTHORITY["EPSG","4326"]],
     VERT_CS["NAVD88 height",
         VERT_DATUM["North American Vertical Datum 1988",2005,
-            EXTENSION["PROJ4_GRIDS","g2012a_conus.gtx,g2012a_alaska.gtx,g2012a_guam.gtx,g2012a_hawaii.gtx,g2012a_puertorico.gtx,g2012a_samoa.gtx"],
             AUTHORITY["EPSG","5103"]],
         UNIT["foot",0.304800609601219],
-        AXIS["Up",UP],
-        AUTHORITY["EPSG","5703"]]]"""
+        AXIS["Gravity-related height",UP]]]"""
 
     wkt = srs.ExportToPrettyWkt()
 
@@ -316,15 +311,10 @@ def test_osr_compd_7():
         print('warning they are equivalent, but not completely the same')
         print(wkt)
 
-    if srs.GetTargetLinearUnits('VERT_CS') != 0.304800609601219:
-        print('%.16g' % srs.GetTargetLinearUnits('VERT_CS'))
-        pytest.fail('Didnt get expected linear units')
+    assert srs.GetTargetLinearUnits('VERT_CS') == pytest.approx(0.304800609601219, 1e-15)
 
-    if srs.GetTargetLinearUnits(None) != 0.304800609601219:
-        print('%.16g' % srs.GetTargetLinearUnits(None))
-        pytest.fail('Didnt get expected linear units')
+    assert srs.GetTargetLinearUnits(None) == pytest.approx(0.304800609601219, 1e-15)
 
-    
 ###############################################################################
 # Test ImportFromURN()
 

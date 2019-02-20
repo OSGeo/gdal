@@ -235,6 +235,7 @@ namespace tut
         ensure_equals("OSRSetTOWGS84 failed", err_, OGRERR_NONE);
         ensure("GetTOWGS84 result is wrong",
             std::equal(coeff, coeff + coeffSize, expect));
+        OSRSetLinearUnits(srs_, "Metre", 1);
 
         char* proj4 = nullptr;
         err_ = OSRExportToProj4(srs_, &proj4);
@@ -270,18 +271,7 @@ namespace tut
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
         ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
 
-        err_ = OSRSetFromUserInput(srs_, "WGS84");
-        ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
-
-        char* wkt2 = nullptr;
-        err_ = OSRExportToWkt(srs_, &wkt2);
-        ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", nullptr != wkt2);
-
-        ensure_equals("CRS84 lookup not as expected",
-            std::string(wkt1), std::string(wkt2));
         CPLFree(wkt1);
-        CPLFree(wkt2);
     }
 
     // Test URN support for EPSG
@@ -328,12 +318,14 @@ namespace tut
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
         ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
 
-        std::string expect("PROJCS[\"UTM Zone 11, Northern Hemisphere\","
-                           "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-                           "SPHEROID[\"WGS 84\",6378137,298.257223563,"
+        std::string expect("PROJCS[\"unnamed\",GEOGCS[\"WGS 84\","
+                           "DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\","
+                           "6378137,298.257223563,"
                            "AUTHORITY[\"EPSG\",\"7030\"]],"
-                           "AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,"
-                           "AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,"
+                           "AUTHORITY[\"EPSG\",\"6326\"]],"
+                           "PRIMEM[\"Greenwich\",0,"
+                           "AUTHORITY[\"EPSG\",\"8901\"]],"
+                           "UNIT[\"degree\",0.0174532925199433,"
                            "AUTHORITY[\"EPSG\",\"9122\"]],"
                            "AUTHORITY[\"EPSG\",\"4326\"]],"
                            "PROJECTION[\"Transverse_Mercator\"],"
@@ -342,7 +334,8 @@ namespace tut
                            "PARAMETER[\"scale_factor\",0.9996],"
                            "PARAMETER[\"false_easting\",500000],"
                            "PARAMETER[\"false_northing\",0],"
-                           "UNIT[\"Meter\",1,AUTHORITY[\"EPSG\",\"9001\"]]]");
+                           "UNIT[\"Meter\",1,AUTHORITY[\"EPSG\",\"9001\"]],"
+                           "AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]");
 
         ensure_equals("AUTO42001 urn lookup not as expected", std::string(wkt1), expect);
         CPLFree(wkt1);

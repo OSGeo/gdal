@@ -104,8 +104,14 @@ class EHdrDataset final: public RawDataset
 
     CPLErr GetGeoTransform( double *padfTransform ) override;
     CPLErr SetGeoTransform( double *padfTransform ) override;
-    const char *GetProjectionRef() override;
-    CPLErr SetProjection( const char * ) override;
+    const char *_GetProjectionRef() override;
+    CPLErr _SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
     char **GetFileList() override;
 

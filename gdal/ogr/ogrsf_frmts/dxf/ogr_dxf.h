@@ -159,13 +159,10 @@ public:
 
     OGRSpatialReference *GetSourceCS() override { return nullptr; }
     OGRSpatialReference *GetTargetCS() override { return nullptr; }
-    int Transform( int nCount,
-        double *x, double *y, double *z ) override
-    { return TransformEx( nCount, x, y, z, nullptr ); }
 
-    int TransformEx( int nCount,
-        double *x, double *y, double *z = nullptr,
-        int *pabSuccess = nullptr ) override
+    int Transform( int nCount,
+        double *x, double *y, double *z, double * /* t */,
+        int *pabSuccess ) override
     {
         for( int i = 0; i < nCount; i++ )
         {
@@ -273,13 +270,10 @@ public:
 
     OGRSpatialReference *GetSourceCS() override { return nullptr; }
     OGRSpatialReference *GetTargetCS() override { return nullptr; }
-    int Transform( int nCount,
-        double *x, double *y, double *z ) override
-    { return TransformEx( nCount, x, y, z, nullptr ); }
 
-    int TransformEx( int nCount,
-        double *adfX, double *adfY, double *adfZ,
-        int *pabSuccess = nullptr ) override;
+    int Transform( int nCount,
+        double *adfX, double *adfY, double *adfZ, double* adfT,
+        int *pabSuccess ) override;
 
     int InverseTransform( int nCount,
         double *adfX, double *adfY, double *adfZ );

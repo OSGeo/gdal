@@ -245,10 +245,20 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData );
 
-    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr _SetProjection( const char * ) override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
+
     virtual CPLErr SetGeoTransform( double* ) override;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection ) override;
+    using GDALJP2AbstractDataset::SetGCPs;
+    CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                    const OGRSpatialReference* poSRS ) override {
+        return OldSetGCPsFromNew(nGCPCountIn, pasGCPListIn, poSRS);
+    }
+
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                              const char * pszDomain = "" ) override;
     virtual CPLErr      SetMetadataItem( const char * pszName,
@@ -1479,7 +1489,7 @@ int JP2OpenJPEGDataset::CloseDependentDatasets()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::SetProjection( const char * pszProjectionIn )
+CPLErr JP2OpenJPEGDataset::_SetProjection( const char * pszProjectionIn )
 {
     if( eAccess == GA_Update )
     {
@@ -1489,7 +1499,7 @@ CPLErr JP2OpenJPEGDataset::SetProjection( const char * pszProjectionIn )
         return CE_None;
     }
     else
-        return GDALJP2AbstractDataset::SetProjection(pszProjectionIn);
+        return GDALJP2AbstractDataset::_SetProjection(pszProjectionIn);
 }
 
 /************************************************************************/
@@ -1516,7 +1526,7 @@ CPLErr JP2OpenJPEGDataset::SetGeoTransform( double *padfGeoTransform )
 /*                           SetGCPs()                                  */
 /************************************************************************/
 
-CPLErr JP2OpenJPEGDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+CPLErr JP2OpenJPEGDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                                     const char *pszGCPProjectionIn )
 {
     if( eAccess == GA_Update )
@@ -1536,7 +1546,7 @@ CPLErr JP2OpenJPEGDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListI
         return CE_None;
     }
     else
-        return GDALJP2AbstractDataset::SetGCPs(nGCPCountIn, pasGCPListIn,
+        return GDALJP2AbstractDataset::_SetGCPs(nGCPCountIn, pasGCPListIn,
                                                pszGCPProjectionIn);
 }
 

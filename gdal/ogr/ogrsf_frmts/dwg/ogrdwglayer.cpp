@@ -1080,12 +1080,10 @@ public:
 
     OGRSpatialReference *GetSourceCS() override { return nullptr; }
     OGRSpatialReference *GetTargetCS() override { return nullptr; }
-    int Transform( int nCount,
-                   double *x, double *y, double *z ) override
-        { return TransformEx( nCount, x, y, z, nullptr ); }
 
-    int TransformEx( int nCount,
+    int Transform( int nCount,
                      double *x, double *y, double *z = nullptr,
+                     double * /*t*/ = nullptr,
                      int *pabSuccess = nullptr ) override
         {
             int i;

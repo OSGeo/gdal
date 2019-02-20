@@ -44,6 +44,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
     if( poSRSIn != nullptr )
     {
         poSRS = new OGRSpatialReference(nullptr);
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         poSRS->SetWellKnownGeogCS( "WGS84" );
         if (!poSRS->IsSame(poSRSIn))
         {
@@ -59,8 +60,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to create coordinate transformation between the\n"
                           "input coordinate system and WGS84.  This may be because they\n"
-                          "are not transformable, or because projection services\n"
-                          "(PROJ.4 DLL/.so) could not be loaded.\n"
+                          "are not transformable.\n"
                           "This message will not be issued any more. \n"
                           "\nSource:\n%s\n",
                           pszWKT );

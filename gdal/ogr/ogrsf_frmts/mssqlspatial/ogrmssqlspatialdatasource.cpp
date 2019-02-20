@@ -1220,11 +1220,24 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
             if ( oStmt.GetColData( 0 ) )
             {
                 poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 const char* pszWKT = oStmt.GetColData( 0 );
                 if( poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
                 {
                     delete poSRS;
                     poSRS = nullptr;
+                }
+                else
+                {
+                    const char* pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+                    const char* pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+                    if( pszAuthorityName && pszAuthorityCode &&
+                        EQUAL(pszAuthorityName, "EPSG") )
+                    {
+                        const int nCode = atoi(pszAuthorityCode);
+                        poSRS->Clear();
+                        poSRS->importFromEPSG(nCode);
+                    }
                 }
             }
         }
@@ -1236,6 +1249,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
     if (!poSRS)
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( poSRS->importFromEPSG( nId ) != OGRERR_NONE )
         {
             delete poSRS;

@@ -1490,6 +1490,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
     if (pszSRSName)
     {
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(
+            m_bInvertAxisOrderIfLatLong ? OAMS_TRADITIONAL_GIS_ORDER : OAMS_AUTHORITY_COMPLIANT);
         if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
         {
             delete poSRS;
@@ -1503,6 +1505,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         if (pszSRSName && GML_IsLegitSRSName(pszSRSName) )
         {
             poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(
+                m_bInvertAxisOrderIfLatLong ? OAMS_TRADITIONAL_GIS_ORDER : OAMS_AUTHORITY_COMPLIANT);
             if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
             {
                 delete poSRS;
@@ -1512,14 +1516,6 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             if (poSRS != nullptr && m_bInvertAxisOrderIfLatLong &&
                 GML_IsSRSLatLongOrder(pszSRSName))
             {
-                OGR_SRSNode *poGEOGCS = poSRS->GetAttrNode("GEOGCS");
-                if( poGEOGCS != nullptr )
-                    poGEOGCS->StripNodes("AXIS");
-
-                OGR_SRSNode *poPROJCS = poSRS->GetAttrNode("PROJCS");
-                if (poPROJCS != nullptr && poSRS->EPSGTreatsAsNorthingEasting())
-                    poPROJCS->StripNodes("AXIS");
-
                 if (!poClass->HasExtents() && sBoundingRect.IsInit())
                 {
                     poClass->SetExtents(sBoundingRect.MinY, sBoundingRect.MaxY,
@@ -1909,14 +1905,20 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
     {
         WriteTopElements();
         if (poSRS)
+        {
             poWriteGlobalSRS = poSRS->Clone();
+            poWriteGlobalSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        }
         bWriteGlobalSRS = true;
     }
     else if( bWriteGlobalSRS )
     {
         if( poWriteGlobalSRS != nullptr )
         {
-            if (poSRS == nullptr || !poSRS->IsSame(poWriteGlobalSRS))
+            const char* const apszOptions[] = {
+                "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+            if (poSRS == nullptr ||
+                !poSRS->IsSame(poWriteGlobalSRS, apszOptions))
             {
                 delete poWriteGlobalSRS;
                 poWriteGlobalSRS = nullptr;
@@ -1942,6 +1944,7 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
             // Clone it since mapogroutput assumes that it can destroys
             // the SRS it has passed to use, instead of dereferencing it.
             poSRS = poSRS->Clone();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
             poSRS->Dereference();
         }

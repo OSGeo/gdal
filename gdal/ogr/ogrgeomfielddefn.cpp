@@ -80,7 +80,13 @@ OGRGeomFieldDefn::OGRGeomFieldDefn( const OGRGeomFieldDefn *poPrototype )
 
 {
     Initialize( poPrototype->GetNameRef(), poPrototype->GetType() );
-    SetSpatialRef( poPrototype->GetSpatialRef() );
+    auto l_poSRS = poPrototype->GetSpatialRef();
+    if( l_poSRS )
+    {
+        l_poSRS = l_poSRS->Clone();
+        SetSpatialRef( l_poSRS );
+        l_poSRS->Release();
+    }
     SetNullable( poPrototype->IsNullable() );
 }
 

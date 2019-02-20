@@ -2,7 +2,8 @@
 # GDAL specific script to extract exported libtiff symbols that can be renamed
 # to keep them internal to GDAL as much as possible
 
-gcc ./*.c -fPIC -shared -o libgeotiff.so -I. -I../../../port
+PROJ_INCLUDE=-I/home/even/proj/install-proj-master/include
+gcc ./*.c -fPIC -shared -o libgeotiff.so -I. -I../../../port ${PROJ_INCLUDE}
 
 OUT_FILE=gdal_libgeotiff_symbol_rename.h
 

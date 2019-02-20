@@ -71,7 +71,7 @@ class ISIS2Dataset : public RawDataset
 
     CPLString   oTempResult;
 
-    void        CleanString( CPLString &osInput );
+    static void CleanString( CPLString &osInput );
 
     const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
@@ -84,7 +84,10 @@ public:
     virtual ~ISIS2Dataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
+    virtual const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
     virtual char **GetFileList() override;
 
@@ -154,13 +157,13 @@ char **ISIS2Dataset::GetFileList()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *ISIS2Dataset::GetProjectionRef()
+const char *ISIS2Dataset::_GetProjectionRef()
 
 {
     if( !osProjection.empty() )
         return osProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/

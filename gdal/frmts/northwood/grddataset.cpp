@@ -75,7 +75,7 @@ class NWT_GRDDataset: public GDALPamDataset {
     NWT_GRID *pGrd;
     NWT_RGB ColorMap[4096];
     bool bUpdateHeader;
-    CPLString m_osProjection;
+    mutable OGRSpatialReference* m_poSRS = nullptr;
 
     // Update the header data with latest changes
     int UpdateHeader();
@@ -96,8 +96,10 @@ public:
     CPLErr GetGeoTransform(double *padfTransform) override;
     CPLErr SetGeoTransform(double *padfTransform) override;
     void FlushCache() override;
-    const char *GetProjectionRef() override;
-    CPLErr SetProjection(const char *pszProjection) override;
+
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
+
 };
 
 /************************************************************************/
@@ -411,6 +413,8 @@ NWT_GRDDataset::~NWT_GRDDataset() {
     }
     pGrd->fp = nullptr;       // this prevents nwtCloseGrid from closing the fp
     nwtCloseGrid(pGrd);
+    if( m_poSRS )
+        m_poSRS->Release();
 
     if (fp != nullptr)
         VSIFCloseL(fp);
@@ -473,41 +477,33 @@ CPLErr NWT_GRDDataset::SetGeoTransform(double *padfTransform) {
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
-const char *NWT_GRDDataset::GetProjectionRef() {
+const OGRSpatialReference *NWT_GRDDataset::GetSpatialRef() const {
 
     // First try getting it from the PAM dataset
-    const char *pszProjection = GDALPamDataset::GetProjectionRef();
+    const OGRSpatialReference *poSRS = GDALPamDataset::GetSpatialRef();
+    if( poSRS )
+        return poSRS;
+
+    if( m_poSRS )
+        return m_poSRS;
 
     // If that isn't possible, read it from the GRD file. This may be a less
     //  complete projection string.
-    if( strlen(pszProjection) == 0 )
-    {
-        OGRSpatialReference *poSpatialRef =
-            MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
-        if( poSpatialRef )
-        {
-            char* pszProjectionTmp = nullptr;
-            poSpatialRef->exportToWkt( &pszProjectionTmp );
-            poSpatialRef->Release();
-            if( pszProjectionTmp )
-                m_osProjection = pszProjectionTmp;
-            CPLFree(pszProjectionTmp);
-            return m_osProjection;
-        }
-    }
-    return pszProjection;
+    OGRSpatialReference *poSpatialRef =
+        MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
+    m_poSRS = poSpatialRef;
+    return m_poSRS;
 }
 
 /************************************************************************/
-/*                          SetProjectionRef()                          */
+/*                            SetSpatialRef()                           */
 /************************************************************************/
 
-CPLErr NWT_GRDDataset::SetProjection( const char *pszProjection ) {
-    OGRSpatialReference oSpatialRef;
-    oSpatialRef.importFromWkt( pszProjection );
-    char *psTABProj = MITABSpatialRef2CoordSys( &oSpatialRef );
+CPLErr NWT_GRDDataset::SetSpatialRef( const OGRSpatialReference *poSRS ) {
+
+    char *psTABProj = MITABSpatialRef2CoordSys( poSRS );
     strncpy( pGrd->cMICoordSys, psTABProj, sizeof(pGrd->cMICoordSys) -1 );
     pGrd->cMICoordSys[255] = '\0';
 
@@ -515,7 +511,7 @@ CPLErr NWT_GRDDataset::SetProjection( const char *pszProjection ) {
     CPLFree(psTABProj);
     // Set projection in PAM dataset, so that
     // GDAL can always retrieve the complete projection.
-    GDALPamDataset::SetProjection( pszProjection );
+    GDALPamDataset::SetSpatialRef( poSRS );
     bUpdateHeader = true;
 
     return CE_None;

@@ -1193,10 +1193,10 @@ CPLErr ECWDataset::SetGeoTransform( double * padfGeoTransform )
 /*                            SetProjection()                           */
 /************************************************************************/
 
-CPLErr ECWDataset::SetProjection( const char* pszProjectionIn )
+CPLErr ECWDataset::_SetProjection( const char* pszProjectionIn )
 {
     if ( bIsJPEG2000 || eAccess == GA_ReadOnly )
-        return GDALPamDataset::SetProjection(pszProjectionIn);
+        return GDALPamDataset::_SetProjection(pszProjectionIn);
 
     if ( !( (pszProjection == nullptr && pszProjectionIn == nullptr) ||
             (pszProjection != nullptr && pszProjectionIn != nullptr &&

@@ -48,13 +48,23 @@ def validate_xml(filename):
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
 
-    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd',
-                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1800.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B00.xsd',
                                   force_download=True):
         pytest.skip()
 
-    if not gdaltest.download_file('https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1800.xsd',
-                                  'pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1800.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1B00.xsd',
+                                  'pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1B00.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    if not gdaltest.download_file('https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd',
+                                  'raw.githubusercontent.com_thareUSGS_ldd_cart_master_build_1.B.0.0_PDS4_CART_1B00.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1800.xsd',
                                   force_download=True):
         pytest.skip()
 
@@ -72,7 +82,7 @@ def validate_xml(filename):
         'VALIDATE=YES',
         'FAIL_IF_VALIDATION_ERROR=YES',
         'CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>'])
-    assert ds is not None
+    return ds is not None
 
 ###############################################################################
 # Perform simple read test on PDS4 dataset.
@@ -90,7 +100,7 @@ def test_pds4_1():
     PARAMETER["central_meridian",-117],
     PARAMETER["scale_factor",0.9996],
     PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0]]
+    PARAMETER["false_northing",0],UNIT["meter",1]]
 """
     gt = (-59250.0, 60.0, 0.0, 3751290.0, 0.0, -60.0)
 
@@ -125,6 +135,27 @@ def test_pds4_2():
     with hide_substitution_warnings_error_handler():
         ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
     return ret
+
+
+###############################################################################
+def test_pds4_write_utm():
+
+    src_ds = gdal.Open('data/byte.tif')
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PDS4').CreateCopy('/vsimem/temp.xml', src_ds)
+    ds = gdal.Open('/vsimem/temp.xml')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    f = gdal.VSIFOpenL('/vsimem/temp.xml', 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert '<cart:west_bounding_coordinate unit="deg">-117.6411686' in data, data
+    assert '<cart:east_bounding_coordinate unit="deg">-117.6281108' in data, data
+    assert '<cart:north_bounding_coordinate unit="deg">33.90241956' in data, data
+    assert '<cart:south_bounding_coordinate unit="deg">33.891530168' in data, data
+    gdal.GetDriverByName('PDS4').Delete('/vsimem/temp.xml')
+
 
 ###############################################################################
 # Test CreateCopy() with explicit INTERLEAVE=BSQ
@@ -188,15 +219,15 @@ def test_pds4_7():
 def test_pds4_8():
 
     filename = '/vsimem/out.xml'
-    for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                  '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_1SP
-                  '+proj=lcc +lat_1=9 +lat_2=11 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # LCC_2SP
-                  '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
-                  '+proj=omerc +lat_0=10 +lon_1=11 +lat_1=12 +lon_2=13 +lat_2=14 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
-                  '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',  # Polar Stereographic
-                  '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                  '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                  '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
+    for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_1SP
+                  '+proj=lcc +lat_0=10 +lon_0=-112.5 +lat_1=9 +lat_2=11 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_2SP
+                  '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +gamma=12 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
+                  '+proj=omerc +lat_0=10 +lat_1=12 +lon_1=11 +lat_2=14 +lon_2=13 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
+                  '+proj=stere +lat_0=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Polar Stereographic
+                  '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                  ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
         sr = osr.SpatialReference()
@@ -207,7 +238,7 @@ def test_pds4_8():
             ds = None
 
         ret = validate_xml(filename)
-        assert ret != 'fail', ('validation of file for %s failed' % proj4)
+        assert ret, ('validation of file for %s failed' % proj4)
 
         ds = gdal.Open(filename)
         wkt = ds.GetProjectionRef()
@@ -219,7 +250,7 @@ def test_pds4_8():
     # longlat doesn't roundtrip as such
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with gdaltest.error_handler():
@@ -229,8 +260,9 @@ def test_pds4_8():
     sr = osr.SpatialReference()
     sr.SetFromUserInput(wkt)
     got_proj4 = sr.ExportToProj4().strip()
-    proj4 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs'
+    proj4 = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs'
     assert got_proj4 == proj4, ''
+
     got_gt = ds.GetGeoTransform()
     expected_gt = (85151.12354629935, 42575.561773149675, 0.0, 2086202.5268843342, 0.0, -85151.12354629935)
     assert max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) <= 1, ''
@@ -258,7 +290,7 @@ def test_pds4_9():
         gdal.Translate(filename, 'data/byte_pds4.xml', format='PDS4')
 
     ret = validate_xml(filename)
-    assert ret != 'fail', 'validation failed'
+    assert ret, 'validation failed'
 
     ds = gdal.Open(filename)
     ndv = ds.GetRasterBand(1).GetNoDataValue()
@@ -278,7 +310,7 @@ def test_pds4_9():
                            creationOptions=['IMAGE_FORMAT=' + frmt])
 
         ret = validate_xml(filename)
-        assert ret != 'fail', 'validation failed'
+        assert ret, 'validation failed'
 
         ds = gdal.Open(filename)
         ndv = ds.GetRasterBand(1).GetNoDataValue()
@@ -300,7 +332,7 @@ def test_pds4_9():
                                             'IMAGE_FORMAT=' + frmt])
 
         ret = validate_xml(filename)
-        assert ret != 'fail', 'validation failed'
+        assert ret, 'validation failed'
 
         ds = gdal.Open(filename)
         ndv = ds.GetRasterBand(1).GetNoDataValue()
@@ -393,7 +425,7 @@ def test_pds4_9():
     ds = None
 
     ret = validate_xml(filename)
-    assert ret != 'fail', 'validation failed'
+    assert ret, 'validation failed'
 
     # Special_Constants with just saturated_constant
     gdal.FileFromMemBuffer(template, """
@@ -455,7 +487,7 @@ def test_pds4_9():
     ds = None
 
     ret = validate_xml(filename)
-    assert ret != 'fail', 'validation failed'
+    assert ret, 'validation failed'
 
     gdal.GetDriverByName('PDS4').Delete(filename)
     gdal.Unlink(template)
@@ -540,7 +572,7 @@ def test_pds4_12():
                                                       'LONGITUDE_DIRECTION=Positive West',
                                                       'IMAGE_FILENAME=/vsimem/myimage.raw'])
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     ds = None
@@ -868,7 +900,7 @@ def test_pds4_14():
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
                                              options=['TEMPLATE=' + template])
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     gdal.ErrorReset()
@@ -921,7 +953,7 @@ def test_pds4_15():
                                             options=['TEMPLATE=data/byte_pds4.xml'])
 
     ret = validate_xml(filename)
-    assert ret != 'fail', 'validation failed'
+    assert ret, 'validation failed'
 
     f = gdal.VSIFOpenL(filename, 'rb')
     if f:
@@ -986,19 +1018,20 @@ def test_pds4_16():
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
                                              options=['TEMPLATE=' + template])
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with hide_substitution_warnings_error_handler():
         ds = None
 
-    ret = validate_xml(filename)
-    assert ret != 'fail', 'validation failed'
-
     f = gdal.VSIFOpenL(filename, 'rb')
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
+
+    ret = validate_xml(filename)
+    assert ret, ('validation failed: %s' % data)
+
     assert 'http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd"' in data
     assert 'xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"' in data
     assert '<cart:Cartography>' in data
@@ -1018,7 +1051,7 @@ def test_pds4_17():
         gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options=['ARRAY_TYPE=Array_2D'])
 
     ret = validate_xml(filename)
-    assert ret != 'fail', 'validation failed'
+    assert ret, 'validation failed'
 
     f = gdal.VSIFOpenL(filename, 'rb')
     if f:
@@ -1040,7 +1073,7 @@ def test_pds4_17():
         gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options=['ARRAY_TYPE=Array_3D_Spectrum'])
 
     ret = validate_xml(filename)
-    assert ret != 'fail', 'validation failed'
+    assert ret, 'validation failed'
 
     f = gdal.VSIFOpenL(filename, 'rb')
     if f:
@@ -1060,7 +1093,7 @@ def test_pds4_18():
 
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options=['RADII=1,2'])
     sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
     with gdaltest.error_handler():
@@ -1076,5 +1109,130 @@ def test_pds4_18():
 
     gdal.GetDriverByName('PDS4').Delete(filename)
 
+###############################################################################
+# Test APPEND_SUBDATASET=YES
 
 
+@pytest.mark.parametrize('options', [['IMAGE_FORMAT=RAW'], ['IMAGE_FORMAT=GEOTIFF']])
+def test_pds4_append_subdataset(options):
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options=options)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=tmerc +R=6378137 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    src_ds.GetRasterBand(1).Fill(2)
+
+    assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['APPEND_SUBDATASET=YES'])
+    ds = gdal.Open(filename)
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 2, subds
+
+    ds = gdal.Open('PDS4:/vsimem/out.xml:1:1')
+    assert ds.GetRasterBand(1).Checksum() == 1
+
+    ds = gdal.Open('PDS4:/vsimem/out.xml:1:2')
+    assert ds.GetRasterBand(1).Checksum() == 2
+
+    src_ds.GetRasterBand(1).Fill(3)
+
+    assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['APPEND_SUBDATASET=YES'])
+
+    ds = gdal.Open('PDS4:/vsimem/out.xml:1:3')
+    assert ds.GetRasterBand(1).Checksum() == 3
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+
+###############################################################################
+# Test APPEND_SUBDATASET=YES error case
+
+
+def test_pds4_append_subdataset_not_same_gt():
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=tmerc +R=6378137 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([2.1, 1, 0, 49, 0, -2])
+    src_ds.GetRasterBand(1).Fill(2)
+
+    assert not gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['APPEND_SUBDATASET=YES'])
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+
+###############################################################################
+# Test APPEND_SUBDATASET=YES error case
+
+
+def test_pds4_append_subdataset_not_same_srs():
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=tmerc +R=6378137 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=tmerc +R=1 +no_defs')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -2])
+    src_ds.GetRasterBand(1).Fill(2)
+
+    assert not gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['APPEND_SUBDATASET=YES'])
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+
+###############################################################################
+# Test unit
+
+
+def test_pds4_unit():
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1)
+    ds.GetRasterBand(1).SetUnitType('my unit')
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetUnitType() == 'my unit'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    src_ds.GetRasterBand(1).SetUnitType('my other unit')
+    assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds)
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetUnitType() == 'my other unit'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
+    assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds,
+                                                   options=['UNIT=yet another unit'])
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetUnitType() == 'yet another unit'
+
+    gdal.GetDriverByName('PDS4').Delete(filename)

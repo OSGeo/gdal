@@ -698,24 +698,18 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     }
 
     OGRCoordinateTransformation * poTransform = nullptr;
-    if (poSrcDS->GetProjectionRef() != nullptr)
+    const auto poSrcSRS = poSrcDS->GetSpatialRef();
+    if (poSrcSRS && poSrcSRS->IsProjected())
     {
-        OGRSpatialReference poDsUTM;
+        OGRSpatialReference poLatLong;
+        poLatLong.SetWellKnownGeogCS( "WGS84" );
+        poLatLong.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-        if (poDsUTM.importFromWkt(poSrcDS->GetProjectionRef()) == OGRERR_NONE)
+        poTransform = OGRCreateCoordinateTransformation( poSrcSRS, &poLatLong );
+        if( poTransform != nullptr )
         {
-            if (poDsUTM.IsProjected())
-            {
-                OGRSpatialReference poLatLong;
-                poLatLong.SetWellKnownGeogCS( "WGS84" );
-
-                poTransform = OGRCreateCoordinateTransformation( &poDsUTM, &poLatLong );
-                if( poTransform != nullptr )
-                {
-                    poTransform->Transform(1, &west, &south);
-                    poTransform->Transform(1, &east, &north);
-                }
-            }
+            poTransform->Transform(1, &west, &south);
+            poTransform->Transform(1, &east, &north);
         }
     }
 
@@ -1090,10 +1084,10 @@ int KmlSuperOverlayReadDataset::CloseDependentDatasets()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *KmlSuperOverlayReadDataset::GetProjectionRef()
+const char *KmlSuperOverlayReadDataset::_GetProjectionRef()
 
 {
-    return SRS_WKT_WGS84;
+    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/
@@ -1909,7 +1903,10 @@ class KmlSingleDocRasterDataset final: public GDALDataset
             return CE_None;
         }
 
-        virtual const char *GetProjectionRef() override { return SRS_WKT_WGS84; }
+        virtual const char *_GetProjectionRef() override { return SRS_WKT_WGS84_LAT_LONG; }
+        const OGRSpatialReference* GetSpatialRef() const override {
+            return GetSpatialRefFromOldGetProjectionRef();
+        }
 
         void BuildOverviews();
 
@@ -2450,7 +2447,47 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
 {
     CPLXMLNode* psGO = CPLGetXMLNode(psRoot, "=kml.GroundOverlay");
     if( psGO == nullptr )
-        return nullptr;
+    {
+        // Otherwise look for kml.Document.Folder.GroundOverlay if there's
+        // a single occurence of Folder and GroundOverlay
+        auto psDoc = CPLGetXMLNode(psRoot, "=kml.Document");
+        if( psDoc == nullptr )
+        {
+            return nullptr;
+        }
+        CPLXMLNode* psFolder = nullptr;
+        for( auto psIter = psDoc->psChild; psIter; psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                strcmp(psIter->pszValue, "Folder") == 0 )
+            {
+                if( psFolder == nullptr )
+                    psFolder = psIter;
+                else
+                    return nullptr;
+            }
+        }
+        if( psFolder == nullptr )
+        {
+            return nullptr;
+        }
+        for( auto psIter = psFolder->psChild; psIter; psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                strcmp(psIter->pszValue, "GroundOverlay") == 0 )
+            {
+                if( psGO == nullptr )
+                    psGO = psIter;
+                else
+                    return nullptr;
+            }
+        }
+        if( psGO == nullptr )
+        {
+            return nullptr;
+        }
+    }
+
     const char* pszHref = CPLGetXMLValue(psGO, "Icon.href", nullptr);
     if( pszHref == nullptr )
         return nullptr;
@@ -2483,6 +2520,10 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
 
         poDS->GetRasterBand(i)->SetColorInterpretation(
                     poImageDS->GetRasterBand(i)->GetColorInterpretation() );
+
+        auto poCT = poImageDS->GetRasterBand(i)->GetColorTable();
+        if( poCT )
+            poDS->GetRasterBand(i)->SetColorTable(poCT);
     }
     poImageDS->Dereference();
     double adfGeoTransform[6] = {
@@ -2493,7 +2534,7 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
         0,
         -(adfExtents[3] - adfExtents[1]) / poImageDS->GetRasterYSize() };
     poDS->SetGeoTransform( adfGeoTransform );
-    poDS->SetProjection( SRS_WKT_WGS84 );
+    poDS->SetProjection( SRS_WKT_WGS84_LAT_LONG );
     poDS->SetWritable( false );
     poDS->SetDescription( pszFilename );
 

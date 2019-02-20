@@ -68,6 +68,15 @@ def test_kmlsuperoverlay_3():
     del ds
     src_ds = None
 
+    f = gdal.VSIFOpenL('tmp/tmp.kml', 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert '<north>33.903651' in data, data
+    assert '<south>33.625312' in data, data
+    assert '<east>-117.309784' in data, data
+    assert '<west>-117.639992' in data, data
+
     filelist = ['tmp/0/0/0.jpg',
                 'tmp/0/0/0.kml',
                 'tmp/1/0/0.jpg',
@@ -283,6 +292,22 @@ def test_kmlsuperoverlay_7():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 30111
     assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand
+
+###############################################################################
+# Test raster KML with single Overlay (such as https://issues.qgis.org/issues/20173)
+
+
+def test_kmlsuperoverlay_single_overlay_document_folder_pct():
+
+    ds = gdal.Open('data/small_world_in_document_folder_pct.kml')
+    assert ds.GetProjectionRef().find('WGS_1984') >= 0
+    got_gt = ds.GetGeoTransform()
+    ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
+    for i in range(6):
+        assert abs(got_gt[i] - ref_gt[i]) <= 1e-6
+
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_PaletteIndex
+    assert ds.GetRasterBand(1).GetColorTable()
 
 ###############################################################################
 # Test that a raster with lots of blank space doesn't have unnecessary child

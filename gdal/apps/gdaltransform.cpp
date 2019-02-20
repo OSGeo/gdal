@@ -58,7 +58,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
     printf(
         "Usage: gdaltransform [--help-general]\n"
         "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
-        "    [-order n] [-tps] [-rpc] [-geoloc] \n"
+        "    [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc] \n"
         "    [-gcp pixel line easting northing [elevation]]* [-output_xy]\n"
         "    [srcfile [dstfile]]\n"
         "\n" );
@@ -70,31 +70,29 @@ static void Usage(const char* pszErrorMsg = nullptr)
 }
 
 /************************************************************************/
-/*                             SanitizeSRS                              */
+/*                             IsValidSRS                               */
 /************************************************************************/
 
-static char *SanitizeSRS( const char *pszUserInput )
+static bool IsValidSRS( const char *pszUserInput )
 
 {
+    OGRSpatialReferenceH hSRS;
+    bool bRes = true;
+
     CPLErrorReset();
 
-    char *pszResult = nullptr;
-    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
+    hSRS = OSRNewSpatialReference( nullptr );
+    if( OSRSetFromUserInput( hSRS, pszUserInput ) != OGRERR_NONE )
     {
-        OSRExportToWkt( hSRS, &pszResult );
-    }
-    else
-    {
+        bRes = false;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Translating source or target SRS failed:\n%s",
                   pszUserInput );
-        exit( 1 );
     }
 
     OSRDestroySpatialReference( hSRS );
 
-    return pszResult;
+    return bRes;
 }
 
 /************************************************************************/
@@ -133,11 +131,12 @@ MAIN_START(argc, argv)
     int                 nGCPCount = 0;
     GDAL_GCP            *pasGCPs = nullptr;
     int                 bInverse = FALSE;
-    char              **papszTO = nullptr;
+    CPLStringList       aosTO;
     int                 bOutputXY = FALSE;
     double              dfX = 0.0;
     double              dfY = 0.0;
     double              dfZ = 0.0;
+    double              dfT = 0.0;
     bool                bCoordOnCommandLine = false;
 
 /* -------------------------------------------------------------------- */
@@ -160,35 +159,43 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-t_srs") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            char *pszSRS = SanitizeSRS(argv[++i]);
-            papszTO = CSLSetNameValue( papszTO, "DST_SRS", pszSRS );
-            CPLFree( pszSRS );
+            const char *pszSRS = argv[++i];
+            if( !IsValidSRS(pszSRS) )
+                exit(1);
+            aosTO.SetNameValue("DST_SRS", pszSRS );
         }
         else if( EQUAL(argv[i],"-s_srs") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            char *pszSRS = SanitizeSRS(argv[++i]);
-            papszTO = CSLSetNameValue( papszTO, "SRC_SRS", pszSRS );
-            CPLFree( pszSRS );
+            const char *pszSRS = argv[++i];
+            if( !IsValidSRS(pszSRS) )
+                exit(1);
+            aosTO.SetNameValue("SRC_SRS", pszSRS );
+        }
+        else if( EQUAL(argv[i],"-ct") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            const char *pszCT = argv[++i];
+            aosTO.SetNameValue("COORDINATE_OPERATION", pszCT );
         }
         else if( EQUAL(argv[i],"-order") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nOrder = atoi(argv[++i]);
-            papszTO = CSLSetNameValue( papszTO, "MAX_GCP_ORDER", argv[i] );
+            aosTO.SetNameValue("MAX_GCP_ORDER", argv[i] );
         }
         else if( EQUAL(argv[i],"-tps") )
         {
-            papszTO = CSLSetNameValue( papszTO, "METHOD", "GCP_TPS" );
+            aosTO.SetNameValue("METHOD", "GCP_TPS" );
             nOrder = -1;
         }
         else if( EQUAL(argv[i],"-rpc") )
         {
-            papszTO = CSLSetNameValue( papszTO, "METHOD", "RPC" );
+            aosTO.SetNameValue("METHOD", "RPC" );
         }
         else if( EQUAL(argv[i],"-geoloc") )
         {
-            papszTO = CSLSetNameValue( papszTO, "METHOD", "GEOLOC_ARRAY" );
+            aosTO.SetNameValue("METHOD", "GEOLOC_ARRAY" );
         }
         else if( EQUAL(argv[i],"-i") )
         {
@@ -197,7 +204,7 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-to")  )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            papszTO = CSLAddString( papszTO, argv[++i] );
+            aosTO.AddString( argv[++i] );
         }
         else if( EQUAL(argv[i],"-gcp") )
         {
@@ -236,7 +243,8 @@ MAIN_START(argc, argv)
             dfY = CPLAtof(argv[++i]);
             if( i + 1 < argc && CPLGetValueType(argv[i+1]) != CPL_VALUE_STRING )
                 dfZ = CPLAtof(argv[++i]);
-            bOutputXY = TRUE;
+            if( i + 1 < argc && CPLGetValueType(argv[i+1]) != CPL_VALUE_STRING )
+                dfT = CPLAtof(argv[++i]);
         }
         else if( argv[i][0] == '-' )
         {
@@ -303,10 +311,8 @@ MAIN_START(argc, argv)
     {
         pfnTransformer = GDALGenImgProjTransform;
         hTransformArg =
-            GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
+            GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, aosTO.List() );
     }
-
-    CSLDestroy( papszTO );
 
     if( hTransformArg == nullptr )
     {
@@ -316,6 +322,8 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Read points from stdin, transform and write to stdout.          */
 /* -------------------------------------------------------------------- */
+    double dfLastT = 0.0;
+
     while( bCoordOnCommandLine || !feof(stdin) )
     {
         if( !bCoordOnCommandLine )
@@ -326,8 +334,9 @@ MAIN_START(argc, argv)
                 break;
 
             char **papszTokens = CSLTokenizeString(szLine);
+            const int nCount = CSLCount(papszTokens);
 
-            if( CSLCount(papszTokens) < 2 )
+            if( nCount < 2 )
             {
                 CSLDestroy(papszTokens);
                 continue;
@@ -335,11 +344,29 @@ MAIN_START(argc, argv)
 
             dfX = CPLAtof(papszTokens[0]);
             dfY = CPLAtof(papszTokens[1]);
-            if( CSLCount(papszTokens) >= 3 )
+            if( nCount >= 3 )
                 dfZ = CPLAtof(papszTokens[2]);
             else
                 dfZ = 0.0;
+            if( nCount == 4 )
+                dfT = CPLAtof(papszTokens[3]);
+            else 
+                dfT = 0.0;
             CSLDestroy(papszTokens);
+        }
+        if( dfT != dfLastT && nGCPCount == 0 )
+        {
+            if( dfT != 0.0 )
+            {
+                aosTO.SetNameValue("COORDINATE_EPOCH", CPLSPrintf("%g", dfT));
+            }
+            else
+            {
+                aosTO.SetNameValue("COORDINATE_EPOCH", nullptr);
+            }
+            GDALDestroyGenImgProjTransformer(hTransformArg);
+            hTransformArg =
+                GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, aosTO.List() );
         }
 
         int bSuccess = TRUE;
@@ -359,6 +386,7 @@ MAIN_START(argc, argv)
 
         if( bCoordOnCommandLine )
             break;
+        dfLastT = dfT;
     }
 
     if( nGCPCount != 0 && nOrder == -1 )

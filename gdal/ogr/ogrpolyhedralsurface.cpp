@@ -436,6 +436,9 @@ OGRErr OGRPolyhedralSurface::importFromWkt( const char ** ppszInput )
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
 
+    set3D(oMP.Is3D());
+    setMeasured(oMP.IsMeasured());
+
     *ppszInput = pszInput;
     return OGRERR_NONE;
 }

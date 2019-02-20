@@ -358,15 +358,6 @@ def test_transformer_10():
     out_ds.GetRasterBand(1).Fill(100)
     out_ds = None
 
-    sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +datum=WGS84 +geoidgrids=./tmp/fake.gtx +vunits=m +foo=bar +no_defs')
-    if sr.ExportToProj4().find('foo=bar') >= 0:
-        gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
-        pytest.skip('Missing proj.4')
-    if sr.ExportToProj4().find('geoidgrids') < 0:
-        gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
-        pytest.skip('Missing geoidgrids in %s. Outdated proj.4 version' % sr.ExportToProj4())
-
     # Create a fake DEM
     ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1, gdal.GDT_Byte)
     ds_dem.SetGeoTransform([125.647968621436, 1.2111052640051412e-05, 0, 39.869926216038, 0, -8.6569068979969188e-06])
@@ -403,9 +394,8 @@ def test_transformer_10():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt'])
     (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
-
     assert success and abs(pnt[0] - 27.31476045569616) <= 1e-5 and abs(pnt[1] - -53.328814757762302) <= 1e-5 and pnt[2] == 0, \
-        'got wrong result.'
+        'got wrong result: %s' % str(pnt)
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt', 'RPC_DEM_APPLY_VDATUM_SHIFT=FALSE'])
     (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
@@ -711,3 +701,18 @@ def test_transformer_17():
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/i/donot/exist/dem.tif'])
     assert tr is None
+
+
+def test_transformer_longlat_wrap_outside_180():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 360, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([-180, 1, 0, 0, 0, -1])
+    tr = gdal.Transformer(ds, ds, [])
+
+    (success, pnt) = tr.TransformPoint(0, -0.5, 0.5, 0)
+    assert success
+    assert abs(pnt[0] - 359.5) <= 0.000001, pnt
+    assert abs(pnt[1] - 0.5) <= 0.000001, pnt

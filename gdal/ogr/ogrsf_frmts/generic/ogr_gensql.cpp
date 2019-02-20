@@ -421,6 +421,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
             if( psColDef->nSRID > 0 )
             {
                 OGRSpatialReference* poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if( poSRS->importFromEPSG( psColDef->nSRID ) == OGRERR_NONE )
                 {
                     oGFDefn.SetSpatialRef( poSRS );

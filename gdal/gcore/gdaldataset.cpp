@@ -116,6 +116,11 @@ class GDALDataset::Private
     GIntBig nTotalFeatures = TOTAL_FEATURES_NOT_INIT;
     OGRLayer *poCurrentLayer = nullptr;
 
+    char               *m_pszWKTCached = nullptr;
+    OGRSpatialReference *m_poSRSCached = nullptr;
+    char               *m_pszWKTGCPCached = nullptr;
+    OGRSpatialReference *m_poSRSGCPCached = nullptr;
+
     Private() = default;
 };
 
@@ -345,8 +350,23 @@ GDALDataset::~GDALDataset()
         m_poStyleTable = nullptr;
     }
 
-    if( m_poPrivate != nullptr && m_poPrivate->hMutex != nullptr )
-        CPLDestroyMutex(m_poPrivate->hMutex);
+    if( m_poPrivate != nullptr )
+    {
+        if( m_poPrivate->hMutex != nullptr )
+            CPLDestroyMutex(m_poPrivate->hMutex);
+
+        CPLFree(m_poPrivate->m_pszWKTCached);
+        if( m_poPrivate->m_poSRSCached )
+        {
+            m_poPrivate->m_poSRSCached->Release();
+        }
+        CPLFree(m_poPrivate->m_pszWKTGCPCached);
+        if( m_poPrivate->m_poSRSGCPCached )
+        {
+            m_poPrivate->m_poSRSGCPCached->Release();
+        }
+    }
+
     delete m_poPrivate;
 
     CSLDestroy(papszOpenOptions);
@@ -815,13 +835,126 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
  * When a projection definition is not available an empty (but not NULL)
  * string is returned.
  *
+ * \note Startig with GDAL 2.5, this is a compatibility layer around
+ * GetSpatialRef()
+ *
  * @return a pointer to an internal projection reference string.  It should
  * not be altered, freed or expected to last for long.
  *
  * @see http://www.gdal.org/osr_tutorial.html
  */
 
-const char *GDALDataset::GetProjectionRef() { return (""); }
+const char *GDALDataset::GetProjectionRef() const
+{
+    return GetProjectionRefFromSpatialRef(GetSpatialRef());
+
+}
+
+//! @cond Doxygen_Suppress
+const char *GDALDataset::GetProjectionRefFromSpatialRef(const OGRSpatialReference* poSRS) const
+{
+    if( !poSRS || !m_poPrivate )
+    {
+        return "";
+    }
+    char* pszWKT = nullptr;
+    poSRS->exportToWkt(&pszWKT);
+    if( !pszWKT )
+    {
+        return "";
+    }
+    if( pszWKT && m_poPrivate->m_pszWKTCached &&
+        strcmp(pszWKT, m_poPrivate->m_pszWKTCached) == 0 )
+    {
+        CPLFree(pszWKT);
+        return m_poPrivate->m_pszWKTCached;
+    }
+    CPLFree(m_poPrivate->m_pszWKTCached);
+    m_poPrivate->m_pszWKTCached = pszWKT;
+    return m_poPrivate->m_pszWKTCached;
+}
+//! @endcond
+
+/************************************************************************/
+/*                         _GetProjectionRef()                          */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/** Pre GDAL-2.5 way */
+const char *GDALDataset::_GetProjectionRef() { return (""); }
+//! @endcond
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+/**
+ * \brief Fetch the spatial reference for this dataset.
+ *
+ * Same as the C function GDALGetSpatialRef().
+ *
+ * When a projection definition is not available, null is returned
+ *
+ * @since GDAL 2.5
+ *
+ * @return a pointer to an internal object. It should not be altered or freed.
+ * Its lifetime will be the one of the dataset object, or until the next
+ * call to this method.
+ *
+ * @see http://www.gdal.org/osr_tutorial.html
+ */
+
+const OGRSpatialReference* GDALDataset::GetSpatialRef() const
+{
+    return nullptr;
+}
+
+/************************************************************************/
+/*                        GDALGetSpatialRef()                           */
+/************************************************************************/
+
+/**
+ * \brief Fetch the projection definition string for this dataset.
+ *
+ * @since GDAL 2.5
+ *
+ * @see GDALDataset::GetSpatialRef()
+ */
+
+OGRSpatialReferenceH GDALGetSpatialRef( GDALDatasetH hDS )
+
+{
+    VALIDATE_POINTER1(hDS, "GDALGetSpatialRef", nullptr);
+
+    return OGRSpatialReference::ToHandle(
+            const_cast<OGRSpatialReference*>(
+                GDALDataset::FromHandle(hDS)->GetSpatialRef()));
+}
+
+/************************************************************************/
+/*                 GetSpatialRefFromOldGetProjectionRef()               */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+const OGRSpatialReference* GDALDataset::GetSpatialRefFromOldGetProjectionRef() const
+{
+    const char* pszWKT = const_cast<GDALDataset*>(this)->_GetProjectionRef();
+    if( !pszWKT || pszWKT[0] == '\0' || !m_poPrivate )
+    {
+        return nullptr;
+    }
+    if( !m_poPrivate->m_poSRSCached )
+    {
+        m_poPrivate->m_poSRSCached = new OGRSpatialReference();
+        m_poPrivate->m_poSRSCached->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    if( m_poPrivate->m_poSRSCached->importFromWkt(pszWKT) != OGRERR_NONE )
+    {
+        return nullptr;
+    }
+    return m_poPrivate->m_poSRSCached;
+}
+//! @endcond
 
 /************************************************************************/
 /*                        GDALGetProjectionRef()                        */
@@ -846,7 +979,6 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * \fn GDALDataset::SetProjection(const char*)
  * \brief Set the projection reference string for this dataset.
  *
  * The string should be in OGC WKT or PROJ.4 format.  An error may occur
@@ -856,18 +988,120 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
  *
  * This method is the same as the C GDALSetProjection() function.
  *
+ * \note Startig with GDAL 2.5, this is a compatibility layer around
+ * SetSpatialRef()
+
  * @param pszProjection projection reference string.
  *
  * @return CE_Failure if an error occurs, otherwise CE_None.
  */
 
-CPLErr GDALDataset::SetProjection( CPL_UNUSED const char *pszProjection )
+CPLErr GDALDataset::SetProjection( const char *pszProjection )
+{
+    if( pszProjection && pszProjection[0] != '\0' )
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if( oSRS.importFromWkt(pszProjection) != OGRERR_NONE )
+        {
+            return CE_Failure;
+        }
+        return SetSpatialRef(&oSRS);
+    }
+    else
+    {
+        return SetSpatialRef(nullptr);
+    }
+}
+
+/************************************************************************/
+/*                           SetSpatialRef()                            */
+/************************************************************************/
+
+/**
+ * \brief Set the spatial reference system for this dataset.
+ *
+ * An error may occur because the dataset
+ * is not writable, or because the dataset does not support the indicated
+ * projection. Many formats do not support writing projections.
+ *
+ * This method is the same as the C GDALSetSpatialRef() function.
+ *
+ * @since GDAL 2.5
+
+ * @param poSRS spatial reference system object. nullptr can potentially be
+ * passed for drivers that support unsetting the SRS.
+ *
+ * @return CE_Failure if an error occurs, otherwise CE_None.
+ */
+
+CPLErr GDALDataset::SetSpatialRef( CPL_UNUSED const OGRSpatialReference* poSRS )
+{
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "Dataset does not support the SetSpatialRef() method.");
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                         GDALSetSpatialRef()                          */
+/************************************************************************/
+
+/**
+ * \brief Set the spatial reference system for this dataset.
+ *
+ * @since GDAL 2.5
+ *
+ * @see GDALDataset::SetSpatialRef()
+ */
+
+CPLErr GDALSetSpatialRef( GDALDatasetH hDS, OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1(hDS, "GDALSetSpatialRef", CE_Failure);
+
+    return GDALDataset::FromHandle(hDS)->SetSpatialRef(
+        OGRSpatialReference::FromHandle(hSRS));
+}
+
+/************************************************************************/
+/*                          _SetProjection()                            */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/** Pre GDAL-2.5 way */
+CPLErr GDALDataset::_SetProjection( const char * )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError(CE_Failure, CPLE_NotSupported,
                     "Dataset does not support the SetProjection() method.");
     return CE_Failure;
 }
+//! @endcond
+
+/************************************************************************/
+/*                   OldSetProjectionFromSetSpatialRef()                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+CPLErr GDALDataset::OldSetProjectionFromSetSpatialRef(
+                            const OGRSpatialReference* poSRS)
+{
+    if( !poSRS || poSRS->IsEmpty() )
+    {
+        return _SetProjection("");
+    }
+    char* pszWKT = nullptr;
+    if( poSRS->exportToWkt(&pszWKT) != OGRERR_NONE )
+    {
+        CPLFree(pszWKT);
+        return CE_Failure;
+    }
+    auto ret = _SetProjection(pszWKT);
+    CPLFree(pszWKT);
+    return ret;
+}
+//! @endcond
 
 /************************************************************************/
 /*                         GDALSetProjection()                          */
@@ -1292,11 +1526,121 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
  *
  * The projection string follows the normal rules from GetProjectionRef().
  *
+ * \note Startig with GDAL 2.5, this is a compatibility layer around
+ * GetGCPSpatialRef()
+ *
  * @return internal projection string or "" if there are no GCPs.
  *  It should not be altered, freed or expected to last for long.
  */
 
-const char *GDALDataset::GetGCPProjection() { return ""; }
+const char *GDALDataset::GetGCPProjection()
+{
+    return GetGCPProjectionFromSpatialRef(GetGCPSpatialRef());
+}
+
+//! @cond Doxygen_Suppress
+const char *GDALDataset::GetGCPProjectionFromSpatialRef(const OGRSpatialReference* poSRS) const
+{
+    if( !poSRS || !m_poPrivate )
+    {
+        return "";
+    }
+    char* pszWKT = nullptr;
+    poSRS->exportToWkt(&pszWKT);
+    if( !pszWKT )
+    {
+        return "";
+    }
+    if( pszWKT && m_poPrivate->m_pszWKTGCPCached &&
+        strcmp(pszWKT, m_poPrivate->m_pszWKTGCPCached) == 0 )
+    {
+        CPLFree(pszWKT);
+        return m_poPrivate->m_pszWKTGCPCached;
+    }
+    CPLFree(m_poPrivate->m_pszWKTGCPCached);
+    m_poPrivate->m_pszWKTGCPCached = pszWKT;
+    return m_poPrivate->m_pszWKTGCPCached;
+}
+//! @endcond
+
+/************************************************************************/
+/*                         _GetGCPProjection()                          */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/** Pre GDAL-2.5 way */
+const char *GDALDataset::_GetGCPProjection() { return ""; }
+//! @endcond
+
+/************************************************************************/
+/*                          GetGCPSpatialRef()                          */
+/************************************************************************/
+
+/**
+ * \brief Get output spatial reference system for GCPs.
+ *
+ * Same as the C function GDALGetGCPSpatialRef().
+ *
+ * When a SRS is not available, null is returned
+ *
+ * @since GDAL 2.5
+ *
+ * @return a pointer to an internal object. It should not be altered or freed.
+ * Its lifetime will be the one of the dataset object, or until the next
+ * call to this method.
+ */
+
+const OGRSpatialReference* GDALDataset::GetGCPSpatialRef() const
+{
+    return nullptr;
+}
+
+/************************************************************************/
+/*                       GDALGetGCPSpatialRef()                         */
+/************************************************************************/
+
+/**
+ * \brief Get output spatial reference system for GCPs.
+ *
+ * @since GDAL 2.5
+ *
+ * @see GDALDataset::GetGCPSpatialRef()
+ */
+
+OGRSpatialReferenceH GDALGetGCPSpatialRef( GDALDatasetH hDS )
+
+{
+    VALIDATE_POINTER1(hDS, "GDALGetGCPSpatialRef", nullptr);
+
+    return OGRSpatialReference::ToHandle(
+            const_cast<OGRSpatialReference*>(
+                GDALDataset::FromHandle(hDS)->GetGCPSpatialRef()));
+}
+
+/************************************************************************/
+/*                GetGCPSpatialRefFromOldGetGCPProjection()             */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+const OGRSpatialReference* GDALDataset::GetGCPSpatialRefFromOldGetGCPProjection() const
+{
+    const char* pszWKT = const_cast<GDALDataset*>(this)->_GetGCPProjection();
+    if( !pszWKT || pszWKT[0] == '\0' || !m_poPrivate )
+    {
+        return nullptr;
+    }
+    if( !m_poPrivate->m_poSRSGCPCached)
+    {
+        m_poPrivate->m_poSRSGCPCached = new OGRSpatialReference();
+        m_poPrivate->m_poSRSGCPCached->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    if( m_poPrivate->m_poSRSGCPCached->importFromWkt(pszWKT) != OGRERR_NONE )
+    {
+        return nullptr;
+    }
+    return m_poPrivate->m_poSRSGCPCached;
+}
+//! @endcond
 
 /************************************************************************/
 /*                        GDALGetGCPProjection()                        */
@@ -1354,7 +1698,6 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 /************************************************************************/
 
 /**
- * \fn GDALDataset::SetGCPs(int, const GDAL_GCP*, const char*)
  * \brief Assign GCPs.
  *
  * This method is the same as the C function GDALSetGCPs().
@@ -1366,6 +1709,9 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
  *
  * Most formats do not support setting of GCPs, even formats that can
  * handle GCPs.  These formats will return CE_Failure.
+ *
+ * \note Startig with GDAL 2.5, this is a compatibility layer around
+ * SetGCPs(int, const GDAL_GCP*, const char*)
  *
  * @param nGCPCount number of GCPs being assigned.
  *
@@ -1379,9 +1725,62 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
  * not supported for this format).
  */
 
+CPLErr GDALDataset::SetGCPs( int nGCPCount,
+                             const GDAL_GCP *pasGCPList,
+                             const char *pszGCPProjection )
+
+{
+    if( pszGCPProjection && pszGCPProjection[0] != '\0' )
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if( oSRS.importFromWkt(pszGCPProjection) != OGRERR_NONE )
+        {
+            return CE_Failure;
+        }
+        return SetGCPs(nGCPCount, pasGCPList, &oSRS);
+    }
+    else
+    {
+        return SetGCPs(nGCPCount, pasGCPList,
+                       static_cast<const OGRSpatialReference*>(nullptr));
+    }
+}
+
+/************************************************************************/
+/*                              SetGCPs()                               */
+/************************************************************************/
+
+/**
+ * \brief Assign GCPs.
+ *
+ * This method is the same as the C function GDALSetGCPs().
+ *
+ * This method assigns the passed set of GCPs to this dataset, as well as
+ * setting their coordinate system.  Internally copies are made of the
+ * coordinate system and list of points, so the caller remains responsible for
+ * deallocating these arguments if appropriate.
+ *
+ * Most formats do not support setting of GCPs, even formats that can
+ * handle GCPs.  These formats will return CE_Failure.
+ *
+ * @since GDAL 2.5
+ *
+ * @param nGCPCount number of GCPs being assigned.
+ *
+ * @param pasGCPList array of GCP structures being assign (nGCPCount in array).
+ *
+ * @param poGCP_SRS the new coordinate reference system to assign for the
+ * GCP output coordinates.  This parameter should be null if no output coordinate
+ * system is known.
+ *
+ * @return CE_None on success, CE_Failure on failure (including if action is
+ * not supported for this format).
+ */
+
 CPLErr GDALDataset::SetGCPs( CPL_UNUSED int nGCPCount,
                              CPL_UNUSED const GDAL_GCP *pasGCPList,
-                             CPL_UNUSED const char *pszGCPProjection )
+                             CPL_UNUSED const OGRSpatialReference * poGCP_SRS )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1392,13 +1791,57 @@ CPLErr GDALDataset::SetGCPs( CPL_UNUSED int nGCPCount,
 }
 
 /************************************************************************/
+/*                            _SetGCPs()                                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/** Pre GDAL-2.5 way */
+CPLErr GDALDataset::_SetGCPs( int,
+                              const GDAL_GCP*,
+                              const char * )
+
+{
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "Dataset does not support the SetGCPs() method.");
+
+    return CE_Failure;
+}
+//! @endcond
+
+/************************************************************************/
+/*                           OldSetGCPsFromNew()                        */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+CPLErr GDALDataset::OldSetGCPsFromNew(
+                              int nGCPCount, const GDAL_GCP *pasGCPList,
+                              const OGRSpatialReference * poGCP_SRS )
+{
+    if( !poGCP_SRS || poGCP_SRS->IsEmpty() )
+    {
+        return _SetGCPs(nGCPCount, pasGCPList, "");
+    }
+    char* pszWKT = nullptr;
+    if( poGCP_SRS->exportToWkt(&pszWKT) != OGRERR_NONE )
+    {
+        CPLFree(pszWKT);
+        return CE_Failure;
+    }
+    auto ret = _SetGCPs(nGCPCount, pasGCPList, pszWKT);
+    CPLFree(pszWKT);
+    return ret;
+}
+//! @endcond
+
+/************************************************************************/
 /*                            GDALSetGCPs()                             */
 /************************************************************************/
 
 /**
  * \brief Assign GCPs.
  *
- * @see GDALDataset::SetGCPs()
+ * @see GDALDataset::SetGCPs(int, const GDAL_GCP*, const char*)
  */
 
 CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
@@ -1410,6 +1853,28 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
 
     return GDALDataset::FromHandle(hDS)
         ->SetGCPs(nGCPCount, pasGCPList, pszGCPProjection);
+}
+
+/************************************************************************/
+/*                           GDALSetGCPs2()                             */
+/************************************************************************/
+
+/**
+ * \brief Assign GCPs.
+ *
+ * @since GDAL 2.5
+ * @see GDALDataset::SetGCPs(int, const GDAL_GCP*, const OGRSpatialReference*)
+ */
+
+CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
+                     const GDAL_GCP *pasGCPList,
+                     OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1(hDS, "GDALSetGCPs2", CE_Failure);
+
+    return GDALDataset::FromHandle(hDS)
+        ->SetGCPs(nGCPCount, pasGCPList, OGRSpatialReference::FromHandle(hSRS));
 }
 
 /************************************************************************/
