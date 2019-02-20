@@ -91,6 +91,8 @@ std::string removeTrailingZeros(std::string s)
 // Round a string representing a number by 1 in the least significant digit.
 std::string roundup(std::string s)
 {
+    // Remove a negative sign if it exists to make processing
+    // more straigtforward.
     bool negative(false);
     if (s[0] == '-')
     {
@@ -98,6 +100,10 @@ std::string roundup(std::string s)
         s = s.substr(1);
     }
 
+    // Go from the back to the front.  If we increment a digit other than
+    // a '9', we're done.  If we increment a '9', set it to a '0' and move
+    // to the next (more significant) digit.  If we get to the front of the
+    // string, add a '1' to the front of the string.
     for (int pos = static_cast<int>(s.size() - 1); pos >= 0; pos--)
     {
         if (s[pos] == '.')
@@ -117,6 +123,10 @@ std::string roundup(std::string s)
     return s;
 }
 
+
+// This attempts to elimiate what is likely binary -> decimal representation
+// error or the result of low-order rounding with calculations.  The result
+// may be more visually pleasing and takes up fewer places.
 std::string intelliround(std::string& s)
 {
     // If there is no decimal point, just return.
@@ -196,146 +206,28 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
                       char chDecimalSep, int nPrecision,
                       char chConversionSpecifier )
 {
-    // So to have identical cross platform representation.
-    if( CPLIsInf(dfVal) )
+    OGRWktOptions opts;
+
+    opts.precision = nPrecision;
+    opts.format =
+        (chConversionSpecifier == 'g' || chConversionSpecifier == 'G') ?
+        OGRWktFormat::G :
+        OGRWktFormat::F;
+
+    std::string s = OGRFormatDouble(dfVal, opts);
+    if (chDecimalSep != '\0' && chDecimalSep != '.')
     {
-        if( dfVal > 0 )
-            CPLsnprintf(pszBuffer, nBufferLen, "%s", "inf");
-        else
-            CPLsnprintf(pszBuffer, nBufferLen, "%s", "-inf");
-        return;
+        auto pos = s.find('.');
+        if (pos != std::string::npos)
+            s.replace(pos, 1, chDecimalSep);
     }
-    if( CPLIsNan(dfVal) )
+    if (s.size() + 1 > nBufferLen)
     {
-        CPLsnprintf(pszBuffer, nBufferLen, "%s", "nan");
-        return;
+        CPLError(CE_Warning, CPLE_AppDefined, "Truncated double value %s to "
+            "%s.", s.data(), s.substr(0, nBufferLen - 1).data());
+        s.resize(nBufferLen - 1);
     }
-
-    char szFormat[16] = {};
-    snprintf(szFormat, sizeof(szFormat),
-             "%%.%d%c", nPrecision, chConversionSpecifier);
-
-    int ret = CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
-    // Windows CRT does not conform with C99 and returns -1 when buffer is
-    // truncated.
-    if( ret >= nBufferLen || ret == -1 )
-    {
-        CPLsnprintf(pszBuffer, nBufferLen, "%s", "too_big");
-        return;
-    }
-
-    if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
-        return;
-
-    const bool bRound =
-        CPLTestBool(CPLGetConfigOption("OGR_WKT_ROUND", "TRUE"));
-
-    int nTruncations = 0;
-    while( nPrecision > 0 )
-    {
-        int i = 0;
-        int nCountBeforeDot = 0;
-        int iDotPos = -1;
-        while( pszBuffer[i] != '\0' )
-        {
-            if( pszBuffer[i] == '.' && chDecimalSep != '\0' )
-            {
-                iDotPos = i;
-                pszBuffer[i] = chDecimalSep;
-            }
-            else if( iDotPos < 0 && pszBuffer[i] != '-' )
-                ++nCountBeforeDot;
-            ++i;
-        }
-        if( iDotPos < 0 )
-            break;
-
-    /* -------------------------------------------------------------------- */
-    /*      Trim trailing 00000x's as they are likely roundoff error.       */
-    /* -------------------------------------------------------------------- */
-        if( i > 10 && bRound )
-        {
-            if(  // && pszBuffer[i-1] == '1' &&
-                pszBuffer[i-2] == '0'
-                && pszBuffer[i-3] == '0'
-                && pszBuffer[i-4] == '0'
-                && pszBuffer[i-5] == '0'
-                && pszBuffer[i-6] == '0' )
-            {
-                pszBuffer[--i] = '\0';
-            }
-            else if( i - 8 > iDotPos &&  // pszBuffer[i-1] == '1'
-                     // && pszBuffer[i-2] == '0' &&
-                     (nCountBeforeDot >= 4 || pszBuffer[i-3] == '0')
-                     && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '0')
-                     && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '0')
-                     && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '0')
-                     && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '0')
-                     && pszBuffer[i-8] == '0'
-                     && pszBuffer[i-9] == '0')
-            {
-                i -= 8;
-                pszBuffer[i] = '\0';
-            }
-        }
-
-    /* -------------------------------------------------------------------- */
-    /*      Trim trailing zeros.                                            */
-    /* -------------------------------------------------------------------- */
-        while( i > 2 && pszBuffer[i-1] == '0' && pszBuffer[i-2] != '.' )
-        {
-            pszBuffer[--i] = '\0';
-        }
-
-        if( !bRound )
-            return;
-
-    /* -------------------------------------------------------------------- */
-    /*      Detect trailing 99999X's as they are likely roundoff error.     */
-    /* -------------------------------------------------------------------- */
-        if( i > 10 &&
-            nPrecision + nTruncations >= 15)
-        {
-            if(  //pszBuffer[i-1] == '9' &&
-                pszBuffer[i-2] == '9'
-                && pszBuffer[i-3] == '9'
-                && pszBuffer[i-4] == '9'
-                && pszBuffer[i-5] == '9'
-                && pszBuffer[i-6] == '9' )
-            {
-                --nPrecision;
-                ++nTruncations;
-                snprintf(szFormat, sizeof(szFormat),
-                         "%%.%d%c", nPrecision, chConversionSpecifier);
-                CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
-                if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
-                    return;
-                continue;
-            }
-            else if( i - 9 > iDotPos &&
-                     // pszBuffer[i-1] == '9' &&
-                     //pszBuffer[i-2] == '9' &&
-                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '9')
-                     && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '9')
-                     && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '9')
-                     && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '9')
-                     && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '9')
-                     && pszBuffer[i-8] == '9'
-                     && pszBuffer[i-9] == '9')
-            {
-                --nPrecision;
-                ++nTruncations;
-                snprintf(szFormat, sizeof(szFormat),
-                         "%%.%d%c", nPrecision, chConversionSpecifier);
-                CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
-                if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
-                    return;
-                continue;
-            }
-        }
-
-        break;
-    }
+    strcpy(pszBuffer, s.data());
 }
 
 
@@ -350,6 +242,7 @@ std::string OGRFormatDouble(double val, OGRWktOptions opts)
         return "nan";
 
     std::ostringstream oss;
+    oss.imbue(std::locale::classic());  // Make sure we output decimal points.
     if (opts.format == OGRWktFormat::F ||
         (opts.format == OGRWktFormat::Default && fabs(val) < 1))
         oss << std::fixed;

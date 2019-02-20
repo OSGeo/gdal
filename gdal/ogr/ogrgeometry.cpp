@@ -1758,7 +1758,7 @@ std::string OGRGeometry::wktTypeString(OGRwkbVariant variant) const
 
 /**
  * \fn OGRErr OGRGeometry::exportToWkt( char ** ppszDstText,
- * OGRwkbVariant eWkbVariant = wkbVariantOldOgc ) const;
+ * OGRwkbVariant variant = wkbVariantOldOgc ) const;
  *
  * \brief Convert a geometry into well known text format.
  *

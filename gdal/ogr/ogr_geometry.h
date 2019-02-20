@@ -56,21 +56,28 @@ typedef void *OGRGeometryH;
 #endif /* DEFINEH_OGRGeometryH */
 /*! @endcond */
 
+/// WKT Output formatting options.
 enum class OGRWktFormat
 {
-    F,
-    G,
-    Default
+    F,        ///< F-type formatting.
+    G,        ///< G-type formatting.
+    Default   ///< Format as F when abs(value) < 1, otherwise as G.
 };
 
+/// Options for formatting WKT output
 struct OGRWktOptions
 {
 public:
+    /// Type of WKT output to produce.
     OGRwkbVariant variant;
+    /// Precision of output.  Interpretation depends on \c format.
     int precision;
+    /// Whether GDAL-special rounding should be applied.
     bool round;
+    /// Formatting type.
     OGRWktFormat format;
 
+    /// Constructor.
     OGRWktOptions() : variant(wkbVariantOldOgc), precision(15), round(true),
         format(OGRWktFormat::Default)
     {
@@ -1460,6 +1467,11 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a circular string to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return  WKT string representing this circular string.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -1675,6 +1687,11 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a compound curve to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the compound curve.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -1873,6 +1890,11 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a curve polygon to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the curve polygon.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -2013,6 +2035,11 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     OGRErr importFromWkt( const char ** ) override;
 
     using OGRGeometry::exportToWkt;
+
+    /// Export a polygon to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the polygon.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -2198,6 +2225,11 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     OGRErr importFromWkt( const char ** ) override;
 
     using OGRGeometry::exportToWkt;
+
+    /// Export a geometry collection to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the geometry collection.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -2296,6 +2328,11 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     OGRErr importFromWkt( const char ** ) override;
 
     using OGRGeometry::exportToWkt;
+
+    /// Export a geometry collection to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the geometry collection.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -2386,6 +2423,11 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a multipolygon to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the multipolygon.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -2482,6 +2524,11 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a polyhedral surface to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the polyhedral surface.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -2657,6 +2704,11 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a multipoint to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the multipoint.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -2737,6 +2789,11 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a multicurve to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the multicurve.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -2811,6 +2868,11 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a multilinestring to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return      WKT representation of the multilinestring.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
