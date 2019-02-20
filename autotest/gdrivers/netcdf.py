@@ -2920,6 +2920,39 @@ def test_netcdf_open_empty_double_attr():
     ds = gdal.Open('data/empty_double_attr.nc')
     assert ds
 
+
+###############################################################################
+# Test writing and reading a file with huge block size
+
+def test_netcdf_huge_block_size():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+    if sys.maxsize < 2**32:
+        pytest.skip('Test not available on 32 bit')
+
+    import psutil
+    if psutil.virtual_memory().available < 2 * 50000 * 50000:
+        pytest.skip("Not enough virtual memory available")
+
+    tmpfilename = 'tmp/test_netcdf_huge_block_size.nc'
+    with gdaltest.SetCacheMax(50000 * 50000 + 100000):
+        with gdaltest.config_option('BLOCKYSIZE', '50000'):
+            gdal.Translate(tmpfilename,
+                        '../gcore/data/byte.tif',
+                        options='-f netCDF -outsize 50000 50000 -co WRITE_BOTTOMUP=NO -co COMPRESS=DEFLATE -co FORMAT=NC4')
+
+    ds = gdal.Open(tmpfilename)
+    data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
+    assert data
+    ref_ds = gdal.Open('../gcore/data/byte.tif')
+    assert data == ref_ds.ReadRaster()
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
 ###############################################################################
 
 ###############################################################################
