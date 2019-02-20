@@ -2906,7 +2906,19 @@ def test_netcdf_mixed_raster_vector():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f['PRFEDEA'] == '35043411'
-    
+
+
+###############################################################################
+# Test opening a file with an empty double attribute
+# https://github.com/OSGeo/gdal/issues/1303
+
+def test_netcdf_open_empty_double_attr():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/empty_double_attr.nc')
+    assert ds
 
 ###############################################################################
 
