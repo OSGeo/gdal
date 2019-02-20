@@ -9374,6 +9374,8 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     CPLDebug("GDAL_netCDF", "NCDFGetAttr1(%s) len=%ld type=%d", pszAttrName,
              nAttrLen, nAttrType);
 #endif
+    if( nAttrLen == 0 && nAttrType != NC_CHAR )
+        return CE_Failure;
 
     /* Allocate guaranteed minimum size (use 10 or 20 if not a string) */
     size_t nAttrValueSize = nAttrLen + 1;
@@ -9691,6 +9693,14 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId, const char *pszAttrName,
             )
             nAttrType = nTmpAttrType;
     }
+
+#ifdef DEBUG
+    if( EQUAL(pszAttrName, "DEBUG_EMPTY_DOUBLE_ATTR" ) )
+    {
+        nAttrType = NC_DOUBLE;
+        nAttrLen = 0;
+    }
+#endif
 
     /* now write the data */
     if( nAttrType == NC_CHAR )
