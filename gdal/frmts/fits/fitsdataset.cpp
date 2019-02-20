@@ -34,6 +34,10 @@
 #include <string.h>
 #include <fitsio.h>
 
+#include <string>
+#include <cstring>
+
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -748,45 +752,53 @@ void FITSDataset::WriteFITSInfo()
 
         // Set according to coordinate system (thanks to Trent Hare - USGS)
 
-        char object[16];
-        char ctype1[9], ctype2[9];
+        std::string object, ctype1, ctype2;
         
         const char* target = oSRS.GetAttrValue("DATUM",0);
-        if ( strstr(target, "Moon") ) {
-          strncpy(object, "Moon",5);
-          strncpy(ctype1, "SE", 3);
-          strncpy(ctype2, "SE", 3);
-        } else if ( strstr(target, "Mercury") ) {
-          strncpy(object, "Mercury", 8);      
-          strncpy(ctype1, "ME", 3);
-          strncpy(ctype2, "ME", 3);
-        } else if ( strstr(target, "Venus") ) {
-          strncpy(object, "Venus", 6);
-          strncpy(ctype1, "VE", 3);
-          strncpy(ctype2, "VE", 3);
-        } else if ( strstr(target, "Mars") ) {
-          strncpy(object, "Mars", 5);
-          strncpy(ctype1, "MA", 3);
-          strncpy(ctype2, "MA", 3);
-        } else if ( strstr(target, "Jupiter") ) {
-          strncpy(object, "Jupiter", 8);
-          strncpy(ctype1, "JU", 3);
-          strncpy(ctype2, "JU", 3);
-        } else if ( strstr(target, "Saturn") ) {
-          strncpy(object, "Saturn", 7);
-          strncpy(ctype1, "SA", 3);
-          strncpy(ctype2, "SA", 3);
-        } else if ( strstr(target, "Uranus") ) {
-          strncpy(object, "Uranus", 7);
-          strncpy(ctype1, "UR", 3);
-          strncpy(ctype2, "UR", 3);
-        } else if ( strstr(target, "Neptune") ) {
-          strncpy(object, "Neptune", 8);
-          strncpy(ctype1, "NE", 3);
-          strncpy(ctype2, "NE", 3);
-        }
+        if ( target ) {
+            if ( strstr(target, "Moon") ) {
+              object.assign("Moon");
+              ctype1.assign("SE");
+              ctype2.assign("SE");              
+            } else if ( strstr(target, "Mercury") ) {
+              object.assign("Mercury");
+              ctype1.assign("ME");
+              ctype2.assign("ME");
+            } else if ( strstr(target, "Venus") ) {
+              object.assign("Venus");
+              ctype1.assign("VE");
+              ctype2.assign("VE");
+            } else if ( strstr(target, "Mars") ) {
+              object.assign("Mars");
+              ctype1.assign("MA");
+              ctype2.assign("MA");
+            } else if ( strstr(target, "Jupiter") ) {
+              object.assign("Jupiter");
+              ctype1.assign("JU");
+              ctype2.assign("JU");
+            } else if ( strstr(target, "Saturn") ) {
+              object.assign("Saturn");
+              ctype1.assign("SA");
+              ctype2.assign("SA");
+            } else if ( strstr(target, "Uranus") ) {
+              object.assign("Uranus");
+              ctype1.assign("UR");
+              ctype2.assign("UR");
+            } else if ( strstr(target, "Neptune") ) {
+              object.assign("Neptune");
+              ctype1.assign("NE");
+              ctype2.assign("NE");
+            } else {
+              object.assign("Earth");
+              ctype1.assign("EA");
+              ctype2.assign("EA");
+            }
 
-        fits_update_key( hFITS, TSTRING, "OBJECT", &object, nullptr, &status);
+            char * cstrobj = new char [object.length()+1];
+            std::strcpy (cstrobj, object.c_str());
+
+            fits_update_key( hFITS, TSTRING, "OBJECT", cstrobj, nullptr, &status);
+        }
 
         double aradius = oSRS.GetSemiMajor();
         double bradius = aradius;
@@ -800,33 +812,33 @@ void FITSDataset::WriteFITSInfo()
 
         const char* un = oSRS.GetAttrValue("UNIT",0);
 
-        strcat(ctype1, "LN-");
-        strcat(ctype2, "LT-"); 
+        ctype1.append("LN-");
+        ctype2.append("LT-"); 
 
         // strcat(ctype1a, "PX-");
         // strcat(ctype2a, "PY-"); 
 
-        char fitsproj[4];
+        std::string fitsproj;
         const char* projection = oSRS.GetAttrValue("PROJECTION",0);
         double centlon, centlat;
 
         if ( strstr(projection, "Sinusoidal") ) {
-          strncpy(fitsproj, "SFL", 4);
+          fitsproj.assign("SFL");
           centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
         } else if ( strstr(projection, "Equirectangular") ) {
-          strncpy(fitsproj, "CAR", 4);
+          fitsproj.assign("CAR");
           centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
           centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
         } else if ( strstr(projection, "Orthographic") ) {
-          strncpy(fitsproj, "SIN", 4);
+          fitsproj.assign("SIN");
           centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
           centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
         } else if ( strstr(projection, "Mercator_1SP") || strstr(projection, "Mercator") ) {
-          strncpy(fitsproj, "MER", 4);
+          fitsproj.assign("MER");
           centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
           centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
         } else if ( strstr(projection, "Polar_Stereographic") || strstr(projection, "Stereographic_South_Pole") || strstr(projection, "Stereographic_North_Pole") ) {
-          strncpy(fitsproj, "STG", 4);
+          fitsproj.assign("STG");
           centlat = oSRS.GetProjParm("latitude_of_origin", 0, nullptr);
           centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
         }
@@ -850,9 +862,6 @@ void FITSDataset::WriteFITSInfo()
         if ( centlon > 180. ) {
           centlon = centlon - 180.;
         }
-        if ( centlat < 0. ) {
-          centlat = - centlat;
-        }
         if ( strstr(un, "metre") ) {
           // convert degrees/pixel to m/pixel 
           mapres = 1. / adfGeoTransform[1] ; // mapres is pixel/meters
@@ -867,10 +876,16 @@ void FITSDataset::WriteFITSInfo()
           crpix2 = (UpperLeftCornerY * mres) - (centlat / mapres) + 0.5;
         }
 
-        strcat(ctype1, fitsproj);
-        strcat(ctype2, fitsproj);
-        fits_update_key( hFITS, TSTRING, "CTYPE1", &ctype1, nullptr, &status);
-        fits_update_key( hFITS, TSTRING, "CTYPE2", &ctype2, nullptr, &status);
+        ctype1.append(fitsproj);
+        ctype2.append(fitsproj);
+
+        char * cstr1 = new char [ctype1.length()+1];
+        std::strcpy (cstr1, ctype1.c_str());
+        fits_update_key( hFITS, TSTRING, "CTYPE1", cstr1, nullptr, &status);
+
+        char * cstr2 = new char [ctype2.length()+1];
+        std::strcpy (cstr2, ctype2.c_str());
+        fits_update_key( hFITS, TSTRING, "CTYPE2", cstr2, nullptr, &status);
 
         /// Write WCS CRPIXia CRVALia CTYPEia here
 
@@ -937,10 +952,6 @@ CPLErr FITSDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 
     if( poSRS == nullptr || poSRS->IsEmpty() )
     {
-        /*if( !oSRS.IsEmpty() )
-        {
-            bForceUnsetProjection = true;
-        }*/
         oSRS.Clear();
     }
     else
@@ -1138,7 +1149,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
     double crpix1, crpix2, crval1, crval2, cdelt1, cdelt2, pc[4], cd[4];
     double aRadius, cRadius, invFlattening = 0.0;
     char target[16], ctype[9];
-    char pszGeogName[16], pszDatumName[16], projName[54];
+    std::string pszGeogName, pszDatumName, projName;
 
     const double PI = std::atan(1.0)*4;
     const double DEG2RAD = PI / 180.;
@@ -1146,11 +1157,8 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
     if( !m_bReadGeoTransform && !m_bLoadPam )
         return;
 
-/*
-    IdentifyAuthorizedGeoreferencingSources();
-*/
 /* -------------------------------------------------------------------- */
-/*      Get the transform or gcps from the FITS file.                */
+/*      Get the transform from the FITS file.                           */
 /* -------------------------------------------------------------------- */
     if( m_bReadGeoTransform )
     {
@@ -1165,10 +1173,10 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
             status = 0;
         }
 
-        strncpy(pszGeogName, "GCS_",5);
-        strcat(pszGeogName, target);
-        strncpy(pszDatumName, "D_",3);
-        strcat(pszDatumName, target);
+        pszGeogName.assign("GCS_");
+        pszGeogName.append(target);
+        pszDatumName.assign("D_");
+        pszDatumName.append(target);
 
         fits_read_key(hFITS, TDOUBLE, "A_RADIUS", &aRadius, nullptr, &status);
         if( status )
@@ -1234,108 +1242,117 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
             }
 
             char* pstr = strrchr(ctype, '-') + 1;
-            char projstr[4];
-            strcpy(projstr, pstr);
+            if ( pstr ) {
 
-            /* Defining projection type
+                /* Defining projection type
                Following http://www.gdal.org/ogr__srs__api_8h.html (GDAL)
                and http://www.aanda.org/component/article?access=bibcode&bibcode=&bibcode=2002A%2526A...395.1077CFUL (FITS)
-            */
+                */
 
-            /* Sinusoidal / SFL projection */
-            if( strcmp(projstr,"SFL" ) == 0 )
-            {
-                strncpy(projName, "Sinusoidal_", 12);
-                oSRS.SetProjection(SRS_PT_SINUSOIDAL);
-                oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
+                /* Sinusoidal / SFL projection */
+                if( strcmp(pstr,"SFL" ) == 0 ) {
+                    projName.assign("Sinusoidal_");
+                    oSRS.SetProjection(SRS_PT_SINUSOIDAL);
+                    oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
 
-            /* Mercator, Oblique (Hotine) Mercator, Transverse Mercator */
-            /* Mercator / MER projection */
-            } else if( strcmp(projstr,"MER" ) == 0 ) {
-                strncpy(projName, "Mercator_", 10);
-                oSRS.SetProjection(SRS_PT_MERCATOR_1SP);
-                oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
-                oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
+                /* Mercator, Oblique (Hotine) Mercator, Transverse Mercator */
+                /* Mercator / MER projection */
+                } else if( strcmp(pstr,"MER" ) == 0 ) {
+                    projName.assign("Mercator_");
+                    oSRS.SetProjection(SRS_PT_MERCATOR_1SP);
+                    oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
+                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
                 /*
-            # Is scale factor a reference point or a ratio between pixel scales?
-            if olat is not None:
+                # Is scale factor a reference point or a ratio between pixel scales?
+                if olat is not None:
                 srs.SetProjParm('scale_factor',olat)
-            else: #set default of 0.0
+                else: #set default of 0.0
                 srs.SetProjParm('scale_factor',0.0)
                 */
 
-            /* Equirectangular / CAR projection */
-            } else if( strcmp(projstr,"CAR" ) == 0 ) {
-                strncpy(projName, "Equirectangular_", 17);
-                oSRS.SetProjection(SRS_PT_EQUIRECTANGULAR);
+                /* Equirectangular / CAR projection */
+                } else if( strcmp(pstr,"CAR" ) == 0 ) {
+                    projName.assign("Equirectangular_");
+                    oSRS.SetProjection(SRS_PT_EQUIRECTANGULAR);
                 /*
                 The standard_parallel_1 defines where the local radius is calculated
                 not the center of Y Cartesian system (which is latitude_of_origin)
                 But FITS WCS only supports projections on the sphere
                 we assume here that the local radius is the one computed at the projection center
                 */
-                oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
-                oSRS.SetProjParm(SRS_PP_STANDARD_PARALLEL_1, crval2);
-                oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
-                oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
+                    oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
+                    oSRS.SetProjParm(SRS_PP_STANDARD_PARALLEL_1, crval2);
+                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
+                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
 
-            /* Lambert Azimuthal Equal Area / ZEA projection */
-            } else if( strcmp(projstr,"ZEA" ) == 0 ) {
-                strncpy(projName, "Lambert_Azimuthal_Equal_Area_", 30);
-                oSRS.SetProjection(SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA);
-                oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
-                oSRS.SetProjParm(SRS_PP_LATITUDE_OF_CENTER, crval2);
+                /* Lambert Azimuthal Equal Area / ZEA projection */
+                } else if( strcmp(pstr,"ZEA" ) == 0 ) {
+                    projName.assign("Lambert_Azimuthal_Equal_Area_");
+                    oSRS.SetProjection(SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA);
+                    oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
+                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_CENTER, crval2);
 
-            /* Lambert Conformal Conic 1SP / COO projection */
-            } else if( strcmp(projstr,"COO" ) == 0 ) {
-                strncpy(projName, "Lambert_Conformal_Conic_1SP_", 29);
-                oSRS.SetProjection(SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP);
-                oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
-                /*
-            #clat = self.__header['XXXXX']
-            #srs.SetProjParm('latitude_of_center',clat)
-            scale = self.__header['XXXXX']
-            if scale is not None:
-                srs.SetProjParm('scale_factor',scale)
-            else: #set default of 1.0
-                srs.SetProjParm('scale_factor',1.0)
-                */
+                /* Lambert Conformal Conic 1SP / COO projection */
+                } else if( strcmp(pstr,"COO" ) == 0 ) {
+                    projName.assign("Lambert_Conformal_Conic_1SP_");
+                    oSRS.SetProjection(SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP);
+                    oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
+                    /*
+                    #clat = self.__header['XXXXX']
+                    #srs.SetProjParm('latitude_of_center',clat)
+                    scale = self.__header['XXXXX']
+                    if scale is not None:
+                        srs.SetProjParm('scale_factor',scale)
+                    else: #set default of 1.0
+                        srs.SetProjParm('scale_factor',1.0)
+                    */
 
-            /* Orthographic / SIN projection */
-            } else if( strcmp(projstr,"SIN" ) == 0 ) {
-                strncpy(projName, "Orthographic_", 14);
-                oSRS.SetProjection(SRS_PT_ORTHOGRAPHIC);
-                oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
-                /*
-            #olat = self.__header['XXXXX']
-            #srs.SetProjParm('latitude_of_origin',olat)
-                */
+                /* Orthographic / SIN projection */
+                } else if( strcmp(pstr,"SIN" ) == 0 ) {
+                    projName.assign("Orthographic_");
+                    oSRS.SetProjection(SRS_PT_ORTHOGRAPHIC);
+                    oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
+                    /*
+                    #olat = self.__header['XXXXX']
+                    #srs.SetProjParm('latitude_of_origin',olat)
+                    */
 
-            /* Point Perspective / AZP projection */
-            } else if( strcmp(projstr,"AZP" ) == 0 ) {
-                strncpy(projName, "perspective_point_height_", 26);
-                oSRS.SetProjection(SRS_PP_PERSPECTIVE_POINT_HEIGHT);
-            /* # appears to need height... maybe center lon/lat */
+                /* Point Perspective / AZP projection */
+                } else if( strcmp(pstr,"AZP" ) == 0 ) {
+                    projName.assign("perspective_point_height_");
+                    oSRS.SetProjection(SRS_PP_PERSPECTIVE_POINT_HEIGHT);
+                    /* # appears to need height... maybe center lon/lat */
 
-            /* Polar Stereographic / STG projection */
-            } else if( strcmp(projstr,"STG" ) == 0 ) {
-                strncpy(projName, "Polar_Stereographic_", 21);
-                oSRS.SetProjection(SRS_PT_POLAR_STEREOGRAPHIC);
-                oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
-                oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
-            } else {
+                /* Polar Stereographic / STG projection */
+                } else if( strcmp(pstr,"STG" ) == 0 ) {
+                    projName.assign("Polar_Stereographic_");
+                    oSRS.SetProjection(SRS_PT_POLAR_STEREOGRAPHIC);
+                    oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
+                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
+                } else {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unknown projection.");
+                }
+
+                projName.append(target);
+                oSRS.SetProjParm(SRS_PP_FALSE_EASTING,0.0);
+                oSRS.SetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+
+                char * cstrproj = new char [projName.length()+1];
+                std::strcpy (cstrproj, projName.c_str());
+                oSRS.SetNode("PROJCS",cstrproj);
+
+                char * cstrgeoname = new char [pszGeogName.length()+1];
+                std::strcpy (cstrgeoname, pszGeogName.c_str());
+                char * cstrdname = new char [pszDatumName.length()+1];
+                std::strcpy (cstrdname, pszDatumName.c_str());
+                oSRS.SetGeogCS(cstrgeoname, cstrdname, target, aRadius, invFlattening,
+                    "Reference_Meridian", 0.0, "degree", 0.0174532925199433);
+            }  else {
                 CPLError(CE_Failure, CPLE_AppDefined,
                      "Unknown projection.");
             }
         }
-
-        strcat(projName, target);
-        oSRS.SetProjParm(SRS_PP_FALSE_EASTING,0.0);
-        oSRS.SetProjParm(SRS_PP_FALSE_NORTHING,0.0);
-        oSRS.SetNode("PROJCS",projName);
-        oSRS.SetGeogCS(pszGeogName, pszDatumName, target, aRadius, invFlattening,
-            "Reference_Meridian", 0.0, "degree", 0.0174532925199433);
-
     }
 
     if( m_bLoadPam )
