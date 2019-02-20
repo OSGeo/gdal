@@ -1084,6 +1084,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
     const int nChunkRightXOff = nChunkXOff + nChunkXSize;
     const int nChunkBottomYOff = nChunkYOff + nChunkYSize;
+    std::vector<int> anVals(256, 0);
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
@@ -1221,9 +1222,13 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             {
                 // So we go here for a paletted or non-paletted byte band.
                 // The input values are then between 0 and 255.
-                std::vector<int> anVals(256, 0);
                 int nMaxVal = 0;
                 int iMaxInd = -1;
+
+                // The cost of this zeroing might be high. Perhaps we should just
+                // use the above generic case, and go to this one if the number
+                // of source pixels is large enough
+                std::fill(anVals.begin(), anVals.end(), 0);
 
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
