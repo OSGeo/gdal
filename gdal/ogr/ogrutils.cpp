@@ -41,6 +41,7 @@
 #include <limits>
 #include <sstream>
 #include <iomanip>
+#include <ios>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"

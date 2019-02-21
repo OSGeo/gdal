@@ -427,6 +427,11 @@ class CPL_DLL OGRGeometry
 
     OGRErr exportToWkt( char ** ppszDstText,
         OGRwkbVariant=wkbVariantOldOgc ) const;
+
+    /// Export a WKT geometry.
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return  WKT string representing this geometry.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const = 0;
 
@@ -874,6 +879,11 @@ class CPL_DLL OGRPoint : public OGRGeometry
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a point to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return  WKT string representing this point.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
@@ -1175,6 +1185,11 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     using OGRGeometry::importFromWkt; /** deprecated */
     OGRErr importFromWkt( const char ** ) override;
     using OGRGeometry::exportToWkt;
+
+    /// Export a simple curve to WKT
+    /// \param opts  Output options.
+    /// \param err   Pointer to error code, if desired.
+    /// \return  WKT string representing this simple curve.
     virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
