@@ -1048,7 +1048,8 @@ bool GMLParseXSD( const char *pszFile,
 
         else if( !EQUALN(pszType, pszName, strlen(pszName))
             || !(EQUAL(pszType + strlen(pszName), "_Type") ||
-                    EQUAL(pszType + strlen(pszName), "Type")) )
+                    EQUAL(pszType + strlen(pszName), "Type") ||
+                    EQUAL(pszType + strlen(pszName), "FeatureType")) )
         {
             continue;
         }
