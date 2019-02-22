@@ -297,6 +297,8 @@ def test_ogr_pds4_create_table_character():
 
     assert validate_xml('/vsimem/test.xml')
 
+    assert gdal.VSIStatL('/vsimem/test/foo.dat')
+
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 8
@@ -334,6 +336,7 @@ def test_ogr_pds4_create_table_character():
     ds = None
 
     ogr.GetDriverByName('PDS4').DeleteDataSource('/vsimem/test.xml')
+    gdal.Rmdir('/vsimem/test')
 
 
 def test_ogr_pds4_create_with_srs():
@@ -342,13 +345,15 @@ def test_ogr_pds4_create_with_srs():
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
     lyr = ds.CreateLayer('bar', geom_type = ogr.wkbPoint25D, srs = sr,
-                         options=['TABLE_TYPE=CHARACTER'])
+                         options=['TABLE_TYPE=CHARACTER', 'SAME_DIRECTORY=YES'])
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT Z (1 2 3)'))
     lyr.CreateFeature(f)
     ds = None
 
     assert validate_xml('/vsimem/test.xml')
+
+    assert gdal.VSIStatL('/vsimem/bar.dat')
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('bar')
@@ -485,6 +490,7 @@ def test_ogr_pds4_create_table_binary():
     ds = None
 
     ogr.GetDriverByName('PDS4').DeleteDataSource('/vsimem/test.xml')
+    gdal.Rmdir('/vsimem/test')
 
 
 def test_ogr_pds4_create_table_delimited():
@@ -544,7 +550,7 @@ def test_ogr_pds4_create_table_delimited():
     assert 'foo.vrt' in fl[2]
     ds= None
 
-    for filename in [ '/vsimem/test.xml', '/vsimem/foo.vrt' ]:
+    for filename in [ '/vsimem/test.xml', '/vsimem/test/foo.vrt' ]:
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldCount() == 8, filename
@@ -583,6 +589,7 @@ def test_ogr_pds4_create_table_delimited():
     ds = None
 
     ogr.GetDriverByName('PDS4').DeleteDataSource('/vsimem/test.xml')
+    gdal.Rmdir('/vsimem/test')
 
 
 def test_ogr_pds4_read_table_binary_group_field():
@@ -627,6 +634,7 @@ def test_ogr_pds4_create_table_delimited_with_srs_no_vrt():
     ds = None
 
     ogr.GetDriverByName('PDS4').DeleteDataSource('/vsimem/test.xml')
+    gdal.Rmdir('/vsimem/test')
 
 
 def test_ogr_pds4_read_table_delimited_test_ogrsf():

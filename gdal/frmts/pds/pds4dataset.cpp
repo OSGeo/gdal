@@ -3116,6 +3116,10 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
                       poLayer->GetName());
         }
 
+        const CPLString osRelativePath(
+            CPLExtractRelativePath(
+                CPLGetPath(m_osXMLFilename), poLayer->GetFileName(), nullptr));
+
         bool bFound = false;
         for( CPLXMLNode* psIter = psProduct->psChild;
                 psIter != nullptr; psIter = psIter->psNext )
@@ -3126,7 +3130,7 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
                 const char* pszFilename = CPLGetXMLValue(psIter,
                             (osPrefix + "File." + osPrefix + "file_name").c_str(),
                             "");
-                if( strcmp(pszFilename, CPLGetFilename(poLayer->GetFileName()) ) == 0 )
+                if( strcmp(pszFilename, osRelativePath) == 0 )
                 {
                     poLayer->RefreshFileAreaObservational(psIter);
                     bFound = true;
@@ -3141,7 +3145,7 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
             CPLXMLNode* psFile = CPLCreateXMLNode(psFAO,
                 CXT_Element, (osPrefix + "File").c_str());
             CPLCreateXMLElementAndValue(psFile, (osPrefix + "file_name").c_str(),
-                                        CPLGetFilename(poLayer->GetFileName()));
+                                        osRelativePath);
             poLayer->RefreshFileAreaObservational(psFAO);
         }
     }
@@ -3558,9 +3562,41 @@ OGRLayer* PDS4Dataset::ICreateLayer( const char *pszName,
     const char* pszExt = EQUAL(pszTableType, "CHARACTER") ? "dat" :
                          EQUAL(pszTableType, "BINARY") ? "bin" : "csv";
 
-    CPLString osFullFilename =
-                CPLFormFilename( CPLGetPath(m_osXMLFilename.c_str()),
-                                 pszName, pszExt );
+    bool bSameDirectory = CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                                           "SAME_DIRECTORY",
+                                                           "NO"));
+    CPLString osFullFilename;
+    if( bSameDirectory )
+    {
+        osFullFilename = CPLFormFilename( CPLGetPath(m_osXMLFilename.c_str()),
+                                          pszName, pszExt );
+        VSIStatBufL sStat;
+        if( VSIStatL(osFullFilename, &sStat) == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s already exists. Please delete it before, or "
+                     "rename the layer",
+                     osFullFilename.c_str());
+            return nullptr;
+        }
+    }
+    else
+    {
+        CPLString osDirectory = CPLFormFilename(
+            CPLGetPath(m_osXMLFilename),
+            CPLGetBasename(m_osXMLFilename),
+            nullptr);
+        VSIStatBufL sStat;
+        if( VSIStatL(osDirectory, &sStat) != 0 &&
+            VSIMkdir(osDirectory, 0755) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create directory %s", osDirectory.c_str());
+            return nullptr;
+        }
+        osFullFilename = CPLFormFilename( osDirectory, pszName, pszExt );
+    }
+
     if( EQUAL(pszTableType, "DELIMITED") )
     {
         std::unique_ptr<PDS4DelimitedTable> poLayer(
@@ -4217,6 +4253,9 @@ void GDALRegister_PDS4()
                     "'Name of a field containing a Altitude value' default='Altitude'/>"
 "  <Option name='WKT' type='string' description="
                     "'Name of a field containing a WKT value' default='WKT'/>"
+"  <Option name='SAME_DIRECTORY' type='boolean' description="
+                    "'Whether table files should be created in the same "
+                    "directory, or in a subdirectory' default='NO'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
