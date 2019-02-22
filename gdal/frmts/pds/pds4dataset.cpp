@@ -675,7 +675,8 @@ int PDS4Dataset::Identify(GDALOpenInfo* poOpenInfo)
     const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
     return poOpenInfo->nHeaderBytes > 0 &&
            (strstr(pszHeader, "Product_Observational") != nullptr ||
-            strstr(pszHeader, "Product_Ancillary") != nullptr) &&
+            strstr(pszHeader, "Product_Ancillary") != nullptr ||
+            strstr(pszHeader, "Product_Collection") != nullptr) &&
            strstr(pszHeader, "http://pds.nasa.gov/pds4/pds/v1") != nullptr;
 }
 

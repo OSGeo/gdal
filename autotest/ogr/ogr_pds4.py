@@ -660,3 +660,13 @@ def test_ogr_pds4_read_table_delimited_group_field():
     assert f['group_second_field_1'] == '3'
     assert f['group_first_field_2'] == 4
     assert f['group_second_field_2'] == '5'
+
+
+def test_ogr_pds4_read_product_collection():
+
+    ds = ogr.Open('data/pds4/product_collection.xml')
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    f = lyr.GetNextFeature()
+    assert f['Member Status'] == 'P'
+    assert f['LIDVID_LID'] == 'urn:nasa:pds:orex.ocams:data_reduced:20160919t162205s722_map_l1pan_v031.fits::1.0'
