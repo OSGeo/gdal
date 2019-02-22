@@ -31,7 +31,6 @@
 import shutil
 import os
 
-
 from osgeo import gdal
 from osgeo import osr
 import test_py_scripts
@@ -241,7 +240,66 @@ def test_gdal_retile_4():
         assert ds.RasterYSize == height, filename
         ds = None
 
-    
+
+###############################################################################
+# Test gdal_retile.py with input having a NoData value
+
+
+def test_gdal_retile_5():
+
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy as np
+    except (ImportError, AttributeError):
+        pytest.skip()
+
+    nodata_value = -3.4028234663852886e+38
+    raster_array = np.array(([0.0, 2.0], [-1.0, nodata_value]))
+
+    script_path = test_py_scripts.get_py_script('gdal_retile')
+    if script_path is None:
+        pytest.skip()
+
+    drv = gdal.GetDriverByName('GTiff')
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS('WGS84')
+    wkt = srs.ExportToWkt()
+
+    ds = drv.Create('tmp/in5.tif', 2, 2, 1, gdal.GDT_Float32)
+    px1_x = 0.1 / ds.RasterXSize
+    px1_y = 0.1 / ds.RasterYSize
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([0, px1_x, 0, 30, 0, -px1_y])
+    raster_band = ds.GetRasterBand(1)
+    raster_band.SetNoDataValue(nodata_value)
+    raster_band.WriteArray(raster_array)
+    raster_band = None
+    ds = None
+
+    try:
+        os.mkdir('tmp/outretile5')
+    except OSError:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -targetDir tmp/outretile5 tmp/in5.tif')
+
+    ds = gdal.Open('tmp/outretile5/in5_1_1.tif')
+    raster_band = ds.GetRasterBand(1)
+
+    assert raster_band.GetNoDataValue() == nodata_value, \
+        ('Wrong nodata value.\nExpected %f, Got: %f' % (nodata_value, raster_band.GetNoDataValue()))
+
+    min_val, max_val = raster_band.ComputeRasterMinMax()
+    assert max_val, \
+        ('Wrong maximum value.\nExpected 2.0, Got: %f' % max_val)
+
+    assert min_val == -1.0, \
+        ('Wrong minimum value.\nExpected -1.0, Got: %f' % min_val)
+
+    ds = None
+
+
 ###############################################################################
 # Cleanup
 
@@ -267,7 +325,8 @@ def test_gdal_retile_cleanup():
            'tmp/outretile3/1',
            'tmp/outretile3/2',
            'tmp/outretile3/in1_1_1.tif',
-           'tmp/outretile3']
+           'tmp/outretile3',
+           'tmp/in5.tif']
     for filename in lst:
         try:
             os.remove(filename)
@@ -279,6 +338,6 @@ def test_gdal_retile_cleanup():
 
     shutil.rmtree('tmp/outretile4')
 
-
-
+    if os.path.exists('tmp/outretile5'):
+        shutil.rmtree('tmp/outretile5')
 
