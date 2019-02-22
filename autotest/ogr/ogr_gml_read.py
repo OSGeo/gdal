@@ -3575,6 +3575,25 @@ def test_ogr_gml_srsname_only_on_top_bounded_by():
     gdal.Unlink(tmpname[0:-3] + "gfs")
 
 ###############################################################################
+# Test understanding of XSD that uses 'FeatureType' suffix instead of 'Type'.
+# If schema was understood, fields 2/3/4 will be 'Real' rather than 'Integer'.
+
+def test_ogr_gml_featuretype_suffix_in_xsd():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('data/arcgis-world-wfs.gfs')
+    
+    ds = ogr.Open('data/arcgis-world-wfs.gml,xsd=data/arcgis-world-wfs.xsd')
+    lyr = ds.GetLayer(0)
+    
+    for i in range(2, 4):
+      assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTReal
+    
+    gdal.Unlink('data/arcgis-world-wfs.gfs')
+
+###############################################################################
 #  Cleanup
 
 
