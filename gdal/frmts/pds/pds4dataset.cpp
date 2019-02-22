@@ -2010,7 +2010,9 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
 /*                         WriteGeoreferencing()                        */
 /************************************************************************/
 
-void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart, const char* pszWKT)
+void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
+                                      const char* pszWKT,
+                                      bool bCart1B00OrLater)
 {
     bool bHasBoundingBox = false;
     double adfX[4] = {0};
@@ -2373,16 +2375,24 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart, const char* pszWKT)
                 "unit", "deg");
         }
 
-        CPLXMLNode* psPCI = CPLCreateXMLNode(psPlanar, CXT_Element,
-                        (osPrefix + "Planar_Coordinate_Information").c_str());
-        CPLCreateXMLElementAndValue(psPCI,
-            (osPrefix + "planar_coordinate_encoding_method").c_str(),
-            "Coordinate Pair");
-        CPLXMLNode* psCR = CPLCreateXMLNode(psPCI, CXT_Element,
-                        (osPrefix + "Coordinate_Representation").c_str());
+        CPLXMLNode* psCR = nullptr;
+        if( m_bGotTransform || !bCart1B00OrLater )
+        {
+            CPLXMLNode* psPCI = CPLCreateXMLNode(psPlanar, CXT_Element,
+                            (osPrefix + "Planar_Coordinate_Information").c_str());
+            CPLCreateXMLElementAndValue(psPCI,
+                (osPrefix + "planar_coordinate_encoding_method").c_str(),
+                "Coordinate Pair");
+            psCR = CPLCreateXMLNode(psPCI, CXT_Element,
+                            (osPrefix + "Coordinate_Representation").c_str());
+        }
         const double dfLinearUnits = oSRS.GetLinearUnits();
         const double dfDegToMeter = oSRS.GetSemiMajor() * M_PI / 180.0;
-        if( !m_bGotTransform )
+        if( psCR == nullptr )
+        {
+            // do nothing
+        }
+        else if( !m_bGotTransform )
         {
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
@@ -2496,16 +2506,19 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart, const char* pszWKT)
     {
         CPLXMLNode* psGeographic = CPLCreateXMLNode(psHCSD, CXT_Element,
                     (osPrefix + "Geographic").c_str());
-        CPLAddXMLAttributeAndValue(
-                    CPLCreateXMLElementAndValue(psGeographic,
-                        (osPrefix + "latitude_resolution").c_str(),
-                        "0"),
-                    "unit", "deg");
-        CPLAddXMLAttributeAndValue(
-                    CPLCreateXMLElementAndValue(psGeographic,
-                        (osPrefix + "longitude_resolution").c_str(),
-                        "0"),
-                    "unit", "deg");
+        if( !bCart1B00OrLater )
+        {
+            CPLAddXMLAttributeAndValue(
+                        CPLCreateXMLElementAndValue(psGeographic,
+                            (osPrefix + "latitude_resolution").c_str(),
+                            "0"),
+                        "unit", "deg");
+            CPLAddXMLAttributeAndValue(
+                        CPLCreateXMLElementAndValue(psGeographic,
+                            (osPrefix + "longitude_resolution").c_str(),
+                            "0"),
+                        "unit", "deg");
+        }
     }
 
     CPLXMLNode* psGM = CPLCreateXMLNode(psHCSD, CXT_Element,
@@ -3156,7 +3169,8 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
 /************************************************************************/
 
 void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
-                               bool bCartNeedsInternalReference)
+                               bool bCartNeedsInternalReference,
+                               bool bCart1B00OrLater)
 {
     CPLString osPrefix;
     if( STARTS_WITH(psProduct->pszValue, "pds:") )
@@ -3286,6 +3300,7 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                         {
                             osCartSchema = "https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd";
                             bCartNeedsInternalReference = true;
+                            bCart1B00OrLater = true;
                         }
                         else
                         {
@@ -3325,7 +3340,7 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                             "cartography_parameters_to_image_object");
             }
 
-            WriteGeoreferencing(psCart, osWKT);
+            WriteGeoreferencing(psCart, osWKT, bCart1B00OrLater);
         }
     }
     else
@@ -3502,6 +3517,7 @@ void PDS4Dataset::WriteHeader()
     if( m_bCreateHeader )
     {
         bool bCartNeedsInternalReference = false;
+        bool bCart1B00OrLater = false;
         char* pszXML = CPLSerializeXMLTree(psRoot);
         if( pszXML )
         {
@@ -3517,6 +3533,8 @@ void PDS4Dataset::WriteHeader()
                         CPLString osVersion(pszCartSchema + strlen("PDS4_CART_"), 4);
                         bCartNeedsInternalReference =
                             strtol(osVersion, nullptr, 16) >= strtol("1900", nullptr, 16);
+                        bCart1B00OrLater =
+                            strtol(osVersion, nullptr, 16) >= strtol("1B00", nullptr, 16);
                         break;
                     }
                     else
@@ -3533,7 +3551,7 @@ void PDS4Dataset::WriteHeader()
             CPLFree(pszXML);
         }
 
-        CreateHeader(psProduct, bCartNeedsInternalReference);
+        CreateHeader(psProduct, bCartNeedsInternalReference, bCart1B00OrLater);
     }
 
     WriteVectorLayers(psProduct);

@@ -328,7 +328,9 @@ class PDS4Dataset final: public RawDataset
     char          **m_papszCreationOptions = nullptr;
     CPLString       m_osXMLPDS4{};
 
-    void            CreateHeader(CPLXMLNode* psProduct, bool bCartNeedsInternalReference);
+    void            CreateHeader(CPLXMLNode* psProduct,
+                                 bool bCartNeedsInternalReference,
+                                 bool bCart1B00OrLater);
     void            WriteHeader();
     void            WriteHeaderAppendCase();
     void            WriteVectorLayers(CPLXMLNode* psProduct);
@@ -336,7 +338,9 @@ class PDS4Dataset final: public RawDataset
                                CPLXMLNode* psFAO,
                                const char* pszLocalIdentifier,
                                CPLXMLNode* psTemplateSpecialConstants);
-    void            WriteGeoreferencing(CPLXMLNode* psCart, const char* pszWKT);
+    void            WriteGeoreferencing(CPLXMLNode* psCart,
+                                        const char* pszWKT,
+                                        bool bCart1B00OrLater);
     void            ReadGeoreferencing(CPLXMLNode* psProduct);
     bool            InitImageFile();
 
