@@ -355,6 +355,12 @@ def test_ogr_pds4_create_with_srs():
 
     assert gdal.VSIStatL('/vsimem/bar.dat')
 
+    f = gdal.VSIFOpenL('/vsimem/test.xml', 'rb')
+    data = gdal.VSIFReadL(1, 100000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+    assert '<local_identifier_reference>bar</local_identifier_reference>' in data
+    assert '<local_identifier>bar</local_identifier>' in data
+
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('bar')
     assert lyr.GetSpatialRef()

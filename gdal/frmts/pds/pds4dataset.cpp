@@ -3329,7 +3329,8 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                     psDisciplineArea,
                     "disp:Display_Settings.Local_Internal_Reference."
                                                     "local_identifier_reference",
-                    GetRasterCount() == 0 ? "first_table" : "image");
+                    GetRasterCount() == 0 && GetLayerCount() > 0 ?
+                        GetLayer(0)->GetName() : "image");
                 CPLXMLNode* psLIR = CPLCreateXMLNode(psCart, CXT_Element,
                                         (osPrefix + "Local_Internal_Reference").c_str());
                 CPLCreateXMLElementAndValue(psLIR,

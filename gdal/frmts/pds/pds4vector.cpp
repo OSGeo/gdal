@@ -369,6 +369,67 @@ void PDS4TableBaseLayer::MarkHeaderDirty()
 }
 
 /************************************************************************/
+/*              RefreshFileAreaObservationalBeginningCommon()           */
+/************************************************************************/
+
+CPLXMLNode* PDS4TableBaseLayer::RefreshFileAreaObservationalBeginningCommon(
+                                                CPLXMLNode* psFAO,
+                                                const CPLString& osPrefix,
+                                                const char* pszTableEltName,
+                                                CPLString& osDescription)
+{
+    CPLXMLNode* psFile = CPLGetXMLNode(psFAO, (osPrefix + "File").c_str());
+    CPLAssert(psFile);
+    CPLXMLNode* psfile_size = CPLGetXMLNode(psFile, (osPrefix + "file_size").c_str());
+    if( psfile_size )
+    {
+        CPLRemoveXMLChild(psFile, psfile_size);
+        CPLDestroyXMLNode(psfile_size);
+    }
+
+    CPLXMLNode* psHeader = CPLGetXMLNode(psFAO, (osPrefix + "Header").c_str());
+    if( psHeader )
+    {
+        CPLRemoveXMLChild(psFAO, psHeader);
+        CPLDestroyXMLNode(psHeader);
+    }
+
+    CPLString osTableEltName(osPrefix + pszTableEltName);
+    CPLXMLNode* psTable = CPLGetXMLNode(psFAO, osTableEltName);
+    CPLString osName;
+    CPLString osLocalIdentifier;
+    if( psTable )
+    {
+        osName = CPLGetXMLValue(psTable, (osPrefix + "name").c_str(), "");
+        osLocalIdentifier = CPLGetXMLValue(psTable, (osPrefix + "local_identifier").c_str(), "");
+        osDescription = CPLGetXMLValue(psTable, (osPrefix + "description").c_str(), "");
+        CPLRemoveXMLChild(psFAO, psTable);
+        CPLDestroyXMLNode(psTable);
+    }
+
+    // Write Table_Delimited/Table_Character/Table_Binary
+    psTable = CPLCreateXMLNode(psFAO, CXT_Element, osTableEltName);
+    if( !osName.empty() )
+        CPLCreateXMLElementAndValue(psTable,
+                                    (osPrefix + "name").c_str(), osName);
+    if( !osLocalIdentifier.empty() )
+        CPLCreateXMLElementAndValue(psTable,
+                                    (osPrefix + "local_identifier").c_str(),
+                                    osLocalIdentifier);
+    else
+        CPLCreateXMLElementAndValue(psTable,
+                                    (osPrefix + "local_identifier").c_str(),
+                                    GetName());
+
+    CPLXMLNode* psOffset = CPLCreateXMLElementAndValue(
+        psTable, (osPrefix + "offset").c_str(),
+        CPLSPrintf(CPL_FRMT_GUIB, m_nOffset));
+    CPLAddXMLAttributeAndValue(psOffset, "unit", "byte");
+
+    return psTable;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                        PDS4FixedWidthTable                           */
 /* ==================================================================== */
@@ -1018,8 +1079,6 @@ static OGRFieldType GetFieldTypeFromPDS4DataType(const char* pszDataType,
 
 bool PDS4FixedWidthTable::ReadTableDef(const CPLXMLNode* psTable)
 {
-    m_bFirstLayer = m_poDS->GetLayerCount() == 0;
-
     m_fp = VSIFOpenL(m_osFilename,
                      (m_poDS->GetAccess() == GA_ReadOnly ) ? "rb" : "r+b");
     if( !m_fp )
@@ -1223,54 +1282,10 @@ void PDS4FixedWidthTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
     if( STARTS_WITH(psFAO->pszValue, "pds:") )
         osPrefix = "pds:";
 
-    CPLXMLNode* psFile = CPLGetXMLNode(psFAO, (osPrefix + "File").c_str());
-    CPLAssert(psFile);
-    CPLXMLNode* psfile_size = CPLGetXMLNode(psFile, (osPrefix + "file_size").c_str());
-    if( psfile_size )
-    {
-        CPLRemoveXMLChild(psFile, psfile_size);
-        CPLDestroyXMLNode(psfile_size);
-    }
-
-    CPLXMLNode* psHeader = CPLGetXMLNode(psFAO, (osPrefix + "Header").c_str());
-    if( psHeader )
-    {
-        CPLRemoveXMLChild(psFAO, psHeader);
-        CPLDestroyXMLNode(psHeader);
-    }
-
-    CPLString osTableEltName(osPrefix + "Table_" + GetSubType());
-    CPLXMLNode* psTable = CPLGetXMLNode(psFAO, osTableEltName);
-    CPLString osName;
-    CPLString osLocalIdentifier;
     CPLString osDescription;
-    if( psTable )
-    {
-        osName = CPLGetXMLValue(psTable, (osPrefix + "name").c_str(), "");
-        osLocalIdentifier = CPLGetXMLValue(psTable, (osPrefix + "local_identifier").c_str(), "");
-        osDescription = CPLGetXMLValue(psTable, (osPrefix + "description").c_str(), "");
-        CPLRemoveXMLChild(psFAO, psTable);
-        CPLDestroyXMLNode(psTable);
-    }
+    CPLXMLNode* psTable = RefreshFileAreaObservationalBeginningCommon(
+        psFAO, osPrefix, ("Table_" + GetSubType()).c_str(), osDescription);
 
-    // Write Table_Character / Table_Binary
-    psTable = CPLCreateXMLNode(psFAO, CXT_Element, osTableEltName);
-    if( !osName.empty() )
-        CPLCreateXMLElementAndValue(psTable,
-                                    (osPrefix + "name").c_str(), osName);
-    if( !osLocalIdentifier.empty() )
-        CPLCreateXMLElementAndValue(psTable,
-                                    (osPrefix + "local_identifier").c_str(),
-                                    osLocalIdentifier);
-    else if( m_bFirstLayer )
-        CPLCreateXMLElementAndValue(psTable,
-                                    (osPrefix + "local_identifier").c_str(),
-                                    "first_table");
-
-    CPLXMLNode* psOffset = CPLCreateXMLElementAndValue(
-        psTable, (osPrefix + "offset").c_str(),
-        CPLSPrintf(CPL_FRMT_GUIB, m_nOffset));
-    CPLAddXMLAttributeAndValue(psOffset, "unit", "byte");
     CPLCreateXMLElementAndValue(psTable,
                                 (osPrefix + "records").c_str(),
                                 CPLSPrintf(CPL_FRMT_GIB, m_nFeatureCount));
@@ -1414,8 +1429,6 @@ bool PDS4FixedWidthTable::InitializeNewLayer(
                                 OGRwkbGeometryType eGType,
                                 const char* const* papszOptions)
 {
-    m_bFirstLayer = m_poDS->GetLayerCount() == 0;
-
     m_fp = VSIFOpenL(m_osFilename, "wb+");
     if( !m_fp )
     {
@@ -2049,8 +2062,6 @@ OGRErr PDS4DelimitedTable::CreateField( OGRFieldDefn *poFieldIn, int )
 
 bool PDS4DelimitedTable::ReadTableDef(const CPLXMLNode* psTable)
 {
-    m_bFirstLayer = m_poDS->GetLayerCount() == 0;
-
     m_fp = VSIFOpenL(m_osFilename,
                      (m_poDS->GetAccess() == GA_ReadOnly ) ? "rb" : "r+b");
     if( !m_fp )
@@ -2232,54 +2243,9 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
     if( STARTS_WITH(psFAO->pszValue, "pds:") )
         osPrefix = "pds:";
 
-    CPLXMLNode* psFile = CPLGetXMLNode(psFAO, (osPrefix + "File").c_str());
-    CPLAssert(psFile);
-    CPLXMLNode* psfile_size = CPLGetXMLNode(psFile, (osPrefix + "file_size").c_str());
-    if( psfile_size )
-    {
-        CPLRemoveXMLChild(psFile, psfile_size);
-        CPLDestroyXMLNode(psfile_size);
-    }
-
-    CPLXMLNode* psHeader = CPLGetXMLNode(psFAO, (osPrefix + "Header").c_str());
-    if( psHeader )
-    {
-        CPLRemoveXMLChild(psFAO, psHeader);
-        CPLDestroyXMLNode(psHeader);
-    }
-
-    CPLString osTableEltName(osPrefix + "Table_Delimited");
-    CPLXMLNode* psTable = CPLGetXMLNode(psFAO, osTableEltName);
-    CPLString osName;
-    CPLString osLocalIdentifier;
     CPLString osDescription;
-    if( psTable )
-    {
-        osName = CPLGetXMLValue(psTable, (osPrefix + "name").c_str(), "");
-        osLocalIdentifier = CPLGetXMLValue(psTable, (osPrefix + "local_identifier").c_str(), "");
-        osDescription = CPLGetXMLValue(psTable, (osPrefix + "description").c_str(), "");
-        CPLRemoveXMLChild(psFAO, psTable);
-        CPLDestroyXMLNode(psTable);
-    }
-
-    // Write Table_Delimited
-    psTable = CPLCreateXMLNode(psFAO, CXT_Element, osTableEltName);
-    if( !osName.empty() )
-        CPLCreateXMLElementAndValue(psTable,
-                                    (osPrefix + "name").c_str(), osName);
-    if( !osLocalIdentifier.empty() )
-        CPLCreateXMLElementAndValue(psTable,
-                                    (osPrefix + "local_identifier").c_str(),
-                                    osLocalIdentifier);
-    else if( m_bFirstLayer )
-        CPLCreateXMLElementAndValue(psTable,
-                                    (osPrefix + "local_identifier").c_str(),
-                                    "first_table");
-
-    CPLXMLNode* psOffset = CPLCreateXMLElementAndValue(
-        psTable, (osPrefix + "offset").c_str(),
-        CPLSPrintf(CPL_FRMT_GUIB, m_nOffset));
-    CPLAddXMLAttributeAndValue(psOffset, "unit", "byte");
+    CPLXMLNode* psTable = RefreshFileAreaObservationalBeginningCommon(
+        psFAO, osPrefix, "Table_Delimited", osDescription);
 
     CPLCreateXMLElementAndValue(psTable,
                                 (osPrefix + "parsing_standard_id").c_str(),
@@ -2398,8 +2364,6 @@ bool PDS4DelimitedTable::InitializeNewLayer(
                                 OGRwkbGeometryType eGType,
                                 const char* const* papszOptions)
 {
-    m_bFirstLayer = m_poDS->GetLayerCount() == 0;
-
     m_fp = VSIFOpenL(m_osFilename, "wb+");
     if( !m_fp )
     {

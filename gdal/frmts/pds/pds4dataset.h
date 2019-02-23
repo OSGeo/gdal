@@ -63,12 +63,16 @@ class PDS4TableBaseLayer: public OGRLayer
         GIntBig         m_nFID = 1;
         vsi_l_offset    m_nOffset = 0;
         CPLStringList   m_aosLCO{};
-        bool            m_bFirstLayer = false;
 
         void            SetupGeomField();
         OGRFeature*     AddGeometryFromFields(OGRFeature* poFeature);
         OGRFeature*     AddFieldsFromGeometry(OGRFeature* poFeature);
         void            MarkHeaderDirty();
+        CPLXMLNode*     RefreshFileAreaObservationalBeginningCommon(
+                                                CPLXMLNode* psFAO,
+                                                const CPLString& osPrefix,
+                                                const char* pszTableEltName,
+                                                CPLString& osDescription);
 
     public:
         PDS4TableBaseLayer(PDS4Dataset* poDS,
