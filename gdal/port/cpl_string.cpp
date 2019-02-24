@@ -2581,7 +2581,7 @@ CPLValueType CPLGetValueType( const char* pszValue )
     const char* pszValueInit = pszValue;
 
     // Skip leading spaces.
-    while( isspace( *pszValue ) )
+    while( isspace(static_cast<unsigned char>( *pszValue )) )
         ++pszValue;
 
     if( *pszValue == '\0' )
@@ -2600,15 +2600,15 @@ CPLValueType CPLGetValueType( const char* pszValue )
 
     for( ; *pszValue != '\0'; ++pszValue )
     {
-        if( isdigit( *pszValue))
+        if( isdigit(static_cast<unsigned char>( *pszValue )) )
         {
             bIsLastCharExponent = false;
             bFoundMantissa = true;
         }
-        else if( isspace( *pszValue ) )
+        else if( isspace(static_cast<unsigned char>( *pszValue )) )
         {
             const char* pszTmp = pszValue;
-            while( isspace( *pszTmp ) )
+            while( isspace(static_cast<unsigned char>( *pszTmp )) )
                 ++pszTmp;
             if( *pszTmp == 0 )
                 break;
