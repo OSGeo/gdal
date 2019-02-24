@@ -678,7 +678,7 @@ GDALRasterBlock::~GDALRasterBlock()
 /*                        GetEffectiveBlockSize()                       */
 /************************************************************************/
 
-static size_t GetEffectiveBlockSize(int nBlockSize)
+static size_t GetEffectiveBlockSize(GPtrDiff_t nBlockSize)
 {
     // The real cost of a block allocation is more than just nBlockSize
     // As we allocate with 64-byte alignment, use 64 as a multiple.
@@ -938,7 +938,7 @@ CPLErr GDALRasterBlock::Internalize()
     const GIntBig nCurCacheMax = GDALGetCacheMax64();
 
     // No risk of overflow as it is checked in GDALRasterBand::InitBlockInfo().
-    const int nSizeInBytes = GetBlockSize();
+    const auto nSizeInBytes = GetBlockSize();
 
 /* -------------------------------------------------------------------- */
 /*      Flush old blocks if we are nearing our memory limit.            */

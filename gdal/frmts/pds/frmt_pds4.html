@@ -160,6 +160,12 @@ Longitude. Only used when the geometry comes from a Point layer with geographic 
 <li> <b>ALT</b>=string. Name of a field containing a Altitude value. Defaults to
 Altitude. Only used when the geometry comes from a Point layer with geographic CRS</li>
 <li> <b>WKT</b>=string. Name of a field containing a WKT value.</li>
+<li> <b>SAME_DIRECTORY</b>=YES/NO. Whether table files should be created in the
+same directory, or in a subdirectory. Defaults to NO, that is that table files
+will be created in a subdiretory whose name is the basename of the XML file.
+For example if creating a "foo.xml" PDS4 dataset, table files will be created
+in the "foo" subdirectory by default. If this option is set to YES, they will
+be created in the same directory as "foo.xml".</li>
 </ul>
 
 <h2>Subdataset / multiple image support</h2>

@@ -1958,7 +1958,7 @@ VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
                     if( iX < 0 || iX >= nReqXSize )
                         continue;
 
-                    const float fSampledValue = pafSrc[iX + iY * nReqXSize];
+                    const float fSampledValue = pafSrc[iX + static_cast<size_t>(iY) * nReqXSize];
                     if( CPLIsNan(fSampledValue) )
                         continue;
 
@@ -1969,7 +1969,7 @@ VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
                         continue;
 
                     nPixelCount++;
-                    dfSum += pafSrc[iX + iY * nReqXSize];
+                    dfSum += pafSrc[iX + static_cast<size_t>(iY) * nReqXSize];
                 }
             }
 

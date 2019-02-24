@@ -93,7 +93,8 @@ void GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                                  int nPartCount, int *panPartSize,
                                  double *padfX, double *padfY,
                                  double *padfVariant,
-                                 llPointFunc pfnPointFunc, void *pCBData );
+                                 llPointFunc pfnPointFunc, void *pCBData,
+                                 int bAvoidBurningSamePoints );
 
 void GDALdllImageFilledPolygon( int nRasterXSize, int nRasterYSize,
                                 int nPartCount, int *panPartSize,

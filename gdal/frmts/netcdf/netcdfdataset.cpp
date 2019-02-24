@@ -192,6 +192,8 @@ class netCDFRasterBand final: public GDALPamRasterBand
                                         size_t nTmpBlockXSize,
                                         size_t nTmpBlockYSize,
                                         bool bCheckIsNan=false );
+    void            SetBlockSize();
+
   protected:
     CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
 
@@ -585,11 +587,17 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     // Attempt to fetch the units attribute for the variable and set it.
     netCDFRasterBand::SetUnitType(GetMetadataItem(CF_UNITS));
 
+    SetBlockSize();
+}
+
+
+void netCDFRasterBand::SetBlockSize()
+{
     // Check for variable chunking (netcdf-4 only).
     // GDAL block size should be set to hdf5 chunk size.
 #ifdef NETCDF_HAS_NC4
     int nTmpFormat = 0;
-    status = nc_inq_format(cdfid, &nTmpFormat);
+    int status = nc_inq_format(cdfid, &nTmpFormat);
     NetCDFFormatEnum eTmpFormat = static_cast<NetCDFFormatEnum>(nTmpFormat);
     if( (status == NC_NOERR) &&
         (eTmpFormat == NCDF_FORMAT_NC4 || eTmpFormat == NCDF_FORMAT_NC4C) )
@@ -599,10 +607,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         status = nc_inq_var_chunking(cdfid, nZId, &nTmpFormat, chunksize);
         if( (status == NC_NOERR) && (nTmpFormat == NC_CHUNKED) )
         {
-            CPLDebug("GDAL_netCDF",
-                     "setting block size to chunk size : %ld x %ld",
-                     static_cast<long>(chunksize[nZDim - 1]),
-                     static_cast<long>(chunksize[nZDim - 2]));
             nBlockXSize = (int)chunksize[nZDim - 1];
             nBlockYSize = (int)chunksize[nZDim - 2];
         }
@@ -611,7 +615,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
     // Force block size to 1 scanline for bottom-up datasets if
     // nBlockYSize != 1.
-    if( poNCDFDS->bBottomUp && nBlockYSize != 1 )
+    if( static_cast<netCDFDataset*>(poDS)->bBottomUp && nBlockYSize != 1 )
     {
         nBlockXSize = nRasterXSize;
         nBlockYSize = 1;
@@ -837,6 +841,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) default", dfNoData);
 #endif
     netCDFRasterBand::SetNoDataValue(dfNoData);
+
+    SetBlockSize();
 }
 
 /************************************************************************/
@@ -1926,22 +1932,37 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 
     size_t start[MAX_NC_DIMS];
     memset(start, 0, sizeof(start));
+    start[nBandXPos] = nBlockXOff * nBlockXSize;
 
-    start[nBandXPos] = 0;  // x dim can move around in array.
     // check y order.
     if( static_cast<netCDFDataset *>(poDS)->bBottomUp )
     {
-        start[nBandYPos] = nRasterYSize - 1 - nBlockYOff;
+        if( nBlockYSize == 1 )
+        {
+            start[nBandYPos] = nRasterYSize - 1 - nBlockYOff;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "nBlockYSize = %d, only 1 supported when "
+                     "writing bottom-up dataset",
+                     nBlockYSize);
+            return CE_Failure;
+        }
     }
     else
     {
-        start[nBandYPos] = nBlockYOff;  // y
+        start[nBandYPos] = nBlockYOff * nBlockYSize;  // y
     }
 
     size_t edge[MAX_NC_DIMS] = {};
 
     edge[nBandXPos] = nBlockXSize;
-    edge[nBandYPos] = 1;
+    if( (start[nBandXPos] + edge[nBandXPos]) > (size_t)nRasterXSize )
+        edge[nBandXPos] = nRasterXSize - start[nBandXPos];
+    edge[nBandYPos] = nBlockYSize;
+    if( (start[nBandYPos] + edge[nBandYPos]) > (size_t)nRasterYSize )
+        edge[nBandYPos] = nRasterYSize - start[nBandYPos];
 
     if( nd == 3 )
     {
@@ -8503,6 +8524,15 @@ int netCDFDataset::DefVarDeflate(
             chunksize[1] = (size_t)1;
             for( int i = 2; i < nd; i++) chunksize[i] = (size_t)1;
             chunksize[nd - 1] = (size_t)nRasterXSize;
+
+            // Config options just for testing purposes
+            const char* pszBlockXSize = CPLGetConfigOption("BLOCKXSIZE", nullptr);
+            if( pszBlockXSize )
+                chunksize[nd - 1] = (size_t)atoi(pszBlockXSize);
+
+            const char* pszBlockYSize = CPLGetConfigOption("BLOCKYSIZE", nullptr);
+            if( nd >= 2 && pszBlockYSize )
+                chunksize[nd - 2] = (size_t)atoi(pszBlockYSize);
 
             CPLDebug("GDAL_netCDF",
                      "DefVarDeflate() chunksize={%ld, %ld} chunkX=%ld nd=%d",

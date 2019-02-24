@@ -462,7 +462,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                                           &(aPointX[0]), &(aPointY[0]),
                                           (eBurnValueSrc == GBV_UserBurnValue)?
                                           nullptr : &(aPointVariant[0]),
-                                          gvBurnPoint, &sInfo );
+                                          gvBurnPoint, &sInfo,
+                                          eMergeAlg == GRMA_Add );
           else
               GDALdllImageLine( sInfo.nXSize, nYSize,
                                 static_cast<int>(aPartSize.size()),
@@ -496,7 +497,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                       static_cast<int>(aPartSize.size()), &(aPartSize[0]),
                       &(aPointX[0]), &(aPointY[0]),
                       nullptr,
-                      gvBurnPoint, &sInfo );
+                      gvBurnPoint, &sInfo,
+                      eMergeAlg == GRMA_Add );
               }
               else
               {
@@ -513,7 +515,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                       static_cast<int>(aPartSize.size()), &(aPartSize[0]),
                       &(aPointX[0]), &(aPointY[0]),
                       &(aPointVariant[0]),
-                      gvBurnPoint, &sInfo );
+                      gvBurnPoint, &sInfo,
+                      eMergeAlg == GRMA_Add );
               }
           }
       }
