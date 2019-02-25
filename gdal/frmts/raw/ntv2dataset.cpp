@@ -42,6 +42,7 @@
 CPL_CVSID("$Id$")
 
 // Format documentation: https://github.com/Esri/ntv2-file-routines
+// Original archived specification: https://web.archive.org/web/20091227232322/http://www.mgs.gov.on.ca/stdprodconsume/groups/content/@mgs/@iandit/documents/resourcelist/stel02_047447.pdf
 
 /**
  * The header for the file, and each grid consists of 11 16byte records.
