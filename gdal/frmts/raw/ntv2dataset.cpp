@@ -41,6 +41,8 @@
 
 CPL_CVSID("$Id$")
 
+// Format documentation: https://github.com/Esri/ntv2-file-routines
+
 /**
  * The header for the file, and each grid consists of 11 16byte records.
  * The first half is an ASCII label, and the second half is the value
