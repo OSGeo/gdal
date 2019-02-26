@@ -1358,19 +1358,22 @@ def WarpOptions(options=None, format=None,
             new_options += ['-cvmd', str(metadataConflictValue)]
         if setColorInterpretation:
             new_options += ['-setci']
-        if overviewLevel is not None:
-            if _is_str_or_unicode(overviewLevel):
-                overviewLevelStr = overviewLevel
+        
+        
+        if overviewLevel is None:
+            overviewLevel = 'NONE'
+        elif _is_str_or_unicode(overviewLevel):
+            pass
+        elif isinstance(overviewLevel, int):
+            if overviewLevel < 0:
+                overviewLevel = 'AUTO' + str(overviewLevel)
             else:
-                overviewLevelStr = ''
-                if overviewLevel is None:
-                    overviewLevelStr = 'NONE'
-                if isinstance(overviewLevel, int):
-                    if overviewLevel < 0:
-                        overviewLevelStr = 'AUTO'
-                    overviewLevelStr = overviewLevelStr + str(overviewLevel)
-            if overviewLevelStr != '':
-                new_options += ['-ovr', overviewLevelStr]
+                overviewLevel = str(overviewLevel)
+        else:
+            overviewLevel = ''
+            
+        if overviewLevel:
+            new_options += ['-ovr', overviewLevelStr]
 
     return (GDALWarpAppOptions(new_options), callback, callback_data)
 
