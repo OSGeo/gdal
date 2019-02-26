@@ -4633,7 +4633,7 @@ int OGRGeometryFactory::GetCurveParmeters(
     dy12 *= dfInvScale;
 
     const double det = dx01 * dy12 - dx12 * dy01;
-    if( fabs(det) < 1.0e-8 )
+    if( fabs(det) < 1.0e-8 || CPLIsNan(det) )
     {
         return FALSE;
     }
