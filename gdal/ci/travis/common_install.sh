@@ -4,8 +4,8 @@ set -e
 
 # Clone proj
 #git clone --depth=1 https://github.com/OSGeo/proj.4 proj
-curl https://download.osgeo.org/proj/proj-6.0.0RC3.tar.gz > proj-6.0.0RC3.tar.gz
-tar xzf proj-6.0.0RC3.tar.gz
+curl https://download.osgeo.org/proj/proj-6.0.0RC4.tar.gz > proj-6.0.0RC4.tar.gz
+tar xzf proj-6.0.0RC4.tar.gz
 mv proj-6.0.0 proj
 echo "#!/bin/sh" > proj/autogen.sh
 chmod +x proj/autogen.sh
