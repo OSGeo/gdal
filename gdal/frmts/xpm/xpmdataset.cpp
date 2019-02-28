@@ -567,7 +567,8 @@ ParseXPM( const char *pszInput,
 
     for( int iColor = 0; iColor < nColorCount; iColor++ )
     {
-        if( papszXPMList[iColor+1] == nullptr )
+        if( papszXPMList[iColor+1] == nullptr ||
+            papszXPMList[iColor+1][0] == '\0' )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing color definition for %d in XPM header.",
