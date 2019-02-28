@@ -69,7 +69,7 @@ class OGRMSSQLSpatialDataSource;
 #define SP_ISVALID 4
 #define SP_ISSINGLEPOINT 8
 #define SP_ISSINGLELINESEGMENT 0x10
-#define SP_ISWHOLEGLOBE 0x20
+#define SP_ISLARGERTHANAHEMISPHERE 0x20
 
 #define ST_UNKNOWN 0
 #define ST_POINT 1
@@ -79,6 +79,15 @@ class OGRMSSQLSpatialDataSource;
 #define ST_MULTILINESTRING 5
 #define ST_MULTIPOLYGON 6
 #define ST_GEOMETRYCOLLECTION 7
+#define ST_CIRCULARSTRING 8
+#define ST_COMPOUNDCURVE 9
+#define ST_CURVEPOLYGON 10
+#define ST_FULLGLOBE 11
+
+#define SMT_LINE 0
+#define SMT_ARC 1
+#define SMT_FIRSTLINE 2
+#define SMT_FIRSTARC 3
 
 /************************************************************************/
 /*                         OGRMSSQLAppendEscaped( )                     */
@@ -125,6 +134,8 @@ class OGRMSSQLGeometryParser
 {
 protected:
     unsigned char* pszData;
+    /* version information */
+    char chVersion;
     /* serialization properties */
     char chProps;
     /* point array */
@@ -137,6 +148,10 @@ protected:
     /* shape array */
     int nShapePos;
     int nNumShapes;
+    /* segmenttype array */
+    int nSegmentPos;
+    int nNumSegments;
+    int iSegment;
     int nSRSId;
     /* geometry or geography */
     int nColType;
@@ -144,11 +159,18 @@ protected:
 protected:
     OGRPoint*           ReadPoint(int iShape);
     OGRMultiPoint*      ReadMultiPoint(int iShape);
+    OGRErr              ReadSimpleCurve(OGRSimpleCurve* poCurve, int iPoint, int iNextPoint);
     OGRLineString*      ReadLineString(int iShape);
+    OGRLinearRing*      ReadLinearRing(int iShape);
     OGRMultiLineString* ReadMultiLineString(int iShape);
     OGRPolygon*         ReadPolygon(int iShape);
     OGRMultiPolygon*    ReadMultiPolygon(int iShape);
     OGRGeometryCollection* ReadGeometryCollection(int iShape);
+    OGRCircularString*  ReadCircularString(int iShape);
+    OGRCompoundCurve*   ReadCompoundCurve(int iShape);
+    void AddCurveSegment(OGRCompoundCurve* poCompoundCurve,
+        OGRSimpleCurve* poCurve, int iPoint, int iNextPoint);
+    OGRCurvePolygon*    ReadCurvePolygon(int iShape);
 
 public:
     explicit            OGRMSSQLGeometryParser( int nGeomColumnType );

@@ -109,6 +109,10 @@ int OGRMSSQLSpatialDataSource::TestCapability( const char * pszCap )
         return TRUE;
     if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return TRUE;
+    else if (EQUAL(pszCap, ODsCCurveGeometries))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCMeasuredGeometries))
+        return TRUE;
     else
         return FALSE;
 }

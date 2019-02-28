@@ -733,6 +733,10 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
         return pszFIDColumn != nullptr;
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
+    else if (EQUAL(pszCap, OLCCurveGeometries))
+        return TRUE;
+    else if (EQUAL(pszCap, OLCMeasuredGeometries))
+        return TRUE;
     else
         return OGRMSSQLSpatialLayer::TestCapability( pszCap );
 }
