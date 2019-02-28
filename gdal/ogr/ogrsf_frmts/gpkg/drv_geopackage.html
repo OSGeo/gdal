@@ -58,6 +58,8 @@ option.</p>
 
 <p>Starting with GDAL 2.2, the "DROP TABLE layer_name" and "ALTER TABLE layer_name RENAME TO new_layer"
 statements can be used. They will update GeoPackage system tables.</p>
+<p>Starting with GDAL 2.2, the "HasSpatialIndex('table_name','geom_col_name')" statement can be 
+used for checking if the table has spatial index on the named geometry column.</p>
 
 <p>When dropping a table, or removing records from tables, the space they
 occupied is not immediately released and kept in the pool of file pages that
