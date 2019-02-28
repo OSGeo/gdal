@@ -31864,7 +31864,8 @@ if test "$NETCDF_SETTING" != "no" ; then
    for ac_header in $NETCDF_INCLUDEDIR/netcdf_mem.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#include <$NETCDF_INCLUDEDIR/netcdf.h>
+"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
