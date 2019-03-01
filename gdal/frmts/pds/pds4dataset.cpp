@@ -1150,7 +1150,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
         const char* pszLatitudeType = CPLGetXMLValue(psGeodeticModel,
                                                      "latitude_type",
                                                      "");
-        bool bIsOgraphic = EQUAL(pszLatitudeType, "planetographic");
+        bool bIsOgraphic = EQUAL(pszLatitudeType, "Planetographic");
 
         double dfSemiMajor = GetLinearValue(psGeodeticModel,
                                             "semi_major_radius");
@@ -2525,12 +2525,12 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                                         (osPrefix + "Geodetic_Model").c_str());
     const char* pszLatitudeType =
         CSLFetchNameValueDef(m_papszCreationOptions, "LATITUDE_TYPE",
-                             "planetocentric");
+                             "Planetocentric");
     // Fix case
-    if( EQUAL(pszLatitudeType, "planetocentric") )
-        pszLatitudeType = "planetocentric";
-    else if( EQUAL(pszLatitudeType, "planetographic") )
-        pszLatitudeType = "planetographic";
+    if( EQUAL(pszLatitudeType, "Planetocentric") )
+        pszLatitudeType = "Planetocentric";
+    else if( EQUAL(pszLatitudeType, "Planetographic") )
+        pszLatitudeType = "Planetographic";
     CPLCreateXMLElementAndValue(psGM,
                                 (osPrefix + "latitude_type").c_str(),
                                 pszLatitudeType);
@@ -4217,9 +4217,9 @@ void GDALRegister_PDS4()
     "description='Whether to use source label in PDS4 to PDS4 conversions' "
     "default='YES'/>"
 "  <Option name='LATITUDE_TYPE' type='string-select' scope='raster,vector' "
-    "description='Value of latitude_type' default='planetocentric'>"
-"     <Value>planetocentric</Value>"
-"     <Value>planetographic</Value>"
+    "description='Value of latitude_type' default='Planetocentric'>"
+"     <Value>Planetocentric</Value>"
+"     <Value>Planetographic</Value>"
 "  </Option>"
 "  <Option name='LONGITUDE_DIRECTION' type='string-select' scope='raster,vector' "
     "description='Value of longitude_direction' "
