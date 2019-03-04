@@ -761,7 +761,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 def DEMProcessingOptions(options=None, colorFilename=None, format=None,
               creationOptions=None, computeEdges=False, alg='Horn', band=1,
               zFactor=None, scale=None, azimuth=None, altitude=None,
-              combined=False, multiDirectional=False,
+              combined=False, multiDirectional=False, igor=False,
               slopeFormat=None, trigonometric=False, zeroForFlat=False,
               addAlpha=None,
               callback=None, callback_data=None):
@@ -778,8 +778,9 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
           scale --- ratio of vertical units to horizontal.
           azimuth --- (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
           altitude ---(hillshade only) altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.
-          combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading.
-          multiDirectional --- (hillshade only) whether to compute multi-directional shading
+          combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading. Only one of combined, multiDirectional and igor can be specified.
+          multiDirectional --- (hillshade only) whether to compute multi-directional shading. Only one of combined, multiDirectional and igor can be specified.
+          igor --- (hillshade only) whether to use Igor's hillshading from Maperitive.  Only one of combined, multiDirectional and igor can be specified.
           slopeformat --- (slope only) "degree" or "percent".
           trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
           zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
@@ -815,6 +816,8 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
             new_options += ['-combined']
         if multiDirectional:
             new_options += ['-multidirectional']
+        if igor:
+            new_options += ['-igor']
         if slopeFormat == 'percent':
             new_options += ['-p']
         if trigonometric:
