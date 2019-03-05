@@ -781,7 +781,7 @@ typedef struct
     double square_z_mul_square_inv_res;
     double cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res;
     double sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res;
-    double adj_scale;
+    double z_scaled;
 } GDALHillshadeAlgData;
 
 /* Unoptimized formulas are :
@@ -894,7 +894,7 @@ float GDALHillshadeIgorAlg (const T* afWin, float /*fDstNoDataValue*/, void* pDa
             (afWin[0] + afWin[1] + afWin[1] + afWin[2])) * psData->inv_nsres;
 
         const double key = (dx * dx + dy * dy);
-        slopeDegrees = atan(sqrt(key) / psData->adj_scale) * kdfRadiansToDegrees;
+        slopeDegrees = atan(sqrt(key) * psData->z_scaled) * kdfRadiansToDegrees;
     }
     else // ZEVENBERGEN_THORNE
     {
@@ -902,7 +902,7 @@ float GDALHillshadeIgorAlg (const T* afWin, float /*fDstNoDataValue*/, void* pDa
         const double dy = (afWin[7] - afWin[1]) * psData->inv_nsres;
         const double key = dx * dx + dy * dy;
 
-        slopeDegrees = atan(sqrt(key) / psData->adj_scale) * kdfRadiansToDegrees;
+        slopeDegrees = atan(sqrt(key) * psData->z_scaled) * kdfRadiansToDegrees;
     }
 
     double aspect;
@@ -1153,19 +1153,18 @@ void* GDALCreateHillshadeData( double* adfGeoTransform,
     GDALHillshadeAlgData* pData = static_cast<GDALHillshadeAlgData *>(
         CPLCalloc(1, sizeof(GDALHillshadeAlgData)));
 
-    pData->adj_scale = (bZevenbergenThorne ? 2 : 8) * scale;
     pData->inv_nsres = 1.0 / adfGeoTransform[5];
     pData->inv_ewres = 1.0 / adfGeoTransform[1];
     pData->sin_altRadians = sin(alt * kdfDegreesToRadians);
     pData->azRadians = az * kdfDegreesToRadians;
-    const double z_scaled = z / pData->adj_scale;
+    pData->z_scaled = z / ((bZevenbergenThorne ? 2 : 8) * scale);
     pData->cos_alt_mul_z =
-        cos(alt * kdfDegreesToRadians) * z_scaled;
+        cos(alt * kdfDegreesToRadians) * pData->z_scaled;
     pData->cos_az_mul_cos_alt_mul_z =
         cos(pData->azRadians) * pData->cos_alt_mul_z;
     pData->sin_az_mul_cos_alt_mul_z =
         sin(pData->azRadians) * pData->cos_alt_mul_z;
-    pData->square_z = z_scaled * z_scaled;
+    pData->square_z = pData->z_scaled * pData->z_scaled;
 
     pData->sin_altRadians_mul_254 = 254.0 *
                                     pData->sin_altRadians;
