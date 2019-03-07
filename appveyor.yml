@@ -150,7 +150,7 @@ install:
       exec { 7z x proj-datumgrid-1.8.zip -aoa }
       #
       cd $env:APPVEYOR_BUILD_FOLDER\gdal
-      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\proj_6_0.dll . }
+      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\proj_6_1.dll . }
       exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
       cd apps
       exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
