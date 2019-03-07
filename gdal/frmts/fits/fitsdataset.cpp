@@ -696,6 +696,18 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   }
 
   // Now create an image of appropriate size and type
+  if( nXSize < 1 || nYSize < 1 || nBands < 1 )
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Attempt to create %dx%dx%d raster FITS file, but width, height and bands"
+            "must be positive.",
+            nXSize, nYSize, nBands );
+        fits_close_file(hFITS, &status);
+
+        return nullptr;
+    }
+
   long naxes[3] = {nXSize, nYSize, nBands};
   int naxis = (nBands == 1) ? 2 : 3;
   fits_create_img(hFITS, bitpix, naxis, naxes, &status);
