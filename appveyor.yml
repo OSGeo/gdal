@@ -127,7 +127,7 @@ install:
       $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"
       $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
       $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:APPVEYOR_BUILD_FOLDER\install-proj\include`n"
-      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj_7_0.lib`n"
+      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj_6_1.lib`n"
       $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
       #
       cd $env:APPVEYOR_BUILD_FOLDER
