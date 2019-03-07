@@ -820,7 +820,7 @@ void FITSDataset::WriteFITSInfo()
 
         std::string fitsproj;
         const char* projection = oSRS.GetAttrValue("PROJECTION",0);
-        double centlon, centlat;
+        double centlon = 0, centlat = 0;
 
         if ( strstr(projection, "Sinusoidal") ) {
           fitsproj.assign("SFL");
@@ -1234,6 +1234,9 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 if ( crval1 > 180. ) {
                     crval1 = crval1 - 180.;
                 }
+
+                /* NOTA BENE: FITS standard define pixel integers at the center of the pixel,
+                   0.5 must be subtract to have UpperLeft corner */
                 adfGeoTransform[0] = crval1 * radfac - adfGeoTransform[1] *
                                                     (crpix1-0.5);
                 adfGeoTransform[3] = crval2 * radfac - adfGeoTransform[5] *
