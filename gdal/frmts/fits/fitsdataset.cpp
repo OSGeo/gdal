@@ -660,16 +660,14 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   // 2018 - BZERO BSCALE keywords are now set using SetScale() and
   // SetOffset() functions 
 
-  // Create the file - to force creation, we prepend the name with '!'
-  char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
-  snprintf(extFilename, strlen(pszFilename) + 10, "!%s", pszFilename);
-  fitsfile* hFITS = nullptr;
-  fits_create_file(&hFITS, extFilename, &status);
-  delete[] extFilename;
-  if (status) {
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "Couldn't create FITS file %s (%d).\n", pszFilename, status);
-    return nullptr;
+  if( nXSize < 1 || nYSize < 1 || nBands < 1 )  {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Attempt to create %dx%dx%d raster FITS file, but width, height and bands"
+            " must be positive.",
+            nXSize, nYSize, nBands );
+
+        return nullptr;
   }
 
   // Determine FITS type of image
@@ -691,23 +689,22 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   else {
     CPLError(CE_Failure, CPLE_AppDefined,
              "GDALDataType (%d) unsupported for FITS", eType);
-    fits_close_file(hFITS, &status);
+    return nullptr;
+  }
+
+  // Create the file - to force creation, we prepend the name with '!'
+  char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
+  snprintf(extFilename, strlen(pszFilename) + 10, "!%s", pszFilename);
+  fitsfile* hFITS = nullptr;
+  fits_create_file(&hFITS, extFilename, &status);
+  delete[] extFilename;
+  if (status) {
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Couldn't create FITS file %s (%d).\n", pszFilename, status);
     return nullptr;
   }
 
   // Now create an image of appropriate size and type
-  if( nXSize < 1 || nYSize < 1 || nBands < 1 )
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Attempt to create %dx%dx%d raster FITS file, but width, height and bands"
-            "must be positive.",
-            nXSize, nYSize, nBands );
-        fits_close_file(hFITS, &status);
-
-        return nullptr;
-    }
-
   long naxes[3] = {nXSize, nYSize, nBands};
   int naxis = (nBands == 1) ? 2 : 3;
   fits_create_img(hFITS, bitpix, naxis, naxes, &status);
