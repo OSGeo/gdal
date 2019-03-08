@@ -63,6 +63,9 @@ class OGRMSSQLSpatialDataSource;
 
 /* sqlgeometry constants */
 
+#define VA_KATMAI 0x01
+#define VA_DENALI 0x02
+
 #define SP_NONE 0
 #define SP_HASZVALUES 1
 #define SP_HASMVALUES 2
@@ -83,6 +86,15 @@ class OGRMSSQLSpatialDataSource;
 #define ST_COMPOUNDCURVE 9
 #define ST_CURVEPOLYGON 10
 #define ST_FULLGLOBE 11
+
+#define FA_INTERIORRING 0x00
+#define FA_STROKE 0x01
+#define FA_EXTERIORRING 0x02
+
+#define FA_NONE 0x00
+#define FA_LINE 0x01
+#define FA_ARC 0x02
+#define FA_CURVE 0x03
 
 #define SMT_LINE 0
 #define SMT_ARC 1
@@ -111,13 +123,16 @@ public:
                     ~OGRMSSQLGeometryValidator();
 
     // cppcheck-suppress functionStatic
-    int             ValidatePoint(OGRPoint * poGeom);
+    int             ValidatePoint(OGRPoint* poGeom);
     // cppcheck-suppress functionStatic
-    int             ValidateMultiPoint(OGRMultiPoint * poGeom);
-    int             ValidateLineString(OGRLineString * poGeom);
-    int             ValidateLinearRing(OGRLinearRing * poGeom);
-    int             ValidateMultiLineString(OGRMultiLineString * poGeom);
+    int             ValidateMultiPoint(OGRMultiPoint* poGeom);
+    int             ValidateLineString(OGRLineString* poGeom);
+    int             ValidateCircularString(OGRCircularString* poGeom);
+    int             ValidateCompoundCurve(OGRCompoundCurve* poGeom);
+    int             ValidateLinearRing(OGRLinearRing* poGeom);
+    int             ValidateMultiLineString(OGRMultiLineString* poGeom);
     int             ValidatePolygon(OGRPolygon* poGeom);
+    int             ValidateCurvePolygon(OGRCurvePolygon* poGeom);
     int             ValidateMultiPolygon(OGRMultiPolygon* poGeom);
     int             ValidateGeometryCollection(OGRGeometryCollection* poGeom);
     int             ValidateGeometry(OGRGeometry* poGeom);
@@ -189,6 +204,8 @@ protected:
     OGRGeometry *poGeom2;
     unsigned char* pszData;
     int nLen;
+    /* version information */
+    char chVersion;
     /* serialization properties */
     char chProps;
     /* point array */
@@ -204,6 +221,10 @@ protected:
     int nShapePos;
     int nNumShapes;
     int iShape;
+    /* segmenttype array */
+    int nSegmentPos;
+    int nNumSegments;
+    int iSegment;
     int nSRSId;
     /* geometry or geography */
     int nColType;
@@ -212,8 +233,12 @@ protected:
     void             WritePoint(OGRPoint* poGeom);
     void             WritePoint(double x, double y);
     void             WritePoint(double x, double y, double z);
-    void             WriteLineString(OGRLineString* poGeom);
+    void             WritePoint(double x, double y, double z, double m);
+    void             WriteSimpleCurve(OGRSimpleCurve* poGeom);
+    void             WriteCompoundCurve(OGRCompoundCurve* poGeom);
+    void             WriteCurve(OGRCurve* poGeom);
     void             WritePolygon(OGRPolygon* poGeom);
+    void             WriteCurvePolygon(OGRCurvePolygon* poGeom);
     void             WriteGeometryCollection(OGRGeometryCollection* poGeom, int iParent);
     void             WriteGeometry(OGRGeometry* poGeom, int iParent);
     void             TrackGeometry(OGRGeometry* poGeom);

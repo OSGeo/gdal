@@ -450,13 +450,13 @@ OGRCurvePolygon* OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
     {
         switch (FigureAttribute(iFigure))
         {
-        case 0x01:
+        case FA_LINE:
             poPoly->addRingDirectly(ReadLinearRing(iFigure));
             break;
-        case 0x02:
+        case FA_ARC:
             poPoly->addRingDirectly(ReadCircularString(iFigure));
             break;
-        case 0x03:
+        case FA_CURVE:
             poPoly->addRingDirectly(ReadCompoundCurve(iFigure));
             break;
         }      

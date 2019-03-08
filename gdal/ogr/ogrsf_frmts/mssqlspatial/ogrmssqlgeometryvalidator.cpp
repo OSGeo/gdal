@@ -74,7 +74,7 @@ int OGRMSSQLGeometryValidator::ValidateMultiPoint(CPL_UNUSED OGRMultiPoint* poGe
 /*                         ValidateLineString()                         */
 /************************************************************************/
 
-int OGRMSSQLGeometryValidator::ValidateLineString(OGRLineString * poGeom)
+int OGRMSSQLGeometryValidator::ValidateLineString(OGRLineString* poGeom)
 {
     OGRPoint* poPoint0 = nullptr;
     int i;
@@ -124,6 +124,116 @@ int OGRMSSQLGeometryValidator::ValidateLineString(OGRLineString * poGeom)
         delete poPoint0;
 
     return bResult;
+}
+
+/************************************************************************/
+/*                         ValidateCircularString()                     */
+/************************************************************************/
+
+int OGRMSSQLGeometryValidator::ValidateCircularString(OGRCircularString* poGeom)
+{
+    OGRPoint* poPoint0 = nullptr;
+    OGRPoint* poPoint1 = nullptr;
+    int i;
+    int bResult = FALSE;
+
+    for (i = 0; i < poGeom->getNumPoints(); i++)
+    {
+        if (poPoint0 == nullptr)
+        {
+            poPoint0 = new OGRPoint();
+            poGeom->getPoint(i, poPoint0);
+            continue;
+        }
+
+        if (poPoint0->getX() == poGeom->getX(i) && poPoint0->getY() == poGeom->getY(i))
+            continue;
+
+        if (poPoint1 == nullptr)
+        {
+            poPoint1 = new OGRPoint();
+            poGeom->getPoint(i, poPoint1);
+            continue;
+        }
+
+        if (poPoint1->getX() == poGeom->getX(i) && poPoint1->getY() == poGeom->getY(i))
+            continue;
+
+        bResult = TRUE;
+        break;
+    }
+
+    if (!bResult)
+    {
+        if (poValidGeometry)
+            delete poValidGeometry;
+
+        poValidGeometry = nullptr;
+
+        // create a compatible geometry
+        if (poPoint1 != nullptr)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                "Circularstring has only 2 distinct points constructing linestring geometry instead.");
+
+            // create a line
+            OGRLineString* poLine = new OGRLineString();
+            poLine->addPoint(poPoint0);
+            poLine->addPoint(poPoint1);
+            poValidGeometry = poLine;
+        }
+        else if (poPoint0 != nullptr)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                "Circularstring has no distinct points constructing point geometry instead.");
+
+            // create a point
+            poValidGeometry = poPoint0;
+            poPoint0 = nullptr;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                "Circularstring has no points. Removing the geometry from the output.");
+        }
+    }
+
+    if (poPoint0)
+        delete poPoint0;
+    if (poPoint1)
+        delete poPoint1;
+
+    return bResult;
+}
+
+/************************************************************************/
+/*                         ValidateCompoundCurve()                      */
+/************************************************************************/
+
+int OGRMSSQLGeometryValidator::ValidateCompoundCurve(OGRCompoundCurve* poGeom)
+{
+    OGRSimpleCurve* poSubGeom;
+    for (auto&& poIter : *poGeom)
+    {
+        switch (poIter->getGeometryType())
+        {
+        case wkbLineString:
+        case wkbLineString25D:
+        case wkbLineStringM:
+        case wkbLineStringZM:
+            poSubGeom = poIter->toSimpleCurve();
+            // TODO
+            break;
+        case wkbCircularString:
+        case wkbCircularStringZ:
+        case wkbCircularStringM:
+        case wkbCircularStringZM:
+            poSubGeom = poIter->toSimpleCurve();
+            // TODO
+            break;
+        }
+    }
+    return TRUE; // TODO
 }
 
 /************************************************************************/
@@ -326,6 +436,62 @@ int OGRMSSQLGeometryValidator::ValidatePolygon(OGRPolygon* poGeom)
 }
 
 /************************************************************************/
+/*                         ValidateCurvePolygon()                       */
+/************************************************************************/
+
+int OGRMSSQLGeometryValidator::ValidateCurvePolygon(OGRCurvePolygon* poGeom)
+{
+    int i, j;
+    OGRCurve* poRing = poGeom->getExteriorRingCurve();
+    OGRCurve* poInteriorRing;
+
+    if (poRing == nullptr)
+        return FALSE;
+
+    OGRGeometryCollection* poGeometries = nullptr;
+
+    if (!ValidateGeometry(poRing))
+    {
+        if (poGeom->getNumInteriorRings() > 0)
+        {
+            poGeometries = new OGRGeometryCollection();
+            poGeometries->addGeometryDirectly(poValidGeometry);
+        }
+    }
+
+    for (i = 0; i < poGeom->getNumInteriorRings(); i++)
+    {
+        poInteriorRing = poGeom->getInteriorRingCurve(i);
+        if (!ValidateLinearRing((OGRLinearRing*)poInteriorRing))
+        {
+            if (!poGeometries)
+            {
+                poGeometries = new OGRGeometryCollection();
+                poGeometries->addGeometry(poRing);
+                for (j = 0; j < i; j++)
+                    poGeometries->addGeometry(poGeom->getInteriorRingCurve(j));
+            }
+
+            poGeometries->addGeometry(poValidGeometry);
+            continue;
+        }
+
+        if (poGeometries)
+            poGeometries->addGeometry(poInteriorRing);
+    }
+
+    if (poGeometries)
+    {
+        if (poValidGeometry)
+            delete poValidGeometry;
+
+        poValidGeometry = poGeometries;
+    }
+
+    return poValidGeometry == nullptr;
+}
+
+/************************************************************************/
 /*                         ValidateMultiPolygon()                       */
 /************************************************************************/
 
@@ -441,24 +607,53 @@ int OGRMSSQLGeometryValidator::ValidateGeometry(OGRGeometry* poGeom)
     {
     case wkbPoint:
     case wkbPoint25D:
+    case wkbPointM:
+    case wkbPointZM:
         return ValidatePoint(poGeom->toPoint());
     case wkbLineString:
     case wkbLineString25D:
+    case wkbLineStringM:
+    case wkbLineStringZM:
         return ValidateLineString(poGeom->toLineString());
     case wkbPolygon:
     case wkbPolygon25D:
+    case wkbPolygonM:
+    case wkbPolygonZM:
         return ValidatePolygon(poGeom->toPolygon());
+    case wkbCurvePolygon :
+    case wkbCurvePolygonZ:
+    case wkbCurvePolygonM:
+    case wkbCurvePolygonZM:
+        return ValidateCurvePolygon(poGeom->toCurvePolygon());
     case wkbMultiPoint:
     case wkbMultiPoint25D:
+    case wkbMultiPointM:
+    case wkbMultiPointZM:
         return ValidateMultiPoint(poGeom->toMultiPoint());
     case wkbMultiLineString:
     case wkbMultiLineString25D:
+    case wkbMultiLineStringM:
+    case wkbMultiLineStringZM:
         return ValidateMultiLineString(poGeom->toMultiLineString());
+    case wkbCircularString:
+    case wkbCircularStringZ:
+    case wkbCircularStringM:
+    case wkbCircularStringZM:
+        return ValidateCircularString(poGeom->toCircularString());
+    case wkbCompoundCurve:
+    case wkbCompoundCurveZ:
+    case wkbCompoundCurveM:
+    case wkbCompoundCurveZM:
+        return ValidateCompoundCurve(poGeom->toCompoundCurve());
     case wkbMultiPolygon:
     case wkbMultiPolygon25D:
+    case wkbMultiPolygonM:
+    case wkbMultiPolygonZM:
         return ValidateMultiPolygon(poGeom->toMultiPolygon());
     case wkbGeometryCollection:
     case wkbGeometryCollection25D:
+    case wkbGeometryCollectionM:
+    case wkbGeometryCollectionZM:
         return ValidateGeometryCollection(poGeom->toGeometryCollection());
     case wkbLinearRing:
         return ValidateLinearRing(poGeom->toLinearRing());

@@ -31,7 +31,7 @@
 
 CPL_CVSID("$Id$")
 
-/*   SqlGeometry serialization format
+/*   SqlGeometry/SqlGeography serialization format
 
 Simple Point (SerializationProps & IsSinglePoint)
   [SRID][0x01][SerializationProps][Point][z][m]
@@ -40,8 +40,16 @@ Simple Line Segment (SerializationProps & IsSingleLineSegment)
   [SRID][0x01][SerializationProps][Point1][Point2][z1][z2][m1][m2]
 
 Complex Geometries
-  [SRID][0x01][SerializationProps][NumPoints][Point1]..[PointN][z1]..[zN][m1]..[mN]
+  [SRID][VersionAttribute][SerializationProps][NumPoints][Point1]..[PointN][z1]..[zN][m1]..[mN]
   [NumFigures][Figure]..[Figure][NumShapes][Shape]..[Shape]
+
+Complex Geometries (FigureAttribute == Curve)
+  [SRID][VersionAttribute][SerializationProps][NumPoints][Point1]..[PointN][z1]..[zN][m1]..[mN]
+  [NumFigures][Figure]..[Figure][NumShapes][Shape]..[Shape][NumSegments][SegmentType]..[SegmentType]
+
+VersionAttribute (1 byte)
+  0x01 = Katmai (MSSQL2008+)
+  0x02 = Denali (MSSQL2012+)
 
 SRID
   Spatial Reference Id (4 bytes)
@@ -52,7 +60,7 @@ SerializationProps (bitmask) 1 byte
   0x04 = IsValid
   0x08 = IsSinglePoint
   0x10 = IsSingleLineSegment
-  0x20 = IsWholeGlobe
+  0x20 = IsLargerThanAHemisphere
 
 Point (2-4)x8 bytes, size depends on SerializationProps & HasZValues & HasMValues
   [x][y]                  - SqlGeometry
@@ -61,13 +69,19 @@ Point (2-4)x8 bytes, size depends on SerializationProps & HasZValues & HasMValue
 Figure
   [FigureAttribute][PointOffset]
 
-FigureAttribute (1 byte)
+FigureAttribute - Katmai (1 byte)
   0x00 = Interior Ring
   0x01 = Stroke
   0x02 = Exterior Ring
 
+FigureAttribute - Denali (1 byte)
+  0x00 = None
+  0x01 = Line
+  0x02 = Arc
+  0x03 = Curve
+
 Shape
-  [ParentOffset][FigureOffset][ShapeType]
+  [ParentFigureOffset][FigureOffset][ShapeType]
 
 ShapeType (1 byte)
   0x00 = Unknown
@@ -78,6 +92,17 @@ ShapeType (1 byte)
   0x05 = MultiLineString
   0x06 = MultiPolygon
   0x07 = GeometryCollection
+  -- Denali
+  0x08 = CircularString
+  0x09 = CompoundCurve
+  0x0A = CurvePolygon
+  0x0B = FullGlobe
+
+SegmentType (1 byte)
+  0x00 = Line
+  0x01 = Arc
+  0x02 = FirstLine
+  0x03 = FirstArc
 
 */
 
@@ -94,6 +119,7 @@ ShapeType (1 byte)
 #define ParentOffset(iShape) (nShapePos + (iShape) * 9 )
 #define FigureOffset(iShape) (nShapePos + (iShape) * 9 + 4)
 #define ShapeType(iShape) (nShapePos + (iShape) * 9 + 8)
+#define SegmentType(iSegment) (nSegmentPos + (iSegment))
 
 #define FigureAttribute(iFigure) (nFigurePos + (iFigure) * 5)
 #define PointOffset(iFigure) (nFigurePos + (iFigure) * 5 + 1)
@@ -116,14 +142,17 @@ OGRMSSQLGeometryWriter::OGRMSSQLGeometryWriter(OGRGeometry *poGeometry, int nGeo
     chProps = 0;
 
     /* calculate required buffer length and the attributes */
+    nPointSize = 16;
     if (poGeom2->getCoordinateDimension() == 3)
     {
         chProps |= SP_HASZVALUES;
-        nPointSize = 24;
+        nPointSize += 8;
     }
-    else
+
+    if (poGeom2->IsMeasured())
     {
-        nPointSize = 16;
+        chProps |= SP_HASMVALUES;
+        nPointSize += 8;
     }
 
     iPoint = 0;
@@ -132,8 +161,11 @@ OGRMSSQLGeometryWriter::OGRMSSQLGeometryWriter(OGRGeometry *poGeometry, int nGeo
     nNumFigures = 0;
     iShape = 0;
     nNumShapes = 0;
+    iSegment = 0;
+    nNumSegments = 0;
 
-    /* calculate points figures and shapes*/
+    /* calculate points figures, shapes and segments*/
+    chVersion = VA_KATMAI;
     TrackGeometry(poGeom2);
     ++nNumShapes;
 
@@ -169,21 +201,14 @@ OGRMSSQLGeometryWriter::OGRMSSQLGeometryWriter(OGRGeometry *poGeometry, int nGeo
 
 void OGRMSSQLGeometryWriter::WritePoint(OGRPoint* poGeom)
 {
-    if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
-    {
-        WriteY(iPoint, poGeom->getX());
-        WriteX(iPoint, poGeom->getY());
-        if (chProps & SP_HASZVALUES)
-            WriteZ(iPoint, poGeom->getZ());
-    }
+    if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
+        WritePoint(poGeom->getX(), poGeom->getY(), poGeom->getZ(), poGeom->getM());
+    else if (chProps & SP_HASZVALUES)
+        WritePoint(poGeom->getX(), poGeom->getY(), poGeom->getZ());
+    else if (chProps & SP_HASMVALUES)
+        WritePoint(poGeom->getX(), poGeom->getY(), poGeom->getM());
     else
-    {
-        WriteX(iPoint, poGeom->getX());
-        WriteY(iPoint, poGeom->getY());
-        if (chProps & SP_HASZVALUES)
-            WriteZ(iPoint, poGeom->getZ());
-    }
-    ++iPoint;
+        WritePoint(poGeom->getX(), poGeom->getY());
 }
 
 void OGRMSSQLGeometryWriter::WritePoint(double x, double y)
@@ -203,41 +228,130 @@ void OGRMSSQLGeometryWriter::WritePoint(double x, double y)
 
 void OGRMSSQLGeometryWriter::WritePoint(double x, double y, double z)
 {
-    if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
-    {
-        WriteY(iPoint, x);
-        WriteX(iPoint, y);
-    }
-    else
-    {
-        WriteX(iPoint, x);
-        WriteY(iPoint, y);
-    }
     WriteZ(iPoint, z);
-    ++iPoint;
+    WritePoint(x, y);
+}
+
+void OGRMSSQLGeometryWriter::WritePoint(double x, double y, double z, double m)
+{
+    WriteZ(iPoint, z);
+    WriteM(iPoint, m);
+    WritePoint(x, y);
 }
 
 /************************************************************************/
-/*                         WriteLineString()                            */
+/*                         WriteSimpleCurve()                           */
 /************************************************************************/
 
-void OGRMSSQLGeometryWriter::WriteLineString(OGRLineString* poGeom)
+void OGRMSSQLGeometryWriter::WriteSimpleCurve(OGRSimpleCurve* poGeom)
 {
     int i;
-    /* write figure */
-    WriteByte(FigureAttribute(iFigure), 0x01);
-    WriteInt32(PointOffset(iFigure), iPoint);
-    if (chProps & SP_HASZVALUES)
+    if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
+    {
+        for (i = 0; i < poGeom->getNumPoints(); i++)
+            WritePoint(poGeom->getX(i), poGeom->getY(i), poGeom->getZ(i), poGeom->getM(i));
+    }
+    else if (chProps & SP_HASZVALUES)
     {
         for (i = 0; i < poGeom->getNumPoints(); i++)
             WritePoint(poGeom->getX(i), poGeom->getY(i), poGeom->getZ(i));
+    }
+    else if (chProps & SP_HASMVALUES)
+    {
+        for (i = 0; i < poGeom->getNumPoints(); i++)
+            WritePoint(poGeom->getX(i), poGeom->getY(i), poGeom->getM(i));
     }
     else
     {
         for (i = 0; i < poGeom->getNumPoints(); i++)
             WritePoint(poGeom->getX(i), poGeom->getY(i));
     }
-    ++iFigure;
+}
+
+/************************************************************************/
+/*                         WriteCompoundCurve()                         */
+/************************************************************************/
+
+void OGRMSSQLGeometryWriter::WriteCompoundCurve(OGRCompoundCurve* poGeom)
+{
+    int i;
+    OGRSimpleCurve* poSubGeom;
+    for (auto&& poIter : *poGeom)
+    {
+        switch (poIter->getGeometryType())
+        {
+        case wkbLineString:
+        case wkbLineString25D:
+        case wkbLineStringM:
+        case wkbLineStringZM:
+            poSubGeom = poIter->toSimpleCurve();
+            WriteSimpleCurve(poSubGeom);
+            for (i = 1; i < poSubGeom->getNumPoints(); i++)
+            {
+                if (i == 1)
+                    WriteByte(SegmentType(iSegment++), SMT_FIRSTLINE);
+                else
+                    WriteByte(SegmentType(iSegment++), SMT_LINE);
+            }
+            break;
+        case wkbCircularString:
+        case wkbCircularStringZ:
+        case wkbCircularStringM:
+        case wkbCircularStringZM:
+            poSubGeom = poIter->toSimpleCurve();
+            WriteSimpleCurve(poSubGeom);
+            for (i = 2; i < poSubGeom->getNumPoints(); i++)
+            {
+                if (i == 2)
+                    WriteByte(SegmentType(iSegment++), SMT_FIRSTARC);
+                else
+                    WriteByte(SegmentType(iSegment++), SMT_ARC);
+                ++i;
+            }
+            break;
+        }
+    }
+}
+
+/************************************************************************/
+/*                         WriteCurve()                                 */
+/************************************************************************/
+
+void OGRMSSQLGeometryWriter::WriteCurve(OGRCurve* poGeom)
+{
+    switch (poGeom->getGeometryType())
+    {
+    case wkbLineString:
+    case wkbLineString25D:
+    case wkbLineStringM:
+    case wkbLineStringZM:
+    case wkbLinearRing:
+        WriteByte(FigureAttribute(iFigure), FA_LINE);
+        WriteInt32(PointOffset(iFigure), iPoint);
+        WriteSimpleCurve(poGeom->toSimpleCurve());
+        ++iFigure;
+        break;
+
+    case wkbCircularString:
+    case wkbCircularStringZ:
+    case wkbCircularStringM:
+    case wkbCircularStringZM:
+        WriteByte(FigureAttribute(iFigure), FA_ARC);
+        WriteInt32(PointOffset(iFigure), iPoint);
+        WriteSimpleCurve(poGeom->toSimpleCurve());
+        ++iFigure;
+        break;
+
+    case wkbCompoundCurve:
+    case wkbCompoundCurveZ:
+    case wkbCompoundCurveM:
+    case wkbCompoundCurveZM:
+        WriteByte(FigureAttribute(iFigure), FA_ARC);
+        WriteInt32(PointOffset(iFigure), iPoint);
+        WriteCompoundCurve(poGeom->toCompoundCurve());
+        ++iFigure;
+        break;
+    }
 }
 
 /************************************************************************/
@@ -246,47 +360,39 @@ void OGRMSSQLGeometryWriter::WriteLineString(OGRLineString* poGeom)
 
 void OGRMSSQLGeometryWriter::WritePolygon(OGRPolygon* poGeom)
 {
-    int i, r;
+    int r;
     OGRLinearRing *poRing = poGeom->getExteriorRing();
-    WriteByte(FigureAttribute(iFigure), 0x02);
+    WriteByte(FigureAttribute(iFigure), FA_EXTERIORRING);
     WriteInt32(PointOffset(iFigure), iPoint);
-    if (chProps & SP_HASZVALUES)
+    WriteSimpleCurve(poRing);
+    ++iFigure;
+    for (r = 0; r < poGeom->getNumInteriorRings(); r++)
     {
-        /* write exterior ring */
-        for (i = 0; i < poRing->getNumPoints(); i++)
-            WritePoint(poRing->getX(i), poRing->getY(i), poRing->getZ(i));
-
+        /* write interior rings */
+        poRing = poGeom->getInteriorRing(r);
+        WriteByte(FigureAttribute(iFigure), FA_INTERIORRING);
+        WriteInt32(PointOffset(iFigure), iPoint);
+        WriteSimpleCurve(poRing);
         ++iFigure;
-
-        for (r = 0; r < poGeom->getNumInteriorRings(); r++)
-        {
-            /* write interior rings */
-            poRing = poGeom->getInteriorRing(r);
-            WriteByte(FigureAttribute(iFigure), 0x00);
-            WriteInt32(PointOffset(iFigure), iPoint);
-            for (i = 0; i < poRing->getNumPoints(); i++)
-                WritePoint(poRing->getX(i), poRing->getY(i), poRing->getZ(i));
-            ++iFigure;
-        }
     }
-    else
+}
+
+/************************************************************************/
+/*                         WriteCurvePolygon()                          */
+/************************************************************************/
+
+void OGRMSSQLGeometryWriter::WriteCurvePolygon(OGRCurvePolygon* poGeom)
+{
+    int r;
+    OGRCurve *poCurve = poGeom->getExteriorRingCurve();
+    WriteCurve(poCurve);
+    ++iFigure;
+    for (r = 0; r < poGeom->getNumInteriorRings(); r++)
     {
-        /* write exterior ring */
-        for (i = 0; i < poRing->getNumPoints(); i++)
-            WritePoint(poRing->getX(i), poRing->getY(i));
-
+        /* write interior rings */
+        poCurve = poGeom->getInteriorRingCurve(r);
+        WriteCurve(poCurve);
         ++iFigure;
-
-        for (r = 0; r < poGeom->getNumInteriorRings(); r++)
-        {
-            /* write interior rings */
-            poRing = poGeom->getInteriorRing(r);
-            WriteByte(FigureAttribute(iFigure), 0x00);
-            WriteInt32(PointOffset(iFigure), iPoint);
-            for (i = 0; i < poRing->getNumPoints(); i++)
-                WritePoint(poRing->getX(i), poRing->getY(i));
-            ++iFigure;
-        }
     }
 }
 
@@ -317,8 +423,13 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
     {
     case wkbPoint:
     case wkbPoint25D:
+    case wkbPointM:
+    case wkbPointZM:
         WriteByte(ShapeType(iShape++), ST_POINT);
-        WriteByte(FigureAttribute(iFigure), 0x01);
+        if (chVersion == VA_KATMAI)
+            WriteByte(FigureAttribute(iFigure), FA_STROKE);
+        else
+            WriteByte(FigureAttribute(iFigure), FA_NONE);  // ???
         WriteInt32(PointOffset(iFigure), iPoint);
         WritePoint(poGeom->toPoint());
         ++iFigure;
@@ -326,36 +437,86 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
 
     case wkbLineString:
     case wkbLineString25D:
+    case wkbLineStringM:
+    case wkbLineStringZM:
         WriteByte(ShapeType(iShape++), ST_LINESTRING);
-        WriteLineString(poGeom->toLineString());
+        if (chVersion == VA_KATMAI)
+            WriteByte(FigureAttribute(iFigure), FA_STROKE);
+        else
+            WriteByte(FigureAttribute(iFigure), FA_LINE);
+        WriteInt32(PointOffset(iFigure), iPoint);
+        WriteSimpleCurve(poGeom->toSimpleCurve());
+        ++iFigure;
+        break;
+
+    case wkbCircularString:
+    case wkbCircularStringZ:
+    case wkbCircularStringM:
+    case wkbCircularStringZM:
+        WriteByte(ShapeType(iShape++), ST_CIRCULARSTRING);
+        if (chVersion == VA_KATMAI)
+            WriteByte(FigureAttribute(iFigure), FA_STROKE);
+        else
+            WriteByte(FigureAttribute(iFigure), FA_ARC);
+        WriteInt32(PointOffset(iFigure), iPoint);
+        WriteSimpleCurve(poGeom->toSimpleCurve());
+        ++iFigure;
+        break;
+
+    case wkbCompoundCurve:
+    case wkbCompoundCurveZ:
+    case wkbCompoundCurveM:
+    case wkbCompoundCurveZM:
+        WriteByte(ShapeType(iShape++), ST_COMPOUNDCURVE);
+        WriteInt32(PointOffset(iFigure), iPoint);
+        WriteCompoundCurve(poGeom->toCompoundCurve());
+        ++iFigure;
         break;
 
     case wkbPolygon:
     case wkbPolygon25D:
+    case wkbPolygonM:
+    case wkbPolygonZM:
         WriteByte(ShapeType(iShape++), ST_POLYGON);
         WritePolygon(poGeom->toPolygon());
         break;
 
+    case wkbCurvePolygon:
+    case wkbCurvePolygonZ:
+    case wkbCurvePolygonM:
+    case wkbCurvePolygonZM:
+        WriteByte(ShapeType(iShape++), ST_CURVEPOLYGON);
+        WriteCurvePolygon(poGeom->toCurvePolygon());
+        break;
+
     case wkbMultiPoint:
     case wkbMultiPoint25D:
+    case wkbMultiPointM:
+    case wkbMultiPointZM:
         WriteByte(ShapeType(iShape++), ST_MULTIPOINT);
         WriteGeometryCollection(poGeom->toGeometryCollection(), iParent);
         break;
 
     case wkbMultiLineString:
     case wkbMultiLineString25D:
+    case wkbMultiLineStringM:
+    case wkbMultiLineStringZM:
         WriteByte(ShapeType(iShape++), ST_MULTILINESTRING);
         WriteGeometryCollection(poGeom->toGeometryCollection(), iParent);
         break;
 
     case wkbMultiPolygon:
     case wkbMultiPolygon25D:
+    case wkbMultiPolygonM:
+    case wkbMultiPolygonZM:
         WriteByte(ShapeType(iShape++), ST_MULTIPOLYGON);
         WriteGeometryCollection(poGeom->toGeometryCollection(), iParent);
         break;
 
     case wkbGeometryCollection:
     case wkbGeometryCollection25D:
+    case wkbGeometryCollectionM:
+    case wkbGeometryCollectionZM:
         WriteByte(ShapeType(iShape++), ST_GEOMETRYCOLLECTION);
         WriteGeometryCollection(poGeom->toGeometryCollection(), iParent);
         break;
@@ -375,18 +536,73 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
     {
     case wkbPoint:
     case wkbPoint25D:
+    case wkbPointM:
+    case wkbPointZM:
         ++nNumFigures;
         ++nNumPoints;
         break;
 
     case wkbLineString:
     case wkbLineString25D:
+    case wkbLineStringM:
+    case wkbLineStringZM:
         ++nNumFigures;
         nNumPoints += poGeom->toLineString()->getNumPoints();
         break;
 
+    case wkbCircularString:
+    case wkbCircularStringZ:
+    case wkbCircularStringM:
+    case wkbCircularStringZM:
+        chVersion = VA_DENALI;
+        ++nNumFigures;
+        nNumPoints += poGeom->toCircularString()->getNumPoints();
+        break;
+
+    case wkbCompoundCurve:
+    case wkbCompoundCurveZ:
+    case wkbCompoundCurveM:
+    case wkbCompoundCurveZM:
+        {
+            int c;
+            chVersion = VA_DENALI;
+            OGRCompoundCurve* g = poGeom->toCompoundCurve();
+            ++nNumFigures;
+            for (auto&& poIter : *g)
+            {
+                switch (poIter->getGeometryType())
+                {
+                case wkbLineString:
+                case wkbLineString25D:
+                case wkbLineStringM:
+                case wkbLineStringZM:
+                    c = poIter->toLineString()->getNumPoints();
+                    if (c > 0)
+                    {
+                        nNumPoints += c;
+                        nNumSegments += c - 1;
+                    }
+                    break;
+                case wkbCircularString:
+                case wkbCircularStringZ:
+                case wkbCircularStringM:
+                case wkbCircularStringZM:
+                    c = poIter->toCircularString()->getNumPoints();
+                    if (c > 0)
+                    {
+                        nNumPoints += c;
+                        nNumSegments += (int)((c - 1) / 2);
+                    }
+                    break;
+                }
+            }
+        }
+        break;
+
     case wkbPolygon:
     case wkbPolygon25D:
+    case wkbPolygonM:
+    case wkbPolygonZM:
         {
             OGRPolygon* g = poGeom->toPolygon();
             for( auto&& poIter: *g )
@@ -394,14 +610,34 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
         }
         break;
 
+    case wkbCurvePolygon:
+    case wkbCurvePolygonZ:
+    case wkbCurvePolygonM:
+    case wkbCurvePolygonZM:
+        {
+            chVersion = VA_DENALI;
+            OGRCurvePolygon* g = poGeom->toCurvePolygon();
+            for (auto&& poIter : *g)
+                TrackGeometry(poIter);
+        }
+        break;
+
     case wkbMultiPoint:
     case wkbMultiPoint25D:
+    case wkbMultiPointM:
+    case wkbMultiPointZM:
     case wkbMultiLineString:
     case wkbMultiLineString25D:
+    case wkbMultiLineStringM:
+    case wkbMultiLineStringZM:
     case wkbMultiPolygon:
     case wkbMultiPolygon25D:
+    case wkbMultiPolygonM:
+    case wkbMultiPolygonZM:
     case wkbGeometryCollection:
     case wkbGeometryCollection25D:
+    case wkbGeometryCollectionM:
+    case wkbGeometryCollectionZM:
         {
             OGRGeometryCollection* g = poGeom->toGeometryCollection();
             for( auto&& poMember: *g )
@@ -435,53 +671,37 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
         /* writing a single point */
         OGRPoint* g = poGeom2->toPoint();
         WriteInt32(0, nSRSId);
-        WriteByte(4, 0x01);
+        WriteByte(4, VA_KATMAI);
         WriteByte(5, chProps);
-        if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
-        {
-            WriteY(0, g->getX());
-            WriteX(0, g->getY());
-            if (chProps & SP_HASZVALUES)
-                WriteZ(0, g->getZ());
-        }
-        else
-        {
-            WriteX(0, g->getX());
-            WriteY(0, g->getY());
-            if (chProps & SP_HASZVALUES)
-                WriteZ(0, g->getZ());
-        }
+        WritePoint(g);
     }
     else if (nNumPoints == 2 && (geomType == wkbLineString || geomType == wkbLineString25D))
     {
         /* writing a single line */
         OGRLineString* g = poGeom2->toLineString();
         WriteInt32(0, nSRSId);
-        WriteByte(4, 0x01);
+        WriteByte(4, VA_KATMAI);
         WriteByte(5, chProps);
-        if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
+
+        if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
         {
-            WriteY(0, g->getX(0));
-            WriteX(0, g->getY(0));
-            WriteY(1, g->getX(1));
-            WriteX(1, g->getY(1));
-            if (chProps & SP_HASZVALUES)
-            {
-                WriteZ(0, g->getZ(0));
-                WriteZ(1, g->getZ(1));
-            }
+            WritePoint(g->getX(0), g->getY(0), g->getZ(0), g->getM(0));
+            WritePoint(g->getX(1), g->getY(1), g->getZ(1), g->getM(1));
+        }
+        else if (chProps & SP_HASZVALUES)
+        {
+            WritePoint(g->getX(0), g->getY(0), g->getZ(0));
+            WritePoint(g->getX(1), g->getY(1), g->getZ(1));
+        }
+        else if (chProps & SP_HASMVALUES)
+        {
+            WritePoint(g->getX(0), g->getY(0), g->getM(0));
+            WritePoint(g->getX(1), g->getY(1), g->getM(1));
         }
         else
         {
-            WriteX(0, g->getX(0));
-            WriteY(0, g->getY(0));
-            WriteX(1, g->getX(1));
-            WriteY(1, g->getY(1));
-            if (chProps & SP_HASZVALUES)
-            {
-                WriteZ(0, g->getZ(0));
-                WriteZ(1, g->getZ(1));
-            }
+            WritePoint(g->getX(0), g->getY(0));
+            WritePoint(g->getX(1), g->getY(1));
         }
     }
     else
@@ -491,7 +711,7 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
             chProps |= SP_ISVALID;
 
         WriteInt32(0, nSRSId);
-        WriteByte(4, 0x01);
+        WriteByte(4, chVersion);
         WriteByte(5, chProps);
         WriteInt32(nPointPos - 4 , nNumPoints);
         WriteInt32(nFigurePos - 4 , nNumFigures);
