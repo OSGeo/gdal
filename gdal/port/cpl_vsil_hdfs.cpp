@@ -154,18 +154,27 @@ VSIHdfsHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
   if (nSize == 0 || nMemb == 0)
     return 0;
 
-  int bytes = hdfsRead(poFilesystem, poFile, pBuffer, nSize * nMemb);
+  int bytes_wanted = nSize * nMemb;
+  int bytes_read = 0;
+  while (bytes_read < bytes_wanted)
+    {
+      int bytes = hdfsRead(poFilesystem, poFile, pBuffer + bytes_read, bytes_wanted - bytes_read);
 
-  if (bytes > 0)
-    return bytes/nSize;
-  else if (bytes == 0) {
-    bEOF = true;
-    return 0;
-  }
-  else {
-    bEOF = false;
-    return 0;
-  }
+      if (bytes > 0) {
+        bytes_read += bytes;
+      }
+      if (bytes == 0) {
+        bEOF = true;
+        return bytes_read/nSize;
+      }
+      else if (bytes < 0) {
+        bEOF = false;
+        return 0;
+      }
+    }
+
+  if (bytes_read > 0)
+    return bytes_read/nSize;
 }
 
 size_t
