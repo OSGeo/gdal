@@ -666,7 +666,24 @@ def test_ogr_geom_segmentize():
             print('%.18g' % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0]))
             pytest.fail('%.18g' % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1]))
 
-    
+
+def test_ogr_geom_segmentize_issue_1341():
+
+    expected_geom = 'LINESTRING (0 0,0.4 0.0,0.8 0.0,1.2 0.0,1.6 0.0,2 0,2.4 0.0,2.8 0.0,3.2 0.0,3.6 0.0,4 0,4.4 0.0,4.8 0.0,5.2 0.0,5.6 0.0,6 0,6.4 0.0,6.8 0.0,7.2 0.0,7.6 0.0,8 0,8.4 0.0,8.8 0.0,9.2 0.0,9.6 0.0,10 0)'
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,10 0)')
+    geom.Segmentize(0.399999999999)
+    assert geom.ExportToWkt() == expected_geom
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,10 0)')
+    geom.Segmentize(0.4)
+    assert geom.ExportToWkt() == expected_geom
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,10 0)')
+    geom.Segmentize(0.400000000001)
+    assert geom.ExportToWkt() == expected_geom
+
+
 ###############################################################################
 # Test Value()
 
