@@ -831,26 +831,27 @@ void FITSDataset::WriteFITSInfo()
         const char* projection = oSRS.GetAttrValue("PROJECTION",0);
         double centlon = 0, centlat = 0;
 
-        if ( strstr(projection, "Sinusoidal") ) {
-          fitsproj.assign("SFL");
-          centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
-        } else if ( strstr(projection, "Equirectangular") ) {
-          fitsproj.assign("CAR");
-          centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
-          centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
-        } else if ( strstr(projection, "Orthographic") ) {
-          fitsproj.assign("SIN");
-          centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
-          centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
-        } else if ( strstr(projection, "Mercator_1SP") || strstr(projection, "Mercator") ) {
-          fitsproj.assign("MER");
-          centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
-          centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
-        } else if ( strstr(projection, "Polar_Stereographic") || strstr(projection, "Stereographic_South_Pole") || strstr(projection, "Stereographic_North_Pole") ) {
-          fitsproj.assign("STG");
-          centlat = oSRS.GetProjParm("latitude_of_origin", 0, nullptr);
-          centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
-        }
+        if (projection) {
+            if ( strstr(projection, "Sinusoidal") ) {
+              fitsproj.assign("SFL");
+              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+            } else if ( strstr(projection, "Equirectangular") ) {
+              fitsproj.assign("CAR");
+              centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
+              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+            } else if ( strstr(projection, "Orthographic") ) {
+              fitsproj.assign("SIN");
+              centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
+              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+            } else if ( strstr(projection, "Mercator_1SP") || strstr(projection, "Mercator") ) {
+              fitsproj.assign("MER");
+              centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
+              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+            } else if ( strstr(projection, "Polar_Stereographic") || strstr(projection, "Stereographic_South_Pole") || strstr(projection, "Stereographic_North_Pole") ) {
+              fitsproj.assign("STG");
+              centlat = oSRS.GetProjParm("latitude_of_origin", 0, nullptr);
+              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+            }
 
 /*
                 #Transverse Mercator definitely not supported in FITS.
@@ -864,6 +865,18 @@ void FITSDataset::WriteFITSInfo()
                 #    falseEast =  hSRS.GetProjParm('false_easting')
                 #    falseNorth =  hSRS.GetProjParm('false_northing')
 */ 
+
+            ctype1.append(fitsproj);
+            ctype2.append(fitsproj);
+
+            char * cstr1 = new char [ctype1.length()+1];
+            std::strcpy (cstr1, ctype1.c_str());
+            fits_update_key( hFITS, TSTRING, "CTYPE1", cstr1, nullptr, &status);
+
+            char * cstr2 = new char [ctype2.length()+1];
+            std::strcpy (cstr2, ctype2.c_str());
+            fits_update_key( hFITS, TSTRING, "CTYPE2", cstr2, nullptr, &status);
+        }
 
         UpperLeftCornerX = adfGeoTransform[0] - falseEast;
         UpperLeftCornerY = adfGeoTransform[3] - falseNorth;
@@ -884,17 +897,6 @@ void FITSDataset::WriteFITSInfo()
           crpix1 = - (UpperLeftCornerX * mres) + centlon / mapres + 0.5;
           crpix2 = (UpperLeftCornerY * mres) - (centlat / mapres) + 0.5;
         }
-
-        ctype1.append(fitsproj);
-        ctype2.append(fitsproj);
-
-        char * cstr1 = new char [ctype1.length()+1];
-        std::strcpy (cstr1, ctype1.c_str());
-        fits_update_key( hFITS, TSTRING, "CTYPE1", cstr1, nullptr, &status);
-
-        char * cstr2 = new char [ctype2.length()+1];
-        std::strcpy (cstr2, ctype2.c_str());
-        fits_update_key( hFITS, TSTRING, "CTYPE2", cstr2, nullptr, &status);
 
         /// Write WCS CRPIXia CRVALia CTYPEia here
 
