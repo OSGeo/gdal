@@ -116,6 +116,7 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
   \param poLine VFK feature
   \param oOGRLine line geometry
   \param[in,out] bValid true when feature's geometry is valid
+  \param ftype geometry VFK type
   \param[in,out] rowIdFeat list of row ids which forms linestring
   \param[in,out] nGeometries number of features with valid geometry
 */
@@ -268,7 +269,6 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             const GUIntBig ipcb  = sqlite3_column_int64(hStmt, 1);
             const char* pszFType = reinterpret_cast<const char*>(
                 sqlite3_column_text(hStmt, 2));
-            osFType = pszFType ? pszFType : "";
             int rowId = sqlite3_column_int(hStmt, 3);
 
             if (ipcb == 1) {
@@ -284,18 +284,17 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
                 poFeature->SetRowId(rowId);
 
                 /* set geometry & reset */
-                CPLString osFTypeLine;
                 if( poLine &&
                     !SetGeometryLineString(
                         poLine, &oOGRLine,
-                        bValid, osFTypeLine, rowIdFeat, nGeometries) )
+                        bValid, osFType.c_str(), rowIdFeat, nGeometries) )
                 {
                     nInvalid++;
                 }
 
                 bValid = true;
                 poLine = poFeature;
-                osFTypeLine = osFType;
+                osFType = pszFType ? pszFType : "";
                 iIdx++;
             }
 
