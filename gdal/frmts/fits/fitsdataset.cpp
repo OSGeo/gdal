@@ -693,11 +693,10 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   }
 
   // Create the file - to force creation, we prepend the name with '!'
-  char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
-  snprintf(extFilename, strlen(pszFilename) + 10, "!%s", pszFilename);
+  CPLString extFilename("!");
+  extFilename += pszFilename;
   fitsfile* hFITS = nullptr;
   fits_create_file(&hFITS, extFilename, &status);
-  delete[] extFilename;
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
              "Couldn't create FITS file %s (%d).\n", pszFilename, status);
@@ -1256,8 +1255,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 bGeoTransformValid = true;
             }
 
-            char* pstr = strrchr(ctype, '-') + 1;
-            if ( pstr ) {
+            if( char* pstr = strrchr(ctype, '-') + 1 ) {
 
                 /* Defining projection type
                Following http://www.gdal.org/ogr__srs__api_8h.html (GDAL)
@@ -1320,15 +1318,9 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 oSRS.SetProjParm(SRS_PP_FALSE_EASTING,0.0);
                 oSRS.SetProjParm(SRS_PP_FALSE_NORTHING,0.0);
 
-                char * cstrproj = new char [projName.length()+1];
-                std::strcpy (cstrproj, projName.c_str());
-                oSRS.SetNode("PROJCS",cstrproj);
+                oSRS.SetNode("PROJCS",projName.c_str());
 
-                char * cstrgeoname = new char [GeogName.length()+1];
-                std::strcpy (cstrgeoname, GeogName.c_str());
-                char * cstrdname = new char [DatumName.length()+1];
-                std::strcpy (cstrdname, DatumName.c_str());
-                oSRS.SetGeogCS(cstrgeoname, cstrdname, target, aRadius, invFlattening,
+                oSRS.SetGeogCS(GeogName.c_str(), DatumName.c_str(), target, aRadius, invFlattening,
                     "Reference_Meridian", 0.0, "degree", 0.0174532925199433);
             }  else {
                 CPLError(CE_Failure, CPLE_AppDefined,
