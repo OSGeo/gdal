@@ -261,7 +261,86 @@ def test_gdaltindex_6():
             ('got %d features, expecting 1' % lyr.GetFeatureCount())
         ds = None
 
-    
+        
+###############################################################################
+# Test with file list
+
+
+def test_gdaltindex_7():
+    if test_cli_utilities.get_gdaltindex_path() is None:
+        pytest.skip()
+
+
+    try:
+        os.remove('tmp/tileindex.shp')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/tileindex.dbf')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/tileindex.shx')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/tileindex.prj')
+    except OSError:
+        pass
+
+    drv = gdal.GetDriverByName('GTiff')
+    wkt = 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]'
+
+    ds = drv.Create('tmp/gdaltindex1.tif', 10, 10, 1)
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([49, 0.1, 0, 2, 0, -0.1])
+    ds = None
+
+    ds = drv.Create('tmp/gdaltindex2.tif', 10, 10, 1)
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([49, 0.1, 0, 3, 0, -0.1])
+    ds = None
+
+    ds = drv.Create('tmp/gdaltindex3.tif', 10, 10, 1)
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([48, 0.1, 0, 2, 0, -0.1])
+    ds = None
+
+    ds = drv.Create('tmp/gdaltindex4.tif', 10, 10, 1)
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([48, 0.1, 0, 3, 0, -0.1])
+    ds = None
+
+    open('tmp/filelist.txt', 'wt').write('tmp/gdaltindex1.tif\ntmp/gdaltindex2.tif\ntmp/gdaltindex3.tif\ntmp/gdaltindex4.tif\n')
+
+    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -input_file_list tmp/filelist.txt tmp/tileindex.shp')
+    # assert (ret_stderr is None or ret_stderr == ''), \
+    #  ('got error/warning %s ----------\n' % ret_stderr)
+
+    ds = ogr.Open('tmp/tileindex.shp')
+    if ds.GetLayer(0).GetFeatureCount() != 4:
+        print('got %d features, expected 4' % ds.GetLayer(0).GetFeatureCount())
+        print(ret_stdout)
+        pytest.fail(ret_stderr)
+    tileindex_wkt = ds.GetLayer(0).GetSpatialRef().ExportToWkt()
+    if tileindex_wkt.find('WGS_1984') == -1:
+        print(ret_stdout)
+        pytest.fail(ret_stderr)
+
+    expected_wkts = ['POLYGON ((49 2,50 2,50 1,49 1,49 2))',
+                     'POLYGON ((49 3,50 3,50 2,49 2,49 3))',
+                     'POLYGON ((48 2,49 2,49 1,48 1,48 2))',
+                     'POLYGON ((48 3,49 3,49 2,48 2,48 3))']
+    i = 0
+    feat = ds.GetLayer(0).GetNextFeature()
+    while feat is not None:
+        assert feat.GetGeometryRef().ExportToWkt() == expected_wkts[i], \
+            ('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
+        i = i + 1
+        feat = ds.GetLayer(0).GetNextFeature()
+    ds.Destroy()
+
+      
 ###############################################################################
 # Cleanup
 
@@ -280,6 +359,8 @@ def test_gdaltindex_cleanup():
     drv.Delete('tmp/gdaltindex4.tif')
     drv.Delete('tmp/gdaltindex5.tif')
     drv.Delete('tmp/gdaltindex6.tif')
+
+    os.remove('tmp/filelist.txt')
 
 
 

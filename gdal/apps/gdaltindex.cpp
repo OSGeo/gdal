@@ -52,10 +52,12 @@ static void Usage(const char* pszErrorMsg)
             "Usage: gdaltindex [-f format] [-tileindex field_name] [-write_absolute_path] \n"
             "                  [-skip_different_projection] [-t_srs target_srs]\n"
             "                  [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]\n"
+            "                  [-input_file_list my_list.txt]\n"
             "                  [-lyr_name name] index_file [gdal_file]*\n"
             "\n"
             "e.g.\n"
             "  % gdaltindex doq_index.shp doq/*.tif\n"
+            "  % gdaltindex -input_file_list my_list.txt doq_index.shp\n"
             "\n"
             "NOTES:\n"
             "  o The index will be created if it doesn't already exist.\n"
@@ -76,6 +78,32 @@ static void Usage(const char* pszErrorMsg)
     exit(1);
 }
 
+typedef enum
+{
+    FORMAT_AUTO,
+    FORMAT_WKT,
+    FORMAT_EPSG,
+    FORMAT_PROJ
+} SrcSRSFormat;
+
+static bool add_one_file(const char *fileNameToAdd,
+                         bool write_absolute_path,
+                         const char* current_path,
+                         int nExistingFiles,
+                         char** existingFilesTab,
+                         bool bSetTargetSRS,
+                         bool* pbAlreadyExistingProjectionRefValid,
+                         char** pAlreadyExistingProjectionRef,
+                         bool skip_different_projection,
+                         int i_SrcSRSName,
+                         OGRSpatialReferenceH hTargetSRS,
+                         const char *pszTargetSRS,
+                         OGRLayerH hLayer,
+                         const int ti_field,
+                         SrcSRSFormat eSrcSRSFormat,
+                         size_t nMaxFieldSize
+                         );
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -84,14 +112,6 @@ static void Usage(const char* pszErrorMsg)
     do { if (iArg + nExtraArg >= argc) \
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          argv[iArg], nExtraArg)); } while( false )
-
-typedef enum
-{
-    FORMAT_AUTO,
-    FORMAT_WKT,
-    FORMAT_EPSG,
-    FORMAT_PROJ
-} SrcSRSFormat;
 
 MAIN_START(argc, argv)
 {
@@ -130,7 +150,8 @@ MAIN_START(argc, argv)
     int i_SrcSRSName = -1;
     bool bSrcSRSFormatSpecified = false;
     SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
-
+    const char *psz_input_file_list = nullptr;
+    
     int iArg = 1;  // Used after for.
     for( ; iArg < argc; iArg++ )
     {
@@ -148,6 +169,17 @@ MAIN_START(argc, argv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszDriverName = argv[++iArg];
+        }
+        else if( strcmp(argv[iArg],"-input_file_list") == 0 )
+        {
+            if (psz_input_file_list != nullptr) {
+                fprintf( stderr,
+                         "Warning : (second?) input_file_list %s ignored\n",
+                         argv[iArg] );
+                exit(1);
+            }
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psz_input_file_list = argv[++iArg];
         }
         else if( strcmp(argv[iArg],"-lyr_name") == 0 )
         {
@@ -202,14 +234,30 @@ MAIN_START(argc, argv)
             break;
         }
     }
-
+    
     if( index_filename == nullptr )
         Usage("No index filename specified.");
-    if( iArg == argc )
-        Usage("No file to index specified.");
+    if( iArg == argc && psz_input_file_list == nullptr)
+        Usage("No file(s) to index specified.");
     if( bSrcSRSFormatSpecified && pszSrcSRSName == nullptr )
         Usage("-src_srs_name must be specified when -src_srs_format is "
               "specified.");
+    
+    const char *pszFirstInputFilename = argv[iArg];
+    VSILFILE* fpInputList = nullptr;
+    if (psz_input_file_list != nullptr) {
+        fpInputList = VSIFOpenL(psz_input_file_list, "r");
+        if (fpInputList) {
+            pszFirstInputFilename = CPLReadLineL(fpInputList);
+        } else {
+            printf( "-input_file_list could not open %s\n", psz_input_file_list);
+            exit( 1 );
+        }
+    }
+    if (pszFirstInputFilename == nullptr) {
+        Usage("No input files found.");
+        exit( 1 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create and validate target SRS if given.                        */
@@ -338,7 +386,7 @@ MAIN_START(argc, argv)
         }
         else
         {
-            GDALDatasetH hDS = GDALOpen( argv[iArg], GA_ReadOnly );
+            GDALDatasetH hDS = GDALOpen( pszFirstInputFilename, GA_ReadOnly );
             if( hDS )
             {
                 const char* pszWKT = GDALGetProjectionRef(hDS);
@@ -445,281 +493,63 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      loop over GDAL files, processing.                               */
 /* -------------------------------------------------------------------- */
-    for( ; iArg < argc; iArg++ )
-    {
-        char *fileNameToWrite = nullptr;
-        VSIStatBuf sStatBuf;
 
-        // Make sure it is a file before building absolute path name.
-        if( write_absolute_path && CPLIsFilenameRelative( argv[iArg] ) &&
-            VSIStat( argv[iArg], &sStatBuf ) == 0 )
-        {
-            fileNameToWrite =
-                CPLStrdup(CPLProjectRelativeFilename(current_path, argv[iArg]));
-        }
-        else
-        {
-            fileNameToWrite = CPLStrdup(argv[iArg]);
-        }
-
-        // Checks that file is not already in tileindex.
-        {
-            int i = 0;  // Used after for.
-            for( ; i < nExistingFiles; i++ )
-            {
-                if (EQUAL(fileNameToWrite, existingFilesTab[i]))
+    if (psz_input_file_list && fpInputList) {
+        const char* filename = pszFirstInputFilename;
+        do {
+            if (!add_one_file(
+                              filename,
+                              write_absolute_path,
+                              current_path,
+                              nExistingFiles,
+                              existingFilesTab,
+                              bSetTargetSRS,
+                              &alreadyExistingProjectionRefValid,
+                              &alreadyExistingProjectionRef,
+                              skip_different_projection,
+                              i_SrcSRSName,
+                              hTargetSRS,
+                              pszTargetSRS,
+                              hLayer,
+                              ti_field,
+                              eSrcSRSFormat,
+                              nMaxFieldSize
+                              )
+                )
                 {
-                    fprintf(stderr,
-                            "File %s is already in tileindex. Skipping it.\n",
-                            fileNameToWrite);
-                    break;
+                    VSIFCloseL(fpInputList);
+                    exit( 1 );
                 }
-            }
-            if (i != nExistingFiles)
-            {
-                CPLFree(fileNameToWrite);
-                continue;
-            }
-        }
-
-        GDALDatasetH hDS = GDALOpen( argv[iArg], GA_ReadOnly );
-        if( hDS == nullptr )
-        {
-            fprintf( stderr, "Unable to open %s, skipping.\n",
-                     argv[iArg] );
-            CPLFree(fileNameToWrite);
-            continue;
-        }
-
-        double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-        GDALGetGeoTransform( hDS, adfGeoTransform );
-        if( adfGeoTransform[0] == 0.0
-            && adfGeoTransform[1] == 1.0
-            && adfGeoTransform[3] == 0.0
-            && std::abs(adfGeoTransform[5]) == 1.0 )
-        {
-            fprintf( stderr,
-                     "It appears no georeferencing is available for\n"
-                     "`%s', skipping.\n",
-                     argv[iArg] );
-            GDALClose( hDS );
-            CPLFree(fileNameToWrite);
-            continue;
-        }
-
-        const char *projectionRef = GDALGetProjectionRef(hDS);
-
-        // If not set target srs, test that the current file uses same
-        // projection as others.
-        if( !bSetTargetSRS )
-        {
-            if( alreadyExistingProjectionRefValid )
-            {
-                int projectionRefNotNull, alreadyExistingProjectionRefNotNull;
-                projectionRefNotNull = projectionRef && projectionRef[0];
-                alreadyExistingProjectionRefNotNull =
-                    alreadyExistingProjectionRef &&
-                    alreadyExistingProjectionRef[0];
-                if ((projectionRefNotNull &&
-                     alreadyExistingProjectionRefNotNull &&
-                     EQUAL(projectionRef, alreadyExistingProjectionRef) == 0) ||
-                    (projectionRefNotNull != alreadyExistingProjectionRefNotNull))
-                {
-                    fprintf(
-                        stderr,
-                        "Warning : %s is not using the same projection system "
-                        "as other files in the tileindex.\n"
-                        "This may cause problems when using it in MapServer "
-                        "for example.\n"
-                        "Use -t_srs option to set target projection system "
-                        "(not supported by MapServer).\n"
-                        "%s\n", argv[iArg],
-                        skip_different_projection ? "Skipping this file." : "");
-                    if( skip_different_projection )
-                    {
-                        CPLFree(fileNameToWrite);
-                        GDALClose( hDS );
-                        continue;
-                    }
-                }
-            }
-            else
-            {
-                alreadyExistingProjectionRefValid = true;
-                alreadyExistingProjectionRef = CPLStrdup(projectionRef);
-            }
-        }
-
-        const int nXSize = GDALGetRasterXSize( hDS );
-        const int nYSize = GDALGetRasterYSize( hDS );
-
-        double adfX[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-        double adfY[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-        adfX[0] = adfGeoTransform[0]
-            + 0 * adfGeoTransform[1]
-            + 0 * adfGeoTransform[2];
-        adfY[0] = adfGeoTransform[3]
-            + 0 * adfGeoTransform[4]
-            + 0 * adfGeoTransform[5];
-
-        adfX[1] = adfGeoTransform[0]
-            + nXSize * adfGeoTransform[1]
-            + 0 * adfGeoTransform[2];
-        adfY[1] = adfGeoTransform[3]
-            + nXSize * adfGeoTransform[4]
-            + 0 * adfGeoTransform[5];
-
-        adfX[2] = adfGeoTransform[0]
-            + nXSize * adfGeoTransform[1]
-            + nYSize * adfGeoTransform[2];
-        adfY[2] = adfGeoTransform[3]
-            + nXSize * adfGeoTransform[4]
-            + nYSize * adfGeoTransform[5];
-
-        adfX[3] = adfGeoTransform[0]
-            + 0 * adfGeoTransform[1]
-            + nYSize * adfGeoTransform[2];
-        adfY[3] = adfGeoTransform[3]
-            + 0 * adfGeoTransform[4]
-            + nYSize * adfGeoTransform[5];
-
-        adfX[4] = adfGeoTransform[0]
-            + 0 * adfGeoTransform[1]
-            + 0 * adfGeoTransform[2];
-        adfY[4] = adfGeoTransform[3]
-            + 0 * adfGeoTransform[4]
-            + 0 * adfGeoTransform[5];
-
-        OGRSpatialReferenceH hSourceSRS = nullptr;
-        if( (bSetTargetSRS || i_SrcSRSName >= 0) &&
-            projectionRef != nullptr &&
-            projectionRef[0] != '\0' )
-        {
-            hSourceSRS = OSRNewSpatialReference( projectionRef );
-            OSRSetAxisMappingStrategy(hSourceSRS, OAMS_TRADITIONAL_GIS_ORDER);
-        }
-
-        // If set target srs, do the forward transformation of all points.
-        if( bSetTargetSRS && projectionRef != nullptr && projectionRef[0] != '\0' )
-        {
-            OGRCoordinateTransformationH hCT = nullptr;
-            if( hSourceSRS && !OSRIsSame( hSourceSRS, hTargetSRS ) )
-            {
-                hCT = OCTNewCoordinateTransformation( hSourceSRS, hTargetSRS );
-                if( hCT == nullptr || !OCTTransform( hCT, 5, adfX, adfY, nullptr ) )
-                {
-                    fprintf(
-                        stderr,
-                        "Warning : unable to transform points from source "
-                        "SRS `%s' to target SRS `%s'\n"
-                        "for file `%s' - file skipped\n",
-                        projectionRef, pszTargetSRS, fileNameToWrite );
-                    if( hCT )
-                        OCTDestroyCoordinateTransformation( hCT );
-                    if( hSourceSRS )
-                        OSRDestroySpatialReference( hSourceSRS );
-                    continue;
-                }
-                if( hCT )
-                    OCTDestroyCoordinateTransformation( hCT );
-            }
-        }
-
-        OGRFeatureH hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
-        OGR_F_SetFieldString( hFeature, ti_field, fileNameToWrite );
-
-        if( i_SrcSRSName >= 0 && hSourceSRS != nullptr )
-        {
-            const char* pszAuthorityCode =
-                OSRGetAuthorityCode(hSourceSRS, nullptr);
-            const char* pszAuthorityName =
-                OSRGetAuthorityName(hSourceSRS, nullptr);
-            if( eSrcSRSFormat == FORMAT_AUTO )
-            {
-                if( pszAuthorityName != nullptr && pszAuthorityCode != nullptr )
-                {
-                    OGR_F_SetFieldString(
-                        hFeature, i_SrcSRSName,
-                        CPLSPrintf("%s:%s",
-                                   pszAuthorityName, pszAuthorityCode) );
-                }
-                else if( nMaxFieldSize == 0 ||
-                         strlen(projectionRef) <= nMaxFieldSize )
-                {
-                    OGR_F_SetFieldString(hFeature, i_SrcSRSName, projectionRef);
-                }
-                else
-                {
-                    char* pszProj4 = nullptr;
-                    if( OSRExportToProj4(hSourceSRS, &pszProj4) == OGRERR_NONE )
-                    {
-                        OGR_F_SetFieldString( hFeature, i_SrcSRSName,
-                                              pszProj4 );
-                        CPLFree(pszProj4);
-                    }
-                    else
-                    {
-                        OGR_F_SetFieldString( hFeature, i_SrcSRSName,
-                                              projectionRef );
-                    }
-                }
-            }
-            else if( eSrcSRSFormat == FORMAT_WKT )
-            {
-                if( nMaxFieldSize == 0 ||
-                    strlen(projectionRef) <= nMaxFieldSize )
-                {
-                    OGR_F_SetFieldString( hFeature, i_SrcSRSName,
-                                          projectionRef );
-                }
-                else
-                {
-                    fprintf(stderr,
-                            "Cannot write WKT for file %s as it is too long!\n",
-                            fileNameToWrite);
-                }
-            }
-            else if( eSrcSRSFormat == FORMAT_PROJ )
-            {
-                char* pszProj4 = nullptr;
-                if( OSRExportToProj4(hSourceSRS, &pszProj4) == OGRERR_NONE )
-                {
-                    OGR_F_SetFieldString( hFeature, i_SrcSRSName, pszProj4 );
-                    CPLFree(pszProj4);
-                }
-            }
-            else if( eSrcSRSFormat == FORMAT_EPSG )
-            {
-                if( pszAuthorityName != nullptr && pszAuthorityCode != nullptr )
-                    OGR_F_SetFieldString(
-                        hFeature, i_SrcSRSName,
-                        CPLSPrintf("%s:%s",
-                                   pszAuthorityName, pszAuthorityCode) );
-            }
-        }
-        if( hSourceSRS )
-            OSRDestroySpatialReference( hSourceSRS );
-
-        OGRGeometryH hPoly = OGR_G_CreateGeometry(wkbPolygon);
-        OGRGeometryH hRing = OGR_G_CreateGeometry(wkbLinearRing);
-        for( int k = 0; k < 5; k++ )
-            OGR_G_SetPoint_2D(hRing, k, adfX[k], adfY[k]);
-        OGR_G_AddGeometryDirectly( hPoly, hRing );
-        OGR_F_SetGeometryDirectly( hFeature, hPoly );
-
-        if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
-        {
-           printf( "Failed to create feature in shapefile.\n" );
-           break;
-        }
-
-        OGR_F_Destroy( hFeature );
-
-        CPLFree(fileNameToWrite);
-
-        GDALClose( hDS );
+            
+            filename = CPLReadLineL(fpInputList);
+            if (filename == nullptr)
+                break;
+        }  while(1);
+        VSIFCloseL(fpInputList);
     }
-
+    
+    for( ; iArg < argc; iArg++ ) {
+        if (!add_one_file(argv[iArg],
+                          write_absolute_path,
+                          current_path,
+                          nExistingFiles,
+                          existingFilesTab,
+                          bSetTargetSRS,
+                          &alreadyExistingProjectionRefValid,
+                          &alreadyExistingProjectionRef,
+                          skip_different_projection,
+                          i_SrcSRSName,
+                          hTargetSRS,
+                          pszTargetSRS,
+                          hLayer,
+                          ti_field,
+                          eSrcSRSFormat,
+                          nMaxFieldSize
+                          )
+            )
+            break;
+    }
+    
     CPLFree(current_path);
 
     if (nExistingFiles)
@@ -744,3 +574,307 @@ MAIN_START(argc, argv)
     exit( 0 );
 }
 MAIN_END
+
+/************************************************************************/
+/*                        add_one_file()                                */
+/************************************************************************/
+
+static bool add_one_file(const char *fileNameToAdd,
+                         bool write_absolute_path,
+                         const char* current_path,
+                         int nExistingFiles,
+                         char** existingFilesTab,
+                         bool bSetTargetSRS,
+                         bool* pbAlreadyExistingProjectionRefValid,
+                         char** pAlreadyExistingProjectionRef,
+                         bool skip_different_projection,
+                         int i_SrcSRSName,
+                         OGRSpatialReferenceH hTargetSRS,
+                         const char *pszTargetSRS,
+                         OGRLayerH hLayer,
+                         const int ti_field,
+                         SrcSRSFormat eSrcSRSFormat,
+                         size_t nMaxFieldSize
+                         )
+{
+    char *fileNameToWrite = nullptr;
+    VSIStatBuf sStatBuf;
+    
+    // Make sure it is a file before building absolute path name.
+    if( write_absolute_path && CPLIsFilenameRelative( fileNameToAdd ) &&
+        VSIStat( fileNameToAdd, &sStatBuf ) == 0 )
+    {
+        fileNameToWrite =
+            CPLStrdup(CPLProjectRelativeFilename(current_path, fileNameToAdd));
+    }
+    else
+    {
+        fileNameToWrite = CPLStrdup(fileNameToAdd);
+    }
+
+    // Checks that file is not already in tileindex.
+    {
+        int i = 0;  // Used after for.
+        for( ; i < nExistingFiles; i++ )
+        {
+            if (EQUAL(fileNameToWrite, existingFilesTab[i]))
+            {
+                fprintf(stderr,
+                        "File %s is already in tileindex. Skipping it.\n",
+                        fileNameToWrite);
+                break;
+            }
+        }
+        if (i != nExistingFiles)
+        {
+            CPLFree(fileNameToWrite);
+            return true;
+        }
+    }
+    
+    GDALDatasetH hDS = GDALOpen( fileNameToAdd, GA_ReadOnly );
+    if( hDS == nullptr )
+    {
+        fprintf( stderr, "Unable to open %s, skipping.\n",
+                 fileNameToAdd );
+        CPLFree(fileNameToWrite);
+        return true;
+    }
+
+    double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    GDALGetGeoTransform( hDS, adfGeoTransform );
+    if( adfGeoTransform[0] == 0.0
+        && adfGeoTransform[1] == 1.0
+        && adfGeoTransform[3] == 0.0
+        && std::abs(adfGeoTransform[5]) == 1.0 )
+    {
+        fprintf( stderr,
+                 "It appears no georeferencing is available for\n"
+                 "`%s', skipping.\n",
+                 fileNameToAdd );
+        GDALClose( hDS );
+        CPLFree(fileNameToWrite);
+        return true;
+    }
+
+    const char *projectionRef = GDALGetProjectionRef(hDS);
+
+    // If not set target srs, test that the current file uses same
+    // projection as others.
+    if( !bSetTargetSRS )
+    {
+        if(pbAlreadyExistingProjectionRefValid && *pbAlreadyExistingProjectionRefValid )
+        {
+            if (pAlreadyExistingProjectionRef==nullptr) {
+                printf("given null pointer to valid alreadyExistingProjectionRef ?");
+                exit(1);
+            }
+            int projectionRefNotNull, alreadyExistingProjectionRefNotNull;
+            projectionRefNotNull = projectionRef && projectionRef[0];
+            alreadyExistingProjectionRefNotNull =
+                *pAlreadyExistingProjectionRef &&
+                (*pAlreadyExistingProjectionRef)[0];
+            if ((projectionRefNotNull &&
+                 alreadyExistingProjectionRefNotNull &&
+                 EQUAL(projectionRef, *pAlreadyExistingProjectionRef) == 0) ||
+                (projectionRefNotNull != alreadyExistingProjectionRefNotNull))
+            {
+                fprintf(
+                        stderr,
+                        "Warning : %s is not using the same projection system "
+                        "as other files in the tileindex.\n"
+                        "This may cause problems when using it in MapServer "
+                        "for example.\n"
+                        "Use -t_srs option to set target projection system "
+                        "(not supported by MapServer).\n"
+                        "%s\n", fileNameToAdd,
+                        skip_different_projection ? "Skipping this file." : "");
+                if( skip_different_projection )
+                    {
+                        CPLFree(fileNameToWrite);
+                        GDALClose( hDS );
+                        return true;
+                    }
+            }
+        }
+        else if( pbAlreadyExistingProjectionRefValid)
+        {
+            *pbAlreadyExistingProjectionRefValid = true;
+            *pAlreadyExistingProjectionRef = CPLStrdup(projectionRef);
+        }
+        else {
+            printf("given null pointer to alreadyExistingProjectionRefValid ?");
+            exit(1);
+        }
+    }
+
+    const int nXSize = GDALGetRasterXSize( hDS );
+    const int nYSize = GDALGetRasterYSize( hDS );
+
+    double adfX[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+    double adfY[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+    adfX[0] = adfGeoTransform[0]
+        + 0 * adfGeoTransform[1]
+        + 0 * adfGeoTransform[2];
+    adfY[0] = adfGeoTransform[3]
+        + 0 * adfGeoTransform[4]
+        + 0 * adfGeoTransform[5];
+
+    adfX[1] = adfGeoTransform[0]
+        + nXSize * adfGeoTransform[1]
+        + 0 * adfGeoTransform[2];
+    adfY[1] = adfGeoTransform[3]
+        + nXSize * adfGeoTransform[4]
+        + 0 * adfGeoTransform[5];
+
+    adfX[2] = adfGeoTransform[0]
+        + nXSize * adfGeoTransform[1]
+        + nYSize * adfGeoTransform[2];
+    adfY[2] = adfGeoTransform[3]
+        + nXSize * adfGeoTransform[4]
+        + nYSize * adfGeoTransform[5];
+
+    adfX[3] = adfGeoTransform[0]
+        + 0 * adfGeoTransform[1]
+        + nYSize * adfGeoTransform[2];
+    adfY[3] = adfGeoTransform[3]
+        + 0 * adfGeoTransform[4]
+        + nYSize * adfGeoTransform[5];
+    
+    adfX[4] = adfGeoTransform[0]
+        + 0 * adfGeoTransform[1]
+        + 0 * adfGeoTransform[2];
+    adfY[4] = adfGeoTransform[3]
+        + 0 * adfGeoTransform[4]
+        + 0 * adfGeoTransform[5];
+
+    OGRSpatialReferenceH hSourceSRS = nullptr;
+    if( (bSetTargetSRS || i_SrcSRSName >= 0) &&
+        projectionRef != nullptr &&
+        projectionRef[0] != '\0' )
+    {
+        hSourceSRS = OSRNewSpatialReference( projectionRef );
+        OSRSetAxisMappingStrategy(hSourceSRS, OAMS_TRADITIONAL_GIS_ORDER);
+    }
+
+    // If set target srs, do the forward transformation of all points.
+    if( bSetTargetSRS && projectionRef != nullptr && projectionRef[0] != '\0' )
+    {
+        OGRCoordinateTransformationH hCT = nullptr;
+        if( hSourceSRS && !OSRIsSame( hSourceSRS, hTargetSRS ) )
+            {
+                hCT = OCTNewCoordinateTransformation( hSourceSRS, hTargetSRS );
+                if( hCT == nullptr || !OCTTransform( hCT, 5, adfX, adfY, nullptr ) )
+                {
+                    fprintf(
+                            stderr,
+                            "Warning : unable to transform points from source "
+                            "SRS `%s' to target SRS `%s'\n"
+                            "for file `%s' - file skipped\n",
+                            projectionRef, pszTargetSRS, fileNameToWrite );
+                    if( hCT )
+                        OCTDestroyCoordinateTransformation( hCT );
+                    if( hSourceSRS )
+                        OSRDestroySpatialReference( hSourceSRS );
+                    return true;
+                }
+                if( hCT )
+                    OCTDestroyCoordinateTransformation( hCT );
+            }
+    }
+
+    OGRFeatureH hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
+    OGR_F_SetFieldString( hFeature, ti_field, fileNameToWrite );
+
+    if( i_SrcSRSName >= 0 && hSourceSRS != nullptr )
+    {
+        const char* pszAuthorityCode =
+            OSRGetAuthorityCode(hSourceSRS, nullptr);
+        const char* pszAuthorityName =
+            OSRGetAuthorityName(hSourceSRS, nullptr);
+        if( eSrcSRSFormat == FORMAT_AUTO )
+        {
+            if( pszAuthorityName != nullptr && pszAuthorityCode != nullptr )
+            {
+                OGR_F_SetFieldString(
+                                     hFeature, i_SrcSRSName,
+                                     CPLSPrintf("%s:%s",
+                                                pszAuthorityName, pszAuthorityCode) );
+            }
+            else if( nMaxFieldSize == 0 ||
+                     strlen(projectionRef) <= nMaxFieldSize )
+            {
+                OGR_F_SetFieldString(hFeature, i_SrcSRSName, projectionRef);
+            }
+            else
+            {
+                char* pszProj4 = nullptr;
+                if( OSRExportToProj4(hSourceSRS, &pszProj4) == OGRERR_NONE )
+                {
+                    OGR_F_SetFieldString( hFeature, i_SrcSRSName,
+                                          pszProj4 );
+                    CPLFree(pszProj4);
+                }
+                else
+                {
+                    OGR_F_SetFieldString( hFeature, i_SrcSRSName,
+                                          projectionRef );
+                }
+            }
+        }
+        else if( eSrcSRSFormat == FORMAT_WKT )
+        {
+            if( nMaxFieldSize == 0 ||
+                strlen(projectionRef) <= nMaxFieldSize )
+            {
+                OGR_F_SetFieldString( hFeature, i_SrcSRSName,
+                                      projectionRef );
+            }
+            else
+            {
+                fprintf(stderr,
+                        "Cannot write WKT for file %s as it is too long!\n",
+                        fileNameToWrite);
+            }
+        }
+        else if( eSrcSRSFormat == FORMAT_PROJ )
+        {
+            char* pszProj4 = nullptr;
+            if( OSRExportToProj4(hSourceSRS, &pszProj4) == OGRERR_NONE )
+            {
+                OGR_F_SetFieldString( hFeature, i_SrcSRSName, pszProj4 );
+                CPLFree(pszProj4);
+            }
+        }
+        else if( eSrcSRSFormat == FORMAT_EPSG )
+        {
+            if( pszAuthorityName != nullptr && pszAuthorityCode != nullptr )
+                OGR_F_SetFieldString(
+                                     hFeature, i_SrcSRSName,
+                                     CPLSPrintf("%s:%s",
+                                                pszAuthorityName, pszAuthorityCode) );
+        }
+    }
+    if( hSourceSRS )
+        OSRDestroySpatialReference( hSourceSRS );
+
+    OGRGeometryH hPoly = OGR_G_CreateGeometry(wkbPolygon);
+    OGRGeometryH hRing = OGR_G_CreateGeometry(wkbLinearRing);
+    for( int k = 0; k < 5; k++ )
+        OGR_G_SetPoint_2D(hRing, k, adfX[k], adfY[k]);
+    OGR_G_AddGeometryDirectly( hPoly, hRing );
+    OGR_F_SetGeometryDirectly( hFeature, hPoly );
+
+    if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
+    {
+        printf( "Failed to create feature in shapefile.\n" );
+        return false;
+    }
+
+    OGR_F_Destroy( hFeature );
+    
+    CPLFree(fileNameToWrite);
+
+    GDALClose( hDS );
+    return true;
+} // add_one_file()

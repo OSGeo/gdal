@@ -683,7 +683,8 @@ Builds a shapefile as a raster tileindex.
 gdaltindex [-f format] [-tileindex field_name] [-write_absolute_path]
            [-skip_different_projection] [-t_srs target_srs]
            [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]
-           [-lyr_name name] index_file [gdal_file]*
+           [-lyr_name name]
+           [-input_file_list my_list.txt] index_file [gdal_file]*
 \endverbatim
 
 \section gdaltindex_description DESCRIPTION
@@ -720,6 +721,10 @@ was ESRI Shapefile). </p>
 <dt><b>-lyr_name</b> name:</dt>
 <dd><p>Layer name to create/append to in the output tile index file.</p>
 </dd>
+<dt><b>-input_file_list</b> my_list.txt:</dt>
+<dd><p>(starting with GDAL 2.5)
+To specify a text file with an input filename on each line.</p>
+</dd>
 <dt><b>index_file</b>:</dt>
 <dd><p>The name of the output file to create/append to. The default shapefile will be created if it doesn't already exist, otherwise it will append to the existing file.</p>
 </dd>
@@ -741,6 +746,11 @@ shape showing the bounds of the image:
 
 \verbatim
 gdaltindex doq_index.shp doq/*.tif
+\endverbatim
+
+Produce a shapefile (<code>doq_index.shp</code>) from files whose name is specified in a text file :
+\verbatim
+gdaltindex -input_file_list my_list.txt doq_index.shp
 \endverbatim
 
 The <code>-t_srs</code> option can also be used to transform all input rasters
