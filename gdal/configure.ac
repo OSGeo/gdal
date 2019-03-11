@@ -1194,7 +1194,7 @@ AC_ARG_WITH(proj,[  --with-proj=ARG Compile with PROJ.x (ARG=yes or path)],,)
 PROJ_INCLUDE=""
 if test "x$with_proj" = "xno" ; then
 
-  AC_MSG_ERROR([PROJ 6 is a required dependency.])
+  AC_MSG_ERROR([PROJ >= 6 is a required dependency.])
 
 else
 
