@@ -819,7 +819,7 @@ void FITSDataset::WriteFITSInfo()
         fits_update_key( hFITS, TDOUBLE, "B_RADIUS", &bradius, nullptr, &status);
         fits_update_key( hFITS, TDOUBLE, "C_RADIUS", &cradius, nullptr, &status);
 
-        const char* un = oSRS.GetAttrValue("UNIT",0);
+        const char* unit = oSRS.GetAttrValue("UNIT",0);
 
         ctype1.append("LN-");
         ctype2.append("LT-"); 
@@ -884,13 +884,13 @@ void FITSDataset::WriteFITSInfo()
         if ( centlon > 180. ) {
           centlon = centlon - 180.;
         }
-        if ( strstr(un, "metre") ) {
+        if ( strstr(unit, "metre") ) {
           // convert degrees/pixel to m/pixel 
           mapres = 1. / adfGeoTransform[1] ; // mapres is pixel/meters
           mres = adfGeoTransform[1] / cfactor ; // mres is deg/pixel
           crpix1 = - (UpperLeftCornerX * mapres) + centlon / mres + 0.5;
           crpix2 = (UpperLeftCornerY * mapres) - (centlat / mres) + 0.5;
-        } else if ( strstr(un, "degree") ) {
+        } else if ( strstr(unit, "degree") ) {
           //convert m/pixel to pixel/degree
           mapres = 1. / adfGeoTransform[1] / cfactor; // mapres is pixel/deg
           mres = adfGeoTransform[1] ; // mres is meters/pixel
@@ -1161,7 +1161,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
     double aRadius, cRadius, invFlattening = 0.0;
     double falseEast = 0.0, falseNorth = 0.0, scale = 1.0;
     char target[16], ctype[9];
-    std::string pszGeogName, pszDatumName, projName;
+    std::string GeogName, DatumName, projName;
 
     const double PI = std::atan(1.0)*4;
     const double DEG2RAD = PI / 180.;
@@ -1185,10 +1185,10 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
             status = 0;
         }
 
-        pszGeogName.assign("GCS_");
-        pszGeogName.append(target);
-        pszDatumName.assign("D_");
-        pszDatumName.append(target);
+        GeogName.assign("GCS_");
+        GeogName.append(target);
+        DatumName.assign("D_");
+        DatumName.append(target);
 
         fits_read_key(hFITS, TDOUBLE, "A_RADIUS", &aRadius, nullptr, &status);
         if( status )
@@ -1324,10 +1324,10 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 std::strcpy (cstrproj, projName.c_str());
                 oSRS.SetNode("PROJCS",cstrproj);
 
-                char * cstrgeoname = new char [pszGeogName.length()+1];
-                std::strcpy (cstrgeoname, pszGeogName.c_str());
-                char * cstrdname = new char [pszDatumName.length()+1];
-                std::strcpy (cstrdname, pszDatumName.c_str());
+                char * cstrgeoname = new char [GeogName.length()+1];
+                std::strcpy (cstrgeoname, GeogName.c_str());
+                char * cstrdname = new char [DatumName.length()+1];
+                std::strcpy (cstrdname, DatumName.c_str());
                 oSRS.SetGeogCS(cstrgeoname, cstrdname, target, aRadius, invFlattening,
                     "Reference_Meridian", 0.0, "degree", 0.0174532925199433);
             }  else {
@@ -1381,7 +1381,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
         fits_read_key(hFITS, TDOUBLE, "BLANK", &dfNoDataValue, nullptr, &status);
         bNoDataSet = !status;
 
-    m_bLoadPam = false;
+        m_bLoadPam = false;
     }
 }
 
