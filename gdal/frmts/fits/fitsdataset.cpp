@@ -1159,6 +1159,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
     double dfScale, dfOffset;
     double crpix1, crpix2, crval1, crval2, cdelt1, cdelt2, pc[4], cd[4];
     double aRadius, cRadius, invFlattening = 0.0;
+    double falseEast = 0.0, falseNorth = 0.0, scale = 1.0;
     char target[16], ctype[9];
     std::string pszGeogName, pszDatumName, projName;
 
@@ -1266,70 +1267,39 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 /* Sinusoidal / SFL projection */
                 if( strcmp(pstr,"SFL" ) == 0 ) {
                     projName.assign("Sinusoidal_");
-                    oSRS.SetProjection(SRS_PT_SINUSOIDAL);
-                    oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
+                    oSRS.SetSinusoidal(crval1, falseEast, falseNorth);
 
                 /* Mercator, Oblique (Hotine) Mercator, Transverse Mercator */
                 /* Mercator / MER projection */
                 } else if( strcmp(pstr,"MER" ) == 0 ) {
                     projName.assign("Mercator_");
-                    oSRS.SetProjection(SRS_PT_MERCATOR_1SP);
-                    oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
-                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
-                /*
-                # Is scale factor a reference point or a ratio between pixel scales?
-                if olat is not None:
-                srs.SetProjParm('scale_factor',olat)
-                else: #set default of 0.0
-                srs.SetProjParm('scale_factor',0.0)
-                */
+                    oSRS.SetMercator(crval2, crval1, scale, falseEast, falseNorth);
 
                 /* Equirectangular / CAR projection */
                 } else if( strcmp(pstr,"CAR" ) == 0 ) {
                     projName.assign("Equirectangular_");
-                    oSRS.SetProjection(SRS_PT_EQUIRECTANGULAR);
                 /*
                 The standard_parallel_1 defines where the local radius is calculated
                 not the center of Y Cartesian system (which is latitude_of_origin)
                 But FITS WCS only supports projections on the sphere
                 we assume here that the local radius is the one computed at the projection center
                 */
-                    oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
-                    oSRS.SetProjParm(SRS_PP_STANDARD_PARALLEL_1, crval2);
-                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
-                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
+                   oSRS.SetEquirectangular2(crval2, crval1, crval2, falseEast, falseNorth);
 
                 /* Lambert Azimuthal Equal Area / ZEA projection */
                 } else if( strcmp(pstr,"ZEA" ) == 0 ) {
                     projName.assign("Lambert_Azimuthal_Equal_Area_");
-                    oSRS.SetProjection(SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA);
-                    oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
-                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_CENTER, crval2);
+                    oSRS.SetLAEA(crval2, crval1, falseEast, falseNorth);
 
                 /* Lambert Conformal Conic 1SP / COO projection */
                 } else if( strcmp(pstr,"COO" ) == 0 ) {
                     projName.assign("Lambert_Conformal_Conic_1SP_");
-                    oSRS.SetProjection(SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP);
-                    oSRS.SetProjParm(SRS_PP_LONGITUDE_OF_CENTER, crval1);
-                    /*
-                    #clat = self.__header['XXXXX']
-                    #srs.SetProjParm('latitude_of_center',clat)
-                    scale = self.__header['XXXXX']
-                    if scale is not None:
-                        srs.SetProjParm('scale_factor',scale)
-                    else: #set default of 1.0
-                        srs.SetProjParm('scale_factor',1.0)
-                    */
+                    oSRS.SetLCC1SP (crval2, crval1, scale, falseEast, falseNorth);
 
                 /* Orthographic / SIN projection */
                 } else if( strcmp(pstr,"SIN" ) == 0 ) {
                     projName.assign("Orthographic_");
-                    oSRS.SetProjection(SRS_PT_ORTHOGRAPHIC);
-                    oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
-                    /*
-                    #olat = self.__header['XXXXX']
-                    #srs.SetProjParm('latitude_of_origin',olat)
-                    */
+                    oSRS.SetOrthographic(crval2, crval1, falseEast, falseNorth);
 
                 /* Point Perspective / AZP projection */
                 } else if( strcmp(pstr,"AZP" ) == 0 ) {
@@ -1340,9 +1310,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 /* Polar Stereographic / STG projection */
                 } else if( strcmp(pstr,"STG" ) == 0 ) {
                     projName.assign("Polar_Stereographic_");
-                    oSRS.SetProjection(SRS_PT_POLAR_STEREOGRAPHIC);
-                    oSRS.SetProjParm(SRS_PP_CENTRAL_MERIDIAN, crval1);
-                    oSRS.SetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, crval2);
+                    oSRS.SetStereographic(crval2, crval1, scale, falseEast, falseNorth);
                 } else {
                     CPLError(CE_Failure, CPLE_AppDefined,
                          "Unknown projection.");
