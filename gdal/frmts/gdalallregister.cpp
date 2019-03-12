@@ -568,6 +568,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_IGNFHeightASCIIGrid();
 #endif
 
+#ifdef FRMT_mrr
+    GDALRegister_MRR();
+#endif
+
     // NOTE: you need to generally your own driver before that line.
 
 /* -------------------------------------------------------------------- */
