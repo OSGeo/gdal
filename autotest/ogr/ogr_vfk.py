@@ -317,6 +317,9 @@ def test_ogr_vfk_11():
 
 def test_ogr_vfk_12():
 
+    if gdaltest.vfk_drv is None:
+        pytest.skip()
+
     gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
 
     gdaltest.vfk_layer_sbp.SetAttributeFilter("PARAMETRY_SPOJENI = '16'")
