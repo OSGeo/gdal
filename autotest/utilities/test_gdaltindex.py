@@ -359,8 +359,10 @@ def test_gdaltindex_cleanup():
     drv.Delete('tmp/gdaltindex4.tif')
     drv.Delete('tmp/gdaltindex5.tif')
     drv.Delete('tmp/gdaltindex6.tif')
-
-    os.remove('tmp/filelist.txt')
+    try:
+        os.remove('tmp/filelist.txt')
+    except OSError:
+        pass
 
 
 
