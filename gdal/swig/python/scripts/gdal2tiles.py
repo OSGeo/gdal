@@ -1509,8 +1509,8 @@ class GDAL2Tiles(object):
         if not self.warped_input_dataset:
             self.warped_input_dataset = input_dataset
 
-        self.warped_input_dataset.GetDriver().CreateCopy(self.tmp_vrt_filename,
-                                                         self.warped_input_dataset)
+        gdal.GetDriverByName('VRT').CreateCopy(self.tmp_vrt_filename,
+                                               self.warped_input_dataset)
 
         # Get alpha band (either directly or from NODATA value)
         self.alphaband = self.warped_input_dataset.GetRasterBand(1).GetMaskBand()
