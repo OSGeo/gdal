@@ -358,9 +358,9 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2()
                "srs_id INTEGER NOT NULL PRIMARY KEY,"
                "organization TEXT NOT NULL,"
                "organization_coordsys_id INTEGER NOT NULL,"
-               "definition TEXT NOT NULL,"
+               "definition TEXT NOT NULL DEFAULT 'undefined',"
                "description TEXT, "
-               "definition_12_063 TEXT NOT NULL)") == OGRERR_NONE;
+               "definition_12_063 TEXT NOT NULL DEFAULT 'undefined')") == OGRERR_NONE;
     }
 
     if( bRet )
@@ -3766,18 +3766,25 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     {
         /* Requirement 10: A GeoPackage SHALL include a gpkg_spatial_ref_sys table */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
+        if( CPLTestBool(CPLGetConfigOption("GPKG_ADD_DEFINITION_12_063", "NO")) )
+        {
+            m_bHasDefinition12_063 = true;
+        }
         osSQL =
             "CREATE TABLE gpkg_spatial_ref_sys ("
             "srs_name TEXT NOT NULL,"
             "srs_id INTEGER NOT NULL PRIMARY KEY,"
             "organization TEXT NOT NULL,"
             "organization_coordsys_id INTEGER NOT NULL,"
-            "definition  TEXT NOT NULL,"
-            "description TEXT";
-        if( CPLTestBool(CPLGetConfigOption("GPKG_ADD_DEFINITION_12_063", "NO")) )
+            "definition  TEXT NOT NULL";
+        if( m_bHasDefinition12_063 )
         {
-            m_bHasDefinition12_063 = true;
-            osSQL += ", definition_12_063 TEXT NOT NULL";
+            osSQL += " DEFAULT 'undefined'";
+        }
+        osSQL += ",description TEXT";
+        if( m_bHasDefinition12_063 )
+        {
+            osSQL += ", definition_12_063 TEXT NOT NULL DEFAULT 'undefined'";
         }
         osSQL += 
             ")"

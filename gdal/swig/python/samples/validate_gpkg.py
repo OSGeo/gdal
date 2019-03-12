@@ -171,9 +171,9 @@ class GPKGChecker(object):
                 (1, 'srs_id', 'INTEGER', 1, None, 1),
                 (2, 'organization', 'TEXT', 1, None, 0),
                 (3, 'organization_coordsys_id', 'INTEGER', 1, None, 0),
-                (4, 'definition', 'TEXT', 1, None, 0),
+                (4, 'definition', 'TEXT', 1, "'undefined'", 0),
                 (5, 'description', 'TEXT', 0, None, 0),
-                (6, 'definition_12_063', 'TEXT', 1, None, 0)
+                (6, 'definition_12_063', 'TEXT', 1, "'undefined'", 0)
             ]
         else:
             expected_columns = [
