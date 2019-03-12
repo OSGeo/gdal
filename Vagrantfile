@@ -43,7 +43,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     ovrd.vm.box = "cultuurnet/ubuntu-14.04-64-puppet"
     lxc.backingstore = 'dir'
     lxc.customize 'cgroup.memory.limit_in_bytes', vm_ram_bytes
-    lxc.customize 'aa_allow_incomplete', 1
+    # LXC 3 or later deprecated old parameter
+    lxc.customize 'apparmor.allow_incomplete', 1
+    # for LXC 2.1 or before
+    #lxc.customize 'aa_allow_incomplete', 1
     lxc.container_name = "gdal-vagrant"
     # allow android adb connection from guest
     #ovrd.vm.synced_folder('/dev/bus', '/dev/bus')
