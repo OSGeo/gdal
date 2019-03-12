@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-SUBDIRS-yes = generic geojson kml mem mitab vrt $(OGR_FORMATS)
+SUBDIRS-yes = generic geojson kml mem mitab EFAL vrt $(OGR_FORMATS)
 
 SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(HAVE_TEIGHA)  += dwg

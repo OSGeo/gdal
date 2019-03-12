@@ -51,6 +51,9 @@ void OGRRegisterAllInternal()
 #ifdef MITAB_ENABLED
     RegisterOGRTAB();
 #endif
+#ifdef EFAL_ENABLED
+    RegisterOGREFAL();
+#endif
 #ifdef NTF_ENABLED
     RegisterOGRNTF();
 #endif

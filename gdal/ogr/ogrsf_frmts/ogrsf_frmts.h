@@ -520,6 +520,7 @@ void CPL_DLL RegisterOGRVDV();
 void CPL_DLL RegisterOGRGMLAS();
 void CPL_DLL RegisterOGRMVT();
 void CPL_DLL RegisterOGRNGW();
+void CPL_DLL RegisterOGREFAL();
 // @endcond
 
 CPL_C_END
