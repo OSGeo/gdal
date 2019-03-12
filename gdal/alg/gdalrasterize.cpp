@@ -89,8 +89,8 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
 
             unsigned char *pabyInsert =
                 psInfo->pabyChunkBuf
-                + iBand * psInfo->nXSize * psInfo->nYSize
-                + nY * psInfo->nXSize + nXStart;
+                + static_cast<GSpacing>(iBand) * psInfo->nXSize * psInfo->nYSize
+                + static_cast<GSpacing>(nY) * psInfo->nXSize + nXStart;
 
             if( psInfo->eMergeAlg == GRMA_Add ) {
                 int nPixels = nXEnd - nXStart + 1;
@@ -113,8 +113,8 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
 
             double *padfInsert =
                 (reinterpret_cast<double *>(psInfo->pabyChunkBuf))
-                + iBand * psInfo->nXSize * psInfo->nYSize
-                + nY * psInfo->nXSize + nXStart;
+                + static_cast<GSpacing>(iBand) * psInfo->nXSize * psInfo->nYSize
+                + static_cast<GSpacing>(nY) * psInfo->nXSize + nXStart;
 
             if( psInfo->eMergeAlg == GRMA_Add ) {
                 while( nPixels-- > 0 )
