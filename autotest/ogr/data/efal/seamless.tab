@@ -1,0 +1,14 @@
+!table
+!version 300
+!charset WindowsLatin1
+
+Definition Table
+  Type NATIVE Charset "WindowsLatin1"
+  Fields 2
+    Table Char (254) ;
+    WKT Char (254) Index 1 ;
+begin_metadata
+"\IsSeamless" = "TRUE"
+"\MapInfo" = ""
+"\MapInfo\TableID" = "fa6a3bab-c3ad-4dce-a578-1d619c1ecda4"
+end_metadata
