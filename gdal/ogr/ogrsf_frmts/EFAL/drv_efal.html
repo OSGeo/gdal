@@ -1,0 +1,202 @@
+<html>
+<head>
+<title>GDAL/OGR driver using MapInfo EFAL SDK</title>
+</head>
+
+<body bgcolor="#ffffff">
+This driver supports the MapInfo TAB file format. This driver supports the native as well as the new MapInfo Extended (NATIVEX) formats. 
+
+<h2>Contents</h2>
+<ol>
+<li><a href="#driver_overview">Overview of GDAL/OGR Driver</a></li>
+<li><a href="#differences_with_mitab">Differences with MITAB</a></li>
+<li><a href="#options">Options</a></li>
+<li><a href="#issues">Issues and Limitations</a></li>
+<li><a href="#building_gdal">Building GDAL</a></li>
+</ol>
+
+
+<hr/><h2 id="driver_overview">Overview of GDAL/OGR Driver</h2>
+<p>
+This driver supports the MapInfo Native and NativeX formats using the EFAL library from Pitney Bowes. The driver supports reading, writing, and creating data in these formats. 
+The MITAB library does not support the newer MapInfo Extended (NativeX) format which allows for larger file sizes, unicode character encodings, and other internal enhancements.
+</p>
+<p>
+EFAL is a new SDK provided by Pitney Bowes. It will eventually be made available for download from Pitney Bowes and will probably be versioned consistently with MapInfo Pro releases.
+The EFAL SDK enables access to the MapInfo SQL data access engine and provides the ability to open, create, query, and modify data in MapInfo TAB and MapInfo Enhanced TAB file formats. 
+This includes MapInfo Seamless tables. EFAL is a thread-safe SDK. The SDK includes detailed documentation on the API. The SDK must be used to build the GDAL driver. The SDK DLLs and related
+files must also be distributed for the driver to execute. 
+</p>
+<p>
+The EFAL driver for GDAL is currently only supported for Windows operating systems. 
+Pitney Bowes plans to port the EFAL library to non-Windows platforms. 
+</p>
+<p>This driver supports the following capabilities:</p>
+<ul>
+  <li>Opening and querying of MapInfo Native and NativeX TAB files</li>
+  <ul>
+	  <li>The EFAL API uses WKB as the interchange format for geometries. Due to this, currently, the API does not support some legacy MapInfo geometry
+	  types; most notably TEXT geometry types. Arc and Ellipse types are also not currently supported. RECT and Rounded RECT types are returned as polygons.</li>
+	  <li>Coordinate systems are supported using the MITAB capabilities through the importFromMICoordSys and 
+	  exportToMICoordSys methods on the OGRSpatialReference class. Due to this, the MITAB driver must be included in any build of GDAL that intends to include the EFAL driver.</li>
+	  <li>Styles in TAB files are converted to/from OGR style strings; currently to a very similar level of interoperability as MITAB.</li>
+	  <li>Spatial filtering - MBR only</li>
+	  <li>Attribute filtering using SQL expressions</li>
+	  <li>Read by Feature ID (random read)</li>
+	  <li>Opening a folder as a datasource will open and expose all TAB files within the folder (like MITAB)</li>
+ 	  <li>File locking option when opening to improve random read performance (details below)</li>
+  </ul>
+  <li>Editing of features within MapInfo tables</li>
+  <ul>
+	  <li>Insert, Update, and Delete supported</li>
+ 	  <li>File locking option when opening to improve insert, update, delete performance (details below)</li>
+  </ul>
+  <li>Creation of new MapInfo Native and NativeX TAB tables (layers)</li>
+  <ul>
+	  <li>Can specify Native or NativeX</li>
+	  <li>Character encoding options including UTF-8 and UTF-16 for NativeX</li>
+	  <li>Feature property types: Integer Integer64 Real String Date DateTime Time</li>
+	  <li>Blocksize options</li>
+ </ul>
+</ul>
+
+<hr/><h2 id="differences_with_mitab">Differences with MITAB</h2>
+<ul>
+  <li>Windows only - currently the EFAL SDK is available on Windows platforms only</li>
+  <li>No MID/MIF support</li>
+  <li>Table (layer) schema lists geometry column as having name "OBJ" whereas MITAB does not.</li>
+  <li>EFAL reports geometry type for table level whereas MITAB reports it as Unknown</li>
+  <li>Style strings - order of PEN and BRUSH clauses are usually reversed although results are the same.</li>
+  <li><code>Symbol (58,16711680,12,"MapInfo Cartographic",256,0)</code>Point style for Washington DC in USA_CAPS: 
+  MAP file stores a FontStyle value of 512. Why do I get 256 in the MapBasic string? MITAB style code adds outline based on 512, not 256....
+	<p>
+
+	Styles\dev\StyleSymFont.cpp
+	<pre><code>
+		if (pFont) {
+			if (pFont->Halo())		style |= S_HALO;    <= this is true, makes it 256 which is what's returned
+			if (pFont->Outline()) style |= S_OUTLINE;
+			if (pFont->Bold())    style |= S_BOLD;
+			if (pFont->Shadow())  style |= S_SHADOW;
+		}
+	</code></pre>
+	</p>
+  </li>
+  <li><b>Fixed (I think)</b>: Data extents and geometry node values (for ocean only?) have different number of significant digits</li>
+  <li><b>Fixed (I think)</b>: ogr2ogr Number_of_Lanes_Style - node values are wrong in new dataset with EFAL?</li>
+</ul>
+
+<hr/><h2 id="options">Options</h2>
+<h3>Open Options</h3>
+These options apply to either the input dataset open option (-oo) or the destination dataset open option (-doo)
+<ul>
+<li>MODE={READ-ONLY|LOCK-READ|READ-WRITE|LOCK-WRITE} - Controls how the table is opened and files are locked.</li>
+	<ul>
+	<li>READ-ONLY - table is opened in read-only mode and files are not locked</li>
+	<li>LOCK-READ - table is opened in read-only mode and files are locked for shareable read</li>
+	<li>READ-WRITE - table is opened in write mode (supports insert, update, and delete) but files are only locked during editing operations</li>
+	<li>LOCK-WRITE - table is opened in write mode and files are locked for write for the lifetime of the table</li>
+	</ul>
+</ul>
+
+<h3>Layer Creation options</h3>
+These options apply to the layer creation options (-lco)
+<ul>
+<li>BOUNDS=[xmin],[ymin],[xmax],[ymax]</li>
+</ul>
+
+
+<h3>Dataset Creation options</h3>
+These options apply to the dataset creation options (-dcco)
+<ul>
+<li>FORMAT={NATIVE|NATIVEX}, Default is NATIVE</li>
+<li>CHARSET - Default is WLATIN1 for NATIVE, UTF-8 for NATIVEX. The list of allowed values is</li>
+<table>
+<tr><td>ISO8859_1</td><td>ISO 8859-1 (Latin-1) character set  </td></tr>
+<tr><td>ISO8859_2</td><td>ISO 8859-2 (Latin-2) character set  </td></tr>
+<tr><td>ISO8859_3</td><td>ISO 8859-3 (Latin-3) character set  </td></tr>
+<tr><td>ISO8859_4</td><td>ISO 8859-4 (Latin-4) character set  </td></tr>
+<tr><td>ISO8859_5</td><td>ISO 8859-5 (English and Cyrillic-based) character set  </td></tr>
+<tr><td>ISO8859_6</td><td>ISO 8859-6 (English and Arabic) character set  </td></tr>
+<tr><td>ISO8859_7</td><td>ISO 8859-7 (English and Greek) character set  </td></tr>
+<tr><td>ISO8859_8</td><td>ISO 8859-8 (English and Hebrew) character set  </td></tr>
+<tr><td>ISO8859_9</td><td>ISO 8859-9 (Latin-5: Western Europe and Turkish) character set  </td></tr>
+<tr><td>WLATIN1</td><td>Windows Latin-1 (Code Page 1252, a.k.a. "ANSI") character set  </td></tr>
+<tr><td>WLATIN2</td><td>Windows Latin-2 (CP 1250) character set  </td></tr>
+<tr><td>WARABIC</td><td>Windows Arabic (CP 1256) character set  </td></tr>
+<tr><td>WCYRILLIC</td><td>Windows Cyrillic (CP 1251) character set  </td></tr>
+<tr><td>WGREEK</td><td>Windows Greek (CP 1253) character set  </td></tr>
+<tr><td>WHEBREW</td><td>Windows Hebrew (CP 1255) character set  </td></tr>
+<tr><td>WTURKISH</td><td>Windows Turkish (CP 1254) character set  </td></tr>
+<tr><td>WTCHINESE</td><td>Windows Big 5 ("Traditional": Taiwan, Hong Kong) character set  </td></tr>
+<tr><td>WSCHINESE</td><td>Windows ("Simplified": China) character set  </td></tr>
+<tr><td>WJAPANESE</td><td>Windows Shift JIS X0208 (Japan) character set  </td></tr>
+<tr><td>WKOREAN</td><td>Windows KS C5601 (Korea) character set  </td></tr>
+<tr><td>CP437</td><td>IBM Code Page 437 ("extended ASCII") character set  </td></tr>
+<tr><td>CP850</td><td>IBM CP 850 (Multilingual) character set  </td></tr>
+<tr><td>CP852</td><td>IBM CP 852 (Eastern Europe) character set  </td></tr>
+<tr><td>CP857</td><td>IBM CP 857 (Turkish) character set  </td></tr>
+<tr><td>CP860</td><td>IBM CP 860 (Portuguese) character set  </td></tr>
+<tr><td>CP861</td><td>IBM CP 861 (Icelandic) character set  </td></tr>
+<tr><td>CP863</td><td>IBM CP 863 (French Canada) character set  </td></tr>
+<tr><td>CP865</td><td>IBM CP 865 (Norway) character set  </td></tr>
+<tr><td>CP855</td><td>IBM CP 855 (Cyrillic) character set  </td></tr>
+<tr><td>CP864</td><td>IBM CP 864 (Arabic) character set  </td></tr>
+<tr><td>CP869</td><td>IBM CP 869 (Modern Greek) character set  </td></tr>
+<tr><td>WTHAI</td><td>Windows Thai (CP 874) character set  </td></tr>
+<tr><td>WBALTICRIM</td><td>Windows Baltic Rim (CP 1257) character set  </td></tr>
+<tr><td>WVIETNAMESE</td><td>Windows Vietnamese (CP 1258) character set  </td></tr>
+<tr><td>UTF8</td><td>Standard UTF-8  </td></tr>
+<tr><td>UTF16</td><td>Standard UTF-16  </td></tr>
+</table>
+<li>BLOCKSIZE=[number], Default is 16384, max is 32768. <b><i>TODO</i></b>: The driver does not use this - EFAL does not expose this ability to supply it. Is there a metadata tag that can be used or do we need an EFAL change?</li>
+</ul>
+
+<hr/><h2 id="issues">Issues and Limitations</h2>
+<ul>
+<li><b>EFAL Session handling</b> is untested - the driver now supports specifying a session by name but has not been tested!</li>
+<li>BOUNDS when creating does not work. <b><i>Maybe fixed</i></b> from the bounded csys change in EFAL???</li>
+</ul>
+
+<hr/><h2 id="building_gdal">Building and Using GDAL</h2>
+<h3>Changes to GDAL Source</h3>
+<table>
+<tr><td>Filename</td><td>Folder</td><td>Change</td><td></td><td></td><td></td></tr>
+<tr><td>EFAL</td><td>ROOT\ogr\ogrsf_frmts</td><td>NEW folder which contains the GDAL/OGR wrapper implementation using EFAL</td><td></td><td></td><td></td></tr>
+<tr><td>makefile.vc</td><td>ROOT\ogr\ogrsf_frmts\generic</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ogrregisterall.cpp</td><td>ROOT\ogr\ogrsf_frmts\generic</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>makefile.vc</td><td>ROOT\ogr\ogrsf_frmts</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ogrsf_frmts.h</td><td>ROOT\ogr\ogrsf_frmts</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>nmake.opt</td><td>ROOT</td><td></td><td></td><td></td><td></td></tr>
+</table>
+<h3>Building</h3>
+The EFAL driver will build as part of the GDAL even if the EFAL SDK is not found or not on the machine. This will allow GDAL to always be EFAL-ready. 
+A new header file (EFALLIB.h> was created to dynamically load the EFAL DLL if found and calls GetProcAddress for each of the function entry points.
+To build GDAL for x64 architecture, for example, from a command prompt run the following:
+<pre><code>
+nmake -f makefile.vc MSVC_VER=1900 DEBUG=1 WIN64=YES
+</code></pre>
+<b>NOTE:</b> vcvars must have already been run - if using a VC comamnd prompt this will be automatic but will cause issues with 32 bit builds.
+<br/>
+<h3>Runtime</h3>
+When using GDAL with this driver, the location of the EFAL runtime must be available on the system path. For example
+<pre><code>
+SET PATH=%PATH%;%EFAL_SDK_DIR%\export\ux64
+</code></pre>
+<h3>Usage examples</h3>
+<p/>
+ogr2ogr -f "MapInfo EFAL" c:\data\new\usa_caps.TAB c:\data\samples\usa_caps.tab
+<p/>
+ogr2ogr -dsco CHARSET=ISO8859_1 -f "MapInfo EFAL" c:\data\new\usa_caps.TAB c:\data\samples\usa_caps.tab
+<p/>
+ogr2ogr -dsco FORMAT=NATIVEX -f "MapInfo EFAL" -f "MapInfo EFAL" c:\data\new\usa_caps.TAB c:\data\samples\usa_caps.tab
+<p/>
+ogr2ogr -dsco CHARSET=ISO8859_1 -dsco FORMAT=NATIVEX -f "MapInfo EFAL" c:\data\new\usa_caps.TAB c:\data\samples\usa_caps.tab
+<p/>
+ogr2ogr -oo MODE=LOCK-WRITE -f "MapInfo EFAL" c:\data\new\usa_caps.TAB c:\data\samples\usa_caps.tab
+<p/>
+ogr2ogr -lco BOUNDS=-180,15,-60,75 -f "MapInfo EFAL" c:\data\new\usa_caps.TAB c:\data\samples\usa_caps.tab
+<p/>
+
+</body>
+</html>

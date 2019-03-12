@@ -1,0 +1,13 @@
+
+OBJ	=	from_mitab.obj ogrefaldriver.obj ogrefaldatasource.obj ogrefallayer.obj ogrgeopackageutility.obj style_utility.obj
+EXTRAFLAGS =	-I. -I.. -I..\.. -I..\generic -I..\gpkg
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
