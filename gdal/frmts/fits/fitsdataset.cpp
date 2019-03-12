@@ -362,9 +362,11 @@ FITSDataset::~FITSDataset() {
                 // Check for errors.
                 if (status)
                 {
+                    // Throw a warning with CFITSIO error status, then ignore status 
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Couldn't update key %s in FITS file %s (%d).",
                              key, GetDescription(), status);
+                    status = 0;
                     return;
                 }
             }
@@ -376,6 +378,15 @@ FITSDataset::~FITSDataset() {
       // Writing nodata value
       if (gdalDataType != GDT_Float32 && gdalDataType != GDT_Float64) {
         fits_update_key( hFITS, TDOUBLE, "BLANK", &dfNoDataValue, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key BLANK in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
       }
 
       // Writing Scale and offset if defined
@@ -385,7 +396,25 @@ FITSDataset::~FITSDataset() {
       double dfOffset = poSrcBand->GetOffset(&pbSuccess);
       if (bMetadataChanged) {
         fits_update_key( hFITS, TDOUBLE, "BSCALE", &dfScale, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key BSCALE in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
         fits_update_key( hFITS, TDOUBLE, "BZERO", &dfOffset, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key BZERO in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
       }
 
       // Copy georeferencing info to PAM if the profile is not FITS
@@ -400,8 +429,7 @@ FITSDataset::~FITSDataset() {
       FlushCache();
     }
 
-    // Close the FITS handle - ignore the error status
-    status = 0;
+    // Close the FITS handle
     fits_close_file(hFITS, &status);
   }
 }
@@ -444,6 +472,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   fits_read_key(hFITS, TDOUBLE, "BZERO", &offset, nullptr, &status);
   if( status )
   {
+    // BZERO is not mandatory offset defaulted to 0 if BZERO is missing
     status = 0;
     offset = 0.;
   }
@@ -815,8 +844,35 @@ void FITSDataset::WriteFITSInfo()
         cfactor = aradius * DEG2RAD;
 
         fits_update_key( hFITS, TDOUBLE, "A_RADIUS", &aradius, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key A_RADIUS in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
         fits_update_key( hFITS, TDOUBLE, "B_RADIUS", &bradius, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key B_RADIUS in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
         fits_update_key( hFITS, TDOUBLE, "C_RADIUS", &cradius, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key C_RADIUS in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
 
         const char* unit = oSRS.GetAttrValue("UNIT",0);
 
@@ -853,7 +909,8 @@ void FITSDataset::WriteFITSInfo()
             }
 
 /*
-                #Transverse Mercator definitely not supported in FITS.
+                #Transverse Mercator is supported in FITS via specific MER parameters.
+                # need some more testing...
                 #if EQUAL(mapProjection,"Transverse_Mercator"):
                 #    mapProjection = "MER"
                 #    centLat = hSRS.GetProjParm('standard_parallel_1')
@@ -871,10 +928,28 @@ void FITSDataset::WriteFITSInfo()
             char * cstr1 = new char [ctype1.length()+1];
             std::strcpy (cstr1, ctype1.c_str());
             fits_update_key( hFITS, TSTRING, "CTYPE1", cstr1, nullptr, &status);
+            if (status)
+            {
+                // Throw a warning with CFITSIO error status, then ignore status 
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Couldn't update key CTYPE1 in FITS file %s (%d).",
+                        GetDescription(), status);
+                status = 0;
+                return;
+            }
 
             char * cstr2 = new char [ctype2.length()+1];
             std::strcpy (cstr2, ctype2.c_str());
             fits_update_key( hFITS, TSTRING, "CTYPE2", cstr2, nullptr, &status);
+            if (status)
+            {
+                // Throw a warning with CFITSIO error status, then ignore status 
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Couldn't update key CTYPE2 in FITS file %s (%d).",
+                        GetDescription(), status);
+                status = 0;
+                return;
+            }
         }
 
         UpperLeftCornerX = adfGeoTransform[0] - falseEast;
@@ -900,9 +975,45 @@ void FITSDataset::WriteFITSInfo()
         /// Write WCS CRPIXia CRVALia CTYPEia here
 
         fits_update_key( hFITS, TDOUBLE, "CRVAL1", &centlon, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key CRVAL1 in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
         fits_update_key( hFITS, TDOUBLE, "CRVAL2", &centlat, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key CRVAL2 in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
         fits_update_key( hFITS, TDOUBLE, "CRPIX1", &crpix1, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key CRPIX1 in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
         fits_update_key( hFITS, TDOUBLE, "CRPIX2", &crpix2, nullptr, &status);
+        if (status)
+        {
+            // Throw a warning with CFITSIO error status, then ignore status 
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't update key CRPIX2 in FITS file %s (%d).",
+                    GetDescription(), status);
+            status = 0;
+            return;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Write geotransform if valid.                                    */
@@ -927,13 +1038,72 @@ void FITSDataset::WriteFITSInfo()
             pc[1] = cd[1] / cd[0];
             pc[2] = cd[2] / cd[3];
             pc[3] = - 1.;
+
             fits_update_key( hFITS, TDOUBLE, "CDELT1", &cd[0], nullptr, &status);
+            if (status)
+            {
+                // Throw a warning with CFITSIO error status, then ignore status 
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Couldn't update key CDELT1 in FITS file %s (%d).",
+                        GetDescription(), status);
+                status = 0;
+                return;
+            }
+
             fits_update_key( hFITS, TDOUBLE, "CDELT2", &cd[3], nullptr, &status);
+            if (status)
+            {
+                // Throw a warning with CFITSIO error status, then ignore status 
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Couldn't update key CDELT2 in FITS file %s (%d).",
+                        GetDescription(), status);
+                status = 0;
+                return;
+            }
 
             fits_update_key( hFITS, TDOUBLE, "PC1_1", &pc[0], nullptr, &status);
+            if (status)
+            {
+                // Throw a warning with CFITSIO error status, then ignore status 
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Couldn't update key PC1_1 in FITS file %s (%d).",
+                        GetDescription(), status);
+                status = 0;
+                return;
+            }
+
             fits_update_key( hFITS, TDOUBLE, "PC1_2", &pc[1], nullptr, &status);
+            if (status)
+            {
+                // Throw a warning with CFITSIO error status, then ignore status 
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Couldn't update key PC1_2 in FITS file %s (%d).",
+                        GetDescription(), status);
+                status = 0;
+                return;
+            }
+
             fits_update_key( hFITS, TDOUBLE, "PC2_1", &pc[2], nullptr, &status);
+            if (status)
+            {
+                // Throw a warning with CFITSIO error status, then ignore status 
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Couldn't update key PC2_1 in FITS file %s (%d).",
+                        GetDescription(), status);
+                status = 0;
+                return;
+            }
+
             fits_update_key( hFITS, TDOUBLE, "PC2_2", &pc[3], nullptr, &status);
+            if (status)
+            {
+                // Throw a warning with CFITSIO error status, then ignore status 
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Couldn't update key PC2_2 in FITS file %s (%d).",
+                        GetDescription(), status);
+                status = 0;
+                return;
+            }
         }
     }
 }
@@ -1159,7 +1329,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
     double crpix1, crpix2, crval1, crval2, cdelt1, cdelt2, pc[4], cd[4];
     double aRadius, cRadius, invFlattening = 0.0;
     double falseEast = 0.0, falseNorth = 0.0, scale = 1.0;
-    char target[16], ctype[9];
+    char target[80], ctype[9];
     std::string GeogName, DatumName, projName;
 
     const double PI = std::atan(1.0)*4;
@@ -1197,6 +1367,13 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
             status = 0;
         } else {
             fits_read_key(hFITS, TDOUBLE, "C_RADIUS", &cRadius, nullptr, &status);
+            if( status )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "No polar radius keyword available, setting C_RADIUS = A_RADIUS");
+                cRadius = aRadius;
+                status = 0;
+            }
             if( aRadius != cRadius )
             {
                 invFlattening = aRadius / ( aRadius - cRadius );
@@ -1326,6 +1503,10 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 CPLError(CE_Failure, CPLE_AppDefined,
                      "Unknown projection.");
             }
+        } else {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                 "No CTYPE keywords: no geospatial information available.");
+            status = 0;
         }
     }
 
