@@ -1329,7 +1329,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
     double crpix1, crpix2, crval1, crval2, cdelt1, cdelt2, pc[4], cd[4];
     double aRadius, cRadius, invFlattening = 0.0;
     double falseEast = 0.0, falseNorth = 0.0, scale = 1.0;
-    char target[80], ctype[9];
+    char target[81], ctype[81];
     std::string GeogName, DatumName, projName;
 
     const double PI = std::atan(1.0)*4;
