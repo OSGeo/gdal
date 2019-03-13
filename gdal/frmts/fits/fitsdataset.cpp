@@ -1392,116 +1392,123 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                 fits_read_key(hFITS, TDOUBLE, "CRPIX2", &crpix2, nullptr, &status);
                 fits_read_key(hFITS, TDOUBLE, "CRVAL1", &crval1, nullptr, &status);
                 fits_read_key(hFITS, TDOUBLE, "CRVAL2", &crval2, nullptr, &status);
-                /* Check for CDELT and PC matrix representation */
-                fits_read_key(hFITS, TDOUBLE, "CDELT1", &cdelt1, nullptr, &status);
-                if ( ! status ) {
-                    fits_read_key(hFITS, TDOUBLE, "CDELT2", &cdelt2, nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "PC1_1", &pc[0], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "PC1_2", &pc[1], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "PC2_1", &pc[2], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "PC2_2", &pc[3], nullptr, &status);
-                    cd[0] = cdelt1 * pc[0];
-                    cd[1] = cdelt1 * pc[1];
-                    cd[2] = cdelt2 * pc[2];
-                    cd[3] = cdelt2 * pc[3];
+                if( status )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                         "No CRPIX / CRVAL keyword available, the raster cannot be georeferenced.");
                     status = 0;
                 } else {
-                    /* Look for CD matrix representation */
-                    fits_read_key(hFITS, TDOUBLE, "CD1_1", &cd[0], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "CD1_2", &cd[1], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "CD2_1", &cd[2], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "CD2_2", &cd[3], nullptr, &status);
-                }
+                    /* Check for CDELT and PC matrix representation */
+                    fits_read_key(hFITS, TDOUBLE, "CDELT1", &cdelt1, nullptr, &status);
+                    if ( ! status ) {
+                        fits_read_key(hFITS, TDOUBLE, "CDELT2", &cdelt2, nullptr, &status);
+                        fits_read_key(hFITS, TDOUBLE, "PC1_1", &pc[0], nullptr, &status);
+                        fits_read_key(hFITS, TDOUBLE, "PC1_2", &pc[1], nullptr, &status);
+                        fits_read_key(hFITS, TDOUBLE, "PC2_1", &pc[2], nullptr, &status);
+                        fits_read_key(hFITS, TDOUBLE, "PC2_2", &pc[3], nullptr, &status);
+                        cd[0] = cdelt1 * pc[0];
+                        cd[1] = cdelt1 * pc[1];
+                        cd[2] = cdelt2 * pc[2];
+                        cd[3] = cdelt2 * pc[3];
+                        status = 0;
+                    } else {
+                        /* Look for CD matrix representation */
+                        fits_read_key(hFITS, TDOUBLE, "CD1_1", &cd[0], nullptr, &status);
+                        fits_read_key(hFITS, TDOUBLE, "CD1_2", &cd[1], nullptr, &status);
+                        fits_read_key(hFITS, TDOUBLE, "CD2_1", &cd[2], nullptr, &status);
+                        fits_read_key(hFITS, TDOUBLE, "CD2_2", &cd[3], nullptr, &status);
+                    }
 
-                double radfac = DEG2RAD * aRadius;
+                    double radfac = DEG2RAD * aRadius;
 
-                adfGeoTransform[1] = cd[0] * radfac;
-                adfGeoTransform[2] = cd[1] * radfac;
-                adfGeoTransform[4] = cd[2] * radfac;
-                adfGeoTransform[5] = - cd[3] * radfac ;
-                if ( crval1 > 180. ) {
-                    crval1 = crval1 - 180.;
-                }
+                    adfGeoTransform[1] = cd[0] * radfac;
+                    adfGeoTransform[2] = cd[1] * radfac;
+                    adfGeoTransform[4] = cd[2] * radfac;
+                    adfGeoTransform[5] = - cd[3] * radfac ;
+                    if ( crval1 > 180. ) {
+                        crval1 = crval1 - 180.;
+                    }
 
-                /* NOTA BENE: FITS standard define pixel integers at the center of the pixel,
-                   0.5 must be subtract to have UpperLeft corner */
-                adfGeoTransform[0] = crval1 * radfac - adfGeoTransform[1] *
+                    /* NOTA BENE: FITS standard define pixel integers at the center of the pixel,
+                       0.5 must be subtract to have UpperLeft corner */
+                    adfGeoTransform[0] = crval1 * radfac - adfGeoTransform[1] *
                                                     (crpix1-0.5);
-                adfGeoTransform[3] = crval2 * radfac - adfGeoTransform[5] *
+                    adfGeoTransform[3] = crval2 * radfac - adfGeoTransform[5] *
                                                     (crpix2-0.5);
-                bGeoTransformValid = true;
-            }
+                    bGeoTransformValid = true;
+                }
 
-            if( char* pstr = strrchr(ctype, '-') + 1 ) {
+                if( char* pstr = strrchr(ctype, '-') + 1 ) {
 
                 /* Defining projection type
                Following http://www.gdal.org/ogr__srs__api_8h.html (GDAL)
                and http://www.aanda.org/component/article?access=bibcode&bibcode=&bibcode=2002A%2526A...395.1077CFUL (FITS)
                 */
 
-                /* Sinusoidal / SFL projection */
-                if( strcmp(pstr,"SFL" ) == 0 ) {
-                    projName.assign("Sinusoidal_");
-                    oSRS.SetSinusoidal(crval1, falseEast, falseNorth);
+                    /* Sinusoidal / SFL projection */
+                    if( strcmp(pstr,"SFL" ) == 0 ) {
+                        projName.assign("Sinusoidal_");
+                        oSRS.SetSinusoidal(crval1, falseEast, falseNorth);
 
-                /* Mercator, Oblique (Hotine) Mercator, Transverse Mercator */
-                /* Mercator / MER projection */
-                } else if( strcmp(pstr,"MER" ) == 0 ) {
-                    projName.assign("Mercator_");
-                    oSRS.SetMercator(crval2, crval1, scale, falseEast, falseNorth);
+                    /* Mercator, Oblique (Hotine) Mercator, Transverse Mercator */
+                    /* Mercator / MER projection */
+                    } else if( strcmp(pstr,"MER" ) == 0 ) {
+                        projName.assign("Mercator_");
+                        oSRS.SetMercator(crval2, crval1, scale, falseEast, falseNorth);
 
-                /* Equirectangular / CAR projection */
-                } else if( strcmp(pstr,"CAR" ) == 0 ) {
-                    projName.assign("Equirectangular_");
-                /*
-                The standard_parallel_1 defines where the local radius is calculated
-                not the center of Y Cartesian system (which is latitude_of_origin)
-                But FITS WCS only supports projections on the sphere
-                we assume here that the local radius is the one computed at the projection center
-                */
-                   oSRS.SetEquirectangular2(crval2, crval1, crval2, falseEast, falseNorth);
+                    /* Equirectangular / CAR projection */
+                    } else if( strcmp(pstr,"CAR" ) == 0 ) {
+                        projName.assign("Equirectangular_");
+                    /*
+                    The standard_parallel_1 defines where the local radius is calculated
+                    not the center of Y Cartesian system (which is latitude_of_origin)
+                    But FITS WCS only supports projections on the sphere
+                    we assume here that the local radius is the one computed at the projection center
+                    */
+                        oSRS.SetEquirectangular2(crval2, crval1, crval2, falseEast, falseNorth);
 
-                /* Lambert Azimuthal Equal Area / ZEA projection */
-                } else if( strcmp(pstr,"ZEA" ) == 0 ) {
-                    projName.assign("Lambert_Azimuthal_Equal_Area_");
-                    oSRS.SetLAEA(crval2, crval1, falseEast, falseNorth);
+                    /* Lambert Azimuthal Equal Area / ZEA projection */
+                    } else if( strcmp(pstr,"ZEA" ) == 0 ) {
+                        projName.assign("Lambert_Azimuthal_Equal_Area_");
+                        oSRS.SetLAEA(crval2, crval1, falseEast, falseNorth);
 
-                /* Lambert Conformal Conic 1SP / COO projection */
-                } else if( strcmp(pstr,"COO" ) == 0 ) {
-                    projName.assign("Lambert_Conformal_Conic_1SP_");
-                    oSRS.SetLCC1SP (crval2, crval1, scale, falseEast, falseNorth);
+                    /* Lambert Conformal Conic 1SP / COO projection */
+                    } else if( strcmp(pstr,"COO" ) == 0 ) {
+                        projName.assign("Lambert_Conformal_Conic_1SP_");
+                        oSRS.SetLCC1SP (crval2, crval1, scale, falseEast, falseNorth);
 
-                /* Orthographic / SIN projection */
-                } else if( strcmp(pstr,"SIN" ) == 0 ) {
-                    projName.assign("Orthographic_");
-                    oSRS.SetOrthographic(crval2, crval1, falseEast, falseNorth);
+                    /* Orthographic / SIN projection */
+                    } else if( strcmp(pstr,"SIN" ) == 0 ) {
+                        projName.assign("Orthographic_");
+                        oSRS.SetOrthographic(crval2, crval1, falseEast, falseNorth);
 
-                /* Point Perspective / AZP projection */
-                } else if( strcmp(pstr,"AZP" ) == 0 ) {
-                    projName.assign("perspective_point_height_");
-                    oSRS.SetProjection(SRS_PP_PERSPECTIVE_POINT_HEIGHT);
-                    /* # appears to need height... maybe center lon/lat */
+                    /* Point Perspective / AZP projection */
+                    } else if( strcmp(pstr,"AZP" ) == 0 ) {
+                        projName.assign("perspective_point_height_");
+                        oSRS.SetProjection(SRS_PP_PERSPECTIVE_POINT_HEIGHT);
+                        /* # appears to need height... maybe center lon/lat */
 
-                /* Polar Stereographic / STG projection */
-                } else if( strcmp(pstr,"STG" ) == 0 ) {
-                    projName.assign("Polar_Stereographic_");
-                    oSRS.SetStereographic(crval2, crval1, scale, falseEast, falseNorth);
-                } else {
+                    /* Polar Stereographic / STG projection */
+                    } else if( strcmp(pstr,"STG" ) == 0 ) {
+                        projName.assign("Polar_Stereographic_");
+                        oSRS.SetStereographic(crval2, crval1, scale, falseEast, falseNorth);
+                    } else {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unknown projection.");
+                    }
+
+                    projName.append(target);
+                    oSRS.SetProjParm(SRS_PP_FALSE_EASTING,0.0);
+                    oSRS.SetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+
+                    oSRS.SetNode("PROJCS",projName.c_str());
+
+                    oSRS.SetGeogCS(GeogName.c_str(), DatumName.c_str(), target, aRadius, invFlattening,
+                        "Reference_Meridian", 0.0, "degree", 0.0174532925199433);
+                }  else {
                     CPLError(CE_Failure, CPLE_AppDefined,
                          "Unknown projection.");
                 }
-
-                projName.append(target);
-                oSRS.SetProjParm(SRS_PP_FALSE_EASTING,0.0);
-                oSRS.SetProjParm(SRS_PP_FALSE_NORTHING,0.0);
-
-                oSRS.SetNode("PROJCS",projName.c_str());
-
-                oSRS.SetGeogCS(GeogName.c_str(), DatumName.c_str(), target, aRadius, invFlattening,
-                    "Reference_Meridian", 0.0, "degree", 0.0174532925199433);
-            }  else {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unknown projection.");
             }
         } else {
             CPLError(CE_Failure, CPLE_AppDefined,
