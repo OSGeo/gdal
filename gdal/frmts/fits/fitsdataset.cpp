@@ -113,7 +113,7 @@ class FITSRasterBand : public GDALPamRasterBand {
   double             dfScale;
 
  protected:
-    FITSDataset       *poDS;
+    FITSDataset       *poFDS;
 
     bool               bNoDataSet;
     double             dfNoDataValue;
@@ -145,7 +145,7 @@ FITSRasterBand::FITSRasterBand( FITSDataset *poDSIn, int nBandIn ) :
   bHaveOffsetScale(false),
   dfOffset(0.0),
   dfScale(1.0),
-  poDS(poDSIn),
+  poFDS(poDSIn),
   bNoDataSet(false),
   dfNoDataValue(-9999.0)
 {
@@ -1186,7 +1186,7 @@ CPLErr FITSDataset::SetGeoTransform( double * padfTransform )
 double FITSRasterBand::GetOffset( int *pbSuccess )
 
 {
-    poDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadGeoreferencingAndPamIfNeeded();
 
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
@@ -1200,9 +1200,9 @@ double FITSRasterBand::GetOffset( int *pbSuccess )
 CPLErr FITSRasterBand::SetOffset( double dfNewValue )
 
 {
-    poDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadGeoreferencingAndPamIfNeeded();
     if( !bHaveOffsetScale || dfNewValue != dfOffset )
-        poDS->bMetadataChanged = true;
+        poFDS->bMetadataChanged = true;
 
     bHaveOffsetScale = true;
     dfOffset = dfNewValue;
@@ -1216,7 +1216,7 @@ CPLErr FITSRasterBand::SetOffset( double dfNewValue )
 double FITSRasterBand::GetScale( int *pbSuccess )
 
 {
-    poDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadGeoreferencingAndPamIfNeeded();
 
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
@@ -1230,10 +1230,10 @@ double FITSRasterBand::GetScale( int *pbSuccess )
 CPLErr FITSRasterBand::SetScale( double dfNewValue )
 
 {
-    poDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadGeoreferencingAndPamIfNeeded();
 
     if( !bHaveOffsetScale || dfNewValue != dfScale )
-        poDS->bMetadataChanged = true;
+        poFDS->bMetadataChanged = true;
 
     bHaveOffsetScale = true;
     dfScale = dfNewValue;
@@ -1247,7 +1247,7 @@ CPLErr FITSRasterBand::SetScale( double dfNewValue )
 double FITSRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    poDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadGeoreferencingAndPamIfNeeded();
 
     if( bNoDataSet )
     {
@@ -1257,12 +1257,12 @@ double FITSRasterBand::GetNoDataValue( int * pbSuccess )
         return dfNoDataValue;
     }
 
-    if( poDS->bNoDataSet )
+    if( poFDS->bNoDataSet )
     {
         if( pbSuccess )
             *pbSuccess = TRUE;
 
-        return poDS->dfNoDataValue;
+        return poFDS->dfNoDataValue;
     }
 
     return GDALPamRasterBand::GetNoDataValue( pbSuccess );
@@ -1275,19 +1275,19 @@ double FITSRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr FITSRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    poDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadGeoreferencingAndPamIfNeeded();
 
-    if( poDS->bNoDataSet && poDS->dfNoDataValue == dfNoData )
+    if( poFDS->bNoDataSet && poFDS->dfNoDataValue == dfNoData )
     {
         bNoDataSet = true;
         dfNoDataValue = dfNoData;
         return CE_None;
     }
 
-    poDS->bNoDataSet = true;
-    poDS->dfNoDataValue = dfNoData;
+    poFDS->bNoDataSet = true;
+    poFDS->dfNoDataValue = dfNoData;
 
-    poDS->bNoDataChanged = true;
+    poFDS->bNoDataChanged = true;
 
     bNoDataSet = true;
     dfNoDataValue = dfNoData;
@@ -1301,15 +1301,15 @@ CPLErr FITSRasterBand::SetNoDataValue( double dfNoData )
 CPLErr FITSRasterBand::DeleteNoDataValue()
 
 {
-    poDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadGeoreferencingAndPamIfNeeded();
 
-    if( !poDS->bNoDataSet )
+    if( !poFDS->bNoDataSet )
         return CE_None;
 
-    poDS->bNoDataSet = false;
-    poDS->dfNoDataValue = -9999.0;
+    poFDS->bNoDataSet = false;
+    poFDS->dfNoDataValue = -9999.0;
 
-    poDS->bNoDataChanged = true;
+    poFDS->bNoDataChanged = true;
 
     bNoDataSet = false;
     dfNoDataValue = -9999.0;
