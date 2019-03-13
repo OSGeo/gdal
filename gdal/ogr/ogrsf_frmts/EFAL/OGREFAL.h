@@ -2,12 +2,11 @@
  * $Id: OGREFAL.h 36501 2016-11-25 14:09:24Z rouault $
  *
  * Project:  EFAL Translator
- * Purpose:  Definition of classes for OGR .EFAL driver.
+ * Purpose:  Definition of classes for OGR EFAL driver.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2004,  Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2019, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

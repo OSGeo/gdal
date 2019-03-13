@@ -5,6 +5,7 @@
  * Author:   Pitney Bowes
  *
  ******************************************************************************
+ * Copyright (c) 2019, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +25,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+ 
 
 #pragma warning(disable:4251)
 #include "cpl_port.h"

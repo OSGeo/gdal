@@ -8,8 +8,7 @@
 # Author:   Pitney Bowes
 #
 ###############################################################################
-# Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2012-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2019, Frank Warmerdam <warmerdam@pobox.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public

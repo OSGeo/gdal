@@ -1,20 +1,31 @@
-/*****************************************************************************
-*       Copyright � 2015, Pitney Bowes Software Inc.
-*       All rights reserved.
-*       Confidential Property of Pitney Bowes Software Inc.
-*
-* $Author: ro011fo $
-* $Revision: 7204 $
-* $Date: 2019-01-17 02:11:07 +0530 (Thu, 17 Jan 2019) $
-*
-* Module Description:
-*   This file contains all of the "global" typedefs and defines
-*   for this product.  Only definitions that are truly needed by all components
-*   should be contained within this file.  Modifying this file will cause a
-*   rebuild of the entire codebase.
-*
-* $HeadURL: http://noisvnmsprod.pbi.global.pvt/svn/platform.net/trunk/MapInfo.Net/Include/dev/MIDefs.h $
-*****************************************************************************/
+/******************************************************************************
+ *
+ * Project:  EFAL Translator
+ * Purpose:  EFAL Library Header
+ * Author:   Pitney Bowes
+ *
+ ******************************************************************************
+ * Copyright (c) 2019, Frank Warmerdam <warmerdam@pobox.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 #ifndef MIDEFS_H
 #define MIDEFS_H
 #if defined(_MSC_VER)
