@@ -2744,19 +2744,12 @@ class GDAL2Tiles(object):
         return s
 
 
-def worker_tile_details(input_file, output_folder, options, send_pipe=None):
-    try:
-        gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
-        gdal2tiles.open_input()
-        gdal2tiles.generate_metadata()
-        tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
-        return_data = (tile_job_info, tile_details)
-        if send_pipe:
-            send_pipe.send(return_data)
-
-        return return_data
-    except Exception as e:
-        print("worker_tile_details failed ", str(e))
+def worker_tile_details(input_file, output_folder, options):
+      gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
+      gdal2tiles.open_input()
+      gdal2tiles.generate_metadata()
+      tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
+      return tile_job_info, tile_details
 
 
 def progress_printer_thread(queue, nb_jobs):
@@ -2870,26 +2863,20 @@ def multi_threaded_tiling(input_file, output_folder, options):
     # Make sure that all processes do not consume more than GDAL_CACHEMAX
     os.environ['GDAL_CACHEMAX'] = '%d' % int(gdal.GetCacheMax() / nb_processes)
 
-    (conf_receiver, conf_sender) = Pipe(False)
-
-    if options.verbose:
-        print("Begin tiles details calc")
-    p = Process(target=worker_tile_details,
-                args=[input_file, output_folder, options],
-                kwargs={"send_pipe": conf_sender})
-    p.start()
-    # Make sure to consume the queue before joining. If the payload is too big, it won't be put in
-    # one go in the queue and therefore the sending process will never finish, waiting for space in
-    # the queue to send data
-    conf, tile_details = conf_receiver.recv()
-    p.join()
-    if options.verbose:
-        print("Tiles details calc complete.")
     # Have to create the Queue through a multiprocessing.Manager to get a Queue Proxy,
     # otherwise you can't pass it as a param in the method invoked by the pool...
     manager = Manager()
     queue = manager.Queue()
     pool = Pool(processes=nb_processes)
+
+    if options.verbose:
+        print("Begin tiles details calc")
+
+    conf, tile_details = pool.apply(worker_tile_details, [input_file, output_folder, options])
+
+    if options.verbose:
+        print("Tiles details calc complete.")
+
     # TODO: gbataille - check the confs for which each element is an array... one useless level?
     # TODO: gbataille - assign an ID to each job for print in verbose mode "ReadRaster Extent ..."
     for tile_detail in tile_details:
