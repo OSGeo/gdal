@@ -3073,3 +3073,15 @@ void *GTIFGetPROJContext( GTIF *psGTIF, int instanciateIfNeeded,
     }
     return psGTIF->pj_context;
 }
+
+
+void GTIFDeaccessCSV( void )
+{
+    /* No operation */
+}
+
+void SetCSVFilenameHook( const char *(*CSVFileOverride)(const char *) )
+{
+    (void)CSVFileOverride;
+    /* No operation */
+}
