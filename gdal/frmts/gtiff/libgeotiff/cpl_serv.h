@@ -46,10 +46,4 @@
  */
 #define CPL_SERV_H_INTERNAL 1
 
-/*
- * The following functions were used up to libgeotiff 1.4.X series, but
- * are now no-operation, since there is no longer any CSV use in libgeotiff.
- */
-void GTIF_DLL SetCSVFilenameHook( const char *(*CSVFileOverride)(const char *) );
-
 #endif /* ndef CPL_SERV_H_INCLUDED */
