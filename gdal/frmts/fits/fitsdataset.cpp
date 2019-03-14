@@ -651,9 +651,10 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   else
   {
 /* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
+/*      Initialize any information.                                 */
 /* -------------------------------------------------------------------- */
       dataset->SetDescription( poOpenInfo->pszFilename );
+      dataset->LoadFITSInfo();
       dataset->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
@@ -1112,7 +1113,6 @@ void FITSDataset::WriteFITSInfo()
 const OGRSpatialReference* FITSDataset::GetSpatialRef() const
 
 {
-    const_cast<FITSDataset*>(this)->LoadFITSInfo();
     return oSRS.IsEmpty() ? nullptr : &oSRS;
 }
 
@@ -1123,9 +1123,6 @@ const OGRSpatialReference* FITSDataset::GetSpatialRef() const
 CPLErr FITSDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 
 {
-
-    LoadFITSInfo();
-
     if( poSRS == nullptr || poSRS->IsEmpty() )
     {
         oSRS.Clear();
@@ -1148,7 +1145,6 @@ CPLErr FITSDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 CPLErr FITSDataset::GetGeoTransform( double * padfTransform )
 
 {
-    LoadFITSInfo();
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
     if( !bGeoTransformValid )
@@ -1164,9 +1160,6 @@ CPLErr FITSDataset::GetGeoTransform( double * padfTransform )
 CPLErr FITSDataset::SetGeoTransform( double * padfTransform )
 
 {
-
-    LoadFITSInfo();
-
     bGeoTransformValid = false;
 
     memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
@@ -1182,8 +1175,6 @@ CPLErr FITSDataset::SetGeoTransform( double * padfTransform )
 double FITSRasterBand::GetOffset( int *pbSuccess )
 
 {
-    poFDS->LoadFITSInfo();
-
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
     return dfOffset;
@@ -1196,7 +1187,6 @@ double FITSRasterBand::GetOffset( int *pbSuccess )
 CPLErr FITSRasterBand::SetOffset( double dfNewValue )
 
 {
-    poFDS->LoadFITSInfo();
     if( !bHaveOffsetScale || dfNewValue != dfOffset )
         poFDS->bMetadataChanged = true;
 
@@ -1212,8 +1202,6 @@ CPLErr FITSRasterBand::SetOffset( double dfNewValue )
 double FITSRasterBand::GetScale( int *pbSuccess )
 
 {
-    poFDS->LoadFITSInfo();
-
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
     return dfScale;
@@ -1226,8 +1214,6 @@ double FITSRasterBand::GetScale( int *pbSuccess )
 CPLErr FITSRasterBand::SetScale( double dfNewValue )
 
 {
-    poFDS->LoadFITSInfo();
-
     if( !bHaveOffsetScale || dfNewValue != dfScale )
         poFDS->bMetadataChanged = true;
 
@@ -1243,8 +1229,6 @@ CPLErr FITSRasterBand::SetScale( double dfNewValue )
 double FITSRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    poFDS->LoadFITSInfo();
-
     if( bNoDataSet )
     {
         if( pbSuccess )
@@ -1271,8 +1255,6 @@ double FITSRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr FITSRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    poFDS->LoadFITSInfo();
-
     if( poFDS->bNoDataSet && poFDS->dfNoDataValue == dfNoData )
     {
         bNoDataSet = true;
@@ -1297,8 +1279,6 @@ CPLErr FITSRasterBand::SetNoDataValue( double dfNoData )
 CPLErr FITSRasterBand::DeleteNoDataValue()
 
 {
-    poFDS->LoadFITSInfo();
-
     if( !poFDS->bNoDataSet )
         return CE_None;
 
