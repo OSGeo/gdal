@@ -479,7 +479,8 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 /************************************************************************/
 
 CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
-                                 void* pUniqueHandle )
+                                 void* pUniqueHandle,
+                                 std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     m_osResampling = CPLGetXMLValue( psSrc, "resampling", "");
@@ -670,12 +671,36 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         /* ----------------------------------------------------------------- */
         /*      Open the file (shared).                                      */
         /* ----------------------------------------------------------------- */
-        int nOpenFlags = GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR;
+        const int nOpenFlags = GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR;
         if( bShared )
-            nOpenFlags |= GDAL_OF_SHARED;
-        poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
-                    pszSrcDSName, nOpenFlags, nullptr,
-                    (const char* const* )papszOpenOptions, nullptr ) );
+        {
+            // We no longer use GDAL_OF_SHARED as this can cause quite
+            // annoying reference cycles in situations like you have
+            // foo.tif and foo.tif.ovr, the later being actually a VRT file
+            // that points to foo.tif
+            auto oIter = oMapSharedSources.find(pszSrcDSName);
+            if( oIter != oMapSharedSources.end() )
+            {
+                poSrcDS = oIter->second;
+                poSrcDS->Reference();
+            }
+            else
+            {
+                poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
+                        pszSrcDSName, nOpenFlags, nullptr,
+                        (const char* const* )papszOpenOptions, nullptr ) );
+                if( poSrcDS )
+                {
+                    oMapSharedSources[pszSrcDSName] = poSrcDS;
+                }
+            }
+        }
+        else
+        {
+            poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
+                        pszSrcDSName, nOpenFlags, nullptr,
+                        (const char* const* )papszOpenOptions, nullptr ) );
+        }
     }
     else
     {
@@ -733,8 +758,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     m_poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
     if( m_poRasterBand == nullptr )
     {
-        if( poSrcDS->GetShared() )
-            GDALClose( poSrcDS );
+        poSrcDS->ReleaseRef();
         return CE_Failure;
     }
     if( bGetMaskBand )
@@ -2259,7 +2283,8 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 /************************************************************************/
 
 CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
-                                  void* pUniqueHandle )
+                                  void* pUniqueHandle,
+                                  std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2267,7 +2292,8 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
 /* -------------------------------------------------------------------- */
     {
         const CPLErr eErr = VRTSimpleSource::XMLInit( psSrc, pszVRTPath,
-                                                      pUniqueHandle );
+                                                      pUniqueHandle,
+                                                      oMapSharedSources );
         if( eErr != CE_None )
             return eErr;
     }
@@ -3065,7 +3091,8 @@ CPLErr VRTFuncSource::GetHistogram( int /* nXSize */,
 /************************************************************************/
 
 VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath,
-                                void* pUniqueHandle )
+                                void* pUniqueHandle,
+                                std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     VRTSource * poSource = nullptr;
@@ -3092,7 +3119,8 @@ VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath,
         return nullptr;
     }
 
-    if( poSource->XMLInit( psChild, pszVRTPath, pUniqueHandle ) == CE_None )
+    if( poSource->XMLInit( psChild, pszVRTPath, pUniqueHandle,
+                           oMapSharedSources ) == CE_None )
         return poSource;
 
     delete poSource;
