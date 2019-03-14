@@ -79,9 +79,7 @@ class FITSDataset final : public GDALPamDataset {
   void        WriteFITSInfo();
   bool        bFITSInfoChanged;
 
-  bool        m_bLoadPam;
-
-  void        LoadGeoreferencingAndPamIfNeeded();
+  void        LoadFITSInfo();
 
 public:
   ~FITSDataset();
@@ -300,8 +298,7 @@ FITSDataset::FITSDataset():
     dfNoDataValue(-9999.0),
     bMetadataChanged(false),
     m_bReadGeoTransform(false),
-    bGeoTransformValid(false),
-    m_bLoadPam(false)
+    bGeoTransformValid(false)
 {
     oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 }
@@ -641,7 +638,6 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   FITSDataset* dataset = new FITSDataset();
   dataset->eAccess = poOpenInfo->eAccess;
 
-  dataset->m_bLoadPam = true;
   dataset->m_bReadGeoTransform = true;
   dataset->bMetadataChanged = false;
   dataset->bNoDataChanged = false;
@@ -1116,7 +1112,7 @@ void FITSDataset::WriteFITSInfo()
 const OGRSpatialReference* FITSDataset::GetSpatialRef() const
 
 {
-    const_cast<FITSDataset*>(this)->LoadGeoreferencingAndPamIfNeeded();
+    const_cast<FITSDataset*>(this)->LoadFITSInfo();
     return oSRS.IsEmpty() ? nullptr : &oSRS;
 }
 
@@ -1128,7 +1124,7 @@ CPLErr FITSDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 
 {
 
-    LoadGeoreferencingAndPamIfNeeded();
+    LoadFITSInfo();
 
     if( poSRS == nullptr || poSRS->IsEmpty() )
     {
@@ -1152,7 +1148,7 @@ CPLErr FITSDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 CPLErr FITSDataset::GetGeoTransform( double * padfTransform )
 
 {
-    LoadGeoreferencingAndPamIfNeeded();
+    LoadFITSInfo();
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
     if( !bGeoTransformValid )
@@ -1169,7 +1165,7 @@ CPLErr FITSDataset::SetGeoTransform( double * padfTransform )
 
 {
 
-    LoadGeoreferencingAndPamIfNeeded();
+    LoadFITSInfo();
 
     bGeoTransformValid = false;
 
@@ -1186,7 +1182,7 @@ CPLErr FITSDataset::SetGeoTransform( double * padfTransform )
 double FITSRasterBand::GetOffset( int *pbSuccess )
 
 {
-    poFDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadFITSInfo();
 
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
@@ -1200,7 +1196,7 @@ double FITSRasterBand::GetOffset( int *pbSuccess )
 CPLErr FITSRasterBand::SetOffset( double dfNewValue )
 
 {
-    poFDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadFITSInfo();
     if( !bHaveOffsetScale || dfNewValue != dfOffset )
         poFDS->bMetadataChanged = true;
 
@@ -1216,7 +1212,7 @@ CPLErr FITSRasterBand::SetOffset( double dfNewValue )
 double FITSRasterBand::GetScale( int *pbSuccess )
 
 {
-    poFDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadFITSInfo();
 
     if( pbSuccess )
         *pbSuccess = bHaveOffsetScale;
@@ -1230,7 +1226,7 @@ double FITSRasterBand::GetScale( int *pbSuccess )
 CPLErr FITSRasterBand::SetScale( double dfNewValue )
 
 {
-    poFDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadFITSInfo();
 
     if( !bHaveOffsetScale || dfNewValue != dfScale )
         poFDS->bMetadataChanged = true;
@@ -1247,7 +1243,7 @@ CPLErr FITSRasterBand::SetScale( double dfNewValue )
 double FITSRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    poFDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadFITSInfo();
 
     if( bNoDataSet )
     {
@@ -1275,7 +1271,7 @@ double FITSRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr FITSRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    poFDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadFITSInfo();
 
     if( poFDS->bNoDataSet && poFDS->dfNoDataValue == dfNoData )
     {
@@ -1301,7 +1297,7 @@ CPLErr FITSRasterBand::SetNoDataValue( double dfNoData )
 CPLErr FITSRasterBand::DeleteNoDataValue()
 
 {
-    poFDS->LoadGeoreferencingAndPamIfNeeded();
+    poFDS->LoadFITSInfo();
 
     if( !poFDS->bNoDataSet )
         return CE_None;
@@ -1317,10 +1313,10 @@ CPLErr FITSRasterBand::DeleteNoDataValue()
 }
 
 /************************************************************************/
-/*                     LoadGeoreferencingAndPamIfNeeded()               */
+/*                     LoadFITSInfo()                                   */
 /************************************************************************/
 
-void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
+void FITSDataset::LoadFITSInfo()
 
 {
     int status = 0;
@@ -1335,7 +1331,7 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
     const double PI = std::atan(1.0)*4;
     const double DEG2RAD = PI / 180.;
 
-    if( !m_bReadGeoTransform && !m_bLoadPam )
+    if( !m_bReadGeoTransform)
         return;
 
 /* -------------------------------------------------------------------- */
@@ -1438,7 +1434,9 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
                     bGeoTransformValid = true;
                 }
 
-                if( char* pstr = strrchr(ctype, '-') + 1 ) {
+                char* pstr = strrchr(ctype, '-');
+                if( pstr ) {
+                    pstr += 1;
 
                 /* Defining projection type
                Following http://www.gdal.org/ogr__srs__api_8h.html (GDAL)
@@ -1517,52 +1515,42 @@ void FITSDataset::LoadGeoreferencingAndPamIfNeeded()
         }
     }
 
-    if( m_bLoadPam )
+    CPLAssert(!bMetadataChanged);
+    CPLAssert(!bNoDataChanged);
+
+    bMetadataChanged = false;
+    bNoDataChanged = false;
+
+    bitpix = this->fitsDataType;
+    FITSRasterBand *poBand = cpl::down_cast<FITSRasterBand*>(GetRasterBand(1));
+
+    if (bitpix != TUSHORT && bitpix != TUINT)
     {
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-        CPLAssert(!bMetadataChanged);
-        CPLAssert(!bNoDataChanged);
-
-        m_bLoadPam = false;
-        bMetadataChanged = false;
-        bNoDataChanged = false;
-
-        bitpix = this->fitsDataType;
-        FITSRasterBand *poBand = cpl::down_cast<FITSRasterBand*>(GetRasterBand(1));
-
-        if (bitpix != TUSHORT && bitpix != TUINT)
+        fits_read_key(hFITS, TDOUBLE, "BSCALE", &dfScale, nullptr, &status);
+        if( status )
         {
-            fits_read_key(hFITS, TDOUBLE, "BSCALE", &dfScale, nullptr, &status);
-            if( status )
-            {
-                status = 0;
-                dfScale = 1.;
-            }
-            fits_read_key(hFITS, TDOUBLE, "BZERO", &dfOffset, nullptr, &status);
-            if( status )
-            {
-                status = 0;
-                dfOffset = 0.;
-            }
+            status = 0;
+            dfScale = 1.;
         }
-        else {
-            poBand->bHaveOffsetScale = true;
-        }
-
-        if( !poBand->bHaveOffsetScale )
+        fits_read_key(hFITS, TDOUBLE, "BZERO", &dfOffset, nullptr, &status);
+        if( status )
         {
-            poBand->bHaveOffsetScale = true;
-            poBand->dfScale = dfScale;
-            poBand->dfOffset = dfOffset;
+            status = 0;
+            dfOffset = 0.;
         }
-
-        fits_read_key(hFITS, TDOUBLE, "BLANK", &dfNoDataValue, nullptr, &status);
-        bNoDataSet = !status;
-
-        m_bLoadPam = false;
+    } else {
+        poBand->bHaveOffsetScale = true;
     }
+
+    if( !poBand->bHaveOffsetScale )
+    {
+        poBand->bHaveOffsetScale = true;
+        poBand->dfScale = dfScale;
+        poBand->dfOffset = dfOffset;
+    }
+
+    fits_read_key(hFITS, TDOUBLE, "BLANK", &dfNoDataValue, nullptr, &status);
+    bNoDataSet = !status;
 }
 
 /************************************************************************/
