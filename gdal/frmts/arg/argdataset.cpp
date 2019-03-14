@@ -727,6 +727,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
                                                   bNative,
                                                   nXSize, nYSize,
                                                   RawRasterBand::OwnFP::NO);
+    poDstBand->SetAccess(GA_Update);
 
     int nXBlockSize, nYBlockSize;
     poSrcBand->GetBlockSize(&nXBlockSize, &nYBlockSize);
