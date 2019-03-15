@@ -288,24 +288,25 @@ void OGRMSSQLGeometryWriter::WriteSimpleCurve(OGRSimpleCurve* poGeom)
 
 void OGRMSSQLGeometryWriter::WriteCompoundCurve(OGRCompoundCurve* poGeom)
 {
-    int iStartPoint = iPoint;
     OGRSimpleCurve* poSubGeom;
-    for (auto&& poIter : *poGeom)
+    WriteByte(FigureAttribute(iFigure), FA_CURVE);
+    WriteInt32(PointOffset(iFigure), iPoint);
+    for (int i = 0; i < poGeom->getNumCurves(); i++)
     {
-        switch (poIter->getGeometryType())
+        poSubGeom = poGeom->getCurve(i)->toSimpleCurve();
+        switch (poSubGeom->getGeometryType())
         {
         case wkbLineString:
         case wkbLineString25D:
         case wkbLineStringM:
         case wkbLineStringZM:
-            poSubGeom = poIter->toSimpleCurve();
-            if (iPoint == iStartPoint)
+            if (i == 0)
                 WriteSimpleCurve(poSubGeom);
             else
                 WriteSimpleCurve(poSubGeom, 1);
-            for (int i = 1; i < poSubGeom->getNumPoints(); i++)
+            for (int j = 1; j < poSubGeom->getNumPoints(); j++)
             {
-                if (i == 1)
+                if (j == 1)
                     WriteByte(SegmentType(iSegment++), SMT_FIRSTLINE);
                 else
                     WriteByte(SegmentType(iSegment++), SMT_LINE);
@@ -315,18 +316,17 @@ void OGRMSSQLGeometryWriter::WriteCompoundCurve(OGRCompoundCurve* poGeom)
         case wkbCircularStringZ:
         case wkbCircularStringM:
         case wkbCircularStringZM:
-            poSubGeom = poIter->toSimpleCurve();
-            if (iPoint == iStartPoint)
+            if (i == 0)
                 WriteSimpleCurve(poSubGeom);
             else
                 WriteSimpleCurve(poSubGeom, 1);
-            for (int i = 2; i < poSubGeom->getNumPoints(); i++)
+            for (int j = 2; j < poSubGeom->getNumPoints(); j++)
             {
-                if (i == 2)
+                if (j == 2)
                     WriteByte(SegmentType(iSegment++), SMT_FIRSTARC);
                 else
                     WriteByte(SegmentType(iSegment++), SMT_ARC);
-                ++i;
+                ++j;
             }
             break;
         }
@@ -366,8 +366,6 @@ void OGRMSSQLGeometryWriter::WriteCurve(OGRCurve* poGeom)
     case wkbCompoundCurveZ:
     case wkbCompoundCurveM:
     case wkbCompoundCurveZM:
-        WriteByte(FigureAttribute(iFigure), FA_CURVE);
-        WriteInt32(PointOffset(iFigure), iPoint);
         WriteCompoundCurve(poGeom->toCompoundCurve());
         ++iFigure;
         break;
@@ -403,14 +401,11 @@ void OGRMSSQLGeometryWriter::WritePolygon(OGRPolygon* poGeom)
 
 void OGRMSSQLGeometryWriter::WriteCurvePolygon(OGRCurvePolygon* poGeom)
 {
-    int r;
-    OGRCurve *poCurve = poGeom->getExteriorRingCurve();
-    WriteCurve(poCurve);
-    for (r = 0; r < poGeom->getNumInteriorRings(); r++)
+    WriteCurve(poGeom->getExteriorRingCurve());
+    for (int r = 0; r < poGeom->getNumInteriorRings(); r++)
     {
         /* write interior rings */
-        poCurve = poGeom->getInteriorRingCurve(r);
-        WriteCurve(poCurve);
+        WriteCurve(poGeom->getInteriorRingCurve(r));
     }
 }
 
@@ -431,8 +426,9 @@ void OGRMSSQLGeometryWriter::WriteGeometryCollection(OGRGeometryCollection* poGe
 void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
 {
     /* write shape */
+    int iCurrentFigure = iFigure;
+    int iCurrentShape = iShape;
     WriteInt32(ParentOffset(iShape), iParent);
-    WriteInt32(FigureOffset(iShape), iFigure);
 
     iParent = iShape;
 
@@ -485,8 +481,6 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
     case wkbCompoundCurveM:
     case wkbCompoundCurveZM:
         WriteByte(ShapeType(iShape++), ST_COMPOUNDCURVE);
-        WriteByte(FigureAttribute(iFigure), FA_CURVE);
-        WriteInt32(PointOffset(iFigure), iPoint);
         WriteCompoundCurve(poGeom->toCompoundCurve());
         ++iFigure;
         break;
@@ -540,8 +534,10 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
         break;
 
     default:
-        break;
+        return;
     }
+    // check if new figures have been added to shape
+    WriteInt32(FigureOffset(iCurrentShape), iFigure == iCurrentFigure? 0xFFFFFFFF : iCurrentFigure);
 }
 
 /************************************************************************/
@@ -583,22 +579,23 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
     case wkbCompoundCurveZM:
         {
             int c;
-            int nStartPointCount = nNumPoints;
             chVersion = VA_DENALI;
             OGRCompoundCurve* g = poGeom->toCompoundCurve();
+            OGRCurve* poSubGeom;
             ++nNumFigures;
-            for (auto&& poIter : *g)
+            for (int i = 0; i < g->getNumCurves(); i++)
             {
-                switch (poIter->getGeometryType())
+                poSubGeom = g->getCurve(i);
+                switch (poSubGeom->getGeometryType())
                 {
                 case wkbLineString:
                 case wkbLineString25D:
                 case wkbLineStringM:
                 case wkbLineStringZM:
-                    c = poIter->toLineString()->getNumPoints();
+                    c = poSubGeom->toLineString()->getNumPoints();
                     if (c > 1)
                     {
-                        if (nNumPoints == nStartPointCount)
+                        if (i == 0)
                             nNumPoints += c;
                         else
                             nNumPoints += c - 1;
@@ -609,10 +606,10 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
                 case wkbCircularStringZ:
                 case wkbCircularStringM:
                 case wkbCircularStringZM:
-                    c = poIter->toCircularString()->getNumPoints();
+                    c = poSubGeom->toCircularString()->getNumPoints();
                     if (c > 2)
                     {
-                        if (nNumPoints == nStartPointCount)
+                        if (i == 0)
                             nNumPoints += c;
                         else
                             nNumPoints += c - 1;

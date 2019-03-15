@@ -190,17 +190,17 @@ protected:
     int nColType;
 
 protected:
-    OGRPoint*           ReadPoint(int iShape);
+    OGRPoint*           ReadPoint(int iFigure);
     OGRMultiPoint*      ReadMultiPoint(int iShape);
     OGRErr              ReadSimpleCurve(OGRSimpleCurve* poCurve, int iPoint, int iNextPoint);
-    OGRLineString*      ReadLineString(int iShape);
-    OGRLinearRing*      ReadLinearRing(int iShape);
+    OGRLineString*      ReadLineString(int iFigure);
+    OGRLinearRing*      ReadLinearRing(int iFigure);
     OGRMultiLineString* ReadMultiLineString(int iShape);
     OGRPolygon*         ReadPolygon(int iShape);
     OGRMultiPolygon*    ReadMultiPolygon(int iShape);
     OGRGeometryCollection* ReadGeometryCollection(int iShape);
-    OGRCircularString*  ReadCircularString(int iShape);
-    OGRCompoundCurve*   ReadCompoundCurve(int iShape);
+    OGRCircularString*  ReadCircularString(int iFigure);
+    OGRCompoundCurve*   ReadCompoundCurve(int iFigure);
     void AddCurveSegment(OGRCompoundCurve* poCompoundCurve,
         OGRSimpleCurve* poCurve, int iPoint, int iNextPoint);
     OGRCurvePolygon*    ReadCurvePolygon(int iShape);
