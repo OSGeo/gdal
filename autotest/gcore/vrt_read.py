@@ -1250,3 +1250,40 @@ def test_vrt_explicit_dataAxisToSRSAxisMapping_1_2():
     </VRTDataset>"""
     ds = gdal.Open(vrt_text)
     assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1,2]
+
+
+def test_vrt_shared_no_proxy_pool():
+
+    before = gdaltest.get_opened_files()
+    vrt_text = """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Red</ColorInterp>
+    <SimpleSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ColorInterp>Green</ColorInterp>
+    <SimpleSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <ColorInterp>Blue</ColorInterp>
+    <SimpleSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    ds = gdal.Open(vrt_text)
+    assert ds
+    assert ds.GetRasterBand(1).Checksum() == 21212
+    assert ds.GetRasterBand(2).Checksum() == 21053
+    assert ds.GetRasterBand(3).Checksum() == 21349
+    ds = None
+
+    after = gdaltest.get_opened_files()
+    assert len(before) == len(after)

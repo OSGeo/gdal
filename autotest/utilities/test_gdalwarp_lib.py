@@ -461,6 +461,35 @@ def test_gdalwarp_lib_46():
     gdal.Unlink(cutlineDSName)
 
 ###############################################################################
+# Test -crop_to_cutline -tr X Y -wo CUTLINE_ALL_TOUCHED=YES (fixes for #1360)
+
+
+def test_gdalwarp_lib_cutline_all_touched_single_pixel():
+
+    cutlineDSName = '/vsimem/test_gdalwarp_lib_cutline_all_touched_single_pixel.json'
+    cutline_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(cutlineDSName)
+    cutline_lyr = cutline_ds.CreateLayer('cutline')
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2.15 48.15,2.15000001 48.15000001,2.15 48.15000001,2.15 48.15))'))
+    cutline_lyr.CreateFeature(f)
+    f = None
+    cutline_lyr = None
+    cutline_ds = None
+
+    src_ds = gdal.Translate('', '../gcore/data/byte.tif', format='MEM',
+                            outputBounds=[2, 49, 3, 48], outputSRS='EPSG:4326')
+
+    ds = gdal.Warp('', src_ds, format='MEM', cutlineDSName=cutlineDSName,
+                   cropToCutline=True, warpOptions=['CUTLINE_ALL_TOUCHED=YES'],
+                   xRes=0.001, yRes=0.001)
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (2.15, 0.001, 0.0, 48.151, 0.0, -0.001)
+    assert max([abs(got_gt[i]-expected_gt[i]) for i in range(6)]) <= 1e-8, got_gt
+    assert ds.RasterXSize == 1 and ds.RasterYSize == 1
+
+    gdal.Unlink(cutlineDSName)
+
+###############################################################################
 # Test callback
 
 
