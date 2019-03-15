@@ -573,7 +573,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib      
 
 #MRR enabled
-MRR_ENABLED = YES
+#MRR_ENABLED = YES
 #MRR_VERSION=1
 #MRR_SDK = C:\MRRSDK\sdk
 #MRR_INC = $(MRR_SDK)\include 
