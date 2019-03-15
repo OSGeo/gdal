@@ -663,6 +663,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         papszOpenOptions =
             CSLSetNameValue(papszOpenOptions, "ROOT_PATH", pszVRTPath);
 
+    bool bAddToMapIfOk = false;
     GDALDataset *poSrcDS = nullptr;
     if( nRasterXSize == 0 || nRasterYSize == 0 ||
         eDataType == static_cast<GDALDataType>(-1) ||
@@ -691,7 +692,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
                         (const char* const* )papszOpenOptions, nullptr ) );
                 if( poSrcDS )
                 {
-                    oMapSharedSources[pszSrcDSName] = poSrcDS;
+                    bAddToMapIfOk = true;
                 }
             }
         }
@@ -761,6 +762,11 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         poSrcDS->ReleaseRef();
         return CE_Failure;
     }
+    else if( bAddToMapIfOk )
+    {
+        oMapSharedSources[pszSrcDSName] = poSrcDS;
+    }
+
     if( bGetMaskBand )
     {
         m_poMaskBandMainBand = m_poRasterBand;
