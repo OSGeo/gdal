@@ -621,6 +621,9 @@ def test_ogr_efal_18():
 
 def test_ogr_efal_19():
     setup_mapinfo_test()
+    if gdaltest.mapinfo_drv is None:
+        pytest.skip()
+
     filename = '/mem/ogr_efal_21.tab'
     for nb_features in (2, 100):
         if nb_features == 2:
@@ -670,6 +673,9 @@ def test_ogr_efal_19():
 
 def test_ogr_efal_20():
     setup_mapinfo_test()
+    if gdaltest.mapinfo_drv is None:
+        pytest.skip()
+
     filename = '/mem/ogr_efal_22.tab'
 
     for nb_features in (0, 1, 2, 100, 1000):
@@ -698,6 +704,9 @@ def test_ogr_efal_20():
 
 def test_ogr_efal_21():
     setup_mapinfo_test()
+    if gdaltest.mapinfo_drv is None:
+        pytest.skip()
+
     filename = '/mem/ogr_efal_22.tab'
 
     for nb_features in (2, 100, 1000):
@@ -741,6 +750,9 @@ def test_ogr_efal_21():
 
 def test_ogr_efal_22():
     setup_mapinfo_test()
+    if gdaltest.mapinfo_drv is None:
+        pytest.skip()
+
     filename = '/mem/ogr_efal_23.tab'
 
     for nb_features in (2, 1000):
@@ -808,6 +820,9 @@ def test_ogr_efal_22():
 
 def test_ogr_efal_23():
     setup_mapinfo_test()
+    if gdaltest.mapinfo_drv is None:
+        pytest.skip()
+
     for update in (0, 1):
         ds = ogr.Open('data/aspatial-table.tab', update=update)
         lyr = ds.GetLayer(0)
@@ -826,6 +841,9 @@ def test_ogr_efal_23():
 
 def test_ogr_efal_24():
     setup_mapinfo_test()
+    if gdaltest.mapinfo_drv is None:
+        pytest.skip()
+
     ds = ogr.Open('data/efal/seamless.tab')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 4
@@ -846,7 +864,8 @@ def test_ogr_efal_24():
 
 def test_ogr_efal_cleanup():
     gdaltest.mapinfo_ds = None
-    gdaltest.mapinfo_drv.DeleteDataSource('tmp')
+    if gdaltest.mapinfo_drv is not None:
+        gdaltest.mapinfo_drv.DeleteDataSource('tmp')
 
 
 
