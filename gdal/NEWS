@@ -1,3 +1,128 @@
+= GDAL/OGR 2.4.1 Release Notes =
+
+The 2.4.1 release is a bug fix release.
+
+== Build ==
+
+Unix:
+ * Fix build with OpenBSD which doesn't support RLIMIT_AS (#1163)
+ * fix build --without-lerc (#1224)
+ * configure: fix netcdf_mem.h detection in netcdf 4.6.2 (#1328)
+
+Windows:
+ * Fix build issue for builds without curl (#1251)
+ * nmake.opt: remove unicode character at line starting with '# 4275' that apparently cause build issues with some MSVC versions (#1169)
+
+All:
+ * Poppler: revision version management. Drop support for ancient versions older than 0.23.0
+ * Add support for Poppler 0.72.0 and 0.73.0 (#1207, #1208)
+
+== Port ==
+
+ * cpl_vsi.h: fix include for C use
+ * VSICurlHandle::ReadMultiRange(): use default implementation if there is a single range. May help to improve performance for #1206
+ * VSIGZipWriteHandleMT: avoid potential deadlock in case of error
+ * /vsihdfs/: fix Read() when more than one hdfsRead call is needed (#1349)
+
+== GDAL utilities ==
+
+ * gdalwarp -crop_to_cutline: do not round computed target extent to be aligned on the grid of the source raster if -tr is set (restore partially pre 2.4 behaviour) (#1173)
+ * gdalwarp: assume -tap when using -crop_to_cutline, -tr and -wo CUTLINE_ALL_TOUCHED=TRUE, so as to avoid issues with polygons smaller than 1x1 pixels (#1360)
+ * gdal2tiles: give local tile layer and basemap layers same min/max zoom levels as generated tile cache (#1074)
+ * gdal2tiles: fix breakage of openlayers.html getURL() javascript function, introduced in GDAL 2.3.3 / 2.4.0 (#1127)
+ * gdal2tiles: prevent accidental copy of full GeoTIFF into temporary .vrt file
+ * Fix double-free in StripIrrelevantOptions() (triggered by gdalinfo / ogrinfo --format)
+ * gdal_retile.py: use nodata value from origin dataset
+
+== GDAL algorithms ==
+
+ * rasterize: fix crash when working buffer is larger than 2GB (#1338)
+
+== GDAL drivers ==
+
+COSAR driver:
+ * avoid out-of-bound write on corrupted dataset. Fixes OSS Fuzz #12360
+
+GTiff driver:
+ * only report scale/offset deduced from ModelTiepointTag and ModelPixelScaleTag if the SRS has a vertical component (and thus currently if GTIFF_REPORT_COMPD_CS is set) (https://issues.qgis.org/issues/20493)
+ * Lerc codec: properly initialize state after Create() so that BuildOverviews() succeed (#1257)
+
+KMLSuperOverlay driver:
+ * report color table of single overlay datasets, and also handle some variation in the KML structure (https://issues.qgis.org/issues/20173)
+
+JPEG driver:
+ * fix GDAL 2.3.0 performance regression when decoding JPEG (or GPKG using JPEG) images (#1324)
+
+netCDF driver:
+ * fix crash when opening a dataset with an attribute of length 0 (#1303)
+
+PDSv3 driver:
+ * fix decoding of band interleaved images (such as for CRISM HSP) (#1239)
+
+XPM driver:
+ * fix read heap buffer overflow on corrupted image. Fixes OSS Fuzz #13455
+
+== OGR core ==
+
+ * Polyhedral surface: fix importFromWKT to properly fix Z/M flag
+ * OGRGeometryFactory::GetCurveParmeters(): fix assertion when coordinates are very near 0 (relates to OSS Fuzz #13408)
+ * OGRLineString::segmentize(): fix issues when segment length is divisible by maxlength (#1341)
+
+== OGRSpatialReference ==
+
+ * Coordinate transformation: do not apply +towgs84 if it is present only in one one of the CRS, when using PROJ >= 5 (#1156)
+
+== OGR drivers ==
+
+CSW driver:
+ * fix crash when geometry parsing fails (#1248)
+
+DXF driver:
+ * fix double-free issue in case of writing error. Fixes OSS Fuzz #13516
+
+Elasticsearch driver:
+ * Fix index comparison bug when a index have at least one mapping
+
+GeoJSON driver:
+ * speed-up random reading with GetFeature() to retrieve performance similar to GDAL 2.2 or before (https://issues.qgis.org/issues/21085)
+
+GeoPackage driver:
+ * allow srs_id with negative values
+
+GML driver:
+ * write SRSName element in .gfs when parsing a GML file with srsName only on top-level boundedBy element (#1210)
+ * Add "FeatureType" to list of suffixes recognized by XSD parser for compatibility with schemas produced by ArcGIS Server
+ * Fix assertion in CPLGetValueType when testing non-ASCII chars
+
+MITAB driver:
+ * .tab: fix deleting a feature without geometry (#1232)
+ * adapt dynamically default projection bounds to false_easting/false_northing values (#1316)
+ * avoid potential assertion or stack buffer overflow on corrupted .ind files. Fixes OSS Fuzz #11999.
+ * prevent potential infinite recursion on broken indexes. Fixes OSS Fuzz #12739.
+
+MSSQLSpatial driver:
+ * Add option to expose the FID column as a feature attribute (#1227)
+
+ODS driver:
+ * allow opening tables with empty cells with huge values of columns-repeated attribute at end of line (#1243)
+ * aavoid potential null pointer dereference when writing to corrupted filename. Fixes OSS Fuz #12976.
+
+PDF driver:
+ * avoid division by zero when generating from vector content whose bounding box is almost a horizontal or vertical line. Fixes OSS Fuzz #13408
+
+PGDump driver:
+ * emit correct SQL statement when UNLOGGED=ON
+
+Selafin driver:
+ * avoid null pointer dereference on corrupted files. Fixes OSS Fuzz #12356
+
+VFK driver:
+ * fix regression where curved geometries were ignored (#1351)
+
+== Python bindings ==
+
+ * fix Dataset.ReadAsRaster() on CInt16 data type (#1186)
+
 = GDAL/OGR 2.4.0 Release Notes =
 
 == In a nutshell... ==
