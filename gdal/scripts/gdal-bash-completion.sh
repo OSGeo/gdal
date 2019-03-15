@@ -143,7 +143,7 @@ _gdal_contour()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-b -a -3d -inodata -snodata -f -i -dsco -lco -off -fl -nln -q "
+      key_list="-b -a -amin -amax -3d -inodata -snodata -f -i -dsco -lco -off -fl -e -nln -q -p "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -173,7 +173,7 @@ _gdal_edit.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -a_nodata -unsetnodata -offset -scale -colorinterp_X -unsetstats -stats -approx_stats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -unsetrpc -a_nodata -unsetnodata -offset -scale -colorinterp_X -unsetstats -stats -approx_stats -setstats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
