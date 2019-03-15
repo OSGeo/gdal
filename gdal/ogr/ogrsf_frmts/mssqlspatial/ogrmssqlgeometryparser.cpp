@@ -206,11 +206,10 @@ OGRPoint* OGRMSSQLGeometryParser::ReadPoint(int iShape)
 
 OGRMultiPoint* OGRMSSQLGeometryParser::ReadMultiPoint(int iShape)
 {
-    int i;
     OGRMultiPoint* poMultiPoint = new OGRMultiPoint();
     OGRGeometry* poGeom;
 
-    for (i = iShape + 1; i < nNumShapes; i++)
+    for (int i = iShape + 1; i < nNumShapes; i++)
     {
         poGeom = nullptr;
         if (ParentOffset(i) == (unsigned int)iShape)
@@ -310,11 +309,10 @@ OGRCircularString* OGRMSSQLGeometryParser::ReadCircularString(int iShape)
 
 OGRMultiLineString* OGRMSSQLGeometryParser::ReadMultiLineString(int iShape)
 {
-    int i;
     OGRMultiLineString* poMultiLineString = new OGRMultiLineString();
     OGRGeometry* poGeom;
 
-    for (i = iShape + 1; i < nNumShapes; i++)
+    for (int i = iShape + 1; i < nNumShapes; i++)
     {
         poGeom = nullptr;
         if (ParentOffset(i) == (unsigned int)iShape)
@@ -352,11 +350,10 @@ OGRPolygon* OGRMSSQLGeometryParser::ReadPolygon(int iShape)
 
 OGRMultiPolygon* OGRMSSQLGeometryParser::ReadMultiPolygon(int iShape)
 {
-    int i;
     OGRMultiPolygon* poMultiPolygon = new OGRMultiPolygon();
     OGRGeometry* poGeom;
 
-    for (i = iShape + 1; i < nNumShapes; i++)
+    for (int i = iShape + 1; i < nNumShapes; i++)
     {
         poGeom = nullptr;
         if (ParentOffset(i) == (unsigned int)iShape)
@@ -397,7 +394,6 @@ void OGRMSSQLGeometryParser::AddCurveSegment(OGRCompoundCurve* poCompoundCurve,
 OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
 {
     int iPoint, iNextPoint, nPointsPrepared;
-    char chSegmentType;
     OGRCompoundCurve* poCompoundCurve = new OGRCompoundCurve();
     iPoint = PointOffset(iFigure);
     iNextPoint = NextPointOffset(iFigure) - 1;
@@ -471,11 +467,10 @@ OGRCurvePolygon* OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
 
 OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape)
 {
-    int i;
     OGRGeometryCollection* poGeomColl = new OGRGeometryCollection();
     OGRGeometry* poGeom;
 
-    for (i = iShape + 1; i < nNumShapes; i++)
+    for (int i = iShape + 1; i < nNumShapes; i++)
     {
         poGeom = nullptr;
         if (ParentOffset(i) == (unsigned int)iShape)
@@ -709,7 +704,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
         {
             iSegment = 0;
             nSegmentPos = nShapePos + 9 * nNumShapes + 4;
-            if (nLen > nShapePos)
+            if (nLen > nSegmentPos)
             {
                 // segment array is present
                 nNumSegments = ReadInt32(nSegmentPos - 4);

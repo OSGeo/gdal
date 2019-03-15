@@ -114,31 +114,49 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
 class OGRMSSQLGeometryValidator
 {
 protected:
-    int bIsValid;
+    bool bIsValid;
     OGRGeometry*    poValidGeometry;
     OGRGeometry*    poOriginalGeometry;
+    int             nGeomColumnType;
 
 public:
-    explicit         OGRMSSQLGeometryValidator(OGRGeometry* poGeom);
+    explicit         OGRMSSQLGeometryValidator(OGRGeometry* poGeom, int nGeomColumnType);
                     ~OGRMSSQLGeometryValidator();
 
-    // cppcheck-suppress functionStatic
-    int             ValidatePoint(OGRPoint* poGeom);
-    // cppcheck-suppress functionStatic
-    int             ValidateMultiPoint(OGRMultiPoint* poGeom);
-    int             ValidateLineString(OGRLineString* poGeom);
-    int             ValidateCircularString(OGRCircularString* poGeom);
-    int             ValidateCompoundCurve(OGRCompoundCurve* poGeom);
-    int             ValidateLinearRing(OGRLinearRing* poGeom);
-    int             ValidateMultiLineString(OGRMultiLineString* poGeom);
-    int             ValidatePolygon(OGRPolygon* poGeom);
-    int             ValidateCurvePolygon(OGRCurvePolygon* poGeom);
-    int             ValidateMultiPolygon(OGRMultiPolygon* poGeom);
-    int             ValidateGeometryCollection(OGRGeometryCollection* poGeom);
-    int             ValidateGeometry(OGRGeometry* poGeom);
+    bool            IsValidLatLon(double longitude, double latitude);
+    bool            IsValidCircularZ(double z1, double z2);
+    bool            IsValidPolygonRingCount(OGRCurve* poGeom);
+    bool            IsValidPolygonRingClosed(OGRCurve* poGeom);
+    bool            IsValid(OGRPoint* poGeom);
+    bool            IsValid(OGRMultiPoint* poGeom);
+    bool            IsValid(OGRLineString* poGeom);
+    bool            IsValid(OGRCircularString* poGeom);
+    bool            IsValid(OGRSimpleCurve* poGeom);
+    bool            IsValid(OGRCompoundCurve* poGeom);
+    bool            IsValid(OGRLinearRing* poGeom);
+    bool            IsValid(OGRMultiLineString* poGeom);
+    bool            IsValid(OGRPolygon* poGeom);
+    bool            IsValid(OGRCurvePolygon* poGeom);
+    bool            IsValid(OGRMultiPolygon* poGeom);
+    bool            IsValid(OGRGeometryCollection* poGeom);
+    bool            IsValid(OGRGeometry* poGeom);
+    void            MakeValid(OGRPoint* poGeom);
+    void            MakeValid(OGRMultiPoint* poGeom);
+    void            MakeValid(OGRLineString* poGeom);
+    void            MakeValid(OGRCircularString* poGeom);
+    void            MakeValid(OGRSimpleCurve* poGeom);
+    void            MakeValid(OGRCompoundCurve* poGeom);
+    void            MakeValid(OGRLinearRing* poGeom);
+    void            MakeValid(OGRMultiLineString* poGeom);
+    void            MakeValid(OGRPolygon* poGeom);
+    void            MakeValid(OGRCurvePolygon* poGeom);
+    void            MakeValid(OGRMultiPolygon* poGeom);
+    void            MakeValid(OGRGeometryCollection* poGeom);
+    void            MakeValid(OGRGeometry* poGeom);
+    bool            ValidateGeometry(OGRGeometry* poGeom);
 
     OGRGeometry*    GetValidGeometryRef();
-    int             IsValid() { return bIsValid; }
+    bool            IsValid() { return bIsValid; }
 };
 
 /************************************************************************/
@@ -235,6 +253,8 @@ protected:
     void             WritePoint(double x, double y, double z);
     void             WritePoint(double x, double y, double z, double m);
     void             WriteSimpleCurve(OGRSimpleCurve* poGeom);
+    void             WriteSimpleCurve(OGRSimpleCurve* poGeom, int iStartIndex);
+    void             WriteSimpleCurve(OGRSimpleCurve* poGeom, int iStartIndex, int nCount);
     void             WriteCompoundCurve(OGRCompoundCurve* poGeom);
     void             WriteCurve(OGRCurve* poGeom);
     void             WritePolygon(OGRPolygon* poGeom);
@@ -349,6 +369,7 @@ typedef union {
 class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
 {
     bool                bUpdateAccess = true;
+    bool                bUseGeometryValidation = false;
     int                 bLaunderColumnNames = FALSE;
     int                 bPreservePrecision = FALSE;
     int                 bNeedSpatialIndex = FALSE;

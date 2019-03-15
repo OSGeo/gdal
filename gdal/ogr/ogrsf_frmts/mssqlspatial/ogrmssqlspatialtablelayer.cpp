@@ -83,6 +83,7 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
 OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource *poDSIn )
 {
     poDS = poDSIn;
+    bUseGeometryValidation = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_VALIDATION", "NO"));
 }
 
 /************************************************************************/
@@ -367,6 +368,13 @@ int OGRMSSQLSpatialTableLayer::FetchSRSId()
 OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
 {
     OGRMSSQLSpatialTableLayer::GetLayerDefn();
+
+    if (pszGeomColumn == nullptr)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+            "No geometry column found.");
+        return OGRERR_FAILURE;
+    }
 
     CPLODBCStatement oStatement( poDS->GetSession() );
 
@@ -984,15 +992,19 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 
     oStmt.Appendf( "UPDATE [%s].[%s] SET ", pszSchemaName, pszTableName);
 
-    OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef());
-    OGRGeometry *poGeom = oValidator.GetValidGeometryRef();
-
-    if (poFeature->GetGeometryRef() != poGeom)
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    if (bUseGeometryValidation && poGeom != nullptr)
     {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "Geometry with FID = " CPL_FRMT_GIB " has been modified.", poFeature->GetFID() );
-    }
+        OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef(), nGeomColumnType);
+        poGeom = oValidator.GetValidGeometryRef();
 
+        if (poFeature->GetGeometryRef() != poGeom)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                "Geometry with FID = " CPL_FRMT_GIB " has been modified.", poFeature->GetFID());
+        }
+    }
+    
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int bind_num = 0;
     void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * nFieldCount);
@@ -1590,9 +1602,13 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
             if (poFeature->GetGeometryRef())
             {
                 /* prepare geometry */
-                OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef());
-                OGRGeometry *poGeom = oValidator.GetValidGeometryRef();
-
+                OGRGeometry *poGeom = poFeature->GetGeometryRef();
+                if (bUseGeometryValidation  && poGeom != nullptr)
+                {
+                    OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef(), nGeomColumnType);
+                    poGeom = oValidator.GetValidGeometryRef();
+                }
+                
                 OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
                 papstBindBuffer[iCol]->RawData.nSize = poWriter.GetDataLen();
                 papstBindBuffer[iCol]->RawData.pData = (GByte *) CPLMalloc(papstBindBuffer[iCol]->RawData.nSize + 1);
@@ -2006,14 +2022,18 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     oStatement.Appendf( "INSERT INTO [%s].[%s] ", pszSchemaName, pszTableName );
 
-    OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef());
-    OGRGeometry *poGeom = oValidator.GetValidGeometryRef();
-
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
     GIntBig nFID = poFeature->GetFID();
-    if (poFeature->GetGeometryRef() != poGeom)
+    if (bUseGeometryValidation && poGeom != nullptr)
     {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "Geometry with FID = " CPL_FRMT_GIB " has been modified.", nFID );
+        OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef(), nGeomColumnType);
+        poGeom = oValidator.GetValidGeometryRef();
+
+        if (poFeature->GetGeometryRef() != poGeom)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                "Geometry with FID = " CPL_FRMT_GIB " has been modified.", nFID);
+        }
     }
 
     int bNeedComma = FALSE;
