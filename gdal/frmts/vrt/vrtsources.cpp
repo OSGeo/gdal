@@ -275,7 +275,10 @@ static const char* const apszSpecialSyntax[] = {
     "NETCDF:{FILENAME}:{ANY}",
     "NITF_IM:{ANY}:{FILENAME}",
     "PDF:{ANY}:{FILENAME}",
-    "RASTERLITE:{FILENAME},{ANY}" };
+    "RASTERLITE:{FILENAME},{ANY}",
+    "TILEDB:\"{FILENAME}\":{ANY}",
+    "TILEDB:{FILENAME}:{ANY}"
+ };
 
 CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 

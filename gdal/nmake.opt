@@ -684,6 +684,11 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #ZSTD_CFLAGS = -IC:/install-zstd/include
 #ZSTD_LIBS = C:/install-zstd/lib/libzstd.lib
 
+# Uncomment for TileDB support
+#TILEDB_ENABLED = YES
+#TILEDB_CFLAGS = -IC:/install-tiledb/dist/include
+#TILEDB_LIBS = C:/install-tiledb/dist/lib/libtiledb.lib
+
 # Uncomment for WEBP support
 #WEBP_ENABLED = YES
 #WEBP_CFLAGS = -IE:/libwebp-0.1-windows/dev/Include

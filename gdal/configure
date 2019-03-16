@@ -641,6 +641,7 @@ RASDAMAN_INC
 RASDAMAN_ENABLED
 JVM_LIB
 MDB_ENABLED
+TILEDB_SETTING
 JNI_LIB
 HDFS_INC
 HDFS_LIB
@@ -1194,6 +1195,7 @@ with_perl
 with_python
 with_java
 with_hdfs
+with_tiledb
 with_mdb
 with_jvm_lib
 with_jvm_lib_add_rpath
@@ -2162,6 +2164,7 @@ Optional Packages:
   --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)
   --with-java       Include Java support (ARG=yes, no or JDK home path)  [default=no]
   --with-hdfs=ARG        Include HDFS support (ARG=Path or no)
+  --with-tiledb=ARG    Include TileDB support (ARG=no, yes or tiledb install root path)
   --with-mdb       Include MDB driver
   --with-jvm-lib=ARG        ARG is dlopen or points to Java libjvm path
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
@@ -40281,6 +40284,128 @@ JNI_LIB=$JNI_LIB
 
 
 
+# Check whether --with-tiledb was given.
+if test "${with_tiledb+set}" = set; then :
+  withval=$with_tiledb;
+fi
+
+
+TILEDB_SETTING=no
+
+if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for tiledb_coords in -ltiledb" >&5
+$as_echo_n "checking for tiledb_coords in -ltiledb... " >&6; }
+if ${ac_cv_lib_tiledb_tiledb_coords+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltiledb  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char tiledb_coords ();
+int
+main ()
+{
+return tiledb_coords ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_tiledb_tiledb_coords=yes
+else
+  ac_cv_lib_tiledb_tiledb_coords=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tiledb_tiledb_coords" >&5
+$as_echo "$ac_cv_lib_tiledb_tiledb_coords" >&6; }
+if test "x$ac_cv_lib_tiledb_tiledb_coords" = xyes; then :
+  TILEDB_SETTING=yes
+else
+  TILEDB_SETTING=no
+fi
+
+
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-ltiledb $LIBS"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+elif test "$with_tiledb" != "no" -a "$with_tiledb" != ""; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for tiledb_coords in -ltiledb" >&5
+$as_echo_n "checking for tiledb_coords in -ltiledb... " >&6; }
+if ${ac_cv_lib_tiledb_tiledb_coords+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltiledb -L$with_tiledb/lib -ltiledb $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char tiledb_coords ();
+int
+main ()
+{
+return tiledb_coords ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_tiledb_tiledb_coords=yes
+else
+  ac_cv_lib_tiledb_tiledb_coords=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tiledb_tiledb_coords" >&5
+$as_echo "$ac_cv_lib_tiledb_tiledb_coords" >&6; }
+if test "x$ac_cv_lib_tiledb_tiledb_coords" = xyes; then :
+  TILEDB_SETTING=yes
+else
+  TILEDB_SETTING=no
+fi
+
+
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-L$with_tiledb/lib -ltiledb $LIBS"
+    EXTRA_INCLUDES="-I$with_tiledb/include $EXTRA_INCLUDES"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+fi
+
+TILEDB_SETTING=$TILEDB_SETTING
+
+
+if test "$TILEDB_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
+fi
+
+
+
 # Check whether --with-mdb was given.
 if test "${with_mdb+set}" = set; then :
   withval=$with_mdb;
@@ -43692,6 +43817,9 @@ echo "  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}"
 
 
 echo "  HDFS support:              ${HDFS_ENABLED}"
+
+
+echo "  TileDB support:            ${TILEDB_SETTING}"
 
 
 echo "  userfaultfd support:       ${ENABLE_UFFD}"
