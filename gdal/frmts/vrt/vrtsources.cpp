@@ -522,7 +522,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         bShared = true;
     }
 
-    char *pszSrcDSName = nullptr;
+    CPLString osSrcDSName;
     if( pszVRTPath != nullptr && m_bRelativeToVRTOri )
     {
         bool bDone = false;
@@ -550,8 +550,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
                     }
                     CPLString osPrefixFilename = pszFilename;
                     osPrefixFilename.resize(pszLastPart - pszFilename);
-                    pszSrcDSName = CPLStrdup( (osPrefixFilename +
-                        CPLProjectRelativeFilename( pszVRTPath, pszLastPart )).c_str() );
+                    osSrcDSName = osPrefixFilename +
+                        CPLProjectRelativeFilename( pszVRTPath, pszLastPart );
                     bDone = true;
                 }
                 else if( STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{FILENAME}") )
@@ -568,9 +568,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
                     {
                         const CPLString osSuffix = osFilename.substr(nPos);
                         osFilename.resize(nPos);
-                        pszSrcDSName = CPLStrdup(
-                            (osPrefix + CPLProjectRelativeFilename(
-                                pszVRTPath, osFilename ) + osSuffix).c_str() );
+                        osSrcDSName =
+                            osPrefix + CPLProjectRelativeFilename(
+                                pszVRTPath, osFilename ) + osSuffix;
                         bDone = true;
                     }
                 }
@@ -579,13 +579,12 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         }
         if( !bDone )
         {
-            pszSrcDSName = CPLStrdup(
-                CPLProjectRelativeFilename( pszVRTPath, pszFilename ) );
+            osSrcDSName = CPLProjectRelativeFilename( pszVRTPath, pszFilename );
         }
     }
     else
     {
-        pszSrcDSName = CPLStrdup( pszFilename );
+        osSrcDSName = pszFilename;
     }
 
     const char* pszSourceBand = CPLGetXMLValue(psSrc,"SourceBand","1");
@@ -607,7 +606,6 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Invalid <SourceBand> element in VRTRasterBand." );
-        CPLFree( pszSrcDSName );
         return CE_Failure;
     }
 
@@ -653,16 +651,16 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Invalid <SourceProperties> element in VRTRasterBand." );
-            CPLFree( pszSrcDSName );
             return CE_Failure;
         }
     }
 
     char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psSrc);
-    if( strstr(pszSrcDSName,"<VRTDataset") != nullptr )
+    if( strstr(osSrcDSName.c_str(),"<VRTDataset") != nullptr )
         papszOpenOptions =
             CSLSetNameValue(papszOpenOptions, "ROOT_PATH", pszVRTPath);
 
+    bool bAddToMapIfOk = false;
     GDALDataset *poSrcDS = nullptr;
     if( nRasterXSize == 0 || nRasterYSize == 0 ||
         eDataType == static_cast<GDALDataType>(-1) ||
@@ -678,7 +676,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
             // annoying reference cycles in situations like you have
             // foo.tif and foo.tif.ovr, the later being actually a VRT file
             // that points to foo.tif
-            auto oIter = oMapSharedSources.find(pszSrcDSName);
+            auto oIter = oMapSharedSources.find(osSrcDSName);
             if( oIter != oMapSharedSources.end() )
             {
                 poSrcDS = oIter->second;
@@ -687,18 +685,18 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
             else
             {
                 poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
-                        pszSrcDSName, nOpenFlags, nullptr,
+                        osSrcDSName, nOpenFlags, nullptr,
                         (const char* const* )papszOpenOptions, nullptr ) );
                 if( poSrcDS )
                 {
-                    oMapSharedSources[pszSrcDSName] = poSrcDS;
+                    bAddToMapIfOk = true;
                 }
             }
         }
         else
         {
             poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
-                        pszSrcDSName, nOpenFlags, nullptr,
+                        osSrcDSName, nOpenFlags, nullptr,
                         (const char* const* )papszOpenOptions, nullptr ) );
         }
     }
@@ -709,7 +707,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         /* ----------------------------------------------------------------- */
         CPLString osUniqueHandle( CPLSPrintf("%p", pUniqueHandle) );
         GDALProxyPoolDataset * const proxyDS =
-            new GDALProxyPoolDataset( pszSrcDSName, nRasterXSize, nRasterYSize,
+            new GDALProxyPoolDataset( osSrcDSName, nRasterXSize, nRasterYSize,
                                       GA_ReadOnly, bShared, nullptr, nullptr,
                                       osUniqueHandle.c_str() );
         proxyDS->SetOpenOptions(papszOpenOptions);
@@ -746,8 +744,6 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
 
     CSLDestroy(papszOpenOptions);
 
-    CPLFree( pszSrcDSName );
-
     if( poSrcDS == nullptr )
         return CE_Failure;
 
@@ -761,6 +757,11 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         poSrcDS->ReleaseRef();
         return CE_Failure;
     }
+    else if( bAddToMapIfOk )
+    {
+        oMapSharedSources[osSrcDSName] = poSrcDS;
+    }
+
     if( bGetMaskBand )
     {
         m_poMaskBandMainBand = m_poRasterBand;

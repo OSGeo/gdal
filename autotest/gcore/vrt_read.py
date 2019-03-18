@@ -1287,3 +1287,24 @@ def test_vrt_shared_no_proxy_pool():
 
     after = gdaltest.get_opened_files()
     assert len(before) == len(after)
+
+
+def test_vrt_shared_no_proxy_pool_error():
+
+    vrt_text = """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>10</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <SimpleSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>11</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    with gdaltest.error_handler():
+        ds = gdal.Open(vrt_text)
+    assert not ds
