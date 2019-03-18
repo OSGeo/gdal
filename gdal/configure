@@ -25685,6 +25685,14 @@ else
   INTERNAL_FORMAT_mrf_ENABLED=no
 fi
 
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED mrr"
+  INTERNAL_FORMAT_mrr_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED mrr"
+  INTERNAL_FORMAT_mrr_ENABLED=no
+fi
+
 # Check whether --enable-driver-msgn was given.
 if test "${enable_driver_msgn+set}" = set; then :
   enableval=$enable_driver_msgn;
