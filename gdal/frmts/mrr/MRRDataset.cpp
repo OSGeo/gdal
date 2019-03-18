@@ -19,7 +19,7 @@ CPL_C_END
 //////////////////////////////////////////////////////////////////////////
 //					Method declarations
 GDALDataType AdjustBandDataType(MIR_DataType& mirDataType);
-bool MRRInitialize();
+bool MRRInitialize(bool logError = true);
 void GDALDeregister_MRR(GDALDriver *);
 //////////////////////////////////////////////////////////////////////////
 
@@ -99,11 +99,14 @@ GDALDataType AdjustBandDataType(MIR_DataType& mirDataType)
 	return gdalDataType;
 }
 
-bool MRRInitialize()
+bool MRRInitialize(bool logError)
 {
 	if (SDKDynamicImpl::Get().Init() == false)
 	{
-		CPLError(CE_Failure, CPLE_AppDefined, "Unable to load MapInfo MRR SDK \n");
+		if (logError)
+		{
+			CPLError(CE_Failure, CPLE_AppDefined, "Unable to load MapInfo MRR SDK \n");
+		}
 		return false;
 	}
 
@@ -538,6 +541,9 @@ void GDALRegister_MRR()
 	GDALDriver  *poDriver;
 
 	if (!GDAL_CHECK_VERSION("MRR"))
+		return;
+
+	if (MRRInitialize(false) == false)
 		return;
 
 	if (GDALGetDriverByName("MRR") == NULL)
