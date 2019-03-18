@@ -94,7 +94,7 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 #define ENABLE_DEBUG_VERBOSE 0
 
 static int N_MAX_REGIONS = 1000;
-static int DOWNLOAD_CHUNK_SIZE = 16384;
+static int DOWNLOAD_CHUNK_SIZE = 131072;
 
 namespace cpl {
 
