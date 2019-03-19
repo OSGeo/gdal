@@ -83,6 +83,7 @@ typedef struct {
     GDALRasterBandH  hBand_X;
     GDALDatasetH     hDS_Y;
     GDALRasterBandH  hBand_Y;
+    int              bSwapXY;
 
     // Located geolocation data.
     int              nGeoLocXSize;
@@ -764,6 +765,9 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         return nullptr;
     }
 
+    psTransform->bSwapXY = CPLTestBool(CSLFetchNameValueDef(
+        papszGeolocationInfo, "SWAP_XY", "NO"));
+
 /* -------------------------------------------------------------------- */
 /*     Check that X and Y bands have the same dimensions                */
 /* -------------------------------------------------------------------- */
@@ -948,6 +952,11 @@ int GDALGeoLocTransform( void *pTransformArg,
                 padfY[i] = padfGLY[0];
             }
 
+            if( psTransform->bSwapXY )
+            {
+                std::swap(padfX[i], padfY[i]);
+            }
+
             panSuccess[i] = TRUE;
         }
     }
@@ -963,6 +972,11 @@ int GDALGeoLocTransform( void *pTransformArg,
             {
                 panSuccess[i] = FALSE;
                 continue;
+            }
+
+            if( psTransform->bSwapXY )
+            {
+                std::swap(padfX[i], padfY[i]);
             }
 
             const double dfBMX =
