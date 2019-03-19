@@ -938,6 +938,14 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile( int nRow, int nCol, GByte *pa
         VSIUnlink(osMemFileName);
         sqlite3_finalize(hStmt);
     }
+    else if( rc == SQLITE_BUSY )
+    {
+        FillEmptyTile(pabyData);
+        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_step(%s) failed (SQLITE_BUSY): %s",
+                      sqlite3_sql( hStmt ), sqlite3_errmsg( IGetDB() ) );
+        sqlite3_finalize(hStmt);
+        return pabyData;
+    }
     else
     {
         sqlite3_finalize( hStmt );
