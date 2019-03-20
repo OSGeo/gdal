@@ -1,6 +1,10 @@
 # This is the config file for building GDAL and running its autotest suite
 # with Travis-ci.org
 
+branches:
+  except:
+  - /^(cherry-pick-)?backport-\d+-on-/
+
 matrix:
   fast_finish: true
   include:
