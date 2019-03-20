@@ -1,4 +1,8 @@
 
+branches:
+  except:
+    - /(cherry-pick-)?backport-\d+-on-/
+
 environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
