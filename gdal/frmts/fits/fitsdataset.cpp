@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "ogr_spatialref.h"
+
 #include <string.h>
 #include <fitsio.h>
 
@@ -949,6 +951,7 @@ void FITSDataset::WriteFITSInfo()
             }
         }
 
+
         UpperLeftCornerX = adfGeoTransform[0] - falseEast;
         UpperLeftCornerY = adfGeoTransform[3] - falseNorth;
 
@@ -960,13 +963,19 @@ void FITSDataset::WriteFITSInfo()
           mapres = 1. / adfGeoTransform[1] ; // mapres is pixel/meters
           mres = adfGeoTransform[1] / cfactor ; // mres is deg/pixel
           crpix1 = - (UpperLeftCornerX * mapres) + centlon / mres + 0.5;
-          crpix2 = (UpperLeftCornerY * mapres) - (centlat / mres) + 0.5;
+          // assuming that center latitude is also the origin of the coordinate
+          // system: this is not always true.
+          // More generic implementation coming soon
+          crpix2 = (UpperLeftCornerY * mapres) + 0.5; // - (centlat / mres);
         } else if ( strstr(unit, "degree") ) {
           //convert m/pixel to pixel/degree
           mapres = 1. / adfGeoTransform[1] / cfactor; // mapres is pixel/deg
           mres = adfGeoTransform[1] ; // mres is meters/pixel
           crpix1 = - (UpperLeftCornerX * mres) + centlon / mapres + 0.5;
-          crpix2 = (UpperLeftCornerY * mres) - (centlat / mapres) + 0.5;
+          // assuming that center latitude is also the origin of the coordinate
+          // system: this is not always true.
+          // More generic implementation coming soon
+          crpix2 = (UpperLeftCornerY * mres) + 0.5; // - (centlat / mapres);
         }
 
         /// Write WCS CRPIXia CRVALia CTYPEia here
@@ -1409,8 +1418,11 @@ void FITSDataset::LoadFITSInfo()
                        0.5 must be subtract to have UpperLeft corner */
                     adfGeoTransform[0] = crval1 * radfac - adfGeoTransform[1] *
                                                     (crpix1-0.5);
-                    adfGeoTransform[3] = crval2 * radfac - adfGeoTransform[5] *
-                                                    (crpix2-0.5);
+                    // assuming that center latitude is also the origin of the coordinate
+                    // system: this is not always true.
+                    // More generic implementation coming soon
+                    adfGeoTransform[3] = - adfGeoTransform[5] * (crpix2-0.5);
+                                                         //+ crval2 * radfac;
                     bGeoTransformValid = true;
                 }
 
