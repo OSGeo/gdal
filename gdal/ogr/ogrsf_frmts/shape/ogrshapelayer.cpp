@@ -1714,6 +1714,15 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         bDBFJustCreated = true;
     }
 
+    if( hDBF->nHeaderLength + XBASE_FLDHDR_SZ > 65535 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                  "Cannot add field %s. Header length limit reached "
+                  "(max 65535 bytes, 2046 fields).",
+                  poFieldDefn->GetNameRef() );
+        return OGRERR_FAILURE;
+    }
+
     CPLErrorReset();
 
     if( poFeatureDefn->GetFieldCount() == 255 )
@@ -1751,46 +1760,77 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     }
 
     const int nNameSize = static_cast<int>(osFieldName.size());
-    char * pszTmp =
-        CPLScanString( osFieldName, std::min( nNameSize, XBASE_FLDNAME_LEN_WRITE) , TRUE, TRUE);
     char szNewFieldName[XBASE_FLDNAME_LEN_WRITE + 1];
-    strncpy(szNewFieldName, pszTmp, sizeof(szNewFieldName)-1);
-    szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
+    CPLString osRadixFieldName;
+    CPLString osRadixFieldNameUC;
+    {
+        char * pszTmp =
+            CPLScanString( osFieldName, std::min( nNameSize, XBASE_FLDNAME_LEN_WRITE) , TRUE, TRUE);
+        strncpy(szNewFieldName, pszTmp, sizeof(szNewFieldName)-1);
+        szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
+        osRadixFieldName = pszTmp;
+        osRadixFieldNameUC = CPLString(osRadixFieldName).toupper();
+        CPLFree(pszTmp);
+    }
+
+    CPLString osNewFieldNameUC(szNewFieldName);
+    osNewFieldNameUC.toupper();
+
+    if( m_oSetUCFieldName.empty() )
+    {
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        {
+            CPLString key(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+            key.toupper();
+            m_oSetUCFieldName.insert(key);
+        }
+    }
+
+    bool bFoundFieldName = m_oSetUCFieldName.find(
+                                osNewFieldNameUC) != m_oSetUCFieldName.end();
 
     if( !bApproxOK &&
-        ( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 ||
-          !EQUAL(osFieldName,szNewFieldName) ) )
+        ( bFoundFieldName || !EQUAL(osFieldName,szNewFieldName) ) )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Failed to add field named '%s'",
-                  poFieldDefn->GetNameRef() );
+                "Failed to add field named '%s'",
+                poFieldDefn->GetNameRef() );
 
-        CPLFree( pszTmp );
         return OGRERR_FAILURE;
     }
 
-    int nRenameNum = 1;
-    while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 10 )
+    if( bFoundFieldName )
     {
-        CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
-                  "%.8s_%.1d", pszTmp, nRenameNum );
-        nRenameNum ++;
-    }
-    while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 100 )
-        CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
-                  "%.8s%.2d", pszTmp, nRenameNum++ );
+        int nRenameNum = 1;
+        while( (bFoundFieldName = m_oSetUCFieldName.find(
+                    osNewFieldNameUC) != m_oSetUCFieldName.end()) && nRenameNum < 10 )
+        {
+            CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
+                    "%.8s_%.1d", osRadixFieldName.c_str(), nRenameNum );
+            osNewFieldNameUC.Printf(
+                "%.8s_%.1d", osRadixFieldNameUC.c_str(), nRenameNum );
+            nRenameNum ++;
+        }
+        while( (bFoundFieldName = m_oSetUCFieldName.find(
+                    osNewFieldNameUC) != m_oSetUCFieldName.end()) && nRenameNum < 100 )
+        {
+            CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
+                    "%.8s%.2d", osRadixFieldName.c_str(), nRenameNum );
+            osNewFieldNameUC.Printf(
+                "%.8s%.2d", osRadixFieldNameUC.c_str(), nRenameNum );
+            nRenameNum ++;
+        }
 
-    CPLFree( pszTmp );
-    pszTmp = nullptr;
-
-    if( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 )
-    {
-        // One hundred similar field names!!?
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Too many field names like '%s' when truncated to %d letters "
-                  "for Shapefile format.",
-                  poFieldDefn->GetNameRef(),
-                  XBASE_FLDNAME_LEN_WRITE );
+        if( bFoundFieldName )
+        {
+            // One hundred similar field names!!?
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "Too many field names like '%s' when truncated to %d letters "
+                    "for Shapefile format.",
+                    poFieldDefn->GetNameRef(),
+                    XBASE_FLDNAME_LEN_WRITE );
+            return OGRERR_FAILURE;
+        }
     }
 
     OGRFieldDefn oModFieldDefn(poFieldDefn);
@@ -1890,6 +1930,8 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     if( iNewField != -1 )
     {
+        m_oSetUCFieldName.insert(osNewFieldNameUC);
+
         poFeatureDefn->AddFieldDefn( &oModFieldDefn );
 
         if( bDBFJustCreated )
@@ -1933,6 +1975,8 @@ OGRErr OGRShapeLayer::DeleteField( int iField )
                   "Invalid field index");
         return OGRERR_FAILURE;
     }
+
+    m_oSetUCFieldName.clear();
 
     if( DBFDeleteField( hDBF, iField ) )
     {
@@ -2000,6 +2044,8 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
                   "Invalid field index");
         return OGRERR_FAILURE;
     }
+
+    m_oSetUCFieldName.clear();
 
     OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
     OGRFieldType eType = poFieldDefn->GetType();
