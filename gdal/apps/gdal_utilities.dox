@@ -754,6 +754,12 @@ gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
 \section gdaltindex_author AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
+
+\section gdaltindex_seealso See also
+
+\ref gdal_utilities_switches for other
+command-line options, and in particular the --optfile switch that can be used to
+specify a list of input datasets.
 */
 
 
