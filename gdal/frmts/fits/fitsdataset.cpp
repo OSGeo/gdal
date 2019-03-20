@@ -1516,7 +1516,7 @@ void FITSDataset::LoadFITSInfo()
             status = 0;
             dfOffset = 0.;
         }
-        if ( dfScale != 1. || !dfOffset )
+        if ( dfScale != 1. || dfOffset != 0. )
         {
             poBand->bHaveOffsetScale = true;
             poBand->dfScale = dfScale;
