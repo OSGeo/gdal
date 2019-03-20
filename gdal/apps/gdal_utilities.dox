@@ -757,9 +757,13 @@ Frank Warmerdam <warmerdam@pobox.com>
 
 \section gdaltindex_seealso See also
 
-\ref gdal_utilities_switches for other
-command-line options, and in particular the --optfile switch that can be used to
-specify a list of input datasets.
+\if man
+gdal_utilities(1)
+\else
+\ref gdal_utilities_switches
+\endif
+for other command-line options, and in particular the --optfile switch
+that can be used to specify a list of input datasets.
 */
 
 
