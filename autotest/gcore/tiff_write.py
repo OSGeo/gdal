@@ -6922,6 +6922,82 @@ def test_tiff_write_184_create_append_subdataset():
     gdal.Unlink(tmpfilename)
 
 ###############################################################################
+# Test LERC compression with Create() and BuildOverviews()
+# Fixes https://github.com/OSGeo/gdal/issues/1257
+
+
+def test_tiff_write_185_lerc_create_and_overview():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        pytest.skip()
+
+    filename = '/vsimem/test_tiff_write_185_lerc_create_and_overview.tif'
+    ds = gdaltest.tiff_drv.Create(filename, 20, 20, options=['COMPRESS=LERC_DEFLATE'])
+    src_ds = gdal.Open('data/byte.tif')
+    ds.WriteRaster(0,0,20,20,src_ds.ReadRaster())
+    gdal.ErrorReset()
+    ds.BuildOverviews('NEAR', [2])
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+    ds = gdal.Open(filename)
+    cs = ds.GetRasterBand(1).Checksum()
+    cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    gdal.Unlink(filename)
+    assert (cs, cs_ovr) == (4672, 1087)
+
+
+###############################################################################
+
+def check_libtiff_internal_or_at_least(expected_maj, expected_min, expected_micro):
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] == 'INTERNAL':
+        return True
+    if md['LIBTIFF'].startswith('LIBTIFF, Version '):
+        version = md['LIBTIFF'][len('LIBTIFF, Version '):]
+        version = version[0:version.find('\n')]
+        got_maj, got_min, got_micro = version.split('.')
+        got_maj = int(got_maj)
+        got_min = int(got_min)
+        got_micro = int(got_micro)
+        if got_maj > expected_maj:
+            return True
+        if got_maj < expected_maj:
+            return False
+        if got_min > expected_min:
+            return True
+        if got_min < expected_min:
+            return False
+        return got_micro >= expected_micro
+    return False
+
+###############################################################################
+# Test writing a deflate compressed file with a uncompressed strip larger than 4 GB
+#
+
+def test_tiff_write_deflate_4GB():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+
+    ref_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    ref_ds.GetRasterBand(1).Fill(127)
+
+    gdal.Translate('/vsimem/out.tif', ref_ds,
+                   options = '-co TILED=YES -co COMPRESS=DEFLATE -co BLOCKXSIZE=50000 -co BLOCKYSIZE=86000 -outsize 50000 86000')
+
+    ds = gdal.Open('/vsimem/out.tif')
+    data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
+    assert data == ref_ds.ReadRaster()
+    ds = None
+
+    gdal.Unlink('/vsimem/out.tif')
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 

@@ -1895,6 +1895,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
         poDS = nullptr;
 
     nBand = nBandIn;
+    eAccess = poDSIn->GetAccess();
 
     int nCompression = 0;
     HFAGetBandInfo(hHFA, nBand, &eHFADataType,

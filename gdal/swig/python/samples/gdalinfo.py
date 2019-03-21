@@ -503,9 +503,15 @@ def main(argv=None):
                 print("    %3d: %s" % (i, category))
                 i = i + 1
 
-        if hBand.GetScale() != 1.0 or hBand.GetOffset() != 0.0:
+        scale = hBand.GetScale()
+        if not scale:
+            scale = 1.0
+        offset = hBand.GetOffset()
+        if not offset:
+            offset = 0.0
+        if scale != 1.0 or offset != 0.0:
             print("  Offset: %.15g,   Scale:%.15g" %
-                  (hBand.GetOffset(), hBand.GetScale()))
+                  (offset, scale))
 
         if bShowMetadata:
             papszMetadata = hBand.GetMetadata_List()

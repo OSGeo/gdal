@@ -2520,6 +2520,7 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
         reversePoints();
         segmentize(dfMaxLength);
         reversePoints();
+        return;
     }
 
     OGRRawPoint* paoNewPoints = nullptr;
@@ -2550,10 +2551,10 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
         const double dfX = paoPoints[i+1].x - paoPoints[i].x;
         const double dfY = paoPoints[i+1].y - paoPoints[i].y;
         const double dfSquareDist = dfX * dfX + dfY * dfY;
-        if( dfSquareDist > dfSquareMaxLength )
+        if( std::fabs(dfSquareDist - dfSquareMaxLength) > 1e-5 * dfSquareMaxLength )
         {
             const double dfIntermediatePoints =
-                floor(sqrt(dfSquareDist / dfSquareMaxLength));
+                floor(sqrt(dfSquareDist / dfSquareMaxLength) - 1e-2);
             const int nIntermediatePoints =
                 DoubleToIntClamp(dfIntermediatePoints);
 

@@ -1458,27 +1458,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
 
-        /* We need to recreate the transform when operating on an overview */
-        if( poSrcOvrDS != nullptr )
-        {
-            GDALDestroyGenImgProjTransformer( hTransformArg );
-            hTransformArg =
-                GDALCreateGenImgProjTransformer2( hWrkSrcDS, hDstDS, psOptions->papszTO );
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Warp the transformer with a linear approximator unless the      */
-/*      acceptable error is zero.                                       */
-/* -------------------------------------------------------------------- */
-        if( psOptions->dfErrorThreshold != 0.0 )
-        {
-            hTransformArg =
-                GDALCreateApproxTransformer( GDALGenImgProjTransform,
-                                             hTransformArg, psOptions->dfErrorThreshold);
-            pfnTransformer = GDALApproxTransform;
-            GDALApproxTransformerOwnsSubtransformer(hTransformArg, TRUE);
-        }
-
 /* -------------------------------------------------------------------- */
 /*      Clear temporary INIT_DEST settings after the first image.       */
 /* -------------------------------------------------------------------- */
@@ -1510,9 +1489,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
         psWO->hSrcDS = hWrkSrcDS;
         psWO->hDstDS = hDstDS;
-
-        psWO->pfnTransformer = pfnTransformer;
-        psWO->pTransformerArg = hTransformArg;
 
         if( !bVRT )
         {
@@ -1957,6 +1933,83 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
 
+/* -------------------------------------------------------------------- */
+/*      In some cases, RPC evaluation can find valid input pixel for    */
+/*      output pixels that are outside the footprint of the source      */
+/*      dataset, so limit the area we update in the target dataset from */
+/*      the suggested warp output (only in cases where SKIP_NOSOURCE=YES) */
+/* -------------------------------------------------------------------- */
+        int nWarpDstXOff = 0;
+        int nWarpDstYOff = 0;
+        int nWarpDstXSize = GDALGetRasterXSize( hDstDS );
+        int nWarpDstYSize = GDALGetRasterYSize( hDstDS );
+
+        if( CPLTestBool(CSLFetchNameValueDef(psWO->papszWarpOptions, "SKIP_NOSOURCE", "NO")) &&
+            GDALGetMetadata( hSrcDS, "RPC" ) != nullptr &&
+            EQUAL(CSLFetchNameValueDef( psOptions->papszTO, "METHOD", "RPC"), "RPC") &&
+            CPLTestBool(CPLGetConfigOption("RESTRICT_OUTPUT_DATASET_UPDATE", "YES")) )
+        {
+            double adfSuggestedGeoTransform[6];
+            double adfExtent[4];
+            int    nPixels, nLines;
+            if( GDALSuggestedWarpOutput2(hSrcDS, pfnTransformer, hTransformArg,
+                                         adfSuggestedGeoTransform, &nPixels, &nLines,
+                                         adfExtent, 0) == CE_None )
+            {
+                const double dfMinX = adfExtent[0];
+                const double dfMinY = adfExtent[1];
+                const double dfMaxX = adfExtent[2];
+                const double dfMaxY = adfExtent[3];
+                if( std::fabs(dfMinX) < INT_MAX/2 &&
+                    std::fabs(dfMinY) < INT_MAX/2 &&
+                    std::fabs(dfMaxX) < INT_MAX/2 &&
+                    std::fabs(dfMaxY) < INT_MAX/2 )
+                {
+                    const int nPadding = 5;
+                    nWarpDstXOff = std::max(nWarpDstXOff,
+                        static_cast<int>(std::floor(dfMinX)) - nPadding);
+                    nWarpDstYOff = std::max(nWarpDstYOff,
+                        static_cast<int>(std::floor(dfMinY)) - nPadding);
+                    nWarpDstXSize = std::min(nWarpDstXSize - nWarpDstXOff,
+                        static_cast<int>(std::ceil(dfMaxX)) + nPadding - nWarpDstXOff);
+                    nWarpDstYSize = std::min(nWarpDstYSize - nWarpDstYOff,
+                        static_cast<int>(std::ceil(dfMaxY)) + nPadding - nWarpDstYOff);
+                    if( nWarpDstXOff != 0 || nWarpDstYOff != 0 ||
+                        nWarpDstXSize != GDALGetRasterXSize( hDstDS ) ||
+                        nWarpDstYSize != GDALGetRasterYSize( hDstDS ) )
+                    {
+                        CPLDebug("WARP",
+                                "Restricting warping to output dataset window %d,%d,%dx%d",
+                                nWarpDstXOff, nWarpDstYOff,nWarpDstXSize, nWarpDstYSize );
+                    }
+                }
+            }
+        }
+
+        /* We need to recreate the transform when operating on an overview */
+        if( poSrcOvrDS != nullptr )
+        {
+            GDALDestroyGenImgProjTransformer( hTransformArg );
+            hTransformArg =
+                GDALCreateGenImgProjTransformer2( hWrkSrcDS, hDstDS, psOptions->papszTO );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Warp the transformer with a linear approximator unless the      */
+/*      acceptable error is zero.                                       */
+/* -------------------------------------------------------------------- */
+        if( psOptions->dfErrorThreshold != 0.0 )
+        {
+            hTransformArg =
+                GDALCreateApproxTransformer( GDALGenImgProjTransform,
+                                             hTransformArg, psOptions->dfErrorThreshold);
+            pfnTransformer = GDALApproxTransform;
+            GDALApproxTransformerOwnsSubtransformer(hTransformArg, TRUE);
+        }
+
+        psWO->pfnTransformer = pfnTransformer;
+        psWO->pTransformerArg = hTransformArg;
+
 
 /* -------------------------------------------------------------------- */
 /*      If we have a cutline, transform it into the source              */
@@ -2028,13 +2081,15 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         {
             CPLErr eErr;
             if( psOptions->bMulti )
-                eErr = oWO.ChunkAndWarpMulti( 0, 0,
-                                       GDALGetRasterXSize( hDstDS ),
-                                       GDALGetRasterYSize( hDstDS ) );
+                eErr = oWO.ChunkAndWarpMulti( nWarpDstXOff,
+                                              nWarpDstYOff,
+                                              nWarpDstXSize,
+                                              nWarpDstYSize );
             else
-                eErr = oWO.ChunkAndWarpImage( 0, 0,
-                                       GDALGetRasterXSize( hDstDS ),
-                                       GDALGetRasterYSize( hDstDS ) );
+                eErr = oWO.ChunkAndWarpImage( nWarpDstXOff,
+                                              nWarpDstYOff,
+                                              nWarpDstXSize,
+                                              nWarpDstYSize );
             if (eErr != CE_None)
                 bHasGotErr = true;
         }
@@ -2658,7 +2713,9 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             psOptions->dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
         }
 
-        if ( psOptions->bTargetAlignedPixels )
+        if ( psOptions->bTargetAlignedPixels ||
+             (psOptions->bCropToCutline &&
+              CPLFetchBool(psOptions->papszWarpOptions, "CUTLINE_ALL_TOUCHED", false)) )
         {
             psOptions->dfMinX = floor(psOptions->dfMinX / psOptions->dfXRes) * psOptions->dfXRes;
             psOptions->dfMaxX = ceil(psOptions->dfMaxX / psOptions->dfXRes) * psOptions->dfXRes;

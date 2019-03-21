@@ -1923,11 +1923,13 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         }
     }
 
+    const bool bMayInsertCenterLong = (!oSrcSRS.IsEmpty() && hSrcDS
+            && CPLFetchBool( papszOptions, "INSERT_CENTER_LONG", true ));
     if( (!oSrcSRS.IsEmpty() && !oDstSRS.IsEmpty() &&
-        !oSrcSRS.IsSame(&oDstSRS)) || pszCO )
+         (!oSrcSRS.IsSame(&oDstSRS) ||
+          (oSrcSRS.IsGeographic() && bMayInsertCenterLong))) || pszCO )
     {
-        if( !oSrcSRS.IsEmpty() && hSrcDS
-            && CPLFetchBool( papszOptions, "INSERT_CENTER_LONG", true ) )
+        if( bMayInsertCenterLong )
         {
             InsertCenterLong( hSrcDS, &oSrcSRS );
         }

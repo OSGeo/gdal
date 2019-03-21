@@ -34,6 +34,7 @@ import sys
 
 
 from osgeo import gdal
+import gdaltest
 import pytest
 
 ###############################################################################
@@ -951,3 +952,19 @@ def test_rasterio_dataset_readarray_cint16():
     assert got[0] == numpy.array([[1 + 2j]])
     assert got[1] == numpy.array([[3 + 4j]])
 
+
+def test_rasterio_rasterband_write_on_readonly():
+
+    ds = gdal.Open('data/byte.tif')
+    band = ds.GetRasterBand(1)
+    with gdaltest.error_handler():
+        err = band.WriteRaster(0, 0, 20, 20, band.ReadRaster())
+    assert err != 0
+
+
+def test_rasterio_dataset_write_on_readonly():
+
+    ds = gdal.Open('data/byte.tif')
+    with gdaltest.error_handler():
+        err = ds.WriteRaster(0, 0, 20, 20, ds.ReadRaster())
+    assert err != 0

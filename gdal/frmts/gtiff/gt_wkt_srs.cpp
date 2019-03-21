@@ -1034,7 +1034,12 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             break;
           default:
             if( oSRS.IsProjected() )
-                oSRS.GetRoot()->SetValue( "LOCAL_CS" );
+            {
+                const char* pszName = oSRS.GetName();
+                std::string osName( pszName ? pszName : "unnamed" );
+                oSRS.Clear();
+                oSRS.SetLocalCS( osName.c_str() );
+            }
             break;
         }
     }

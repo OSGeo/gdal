@@ -402,6 +402,7 @@ json_object* OGRGeoJSONSeqLayer::GetNextObject()
         {
             json_object* poObject = nullptr;
             OGRJSonParse(m_osFeatureBuffer.c_str(), &poObject);
+            m_osFeatureBuffer.clear();
             if( json_object_get_type(poObject) == json_type_object )
             {
                 return poObject;

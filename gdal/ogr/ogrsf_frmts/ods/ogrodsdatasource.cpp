@@ -1862,6 +1862,11 @@ void OGRODSDataSource::FlushCache()
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/META-INF/manifest.xml", pszName);
     VSILFILE* fp = VSIFOpenL(osTmpFilename, "wb");
+    if( fp == nullptr )
+    {
+        VSIFCloseL(fpZIP);
+        return;
+    }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
         fp,
@@ -1885,6 +1890,11 @@ void OGRODSDataSource::FlushCache()
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/meta.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
+    if( fp == nullptr )
+    {
+        VSIFCloseL(fpZIP);
+        return;
+    }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
         fp, "<office:document-meta "
@@ -1895,6 +1905,11 @@ void OGRODSDataSource::FlushCache()
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/settings.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
+    if( fp == nullptr )
+    {
+        VSIFCloseL(fpZIP);
+        return;
+    }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
          fp, "<office:document-settings "
@@ -1951,6 +1966,11 @@ void OGRODSDataSource::FlushCache()
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/styles.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
+    if( fp == nullptr )
+    {
+        VSIFCloseL(fpZIP);
+        return;
+    }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
          fp, "<office:document-styles "
@@ -1967,6 +1987,11 @@ void OGRODSDataSource::FlushCache()
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/content.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
+    if( fp == nullptr )
+    {
+        VSIFCloseL(fpZIP);
+        return;
+    }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
          fp, "<office:document-content "

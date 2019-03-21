@@ -1281,6 +1281,51 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy imagery                                                    */
 /* -------------------------------------------------------------------- */
+    char szFormat[32] = { '\0' };
+    if (eReqDT == GDT_Int32)
+        strcpy(szFormat, "%.18g%c%.18g%c%d\n");
+    else
+        strcpy(szFormat, "%.18g%c%.18g%c%.18g\n");
+    const char *pszDecimalPrecision =
+        CSLFetchNameValue(papszOptions, "DECIMAL_PRECISION");
+    const char *pszSignificantDigits =
+        CSLFetchNameValue(papszOptions, "SIGNIFICANT_DIGITS");
+    bool bIgnoreSigDigits = false;
+    if( pszDecimalPrecision && pszSignificantDigits )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Conflicting precision arguments, using DECIMAL_PRECISION");
+        bIgnoreSigDigits = true;
+    }
+    int nPrecision;
+    if ( pszSignificantDigits && !bIgnoreSigDigits )
+    {
+        nPrecision = atoi(pszSignificantDigits);
+        if (nPrecision >= 0)
+        {
+            if (eReqDT == GDT_Int32)
+                snprintf(szFormat, sizeof(szFormat), "%%.%dg%%c%%.%dg%%c%%d\n",
+                     nPrecision, nPrecision);
+            else
+                snprintf(szFormat, sizeof(szFormat), "%%.%dg%%c%%.%dg%%c%%.%dg\n",
+                     nPrecision, nPrecision, nPrecision);
+        }
+        CPLDebug("XYZ", "Setting precision format: %s", szFormat);
+    }
+    else if( pszDecimalPrecision )
+    {
+        nPrecision = atoi(pszDecimalPrecision);
+        if ( nPrecision >= 0 )
+        {
+            if (eReqDT == GDT_Int32)
+                snprintf(szFormat, sizeof(szFormat), "%%.%df%%c%%.%df%%c%%d\n",
+                     nPrecision, nPrecision);
+            else
+                snprintf(szFormat, sizeof(szFormat), "%%.%df%%c%%.%df%%c%%.%df\n",
+                     nPrecision, nPrecision, nPrecision);
+        }
+        CPLDebug("XYZ", "Setting precision format: %s", szFormat);
+    }
     void* pLineBuffer
         = reinterpret_cast<void *>( CPLMalloc( nXSize * sizeof(int) ) );
     CPLErr eErr = CE_None;
@@ -1300,11 +1345,11 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
                 = adfGeoTransform[0] + (i + 0.5) * adfGeoTransform[1];
             char szBuf[256];
             if (eReqDT == GDT_Int32)
-                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%d\n",
+                CPLsnprintf(szBuf, sizeof(szBuf), szFormat,
                             dfX, pszColSep[0], dfY, pszColSep[0],
                             reinterpret_cast<int *>( pLineBuffer )[i] );
             else
-                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%.18g\n",
+                CPLsnprintf(szBuf, sizeof(szBuf), szFormat,
                             dfX, pszColSep[0], dfY, pszColSep[0],
                             reinterpret_cast<float *>( pLineBuffer )[i]);
             osBuf += szBuf;
@@ -1394,6 +1439,8 @@ void GDALRegister_XYZ()
 "<CreationOptionList>"
 "   <Option name='COLUMN_SEPARATOR' type='string' default=' ' description='Separator between fields.'/>"
 "   <Option name='ADD_HEADER_LINE' type='boolean' default='false' description='Add an header line with column names.'/>"
+"   <Option name='SIGNIFICANT_DIGITS' type='int' description='Number of significant digits when writing floating-point numbers (%g format; default with 18).'/>\n"
+"   <Option name='DECIMAL_PRECISION' type='int' description='Number of decimal places when writing floating-point numbers (%f format).'/>\n"
 "</CreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

@@ -168,7 +168,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 
     if( nBlockXSize != nXSizeRequest || nBlockYSize != nYSizeRequest )
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        memset(pImage, 0, static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
     }
 
     GDALRasterIOExtraArg sExtraArg;

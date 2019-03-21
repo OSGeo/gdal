@@ -970,6 +970,13 @@ void CPL_DLL CPL_STDCALL
                    GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
+void CPL_DLL CPL_STDCALL
+    GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
+                     GDALDataType eSrcType, int nSrcPixelOffset,
+                     void * CPL_RESTRICT pDstData,
+                     GDALDataType eDstType, int nDstPixelOffset,
+                     GPtrDiff_t nWordCount );
+
 void CPL_DLL
 GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
               GByte *pabyDstData, int nDstOffset, int nDstStep,

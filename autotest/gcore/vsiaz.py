@@ -583,7 +583,76 @@ def test_vsiaz_fake_write():
             pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
-    
+###############################################################################
+# Test write with retry
+
+
+def test_vsiaz_write_blockblob_retry():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    # Test creation of BlockBob
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    assert f is not None
+
+    with gdaltest.config_options({'GDAL_HTTP_MAX_RETRY': '2',
+                                  'GDAL_HTTP_RETRY_DELAY': '0.01'}):
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            request.protocol_version = 'HTTP/1.1'
+            request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+            content = request.rfile.read(3).decode('ascii')
+            if len(content) != 3:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+            request.send_response(201)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+
+        handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 502)
+        handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+        with webserver.install_http_handler(handler):
+            assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+            gdal.VSIFCloseL(f)
+
+###############################################################################
+# Test write with retry
+
+
+def test_vsiaz_write_appendblob_retry():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options({'GDAL_HTTP_MAX_RETRY': '2',
+                                  'GDAL_HTTP_RETRY_DELAY': '0.01',
+                                  'VSIAZ_CHUNK_SIZE_BYTES': '10'}):
+
+        f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+        assert f is not None
+
+        handler = webserver.SequentialHandler()
+        handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 502)
+        handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 201)
+        handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 502)
+        handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 201)
+        handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 502)
+        handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 201)
+
+        with webserver.install_http_handler(handler):
+            assert gdal.VSIFWriteL('0123456789abcdef', 1, 16, f) == 16
+            gdal.VSIFCloseL(f)
+
 ###############################################################################
 # Test Unlink()
 

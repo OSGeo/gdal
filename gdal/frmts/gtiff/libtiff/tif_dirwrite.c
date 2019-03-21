@@ -28,7 +28,6 @@
  * Directory Write Support Routines.
  */
 #include "tiffiop.h"
-#include <float.h>
 
 #ifdef HAVE_IEEEFP
 #define TIFFCvtNativeToIEEEFloat(tif, n, fp)
@@ -946,15 +945,6 @@ bad:
 	return(0);
 }
 
-static float TIFFClampDoubleToFloat( double val )
-{
-    if( val > FLT_MAX )
-        return FLT_MAX;
-    if( val < -FLT_MAX )
-        return -FLT_MAX;
-    return (float)val;
-}
-
 static int8 TIFFClampDoubleToInt8( double val )
 {
     if( val > 127 )
@@ -1029,7 +1019,7 @@ TIFFWriteDirectoryTagSampleformatArray(TIFF* tif, uint32* ndir, TIFFDirEntry* di
 			if (tif->tif_dir.td_bitspersample<=32)
 			{
 				for (i = 0; i < count; ++i)
-					((float*)conv)[i] = TIFFClampDoubleToFloat(value[i]);
+					((float*)conv)[i] = _TIFFClampDoubleToFloat(value[i]);
 				ok = TIFFWriteDirectoryTagFloatArray(tif,ndir,dir,tag,count,(float*)conv);
 			}
 			else

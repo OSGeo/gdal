@@ -1215,6 +1215,11 @@ bool MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
         return false;
     }
 
+    if( poParentDS )
+    {
+        eAccess = poParentDS->eAccess;
+    }
+
     for(int i = 1; i <= nBandCount; i ++)
         SetBand( i, new MBTilesBand(this, nTileSize) );
 
@@ -1227,7 +1232,6 @@ bool MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
     {
         m_poParentDS = poParentDS;
         poMainDS = poParentDS;
-        eAccess = poParentDS->eAccess;
         hDS = poParentDS->hDS;
         hDB = poParentDS->hDB;
         m_eTF = poParentDS->m_eTF;

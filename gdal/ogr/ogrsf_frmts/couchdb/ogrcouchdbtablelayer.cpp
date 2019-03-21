@@ -1761,7 +1761,7 @@ void OGRCouchDBTableLayer::SetInfoAfterCreation(OGRwkbGeometryType eGType,
     CPLAssert(poSRS == nullptr);
     if (poSRSIn)
     {
-        poSRS = poSRS->Clone();
+        poSRS = poSRSIn->Clone();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 }

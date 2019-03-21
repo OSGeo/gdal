@@ -1756,8 +1756,9 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
 
 %fragment("DecomposeSequenceOf4DCoordinates","header") %{
 static int
-DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *y, double *z, double *t )
+DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *y, double *z, double *t, int *pbFoundTime )
 {
+  *pbFoundTime = FALSE;
   for( int i = 0; i<nCount; ++i )
   {
 
@@ -1826,6 +1827,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 
                 return FALSE;
             }
+            *pbFoundTime = TRUE;
             t[i] = PyFloat_AsDouble(o1);
             Py_DECREF(o1);
         }
@@ -1849,7 +1851,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 }
 %}
 
-%typemap(in,numinputs=1,fragment="DecomposeSequenceOf4DCoordinates") (int nCount, double *x, double *y, double *z, double *t)
+%typemap(in,numinputs=1,fragment="DecomposeSequenceOf4DCoordinates") (int nCount, double *x, double *y, double *z, double *t) (int foundTime = FALSE) 
 {
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -1873,7 +1875,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
       SWIG_fail;
   }
 
-  if (!DecomposeSequenceOf4DCoordinates($input,$1,$2,$3,$4,$5)) {
+  if (!DecomposeSequenceOf4DCoordinates($input,$1,$2,$3,$4,$5, &foundTime)) {
     SWIG_fail;
   }
 }
@@ -1883,12 +1885,14 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
   /* %typemap(argout)  (int nCount, double *x, double *y, double *z, double *t) */
   Py_DECREF($result);
   PyObject *out = PyList_New( $1 );
+  int foundTime = foundTime$argnum;
   for( int i=0; i< $1; i++ ) {
-    PyObject *tuple = PyTuple_New( 4 );
+    PyObject *tuple = PyTuple_New( foundTime ? 4 : 3 );
     PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( ($2)[i] ) );
     PyTuple_SetItem( tuple, 1, PyFloat_FromDouble( ($3)[i] ) );
     PyTuple_SetItem( tuple, 2, PyFloat_FromDouble( ($4)[i] ) );
-    PyTuple_SetItem( tuple, 3, PyFloat_FromDouble( ($5)[i] ) );
+    if( foundTime )
+        PyTuple_SetItem( tuple, 3, PyFloat_FromDouble( ($5)[i] ) );
     PyList_SetItem( out, i, tuple );
   }
   $result = out;

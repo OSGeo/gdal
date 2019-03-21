@@ -1493,16 +1493,16 @@ int GDALPDFWriter::WriteOCG(const char* pszLayerName, int nParentId)
     if (pszLayerName == nullptr || pszLayerName[0] == '\0')
         return 0;
 
-    int nOGCId = AllocNewObject();
+    int nOCGId = AllocNewObject();
 
     GDALPDFOCGDesc oOCGDesc;
-    oOCGDesc.nId = nOGCId;
+    oOCGDesc.nId = nOCGId;
     oOCGDesc.nParentId = nParentId;
     oOCGDesc.osLayerName = pszLayerName;
 
     asOCGs.push_back(oOCGDesc);
 
-    StartObj(nOGCId);
+    StartObj(nOCGId);
     {
         GDALPDFDictionaryRW oDict;
         oDict.Add("Type", GDALPDFObjectRW::CreateName("OCG"));
@@ -1511,7 +1511,7 @@ int GDALPDFWriter::WriteOCG(const char* pszLayerName, int nParentId)
     }
     EndObj();
 
-    return nOGCId;
+    return nOCGId;
 }
 
 /************************************************************************/
@@ -1973,7 +1973,7 @@ GDALPDFLayerDesc GDALPDFWriter::StartOGRLayer(CPLString osLayerName,
     GDALPDFLayerDesc osVectorDesc;
     osVectorDesc.osLayerName = osLayerName;
     osVectorDesc.bWriteOGRAttributes = bWriteOGRAttributes;
-    osVectorDesc.nOGCId = WriteOCG(osLayerName);
+    osVectorDesc.nOCGId = WriteOCG(osLayerName);
     osVectorDesc.nFeatureLayerId = (bWriteOGRAttributes) ? AllocNewObject() : 0;
     osVectorDesc.nOCGTextId = 0;
 
@@ -2956,7 +2956,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     if (!osLabelText.empty() && wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint)
     {
         if (osVectorDesc.nOCGTextId == 0)
-            osVectorDesc.nOCGTextId = WriteOCG("Text", osVectorDesc.nOGCId);
+            osVectorDesc.nOCGTextId = WriteOCG("Text", osVectorDesc.nOCGId);
 
         /* -------------------------------------------------------------- */
         /*  Work out the text metrics for alignment purposes              */
@@ -3359,7 +3359,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
     {
         GDALPDFLayerDesc& oLayerDesc = oPageContext.asVectorDesc[iLayer];
 
-        VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOGCId);
+        VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOCGId);
 
         for(size_t iVector = 0; iVector < oLayerDesc.aIds.size(); iVector ++)
         {
@@ -3395,7 +3395,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
         GDALPDFLayerDesc& oLayerDesc = oPageContext.asVectorDesc[iLayer];
         if (oLayerDesc.nOCGTextId)
         {
-            VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOGCId);
+            VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOCGId);
             VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOCGTextId);
 
             for(size_t iVector = 0; iVector < oLayerDesc.aIdsText.size(); iVector ++)

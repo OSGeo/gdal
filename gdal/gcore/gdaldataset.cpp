@@ -2454,6 +2454,17 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
+    if( eRWFlag == GF_Write )
+    {
+        if( eAccess != GA_Update )
+        {
+            ReportError( CE_Failure, CPLE_AppDefined,
+                        "Write operation not permitted on dataset opened "
+                        "in read-only mode" );
+            return CE_Failure;
+        }
+    }
+
     int bStopProcessing = FALSE;
     CPLErr eErr = ValidateRasterIOOrAdviseReadParameters(
         "RasterIO()", &bStopProcessing, nXOff, nYOff, nXSize, nYSize, nBufXSize,

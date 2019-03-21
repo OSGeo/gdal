@@ -3175,6 +3175,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
                 oHorizSRS.d->refreshProjObj();
                 oVertSRS.d->refreshProjObj();
+                if( !oHorizSRS.d->m_pj_crs || !oVertSRS.d->m_pj_crs )
+                    return OGRERR_FAILURE;
+
                 const char* pszHorizName = proj_get_name(oHorizSRS.d->m_pj_crs);
                 const char* pszVertName = proj_get_name(oVertSRS.d->m_pj_crs);
 
@@ -3665,6 +3668,9 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
         oHorizSRS.d->refreshProjObj();
         oVertSRS.d->refreshProjObj();
+        if( !oHorizSRS.d->m_pj_crs || !oVertSRS.d->m_pj_crs )
+            return OGRERR_FAILURE;
+
         const char* pszHorizName = proj_get_name(oHorizSRS.d->m_pj_crs);
         const char* pszVertName = proj_get_name(oVertSRS.d->m_pj_crs);
 
@@ -9584,13 +9590,9 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * will be returned along with OGRERR_NONE.
  *
  * Special processing for Transverse Mercator:
- * If the OSR_USE_ETMERC configuration option is set to YES, the PROJ
- * definition built from the SRS will use the 'etmerc' projection method,
- * rather than the default 'tmerc'. This will give better accuracy (at the
- * expense of computational speed) when reprojection occurs near the edges
- * of the validity area for the projection.
- * Starting with GDAL &gt;= 2.2, setting OSR_USE_ETMERC to NO will expand to the
- * 'tmerc' projection method.
+ * Starting with GDAL 2.5, if the OSR_USE_APPROX_TMERC configuration option is
+ * set to YES, the PROJ definition built from the SRS will use the +approx flag
+ * for the tmerc and utm projection methods, rather than the more accurate method.
  *
  * This method is the equivalent of the C function OSRExportToProj4().
  *
@@ -9615,10 +9617,33 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         *ppszProj4 = CPLStrdup("");
         return OGRERR_FAILURE;
     }
-    const char* pszUseETMERC = CPLGetConfigOption("OSR_USE_ETMERC", "");
+
+    // OSR_USE_ETMERC is here just for legacy
+    bool bForceApproxTMerc = false;
+    const char* pszUseETMERC = CPLGetConfigOption("OSR_USE_ETMERC", nullptr);
+    if( pszUseETMERC && pszUseETMERC[0] )
+    {
+        static bool bHasWarned = false;
+        if( !bHasWarned )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "OSR_USE_ETMERC is a legacy configuration option, which "
+                     "now has only effect when set to NO (YES is the default). "
+                     "Use OSR_USE_APPROX_TMERC=YES instead");
+            bHasWarned = true;
+        }
+        bForceApproxTMerc = !CPLTestBool(pszUseETMERC);
+    }
+    else
+    {
+        const char* pszUseApproxTMERC = CPLGetConfigOption("OSR_USE_APPROX_TMERC", nullptr);
+        if( pszUseApproxTMERC && pszUseApproxTMERC[0] )
+        {
+            bForceApproxTMerc = CPLTestBool(pszUseApproxTMERC);
+        }
+    }
     const char* options[] = {
-        pszUseETMERC[0] && CPLTestBool(pszUseETMERC) ? "USE_ETMERC=YES" :
-        pszUseETMERC[0] && !CPLTestBool(pszUseETMERC) ? "USE_ETMERC=NO" : nullptr,
+        bForceApproxTMerc ? "USE_APPROX_TMERC=YES" : nullptr,
         nullptr
     };
     const char* projString = proj_as_proj_string(d->getPROJContext(),

@@ -754,6 +754,12 @@ gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
 \section gdaltindex_author AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
+
+\section gdaltindex_seealso See also
+
+\ref gdal_utilities_switches for other
+command-line options, and in particular the --optfile switch that can be used to
+specify a list of input datasets.
 */
 
 
@@ -1090,17 +1096,17 @@ formats.
 Note that on the fly reprojection of vector data to the coordinate system of the
 raster data is only supported since GDAL 2.1.0.
 
-Prior to GDAL 1.8.0, gdal_rasterize could only modify existing raster images. 
-Since 1.8.0, it will create a new target raster image when any of the -of, 
--a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are used. 
+Prior to GDAL 1.8.0, gdal_rasterize could only modify existing raster images.
+Since 1.8.0, it will create a new target raster image when any of the -of,
+-a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are used.
 The resolution or size must be specified using the -tr or -ts option for all new
-rasters.  The target raster will be overwritten if it already exists and any of 
+rasters.  The target raster will be overwritten if it already exists and any of
 these creation-related options are used.
 
 <dl>
 <dt> <b>-b</b> <em>band</em>: </dt><dd>
 The band(s) to burn values into.  Multiple -b arguments may be used to burn
-into a list of bands.  The default is to burn into band 1.  Not used when 
+into a list of bands.  The default is to burn into band 1.  Not used when
 creating a new raster.</dd>
 
 <dt> <b>-i</b>: </dt><dd>
@@ -1210,9 +1216,9 @@ non-error output.</dd>
 Any OGR supported readable datasource.</dd>
 
 <dt> <em>dst_filename</em>: </dt><dd>
-The GDAL supported output file.  Must support update mode access.  As of GDAL 
-1.8.0, this file will be created (or overwritten if it already exists) if the 
--of, -a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are 
+The GDAL supported output file.  Must support update mode access.  As of GDAL
+1.8.0, this file will be created (or overwritten if it already exists) if the
+-of, -a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are
 used.</dd>
 
 </dl>
@@ -1238,7 +1244,7 @@ gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_de
 \endverbatim
 
 The following would burn all polygons from footprint.shp into a new 1000x1000
-rgb TIFF as the color red.  Note that -b is not used; the order of the -burn 
+rgb TIFF as the color red.  Note that -b is not used; the order of the -burn
 options determines the bands of the output raster.
 
 \verbatim
@@ -1523,7 +1529,7 @@ can be treated as transparent when mosaicing.
 created.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL 1.8.0 or later) Select the output format.
 Starting with GDAL 2.3, if not specified, the format is guessed from the extension (previously
-was ERDAS Imagine .img). 
+was ERDAS Imagine .img).
 Use the short format name (GTiff for GeoTIFF for example).</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL 1.8.0 or later) Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
@@ -2359,7 +2365,7 @@ Usage:
     gdaldem hillshade input_dem output_hillshade
                 [-z ZFactor (default=1)] [-s scale* (default=1)]"
                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]
-                [-alg ZevenbergenThorne] [-combined | -multidirectional]
+                [-alg ZevenbergenThorne] [-combined | -multidirectional | -igor]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 - To generate a slope map from any GDAL-supported elevation raster :
@@ -2462,9 +2468,12 @@ The following specific options are available :
 <dt> <b>-alt</b> <i>altitude</i>:</dt><dd>altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.</dd>
 <dt> <b>-combined</b>:</dt><dd>(starting with GDAL 1.10) combined shading, a combination of slope and oblique shading.</dd>
 <dt> <b>-multidirectional</b>:</dt><dd>(starting with GDAL 2.2) multidirectional shading, a combination of hillshading illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.</dd>
+<dt> <b>-igor</b>:</dt><dd>(starting with GDAL 2.5) shading which tries to minimize effects on other map features beneath. Can't be used with -alt option.</dd>
 </dl>
 
 Multidirectional hillshading applies the formula of http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf.
+
+Igor's hillshading uses formula from Maperitive http://maperitive.net/docs/Commands/GenerateReliefImageIgor.html.
 
 \subsection gdaldem_slope slope
 

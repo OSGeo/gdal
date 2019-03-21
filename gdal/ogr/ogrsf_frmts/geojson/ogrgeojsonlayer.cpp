@@ -205,6 +205,10 @@ OGRFeature* OGRGeoJSONLayer::GetFeature(GIntBig nFID)
 {
     if( poReader_ )
     {
+        if( !IsUpdatable() )
+        {
+            return poReader_->GetFeature(this, nFID);
+        }
         return OGRLayer::GetFeature(nFID);
     }
     else

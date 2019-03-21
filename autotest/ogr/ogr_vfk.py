@@ -8,7 +8,7 @@
 # Author:   Martin Landa <landa.martin gmail.com>
 #
 ###############################################################################
-# Copyright (c) 2009-2018 Martin Landa <landa.martin gmail.com>
+# Copyright (c) 2009-2019 Martin Landa <landa.martin gmail.com>
 # Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -49,10 +49,7 @@ def test_ogr_vfk_1():
     if gdaltest.vfk_drv is None:
         pytest.skip()
 
-    try:
-        os.remove('data/bylany.vfk.db')
-    except OSError:
-        pass
+    gdal.SetConfigOption('OGR_VFK_DB_OVERWRITE', 'YES')
 
     gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
 
@@ -314,6 +311,26 @@ def test_ogr_vfk_11():
             feat.DumpReadable()
             pytest.fail('did not get expected number of features')
 
+###############################################################################
+# Read SBP layer, check curved geometry
+
+
+def test_ogr_vfk_12():
+
+    if gdaltest.vfk_drv is None:
+        pytest.skip()
+
+    gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
+
+    gdaltest.vfk_layer_sbp.SetAttributeFilter("PARAMETRY_SPOJENI = '16'")
+    feat = gdaltest.vfk_layer_sbp.GetNextFeature()
+    geom = feat.GetGeometryRef()
+
+    assert geom.GetGeometryType() == ogr.wkbLineString, \
+        'did not get expected geometry type.'
+
+    assert geom.GetPointCount() == 92, \
+        'did not get expected number of points.'
     
 ###############################################################################
 # cleanup
