@@ -1802,22 +1802,25 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     if( bFoundFieldName )
     {
         int nRenameNum = 1;
-        while( (bFoundFieldName = (m_oSetUCFieldName.find(
-                    osNewFieldNameUC) != m_oSetUCFieldName.end())) && nRenameNum < 10 )
+        while (bFoundFieldName && nRenameNum < 10)
         {
             CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
                     "%.8s_%.1d", osRadixFieldName.c_str(), nRenameNum );
             osNewFieldNameUC.Printf(
                 "%.8s_%.1d", osRadixFieldNameUC.c_str(), nRenameNum );
+            bFoundFieldName = m_oSetUCFieldName.find(
+                    osNewFieldNameUC) != m_oSetUCFieldName.end();
             nRenameNum ++;
         }
-        while( (bFoundFieldName = (m_oSetUCFieldName.find(
-                    osNewFieldNameUC) != m_oSetUCFieldName.end())) && nRenameNum < 100 )
+
+        while (bFoundFieldName && nRenameNum < 100)
         {
             CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
                     "%.8s%.2d", osRadixFieldName.c_str(), nRenameNum );
             osNewFieldNameUC.Printf(
                 "%.8s%.2d", osRadixFieldNameUC.c_str(), nRenameNum );
+            bFoundFieldName = m_oSetUCFieldName.find(
+                    osNewFieldNameUC) != m_oSetUCFieldName.end();
             nRenameNum ++;
         }
 
