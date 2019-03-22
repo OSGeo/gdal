@@ -1951,7 +1951,7 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
     if( m_osWriteMapFilename.empty() && m_bSerializeMapping )
     {
         m_bSerializeMapping = false;
-        if( !m_poDS->UploadFile(CPLSPrintf("%s/%s/%s/_mapping", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()), BuildMap()) )
+        if( !m_poDS->UploadFile(CPLSPrintf("%s/%s/_mapping/%s", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()), BuildMap()) )
         {
             return OGRERR_FAILURE;
         }
