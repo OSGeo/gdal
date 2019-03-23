@@ -1870,8 +1870,7 @@ void OWUpperIfNoQuotes( char* pszText )
 /*****************************************************************************/
 /*                     Parse Value after a Hint on a string                  */
 /*****************************************************************************/
-static
-const char *OWParseValue( const char* pszText,
+static CPLString OWParseValue( const char* pszText,
                           const char* pszSeparators,
                           const char* pszHint,
                           int nOffset )
@@ -1885,20 +1884,20 @@ const char *OWParseValue( const char* pszText,
         CSLT_PRESERVEQUOTES );
 
     nCount = CSLCount( papszTokens );
-    const char* pszResult = "";
+    CPLString osResult;
 
     for( i = 0; ( i + nOffset ) < nCount; i++ )
     {
         if( EQUAL( papszTokens[i], pszHint ) )
         {
-            pszResult = CPLStrdup( papszTokens[i + nOffset] );
+            osResult = papszTokens[i + nOffset];
             break;
         }
     }
 
     CSLDestroy( papszTokens );
 
-    return pszResult;
+    return osResult;
 }
 
 /*****************************************************************************/
@@ -1911,7 +1910,7 @@ const char *OWParseValue( const char* pszText,
  *
  */
 
-const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
+CPLString OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
 {
     char  szUpcase[OWTEXT];
     char* pszIn = nullptr;
@@ -1948,9 +1947,9 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
     strncpy( szBuffer, pszStart, nLength );
     szBuffer[nLength] = '\0';
 
-    const char* pszValue = OWParseValue( szBuffer, " (,)", "INIT", nField );
+    auto osValue = OWParseValue( szBuffer, " (,)", "INIT", nField );
 
-    return EQUAL( pszValue, "" ) ? "NULL" : pszValue;
+    return EQUAL( osValue, "" ) ? "NULL" : osValue;
 }
 
 /*****************************************************************************/

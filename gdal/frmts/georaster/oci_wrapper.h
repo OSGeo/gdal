@@ -34,6 +34,7 @@
 
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 // Oracle Class Interface
 
@@ -63,7 +64,7 @@ const char*         OWSetDataType( const GDALDataType eType );
 int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );
 bool                OWIsNumeric( const char *pszText );
-const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
+CPLString           OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
 char*               OWRemoveQuotes( const char* pszText );
 void                OWUpperIfNoQuotes( char* pszText );
 

@@ -569,20 +569,22 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
     if( ! sDataTable.empty() )
     {
-        strcpy( szRDT, CPLSPrintf( "'%s'", sDataTable.c_str() ) );
+        snprintf( szRDT, sizeof(szRDT), "'%s'", sDataTable.c_str() );
     }
     else
     {
-        strcpy( szRDT, OWParseSDO_GEOR_INIT( sValues.c_str(), 1 ) );
+        snprintf( szRDT, sizeof(szRDT), "%s",
+                  OWParseSDO_GEOR_INIT( sValues.c_str(), 1 ).c_str() );
     }
 
     if ( nRasterId > 0 )
     {
-        strcpy( szRID, CPLSPrintf( "%lld", nRasterId ) );
+        snprintf( szRID, sizeof(szRID), "%lld", nRasterId );
     }
     else
     {
-        strcpy( szRID, OWParseSDO_GEOR_INIT( sValues.c_str(), 2 ) );
+        snprintf( szRID, sizeof(szRID), "%s",
+                  OWParseSDO_GEOR_INIT( sValues.c_str(), 2 ).c_str() );
 
         if ( EQUAL( szRID, "" ) )
         {
