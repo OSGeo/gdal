@@ -743,18 +743,18 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         if( poOFD->GetType() == OFTIntegerList )
         {
             poFeature->SetField( iField, nSubSeqCount, panIntList );
-            CPLFree(panIntList);
         }
         else if( poOFD->GetType() == OFTRealList )
         {
             poFeature->SetField( iField, nSubSeqCount, padfDblList );
-            CPLFree(padfDblList);
         }
         else if( poOFD->GetType() == OFTStringList )
         {
             poFeature->SetField( iField, papszStrList );
-            CSLDestroy( papszStrList );
         }
+        CPLFree(panIntList);
+        CPLFree(padfDblList);
+        CSLDestroy( papszStrList );
     }
 
 /* ==================================================================== */
