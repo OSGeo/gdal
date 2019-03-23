@@ -73,14 +73,16 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     if( poTargVar->type() == dods_grid_c )
     {
         poTargetGrid = dynamic_cast<Grid *>( poTargVar );
-        poTargetArray = dynamic_cast<Array *>(poTargetGrid->array_var());
+        if( poTargetGrid )
+            poTargetArray = dynamic_cast<Array *>(poTargetGrid->array_var());
     }
     else if( poTargVar->type() == dods_array_c )
     {
         poTargetGrid = nullptr;
         poTargetArray = dynamic_cast<Array *>( poTargVar );
     }
-    else
+
+    if( !poTargetArray )
     {
         CPLAssert( false );
         return;
