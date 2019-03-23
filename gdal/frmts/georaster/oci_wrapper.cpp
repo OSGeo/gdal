@@ -1942,9 +1942,7 @@ CPLString OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
 
 int OWParseServerVersion( const char* pszText )
 {
-    const char* pszValue = OWParseValue( pszText, " .", "Release", 1 );
-
-    return pszValue == nullptr ? 0 : atoi( pszValue );
+    return atoi(OWParseValue( pszText, " .", "Release", 1 ));
 }
 
 /*****************************************************************************/
@@ -1960,9 +1958,7 @@ int OWParseServerVersion( const char* pszText )
 
 int OWParseEPSG( const char* pszText )
 {
-    const char* pszValue = OWParseValue( pszText, " ()", "EPSG", 2 );
-
-    return pszValue == nullptr ? 0 : atoi( pszValue );
+    return atoi(OWParseValue( pszText, " ()", "EPSG", 2 ));
 }
 
 /*****************************************************************************/
