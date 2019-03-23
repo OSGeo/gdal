@@ -3002,7 +3002,10 @@ void GeoRasterWrapper::SetRPC()
     //  Add "layerInfo" tree back
     //  -------------------------------------------------------------------
 
-    CPLAddXMLChild( phMetadata, phClone );
+    if( phClone )
+    {
+        CPLAddXMLChild( phMetadata, phClone );
+    }
 }
 
 //  ---------------------------------------------------------------------------
