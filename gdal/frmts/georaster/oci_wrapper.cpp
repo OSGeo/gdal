@@ -91,7 +91,7 @@ OWConnection::OWConnection( OCIExtProcContext* poWithContext )
     poStmt->Define(szUser);
     poStmt->Define(szSchema);
 
-    poStmt->Execute();
+    CPL_IGNORE_RET_VAL(poStmt->Execute());
 
     pszExtProcSchema = CPLStrdup( szSchema );
     pszExtProcUser   = CPLStrdup( szUser );
