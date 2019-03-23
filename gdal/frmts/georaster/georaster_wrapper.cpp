@@ -109,6 +109,8 @@ GeoRasterWrapper::GeoRasterWrapper() :
     pasGCPList          = nullptr;
     nGCPCount           = 0;
     bFlushGCP           = false;
+    memset(&sCInfo, 0, sizeof(sCInfo));
+    memset(&sJErr, 0, sizeof(sJErr));
 }
 
 //  ---------------------------------------------------------------------------
