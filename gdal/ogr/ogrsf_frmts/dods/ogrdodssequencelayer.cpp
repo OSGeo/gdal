@@ -479,6 +479,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             seq = dynamic_cast<Sequence *>(poTargetVar);
         }
     }
+    if( !seq )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature being read.                                  */
