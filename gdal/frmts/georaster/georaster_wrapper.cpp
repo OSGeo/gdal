@@ -1897,7 +1897,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
         }
     }
 
-    if( nCurrentLevel != nLevel )
+    if( nCurrentLevel != nLevel && nLevel != DEFAULT_BMP_MASK )
     {
         InitializeLevel( nLevel );
     }
