@@ -883,7 +883,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  -------------------------------------------------------------------
 
     const char* pszFetched  = "";
-    char* pszDescription    = nullptr;
+    CPLCharUniquePtr pszDescription;
     CPLCharUniquePtr pszInsert;
     int   nQuality          = -1;
 
@@ -893,7 +893,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
         if( pszFetched )
         {
-            pszDescription  = CPLStrdup( pszFetched );
+            pszDescription.reset(CPLStrdup( pszFetched ));
         }
     }
 
@@ -1045,7 +1045,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  Validate options
     //  -------------------------------------------------------------------
 
-    if( pszDescription && poGRW->bUniqueFound )
+    if( pszDescription.get() && poGRW->bUniqueFound )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
             "Option (DESCRIPTION) cannot be used on a existing GeoRaster." );
@@ -1169,9 +1169,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  Create a SDO_GEORASTER object on the server
     //  -------------------------------------------------------------------
 
-    const bool bSuccess = poGRW->Create( pszDescription, pszInsert.get(), poGRW->bUniqueFound );
-
-    CPLFree( pszDescription );
+    const bool bSuccess = poGRW->Create( pszDescription.get(), pszInsert.get(), poGRW->bUniqueFound );
 
     if( ! bSuccess )
     {
