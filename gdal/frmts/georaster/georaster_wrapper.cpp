@@ -1857,8 +1857,10 @@ bool GeoRasterWrapper::InitializeIO( void )
 
     if( ! poBlockStmt->Execute( static_cast<int>(nBlockCount) ) )
     {
+        delete poBlockStmt;
         return false;
     }
+    delete poBlockStmt;
 
     return true;
 }
