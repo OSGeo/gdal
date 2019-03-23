@@ -3749,6 +3749,7 @@ bool GeoRasterWrapper::GeneratePyramid( int nLevels,
         delete poStmt;
         return false;
     }
+    delete poStmt;
 
     CPLXMLNode* psNode = CPLGetXMLNode( phMetadata, "rasterInfo.pyramid" );
 
