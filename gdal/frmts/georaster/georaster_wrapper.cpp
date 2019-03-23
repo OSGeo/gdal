@@ -3137,8 +3137,8 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
     char szRDT[OWCODE];
     char szNoData[OWTEXT];
 
-    strcpy( szRDT, sDataTable.c_str() );
-    strcpy( szNoData, pszValue );
+    snprintf( szRDT, sizeof(szRDT), "%s", sDataTable.c_str() );
+    snprintf( szNoData, sizeof(szNoData), "%s", pszValue );
 
     long long  nRID = nRasterId;
 
