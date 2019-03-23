@@ -1470,7 +1470,10 @@ char* GDALPDFStreamPoppler::GetBytes()
         pszContent[i] = (GByte)nVal;
     }
     m_nLength = i;
-    pszContent[i] = '\0';
+    if( pszContent )
+    {
+        pszContent[i] = '\0';
+    }
     return pszContent;
 #endif
 }
