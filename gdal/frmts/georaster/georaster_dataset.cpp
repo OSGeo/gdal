@@ -40,6 +40,8 @@
 
 #include "georaster_priv.h"
 
+#include <memory>
+
 CPL_CVSID("$Id$")
 
 //  ---------------------------------------------------------------------------
@@ -2083,7 +2085,7 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
     // Convert SRS into old style format (SF-SQL 1.0)
     // ----------------------------------------------------------------
 
-    OGRSpatialReference *poSRS2 = oSRS.Clone();
+    std::unique_ptr<OGRSpatialReference> poSRS2(oSRS.Clone());
 
     double dfAngularUnits = poSRS2->GetAngularUnits( nullptr );
     
@@ -2099,7 +2101,6 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
     const char* const apszOptions[] = { "FORMAT=SFSQL", nullptr };
     if( poSRS2->exportToWkt( &pszCloneWKT, apszOptions ) != OGRERR_NONE )
     {
-        delete poSRS2;
         return CE_Failure;
     }
     
@@ -2187,7 +2188,6 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
 
         if( poSRS2->exportToWkt( &pszCloneWKT ) != OGRERR_NONE )
         {
-            delete poSRS2;
             return CE_Failure;
         }
 
