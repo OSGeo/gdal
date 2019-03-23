@@ -780,12 +780,9 @@ boolean GeoRasterDataset::JPEG_CopyDirect( const char* pszJPGFilename,
     {
         OWStatement::Free( &poLocator, 1 );
     }
-    
-    if( poStmt )
-    {
-        delete poStmt;
-    }    
-        
+
+    delete poStmt;
+
     return false;
 }
 
