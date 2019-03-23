@@ -363,8 +363,8 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
             if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
             {
                 m_osProjection = pszWKT;
-                CPLFree(pszWKT);
             }
+            CPLFree(pszWKT);
         }
     }
 
