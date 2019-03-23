@@ -814,7 +814,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
         GDALOpenInfo oOpenInfo(pszUnprefixed, GA_ReadOnly);
         if( oOpenInfo.fpL == nullptr || oOpenInfo.pabyHeader == nullptr )
             return;
-        oOpenInfo.TryToIngest(6000);
+        CPL_IGNORE_RET_VAL(oOpenInfo.TryToIngest(6000));
         CPLFree(pszGeoData_);
         pszGeoData_ = CPLStrdup(
                         reinterpret_cast<const char*>(oOpenInfo.pabyHeader));
