@@ -2543,18 +2543,17 @@ OGRErr PDS4EditableSynchronizer<T>::EditableSyncToDisk(
         ComputeMapForSetFrom(poEditableLayer->GetLayerDefn(), true);
     aoMapSrcToTargetIdx.push_back(-1); // add dummy entry to be sure that .data() is valid
 
+    OGRErr eErr = OGRERR_NONE;
     for( auto&& poFeature: poEditableLayer )
     {
         OGRFeature *poNewFeature =
             new OGRFeature(poNewLayer->GetLayerDefn());
         poNewFeature->SetFrom(poFeature.get(), aoMapSrcToTargetIdx.data(), true);
-        OGRErr eErr = poNewLayer->CreateFeature(poNewFeature);
+        eErr = poNewLayer->CreateFeature(poNewFeature);
         delete poNewFeature;
         if( eErr != OGRERR_NONE )
         {
-            delete poNewLayer;
-            VSIUnlink(osTmpFilename);
-            return eErr;
+            break;
         }
     }
 
@@ -2564,7 +2563,8 @@ OGRErr PDS4EditableSynchronizer<T>::EditableSyncToDisk(
     poEditableLayer->SetSpatialFilter(iFilterGeomIndexBak, poFilterGeomBak);
     delete poFilterGeomBak;
 
-    if( !poNewLayer->RenameFileTo(poOriLayer->GetFileName()) )
+    if( eErr != OGRERR_NONE ||
+        !poNewLayer->RenameFileTo(poOriLayer->GetFileName()) )
     {
         delete poNewLayer;
         VSIUnlink(osTmpFilename);
