@@ -297,6 +297,8 @@ OWConnection::~OWConnection()
     DestroyType( hGeoRasterTDO );
     DestroyType( hElemArrayTDO );
     DestroyType( hOrdnArrayTDO );
+    if( hPCTDO )
+        DestroyType( hPCTDO );
 
     OCIHandleFree( (dvoid*) hDescribe, (ub4) OCI_HTYPE_DESCRIBE);
 
