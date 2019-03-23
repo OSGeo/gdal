@@ -989,17 +989,19 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
     if( nRasterBands == 1 )
     {
-        strcpy( szCreateBlank, CPLSPrintf( "SDO_GEOR.createBlank(20001, "
+        snprintf( szCreateBlank, sizeof(szCreateBlank),
+            "SDO_GEOR.createBlank(20001, "
             "SDO_NUMBER_ARRAY(0, 0), "
             "SDO_NUMBER_ARRAY(%d, %d), 0, :rdt, :rid)",
-            nRasterRows, nRasterColumns ) );
+            nRasterRows, nRasterColumns );
     }
     else
     {
-        strcpy( szCreateBlank, CPLSPrintf( "SDO_GEOR.createBlank(21001, "
+        snprintf( szCreateBlank, sizeof(szCreateBlank),
+            "SDO_GEOR.createBlank(21001, "
             "SDO_NUMBER_ARRAY(0, 0, 0), "
             "SDO_NUMBER_ARRAY(%d, %d, %d), 0, :rdt, :rid)",
-            nRasterRows, nRasterColumns, nRasterBands ) );
+            nRasterRows, nRasterColumns, nRasterBands );
     }
 
     poStmt = poConnection->CreateStatement( CPLSPrintf(
