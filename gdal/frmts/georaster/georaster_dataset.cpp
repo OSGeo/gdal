@@ -884,7 +884,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     const char* pszFetched  = "";
     char* pszDescription    = nullptr;
-    char* pszInsert         = nullptr;
+    CPLCharUniquePtr pszInsert;
     int   nQuality          = -1;
 
     if( ! poGRW->sTable.empty() )
@@ -912,7 +912,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     if( pszFetched )
     {
-        pszInsert = CPLStrdup( pszFetched );
+        pszInsert.reset(CPLStrdup( pszFetched ));
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "BLOCKXSIZE" );
@@ -1169,9 +1169,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  Create a SDO_GEORASTER object on the server
     //  -------------------------------------------------------------------
 
-    const bool bSuccess = poGRW->Create( pszDescription, pszInsert, poGRW->bUniqueFound );
+    const bool bSuccess = poGRW->Create( pszDescription, pszInsert.get(), poGRW->bUniqueFound );
 
-    CPLFree( pszInsert );
     CPLFree( pszDescription );
 
     if( ! bSuccess )
