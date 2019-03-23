@@ -1527,7 +1527,8 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
-    if( nXSize == nBufXSize &&
+    if( nDataTypeSize > 0 &&
+        nXSize == nBufXSize &&
         nYSize == nBufYSize &&
         nDataTypeSize == nPixelSpace &&
         nLineSpace == nPixelSpace * nBufXSize )
