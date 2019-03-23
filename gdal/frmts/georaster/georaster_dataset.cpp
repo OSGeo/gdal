@@ -774,7 +774,9 @@ boolean GeoRasterDataset::JPEG_CopyDirect( const char* pszJPGFilename,
         VSIFCloseL( fpInput );
 
         CPLFree( pBuffer );
-        
+
+        delete poStmt;
+
         return true;
     }            
 
