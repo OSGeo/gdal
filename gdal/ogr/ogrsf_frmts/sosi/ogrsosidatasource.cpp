@@ -278,11 +278,11 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
 
     /* allocate room for one pointer per feature */
     nNumFeatures = static_cast<unsigned int>(poFileadm->lAntGr);
-    void* mem = VSI_MALLOC2_VERBOSE(nNumFeatures, sizeof(void*));
-    if (mem == nullptr) {
+    papoBuiltGeometries = static_cast<OGRGeometry**>(
+        VSI_MALLOC2_VERBOSE(nNumFeatures, sizeof(OGRGeometry*)));
+    if (papoBuiltGeometries == nullptr) {
+        nNumFeatures = 0;
         return FALSE;
-    } else {
-        papoBuiltGeometries = (OGRGeometry**)mem;
     }
     for (unsigned int i=0; i<nNumFeatures; i++) papoBuiltGeometries[i] = nullptr;
 
