@@ -877,7 +877,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     OWStatement* poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
         "SELECT %s FROM %s", szColumnList, l_pszVATName ) );
 
-    char** papszValue = (char**) CPLMalloc( sizeof(char**) * iCol );
+    char** papszValue = (char**) CPLCalloc( sizeof(char**), iCol + 1 );
 
     int i = 0;
 
@@ -891,6 +891,8 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Error reading VAT %s",
             l_pszVATName );
+        CSLDestroy(papszValue);
+        delete poStmt;
         return nullptr;
     }
 
@@ -905,11 +907,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
         iRow++;
     }
 
-    for( i = 0; i < iCol; i++ )
-    {
-        CPLFree( papszValue[i] );
-    }
-    CPLFree( papszValue );
+    CSLDestroy(papszValue);
 
     delete poStmt;
 
