@@ -2810,6 +2810,7 @@ void GeoRasterWrapper::GetRPC()
     {
         CPLFree( phRPC );
         phRPC = nullptr;
+        CSLDestroy(papszCeoff);
         return;
     }
 
@@ -2817,6 +2818,7 @@ void GeoRasterWrapper::GetRPC()
     {
         phRPC->adfSAMP_DEN_COEFF[anOrder[i] - 1] = CPLAtof( papszCeoff[i] );
     }
+    CSLDestroy(papszCeoff);
 }
 
 //  ---------------------------------------------------------------------------
