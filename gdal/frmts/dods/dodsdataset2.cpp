@@ -1145,13 +1145,15 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
     if( poDDSDef->type() == dods_grid_c )
     {
         poGrid = dynamic_cast<Grid *>( poDDSDef );
-        poArray = dynamic_cast<Array *>( poGrid->array_var() );
+        if( poGrid )
+            poArray = dynamic_cast<Array *>( poGrid->array_var() );
     }
     else if( poDDSDef->type() == dods_array_c )
     {
         poArray = dynamic_cast<Array *>( poDDSDef );
     }
-    else
+
+    if( !poArray )
     {
         throw InternalErr(
             CPLSPrintf( "Variable %s is not a grid or an array.",
