@@ -822,8 +822,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     int   nPrecision = 0;
     signed short nScale = 0;
 
-    char szColumnList[OWTEXT];
-    szColumnList[0] = '\0';
+    CPLString osColumnList;
 
     while( poGDS->poGeoRaster->poConnection->GetNextField(
                 phDesc, iCol, szField, &hType, &nSize, &nPrecision, &nScale ) )
@@ -862,20 +861,22 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
                     "as GDAL RAT", l_pszVATName, szField, hType );
                 continue;
         }
-        strcpy( szColumnList, CPLSPrintf( "%s substr(%s,1,%d),",
-            szColumnList, szField, MIN(nSize,OWNAME) ) );
+        osColumnList += CPLSPrintf(
+                  "substr(%s,1,%d),",
+                  szField, MIN(nSize,OWNAME));
 
         iCol++;
     }
 
-    szColumnList[strlen(szColumnList) - 1] = '\0'; // remove the last comma
+    if( !osColumnList.empty() )
+        osColumnList.resize(osColumnList.size()-1); // remove the last comma
 
     // ----------------------------------------------------------
     // Read VAT and load RAT
     // ----------------------------------------------------------
 
     OWStatement* poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
-        "SELECT %s FROM %s", szColumnList, l_pszVATName ) );
+        "SELECT %s FROM %s", osColumnList.c_str(), l_pszVATName ) );
 
     char** papszValue = (char**) CPLCalloc( sizeof(char**), iCol + 1 );
 
