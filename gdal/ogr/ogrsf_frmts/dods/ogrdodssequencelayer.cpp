@@ -840,10 +840,14 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         else
         {
             poFeature->SetGeometryDirectly(
-                new OGRPoint(
-                    poFeature->GetFieldAsDouble( iXField ),
-                    poFeature->GetFieldAsDouble( iYField ),
-                    poFeature->GetFieldAsDouble( iZField ) ) );
+                iZField >= 0 ?
+                    new OGRPoint(
+                        poFeature->GetFieldAsDouble( iXField ),
+                        poFeature->GetFieldAsDouble( iYField ),
+                        poFeature->GetFieldAsDouble( iZField ) ) :
+                    new OGRPoint(
+                        poFeature->GetFieldAsDouble( iXField ),
+                        poFeature->GetFieldAsDouble( iYField ) ) );
         }
     }
 
