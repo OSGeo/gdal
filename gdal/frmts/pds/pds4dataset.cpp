@@ -3681,6 +3681,9 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         return poDS;
     }
 
+    if( nXSize == 0 )
+        return nullptr;
+
     if( !(eType == GDT_Byte || eType == GDT_Int16 || eType == GDT_UInt16 ||
           eType == GDT_Int32 || eType == GDT_UInt32 || eType == GDT_Float32 ||
           eType == GDT_Float64 || eType == GDT_CFloat32 ||
