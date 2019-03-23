@@ -381,6 +381,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
     {
         CPLDebug("PANSHARPEN", "Using %d threads", nThreads);
         poThreadPool = new (std::nothrow) CPLWorkerThreadPool();
+        // coverity[tainted_data]
         if( poThreadPool == nullptr ||
             !poThreadPool->Setup( nThreads, nullptr, nullptr ) )
         {
