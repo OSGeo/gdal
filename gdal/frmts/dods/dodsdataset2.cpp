@@ -1410,7 +1410,7 @@ void DODSRasterBand::HarvestDAS()
 CPLErr
 DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
-    DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
+    DODSDataset *poDODS = cpl::down_cast<DODSDataset *>(poDS);
     int nBytesPerPixel = GDALGetDataTypeSize(eDataType) / 8;
 
 /* -------------------------------------------------------------------- */
