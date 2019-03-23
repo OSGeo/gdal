@@ -289,7 +289,7 @@ BaseType *OGRDODSSequenceLayer::GetFieldValue( OGRDODSFieldDefn *poFDefn,
     if( seq == nullptr )
         seq = dynamic_cast<Sequence *>(poTargetVar);
 
-    if( !poFDefn->bValid )
+    if( seq == nullptr || !poFDefn->bValid )
         return nullptr;
 
 /* ==================================================================== */
