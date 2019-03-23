@@ -65,7 +65,13 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
     pahNoDataArray      = nullptr;
     nNoDataArraySz      = 0;
     bHasNoDataArray     = false;
-   
+    dfMin               = 0.0;
+    dfMax               = 0.0;
+    dfMean              = 0.0;
+    dfMedian            = 0.0;
+    dfMode              = 0.0;
+    dfStdDev            = 0.0;
+
     poJP2Dataset        = poJP2DatasetIn;
 
     //  -----------------------------------------------------------------------
