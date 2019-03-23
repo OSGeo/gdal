@@ -693,7 +693,9 @@ OGRErr PDS4FixedWidthTable::ISetFeature( OGRFeature *poFeature )
         else if( osDT == "ASCII_Date_Time_YMD" ||
                  osDT == "ASCII_Date_Time_YMD_UTC" )
         {
-            osBuffer = OGRGetXMLDateTime(poRawFeature->GetRawFieldRef(i));
+            char* pszDateTime = OGRGetXMLDateTime(poRawFeature->GetRawFieldRef(i));
+            osBuffer = pszDateTime;
+            CPLFree(pszDateTime);
         }
         else if( osDT == "ASCII_Date_YMD" )
         {
