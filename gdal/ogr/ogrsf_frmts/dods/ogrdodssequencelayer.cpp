@@ -740,22 +740,22 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Apply back to feature.                                          */
 /* -------------------------------------------------------------------- */
-        if( poOFD->GetType() == OFTIntegerList )
+        if( poOFD->GetType() == OFTIntegerList && panIntList )
         {
             poFeature->SetField( iField, nSubSeqCount, panIntList );
         }
-        else if( poOFD->GetType() == OFTRealList )
+        else if( poOFD->GetType() == OFTRealList && padfDblList )
         {
             poFeature->SetField( iField, nSubSeqCount, padfDblList );
         }
-        else if( poOFD->GetType() == OFTStringList )
+        else if( poOFD->GetType() == OFTStringList && papszStrList )
         {
             poFeature->SetField( iField, papszStrList );
         }
         CPLFree(panIntList);
         CPLFree(padfDblList);
         CSLDestroy( papszStrList );
-    }
+        }
 
 /* ==================================================================== */
 /*      Fetch the geometry.                                             */
