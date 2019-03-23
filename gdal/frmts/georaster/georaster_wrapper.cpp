@@ -2407,6 +2407,7 @@ void GeoRasterWrapper::GetSpatialReference()
 
     if( CSLCount( papszCeoff ) < 3 )
     {
+        CSLDestroy(papszCeoff);
         return;
     }
     
@@ -2416,6 +2417,7 @@ void GeoRasterWrapper::GetSpatialReference()
     {
         adfRCoef[i] = CPLAtof( papszCeoff[i] );
     }
+    CSLDestroy(papszCeoff);
 
     //  -------------------------------------------------------------------
     //  Inverse the transformation matrix
