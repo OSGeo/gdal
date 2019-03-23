@@ -2619,6 +2619,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         }
         while( poStmt->Fetch() );
     }
+    delete poStmt;
 }
 
 int GeoRasterDataset::GetGCPCount()
