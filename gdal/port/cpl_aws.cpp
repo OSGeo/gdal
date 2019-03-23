@@ -1005,6 +1005,7 @@ bool VSIS3HandleHelper::GetConfiguration(CSLConstList papszOptions,
 
     // Next try reading from ~/.aws/credentials and ~/.aws/config
     CPLString osCredentials;
+    // coverity[tainted_data]
     if( GetConfigurationFromAWSConfigFiles(osSecretAccessKey, osAccessKeyId,
                                            osSessionToken, osRegion,
                                            osCredentials) )
