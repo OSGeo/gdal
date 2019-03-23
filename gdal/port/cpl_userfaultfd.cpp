@@ -190,6 +190,11 @@ static void cpl_uffd_fault_handler(void * ptr)
             struct sigaction bus;
             struct sigaction old_bus;
 
+            memset(&segv, 0, sizeof(segv));
+            memset(&old_segv, 0, sizeof(old_segv));
+            memset(&bus, 0, sizeof(bus));
+            memset(&old_bus, 0, sizeof(old_bus));
+
             // Step 1 from the block comment above
             segv.sa_handler = signal_handler;
             bus.sa_handler = signal_handler;
