@@ -1484,14 +1484,23 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         Array *poA = nullptr;
         switch (poBt->type()) {
           case dods_grid_c:
-            poA = dynamic_cast<Array*>(dynamic_cast<Grid*>(poBt)->array_var());
+          {
+            auto poGrid = dynamic_cast<Grid*>(poBt);
+            if( poGrid)
+             poA = dynamic_cast<Array*>(poGrid->array_var());
             break;
+          }
 
           case dods_array_c:
             poA = dynamic_cast<Array *>(poBt);
             break;
 
           default:
+            break;
+        }
+
+        if( !poA )
+        {
             throw InternalErr("Expected an Array or Grid variable!");
         }
 
