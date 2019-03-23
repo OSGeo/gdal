@@ -1002,6 +1002,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLDebug( "DODS", "No apparent raster grids or arrays found in DDS.");
             delete poDS;
+            CSLDestroy(papszVarConstraintList);
             return nullptr;
         }
 
