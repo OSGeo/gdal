@@ -8580,7 +8580,8 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
                     // (if using TIFFWriteEncodedStrip/Tile first,
                     // TIFFWriteBufferSetup() is automatically called).
                     // This should likely rather fixed in libtiff itself.
-                    TIFFWriteBufferSetup(hTIFF, nullptr, -1);
+                    CPL_IGNORE_RET_VAL(
+                        TIFFWriteBufferSetup(hTIFF, nullptr, -1));
                 }
             }
         }
