@@ -883,7 +883,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
 
     for( i = 0; i < iCol; i++ )
     {
-        papszValue[i] = (char*) CPLMalloc( sizeof(char*) * OWNAME );
+        papszValue[i] = (char*) CPLCalloc( 1, OWNAME + 1 );
         poStmt->Define( papszValue[i] );
     }
 
