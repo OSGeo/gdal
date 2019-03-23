@@ -1542,7 +1542,7 @@ char* OWStatement::ReadCLob( OCILobLocator* phLocator )
 
     nSize *= this->poConnection->nCharSize;
 
-    pszBuffer = (char*) VSIMalloc( sizeof(char*) * nSize );
+    pszBuffer = (char*) VSICalloc( 1, nSize + 1 );
 
     if( pszBuffer == nullptr)
     {
