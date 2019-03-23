@@ -243,6 +243,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
 
     if( ! poGRW )
     {
+        CSLDestroy(papszParam);
         return nullptr;
     }
 
@@ -347,12 +348,15 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
         {
             poGRW->sTable   = papszParam[3];
             poGRW->sColumn  = papszParam[4];
+            CSLDestroy(papszParam);
             return poGRW;
         }
     case 4 :
         poGRW->sTable   = papszParam[3];
+        CSLDestroy(papszParam);
         return poGRW;
     default :
+        CSLDestroy(papszParam);
         return poGRW;
     }
 
