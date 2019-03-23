@@ -382,7 +382,7 @@ cpl_uffd_context* CPLCreateUserFaultMapping(const char * pszFilename, void ** pp
   }
 
   // Attempt to acquire a scratch page to use to fulfill requests.
-  ctx->page_ptr = mmap(nullptr, ctx->page_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  ctx->page_ptr = mmap(nullptr, static_cast<size_t>(ctx->page_size), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   if (ctx->page_ptr == BAD_MMAP) {
     ctx->page_ptr = nullptr;
     uffd_cleanup(ctx);
