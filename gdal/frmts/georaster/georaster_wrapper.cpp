@@ -3910,7 +3910,7 @@ void GeoRasterWrapper::PackNBits( GByte* pabyData ) const
 {
     int nPixCount = nBandBlockSize * nRowBlockSize * nColumnBlockSize;
 
-    GByte* pabyBuffer = (GByte*) VSI_MALLOC_VERBOSE( nPixCount * sizeof(GByte*) );
+    GByte* pabyBuffer = (GByte*) VSI_MALLOC_VERBOSE( nPixCount );
 
     if( pabyBuffer == nullptr )
     {
