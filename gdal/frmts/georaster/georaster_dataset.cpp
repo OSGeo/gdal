@@ -2346,7 +2346,9 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
     }
 
     CPLPopErrorHandler();
-    
+
+    delete poStmt;
+
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  MAX_SRID NUMBER := 0;\n"
@@ -2386,7 +2388,9 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
     }
 
     CPLFree( pszCloneWKT );
-    
+
+    delete poStmt;
+
     return eError;
 }
 
