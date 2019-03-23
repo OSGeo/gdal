@@ -340,6 +340,7 @@ DODSDataset::connect_to_server() /*throw(Error)*/
 
         snprintf( szDODS_CONF, sizeof(szDODS_CONF), "DODS_CONF=%.980s",
                  CPLGetConfigOption( "DODS_CONF", "" ) );
+        // coverity[tainted_string]
         putenv( szDODS_CONF );
     }
 
