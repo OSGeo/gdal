@@ -404,7 +404,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
 
     if( ! poGRW->sWhere.empty() )
     {
-      strcpy( szWhere, poGRW->sWhere.c_str() );
+      snprintf( szWhere, sizeof(szWhere), "%s", poGRW->sWhere.c_str() );
     }
 
     OWStatement* poStmt = poGRW->poConnection->CreateStatement(
