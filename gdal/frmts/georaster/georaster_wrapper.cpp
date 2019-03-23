@@ -3865,6 +3865,7 @@ bool GeoRasterWrapper::InitializeMask( int nLevel,
         return false;
     }
 
+    delete poStmt;
     return true;
 }
 
