@@ -127,6 +127,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
         snprintf( szDODS_CONF, knBufSize, "DODS_CONF=%.980s",
                   CPLGetConfigOption( "DODS_CONF", "" ) );
+        // coverity[tainted_string]
         putenv( szDODS_CONF );
     }
 
