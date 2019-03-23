@@ -120,7 +120,14 @@ static void uffd_cleanup(void * ptr)
   return;
 }
 
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic pop
+#endif
 
 static int64_t get_page_limit()
 {
