@@ -562,35 +562,27 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // Format Table description
     // ----------------------------------------------------------
 
-    char szName[OWTEXT];
-    char szDescription[OWTEXT];
-
-    strcpy( szDescription, "( ID NUMBER" );
+    CPLString osDescription = "( ID NUMBER";
 
     for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
     {
-        strcpy( szName, poRAT->GetNameOfCol( iCol ) );
-
-        strcpy( szDescription, CPLSPrintf( "%s, %s",
-            szDescription, szName ) );
+        osDescription += ", ";
+        osDescription += poRAT->GetNameOfCol( iCol );
 
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer )
         {
-            strcpy( szDescription, CPLSPrintf( "%s NUMBER",
-                szDescription ) );
+            osDescription += " NUMBER";
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
         {
-            strcpy( szDescription, CPLSPrintf( "%s NUMBER",
-                szDescription ) );
+            osDescription += " NUMBER";
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
         {
-            strcpy( szDescription, CPLSPrintf( "%s VARCHAR2(%d)",
-                szDescription, MAXLEN_VATSTR) );
+            osDescription += CPLSPrintf(" VARCHAR2(%d)", MAXLEN_VATSTR);
         }
     }
-    strcpy( szDescription, CPLSPrintf( "%s )", szDescription ) );
+    osDescription += " )";
 
     // ----------------------------------------------------------
     // Create VAT named based on RDT and RID and Layer (nBand)
@@ -627,7 +619,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         "  END IF;\n"
         "\n"
         "  EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
-        "END;", szDescription ) );
+        "END;", osDescription.c_str() ) );
 
     poStmt->Bind( pszVATName );
 
