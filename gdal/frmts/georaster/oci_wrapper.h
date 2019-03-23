@@ -275,33 +275,33 @@ public:
 
 private:
 
-    OCIEnv*             hEnv;
-    OCIError*           hError;
-    OCISvcCtx*          hSvcCtx;
-    OCIServer*          hServer;
-    OCISession*         hSession;
-    OCIDescribe*        hDescribe;
+    OCIEnv*             hEnv = nullptr;
+    OCIError*           hError = nullptr;
+    OCISvcCtx*          hSvcCtx = nullptr;
+    OCIServer*          hServer = nullptr;
+    OCISession*         hSession = nullptr;
+    OCIDescribe*        hDescribe = nullptr;
 
-    int                 nVersion;
-    sb4                 nCharSize;
+    int                 nVersion = 0;
+    sb4                 nCharSize = 1;
 
-    bool                bSuceeeded;
+    bool                bSuceeeded = false;
 
-    bool                bExtProc;
+    bool                bExtProc = false;
 
-    char*               pszUser;
-    char*               pszPassword;
-    char*               pszServer;
+    char*               pszUser = nullptr;
+    char*               pszPassword = nullptr;
+    char*               pszServer = nullptr;
 
-    char*               pszExtProcUser;
-    char*               pszExtProcSchema;
+    char*               pszExtProcUser = nullptr;
+    char*               pszExtProcSchema = nullptr;
 
-    OCIType*            hNumArrayTDO;
-    OCIType*            hGeometryTDO;
-    OCIType*            hGeoRasterTDO;
-    OCIType*            hPCTDO;
-    OCIType*            hElemArrayTDO;
-    OCIType*            hOrdnArrayTDO;
+    OCIType*            hNumArrayTDO = nullptr;
+    OCIType*            hGeometryTDO = nullptr;
+    OCIType*            hGeoRasterTDO = nullptr;
+    OCIType*            hPCTDO = nullptr;
+    OCIType*            hElemArrayTDO = nullptr;
+    OCIType*            hOrdnArrayTDO = nullptr;
 
     void                QueryVersion();
 

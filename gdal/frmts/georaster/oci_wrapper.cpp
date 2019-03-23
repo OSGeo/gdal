@@ -56,20 +56,6 @@ OWConnection::OWConnection( OCIExtProcContext* poWithContext )
     pszPassword     = CPLStrdup( "" );
     pszServer       = CPLStrdup( "" );
 
-    hEnv            = nullptr;
-    hError          = nullptr;
-    hSvcCtx         = nullptr;
-    hSession        = nullptr;
-    hDescribe       = nullptr;
-    hNumArrayTDO    = nullptr;
-    hGeometryTDO    = nullptr;
-    hGeoRasterTDO   = nullptr;
-    hElemArrayTDO   = nullptr;
-    hOrdnArrayTDO   = nullptr;
-    bSuceeeded      = false;
-    nCharSize       = 1;
-    bExtProc        = false;
-
     if( ! poWithContext )
     {
        return;
@@ -127,20 +113,6 @@ OWConnection::OWConnection( const char* pszUserIn,
     pszUser         = CPLStrdup( pszUserIn );
     pszPassword     = CPLStrdup( pszPasswordIn );
     pszServer       = CPLStrdup( pszServerIn );
-
-    hEnv            = nullptr;
-    hError          = nullptr;
-    hSvcCtx         = nullptr;
-    hSession        = nullptr;
-    hDescribe       = nullptr;
-    hNumArrayTDO    = nullptr;
-    hGeometryTDO    = nullptr;
-    hGeoRasterTDO   = nullptr;
-    hElemArrayTDO   = nullptr;
-    hOrdnArrayTDO   = nullptr;
-    bSuceeeded      = false;
-    nCharSize       = 1;
-    bExtProc        = false;
 
     // ------------------------------------------------------
     //  Operational Systems's authentication option
@@ -370,6 +342,9 @@ OWConnection::~OWConnection()
     {
         OCIHandleFree((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION);
     }
+
+    CPLFree( pszExtProcUser );
+    CPLFree( pszExtProcSchema );
 }
 
 OCIType* OWConnection::DescribeType( const char *pszTypeName )
