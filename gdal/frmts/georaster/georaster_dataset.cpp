@@ -1371,8 +1371,9 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     if ( papszRPCMetadata != nullptr )
     {
-        poDstDS->poGeoRaster->phRPC = (GDALRPCInfo*) VSIMalloc( sizeof(GDALRPCInfo) );
-        GDALExtractRPCInfo( papszRPCMetadata, poDstDS->poGeoRaster->phRPC );
+        poDstDS->poGeoRaster->phRPC = (GDALRPCInfo*) VSICalloc( 1, sizeof(GDALRPCInfo) );
+        CPL_IGNORE_RET_VAL(
+            GDALExtractRPCInfo( papszRPCMetadata, poDstDS->poGeoRaster->phRPC ));
     }
 
     // --------------------------------------------------------------------
