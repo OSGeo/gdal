@@ -1352,7 +1352,8 @@ void GeoRasterWrapper::GetRasterInfo( void )
 
     char szPyramidType[OWCODE];
 
-    strcpy( szPyramidType, CPLGetXMLValue( phMetadata,
+    snprintf( szPyramidType, sizeof(szPyramidType), "%s",
+              CPLGetXMLValue( phMetadata,
                             "rasterInfo.pyramid.type", "None" ) );
 
     if( EQUAL( szPyramidType, "DECREASE" ) )
