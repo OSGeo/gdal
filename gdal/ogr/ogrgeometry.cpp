@@ -6862,7 +6862,6 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(
     memcpy(pszWKT, pabySFCGALWKT, nLength);
     pszWKT[nLength] = 0;
     free(pabySFCGALWKT);
-    const char *pszTmpWKT = pszWKT;
 
     sfcgal_geometry_type_t geom_type = sfcgal_geometry_type_id (geometry);
 
@@ -6909,10 +6908,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(
     }
     else
     {
+        CPLFree(pszWKT);
         return nullptr;
     }
 
-    if( poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE )
+    const char* pszWKTTmp = pszWKT;
+    if( poGeom->importFromWkt(&pszWKTTmp) == OGRERR_NONE )
     {
         CPLFree(pszWKT);
         return poGeom;
