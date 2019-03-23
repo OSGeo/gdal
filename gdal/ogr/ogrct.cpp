@@ -1588,8 +1588,9 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                                 y, sizeof(double), nCount,
                                 z, z ? sizeof(double) : 0, z ? nCount : 0,
                                 t, t ? sizeof(double) : 0, t ? nCount : 0);
-        err == ( static_cast<int>(nRet) == nCount ) ?
+        err = ( static_cast<int>(nRet) == nCount ) ?
                     0 : proj_context_errno(ctx);
+        if( err == 0 )
         {
             memcpy(padfTargetX, x, sizeof(double) * nCount);
             memcpy(padfTargetY, y, sizeof(double) * nCount);
@@ -1607,8 +1608,9 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                 padfTargetY, sizeof(double), nCount,
                 z ? padfTargetZ : nullptr, z ? sizeof(double) : 0, z ? nCount : 0,
                 t ? padfTargetT : nullptr, t ? sizeof(double) : 0, t ? nCount : 0);
-            err == ( static_cast<int>(nRet) == nCount ) ?
+            err = ( static_cast<int>(nRet) == nCount ) ?
                     0 : proj_context_errno(ctx);
+            if( err == 0 )
             {
                 for( int i = 0; i < nCount; i++ )
                 {
@@ -1630,7 +1632,7 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                                 y, sizeof(double), nCount,
                                 z, z ? sizeof(double) : 0, z ? nCount : 0,
                                 t, t ? sizeof(double) : 0, t ? nCount : 0);
-        err == ( static_cast<int>(nRet) == nCount ) ?
+        err = ( static_cast<int>(nRet) == nCount ) ?
                     0 : proj_context_errno(ctx);
     }
 
