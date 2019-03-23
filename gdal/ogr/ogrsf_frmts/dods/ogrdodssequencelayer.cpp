@@ -920,7 +920,7 @@ bool OGRDODSSequenceLayer::ProvideDataDDS()
         }
     }
 
-    return poTargetVar != nullptr;
+    return true;
 }
 
 /* IEEE Constants:
