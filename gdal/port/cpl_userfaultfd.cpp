@@ -273,6 +273,8 @@ static void cpl_uffd_fault_handler(void * ptr)
             // Step 5.  Solution: Cannot unregister special handlers before
             // any such threads have been handled by them, so sleep for
             // 1/100th of a second.
+            // Coverity complains about sleeping under a mutex
+            // coverity[sleep]
             usleep(10000);
             if (sigaction(SIGSEGV, &old_segv, nullptr) == -1) {
                 CPLError(CE_Failure, CPLE_AppDefined,
