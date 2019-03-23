@@ -124,7 +124,8 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
         for( dv_i = poExtraContainers->attr_begin();
              dv_i != poExtraContainers->attr_end(); dv_i++ )
         {
-            const char *pszTargetName=poExtraContainers->get_attr(dv_i).c_str();
+            auto osTargetName(poExtraContainers->get_attr(dv_i));
+            const char *pszTargetName = osTargetName.c_str();
             BaseType *poExtraTarget = poDS->poDDS->var( pszTargetName );
 
             if( poExtraTarget == nullptr )
