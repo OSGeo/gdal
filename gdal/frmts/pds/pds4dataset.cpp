@@ -3073,18 +3073,18 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
                 psMC = CPLCreateXMLElementAndValue(nullptr,
                     (osPrefix + "missing_constant").c_str(),
                     CPLSPrintf("%.18g", dfNoData));
+                CPLXMLNode* psNext;
                 if( psSaturatedConstant )
                 {
-                    CPLXMLNode* psNext = psSaturatedConstant->psNext;
+                    psNext = psSaturatedConstant->psNext;
                     psSaturatedConstant->psNext = psMC;
-                    psMC->psNext = psNext;
                 }
                 else
                 {
-                    CPLXMLNode* psNext = psTemplateSpecialConstants->psChild;
+                    psNext = psTemplateSpecialConstants->psChild;
                     psTemplateSpecialConstants->psChild = psMC;
-                    psMC->psNext = psNext;
                 }
+                psMC->psNext = psNext;
             }
         }
     }
