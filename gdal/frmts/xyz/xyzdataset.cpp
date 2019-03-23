@@ -1281,7 +1281,7 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy imagery                                                    */
 /* -------------------------------------------------------------------- */
-    char szFormat[32] = { '\0' };
+    char szFormat[50] = { '\0' };
     if (eReqDT == GDT_Int32)
         strcpy(szFormat, "%.18g%c%.18g%c%d\n");
     else
