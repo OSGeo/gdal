@@ -1892,7 +1892,7 @@ CPLString OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
     char  szUpcase[OWTEXT];
     char* pszIn = nullptr;
 
-    strcpy( szUpcase, pszInsert );
+    snprintf( szUpcase, sizeof(szUpcase), "%s", pszInsert );
 
     for( pszIn = szUpcase; *pszIn != '\0'; pszIn++ )
     {
