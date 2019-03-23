@@ -380,10 +380,10 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       break;
 
       case dods_float32_c:
-        return dynamic_cast<Float32 *>(poBT)->value();
+        return cpl::down_cast<Float32 *>(poBT)->value();
 
       case dods_float64_c:
-        return dynamic_cast<Float64 *>(poBT)->value();
+        return cpl::down_cast<Float64 *>(poBT)->value();
 
       case dods_str_c:
       case dods_url_c:
