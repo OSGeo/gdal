@@ -538,10 +538,12 @@ bool OGRDODSGridLayer::ProvideDataDDS()
         BaseType *poTarget = poDataDDS->var( poRef->pszName );
 
         // Reset ref array pointer to point in DataDDS result.
+        poRef->poArray = nullptr;
         if( poTarget->type() == dods_grid_c )
         {
             Grid *poGrid = dynamic_cast<Grid *>( poTarget );
-            poRef->poArray = dynamic_cast<Array *>(poGrid->array_var());
+            if( poGrid )
+                poRef->poArray = dynamic_cast<Array *>(poGrid->array_var());
 
             if( iArray == 0 )
                 poTargetGrid = poGrid;
@@ -550,7 +552,8 @@ bool OGRDODSGridLayer::ProvideDataDDS()
         {
             poRef->poArray = dynamic_cast<Array *>( poTarget );
         }
-        else
+
+        if( !(poRef->poArray) )
         {
             CPLAssert( false );
             return false;
