@@ -194,7 +194,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
 {
-    char szBasename[20];
+    char szBasename[32];
     char *pszFilename;
     AIGTileInfo *psTInfo;
     const size_t nFilenameLen = strlen(psInfo->pszCoverName)+40;
