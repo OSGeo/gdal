@@ -3784,7 +3784,7 @@ bool GeoRasterWrapper::GeneratePyramid( int nLevels,
 //                                                            GeneratePyramid()
 //  ---------------------------------------------------------------------------
 
-bool GeoRasterWrapper::DeletePyramid()
+void GeoRasterWrapper::DeletePyramid()
 {
     OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
@@ -3802,10 +3802,9 @@ bool GeoRasterWrapper::DeletePyramid()
             sColumn.c_str(),
             sWhere.c_str() ) );
 
-    poStmt->Execute();
+    CPL_IGNORE_RET_VAL(poStmt->Execute());
 
     delete poStmt;
-    return false;
 }
 
 //  ---------------------------------------------------------------------------
