@@ -687,7 +687,7 @@ CPLErr BAGSuperGridBand::IReadBlock( int, int nBlockYOff,
     H5OFFSET_TYPE offset[2] = {
         static_cast<H5OFFSET_TYPE>(0),
         static_cast<H5OFFSET_TYPE>(poGDS->m_nSuperGridRefinementStartIndex +
-                        (nRasterYSize - 1 - nBlockYOff) * nBlockXSize)
+            static_cast<H5OFFSET_TYPE>(nRasterYSize - 1 - nBlockYOff) * nBlockXSize)
     };
     hsize_t count[2] = {1, static_cast<hsize_t>(nBlockXSize)};
     {
@@ -4232,8 +4232,8 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
                     }
 
                     H5OFFSET_TYPE offset[2] = {
-                        static_cast<H5OFFSET_TYPE>(iY * nBlockYSize),
-                        static_cast<H5OFFSET_TYPE>(iX * nBlockXSize)
+                        static_cast<H5OFFSET_TYPE>(iY) * static_cast<H5OFFSET_TYPE>(nBlockYSize),
+                        static_cast<H5OFFSET_TYPE>(iX) * static_cast<H5OFFSET_TYPE>(nBlockXSize)
                     };
                     hsize_t count[2] = {
                         static_cast<hsize_t>(nReqCountY),
