@@ -279,7 +279,8 @@ NCSEcwReadStatus ECWAsyncReader::RefreshCB( NCSFileView *pFileView )
         if( !poReader->bComplete )
             poReader->bUpdateReady = TRUE;
 
-        if( psVSI->nBlocksAvailable == psVSI->nBlocksInView )
+        if( psVSI != nullptr &&
+            psVSI->nBlocksAvailable == psVSI->nBlocksInView )
             poReader->bComplete = TRUE;
     }
 
