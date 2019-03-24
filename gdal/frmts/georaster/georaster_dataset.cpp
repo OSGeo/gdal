@@ -2331,6 +2331,8 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
 
     if( poStmt->Execute() && nCounter > 0 )
     {
+        delete poStmt;
+
         poStmt = poConnection->CreateStatement( CPLSPrintf(
             "SELECT SRID FROM MDSYS.CS_SRS WHERE WKTEXT = '%s'", pszCloneWKT));
 
@@ -2342,6 +2344,7 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
             
             poGeoRaster->SetGeoReference( nNewSRID );
             CPLFree( pszCloneWKT );
+            delete poStmt;
             return CE_None;
         }
     }
