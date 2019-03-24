@@ -1185,12 +1185,12 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     char szStringId[OWTEXT];
 
-    strcpy( szStringId, CPLSPrintf( "georaster:%s,%s,%s,%s,%lld",
+    snprintf( szStringId, sizeof(szStringId), "georaster:%s,%s,%s,%s,%lld",
         poGRW->poConnection->GetUser(),
         poGRW->poConnection->GetPassword(),
         poGRW->poConnection->GetServer(),
         poGRW->sDataTable.c_str(),
-        poGRW->nRasterId ) );
+        poGRW->nRasterId );
 
     delete poGRD;
 
