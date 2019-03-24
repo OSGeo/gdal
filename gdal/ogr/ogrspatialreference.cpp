@@ -9527,6 +9527,12 @@ OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
 OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
 {
+    if( strlen(pszProj4) >= 10000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long PROJ string");
+        return OGRERR_CORRUPT_DATA;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
