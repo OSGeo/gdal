@@ -603,12 +603,12 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
         if ( pszDescription  )
         {
-            strcpy( szDescription, pszDescription );
+            snprintf( szDescription, sizeof(szDescription), "%s", pszDescription );
         }
         else
         {
-            strcpy( szDescription, CPLSPrintf(
-                "(%s MDSYS.SDO_GEORASTER)", sColumn.c_str() ) );
+             snprintf( szDescription, sizeof(szDescription), 
+                "(%s MDSYS.SDO_GEORASTER)", sColumn.c_str() );
         }
 
         //  ---------------------------------------------------------------
