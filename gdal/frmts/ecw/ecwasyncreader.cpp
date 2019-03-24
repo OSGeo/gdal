@@ -199,11 +199,6 @@ ECWAsyncReader::ECWAsyncReader()
 {
     hMutex = CPLCreateMutex();
     CPLReleaseMutex( hMutex );
-
-    poFileView = nullptr;
-    bUpdateReady = FALSE;
-    bComplete = FALSE;
-    panBandMap = nullptr;
 }
 
 /************************************************************************/
