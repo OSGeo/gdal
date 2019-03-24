@@ -298,7 +298,8 @@ FITSDataset::FITSDataset():
     bNoDataSet(false),
     dfNoDataValue(-9999.0),
     bMetadataChanged(false),
-    bGeoTransformValid(false)
+    bGeoTransformValid(false),
+    bFITSInfoChanged(false)
 {
     oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 }
