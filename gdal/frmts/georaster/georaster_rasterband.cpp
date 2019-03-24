@@ -876,7 +876,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     OWStatement* poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
         "SELECT %s FROM %s", osColumnList.c_str(), l_pszVATName ) );
 
-    char** papszValue = (char**) CPLCalloc( sizeof(char**), iCol + 1 );
+    char** papszValue = (char**) CPLCalloc( sizeof(char*), iCol + 1 );
 
     int i = 0;
 
