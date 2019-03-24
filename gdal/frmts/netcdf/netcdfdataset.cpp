@@ -3937,12 +3937,12 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
                     CPLString osTMP;
                     osTMP.Printf("NETCDF:\"%s\":%s",
                                  osFilename.c_str(), pszGeolocXFullName);
-                    CPLFree(pszGeolocXFullName);
+
                     SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
                     SetMetadataItem("X_BAND", "1" , "GEOLOCATION");
                     osTMP.Printf("NETCDF:\"%s\":%s",
                                  osFilename.c_str(), pszGeolocYFullName);
-                    CPLFree(pszGeolocYFullName);
+
                     SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
                     SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
 
@@ -3958,6 +3958,8 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
                              "lat/lon variables specified by the coordinates "
                              "attribute [%s]", pszTemp);
                 }
+                CPLFree(pszGeolocXFullName);
+                CPLFree(pszGeolocYFullName);
             }
             else
             {
