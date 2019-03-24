@@ -110,6 +110,7 @@ GeoRasterWrapper::GeoRasterWrapper() :
     nGCPCount           = 0;
     bFlushGCP           = false;
     memset(&sCInfo, 0, sizeof(sCInfo));
+    memset(&sDInfo, 0, sizeof(sDInfo));
     memset(&sJErr, 0, sizeof(sJErr));
 }
 
