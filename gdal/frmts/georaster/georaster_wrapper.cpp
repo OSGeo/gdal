@@ -2393,6 +2393,7 @@ void GeoRasterWrapper::GetSpatialReference()
     {
         adfPCoef[i] = CPLAtof( papszCeoff[i] );
     }
+    CSLDestroy(papszCeoff);
 
     phPolynomial = CPLGetXMLNode( phPolyModel, "rPolynomial" );
 
