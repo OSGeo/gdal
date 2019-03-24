@@ -2455,7 +2455,6 @@ CPLErr GeoRasterDataset::Delete( const char* pszFilename )
 void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
 {
     OWConnection* poConnection  = poGRW->poConnection;
-    OWStatement* poStmt = nullptr;
 
     //  -----------------------------------------------------------
     //  List all the GeoRaster Tables of that User/Database
@@ -2464,7 +2463,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     if( poGRW->sTable.empty() &&
         poGRW->sColumn.empty() )
     {
-        poStmt = poConnection->CreateStatement(
+        OWStatement* poStmt = poConnection->CreateStatement(
             "SELECT   DISTINCT TABLE_NAME, OWNER FROM ALL_SDO_GEOR_SYSDATA\n"
             "  ORDER  BY TABLE_NAME ASC" );
         
@@ -2495,6 +2494,8 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
             while( poStmt->Fetch() );
         }
 
+        delete poStmt;
+
         return;
     }
 
@@ -2505,7 +2506,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     if( ! poGRW->sTable.empty() &&
           poGRW->sColumn.empty() )
     {
-        poStmt = poConnection->CreateStatement( CPLSPrintf(
+        OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
             "SELECT   DISTINCT COLUMN_NAME, OWNER FROM ALL_SDO_GEOR_SYSDATA\n"
             "  WHERE  TABLE_NAME = UPPER('%s')\n"
             "  ORDER  BY COLUMN_NAME ASC",
@@ -2539,7 +2540,9 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
             }
             while( poStmt->Fetch() );
         }
-        
+
+        delete poStmt;
+
         return;
     }
 
@@ -2554,7 +2557,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         osAndWhere = CPLSPrintf( "AND %s", poGRW->sWhere.c_str() );
     }
 
-    poStmt = poConnection->CreateStatement( CPLSPrintf(
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
         "SELECT T.%s.RASTERDATATABLE, T.%s.RASTERID, \n"
         "  extractValue(t.%s.metadata, "
 "'/georasterMetadata/rasterInfo/dimensionSize[@type=\"ROW\"]/size','%s'),\n"
