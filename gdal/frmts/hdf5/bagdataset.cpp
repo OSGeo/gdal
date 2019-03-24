@@ -2945,7 +2945,14 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
 
     const char* pszSUPERGRIDS = CSLFetchNameValue(l_papszOpenOptions,
                                                   "SUPERGRIDS_INDICES");
-    std::set<std::pair<int,int>> oSupergrids;
+    struct yx {
+        int y;
+        int x;
+        yx(int yin, int xin): y(yin), x(xin) {}
+        bool operator<(const yx& other) const {
+            return y < other.y || (y == other.y && x < other.x); }
+    };
+    std::set<yx> oSupergrids;
     int nMinX = 0;
     int nMinY = 0;
     int nMaxX = m_nLowResWidth - 1;
@@ -3000,7 +3007,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                 {
                     int nX = atoi(pszSUPERGRIDS + i);
                     bNextIsX = false;
-                    oSupergrids.insert(std::pair<int,int>(nY, nX));
+                    oSupergrids.insert(yx(nY, nX));
                     bHasX = true;
                 }
                 else if( (bHasX || bHasY) && pszSUPERGRIDS[i] >= '0' &&
@@ -3036,22 +3043,22 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         }
 
         bool bFirst = true;
-        for( const auto& oPair: oSupergrids )
+        for( const auto& yxPair: oSupergrids )
         {
             if( bFirst )
             {
-                nMinX = oPair.second;
-                nMaxX = oPair.second;
-                nMinY = oPair.first;
-                nMaxY = oPair.first;
+                nMinX = yxPair.x;
+                nMaxX = yxPair.x;
+                nMinY = yxPair.y;
+                nMaxY = yxPair.y;
                 bFirst = false;
             }
             else
             {
-                nMinX = std::min(nMinX, oPair.second);
-                nMaxX = std::max(nMaxX, oPair.second);
-                nMinY = std::min(nMinY, oPair.first);
-                nMaxY = std::max(nMaxY, oPair.first);
+                nMinX = std::min(nMinX, yxPair.x);
+                nMaxX = std::max(nMaxX, yxPair.x);
+                nMinY = std::min(nMinY, yxPair.y);
+                nMaxY = std::max(nMaxY, yxPair.y);
             }
         }
     }
@@ -3208,7 +3215,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                         const double dfMaxY = dfMinY + rgrid.nHeight * rgrid.fResY;
 
                         if( (oSupergrids.empty() ||
-                            oSupergrids.find(std::pair<int,int>(
+                            oSupergrids.find(yx(
                                 static_cast<int>(y), static_cast<int>(x))) !=
                                     oSupergrids.end()) &&
                             (!bHasBoundingBoxFilter ||
