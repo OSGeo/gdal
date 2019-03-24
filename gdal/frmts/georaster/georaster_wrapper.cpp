@@ -1840,12 +1840,7 @@ bool GeoRasterWrapper::InitializeIO( void )
     //  Issue a statement to load the locators
     //  --------------------------------------------------------------------
 
-    const char* pszUpdate = "";
-
-    if( bUpdate )
-    {
-        pszUpdate = CPLStrdup( "\nFOR UPDATE" );
-    }
+    const char* pszUpdate = bUpdate ? "\nFOR UPDATE" : "";
 
     poBlockStmt = poConnection->CreateStatement( CPLSPrintf(
         "SELECT RASTERBLOCK\n"
