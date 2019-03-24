@@ -2185,9 +2185,11 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
         char* pszStart = nullptr;
 
         CPLFree( pszCloneWKT );
+        pszCloneWKT = nullptr;
 
         if( poSRS2->exportToWkt( &pszCloneWKT ) != OGRERR_NONE )
         {
+            CPLFree(pszCloneWKT);
             return CE_Failure;
         }
 
