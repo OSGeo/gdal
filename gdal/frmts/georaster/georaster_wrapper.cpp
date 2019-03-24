@@ -385,22 +385,22 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
 
     if( ! poGRW->sOwner.empty() )
     {
-      strcpy( szOwner, poGRW->sOwner.c_str() );
+      snprintf( szOwner, sizeof(szOwner), "%s", poGRW->sOwner.c_str() );
     }
 
     if( ! poGRW->sTable.empty() )
     {
-      strcpy( szTable, poGRW->sTable.c_str() );
+      snprintf( szTable, sizeof(szTable), "%s", poGRW->sTable.c_str() );
     }
 
     if( ! poGRW->sColumn.empty() )
     {
-      strcpy( szColumn, poGRW->sColumn.c_str() );
+      snprintf( szColumn, sizeof(szColumn), "%s", poGRW->sColumn.c_str() );
     }
 
     if( ! poGRW->sDataTable.empty() )
     {
-      strcpy( szDataTable, poGRW->sDataTable.c_str() );
+      snprintf( szDataTable, sizeof(szDataTable), "%s", poGRW->sDataTable.c_str() );
     }
 
     nRasterId = poGRW->nRasterId;
