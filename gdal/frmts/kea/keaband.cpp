@@ -194,7 +194,10 @@ CPLErr KEARasterBand::SetHistogramFromString(const char *pszString)
     if( nCol == -1 )
     {
         if( pTable->CreateColumn("Histogram", GFT_Real, GFU_PixelCount) != CE_None )
+        {
+            CPLFree(pszBinValues);
             return CE_Failure;
+        }
 
         nCol = pTable->GetColumnCount() - 1;
     }
