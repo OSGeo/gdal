@@ -559,12 +559,12 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 
           case dods_float32_c:
             poFeature->SetField( iField,
-                                 dynamic_cast<Float32 *>(poFieldVar)->value());
+                                 cpl::down_cast<Float32 *>(poFieldVar)->value());
             break;
 
           case dods_float64_c:
             poFeature->SetField( iField,
-                                 dynamic_cast<Float64 *>(poFieldVar)->value());
+                                 cpl::down_cast<Float64 *>(poFieldVar)->value());
             break;
 
           case dods_str_c:
