@@ -483,7 +483,10 @@ CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
                 else if( EQUAL( pszName, "STATISTICS_HISTOBINVALUES" ) )
                 {
                     if( this->SetHistogramFromString(pszValue) != CE_None )
+                    {
+                        CPLFree(pszName);
                         return CE_Failure;
+                    }
                 }
                 else
                 {
