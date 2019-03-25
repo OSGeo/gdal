@@ -8421,6 +8421,9 @@ void OSRFreeSRSArray(OGRSpatialReferenceH* pahSRS)
  * @return OGRERR_NONE on success.
  */
 
+#define STRINGIFY(s) #s
+#define XSTRINGIFY(s) STRINGIFY(s)
+
 OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
                                         double dfEX, double dfEY, double dfEZ,
                                         double dfPPM )
@@ -8445,9 +8448,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[0].name = EPSG_NAME_PARAMETER_X_AXIS_TRANSLATION;
     params[0].auth_name = "EPSG";
-    CPLString osCode0;
-    osCode0.Printf("%d", EPSG_CODE_PARAMETER_X_AXIS_TRANSLATION);
-    params[0].code = osCode0.c_str();
+    params[0].code = XSTRINGIFY(EPSG_CODE_PARAMETER_X_AXIS_TRANSLATION);
     params[0].value = dfDX;
     params[0].unit_name = "metre";
     params[0].unit_conv_factor = 1.0;
@@ -8455,9 +8456,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[1].name = EPSG_NAME_PARAMETER_Y_AXIS_TRANSLATION;
     params[1].auth_name = "EPSG";
-    CPLString osCode1;
-    osCode1.Printf("%d", EPSG_CODE_PARAMETER_Y_AXIS_TRANSLATION);
-    params[1].code = osCode1.c_str();
+    params[1].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Y_AXIS_TRANSLATION);
     params[1].value = dfDY;
     params[1].unit_name = "metre";
     params[1].unit_conv_factor = 1.0;
@@ -8465,9 +8464,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[2].name = EPSG_NAME_PARAMETER_Z_AXIS_TRANSLATION;
     params[2].auth_name = "EPSG";
-    CPLString osCode2;
-    osCode2.Printf("%d", EPSG_CODE_PARAMETER_Z_AXIS_TRANSLATION);
-    params[2].code = osCode2.c_str();
+    params[2].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Z_AXIS_TRANSLATION);
     params[2].value = dfDZ;
     params[2].unit_name = "metre";
     params[2].unit_conv_factor = 1.0;
@@ -8475,9 +8472,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[3].name = EPSG_NAME_PARAMETER_X_AXIS_ROTATION;
     params[3].auth_name = "EPSG";
-    CPLString osCode3;
-    osCode3.Printf("%d", EPSG_CODE_PARAMETER_X_AXIS_ROTATION);
-    params[3].code = osCode3.c_str();
+    params[3].code = XSTRINGIFY(EPSG_CODE_PARAMETER_X_AXIS_ROTATION);
     params[3].value = dfEX;
     params[3].unit_name = "arc-second";
     params[3].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8485,9 +8480,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[4].name = EPSG_NAME_PARAMETER_Y_AXIS_ROTATION;
     params[4].auth_name = "EPSG";
-    CPLString osCode4;
-    osCode4.Printf("%d", EPSG_CODE_PARAMETER_Y_AXIS_ROTATION);
-    params[4].code = osCode4.c_str();
+    params[4].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Y_AXIS_ROTATION);
     params[4].value = dfEY;
     params[4].unit_name = "arc-second";
     params[4].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8495,9 +8488,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[5].name = EPSG_NAME_PARAMETER_Z_AXIS_ROTATION;
     params[5].auth_name = "EPSG";
-    CPLString osCode5;
-    osCode5.Printf("%d", EPSG_CODE_PARAMETER_Z_AXIS_ROTATION);
-    params[5].code = osCode5.c_str();
+    params[5].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Z_AXIS_ROTATION);
     params[5].value = dfEZ;
     params[5].unit_name = "arc-second";
     params[5].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8505,9 +8496,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[6].name = EPSG_NAME_PARAMETER_SCALE_DIFFERENCE;
     params[6].auth_name = "EPSG";
-    CPLString osCode6;
-    osCode6.Printf("%d", EPSG_CODE_PARAMETER_SCALE_DIFFERENCE);
-    params[6].code = osCode6.c_str();
+    params[6].code = XSTRINGIFY(EPSG_CODE_PARAMETER_SCALE_DIFFERENCE);
     params[6].value = dfPPM;
     params[6].unit_name = "parts per million";
     params[6].unit_conv_factor = 1e-6;
