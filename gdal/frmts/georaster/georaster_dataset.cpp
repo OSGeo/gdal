@@ -2101,6 +2101,7 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
     const char* const apszOptions[] = { "FORMAT=SFSQL", nullptr };
     if( poSRS2->exportToWkt( &pszCloneWKT, apszOptions ) != OGRERR_NONE )
     {
+        CPLFree(pszCloneWKT);
         return CE_Failure;
     }
     
