@@ -2703,6 +2703,7 @@ void GeoRasterWrapper::GetRPC()
 
     if( CSLCount( papszCeoff ) != 20 )
     {
+        CSLDestroy(papszCeoff);
         return;
     }
 
@@ -2724,6 +2725,7 @@ void GeoRasterWrapper::GetRPC()
     {
         phRPC->adfLINE_NUM_COEFF[anOrder[i] - 1] = CPLAtof( papszCeoff[i] );
     }
+    CSLDestroy(papszCeoff);
 
     // qPolynomial refers to LINE_DEN
 
@@ -2751,6 +2753,7 @@ void GeoRasterWrapper::GetRPC()
     {
         CPLFree( phRPC );
         phRPC = nullptr;
+        CSLDestroy(papszCeoff);
         return;
     }
 
@@ -2758,6 +2761,7 @@ void GeoRasterWrapper::GetRPC()
     {
         phRPC->adfLINE_DEN_COEFF[anOrder[i] - 1] = CPLAtof( papszCeoff[i] );
     }
+    CSLDestroy(papszCeoff);
 
     // rPolynomial refers to SAMP_NUM
 
