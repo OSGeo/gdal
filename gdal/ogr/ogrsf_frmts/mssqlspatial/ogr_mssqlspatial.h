@@ -353,6 +353,9 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     OGRErr              CreateSpatialIndex();
     void                DropSpatialIndex();
 
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) override { return GetExtent(0, psExtent, bForce); }
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override;
+
     virtual void        ResetReading() override;
     virtual GIntBig     GetFeatureCount( int ) override;
 
@@ -443,6 +446,14 @@ class OGRMSSQLSpatialSelectLayer final: public OGRMSSQLSpatialLayer
 
 class OGRMSSQLSpatialDataSource final: public OGRDataSource
 {
+    typedef struct
+    {
+        int nMajor;
+        int nMinor;
+        int nBuild;
+        int nRevision;
+    } MSSQLVer;
+
     OGRMSSQLSpatialTableLayer    **papoLayers;
     int                 nLayers;
 
@@ -471,9 +482,13 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
 
     OGRMSSQLSpatialTableLayer *poLayerInCopyMode;
 
+    static void               OGRMSSQLDecodeVersionString(MSSQLVer* psVersion, const char* pszVer);
+
     char                *pszConnection;
 
-  public:
+public:
+    MSSQLVer            sMSSQLVersion;
+
                         OGRMSSQLSpatialDataSource();
                         virtual ~OGRMSSQLSpatialDataSource();
 
