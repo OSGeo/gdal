@@ -2314,9 +2314,11 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
         {
             poGeoRaster->SetGeoReference( nNewSRID );
             CPLFree( pszCloneWKT );
+            delete poStmt;
             return CE_None;
         }
     }
+    delete poStmt;
 
     // --------------------------------------------------------------------
     // Search by simplified WKT or insert it as a user defined SRS
