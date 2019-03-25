@@ -2384,6 +2384,7 @@ void GeoRasterWrapper::GetSpatialReference()
 
     if( CSLCount( papszCeoff ) < 3 )
     {
+        CSLDestroy(papszCeoff);
         return;
     }
 
