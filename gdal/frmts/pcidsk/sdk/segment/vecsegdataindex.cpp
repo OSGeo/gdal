@@ -36,6 +36,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdio>
+#include <limits>
 
 using namespace PCIDSK;
 
@@ -100,6 +101,11 @@ void VecSegDataIndex::Initialize( CPCIDSKVectorSegment *vsIn, int sectionIn )
         SwapData( &bytes, 4, 1 );
     }
 
+    if( block_count > (std::numeric_limits<uint32>::max() - 8) /4 )
+    {
+        throw PCIDSKException("Invalid block_count: %u", block_count);
+    }
+
     size_on_disk = block_count * 4 + 8;
 }
 
@@ -127,6 +133,9 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
     {
         bool needs_swap = !BigEndianSystem();
 
+        auto offset = offset_on_disk_within_section
+                              + vs->vh.section_offsets[hsec_shape] + 8;
+        vs->CheckFileBigEnough ( offset + 4 * block_count );
         try
         {
             block_index.resize( block_count );
@@ -139,8 +148,7 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
         if( block_count > 0 )
         {
             vs->ReadFromFile( &(block_index[0]), 
-                              offset_on_disk_within_section
-                              + vs->vh.section_offsets[hsec_shape] + 8, 
+                              offset,
                               4 * block_count );
 
             if( needs_swap )

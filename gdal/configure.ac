@@ -1194,7 +1194,7 @@ AC_ARG_WITH(proj,[  --with-proj=ARG Compile with PROJ.x (ARG=yes or path)],,)
 PROJ_INCLUDE=""
 if test "x$with_proj" = "xno" ; then
 
-  AC_MSG_ERROR([PROJ 6 is a required dependency.])
+  AC_MSG_ERROR([PROJ >= 6 is a required dependency.])
 
 else
 
@@ -2929,7 +2929,7 @@ AC_SUBST([NETCDF_SETTING], [$NETCDF_SETTING])
 
 if test "$NETCDF_SETTING" != "no" ; then
 
-   AC_CHECK_HEADERS([$NETCDF_INCLUDEDIR/netcdf_mem.h], [NETCDF_MEM=yes], [NETCDF_MEM=no],)
+   AC_CHECK_HEADERS([$NETCDF_INCLUDEDIR/netcdf_mem.h], [NETCDF_MEM=yes], [NETCDF_MEM=no], [#include <$NETCDF_INCLUDEDIR/netcdf.h>])
 
    AC_SUBST([NETCDF_MEM], [$NETCDF_MEM])
    AC_SUBST([NETCDF_ROOT], [$NETCDF_ROOT])

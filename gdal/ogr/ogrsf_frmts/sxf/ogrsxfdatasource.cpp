@@ -502,23 +502,23 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
         return;
     }
 
-    OGRSpatialReference* sr = new OGRSpatialReference();
-    sr->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    OGRErr eImportFromEPSGErr = sr->importFromEPSG(nEPSG);
+    OGRSpatialReference sr;
+    sr.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    OGRErr eImportFromEPSGErr = sr.importFromEPSG(nEPSG);
     if (eImportFromEPSGErr != OGRERR_NONE)
     {
         CPLError( CE_Warning, CPLE_None, "SXF. Vertical coordinate system (SXF index %ld, EPSG %d) import from EPSG error", iVCS, nEPSG);
         return;
     }
 
-    if (sr->IsVertical() != 1)
+    if (sr.IsVertical() != 1)
     {
         CPLError( CE_Warning, CPLE_None, "SXF. Coordinate system (SXF index %ld, EPSG %d) is not Vertical", iVCS, nEPSG);
         return;
     }
 
     //passport.stMapDescription.pSpatRef->SetVertCS("Baltic", "Baltic Sea");
-    OGRErr eSetVertCSErr = passport.stMapDescription.pSpatRef->SetVertCS(sr->GetAttrValue("VERT_CS"), sr->GetAttrValue("VERT_DATUM"));
+    OGRErr eSetVertCSErr = passport.stMapDescription.pSpatRef->SetVertCS(sr.GetAttrValue("VERT_CS"), sr.GetAttrValue("VERT_DATUM"));
     if (eSetVertCSErr != OGRERR_NONE)
     {
         CPLError(CE_Warning, CPLE_None, "SXF. Vertical coordinate system (SXF index %ld, EPSG %d) set error", iVCS, nEPSG);

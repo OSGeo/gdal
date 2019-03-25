@@ -190,8 +190,10 @@ considered as a source alpha band. </dd>
 considered as such (it will be warped as a regular band) (GDAL>=2.2). </dd>
 <dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify
 nodata (unset/transparent) pixels. </dd>
-<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
-megabytes) that the warp API is allowed to use for caching.</dd>
+<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory that the
+warp API is allowed to use for caching. The value is interpreted as being
+in megabytes if the value is less than 10000. For values &gt;=10000, this is
+interpreted as bytes.</dd>
 <dt> <b>-multi</b>:</dt><dd> Use multithreaded warping implementation.
 Two threads will be used to process chunks of image and perform
 input/output operation simultaneously. Note that computation is not

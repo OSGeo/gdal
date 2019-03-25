@@ -2762,6 +2762,7 @@ OSMContext* OSM_Open( const char* pszFilename,
     if( nNumCPUs > 1 )
     {
         psCtxt->poWTP = new CPLWorkerThreadPool();
+        // coverity[tainted_data]
         if( !psCtxt->poWTP->Setup(nNumCPUs , nullptr, nullptr) )
         {
             delete psCtxt->poWTP;

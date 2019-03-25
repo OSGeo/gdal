@@ -451,6 +451,9 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 gmlType = GMLPT_Short;
             else if (EQUAL(pszStrippedNSType, "boolean") )
                 gmlType = GMLPT_Boolean;
+            // TODO: Would be nice to have a binary type.
+            else if (EQUAL(pszStrippedNSType, "hexBinary"))
+                gmlType = GMLPT_String;
             else if (strcmp(pszType, "gml:FeaturePropertyType") == 0 )
             {
                 gmlType = GMLPT_FeatureProperty;

@@ -1150,7 +1150,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
         const char* pszLatitudeType = CPLGetXMLValue(psGeodeticModel,
                                                      "latitude_type",
                                                      "");
-        bool bIsOgraphic = EQUAL(pszLatitudeType, "planetographic");
+        bool bIsOgraphic = EQUAL(pszLatitudeType, "Planetographic");
 
         double dfSemiMajor = GetLinearValue(psGeodeticModel,
                                             "semi_major_radius");
@@ -2525,12 +2525,12 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                                         (osPrefix + "Geodetic_Model").c_str());
     const char* pszLatitudeType =
         CSLFetchNameValueDef(m_papszCreationOptions, "LATITUDE_TYPE",
-                             "planetocentric");
+                             "Planetocentric");
     // Fix case
-    if( EQUAL(pszLatitudeType, "planetocentric") )
-        pszLatitudeType = "planetocentric";
-    else if( EQUAL(pszLatitudeType, "planetographic") )
-        pszLatitudeType = "planetographic";
+    if( EQUAL(pszLatitudeType, "Planetocentric") )
+        pszLatitudeType = "Planetocentric";
+    else if( EQUAL(pszLatitudeType, "Planetographic") )
+        pszLatitudeType = "Planetographic";
     CPLCreateXMLElementAndValue(psGM,
                                 (osPrefix + "latitude_type").c_str(),
                                 pszLatitudeType);
@@ -3073,18 +3073,18 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
                 psMC = CPLCreateXMLElementAndValue(nullptr,
                     (osPrefix + "missing_constant").c_str(),
                     CPLSPrintf("%.18g", dfNoData));
+                CPLXMLNode* psNext;
                 if( psSaturatedConstant )
                 {
-                    CPLXMLNode* psNext = psSaturatedConstant->psNext;
+                    psNext = psSaturatedConstant->psNext;
                     psSaturatedConstant->psNext = psMC;
-                    psMC->psNext = psNext;
                 }
                 else
                 {
-                    CPLXMLNode* psNext = psTemplateSpecialConstants->psChild;
+                    psNext = psTemplateSpecialConstants->psChild;
                     psTemplateSpecialConstants->psChild = psMC;
-                    psMC->psNext = psNext;
                 }
+                psMC->psNext = psNext;
             }
         }
     }
@@ -3681,6 +3681,9 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         return poDS;
     }
 
+    if( nXSize == 0 )
+        return nullptr;
+
     if( !(eType == GDT_Byte || eType == GDT_Int16 || eType == GDT_UInt16 ||
           eType == GDT_Int32 || eType == GDT_UInt32 || eType == GDT_Float32 ||
           eType == GDT_Float64 || eType == GDT_CFloat32 ||
@@ -4217,9 +4220,9 @@ void GDALRegister_PDS4()
     "description='Whether to use source label in PDS4 to PDS4 conversions' "
     "default='YES'/>"
 "  <Option name='LATITUDE_TYPE' type='string-select' scope='raster,vector' "
-    "description='Value of latitude_type' default='planetocentric'>"
-"     <Value>planetocentric</Value>"
-"     <Value>planetographic</Value>"
+    "description='Value of latitude_type' default='Planetocentric'>"
+"     <Value>Planetocentric</Value>"
+"     <Value>Planetographic</Value>"
 "  </Option>"
 "  <Option name='LONGITUDE_DIRECTION' type='string-select' scope='raster,vector' "
     "description='Value of longitude_direction' "

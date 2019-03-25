@@ -2558,7 +2558,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         assert(!adfRates.empty());
     }
 
-    if( poCT != nullptr && (bIsIrreversible || adfRates.back() != 100.0 / 100.0) )
+    if( poCT != nullptr && (bIsIrreversible || adfRates.back() != 1.0) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Encoding a dataset with a color table with REVERSIBLE != YES "

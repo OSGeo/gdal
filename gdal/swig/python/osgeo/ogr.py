@@ -6641,6 +6641,11 @@ class Geometry(_object):
         return _ogr.Geometry_ConvexHull(self, *args)
 
 
+    def MakeValid(self, *args):
+        """MakeValid(Geometry self) -> Geometry"""
+        return _ogr.Geometry_MakeValid(self, *args)
+
+
     def Buffer(self, *args, **kwargs):
         """
         Buffer(Geometry self, double distance, int quadsecs=30) -> Geometry

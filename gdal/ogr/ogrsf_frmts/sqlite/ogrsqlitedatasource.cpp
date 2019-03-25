@@ -798,6 +798,11 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
         return FALSE;
     }
 
+    const char* pszVal = CPLGetConfigOption("SQLITE_BUSY_TIMEOUT", "5000");
+    if ( pszVal != nullptr ) {
+        sqlite3_busy_timeout(hDB, atoi(pszVal));
+    }
+
     if( (flagsIn & SQLITE_OPEN_CREATE) == 0 )
     {
         if( CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ", "NO")) )

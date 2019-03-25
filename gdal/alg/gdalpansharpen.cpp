@@ -259,7 +259,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
         }
     }
 
-    GDALRasterBand* poPanchroBand = reinterpret_cast<GDALRasterBand*>(
+    GDALRasterBand* poPanchroBand = GDALRasterBand::FromHandle(
                                                     psOptionsIn->hPanchroBand);
     GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
     if( psOptionsIn->nBitDepth )
@@ -301,7 +301,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
 
     for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
     {
-        aMSBands.push_back( reinterpret_cast<GDALRasterBand*>(
+        aMSBands.push_back( GDALRasterBand::FromHandle(
                                         psOptions->pahInputSpectralBands[i]) );
     }
 
@@ -310,7 +310,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
         bool bNeedToWrapInVRT = false;
         for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
         {
-            GDALRasterBand* poBand = reinterpret_cast<GDALRasterBand*>(
+            GDALRasterBand* poBand = GDALRasterBand::FromHandle(
                                         psOptions->pahInputSpectralBands[i]);
             int bHasNoData = FALSE;
             double dfNoData = poBand->GetNoDataValue(&bHasNoData);
@@ -381,6 +381,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
     {
         CPLDebug("PANSHARPEN", "Using %d threads", nThreads);
         poThreadPool = new (std::nothrow) CPLWorkerThreadPool();
+        // coverity[tainted_data]
         if( poThreadPool == nullptr ||
             !poThreadPool->Setup( nThreads, nullptr, nullptr ) )
         {
@@ -1050,7 +1051,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion( int nXOff, int nYOff,
         return CE_Failure;
 
     // TODO: Avoid allocating buffers each time.
-    GDALRasterBand* poPanchroBand = reinterpret_cast<GDALRasterBand*>(
+    GDALRasterBand* poPanchroBand = GDALRasterBand::FromHandle(
                                                     psOptions->hPanchroBand);
     GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
 #ifdef LIMIT_TYPES
@@ -1658,51 +1659,51 @@ GDALPansharpenOperation::PansharpenChunk( GDALDataType eWorkDataType,
     switch( eWorkDataType )
     {
         case GDT_Byte:
-            eErr = WeightedBrovey(reinterpret_cast<const GByte*>(pPanBuffer),
-                                  reinterpret_cast<const GByte*>(pUpsampledSpectralBuffer),
+            eErr = WeightedBrovey(static_cast<const GByte*>(pPanBuffer),
+                                  static_cast<const GByte*>(pUpsampledSpectralBuffer),
                                   pDataBuf, eBufDataType,
                                   nValues, nBandValues, static_cast<GByte>(nMaxValue));
             break;
 
         case GDT_UInt16:
-            eErr = WeightedBrovey(reinterpret_cast<const GUInt16*>(pPanBuffer),
-                                  reinterpret_cast<const GUInt16*>(pUpsampledSpectralBuffer),
+            eErr = WeightedBrovey(static_cast<const GUInt16*>(pPanBuffer),
+                                  static_cast<const GUInt16*>(pUpsampledSpectralBuffer),
                                   pDataBuf, eBufDataType,
                                   nValues, nBandValues, static_cast<GUInt16>(nMaxValue));
             break;
 
 #ifndef LIMIT_TYPES
         case GDT_Int16:
-            eErr = WeightedBrovey(reinterpret_cast<const GInt16*>(pPanBuffer),
-                                  reinterpret_cast<const GInt16*>(pUpsampledSpectralBuffer),
+            eErr = WeightedBrovey(static_cast<const GInt16*>(pPanBuffer),
+                                  static_cast<const GInt16*>(pUpsampledSpectralBuffer),
                                   pDataBuf, eBufDataType,
                                   nValues, nBandValues);
             break;
 
         case GDT_UInt32:
-            eErr = WeightedBrovey(reinterpret_cast<const GUInt32*>(pPanBuffer),
-                                  reinterpret_cast<const GUInt32*>(pUpsampledSpectralBuffer),
+            eErr = WeightedBrovey(static_cast<const GUInt32*>(pPanBuffer),
+                                  static_cast<const GUInt32*>(pUpsampledSpectralBuffer),
                                   pDataBuf, eBufDataType,
                                   nValues, nBandValues, nMaxValue);
             break;
 
         case GDT_Int32:
-            eErr = WeightedBrovey(reinterpret_cast<const GInt32*>(pPanBuffer),
-                                  reinterpret_cast<const GInt32*>(pUpsampledSpectralBuffer),
+            eErr = WeightedBrovey(static_cast<const GInt32*>(pPanBuffer),
+                                  static_cast<const GInt32*>(pUpsampledSpectralBuffer),
                                   pDataBuf, eBufDataType,
                                   nValues, nBandValues);
             break;
 
         case GDT_Float32:
-            eErr = WeightedBrovey(reinterpret_cast<const float*>(pPanBuffer),
-                                  reinterpret_cast<const float*>(pUpsampledSpectralBuffer),
+            eErr = WeightedBrovey(static_cast<const float*>(pPanBuffer),
+                                  static_cast<const float*>(pUpsampledSpectralBuffer),
                                   pDataBuf, eBufDataType,
                                   nValues, nBandValues);
             break;
 #endif
         case GDT_Float64:
-            eErr = WeightedBrovey(reinterpret_cast<const double*>(pPanBuffer),
-                                  reinterpret_cast<const double*>(pUpsampledSpectralBuffer),
+            eErr = WeightedBrovey(static_cast<const double*>(pPanBuffer),
+                                  static_cast<const double*>(pUpsampledSpectralBuffer),
                                   pDataBuf, eBufDataType,
                                   nValues, nBandValues);
             break;

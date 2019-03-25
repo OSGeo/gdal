@@ -6487,7 +6487,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         const int iBandBitOffset = iBand * poGDS->nBitsPerSample;
 
         // Bits per line rounds up to next byte boundary.
-        GInt64 nBitsPerLine = nBlockXSize * iPixelBitSkip;
+        GInt64 nBitsPerLine = static_cast<GInt64>(nBlockXSize) * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
@@ -8580,7 +8580,8 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
                     // (if using TIFFWriteEncodedStrip/Tile first,
                     // TIFFWriteBufferSetup() is automatically called).
                     // This should likely rather fixed in libtiff itself.
-                    TIFFWriteBufferSetup(hTIFF, nullptr, -1);
+                    CPL_IGNORE_RET_VAL(
+                        TIFFWriteBufferSetup(hTIFF, nullptr, -1));
                 }
             }
         }

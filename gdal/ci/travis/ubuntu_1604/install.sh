@@ -21,7 +21,7 @@ export LC_ALL=en_US.utf8
 chroot "$chroot" ccache -M 1G
 chroot "$chroot" ccache -s
 
-chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && cd sl && fossil open ../libspatialite.fossil && fossil update 90180e065d && CCACHE_CPP2=yes CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' ./configure --prefix=/usr --disable-geos370 && cd src/stored_procedures && make && cd ../.. && CCACHE_CPP2=yes make -j3"
+chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && cd sl && fossil open ../libspatialite.fossil && CCACHE_CPP2=yes CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' ./configure --prefix=/usr --disable-geos370 && cd src/stored_procedures && make && cd ../.. && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD && cd sl && make -j3 install"
 
 chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && cd rl2 && fossil open ../librasterlite2.fossil && CCACHE_CPP2=yes CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' ./configure --prefix=/usr --disable-lz4 --disable-zstd && CCACHE_CPP2=yes make -j3"

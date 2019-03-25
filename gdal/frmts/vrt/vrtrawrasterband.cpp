@@ -321,10 +321,12 @@ void VRTRawRasterBand::ClearRawLink()
 
 CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
                                   const char *pszVRTPath,
-                                  void* pUniqueHandle )
+                                  void* pUniqueHandle,
+                                  std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
-    const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath, pUniqueHandle );
+    const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath, pUniqueHandle,
+                                                oMapSharedSources );
     if( eErr != CE_None )
         return eErr;
 

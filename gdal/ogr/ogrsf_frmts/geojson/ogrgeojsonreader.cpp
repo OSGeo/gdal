@@ -1458,7 +1458,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             }
         }
 
-        if( STARTS_WITH_CI(pszSrsType, "EPSG") )
+        else if( STARTS_WITH_CI(pszSrsType, "EPSG") )
         {
             json_object* poObjSrsProps =
                 OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
@@ -1481,7 +1481,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             }
         }
 
-        if( STARTS_WITH_CI(pszSrsType, "URL") ||
+        else if( STARTS_WITH_CI(pszSrsType, "URL") ||
             STARTS_WITH_CI(pszSrsType, "LINK")  )
         {
             json_object* poObjSrsProps =
@@ -1510,7 +1510,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             }
         }
 
-        if( EQUAL( pszSrsType, "OGC" ) )
+        else if( EQUAL( pszSrsType, "OGC" ) )
         {
             json_object* poObjSrsProps =
                 OGRGeoJSONFindMemberByName( poObjSrs, "properties" );

@@ -1338,7 +1338,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                 char    *pszWKT = nullptr;
 
                 if (poGeom != nullptr)
-                    poGeom->exportToWkt( &pszWKT );
+                    poGeom->exportToWkt( &pszWKT, wkbVariantIso );
 
                 int nSRSId = poGeomFieldDefn->nSRSId;
                 if( pszWKT != nullptr )
@@ -1776,7 +1776,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             else
             {
                 char    *pszWKT = nullptr;
-                poGeom->exportToWkt( &pszWKT );
+                poGeom->exportToWkt( &pszWKT, wkbVariantIso );
 
                 if( pszWKT != nullptr )
                 {

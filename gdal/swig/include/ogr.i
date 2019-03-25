@@ -2967,6 +2967,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_ConvexHull(self);
   }
 
+  %newobject MakeValid;
+  OGRGeometryShadow* MakeValid() {
+    return (OGRGeometryShadow*) OGR_G_MakeValid(self);
+  }
+
   %newobject Buffer;
 #ifndef SWIGJAVA
   %feature("kwargs") Buffer;

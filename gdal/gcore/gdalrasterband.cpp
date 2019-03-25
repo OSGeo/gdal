@@ -301,14 +301,24 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
         return CE_None;
     }
 
-    if( eRWFlag == GF_Write && eFlushBlockErr != CE_None )
+    if( eRWFlag == GF_Write )
     {
-        ReportError(eFlushBlockErr, CPLE_AppDefined,
-                    "An error occurred while writing a dirty block "
-                    "from GDALRasterBand::RasterIO");
-        CPLErr eErr = eFlushBlockErr;
-        eFlushBlockErr = CE_None;
-        return eErr;
+        if( eFlushBlockErr != CE_None )
+        {
+            ReportError(eFlushBlockErr, CPLE_AppDefined,
+                        "An error occurred while writing a dirty block "
+                        "from GDALRasterBand::RasterIO");
+            CPLErr eErr = eFlushBlockErr;
+            eFlushBlockErr = CE_None;
+            return eErr;
+        }
+        if( eAccess != GA_Update )
+        {
+            ReportError( CE_Failure, CPLE_AppDefined,
+                        "Write operation not permitted on dataset opened "
+                        "in read-only mode" );
+            return CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */

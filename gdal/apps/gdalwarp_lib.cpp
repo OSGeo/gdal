@@ -1960,10 +1960,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 const double dfMinY = adfExtent[1];
                 const double dfMaxX = adfExtent[2];
                 const double dfMaxY = adfExtent[3];
-                if( std::fabs(dfMinX) < INT_MAX/2 &&
-                    std::fabs(dfMinY) < INT_MAX/2 &&
-                    std::fabs(dfMaxX) < INT_MAX/2 &&
-                    std::fabs(dfMaxY) < INT_MAX/2 )
+                const double dfThreshold = static_cast<double>(INT_MAX)/2;
+                if( std::fabs(dfMinX) < dfThreshold &&
+                    std::fabs(dfMinY) < dfThreshold &&
+                    std::fabs(dfMaxX) < dfThreshold &&
+                    std::fabs(dfMaxY) < dfThreshold )
                 {
                     const int nPadding = 5;
                     nWarpDstXOff = std::max(nWarpDstXOff,
@@ -2713,7 +2714,9 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             psOptions->dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
         }
 
-        if ( psOptions->bTargetAlignedPixels )
+        if ( psOptions->bTargetAlignedPixels ||
+             (psOptions->bCropToCutline &&
+              CPLFetchBool(psOptions->papszWarpOptions, "CUTLINE_ALL_TOUCHED", false)) )
         {
             psOptions->dfMinX = floor(psOptions->dfMinX / psOptions->dfXRes) * psOptions->dfXRes;
             psOptions->dfMaxX = ceil(psOptions->dfMaxX / psOptions->dfXRes) * psOptions->dfXRes;

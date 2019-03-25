@@ -453,13 +453,15 @@ def process(argv, progress=None, progress_arg=None):
 
                 writer.open_element('OGRVRTLayer',
                                     attrs={'name': layer_name})
-                attrs = None
+                attrs = {}
                 if EQUAL(output_format, 'VRT') and \
                    os.path.exists(src_dsname) and \
                    not os.path.isabs(src_dsname) and \
                    '/' not in vrt_filename and \
                    '\\' not in vrt_filename:
-                    attrs = {'relativeToVRT': '1'}
+                    attrs['relativeToVRT'] = '1'
+                if single_layer:
+                    attrs['shared'] = '1'
                 writer.write_element_value('SrcDataSource', src_dsname,
                                            attrs=attrs)
                 writer.write_element_value('SrcLayer', src_lyr.GetName())
@@ -550,13 +552,15 @@ def process(argv, progress=None, progress_arg=None):
 
                 writer.open_element('OGRVRTLayer',
                                     attrs={'name': layer_name})
-                attrs = None
+                attrs = {}
                 if EQUAL(output_format, 'VRT') and \
                    os.path.exists(src_dsname) and \
                    not os.path.isabs(src_dsname) and \
                    '/' not in vrt_filename and \
                    '\\' not in vrt_filename:
-                    attrs = {'relativeToVRT': '1'}
+                    attrs['relativeToVRT'] = '1'
+                if single_layer:
+                    attrs['shared'] = '1'
                 writer.write_element_value('SrcDataSource', src_dsname,
                                            attrs=attrs)
                 writer.write_element_value('SrcLayer', src_lyr_name)

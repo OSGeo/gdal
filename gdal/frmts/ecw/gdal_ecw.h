@@ -398,12 +398,12 @@ class ECWDataset;
 class ECWAsyncReader : public GDALAsyncReader
 {
 private:
-    CNCSJP2FileView *poFileView;
-    CPLMutex        *hMutex;
-    int              bUsingCustomStream;
+    CNCSJP2FileView *poFileView = nullptr;
+    CPLMutex        *hMutex = nullptr;
+    int              bUsingCustomStream = false;
 
-    int              bUpdateReady;
-    int              bComplete;
+    int              bUpdateReady = false;
+    int              bComplete = false;
 
     static NCSEcwReadStatus RefreshCB( NCSFileView * );
     NCSEcwReadStatus ReadToBuffer();
@@ -626,8 +626,8 @@ class ECWRasterBand : public GDALPamRasterBand
 
 #if ECWSDK_VERSION>=50
 
-    int nStatsBandIndex;
-    int nStatsBandCount;
+    int nStatsBandIndex = 0;
+    int nStatsBandCount = 0;
 
 #endif
 

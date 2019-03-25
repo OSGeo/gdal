@@ -532,7 +532,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
 
             VRTRasterBand  *poBand = InitBand(pszSubclass, 0, false);
             if( poBand != nullptr
-                && poBand->XMLInit( psChild, pszVRTPathIn, this ) == CE_None )
+                && poBand->XMLInit( psChild, pszVRTPathIn, this,
+                                    m_oMapSharedSources ) == CE_None )
             {
                 SetMaskBand(poBand);
                 break;
@@ -559,7 +560,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
 
             VRTRasterBand  *poBand = InitBand(pszSubclass, l_nBands+1, true);
             if( poBand != nullptr
-                && poBand->XMLInit( psChild, pszVRTPathIn, this ) == CE_None )
+                && poBand->XMLInit( psChild, pszVRTPathIn, this,
+                                    m_oMapSharedSources ) == CE_None )
             {
                 l_nBands ++;
                 SetBand( l_nBands, poBand );
@@ -1801,6 +1803,8 @@ void VRTDataset::BuildVirtualOverviews()
             return;
         if( iBand == 0 )
         {
+            if( poSrcBand->GetXSize() == 0 || poSrcBand->GetYSize() == 0 )
+                return;
             poFirstBand = poSrcBand;
             nOverviews = nOvrCount;
         }
@@ -1810,10 +1814,13 @@ void VRTDataset::BuildVirtualOverviews()
 
     for( int j = 0; j < nOverviews; j++)
     {
+        auto poOvrBand = poFirstBand->GetOverview(j);
+        if( !poOvrBand )
+            return;
         const double dfXRatio = static_cast<double>(
-            poFirstBand->GetOverview(j)->GetXSize() ) / poFirstBand->GetXSize();
+            poOvrBand->GetXSize() ) / poFirstBand->GetXSize();
         const double dfYRatio = static_cast<double>(
-            poFirstBand->GetOverview(j)->GetYSize() ) / poFirstBand->GetYSize();
+            poOvrBand->GetYSize() ) / poFirstBand->GetYSize();
         const int nOvrXSize = static_cast<int>(0.5 + nRasterXSize * dfXRatio);
         const int nOvrYSize = static_cast<int>(0.5 + nRasterYSize * dfYRatio);
         if( nOvrXSize < 128 || nOvrYSize < 128 )

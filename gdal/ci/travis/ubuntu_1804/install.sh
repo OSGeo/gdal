@@ -29,7 +29,7 @@ chroot "$chroot" sh -c "cd $PWD && tar xzf r3.4.0.tar.gz && cd mongo-cxx-driver-
 sudo chroot "$chroot" sh -c "cd $PWD/mongo-cxx-driver-r3.4.0/build_cmake && make -j3 install"
 
 # Build libspatialite
-chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && cd sl && fossil open ../libspatialite.fossil && fossil update 90180e065d && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' ./configure --prefix=/usr --disable-geos370 && CCACHE_CPP2=yes make -j3"
+chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && cd sl && fossil open ../libspatialite.fossil && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' ./configure --prefix=/usr --disable-geos370 && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD && cd sl && make -j3 install"
 
 # Build librasterlite2

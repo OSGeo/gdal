@@ -391,11 +391,22 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
     GBool bAllColumnsRead =  FALSE;
     int nColumns = 0;
     GBool bCoordSys = FALSE;
+    CPLString osCoordSys;
+    int nLineCount = 0;
 
     const char *pszLine = nullptr;
     while (((pszLine = m_poMIFFile->GetLine()) != nullptr) &&
            ((bAllColumnsRead == FALSE) || !STARTS_WITH_CI(pszLine, "Data")))
     {
+        nLineCount ++;
+        if( nLineCount == 100000 )
+        {
+            // Arbitrary threshold. The number of lines must be at least as big
+            // as the number of fields we want to support.
+            CPLError(CE_Failure, CPLE_NotSupported, "Too many lines in MIF header");
+            return -1;
+        }
+
         if (bColumns == TRUE && nColumns >0)
         {
             if (AddFields(pszLine) == 0)
@@ -458,26 +469,12 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
 
             m_pszIndex = CPLStrdup(pszLine + 5);
         }
-        else if (m_pszCoordSys == nullptr &&
+        else if (osCoordSys.empty() &&
                  STARTS_WITH_CI(pszLine, "COORDSYS") &&
                  CPLStrnlen(pszLine, 9) >= 9)
         {
             bCoordSys = TRUE;
-            m_pszCoordSys = CPLStrdup(pszLine + 9);
-
-            // Extract bounds if present
-            char  **papszFields =
-                CSLTokenizeStringComplex(m_pszCoordSys, " ,()\t", TRUE, FALSE );
-            int iBounds = CSLFindString( papszFields, "Bounds" );
-            if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
-            {
-                m_dXMin = CPLAtof(papszFields[++iBounds]);
-                m_dYMin = CPLAtof(papszFields[++iBounds]);
-                m_dXMax = CPLAtof(papszFields[++iBounds]);
-                m_dYMax = CPLAtof(papszFields[++iBounds]);
-                m_bBoundsSet = TRUE;
-            }
-            CSLDestroy( papszFields );
+            osCoordSys = pszLine + 9;
         }
         else if (STARTS_WITH_CI(pszLine, "TRANSFORM"))
         {
@@ -523,13 +520,34 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
         }
         else if (bCoordSys == TRUE)
         {
-            char *pszTmp = m_pszCoordSys;
-            m_pszCoordSys = CPLStrdup(CPLSPrintf("%s %s",m_pszCoordSys,
-                                                 pszLine));
-            CPLFree(pszTmp);
-            //printf("Reading CoordSys\n");
-            // Reading CoordSys
+            if( osCoordSys.size() > 10000 ) // Arbitrary threshold
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "COORDSYS value too long");
+                return -1;
+            }
+            osCoordSys += ' ';
+            osCoordSys += pszLine;
         }
+    }
+
+    if( !osCoordSys.empty() )
+    {
+        m_pszCoordSys = CPLStrdup(osCoordSys);
+
+        // Extract bounds if present
+        char  **papszFields =
+            CSLTokenizeStringComplex(osCoordSys, " ,()\t", TRUE, FALSE );
+        int iBounds = CSLFindString( papszFields, "Bounds" );
+        if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
+        {
+            m_dXMin = CPLAtof(papszFields[++iBounds]);
+            m_dYMin = CPLAtof(papszFields[++iBounds]);
+            m_dXMax = CPLAtof(papszFields[++iBounds]);
+            m_dYMax = CPLAtof(papszFields[++iBounds]);
+            m_bBoundsSet = TRUE;
+        }
+        CSLDestroy( papszFields );
     }
 
     if (!bAllColumnsRead)

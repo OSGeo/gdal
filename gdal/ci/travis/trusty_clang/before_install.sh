@@ -98,7 +98,7 @@ sudo apt-get update
 sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
 # Nasty: force reinstallation of unixodbc-dev since the previous line installed unixodbc 2.3.1 from microsoft repo, which lacks the -dev package
-# DONT DO THAT ON YOUR PRODUCTION SERVER.
+# DON'T DO THAT ON YOUR PRODUCTION SERVER.
 wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/libodbc1_2.3.1-4.1_amd64.deb
 wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/odbcinst1debian2_2.3.1-4.1_amd64.deb
 wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/odbcinst_2.3.1-4.1_amd64.deb
