@@ -59,6 +59,9 @@
 
 CPL_CVSID("$Id$")
 
+#define STRINGIFY(s) #s
+#define XSTRINGIFY(s) STRINGIFY(s)
+
 struct OGRSpatialReference::Private
 {
     struct Listener: public OGR_SRSNode::Listener
@@ -8420,9 +8423,6 @@ void OSRFreeSRSArray(OGRSpatialReferenceH* pahSRS)
  *
  * @return OGRERR_NONE on success.
  */
-
-#define STRINGIFY(s) #s
-#define XSTRINGIFY(s) STRINGIFY(s)
 
 OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
                                         double dfEX, double dfEY, double dfEZ,
