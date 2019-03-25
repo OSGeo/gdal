@@ -95,7 +95,7 @@ def test_ignfheightasciigrid_7():
 def test_ignfheightasciigrid_description_multiword_and_lf():
 
     filename = '/vsimem/ignfheightasciigrid_invalid'
-    ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\xC3\xA9\xC3\xA8\n1 2 3 4'
+    ok_content = b'2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\xC3\xA9\xC3\xA8\n1 2 3 4'
     gdal.FileFromMemBuffer(filename, ok_content)
     ds = gdal.OpenEx(filename)
     desc = ds.GetMetadataItem('DESCRIPTION')
