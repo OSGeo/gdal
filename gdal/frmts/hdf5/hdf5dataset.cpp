@@ -878,23 +878,41 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
             szValue[0] = '\0';
             H5Aread(hAttrID, hAttrNativeType, buf);
         }
-        if( H5Tequal(H5T_NATIVE_CHAR, hAttrNativeType ) ||
-            H5Tequal(H5T_NATIVE_SCHAR, hAttrNativeType) )
+        const bool bIsSCHAR = H5Tequal(H5T_NATIVE_SCHAR, hAttrNativeType);
+        const bool bIsUCHAR = H5Tequal(H5T_NATIVE_UCHAR, hAttrNativeType);
+        if( (bIsSCHAR || bIsUCHAR) &&
+            CPLTestBool(CPLGetConfigOption("GDAL_HDF5_CHAR_AS_STRING", "NO")) )
         {
+            // Compatibily mode with ancient GDAL versions where we consider
+            // array of SCHAR/UCHAR as strings. Likely inappropriate mode...
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
-                snprintf(szData, nDataLen, "%c ", static_cast<char *>(buf)[i]);
+                snprintf(szData, nDataLen, "%c",
+                         static_cast<char *>(buf)[i]);
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                     MAX_METADATA_LEN )
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_UCHAR, hAttrNativeType) )
+        else if( bIsSCHAR )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
-                snprintf(szData, nDataLen, "%c", static_cast<char *>(buf)[i]);
+                snprintf(szData, nDataLen, "%d ",
+                         static_cast<signed char *>(buf)[i]);
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                    MAX_METADATA_LEN )
+                    CPLError(CE_Warning, CPLE_OutOfMemory,
+                             "Header data too long. Truncated");
+            }
+        }
+        else if( bIsUCHAR )
+        {
+            for( hsize_t i = 0; i < nAttrElmts; i++ )
+            {
+                snprintf(szData, nDataLen, "%u ",
+                         static_cast<unsigned char *>(buf)[i]);
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                     MAX_METADATA_LEN )
                     CPLError(CE_Warning, CPLE_OutOfMemory,
@@ -916,7 +934,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
-              snprintf(szData, nDataLen, "%ud ",
+              snprintf(szData, nDataLen, "%u ",
                        static_cast<unsigned short *>(buf)[i]);
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                     MAX_METADATA_LEN )
@@ -939,7 +957,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
-                snprintf(szData, nDataLen, "%ud ",
+                snprintf(szData, nDataLen, "%u ",
                          static_cast<unsigned int *>(buf)[i]);
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                     MAX_METADATA_LEN )
