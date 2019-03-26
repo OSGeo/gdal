@@ -575,7 +575,7 @@ def test_ogr_mitab_19():
     if gdaltest.mapinfo_drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/utm31.TAB')
+    ds = gdaltest.mapinfo_drv.Open('data/utm31.TAB')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     # Strict text comparison to check precision
@@ -1242,7 +1242,7 @@ def test_ogr_mitab_29():
     shutil.copy('tmp/cache/compr_symb_deleted_records.map', 'tmp')
 
     # Is a 100x100 point grid with only the 4 edge lines left (compressed points)
-    ds = ogr.Open('tmp/compr_symb_deleted_records.tab', update=1)
+    ds = ogr.GetDriverByName('MapInfo File').Open('tmp/compr_symb_deleted_records.tab', update=1)
     lyr = ds.GetLayer(0)
     # Re-add the 98x98 interior points
     N2 = 98
@@ -1257,7 +1257,7 @@ def test_ogr_mitab_29():
     ds = None
 
     # Check grid integrity that after reopening
-    ds = ogr.Open('tmp/compr_symb_deleted_records.tab')
+    ds = ogr.GetDriverByName('MapInfo File').Open('tmp/compr_symb_deleted_records.tab')
     lyr = ds.GetLayer(0)
     N2 = 100
     N = N2 * N2
@@ -1280,12 +1280,14 @@ def test_ogr_mitab_30(update=0):
 
     filename = 'tmp/ogr_mitab_30.tab'
 
-    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    mitab_drv = ogr.GetDriverByName('MapInfo File')
+
+    ds = mitab_drv.CreateDataSource(filename)
     lyr = ds.CreateLayer('test', options=['BOUNDS=0,0,100,100'])
     lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
     assert lyr.SyncToDisk() == 0
 
-    ds2 = ogr.Open(filename)
+    ds2 = mitab_drv.Open(filename)
     lyr2 = ds2.GetLayer(0)
     assert lyr2.GetFeatureCount() == 0 and lyr2.GetLayerDefn().GetFieldCount() == 1
     ds2 = None
@@ -1309,7 +1311,7 @@ def test_ogr_mitab_30(update=0):
 
     if update == 1:
         ds = None
-        ds = ogr.Open(filename, update=1)
+        ds = mitab_drv.Open(filename, update=1)
         lyr = ds.GetLayer(0)
 
     for j in range(100):
@@ -1336,7 +1338,7 @@ def test_ogr_mitab_30(update=0):
                         print(j)
                         pytest.fail(i)
 
-            ds2 = ogr.Open(filename)
+            ds2 = mitab_drv.Open(filename)
             lyr2 = ds2.GetLayer(0)
             assert lyr2.GetFeatureCount() == j + 1, i
             feat2 = lyr2.GetFeature(j + 1)
@@ -1354,7 +1356,8 @@ def test_ogr_mitab_30(update=0):
             ds2 = None
 
     ds = None
-    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+    mitab_drv.DeleteDataSource(filename)
+    mitab_drv = None
 
 ###############################################################################
 # Test SyncToDisk() in update mode
@@ -1736,7 +1739,7 @@ def test_ogr_mitab_36():
 
 def test_ogr_mitab_37():
 
-    ds = ogr.Open('data/seamless.tab')
+    ds = ogr.GetDriverByName('MapInfo File').Open('data/seamless.tab')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 4
 
@@ -1827,7 +1830,7 @@ def test_ogr_mitab_40():
 
 def test_ogr_mitab_41():
 
-    ds = ogr.Open('data/all_geoms.tab')
+    ds = ogr.GetDriverByName('MapInfo File').Open('data/all_geoms.tab')
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open('data/all_geoms.mif.golden.csv')
     lyr_ref = ds_ref.GetLayer(0)
@@ -2307,7 +2310,7 @@ def test_ogr_mitab_local_encoding_label():
                       'LABEL(t:"Поле",a:0.000000,s:0.015375g,c:#000000,p:1,f:"Times New Roman")']
     for (dsName, expectedStyle) in zip(dsNames, expectedStyles):
 
-        ds = ogr.Open(dsName)
+        ds = ogr.GetDriverByName('MapInfo File').Open(dsName)
         assert ds is not None, ('Can\'t open dataset: ' + dsName)
 
         lyr = ds.GetLayer(0)
@@ -2318,7 +2321,7 @@ def test_ogr_mitab_local_encoding_label():
 
         feat = lyr.GetNextFeature()
         assert lyr is not None, ('Can\'t find text feature in' + dsName)
-
+        print(feat.GetStyleString())
         assert feat.GetStyleString() == expectedStyle, (feat.GetStyleString(), expectedStyle)
 
 

@@ -48,11 +48,11 @@ void OGRRegisterAllInternal()
 #ifdef SHAPE_ENABLED
     RegisterOGRShape();
 #endif
-#ifdef MITAB_ENABLED
-    RegisterOGRTAB();
-#endif
 #ifdef EFAL_ENABLED
     RegisterOGREFAL();
+#endif
+#ifdef MITAB_ENABLED
+    RegisterOGRTAB();
 #endif
 #ifdef NTF_ENABLED
     RegisterOGRNTF();
