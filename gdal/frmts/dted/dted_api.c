@@ -1021,6 +1021,7 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 {
     int nFieldLen;
     char *pszFieldSrc;
+    size_t nLenToCopy;
 
     if( !psDInfo->bUpdate )
         return FALSE;
@@ -1035,10 +1036,10 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 /* -------------------------------------------------------------------- */
 /*      Update it, padding with spaces.                                 */
 /* -------------------------------------------------------------------- */
-    memset( pszFieldSrc, ' ', nFieldLen );
-    /* cppcheck-suppress redundantCopy */
-    strncpy( pszFieldSrc, pszNewValue,
-             MIN((size_t)nFieldLen,strlen(pszNewValue)) );
+    nLenToCopy = MIN((size_t)nFieldLen,strlen(pszNewValue));
+    memcpy( pszFieldSrc, pszNewValue, nLenToCopy);
+    if( nLenToCopy < (size_t)nFieldLen )
+        memset( pszFieldSrc + nLenToCopy, ' ', nFieldLen - nLenToCopy );
 
     /* Turn the flag on, so that the headers are rewritten at file */
     /* closing */

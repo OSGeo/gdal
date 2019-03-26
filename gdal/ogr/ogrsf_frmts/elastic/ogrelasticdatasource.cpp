@@ -468,7 +468,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
             }
         }
 
-        CPLString osMappingURL(CPLSPrintf("%s/%s/%s/_mapping",
+        CPLString osMappingURL(CPLSPrintf("%s/%s/_mapping/%s",
                             GetURL(), osLaunderedName.c_str(), pszMappingName));
         if( !UploadFile(osMappingURL, osLayerMapping.c_str()) )
         {

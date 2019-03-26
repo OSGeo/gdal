@@ -465,7 +465,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 
         json_object_put(pJSONObject);
         pJSONObject = nullptr;
-
+        CPLFree(pszWKT);
         return nullptr;
     }
 

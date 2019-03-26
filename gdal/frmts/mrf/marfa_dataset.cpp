@@ -1499,17 +1499,23 @@ GDALDataset *GDALMRFDataset::GetSrcDS() {
     if (source.empty()) return nullptr;
 
     // Try open the source dataset as is
-    poSrcDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(source.c_str(), GA_ReadOnly));
+    poSrcDS = GDALDataset::FromHandle(GDALOpenShared(source.c_str(), GA_ReadOnly));
 
     // It the open failes, try again with the current dataset path prepended
     if (!poSrcDS && make_absolute(source, fname))
-        poSrcDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(source.c_str(), GA_ReadOnly));
+        poSrcDS = GDALDataset::FromHandle(GDALOpenShared(source.c_str(), GA_ReadOnly));
 
     if (0 == source.find("<MRF_META>") && has_path(fname))
     {   // MRF XML source, might need to patch the file names with the current one
-        GDALMRFDataset *psDS = reinterpret_cast<GDALMRFDataset *>(poSrcDS);
-        make_absolute(psDS->current.datfname, fname);
-        make_absolute(psDS->current.idxfname, fname);
+        GDALMRFDataset *poMRFDS = dynamic_cast<GDALMRFDataset *>(poSrcDS);
+        if( !poMRFDS )
+        {
+            delete poSrcDS;
+            poSrcDS = nullptr;
+            return nullptr;
+        }
+        make_absolute(poMRFDS->current.datfname, fname);
+        make_absolute(poMRFDS->current.idxfname, fname);
     }
     mp_safe = true; // Turn on MP safety
     return poSrcDS;

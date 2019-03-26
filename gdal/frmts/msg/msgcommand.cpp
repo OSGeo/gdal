@@ -83,7 +83,7 @@ std::string MSGCommand::sNextTerm(std::string const& str, int & iPos)
   iPos = static_cast<int>(str.find(',', iOldPos));
   // FIXME: the int vs size_t is messy !
   iPos = static_cast<int>(min(static_cast<size_t>(iPos), str.find(')', iOldPos)));
-  if (static_cast<size_t>(iPos) > iOldPos)
+  if (iPos >= 0 && static_cast<size_t>(iPos) > iOldPos)
   {
     std::string sRet = str.substr(iOldPos, iPos - iOldPos);
     if (str[iPos] != ')')

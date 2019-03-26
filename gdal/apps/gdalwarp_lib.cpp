@@ -1960,10 +1960,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 const double dfMinY = adfExtent[1];
                 const double dfMaxX = adfExtent[2];
                 const double dfMaxY = adfExtent[3];
-                if( std::fabs(dfMinX) < INT_MAX/2 &&
-                    std::fabs(dfMinY) < INT_MAX/2 &&
-                    std::fabs(dfMaxX) < INT_MAX/2 &&
-                    std::fabs(dfMaxY) < INT_MAX/2 )
+                const double dfThreshold = static_cast<double>(INT_MAX)/2;
+                if( std::fabs(dfMinX) < dfThreshold &&
+                    std::fabs(dfMinY) < dfThreshold &&
+                    std::fabs(dfMaxX) < dfThreshold &&
+                    std::fabs(dfMaxY) < dfThreshold )
                 {
                     const int nPadding = 5;
                     nWarpDstXOff = std::max(nWarpDstXOff,

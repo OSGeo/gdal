@@ -739,7 +739,7 @@ static bool LoadPythonAPI()
 #endif // LOAD_NOCHECK_WITH_NAME
 
     bInit = true;
-    return bInit;
+    return true;
 }
 
 /************************************************************************/

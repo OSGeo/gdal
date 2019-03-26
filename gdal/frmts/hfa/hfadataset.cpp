@@ -4443,18 +4443,18 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         }
     }
 
-    char *pszNewProj = nullptr;
     if( psPro == nullptr )
     {
         if( oSRS.IsLocal() )
         {
+            char *pszNewProj = nullptr;
             if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
             {
                 return pszNewProj;
             }
             else
             {
-                pszNewProj = nullptr;
+                CPLFree(pszNewProj);
                 return nullptr;
             }
         }
@@ -4544,10 +4544,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
               oSRS.morphFromESRI();
               oSRS.AutoIdentifyEPSG();
 
+              char *pszNewProj = nullptr;
               if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
                   return pszNewProj;
               else
+              {
+                  CPLFree(pszNewProj);
                   return nullptr;
+              }
           }
 
           // Set state plane zone.  Set NAD83/27 on basis of spheroid.
@@ -4581,8 +4585,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
                     psPro->proParams[5] * R2D,
                     psMapInfo->units) == OGRERR_NONE )
             {
+                char *pszNewProj = nullptr;
                 if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
                     return pszNewProj;
+                else
+                {
+                    CPLFree(pszNewProj);
+                    return nullptr;
+                }
             }
         }
         oSRS.SetLCC(psPro->proParams[2] * R2D, psPro->proParams[3] * R2D,
@@ -4629,8 +4639,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
                     psPro->proParams[5] * R2D,
                     psMapInfo->units) == OGRERR_NONE )
             {
+                char *pszNewProj = nullptr;
                 if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
                     return pszNewProj;
+                else
+                {
+                    CPLFree(pszNewProj);
+                    return nullptr;
+                }
             }
         }
         oSRS.SetTM(psPro->proParams[5] * R2D, psPro->proParams[4] * R2D,
@@ -5042,10 +5058,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     oSRS.AutoIdentifyEPSG();
 
     // Get the WKT representation of the coordinate system.
+    char *pszNewProj = nullptr;
     if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
         return pszNewProj;
-
-    return nullptr;
+    else
+    {
+        CPLFree(pszNewProj);
+        return nullptr;
+    }
 }
 
 /************************************************************************/

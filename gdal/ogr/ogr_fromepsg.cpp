@@ -222,7 +222,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
 /*      We will need to adjust the linear projection parameter to       */
 /*      match the provided units, and clear the authority code.         */
 /* -------------------------------------------------------------------- */
-    if( dfOverrideUnit != 0.0
+    if( pszOverrideUnitName != nullptr && dfOverrideUnit != 0.0
         && fabs(dfOverrideUnit - GetLinearUnits()) > 0.0000000001 )
     {
         const double dfFalseEasting = GetNormProjParm( SRS_PP_FALSE_EASTING );

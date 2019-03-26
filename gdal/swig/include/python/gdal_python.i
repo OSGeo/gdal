@@ -1229,6 +1229,7 @@ def WarpOptions(options=None, format=None,
          cutlineLayer=None, cutlineWhere=None, cutlineSQL=None, cutlineBlend=None, cropToCutline = False,
          copyMetadata = True, metadataConflictValue=None,
          setColorInterpretation = False,
+         overviewLevel = 'AUTO',
          callback=None, callback_data=None):
     """ Create a WarpOptions() object that can be passed to gdal.Warp()
         Keyword arguments are :
@@ -1269,6 +1270,7 @@ def WarpOptions(options=None, format=None,
           copyMetadata --- whether to copy source metadata
           metadataConflictValue --- metadata data conflict value
           setColorInterpretation --- whether to force color interpretation of input bands to output bands
+          overviewLevel --- To specify which overview level of source files must be used
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -1368,6 +1370,19 @@ def WarpOptions(options=None, format=None,
             new_options += ['-cvmd', str(metadataConflictValue)]
         if setColorInterpretation:
             new_options += ['-setci']
+
+        if overviewLevel is None or _is_str_or_unicode(overviewLevel):
+            pass
+        elif isinstance(overviewLevel, int):
+            if overviewLevel < 0:
+                overviewLevel = 'AUTO' + str(overviewLevel)
+            else:
+                overviewLevel = str(overviewLevel)
+        else:
+            overviewLevel = None
+
+        if overviewLevel:
+            new_options += ['-ovr', overviewLevel]
 
     return (GDALWarpAppOptions(new_options), callback, callback_data)
 

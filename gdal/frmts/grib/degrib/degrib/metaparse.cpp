@@ -2965,17 +2965,18 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
        *Grib_Data = nullptr;
        return;
    }
-   
-   if (subNx * subNy > *grib_DataLen) {
 
-      if( subNx * subNy > 100 * 1024 * 1024 )
+   const uInt4 subNxNy = subNx * subNy;
+   if (subNxNy > *grib_DataLen) {
+
+      if( subNxNy > 100 * 1024 * 1024 )
       {
           vsi_l_offset curPos = VSIFTellL(fp);
           VSIFSeekL(fp, 0, SEEK_END);
           vsi_l_offset fileSize = VSIFTellL(fp);
           VSIFSeekL(fp, curPos, SEEK_SET);      
           // allow a compression ratio of 1:1000
-          if( subNx * subNy / 1000 > fileSize )
+          if( subNxNy / 1000 > fileSize )
           {
             errSprintf ("ERROR: File too short\n");
             *grib_DataLen = 0;
@@ -2984,7 +2985,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
           }
       }
 
-      *grib_DataLen = subNx * subNy;
+      *grib_DataLen = subNxNy;
       double* newData = (double *) realloc ((void *) (*Grib_Data),
                                        (*grib_DataLen) * sizeof (double));
       if( newData == nullptr )

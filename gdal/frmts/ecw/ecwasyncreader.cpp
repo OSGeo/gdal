@@ -160,7 +160,7 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
     CNCSError    oErr;
 
     for( i = 0; i < nBandCount; i++ )
-        anBandIndices.push_back( panBandMap[i] - 1 );
+        anBandIndices.push_back( poReader->panBandMap[i] - 1 );
 
     oErr = poReader->poFileView->SetView( nBandCount, &(anBandIndices[0]),
                                           nXOff, nYOff,
@@ -199,11 +199,6 @@ ECWAsyncReader::ECWAsyncReader()
 {
     hMutex = CPLCreateMutex();
     CPLReleaseMutex( hMutex );
-
-    poFileView = nullptr;
-    bUpdateReady = FALSE;
-    bComplete = FALSE;
-    panBandMap = nullptr;
 }
 
 /************************************************************************/
@@ -279,7 +274,8 @@ NCSEcwReadStatus ECWAsyncReader::RefreshCB( NCSFileView *pFileView )
         if( !poReader->bComplete )
             poReader->bUpdateReady = TRUE;
 
-        if( psVSI->nBlocksAvailable == psVSI->nBlocksInView )
+        if( psVSI != nullptr &&
+            psVSI->nBlocksAvailable == psVSI->nBlocksInView )
             poReader->bComplete = TRUE;
     }
 

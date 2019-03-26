@@ -1041,71 +1041,68 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         GByte* pabyMarkerDataIter = pabyMarkerData;
         GUInt16 nRemainingMarkerSize = nMarkerSize - 2;
-        GUInt32 nLastVal = 0;
         bool bError = false;
 
-#define READ_MARKER_FIELD_UINT8_COMMENT(name, comment) \
-        do { if( nRemainingMarkerSize >= 1 ) { \
-            nLastVal = *pabyMarkerDataIter; \
-            AddField(psMarker, psLastChild, name, *pabyMarkerDataIter, comment); \
-            pabyMarkerDataIter += 1; \
-            nRemainingMarkerSize -= 1; \
-            } \
-            else { \
-                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name)); \
-                nLastVal = 0; \
-                bError = true; \
-            } \
-        } while( false )
+        auto READ_MARKER_FIELD_UINT8 = [&](const char* name,
+                                           const char* (*commentFunc)(GByte) = nullptr) {
+            GByte v;
+            if( nRemainingMarkerSize >= 1 ) {
+                v = *pabyMarkerDataIter;
+                AddField(psMarker, psLastChild, name, *pabyMarkerDataIter,
+                         commentFunc ? commentFunc(v) : nullptr);
+                pabyMarkerDataIter += 1;
+                nRemainingMarkerSize -= 1;
+            }
+            else {
+                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name));
+                v = 0;
+                bError = true;
+            }
+            return v;
+        };
 
-#define READ_MARKER_FIELD_UINT8(name) \
-        READ_MARKER_FIELD_UINT8_COMMENT(name, nullptr)
+        auto READ_MARKER_FIELD_UINT16 = [&](const char* name,
+                                            const char* (*commentFunc)(GUInt16) = nullptr) {
+            GUInt16 v;
+            if( nRemainingMarkerSize >= 2 ) {
+                memcpy(&v, pabyMarkerDataIter, 2);
+                CPL_MSBPTR16(&v);
+                AddField(psMarker, psLastChild, name, v,
+                         commentFunc ? commentFunc(v) : nullptr);
+                pabyMarkerDataIter += 2;
+                nRemainingMarkerSize -= 2;
+            }
+            else {
+                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name));
+                v = 0;
+                bError = true;
+            }
+            return v;
+        };
 
-#define READ_MARKER_FIELD_UINT16_COMMENT(name, comment) \
-        do { if( nRemainingMarkerSize >= 2 ) { \
-            GUInt16 nVal; \
-            memcpy(&nVal, pabyMarkerDataIter, 2); \
-            CPL_MSBPTR16(&nVal); \
-            nLastVal = nVal; \
-            AddField(psMarker, psLastChild, name, nVal, comment); \
-            pabyMarkerDataIter += 2; \
-            nRemainingMarkerSize -= 2; \
-            } \
-            else { \
-                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name)); \
-                nLastVal = 0; \
-                bError = true; \
-            } \
-        } while( false )
-
-#define READ_MARKER_FIELD_UINT16(name) \
-        READ_MARKER_FIELD_UINT16_COMMENT(name, nullptr)
-
-#define READ_MARKER_FIELD_UINT32_COMMENT(name, comment) \
-        do { if( nRemainingMarkerSize >= 4 ) { \
-            GUInt32 nVal; \
-            memcpy(&nVal, pabyMarkerDataIter, 4); \
-            CPL_MSBPTR32(&nVal); \
-            AddField(psMarker, psLastChild, name, nVal, comment); \
-            nLastVal = nVal; \
-            pabyMarkerDataIter += 4; \
-            nRemainingMarkerSize -= 4; \
-            } \
-            else { \
-                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name)); \
-                nLastVal = 0; \
-                bError = true; \
-            } \
-        } while( false )
-
-#define READ_MARKER_FIELD_UINT32(name) \
-        READ_MARKER_FIELD_UINT32_COMMENT(name, nullptr)
+        auto READ_MARKER_FIELD_UINT32 = [&](const char* name,
+                                            const char* (*commentFunc)(GUInt32) = nullptr) {
+            GUInt32 v;
+            if( nRemainingMarkerSize >= 4 ) {
+                memcpy(&v, pabyMarkerDataIter, 4);
+                CPL_MSBPTR32(&v);
+                AddField(psMarker, psLastChild, name, v,
+                         commentFunc ? commentFunc(v) : nullptr);
+                pabyMarkerDataIter += 4;
+                nRemainingMarkerSize -= 4;
+            }
+            else {
+                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name));
+                v = 0;
+                bError = true;
+            }
+            return v;
+        };
 
         if( abyMarker[1] == 0x90 ) /* SOT */
         {
             READ_MARKER_FIELD_UINT16("Isot");
-            READ_MARKER_FIELD_UINT32("Psot");
-            GUInt32 PSOT = nLastVal;
+            GUInt32 PSOT = READ_MARKER_FIELD_UINT32("Psot");
             READ_MARKER_FIELD_UINT8("TPsot");
             READ_MARKER_FIELD_UINT8("TNsot");
             if( nRemainingMarkerSize > 0 )
@@ -1119,10 +1116,10 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x51 ) /* SIZ */
         {
-            READ_MARKER_FIELD_UINT16_COMMENT("Rsiz",
-                                            (nLastVal == 0) ? "Unrestricted profile":
-                                            (nLastVal == 1) ? "Profile 0":
-                                            (nLastVal == 2) ? "Profile 1": nullptr);
+            READ_MARKER_FIELD_UINT16("Rsiz", [](GUInt16 v) {
+                return (v == 0) ? "Unrestricted profile":
+                        (v == 1) ? "Profile 0":
+                        (v == 2) ? "Profile 1": nullptr; });
             READ_MARKER_FIELD_UINT32("Xsiz");
             READ_MARKER_FIELD_UINT32("Ysiz");
             READ_MARKER_FIELD_UINT32("XOsiz");
@@ -1131,13 +1128,12 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT32("YTsiz");
             READ_MARKER_FIELD_UINT32("XTOSiz");
             READ_MARKER_FIELD_UINT32("YTOSiz");
-            READ_MARKER_FIELD_UINT16("Csiz");
-            int CSiz = nLastVal;
+            int CSiz = READ_MARKER_FIELD_UINT16("Csiz");
             bError = false;
             for(int i=0;i<CSiz && !bError;i++)
             {
-                READ_MARKER_FIELD_UINT8_COMMENT(CPLSPrintf("Ssiz%d", i),
-                        GetInterpretationOfBPC(static_cast<GByte>(nLastVal)));
+                READ_MARKER_FIELD_UINT8(CPLSPrintf("Ssiz%d", i), [](GByte v) {
+                        return GetInterpretationOfBPC(v); });
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("XRsiz%d", i));
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("YRsiz%d", i));
             }
@@ -1151,7 +1147,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         {
             bool bHasPrecincts = false;
             if( nRemainingMarkerSize >= 1 ) {
-                nLastVal = *pabyMarkerDataIter;
+                auto nLastVal = *pabyMarkerDataIter;
                 CPLString osInterp;
                 if( nLastVal & 0x1 )
                 {
@@ -1170,28 +1166,29 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                     osInterp += "EPH marker segments may be used";
                 else
                     osInterp += "No EPH marker segments";
-                AddField(psMarker, psLastChild, "Scod", static_cast<GByte>(nLastVal), osInterp.c_str());
+                AddField(psMarker, psLastChild, "Scod", nLastVal, osInterp.c_str());
                 pabyMarkerDataIter += 1;
                 nRemainingMarkerSize -= 1;
             }
             else {
                 AddError(psMarker, psLastChild,
                          CPLSPrintf("Cannot read field %s", "Scod"));
-                /*nLastVal = 0;*/
             }
-            READ_MARKER_FIELD_UINT8_COMMENT("SGcod_Progress",
-                                            (nLastVal == 0) ? "LRCP" :
-                                            (nLastVal == 1) ? "RLCP" :
-                                            (nLastVal == 2) ? "RPCL" :
-                                            (nLastVal == 3) ? "PCRL" :
-                                            (nLastVal == 4) ? "CPRL" : nullptr);
+            READ_MARKER_FIELD_UINT8("SGcod_Progress",  [](GByte v) {
+                return (v == 0) ? "LRCP" :
+                        (v == 1) ? "RLCP" :
+                        (v == 2) ? "RPCL" :
+                        (v == 3) ? "PCRL" :
+                        (v == 4) ? "CPRL" : nullptr; });
             READ_MARKER_FIELD_UINT16("SGcod_NumLayers");
             READ_MARKER_FIELD_UINT8("SGcod_MCT");
             READ_MARKER_FIELD_UINT8("SPcod_NumDecompositions");
-            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_xcb_minus_2", nLastVal <= 8 ? CPLSPrintf("%d", 1 << (2+nLastVal)) : "invalid");
-            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_ycb_minus_2", nLastVal <= 8 ? CPLSPrintf("%d", 1 << (2+nLastVal)) : "invalid");
+            READ_MARKER_FIELD_UINT8("SPcod_xcb_minus_2", [](GByte v) {
+                return v <= 8 ? CPLSPrintf("%d", 1 << (2+v)) : "invalid"; });
+            READ_MARKER_FIELD_UINT8("SPcod_ycb_minus_2", [](GByte v) {
+                return v <= 8 ? CPLSPrintf("%d", 1 << (2+v)) : "invalid"; });
             if( nRemainingMarkerSize >= 1 ) {
-                nLastVal = *pabyMarkerDataIter;
+                auto nLastVal = *pabyMarkerDataIter;
                 CPLString osInterp;
                 if( nLastVal & 0x1 )
                     osInterp += "Selective arithmetic coding bypass";
@@ -1231,17 +1228,16 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 AddError(psMarker,
                          psLastChild,
                          CPLSPrintf("Cannot read field %s", "SPcod_cbstyle"));
-                /*nLastVal = 0;*/
             }
-            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_transformation",
-                                            (nLastVal == 0) ? "9-7 irreversible":
-                                            (nLastVal == 1) ? "5-3 reversible": nullptr);
+            READ_MARKER_FIELD_UINT8("SPcod_transformation", [](GByte v) {
+                return (v == 0) ? "9-7 irreversible":
+                       (v == 1) ? "5-3 reversible": nullptr; });
             if( bHasPrecincts )
             {
                 int i = 0;
                 while( nRemainingMarkerSize >= 1 )
                 {
-                    nLastVal = *pabyMarkerDataIter;
+                    auto nLastVal = *pabyMarkerDataIter;
                     AddField(psMarker, psLastChild,
                              CPLSPrintf("SPcod_Precincts%d", i), *pabyMarkerDataIter,
                              CPLSPrintf("PPx=%d PPy=%d: %dx%d",
@@ -1264,12 +1260,12 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         else if( abyMarker[1] == 0x55 ) /* TLM */
         {
             READ_MARKER_FIELD_UINT8("Ztlm");
-            int ST = 0;
-            int SP = 0;
-            READ_MARKER_FIELD_UINT8_COMMENT("Stlm",
-                    CPLSPrintf("ST=%d SP=%d",
-                               (ST = (nLastVal >> 4) & 3),
-                               (SP = ((nLastVal >> 6) & 1))));
+            auto Stlm = READ_MARKER_FIELD_UINT8("Stlm", [](GByte v) {
+                return CPLSPrintf("ST=%d SP=%d",
+                               (v >> 4) & 3,
+                               (v >> 6) & 1); });
+            int ST = (Stlm >> 4) & 3;
+            int SP = (Stlm >> 6) & 1;
             int nTilePartDescLength = ST + ((SP == 0) ? 2 : 4);
             int i = 0;
             while( nRemainingMarkerSize >= nTilePartDescLength )
@@ -1319,8 +1315,9 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x64 ) /* COM */
         {
-            READ_MARKER_FIELD_UINT16_COMMENT("Rcom", (nLastVal == 0 ) ? "Binary" : (nLastVal == 1) ? "LATIN1" : nullptr);
-            if( nLastVal == 1 )
+            auto RCom = READ_MARKER_FIELD_UINT16("Rcom", [](GUInt16 v) {
+                return (v == 0 ) ? "Binary" : (v == 1) ? "LATIN1" : nullptr; });
+            if( RCom == 1 )
             {
                 GByte abyBackup = pabyMarkerDataIter[nRemainingMarkerSize];
                 pabyMarkerDataIter[nRemainingMarkerSize] = 0;

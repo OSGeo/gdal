@@ -167,7 +167,10 @@ static OGRPoint *getPoint(DOMElement *elem) {
 
 OGRCircularString *ILI2Reader::getArc(DOMElement *elem) {
   // previous point -> start point
-  OGRPoint *ptStart = getPoint(dynamic_cast<DOMElement*>(elem->getPreviousSibling())); // COORD or ARC
+  auto elemPrev = dynamic_cast<DOMElement*>(elem->getPreviousSibling());
+  if( elemPrev == nullptr )
+      return nullptr;
+  OGRPoint *ptStart = getPoint(elemPrev); // COORD or ARC
   if( ptStart == nullptr )
       return nullptr;
   
@@ -275,14 +278,18 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
         arcElem = dynamic_cast<DOMElement *>(arcElem->getNextSibling());
       }
 
-      OGRPoint *ptStart = getPoint(dynamic_cast<DOMElement *>(lineElem->getPreviousSibling())); // COORD or ARC
-      if( ptStart )
-        arc->addPoint(ptStart);
+      auto elemPrev = dynamic_cast<DOMElement *>(lineElem->getPreviousSibling());
+      if( elemPrev )
+      {
+        OGRPoint *ptStart = getPoint(elemPrev); // COORD or ARC
+        if( ptStart )
+            arc->addPoint(ptStart);
+        delete ptStart;
+      }
       arc->addPoint(ptOnArc);
       arc->addPoint(ptEnd);
       ogrCurve->addCurveDirectly(arc);
 
-      delete ptStart;
       delete ptEnd;
       delete ptOnArc;
     } /* else { // TODO: StructureValue in Polyline not yet supported
@@ -442,6 +449,7 @@ void ILI2Reader::setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
         type == 0 && childNode && childNode->getNodeType() == DOMNode::ELEMENT_NODE;
         childNode = childNode->getNextSibling()) {
     DOMElement* childElem = dynamic_cast<DOMElement*>(childNode);
+    CPLAssert(childElem);
     type = getGeometryTypeOfElem(childElem);
     if (type == 0) {
       if (childElem->getFirstChild() && childElem->getFirstChild()->getNodeType() == DOMNode::ELEMENT_NODE) {
@@ -466,6 +474,7 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
         type == 0 && childNode && childNode->getNodeType() == DOMNode::ELEMENT_NODE;
         childNode = childNode->getNextSibling()) {
     DOMElement* childElem = dynamic_cast<DOMElement*>(childNode);
+    CPLAssert(childElem);
     type = getGeometryTypeOfElem(childElem);
     if (type == 0) {
       if (childElem->getFirstChild() && childElem->getFirstChild()->getNodeType() == DOMNode::ELEMENT_NODE) {

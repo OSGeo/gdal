@@ -137,8 +137,11 @@ bool OGRSQLiteDataSource::OpenRaster()
 
     if( m_aosSubDatasets.size() == 2 )
     {
-        return OpenRasterSubDataset(
-                    m_aosSubDatasets.FetchNameValue( "SUBDATASET_1_NAME" ));
+        const char* pszSubDSName = m_aosSubDatasets.FetchNameValue( "SUBDATASET_1_NAME" );
+        if( pszSubDSName )
+        {
+            return OpenRasterSubDataset(pszSubDSName);
+        }
     }
 
     return !m_aosSubDatasets.empty();
@@ -363,8 +366,8 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
             if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
             {
                 m_osProjection = pszWKT;
-                CPLFree(pszWKT);
             }
+            CPLFree(pszWKT);
         }
     }
 

@@ -183,7 +183,7 @@ int IGNFHeightASCIIGridDataset::IdentifyMNT(GDALOpenInfo* poOpenInfo)
         {
             continue;
         }
-        if( ch == '\r' )
+        if( ch == '\r' || ch == '\n' )
         {
             iPosFirstNewLine = i;
             break;
@@ -199,9 +199,10 @@ int IGNFHeightASCIIGridDataset::IdentifyMNT(GDALOpenInfo* poOpenInfo)
                 return FALSE;
             }
         }
-        else if( ch == static_cast<GByte>('\xC3') &&  // eacute in UTF-8
+        else if( ch == static_cast<GByte>('\xC3') &&
             i + 1 < poOpenInfo->nHeaderBytes &&
-            pabyHeader[i+1] == static_cast<GByte>('\xA9') )
+            (pabyHeader[i+1] == static_cast<GByte>('\xA9') || // eacute in UTF-8
+             pabyHeader[i+1] == static_cast<GByte>('\xA8'))) // egrave in UTF-8
         {
             i++;
         }
@@ -365,7 +366,7 @@ bool IGNFHeightASCIIGridDataset::ParseHeaderMNT(GDALOpenInfo* poOpenInfo,
     std::string osHeader;
     osHeader.assign(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
                     poOpenInfo->nHeaderBytes);
-    const size_t nHeaderSize = osHeader.find('\r');
+    const size_t nHeaderSize = osHeader.find_first_of("\r\n");
     CPLAssert(nHeaderSize != std::string::npos);
     osHeader.resize( nHeaderSize );
     CPLStringList aosTokens(CSLTokenizeString2(osHeader.c_str(), " ", 0));
@@ -430,6 +431,7 @@ bool IGNFHeightASCIIGridDataset::ParseHeaderMNT(GDALOpenInfo* poOpenInfo,
     }
     osDesc.replaceAll("\xE9", "e");
     osDesc.replaceAll("\xC3\xA9", "e");
+    osDesc.replaceAll("\xC3\xA8", "e");
     osDesc.replaceAll("\xEF", "i");
 
     return true;
@@ -574,7 +576,7 @@ GDALDataset* IGNFHeightASCIIGridDataset::Open(GDALOpenInfo* poOpenInfo)
     size_t nHeaderSize;
     if( isMNTFormat )
     {
-        nHeaderSize = osBuffer.find('\r');
+        nHeaderSize = osBuffer.find_first_of("\r\n");
     }
     else
     {

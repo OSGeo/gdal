@@ -2096,15 +2096,19 @@ void GMLASReader::ProcessXLinkHref( int nAttrIdx,
                     const int nLinkFieldOGRId =
                         m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(
                             osLinkFieldXPath);
-                    const auto oIter2 = m_oMapElementIdToPKID.find(osId);
-                    if( oIter2 != m_oMapElementIdToPKID.end() )
+                    if( nLinkFieldOGRId >= 0 )
                     {
-                        m_oCurCtxt.m_poFeature->SetField(nLinkFieldOGRId,
-                                                         oIter2->second);
-                    }
-                    else
-                    {
-                        m_oCurCtxt.m_poFeature->SetField(nLinkFieldOGRId, osId);
+                        const auto oIter2 = m_oMapElementIdToPKID.find(osId);
+                        if( oIter2 != m_oMapElementIdToPKID.end() )
+                        {
+                            m_oCurCtxt.m_poFeature->SetField(nLinkFieldOGRId,
+                                                             oIter2->second);
+                        }
+                        else
+                        {
+                            m_oCurCtxt.m_poFeature->SetField(nLinkFieldOGRId,
+                                                             osId);
+                        }
                     }
                 }
             }

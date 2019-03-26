@@ -229,6 +229,7 @@ int WSIOCILobFSHandle::Stat( const char* pszFilename,
 
     if(  strcmp( papszParam[5], "noext" ) != 0 )
     {
+        CSLDestroy( papszParam );
         return -1;
     }
 

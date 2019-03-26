@@ -401,7 +401,8 @@ json_object* OGRGeoJSONSeqLayer::GetNextObject()
         if( !m_osFeatureBuffer.empty() )
         {
             json_object* poObject = nullptr;
-            OGRJSonParse(m_osFeatureBuffer.c_str(), &poObject);
+            CPL_IGNORE_RET_VAL(
+                OGRJSonParse(m_osFeatureBuffer.c_str(), &poObject));
             m_osFeatureBuffer.clear();
             if( json_object_get_type(poObject) == json_type_object )
             {

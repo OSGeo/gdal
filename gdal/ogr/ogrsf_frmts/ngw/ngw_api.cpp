@@ -779,6 +779,7 @@ CPLJSONObject UploadFile(const std::string &osUrl, const std::string &osFilePath
         if( !bResult )
         {
             ReportError(psResult->pabyData, psResult->nDataLen);
+            CPLHTTPDestroyResult(psResult);
             return oResult;
         }
         CPLJSONDocument oFileJson;

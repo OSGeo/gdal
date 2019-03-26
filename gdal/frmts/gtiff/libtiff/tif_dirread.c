@@ -5878,7 +5878,7 @@ static void TryChopUpUncompressedBigTiff( TIFF* tif )
     else
         rowblock = 1;
     rowblockbytes = TIFFVStripSize64(tif, rowblock);
-    if( rowblockbytes > 0x7FFFFFFFUL )
+    if( rowblockbytes == 0 || rowblockbytes > 0x7FFFFFFFUL )
     {
         /* In case of file with gigantic width */
         return;

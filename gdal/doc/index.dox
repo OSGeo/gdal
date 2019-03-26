@@ -20,8 +20,8 @@ Geospatial Foundation</a>.  As a library, it presents a
 to the calling application for all supported formats.  It also comes with a variety
 of useful command line utilities
 for data translation and processing.  The
-<a href="http://trac.osgeo.org/gdal/wiki/Release/2.4.0-News">NEWS</a>
-page describes the December 2018 GDAL/OGR 2.4.0 release.
+<a href="http://trac.osgeo.org/gdal/wiki/Release/2.4.1-News">NEWS</a>
+page describes the March 2019 GDAL/OGR 2.4.1 release.
 </td>
 
 <td>

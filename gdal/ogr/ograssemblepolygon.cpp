@@ -32,6 +32,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <list>
 #include <vector>
 
 #include "ogr_core.h"
@@ -54,15 +55,27 @@ static bool CheckPoints( OGRLineString *poLine1, int iPoint1,
 
 {
     if( pdfDistance == nullptr || *pdfDistance == 0 )
-        return poLine1->getX(iPoint1) == poLine2->getX(iPoint2)
-            && poLine1->getY(iPoint1) == poLine2->getY(iPoint2);
+    {
+        if( poLine1->getX(iPoint1) == poLine2->getX(iPoint2)
+            && poLine1->getY(iPoint1) == poLine2->getY(iPoint2) )
+        {
+            if( pdfDistance )
+                *pdfDistance = 0.0;
+            return true;
+        }
+        return false;
+    }
 
     const double dfDeltaX =
         std::abs(poLine1->getX(iPoint1) - poLine2->getX(iPoint2));
+
+    if( dfDeltaX > *pdfDistance )
+        return false;
+
     const double dfDeltaY =
         std::abs(poLine1->getY(iPoint1) - poLine2->getY(iPoint2));
 
-    if( dfDeltaX > *pdfDistance || dfDeltaY > *pdfDistance )
+    if( dfDeltaY > *pdfDistance )
         return false;
 
     const double dfDistance = sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
@@ -179,28 +192,26 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /*      added to a ring yet.                                            */
 /* -------------------------------------------------------------------- */
     const int nEdges = poLines->getNumGeometries();
-    int nRemainingEdges = nEdges;
-    std::vector<bool> oEdgeConsumed(nEdges, false);
+    std::list<OGRLineString*> oListEdges;
+    for( int i = 0; i < nEdges; i++ ) 
+    {
+        OGRLineString *poLine = poLines->getGeometryRef(i)->toLineString();
+        if( poLine->getNumPoints() >= 2 )
+        {
+            oListEdges.push_back(poLine);
+        }
+    }
 
 /* ==================================================================== */
 /*      Loop generating rings.                                          */
 /* ==================================================================== */
-    while( nRemainingEdges > 0 )
+    while( !oListEdges.empty() )
     {
 /* -------------------------------------------------------------------- */
 /*      Find the first unconsumed edge.                                 */
 /* -------------------------------------------------------------------- */
-        int iFirstEdge = 0;  // Used after for.
-        for( ; oEdgeConsumed[iFirstEdge]; iFirstEdge++ ) {}
-
-        OGRLineString *poLine = poLines->getGeometryRef(iFirstEdge)->toLineString();
-        oEdgeConsumed[iFirstEdge] = true;
-        nRemainingEdges--;
-
-        if( poLine->getNumPoints() < 2 )
-        {
-            continue;
-        }
+        OGRLineString *poLine = oListEdges.front();
+        oListEdges.erase(oListEdges.begin());
 
 /* -------------------------------------------------------------------- */
 /*      Start a new ring, copying in the current line directly          */
@@ -217,7 +228,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         double dfBestDist = dfTolerance;
 
         while( !CheckPoints(poRing, 0, poRing, poRing->getNumPoints() - 1, nullptr)
-               && nRemainingEdges > 0
+               && !oListEdges.empty()
                && bWorkDone )
         {
             bool bReverse = false;
@@ -232,42 +243,38 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             //             &dfBestDist);
 
             // Find unused edge with end point closest to our loose end.
-            int iBestEdge = -1;
-            for( int iEdge = 0; iEdge < nEdges; iEdge++ )
+            OGRLineString* poBestEdge = nullptr;
+            std::list<OGRLineString*>::iterator oBestIter;
+            for( auto oIter = oListEdges.begin(); oIter != oListEdges.end(); ++oIter )
             {
-                if( oEdgeConsumed[iEdge] )
-                    continue;
-
-                poLine = poLines->getGeometryRef(iEdge)->toLineString();
-                if( poLine->getNumPoints() < 2 )
-                    continue;
+                poLine = *oIter;
 
                 if( CheckPoints(poLine, 0, poRing, poRing->getNumPoints() - 1,
                                 &dfBestDist) )
                 {
-                    iBestEdge = iEdge;
+                    poBestEdge = poLine;
+                    oBestIter = oIter;
                     bReverse = false;
                 }
                 if( CheckPoints(poLine, poLine->getNumPoints() - 1,
                                 poRing, poRing->getNumPoints() - 1,
                                 &dfBestDist) )
                 {
-                    iBestEdge = iEdge;
+                    poBestEdge = poLine;
+                    oBestIter = oIter;
                     bReverse = true;
                 }
 
-                // If we use exact comparison, jump now.
-                if( dfTolerance == 0.0 && iBestEdge != -1 ) break;
+                // If we found an exact match, jump now.
+                if( dfBestDist == 0.0 && poBestEdge != nullptr ) break;
             }
 
             // We found one within tolerance - add it.
-            if( iBestEdge != -1 )
+            if( poBestEdge )
             {
-                poLine = poLines->getGeometryRef(iBestEdge)->toLineString();
-                AddEdgeToRing( poRing, poLine, bReverse, dfTolerance );
+                AddEdgeToRing( poRing, poBestEdge, bReverse, dfTolerance );
 
-                oEdgeConsumed[iBestEdge] = true;
-                nRemainingEdges--;
+                oListEdges.erase(oBestIter);
                 bWorkDone = true;
             }
         }
