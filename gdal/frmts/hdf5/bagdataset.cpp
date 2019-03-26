@@ -3280,7 +3280,7 @@ void BAGDataset::LoadMetadata()
     H5Tclose(datatype);
     H5Dclose(hMDDS);
 
-    if( strlen(pszXMLMetadata) == 0 )
+    if( pszXMLMetadata == nullptr || pszXMLMetadata[0] == 0 )
         return;
 
     // Try to get the geotransform.
