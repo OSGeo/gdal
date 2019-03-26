@@ -70,7 +70,7 @@ namespace EFAL_GDAL_DRIVER
 	typedef struct TABFontDef_t
 	{
 		GInt32      nRefCount;
-		char        szFontName[33];
+		char        szFontName[256];
 	} TABFontDef;
 
 	/* MI Default = FONT("Arial",0,0,0) */

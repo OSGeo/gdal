@@ -922,7 +922,7 @@ namespace EFAL_GDAL_DRIVER
 			int nSymbolColor = static_cast<int>(strtol(pszSymbolColor, NULL, 16));
 			SetSymbolColor((GInt32)nSymbolColor);
 		}
-
+		
 		delete poStyleMgr;
 		delete poStylePart;
 

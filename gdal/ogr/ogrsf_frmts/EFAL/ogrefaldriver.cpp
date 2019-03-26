@@ -58,14 +58,19 @@ EFALLIB * efallib = NULL;
 /************************************************************************/
 
 static int OGREFALDriverIdentify(GDALOpenInfo* poOpenInfo)
-
 {
+
 	if (!poOpenInfo->bStatOK)
 		return FALSE;
 	if (poOpenInfo->bIsDirectory)
 		return -1;  // Unsure.
 	if (poOpenInfo->fpL == NULL)
 		return FALSE;
+
+	if (STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsi"))
+	{
+		return FALSE;
+	}
 
 	const CPLString osBaseFilename = CPLGetFilename(poOpenInfo->pszFilename);
 	const CPLString osExt = OGREFALDataSource::GetRealExtension(poOpenInfo->pszFilename);
@@ -98,7 +103,7 @@ static GDALDataset *OGREFALDriverOpen(GDALOpenInfo* poOpenInfo)
 
 	OGREFALDataSource *poDS = new OGREFALDataSource();
 
-	if (!poDS->Open(poOpenInfo, FALSE))
+	if (!poDS->Open(poOpenInfo, TRUE))
 	{
 		delete poDS;
 		poDS = NULL;
@@ -118,6 +123,11 @@ static GDALDataset *OGREFALDriverCreate(const char * pszName,
 	CPL_UNUSED GDALDataType /*eDT*/,
 	char **papszOptions)
 {
+	if (STARTS_WITH_CI(pszName, "/vsi"))
+	{
+		return FALSE;
+	}
+
 	// Try to create the data source.
 	OGREFALDataSource   *poDS = new OGREFALDataSource();
 	if (!poDS->Create(pszName, papszOptions))
