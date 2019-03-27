@@ -380,7 +380,7 @@ def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_optio
         Calc(calc="(A+B)/2", A="input1.tif", B="input2.tif", outfile="result.tif")
 
     set values of zero and below to null:
-        Calc(calc="A*(A>0)", A="input.tif", A_Band=2, outfile="result.tif", NoDataValue=0)
+        Calc(calc="A*(A>0)", A="input.tif", A_band=2, outfile="result.tif", NoDataValue=0)
     """
     opts = Values()
     opts.input_files = input_files
