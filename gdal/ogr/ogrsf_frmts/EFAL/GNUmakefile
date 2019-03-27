@@ -16,7 +16,7 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 
-$(O_OBJ):       MIDefs.h EFAL.h EFALAPI.h EFALErrorIDs.h EFALLIB.h from_mitab.h OGREFAL.h ogrgeopackageutility.h ogr_efal.h
+$(O_OBJ):       MIDefs.h EFAL.h EFALAPI.h EFALErrorIDs.h EFALLIB.h from_mitab.h OGREFAL.h ogrgeopackageutility.h
 
 update:
 	copymatch.sh ~/pkg/efal *.TXT

@@ -26,7 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma warning(disable:4251)
+#if defined(_WIN32) && !defined(unix)
+	#pragma warning(disable:4251)
+#endif
+
 #include "cpl_port.h"
 #include "OGREFAL.h"
 #include "ogrgeopackageutility.h"
@@ -66,6 +69,59 @@ enum class SymbolType : unsigned char
 	EFF = 3,
 };
 
+typedef enum TABFontStyle_t
+{
+	TABFSNone = 0,
+	TABFSBold = 0x0001,
+	TABFSItalic = 0x0002,
+	TABFSUnderline = 0x0004,
+	TABFSStrikeout = 0x0008,
+	TABFSShadow = 0x0020,
+	TABFSHalo = 0x0100,
+	TABFSAllCaps = 0x0200,
+	TABFSExpanded = 0x0400,
+} TABFontStyle;
+
+static bool QueryFontStyle(int style, TABFontStyle eStyleToQuery);
+static char *mystrtok(char *str, const char *sep, char** context);
+
+static bool QueryFontStyle(int style, TABFontStyle eStyleToQuery)
+{
+	return (style & static_cast<int>(eStyleToQuery)) ? true : false;
+}
+
+static char *mystrtok(char *str, const char *sep, char** context) {
+	char * s = nullptr;
+	if (str == nullptr) {
+		s = *context;
+	}
+	else {
+		s = str;
+	}
+	while (*s && strchr(sep, *s) != nullptr) s++;
+	if (!*s) return nullptr;
+	char *t = s;
+	if (*s == '"')
+	{
+		s++;
+		t = s;
+		while (*s && *s != '"') s++;
+		*s = 0;
+		s++;
+	}
+	else
+	{
+		while (*s && strchr(sep, *s) == nullptr) s++;
+		if (*s)
+		{
+			*s = 0;
+			s++;
+		}
+	}
+	*context = s;
+	return t;
+}
+
 class EFALFeaturePen : public EFAL_GDAL_DRIVER::ITABFeaturePen
 {
 public:
@@ -88,8 +144,8 @@ class EFALFeatureSymbol : public EFAL_GDAL_DRIVER::ITABFeatureSymbol, public EFA
 {
 protected:
 	double      m_dAngle;
-	GInt16      m_nFontStyle;           // Bold/shadow/halo/etc.
 	SymbolType  m_eSymbolType;
+	GInt16      m_nFontStyle;           // Bold/shadow/halo/etc.
 
 public:
 	EFALFeatureSymbol();
@@ -122,7 +178,7 @@ protected:
 	long m_rgbBackground;
 
 public:
-	EFALFeatureFont() : m_nFontStyle(0), m_nPointSize(0), m_rgbForeground(0), m_rgbBackground(0), ITABFeatureFont()
+	EFALFeatureFont() : ITABFeatureFont(), m_nFontStyle(0), m_nPointSize(0), m_rgbForeground(0), m_rgbBackground(0)
 	{}
 	~EFALFeatureFont() {};
 
@@ -158,29 +214,11 @@ public:
 	}
 };
 
-typedef enum TABFontStyle_t
-{
-	TABFSNone = 0,
-	TABFSBold = 0x0001,
-	TABFSItalic = 0x0002,
-	TABFSUnderline = 0x0004,
-	TABFSStrikeout = 0x0008,
-	TABFSShadow = 0x0020,
-	TABFSHalo = 0x0100,
-	TABFSAllCaps = 0x0200,
-	TABFSExpanded = 0x0400,
-} TABFontStyle;
-
-bool QueryFontStyle(int style, TABFontStyle eStyleToQuery)
-{
-	return (style & static_cast<int>(eStyleToQuery)) ? true : false;
-}
-
 const char *EFALFeatureFont::GetFontStyleString()
 {
-	const char *pszBGColor = m_rgbBackground > 0 ? CPLSPrintf(",b:#%6.6x", m_rgbBackground) : "";
+	const char *pszBGColor = m_rgbBackground > 0 ? CPLSPrintf(",b:#%6.6x", (GInt32)m_rgbBackground) : "";
 	const char *pszOColor = QueryFontStyle(m_nFontStyle, TABFontStyle::TABFSHalo) ? CPLSPrintf(",o:#%6.6x",
-		m_rgbBackground) : "";
+		(GInt32)m_rgbBackground) : "";
 	const char *pszSColor = QueryFontStyle(m_nFontStyle, TABFontStyle::TABFSShadow) ? CPLSPrintf(",h:#%6.6x",
 		0x808080) : "";
 	const char *pszBold = QueryFontStyle(m_nFontStyle, TABFontStyle::TABFSBold) ? ",bo:1" : "";
@@ -188,7 +226,7 @@ const char *EFALFeatureFont::GetFontStyleString()
 	const char *pszUnderline = QueryFontStyle(m_nFontStyle, TABFontStyle::TABFSUnderline) ? ",un:1" : "";
 	const char *pszStrikethrough = QueryFontStyle(m_nFontStyle, TABFontStyle::TABFSStrikeout) ? ",st:1" : "";
 	const char *pszStyle = CPLSPrintf("LABEL(f:\"%s\",s:%dpt,c:#%6.6x%s%s%s%s%s%s%s)", GetFontNameRef(),
-		GetPointSize(), GetForeground(), pszBGColor, pszOColor, pszSColor,
+		GetPointSize(), (GInt32)GetForeground(), pszBGColor, pszOColor, pszSColor,
 		pszBold, pszItalic, pszUnderline, pszStrikethrough);
 	return pszStyle;
 }
@@ -198,8 +236,8 @@ void EFALFeatureFont::SetFontFromStyleString(const char * pszStyleString)
 	GBool bIsNull = 0;
 
 	// Use the Style Manager to retrieve all the information we need.
-	OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-	OGRStyleTool *poStylePart = NULL;
+	OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
+	OGRStyleTool *poStylePart = nullptr;
 
 	// Init the StyleMgr with the StyleString.
 	poStyleMgr->InitStyleString(pszStyleString);
@@ -209,7 +247,7 @@ void EFALFeatureFont::SetFontFromStyleString(const char * pszStyleString)
 	for (int i = 0; i < numParts; i++)
 	{
 		poStylePart = poStyleMgr->GetPart(i);
-		if (poStylePart == NULL)
+		if (poStylePart == nullptr)
 			continue;
 
 		if (poStylePart->GetType() == OGRSTCLabel)
@@ -219,12 +257,12 @@ void EFALFeatureFont::SetFontFromStyleString(const char * pszStyleString)
 		else
 		{
 			delete poStylePart;
-			poStylePart = NULL;
+			poStylePart = nullptr;
 		}
 	}
 
 	// If the no label found, do nothing.
-	if (poStylePart == NULL)
+	if (poStylePart == nullptr)
 	{
 		delete poStyleMgr;
 		return;
@@ -252,7 +290,7 @@ void EFALFeatureFont::SetFontFromStyleString(const char * pszStyleString)
 	{
 		if (pszFgColor[0] == '#')
 			pszFgColor++;
-		long nFgColor = strtol(pszFgColor, NULL, 16);
+		long nFgColor = strtol(pszFgColor, nullptr, 16);
 		SetForeground(nFgColor);
 	}
 
@@ -261,7 +299,7 @@ void EFALFeatureFont::SetFontFromStyleString(const char * pszStyleString)
 	{
 		if (pszBgColor[0] == '#')
 			pszBgColor++;
-		long nBgColor = strtol(pszBgColor, NULL, 16);
+		long nBgColor = strtol(pszBgColor, nullptr, 16);
 		SetForeground(nBgColor);
 	}
 
@@ -301,7 +339,7 @@ void EFALFeatureFont::SetFontFromStyleString(const char * pszStyleString)
 const char * EFALFeatureFont::GetMapBasicStyleClause()
 {
 	const char *pszBg = m_rgbBackground > 0 ? CPLSPrintf(",%d", (int)GetBackground()) : "";
-	const char *pszStyle = NULL;
+	const char *pszStyle = nullptr;
 	pszStyle = CPLSPrintf("Font(\"%s\",%d,%d,%d%s)", GetFontNameRef(), (int)GetFontStyle(), (int)GetPointSize(), (int)GetForeground(), pszBg);
 	return pszStyle;
 }
@@ -309,8 +347,7 @@ const char * EFALFeatureFont::GetMapBasicStyleClause()
 /*=====================================================================
 *                      class EFALFeatureSymbolFont
 *====================================================================*/
-EFALFeatureSymbol::EFALFeatureSymbol() : m_dAngle(0), m_eSymbolType(SymbolType::NONE), m_nFontStyle(0),
-ITABFeatureFont()
+EFALFeatureSymbol::EFALFeatureSymbol() : ITABFeatureFont(), m_dAngle(0), m_eSymbolType(SymbolType::NONE), m_nFontStyle(0)
 {}
 /**********************************************************************
 *                   EFALFeatureSymbolFont::SetSymbolAngle()
@@ -334,7 +371,7 @@ void EFALFeatureSymbol::SetSymbolAngle(double dAngle)
 **********************************************************************/
 const char *EFALFeatureSymbol::GetSymbolStyleString()
 {
-	const char *pszStyle = NULL;
+	const char *pszStyle = nullptr;
 	int    nOGRStyle = 1;
 	/* char szPattern[20]; */
 	int nAngle = 0;
@@ -402,7 +439,7 @@ const char *EFALFeatureSymbol::GetSymbolStyleString()
 	}
 	else if (m_eSymbolType == SymbolType::FONT)
 	{
-		const char *outlineColor = NULL;
+		const char *outlineColor = nullptr;
 		if (m_nFontStyle & 16)
 			outlineColor = ",o:#000000";
 		else if (m_nFontStyle & 256)
@@ -422,7 +459,7 @@ const char *EFALFeatureSymbol::GetSymbolStyleString()
 	}
 	else if (m_eSymbolType == SymbolType::EFF)
 	{
-		const char *outlineColor = NULL;
+		const char *outlineColor = nullptr;
 		if (m_nFontStyle & 1)
 			outlineColor = ",o:#ffffff";
 		else if (m_nFontStyle & 4)
@@ -446,8 +483,8 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
 	GBool bIsNull = 0;
 
 	// Use the Style Manager to retrieve all the information we need.
-	OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-	OGRStyleTool *poStylePart = NULL;
+	OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
+	OGRStyleTool *poStylePart = nullptr;
 
 	// Init the StyleMgr with the StyleString.
 	poStyleMgr->InitStyleString(pszStyleString);
@@ -457,7 +494,7 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
 	for (int i = 0; i < numParts; i++)
 	{
 		poStylePart = poStyleMgr->GetPart(i);
-		if (poStylePart == NULL)
+		if (poStylePart == nullptr)
 			continue;
 
 		if (poStylePart->GetType() == OGRSTCSymbol)
@@ -467,12 +504,12 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
 		else
 		{
 			delete poStylePart;
-			poStylePart = NULL;
+			poStylePart = nullptr;
 		}
 	}
 
 	// If the no Symbol found, do nothing.
-	if (poStylePart == NULL)
+	if (poStylePart == nullptr)
 	{
 		delete poStyleMgr;
 		return;
@@ -491,7 +528,7 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
 
 	// Set the Symbol Id (SymbolNo)
 	const char *pszSymbolId = poSymbolStyle->Id(bIsNull);
-	if (bIsNull) pszSymbolId = NULL;
+	if (bIsNull) pszSymbolId = nullptr;
 
 
 	if (pszSymbolId && strlen(pszSymbolId) > 0)
@@ -531,7 +568,11 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
 			{
 				size_t diff = ptr2 - ptr;
 				memset(m_sFontDef.szFontName, 0, sizeof(m_sFontDef.szFontName));
-				strncpy(m_sFontDef.szFontName, ptr + 4, __min(sizeof(m_sFontDef.szFontName), diff - 4));
+#ifdef min
+#undef min
+#endif
+				strncpy(m_sFontDef.szFontName, ptr + 4, std::min(sizeof(m_sFontDef.szFontName), diff - 4));
+
 				SetSymbolType(SymbolType::EFF);
 			}
 		}
@@ -596,7 +637,7 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
 	{
 		if (pszSymbolColor[0] == '#')
 			pszSymbolColor++;
-		int nSymbolColor = static_cast<int>(strtol(pszSymbolColor, NULL, 16));
+		int nSymbolColor = static_cast<int>(strtol(pszSymbolColor, nullptr, 16));
 		SetSymbolColor((GInt32)nSymbolColor);
 	}
 
@@ -606,7 +647,7 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
 	{
 		if (pszSymbolOColor[0] == '#')
 			pszSymbolOColor++;
-		int nSymbolColor = static_cast<int>(strtol(pszSymbolOColor, NULL, 16));
+		int nSymbolColor = static_cast<int>(strtol(pszSymbolOColor, nullptr, 16));
 
 		if (GetSymbolType() == SymbolType::FONT) 
 		{
@@ -646,7 +687,7 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
 }
 const char * EFALFeatureSymbol::GetMapBasicStyleClause()
 {
-	const char *pszStyle = NULL;
+	const char *pszStyle = nullptr;
 	if (GetSymbolType() == SymbolType::VECTOR)
 	{
 		pszStyle = CPLSPrintf("Symbol(%d,%d,%d)", (int)m_sSymbolDef.nSymbolNo, (int)m_sSymbolDef.rgbColor, (int)m_sSymbolDef.nPointSize);
@@ -670,7 +711,7 @@ const char * EFALFeatureSymbol::GetMapBasicStyleClause()
 **********************************************************************/
 const char *EFALFeaturePen::GetMapBasicStyleClause()
 {
-	const char *pszStyle = NULL;
+	const char *pszStyle = nullptr;
 	pszStyle = CPLSPrintf("Pen(%d,%d,%d)", (int)m_sPenDef.nPixelWidth, (int)m_sPenDef.nLinePattern, (int)m_sPenDef.rgbColor);
 	return pszStyle;
 }
@@ -681,41 +722,9 @@ const char *EFALFeaturePen::GetMapBasicStyleClause()
 **********************************************************************/
 const char *EFALFeatureBrush::GetMapBasicStyleClause()
 {
-	const char *pszStyle = NULL;
+	const char *pszStyle = nullptr;
 	pszStyle = CPLSPrintf("Brush(%d,%d,%d)", (int)m_sBrushDef.nFillPattern, (int)m_sBrushDef.rgbFGColor, (int)m_sBrushDef.rgbBGColor);
 	return pszStyle;
-}
-
-char *mystrtok(char *str, const char *sep, char** context) {
-	char * s = NULL;
-	if (str == NULL) {
-		s = *context;
-	}
-	else {
-		s = str;
-	}
-	while (*s && strchr(sep, *s) != NULL) s++;
-	if (!*s) return NULL;
-	char *t = s;
-	if (*s == '"')
-	{
-		s++;
-		t = s;
-		while (*s && *s != '"') s++;
-		*s = NULL;
-		s++;
-	}
-	else
-	{
-		while (*s && strchr(sep, *s) == NULL) s++;
-		if (*s)
-		{
-			*s = NULL;
-			s++;
-		}
-	}
-	*context = s;
-	return t;
 }
 
 /************************************************************************/
@@ -727,12 +736,12 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 	{
 		CPLString ogrStyle = "";
 
-		char * mbStyleTokenString = NULL;
+		char * mbStyleTokenString = nullptr;
 		mbStyleTokenString = CPLRecodeFromWChar(mbStyle, CPL_ENC_UCS2, CPL_ENC_UTF8);
 
 		char seps[] = " ,()";
-		char *token = NULL;
-		char *next_token = NULL;
+		char *token = nullptr;
+		char *next_token = nullptr;
 
 		token = mystrtok(mbStyleTokenString, seps, &next_token);
 		/*
@@ -762,7 +771,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 		{
 			if (stricmp(token, "Pen") == 0)
 			{
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 
 				if (token == nullptr)
 				{
@@ -771,7 +780,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 				double thickness = atof(token);
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 
 				if (token == nullptr)
 				{
@@ -793,7 +802,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					pattern = 2;
 				}
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 
 				if (token == nullptr)
 				{
@@ -814,12 +823,12 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 				pen.SetPenColor((GInt32)color);
 				hasPen = true;
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 				continue;
 			}
 			else if (stricmp(token, "Brush") == 0)
 			{
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 
 				if (token == nullptr)
 				{
@@ -834,7 +843,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					pattern = UCHAR_MAX;
 				}
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 
 				if (token == nullptr)
 				{
@@ -843,7 +852,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 				long forecolor = atol(token);
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 
 				long bgcolor = 0;
 				unsigned char transparent = 1;
@@ -870,13 +879,13 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					brush.SetBrushTransparent((GByte)transparent);
 					hasBrush = true;
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 					continue;
 				}
 			}
 			else if (stricmp(token, "Font") == 0)
 			{
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 				if (token == nullptr)
 				{
 					break;
@@ -884,13 +893,13 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 				char* fontName = token;
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 				if (token == nullptr)
 				{
 					break;
 				}
 
-				short style = (short)atoi(token);
+				int style = atoi(token);
 				if (style < 0) {
 					style = 0;
 				}
@@ -898,13 +907,13 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					style = SHRT_MAX;
 				}
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 				if (token == nullptr)
 				{
 					break;
 				}
 
-				short size = (short)atoi(token);
+				int size = atoi(token);
 				if (size < 0) {
 					size = 0;
 				}
@@ -912,7 +921,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					size = SHRT_MAX;
 				}
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 
 				if (token == nullptr)
 				{
@@ -921,7 +930,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 				long forecolor = atol(token);
 
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 
 				long bgcolor = 0;
 				if (token == nullptr ||
@@ -930,8 +939,8 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					stricmp(token, "Symbol") == 0)
 				{
 					font.SetFontName(fontName);
-					font.SetFontStyle(style);
-					font.SetPointSize(size);
+					font.SetFontStyle((short)style);
+					font.SetPointSize((short)size);
 					font.SetForeground(forecolor);
 					font.SetBackground(bgcolor);
 					hasFont = true;
@@ -942,19 +951,19 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					bgcolor = atol(token);
 
 					font.SetFontName(fontName);
-					font.SetFontStyle(style);
-					font.SetPointSize(size);
+					font.SetFontStyle((short)style);
+					font.SetPointSize((short)size);
 					font.SetForeground(forecolor);
 					font.SetBackground(bgcolor);
 					hasFont = true;
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 					continue;
 				}
 			}
 			else if (stricmp(token, "Symbol") == 0)
 			{
-				token = mystrtok(NULL, seps, &next_token);
+				token = mystrtok(nullptr, seps, &next_token);
 				if (token == nullptr)
 				{
 					break;
@@ -965,7 +974,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 				{
 					// non-custom symbol
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 					if (token == nullptr)
 					{
 						break;
@@ -973,13 +982,13 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 					long color = atol(token);
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 					if (token == nullptr)
 					{
 						break;
 					}
 
-					short size = (short)atoi(token);
+					int size = atoi(token);
 					if (size < 0) {
 						size = 0;
 					}
@@ -987,7 +996,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 						size = SHRT_MAX;
 					}
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 
 					if (token == nullptr ||
 						stricmp(token, "Pen") == 0 ||
@@ -1009,13 +1018,13 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 						**/
 						char* fontName = token;
 
-						token = mystrtok(NULL, seps, &next_token);
+						token = mystrtok(nullptr, seps, &next_token);
 						if (token == nullptr)
 						{
 							break;
 						}
 
-						short style = (short)atoi(token);
+						int style = atoi(token);
 						if (style < 0) {
 							style = 0;
 						}
@@ -1023,7 +1032,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 							style = SHRT_MAX;
 						}
 
-						token = mystrtok(NULL, seps, &next_token);
+						token = mystrtok(nullptr, seps, &next_token);
 						if (token == nullptr)
 						{
 							break;
@@ -1039,7 +1048,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 						symbol.SetSymbolType(SymbolType::FONT);
 						hasSymbol = true;
 
-						token = mystrtok(NULL, seps, &next_token);
+						token = mystrtok(nullptr, seps, &next_token);
 						continue;
 					}
 				}
@@ -1049,7 +1058,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 					char* bitmapName = token;
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 					if (token == nullptr)
 					{
 						break;
@@ -1057,13 +1066,13 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 					long color = atol(token);
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 					if (token == nullptr)
 					{
 						break;
 					}
 
-					short size = (short)atoi(token);
+					int size = atoi(token);
 					if (size < 0) {
 						size = 0;
 					}
@@ -1071,13 +1080,13 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 						size = SHRT_MAX;
 					}
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 					if (token == nullptr)
 					{
 						break;
 					}
 
-					short style = (short)atoi(token);
+					int style = atoi(token);
 					if (style < 0) {
 						style = 0;
 					}
@@ -1092,7 +1101,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					symbol.SetSymbolType(SymbolType::EFF);
 					hasSymbol = true;
 
-					token = mystrtok(NULL, seps, &next_token);
+					token = mystrtok(nullptr, seps, &next_token);
 					continue;
 				}
 			}
@@ -1125,7 +1134,7 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 		}
 		return ogrStyle;
 	}
-	return NULL;
+	return nullptr;
 }
 /************************************************************************/
 /*                      OGRStyle2MapBasicStyle()                        */

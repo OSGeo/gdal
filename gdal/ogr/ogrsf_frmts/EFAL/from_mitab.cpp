@@ -26,12 +26,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma warning(disable:4251)
+#if defined(_WIN32) && !defined(unix)
+	#pragma warning(disable:4251)
+#endif
+
 #include "from_mitab.h"
 #include <algorithm>
 
 #if defined(_WIN32) && !defined(unix)
-#  include <mbctype.h>  // Multibyte chars stuff.
+	#include <mbctype.h>  // Multibyte chars stuff.
 #endif
 
 namespace EFAL_GDAL_DRIVER
@@ -139,7 +142,7 @@ namespace EFAL_GDAL_DRIVER
 	**********************************************************************/
 	const char *ITABFeaturePen::GetPenStyleString()
 	{
-		const char *pszStyle = NULL;
+		const char *pszStyle = nullptr;
 		int    nOGRStyle = 0;
 		char szPattern[20];
 
@@ -294,8 +297,8 @@ namespace EFAL_GDAL_DRIVER
 		GBool bIsNull = 0;
 
 		// Use the Style Manager to retrieve all the information we need.
-		OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-		OGRStyleTool *poStylePart = NULL;
+		OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
+		OGRStyleTool *poStylePart = nullptr;
 
 		// Init the StyleMgr with the StyleString.
 		poStyleMgr->InitStyleString(pszStyleString);
@@ -305,7 +308,7 @@ namespace EFAL_GDAL_DRIVER
 		for (int i = 0; i < numParts; i++)
 		{
 			poStylePart = poStyleMgr->GetPart(i);
-			if (poStylePart == NULL)
+			if (poStylePart == nullptr)
 				continue;
 
 			if (poStylePart->GetType() == OGRSTCPen)
@@ -315,12 +318,12 @@ namespace EFAL_GDAL_DRIVER
 			else
 			{
 				delete poStylePart;
-				poStylePart = NULL;
+				poStylePart = nullptr;
 			}
 		}
 
 		// If the no Pen found, do nothing.
-		if (poStylePart == NULL)
+		if (poStylePart == nullptr)
 		{
 			delete poStyleMgr;
 			return;
@@ -340,7 +343,7 @@ namespace EFAL_GDAL_DRIVER
 
 		// Get the Pen Id or pattern
 		const char *pszPenName = poPenStyle->Id(bIsNull);
-		if (bIsNull) pszPenName = NULL;
+		if (bIsNull) pszPenName = nullptr;
 
 		// Set the width
 		if (poPenStyle->Width(bIsNull) != 0.0)
@@ -355,17 +358,17 @@ namespace EFAL_GDAL_DRIVER
 
 		//Set the color
 		const char *pszPenColor = poPenStyle->Color(bIsNull);
-		if (pszPenColor != NULL)
+		if (pszPenColor != nullptr)
 		{
 			if (pszPenColor[0] == '#')
 				pszPenColor++;
 			// The Pen color is an Hexa string that need to be convert in a int
 			const GInt32 nPenColor =
-				static_cast<int>(strtol(pszPenColor, NULL, 16));
+				static_cast<int>(strtol(pszPenColor, nullptr, 16));
 			SetPenColor(nPenColor);
 		}
 
-		const char *pszPenPattern = NULL;
+		const char *pszPenPattern = nullptr;
 
 		int nPenId = 0;
 		// Set the Id of the Pen, use Pattern if necessary.
@@ -373,7 +376,7 @@ namespace EFAL_GDAL_DRIVER
 			(strstr(pszPenName, "mapinfo-pen-") || strstr(pszPenName, "ogr-pen-")))
 		{
 			const char* pszPenId = strstr(pszPenName, "mapinfo-pen-");
-			if (pszPenId != NULL)
+			if (pszPenId != nullptr)
 			{
 				nPenId = atoi(pszPenId + 12);
 				SetPenPattern((GByte)nPenId);
@@ -381,7 +384,7 @@ namespace EFAL_GDAL_DRIVER
 			else
 			{
 				pszPenId = strstr(pszPenName, "ogr-pen-");
-				if (pszPenId != NULL)
+				if (pszPenId != nullptr)
 				{
 					nPenId = atoi(pszPenId + 8);
 					if (nPenId == 0)
@@ -395,7 +398,7 @@ namespace EFAL_GDAL_DRIVER
 			// If no Pen Id, use the Pen Pattern to retrieve the Id.
 			pszPenPattern = poPenStyle->Pattern(bIsNull);
 			if (bIsNull)
-				pszPenPattern = NULL;
+				pszPenPattern = nullptr;
 			else
 			{
 				if (strcmp(pszPenPattern, "1 1") == 0)
@@ -458,9 +461,9 @@ namespace EFAL_GDAL_DRIVER
 	*
 	* Dump pen definition information.
 	**********************************************************************/
-	void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=NULL*/)
+	void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=nullptr*/)
 	{
-		if (fpOut == NULL)
+		if (fpOut == nullptr)
 			fpOut = stdout;
 
 		fprintf(fpOut, "  m_nPenDefIndex         = %d\n", m_nPenDefIndex);
@@ -497,7 +500,7 @@ namespace EFAL_GDAL_DRIVER
 	**********************************************************************/
 	const char *ITABFeatureBrush::GetBrushStyleString()
 	{
-		const char *pszStyle = NULL;
+		const char *pszStyle = nullptr;
 		int    nOGRStyle = 0;
 		/* char szPattern[20]; */
 		//* szPattern[0] = '\0'; */
@@ -546,8 +549,8 @@ namespace EFAL_GDAL_DRIVER
 		GBool bIsNull = 0;
 
 		// Use the Style Manager to retrieve all the information we need.
-		OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-		OGRStyleTool *poStylePart = NULL;
+		OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
+		OGRStyleTool *poStylePart = nullptr;
 
 		// Init the StyleMgr with the StyleString.
 		poStyleMgr->InitStyleString(pszStyleString);
@@ -557,7 +560,7 @@ namespace EFAL_GDAL_DRIVER
 		for (int i = 0; i < numParts; i++)
 		{
 			poStylePart = poStyleMgr->GetPart(i);
-			if (poStylePart == NULL)
+			if (poStylePart == nullptr)
 				continue;
 
 			if (poStylePart->GetType() == OGRSTCBrush)
@@ -567,12 +570,12 @@ namespace EFAL_GDAL_DRIVER
 			else
 			{
 				delete poStylePart;
-				poStylePart = NULL;
+				poStylePart = nullptr;
 			}
 		}
 
 		// If the no Brush found, do nothing.
-		if (poStylePart == NULL)
+		if (poStylePart == nullptr)
 		{
 			delete poStyleMgr;
 			return;
@@ -582,7 +585,7 @@ namespace EFAL_GDAL_DRIVER
 
 		// Set the Brush Id (FillPattern)
 		const char *pszBrushId = poBrushStyle->Id(bIsNull);
-		if (bIsNull) pszBrushId = NULL;
+		if (bIsNull) pszBrushId = nullptr;
 
 		if (pszBrushId &&
 			(strstr(pszBrushId, "mapinfo-brush-") ||
@@ -604,14 +607,14 @@ namespace EFAL_GDAL_DRIVER
 
 		// Set the BackColor, if not set, then it's transparent
 		const char *pszBrushColor = poBrushStyle->BackColor(bIsNull);
-		if (bIsNull) pszBrushColor = NULL;
+		if (bIsNull) pszBrushColor = nullptr;
 
 		if (pszBrushColor)
 		{
 			if (pszBrushColor[0] == '#')
 				pszBrushColor++;
 			const int nBrushColor =
-				static_cast<int>(strtol(pszBrushColor, NULL, 16));
+				static_cast<int>(strtol(pszBrushColor, nullptr, 16));
 			SetBrushBGColor((GInt32)nBrushColor);
 		}
 		else
@@ -621,14 +624,14 @@ namespace EFAL_GDAL_DRIVER
 
 		// Set the ForeColor
 		pszBrushColor = poBrushStyle->ForeColor(bIsNull);
-		if (bIsNull) pszBrushColor = NULL;
+		if (bIsNull) pszBrushColor = nullptr;
 
 		if (pszBrushColor)
 		{
 			if (pszBrushColor[0] == '#')
 				pszBrushColor++;
 			const int nBrushColor =
-				static_cast<int>(strtol(pszBrushColor, NULL, 16));
+				static_cast<int>(strtol(pszBrushColor, nullptr, 16));
 			SetBrushFGColor((GInt32)nBrushColor);
 		}
 
@@ -643,9 +646,9 @@ namespace EFAL_GDAL_DRIVER
 	*
 	* Dump Brush definition information.
 	**********************************************************************/
-	void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=NULL*/)
+	void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=nullptr*/)
 	{
-		if (fpOut == NULL)
+		if (fpOut == nullptr)
 			fpOut = stdout;
 
 		fprintf(fpOut, "  m_nBrushDefIndex         = %d\n", m_nBrushDefIndex);
@@ -692,9 +695,9 @@ namespace EFAL_GDAL_DRIVER
 	*
 	* Dump Font definition information.
 	**********************************************************************/
-	void ITABFeatureFont::DumpFontDef(FILE *fpOut /*=NULL*/)
+	void ITABFeatureFont::DumpFontDef(FILE *fpOut /*=nullptr*/)
 	{
-		if (fpOut == NULL)
+		if (fpOut == nullptr)
 			fpOut = stdout;
 
 		fprintf(fpOut, "  m_nFontDefIndex       = %d\n", m_nFontDefIndex);
@@ -728,7 +731,7 @@ namespace EFAL_GDAL_DRIVER
 	**********************************************************************/
 	const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
 	{
-		const char *pszStyle = NULL;
+		const char *pszStyle = nullptr;
 		int    nOGRStyle = 1;
 		/* char szPattern[20]; */
 		int nAngle = 0;
@@ -805,8 +808,8 @@ namespace EFAL_GDAL_DRIVER
 		GBool bIsNull = 0;
 
 		// Use the Style Manager to retrieve all the information we need.
-		OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
-		OGRStyleTool *poStylePart = NULL;
+		OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
+		OGRStyleTool *poStylePart = nullptr;
 
 		// Init the StyleMgr with the StyleString.
 		poStyleMgr->InitStyleString(pszStyleString);
@@ -816,7 +819,7 @@ namespace EFAL_GDAL_DRIVER
 		for (int i = 0; i < numParts; i++)
 		{
 			poStylePart = poStyleMgr->GetPart(i);
-			if (poStylePart == NULL)
+			if (poStylePart == nullptr)
 				continue;
 
 			if (poStylePart->GetType() == OGRSTCSymbol)
@@ -826,12 +829,12 @@ namespace EFAL_GDAL_DRIVER
 			else
 			{
 				delete poStylePart;
-				poStylePart = NULL;
+				poStylePart = nullptr;
 			}
 		}
 
 		// If the no Symbol found, do nothing.
-		if (poStylePart == NULL)
+		if (poStylePart == nullptr)
 		{
 			delete poStyleMgr;
 			return;
@@ -850,7 +853,7 @@ namespace EFAL_GDAL_DRIVER
 
 		// Set the Symbol Id (SymbolNo)
 		const char *pszSymbolId = poSymbolStyle->Id(bIsNull);
-		if (bIsNull) pszSymbolId = NULL;
+		if (bIsNull) pszSymbolId = nullptr;
 
 		if (pszSymbolId &&
 			(strstr(pszSymbolId, "mapinfo-sym-") ||
@@ -919,7 +922,7 @@ namespace EFAL_GDAL_DRIVER
 		{
 			if (pszSymbolColor[0] == '#')
 				pszSymbolColor++;
-			int nSymbolColor = static_cast<int>(strtol(pszSymbolColor, NULL, 16));
+			int nSymbolColor = static_cast<int>(strtol(pszSymbolColor, nullptr, 16));
 			SetSymbolColor((GInt32)nSymbolColor);
 		}
 		
@@ -934,9 +937,9 @@ namespace EFAL_GDAL_DRIVER
 	*
 	* Dump Symbol definition information.
 	**********************************************************************/
-	void ITABFeatureSymbol::DumpSymbolDef(FILE *fpOut /*=NULL*/)
+	void ITABFeatureSymbol::DumpSymbolDef(FILE *fpOut /*=nullptr*/)
 	{
-		if (fpOut == NULL)
+		if (fpOut == nullptr)
 			fpOut = stdout;
 
 		fprintf(fpOut, "  m_nSymbolDefIndex       = %d\n", m_nSymbolDefIndex);

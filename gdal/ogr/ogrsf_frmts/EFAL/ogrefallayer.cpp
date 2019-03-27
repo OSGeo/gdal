@@ -27,7 +27,10 @@
  ****************************************************************************/
 
 
-#pragma warning(disable:4251)
+#if defined(_WIN32) && !defined(unix)
+	#pragma warning(disable:4251)
+#endif
+
 #include "cpl_port.h"
 #include "OGREFAL.h"
 #include "ogrgeopackageutility.h"
@@ -72,14 +75,14 @@ extern EFALHANDLE OGREFALGetSession(GUIntBig);
 /*      Note that the OGREFALLayer assumes ownership of the passed       */
 /*      file pointer.                                                   */
 /************************************************************************/
-OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenMode efalOpenMode) :
+OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenMode eEfalOpenMode) :
 	hSession(argSession),
 	hTable(argTable),
 	hSequentialCursor(0),
-	poFeatureDefn(NULL),
-	pszTableCSys(NULL),
+	poFeatureDefn(nullptr),
+	pszTableCSys(nullptr),
 	bHasFieldNames(false),
-	efalOpenMode(efalOpenMode),
+	efalOpenMode(eEfalOpenMode),
 	bNew(FALSE),
 	bNeedEndAccess(FALSE),
 	bCreateNativeX(FALSE),
@@ -91,7 +94,7 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenM
 	xmax(0),
 	ymax(0),
 	bInWriteMode(FALSE),
-	pszFilename(NULL),
+	pszFilename(nullptr),
 	nLastFID(-1),
 	bHasMap(false),
 	pSpatialReference(nullptr)
@@ -116,10 +119,10 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenM
 	/*
 	 * Create the field definitions
 	*/
-	OGRFieldDefn *poFieldDefn = NULL;
+	OGRFieldDefn *poFieldDefn = nullptr;
 	for (unsigned long i = 0; i < efallib->GetColumnCount(hSession, hTable); i++)
 	{
-		poFieldDefn = NULL;
+		poFieldDefn = nullptr;
 		const wchar_t * pwszAlias = efallib->GetColumnName(hSession, hTable, i);
 		char * pszAlias = CPLRecodeFromWChar(pwszAlias, CPL_ENC_UCS2, CPL_ENC_UTF8);
 
@@ -178,15 +181,15 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenM
 			 */
 			break;
 		case Ellis::ALLTYPE_TYPE::OT_OBJECT:
+		{
 			/*
 			 * NOTE: OGRFeatureDefn ctor automatically adds 1 geometry field definition with
 			 * type of unknown and no SRS. So we don't create a new one, we just update that one.
 			 */
-			int numPoints = 0, numRegions = 0, numTexts = 0, numLines = 0;
-			numPoints = efallib->GetPointObjectCount(hSession, hTable, i);
-			numRegions = efallib->GetAreaObjectCount(hSession, hTable, i);
-			numLines = efallib->GetLineObjectCount(hSession, hTable, i);
-			numTexts = efallib->GetMiscObjectCount(hSession, hTable, i);
+			int numPoints = efallib->GetPointObjectCount(hSession, hTable, i);
+			int numRegions = efallib->GetAreaObjectCount(hSession, hTable, i);
+			int numLines = efallib->GetLineObjectCount(hSession, hTable, i);
+			int numTexts = efallib->GetMiscObjectCount(hSession, hTable, i);
 			if (numPoints > 0 && numLines == 0 && numRegions == 0 && numTexts == 0)
 				poFeatureDefn->SetGeomType(wkbPoint);
 			else {
@@ -206,13 +209,16 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenM
 			bHasMap = true;
 			break;
 		}
+		default:
+			break;
+		}
 
 		CPLFree(pszAlias);
 		if (poFieldDefn)
 		{
 			poFeatureDefn->AddFieldDefn(poFieldDefn);
 			delete poFieldDefn;
-			poFieldDefn = NULL;
+			poFieldDefn = nullptr;
 		}
 	}
 	switch (efalOpenMode)
@@ -230,19 +236,19 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenM
 }
 
 OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, const char *pszLayerNameIn,
-	const char *pszFilenameIn, bool bNativeX, int nBlockSize, Ellis::MICHARSET charset) :
+	const char *pszFilenameIn, bool bNativeX, int BlockSize, Ellis::MICHARSET eCharset) :
 	hSession(argSession),
 	hTable(0),
 	hSequentialCursor(0),
-	poFeatureDefn(NULL),
-	pszTableCSys(NULL),
+	poFeatureDefn(nullptr),
+	pszTableCSys(nullptr),
 	bHasFieldNames(false),
 	efalOpenMode(EfalOpenMode::EFAL_LOCK_WRITE),
 	bNew(true),
 	bNeedEndAccess(FALSE),
 	bCreateNativeX(bNativeX),
-	nBlockSize(nBlockSize),
-	charset(charset),
+	nBlockSize(BlockSize),
+	charset(eCharset),
 	bHasBounds(FALSE),
 	xmin(0),
 	ymin(0),
@@ -391,7 +397,7 @@ void OGREFALLayer::BuildQuery(wchar_t * szQuery, size_t sz, bool count) const
 	query += "\"";
 
 	CPLString where = "";
-	if (m_poFilterGeom != NULL)
+	if (m_poFilterGeom != nullptr)
 	{
 		OGREnvelope envelope;
 		m_poFilterGeom->getEnvelope(&envelope);
@@ -407,9 +413,9 @@ void OGREFALLayer::BuildQuery(wchar_t * szQuery, size_t sz, bool count) const
 		where += pszTableCSys;
 		where += "'))";
 	}
-	if (m_pszAttrQueryString != NULL)
+	if (m_pszAttrQueryString != nullptr)
 	{
-		if (m_poFilterGeom != NULL)
+		if (m_poFilterGeom != nullptr)
 		where += " AND ";
 		else
 		where += " WHERE ";
@@ -476,7 +482,7 @@ void OGREFALLayer::ResetReading()
 OGRSpatialReference* OGREFALLayer::EFALCSys2OGRSpatialRef(const wchar_t* szwCoordSys)
 {
 	char * szCoordSys = CPLRecodeFromWChar(szwCoordSys, CPL_ENC_UCS2, CPL_ENC_UTF8);
-	OGRSpatialReference* poSpatialRef = NULL;
+	OGRSpatialReference* poSpatialRef = nullptr;
 	if (strnicmp(szCoordSys, "mapinfo:coordsys ", 17) == 0)
 	{
 		szwCoordSys = efallib->CoordSys2MBString(hSession, szwCoordSys);
@@ -495,7 +501,7 @@ OGRSpatialReference* OGREFALLayer::EFALCSys2OGRSpatialRef(const wchar_t* szwCoor
 		int nEPSGCode = atoi(szCode);
 		poSpatialRef = new OGRSpatialReference();
 		CPLPushErrorHandler(CPLQuietErrorHandler);
-		const OGRErr eErr = poSpatialRef->importFromEPSG(nEPSGCode);
+		poSpatialRef->importFromEPSG(nEPSGCode);
 		CPLPopErrorHandler();
 		CPLErrorReset();
 	}
@@ -533,7 +539,7 @@ const wchar_t* OGREFALLayer::OGRSpatialRef2EFALCSys(const OGRSpatialReference* p
 {
 	if (poSpatialRef) 
 	{
-		char * szResult = NULL;
+		char * szResult = nullptr;
 		OGRErr err = poSpatialRef->exportToMICoordSys(&szResult);
 		if (err == OGRERR_NONE)
 		{
@@ -544,7 +550,7 @@ const wchar_t* OGREFALLayer::OGRSpatialRef2EFALCSys(const OGRSpatialReference* p
 			return pwConvertedCoordSys;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 /************************************************************************/
@@ -606,7 +612,7 @@ OGRFeature* OGREFALLayer::Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFe
 		{
 			const wchar_t* szwMBStyle = efallib->GetCursorValueStyle(hSession, hCursor, i);
 			CPLString szOGRStyle = MapBasicStyle2OGRStyle(szwMBStyle);
-			if (szOGRStyle != NULL) {
+			if (szOGRStyle != nullptr) {
 				pFeature->SetStyleString(szOGRStyle);
 			}
 		}
@@ -636,11 +642,11 @@ OGRFeature* OGREFALLayer::Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFe
 				case Ellis::ALLTYPE_TYPE::OT_CHAR:
 				case Ellis::ALLTYPE_TYPE::OT_FLSTRING:
 				{
-					char * szValue = NULL;
+					char * szValue = nullptr;
 					szValue = CPLRecodeFromWChar(efallib->GetCursorValueString(hSession, hCursor, i), CPL_ENC_UCS2, CPL_ENC_UTF8);
 					pFeature->SetField(idxFeature, szValue);
 					CPLFree(szValue);
-					szValue = NULL;
+					szValue = nullptr;
 				}
 				break;
 				case Ellis::ALLTYPE_TYPE::OT_DECIMAL:
@@ -681,6 +687,8 @@ OGRFeature* OGREFALLayer::Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFe
 				case Ellis::ALLTYPE_TYPE::OT_TIMESPAN:
 					pFeature->SetField(idxFeature, efallib->GetCursorValueDouble(hSession, hCursor, i));
 					break;
+				default:
+					break;
 				}
 			}
 		}
@@ -696,7 +704,7 @@ OGRFeature* OGREFALLayer::GetFeature(GIntBig nFID)
 {
 	// we need to create the table as its not yet created.
 	OGRErr status = CreateNewTable();
-	if (status != OGRERR_NONE) return NULL;
+	if (status != OGRERR_NONE) return nullptr;
 
 	wchar_t szQuery[256] = { 0 };
 	swprintf(szQuery, sizeof(szQuery) / sizeof(wchar_t), L"SELECT * FROM \"%ls\" WHERE MI_KEY = '" CPL_FRMT_GIB "'", efallib->GetTableName(hSession, hTable), nFID);
@@ -712,7 +720,7 @@ OGRFeature* OGREFALLayer::GetFeature(GIntBig nFID)
 		efallib->DisposeCursor(hSession, hCursor);
 		return pFeature;
 	}
-	return NULL;
+	return nullptr;
 }
 
 /************************************************************************/
@@ -730,7 +738,7 @@ OGRFeature *OGREFALLayer::GetNextFeature()
 		OGRFeature* pFeature = Cursor2Feature(hSequentialCursor, poFeatureDefn);
 		return pFeature;
 	}
-	return NULL;
+	return nullptr;
 }
 /************************************************************************/
 /*                           ISetFeature()                              */
@@ -766,7 +774,7 @@ OGRErr OGREFALLayer::ISetFeature(OGRFeature *poFeature)
 		{
 			if (!first) command += ","; first = false;
 			command += fieldName;
-			command += "= NULL";
+			command += "= nullptr";
 		}
 		else
 		{
@@ -884,17 +892,17 @@ OGRErr OGREFALLayer::ISetFeature(OGRFeature *poFeature)
 			CPLFree(varname);
 		}
 	}
-	// API Seems unclear of the meaning when the Geometry and/or Style is NULL on the feature
-	// whether this means the record in the table should be updated to NULL or if they should 
+	// API Seems unclear of the meaning when the Geometry and/or Style is nullptr on the feature
+	// whether this means the record in the table should be updated to nullptr or if they should 
 	// not be included in the update at all. It appears from other implementations that they
 	// are not included in the update at all so this driver will follow that pattern.
-	OGRGeometry * ogrGeometry = poFeature->GetGeometryRef(); // may be NULL
-	if (ogrGeometry != NULL)
+	OGRGeometry * ogrGeometry = poFeature->GetGeometryRef(); // may be nullptr
+	if (ogrGeometry != nullptr)
 	{
-		GByte* bytes = NULL;
+		GByte* bytes = nullptr;
 		size_t sz = 0;
 		OGRGeometry2EFALGeometry(ogrGeometry, &bytes, &sz);
-		if (bytes == NULL)
+		if (bytes == nullptr)
 		{
 			err = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 		}
@@ -910,14 +918,14 @@ OGRErr OGREFALLayer::ISetFeature(OGRFeature *poFeature)
 			command += varname;
 		}
 	}
-	const char * ogrStyleString = poFeature->GetStyleString(); // may be NULL
-	if (ogrStyleString != NULL)
+	const char * ogrStyleString = poFeature->GetStyleString(); // may be nullptr
+	if (ogrStyleString != nullptr)
 	{
 		const wchar_t * warname = L"@style";
 		const char * varname = "@style";
 
 		char* mbStyleString = OGRStyle2MapBasicStyle(ogrStyleString);
-		if (mbStyleString == NULL)
+		if (mbStyleString == nullptr)
 		{
 			// Just because we failed to parse an OGR style into a MapBasic style, we won't fail the operation, just allow it to default to the Ellis default values.
 			efallib->CreateVariable(hSession, warname);
@@ -1054,7 +1062,7 @@ OGRErr OGREFALLayer::CreateNewTable()
 				}
 				if (status == OGRERR_NONE)
 				{
-					efallib->AddColumn(hSession, hMetadata, columnName, columnType, isIndexed, columnWidth, columnDecimals, NULL);
+					efallib->AddColumn(hSession, hMetadata, columnName, columnType, isIndexed, columnWidth, columnDecimals, nullptr);
 				}
 				CPLFree(columnName);
 			}
@@ -1062,14 +1070,14 @@ OGRErr OGREFALLayer::CreateNewTable()
 		else 
 		{
 			// Add a single FID column.
-			efallib->AddColumn(hSession, hMetadata, L"FID", Ellis::ALLTYPE_TYPE::OT_INTEGER, true, 0, 0, NULL);
+			efallib->AddColumn(hSession, hMetadata, L"FID", Ellis::ALLTYPE_TYPE::OT_INTEGER, true, 0, 0, nullptr);
 		}
 		// Add Geometry and Style columns
 		if (poFeatureDefn->GetGeomFieldCount() > 0)
 		{
 			const wchar_t * efalCSys = OGRSpatialRef2EFALCSys(GetSpatialRef());
 			efallib->AddColumn(hSession, hMetadata, L"OBJ", Ellis::ALLTYPE_TYPE::OT_OBJECT, false, 0, 0, efalCSys);
-			efallib->AddColumn(hSession, hMetadata, L"MI_STYLE", Ellis::ALLTYPE_TYPE::OT_STYLE, false, 0, 0, NULL);
+			efallib->AddColumn(hSession, hMetadata, L"MI_STYLE", Ellis::ALLTYPE_TYPE::OT_STYLE, false, 0, 0, nullptr);
 			bHasMap = true;
 		}
 
@@ -1127,7 +1135,7 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
 		{
 			if (!first) { command += ","; values += ","; } first = false;
 			command += fieldName;
-			values += "NULL";
+			values += "nullptr";
 		}
 		else
 		{
@@ -1238,17 +1246,17 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
 			CPLFree(varname);
 		}
 	}
-	// API Seems unclear of the meaning when the Geometry and/or Style is NULL on the feature
-	// whether this means the record in the table should be updated to NULL or if they should 
+	// API Seems unclear of the meaning when the Geometry and/or Style is nullptr on the feature
+	// whether this means the record in the table should be updated to nullptr or if they should 
 	// not be included in the update at all. It appears from other implementations that they
 	// are not included in the update at all so this driver will follow that pattern.
-	OGRGeometry * ogrGeometry = poFeature->GetGeometryRef(); // may be NULL
-	if (ogrGeometry != NULL)
+	OGRGeometry * ogrGeometry = poFeature->GetGeometryRef(); // may be nullptr
+	if (ogrGeometry != nullptr)
 	{
-		GByte* bytes = NULL;
+		GByte* bytes = nullptr;
 		size_t sz = 0;
 		OGRGeometry2EFALGeometry(ogrGeometry, &bytes, &sz);
-		if (bytes == NULL)
+		if (bytes == nullptr)
 		{
 			err = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 		}
@@ -1257,7 +1265,7 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
 			const wchar_t * warname = L"@geom";
 			const char * varname = "@geom";
 			const wchar_t * pszwCSys = OGRSpatialRef2EFALCSys(GetSpatialRef());
-			if (pszwCSys == NULL) {
+			if (pszwCSys == nullptr) {
 				for (unsigned long i = 0; i < efallib->GetColumnCount(hSession, hTable); i++)
 				{
 					Ellis::ALLTYPE_TYPE atType = efallib->GetColumnType(hSession, hTable, i);
@@ -1273,8 +1281,8 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
 			values += varname;
 		}
 	}
-	const char * ogrStyleString = poFeature->GetStyleString(); // may be NULL
-	if (ogrStyleString != NULL)
+	const char * ogrStyleString = poFeature->GetStyleString(); // may be nullptr
+	if (ogrStyleString != nullptr)
 	{
 		const wchar_t * warname = L"@style";
 		const char * varname = "@style";
@@ -1680,7 +1688,7 @@ OGRErr OGREFALLayer::CreateField(OGRFieldDefn *poNewField, int bApproxOK)
 	/*-----------------------------------------------------------------
 	* Map MapInfo native types to OGR types
 	*----------------------------------------------------------------*/
-	OGRFieldDefn *poFieldDefn = NULL;
+	OGRFieldDefn *poFieldDefn = nullptr;
 
 	switch (eTABType)
 	{

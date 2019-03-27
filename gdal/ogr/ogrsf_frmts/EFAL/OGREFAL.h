@@ -32,6 +32,11 @@
 
 #include "ogrsf_frmts.h"
 #define EFAL_IN_GDAL
+
+#ifdef ABS
+#undef ABS
+#endif
+
 #include "MIDefs.h"
 #include "EFALAPI.h"
 #include "EFAL.h"
@@ -94,8 +99,8 @@ private:
 	OGRErr               CreateNewTable();
 
 public:
-	OGREFALLayer(EFALHANDLE hSession, EFALHANDLE hTable, EfalOpenMode efalOpenMode);
-	OGREFALLayer(EFALHANDLE hSession, const char *pszName, const char *pszFilename, bool bNativeX, int nBlockSize, Ellis::MICHARSET charset);
+	OGREFALLayer(EFALHANDLE hSession, EFALHANDLE hTable, EfalOpenMode eEfalOpenMode);
+	OGREFALLayer(EFALHANDLE hSession, const char *pszName, const char *pszFilename, bool bNativeX, int BlockSize, Ellis::MICHARSET eCharset);
 	virtual ~OGREFALLayer();
 
 	const char*          GetFilename() const { return pszFilename; }

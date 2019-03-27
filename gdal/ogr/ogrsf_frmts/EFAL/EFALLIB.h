@@ -181,6 +181,7 @@ private:
 	typedef bool(__cdecl *SetVariableValueDateProc)(EFALHANDLE hSession, const wchar_t * name, EFALDATE value);
 	typedef bool(__cdecl *SetVariableValueDateTimeProc)(EFALHANDLE hSession, const wchar_t * name, EFALDATETIME value);
 
+	dynlib  __efalHandle = nullptr;
 	InitializeSessionProc __InitializeSession = NULL;
 	DestroySessionProc __DestroySession = NULL;
 	GetDataProc __GetData = NULL;
@@ -324,9 +325,8 @@ private:
 	SetVariableValueDateProc __SetVariableValueDate = NULL;
 	SetVariableValueDateTimeProc __SetVariableValueDateTime = NULL;
 
-	dynlib  efalHandle = NULL;
 	EFALLIB(dynlib efalHandle) :
-		efalHandle(efalHandle),
+		__efalHandle(efalHandle),
 		#if ELLIS_OS_IS_WINOS
 		__InitializeSession((InitializeSessionProc)dynlib_sym(efalHandle, "?InitializeSession@EFAL@@YA_KP6APEB_WPEB_W@Z@Z")),
 		__DestroySession((DestroySessionProc)dynlib_sym(efalHandle, "?DestroySession@EFAL@@YAX_K@Z")),
@@ -617,15 +617,15 @@ private:
 	{
 	}
 public:
-	static EFALLIB * Create(const char * path = 0)
+	static EFALLIB * Create(const char * path = nullptr)
 	{
 		#if ELLIS_OS_ISUNIX
-		if (path == NULL) path = "libEFAL.so";
+		if (path == nullptr) path = "libEFAL.so";
 		#else
-		if (path == NULL) path = "EFAL.dll";
+		if (path == nullptr) path = "EFAL.dll";
 		#endif
 		dynlib handle = dynlib_open(path);
-		if (handle != NULL)
+		if (handle != nullptr)
 		{
 			EFALLIB * efallib = new EFALLIB(handle);
 			return efallib;
@@ -634,11 +634,11 @@ public:
 	}
 	~EFALLIB()
 	{
-		if (efalHandle)
+		if (__efalHandle)
 		{
-			dynlib_close(efalHandle);
+			dynlib_close(__efalHandle);
 		}
-		efalHandle = 0;
+		__efalHandle = nullptr;
 	}
 	/* ***********************************************************
 	* These functions were added after the initial release so we
@@ -724,7 +724,7 @@ public:
 		{
 			return (__HaveErrors)(hSession);
 		}
-		return 0;
+		return false;
 	}
 	void ClearErrors(EFALHANDLE hSession)
 	{
@@ -747,7 +747,7 @@ public:
 		{
 			return (__GetError)(hSession, ierror);
 		}
-		return 0;
+		return nullptr;
 	}
 
 	/* ***********************************************************
@@ -782,7 +782,7 @@ public:
 		{
 			return (__BeginReadAccess)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	bool BeginWriteAccess(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -790,7 +790,7 @@ public:
 		{
 			return (__BeginWriteAccess)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	void EndAccess(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -837,7 +837,7 @@ public:
 		{
 			return (__SupportsPack)(hSession, hTable, ePackType);
 		}
-		return 0;
+		return false;
 	}
 	bool Pack(EFALHANDLE hSession, EFALHANDLE hTable, Ellis::ETablePackType ePackType)
 	{
@@ -845,7 +845,7 @@ public:
 		{
 			return (__Pack)(hSession, hTable, ePackType);
 		}
-		return 0;
+		return false;
 	}
 
 	/* ***********************************************************
@@ -858,7 +858,7 @@ public:
 		{
 			return (__CoordSys2PRJString)(hSession, csys);
 		}
-		return 0;
+		return nullptr;
 	}
 	const wchar_t * CoordSys2MBString(EFALHANDLE hSession, const wchar_t * csys)
 	{
@@ -866,7 +866,7 @@ public:
 		{
 			return (__CoordSys2MBString)(hSession, csys);
 		}
-		return 0;
+		return nullptr;
 	}
 	const wchar_t * PRJ2CoordSysString(EFALHANDLE hSession, const wchar_t * csys)
 	{
@@ -874,7 +874,7 @@ public:
 		{
 			return (__PRJ2CoordSysString)(hSession, csys);
 		}
-		return 0;
+		return nullptr;
 	}
 	const wchar_t * MB2CoordSysString(EFALHANDLE hSession, const wchar_t * csys)
 	{
@@ -882,7 +882,7 @@ public:
 		{
 			return (__MB2CoordSysString)(hSession, csys);
 		}
-		return 0;
+		return nullptr;
 	}
 
 	/* ***********************************************************
@@ -895,7 +895,7 @@ public:
 		{
 			return (__GetTableName)(hSession, hTable);
 		}
-		return 0;
+		return nullptr;
 	}
 	const wchar_t * GetTableDescription(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -903,7 +903,7 @@ public:
 		{
 			return (__GetTableDescription)(hSession, hTable);
 		}
-		return 0;
+		return nullptr;
 	}
 	const wchar_t * GetTablePath(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -911,7 +911,7 @@ public:
 		{
 			return (__GetTablePath)(hSession, hTable);
 		}
-		return 0;
+		return nullptr;
 	}
 	const wchar_t * GetTableGUID(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -919,7 +919,7 @@ public:
 		{
 			return (__GetTableGUID)(hSession, hTable);
 		}
-		return 0;
+		return nullptr;
 	}
 	Ellis::MICHARSET GetTableCharset(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -935,7 +935,7 @@ public:
 		{
 			return (__HasRaster)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	bool HasGrid(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -943,7 +943,7 @@ public:
 		{
 			return (__HasGrid)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	bool IsSeamless(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -951,7 +951,7 @@ public:
 		{
 			return (__IsSeamless)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	bool IsVector(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -959,7 +959,7 @@ public:
 		{
 			return (__IsVector)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	bool SupportsInsert(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -967,7 +967,7 @@ public:
 		{
 			return (__SupportsInsert)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	bool SupportsUpdate(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -975,7 +975,7 @@ public:
 		{
 			return (__SupportsUpdate)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	bool SupportsDelete(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -983,7 +983,7 @@ public:
 		{
 			return (__SupportsDelete)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	bool SupportsBeginAccess(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -991,7 +991,7 @@ public:
 		{
 			return (__SupportsBeginAccess)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 	MI_INT32 GetReadVersion(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -1031,7 +1031,7 @@ public:
 		{
 			return (__GetColumnName)(hSession, hTable, columnNbr);
 		}
-		return 0;
+		return nullptr;
 	}
 	Ellis::ALLTYPE_TYPE GetColumnType(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
 	{
@@ -1063,7 +1063,7 @@ public:
 		{
 			return (__IsColumnIndexed)(hSession, hTable, columnNbr);
 		}
-		return 0;
+		return false;
 	}
 	bool IsColumnReadOnly(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
 	{
@@ -1071,7 +1071,7 @@ public:
 		{
 			return (__IsColumnReadOnly)(hSession, hTable, columnNbr);
 		}
-		return 0;
+		return false;
 	}
 	const wchar_t * GetColumnCSys(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
 	{
@@ -1079,7 +1079,7 @@ public:
 		{
 			return (__GetColumnCSys)(hSession, hTable, columnNbr);
 		}
-		return 0;
+		return nullptr;
 	}
 	Ellis::DRECT GetEntireBounds(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
 	{
@@ -1137,7 +1137,7 @@ public:
 		{
 			return (__HasZ)(hSession, hTable, columnNbr);
 		}
-		return 0;
+		return false;
 	}
 	bool IsZRangeKnown(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
 	{
@@ -1145,7 +1145,7 @@ public:
 		{
 			return (__IsZRangeKnown)(hSession, hTable, columnNbr);
 		}
-		return 0;
+		return false;
 	}
 	Ellis::DRANGE GetZRange(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
 	{
@@ -1162,7 +1162,7 @@ public:
 		{
 			return (__HasM)(hSession, hTable, columnNbr);
 		}
-		return 0;
+		return false;
 	}
 	bool IsMRangeKnown(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
 	{
@@ -1170,7 +1170,7 @@ public:
 		{
 			return (__IsMRangeKnown)(hSession, hTable, columnNbr);
 		}
-		return 0;
+		return false;
 	}
 	Ellis::DRANGE GetMRange(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
 	{
@@ -1192,7 +1192,7 @@ public:
 		{
 			return (__GetMetadata)(hSession, hTable, key);
 		}
-		return 0;
+		return nullptr;
 	}
 	EFALHANDLE EnumerateMetadata(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
@@ -1215,7 +1215,7 @@ public:
 		{
 			return (__GetNextEntry)(hSession, hEnumerator);
 		}
-		return 0;
+		return false;
 	}
 	const wchar_t * GetCurrentMetadataKey(EFALHANDLE hSession, EFALHANDLE hEnumerator)
 	{
@@ -1223,7 +1223,7 @@ public:
 		{
 			return (__GetCurrentMetadataKey)(hSession, hEnumerator);
 		}
-		return 0;
+		return nullptr;
 	}
 	const wchar_t * GetCurrentMetadataValue(EFALHANDLE hSession, EFALHANDLE hEnumerator)
 	{
@@ -1231,7 +1231,7 @@ public:
 		{
 			return (__GetCurrentMetadataValue)(hSession, hEnumerator);
 		}
-		return 0;
+		return nullptr;
 	}
 	void SetMetadata(EFALHANDLE hSession, EFALHANDLE hTable, const wchar_t * key, const wchar_t * value)
 	{
@@ -1253,7 +1253,7 @@ public:
 		{
 			return (__WriteMetadata)(hSession, hTable);
 		}
-		return 0;
+		return false;
 	}
 
 	/* ***********************************************************
@@ -1334,7 +1334,7 @@ public:
 		{
 			return (__AddSeamlessComponentTable)(hSession, hSeamlessTable, componentTablePath, mbr);
 		}
-		return 0;
+		return false;
 	}
 
 	/* ***********************************************************
@@ -1355,7 +1355,7 @@ public:
 		{
 			return (__FetchNext)(hSession, hCursor);
 		}
-		return 0;
+		return false;
 	}
 	void DisposeCursor(EFALHANDLE hSession, EFALHANDLE hCursor)
 	{
@@ -1455,7 +1455,7 @@ public:
 		{
 			return (__GetCursorColumnName)(hSession, hCursor, columnNbr);
 		}
-		return 0;
+		return nullptr;
 	}
 	Ellis::ALLTYPE_TYPE GetCursorColumnType(EFALHANDLE hSession, EFALHANDLE hCursor, MI_UINT32 columnNbr)
 	{
@@ -1471,7 +1471,7 @@ public:
 		{
 			return (__GetCursorColumnCSys)(hSession, hCursor, columnNbr);
 		}
-		return 0;
+		return nullptr;
 	}
 	const wchar_t * GetCursorCurrentKey(EFALHANDLE hSession, EFALHANDLE hCursor)
 	{
@@ -1479,7 +1479,7 @@ public:
 		{
 			return (__GetCursorCurrentKey)(hSession, hCursor);
 		}
-		return 0;
+		return nullptr;
 	}
 	bool GetCursorIsNull(EFALHANDLE hSession, EFALHANDLE hCursor, MI_UINT32 columnNbr)
 	{
@@ -1487,7 +1487,7 @@ public:
 		{
 			return (__GetCursorIsNull)(hSession, hCursor, columnNbr);
 		}
-		return 0;
+		return false;
 	}
 	const wchar_t *  GetCursorValueString(EFALHANDLE hSession, EFALHANDLE hCursor, MI_UINT32 columnNbr)
 	{
@@ -1495,7 +1495,7 @@ public:
 		{
 			return (__GetCursorValueString)(hSession, hCursor, columnNbr);
 		}
-		return 0;
+		return nullptr;
 	}
 	bool GetCursorValueBoolean(EFALHANDLE hSession, EFALHANDLE hCursor, MI_UINT32 columnNbr)
 	{
@@ -1543,7 +1543,7 @@ public:
 		{
 			return (__GetCursorValueStyle)(hSession, hCursor, columnNbr);
 		}
-		return 0;
+		return nullptr;
 	}
 	MI_UINT32 PrepareCursorValueBinary(EFALHANDLE hSession, EFALHANDLE hCursor, MI_UINT32 columnNbr)
 	{
@@ -1606,7 +1606,7 @@ public:
 		{
 			return (__CreateVariable)(hSession, name);
 		}
-		return 0;
+		return false;
 	}
 	void DropVariable(EFALHANDLE hSession, const wchar_t * name)
 	{
@@ -1629,7 +1629,7 @@ public:
 		{
 			return (__GetVariableName)(hSession, index);
 		}
-		return 0;
+		return nullptr;
 	}
 	Ellis::ALLTYPE_TYPE GetVariableType(EFALHANDLE hSession, const wchar_t * name)
 	{
@@ -1654,7 +1654,7 @@ public:
 		{
 			return (__GetVariableIsNull)(hSession, name);
 		}
-		return 0;
+		return false;
 	}
 	const wchar_t *  GetVariableValueString(EFALHANDLE hSession, const wchar_t * name)
 	{
@@ -1662,7 +1662,7 @@ public:
 		{
 			return (__GetVariableValueString)(hSession, name);
 		}
-		return 0;
+		return nullptr;
 	}
 	bool GetVariableValueBoolean(EFALHANDLE hSession, const wchar_t * name)
 	{
@@ -1670,7 +1670,7 @@ public:
 		{
 			return (__GetVariableValueBoolean)(hSession, name);
 		}
-		return 0;
+		return false;
 	}
 	double GetVariableValueDouble(EFALHANDLE hSession, const wchar_t * name)
 	{
@@ -1710,7 +1710,7 @@ public:
 		{
 			return (__GetVariableValueStyle)(hSession, name);
 		}
-		return 0;
+		return nullptr;
 	}
 	MI_UINT32 PrepareVariableValueBinary(EFALHANDLE hSession, const wchar_t * name)
 	{
@@ -1734,7 +1734,7 @@ public:
 		{
 			return (__GetVariableColumnCSys)(hSession, name);
 		}
-		return 0;
+		return nullptr;
 	}
 	double GetVariableValueTimespanInMilliseconds(EFALHANDLE hSession, const wchar_t * name)
 	{
@@ -1777,7 +1777,7 @@ public:
 		{
 			return (__SetVariableIsNull)(hSession, name);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueString(EFALHANDLE hSession, const wchar_t * name, const wchar_t * value)
 	{
@@ -1785,7 +1785,7 @@ public:
 		{
 			return (__SetVariableValueString)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueBoolean(EFALHANDLE hSession, const wchar_t * name, bool value)
 	{
@@ -1793,7 +1793,7 @@ public:
 		{
 			return (__SetVariableValueBoolean)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueDouble(EFALHANDLE hSession, const wchar_t * name, double value)
 	{
@@ -1801,7 +1801,7 @@ public:
 		{
 			return (__SetVariableValueDouble)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueInt64(EFALHANDLE hSession, const wchar_t * name, MI_INT64 value)
 	{
@@ -1809,7 +1809,7 @@ public:
 		{
 			return (__SetVariableValueInt64)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueInt32(EFALHANDLE hSession, const wchar_t * name, MI_INT32 value)
 	{
@@ -1817,7 +1817,7 @@ public:
 		{
 			return (__SetVariableValueInt32)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueInt16(EFALHANDLE hSession, const wchar_t * name, MI_INT16 value)
 	{
@@ -1825,7 +1825,7 @@ public:
 		{
 			return (__SetVariableValueInt16)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueStyle(EFALHANDLE hSession, const wchar_t * name, const wchar_t * value)
 	{
@@ -1833,7 +1833,7 @@ public:
 		{
 			return (__SetVariableValueStyle)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueBinary(EFALHANDLE hSession, const wchar_t * name, MI_UINT32 nbytes, const char * value)
 	{
@@ -1841,7 +1841,7 @@ public:
 		{
 			return (__SetVariableValueBinary)(hSession, name, nbytes, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueGeometry(EFALHANDLE hSession, const wchar_t * name, MI_UINT32 nbytes, const char * value, const wchar_t * szcsys)
 	{
@@ -1849,7 +1849,7 @@ public:
 		{
 			return (__SetVariableValueGeometry)(hSession, name, nbytes, value, szcsys);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueTimespanInMilliseconds(EFALHANDLE hSession, const wchar_t * name, double value)
 	{
@@ -1857,7 +1857,7 @@ public:
 		{
 			return (__SetVariableValueTimespanInMilliseconds)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueTime(EFALHANDLE hSession, const wchar_t * name, EFALTIME value)
 	{
@@ -1865,7 +1865,7 @@ public:
 		{
 			return (__SetVariableValueTime)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueDate(EFALHANDLE hSession, const wchar_t * name, EFALDATE value)
 	{
@@ -1873,7 +1873,7 @@ public:
 		{
 			return (__SetVariableValueDate)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 	bool SetVariableValueDateTime(EFALHANDLE hSession, const wchar_t * name, EFALDATETIME value)
 	{
@@ -1881,7 +1881,7 @@ public:
 		{
 			return (__SetVariableValueDateTime)(hSession, name, value);
 		}
-		return 0;
+		return false;
 	}
 
 };

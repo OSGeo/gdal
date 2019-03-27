@@ -4,7 +4,7 @@
 </head>
 
 <body bgcolor="#ffffff">
-This driver supports the MapInfo TAB file format. This driver supports the native as well as the new MapInfo Extended (NATIVEX) formats. 
+This driver supports the MapInfo TAB file format. This driver supports the MapInfo (Native) as well as the new MapInfo Extended (NATIVEX) formats. 
 
 <h2>Contents</h2>
 <ol>
@@ -62,28 +62,10 @@ Pitney Bowes plans to port the EFAL library to non-Windows platforms.
 
 <hr/><h2 id="differences_with_mitab">Differences with MITAB</h2>
 <ul>
-  <li>Windows only - currently the EFAL SDK is available on Windows platforms only</li>
   <li>No MID/MIF support</li>
   <li>Table (layer) schema lists geometry column as having name "OBJ" whereas MITAB does not.</li>
-  <li>EFAL reports geometry type for table level whereas MITAB reports it as Unknown</li>
+  <li>EFAL reports geometry type for table level whereas MITAB reports it as Unknown.</li>
   <li>Style strings - order of PEN and BRUSH clauses are usually reversed although results are the same.</li>
-  <li><code>Symbol (58,16711680,12,"MapInfo Cartographic",256,0)</code>Point style for Washington DC in USA_CAPS: 
-  MAP file stores a FontStyle value of 512. Why do I get 256 in the MapBasic string? MITAB style code adds outline based on 512, not 256....
-	<p>
-
-	Styles\dev\StyleSymFont.cpp
-	<pre><code>
-		if (pFont) {
-			if (pFont->Halo())		style |= S_HALO;    <= this is true, makes it 256 which is what's returned
-			if (pFont->Outline()) style |= S_OUTLINE;
-			if (pFont->Bold())    style |= S_BOLD;
-			if (pFont->Shadow())  style |= S_SHADOW;
-		}
-	</code></pre>
-	</p>
-  </li>
-  <li><b>Fixed (I think)</b>: Data extents and geometry node values (for ocean only?) have different number of significant digits</li>
-  <li><b>Fixed (I think)</b>: ogr2ogr Number_of_Lanes_Style - node values are wrong in new dataset with EFAL?</li>
 </ul>
 
 <hr/><h2 id="options">Options</h2>
@@ -149,29 +131,18 @@ These options apply to the dataset creation options (-dcco)
 <tr><td>UTF8</td><td>Standard UTF-8  </td></tr>
 <tr><td>UTF16</td><td>Standard UTF-16  </td></tr>
 </table>
-<li>BLOCKSIZE=[number], Default is 16384, max is 32768. <b><i>TODO</i></b>: The driver does not use this - EFAL does not expose this ability to supply it. Is there a metadata tag that can be used or do we need an EFAL change?</li>
+<li>BLOCKSIZE=[number], Default is 16384, max is 32768.</li>
 </ul>
 
 <hr/><h2 id="issues">Issues and Limitations</h2>
 <ul>
-<li><b>EFAL Session handling</b> is untested - the driver now supports specifying a session by name but has not been tested!</li>
-<li>BOUNDS when creating does not work. <b><i>Maybe fixed</i></b> from the bounded csys change in EFAL???</li>
+<li>TODO:</li>
 </ul>
 
 <hr/><h2 id="building_gdal">Building and Using GDAL</h2>
-<h3>Changes to GDAL Source</h3>
-<table>
-<tr><td>Filename</td><td>Folder</td><td>Change</td><td></td><td></td><td></td></tr>
-<tr><td>EFAL</td><td>ROOT\ogr\ogrsf_frmts</td><td>NEW folder which contains the GDAL/OGR wrapper implementation using EFAL</td><td></td><td></td><td></td></tr>
-<tr><td>makefile.vc</td><td>ROOT\ogr\ogrsf_frmts\generic</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>ogrregisterall.cpp</td><td>ROOT\ogr\ogrsf_frmts\generic</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>makefile.vc</td><td>ROOT\ogr\ogrsf_frmts</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>ogrsf_frmts.h</td><td>ROOT\ogr\ogrsf_frmts</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>nmake.opt</td><td>ROOT</td><td></td><td></td><td></td><td></td></tr>
-</table>
 <h3>Building</h3>
 The EFAL driver will build as part of the GDAL even if the EFAL SDK is not found or not on the machine. This will allow GDAL to always be EFAL-ready. 
-A new header file (EFALLIB.h> was created to dynamically load the EFAL DLL if found and calls GetProcAddress for each of the function entry points.
+A new header file (EFALLIB.h) was created to dynamically load the EFAL DLL if found and calls GetProcAddress for each of the function entry points.
 To build GDAL for x64 architecture, for example, from a command prompt run the following:
 <pre><code>
 nmake -f makefile.vc MSVC_VER=1900 DEBUG=1 WIN64=YES
@@ -181,7 +152,7 @@ nmake -f makefile.vc MSVC_VER=1900 DEBUG=1 WIN64=YES
 <h3>Runtime</h3>
 When using GDAL with this driver, the location of the EFAL runtime must be available on the system path. For example
 <pre><code>
-SET PATH=%PATH%;%EFAL_SDK_DIR%\export\ux64
+SET PATH=%PATH%;%EFAL_SDK_DIR%
 </code></pre>
 <h3>Usage examples</h3>
 <p/>

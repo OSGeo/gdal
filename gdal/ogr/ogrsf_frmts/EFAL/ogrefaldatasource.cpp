@@ -27,7 +27,10 @@
  ****************************************************************************/
  
 
-#pragma warning(disable:4251)
+#if defined(_WIN32) && !defined(unix)
+	#pragma warning(disable:4251)
+#endif
+
 #include "cpl_port.h"
 #include "OGREFAL.h"
 
@@ -59,12 +62,12 @@ extern void OGREFALReleaseSession(EFALHANDLE hSession);
 /************************************************************************/
 
 OGREFALDataSource::OGREFALDataSource() :
-	pszName(NULL),
-	pszDirectory(NULL),
-	papoLayers(NULL),
+	pszName(nullptr),
+	pszDirectory(nullptr),
+	papoLayers(nullptr),
 	nLayers(0),
-	efalOpenMode(EfalOpenMode::EFAL_READ_WRITE),
 	bUpdate(FALSE),
+	efalOpenMode(EfalOpenMode::EFAL_READ_WRITE),
 	bSingleFile(FALSE),
 	bSingleLayerAlreadyCreated(FALSE),
 	bCreateNativeX(false),
@@ -115,7 +118,7 @@ int OGREFALDataSource::TestCapability(const char * pszCap)
 OGRLayer *OGREFALDataSource::GetLayer(int iLayer)
 {
 	if (iLayer < 0 || iLayer >= GetLayerCount())
-		return NULL;
+		return nullptr;
 	return papoLayers[iLayer];
 }
 
@@ -183,7 +186,7 @@ char **OGREFALDataSource::GetFileList()
 /************************************************************************/
 int OGREFALDataSource::Open(GDALOpenInfo* poOpenInfo, int bTestOpen)
 {
-	CPLAssert(pszName == NULL);
+	CPLAssert(pszName == nullptr);
 
 	pszName = CPLStrdup(poOpenInfo->pszFilename);
 	pszDirectory = CPLStrdup(CPLGetPath(pszName));
@@ -217,7 +220,7 @@ int OGREFALDataSource::Open(GDALOpenInfo* poOpenInfo, int bTestOpen)
 		 * TODO: May need to reopen this or do a better test if EFAL cannot open it???
 		 * **************************************************************************** */
 		VSIFCloseL(poOpenInfo->fpL);
-		poOpenInfo->fpL = NULL;
+		poOpenInfo->fpL = nullptr;
 
 		EFALHANDLE hSession = OGREFALGetSession(++counter);
 		if (hSession == (EFALHANDLE)nullptr)
@@ -252,7 +255,7 @@ int OGREFALDataSource::Open(GDALOpenInfo* poOpenInfo, int bTestOpen)
 		pszDirectory = CPLStrdup(pszName);
 
 		for (int iFile = 0;
-			papszFileList != NULL && papszFileList[iFile] != NULL;
+			papszFileList != nullptr && papszFileList[iFile] != nullptr;
 			iFile++)
 		{
 			const char *pszExtension = CPLGetExtension(papszFileList[iFile]);
@@ -311,7 +314,7 @@ These options are normally documented in the format specific documentation.
 
 Parameters
 	pszName	the name for the new layer. This should ideally not match any existing layer on the datasource.
-	poSpatialRef	the coordinate system to use for the new layer, or NULL if no coordinate system is available.
+	poSpatialRef	the coordinate system to use for the new layer, or nullptr if no coordinate system is available.
 	eGType	the geometry type for the layer. Use wkbUnknown if there are no constraints on the types geometry to be written.
 	papszOptions	a StringList of name=value options. Options are driver specific.
 */
@@ -331,13 +334,13 @@ OGREFALDataSource::ICreateLayer(const char *pszLayerName,
 			"New layer %s cannot be created.",
 			pszName, pszLayerName);
 
-		return NULL;
+		return nullptr;
 	}
 	// If it's a single file mode file, then we may have already
 	// instantiated the low level layer.   We would just need to
 	// reset the coordinate system and (potentially) bounds.
-	OGREFALLayer *poLayer = NULL;
-	char *pszFullFilename = NULL;
+	OGREFALLayer *poLayer = nullptr;
+	char *pszFullFilename = nullptr;
 
 	if (bSingleFile)
 	{
@@ -346,7 +349,7 @@ OGREFALDataSource::ICreateLayer(const char *pszLayerName,
 			CPLError(
 				CE_Failure, CPLE_AppDefined,
 				"Unable to create new layers in this single file dataset.");
-			return NULL;
+			return nullptr;
 		}
 
 		bSingleLayerAlreadyCreated = TRUE;
@@ -365,14 +368,14 @@ OGREFALDataSource::ICreateLayer(const char *pszLayerName,
 		{
 			CPLError(CE_Failure, CPLE_AppDefined,
 				"Attempt to create layer against a non-directory datasource.");
-			return NULL;
+			return nullptr;
 		}
 
 		
 		EFALHANDLE hSession = OGREFALGetSession(++counter);
 		if (hSession == (EFALHANDLE)nullptr)
 		{
-			return NULL;
+			return nullptr;
 		}
 
 		pszFullFilename = CPLStrdup(CPLFormFilename(pszDirectory, pszLayerName, "tab"));
@@ -427,13 +430,13 @@ int OGREFALDataSource::Create(const char *pszFileName, char ** papszOptions)
 	pszName = CPLStrdup(pszFileName);
 
 	const char *pszOpt = CSLFetchNameValue(papszOptions, "FORMAT");
-	if (pszOpt != NULL && EQUAL(pszOpt, "NATIVEX")) {
+	if (pszOpt != nullptr && EQUAL(pszOpt, "NATIVEX")) {
 		bCreateNativeX = TRUE;
 		charset = Ellis::MICHARSET::CHARSET_UTF8;
 	}
 
 	pszOpt = CSLFetchNameValue(papszOptions, "CHARSET");
-	if (pszOpt != NULL)
+	if (pszOpt != nullptr)
 	{
 		if (EQUAL(pszOpt, "NEUTRAL")) charset = Ellis::MICHARSET::CHARSET_NEUTRAL;
 		else if (EQUAL(pszOpt, "ISO8859_1")) charset = Ellis::MICHARSET::CHARSET_ISO8859_1;

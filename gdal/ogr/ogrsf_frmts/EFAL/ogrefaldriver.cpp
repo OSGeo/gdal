@@ -26,7 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma warning(disable:4251)
+#if defined(_WIN32) && !defined(unix)
+	#pragma warning(disable:4251)
+#endif
+
 #include "cpl_port.h"
 
 #include <cerrno>
@@ -48,10 +51,11 @@
 CPL_CVSID("$Id: OGREFALdriver.cpp 38032 2017-04-16 08:26:01Z rouault $");
 
 static void OGREFALUnloadAll();
+EFALHANDLE OGREFALGetSession(GUIntBig nEFALSession);
 void OGREFALReleaseSession(EFALHANDLE);
 
-static CPLMutex* hMutexEFALLIB = NULL;
-EFALLIB * efallib = NULL;
+static CPLMutex* hMutexEFALLIB = nullptr;
+EFALLIB * efallib = nullptr;
 
 /************************************************************************/
 /*                         OGREFALDriverIdentify()                       */
@@ -64,7 +68,7 @@ static int OGREFALDriverIdentify(GDALOpenInfo* poOpenInfo)
 		return FALSE;
 	if (poOpenInfo->bIsDirectory)
 		return -1;  // Unsure.
-	if (poOpenInfo->fpL == NULL)
+	if (poOpenInfo->fpL == nullptr)
 		return FALSE;
 
 	if (STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsi"))
@@ -99,14 +103,14 @@ static int OGREFALDriverIdentify(GDALOpenInfo* poOpenInfo)
 static GDALDataset *OGREFALDriverOpen(GDALOpenInfo* poOpenInfo)
 {
 	if (!OGREFALDriverIdentify(poOpenInfo))
-		return NULL;
+		return nullptr;
 
 	OGREFALDataSource *poDS = new OGREFALDataSource();
 
 	if (!poDS->Open(poOpenInfo, TRUE))
 	{
 		delete poDS;
-		poDS = NULL;
+		poDS = nullptr;
 	}
 
 	return poDS;
@@ -125,7 +129,7 @@ static GDALDataset *OGREFALDriverCreate(const char * pszName,
 {
 	if (STARTS_WITH_CI(pszName, "/vsi"))
 	{
-		return FALSE;
+		return nullptr;
 	}
 
 	// Try to create the data source.
@@ -133,7 +137,7 @@ static GDALDataset *OGREFALDriverCreate(const char * pszName,
 	if (!poDS->Create(pszName, papszOptions))
 	{
 		delete poDS;
-		return NULL;
+		return nullptr;
 	}
 
 	return poDS;
@@ -191,7 +195,7 @@ void RegisterOGREFAL()
 	CPLMutexHolderD(&hMutexEFALLIB);
 
 	efallib = EFALLIB::Create();
-	if ((efallib == NULL) ||
+	if ((efallib == nullptr) ||
 		(!efallib->HasGetRowCountProc()) ||
 		(!efallib->HasCoordSys2PRJStringProc()) ||
 		(!efallib->HasCoordSys2MBStringProc()) ||
@@ -201,7 +205,7 @@ void RegisterOGREFAL()
 		return;
 	}
 
-	if (GDALGetDriverByName("MapInfo EFAL") != NULL)
+	if (GDALGetDriverByName("MapInfo EFAL") != nullptr)
 		return;
 
 	GDALDriver *poDriver = new GDALDriver();
@@ -323,7 +327,7 @@ void RegisterOGREFAL()
 /************************************************************************/
 /*                       OGR EFAL Session Management                    */
 /************************************************************************/
-static CPLMutex* hMutexEFALSessionManage = NULL;
+static CPLMutex* hMutexEFALSessionManage = nullptr;
 static std::map<GUIntBig, EFALHANDLE> * mapEFALSessions;
 static std::map<EFALHANDLE, int> * mapEFALSessionRefCount;
 
@@ -331,7 +335,7 @@ void OGREFALReleaseSession(EFALHANDLE hSession)
 {
 	CPLMutexHolderD(&hMutexEFALSessionManage);
 	// These should exist already if we're releasing a session....
-	if ((mapEFALSessions != NULL) && (mapEFALSessionRefCount != NULL))
+	if ((mapEFALSessions != nullptr) && (mapEFALSessionRefCount != nullptr))
 	{
 		std::map<EFALHANDLE, int>::iterator oIterRefCount = mapEFALSessionRefCount->find(hSession);
 		if (oIterRefCount != mapEFALSessionRefCount->end())
@@ -374,10 +378,10 @@ EFALHANDLE OGREFALGetSession(GUIntBig nEFALSession)
 	CPLMutexHolderD(&hMutexEFALSessionManage);
 
 	// If the maps don't exist, create them
-	if (mapEFALSessions == NULL)
+	if (mapEFALSessions == nullptr)
 		mapEFALSessions = new std::map<GUIntBig, EFALHANDLE>();
 
-	if (mapEFALSessionRefCount == NULL)
+	if (mapEFALSessionRefCount == nullptr)
 		mapEFALSessionRefCount = new std::map<EFALHANDLE, int>();
 
 
@@ -407,12 +411,12 @@ EFALHANDLE OGREFALGetSession(GUIntBig nEFALSession)
 static void OGREFALUnloadAll()
 {
 	delete mapEFALSessions;
-	mapEFALSessions = NULL;
+	mapEFALSessions = nullptr;
 
 	delete mapEFALSessionRefCount;
-	mapEFALSessionRefCount = NULL;
+	mapEFALSessionRefCount = nullptr;
 
-	if (hMutexEFALSessionManage != NULL)
+	if (hMutexEFALSessionManage != nullptr)
 		CPLDestroyMutex(hMutexEFALSessionManage);
-	hMutexEFALSessionManage = NULL;
+	hMutexEFALSessionManage = nullptr;
 }
