@@ -345,13 +345,13 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
     for(SQLSMALLINT nRecNum = 1; nDiagRetCode == SQL_SUCCESS; ++nRecNum)
     {
         SQLCHAR achSQLState[5 + 1] = {};
-        SQLCHAR* achCurErrMsg = static_cast<SQLCHAR *>(CPLMalloc((SQL_MAX_MESSAGE_LENGTH + 1) * sizeof(SQLCHAR)));
+        SQLCHAR* pachCurErrMsg = static_cast<SQLCHAR *>(CPLMalloc((SQL_MAX_MESSAGE_LENGTH + 1) * sizeof(SQLCHAR)));
         SQLSMALLINT nTextLength = 0;
         SQLINTEGER nNativeError = 0;
 
         nDiagRetCode = SQLGetDiagRec( SQL_HANDLE_STMT, hStmt, nRecNum,
                 achSQLState, &nNativeError,
-                reinterpret_cast<SQLCHAR *>(achCurErrMsg),
+                reinterpret_cast<SQLCHAR *>(pachCurErrMsg),
                 SQL_MAX_MESSAGE_LENGTH, &nTextLength );
         if (nDiagRetCode == SQL_SUCCESS ||
             nDiagRetCode == SQL_SUCCESS_WITH_INFO)
@@ -360,18 +360,18 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
             {
                 // the buffer wasn't enough, retry
                 SQLSMALLINT nTextLength2 = 0;
-                achCurErrMsg = static_cast<SQLCHAR *>(CPLRealloc(achCurErrMsg, (nTextLength + 1) * sizeof(SQLCHAR)));
+                pachCurErrMsg = static_cast<SQLCHAR *>(CPLRealloc(pachCurErrMsg, (nTextLength + 1) * sizeof(SQLCHAR)));
                 nDiagRetCode = SQLGetDiagRec(SQL_HANDLE_STMT, hStmt, nRecNum,
                     achSQLState, &nNativeError,
-                    reinterpret_cast<SQLCHAR *>(achCurErrMsg),
+                    reinterpret_cast<SQLCHAR *>(pachCurErrMsg),
                     nTextLength, &nTextLength2);
             }               
-            achCurErrMsg[nTextLength] = '\0';
+            pachCurErrMsg[nTextLength] = '\0';
             m_osLastError += CPLString().Printf("%s[%5s]%s(" CPL_FRMT_GIB ")",
                     (m_osLastError.empty() ? "" : ", "), achSQLState,
-                    achCurErrMsg, static_cast<GIntBig>(nNativeError));
+                    pachCurErrMsg, static_cast<GIntBig>(nNativeError));
         }
-        CPLFree(achCurErrMsg);
+        CPLFree(pachCurErrMsg);
     }
 
     if( nRetCode == SQL_ERROR && m_bInTransaction )
