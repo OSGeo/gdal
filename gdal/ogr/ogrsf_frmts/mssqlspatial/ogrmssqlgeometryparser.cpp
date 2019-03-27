@@ -404,7 +404,9 @@ OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
         case SMT_FIRSTLINE:
             AddCurveSegment(poCompoundCurve, poCurve, iPoint - nPointsPrepared, iPoint + 1);
             poCurve = new OGRLineString();
-            nPointsPrepared = 0;
+            nPointsPrepared = 1;
+            ++iPoint;
+            break;
         case SMT_LINE:
             ++nPointsPrepared;
             ++iPoint;
@@ -412,7 +414,9 @@ OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
         case SMT_FIRSTARC:
             AddCurveSegment(poCompoundCurve, poCurve, iPoint - nPointsPrepared, iPoint + 1);
             poCurve = new OGRCircularString();
-            nPointsPrepared = 0;    
+            nPointsPrepared = 2;
+            iPoint += 2;
+            break;
         case SMT_ARC:           
             nPointsPrepared += 2;
             iPoint += 2;

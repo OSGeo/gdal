@@ -282,19 +282,13 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRCompoundCurve* poGeom)
     for (int i = 0; i < poGeom->getNumCurves(); i++)
     {
         OGRCurve* poCurve = poGeom->getCurve(i);
-        switch (poCurve->getGeometryType())
+        switch (wkbFlatten(poCurve->getGeometryType()))
         {
         case wkbLineString:
-        case wkbLineString25D:
-        case wkbLineStringM:
-        case wkbLineStringZM:
             if (!IsValid(poCurve->toLineString()))
                 return false;
             break;
         case wkbCircularString:
-        case wkbCircularStringZ:
-        case wkbCircularStringM:
-        case wkbCircularStringZM:
             if (!IsValid(poCurve->toCircularString()))
                 return false;
             break;
@@ -308,18 +302,12 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRCompoundCurve* poGeom)
     for (int i = 0; i < poGeom->getNumCurves(); i++)
     {
         OGRCurve* poCurve = poGeom->getCurve(i);
-        switch (poCurve->getGeometryType())
+        switch (wkbFlatten(poCurve->getGeometryType()))
         {
         case wkbLineString:
-        case wkbLineString25D:
-        case wkbLineStringM:
-        case wkbLineStringZM:
             MakeValid(poCurve->toLineString());
             break;
         case wkbCircularString:
-        case wkbCircularStringZ:
-        case wkbCircularStringM:
-        case wkbCircularStringZM:
             MakeValid(poCurve->toCircularString());
             break;
         }
@@ -476,57 +464,27 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRGeometry* poGeom)
     if (!poGeom)
         return false;
 
-    switch (poGeom->getGeometryType())
+    switch (wkbFlatten(poGeom->getGeometryType()))
     {
     case wkbPoint:
-    case wkbPoint25D:
-    case wkbPointM:
-    case wkbPointZM:
         return IsValid(poGeom->toPoint());
     case wkbLineString:
-    case wkbLineString25D:
-    case wkbLineStringM:
-    case wkbLineStringZM:
         return IsValid(poGeom->toLineString());
     case wkbPolygon:
-    case wkbPolygon25D:
-    case wkbPolygonM:
-    case wkbPolygonZM:
         return IsValid(poGeom->toPolygon());
     case wkbCurvePolygon :
-    case wkbCurvePolygonZ:
-    case wkbCurvePolygonM:
-    case wkbCurvePolygonZM:
         return IsValid(poGeom->toCurvePolygon());
     case wkbMultiPoint:
-    case wkbMultiPoint25D:
-    case wkbMultiPointM:
-    case wkbMultiPointZM:
         return IsValid(poGeom->toMultiPoint());
     case wkbMultiLineString:
-    case wkbMultiLineString25D:
-    case wkbMultiLineStringM:
-    case wkbMultiLineStringZM:
         return IsValid(poGeom->toMultiLineString());
     case wkbCircularString:
-    case wkbCircularStringZ:
-    case wkbCircularStringM:
-    case wkbCircularStringZM:
         return IsValid(poGeom->toCircularString());
     case wkbCompoundCurve:
-    case wkbCompoundCurveZ:
-    case wkbCompoundCurveM:
-    case wkbCompoundCurveZM:
         return IsValid(poGeom->toCompoundCurve());
     case wkbMultiPolygon:
-    case wkbMultiPolygon25D:
-    case wkbMultiPolygonM:
-    case wkbMultiPolygonZM:
         return IsValid(poGeom->toMultiPolygon());
     case wkbGeometryCollection:
-    case wkbGeometryCollection25D:
-    case wkbGeometryCollectionM:
-    case wkbGeometryCollectionZM:
         return IsValid(poGeom->toGeometryCollection());
     case wkbLinearRing:
         return IsValid(poGeom->toLinearRing());
@@ -539,66 +497,36 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRGeometry* poGeom)
     if (!poGeom)
         return;
 
-    switch (poGeom->getGeometryType())
+    switch (wkbFlatten(poGeom->getGeometryType()))
     {
     case wkbPoint:
-    case wkbPoint25D:
-    case wkbPointM:
-    case wkbPointZM:
         MakeValid(poGeom->toPoint());
         break;
     case wkbLineString:
-    case wkbLineString25D:
-    case wkbLineStringM:
-    case wkbLineStringZM:
         MakeValid(poGeom->toLineString());
         break;
     case wkbPolygon:
-    case wkbPolygon25D:
-    case wkbPolygonM:
-    case wkbPolygonZM:
         MakeValid(poGeom->toPolygon());
         break;
     case wkbCurvePolygon:
-    case wkbCurvePolygonZ:
-    case wkbCurvePolygonM:
-    case wkbCurvePolygonZM:
         MakeValid(poGeom->toCurvePolygon());
         break;
     case wkbMultiPoint:
-    case wkbMultiPoint25D:
-    case wkbMultiPointM:
-    case wkbMultiPointZM:
         MakeValid(poGeom->toMultiPoint());
         break;
     case wkbMultiLineString:
-    case wkbMultiLineString25D:
-    case wkbMultiLineStringM:
-    case wkbMultiLineStringZM:
         MakeValid(poGeom->toMultiLineString());
         break;
     case wkbCircularString:
-    case wkbCircularStringZ:
-    case wkbCircularStringM:
-    case wkbCircularStringZM:
         MakeValid(poGeom->toCircularString());
         break;
     case wkbCompoundCurve:
-    case wkbCompoundCurveZ:
-    case wkbCompoundCurveM:
-    case wkbCompoundCurveZM:
         MakeValid(poGeom->toCompoundCurve());
         break;
     case wkbMultiPolygon:
-    case wkbMultiPolygon25D:
-    case wkbMultiPolygonM:
-    case wkbMultiPolygonZM:
         MakeValid(poGeom->toMultiPolygon());
         break;
     case wkbGeometryCollection:
-    case wkbGeometryCollection25D:
-    case wkbGeometryCollectionM:
-    case wkbGeometryCollectionZM:
         MakeValid(poGeom->toGeometryCollection());
         break;
     case wkbLinearRing:
