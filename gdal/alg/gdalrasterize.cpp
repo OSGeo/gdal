@@ -147,8 +147,8 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
         for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
             unsigned char *pbyInsert = psInfo->pabyChunkBuf
-                                      + iBand * psInfo->nXSize * psInfo->nYSize
-                                      + nY * psInfo->nXSize + nX;
+                                      + static_cast<GSpacing>(iBand) * psInfo->nXSize * psInfo->nYSize
+                                      + static_cast<GSpacing>(nY) * psInfo->nXSize + nX;
             double dfVal;
             if( psInfo->eMergeAlg == GRMA_Add ) {
                 dfVal = *pbyInsert + ( psInfo->padfBurnValue[iBand] +
@@ -172,8 +172,8 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
         for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
             double *pdfInsert = reinterpret_cast<double *>(psInfo->pabyChunkBuf)
-                                + iBand * psInfo->nXSize * psInfo->nYSize
-                                + nY * psInfo->nXSize + nX;
+                                + static_cast<GSpacing>(iBand) * psInfo->nXSize * psInfo->nYSize
+                                + static_cast<GSpacing>(nY) * psInfo->nXSize + nX;
 
             if( psInfo->eMergeAlg == GRMA_Add ) {
                 *pdfInsert += ( psInfo->padfBurnValue[iBand] +
