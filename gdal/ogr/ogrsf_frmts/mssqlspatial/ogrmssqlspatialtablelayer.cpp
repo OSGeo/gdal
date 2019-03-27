@@ -686,6 +686,95 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
     return GetNextRawFeature();
 }
 
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/*                                                                      */
+/*      For Geometry or Geography types we can use an optimized         */
+/*      statement in other cases we use standard OGRLayer::GetExtent()  */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+{
+    // Make sure we have a geometry field:
+    if (iGeomField < 0 || iGeomField >= poFeatureDefn->GetGeomFieldCount() ||
+        poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
+    {
+        if (iGeomField != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Invalid geometry field index : %d", iGeomField);
+        }
+        return OGRERR_FAILURE;
+    }
+
+    // If we have a geometry or geography type:
+    if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY || nGeomColumnType == MSSQLCOLTYPE_GEOMETRY)
+    {
+        // Prepare statement
+        poStmt = new CPLODBCStatement(poDS->GetSession());
+
+        if (poDS->sMSSQLVersion.nMajor >= 11) {
+            // SQLServer 2012 or later:
+
+            if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+                poStmt->Appendf("WITH extent(extentcol) AS (SELECT geography::EnvelopeAggregate(%s) AS extentcol FROM [%s].[%s])", pszGeomColumn, pszSchemaName, pszTableName);
+            else
+                poStmt->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(%s) AS extentcol FROM [%s].[%s])", pszGeomColumn, pszSchemaName, pszTableName);
+
+            poStmt->Appendf("SELECT COALESCE(extentcol.STPointN(1).STX, 0) as MinX, COALESCE(extentcol.STPointN(1).STY, 0) as MinY,");
+            poStmt->Appendf("COALESCE(extentcol.STPointN(3).STX, 0) as MaxX, COALESCE(extentcol.STPointN(3).STY, 0) as MaxY FROM extent;");
+
+        }
+        else
+        {
+            // Before 2012 use two CTE's:
+            poStmt->Appendf("WITH ENVELOPE as (SELECT %s.STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszSchemaName, pszTableName);
+            poStmt->Appendf("      CORNERS  as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE)");
+            poStmt->Appendf("SELECT COALESCE(MIN(point.STX), 0) as MinX, COALESCE(MIN(point.STY), 0) as MinY, COALESCE(MAX(point.STX),0) as MaxX, COALESCE(MAX(point.STY),0) as MaxY FROM CORNERS;");
+        }
+
+        // Execute
+        if (!poStmt->ExecuteSQL())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Error getting extents, %s",
+                poDS->GetSession()->GetLastError());   
+        }
+        else
+        {
+            // Try to update
+            while (poStmt->Fetch()) {
+
+                const char *minx = poStmt->GetColData(0);
+                const char *miny = poStmt->GetColData(1);
+                const char *maxx = poStmt->GetColData(2);
+                const char *maxy = poStmt->GetColData(3);
+
+                if (!(minx == nullptr || miny == nullptr || maxx == nullptr || maxy == nullptr)) {
+                    psExtent->MinX = CPLAtof(minx);
+                    psExtent->MinY = CPLAtof(miny);
+                    psExtent->MaxX = CPLAtof(maxx);
+                    psExtent->MaxY = CPLAtof(maxy);
+                    return OGRERR_NONE;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                        "MSSQL extents query returned a NULL value");
+                }
+            }
+        }
+
+    }
+
+    // Fall back to generic implementation (loading all features)
+    if (iGeomField == 0)
+        return OGRLayer::GetExtent(psExtent, bForce);
+    else
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+}
+
 /************************************************************************/
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
