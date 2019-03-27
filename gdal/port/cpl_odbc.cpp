@@ -345,22 +345,33 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
     for(SQLSMALLINT nRecNum = 1; nDiagRetCode == SQL_SUCCESS; ++nRecNum)
     {
         SQLCHAR achSQLState[5 + 1] = {};
-        SQLCHAR achCurErrMsg[SQL_MAX_MESSAGE_LENGTH] = {};
+        SQLCHAR* pachCurErrMsg = static_cast<SQLCHAR *>(CPLMalloc((SQL_MAX_MESSAGE_LENGTH + 1) * sizeof(SQLCHAR)));
         SQLSMALLINT nTextLength = 0;
         SQLINTEGER nNativeError = 0;
 
         nDiagRetCode = SQLGetDiagRec( SQL_HANDLE_STMT, hStmt, nRecNum,
                 achSQLState, &nNativeError,
-                reinterpret_cast<SQLCHAR *>(achCurErrMsg),
-                sizeof(achCurErrMsg) - 1, &nTextLength );
+                reinterpret_cast<SQLCHAR *>(pachCurErrMsg),
+                SQL_MAX_MESSAGE_LENGTH, &nTextLength );
         if (nDiagRetCode == SQL_SUCCESS ||
             nDiagRetCode == SQL_SUCCESS_WITH_INFO)
         {
-            achCurErrMsg[nTextLength] = '\0';
+            if (nTextLength >= SQL_MAX_MESSAGE_LENGTH)
+            {
+                // the buffer wasn't enough, retry
+                SQLSMALLINT nTextLength2 = 0;
+                pachCurErrMsg = static_cast<SQLCHAR *>(CPLRealloc(pachCurErrMsg, (nTextLength + 1) * sizeof(SQLCHAR)));
+                nDiagRetCode = SQLGetDiagRec(SQL_HANDLE_STMT, hStmt, nRecNum,
+                    achSQLState, &nNativeError,
+                    reinterpret_cast<SQLCHAR *>(pachCurErrMsg),
+                    nTextLength, &nTextLength2);
+            }               
+            pachCurErrMsg[nTextLength] = '\0';
             m_osLastError += CPLString().Printf("%s[%5s]%s(" CPL_FRMT_GIB ")",
                     (m_osLastError.empty() ? "" : ", "), achSQLState,
-                    achCurErrMsg, static_cast<GIntBig>(nNativeError));
+                    pachCurErrMsg, static_cast<GIntBig>(nNativeError));
         }
+        CPLFree(pachCurErrMsg);
     }
 
     if( nRetCode == SQL_ERROR && m_bInTransaction )
