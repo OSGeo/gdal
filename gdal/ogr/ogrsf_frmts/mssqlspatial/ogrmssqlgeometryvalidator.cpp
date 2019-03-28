@@ -57,7 +57,7 @@ OGRMSSQLGeometryValidator::~OGRMSSQLGeometryValidator()
 /*                         IsValidLatLon()                             */
 /************************************************************************/
 
-double MakeValidLatitude(double latitude)
+double OGRMSSQLGeometryValidator::MakeValidLatitude(double latitude)
 {
     if (latitude < -90)
         return -90;
@@ -68,7 +68,7 @@ double MakeValidLatitude(double latitude)
     return latitude;
 }
 
-double MakeValidLongitude(double longitude)
+double OGRMSSQLGeometryValidator::MakeValidLongitude(double longitude)
 {
     if (longitude < -15069.0)
         return -15069.0;
@@ -288,9 +288,13 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRCompoundCurve* poGeom)
             if (!IsValid(poCurve->toLineString()))
                 return false;
             break;
+
         case wkbCircularString:
             if (!IsValid(poCurve->toCircularString()))
                 return false;
+            break;
+
+        default:
             break;
         }
     }
@@ -307,8 +311,12 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRCompoundCurve* poGeom)
         case wkbLineString:
             MakeValid(poCurve->toLineString());
             break;
+            
         case wkbCircularString:
             MakeValid(poCurve->toCircularString());
+            break;
+
+        default:
             break;
         }
     }
@@ -488,6 +496,8 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRGeometry* poGeom)
         return IsValid(poGeom->toGeometryCollection());
     case wkbLinearRing:
         return IsValid(poGeom->toLinearRing());
+    default:
+        break;
     }
     return false;
 }
@@ -531,6 +541,8 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRGeometry* poGeom)
         break;
     case wkbLinearRing:
         MakeValid(poGeom->toLinearRing());
+        break;
+    default:
         break;
     }
 }

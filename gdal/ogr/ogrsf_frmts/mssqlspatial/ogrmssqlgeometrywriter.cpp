@@ -309,6 +309,7 @@ void OGRMSSQLGeometryWriter::WriteCompoundCurve(OGRCompoundCurve* poGeom)
                     WriteByte(SegmentType(iSegment++), SMT_LINE);
             }
             break;
+
         case wkbCircularString:
             if (i == 0)
                 WriteSimpleCurve(poSubGeom);
@@ -322,6 +323,9 @@ void OGRMSSQLGeometryWriter::WriteCompoundCurve(OGRCompoundCurve* poGeom)
                     WriteByte(SegmentType(iSegment++), SMT_ARC);
                 ++j;
             }
+            break;
+
+        default:
             break;
         }
     }
@@ -353,6 +357,9 @@ void OGRMSSQLGeometryWriter::WriteCurve(OGRCurve* poGeom)
     case wkbCompoundCurve:
         WriteCompoundCurve(poGeom->toCompoundCurve());
         ++iFigure;
+        break;
+
+    default:
         break;
     }
 }
@@ -542,6 +549,7 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
                         nNumSegments += c - 1;
                     }
                     break;
+
                 case wkbCircularString:
                     c = poSubGeom->toCircularString()->getNumPoints();
                     if (c > 2)
@@ -552,6 +560,9 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
                             nNumPoints += c - 1;
                         nNumSegments += (int)((c - 1) / 2);
                     }
+                    break;
+
+                default:
                     break;
                 }
             }
