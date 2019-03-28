@@ -351,6 +351,11 @@ bool OGRWFS3Dataset::Open(GDALOpenInfo* poOpenInfo)
             if( osName.empty() )
                 osName = oCollection.GetString("collectionId");
 #endif
+            // "name" will be soon be replaced by "id"
+            // https://github.com/opengeospatial/WFS_FES/issues/171
+            if( osName.empty() )
+                osName = oCollection.GetString("id");
+
             if( osName.empty() )
                 continue;
             CPLString osTitle( oCollection.GetString("title") );
