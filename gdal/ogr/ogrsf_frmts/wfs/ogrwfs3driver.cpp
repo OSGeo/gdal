@@ -686,6 +686,8 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
                 CPLJSONArray oLinks = oDoc.GetRoot().GetArray("links");
                 if( oLinks.IsValid() )
                 {
+                    int nCountRelNext = 0;
+                    CPLString osNextURL;
                     for( int i = 0; i < oLinks.Size(); i++ )
                     {
                         CPLJSONObject oLink = oLinks[i];
@@ -694,13 +696,26 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
                         {
                             continue;
                         }
-                        if( oLink.GetString("rel") == "next" &&
-                            (oLink.GetString("type") == "application/geo+json" ||
-                             oLink.GetString("type") == "application/json") )
+                        if( oLink.GetString("rel") == "next" )
                         {
-                            m_osGetURL = oLink.GetString("href");
-                            break;
+                            nCountRelNext ++;
+                            auto type = oLink.GetString("type");
+                            if (type == "application/geo+json" ||
+                                type == "application/json" )
+                            {
+                                m_osGetURL = oLink.GetString("href");
+                                break;
+                            }
+                            else if( type.empty() )
+                            {
+                                osNextURL = oLink.GetString("href");
+                            }
                         }
+                    }
+                    if( nCountRelNext == 1 && m_osGetURL.empty() )
+                    {
+                        // In case we go a "rel": "next" without a "type"
+                        m_osGetURL = osNextURL;
                     }
                 }
 
@@ -727,6 +742,32 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
                         }
                     }
                 }
+
+                // If source URL is https://user:pwd@server.com/bla
+                // and link only contains https://server.com/bla, then insert
+                // into it user:pwd
+                const auto nArobaseInURLPos = osURL.find('@');
+                if( !m_osGetURL.empty() &&
+                    STARTS_WITH(osURL, "https://") &&
+                    STARTS_WITH(m_osGetURL, "https://") &&
+                    nArobaseInURLPos != std::string::npos &&
+                    m_osGetURL.find('@') == std::string::npos )
+                {
+                    const auto nFirstSlashPos = osURL.find('/', strlen("https://"));
+                    if( nFirstSlashPos != std::string::npos &&
+                        nFirstSlashPos > nArobaseInURLPos )
+                    {
+                        auto osUserPwd = osURL.substr(strlen("https://"),
+                                        nArobaseInURLPos - strlen("https://"));
+                        auto osServer = osURL.substr(nArobaseInURLPos + 1,
+                                                     nFirstSlashPos - nArobaseInURLPos);
+                        if( STARTS_WITH(m_osGetURL, ("https://" + osServer).c_str()) )
+                        {
+                            m_osGetURL = "https://" + osUserPwd + "@" +
+                                    m_osGetURL.substr(strlen("https://"));
+                        }
+                    }
+                }
             }
         }
 
@@ -739,6 +780,11 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
 
     OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
     poFeature->SetFrom(poSrcFeature);
+    auto poGeom = poFeature->GetGeometryRef();
+    if( poGeom )
+    {
+        poGeom->assignSpatialReference(GetSpatialRef());
+    }
     poFeature->SetFID(m_nFID);
     m_nFID ++;
     delete poSrcFeature;
