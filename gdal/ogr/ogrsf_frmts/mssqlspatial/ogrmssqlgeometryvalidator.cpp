@@ -57,7 +57,7 @@ OGRMSSQLGeometryValidator::~OGRMSSQLGeometryValidator()
 /*                         IsValidLatLon()                             */
 /************************************************************************/
 
-double OGRMSSQLGeometryValidator::MakeValidLatitude(double latitude)
+static double MakeValidLatitude(double latitude)
 {
     if (latitude < -90)
         return -90;
@@ -68,7 +68,7 @@ double OGRMSSQLGeometryValidator::MakeValidLatitude(double latitude)
     return latitude;
 }
 
-double OGRMSSQLGeometryValidator::MakeValidLongitude(double longitude)
+static double MakeValidLongitude(double longitude)
 {
     if (longitude < -15069.0)
         return -15069.0;

@@ -140,8 +140,6 @@ public:
     bool            IsValid(OGRMultiPolygon* poGeom);
     bool            IsValid(OGRGeometryCollection* poGeom);
     bool            IsValid(OGRGeometry* poGeom);
-    double          MakeValidLatitude(double latitude);
-    double          MakeValidLongitude(double longitude);
     void            MakeValid(OGRPoint* poGeom);
     void            MakeValid(OGRMultiPoint* poGeom);
     void            MakeValid(OGRLineString* poGeom);

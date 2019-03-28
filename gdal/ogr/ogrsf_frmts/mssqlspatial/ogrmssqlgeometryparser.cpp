@@ -151,6 +151,8 @@ OGRMSSQLGeometryParser::OGRMSSQLGeometryParser(int nGeomColumnType)
     nSegmentPos = 0;
     nNumSegments = 0;
     nSRSId = 0;
+    chVersion = 0;
+    iSegment = 0;
 }
 
 /************************************************************************/

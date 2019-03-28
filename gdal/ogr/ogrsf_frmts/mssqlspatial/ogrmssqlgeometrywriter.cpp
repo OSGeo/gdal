@@ -315,13 +315,12 @@ void OGRMSSQLGeometryWriter::WriteCompoundCurve(OGRCompoundCurve* poGeom)
                 WriteSimpleCurve(poSubGeom);
             else
                 WriteSimpleCurve(poSubGeom, 1);
-            for (int j = 2; j < poSubGeom->getNumPoints(); j++)
+            for (int j = 2; j < poSubGeom->getNumPoints(); j += 2)
             {
                 if (j == 2)
                     WriteByte(SegmentType(iSegment++), SMT_FIRSTARC);
                 else
                     WriteByte(SegmentType(iSegment++), SMT_ARC);
-                ++j;
             }
             break;
 
