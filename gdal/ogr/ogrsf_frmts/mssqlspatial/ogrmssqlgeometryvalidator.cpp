@@ -373,9 +373,21 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRPolygon* poGeom)
     if (!IsValid(poGeom->getExteriorRing()))
         return false;
 
+    if (!IsValidPolygonRingCount(poGeom->getExteriorRing()))
+        return false;
+
+    if (!IsValidPolygonRingClosed(poGeom->getExteriorRing()))
+        return false;
+
     for (int i = 0; i < poGeom->getNumInteriorRings(); i++)
     {
         if (!IsValid(poGeom->getInteriorRing(i)))
+            return false;
+
+        if (!IsValidPolygonRingCount(poGeom->getInteriorRing(i)))
+            return false;
+
+        if (!IsValidPolygonRingClosed(poGeom->getInteriorRing(i)))
             return false;
     }
 
@@ -390,6 +402,8 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRPolygon* poGeom)
     {
         MakeValid(poGeom->getInteriorRing(i));
     }
+
+    poGeom->closeRings();
 }
 
 /************************************************************************/
@@ -401,9 +415,21 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRCurvePolygon* poGeom)
     if (!IsValid(poGeom->getExteriorRingCurve()))
         return false;
 
+    if (!IsValidPolygonRingCount(poGeom->getExteriorRingCurve()))
+        return false;
+
+    if (!IsValidPolygonRingClosed(poGeom->getExteriorRingCurve()))
+        return false;
+
     for (int i = 0; i < poGeom->getNumInteriorRings(); i++)
     {
         if (!IsValid(poGeom->getInteriorRingCurve(i)))
+            return false;
+
+        if (!IsValidPolygonRingCount(poGeom->getInteriorRingCurve(i)))
+            return false;
+
+        if (!IsValidPolygonRingClosed(poGeom->getInteriorRingCurve(i)))
             return false;
     }
 
