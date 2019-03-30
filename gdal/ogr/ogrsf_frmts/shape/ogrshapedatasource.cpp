@@ -1150,7 +1150,9 @@ const char* const* OGRShapeDataSource::GetExtensionsForDeletion()
 {
     static const char * const apszExtensions[] =
         { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind",
-          "qix", "cpg", nullptr };
+          "qix", "cpg",
+          "qpj", // QGIS projection file
+          nullptr };
     return apszExtensions;
 }
 
