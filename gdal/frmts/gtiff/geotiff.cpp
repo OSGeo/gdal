@@ -103,7 +103,6 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
-
 CPL_CVSID("$Id$")
 
 static bool bGlobalInExternalOvr = false;
@@ -16854,6 +16853,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
             dfExtraSpaceForOverviews *=
                                 l_nBands * GDALGetDataTypeSizeBytes(eType);
+        }
+        else
+        {
+            CPLDebug("GTiff", "No source overviews to copy");
         }
     }
 
