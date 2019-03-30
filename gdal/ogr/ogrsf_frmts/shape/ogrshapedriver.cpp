@@ -216,19 +216,18 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
         return CE_Failure;
     }
 
-    static const char * const apszExtensions[] =
-        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind",
-          "qix", "cpg", nullptr };
+    const char * const* papszExtensions =
+        OGRShapeDataSource::GetExtensionsForDeletion();
 
     if( VSI_ISREG(sStatBuf.st_mode)
         && (EQUAL(CPLGetExtension(pszDataSource), "shp")
             || EQUAL(CPLGetExtension(pszDataSource), "shx")
             || EQUAL(CPLGetExtension(pszDataSource), "dbf")) )
     {
-        for( int iExt = 0; apszExtensions[iExt] != nullptr; iExt++ )
+        for( int iExt = 0; papszExtensions[iExt] != nullptr; iExt++ )
         {
             const char *pszFile = CPLResetExtension(pszDataSource,
-                                                    apszExtensions[iExt]);
+                                                    papszExtensions[iExt]);
             if( VSIStatL( pszFile, &sStatBuf ) == 0 )
                 VSIUnlink( pszFile );
         }
@@ -241,7 +240,7 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++ )
         {
-            if( CSLFindString( apszExtensions,
+            if( CSLFindString( papszExtensions,
                                CPLGetExtension(papszDirEntries[iFile])) != -1)
             {
                 VSIUnlink( CPLFormFilename( pszDataSource,

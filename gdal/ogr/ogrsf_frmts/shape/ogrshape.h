@@ -321,6 +321,8 @@ class OGRShapeDataSource final: public OGRDataSource
     DBFHandle            DS_DBFOpen( const char * pszDBFFile,
                                      const char * pszAccess );
     char               **GetOpenOptions() { return papszOpenOptions; }
+
+    static const char* const* GetExtensionsForDeletion();
 };
 
 #endif /* ndef OGRSHAPE_H_INCLUDED */
