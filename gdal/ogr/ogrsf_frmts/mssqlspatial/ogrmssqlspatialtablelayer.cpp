@@ -1082,10 +1082,11 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
     oStmt.Appendf( "UPDATE [%s].[%s] SET ", pszSchemaName, pszTableName);
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    OGRMSSQLGeometryValidator* poValidator = nullptr;
     if (bUseGeometryValidation && poGeom != nullptr)
     {
-        OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef(), nGeomColumnType);
-        poGeom = oValidator.GetValidGeometryRef();
+        poValidator = new OGRMSSQLGeometryValidator(poGeom, nGeomColumnType);
+        poGeom = poValidator->GetValidGeometryRef();
 
         if (poFeature->GetGeometryRef() != poGeom)
         {
@@ -1218,6 +1219,9 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 
         bNeedComma = TRUE;
     }
+
+    if (poValidator != nullptr)
+        delete poValidator;
 
     int i;
     for( i = 0; i < nFieldCount; i++ )
