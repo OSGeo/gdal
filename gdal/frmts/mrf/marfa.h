@@ -274,7 +274,7 @@ static inline int pcount(const int n, const int sz) {
 }
 
 // Returns a pagecount per dimension, .l will have the total number
-// or 0 in case of error
+// or -1 in case of error
 static inline const ILSize pcount(const ILSize &size, const ILSize &psz) {
     ILSize pcnt;
     pcnt.x = pcount(size.x, psz.x);
@@ -283,11 +283,11 @@ static inline const ILSize pcount(const ILSize &size, const ILSize &psz) {
     pcnt.c = pcount(size.c, psz.c);
     auto xy = static_cast<GIntBig>(pcnt.x) * pcnt.y;
     auto zc = static_cast<GIntBig>(pcnt.z) * pcnt.c;
-    if( xy > std::numeric_limits<GIntBig>::max() / zc )
+    if( zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Integer overflow in page count computation");
-        pcnt.l = 0;
+        pcnt.l = -1;
     }
     else
     {

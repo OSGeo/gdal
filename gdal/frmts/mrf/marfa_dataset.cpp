@@ -934,7 +934,7 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
 
     // Calculate the page count, including the total for the level
     image.pagecount = pcount(image.size, image.pagesize);
-    if( image.pagecount.l == 0 )
+    if( image.pagecount.l < 0 )
     {
         return CE_Failure;
     }
