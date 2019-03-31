@@ -40,7 +40,7 @@ OGRMSSQLGeometryValidator::OGRMSSQLGeometryValidator(OGRGeometry *poGeom, int ge
     poOriginalGeometry = poGeom;
     poValidGeometry = nullptr;
     nGeomColumnType = geomColumnType;
-    bIsValid = ValidateGeometry(poGeom);
+    bIsValid = IsValid(poGeom);
 }
 
 /************************************************************************/

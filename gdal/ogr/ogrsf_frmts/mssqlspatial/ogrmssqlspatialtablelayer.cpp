@@ -1082,16 +1082,14 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
     oStmt.Appendf( "UPDATE [%s].[%s] SET ", pszSchemaName, pszTableName);
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    OGRMSSQLGeometryValidator* poValidator = nullptr;
     if (bUseGeometryValidation && poGeom != nullptr)
     {
-        poValidator = new OGRMSSQLGeometryValidator(poGeom, nGeomColumnType);
-        poGeom = poValidator->GetValidGeometryRef();
-
-        if (poFeature->GetGeometryRef() != poGeom)
+        OGRMSSQLGeometryValidator oValidator(poGeom, nGeomColumnType);
+        if (!oValidator.IsValid())
         {
+            oValidator.MakeValid(poGeom);
             CPLError(CE_Warning, CPLE_NotSupported,
-                "Geometry with FID = " CPL_FRMT_GIB " has been modified.", poFeature->GetFID());
+                "Geometry with FID = " CPL_FRMT_GIB " has been modified to valid geometry.", poFeature->GetFID());
         }
     }
     
@@ -1219,9 +1217,6 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 
         bNeedComma = TRUE;
     }
-
-    if (poValidator != nullptr)
-        delete poValidator;
 
     int i;
     for( i = 0; i < nFieldCount; i++ )
@@ -1696,19 +1691,20 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
             {
                 /* prepare geometry */
                 OGRGeometry *poGeom = poFeature->GetGeometryRef();
-                OGRMSSQLGeometryValidator* poValidator = nullptr;
                 if (bUseGeometryValidation  && poGeom != nullptr)
                 {
-                    poValidator = new OGRMSSQLGeometryValidator(poGeom, nGeomColumnType);
-                    poGeom = poValidator->GetValidGeometryRef();
+                    OGRMSSQLGeometryValidator oValidator(poGeom, nGeomColumnType);
+                    if (!oValidator.IsValid())
+                    {
+                        oValidator.MakeValid(poGeom);
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                            "Geometry with FID = " CPL_FRMT_GIB " has been modified to valid geometry.", poFeature->GetFID());
+                    }
                 }
                 
                 OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
                 papstBindBuffer[iCol]->RawData.nSize = poWriter.GetDataLen();
                 papstBindBuffer[iCol]->RawData.pData = (GByte *) CPLMalloc(papstBindBuffer[iCol]->RawData.nSize + 1);
-
-                if (poValidator != nullptr)
-                    delete poValidator;
 
                 if (poWriter.WriteSqlGeometry(papstBindBuffer[iCol]->RawData.pData, (int)papstBindBuffer[iCol]->RawData.nSize) != OGRERR_NONE)
                     return OGRERR_FAILURE;
@@ -2120,18 +2116,16 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     oStatement.Appendf( "INSERT INTO [%s].[%s] ", pszSchemaName, pszTableName );
 
-    OGRMSSQLGeometryValidator* poValidator = nullptr;
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     GIntBig nFID = poFeature->GetFID();
     if (bUseGeometryValidation && poGeom != nullptr)
     {
-        poValidator = new OGRMSSQLGeometryValidator(poFeature->GetGeometryRef(), nGeomColumnType);
-        poGeom = poValidator->GetValidGeometryRef();
-
-        if (poFeature->GetGeometryRef() != poGeom)
+        OGRMSSQLGeometryValidator oValidator(poGeom, nGeomColumnType);
+        if (!oValidator.IsValid())
         {
+            oValidator.MakeValid(poGeom);
             CPLError(CE_Warning, CPLE_NotSupported,
-                "Geometry with FID = " CPL_FRMT_GIB " has been modified.", nFID);
+                "Geometry with FID = " CPL_FRMT_GIB " has been modified to valid geometry.", poFeature->GetFID());
         }
     }
 
@@ -2154,9 +2148,6 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
             CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to create feature with large integer fid. "
                   "The FID64 layer creation option should be used." );
-
-            if (poValidator != nullptr)
-                delete poValidator;
 
             return OGRERR_FAILURE;
         }
@@ -2263,9 +2254,6 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
                 // No need to free bind_buffer[i] since bind_num == 0 in that branch
                 CPLFree(bind_buffer);
-
-                if (poValidator != nullptr)
-                    delete poValidator;
 
                 return OGRERR_FAILURE;
 #endif
@@ -2383,9 +2371,6 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         oStatement.Append( ");" );
     }
-
-    if (poValidator != nullptr)
-        delete poValidator;
 
     if( nFID != OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid )
         oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] OFF;", pszSchemaName, pszTableName );
