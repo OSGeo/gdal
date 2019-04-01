@@ -127,8 +127,9 @@ static void GetNameFromDatabase(GTIF* gtif,
         const char* pszName = proj_get_name(obj);
         if( pszName )
         {
-            strncpy(pszOut, pszName, nOutSize);
-            pszOut[nOutSize-1] = 0;
+            size_t nToCopy = MIN(strlen(pszName), nOutSize - 1);
+            memcpy(pszOut, pszName, nToCopy);
+            pszOut[nToCopy] = 0;
         }
         proj_destroy(obj);
     }
