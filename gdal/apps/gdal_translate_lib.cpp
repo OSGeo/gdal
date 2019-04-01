@@ -983,7 +983,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "General options of gdal_translate make the "
-                 "COPY_SRC_OVERVIEWS creation option ineffective");
+                 "COPY_SRC_OVERVIEWS creation option ineffective as they hide "
+                 "the overviews");
     }
 
 /* -------------------------------------------------------------------- */

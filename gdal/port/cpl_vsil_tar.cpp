@@ -338,13 +338,16 @@ int VSITarReader::GotoNextFile()
     {
         return FALSE;
     }
-    if( abyHeader[124] < '0' || abyHeader[124] > '7' )
+    if( !(abyHeader[124] == ' ' || (abyHeader[124] >= '0' && abyHeader[124] <= '7')) )
         return FALSE;
 
     osNextFileName = reinterpret_cast<const char*>(abyHeader);
     nNextFileSize = 0;
     for(int i=0;i<11;i++)
-        nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');
+    {
+        if( abyHeader[124+i] != ' ' )
+            nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');
+    }
     if( nNextFileSize > GINTBIG_MAX )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -354,7 +357,10 @@ int VSITarReader::GotoNextFile()
 
     nModifiedTime = 0;
     for(int i=0;i<11;i++)
-        nModifiedTime = nModifiedTime * 8 + (abyHeader[136+i] - '0');
+    {
+        if( abyHeader[136+i] != ' ' )
+            nModifiedTime = nModifiedTime * 8 + (abyHeader[136+i] - '0');
+    }
 
     nCurOffset = VSIFTellL(fp);
 

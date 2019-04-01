@@ -1000,11 +1000,12 @@ clockwise around a top.
 
 <dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
 
-<dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. </dd>
+<dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached.
+Ignored in polygonal contouring (-p) mode.</dd>
 
-<dt> <b>-amin</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the minimum elevation of contour polygon. If not provided no minimum elevation attribute is attached. </dd>
+<dt> <b>-amin</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the minimum elevation of contour polygon. If not provided no minimum elevation attribute is attached. Ignored in default line contouring mode.</dd>
 
-<dt> <b>-amax</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the maximum elevation of contour polygon. If not provided no maximim elevation attribute is attached. </dd>
+<dt> <b>-amax</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the maximum elevation of contour polygon. If not provided no maximim elevation attribute is attached. Ignored in default line contouring mode.</dd>
 
 <dt> <b>-3d</b>:</dt> <dd>
       Force production of 3D vectors instead of 2D.  Includes elevation at

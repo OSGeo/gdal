@@ -878,8 +878,8 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
             szValue[0] = '\0';
             H5Aread(hAttrID, hAttrNativeType, buf);
         }
-        const bool bIsSCHAR = H5Tequal(H5T_NATIVE_SCHAR, hAttrNativeType);
-        const bool bIsUCHAR = H5Tequal(H5T_NATIVE_UCHAR, hAttrNativeType);
+        const bool bIsSCHAR = H5Tequal(H5T_NATIVE_SCHAR, hAttrNativeType) > 0;
+        const bool bIsUCHAR = H5Tequal(H5T_NATIVE_UCHAR, hAttrNativeType) > 0;
         if( (bIsSCHAR || bIsUCHAR) &&
             CPLTestBool(CPLGetConfigOption("GDAL_HDF5_CHAR_AS_STRING", "NO")) )
         {
@@ -919,7 +919,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType) )
+        else if( H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType) > 0 )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
@@ -930,7 +930,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_USHORT, hAttrNativeType) )
+        else if( H5Tequal(H5T_NATIVE_USHORT, hAttrNativeType) > 0 )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
@@ -942,7 +942,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_INT, hAttrNativeType) )
+        else if( H5Tequal(H5T_NATIVE_INT, hAttrNativeType) > 0 )
         {
             for( hsize_t i=0; i < nAttrElmts; i++ )
             {
@@ -953,7 +953,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_UINT, hAttrNativeType) )
+        else if( H5Tequal(H5T_NATIVE_UINT, hAttrNativeType) > 0 )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
@@ -965,7 +965,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_LONG, hAttrNativeType) )
+        else if( H5Tequal(H5T_NATIVE_LONG, hAttrNativeType) > 0 )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
@@ -976,7 +976,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_ULONG, hAttrNativeType) )
+        else if( H5Tequal(H5T_NATIVE_ULONG, hAttrNativeType) > 0 )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ ) {
                 snprintf(szData, nDataLen, "%lu ",
@@ -987,7 +987,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType) )
+        else if( H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType) > 0 )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {
@@ -999,7 +999,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
                              "Header data too long. Truncated");
             }
         }
-        else if( H5Tequal(H5T_NATIVE_DOUBLE, hAttrNativeType) )
+        else if( H5Tequal(H5T_NATIVE_DOUBLE, hAttrNativeType) > 0 )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {

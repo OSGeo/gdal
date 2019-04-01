@@ -87,7 +87,7 @@ def validate(ds, check_tiled=True):
         errors += [
             'Overviews found in external .ovr file. They should be internal']
 
-    if main_band.XSize >= 512 or main_band.YSize >= 512:
+    if main_band.XSize > 512 or main_band.YSize > 512:
         if check_tiled:
             block_size = main_band.GetBlockSize()
             if block_size[0] == main_band.XSize and block_size[0] > 1024:

@@ -3,7 +3,7 @@
 
 branches:
   except:
-  - /^(cherry-pick-)?backport-\d+-on-/
+  - /^(cherry-pick-)?backport-\d+-to-/
 
 matrix:
   fast_finish: true

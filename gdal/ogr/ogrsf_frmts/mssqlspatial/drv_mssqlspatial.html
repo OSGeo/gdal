@@ -139,6 +139,7 @@ Options</a> which help control the behavior of this driver.</p>
     <li><b>MSSQLSPATIAL_SHOW_FID_COLUMN</b>: Force to display the FID colums as a feature attribute. Default = "NO".</li>
     <li><b>MSSQLSPATIAL_USE_GEOMETRY_COLUMNS</b>: Use/create geometry_columns metadata table in the database. Default = "YES".</li>
     <li><b>MSSQLSPATIAL_LIST_ALL_TABLES</b>: Use mssql catalog to list available layers. Default = "NO".</li>
+    <li><b>MSSQLSPATIAL_USE_GEOMETRY_VALIDATION</b>: (From GDAL 2.5.0) Let the driver detect the geometries which would trigger run time errors at MSSQL server. The driver tries to correct these geometries before submitting that to the server. Default = "YES".</li>
 </ul>
 
 <h2>Transaction support (GDAL &gt;= 2.0)</h2>

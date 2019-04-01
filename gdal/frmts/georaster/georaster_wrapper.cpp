@@ -1842,6 +1842,7 @@ bool GeoRasterWrapper::InitializeIO( void )
 
     const char* pszUpdate = bUpdate ? "\nFOR UPDATE" : "";
 
+    delete poBlockStmt;
     poBlockStmt = poConnection->CreateStatement( CPLSPrintf(
         "SELECT RASTERBLOCK\n"
         "FROM   %s%s\n"
@@ -1860,10 +1861,8 @@ bool GeoRasterWrapper::InitializeIO( void )
 
     if( ! poBlockStmt->Execute( static_cast<int>(nBlockCount) ) )
     {
-        delete poBlockStmt;
         return false;
     }
-    delete poBlockStmt;
 
     return true;
 }

@@ -353,6 +353,28 @@ MAIN_START(argc, argv)
     OGR_L_CreateField( hLayer, hFld, FALSE );
     OGR_Fld_Destroy( hFld );
 
+    if( bPolygonize )
+    {
+        if( pszElevAttrib )
+        {
+            pszElevAttrib = nullptr;
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "-a is ignored in polygonal contouring mode. "
+                     "Use -amin and/or -amax instead");
+        }
+    }
+    else
+    {
+        if( pszElevAttribMin != nullptr || pszElevAttribMax != nullptr )
+        {
+            pszElevAttribMin = nullptr;
+            pszElevAttribMax = nullptr;
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "-amin and/or -amax are ignored in line contouring mode. "
+                     "Use -a instead");
+        }
+    }
+
     if( pszElevAttrib )
     {
       CreateElevAttrib( pszElevAttrib, hLayer );
