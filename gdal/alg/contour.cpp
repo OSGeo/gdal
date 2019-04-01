@@ -501,17 +501,17 @@ an averaged value from the two nearby points (in this case (12+3+5)/3).
  *   ELEV_FIELD=d
  *
  * This will be used as a field index to indicate where the elevation value
- * of the contour should be written.
+ * of the contour should be written. Only used in line contouring mode.
  *
  *   ELEV_FIELD_MIN=d
  *
  * This will be used as a field index to indicate where the minimum elevation value
- * of the polygon contour should be written.
+ * of the polygon contour should be written. Only used in polygonal contouring mode.
  *
  *   ELEV_FIELD_MAX=d
  *
  * This will be used as a field index to indicate where the maximum elevation value
- * of the polygon contour should be written.
+ * of the polygon contour should be written. Only used in polygonal contouring mode.
  *
  *   POLYGONIZE=YES|NO
  *
