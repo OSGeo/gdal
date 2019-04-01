@@ -2882,8 +2882,12 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     if( tabPolygons != nullptr )
                     {
                         int isValidGeometry = FALSE;
+                        // The outer ring is supposed to be clockwise oriented
+                        // If it is not, then use the default/slow method.
                         const char* papszOptions[] =
-                            { "METHOD=ONLY_CCW", nullptr };
+                            { !(tabPolygons[0]->getExteriorRing()->isClockwise()) ?
+                                "METHOD=DEFAULT" : "METHOD=ONLY_CCW",
+                              nullptr };
                         poOGR = OGRGeometryFactory::organizePolygons(
                             reinterpret_cast<OGRGeometry **>(tabPolygons),
                             nParts,

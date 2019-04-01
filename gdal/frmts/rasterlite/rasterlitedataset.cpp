@@ -189,6 +189,11 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
         OGR_G_GetEnvelope(hGeom, &oEnvelope);
 
         const int nTileId = OGR_F_GetFieldAsInteger(hFeat, 1);
+        if( poGDS->m_nLastBadTileId == nTileId )
+        {
+            OGR_F_Destroy(hFeat);
+            continue;
+        }
         const int nTileXSize = OGR_F_GetFieldAsInteger(hFeat, 2);
         const int nTileYSize = OGR_F_GetFieldAsInteger(hFeat, 3);
 
@@ -271,6 +276,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             }
             if (hDSTile == nullptr)
             {
+                poGDS->m_nLastBadTileId = nTileId;
                 CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d",
                          nTileId);
             }
@@ -282,6 +288,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 nReqBand = 1;
             else
             {
+                poGDS->m_nLastBadTileId = nTileId;
                 GDALClose(hDSTile);
                 hDSTile = nullptr;
             }
@@ -293,6 +300,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions for tile %d",
                              nTileId);
+                    poGDS->m_nLastBadTileId = nTileId;
                     GDALClose(hDSTile);
                     hDSTile = nullptr;
                 }

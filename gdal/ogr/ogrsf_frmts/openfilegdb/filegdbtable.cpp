@@ -3104,9 +3104,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 }
                 delete[] papoRings;
                 papoRings = nullptr;
-                const char* papszOptions[] = { "METHOD=ONLY_CCW", nullptr };
                 poRet = OGRGeometryFactory::organizePolygons(
-                    (OGRGeometry**) papoPolygons, nParts, nullptr, papszOptions );
+                    (OGRGeometry**) papoPolygons, nParts, nullptr, nullptr );
                 delete[] papoPolygons;
             }
 #ifdef ASSUME_INNER_RINGS_IMMEDIATELY_AFTER_OUTER_RING

@@ -2906,7 +2906,108 @@ def test_netcdf_mixed_raster_vector():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f['PRFEDEA'] == '35043411'
-    
+
+
+###############################################################################
+# Test opening a file with an empty double attribute
+# https://github.com/OSGeo/gdal/issues/1303
+
+def test_netcdf_open_empty_double_attr():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/empty_double_attr.nc')
+    assert ds
+
+
+###############################################################################
+# Test writing and reading a file with huge block size
+
+def test_netcdf_huge_block_size():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+    if sys.maxsize < 2**32:
+        pytest.skip('Test not available on 32 bit')
+
+    import psutil
+    if psutil.virtual_memory().available < 2 * 50000 * 50000:
+        pytest.skip("Not enough virtual memory available")
+
+    tmpfilename = 'tmp/test_netcdf_huge_block_size.nc'
+    with gdaltest.SetCacheMax(50000 * 50000 + 100000):
+        with gdaltest.config_option('BLOCKYSIZE', '50000'):
+            gdal.Translate(tmpfilename,
+                        '../gcore/data/byte.tif',
+                        options='-f netCDF -outsize 50000 50000 -co WRITE_BOTTOMUP=NO -co COMPRESS=DEFLATE -co FORMAT=NC4')
+
+    ds = gdal.Open(tmpfilename)
+    data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
+    assert data
+    ref_ds = gdal.Open('../gcore/data/byte.tif')
+    assert data == ref_ds.ReadRaster()
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test reading a netCDF file whose fastest varying dimension is Latitude, and
+# slowest one is Longitude
+# https://lists.osgeo.org/pipermail/gdal-dev/2019-March/049931.html
+# Currently we expose it in a 'raw' way, but make sure that geotransform and
+# geoloc arrays reflect the georeferencing correctly
+
+def test_netcdf_swapped_x_y_dimension():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/swapedxy.nc')
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 8
+    assert ds.GetGeoTransform() == (90.0, -45.0, 0, -180, 0.0, 45.0)
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('h' * 4 * 8, data)
+    assert data == (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ,13 ,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)
+    md = ds.GetMetadata('GEOLOCATION')
+    assert md == {
+        'LINE_OFFSET': '0',
+        'X_DATASET': 'NETCDF:"data/swapedxy.nc":Latitude',
+        'SWAP_XY': 'YES',
+        'PIXEL_STEP': '1',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        'PIXEL_OFFSET': '0',
+        'X_BAND': '1',
+        'LINE_STEP': '1',
+        'Y_DATASET': 'NETCDF:"data/swapedxy.nc":Longitude',
+        'Y_BAND': '1'}, md
+
+    ds = gdal.Open(md['X_DATASET'])
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 1
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('f' * 4, data)
+    assert data == (67.5, 22.5, -22.5, -67.5)
+
+    ds = gdal.Open(md['Y_DATASET'])
+    assert ds.RasterXSize == 8
+    assert ds.RasterYSize == 1
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('f' * 8, data)
+    assert data == (-157.5, -112.5, -67.5, -22.5, 22.5, 67.5, 112.5, 157.5)
+
+    ds = gdal.Warp('', 'data/swapedxy.nc', options = '-f MEM -geoloc')
+    assert ds.RasterXSize == 8
+    assert ds.RasterYSize == 4
+    assert ds.GetGeoTransform() == (-157.5, 38.3161193233344, 0.0, 67.5, 0.0, -38.3161193233344)
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('h' * 4 * 8, data)
+    # not exactly the transposed aray, but not so far
+    assert data == (4, 8, 8, 12, 16, 20, 20, 24, 5, 9, 9, 13, 17, 21, 21, 25, 6, 10, 10, 14, 18, 22, 22, 26, 7, 11, 11, 15, 19, 23, 23, 27)
 
 ###############################################################################
 

@@ -340,6 +340,7 @@ DODSDataset::connect_to_server() /*throw(Error)*/
 
         snprintf( szDODS_CONF, sizeof(szDODS_CONF), "DODS_CONF=%.980s",
                  CPLGetConfigOption( "DODS_CONF", "" ) );
+        // coverity[tainted_string]
         putenv( szDODS_CONF );
     }
 
@@ -513,8 +514,8 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 /* -------------------------------------------------------------------- */
     string dim1_name = poArray->dimension_name( dim1 );
     string dim2_name = poArray->dimension_name( dim2 );
-    int iXDim = -1;
-    int iYDim = -1;
+    int iXDim = 0;
+    int iYDim = 1;
 
     if( dim1_name == "easting" && dim2_name == "northing" )
     {
@@ -529,19 +530,16 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
     else if( STARTS_WITH_CI(dim1_name.c_str(), "lat")
              && STARTS_WITH_CI(dim2_name.c_str(), "lon") )
     {
+        // FIXME? The axis order looks wrong to me (ERO)
         iXDim = 0;
         iYDim = 1;
     }
     else if( STARTS_WITH_CI(dim1_name.c_str(), "lon")
              && STARTS_WITH_CI(dim2_name.c_str(), "lat") )
     {
+        // FIXME? The axis order looks wrong to me (ERO)
         iXDim = 1;
         iYDim = 0;
-    }
-    else
-    {
-        iYDim = 0;
-        iXDim = 1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -567,10 +565,8 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 
     if( iXDim == 0 && iYDim == 1 )
         oConstraint = "[x][y]";
-    else if( iXDim == 1 && iYDim == 0 )
-        oConstraint = "[y][x]";
     else
-        return papszResultList;
+        oConstraint = "[y][x]";
 
     papszResultList = CSLAddString( papszResultList,
                                     poVar->name().c_str() );
@@ -1007,6 +1003,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLDebug( "DODS", "No apparent raster grids or arrays found in DDS.");
             delete poDS;
+            CSLDestroy(papszVarConstraintList);
             return nullptr;
         }
 
@@ -1145,13 +1142,15 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
     if( poDDSDef->type() == dods_grid_c )
     {
         poGrid = dynamic_cast<Grid *>( poDDSDef );
-        poArray = dynamic_cast<Array *>( poGrid->array_var() );
+        if( poGrid )
+            poArray = dynamic_cast<Array *>( poGrid->array_var() );
     }
     else if( poDDSDef->type() == dods_array_c )
     {
         poArray = dynamic_cast<Array *>( poDDSDef );
     }
-    else
+
+    if( !poArray )
     {
         throw InternalErr(
             CPLSPrintf( "Variable %s is not a grid or an array.",
@@ -1412,7 +1411,7 @@ void DODSRasterBand::HarvestDAS()
 CPLErr
 DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
-    DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
+    DODSDataset *poDODS = cpl::down_cast<DODSDataset *>(poDS);
     int nBytesPerPixel = GDALGetDataTypeSize(eDataType) / 8;
 
 /* -------------------------------------------------------------------- */
@@ -1486,14 +1485,23 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         Array *poA = nullptr;
         switch (poBt->type()) {
           case dods_grid_c:
-            poA = dynamic_cast<Array*>(dynamic_cast<Grid*>(poBt)->array_var());
+          {
+            auto poGrid = dynamic_cast<Grid*>(poBt);
+            if( poGrid)
+             poA = dynamic_cast<Array*>(poGrid->array_var());
             break;
+          }
 
           case dods_array_c:
             poA = dynamic_cast<Array *>(poBt);
             break;
 
           default:
+            break;
+        }
+
+        if( !poA )
+        {
             throw InternalErr("Expected an Array or Grid variable!");
         }
 

@@ -44,7 +44,7 @@ cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf.exe
 cd ..
 ln -sf $PWD/.libs/libgdal-20.dll $HOME/.wine/drive_c/windows
-ln -sf /tmp/install/bin/libproj-13.dll $HOME/.wine/drive_c/windows
+ln -sf /tmp/install/bin/libproj-15.dll $HOME/.wine/drive_c/windows
 ln -sf /tmp/install/bin/libsqlite3-0.dll $HOME/.wine/drive_c/windows
 # Python bindings
 wget https://www.python.org/ftp/python/2.7.15/python-2.7.15.amd64.msi

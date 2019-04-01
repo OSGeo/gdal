@@ -93,11 +93,6 @@ class VSIPDFFileStream final: public BaseStream
         virtual void       close() override;
 
     private:
-        /* getChars/hasGetChars added in poppler 0.15.0
-         * POPPLER_BASE_STREAM_HAS_TWO_ARGS true from poppler 0.16,
-         * This test will be wrong for poppler 0.15 or 0.16,
-         * but will still compile correctly.
-         */
         virtual GBool hasGetChars() override;
         virtual int getChars(int nChars, Guchar *buffer) override;
 

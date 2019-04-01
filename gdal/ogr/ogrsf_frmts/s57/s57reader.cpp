@@ -477,8 +477,13 @@ bool S57Reader::Ingest()
 
         if( EQUAL(pszName,"VRID") )
         {
-            const int nRCNM = poRecord->GetIntSubfield( "VRID",0, "RCNM",0 );
-            const int nRCID = poRecord->GetIntSubfield( "VRID",0, "RCID",0 );
+            int bSuccess = FALSE;
+            const int nRCNM = poRecord->GetIntSubfield( "VRID",0, "RCNM",0, &bSuccess);
+            if( !bSuccess && CPLGetLastErrorType() == CE_Failure )
+                break;
+            const int nRCID = poRecord->GetIntSubfield( "VRID",0, "RCID",0, &bSuccess);
+            if( !bSuccess && CPLGetLastErrorType() == CE_Failure )
+                break;
 
             switch( nRCNM )
             {
@@ -507,16 +512,22 @@ bool S57Reader::Ingest()
 
         else if( EQUAL(pszName,"FRID") )
         {
-            int         nRCID = poRecord->GetIntSubfield( "FRID",0, "RCID",0);
+            int bSuccess = FALSE;
+            int         nRCID = poRecord->GetIntSubfield( "FRID",0, "RCID",0, &bSuccess);
+            if( !bSuccess && CPLGetLastErrorType() == CE_Failure )
+                break;
 
             oFE_Index.AddRecord( nRCID, poRecord->Clone() );
         }
 
         else if( EQUAL(pszName,"DSID") )
         {
+            int bSuccess = FALSE;
             CPLFree( pszDSNM );
             pszDSNM =
-                CPLStrdup(poRecord->GetStringSubfield( "DSID", 0, "DSNM", 0 ));
+                CPLStrdup(poRecord->GetStringSubfield( "DSID", 0, "DSNM", 0, &bSuccess ));
+            if( !bSuccess && CPLGetLastErrorType() == CE_Failure )
+                break;
 
             if( nOptionFlags & S57M_RETURN_DSID )
             {
@@ -529,8 +540,13 @@ bool S57Reader::Ingest()
 
         else if( EQUAL(pszName,"DSPM") )
         {
-            nCOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
-            nSOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
+            int bSuccess = FALSE;
+            nCOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "COMF",0, &bSuccess));
+            if( !bSuccess && CPLGetLastErrorType() == CE_Failure )
+                break;
+            nSOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "SOMF",0, &bSuccess));
+            if( !bSuccess && CPLGetLastErrorType() == CE_Failure )
+                break;
 
             if( nOptionFlags & S57M_RETURN_DSID )
             {

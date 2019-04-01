@@ -307,25 +307,25 @@ def test_osr_ct_towgs84_both_side():
     srs_other_towgs84.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_other_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    (x, y, z) = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
-    assert z != 0
+    assert z == 20
 
     srs_datum_wgs84 = osr.SpatialReference()
     srs_datum_wgs84.SetFromUserInput("+proj=longlat +datum=WGS84")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_datum_wgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    (x, y, z) = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
-    assert z != 0
+    assert z == 20
 
     ct = osr.CoordinateTransformation(srs_datum_wgs84, srs_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    (x, y, z) = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
-    assert z != 0
+    assert z == 20
 
 ###############################################################################
 # Test coordinate transformation with custom operation

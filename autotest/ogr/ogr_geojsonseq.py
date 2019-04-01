@@ -127,7 +127,32 @@ def test_ogr_geojsonseq_seq_geometries():
             f.DumpReadable()
             pytest.fail()
 
-    
+
+def test_ogr_geojsonseq_seq_geometries_with_errors():
+
+    with gdaltest.error_handler():
+        ds = ogr.Open("""{"type":"Point","coordinates":[2,49]}
+    {"type":"Point","coordinates":[3,50]}
+    foo
+    "bar"
+    null
+
+    {"type":"Point","coordinates":[3,51]}""")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 3
+        f = lyr.GetNextFeature()
+        if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+            f.DumpReadable()
+            pytest.fail()
+        f = lyr.GetNextFeature()
+        if f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
+            f.DumpReadable()
+            pytest.fail()
+        f = lyr.GetNextFeature()
+        if f.GetGeometryRef().ExportToWkt() != 'POINT (3 51)':
+            f.DumpReadable()
+            pytest.fail()
+
 
 def test_ogr_geojsonseq_reprojection():
 

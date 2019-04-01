@@ -113,6 +113,8 @@ class RasterliteDataset final: public GDALPamDataset
 
     OGRDataSourceH hDS;
 
+    int m_nLastBadTileId = -1;
+
     void AddSubDataset( const char* pszDSName);
     int  GetBlockParams(OGRLayerH hRasterLyr, int nLevel, int* pnBands,
                         GDALDataType* peDataType,

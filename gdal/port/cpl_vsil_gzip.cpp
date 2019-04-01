@@ -1207,6 +1207,7 @@ class VSIGZipWriteHandleMT final : public VSIVirtualHandle
     int                nSeqNumberExpected_ = 0;
     int                nSeqNumberExpectedCRC_ = 0;
     size_t             nChunkSize_ = 0;
+    bool               bHasErrored_ = false;
 
     struct Job
     {
@@ -1578,10 +1579,6 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                                           nToWrite) < nToWrite;
                 sMutex_.lock();
                 nSeqNumberExpected_ ++;
-                if( bError )
-                {
-                    return false;
-                }
 
                 if( nDeflateType_ != CPL_DEFLATE_TYPE_GZIP )
                 {
@@ -1589,6 +1586,11 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                     psJob->pBuffer_ = nullptr;
 
                     apoFreeJobs_.push_back(psJob);
+                }
+
+                if( bError )
+                {
+                    return false;
                 }
 
                 do_it_again = true;
@@ -1652,6 +1654,9 @@ size_t VSIGZipWriteHandleMT::Write( const void * const pBuffer,
                                     size_t const nSize, size_t const nMemb )
 
 {
+    if( bHasErrored_ )
+        return 0;
+
     const char* pszBuffer = static_cast<const char*>(pBuffer);
     size_t nBytesToWrite = nSize * nMemb;
     while( nBytesToWrite > 0 )
@@ -1675,6 +1680,7 @@ size_t VSIGZipWriteHandleMT::Write( const void * const pBuffer,
                 }
                 if( !ProcessCompletedJobs() )
                 {
+                    bHasErrored_ = true;
                     return 0;
                 }
             }
@@ -1693,6 +1699,7 @@ size_t VSIGZipWriteHandleMT::Write( const void * const pBuffer,
                 poPool_.reset(new CPLWorkerThreadPool());
                 if( !poPool_->Setup(nThreads_, nullptr, nullptr, false) )
                 {
+                    bHasErrored_ = true;
                     poPool_.reset();
                     return 0;
                 }

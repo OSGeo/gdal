@@ -43,7 +43,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     ovrd.vm.box = "cultuurnet/ubuntu-14.04-64-puppet"
     lxc.backingstore = 'dir'
     lxc.customize 'cgroup.memory.limit_in_bytes', vm_ram_bytes
-    lxc.customize 'aa_allow_incomplete', 1
+    # LXC 3 or later deprecated old parameter
+    lxc.customize 'apparmor.allow_incomplete', 1
+    # for LXC 2.1 or before
+    #lxc.customize 'aa_allow_incomplete', 1
     lxc.container_name = "gdal-vagrant"
     # allow android adb connection from guest
     #ovrd.vm.synced_folder('/dev/bus', '/dev/bus')
@@ -88,7 +91,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "liblzma-dev",
     "libgeos-dev",
     "libcurl4-gnutls-dev",
-    "libproj-dev",
+    # "libproj-dev",
     "libxml2-dev",
     "libexpat-dev",
     "libxerces-c-dev",
@@ -151,7 +154,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "mingw-w64-tools",
     "gdb-mingw-w64-target",
     "libgeos-mingw-w64-dev",
-    "libproj-mingw-w64-dev",
+    # "libproj-mingw-w64-dev",
     "cmake3-curses-gui",
     "gdb",
     "gdbserver",
@@ -162,6 +165,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libcharls-dev",
     "libgeotiff-dev",
     "libgeotiff-epsg",
+    "sqlite3",
     "sqlite3-pcre",
     "libpcre3-dev",
     "libspatialite-dev",
@@ -196,8 +200,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  pkg_cmd << "apt-get --no-install-recommends install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
+      "install-proj6.sh",
       "gdal.sh",
       "postgis.sh",
+      "install-proj6-mingw.sh",
       "gdal-mingw.sh"
     ];
     scripts.each { |script| config.vm.provision :shell, :privileged => false, :path => "gdal/scripts/vagrant/" << script }

@@ -665,7 +665,10 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     char *pszWKT = nullptr;
     if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        CPLFree(pszWKT);
         return GetUnknownSRID();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing record.                             */

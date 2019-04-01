@@ -329,4 +329,59 @@ def test_rasterize_6():
     gdal.RasterizeLayer(mask_ds, [1], layer, burn_values=[1], options=["ALL_TOUCHED"])
 
 
+###############################################################################
+# Test rasterizing linestring with multiple segments and MERGE_ALG=ADD
+# Tests https://github.com/OSGeo/gdal/issues/1307
 
+def test_rasterize_merge_alg_add_multiple_segment_linestring():
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference(sr_wkt)
+
+    data_source = ogr.GetDriverByName('MEMORY').CreateDataSource('')
+    layer = data_source.CreateLayer('', sr, geom_type=ogr.wkbLineString)
+    feature = ogr.Feature(layer.GetLayerDefn())
+    # Diagonal segments
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0.5 0.5,100.5 50.5,199.5 99.5)'))
+    layer.CreateFeature(feature)
+    feature = ogr.Feature(layer.GetLayerDefn())
+    # Vertical and horizontal segments
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(30.5 40.5,30.5 70.5,50.5 70.5)'))
+    layer.CreateFeature(feature)
+
+    ds = gdal.GetDriverByName('Mem').Create('', 10, 10, 1, gdal.GDT_Byte)
+    ds.SetGeoTransform([0, 20, 0, 100, 0, -10])
+    ds.SetProjection(sr_wkt)
+
+    ds.GetRasterBand(1).Fill(0)
+    gdal.RasterizeLayer(ds, [1], layer, burn_values=[1], options=["MERGE_ALG=ADD"])
+
+    got = struct.unpack('B' * 100, ds.ReadRaster())
+    expected = (0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 1, 1, 0, 0, 0, 0, 1, 0, 0,
+                0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 1, 0, 0, 0, 1, 0, 0, 0, 0,
+                0, 1, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    assert got == expected, '%s' % str(got)
+
+    ds.GetRasterBand(1).Fill(0)
+    gdal.RasterizeLayer(ds, [1], layer, burn_values=[1], options=["MERGE_ALG=ADD", "ALL_TOUCHED"])
+
+    got = struct.unpack('B' * 100, ds.ReadRaster())
+    expected = (0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+                0, 1, 1, 0, 0, 0, 1, 1, 1, 0,
+                0, 1, 0, 0, 0, 1, 1, 0, 0, 0,
+                0, 1, 0, 0, 1, 1, 0, 0, 0, 0,
+                0, 1, 0, 1, 1, 0, 0, 0, 0, 0,
+                0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
+                0, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+                1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    assert got == expected, '%s' % str(got)

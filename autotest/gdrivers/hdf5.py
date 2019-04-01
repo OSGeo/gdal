@@ -317,12 +317,9 @@ def test_hdf5_12():
     assert 'Azimuthal_Equidistant' in got_projection
 
     got_gt = ds.GetGeoTransform()
-    expected_gt = (-240890.02470187756, 1001.7181388478905, 0.0, 239638.21326987055, 0.0, -1000.3790932482976)
-    # Proj 4.9.3
-    expected_gt2 = (-240889.94573659054, 1001.7178235672992, 0.0, 239638.28570609915, 0.0, -1000.3794089534567)
+    expected_gt = (-239999.9823595533, 997.9165855496311, 0.0, 239000.03320328312, 0.0, -997.9167782264051)
 
-    assert (max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-5 or \
-       max([abs(got_gt[i] - expected_gt2[i]) for i in range(6)]) <= 1e-5)
+    assert max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-5, got_gt
 
 ###############################################################################
 # Test MODIS L2 HDF5 GCPs (#6666)
@@ -396,6 +393,21 @@ def test_hdf5_single_char_varname():
 
     ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
     assert ds is not None
+
+def test_hdf5_attr_all_datatypes():
+
+    ds = gdal.Open('data/attr_all_datatypes.h5')
+    assert ds is not None
+    assert ds.GetMetadata() == {'attr_float16': '125 ',
+                                'attr_float32': '125 ',
+                                'attr_float64': '125 ',
+                                'attr_int16': '125 ',
+                                'attr_int32': '125 ',
+                                'attr_int8': '125 ',
+                                'attr_uint16': '125 ',
+                                'attr_uint32': '125 ',
+                                'attr_uint8': '125 '}
+
 
 
 def test_hdf5_virtual_file():

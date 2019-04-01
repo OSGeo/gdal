@@ -116,7 +116,7 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
             nSrcYOff = nChunkYOff;
 
         const T * const pSrcScanline =
-            pChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize) - nChunkXOff;
+            pChunk + (static_cast<GPtrDiff_t>(nSrcYOff-nChunkYOff) * nChunkXSize) - nChunkXOff;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
@@ -528,7 +528,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                 // regular x and y src spacing.
                 const T* pSrcScanlineShifted =
                     pChunk + panSrcXOffShifted[0] +
-                    (nSrcYOff - nChunkYOff) * nChunkXSize;
+                    static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
                 for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
                 {
                     const Tsum nTotal =
@@ -555,13 +555,13 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
 
                     Tsum dfTotal = 0;
-                    int nCount = 0;
+                    GPtrDiff_t nCount = 0;
 
                     for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                     {
                         for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                         {
-                            const T val = pChunk[iX + iY *nChunkXSize];
+                            const T val = pChunk[iX + static_cast<GPtrDiff_t>(iY) *nChunkXSize];
                             if( pabyChunkNodataMask == nullptr ||
                                 pabyChunkNodataMask[iX + iY *nChunkXSize] )
                             {
@@ -573,7 +573,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
                     if( nCount == 0 ||
                         (bPropagateNoData && nCount <
-                            (nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)))
+                            static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)))
                     {
                         pDstScanline[iDstPixel] = tNoDataValue;
                     }
@@ -605,16 +605,16 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                 const int nSrcXOff = panSrcXOffShifted[2 * iDstPixel];
                 const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
 
-                int nTotalR = 0;
-                int nTotalG = 0;
-                int nTotalB = 0;
-                int nCount = 0;
+                GPtrDiff_t nTotalR = 0;
+                GPtrDiff_t nTotalG = 0;
+                GPtrDiff_t nTotalB = 0;
+                GPtrDiff_t nCount = 0;
 
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
-                        const T val = pChunk[iX + iY *nChunkXSize];
+                        const T val = pChunk[iX + static_cast<GPtrDiff_t>(iY) *nChunkXSize];
                         int nVal = static_cast<int>(val);
                         if( nVal >= 0 && nVal < nEntryCount &&
                             aEntries[nVal].c4 )
@@ -629,15 +629,15 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
                 if( nCount == 0 ||
                     (bPropagateNoData && nCount <
-                        (nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)) )
+                        static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)) )
                 {
                     pDstScanline[iDstPixel] = tNoDataValue;
                 }
                 else
                 {
-                    int nR = (nTotalR + nCount / 2) / nCount,
-                        nG = (nTotalG + nCount / 2) / nCount,
-                        nB = (nTotalB + nCount / 2) / nCount;
+                    int nR = static_cast<int>((nTotalR + nCount / 2) / nCount),
+                        nG = static_cast<int>((nTotalG + nCount / 2) / nCount),
+                        nB = static_cast<int>((nTotalB + nCount / 2) / nCount);
                     pDstScanline[iDstPixel] = static_cast<T>(GDALFindBestEntry(
                         nEntryCount, aEntries, nR, nG, nB));
                 }
@@ -930,7 +930,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             if( poColorTable == nullptr )
             {
                 double dfTotal = 0.0;
-                int nCount = 0;
+                GInt64 nCount = 0;
                 const int *panLineWeight = panGaussMatrix +
                     nYShiftGaussMatrix * nGaussMatrixDim + nXShiftGaussMatrix;
 
@@ -941,11 +941,11 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                     for( int i=0, iX = nSrcXOff; iX < nSrcXOff2; ++iX, ++i )
                     {
                         const double val =
-                            pafSrcScanline[iX-nChunkXOff+(iY-nSrcYOff)
+                            pafSrcScanline[iX-nChunkXOff+static_cast<GPtrDiff_t>(iY-nSrcYOff)
                                            * nChunkXSize];
                         if( pabySrcScanlineNodataMask == nullptr ||
                             pabySrcScanlineNodataMask[iX - nChunkXOff
-                                                      +(iY - nSrcYOff)
+                                                      +static_cast<GPtrDiff_t>(iY - nSrcYOff)
                                                       * nChunkXSize] )
                         {
                             const int nWeight = panLineWeight[i];
@@ -967,10 +967,10 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             }
             else
             {
-                int nTotalR = 0;
-                int nTotalG = 0;
-                int nTotalB = 0;
-                int nTotalWeight = 0;
+                GInt64 nTotalR = 0;
+                GInt64 nTotalG = 0;
+                GInt64 nTotalB = 0;
+                GInt64 nTotalWeight = 0;
                 const int *panLineWeight =
                     panGaussMatrix + nYShiftGaussMatrix * nGaussMatrixDim +
                     nXShiftGaussMatrix;
@@ -982,7 +982,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                     {
                         const double val =
                             pafSrcScanline[iX - nChunkXOff +
-                                           (iY-nSrcYOff) * nChunkXSize];
+                                           static_cast<GPtrDiff_t>(iY-nSrcYOff) * nChunkXSize];
                         int nVal = static_cast<int>(val);
                         if( nVal >= 0 && nVal < nEntryCount &&
                             aEntries[nVal].c4 )
@@ -1003,11 +1003,11 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                 else
                 {
                     const int nR =
-                        (nTotalR + nTotalWeight / 2) / nTotalWeight;
+                        static_cast<int>((nTotalR + nTotalWeight / 2) / nTotalWeight);
                     const int nG =
-                        (nTotalG + nTotalWeight / 2) / nTotalWeight;
+                        static_cast<int>((nTotalG + nTotalWeight / 2) / nTotalWeight);
                     const int nB =
-                        (nTotalB + nTotalWeight / 2) / nTotalWeight;
+                        static_cast<int>((nTotalB + nTotalWeight / 2) / nTotalWeight);
                     pafDstScanline[iDstPixel - nDstXOff] =
                         static_cast<float>( GDALFindBestEntry(
                             nEntryCount, aEntries, nR, nG, nB ) );
@@ -1078,12 +1078,13 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         return CE_Failure;
     }
 
-    int nMaxNumPx = 0;
+    GPtrDiff_t nMaxNumPx = 0;
     float *pafVals = nullptr;
     int *panSums = nullptr;
 
     const int nChunkRightXOff = nChunkXOff + nChunkXSize;
     const int nChunkBottomYOff = nChunkYOff + nChunkYSize;
+    std::vector<int> anVals(256, 0);
 
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
@@ -1120,11 +1121,11 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             nSrcYOff2 = nChunkBottomYOff;
 
         const float * const pafSrcScanline =
-            pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
+            pafChunk + (static_cast<GPtrDiff_t>(nSrcYOff-nChunkYOff) * nChunkXSize);
         GByte *pabySrcScanlineNodataMask = nullptr;
         if( pabyChunkNodataMask != nullptr )
             pabySrcScanlineNodataMask =
-                pabyChunkNodataMask + (nSrcYOff-nChunkYOff) * nChunkXSize;
+                pabyChunkNodataMask + static_cast<GPtrDiff_t>(nSrcYOff-nChunkYOff) * nChunkXSize;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
@@ -1164,9 +1165,9 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                 // filter on floating point data, but here it is for the sake
                 // of compatibility. It won't look right on RGB images by the
                 // nature of the filter.
-                int nNumPx = (nSrcYOff2-nSrcYOff)*(nSrcXOff2-nSrcXOff);
-                int iMaxInd = 0;
-                int iMaxVal = -1;
+                GPtrDiff_t nNumPx = static_cast<GPtrDiff_t>(nSrcYOff2-nSrcYOff)*(nSrcXOff2-nSrcXOff);
+                GPtrDiff_t iMaxInd = 0;
+                GPtrDiff_t iMaxVal = -1;
 
                 if( pafVals == nullptr || nNumPx > nMaxNumPx )
                 {
@@ -1179,14 +1180,14 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
-                    const int iTotYOff = (iY-nSrcYOff)*nChunkXSize-nChunkXOff;
+                    const GPtrDiff_t iTotYOff = static_cast<GPtrDiff_t>(iY-nSrcYOff)*nChunkXSize-nChunkXOff;
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         if( pabySrcScanlineNodataMask == nullptr ||
                             pabySrcScanlineNodataMask[iX+iTotYOff] )
                         {
                             const float fVal = pafSrcScanline[iX+iTotYOff];
-                            int i = 0;  // Used after for.
+                            GPtrDiff_t i = 0;  // Used after for.
 
                             // Check array for existing entry.
                             for( ; i < iMaxInd; ++i )
@@ -1221,14 +1222,18 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             {
                 // So we go here for a paletted or non-paletted byte band.
                 // The input values are then between 0 and 255.
-                std::vector<int> anVals(256, 0);
                 int nMaxVal = 0;
                 int iMaxInd = -1;
 
+                // The cost of this zeroing might be high. Perhaps we should just
+                // use the above generic case, and go to this one if the number
+                // of source pixels is large enough
+                std::fill(anVals.begin(), anVals.end(), 0);
+
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
-                    const int iTotYOff =
-                        (iY - nSrcYOff) * nChunkXSize - nChunkXOff;
+                    const GPtrDiff_t iTotYOff =
+                        static_cast<GPtrDiff_t>(iY - nSrcYOff) * nChunkXSize - nChunkXOff;
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         const float val = pafSrcScanline[iX+iTotYOff];
@@ -1976,7 +1981,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
     GByte* pabyChunkNodataMaskHorizontalFiltered = nullptr;
     if( pabyChunkNodataMask )
         pabyChunkNodataMaskHorizontalFiltered = static_cast<GByte*>(
-            VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize) );
+            VSI_MALLOC2_VERBOSE(nChunkYSize, nDstXSize) );
     if( pafDstScanline == nullptr ||
         padfHorizontalFiltered == nullptr ||
         padfWeights == nullptr ||
@@ -2060,8 +2065,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             {
                 for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
-                    const int j =
-                        iSrcLineOff * nChunkXSize +
+                    const GPtrDiff_t j =
+                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -2082,8 +2087,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             {
                 for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
-                    const int j =
-                        iSrcLineOff * nChunkXSize +
+                    const GPtrDiff_t j =
+                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -2105,8 +2110,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             {
                 for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
-                    const int j =
-                        iSrcLineOff * nChunkXSize +
+                    const GPtrDiff_t j =
+                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -2126,8 +2131,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             }
             for( ; iSrcLineOff < nHeight; ++iSrcLineOff )
             {
-                const int j =
-                    iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
+                const GPtrDiff_t j =
+                    static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize + (nSrcPixelStart - nChunkXOff);
                 const double dfVal =
                     GDALResampleConvolutionHorizontal(pChunk + j,
                                                 padfWeights, nSrcPixelCount);
@@ -2139,8 +2144,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         {
             for( int iSrcLineOff = 0; iSrcLineOff < nHeight; ++iSrcLineOff )
             {
-                const int j =
-                    iSrcLineOff * nChunkXSize + (nSrcPixelStart - nChunkXOff);
+                const GPtrDiff_t j =
+                    static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize + (nSrcPixelStart - nChunkXOff);
 
                 if( bKernelWithNegativeWeights )
                 {
@@ -2625,9 +2630,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         const double dfR =
-                            pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
+                            pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
                         const double dfI =
-                            pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
+                            pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
                         dfTotalR += dfR;
                         dfTotalI += dfI;
                         dfTotalM += sqrt( dfR*dfR + dfI*dfI );
@@ -2676,9 +2681,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                     {
                         // TODO(schwehr): Maybe use std::complex?
                         dfTotalR +=
-                            pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
+                            pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
                         dfTotalI +=
-                            pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
+                            pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
                         ++nCount;
                     }
                 }
@@ -3284,7 +3289,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             if( eType == GDT_Float32 )
             {
                 float* pafChunk = static_cast<float*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pafChunk[i] == 1.0 )
                         pafChunk[i] = 255.0;
@@ -3292,8 +3297,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             }
             else if( eType == GDT_Byte )
             {
-              GByte* pabyChunk = static_cast<GByte*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                GByte* pabyChunk = static_cast<GByte*>(pChunk);
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pabyChunk[i] == 1 )
                         pabyChunk[i] = 255;
@@ -3302,7 +3307,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             else if( eType == GDT_UInt16 )
             {
                 GUInt16* pasChunk = static_cast<GUInt16*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pasChunk[i] == 1 )
                         pasChunk[i] = 255;
@@ -3317,7 +3322,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             if( eType == GDT_Float32 )
             {
                 float* pafChunk = static_cast<float*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pafChunk[i] == 1.0 )
                         pafChunk[i] = 0.0;
@@ -3328,7 +3333,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             else if( eType == GDT_Byte )
             {
                 GByte* pabyChunk = static_cast<GByte*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pabyChunk[i] == 1 )
                         pabyChunk[i] = 0;
@@ -3339,7 +3344,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             else if( eType == GDT_UInt16 )
             {
                 GUInt16* pasChunk = static_cast<GUInt16*>(pChunk);
-                for( int i = nChunkYSizeQueried*nWidth - 1; i >= 0; --i )
+                for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nChunkYSizeQueried)*nWidth; i++)
                 {
                     if( pasChunk[i] == 1 )
                         pasChunk[i] = 0;
@@ -3961,7 +3966,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
     double dfSum = 0.0;
     double dfSum2 = 0.0;
     int iLine = 0;
-    int nSamples = 0;
+    GIntBig nSamples = 0;
 
     do
     {

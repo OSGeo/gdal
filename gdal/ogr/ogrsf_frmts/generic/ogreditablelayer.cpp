@@ -177,10 +177,21 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
     OGRFeature* poRet = new OGRFeature(poTargetDefn);
 
     std::map<CPLString, int> oMapTargetFieldNameToIdx;
-    for( int iField = 0; iField < poTargetDefn->GetFieldCount(); iField++ )
+    std::map<CPLString, int>* poMap = &oMapTargetFieldNameToIdx;
+    if( poTargetDefn == m_poEditableFeatureDefn &&
+        !m_oMapEditableFDefnFieldNameToIdx.empty() )
     {
-        oMapTargetFieldNameToIdx[
-            poTargetDefn->GetFieldDefn(iField)->GetNameRef()] = iField;
+        poMap = &m_oMapEditableFDefnFieldNameToIdx;
+    }
+    else
+    {
+        for( int iField = 0; iField < poTargetDefn->GetFieldCount(); iField++ )
+        {
+            oMapTargetFieldNameToIdx[
+                poTargetDefn->GetFieldDefn(iField)->GetNameRef()] = iField;
+        }
+        if( poTargetDefn == m_poEditableFeatureDefn )
+            m_oMapEditableFDefnFieldNameToIdx = oMapTargetFieldNameToIdx;
     }
 
     int* panMap = static_cast<int *>(CPLMalloc( sizeof(int) * poSrcFeature->GetFieldCount() ));
@@ -194,9 +205,9 @@ OGRFeature* OGREditableLayer::Translate(OGRFeatureDefn* poTargetDefn,
         }
         else
         {
-            auto oIter = oMapTargetFieldNameToIdx.find(pszFieldName);
+            auto oIter = poMap->find(pszFieldName);
             panMap[iField] =
-                (oIter == oMapTargetFieldNameToIdx.end()) ? -1 : oIter->second;
+                (oIter == poMap->end()) ? -1 : oIter->second;
         }
     }
     poRet->SetFieldsFrom( poSrcFeature, panMap, TRUE );
@@ -661,6 +672,8 @@ OGRErr      OGREditableLayer::CreateField( OGRFieldDefn *poField,
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
+    m_oMapEditableFDefnFieldNameToIdx.clear();
+
     // workarounds a bug in certain QGIS versions (2.0 for example)
     SetIgnoredFields(nullptr);
 
@@ -696,6 +709,8 @@ OGRErr      OGREditableLayer::DeleteField( int iField )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
 
+    m_oMapEditableFDefnFieldNameToIdx.clear();
+
     // workarounds a bug in certain QGIS versions (2.0 for example)
     SetIgnoredFields(nullptr);
 
@@ -722,6 +737,9 @@ OGRErr      OGREditableLayer::DeleteField( int iField )
 OGRErr      OGREditableLayer::ReorderFields( int* panMap )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+
+    m_oMapEditableFDefnFieldNameToIdx.clear();
+
     OGRErr eErr = m_poMemLayer->ReorderFields(panMap);
     if( eErr == OGRERR_NONE )
     {
@@ -740,6 +758,9 @@ OGRErr      OGREditableLayer::AlterFieldDefn( int iField,
                                               int nFlagsIn )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+
+    m_oMapEditableFDefnFieldNameToIdx.clear();
+
     OGRErr eErr = m_poMemLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
     if( eErr == OGRERR_NONE )
     {

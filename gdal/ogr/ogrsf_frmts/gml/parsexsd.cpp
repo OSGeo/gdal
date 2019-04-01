@@ -451,6 +451,9 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 gmlType = GMLPT_Short;
             else if (EQUAL(pszStrippedNSType, "boolean") )
                 gmlType = GMLPT_Boolean;
+            // TODO: Would be nice to have a binary type.
+            else if (EQUAL(pszStrippedNSType, "hexBinary"))
+                gmlType = GMLPT_String;
             else if (strcmp(pszType, "gml:FeaturePropertyType") == 0 )
             {
                 gmlType = GMLPT_FeatureProperty;
@@ -1048,7 +1051,8 @@ bool GMLParseXSD( const char *pszFile,
 
         else if( !EQUALN(pszType, pszName, strlen(pszName))
             || !(EQUAL(pszType + strlen(pszName), "_Type") ||
-                    EQUAL(pszType + strlen(pszName), "Type")) )
+                    EQUAL(pszType + strlen(pszName), "Type") ||
+                    EQUAL(pszType + strlen(pszName), "FeatureType")) )
         {
             continue;
         }

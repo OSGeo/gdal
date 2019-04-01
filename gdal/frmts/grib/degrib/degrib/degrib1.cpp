@@ -169,6 +169,7 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
                if ((subcenter != 0) || ((process != 80) && (process != 180))) {
                   return &parm_table_ncep_opn[0];
                }
+#if 0
                /* At this point could be either the opn or reanalysis table */
                switch (DEF_NCEP_TABLE) {
                   case opn_nowarn:
@@ -177,6 +178,10 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
                      return &parm_table_ncep_reanal[0];
                }
                break;
+#else
+               // ERO: this is the non convoluted version of the above code
+               return &parm_table_ncep_reanal[0];
+#endif
             case 3:
                return &parm_table_ncep_opn[0];
             case 128:

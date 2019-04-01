@@ -2077,7 +2077,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 {
     int                  nEntitySize, nRequiredSize;
     SHPObject           *psShape;
-    char                 szErrorMsg[128];
+    char                 szErrorMsg[160];
     int                  nSHPType;
     int                  nBytesRead;
 

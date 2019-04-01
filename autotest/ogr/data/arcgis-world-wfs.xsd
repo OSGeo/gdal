@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- https://sampleserver6.arcgisonline.com/arcgis/services/SampleWorldCities/MapServer/WFSServer?service=WFS&version=2.0.0&request=DescribeFeatureType&typename=esri:World -->
+<xsd:schema xmlns:esri="http://www.esri.com" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" targetNamespace="http://www.esri.com" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xsd:import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+<xsd:element name="World" type="esri:WorldFeatureType" substitutionGroup="gml:AbstractFeature"/>
+<xsd:complexType name="WorldFeatureType">
+  <xsd:complexContent>
+    <xsd:extension base="gml:AbstractFeatureType">
+      <xsd:sequence>
+        <xsd:element minOccurs="0" maxOccurs="1" name="OBJECTID" type="xsd:int"/>
+        <xsd:element minOccurs="0" maxOccurs="1" name="Shape" nillable="true" type="gml:MultiSurfacePropertyType"/>
+        <xsd:element minOccurs="0" maxOccurs="1" name="WRLD30_ID" nillable="true" type="xsd:double"/>
+        <xsd:element minOccurs="0" maxOccurs="1" name="Shape_Length" nillable="true" type="xsd:double"/>
+        <xsd:element minOccurs="0" maxOccurs="1" name="Shape_Area" nillable="true" type="xsd:double"/>
+      </xsd:sequence>
+    </xsd:extension>
+  </xsd:complexContent>
+</xsd:complexType>
+</xsd:schema>

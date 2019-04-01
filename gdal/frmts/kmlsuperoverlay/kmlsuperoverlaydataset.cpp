@@ -2449,7 +2449,7 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
     if( psGO == nullptr )
     {
         // Otherwise look for kml.Document.Folder.GroundOverlay if there's
-        // a single occurence of Folder and GroundOverlay
+        // a single occurrence of Folder and GroundOverlay
         auto psDoc = CPLGetXMLNode(psRoot, "=kml.Document");
         if( psDoc == nullptr )
         {

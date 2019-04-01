@@ -921,8 +921,8 @@ class CPL_DLL GDALRasterBlock
     /** Return the block size in bytes
      * @return block size.
      */
-    int          GetBlockSize() const {
-        return nXSize * nYSize * GDALGetDataTypeSizeBytes(eType); }
+    GPtrDiff_t   GetBlockSize() const {
+        return static_cast<GPtrDiff_t>(nXSize) * nYSize * GDALGetDataTypeSizeBytes(eType); }
 
     int          TakeLock();
     int          DropLockForRemovalFromStorage();

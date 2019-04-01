@@ -84,7 +84,7 @@ class GDALPDFImageDesc
 class GDALPDFLayerDesc
 {
     public:
-        int          nOGCId;
+        int          nOCGId;
         int          nOCGTextId;
         int          nFeatureLayerId;
         CPLString    osLayerName;

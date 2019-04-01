@@ -479,6 +479,7 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 /*                       RequiresUnixPathSeparator()                    */
 /************************************************************************/
 
+#if defined(WIN32)
 static bool RequiresUnixPathSeparator(const char* pszPath)
 {
     return strcmp(pszPath, "/vsimem") == 0 ||
@@ -499,6 +500,7 @@ static bool RequiresUnixPathSeparator(const char* pszPath)
             STARTS_WITH(pszPath, "/vsiswift_streaming/") ||
             STARTS_WITH(pszPath, "/vsizip/");
 }
+#endif
 
 /************************************************************************/
 /*                          CPLFormFilename()                           */
@@ -588,12 +590,16 @@ const char *CPLFormFilename( const char * pszPath,
              && pszPath[nLenPath-1] != '/'
              && pszPath[nLenPath-1] != '\\' )
     {
+#if defined(WIN32)
         // FIXME? Would be better to ask the filesystems what it
         // prefers as directory separator?
         if( RequiresUnixPathSeparator(pszPath) )
             pszAddedPathSep = "/";
         else
+#endif
+        {
             pszAddedPathSep = SEP_STRING;
+        }
     }
 
     if( pszExtension == nullptr )
@@ -771,10 +777,14 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
         // FIXME: Better to ask the filesystems what it
         // prefers as directory separator?
         const char* pszAddedPathSep = nullptr;
+#if defined(WIN32)
         if( RequiresUnixPathSeparator(pszStaticResult) )
             pszAddedPathSep = "/";
         else
+#endif
+        {
             pszAddedPathSep = SEP_STRING;
+        }
         if( CPLStrlcat( pszStaticResult, pszAddedPathSep, CPL_PATH_BUF_SIZE )
             >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
             return CPLStaticBufferTooSmall(pszStaticResult);

@@ -517,8 +517,9 @@ void PCIDSK2Band::RefreshOverviewList()
 /* -------------------------------------------------------------------- */
     for( int iOver = 0; iOver < poChannel->GetOverviewCount(); iOver++ )
     {
-        apoOverviews.push_back(
-            new PCIDSK2Band( poChannel->GetOverview(iOver) ) );
+        auto poOvrBand = new PCIDSK2Band( poChannel->GetOverview(iOver) );
+        poOvrBand->eAccess = eAccess;
+        apoOverviews.push_back( poOvrBand );
     }
 }
 
