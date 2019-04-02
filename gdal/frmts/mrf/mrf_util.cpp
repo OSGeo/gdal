@@ -291,6 +291,7 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
 
 {
     GDALMRFRasterBand *bnd = nullptr;
+    CPLErrorReset();
     switch(pDS->current.comp)
     {
     case IL_PPNG: // Uses the PNG code, just has a palette in each PNG
