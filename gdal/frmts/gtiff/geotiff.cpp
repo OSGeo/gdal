@@ -14445,6 +14445,7 @@ char** GTiffDataset::GetSiblingFiles()
     }
 
     m_bHasGotSiblingFiles = true;
+
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
     char** papszSiblingFiles =
@@ -14456,6 +14457,15 @@ char** GTiffDataset::GetSiblingFiles()
         CSLDestroy(papszSiblingFiles);
         papszSiblingFiles = nullptr;
     }
+
+    if ((papszSiblingFiles == nullptr) &&
+        (CPLTestBool(CPLGetConfigOption("GDAL_COG_SHORTCUT", "FALSE"))))
+    {
+      papszSiblingFiles = static_cast<char **>(calloc(3, sizeof(char *)));
+      papszSiblingFiles[0] = strdup(CPLGetFilename(osFilename));
+      papszSiblingFiles[1] = nullptr;
+    }
+
     oOvManager.TransferSiblingFiles( papszSiblingFiles );
 
     return papszSiblingFiles;
