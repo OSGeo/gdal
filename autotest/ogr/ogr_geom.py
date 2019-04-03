@@ -646,15 +646,33 @@ def test_ogr_geom_closerings():
 
 def test_ogr_geom_segmentize():
 
+    # 2D
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 10)')
     geom.Segmentize(1.00001)
 
     assert geom.ExportToWkt() == 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)'
 
+    # 2D + Z
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0 1,0 10 1)')
     geom.Segmentize(1.00001)
 
     assert geom.ExportToWkt() == 'LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)'
+
+    # 2D + M
+    geom = ogr.CreateGeometryFromWkt('LINESTRING M(0 0 1,0 10 1)')
+    geom.Segmentize(5)
+    assert geom.ExportToIsoWkt() == 'LINESTRING M (0 0 1,0 5 1,0 10 1)'
+
+    # 2D + ZM
+    geom = ogr.CreateGeometryFromWkt('LINESTRING ZM(0 0 1 2,0 10 1 2)')
+    geom.Segmentize(5)
+    assert geom.ExportToIsoWkt() == 'LINESTRING ZM (0 0 1 2,0 5 1 2,0 10 1 2)'
+
+    # Test distance between points <<<< segmentization threshold
+    # https://github.com/OSGeo/gdal/issues/1414
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 1)')
+    geom.Segmentize(10000)
+    assert geom.ExportToWkt() == 'LINESTRING (0 0,0 1)'
 
     # Check segmentize symmetry : do exact binary comparison.
     in_wkt = 'LINESTRING (0 0,1.2 1,2 0)'
