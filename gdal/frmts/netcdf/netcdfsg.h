@@ -49,22 +49,31 @@ namespace nccfdriver
 
 	// Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h
 	
-	/* Retrieves the minor version from the value cf-conventions global attr
+	/* Retrieves the minor version from the value Conventions global attr
 	 * Returns: a positive integer corresponding to the conventions value
 	 *	if not CF-1.x then return negative value, -1
 	 */
-	int getCFMinorVersion(int * ncid);
+	int getCFMinorVersion(int ncid);
 
 	/* Given a var name, searches that variable for a geometry attribute
 	 * Returns: the equivalent geometry type
 	 */
-	geom_t getGeometryType(int * ncid, const char * varName );
+	geom_t getGeometryType(int ncid, const char * varName );
 
 	/* Given a variable name, and the ncid, returns a SGeometry reference object, which acts more of an iterator of a geometry container
 	 *
 	 * Returns: a NEW geometry "reference" object, that can be used to quickly access information about the object, nullptr if invalid or an error occurs
 	 */
-	SGeometry* getGeometryRef(int * ncid, const char * varName );
+	SGeometry* getGeometryRef(int ncid, const char * varName );	
+
+	/* Writes a geometry to the specified NC file.
+	 * The write uses the following guidelines
+	 * - the geometry variable name is geometryX where X is some natural number
+	 * - the geometry container is called geometry_containerX, corresponding to some geometryX
+	 *
+	 * Returns: an error code if failure, 0 on success
+	 */
+	int putGeometryRef(int ncid, SGeometry* geometry);
 }
 
 #endif
