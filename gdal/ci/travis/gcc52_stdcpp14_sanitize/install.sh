@@ -29,7 +29,7 @@ ccache -M 1G
 ccache -s
 
 # Build proj
-(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure --prefix=/usr/local && make -j3)
+(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure --disable-static --prefix=/usr/local && make -j3)
 (cd proj; sudo make -j3 install && sudo ldconfig)
 
 cd gdal

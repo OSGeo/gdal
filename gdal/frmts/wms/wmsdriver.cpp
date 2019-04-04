@@ -42,6 +42,8 @@
 #include "minidriver_iip.h"
 #include "minidriver_mrf.h"
 
+#include "cpl_json.h"
+
 #include <limits>
 #include <utility>
 
@@ -470,146 +472,61 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
 }
 
 /************************************************************************/
-/*                             GetJSonValue()                           */
-/************************************************************************/
-
-static const char* GetJSonValue(const char* pszLine, const char* pszKey)
-{
-    const char* pszJSonKey = CPLSPrintf("\"%s\" : ", pszKey);
-    const char* pszPtr;
-    if( (pszPtr = strstr(pszLine, pszJSonKey)) != nullptr )
-        return pszPtr + strlen(pszJSonKey);
-    pszJSonKey = CPLSPrintf("\"%s\": ", pszKey);
-    if( (pszPtr = strstr(pszLine, pszJSonKey)) != nullptr )
-        return pszPtr + strlen(pszJSonKey);
-    return nullptr;
-}
-
-/************************************************************************/
 /*             GDALWMSDatasetGetConfigFromArcGISJSON()                  */
 /************************************************************************/
 
 static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
                                                          const char* pszContent)
 {
-    /* TODO : use JSONC library to parse. But we don't really need it */
-    CPLString osTmpFilename(CPLSPrintf("/vsimem/WMSArcGISJSON%p", pszURL));
-    VSILFILE* fp = VSIFileFromMemBuffer( osTmpFilename,
-                                         (GByte*)pszContent,
-                                         strlen(pszContent),
-                                         FALSE);
-    VSIUnlink(osTmpFilename);
-
-    const char* pszLine;
-    int nTileWidth = -1;
-    int nTileHeight = -1;
-    int nWKID = -1;
-    int nLatestWKID = -1;
-    CPLString osWKT;
-    double dfMinX = 0.0;
-    double dfMaxY = 0.0;
-    int bHasMinX = FALSE;
-    int bHasMaxY = FALSE;
-    int nExpectedLevel = 0;
-    double dfBaseResolution = 0.0;
-    while((pszLine = CPLReadLine2L(fp, 4096, nullptr)) != nullptr)
+    CPLJSONDocument oDoc;
+    if( !oDoc.LoadMemory(std::string(pszContent)) )
+        return nullptr;
+    auto oRoot(oDoc.GetRoot());
+    auto oTileInfo(oRoot["tileInfo"]);
+    if( !oTileInfo.IsValid() )
     {
-        const char* pszVal;
-        if ((pszVal = GetJSonValue(pszLine, "rows")) != nullptr)
-            nTileHeight = atoi(pszVal);
-        else if ((pszVal = GetJSonValue(pszLine, "cols")) != nullptr)
-            nTileWidth = atoi(pszVal);
-        else if ((pszVal = GetJSonValue(pszLine, "wkid")) != nullptr)
-        {
-            int nVal = atoi(pszVal);
-            if (nWKID < 0)
-                nWKID = nVal;
-            else if (nWKID != nVal)
-            {
-                CPLDebug("WMS", "Inconsistent WKID values : %d, %d", nVal, nWKID);
-                VSIFCloseL(fp);
-                return nullptr;
-            }
-        }
-        else if ((pszVal = GetJSonValue(pszLine, "latestWkid")) != nullptr)
-        {
-            int nVal = atoi(pszVal);
-            if (nLatestWKID < 0)
-                nLatestWKID = nVal;
-            else if (nLatestWKID != nVal)
-            {
-                CPLDebug("WMS", "Inconsistent latestWkid values : %d, %d", nVal, nLatestWKID);
-                VSIFCloseL(fp);
-                return nullptr;
-            }
-        }
-        else if ((pszVal = GetJSonValue(pszLine, "wkt")) != nullptr)
-        {
-            osWKT = pszVal;
-            size_t nPos;
-            // FIXME: we should really use a proper JSon parser !!!
-            if( !osWKT.empty() && osWKT[0] == '"' &&
-                (nPos = osWKT.find("\"}")) != std::string::npos )
-            {
-                osWKT = osWKT.substr(1, nPos - 1);
-                osWKT.replaceAll("\\\"", "\"");
-            }
-            else if( osWKT.size() > 2 && osWKT[0] == '"' && osWKT.back() == '"' )
-            {
-                osWKT = osWKT.substr(1, osWKT.size() - 2);
-                osWKT.replaceAll("\\\"", "\"");
-            }
-            else
-            {
-                osWKT.clear();
-            }
-        }
-        else if ((pszVal = GetJSonValue(pszLine, "x")) != nullptr)
-        {
-            bHasMinX = TRUE;
-            dfMinX = CPLAtofM(pszVal);
-        }
-        else if ((pszVal = GetJSonValue(pszLine, "y")) != nullptr)
-        {
-            bHasMaxY = TRUE;
-            dfMaxY = CPLAtofM(pszVal);
-        }
-        else if ((pszVal = GetJSonValue(pszLine, "level")) != nullptr)
-        {
-            int nLevel = atoi(pszVal);
-            if (nLevel != nExpectedLevel)
-            {
-                CPLDebug("WMS", "Expected level : %d, got : %d", nExpectedLevel, nLevel);
-                VSIFCloseL(fp);
-                return nullptr;
-            }
+        CPLDebug("WMS", "Did not get tileInfo");
+        return nullptr;
+    }
+    int nTileWidth = oTileInfo.GetInteger("cols", -1);
+    int nTileHeight = oTileInfo.GetInteger("rows", -1);
 
-            pszVal = GetJSonValue(pszLine, "resolution");
-            if( pszVal == nullptr )
-            {
-                pszLine = CPLReadLine2L(fp, 4096, nullptr);
-                if( pszLine == nullptr )
-                    break;
-                pszVal = GetJSonValue(pszLine, "resolution");
-            }
-            if (pszVal != nullptr)
-            {
-                double dfResolution = CPLAtofM(pszVal);
-                if (nLevel == 0)
-                    dfBaseResolution = dfResolution;
-            }
-            else
-            {
-                CPLDebug("WMS", "Did not get resolution");
-                VSIFCloseL(fp);
-                return nullptr;
-            }
-            nExpectedLevel ++;
+    auto oSpatialReference(oTileInfo["spatialReference"]);
+    if( !oSpatialReference.IsValid() )
+    {
+        CPLDebug("WMS", "Did not get spatialReference");
+        return nullptr;
+    }
+    int nWKID = oSpatialReference.GetInteger("wkid", -1);
+    int nLatestWKID = oSpatialReference.GetInteger("latestWkid", -1);
+    CPLString osWKT( oSpatialReference.GetString("wkt"));
+
+    auto oOrigin(oTileInfo["origin"]);
+    if( !oOrigin.IsValid() )
+    {
+        CPLDebug("WMS", "Did not get origin");
+        return nullptr;
+    }
+    double dfMinX = oOrigin.GetDouble("x", std::numeric_limits<double>::infinity());
+    double dfMaxY = oOrigin.GetDouble("y", std::numeric_limits<double>::infinity());
+
+    auto oLods(oTileInfo["lods"].ToArray());
+    if( !oLods.IsValid() )
+    {
+        CPLDebug("WMS", "Did not get lods");
+        return nullptr;
+    }
+    double dfBaseResolution = 0.0;
+    for(int i = 0; i < oLods.Size(); i++ )
+    {
+        if( oLods[i].GetInteger("level", -1) == 0 )
+        {
+            dfBaseResolution = oLods[i].GetDouble("resolution");
+            break;
         }
     }
-    VSIFCloseL(fp);
 
-    int nLevelCount = nExpectedLevel - 1;
+    int nLevelCount = oLods.Size() - 1;
     if (nLevelCount < 1)
     {
         CPLDebug("WMS", "Did not get levels");
@@ -631,12 +548,12 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         CPLDebug("WMS", "Did not get WKID");
         return nullptr;
     }
-    if (!bHasMinX)
+    if (dfMinX == std::numeric_limits<double>::infinity())
     {
         CPLDebug("WMS", "Did not get min x");
         return nullptr;
     }
-    if (!bHasMaxY)
+    if (dfMaxY == std::numeric_limits<double>::infinity())
     {
         CPLDebug("WMS", "Did not get max y");
         return nullptr;

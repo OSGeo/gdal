@@ -423,6 +423,25 @@ def test_pam_13():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
 
+###############################################################################
+# Test that existing PAM metadata is preserved when new is added
+# https://github.com/OSGeo/gdal/issues/1430
+
+
+def test_pam_metadata_preserved():
+
+    tmpfilename = '/vsimem/tmp.pnm'
+    ds = gdal.GetDriverByName('PNM').Create(tmpfilename, 1, 1)
+    ds.SetMetadataItem('foo', 'bar')
+    ds = None
+    ds = gdal.Open(tmpfilename)
+    ds.GetRasterBand(1).SetMetadataItem('bar', 'baz')
+    ds = None
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem('foo') == 'bar'
+    assert ds.GetRasterBand(1).GetMetadataItem('bar') == 'baz'
+    ds = None
+    gdal.GetDriverByName('PNM').Delete(tmpfilename)
 
 ###############################################################################
 # Cleanup.
