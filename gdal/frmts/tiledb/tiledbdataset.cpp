@@ -88,7 +88,7 @@ class TileDBDataset : public GDALPamDataset
         static CPLErr           CopySubDatasets( GDALDataset* poSrcDS,
                                                 TileDBDataset* poDstDS,
                                                 GDALProgressFunc pfnProgress, 
-                                                void *pProgressData );	
+                                                void *pProgressData );
         static TileDBDataset    *CreateLL( const char * pszFilename,
                                     int nXSize, int nYSize, int nBands,
                                     char ** papszOptions );
@@ -129,14 +129,14 @@ class TileDBRasterBand : public GDALPamRasterBand
         virtual CPLErr IWriteBlock( int, int, void * ) override;
         virtual GDALColorInterp GetColorInterpretation() override;
         virtual CPLErr AdviseRead( 
-                        int  	nXOff,
-                        int  	nYOff,
-                        int  	nXSize,
-                        int  	nYSize,
-                        int  	nBufXSize,
-                        int  	nBufYSize,
-                        GDALDataType  	eBufType,
-                        char **  	papszOptions ) override; 
+                        int     nXOff,
+                        int     nYOff,
+                        int     nXSize,
+                        int     nYSize,
+                        int     nBufXSize,
+                        int     nBufYSize,
+                        GDALDataType  eBufType,
+                        char ** papszOptions ) override; 
 };
 
 /************************************************************************/
@@ -200,14 +200,14 @@ void TileDBRasterBand::Finalize()
 /************************************************************************/
 
 CPLErr TileDBRasterBand::AdviseRead( 
-                        int  	nXOff,
-                        int  	nYOff,
-                        int  	nXSize,
-                        int  	nYSize,
-                        CPL_UNUSED int  	nBufXSize,
-                        CPL_UNUSED int  	nBufYSize,
-                        CPL_UNUSED GDALDataType  	eBufType,
-                        CPL_UNUSED char **  	papszOptions 
+                        int     nXOff,
+                        int     nYOff,
+                        int     nXSize,
+                        int     nYSize,
+                        CPL_UNUSED int      nBufXSize,
+                        CPL_UNUSED int      nBufYSize,
+                        CPL_UNUSED GDALDataType eBufType,
+                        CPL_UNUSED char **      papszOptions 
                     )
 
 {
