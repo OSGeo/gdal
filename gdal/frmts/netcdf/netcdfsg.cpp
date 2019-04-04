@@ -9,13 +9,30 @@
 #include "netcdfsg.h"
 namespace nccfdriver
 {
+	// Point
 	Point::~Point()
 	{
 		delete[] this->values;
 	}
 
-	// short hand for a clean up and exit, since goto isn't allowed
-	#define getCFMinorVersionExit delete[] attr_vals; return minor_ver;
+
+	// SGeometry
+	SGeometry::SGeometry(int ncId, int baseVarId) : base_varId(baseVarId)
+	{
+		// stub
+
+		// Look through base variable, for geometry_container
+
+		// Find geometry type
+
+		// Once found, go to open geometry_container variable
+
+		// Set iterators correctly
+	}
+
+	// Helpers
+	// following is a short hand for a clean up and exit, since goto isn't allowed
+	#define getCFMinorVersionExit delete[] attr_vals; nc_free_string(len, attr_vals); return minor_ver;	
 	int getCFMinorVersion(int ncid)
 	{
 		bool is_CF_conv = false;
@@ -23,19 +40,21 @@ namespace nccfdriver
 
 		// Allocate a large enough buffer	
 		size_t len = 0;
-		char ** attr_vals = new char*[1];
 		nc_inq_attlen(ncid, NC_GLOBAL, NCDF_CONVENTIONS, &len);
-		
+
 		// If not one value, error 
 		if(len != 1)
 		{
-			getCFMinorVersionExit 
+			return -1;
 		}	
 
+		char ** attr_vals = new char*[1];
 
 		// Fetch the CF attribute
-		if(nc_get_att_string(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attr_vals) == NC_ERANGE)
+		if(nc_get_att_string(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attr_vals) != NC_NOERR)
 		{
+			delete[] attr_vals;
+			return minor_ver;
 		}
 
 		// Fetched without errors, now traverse	
@@ -65,7 +84,15 @@ namespace nccfdriver
 
 				char * minor = parse + sizeof(char) * 2;
 				minor_ver = atoi(minor);				
-				// check for "0" and malformed, differentiate still to do
+
+				// check for "0" and potentially malformed, due to atoi return cond
+				if(minor_ver == 0)
+				{
+					if(strlen(parse) > 3 || parse[2] == '0')
+					{
+						minor_ver = -1;
+					}
+				}
 			}	
 
 			else
@@ -78,18 +105,29 @@ namespace nccfdriver
 		}
 	
 	
+		nc_free_string(len, attr_vals);	
 		delete[] attr_vals;
 		return minor_ver;
 	}
 
 	geom_t getGeometryType(int ncid, const char * varName)
 	{
-		int varId = 0;
+		int varId = 0; size_t len = 0;
 		nc_inq_varid(ncid, varName, &varId);
-		char ** attr_vals;	// have to allocate prehand, still to do! 
-		if(nc_get_att_string(ncid, varId, CF_SG_GEOMETRY_TYPE, attr_vals) == NC_ERANGE)
+		nc_inq_attlen(ncid, varId, CF_SG_GEOMETRY_TYPE, &len);
+		geom_t ret = NONE;
+
+		if(len != 1)
 		{
 			return NONE;
+		} 
+
+		char ** attr_vals = new char*[1];	// have to allocate prehand, still to do! 
+
+
+		if(nc_get_att_string(ncid, varId, CF_SG_GEOMETRY_TYPE, attr_vals) != NC_NOERR)
+		{
+			ret = NONE;	
 		}
 
 		char * gt_name = attr_vals[0];
@@ -98,21 +136,36 @@ namespace nccfdriver
 		if(!strcmp(gt_name, CF_SG_TYPE_POINT))
 		{
 			// still to do, add detection for multipart geometry
-			return POINT;	
+			ret = POINT;	
 		}
 
 		// Lines
-		if(!strcmp(gt_name, CF_SG_TYPE_LINE))
+		else if(!strcmp(gt_name, CF_SG_TYPE_LINE))
 		{
-			return LINE;
+			ret = LINE;
 		}
 
 		// Polygons
-		if(!strcmp(gt_name, CF_SG_TYPE_POLY))
+		else if(!strcmp(gt_name, CF_SG_TYPE_POLY))
 		{
-			return POLYGON;
+			ret = POLYGON;
 		}
 
-		return NONE;
+		nc_free_string(len, attr_vals);	
+		delete[] attr_vals;
+		return ret;
 	}
+
+	SGeometry* getGeometryRef(int ncid, const char * varName )
+	{
+		// stub
+		return nullptr;
+	}
+
+	int putGeometryRef(int ncid, SGeometry * geometry)
+	{
+		// stub
+		return -1;
+	}
+
 }

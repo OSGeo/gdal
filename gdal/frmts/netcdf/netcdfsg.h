@@ -30,21 +30,32 @@ namespace nccfdriver
 
 		public:
 		~Point();	
-		Point(int dim) : size(dim) { this->values = new double[dim]; memset(this->values, 0, dim*sizeof(double)); }	
+		Point(int dim) : size(dim)
+			{ this->values = new double[dim]; memset(this->values, 0, dim*sizeof(double)); }	
 	};
 
 	// Simple geometry - doesn't actually hold the points, rather serves
 	// as a pseudo reference to a NC variable
 	class SGeometry
 	{
-		geom_t type;	 // internal geometry type structure
+		geom_t type;	 	// internal geometry type structure
+		int base_varId;		// var with geometry_container attribute
+		int gc_varId;		// the name of the underlying geometry_container variable
+		int current_vert_ind;	// used to keep track of current point being used
+		bool interior;		// interior ring = true. only meaningful for polygons
 
 		public:
-		// might make the following two virtual
 		Point next_pt(); // returns the next pt coordinate
 		bool has_next_pt(); // returns whether or not the geometry has another point
-	
-		// also to do, add something to retrieve a "next" geometry
+			
+		// if part of a multigeometry retrieve a "next" geometry
+		SGeometry next_geometry();
+		bool has_next_geometry();
+
+		/* ncID - as used in netcdf.h
+		 * baseVarId - the id of a variable with a geometry container attribute 
+		 */
+		SGeometry(int ncId, int baseVarId); 
 	};
 
 	// Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h
