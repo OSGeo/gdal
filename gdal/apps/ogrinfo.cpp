@@ -958,6 +958,12 @@ MAIN_START(nArgc, papszArgv)
                 {
                     printf("%d: %s", iLayer + 1, poLayer->GetName());
 
+                    const char* pszTitle = poLayer->GetMetadataItem("TITLE");
+                    if( pszTitle )
+                    {
+                        printf(" (title: %s)", pszTitle);
+                    }
+
                     const int nGeomFieldCount =
                         poLayer->GetLayerDefn()->GetGeomFieldCount();
                     if( nGeomFieldCount > 1 )

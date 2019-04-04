@@ -460,7 +460,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     }
     else
     {
-        osCreateTable.Printf("CREATE TABLE%s \"%s\".\"%s\"",
+        osCreateTable.Printf("CREATE%s TABLE \"%s\".\"%s\"",
                              CPLFetchBool( papszOptions, "UNLOGGED", false ) ?
                              " UNLOGGED": "",
                              pszSchemaName, pszTableName);

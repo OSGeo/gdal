@@ -29,6 +29,8 @@
 #ifdef HAVE_EXPAT
 
 #include "cpl_port.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
 #include "ogr_expat.h"
 
 #include <cstddef>
@@ -45,17 +47,35 @@ static void* OGRExpatMalloc( size_t size ) CPL_WARN_UNUSED_RESULT;
 static void* OGRExpatRealloc( void *ptr, size_t size ) CPL_WARN_UNUSED_RESULT;
 
 /************************************************************************/
+/*                              CanAlloc()                              */
+/************************************************************************/
+
+static bool CanAlloc( size_t size )
+{
+    if( size < OGR_EXPAT_MAX_ALLOWED_ALLOC )
+        return true;
+
+    if( CPLTestBool(CPLGetConfigOption("OGR_EXPAT_UNLIMITED_MEM_ALLOC", "NO")) )
+        return true;
+
+    CPLError(CE_Failure, CPLE_OutOfMemory,
+             "Expat tried to malloc %d bytes. File probably corrupted. "
+             "This may also happen in case of a very big XML comment, in which case "
+             "you may define the OGR_EXPAT_UNLIMITED_MEM_ALLOC configuration "
+             "option to YES to remove that protection.",
+             static_cast<int>(size));
+    return false;
+}
+
+/************************************************************************/
 /*                          OGRExpatMalloc()                            */
 /************************************************************************/
 
 static void* OGRExpatMalloc( size_t size )
 {
-    if( size < OGR_EXPAT_MAX_ALLOWED_ALLOC )
+    if( CanAlloc(size) )
         return malloc(size);
 
-    CPLError(CE_Failure, CPLE_OutOfMemory,
-             "Expat tried to malloc %d bytes. File probably corrupted",
-             static_cast<int>(size));
     return nullptr;
 }
 
@@ -64,15 +84,11 @@ static void* OGRExpatMalloc( size_t size )
 /************************************************************************/
 
 // Caller must replace the pointer with the returned pointer.
-// TODO(schwehr): Consider refactoring to be a void **ptr for safety.
 static void* OGRExpatRealloc( void *ptr, size_t size )
 {
-    if( size < OGR_EXPAT_MAX_ALLOWED_ALLOC )
+    if( CanAlloc(size) )
         return realloc(ptr, size);
 
-    CPLError(CE_Failure, CPLE_OutOfMemory,
-             "Expat tried to realloc %d bytes. File probably corrupted",
-             static_cast<int>(size));
     free(ptr);
     return nullptr;
 }

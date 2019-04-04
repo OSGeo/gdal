@@ -137,7 +137,8 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 /************************************************************************/
 
 VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
-                                   void* pUniqueHandle )
+                                   void* pUniqueHandle,
+                                   std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
 
@@ -162,7 +163,7 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
     if( pfnParser == nullptr )
         return nullptr;
 
-    return pfnParser( psSrc, pszVRTPath, pUniqueHandle );
+    return pfnParser( psSrc, pszVRTPath, pUniqueHandle, oMapSharedSources );
 }
 
 /************************************************************************/

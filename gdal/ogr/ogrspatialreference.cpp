@@ -59,6 +59,9 @@
 
 CPL_CVSID("$Id$")
 
+#define STRINGIFY(s) #s
+#define XSTRINGIFY(s) STRINGIFY(s)
+
 struct OGRSpatialReference::Private
 {
     struct Listener: public OGR_SRSNode::Listener
@@ -3175,6 +3178,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
                 oHorizSRS.d->refreshProjObj();
                 oVertSRS.d->refreshProjObj();
+                if( !oHorizSRS.d->m_pj_crs || !oVertSRS.d->m_pj_crs )
+                    return OGRERR_FAILURE;
+
                 const char* pszHorizName = proj_get_name(oHorizSRS.d->m_pj_crs);
                 const char* pszVertName = proj_get_name(oVertSRS.d->m_pj_crs);
 
@@ -3665,6 +3671,9 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
         oHorizSRS.d->refreshProjObj();
         oVertSRS.d->refreshProjObj();
+        if( !oHorizSRS.d->m_pj_crs || !oVertSRS.d->m_pj_crs )
+            return OGRERR_FAILURE;
+
         const char* pszHorizName = proj_get_name(oHorizSRS.d->m_pj_crs);
         const char* pszVertName = proj_get_name(oVertSRS.d->m_pj_crs);
 
@@ -8439,9 +8448,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[0].name = EPSG_NAME_PARAMETER_X_AXIS_TRANSLATION;
     params[0].auth_name = "EPSG";
-    CPLString osCode0;
-    osCode0.Printf("%d", EPSG_CODE_PARAMETER_X_AXIS_TRANSLATION);
-    params[0].code = osCode0.c_str();
+    params[0].code = XSTRINGIFY(EPSG_CODE_PARAMETER_X_AXIS_TRANSLATION);
     params[0].value = dfDX;
     params[0].unit_name = "metre";
     params[0].unit_conv_factor = 1.0;
@@ -8449,9 +8456,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[1].name = EPSG_NAME_PARAMETER_Y_AXIS_TRANSLATION;
     params[1].auth_name = "EPSG";
-    CPLString osCode1;
-    osCode1.Printf("%d", EPSG_CODE_PARAMETER_Y_AXIS_TRANSLATION);
-    params[1].code = osCode1.c_str();
+    params[1].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Y_AXIS_TRANSLATION);
     params[1].value = dfDY;
     params[1].unit_name = "metre";
     params[1].unit_conv_factor = 1.0;
@@ -8459,9 +8464,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[2].name = EPSG_NAME_PARAMETER_Z_AXIS_TRANSLATION;
     params[2].auth_name = "EPSG";
-    CPLString osCode2;
-    osCode2.Printf("%d", EPSG_CODE_PARAMETER_Z_AXIS_TRANSLATION);
-    params[2].code = osCode2.c_str();
+    params[2].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Z_AXIS_TRANSLATION);
     params[2].value = dfDZ;
     params[2].unit_name = "metre";
     params[2].unit_conv_factor = 1.0;
@@ -8469,9 +8472,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[3].name = EPSG_NAME_PARAMETER_X_AXIS_ROTATION;
     params[3].auth_name = "EPSG";
-    CPLString osCode3;
-    osCode3.Printf("%d", EPSG_CODE_PARAMETER_X_AXIS_ROTATION);
-    params[3].code = osCode3.c_str();
+    params[3].code = XSTRINGIFY(EPSG_CODE_PARAMETER_X_AXIS_ROTATION);
     params[3].value = dfEX;
     params[3].unit_name = "arc-second";
     params[3].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8479,9 +8480,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[4].name = EPSG_NAME_PARAMETER_Y_AXIS_ROTATION;
     params[4].auth_name = "EPSG";
-    CPLString osCode4;
-    osCode4.Printf("%d", EPSG_CODE_PARAMETER_Y_AXIS_ROTATION);
-    params[4].code = osCode4.c_str();
+    params[4].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Y_AXIS_ROTATION);
     params[4].value = dfEY;
     params[4].unit_name = "arc-second";
     params[4].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8489,9 +8488,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[5].name = EPSG_NAME_PARAMETER_Z_AXIS_ROTATION;
     params[5].auth_name = "EPSG";
-    CPLString osCode5;
-    osCode5.Printf("%d", EPSG_CODE_PARAMETER_Z_AXIS_ROTATION);
-    params[5].code = osCode5.c_str();
+    params[5].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Z_AXIS_ROTATION);
     params[5].value = dfEZ;
     params[5].unit_name = "arc-second";
     params[5].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8499,9 +8496,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[6].name = EPSG_NAME_PARAMETER_SCALE_DIFFERENCE;
     params[6].auth_name = "EPSG";
-    CPLString osCode6;
-    osCode6.Printf("%d", EPSG_CODE_PARAMETER_SCALE_DIFFERENCE);
-    params[6].code = osCode6.c_str();
+    params[6].code = XSTRINGIFY(EPSG_CODE_PARAMETER_SCALE_DIFFERENCE);
     params[6].value = dfPPM;
     params[6].unit_name = "parts per million";
     params[6].unit_conv_factor = 1e-6;
@@ -9521,6 +9516,12 @@ OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
 OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
 {
+    if( strlen(pszProj4) >= 10000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long PROJ string");
+        return OGRERR_CORRUPT_DATA;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
@@ -9584,13 +9585,9 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * will be returned along with OGRERR_NONE.
  *
  * Special processing for Transverse Mercator:
- * If the OSR_USE_ETMERC configuration option is set to YES, the PROJ
- * definition built from the SRS will use the 'etmerc' projection method,
- * rather than the default 'tmerc'. This will give better accuracy (at the
- * expense of computational speed) when reprojection occurs near the edges
- * of the validity area for the projection.
- * Starting with GDAL &gt;= 2.2, setting OSR_USE_ETMERC to NO will expand to the
- * 'tmerc' projection method.
+ * Starting with GDAL 2.5, if the OSR_USE_APPROX_TMERC configuration option is
+ * set to YES, the PROJ definition built from the SRS will use the +approx flag
+ * for the tmerc and utm projection methods, rather than the more accurate method.
  *
  * This method is the equivalent of the C function OSRExportToProj4().
  *
@@ -9615,10 +9612,33 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         *ppszProj4 = CPLStrdup("");
         return OGRERR_FAILURE;
     }
-    const char* pszUseETMERC = CPLGetConfigOption("OSR_USE_ETMERC", "");
+
+    // OSR_USE_ETMERC is here just for legacy
+    bool bForceApproxTMerc = false;
+    const char* pszUseETMERC = CPLGetConfigOption("OSR_USE_ETMERC", nullptr);
+    if( pszUseETMERC && pszUseETMERC[0] )
+    {
+        static bool bHasWarned = false;
+        if( !bHasWarned )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "OSR_USE_ETMERC is a legacy configuration option, which "
+                     "now has only effect when set to NO (YES is the default). "
+                     "Use OSR_USE_APPROX_TMERC=YES instead");
+            bHasWarned = true;
+        }
+        bForceApproxTMerc = !CPLTestBool(pszUseETMERC);
+    }
+    else
+    {
+        const char* pszUseApproxTMERC = CPLGetConfigOption("OSR_USE_APPROX_TMERC", nullptr);
+        if( pszUseApproxTMERC && pszUseApproxTMERC[0] )
+        {
+            bForceApproxTMerc = CPLTestBool(pszUseApproxTMERC);
+        }
+    }
     const char* options[] = {
-        pszUseETMERC[0] && CPLTestBool(pszUseETMERC) ? "USE_ETMERC=YES" :
-        pszUseETMERC[0] && !CPLTestBool(pszUseETMERC) ? "USE_ETMERC=NO" : nullptr,
+        bForceApproxTMerc ? "USE_APPROX_TMERC=YES" : nullptr,
         nullptr
     };
     const char* projString = proj_as_proj_string(d->getPROJContext(),

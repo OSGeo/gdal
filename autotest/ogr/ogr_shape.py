@@ -4496,6 +4496,35 @@ def test_ogr_shape_111_delete_field_no_record():
 
     shape_drv.DeleteDataSource(filename)
 
+
+###############################################################################
+
+
+def test_ogr_shape_112_delete_layer():
+
+    dirname = '/vsimem/test_ogr_shape_112_delete_layer'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(dirname)
+    ds.CreateLayer("test")
+    ds = None
+
+    ds = ogr.Open(dirname)
+    with gdaltest.error_handler():
+        assert ds.DeleteLayer(0) != 0
+    ds = None
+
+    ds = ogr.Open(dirname, update = 1)
+    with gdaltest.error_handler():
+        assert ds.DeleteLayer(-1) != 0
+        assert ds.DeleteLayer(1) != 0
+    gdal.FileFromMemBuffer(dirname + "/test.cpg", "foo")
+    assert ds.DeleteLayer(0) == 0
+    assert not gdal.VSIStatL(dirname + "/test.shp")
+    assert not gdal.VSIStatL(dirname + "/test.cpg")
+    ds = None
+
+    shape_drv.DeleteDataSource(dirname)
+
 ###############################################################################
 
 

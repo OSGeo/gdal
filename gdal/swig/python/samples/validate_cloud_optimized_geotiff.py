@@ -87,7 +87,7 @@ def validate(ds, check_tiled=True):
         errors += [
             'Overviews found in external .ovr file. They should be internal']
 
-    if main_band.XSize >= 512 or main_band.YSize >= 512:
+    if main_band.XSize > 512 or main_band.YSize > 512:
         if check_tiled:
             block_size = main_band.GetBlockSize()
             if block_size[0] == main_band.XSize and block_size[0] > 1024:
@@ -211,7 +211,7 @@ def main():
 
     try:
         ret = 0
-        warnings, errors, _ = validate(filename)
+        warnings, errors, details = validate(filename)
         if warnings:
             if not quiet:
                 print('The following warnings were found:')
@@ -229,6 +229,10 @@ def main():
         else:
             if not quiet:
                 print('%s is a valid cloud optimized GeoTIFF' % filename)
+
+        if not quiet and not warnings and not errors:
+            print('\nThe size of all IFD headers is %d bytes' %
+                  min(details['data_offsets'][k] for k in details['data_offsets']))
     except ValidateCloudOptimizedGeoTIFFException as e:
         if not quiet:
             print('%s is NOT a valid cloud optimized GeoTIFF : %s' %

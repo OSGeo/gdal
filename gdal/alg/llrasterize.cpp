@@ -35,6 +35,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <set>
 #include <utility>
 
 #include "gdal_alg.h"
@@ -322,6 +323,14 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                     ? 0.0
                     : (dfVariant1 - dfVariant) / nDeltaX;
 
+                // Do not burn the end point, unless we are in the last
+                // segment. This is to avoid burning twice intermediate points,
+                // which causes artifacts in Add mode
+                if( j != panPartSize[i] - 1 )
+                {
+                    nDeltaX --;
+                }
+
                 while( nDeltaX-- >= 0 )
                 {
                     if( 0 <= iX && iX < nRasterXSize
@@ -353,6 +362,14 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                     nDeltaY == 0
                     ? 0.0
                     : (dfVariant1 - dfVariant) / nDeltaY;
+
+                // Do not burn the end point, unless we are in the last
+                // segment. This is to avoid burning twice intermediate points,
+                // which causes artifacts in Add mode
+                if( j != panPartSize[i] - 1 )
+                {
+                    nDeltaY --;
+                }
 
                 while( nDeltaY-- >= 0 )
                 {
@@ -394,7 +411,8 @@ void
 GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                             int nPartCount, int *panPartSize,
                             double *padfX, double *padfY, double *padfVariant,
-                            llPointFunc pfnPointFunc, void *pCBData )
+                            llPointFunc pfnPointFunc, void *pCBData,
+                            int bAvoidBurningSamePoints )
 
 {
     if( !nPartCount )
@@ -402,8 +420,14 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
 
     for( int i = 0, n = 0; i < nPartCount; n += panPartSize[i++] )
     {
+        std::set<std::pair<int,int>> lastBurntPoints;
+        std::set<std::pair<int,int>> newBurntPoints;
+
         for( int j = 1; j < panPartSize[i]; j++ )
         {
+            lastBurntPoints = std::move(newBurntPoints);
+            newBurntPoints.clear();
+
             double dfX = padfX[n + j - 1];
             double dfY = padfY[n + j - 1];
 
@@ -465,11 +489,37 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 dfVariant += dfDeltaVariant * (iY - dfY);
 
                 if( padfVariant == nullptr )
+                {
                     for( ; iY <= iYEnd; iY++ )
+                    {
+                        if( bAvoidBurningSamePoints )
+                        {
+                            auto yx = std::pair<int,int>(iY,iX);
+                            if( lastBurntPoints.find( yx ) != lastBurntPoints.end() )
+                            {
+                                continue;
+                            }
+                            newBurntPoints.insert(yx);
+                        }
                         pfnPointFunc( pCBData, iY, iX, 0.0 );
+                    }
+                }
                 else
+                {
                     for( ; iY <= iYEnd; iY++, dfVariant +=  dfDeltaVariant )
+                    {
+                        if( bAvoidBurningSamePoints )
+                        {
+                            auto yx = std::pair<int,int>(iY,iX);
+                            if( lastBurntPoints.find( yx ) != lastBurntPoints.end() )
+                            {
+                                continue;
+                            }
+                            newBurntPoints.insert(yx);
+                        }
                         pfnPointFunc( pCBData, iY, iX, dfVariant );
+                    }
+                }
 
                 continue;  // Next segment.
             }
@@ -502,11 +552,37 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 dfVariant += dfDeltaVariant * (iX - dfX);
 
                 if( padfVariant == nullptr )
+                {
                     for( ; iX <= iXEnd; iX++ )
+                    {
+                        if( bAvoidBurningSamePoints )
+                        {
+                            auto yx = std::pair<int,int>(iY,iX);
+                            if( lastBurntPoints.find( yx ) != lastBurntPoints.end() )
+                            {
+                                continue;
+                            }
+                            newBurntPoints.insert(yx);
+                        }
                         pfnPointFunc( pCBData, iY, iX, 0.0 );
+                    }
+                }
                 else
+                {
                     for( ; iX <= iXEnd; iX++, dfVariant +=  dfDeltaVariant )
+                    {
+                        if( bAvoidBurningSamePoints )
+                        {
+                            auto yx = std::pair<int,int>(iY,iX);
+                            if( lastBurntPoints.find( yx ) != lastBurntPoints.end() )
+                            {
+                                continue;
+                            }
+                            newBurntPoints.insert(yx);
+                        }
                         pfnPointFunc( pCBData, iY, iX, dfVariant );
+                    }
+                }
 
                 continue;  // Next segment.
             }
@@ -576,7 +652,22 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 // We should be able to drop the Y check because we clipped
                 // in Y, but there may be some error with all the small steps.
                 if( iY >= 0 && iY < nRasterYSize )
-                    pfnPointFunc( pCBData, iY, iX, dfVariant );
+                {
+                    if( bAvoidBurningSamePoints )
+                    {
+                        auto yx = std::pair<int,int>(iY,iX);
+                        if( lastBurntPoints.find( yx ) == lastBurntPoints.end() &&
+                            newBurntPoints.find( yx ) == newBurntPoints.end() )
+                        {
+                            newBurntPoints.insert(yx);
+                            pfnPointFunc( pCBData, iY, iX, dfVariant );
+                        }
+                    }
+                    else
+                    {
+                        pfnPointFunc( pCBData, iY, iX, dfVariant );
+                    }
+                }
 
                 double dfStepX = floor(dfX+1.0) - dfX;
                 double dfStepY = dfStepX * dfSlope;

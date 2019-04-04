@@ -92,14 +92,14 @@ def test_ignfheightasciigrid_7():
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
 
-def test_ignfheightasciigrid_description_multiword():
+def test_ignfheightasciigrid_description_multiword_and_lf():
 
     filename = '/vsimem/ignfheightasciigrid_invalid'
-    ok_content = '2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\r1 2 3 4'
+    ok_content = b'2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\xC3\xA9\xC3\xA8\n1 2 3 4'
     gdal.FileFromMemBuffer(filename, ok_content)
     ds = gdal.OpenEx(filename)
     desc = ds.GetMetadataItem('DESCRIPTION')
-    assert desc == 'MULTI WORD'
+    assert desc == 'MULTI WORDee'
 
 
 def test_ignfheightasciigrid_invalid():
@@ -120,7 +120,7 @@ def test_ignfheightasciigrid_invalid():
                 # not a number in numeric header section
                 '2 3 49 50 1 1 1 a 1 0 0 DESC\r1 2 3 4',
                 '2 3 49 50 1 1 1 0 1 0 0 DESC\ra 2 3 4',  # not a number in value section
-                '2 3 49 50 1 1 1 0 1 0 0 DES\xC3\xA8C\r1 2 3 4',  # invalid character in comment
+                '2 3 49 50 1 1 1 0 1 0 0 DES\xC3\xA7C\r1 2 3 4',  # invalid character in comment
                 '-200 3 49 50 1 1 1 0 1 0 0 DESC\r1 2 3 4',  # invalid longmin
                 '2 300 49 50 1 1 1 0 1 0 0 DESC\r1 2 3 4',  # invalid longmax
                 '2 3 -149 50 1 1 1 0 1 0 0 DESC\r1 2 3 4',  # invalid latmin

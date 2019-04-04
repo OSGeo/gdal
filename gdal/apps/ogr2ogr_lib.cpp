@@ -2187,8 +2187,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 }
                 else
                 {
-                    if( poODS != nullptr )
-                        poDriver = poODS->GetDriver();
+                    poDriver = poODS->GetDriver();
                     GDALClose(poODS);
                     poODS = nullptr;
                 }

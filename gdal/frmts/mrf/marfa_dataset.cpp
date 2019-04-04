@@ -933,16 +933,20 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
         image.pagesize.x > INT_MAX / image.pagesize.y ||
         image.pagesize.x * image.pagesize.y > INT_MAX / image.pagesize.z ||
         image.pagesize.x * image.pagesize.y * image.pagesize.z > INT_MAX / image.pagesize.c ||
-        image.pagesize.x * image.pagesize.y * image.pagesize.z* image.pagesize.c  > INT_MAX / (GDALGetDataTypeSize(image.dt) / 8) )
+        image.pagesize.x * image.pagesize.y * image.pagesize.z* image.pagesize.c  > INT_MAX / GDALGetDataTypeSizeBytes(image.dt) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF page size too big");
         return CE_Failure;
     }
-    image.pageSizeBytes = (GDALGetDataTypeSize(image.dt) / 8) *
+    image.pageSizeBytes = GDALGetDataTypeSizeBytes(image.dt) *
         image.pagesize.x * image.pagesize.y * image.pagesize.z * image.pagesize.c;
 
     // Calculate the page count, including the total for the level
     image.pagecount = pcount(image.size, image.pagesize);
+    if( image.pagecount.l < 0 )
+    {
+        return CE_Failure;
+    }
 
     // Data File Name and base offset
     image.datfname = getFname(defimage, "DataFile", ds->GetFname(), ILComp_Ext[image.comp]);
@@ -1499,17 +1503,23 @@ GDALDataset *GDALMRFDataset::GetSrcDS() {
     if (source.empty()) return nullptr;
 
     // Try open the source dataset as is
-    poSrcDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(source.c_str(), GA_ReadOnly));
+    poSrcDS = GDALDataset::FromHandle(GDALOpenShared(source.c_str(), GA_ReadOnly));
 
     // It the open failes, try again with the current dataset path prepended
     if (!poSrcDS && make_absolute(source, fname))
-        poSrcDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(source.c_str(), GA_ReadOnly));
+        poSrcDS = GDALDataset::FromHandle(GDALOpenShared(source.c_str(), GA_ReadOnly));
 
     if (0 == source.find("<MRF_META>") && has_path(fname))
     {   // MRF XML source, might need to patch the file names with the current one
-        GDALMRFDataset *psDS = reinterpret_cast<GDALMRFDataset *>(poSrcDS);
-        make_absolute(psDS->current.datfname, fname);
-        make_absolute(psDS->current.idxfname, fname);
+        GDALMRFDataset *poMRFDS = dynamic_cast<GDALMRFDataset *>(poSrcDS);
+        if( !poMRFDS )
+        {
+            delete poSrcDS;
+            poSrcDS = nullptr;
+            return nullptr;
+        }
+        make_absolute(poMRFDS->current.datfname, fname);
+        make_absolute(poMRFDS->current.idxfname, fname);
     }
     mp_safe = true; // Turn on MP safety
     return poSrcDS;

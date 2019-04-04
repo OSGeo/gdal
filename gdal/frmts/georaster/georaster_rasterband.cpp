@@ -65,7 +65,13 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
     pahNoDataArray      = nullptr;
     nNoDataArraySz      = 0;
     bHasNoDataArray     = false;
-   
+    dfMin               = 0.0;
+    dfMax               = 0.0;
+    dfMean              = 0.0;
+    dfMedian            = 0.0;
+    dfMode              = 0.0;
+    dfStdDev            = 0.0;
+
     poJP2Dataset        = poJP2DatasetIn;
 
     //  -----------------------------------------------------------------------
@@ -562,35 +568,27 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // Format Table description
     // ----------------------------------------------------------
 
-    char szName[OWTEXT];
-    char szDescription[OWTEXT];
-
-    strcpy( szDescription, "( ID NUMBER" );
+    CPLString osDescription = "( ID NUMBER";
 
     for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
     {
-        strcpy( szName, poRAT->GetNameOfCol( iCol ) );
-
-        strcpy( szDescription, CPLSPrintf( "%s, %s",
-            szDescription, szName ) );
+        osDescription += ", ";
+        osDescription += poRAT->GetNameOfCol( iCol );
 
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Integer )
         {
-            strcpy( szDescription, CPLSPrintf( "%s NUMBER",
-                szDescription ) );
+            osDescription += " NUMBER";
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_Real )
         {
-            strcpy( szDescription, CPLSPrintf( "%s NUMBER",
-                szDescription ) );
+            osDescription += " NUMBER";
         }
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
         {
-            strcpy( szDescription, CPLSPrintf( "%s VARCHAR2(%d)",
-                szDescription, MAXLEN_VATSTR) );
+            osDescription += CPLSPrintf(" VARCHAR2(%d)", MAXLEN_VATSTR);
         }
     }
-    strcpy( szDescription, CPLSPrintf( "%s )", szDescription ) );
+    osDescription += " )";
 
     // ----------------------------------------------------------
     // Create VAT named based on RDT and RID and Layer (nBand)
@@ -627,7 +625,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
         "  END IF;\n"
         "\n"
         "  EXECUTE IMMEDIATE 'CREATE TABLE '||TAB||' %s';\n"
-        "END;", szDescription ) );
+        "END;", osDescription.c_str() ) );
 
     poStmt->Bind( pszVATName );
 
@@ -822,8 +820,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     int   nPrecision = 0;
     signed short nScale = 0;
 
-    char szColumnList[OWTEXT];
-    szColumnList[0] = '\0';
+    CPLString osColumnList;
 
     while( poGDS->poGeoRaster->poConnection->GetNextField(
                 phDesc, iCol, szField, &hType, &nSize, &nPrecision, &nScale ) )
@@ -862,28 +859,30 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
                     "as GDAL RAT", l_pszVATName, szField, hType );
                 continue;
         }
-        strcpy( szColumnList, CPLSPrintf( "%s substr(%s,1,%d),",
-            szColumnList, szField, MIN(nSize,OWNAME) ) );
+        osColumnList += CPLSPrintf(
+                  "substr(%s,1,%d),",
+                  szField, MIN(nSize,OWNAME));
 
         iCol++;
     }
 
-    szColumnList[strlen(szColumnList) - 1] = '\0'; // remove the last comma
+    if( !osColumnList.empty() )
+        osColumnList.resize(osColumnList.size()-1); // remove the last comma
 
     // ----------------------------------------------------------
     // Read VAT and load RAT
     // ----------------------------------------------------------
 
     OWStatement* poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
-        "SELECT %s FROM %s", szColumnList, l_pszVATName ) );
+        "SELECT %s FROM %s", osColumnList.c_str(), l_pszVATName ) );
 
-    char** papszValue = (char**) CPLMalloc( sizeof(char**) * iCol );
+    char** papszValue = (char**) CPLCalloc( sizeof(char*), iCol + 1 );
 
     int i = 0;
 
     for( i = 0; i < iCol; i++ )
     {
-        papszValue[i] = (char*) CPLMalloc( sizeof(char*) * OWNAME );
+        papszValue[i] = (char*) CPLCalloc( 1, OWNAME + 1 );
         poStmt->Define( papszValue[i] );
     }
 
@@ -891,6 +890,8 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Error reading VAT %s",
             l_pszVATName );
+        CSLDestroy(papszValue);
+        delete poStmt;
         return nullptr;
     }
 
@@ -905,11 +906,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
         iRow++;
     }
 
-    for( i = 0; i < iCol; i++ )
-    {
-        CPLFree( papszValue[i] );
-    }
-    CPLFree( papszValue );
+    CSLDestroy(papszValue);
 
     delete poStmt;
 

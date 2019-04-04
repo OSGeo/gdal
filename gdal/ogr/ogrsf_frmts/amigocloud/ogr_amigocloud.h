@@ -61,7 +61,6 @@ class OGRAmigoCloudGeomFieldDefn final: public OGRGeomFieldDefn
         }
 };
 
-// cppcheck-suppress copyCtorAndEqOperator
 class OGRAmigoCloudFID
 {
     public:
@@ -82,12 +81,8 @@ class OGRAmigoCloudFID
             iFID=0;
         }
 
-        OGRAmigoCloudFID(const OGRAmigoCloudFID& fid) :
-            iIndex( fid.iIndex ),
-            iFID( fid.iFID ),
-            osAmigoId( fid.osAmigoId.c_str() )
-        {
-        }
+        OGRAmigoCloudFID(const OGRAmigoCloudFID& fid) = default;
+        OGRAmigoCloudFID& operator=(const OGRAmigoCloudFID& fid) = default;
 };
 
 /************************************************************************/

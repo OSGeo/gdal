@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <cfloat>
 #include <vector>
 #include <algorithm>
 
@@ -54,6 +55,44 @@
 
 CPL_CVSID("$Id$")
 
+
+/************************************************************************/
+/*                        gvBurnScanlineBasic()                         */
+/************************************************************************/
+template<typename T>
+static inline
+void gvBurnScanlineBasic( GDALRasterizeInfo *psInfo,
+                          int nY, int nXStart, int nXEnd,
+                          double dfVariant )
+
+{
+    for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
+    {
+        const double burnValue = ( psInfo->padfBurnValue[iBand] +
+                ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
+                            0 : dfVariant ) );
+
+        unsigned char *pabyInsert = psInfo->pabyChunkBuf
+                                    + iBand * psInfo->nBandSpace
+                                    + nY * psInfo->nLineSpace + nXStart * psInfo->nPixelSpace;
+        int nPixels = nXEnd - nXStart + 1;
+        if( psInfo->eMergeAlg == GRMA_Add ) {
+            while( nPixels-- > 0 ) 
+            {
+                *reinterpret_cast<T*>(pabyInsert) += static_cast<T>(burnValue);
+                pabyInsert += psInfo->nPixelSpace;
+            }
+        } else {
+            while( nPixels-- > 0 ) 
+            {
+                *reinterpret_cast<T*>(pabyInsert) = static_cast<T>(burnValue);
+                pabyInsert += psInfo->nPixelSpace;
+            }
+        }
+    }
+}
+
+
 /************************************************************************/
 /*                           gvBurnScanline()                           */
 /************************************************************************/
@@ -62,10 +101,10 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
                      double dfVariant )
 
 {
+    GDALRasterizeInfo *psInfo = static_cast<GDALRasterizeInfo *>(pCBData);
+
     if( nXStart > nXEnd )
         return;
-
-    GDALRasterizeInfo *psInfo = static_cast<GDALRasterizeInfo *>(pCBData);
 
     CPLAssert( nY >= 0 && nY < psInfo->nYSize );
     CPLAssert( nXStart <= nXEnd );
@@ -78,57 +117,65 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
     if( nXEnd >= psInfo->nXSize )
         nXEnd = psInfo->nXSize - 1;
 
-    if( psInfo->eType == GDT_Byte )
+    switch (psInfo->eType)
     {
-        for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
-        {
-            unsigned char nBurnValue = static_cast<unsigned char>
-                ( psInfo->padfBurnValue[iBand] +
-                  ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
-                             0 : dfVariant ) );
-
-            unsigned char *pabyInsert =
-                psInfo->pabyChunkBuf
-                + iBand * psInfo->nXSize * psInfo->nYSize
-                + nY * psInfo->nXSize + nXStart;
-
-            if( psInfo->eMergeAlg == GRMA_Add ) {
-                int nPixels = nXEnd - nXStart + 1;
-                while( nPixels-- > 0 )
-                    *(pabyInsert++) += nBurnValue;
-            } else {
-                memset( pabyInsert, nBurnValue, nXEnd - nXStart + 1 );
-            }
-        }
-    }
-    else if( psInfo->eType == GDT_Float64 )
-    {
-        for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
-        {
-            int nPixels = nXEnd - nXStart + 1;
-            const double dfBurnValue =
-                ( psInfo->padfBurnValue[iBand] +
-                  ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
-                             0 : dfVariant ) );
-
-            double *padfInsert =
-                (reinterpret_cast<double *>(psInfo->pabyChunkBuf))
-                + iBand * psInfo->nXSize * psInfo->nYSize
-                + nY * psInfo->nXSize + nXStart;
-
-            if( psInfo->eMergeAlg == GRMA_Add ) {
-                while( nPixels-- > 0 )
-                    *(padfInsert++) += dfBurnValue;
-            } else {
-                while( nPixels-- > 0 )
-                    *(padfInsert++) = dfBurnValue;
-            }
-        }
-    }
-    else {
-        CPLAssert(false);
+        case GDT_Byte:
+            gvBurnScanlineBasic<GByte>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
+        case GDT_Int16:
+            gvBurnScanlineBasic<GInt16>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
+        case GDT_UInt16:
+            gvBurnScanlineBasic<GUInt16>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
+        case GDT_Int32:
+            gvBurnScanlineBasic<GInt32>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
+        case GDT_UInt32:
+            gvBurnScanlineBasic<GUInt32>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
+        case GDT_Float32:
+            gvBurnScanlineBasic<float>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
+        case GDT_Float64:
+            gvBurnScanlineBasic<double>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
+        default:
+            CPLAssert(false);
+            break;
     }
 }
+
+/************************************************************************/
+/*                        gvBurnPointBasic()                            */
+/************************************************************************/
+template<typename T>
+static inline
+void gvBurnPointBasic( GDALRasterizeInfo *psInfo,
+                       int nY, int nX, double dfVariant )
+
+{
+    constexpr double dfMinVariant = std::numeric_limits<T>::lowest();
+    constexpr double dfMaxVariant = std::numeric_limits<T>::max();
+
+    for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
+    {
+        double burnValue = ( psInfo->padfBurnValue[iBand] +
+                ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
+                            0 : dfVariant ) );
+        unsigned char *pbyInsert = psInfo->pabyChunkBuf
+                                 + iBand * psInfo->nBandSpace
+                                 + nY * psInfo->nLineSpace + nX * psInfo->nPixelSpace;
+
+        T* pbyPixel = reinterpret_cast<T*>(pbyInsert);
+        burnValue += ( psInfo->eMergeAlg != GRMA_Add ) ? 0 : *pbyPixel;
+        *pbyPixel = static_cast<T>(
+                    ( dfMinVariant > burnValue ) ? dfMinVariant :
+                    ( dfMaxVariant < burnValue ) ? dfMaxVariant :
+                    burnValue );
+    }
+}
+
 
 /************************************************************************/
 /*                            gvBurnPoint()                             */
@@ -142,52 +189,31 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
     CPLAssert( nY >= 0 && nY < psInfo->nYSize );
     CPLAssert( nX >= 0 && nX < psInfo->nXSize );
 
-    if( psInfo->eType == GDT_Byte )
+    switch( psInfo->eType )
     {
-        for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
-        {
-            unsigned char *pbyInsert = psInfo->pabyChunkBuf
-                                      + iBand * psInfo->nXSize * psInfo->nYSize
-                                      + nY * psInfo->nXSize + nX;
-            double dfVal;
-            if( psInfo->eMergeAlg == GRMA_Add ) {
-                dfVal = *pbyInsert + ( psInfo->padfBurnValue[iBand] +
-                          ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
-                             0 : dfVariant ) );
-            } else {
-                dfVal = psInfo->padfBurnValue[iBand] +
-                          ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
-                             0 : dfVariant );
-            }
-            if( dfVal > 255.0 )
-                *pbyInsert = 255;
-            else if( dfVal < 0.0 )
-                *pbyInsert = 0;
-            else
-                *pbyInsert = static_cast<unsigned char>( dfVal );
-        }
-    }
-    else if( psInfo->eType == GDT_Float64 )
-    {
-        for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
-        {
-            double *pdfInsert = reinterpret_cast<double *>(psInfo->pabyChunkBuf)
-                                + iBand * psInfo->nXSize * psInfo->nYSize
-                                + nY * psInfo->nXSize + nX;
-
-            if( psInfo->eMergeAlg == GRMA_Add ) {
-                *pdfInsert += ( psInfo->padfBurnValue[iBand] +
-                         ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
-                            0 : dfVariant ) );
-            } else {
-                *pdfInsert = ( psInfo->padfBurnValue[iBand] +
-                         ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
-                            0 : dfVariant ) );
-            }
-        }
-    }
-    else {
-        CPLAssert(false);
+        case GDT_Byte:
+            gvBurnPointBasic<GByte>( psInfo, nY, nX, dfVariant );
+            break;
+        case GDT_Int16:
+            gvBurnPointBasic<GInt16>( psInfo, nY, nX, dfVariant );
+            break;
+        case GDT_UInt16:
+            gvBurnPointBasic<GUInt16>( psInfo, nY, nX, dfVariant );
+            break;
+        case GDT_Int32:
+            gvBurnPointBasic<GInt32>( psInfo, nY, nX, dfVariant );
+            break;
+        case GDT_UInt32:
+            gvBurnPointBasic<GUInt32>( psInfo, nY, nX, dfVariant );
+            break;
+        case GDT_Float32:
+            gvBurnPointBasic<float>( psInfo, nY, nX, dfVariant );
+            break;
+        case GDT_Float64:
+            gvBurnPointBasic<double>( psInfo, nY, nX, dfVariant );
+            break;
+        default:
+            CPLAssert(false);
     }
 }
 
@@ -330,7 +356,9 @@ static void GDALCollectRingsFromGeometry(
 static void
 gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                         int nXSize, int nYSize,
-                        int nBands, GDALDataType eType, int bAllTouched,
+                        int nBands, GDALDataType eType,
+                        int nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+                        int bAllTouched,
                         OGRGeometry *poShape, double *padfBurnValue,
                         GDALBurnValueSrc eBurnValueSrc,
                         GDALRasterMergeAlg eMergeAlg,
@@ -341,12 +369,28 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
     if( poShape == nullptr || poShape->IsEmpty() )
         return;
 
+    if(nPixelSpace == 0)
+    {
+        nPixelSpace = GDALGetDataTypeSizeBytes(eType);
+    }
+    if(nLineSpace == 0)
+    {
+        nLineSpace = static_cast<GSpacing>(nXSize) * nPixelSpace;
+    }
+    if(nBandSpace == 0)
+    {
+        nBandSpace = nYSize * nLineSpace;
+    }
+
     GDALRasterizeInfo sInfo;
     sInfo.nXSize = nXSize;
     sInfo.nYSize = nYSize;
     sInfo.nBands = nBands;
     sInfo.pabyChunkBuf = pabyChunkBuf;
     sInfo.eType = eType;
+    sInfo.nPixelSpace = nPixelSpace;
+    sInfo.nLineSpace = nLineSpace;
+    sInfo.nBandSpace = nBandSpace;
     sInfo.padfBurnValue = padfBurnValue;
     sInfo.eBurnValueSource = eBurnValueSrc;
     sInfo.eMergeAlg = eMergeAlg;
@@ -418,7 +462,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                                           &(aPointX[0]), &(aPointY[0]),
                                           (eBurnValueSrc == GBV_UserBurnValue)?
                                           nullptr : &(aPointVariant[0]),
-                                          gvBurnPoint, &sInfo );
+                                          gvBurnPoint, &sInfo,
+                                          eMergeAlg == GRMA_Add );
           else
               GDALdllImageLine( sInfo.nXSize, nYSize,
                                 static_cast<int>(aPartSize.size()),
@@ -452,7 +497,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                       static_cast<int>(aPartSize.size()), &(aPartSize[0]),
                       &(aPointX[0]), &(aPointY[0]),
                       nullptr,
-                      gvBurnPoint, &sInfo );
+                      gvBurnPoint, &sInfo,
+                      eMergeAlg == GRMA_Add );
               }
               else
               {
@@ -469,7 +515,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                       static_cast<int>(aPartSize.size()), &(aPartSize[0]),
                       &(aPointX[0]), &(aPointY[0]),
                       &(aPointVariant[0]),
-                      gvBurnPoint, &sInfo );
+                      gvBurnPoint, &sInfo,
+                      eMergeAlg == GRMA_Add );
               }
           }
       }
@@ -789,8 +836,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 /*      size the less times we need to make a pass through all the      */
 /*      shapes.                                                         */
 /* -------------------------------------------------------------------- */
-        const GDALDataType eType =
-            poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
+        const GDALDataType eType = GDALGetNonComplexDataType(poBand->GetRasterDataType());
 
         const int nScanlineBytes =
             nBandCount * poDS->GetRasterXSize() * GDALGetDataTypeSizeBytes(eType);
@@ -850,7 +896,9 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
             {
                 gv_rasterize_one_shape( pabyChunkBuf, 0, iY,
                                         poDS->GetRasterXSize(), nThisYChunkSize,
-                                        nBandCount, eType, bAllTouched,
+                                        nBandCount, eType,
+                                        0, 0, 0,
+                                        bAllTouched,
                                         reinterpret_cast<OGRGeometry *>(
                                                             pahGeometries[iShape]),
                                         padfGeomBurnValue + iShape*nBandCount,
@@ -988,7 +1036,9 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
                     gv_rasterize_one_shape( pabyChunkBuf, xB * nXBlockSize, yB * nYBlockSize,
                                             nThisXChunkSize, nThisYChunkSize,
-                                            nBandCount, eType, bAllTouched,
+                                            nBandCount, eType,
+                                            0, 0, 0,
+                                            bAllTouched,
                                             reinterpret_cast<OGRGeometry *>(pahGeometries[iShape]),
                                             padfGeomBurnValue + iShape*nBandCount,
                                             eBurnValueSource, eMergeAlg,
@@ -1145,8 +1195,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     const char  *pszYChunkSize =
         CSLFetchNameValue( papszOptions, "CHUNKYSIZE" );
 
-    const GDALDataType eType =
-        poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
+    const GDALDataType eType = poBand->GetRasterDataType();
 
     const int nScanlineBytes =
         nBandCount * poDS->GetRasterXSize() * GDALGetDataTypeSizeBytes(eType);
@@ -1347,7 +1396,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                 gv_rasterize_one_shape( pabyChunkBuf, 0, iY,
                                         poDS->GetRasterXSize(),
                                         nThisYChunkSize,
-                                        nBandCount, eType, bAllTouched, poGeom,
+                                        nBandCount, eType, 0, 0, 0, bAllTouched, poGeom,
                                         padfBurnValues, eBurnValueSource,
                                         eMergeAlg,
                                         pfnTransformer, pTransformArg );
@@ -1425,9 +1474,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  * needs to transform the geometry locations into pixel/line coordinates
  * of the target raster.
  *
- * The output raster may be of any GDAL supported datatype, though currently
- * internally the burning is done either as GDT_Byte or GDT_Float32.  This
- * may be improved in the future.
+ * The output raster may be of any GDAL supported datatype(non complex).
  *
  * @param pData pointer to the output data array.
  *
@@ -1504,14 +1551,26 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 
 {
 /* -------------------------------------------------------------------- */
+/*           check eType, Avoid not supporting data types               */
+/* -------------------------------------------------------------------- */
+    if( GDALDataTypeIsComplex(eBufType) ||
+       eBufType <= GDT_Unknown || eBufType >= GDT_TypeCount )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+            "GDALRasterizeLayersBuf(): unsupported data type of eBufType");
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If pixel and line spaceing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
-    if( nPixelSpace != 0 )
+    int nTypeSizeBytes = GDALGetDataTypeSizeBytes( eBufType );
+    if( nPixelSpace == 0 )
     {
-        nPixelSpace = GDALGetDataTypeSizeBytes( eBufType );
+        nPixelSpace = nTypeSizeBytes;
     }
-    if( nPixelSpace != GDALGetDataTypeSizeBytes( eBufType ) )
+    if( nPixelSpace < nTypeSizeBytes )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GDALRasterizeLayersBuf(): unsupported value of nPixelSpace");
@@ -1522,7 +1581,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
     {
         nLineSpace = nPixelSpace * nBufXSize;
     }
-    if( nLineSpace != nPixelSpace * nBufXSize )
+    if( nLineSpace < nPixelSpace * nBufXSize )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GDALRasterizeLayersBuf(): unsupported value of nLineSpace");
@@ -1644,7 +1703,8 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 
                 gv_rasterize_one_shape( static_cast<unsigned char *>(pData), 0, 0,
                                         nBufXSize, nBufYSize,
-                                        1, eBufType, bAllTouched, poGeom,
+                                        1, eBufType,
+                                        nPixelSpace, nLineSpace, 0, bAllTouched, poGeom,
                                         &dfBurnValue, eBurnValueSource,
                                         eMergeAlg,
                                         pfnTransformer, pTransformArg );

@@ -133,18 +133,21 @@ void JPGAddICCProfile( void *pInfo,
                        my_jpeg_write_m_header p_jpeg_write_m_header,
                        my_jpeg_write_m_byte p_jpeg_write_m_byte);
 
-typedef struct GDALJPEGErrorStruct
+class GDALJPEGUserData
 {
+public:
     jmp_buf     setjmp_buffer;
-    bool        bNonFatalErrorEncountered;
-    void      (*p_previous_emit_message)(j_common_ptr cinfo, int msg_level);
-    GDALJPEGErrorStruct() :
-        bNonFatalErrorEncountered(false),
-        p_previous_emit_message(nullptr)
+    bool        bNonFatalErrorEncountered = false;
+    void      (*p_previous_emit_message)(j_common_ptr cinfo, int msg_level) = nullptr;
+    int         nMaxScans;
+
+    GDALJPEGUserData() :
+        nMaxScans(atoi(
+            CPLGetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "100")))
     {
         memset(&setjmp_buffer, 0, sizeof(setjmp_buffer));
     }
-} GDALJPEGErrorStruct;
+};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -274,7 +277,7 @@ class JPGDatasetCommon : public GDALPamDataset
 
 class JPGDataset final: public JPGDatasetCommon
 {
-    GDALJPEGErrorStruct sErrorStruct;
+    GDALJPEGUserData sUserData;
 
     bool ErrorOutOnNonFatalError();
 
@@ -313,7 +316,7 @@ class JPGDataset final: public JPGDatasetCommon
         const char *pszFilename, GDALDataset *poSrcDS, char **papszOptions,
         GDALProgressFunc pfnProgress, void *pProgressData, VSILFILE *fpImage,
         GDALDataType eDT, int nQuality, bool bAppendMask,
-        GDALJPEGErrorStruct &sErrorStruct, struct jpeg_compress_struct &sCInfo,
+        GDALJPEGUserData &sUserData, struct jpeg_compress_struct &sCInfo,
         struct jpeg_error_mgr &sJErr, GByte *&pabyScanline);
     static void ErrorExit(j_common_ptr cinfo);
 };

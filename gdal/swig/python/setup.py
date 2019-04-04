@@ -211,6 +211,18 @@ int main () { return 0; }""")
         os.unlink('gdal_python_cxx11_test.o')
     return ret
 
+###Based on: https://stackoverflow.com/questions/28641408/how-to-tell-which-compiler-will-be-invoked-for-a-python-c-extension-in-setuptool
+def has_flag(compiler, flagname):
+    import tempfile
+    from distutils.errors import CompileError
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([f.name], extra_postargs=[flagname])
+        except CompileError:
+            return False
+    return True
+
 
 class gdal_ext(build_ext):
 
@@ -255,6 +267,18 @@ class gdal_ext(build_ext):
                     # gdalconst builds as a .c file
                     if ext.name != 'osgeo._gdalconst':
                         ext.extra_compile_args += [cxx11_flag]
+
+        # Adding arch flags here if OS X and compiler is clang
+        if sys.platform == 'darwin' and [int(x) for x in os.uname()[2].split('.')] >= [11, 0, 0]:
+            # since MacOS X 10.9, clang no longer accepts -mno-fused-madd
+            # extra_compile_args.append('-Qunused-arguments')
+            clang_flag = '-Wno-error=unused-command-line-argument-hard-error-in-future'
+            if has_flag(self.compiler, clang_flag): 
+                ext.extra_compile_args += [clang_flag]
+            else:
+                clang_flag = '-Wno-error=unused-command-line-argument'
+                if has_flag(self.compiler, clang_flag):
+                    ext.extra_compile_args += [clang_flag]
 
         build_ext.build_extensions(self)
 
@@ -302,11 +326,6 @@ class gdal_ext(build_ext):
 
 extra_link_args = []
 extra_compile_args = []
-
-if sys.platform == 'darwin' and [int(x) for x in os.uname()[2].split('.')] >= [11, 0, 0]:
-    # since MacOS X 10.9, clang no longer accepts -mno-fused-madd
-    # extra_compile_args.append('-Qunused-arguments')
-    os.environ['ARCHFLAGS'] = '-Wno-error=unused-command-line-argument-hard-error-in-future'
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],

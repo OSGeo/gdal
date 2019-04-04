@@ -507,7 +507,7 @@ OGRFeature* GDALEEDALayer::GetNextRawFeature()
         json_object_get_string(CPL_json_object_object_get(poAsset, "path"));
     if ( pszPath )
     {
-        poFeature->SetField("path", pszId);
+        poFeature->SetField("path", pszPath);
     }
 
     const char* const apszBaseProps[] =

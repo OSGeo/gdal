@@ -111,7 +111,8 @@ class GDALDatasetPool
                                              int bShared,
                                              bool bForceOpen,
                                              const char* pszOwner);
-        void _CloseDataset(const char* pszFileName, GDALAccess eAccess);
+        void _CloseDataset(const char* pszFileName, GDALAccess eAccess,
+                           const char* pszOwner);
 
 #ifdef DEBUG_PROXY_POOL
         // cppcheck-suppress unusedPrivateFunction
@@ -131,7 +132,8 @@ class GDALDatasetPool
                                                    bool bForceOpen,
                                                    const char* pszOwner);
         static void UnrefDataset(GDALProxyPoolCacheEntry* cacheEntry);
-        static void CloseDataset(const char* pszFileName, GDALAccess eAccess);
+        static void CloseDataset(const char* pszFileName, GDALAccess eAccess,
+                                 const char* pszOwner);
 
         static void PreventDestroy();
         static void ForceDestroy();
@@ -359,7 +361,8 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
 /************************************************************************/
 
 void GDALDatasetPool::_CloseDataset( const char* pszFileName,
-                                     GDALAccess /* eAccess */ )
+                                     GDALAccess /* eAccess */,
+                                     const char* pszOwner )
 {
     GDALProxyPoolCacheEntry* cur = firstEntry;
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
@@ -370,6 +373,9 @@ void GDALDatasetPool::_CloseDataset( const char* pszFileName,
 
         CPLAssert(cur->pszFileName);
         if (strcmp(cur->pszFileName, pszFileName) == 0 && cur->refCount == 0 &&
+            ((pszOwner == nullptr && cur->pszOwner == nullptr) ||
+             (pszOwner != nullptr && cur->pszOwner != nullptr &&
+              strcmp(cur->pszOwner, pszOwner) == 0)) &&
             cur->poDS != nullptr )
         {
             /* Close by pretending we are the thread that GDALOpen'ed this */
@@ -502,10 +508,11 @@ void GDALDatasetPool::UnrefDataset(GDALProxyPoolCacheEntry* cacheEntry)
 /*                       CloseDataset()                                 */
 /************************************************************************/
 
-void GDALDatasetPool::CloseDataset(const char* pszFileName, GDALAccess eAccess)
+void GDALDatasetPool::CloseDataset(const char* pszFileName, GDALAccess eAccess,
+                                   const char* pszOwner)
 {
     CPLMutexHolderD( GDALGetphDLMutex() );
-    singleton->_CloseDataset(pszFileName, eAccess);
+    singleton->_CloseDataset(pszFileName, eAccess, pszOwner);
 }
 
 struct GetMetadataElt
@@ -656,7 +663,7 @@ GDALProxyPoolDataset::~GDALProxyPoolDataset()
 {
     if( !bShared )
     {
-        GDALDatasetPool::CloseDataset(GetDescription(), eAccess);
+        GDALDatasetPool::CloseDataset(GetDescription(), eAccess, m_pszOwner);
     }
     /* See comment in constructor */
     /* It is not really a genuine shared dataset, so we don't */

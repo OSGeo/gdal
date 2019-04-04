@@ -79,6 +79,13 @@ void VSIInstallSwiftStreamingFileHandler(void)
     // Not supported
 }
 
+#ifdef HAVE_CURL
+void VSICurlStreamingClearCache( void )
+{
+    // Not supported
+}
+#endif
+
 #else
 
 //! @cond Doxygen_Suppress
