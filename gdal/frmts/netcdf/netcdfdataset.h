@@ -84,6 +84,7 @@
 
 /* NETCDF driver defs */
 static const size_t NCDF_MAX_STR_LEN = 8192;
+#define NCDF_CONVENTIONS     "Conventions"
 #define NCDF_CONVENTIONS_CF_V1_5  "CF-1.5"
 #define NCDF_CONVENTIONS_CF_V1_6  "CF-1.6"
 #define NCDF_SPATIAL_REF     "spatial_ref"
