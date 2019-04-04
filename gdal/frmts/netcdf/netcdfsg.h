@@ -55,7 +55,7 @@ namespace nccfdriver
 	 */
 	int getCFMinorVersion(int ncid);
 
-	/* Given a var name, searches that variable for a geometry attribute
+	/* Given a geometry_container var name, searches that variable for a geometry_type attribute
 	 * Returns: the equivalent geometry type
 	 */
 	geom_t getGeometryType(int ncid, const char * varName );

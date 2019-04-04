@@ -15,19 +15,19 @@ namespace nccfdriver
 	}
 
 	// short hand for a clean up and exit, since goto isn't allowed
-	#define getCFMinorVersionExit delete len; delete[] attr_vals; return minor_ver;
+	#define getCFMinorVersionExit delete[] attr_vals; return minor_ver;
 	int getCFMinorVersion(int ncid)
 	{
-		bool isCFConv = false;
+		bool is_CF_conv = false;
 		int minor_ver = -1;
 
 		// Allocate a large enough buffer	
-		size_t * len = new size_t;
+		size_t len = 0;
 		char ** attr_vals = new char*[1];
-		nc_inq_attlen(ncid, NC_GLOBAL, NCDF_CONVENTIONS, len);
+		nc_inq_attlen(ncid, NC_GLOBAL, NCDF_CONVENTIONS, &len);
 		
 		// If not one value, error 
-		if(*len != 1)
+		if(len != 1)
 		{
 			getCFMinorVersionExit 
 		}	
@@ -46,11 +46,11 @@ namespace nccfdriver
 			// Test for CF Conventions
 			if(!strcmp(parse, "CF"))
 			{
-				isCFConv = true;		
+				is_CF_conv = true;		
 			}
 
 			// Test for Version to see if 
-			else if(parse[0] == '1' && isCFConv)
+			else if(parse[0] == '1' && is_CF_conv)
 			{
 				// ensure correct formatting and only singly defined
 				if(strlen(parse) < 3 || minor_ver >= 0)
@@ -63,7 +63,7 @@ namespace nccfdriver
 					getCFMinorVersionExit 
 				}
 
-				char * minor = parse + 2;
+				char * minor = parse + sizeof(char) * 2;
 				minor_ver = atoi(minor);				
 				// check for "0" and malformed, differentiate still to do
 			}	
@@ -78,8 +78,41 @@ namespace nccfdriver
 		}
 	
 	
-		delete len;
 		delete[] attr_vals;
 		return minor_ver;
+	}
+
+	geom_t getGeometryType(int ncid, const char * varName)
+	{
+		int varId = 0;
+		nc_inq_varid(ncid, varName, &varId);
+		char ** attr_vals;	// have to allocate prehand, still to do! 
+		if(nc_get_att_string(ncid, varId, CF_SG_GEOMETRY_TYPE, attr_vals) == NC_ERANGE)
+		{
+			return NONE;
+		}
+
+		char * gt_name = attr_vals[0];
+
+		// Points	
+		if(!strcmp(gt_name, CF_SG_TYPE_POINT))
+		{
+			// still to do, add detection for multipart geometry
+			return POINT;	
+		}
+
+		// Lines
+		if(!strcmp(gt_name, CF_SG_TYPE_LINE))
+		{
+			return LINE;
+		}
+
+		// Polygons
+		if(!strcmp(gt_name, CF_SG_TYPE_POLY))
+		{
+			return POLYGON;
+		}
+
+		return NONE;
 	}
 }
