@@ -68,11 +68,8 @@ namespace nccfdriver
 		int geoVarId = 0;
 		char * cart = nullptr;
 		
-		if(nc_inq_varid(ncId, attrVal, &geoVarId) != NC_NOERR)
-		   if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr)
-		{
-			return;
-		}
+		if(nc_inq_varid(ncId, attrVal, &geoVarId) != NC_NOERR) { delete attrVal; return; }
+		if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr) { delete attrVal; return; }
 
 		// Find geometry type
 		this->type = getGeometryType(ncId, geoVarId); 
@@ -86,7 +83,8 @@ namespace nccfdriver
 		
 		while(dim != NULL)
 		{
-			if(nc_inq_varid(ncId, dim, &axis_id) == NC_NOERR) { this->touple_order++;
+			if(nc_inq_varid(ncId, dim, &axis_id) == NC_NOERR)
+			{ this->touple_order++;
 				this->nodec_varIds.push_back(axis_id);
 			}
 
@@ -102,6 +100,7 @@ namespace nccfdriver
 		this->base_varId = baseVarId;
 		this->gc_varId = geoVarId; 
 		this->current_vert_ind = 0;	
+		this->ncid = ncId;
 		
 		if(this->type == POLYGON)
 		{
@@ -124,7 +123,7 @@ namespace nccfdriver
 		// New pt now
 		for(int order = 0; order < touple_order; order++)
 		{
-			Point& pt = *this->pt_buffer;
+			Point& pt = *(this->pt_buffer);
 			double data;
 
 			// Read a single coord
@@ -243,7 +242,7 @@ namespace nccfdriver
 		}
 	
 	
-		delete attrVal;
+		delete []attrVal;
 		return minor_ver;
 	}
 

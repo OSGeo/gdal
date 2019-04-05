@@ -32,7 +32,7 @@ namespace nccfdriver
 		public:
 		~Point();	
 		Point(int dim = 0) : size(dim)
-			{ this->values = new double[dim]; memset(this->values, 0, dim*sizeof(double)); }	
+			{ this->values = new double[dim]; } // memset(this->values, 0, dim*sizeof(double)); }	
 		double& operator[](int i) { return this->values[i]; }
 	};
 
