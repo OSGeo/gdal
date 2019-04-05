@@ -64,10 +64,6 @@ namespace nccfdriver
 			return;	
 		}
 
-		// Find geometry type
-		this->type = getGeometryType(ncId, attrVal); 
-		delete attrVal;	
-
 		// Once found, go to open geometry_container variable	
 		int geoVarId = 0;
 		char * cart = nullptr;
@@ -77,6 +73,10 @@ namespace nccfdriver
 		{
 			return;
 		}
+
+		// Find geometry type
+		this->type = getGeometryType(ncId, geoVarId); 
+		delete attrVal;
 
 		// (1) the touple order for a single point
 		// (2) the variable ids with the relevant coordinate values
@@ -209,11 +209,13 @@ namespace nccfdriver
 				// ensure correct formatting and only singly defined
 				if(strlen(parse) < 3 || minor_ver >= 0)
 				{
+					delete[] attrVal;
 					return minor_ver;
 				}	
 
 				if(parse[1] != '.')
 				{
+					delete[] attrVal;
 					return minor_ver;	
 				}
 
@@ -233,6 +235,7 @@ namespace nccfdriver
 			else
 			{
 				minor_ver = -1;
+				delete[] attrVal;
 				return minor_ver;	
 			}
 
@@ -244,27 +247,11 @@ namespace nccfdriver
 		return minor_ver;
 	}
 
-	geom_t getGeometryType(int ncid, const char * varName)
+	geom_t getGeometryType(int ncid, int varid)
 	{
-		int varId = 0; size_t len = 0;
-		nc_inq_varid(ncid, varName, &varId);
-		nc_inq_attlen(ncid, varId, CF_SG_GEOMETRY_TYPE, &len);
+		size_t len = 0;
 		geom_t ret = NONE;
-
-		if(len != 1)
-		{
-			return NONE;
-		} 
-
-		char ** attr_vals = new char*[1];	// have to allocate prehand, still to do! 
-
-
-		if(nc_get_att_string(ncid, varId, CF_SG_GEOMETRY_TYPE, attr_vals) != NC_NOERR)
-		{
-			ret = NONE;	
-		}
-
-		char * gt_name = attr_vals[0];
+		char * gt_name = attrf(ncid, varid, CF_SG_GEOMETRY_TYPE);
 
 		// Points	
 		if(!strcmp(gt_name, CF_SG_TYPE_POINT))
@@ -285,8 +272,7 @@ namespace nccfdriver
 			ret = POLYGON;
 		}
 
-		nc_free_string(len, attr_vals);	
-		delete[] attr_vals;
+		delete[] gt_name;
 		return ret;
 	}
 

@@ -88,10 +88,10 @@ namespace nccfdriver
 	 */
 	int getCFMinorVersion(int ncid);
 
-	/* Given a geometry_container var name, searches that variable for a geometry_type attribute
+	/* Given a geometry_container varID, searches that variable for a geometry_type attribute
 	 * Returns: the equivalent geometry type
 	 */
-	geom_t getGeometryType(int ncid, const char * varName );
+	geom_t getGeometryType(int ncid, int varid); 
 
 	/* Given a variable name, and the ncid, returns a SGeometry reference object, which acts more of an iterator of a geometry container
 	 *
