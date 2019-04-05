@@ -72,9 +72,6 @@ class TileDBDataset : public GDALPamDataset
         CPLErr AddFilter( const char* pszFilterName, const int level );
         CPLErr CreateAttribute( GDALDataType eType, const CPLString& osAttrName,
                                 const int nSubRasterCount=1 );
-        CPLErr SetBuffer(tiledb::Query* poQuery, GDALDataType eType,
-                            const CPLString& osAttrName,
-                            void * pImage, int nSize );
     public:
         virtual ~TileDBDataset();
 
@@ -138,6 +135,65 @@ class TileDBRasterBand : public GDALPamRasterBand
                         GDALDataType  eBufType,
                         char ** papszOptions ) override; 
 };
+
+/************************************************************************/
+/*                             SetBuffer()                              */
+/************************************************************************/
+
+static CPLErr SetBuffer( tiledb::Query* poQuery, GDALDataType eType,
+                        const CPLString& osAttrName, void * pImage, int nSize )
+{
+    switch (eType)
+    {
+        case GDT_Byte:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<unsigned char*>( pImage ), nSize );
+            break;
+        case GDT_UInt16:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<unsigned short*>( pImage ), nSize );
+            break;
+        case GDT_UInt32:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<unsigned int*>( pImage ), nSize );
+            break;
+        case GDT_Int16:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<short*>( pImage ), nSize );
+            break;
+        case GDT_Int32:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<int*>( pImage ), nSize );
+            break;
+        case GDT_Float32:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<float*>( pImage ), nSize );
+            break;
+        case GDT_Float64:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<double*>( pImage ), nSize );
+            break;
+        case GDT_CInt16:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<short*>( pImage ), nSize * 2 );
+            break;
+        case GDT_CInt32:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<int*>( pImage ), nSize * 2 );
+            break;
+        case GDT_CFloat32:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<float*>( pImage ), nSize * 2 );
+            break;
+        case GDT_CFloat64:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<double*>( pImage ), nSize * 2 );
+            break;
+        default:
+            return CE_Failure;
+    }
+    return CE_None;
+}
 
 /************************************************************************/
 /*                          TileDBRasterBand()                          */
@@ -274,7 +330,7 @@ CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff,
         }
     }
 
-    poGDS->SetBuffer(m_query.get(), eDataType, osAttrName, 
+    SetBuffer(m_query.get(), eDataType, osAttrName, 
                      pImage, nBlockXSize * nBlockYSize );
 
     if ( bStats )
@@ -314,7 +370,7 @@ CPLErr TileDBRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
                && nBlockYOff >= 0
                && pImage != nullptr );
 
-        poGDS->SetBuffer( m_query.get(), eDataType, osAttrName, 
+        SetBuffer( m_query.get(), eDataType, osAttrName, 
                     pImage, nBlockXSize * nBlockYSize );
 
         if ( bStats )
@@ -685,65 +741,6 @@ char **TileDBDataset::GetMetadata(const char *pszDomain)
     {
         return GDALPamDataset::GetMetadata( pszDomain );
     }    
-}
-
-/************************************************************************/
-/*                             SetBuffer()                              */
-/************************************************************************/
-
-CPLErr TileDBDataset::SetBuffer( tiledb::Query* poQuery, GDALDataType eType,
-                        const CPLString& osAttrName, void * pImage, int nSize )
-{
-    switch (eType)
-    {
-        case GDT_Byte:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned char*>( pImage ), nSize );
-            break;
-        case GDT_UInt16:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned short*>( pImage ), nSize );
-            break;
-        case GDT_UInt32:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned int*>( pImage ), nSize );
-            break;
-        case GDT_Int16:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<short*>( pImage ), nSize );
-            break;
-        case GDT_Int32:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<int*>( pImage ), nSize );
-            break;
-        case GDT_Float32:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<float*>( pImage ), nSize );
-            break;
-        case GDT_Float64:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<double*>( pImage ), nSize );
-            break;
-        case GDT_CInt16:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<short*>( pImage ), nSize * 2 );
-            break;
-        case GDT_CInt32:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<int*>( pImage ), nSize * 2 );
-            break;
-        case GDT_CFloat32:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<float*>( pImage ), nSize * 2 );
-            break;
-        case GDT_CFloat64:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<double*>( pImage ), nSize * 2 );
-            break;
-        default:
-            return CE_Failure;
-    }
-    return CE_None;
 }
 
 /************************************************************************/
@@ -1436,14 +1433,13 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
 
         GDALDataset* poSubDS = (GDALDataset *) GDALOpen( pszSource, GA_ReadOnly );
 
-        if ( poSubDS->GetRasterCount() > 0 )
+        if ( ( poSubDS != nullptr ) && poSubDS->GetRasterCount() > 0 )
         {
             GDALRasterBand* poBand = poSubDS->GetRasterBand( 1 );
             int nBlockXSize, nBlockYSize;
             poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
             
-            if ( (poSubDS == nullptr) ||
-                ( poSubDS->GetRasterXSize() != (int) nSubXSize ) ||
+            if ( ( poSubDS->GetRasterXSize() != (int) nSubXSize ) ||
                 ( poSubDS->GetRasterYSize() != (int) nSubYSize ) ||
                 ( nBlockXSize != poDstDS->nBlockXSize) || 
                 ( nBlockYSize != poDstDS->nBlockYSize ))
@@ -1465,7 +1461,7 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                "Sub-datasets must contain data in bands," 
+                "Sub-datasets must be not null and contain data in bands," 
                 "skipping %s\n",
                 pszSource );
             GDALClose( poSubDS );
@@ -1520,7 +1516,7 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
                     GDALRasterBand* poBand = poSubDS->GetRasterBand( b );
                     if ( poBand->ReadBlock( i, j, pBlock ) == CE_None )
                     {
-                        poDstDS->SetBuffer( &query, eDT,
+                        SetBuffer( &query, eDT,
                             poDstDS->m_schema->attribute( iAttr++ ).name(),
                             pBlock, poDstDS->nBlockXSize * poDstDS->nBlockYSize );
                     }
