@@ -165,9 +165,10 @@ namespace nccfdriver
 		{
 			Point& pt = *(this->pt_buffer);
 			double data;
+			size_t full_ind = bound_list[cur_geometry_ind] + current_vert_ind;
 
 			// Read a single coord
-			int err = nc_get_var1_double(ncid, nodec_varIds[order], &this->current_vert_ind, &data);
+			int err = nc_get_var1_double(ncid, nodec_varIds[order], &full_ind, &data);
 			// To do: optimize through multiple reads at once, instead of one datum
 
 			if(err != NC_NOERR)
