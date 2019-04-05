@@ -68,38 +68,58 @@ namespace nccfdriver
 		int geoVarId = 0;
 		char * cart = nullptr;
 		
-		if(nc_inq_varid(ncId, attrVal, &geoVarId) != NC_NOERR) { delete attrVal; return; }
-		if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr) { delete attrVal; return; }
+		if(nc_inq_varid(ncId, attrVal, &geoVarId) != NC_NOERR) { delete[] attrVal; return; }
+		if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr) { delete[] attrVal; return; }
 
 		// Find geometry type
 		this->type = getGeometryType(ncId, geoVarId); 
-		delete attrVal;
+		delete[] attrVal;
 
 		// Find a list of node counts and part node count
-		char * nc_name = nullptr; char * pnc_name = nullptr;
-		int pnc_vid; int nc_vid; 
-		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) == nullptr) { return; }	
-		if((pnc_name = attrf(ncId, geoVarId, CF_SG_PART_NODE_COUNT)) == nullptr) { return; }	
-	
-		if(nc_inq_varid(ncId, nc_name, &nc_vid) != NC_NOERR) { delete nc_name; delete pnc_name; return; }
-		if(nc_inq_varid(ncId, pnc_name, &pnc_vid) != NC_NOERR) { delete nc_name; delete pnc_name; return; }
-
+		char * nc_name = nullptr; char * pnc_name = nullptr; char * inter_name = nullptr;
+		int pnc_vid = -2; int nc_vid = -2; int inter_vid = -2;
 		size_t bound = 0; int buf;
-		while(nc_get_var1_int(ncId, nc_vid, &bound, &buf) == NC_NOERR)
+		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) != nullptr)
 		{
-			this->node_counts.push_back(buf);
-			bound++;	
+			nc_inq_varid(ncId, nc_name, &nc_vid);
+			while(nc_get_var1_int(ncId, nc_vid, &bound, &buf) == NC_NOERR)
+			{
+				this->node_counts.push_back(buf);
+				bound++;	
+			}	
+
 		}	
 
-		bound = 0;
-		while(nc_get_var1_int(ncId, pnc_vid, &bound, &buf) == NC_NOERR)
+		if((pnc_name = attrf(ncId, geoVarId, CF_SG_PART_NODE_COUNT)) != nullptr)
 		{
-			this->pnode_counts.push_back(buf);
-			bound++;	
+			bound = 0;
+			nc_inq_varid(ncId, pnc_name, &pnc_vid);
+			while(nc_get_var1_int(ncId, pnc_vid, &bound, &buf) == NC_NOERR)
+			{
+				this->pnode_counts.push_back(buf);
+				bound++;	
+			}	
+		}	
+	
+		if((inter_name = attrf(ncId, geoVarId, CF_SG_INTERIOR_RING)) != nullptr
+						&&
+					this->type == POLYGON	
+		)
+		{
+			bound = 0;
+			// to do: check for error cond and exit
+			nc_inq_varid(ncId, inter_name, &inter_vid);
+			while(nc_get_var1_int(ncId, inter_vid, &bound, &buf) == NC_NOERR)
+			{
+				bool has_ring = buf == 1 ? true : false;
+				this->pnode_counts.push_back(has_ring);
+				bound++;	
+			}	
 		}	
 
-		delete nc_name;
-		delete pnc_name;
+		delete[] nc_name;
+		delete[] pnc_name;
+		delete[] inter_name;
 
 		// Create bound list
 		int rc = 0;
@@ -108,6 +128,31 @@ namespace nccfdriver
 		{
 			rc = rc + node_counts[i];
 			bound_list.push_back(rc);	
+		}
+
+		// Create parts count list and an offset list for parts indexing	
+		if(this->node_counts.size() > 0)
+		{
+			// to do: check for out of bounds
+			int ind = 0; int parts = 0; int prog = 0;
+			for(size_t pcnt = 0; pcnt < pnode_counts.size() ; pcnt++)
+			{
+				if(prog == 0) pnc_bl.push_back(pcnt);
+				prog = prog + pnode_counts[pcnt];
+				parts++;
+
+				if(prog == node_counts[ind])
+				{
+					ind++;
+					this->parts_count.push_back(parts);
+					prog = 0; parts = 0;
+				}	
+				else if(prog > node_counts[ind])
+				{
+					delete[] cart;
+					return;
+				}
+			} 
 		}
 
 		// (1) the touple order for a single point
@@ -127,7 +172,7 @@ namespace nccfdriver
 
 		}
 
-		delete cart;
+		delete[] cart;
 
 		this->pt_buffer = new Point(this->touple_order);
 		

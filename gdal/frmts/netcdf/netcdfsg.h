@@ -52,6 +52,9 @@ namespace nccfdriver
 		std::vector<int> node_counts;	// node counts of each geometry in a container
 		std::vector<int> pnode_counts;	// part node counts of each geometry in a container
 		std::vector<int> bound_list;	// a quick list used to store the real beginning indicies of shapes
+		std::vector<bool> int_rings;	// list of parts that are interior rings
+		std::vector<int> pnc_bl;	// a quick list of indicies for part counts corresponding to a geometry
+		std::vector<int> parts_count;	// a count of total parts in a single geometry instance
 		size_t current_vert_ind;	// used to keep track of current point being used
 		size_t cur_geometry_ind;	// used to keep track of current geometry index
 		size_t cur_part_ind;		// used to keep track of current part index
@@ -79,18 +82,30 @@ namespace nccfdriver
 		void next_geometry(); // simply reuses the host structure
 		bool has_next_geometry();
 
-		/* void SGeometry::next_part()
-		 * retrieves the next part of a single geometry (i.e. for multigeometries)
-		 * similar to next geometry() but for multipart geometries
+		/* int SGeometry::get_part_num()
+		 * Retrieves the corresponding part number of the part within a geometry that the next_pt() belongs to. 
+		 * Part number meaning the number of that part within a geometry
+		 * If a geometry is single part, or the variable explicitly contains no multipart geometries, then it is "1"
 		 */
-		void next_part();
-		bool has_next_part();
+		int get_part_num();
+
+		/* bool SGeometry::is_interior()
+		 * Retrieves whether or not the point to be returned through next_pt() is a part of
+		 * an interior ring structure. If the structure has no interior rings, then false by default
+		 */
+		bool is_interior();
 
 		/* void SGeometry::get_geometry_count()
 		 * returns a size, indicating the amount of geometries
 		 * contained in the variable
 		 */
 		size_t get_geometry_count() { return this->node_counts.size(); }
+
+		/* bool SGeometry::getValid()
+		 * Gets the valid flag of this geometry.
+		 * Future work: replace by exception handling
+		 */
+		bool getValid() { return this->valid; }
 
 		/* ncID - as used in netcdf.h
 		 * baseVarId - the id of a variable with a geometry container attribute 
