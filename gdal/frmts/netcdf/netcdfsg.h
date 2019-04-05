@@ -48,7 +48,12 @@ namespace nccfdriver
 		int gc_varId;		// the name of the underlying geometry_container variable
 		int touple_order;	// amount of "coordinates" in a point
 		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
+		std::vector<int> node_counts;	// node counts of each geometry in a container
+		std::vector<int> pnode_counts;	// part node counts of each geometry in a container
+		std::vector<int> bound_list;	// a quick list used to store the real beginning indicies of shapes
 		size_t current_vert_ind;	// used to keep track of current point being used
+		size_t cur_geometry_ind;	// used to keep track of current geometry index
+		size_t cur_part_ind;		// used to keep track of current part index
 		bool interior;		// interior ring = true. only meaningful for polygons
 		bool valid;		// true if geometry is valid, or false if construction failed, improve by using exception
 		Point * pt_buffer;	// holds the current point
@@ -72,6 +77,19 @@ namespace nccfdriver
 		 */
 		void next_geometry(); // simply reuses the host structure
 		bool has_next_geometry();
+
+		/* void SGeometry::next_part()
+		 * retrieves the next part of a single geometry (i.e. for multigeometries)
+		 * similar to next geometry() but for multipart geometries
+		 */
+		void next_part();
+		bool has_next_part();
+
+		/* void SGeometry::get_geometry_count()
+		 * returns a size, indicating the amount of geometries
+		 * contained in the variable
+		 */
+		size_t get_geometry_count() { return this->node_counts.size(); }
 
 		/* ncID - as used in netcdf.h
 		 * baseVarId - the id of a variable with a geometry container attribute 

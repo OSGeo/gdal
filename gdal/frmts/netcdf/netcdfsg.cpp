@@ -12,7 +12,7 @@ namespace nccfdriver
 {
 	/* Attribute Fetch
 	 * -
-	 * A function which makes it a bit easier to fetch single string attribute values
+	 * A function which makes it a bit easier to fetch single text attribute values
 	 * attrgets returns a char. seq. on success, nullptr on failure 
 	 * attrgets takes in ncid and varId in which to look for the attribute with name attrName 
 	 *
@@ -75,6 +75,41 @@ namespace nccfdriver
 		this->type = getGeometryType(ncId, geoVarId); 
 		delete attrVal;
 
+		// Find a list of node counts and part node count
+		char * nc_name = nullptr; char * pnc_name = nullptr;
+		int pnc_vid; int nc_vid; 
+		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) == nullptr) { return; }	
+		if((pnc_name = attrf(ncId, geoVarId, CF_SG_PART_NODE_COUNT)) == nullptr) { return; }	
+	
+		if(nc_inq_varid(ncId, nc_name, &pnc_vid) != NC_NOERR) { delete nc_name; delete pnc_name; return; }
+		if(nc_inq_varid(ncId, pnc_name, &nc_vid) != NC_NOERR) { delete nc_name; delete pnc_name; return; }
+
+		size_t bound = 0; int buf;
+		while(nc_get_var1_int(ncId, nc_vid, &bound, &buf) == NC_NOERR)
+		{
+			this->node_counts.push_back(buf);
+			bound++;	
+		}	
+
+		bound = 0;
+		while(nc_get_var1_int(ncId, pnc_vid, &bound, &buf) == NC_NOERR)
+		{
+			this->pnode_counts.push_back(buf);
+			bound++;	
+		}	
+
+		delete nc_name;
+		delete pnc_name;
+
+		// Create bound list
+		int rc = 0;
+		bound_list.push_back(0);// start with 0
+		for(int i = 0; i < node_counts.size() - 1; i++)
+		{
+			rc = rc + node_counts[i];
+			bound_list.push_back(rc);	
+		}
+
 		// (1) the touple order for a single point
 		// (2) the variable ids with the relevant coordinate values
 		// (3) initialize the point buffer
@@ -119,6 +154,11 @@ namespace nccfdriver
 
 	Point* SGeometry::next_pt()
 	{
+		if(!this->has_next_pt())
+		{
+			return nullptr;
+		}
+
 		// Fill pt
 		// New pt now
 		for(int order = 0; order < touple_order; order++)
@@ -135,46 +175,39 @@ namespace nccfdriver
 				return nullptr;
 			}
 
-			this->current_vert_ind++;
 			pt[order] = data;
 		}	
 		
+		this->current_vert_ind++;
 		return (this->pt_buffer);	
 	}
 
 	bool SGeometry::has_next_pt()
 	{
-		// Check dimensions of one (or perhaps each of the node coordinate) arrays
-		// false if the current_vert_ind is equal to or exceeds length of one of those arrays
-		// stub	
-		
-		for(int order = 0; order < touple_order; order++)
+		if(this->current_vert_ind < node_counts[cur_geometry_ind])
 		{
-			double data;
-
-			// Read a single coord
-			int err = nc_get_var1_double(ncid, nodec_varIds[order], &this->current_vert_ind, &data);
-			// To do: optimize through multiple reads at once, instead of one datum
-
-			if(err != NC_NOERR)
-			{
-				return false;
-			}
-		}	
-
-		return true;
+			return true;
+		}
+	
+		else return false;
 	}
 
 	void SGeometry::next_geometry()
 	{
-		
-		// stub
+		// to do: maybe implement except. and such on error conds.
+
+		this->cur_geometry_ind++;
+		this->cur_part_ind = 0;
+		this->current_vert_ind = 0;	
 	}
 
 	bool SGeometry::has_next_geometry()
 	{
-		// stub
-		return false;
+		if(this->cur_geometry_ind < node_counts.size())
+		{
+			return true;
+		}
+		else return false;
 	}
 
 	// Helpers
@@ -224,8 +257,10 @@ namespace nccfdriver
 				// check for "0" and potentially malformed, due to atoi return cond
 				if(minor_ver == 0)
 				{
-					if(strlen(parse) > 3 || parse[2] == '0')
+					if(strlen(parse) != 3)
+						if(parse[2] != '0')
 					{
+						delete[] attrVal;
 						minor_ver = -1;
 					}
 				}
