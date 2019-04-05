@@ -9,25 +9,100 @@
 #include "netcdfsg.h"
 namespace nccfdriver
 {
+	// Private Helpers
+
+	/* Attribute-Gets
+	 * A function which makes it a bit easier to fetch single string attribute values
+	 * attrgets returns 0 on success, some non-zero value on failure
+	 * attrgets takes in ncid and varId in which to look for the attribute with name attrName 
+	 * then it fills bufOut with the attribute value 
+	 */
+	static int attrgets(int ncid, int varId, size_t buffer_length, char * attrName, char * bufOut)
+	{
+		
+	}
+
 	// Point
 	Point::~Point()
 	{
 		delete[] this->values;
 	}
 
-
 	// SGeometry
 	SGeometry::SGeometry(int ncId, int baseVarId) : base_varId(baseVarId)
 	{
-		// stub
-
+		size_t len = 0;
+		nc_inq_attlen(ncId, baseVarId, CF_SG_GEOMETRY, &len); 
+		// If not one value, error 
+		if(len != 1)
+		{
+			this -> valid = false;
+			return;
+		}
+	
+		char ** attr_vals = new char*[1];
 		// Look through base variable, for geometry_container
+		if(nc_get_att_string(ncId, baseVarId, CF_SG_GEOMETRY, attr_vals) != NC_NOERR) {
+			this -> valid = false;
+			return;	
+			delete[] attr_vals;
+		}
 
 		// Find geometry type
+		this->type = getGeometryType(ncId, attr_vals[0]);
 
-		// Once found, go to open geometry_container variable
+		// Once found, go to open geometry_container variable	
+		int geoVarId = 0;
+		nc_inq_varid(ncId, attr_vals[0], &geoVarId);
 
-		// Set iterators correctly
+
+		// Now geometry_container is open, look for node_coordinates, assign the following
+		// (1) the touple order for a single point
+		// (2) the variable ids with the relevant coordinate values
+		// (3) initialize the point buffer
+
+		// Set other values accordingly
+		this->base_varId = baseVarId;
+		this->gc_varId = geoVarId; 
+		this->current_vert_ind = 0;	
+		
+		if(this->type == POLYGON)
+		{
+			// still to implement
+			this->interior = false;	// stub
+		}
+		else this->interior = false;
+
+		nc_free_string(len, attr_vals);
+		delete[] attr_vals;
+		this -> valid = true;
+	}
+
+	Point* SGeometry::next_pt()
+	{
+		// Fill pt
+
+		// New pt now
+		return this->pt_buffer;	
+	}
+
+	bool SGeometry::has_next_pt()
+	{
+		// Check dimensions of one (or perhaps each of the node coordinate) arrays
+		// false if the current_vert_ind is equal to or exceeds length of one of those arrays
+		// stub	
+		return false;
+	}
+
+	void SGeometry::next_geometry()
+	{
+		// stub
+	}
+
+	bool SGeometry::has_next_geometry()
+	{
+		// stub
+		return false;
 	}
 
 	// Helpers
@@ -158,12 +233,14 @@ namespace nccfdriver
 
 	SGeometry* getGeometryRef(int ncid, const char * varName )
 	{
-		// stub
-		return nullptr;
+		int varId = 0;
+		nc_inq_varid(ncid, varName, &varId);
+		return new SGeometry(ncid, varId);
 	}
 
 	int putGeometryRef(int ncid, SGeometry * geometry)
 	{
+		
 		// stub
 		return -1;
 	}

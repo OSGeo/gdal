@@ -34,6 +34,8 @@ namespace nccfdriver
 			{ this->values = new double[dim]; memset(this->values, 0, dim*sizeof(double)); }	
 	};
 
+
+
 	// Simple geometry - doesn't actually hold the points, rather serves
 	// as a pseudo reference to a NC variable
 	class SGeometry
@@ -41,15 +43,29 @@ namespace nccfdriver
 		geom_t type;	 	// internal geometry type structure
 		int base_varId;		// var with geometry_container attribute
 		int gc_varId;		// the name of the underlying geometry_container variable
+		int touple_order;	// amount of "coordinates" in a point
+		int * nodec_varIds;	// varIds for each node_coordinate entry
 		int current_vert_ind;	// used to keep track of current point being used
 		bool interior;		// interior ring = true. only meaningful for polygons
+		bool valid;		// true if geometry is valid, or false if construction failed, improve by using exception
+		Point * pt_buffer;	// holds the current point
 
 		public:
-		Point next_pt(); // returns the next pt coordinate
+
+		/* Point* SGeometry::next_pt()
+		 * returns a pointer to the next pt in sequence, if any. If none, returns a nullptr
+		 * calling next_pt does not have additional space requirements
+		 */
+		Point* next_pt(); 
 		bool has_next_pt(); // returns whether or not the geometry has another point
 			
-		// if part of a multigeometry retrieve a "next" geometry
-		SGeometry next_geometry();
+		/* void SGeometry::next_geometry()
+		 * does not return anything. Rather, the SGeometry for which next_geometry() was called
+		 * essentially gets replaced by the new geometry. So to access the next geometry,
+		 * no additional space is required, just use the reference to the previous geometry, now
+		 * pointing to the new geometry.
+		 */
+		void next_geometry(); // simply reuses the host structure
 		bool has_next_geometry();
 
 		/* ncID - as used in netcdf.h
