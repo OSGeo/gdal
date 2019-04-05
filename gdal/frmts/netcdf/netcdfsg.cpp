@@ -123,15 +123,23 @@ namespace nccfdriver
 	Point* SGeometry::next_pt()
 	{
 		// Fill pt
-		if(!this->has_next_pt())
-		{
-			return nullptr;
-		}
 		// New pt now
-		for(int order; order < touple_order; order++)
+		for(int order = 0; order < touple_order; order++)
 		{
 			Point& pt = *this->pt_buffer;
-			pt[order] = 0;
+			double data;
+
+			// Read a single coord
+			int err = nc_get_var1_double(ncid, nodec_varIds[order], &this->current_vert_ind, &data);
+			// To do: optimize through multiple reads at once, instead of one datum
+
+			if(err != NC_NOERR)
+			{
+				return nullptr;
+			}
+
+			this->current_vert_ind++;
+			pt[order] = data;
 		}	
 		
 		return (this->pt_buffer);	
@@ -142,7 +150,22 @@ namespace nccfdriver
 		// Check dimensions of one (or perhaps each of the node coordinate) arrays
 		// false if the current_vert_ind is equal to or exceeds length of one of those arrays
 		// stub	
-		return false;
+		
+		for(int order = 0; order < touple_order; order++)
+		{
+			double data;
+
+			// Read a single coord
+			int err = nc_get_var1_double(ncid, nodec_varIds[order], &this->current_vert_ind, &data);
+			// To do: optimize through multiple reads at once, instead of one datum
+
+			if(err != NC_NOERR)
+			{
+				return false;
+			}
+		}	
+
+		return true;
 	}
 
 	void SGeometry::next_geometry()
@@ -278,9 +301,8 @@ namespace nccfdriver
 
 	int putGeometryRef(int ncid, SGeometry * geometry)
 	{
-		
 		// stub
-		return -1;
+		return -1; 
 	}
 
 }

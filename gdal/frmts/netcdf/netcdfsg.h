@@ -43,11 +43,12 @@ namespace nccfdriver
 	class SGeometry
 	{
 		geom_t type;	 	// internal geometry type structure
+		int ncid;		// ncid - as used in netcdf.h
 		int base_varId;		// var with geometry_container attribute
 		int gc_varId;		// the name of the underlying geometry_container variable
 		int touple_order;	// amount of "coordinates" in a point
 		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
-		int current_vert_ind;	// used to keep track of current point being used
+		size_t current_vert_ind;	// used to keep track of current point being used
 		bool interior;		// interior ring = true. only meaningful for polygons
 		bool valid;		// true if geometry is valid, or false if construction failed, improve by using exception
 		Point * pt_buffer;	// holds the current point
@@ -106,6 +107,13 @@ namespace nccfdriver
 	 * Returns: an error code if failure, 0 on success
 	 */
 	int putGeometryRef(int ncid, SGeometry* geometry);
+
+	/* Fetches a one dimensional string attribute
+	 * using the given ncid, variable ID (varID), and attribute key (attrName)
+	 *
+	 * Returns: a NEW cstring of the attribute value, that must be separately deleted 
+	 */
+	char * attrf(int ncid, int varId, const char * attrName);
 }
 
 #endif
