@@ -81,8 +81,8 @@ namespace nccfdriver
 		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) == nullptr) { return; }	
 		if((pnc_name = attrf(ncId, geoVarId, CF_SG_PART_NODE_COUNT)) == nullptr) { return; }	
 	
-		if(nc_inq_varid(ncId, nc_name, &pnc_vid) != NC_NOERR) { delete nc_name; delete pnc_name; return; }
-		if(nc_inq_varid(ncId, pnc_name, &nc_vid) != NC_NOERR) { delete nc_name; delete pnc_name; return; }
+		if(nc_inq_varid(ncId, nc_name, &nc_vid) != NC_NOERR) { delete nc_name; delete pnc_name; return; }
+		if(nc_inq_varid(ncId, pnc_name, &pnc_vid) != NC_NOERR) { delete nc_name; delete pnc_name; return; }
 
 		size_t bound = 0; int buf;
 		while(nc_get_var1_int(ncId, nc_vid, &bound, &buf) == NC_NOERR)
@@ -104,7 +104,7 @@ namespace nccfdriver
 		// Create bound list
 		int rc = 0;
 		bound_list.push_back(0);// start with 0
-		for(int i = 0; i < node_counts.size() - 1; i++)
+		for(size_t i = 0; i < node_counts.size() - 1; i++)
 		{
 			rc = rc + node_counts[i];
 			bound_list.push_back(rc);	
@@ -284,7 +284,6 @@ namespace nccfdriver
 
 	geom_t getGeometryType(int ncid, int varid)
 	{
-		size_t len = 0;
 		geom_t ret = NONE;
 		char * gt_name = attrf(ncid, varid, CF_SG_GEOMETRY_TYPE);
 
