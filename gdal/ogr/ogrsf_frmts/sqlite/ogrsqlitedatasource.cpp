@@ -348,13 +348,13 @@ OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource() :
 OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 
 {
+    CloseDB();
 #ifdef SPATIALITE_412_OR_LATER
     FinishNewSpatialite();
 #endif
 #ifdef HAVE_RASTERLITE2
     FinishRasterLite2();
 #endif
-    CloseDB();
 
     if( m_bCallUndeclareFileNotToOpen )
     {

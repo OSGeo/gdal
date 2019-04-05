@@ -6997,6 +6997,30 @@ def test_tiff_write_deflate_4GB():
 
     gdal.Unlink('/vsimem/out.tif')
 
+
+###############################################################################
+# Test rewriting a LZW strip/tile that is very close to 8 KB with larger data
+
+def test_tiff_write_rewrite_lzw_strip():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    src_data = open('data/bug_gh_1439_to_be_updated_lzw.tif', 'rb').read()
+    tmpfilename = '/vsimem/out.tif'
+    gdal.FileFromMemBuffer(tmpfilename, src_data)
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    src_ds = gdal.Open('data/bug_gh_1439_update_lzw.tif')
+    ds.WriteRaster(0,0,4096,1,src_ds.ReadRaster())
+    ds = None
+    ds = gdal.Open(tmpfilename)
+    gdal.ErrorReset()
+    assert ds.GetRasterBand(1).ReadRaster(0,1,4096,1)
+    assert gdal.GetLastErrorMsg() == ''
+
+    gdal.Unlink(tmpfilename)
+
+
 ###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 

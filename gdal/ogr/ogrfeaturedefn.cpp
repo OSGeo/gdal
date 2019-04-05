@@ -31,6 +31,7 @@
 #include "ogr_feature.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 
 #include "cpl_conv.h"
@@ -1575,7 +1576,10 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
     std::map<CPLString, int> oMapNameToTargetFieldIndexUC;
     for( int i = 0; i < GetFieldCount(); i++ )
     {
-        const char* pszName = GetFieldDefn(i)->GetNameRef();
+        const OGRFieldDefn* poFldDefn = GetFieldDefn(i);
+        assert(poFldDefn); /* Make GCC-8 -Wnull-dereference happy */
+        const char* pszName = poFldDefn->GetNameRef();
+
         // In the insane case where there are several matches, arbitrarily
         // decide for the first one (preserve past behaviour)
         if( oMapNameToTargetFieldIndex.find(pszName) ==
@@ -1588,7 +1592,10 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
     aoMapSrcToTargetIdx.resize(poSrcFDefn->GetFieldCount());
     for( int i = 0; i < poSrcFDefn->GetFieldCount(); i++ )
     {
-        const char* pszSrcName = poSrcFDefn->GetFieldDefn(i)->GetNameRef();
+        const OGRFieldDefn* poSrcFldDefn = poSrcFDefn->GetFieldDefn(i);
+        assert(poSrcFldDefn); /* Make GCC-8 -Wnull-dereference happy */
+        const char* pszSrcName = poSrcFldDefn->GetNameRef();
+
         auto oIter = oMapNameToTargetFieldIndex.find(pszSrcName);
         if( oIter == oMapNameToTargetFieldIndex.end() )
         {
@@ -1597,8 +1604,10 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
             {
                 for( int j = 0; j < GetFieldCount(); j++ )
                 {
+                    const OGRFieldDefn* poFldDefn = GetFieldDefn(j);
+                    assert(poFldDefn); /* Make GCC-8 -Wnull-dereference happy */
                     oMapNameToTargetFieldIndexUC[
-                        CPLString(GetFieldDefn(j)->GetNameRef()).toupper()] = j;
+                        CPLString(poFldDefn->GetNameRef()).toupper()] = j;
                 }
             }
             oIter = oMapNameToTargetFieldIndexUC.find(

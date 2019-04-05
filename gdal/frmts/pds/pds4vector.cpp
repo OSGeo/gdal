@@ -32,6 +32,7 @@
 #include "ogr_p.h"
 
 #include <algorithm>
+#include <cassert>
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2602,7 +2603,7 @@ PDS4EditableLayer::PDS4EditableLayer(PDS4DelimitedTable* poBaseLayer):
 PDS4TableBaseLayer* PDS4EditableLayer::GetBaseLayer() const
 {
     auto ret = dynamic_cast<PDS4TableBaseLayer*>(OGREditableLayer::GetBaseLayer());
-    CPLAssert(ret);
+    assert(ret);
     return ret;
 }
 

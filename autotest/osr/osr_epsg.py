@@ -292,7 +292,7 @@ def test_osr_epsg_13():
 
     # Two matches (and test GEOGCS)
     # This will now match with 4126 (which is deprecated), since the datum
-    # is identified to 6126 and GetEPSGGeogCS has logic to substract 2000 to it.
+    # is identified to 6126 and GetEPSGGeogCS has logic to subtract 2000 to it.
     #sr.SetFromUserInput("""GEOGCS["myLKS94",
     #DATUM["Lithuania_1994_ETRS89",
     #    SPHEROID["GRS 1980",6378137,298.257222101],

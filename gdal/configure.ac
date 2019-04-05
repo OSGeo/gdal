@@ -5332,6 +5332,43 @@ AC_SUBST(HDFS_INC,$HDFS_INC)
 AC_SUBST(JNI_LIB,$JNI_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl TileDB support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(tiledb,[  --with-tiledb[=ARG]    Include TileDB support (ARG=no, yes or tiledb install root path)],,)
+
+TILEDB_SETTING=no
+
+if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
+
+  AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,)
+  
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-ltiledb $LIBS"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+elif test "$with_tiledb" != "no" -a "$with_tiledb" != ""; then
+
+  AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,-L$with_tiledb/lib -ltiledb)
+
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-L$with_tiledb/lib -ltiledb $LIBS"
+    EXTRA_INCLUDES="-I$with_tiledb/include $EXTRA_INCLUDES"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+fi
+
+AC_SUBST(TILEDB_SETTING,$TILEDB_SETTING)
+
+if test "$TILEDB_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl MDB driver
 dnl ---------------------------------------------------------------------------
 
@@ -5887,6 +5924,7 @@ LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
+LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
 LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])

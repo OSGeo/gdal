@@ -655,9 +655,11 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if( psOptions->panBandList == nullptr )
     {
+
         psOptions->nBandCount = GDALGetRasterCount( hSrcDataset );
-        if( psOptions->nBandCount == 0 )
+        if( ( psOptions->nBandCount == 0 ) && (psOptions->bStrict ) )
         {
+            // if not strict then the driver can fail if it doesn't support zero bands
             CPLError( CE_Failure, CPLE_AppDefined, "Input file has no bands, and so cannot be translated." );
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
