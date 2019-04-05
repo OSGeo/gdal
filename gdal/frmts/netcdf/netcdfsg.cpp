@@ -23,25 +23,23 @@ namespace nccfdriver
 		size_t len = 0;
 		nc_inq_attlen(ncid, varId, attrName, &len);
 		
-		// If not one value, error
-		if(len != 1)
+		if(len < 1)
 		{
 			return nullptr;
-		}	
+		}
 
-		char ** attr_vals = new char*[1];
+		char * attr_vals = new char[len];
 		// Now look through this variable for the attribute
-		if(nc_get_att_string(ncid, varId, attrName, attr_vals) != NC_NOERR)
+		if(nc_get_att_text(ncid, varId, attrName, attr_vals) != NC_NOERR)
 		{
 			delete[] attr_vals;
 			return nullptr;		
 		}
 
-		char * ret = new char[strlen(attr_vals[0])];
-		strcpy(ret, attr_vals[0]);
-		nc_free_string(len, attr_vals);
-		delete[] attr_vals;
-		return ret;
+		//char * ret = new char[len];
+		//strcpy(ret, attr_vals[0]);
+		//nc_free_string(len, attr_vals);
+		return attr_vals;
 	}
 
 	/* Point
@@ -214,7 +212,7 @@ namespace nccfdriver
 					return minor_ver;
 				}	
 
-				if(parse[1] != ',')
+				if(parse[1] != '.')
 				{
 					return minor_ver;	
 				}
