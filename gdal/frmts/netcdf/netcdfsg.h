@@ -1,6 +1,7 @@
 #ifndef __NETCDFSG_H__
 #define __NETCDFSG_H__
 #include <cstring>
+#include <vector>
 
 // Interface used for netCDF functions
 // implementing awareness for the CF-1.8 convention
@@ -30,8 +31,9 @@ namespace nccfdriver
 
 		public:
 		~Point();	
-		Point(int dim) : size(dim)
+		Point(int dim = 0) : size(dim)
 			{ this->values = new double[dim]; memset(this->values, 0, dim*sizeof(double)); }	
+		double& operator[](int i) { return this->values[i]; }
 	};
 
 
@@ -44,11 +46,13 @@ namespace nccfdriver
 		int base_varId;		// var with geometry_container attribute
 		int gc_varId;		// the name of the underlying geometry_container variable
 		int touple_order;	// amount of "coordinates" in a point
-		int * nodec_varIds;	// varIds for each node_coordinate entry
+		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
 		int current_vert_ind;	// used to keep track of current point being used
 		bool interior;		// interior ring = true. only meaningful for polygons
 		bool valid;		// true if geometry is valid, or false if construction failed, improve by using exception
 		Point * pt_buffer;	// holds the current point
+		SGeometry(SGeometry &);
+		SGeometry operator=(const SGeometry &);
 
 		public:
 
@@ -72,6 +76,7 @@ namespace nccfdriver
 		 * baseVarId - the id of a variable with a geometry container attribute 
 		 */
 		SGeometry(int ncId, int baseVarId); 
+		~SGeometry();
 	};
 
 	// Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h

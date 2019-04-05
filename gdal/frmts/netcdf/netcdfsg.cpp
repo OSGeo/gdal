@@ -4,63 +4,102 @@
 // Author: wchen329
 #include <cstdio>
 #include <cstring>
+#include <vector>
 #include "netcdf.h"
 #include "netcdfdataset.h"
 #include "netcdfsg.h"
 namespace nccfdriver
 {
-	// Private Helpers
-
-	/* Attribute-Gets
+	/* Attribute Fetch
+	 * -
 	 * A function which makes it a bit easier to fetch single string attribute values
-	 * attrgets returns 0 on success, some non-zero value on failure
+	 * attrgets returns a char. seq. on success, nullptr on failure 
 	 * attrgets takes in ncid and varId in which to look for the attribute with name attrName 
-	 * then it fills bufOut with the attribute value 
+	 *
+	 * The returned char. seq. must be free'd afterwards
 	 */
-	static int attrgets(int ncid, int varId, size_t buffer_length, char * attrName, char * bufOut)
+	char* attrf(int ncid, int varId, const char * attrName)
 	{
+		size_t len = 0;
+		nc_inq_attlen(ncid, varId, attrName, &len);
 		
+		// If not one value, error
+		if(len != 1)
+		{
+			return nullptr;
+		}	
+
+		char ** attr_vals = new char*[1];
+		// Now look through this variable for the attribute
+		if(nc_get_att_string(ncid, varId, attrName, attr_vals) != NC_NOERR)
+		{
+			delete[] attr_vals;
+			return nullptr;		
+		}
+
+		char * ret = new char[strlen(attr_vals[0])];
+		strcpy(ret, attr_vals[0]);
+		nc_free_string(len, attr_vals);
+		delete[] attr_vals;
+		return ret;
 	}
 
-	// Point
+	/* Point
+	 * (implementations)
+	 *
+	 */
 	Point::~Point()
 	{
 		delete[] this->values;
 	}
 
-	// SGeometry
+	/* SGeometry 
+	 * (implementations)
+	 *
+	 */
 	SGeometry::SGeometry(int ncId, int baseVarId) : base_varId(baseVarId)
 	{
-		size_t len = 0;
-		nc_inq_attlen(ncId, baseVarId, CF_SG_GEOMETRY, &len); 
-		// If not one value, error 
-		if(len != 1)
-		{
-			this -> valid = false;
-			return;
-		}
-	
-		char ** attr_vals = new char*[1];
+		char * attrVal = nullptr;
 		// Look through base variable, for geometry_container
-		if(nc_get_att_string(ncId, baseVarId, CF_SG_GEOMETRY, attr_vals) != NC_NOERR) {
-			this -> valid = false;
+		if((attrVal = attrf(ncId, baseVarId, CF_SG_GEOMETRY)) == nullptr)
+		{
 			return;	
-			delete[] attr_vals;
 		}
 
 		// Find geometry type
-		this->type = getGeometryType(ncId, attr_vals[0]);
+		this->type = getGeometryType(ncId, attrVal); 
+		delete attrVal;	
 
 		// Once found, go to open geometry_container variable	
 		int geoVarId = 0;
-		nc_inq_varid(ncId, attr_vals[0], &geoVarId);
+		char * cart = nullptr;
+		
+		if(nc_inq_varid(ncId, attrVal, &geoVarId) != NC_NOERR)
+		   if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr)
+		{
+			return;
+		}
 
-
-		// Now geometry_container is open, look for node_coordinates, assign the following
 		// (1) the touple order for a single point
 		// (2) the variable ids with the relevant coordinate values
 		// (3) initialize the point buffer
+		char * dim = strtok(cart,  " ");
+		int axis_id = 0;
+		
+		while(dim != NULL)
+		{
+			if(nc_inq_varid(ncId, dim, &axis_id) == NC_NOERR) { this->touple_order++;
+				this->nodec_varIds.push_back(axis_id);
+			}
 
+			dim = strtok(NULL, " ");
+
+		}
+
+		delete cart;
+
+		this->pt_buffer = new Point(this->touple_order);
+		
 		// Set other values accordingly
 		this->base_varId = baseVarId;
 		this->gc_varId = geoVarId; 
@@ -69,21 +108,33 @@ namespace nccfdriver
 		if(this->type == POLYGON)
 		{
 			// still to implement
-			this->interior = false;	// stub
+			this->interior = false;
 		}
 		else this->interior = false;
 
-		nc_free_string(len, attr_vals);
-		delete[] attr_vals;
 		this -> valid = true;
+	}
+
+	SGeometry::~SGeometry()
+	{
+		delete this->pt_buffer;
 	}
 
 	Point* SGeometry::next_pt()
 	{
 		// Fill pt
-
+		if(!this->has_next_pt())
+		{
+			return nullptr;
+		}
 		// New pt now
-		return this->pt_buffer;	
+		for(int order; order < touple_order; order++)
+		{
+			Point& pt = *this->pt_buffer;
+			pt[order] = 0;
+		}	
+		
+		return (this->pt_buffer);	
 	}
 
 	bool SGeometry::has_next_pt()
@@ -96,6 +147,7 @@ namespace nccfdriver
 
 	void SGeometry::next_geometry()
 	{
+		
 		// stub
 	}
 
@@ -107,33 +159,20 @@ namespace nccfdriver
 
 	// Helpers
 	// following is a short hand for a clean up and exit, since goto isn't allowed
-	#define getCFMinorVersionExit delete[] attr_vals; nc_free_string(len, attr_vals); return minor_ver;	
 	int getCFMinorVersion(int ncid)
 	{
 		bool is_CF_conv = false;
 		int minor_ver = -1;
-
-		// Allocate a large enough buffer	
-		size_t len = 0;
-		nc_inq_attlen(ncid, NC_GLOBAL, NCDF_CONVENTIONS, &len);
-
-		// If not one value, error 
-		if(len != 1)
-		{
-			return -1;
-		}	
-
-		char ** attr_vals = new char*[1];
+		char * attrVal = nullptr;
 
 		// Fetch the CF attribute
-		if(nc_get_att_string(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attr_vals) != NC_NOERR)
+		if((attrVal = attrf(ncid, NC_GLOBAL, NCDF_CONVENTIONS)) == nullptr)
 		{
-			delete[] attr_vals;
 			return minor_ver;
 		}
 
 		// Fetched without errors, now traverse	
-		char * parse = strtok(attr_vals[0], "-");
+		char * parse = strtok(attrVal, "-");
 		while(parse != NULL)
 		{
 			// still todo, look for erroneous standards
@@ -149,12 +188,12 @@ namespace nccfdriver
 				// ensure correct formatting and only singly defined
 				if(strlen(parse) < 3 || minor_ver >= 0)
 				{
-					getCFMinorVersionExit 
+					return minor_ver;
 				}	
 
 				if(parse[1] != ',')
 				{
-					getCFMinorVersionExit 
+					return minor_ver;	
 				}
 
 				char * minor = parse + sizeof(char) * 2;
@@ -173,15 +212,14 @@ namespace nccfdriver
 			else
 			{
 				minor_ver = -1;
-				getCFMinorVersionExit 
+				return minor_ver;	
 			}
 
 			parse = strtok(NULL, "-");
 		}
 	
 	
-		nc_free_string(len, attr_vals);	
-		delete[] attr_vals;
+		delete attrVal;
 		return minor_ver;
 	}
 
