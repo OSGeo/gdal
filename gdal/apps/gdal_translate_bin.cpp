@@ -269,7 +269,9 @@ MAIN_START(argc, argv)
 
     if ( psOptionsForBinary->pszFormat == nullptr )
     {
-        hOutDriver = GDALIdentifyDriver( psOptionsForBinary->pszDest, nullptr );
+        hOutDriver = GDALGetDriverByName(
+                GetOutputDriverForRaster( psOptionsForBinary->pszDest )
+            );
     }
     else
     {
