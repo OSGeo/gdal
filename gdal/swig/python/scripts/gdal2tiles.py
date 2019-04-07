@@ -2322,8 +2322,8 @@ class GDAL2Tiles(object):
             <title>%(htmltitle)s</title>
 
             <!-- Leaflet -->
-            <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
-            <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
 
             <style>
                 body { margin:0; padding:0; }
@@ -2866,7 +2866,7 @@ def multi_threaded_tiling(input_file, output_folder, options):
 
     if options.verbose:
         print("Tiles details calc complete.")
-        
+
     if not options.verbose and not options.quiet:
         progress_bar = ProgressBar(len(tile_details))
         progress_bar.start()
