@@ -34,7 +34,7 @@ tar xzf sqlite-autoconf-3250100.tar.gz
 (cd sqlite-autoconf-3250100 && ./configure --host=arm-linux-androideabi --prefix=/tmp/install && make -j3 && make install)
 
 # Build proj
-(cd proj;  ./autogen.sh && PKG_CONFIG_PATH=/tmp/install/lib/pkgconfig ./configure --host=arm-linux-androideabi --prefix=/tmp/install && make -j3 && make install)
+(cd proj;  ./autogen.sh && PKG_CONFIG_PATH=/tmp/install/lib/pkgconfig ./configure --host=arm-linux-androideabi --prefix=/tmp/install --disable-static && make -j3 && make install)
 
 cd gdal
 ./configure --host=arm-linux-androideabi --with-proj=/tmp/install --with-sqlite3=/tmp/install
