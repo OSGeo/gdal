@@ -1473,12 +1473,10 @@ PG_CONFIG=no
 
 AC_ARG_WITH(pg,
 	    AS_HELP_STRING([--with-pg[=ARG]],
-	       [Include PostgreSQL GDAL/OGR Support (ARG=path to pg_config)]),,)
+	       [Include PostgreSQL GDAL/OGR Support (ARG=yes,no)]),,)
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
-  AC_PATH_PROG(PG_CONFIG, pg_config, no)
-else
-  PG_CONFIG=$with_pg
+  PG_CONFIG=yes
 fi
 
 AC_MSG_CHECKING([for PostgreSQL])
@@ -1492,23 +1490,24 @@ if test "x$PG_CONFIG" = "xno" ; then
   AC_MSG_RESULT([no])
 
 else
-  if test -d ${PG_CONFIG} ; then
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a directory.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
-  fi
 
-  if test \! -x ${PG_CONFIG} ; then
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a not an executable file.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
-  fi
-
-  AC_MSG_RESULT([yes])
-
-  AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no,-L`$PG_CONFIG --libdir`)
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([PQ],[libpq > 9.1], [HAVE_PG=yes], [HAVE_PG=no])
 
   if test "${HAVE_PG}" = "yes" ; then
-    LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
-    PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
+    PG_LIB="${PQ_LIBS}"
+    PG_INC="${PQ_CFLAGS}"
+    SAVED_LIBS="${LIBS}"
+    LIBS="${PG_LIBS}"
+    AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no)
+    LIBS="${SAVED_LIBS}"
+    if test "${HAVE_PG}" = "yes" ; then
+      LIBS="${PG_LIB} ${LIBS}"
+    fi
+  else
+    if "x$with_pg" = "xyes"; then
+      AC_MSG_ERROR([--with-pg was requested, but libpq is not available])
+    fi
   fi
 
 fi
