@@ -72,3 +72,4 @@ sudo chroot "$chroot" ldconfig
 
 wget https://github.com/mongodb/mongo-c-driver/releases/download/1.13.0/mongo-c-driver-1.13.0.tar.gz
 wget https://github.com/mongodb/mongo-cxx-driver/archive/r3.4.0.tar.gz
+wget -O TileDB-1.5.0.tar.gz https://github.com/TileDB-Inc/TileDB/archive/1.5.0.tar.gz
