@@ -216,7 +216,10 @@ TileDBRasterBand::TileDBRasterBand(
 
     m_query.reset(new tiledb::Query( *poGDS->m_ctx, *poGDS->m_array ) );
     
-    m_query->set_layout( TILEDB_GLOBAL_ORDER );
+    if ( eAccess == GA_Update)
+        m_query->set_layout( TILEDB_GLOBAL_ORDER );
+    else
+        m_query->set_layout( TILEDB_ROW_MAJOR );
 
      // initialize to complete image block layout
     std::vector<size_t> oaSubarray = { 0, 
@@ -226,7 +229,7 @@ TileDBRasterBand::TileDBRasterBand(
                                     size_t( nBand ),
                                     size_t( nBand ) };
 
-    if ( eAccess == GA_Update || EQUAL( TILEDB_VALUES, osAttrName ) )
+    if ( EQUAL( TILEDB_VALUES, osAttrName ) )
     {
         m_query->set_subarray( oaSubarray );
     }
