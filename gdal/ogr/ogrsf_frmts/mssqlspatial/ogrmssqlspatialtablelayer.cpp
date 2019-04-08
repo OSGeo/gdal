@@ -716,22 +716,26 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExten
 
         if (poDS->sMSSQLVersion.nMajor >= 11) {
             // SQLServer 2012 or later:
-
+            // geography is converted to geometry to obtain the rectangular envelope
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
-                poStmt->Appendf("WITH extent(extentcol) AS (SELECT geography::EnvelopeAggregate(%s) AS extentcol FROM [%s].[%s])", pszGeomColumn, pszSchemaName, pszTableName);
+                poStmt->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid()) as extentcol FROM [%s].[%s])", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
             else
-                poStmt->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(%s) AS extentcol FROM [%s].[%s])", pszGeomColumn, pszSchemaName, pszTableName);
+                poStmt->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(%s.MakeValid()) AS extentcol FROM [%s].[%s])", pszGeomColumn, pszSchemaName, pszTableName);
 
-            poStmt->Appendf("SELECT COALESCE(extentcol.STPointN(1).STX, 0) as MinX, COALESCE(extentcol.STPointN(1).STY, 0) as MinY,");
-            poStmt->Appendf("COALESCE(extentcol.STPointN(3).STX, 0) as MaxX, COALESCE(extentcol.STPointN(3).STY, 0) as MaxY FROM extent;");
-
+            poStmt->Appendf("SELECT extentcol.STPointN(1).STX, extentcol.STPointN(1).STY,");
+            poStmt->Appendf("extentcol.STPointN(3).STX, extentcol.STPointN(3).STY FROM extent;");
         }
         else
         {
             // Before 2012 use two CTE's:
-            poStmt->Appendf("WITH ENVELOPE as (SELECT %s.STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszSchemaName, pszTableName);
-            poStmt->Appendf("      CORNERS  as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE)");
-            poStmt->Appendf("SELECT COALESCE(MIN(point.STX), 0) as MinX, COALESCE(MIN(point.STY), 0) as MinY, COALESCE(MAX(point.STX),0) as MaxX, COALESCE(MAX(point.STY),0) as MaxY FROM CORNERS;");
+            // geography is converted to geometry to obtain the envelope
+            if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+                poStmt->Appendf("WITH ENVELOPE as (SELECT geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
+            else
+                poStmt->Appendf("WITH ENVELOPE as (SELECT %s.MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszSchemaName, pszTableName);
+            
+            poStmt->Appendf(" CORNERS as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE)");
+            poStmt->Appendf("SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), MAX(point.STY) FROM CORNERS;");
         }
 
         // Execute
