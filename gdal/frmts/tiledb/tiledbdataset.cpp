@@ -97,7 +97,7 @@ class TileDBDataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData);
         static void             ErrorHandler( const std::string& msg );
-        static char**           SetBlockSize( GDALRasterBand* poBand,
+        static void             SetBlockSize( GDALRasterBand* poBand,
                                                 char ** &papszOptions );
 
 };
@@ -1261,7 +1261,7 @@ CPLErr TileDBDataset::CreateAttribute( GDALDataType eType,
 /*                              SetBlockSize()                          */
 /************************************************************************/
 
-char** TileDBDataset::SetBlockSize( GDALRasterBand* poBand, char** &papszOptions)
+void TileDBDataset::SetBlockSize( GDALRasterBand* poBand, char** &papszOptions)
 
 {
     int nX = 0;
@@ -1281,8 +1281,6 @@ char** TileDBDataset::SetBlockSize( GDALRasterBand* poBand, char** &papszOptions
                             papszOptions, "BLOCKYSIZE",
                             CPLString().Printf( "%d", nY ) );
     }
-
-    return papszOptions;
 }
 
 /************************************************************************/
@@ -1636,7 +1634,7 @@ TileDBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError(CE_Failure, CPLE_NotSupported,
             "TileDB driver does not support "
             "appending to an existing schema.");
-        return nullptr;                   
+        return nullptr;
     }
 
     char** papszCopyOptions = CSLDuplicate( papszOptions );
@@ -1660,14 +1658,14 @@ TileDBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         "source dataset with different band data types.");
                     CSLDestroy( papszCopyOptions );
                     return nullptr;
-                }               
+                }
             }
-            
+
             poDstDS = ( TileDBDataset* ) TileDBDataset::Create( pszFilename, 
                         poSrcDS->GetRasterXSize(),
                         poSrcDS->GetRasterYSize(), 
                         nBands, eType, papszOptions );
-            
+
             CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDstDS,
                                             papszOptions, pfnProgress,
                                             pProgressData );
@@ -1701,7 +1699,8 @@ TileDBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                 "Changing block size is not supported when copying subdatasets.");
-            return nullptr;                   
+            CSLDestroy( papszCopyOptions );
+            return nullptr;
         }
 
         const int nSubDatasetCount = CSLCount( papszSrcSubDatasets ) / 2;
@@ -1719,11 +1718,11 @@ TileDBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 {
                     GDALRasterBand* poBand = poSubDataset->GetRasterBand( 1 );
 
-                    papszOptions = TileDBDataset::SetBlockSize( poBand, papszCopyOptions );
+                    TileDBDataset::SetBlockSize( poBand, papszCopyOptions );
 
                     poDstDS = TileDBDataset::CreateLL(
                                 pszFilename, poBand->GetXSize(),
-                                poBand->GetYSize(), 0, papszOptions );
+                                poBand->GetYSize(), 0, papszCopyOptions );
 
                     if ( TileDBDataset::CopySubDatasets( poSrcDS, poDstDS,
                                             pfnProgress, pProgressData ) != CE_None )
