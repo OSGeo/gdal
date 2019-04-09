@@ -38,7 +38,7 @@ import gdaltest
 def test_tiledb_write_complex():
     gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
 
-    src_ds = gdal.Open('data/cfloat64.tif')
+    src_ds = gdal.Open('../gcore/data/cfloat64.tif')
 
     new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_complex64', src_ds)
 
@@ -54,7 +54,7 @@ def test_tiledb_write_complex():
 def test_tiledb_write_custom_blocksize():
     gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
 
-    src_ds = gdal.Open('data/utmsmall.tif')
+    src_ds = gdal.Open('../gcore/data/utmsmall.tif')
 
     options = ['BLOCKXSIZE=32', 'BLOCKYSIZE=32']
 
@@ -74,7 +74,7 @@ def test_tiledb_write_custom_blocksize():
 def test_tiledb_write_rgb():
     gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
 
-    src_ds = gdal.Open('data/rgbsmall.tif')
+    src_ds = gdal.Open('../gcore/data/rgbsmall.tif')
 
     new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_rgb', src_ds)
 
