@@ -59,6 +59,7 @@ class TileDBDataset : public GDALPamDataset
         bool          bHasSubDatasets = false;
         int           nSubDataCount = 0;
         char          **papszSubDatasets = nullptr;
+        CPLStringList m_osSubdatasetMD{};
         CPLXMLNode*   psSubDatasetsTree = nullptr;
 
         std::unique_ptr<tiledb::Context> m_ctx;
@@ -711,29 +712,32 @@ char **TileDBDataset::GetMetadata(const char *pszDomain)
 {
     if( pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS") )
     {
-        char** papszMeta = GDALPamDataset::GetMetadata( pszDomain );
-        int n = CSLCount( papszMeta );
-        for ( int i = 0; i < n; i += 2 )
+        char** papszMeta = CSLDuplicate(GDALPamDataset::GetMetadata( pszDomain ));
+        for ( int i = 0; papszMeta && papszMeta[i]; i++ )
         {
-            CPLString osName;
-            osName.Printf( "SUBDATASET_%d_NAME", (i / 2) + 1 );
-            char* pszAttr = papszMeta[i] + osName.size() + 1;
-
-            if ( !STARTS_WITH( pszAttr, "TILEDB:" ) )
+            if( STARTS_WITH(papszMeta[i], "SUBDATASET_") &&
+                strstr(papszMeta[i], "_NAME=") )
             {
-                CPLFree( papszMeta[i] );
-    
-                papszMeta[i] =  CPLStrdup(
-                    CPLString().Printf(
-                        "%s=TILEDB:\"%s\":%s",
-                        osName.c_str(),
-                        GetDescription(),
-                        pszAttr
-                    )
-                );
+                char* pszKey = nullptr;
+                const char* pszAttr = CPLParseNameValue(papszMeta[i], &pszKey);
+                if ( pszAttr && !STARTS_WITH( pszAttr, "TILEDB:" ) )
+                {
+                    CPLString osAttr(pszAttr);
+                    CPLFree( papszMeta[i] );
+                    papszMeta[i] =  CPLStrdup(
+                        CPLString().Printf(
+                            "%s=TILEDB:\"%s\":%s",
+                            pszKey,
+                            GetDescription(),
+                            osAttr.c_str()
+                        )
+                    );
+                }
+                CPLFree(pszKey);
             }
         }
-        return papszMeta;
+        m_osSubdatasetMD.Assign(papszMeta);
+        return m_osSubdatasetMD.List();
     }
     else
     {
@@ -1031,8 +1035,8 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
                 if ( ( CSLCount( papszMeta ) / 2 ) == 1 )
                 {
                     CPLString osDSName =
-                        CSLFetchNameValue(poDS->papszSubDatasets,
-                                            "SUBDATASET_1_NAME");
+                        CSLFetchNameValueDef(poDS->papszSubDatasets,
+                                            "SUBDATASET_1_NAME", "");
                     delete poDS;
                     return (GDALDataset *)GDALOpen( osDSName, poOpenInfo->eAccess );
                 }
@@ -1399,36 +1403,63 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
                                     void *pProgressData )
 
 {
-    std::vector<GDALDataset*> apoDatasets;
+    std::vector<std::unique_ptr<GDALDataset>> apoDatasets;
     poDstDS->bHasSubDatasets = true;
     char ** papszSrcSubDatasets = poSrcDS->GetMetadata( "SUBDATASETS" );
-    char* pszSource = CPLStrdup( strstr( papszSrcSubDatasets[0], "=" ) + 1 );
-    char* pszAttrName = CPLStrdup( strstr ( strstr( papszSrcSubDatasets[0], ":" ) + 1 , ":" ) + 1 );
+    if( !papszSrcSubDatasets )
+        return CE_Failure;
+    const char* pszSubDSName = CSLFetchNameValue(papszSrcSubDatasets,
+                                                      "SUBDATASET_1_NAME");
+    if( !pszSubDSName )
+        return CE_Failure;
 
+    CPLStringList apszTokens(
+            CSLTokenizeString2(pszSubDSName, ":",
+                            CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES));
+    // FIXME? this is tailored for HDF5-like subdataset names
+    // HDF5:foo.hdf5:attrname.
+    if( apszTokens.size() != 3 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot guess attribute name in %s", pszSubDSName);
+        return CE_Failure;
+    }
 
-    GDALDataset* poSubDataset = (GDALDataset *) GDALOpen( pszSource, GA_ReadOnly );
-    apoDatasets.push_back( poSubDataset );
+    std::unique_ptr<GDALDataset> poSubDataset(GDALDataset::Open(pszSubDSName));
+    if( poSubDataset.get() == nullptr || poSubDataset->GetRasterCount() == 0 )
+    {
+        return CE_Failure;
+    }
 
     size_t nSubXSize = poSubDataset->GetRasterXSize();
     size_t nSubYSize = poSubDataset->GetRasterYSize();   
 
+    const char* pszAttrName = apszTokens[2];
     poDstDS->CreateAttribute( poSubDataset->GetRasterBand( 1 )
                                                 ->GetRasterDataType(),
                                             pszAttrName,
                                             poSubDataset->GetRasterCount() );
+    apoDatasets.push_back( std::move(poSubDataset) );
 
-    CPLFree( pszAttrName );
-    CPLFree( pszSource );
-
-    for( int i = 2; papszSrcSubDatasets[i] != nullptr; i += 2 )
+    for( int i = 0; papszSrcSubDatasets[i] != nullptr; i ++ )
     {
-        pszSource = CPLStrdup(strstr(papszSrcSubDatasets[i],"=")+1);
-        pszAttrName = CPLStrdup( strstr ( 
-                        strstr( papszSrcSubDatasets[i], ":" ) + 1 ,
-                        ":" ) + 1 );
+        if( STARTS_WITH_CI(papszSrcSubDatasets[i], "SUBDATASET_1_NAME=") ||
+            strstr(papszSrcSubDatasets[i], "_DESC=") )
+        {
+            continue;
+        }
+        pszSubDSName = CPLParseNameValue(papszSrcSubDatasets[i], nullptr);
+        apszTokens =
+            CSLTokenizeString2(pszSubDSName, ":",
+                            CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
+        if( apszTokens.size() != 3 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot guess attribute name in %s", pszSubDSName);
+            continue;
+        }
 
-        GDALDataset* poSubDS = (GDALDataset *) GDALOpen( pszSource, GA_ReadOnly );
-
+        std::unique_ptr<GDALDataset> poSubDS(GDALDataset::Open(pszSubDSName));
         if ( ( poSubDS != nullptr ) && poSubDS->GetRasterCount() > 0 )
         {
             GDALRasterBand* poBand = poSubDS->GetRasterBand( 1 );
@@ -1443,15 +1474,15 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
                 CPLError( CE_Warning, CPLE_AppDefined,
                     "Sub-datasets must have the same dimension,"
                     " and block sizes, skipping %s\n",
-                    pszSource );
-                GDALClose( poSubDS );
+                    pszSubDSName );
             }
             else
             {
-                apoDatasets.push_back( poSubDS );
+                pszAttrName = apszTokens[2];
                 poDstDS->CreateAttribute(
                     poSubDS->GetRasterBand(1)->GetRasterDataType(),
                     pszAttrName, poSubDS->GetRasterCount() );
+                apoDatasets.push_back( std::move(poSubDS) );
             }
         }
         else
@@ -1459,12 +1490,8 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
             CPLError( CE_Warning, CPLE_AppDefined,
                 "Sub-datasets must be not null and contain data in bands," 
                 "skipping %s\n",
-                pszSource );
-            GDALClose( poSubDS );
+                pszSubDSName );
         }
-        
-        CPLFree( pszAttrName );
-        CPLFree( pszSource );
     }
 
     poDstDS->SetMetadata( poDstDS->papszSubDatasets, "SUBDATASETS" );
@@ -1480,8 +1507,6 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
     {
         CPLError( CE_Failure, CPLE_UserInterrupt,
                 "User terminated CreateCopy()" );
-        for ( auto poDS : apoDatasets )
-            GDALClose( (GDALDatasetH) poDS );
         return CE_Failure;
     }
 
@@ -1498,7 +1523,7 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
             std::vector<void*> aBlocks;
             // have to write set all tiledb attributes on write
             int iAttr = 0;
-            for ( auto poSubDS : apoDatasets )
+            for ( auto& poSubDS : apoDatasets )
             {
                 GDALDataType eDT = poSubDS->GetRasterBand( 1 )->
                                             GetRasterDataType();
@@ -1535,8 +1560,6 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
 
             if ( status == tiledb::Query::Status::FAILED )
             {
-                for ( auto poDS : apoDatasets )
-                    GDALClose( (GDALDatasetH) poDS );
                 return CE_Failure;
             }
 
@@ -1547,8 +1570,6 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt,
                         "User terminated CreateCopy()" );
-                for ( auto poDS : apoDatasets )
-                    GDALClose( (GDALDatasetH) poDS );
                 return CE_Failure;
             }
 
@@ -1556,9 +1577,6 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
     }
 
     query.finalize();
-
-    for ( auto poDS : apoDatasets )
-        GDALClose( (GDALDatasetH) poDS );
 
     return CE_None;
 }
