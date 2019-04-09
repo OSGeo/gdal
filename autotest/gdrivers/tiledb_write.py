@@ -108,4 +108,7 @@ def test_tiledb_write_subdatasets():
     assert src_ds.GetRasterBand(1).Checksum() == 42472
     src_ds = None
 
+    src_ds = gdal.Open('TILEDB:"tmp/test_sds_array":i_dont_exist')
+    assert not src_ds
+
     gdaltest.tiledb_drv.Delete('tmp/test_sds_array')

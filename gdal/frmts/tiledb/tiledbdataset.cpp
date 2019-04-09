@@ -602,7 +602,7 @@ CPLErr TileDBDataset::TrySaveXML()
 /*                           TryLoadXML()                               */
 /************************************************************************/
 
-CPLErr TileDBDataset::TryLoadXML( CPL_UNUSED char **papszSiblingFiles )
+CPLErr TileDBDataset::TryLoadXML( char ** /*papszSiblingFiles*/ )
 
 {
     PamInitialize();
@@ -687,13 +687,15 @@ CPLErr TileDBDataset::TryLoadXML( CPL_UNUSED char **papszSiblingFiles )
         CPLDestroyXMLNode( psTree );
         psTree = psSubTree;
     }
+    if( psTree == nullptr )
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize ourselves from this XML tree.                        */
 /* -------------------------------------------------------------------- */
 
-    CPLString osVRTPath(CPLGetPath(psPam->pszPamFilename));
-    const CPLErr eErr = XMLInit( psTree, osVRTPath );
+    CPLString osPath(CPLGetPath(psPam->pszPamFilename));
+    const CPLErr eErr = XMLInit( psTree, osPath );
 
     CPLDestroyXMLNode( psTree );
 
