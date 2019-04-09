@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$")
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
+#ifdef HAVE_PDF_READ_SUPPORT
 
 /************************************************************************/
 /*                        OpenVectorLayers()                            */
@@ -245,7 +245,7 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj,
     if (nRecLevel == 16)
         return;
 
-    std::pair<int,int> oObjPair( poObj->GetRefNum(), poObj->GetRefGen() );
+    std::pair<int,int> oObjPair( poObj->GetRefNum().toInt(), poObj->GetRefGen() );
     if( aoSetAlreadyVisited.find( oObjPair ) != aoSetAlreadyVisited.end() )
         return;
     aoSetAlreadyVisited.insert( oObjPair );
@@ -1651,11 +1651,11 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
             {
                 const char* pszKey = oIter->first.c_str();
                 GDALPDFObject* poObj = oIter->second;
-                if( poObj->GetRefNum() != 0 )
+                if( poObj->GetRefNum().toBool() )
                 {
                     std::map< std::pair<int, int>, OGRPDFLayer *>::iterator
                         oIterNumGenToLayer = oMapNumGenToLayer.find(
-                            std::pair<int,int>(poObj->GetRefNum(), poObj->GetRefGen()) );
+                            std::pair<int,int>(poObj->GetRefNum().toInt(), poObj->GetRefGen()) );
                     if( oIterNumGenToLayer != oMapNumGenToLayer.end() )
                     {
                         oMapPropertyToLayer[pszKey] = oIterNumGenToLayer->second;
@@ -1708,4 +1708,4 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
     }
 }
 
-#endif /* defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM) */
+#endif /* HAVE_PDF_READ_SUPPORT */

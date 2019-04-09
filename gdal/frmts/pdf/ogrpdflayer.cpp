@@ -30,7 +30,7 @@
 
 CPL_CVSID("$Id$")
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
+#ifdef HAVE_PDF_READ_SUPPORT
 
 /************************************************************************/
 /*                            OGRPDFLayer()                             */
@@ -168,7 +168,7 @@ int OGRPDFLayer::TestCapability( const char * pszCap )
         return OGRMemLayer::TestCapability(pszCap);
 }
 
-#endif /* defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM) */
+#endif /* HAVE_PDF_READ_SUPPORT */
 
 /************************************************************************/
 /*                        OGRPDFWritableLayer()                         */
