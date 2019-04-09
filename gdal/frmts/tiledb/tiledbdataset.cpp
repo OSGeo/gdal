@@ -62,7 +62,7 @@ class TileDBDataset : public GDALPamDataset
         int           nSubDataCount;
         char          **papszSubDatasets;
         CPLXMLNode*   psSubDatasetsTree = nullptr;
-        
+
         std::unique_ptr<tiledb::Context> m_ctx;
         std::unique_ptr<tiledb::Array> m_array;
         std::unique_ptr<tiledb::ArraySchema> m_schema;
@@ -373,23 +373,22 @@ CPLErr TileDBRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
                && nBlockYOff >= 0
                && pImage != nullptr );
 
-        SetBuffer( m_query.get(), eDataType, osAttrName, 
-                    pImage, nBlockXSize * nBlockYSize );
+    SetBuffer( m_query.get(), eDataType, osAttrName, 
+                pImage, nBlockXSize * nBlockYSize );
 
-        if ( bStats )
-            tiledb::Stats::enable();
+    if ( bStats )
+        tiledb::Stats::enable();
 
-        auto status = m_query->submit();
+    auto status = m_query->submit();
 
-        if ( bStats )
-        {
-            tiledb::Stats::dump(stdout);
-            tiledb::Stats::disable();
-        }
+    if ( bStats )
+    {
+        tiledb::Stats::dump(stdout);
+        tiledb::Stats::disable();
+    }
 
-        if (status == tiledb::Query::Status::FAILED)
-            return CE_Failure;
-    // }
+    if (status == tiledb::Query::Status::FAILED)
+        return CE_Failure;
 
     return CE_None;
 }
@@ -468,7 +467,7 @@ CPLErr TileDBDataset::TrySaveXML()
 /*      Build the XML representation of the auxiliary metadata.          */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psTree = SerializeToXML( nullptr );
- 
+
     if( psTree == nullptr )
     {
         /* If we have unset all metadata, we have to delete the PAM file */
@@ -696,8 +695,6 @@ CPLErr TileDBDataset::TryLoadXML( CPL_UNUSED char **papszSiblingFiles )
 
     CPLString osVRTPath(CPLGetPath(psPam->pszPamFilename));
     const CPLErr eErr = XMLInit( psTree, osVRTPath );
-
-    // add TileDB required parameters to the PAM tree
 
     CPLDestroyXMLNode( psTree );
 
@@ -968,9 +965,6 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->eDataType = static_cast<GDALDataType>( atoi( pszDataType ) );
     }
-
-    // // update current PAM so this isn't overwritten
-    // poDS->SetMetadata( papszStructMeta, "IMAGE_STRUCTURE");
 
     poDS->eAccess = poOpenInfo->eAccess;
 
