@@ -59,8 +59,8 @@ class TileDBDataset : public GDALPamDataset
         int           nBlocksX = 0;
         int           nBlocksY = 0;
         bool          bHasSubDatasets = false;
-        int           nSubDataCount;
-        char          **papszSubDatasets;
+        int           nSubDataCount = 0;
+        char          **papszSubDatasets = nullptr;
         CPLXMLNode*   psSubDatasetsTree = nullptr;
 
         std::unique_ptr<tiledb::Context> m_ctx;
