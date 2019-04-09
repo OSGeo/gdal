@@ -823,18 +823,19 @@ int TileDBDataset::Identify( GDALOpenInfo * poOpenInfo )
     }
     else if( poOpenInfo->bIsDirectory )
     {
+        char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
         const char* pszArrayName = CPLGetBasename( poOpenInfo->pszFilename ); 
-        const int nMaxFiles =
-            atoi(CPLGetConfigOption( "GDAL_READDIR_LIMIT_ON_OPEN", "1000" ) );
-        char** papszSiblingFiles = VSIReadDirEx( 
-                                    poOpenInfo->pszFilename,
-                                    nMaxFiles );
-
         CPLString osAux;
-        osAux.Printf( "%s.tdb.aux.xml", pszArrayName );        
-        if( CSLFindString( papszSiblingFiles, osAux ) != -1 )
+        osAux.Printf( "%s.tdb.aux.xml", pszArrayName );
+        if( papszSiblingFiles )
         {
-            return TRUE;
+            return CSLFindString( papszSiblingFiles, osAux ) != -1;
+        }
+        else
+        {
+            VSIStatBufL sStat;
+            const char* pszAuxFilename = CPLFormFilename(poOpenInfo->pszFilename, osAux, nullptr);
+            return VSIStatL( pszAuxFilename, &sStat ) == 0;
         }
     }
     return FALSE;
