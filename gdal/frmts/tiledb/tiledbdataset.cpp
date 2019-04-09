@@ -30,8 +30,6 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-#include "tiff.h"
-
 #include "tiledb/tiledb"
 
 CPL_CVSID("$Id$")
@@ -52,7 +50,7 @@ class TileDBDataset : public GDALPamDataset
     friend class TileDBRasterBand;
 
     protected:
-        uint16        nBitsPerSample = 8;
+        int           nBitsPerSample = 8;
         GDALDataType  eDataType = GDT_Unknown;
         int           nBlockXSize = -1;
         int           nBlockYSize = -1;
