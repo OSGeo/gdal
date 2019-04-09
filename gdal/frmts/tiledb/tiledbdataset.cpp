@@ -1710,32 +1710,31 @@ TileDBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if ( nSubDatasetCount <= nMaxFiles )
         {
-            char* pszSource = CPLStrdup( strstr( papszSrcSubDatasets[0], "=" ) + 1 );
-            GDALDataset* poSubDataset = (GDALDataset *) GDALOpen( 
-                                                            pszSource,
-                                                            GA_ReadOnly );
-            if ( poSubDataset->GetRasterCount() > 0 )
+            const char* pszSource = CSLFetchNameValue(
+                papszSrcSubDatasets, "SUBDATASET_1_NAME");
+            if( pszSource )
             {
-                GDALRasterBand* poBand = poSubDataset->GetRasterBand( 1 );
-
-                papszOptions = TileDBDataset::SetBlockSize( poBand, papszCopyOptions );
-
-                poDstDS = TileDBDataset::CreateLL(
-                            pszFilename, poBand->GetXSize(),
-                            poBand->GetYSize(), 0, papszOptions );
-
-                if ( TileDBDataset::CopySubDatasets( poSrcDS, poDstDS,
-                                        pfnProgress, pProgressData ) != CE_None )
+                std::unique_ptr<GDALDataset> poSubDataset(GDALDataset::Open( pszSource ));
+                if ( poSubDataset && poSubDataset->GetRasterCount() > 0 )
                 {
-                    delete poDstDS;
-                    poDstDS = nullptr;
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                        "Unable to copy subdatasets.");                    
+                    GDALRasterBand* poBand = poSubDataset->GetRasterBand( 1 );
+
+                    papszOptions = TileDBDataset::SetBlockSize( poBand, papszCopyOptions );
+
+                    poDstDS = TileDBDataset::CreateLL(
+                                pszFilename, poBand->GetXSize(),
+                                poBand->GetYSize(), 0, papszOptions );
+
+                    if ( TileDBDataset::CopySubDatasets( poSrcDS, poDstDS,
+                                            pfnProgress, pProgressData ) != CE_None )
+                    {
+                        delete poDstDS;
+                        poDstDS = nullptr;
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                            "Unable to copy subdatasets.");                    
+                    }
                 }
             }
-
-            CPLFree( pszSource );
-            GDALClose( poSubDataset );
         }
         else
         {
