@@ -47,6 +47,8 @@ sudo chroot "$chroot" apt-get install -y --allow-unauthenticated python-numpy li
 sudo chroot "$chroot" apt-get install -y doxygen texlive-latex-base make python-dev g++
 #sudo chroot "$chroot" apt-get install -y --allow-unauthenticated libsfcgal-dev
 sudo chroot "$chroot" apt-get install -y --allow-unauthenticated fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev
+# TileDB
+sudo chroot "$chroot" apt-get install -y libtbb-dev
 
 # MSSQL: client side
 sudo chroot "$chroot" sh -c "curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -"

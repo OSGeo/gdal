@@ -42,7 +42,7 @@ chroot "$chroot" sh -c "cd $PWD/proj && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD/proj && make -j3 install && mv /usr/local/lib/libproj.so.15.0.0 /usr/local/lib/libinternalproj.so.15.0.0 && rm /usr/local/lib/libproj.so* && rm /usr/local/lib/libproj.a && rm /usr/local/lib/libproj.la && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so.15 && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so"
 
 # Build tiledb
-chroot "$chroot" sh -c "cd $PWD && tar xzf TileDB-1.5.0.tar.gz && cd TileDB-1.5.0 && mkdir build_cmake && cd build_cmake && ../bootstrap --prefix=/usr/local --disable-tbb && make -j3"
+chroot "$chroot" sh -c "cd $PWD && tar xzf TileDB-1.5.0.tar.gz && cd TileDB-1.5.0 && mkdir build_cmake && cd build_cmake && CC='ccache gcc' CXX='ccache g++' && ../bootstrap --prefix=/usr/local && make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD/TileDB-1.5.0/build_cmake && make -j3 install-tiledb"
 
 # Configure GDAL
