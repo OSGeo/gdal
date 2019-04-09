@@ -30,7 +30,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-#include "tiledb/tiledb"
+#include "tiledb_headers.h"
 
 CPL_CVSID("$Id$")
 
