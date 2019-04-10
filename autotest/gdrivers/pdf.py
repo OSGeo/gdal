@@ -987,7 +987,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     ds = None
 
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-7, 'did not get expected gt'
+        assert abs(got_gt[i] - expected_gt[i]) <= 2e-7, 'did not get expected gt'
 
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
