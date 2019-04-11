@@ -176,6 +176,32 @@ TIFFWriteScanline(TIFF* tif, void* buf, uint32 row, uint16 sample)
 	return (status);
 }
 
+/* Make sure that at the first attempt of rewriting a tile/strip, we will have */
+/* more bytes available in the output buffer than the previous byte count, */
+/* so that TIFFAppendToStrip() will detect the overflow when it is called the first */
+/* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
+static int _TIFFReserveLargeEnoughWriteBuffer(TIFF* tif, uint32 strip_or_tile)
+{
+    TIFFDirectory *td = &tif->tif_dir;
+    if( td->td_stripbytecount[strip_or_tile] > 0 )
+    {
+        /* The +1 is to ensure at least one extra bytes */
+        /* The +4 is because the LZW encoder flushes 4 bytes before the limit */
+        uint64 safe_buffer_size = (uint64)(td->td_stripbytecount[strip_or_tile] + 1 + 4);
+        if( tif->tif_rawdatasize <= (tmsize_t)safe_buffer_size )
+        {
+            if( !(TIFFWriteBufferSetup(tif, NULL,
+                (tmsize_t)TIFFroundup_64(safe_buffer_size, 1024))) )
+                return 0;
+        }
+
+        /* Force TIFFAppendToStrip() to consider placing data at end
+            of file. */
+        tif->tif_curoff = 0;
+    }
+    return 1;
+}
+
 /*
  * Encode the supplied data and write it to the
  * specified strip.
@@ -222,6 +248,13 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
         tif->tif_flags |= TIFF_BUF4WRITE;
 	tif->tif_curstrip = strip;
 
+	if( !_TIFFReserveLargeEnoughWriteBuffer(tif, strip) ) {
+            return ((tmsize_t)(-1));
+        }
+
+        tif->tif_rawcc = 0;
+        tif->tif_rawcp = tif->tif_rawdata;
+
         if (td->td_stripsperimage == 0) {
                 TIFFErrorExt(tif->tif_clientdata, module, "Zero strips per image");
                 return ((tmsize_t) -1);
@@ -233,27 +266,6 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
 			return ((tmsize_t) -1);
 		tif->tif_flags |= TIFF_CODERSETUP;
 	}
-
-	if( td->td_stripbytecount[strip] > 0 )
-        {
-            /* Make sure that at the first attempt of rewriting the tile, we will have */
-            /* more bytes available in the output buffer than the previous byte count, */
-            /* so that TIFFAppendToStrip() will detect the overflow when it is called the first */
-            /* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
-            if( tif->tif_rawdatasize <= (tmsize_t)td->td_stripbytecount[strip] )
-            {
-                if( !(TIFFWriteBufferSetup(tif, NULL,
-                    (tmsize_t)TIFFroundup_64((uint64)(td->td_stripbytecount[strip] + 1), 1024))) )
-                    return ((tmsize_t)(-1));
-            }
-
-	    /* Force TIFFAppendToStrip() to consider placing data at end
-               of file. */
-            tif->tif_curoff = 0;
-        }
-
-    tif->tif_rawcc = 0;
-    tif->tif_rawcp = tif->tif_rawdata;
 
 	tif->tif_flags &= ~TIFF_POSTENCODE;
 
@@ -402,22 +414,8 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
         tif->tif_flags |= TIFF_BUF4WRITE;
 	tif->tif_curtile = tile;
 
-	if( td->td_stripbytecount[tile] > 0 )
-        {
-            /* Make sure that at the first attempt of rewriting the tile, we will have */
-            /* more bytes available in the output buffer than the previous byte count, */
-            /* so that TIFFAppendToStrip() will detect the overflow when it is called the first */
-            /* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
-            if( tif->tif_rawdatasize <= (tmsize_t) td->td_stripbytecount[tile] )
-            {
-                if( !(TIFFWriteBufferSetup(tif, NULL,
-                    (tmsize_t)TIFFroundup_64((uint64)(td->td_stripbytecount[tile] + 1), 1024))) )
-                    return ((tmsize_t)(-1));
-            }
-
-	    /* Force TIFFAppendToStrip() to consider placing data at end
-               of file. */
-            tif->tif_curoff = 0;
+        if( !_TIFFReserveLargeEnoughWriteBuffer(tif, tile) ) {
+            return ((tmsize_t)(-1));
         }
 
 	tif->tif_rawcc = 0;
