@@ -390,9 +390,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
                         "Failed to create coordinate transformation between the "
-                        "input coordinate system and WGS84.  This may be because "
-                        "they are not transformable, or because projection "
-                        "services (PROJ.4 DLL/.so) could not be loaded." );
+                        "input coordinate system and WGS84." );
 
                     return nullptr;
                 }
