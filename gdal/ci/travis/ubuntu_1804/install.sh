@@ -41,12 +41,8 @@ chroot "$chroot" sh -c "cd $PWD/proj && ./autogen.sh && CC='ccache gcc' CXX='cca
 chroot "$chroot" sh -c "cd $PWD/proj && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD/proj && make -j3 install && mv /usr/local/lib/libproj.so.15.0.0 /usr/local/lib/libinternalproj.so.15.0.0 && rm /usr/local/lib/libproj.so* && rm /usr/local/lib/libproj.a && rm /usr/local/lib/libproj.la && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so.15 && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so"
 
-# Build tiledb
-chroot "$chroot" sh -c "cd $PWD && tar xzf TileDB-1.5.0.tar.gz && cd TileDB-1.5.0 && mkdir build_cmake && cd build_cmake && ../bootstrap --prefix=/usr/local && make -j3"
-sudo chroot "$chroot" sh -c "cd $PWD/TileDB-1.5.0/build_cmake && make -j3 install-tiledb"
-
 # Configure GDAL
-chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --with-fgdb=$PWD/FileGDB_API-64gcc51 --with-tiledb"
+chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --with-fgdb=$PWD/FileGDB_API-64gcc51"
 # --enable-debug --with-podofo
 
 chroot "$chroot" sh -c "cd $PWD/gdal && make docs >docs_log.txt 2>&1"
