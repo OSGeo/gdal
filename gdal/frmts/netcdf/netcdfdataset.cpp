@@ -3030,14 +3030,20 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
         CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
                  static_cast<int>(poDS->bBottomUp));
 
-        // Convert ]180,360] longitude values to [-180,180].
+        // Convert ]180,540] longitude values to ]-180,0].
         if( NCDFIsVarLongitude(cdfid, nVarDimXID, nullptr) &&
             CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180",
-                                           "YES")) )
+                                        "YES")) )
         {
             // If minimum longitude is > 180, subtract 360 from all.
-            if( std::min(pdfXCoord[0], pdfXCoord[xdim - 1]) > 180.0 )
+            // Add a check on the maximum X value too, since NCDFIsVarLongitude()
+            // is not very specific by default (see https://github.com/OSGeo/gdal/issues/1440)
+            if( std::min(pdfXCoord[0], pdfXCoord[xdim - 1]) > 180.0 &&
+                std::max(pdfXCoord[0], pdfXCoord[xdim - 1]) <= 540 )
             {
+                CPLDebug("GDAL_netCDF",
+                            "Offseting longitudes from ]180,540] to ]-180,180]. "
+                            "Can be disabled with GDAL_NETCDF_CENTERLONG_180=NO");
                 for( size_t i = 0; i < xdim; i++ )
                         pdfXCoord[i] -= 360;
             }
@@ -3122,11 +3128,12 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
         }
         else
         {
-            bool nWestIsLeft = (pdfXCoord[0] < pdfXCoord[xdim - 1]);
+            bool bWestIsLeft = (pdfXCoord[0] < pdfXCoord[xdim - 1]);
 
             // fix longitudes if longitudes should increase from 
             // west to east, but west > east
-            if (!nWestIsLeft)
+            if (NCDFIsVarLongitude(cdfid, nVarDimXID, nullptr) &&
+                !bWestIsLeft)
             {
                 size_t ndecreases = 0;
 
