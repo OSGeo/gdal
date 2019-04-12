@@ -39,7 +39,7 @@ static void user_read_data(png_structp png_ptr,png_bytep data, png_size_t length
         offset=mem->stream_len;
     /*     printf("SAGrd %ld %ld %x\n",offset,length,ptr);  */
         memcpy(data,ptr+offset,length);
-        mem->stream_len += length;
+        mem->stream_len += (g2int)length;
      }
 }
 
