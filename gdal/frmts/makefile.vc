@@ -203,6 +203,11 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_mrf
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jpegls
 !ENDIF
 
+!IFDEF TILEDB_ENABLED
+EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_tiledb
+!ENDIF
+
+
 default:	o\gdalallregister.obj subdirs
 
 list:
