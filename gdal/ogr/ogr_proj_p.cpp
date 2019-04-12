@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  PROJ-related functionnality
+ * Purpose:  PROJ-related functionality
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************

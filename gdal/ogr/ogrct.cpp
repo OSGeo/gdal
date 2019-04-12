@@ -125,7 +125,7 @@ void OCTDestroyCoordinateTransformationOptions(
 /** \brief Sets an area of interest.
  *
  * The west longitude is generally lower than the east longitude, except for
- * areas of interest that go accross the anti-meridian.
+ * areas of interest that go across the anti-meridian.
  *
  * @param dfWestLongitudeDeg West longitude (in degree). Must be in [-180,180]
  * @param dfSouthLatitudeDeg South latitude (in degree). Must be in [-90,90]
@@ -207,8 +207,8 @@ int OCTCoordinateTransformationOptionsSetAreaOfInterest(
  * SRS.
  *
  * The pipeline may be provided as a PROJ string (single step operation or
- * multiple step string starting with +proj=pipeline), or a WKT2 string
- * describing a CoordinateOperation.
+ * multiple step string starting with +proj=pipeline), a WKT2 string describing
+ * a CoordinateOperation, or a "urn:ogc:def:coordinateOperation:EPSG::XXXX" URN
  *
  * @param pszCO PROJ or WKT string describing a coordinate operation
  * @param bReverseCO Whether the PROJ or WKT string should be evaluated in the reverse path

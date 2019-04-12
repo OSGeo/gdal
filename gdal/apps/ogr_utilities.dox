@@ -261,7 +261,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-progress] [-sql <sql statement>|\@filename] [-dialect dialect]
                [-preserve_fid] [-fid FID] [-limit nb_features]
                [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
-               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] [-ct proj_string]
+               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] [-ct string]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
                [-lco NAME=VALUE] [-nln name]
@@ -375,8 +375,10 @@ GDAL 2.1</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
-<dt> <b>-ct</b> <em>proj_string</em>:</dt><dd> (GDAL &gt;= 2.5)
-PROJ string overriding the default
+<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 2.5)
+A PROJ string (single step operation or multiple step string
+starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
+or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
 transformation from the source to the target CRS. It must take into account the
 axis order of the source and target CRS.</dd>
 <dt> <b>-preserve_fid</b>:</dt><dd>Use the FID of the source features instead of
