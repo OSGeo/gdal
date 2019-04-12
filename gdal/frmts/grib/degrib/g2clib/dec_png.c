@@ -16,9 +16,7 @@ struct png_stream {
 };
 typedef struct png_stream png_stream;
 
-void user_read_data(png_structp , png_bytep , png_uint_32 );
-
-void user_read_data(png_structp png_ptr,png_bytep data, png_uint_32 length)
+static void user_read_data(png_structp png_ptr,png_bytep data, png_size_t length)
 /*
         Custom read function used so that libpng will read a PNG stream
         from memory instead of a file on disk.
@@ -41,7 +39,7 @@ void user_read_data(png_structp png_ptr,png_bytep data, png_uint_32 length)
         offset=mem->stream_len;
     /*     printf("SAGrd %ld %ld %x\n",offset,length,ptr);  */
         memcpy(data,ptr+offset,length);
-        mem->stream_len += length;
+        mem->stream_len += (g2int)length;
      }
 }
 

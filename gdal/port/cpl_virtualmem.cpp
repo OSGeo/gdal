@@ -549,7 +549,7 @@ void CPLVirtualMemDeclareThread( CPLVirtualMem* ctxt )
     if( ctxt->eType == VIRTUAL_MEM_TYPE_FILE_MEMORY_MAPPED )
         return;
 #ifndef HAVE_5ARGS_MREMAP
-    CPLVirtualMemVMA* ctxtVMA = (CPLVirtualMemVMA* )ctxt;
+    CPLVirtualMemVMA* ctxtVMA = reinterpret_cast<CPLVirtualMemVMA *>(ctxt);
     IGNORE_OR_ASSERT_IN_DEBUG( !ctxt->bSingleThreadUsage );
     CPLAcquireMutex(ctxtVMA->hMutexThreadArray, 1000.0);
     ctxtVMA->pahThreads = static_cast<pthread_t *>(
@@ -571,7 +571,7 @@ void CPLVirtualMemUnDeclareThread( CPLVirtualMem* ctxt )
     if( ctxt->eType == VIRTUAL_MEM_TYPE_FILE_MEMORY_MAPPED )
         return;
 #ifndef HAVE_5ARGS_MREMAP
-    CPLVirtualMemVMA* ctxtVMA = (CPLVirtualMemVMA* )ctxt;
+    CPLVirtualMemVMA* ctxtVMA = reinterpret_cast<CPLVirtualMemVMA *>(ctxt);
     pthread_t self = pthread_self();
     IGNORE_OR_ASSERT_IN_DEBUG( !ctxt->bSingleThreadUsage );
     CPLAcquireMutex(ctxtVMA->hMutexThreadArray, 1000.0);

@@ -1734,7 +1734,7 @@ int CSLFindName( CSLConstList papszStrList, const char *pszName )
  * Parse NAME=VALUE string into name and value components.
  *
  * Note that if ppszKey is non-NULL, the key (or name) portion will be
- * allocated using VSIMalloc(), and returned in that pointer.  It is the
+ * allocated using CPLMalloc(), and returned in that pointer.  It is the
  * applications responsibility to free this string, but the application should
  * not modify or free the returned value portion.
  *
@@ -1764,7 +1764,7 @@ const char *CPLParseNameValue( const char *pszNameValue, char **ppszKey )
             if( ppszKey != nullptr )
             {
                 *ppszKey = static_cast<char *>(CPLMalloc(i + 1));
-                strncpy( *ppszKey, pszNameValue, i );
+                memcpy( *ppszKey, pszNameValue, i );
                 (*ppszKey)[i] = '\0';
                 while( i > 0 &&
                        ( (*ppszKey)[i-1] == ' ' || (*ppszKey)[i-1] == '\t') )
