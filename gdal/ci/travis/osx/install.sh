@@ -22,11 +22,10 @@ esac
 $SCRIPT_DIR/../common_install.sh
 
 # Build proj
-(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' PKG_CONFIG_PATH="/usr/local/opt/sqlite/lib/pkgconfig" ./configure --prefix=/tmp/install && make -j3 && make -j3 install)
+(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' PKG_CONFIG_PATH="/usr/local/opt/sqlite/lib/pkgconfig" ./configure --disable-static --prefix=/tmp/install && make -j3 && make -j3 install)
 rm /tmp/install/lib/libproj.dylib
 mv /tmp/install/lib/libproj.15.dylib /tmp/install/lib/libinternalproj.15.dylib
 ln -s libinternalproj.15.dylib /tmp/install/lib/libinternalproj.dylib
-mv /tmp/install/lib/libproj.a /tmp/install/lib/libinternalproj.a
 
 # build GDAL
 cd gdal

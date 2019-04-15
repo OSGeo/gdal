@@ -51,7 +51,7 @@ Usage:
 
 \verbatim
 gdalwarp [--help-general] [--formats]
-    [-s_srs srs_def] [-t_srs srs_def] [-ct proj_string] [-to "NAME=VALUE"]* [-novshiftgrid]
+    [-s_srs srs_def] [-t_srs srs_def] [-ct string] [-to "NAME=VALUE"]* [-novshiftgrid]
     [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
     [-refine_gcps tolerance [minimum_gcps]]
     [-te xmin ymin xmax ymax] [-te_srs srs_def]
@@ -94,8 +94,10 @@ containing well known text. Starting with GDAL 2.2, if the SRS has an explicit
 vertical datum that points to a PROJ.4 geoidgrids, and the input dataset is a
 single band dataset, a vertical correction will be applied to the values of the
 dataset.</dd>
-<dt> <b>-ct</b> <em>proj_string</em>:</dt><dd> (GDAL &gt;= 2.5)
-PROJ string overriding the default
+<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 2.5)
+A PROJ string (single step operation or multiple step string
+starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
+or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
 transformation from the source to the target CRS. It must take into account the
 axis order of the source and target CRS.</dd>
 <dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable

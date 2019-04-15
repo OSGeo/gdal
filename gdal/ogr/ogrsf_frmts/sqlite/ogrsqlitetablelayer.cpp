@@ -3522,6 +3522,7 @@ int OGRSQLiteTableLayer::SaveStatistics()
         osGeomCol = osGeomCol.tolower();
         pszNowValue = ", strftime('%Y-%m-%dT%H:%M:%fZ','now')";
     }
+
     if( nFeatureCount >= 0 )
     {
         /* Update or add entry in the layer_statistics table */
@@ -3530,7 +3531,7 @@ int OGRSQLiteTableLayer::SaveStatistics()
             osSQL.Printf("INSERT OR REPLACE INTO %s (%s"
                             "%s, %s, row_count, extent_min_x, "
                             "extent_min_y, extent_max_x, extent_max_y%s) VALUES ("
-                            "%s'%s', '%s', " CPL_FRMT_GIB ", %.18g, %.18g, %.18g, %.18g%s)",
+                            "%s'%s', '%s', " CPL_FRMT_GIB ", ?, ?, ?, ?%s)",
                             pszStatTableName,
                             poDS->HasSpatialite4Layout() ? "" : "raster_layer, ",
                             pszFTableName,
@@ -3540,12 +3541,33 @@ int OGRSQLiteTableLayer::SaveStatistics()
                             SQLEscapeLiteral(osTableName).c_str(),
                             SQLEscapeLiteral(osGeomCol).c_str(),
                             nFeatureCount,
-                            poGeomFieldDefn->oCachedExtent.MinX,
-                            poGeomFieldDefn->oCachedExtent.MinY,
-                            poGeomFieldDefn->oCachedExtent.MaxX,
-                            poGeomFieldDefn->oCachedExtent.MaxY,
                             pszNowValue
                         );
+
+            sqlite3_stmt *hStmtInsert = nullptr;
+            int rc = sqlite3_prepare_v2( hDB, osSQL, -1, &hStmtInsert, nullptr );
+            if( rc == SQLITE_OK )
+                rc = sqlite3_bind_double(hStmtInsert, 1,
+                                         poGeomFieldDefn->oCachedExtent.MinX);
+            if( rc == SQLITE_OK )
+                rc = sqlite3_bind_double(hStmtInsert, 2,
+                                         poGeomFieldDefn->oCachedExtent.MinY);
+            if( rc == SQLITE_OK )
+                rc = sqlite3_bind_double(hStmtInsert, 3,
+                                         poGeomFieldDefn->oCachedExtent.MaxX);
+            if( rc == SQLITE_OK )
+                rc = sqlite3_bind_double(hStmtInsert, 4,
+                                         poGeomFieldDefn->oCachedExtent.MaxY);
+            if( rc == SQLITE_OK )
+                rc = sqlite3_step( hStmtInsert );
+            if ( rc != SQLITE_DONE )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "In Initialize(): sqlite3_step(%s):\n  %s",
+                          osSQL.c_str(), sqlite3_errmsg(hDB) );
+            }
+            sqlite3_finalize( hStmtInsert );
+            return rc == SQLITE_DONE;
         }
         else
         {
@@ -3564,6 +3586,7 @@ int OGRSQLiteTableLayer::SaveStatistics()
                             nFeatureCount,
                             pszNowValue
                         );
+            return SQLCommand( hDB, osSQL) == OGRERR_NONE;
         }
     }
     else
@@ -3577,9 +3600,8 @@ int OGRSQLiteTableLayer::SaveStatistics()
                      SQLEscapeLiteral(osTableName).c_str(),
                      pszFGeometryColumn,
                      SQLEscapeLiteral(osGeomCol).c_str());
+        return SQLCommand( hDB, osSQL) == OGRERR_NONE;
     }
-
-    return SQLCommand( hDB, osSQL) == OGRERR_NONE;
 }
 
 /************************************************************************/

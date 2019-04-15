@@ -1215,7 +1215,7 @@ GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
         }
         else
         {
-            GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(new Object(std::move(o.copy())), TRUE);
+            GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(new Object(o.copy()), TRUE);
             poObj->SetRefNumAndGen(nRefNum, nRefGen);
             m_map[pszKey] = poObj;
             return poObj;
@@ -1349,7 +1349,7 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
         }
         else
         {
-            GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(new Object(std::move(o.copy())), TRUE);
+            GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(new Object(o.copy()), TRUE);
             poObj->SetRefNumAndGen(nRefNum, nRefGen);
             m_v[nIndex] = poObj;
             return poObj;

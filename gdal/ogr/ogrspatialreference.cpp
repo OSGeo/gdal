@@ -1225,7 +1225,7 @@ void OGRSpatialReference::dumpReadable()
  * Note that the returned WKT string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
  *
- * The WKT version can be overriden by using the OSR_WKT_FORMAT configuration
+ * The WKT version can be overridden by using the OSR_WKT_FORMAT configuration
  * option. Valid values are the one of the FORMAT option of
  * exportToWkt( char ** ppszResult, const char* const* papszOptions ) const
  *
@@ -1259,7 +1259,7 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
  * \brief Convert this SRS into a nicely formatted WKT 1 string for display to a
  * person.
  *
- * The WKT version can be overriden by using the OSR_WKT_FORMAT configuration
+ * The WKT version can be overridden by using the OSR_WKT_FORMAT configuration
  * option. Valid values are the one of the FORMAT option of
  * exportToWkt( char ** ppszResult, const char* const* papszOptions ) const
  *
@@ -1291,7 +1291,7 @@ OGRErr CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppsz
  * Note that the returned WKT string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
  *
- * The WKT version can be overriden by using the OSR_WKT_FORMAT configuration
+ * The WKT version can be overridden by using the OSR_WKT_FORMAT configuration
  * option. Valid values are the one of the FORMAT option of
  * exportToWkt( char ** ppszResult, const char* const* papszOptions ) const
  *
@@ -1448,7 +1448,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
  * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
  * for implementation details of WKT in OGR.
  *
- * The WKT version can be overriden by using the OSR_WKT_FORMAT configuration
+ * The WKT version can be overridden by using the OSR_WKT_FORMAT configuration
  * option. Valid values are the one of the FORMAT option of
  * exportToWkt( char ** ppszResult, const char* const* papszOptions ) const
  *
@@ -1474,6 +1474,8 @@ OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS,
  * \brief Convert this SRS into WKT format.
  * 
  * This function is the same as OGRSpatialReference::exportToWkt(char ** ppszResult,const char* const* papszOptions ) const
+ * 
+ * @since GDAL 2.5
  */
 
 OGRErr OSRExportToWktEx( OGRSpatialReferenceH hSRS,

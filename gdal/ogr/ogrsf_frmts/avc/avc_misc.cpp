@@ -232,7 +232,6 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
  * necessary, and return a reference to that filename.
  *
  * This function works on the original buffer and returns a reference to it.
- * It does nothing on Windows systems where filenames are not case sensitive.
  *
  * NFW: It seems like this could be made somewhat more efficient by
  * getting a directory listing and doing a case insensitive search in
@@ -243,30 +242,10 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
  **********************************************************************/
 char *AVCAdjustCaseSensitiveFilename(char *pszFname)
 {
-
-#ifdef _WIN32
-    /*-----------------------------------------------------------------
-     * Nothing to do on Windows
-     *----------------------------------------------------------------*/
-    return pszFname;
-
-#else
-    /*-----------------------------------------------------------------
-     * Unix case.
-     *----------------------------------------------------------------*/
     VSIStatBufL  sStatBuf;
     char        *pszTmpPath = nullptr;
     int         nTotalLen, iTmpPtr;
     GBool       bValidPath;
-
-    /*-----------------------------------------------------------------
-     * Remap '\\' to '/'
-     *----------------------------------------------------------------*/
-    for(pszTmpPath = pszFname; *pszTmpPath != '\0'; pszTmpPath++)
-    {
-        if (*pszTmpPath == '\\')
-            *pszTmpPath = '/';
-    }
 
     /*-----------------------------------------------------------------
      * First check if the filename is OK as is.
@@ -280,11 +259,20 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     nTotalLen = (int)strlen(pszTmpPath);
 
     /*-----------------------------------------------------------------
+     * Remap '\\' to '/'
+     *----------------------------------------------------------------*/
+    for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
+    {
+        if (pszTmpPath[iTmpPtr] == '\\')
+            pszTmpPath[iTmpPtr] = '/';
+    }
+
+    /*-----------------------------------------------------------------
      * Try all lower case, check if the filename is OK as that.
      *----------------------------------------------------------------*/
     for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
     {
-        if ( pszTmpPath[iTmpPtr] >= 0x41 && pszTmpPath[iTmpPtr] <= 0x5a )
+        if ( pszTmpPath[iTmpPtr] >= 'A' && pszTmpPath[iTmpPtr] <= 'Z' )
             pszTmpPath[iTmpPtr] += 32;
     }
 
@@ -300,7 +288,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
      *----------------------------------------------------------------*/
     for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
     {
-        if ( pszTmpPath[iTmpPtr] >= 0x61 && pszTmpPath[iTmpPtr] <= 0x7a )
+        if ( pszTmpPath[iTmpPtr] >= 'a' && pszTmpPath[iTmpPtr] <= 'z' )
             pszTmpPath[iTmpPtr] -= 32;
     }
 
@@ -315,9 +303,18 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
      * OK, file either does not exist or has the wrong cases... we'll
      * go backwards until we find a portion of the path that is valid.
      *----------------------------------------------------------------*/
-    iTmpPtr = nTotalLen;
-    bValidPath = FALSE;
+    strcpy(pszTmpPath, pszFname);
 
+    /*-----------------------------------------------------------------
+     * Remap '\\' to '/'
+     *----------------------------------------------------------------*/
+    for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
+    {
+        if (pszTmpPath[iTmpPtr] == '\\')
+            pszTmpPath[iTmpPtr] = '/';
+    }
+
+    bValidPath = FALSE;
     while(iTmpPtr > 0 && !bValidPath)
     {
         /*-------------------------------------------------------------
@@ -402,8 +399,6 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     CPLFree(pszTmpPath);
 
     return pszFname;
-
-#endif
 }
 
 

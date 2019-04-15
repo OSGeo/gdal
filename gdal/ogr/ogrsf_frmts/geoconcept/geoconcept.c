@@ -2976,7 +2976,10 @@ GCField GCIOAPI_CALL1(*) AddTypeField_GCIO (
     return NULL;
   }
   theClass= _getType_GCIO(H,whereClass);
-
+  if( theClass == NULL )
+  {
+      return NULL;
+  }
   normName= _NormalizeFieldName_GCIO(name);
   if( _findFieldByName_GCIO(GetTypeFields_GCIO(theClass),normName)!=-1 )
   {
@@ -3053,6 +3056,10 @@ GCField GCIOAPI_CALL1(*) AddSubTypeField_GCIO (
     return NULL;
   }
   theSubType= _getSubType_GCIO(theClass,whereSubType);
+  if( theSubType == NULL )
+  {
+    return NULL;
+  }
 
   normName= _NormalizeFieldName_GCIO(name);
   if( _findFieldByName_GCIO(GetSubTypeFields_GCIO(theSubType),normName)!=-1 )

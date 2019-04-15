@@ -1473,12 +1473,10 @@ PG_CONFIG=no
 
 AC_ARG_WITH(pg,
 	    AS_HELP_STRING([--with-pg[=ARG]],
-	       [Include PostgreSQL GDAL/OGR Support (ARG=path to pg_config)]),,)
+	       [Include PostgreSQL GDAL/OGR Support (ARG=yes,no)]),,)
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
-  AC_PATH_PROG(PG_CONFIG, pg_config, no)
-else
-  PG_CONFIG=$with_pg
+  PG_CONFIG=yes
 fi
 
 AC_MSG_CHECKING([for PostgreSQL])
@@ -1492,23 +1490,24 @@ if test "x$PG_CONFIG" = "xno" ; then
   AC_MSG_RESULT([no])
 
 else
-  if test -d ${PG_CONFIG} ; then
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a directory.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
-  fi
 
-  if test \! -x ${PG_CONFIG} ; then
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a not an executable file.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
-  fi
-
-  AC_MSG_RESULT([yes])
-
-  AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no,-L`$PG_CONFIG --libdir`)
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([PQ],[libpq > 9.1], [HAVE_PG=yes], [HAVE_PG=no])
 
   if test "${HAVE_PG}" = "yes" ; then
-    LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
-    PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
+    PG_LIB="${PQ_LIBS}"
+    PG_INC="${PQ_CFLAGS}"
+    SAVED_LIBS="${LIBS}"
+    LIBS="${PG_LIBS}"
+    AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no)
+    LIBS="${SAVED_LIBS}"
+    if test "${HAVE_PG}" = "yes" ; then
+      LIBS="${PG_LIB} ${LIBS}"
+    fi
+  else
+    if "x$with_pg" = "xyes"; then
+      AC_MSG_ERROR([--with-pg was requested, but libpq is not available])
+    fi
   fi
 
 fi
@@ -5333,6 +5332,43 @@ AC_SUBST(HDFS_INC,$HDFS_INC)
 AC_SUBST(JNI_LIB,$JNI_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl TileDB support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(tiledb,[  --with-tiledb[=ARG]    Include TileDB support (ARG=no, yes or tiledb install root path)],,)
+
+TILEDB_SETTING=no
+
+if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
+
+  AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,)
+  
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-ltiledb $LIBS"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+elif test "$with_tiledb" != "no" -a "$with_tiledb" != ""; then
+
+  AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,-L$with_tiledb/lib -ltiledb)
+
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-L$with_tiledb/lib -ltiledb $LIBS"
+    EXTRA_INCLUDES="-I$with_tiledb/include $EXTRA_INCLUDES"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+fi
+
+AC_SUBST(TILEDB_SETTING,$TILEDB_SETTING)
+
+if test "$TILEDB_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl MDB driver
 dnl ---------------------------------------------------------------------------
 
@@ -5888,6 +5924,7 @@ LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
+LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
 LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])
