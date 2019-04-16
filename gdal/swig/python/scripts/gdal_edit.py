@@ -30,7 +30,6 @@
 ###############################################################################
 
 import sys
-import re
 from osgeo import gdal
 from osgeo import osr
 
@@ -90,7 +89,6 @@ def gdal_edit(argv):
     scale = []
     colorinterp = {}
     unsetrpc = False
-    isarg=re.compile('-\D')
 
     i = 1
     argc = len(argv)
@@ -117,16 +115,16 @@ def gdal_edit(argv):
         elif argv[i] == '-a_nodata' and i < len(argv) - 1:
             nodata = float(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-scale' and i < len(argv) - 1:
+        elif argv[i] == '-scale' and i < len(argv) :
             scale.append(float(argv[i+1]))
             i = i + 1
-            while not isarg.match(argv[i+1][:2]) and i < len(argv) - 2:
+            while i < len(argv) - 1 and ArgIsNumeric(argv[i+1]):
                 scale.append(float(argv[i+1]))
                 i = i + 1
         elif argv[i] == '-offset' and i < len(argv) - 1:
             offset.append(float(argv[i+1]))
             i = i + 1
-            while not isarg.match(argv[i+1][:2]) and i < len(argv) - 2:
+            while i < len(argv) - 1 and ArgIsNumeric(argv[i+1]):
                 offset.append(float(argv[i+1]))
                 i = i + 1
         elif argv[i] == '-mo' and i < len(argv) - 1:
@@ -210,7 +208,7 @@ def gdal_edit(argv):
                 return Usage()
             colorinterp[band] = val
             i = i + 1
-        elif isarg.match(argv[i][:1]):
+        elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
             return Usage()
         elif datasetname is None:
