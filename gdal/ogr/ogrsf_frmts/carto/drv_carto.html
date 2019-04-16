@@ -96,6 +96,10 @@ in chunks until they reach 15 MB (can be changed with the CARTO_MAX_CHUNK_SIZE
 configuration option, with a value in MB), at which point they are transferred
 to the server. By setting CARTO_MAX_CHUNK_SIZE to 0, immediate transfer occurs.<p>
 
+<b>WARNING</b>: Don't use DeleteLayer() + CreateLayer() to overwrite a table.
+Instead only call CreateLayer() with OVERWRITE=YES. This will avoid CARTO
+deleting maps that depend on this table<p>
+
 <h2>SQL</h2>
 
 SQL commands provided to the OGRDataSource::ExecuteSQL() call are executed on the server side, unless the OGRSQL
