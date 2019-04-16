@@ -452,7 +452,7 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
     OGRCARTOTableLayer* poLayer = new OGRCARTOTableLayer(this, osName);
     const bool bGeomNullable =
         CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
-    int nSRID = (poSpatialRef && eGType != wkbNone) ? FetchSRSId( poSpatialRef ) : 0;
+    int nSRID = poSpatialRef ? FetchSRSId( poSpatialRef ) : 0;
     bool bCartoify = CPLFetchBool(papszOptions, "CARTODBFY",
                                   CPLFetchBool(papszOptions, "CARTODBIFY",
                                                true));
@@ -460,12 +460,19 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
     {
         if( nSRID != 4326 )
         {
-            if( eGType != wkbNone )
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                        "Cannot register table in dashboard with "
-                        "cdb_cartodbfytable() since its SRS is not EPSG:4326");
-            }
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Cannot register table in dashboard with "
+                    "cdb_cartodbfytable() since its SRS is not EPSG:4326."
+                    " Check the documentation for more information"
+                );
+            bCartoify = false;
+        } else if( eGType == wkbNone )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Cannot register table in dashboard with "
+                    "cdb_cartodbfytable() since its geometry type isn't defined."
+                    " Check the documentation for more information"
+                );
             bCartoify = false;
         }
     }
