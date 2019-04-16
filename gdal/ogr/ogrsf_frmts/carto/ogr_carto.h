@@ -138,6 +138,8 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     bool                bCartodbfy;
     int                 nMaxChunkSize;
 
+    bool                bDropOnCreation;
+
     void                BuildWhere();
     std::vector<bool>   m_abFieldSetForInsert;
 
@@ -201,6 +203,11 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
                                             bool bHasUserFieldMatchingFID, 
                                             bool bHasJustGotNextFID );
     char *              OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i );
+
+    void                SetDropOnCreation( bool bFlag )
+        { bDropOnCreation = bFlag; }
+    bool                GetDropOnCreation() const
+        { return bDropOnCreation; }
 };
 
 /************************************************************************/
