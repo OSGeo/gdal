@@ -30,7 +30,6 @@
 ###############################################################################
 
 import sys
-
 from osgeo import gdal
 from osgeo import osr
 
@@ -86,8 +85,8 @@ def gdal_edit(argv):
     molist = []
     gcp_list = []
     open_options = []
-    offset = None
-    scale = None
+    offset = []
+    scale = []
     colorinterp = {}
     unsetrpc = False
 
@@ -116,12 +115,18 @@ def gdal_edit(argv):
         elif argv[i] == '-a_nodata' and i < len(argv) - 1:
             nodata = float(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-scale' and i < len(argv) - 1:
-            scale = float(argv[i + 1])
+        elif argv[i] == '-scale' and i < len(argv) :
+            scale.append(float(argv[i+1]))
             i = i + 1
+            while i < len(argv) - 1 and ArgIsNumeric(argv[i+1]):
+                scale.append(float(argv[i+1]))
+                i = i + 1
         elif argv[i] == '-offset' and i < len(argv) - 1:
-            offset = float(argv[i + 1])
+            offset.append(float(argv[i+1]))
             i = i + 1
+            while i < len(argv) - 1 and ArgIsNumeric(argv[i+1]):
+                offset.append(float(argv[i+1]))
+                i = i + 1
         elif argv[i] == '-mo' and i < len(argv) - 1:
             molist.append(argv[i + 1])
             i = i + 1
@@ -261,6 +266,22 @@ def gdal_edit(argv):
     if ds is None:
         return -1
 
+    if scale:
+        if len(scale) == 1:
+            scale = scale * ds.RasterCount 
+        elif len(scale) != ds.RasterCount:
+            print('If more than one scale value is provided, their number must match the number of bands.')
+            print('')
+            return Usage()
+    
+    if offset:
+        if len(offset) == 1:
+            offset = offset * ds.RasterCount
+        elif len(offset) != ds.RasterCount:
+            print('If more than one offset value is provided, their number must match the number of bands.')
+            print('')
+            return Usage()
+    
     wkt = None
     if srs == '' or srs == 'None':
         ds.SetProjection('')
@@ -308,13 +329,13 @@ def gdal_edit(argv):
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).DeleteNoDataValue()
 
-    if scale is not None:
+    if scale:
         for i in range(ds.RasterCount):
-            ds.GetRasterBand(i + 1).SetScale(scale)
+            ds.GetRasterBand(i + 1).SetScale(scale[i])
 
-    if offset is not None:
+    if offset:
         for i in range(ds.RasterCount):
-            ds.GetRasterBand(i + 1).SetOffset(offset)
+            ds.GetRasterBand(i + 1).SetOffset(offset[i])
 
     if unsetstats:
         for i in range(ds.RasterCount):

@@ -87,7 +87,9 @@ Assign a specified nodata value to output bands.</dd>
 Remove existing nodata values.</dd>
 
 <dt> <b>-scale</b> <i>value</i>:</dt><dd> (GDAL >= 2.2)
-Assign a specified scale value to output bands. If no scale is needed, it
+Assign a specified scale value to output bands. If a single scale value is provided it will be 
+set for all bands. Alternatively one scale value per band can be provided, in which case the 
+the number of scale values must match the number of bands. If no scale is needed, it
 it recommended to set the value to 1. Scale and Offset are generally used
 together. For example, scale and offset might be used to store elevations in 
 a unsigned 16bit integer file with a precision of 0.1, and starting from -100.
@@ -96,7 +98,9 @@ true_value = (pixel_value * scale) + offset
 Note: these values can be applied using -unscale during a gdal_translate run.</dd> 
 
 <dt> <b>-offset</b> <i>value</i>:</dt><dd> (GDAL >= 2.2)
-Assign a specified offset value to output bands. If no offset is needed, it
+Assign a specified offset value to output bands. If a single offset value is provided it will be 
+set for all bands. Alternatively one offset value per band can be provided, in which case the 
+the number of offset values must match the number of bands. If no offset is needed, it
 recommended to set the value to 0. For more see scale.</dd> 
 
 <dt> <b>-colorinterp_X</b> <i>red|green|blue|alpha|gray|undefined</i>:</dt><dd>
@@ -130,6 +134,9 @@ the existing metadata items, unless -unsetmd is also specified.</dd>
 
 \verbatim
 gdal_edit -mo DATUM=WGS84 -mo PROJ=GEODETIC -a_ullr 7 47 8 46 test.ecw
+
+gdal_edit -scale 1e3 1e4 -offset 0 10 twoBand.tif
+
 \endverbatim
 
 \if man
