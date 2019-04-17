@@ -291,7 +291,7 @@ OCI driver:
  * Fix memory leaks
 
 ODS driver:
- * allow opening tables wih empty cells with huge values of columns-repeated attribute at end of line (#1243)
+ * allow opening tables with empty cells with huge values of columns-repeated attribute at end of line (#1243)
  * avoid potential null pointer dereference when writing to corrupted filename. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12976.
 
 OGDI driver:

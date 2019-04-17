@@ -883,7 +883,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         if( (bIsSCHAR || bIsUCHAR) &&
             CPLTestBool(CPLGetConfigOption("GDAL_HDF5_CHAR_AS_STRING", "NO")) )
         {
-            // Compatibily mode with ancient GDAL versions where we consider
+            // Compatibility mode with ancient GDAL versions where we consider
             // array of SCHAR/UCHAR as strings. Likely inappropriate mode...
             for( hsize_t i = 0; i < nAttrElmts; i++ )
             {

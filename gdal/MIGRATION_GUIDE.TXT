@@ -21,13 +21,13 @@ MIGRATION GUIDE FROM GDAL 2.4 to GDAL 2.5
     * OSRIsSame(): now takes into account data axis to CRS axis mapping, unless
       IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES is set as an option to OSRIsSameEx()
     * ogr_srs_api.h: SRS_WKT_WGS84 macro is no longer declared by default since
-      WKT without AXIS is too ambiguous. Prefered remediation: use SRS_WKT_WGS84_LAT_LONG.
+      WKT without AXIS is too ambiguous. Preferred remediation: use SRS_WKT_WGS84_LAT_LONG.
       Or #define USE_DEPRECATED_SRS_WKT_WGS84 before including ogr_srs_api.h
 
 Out-of-tree drivers:
 * GDALDataset::GetProjectionRef() made non-virtual.
   Replaced by GetSpatialRef() virtual method.
-  Compatibility emulation possible by definining:
+  Compatibility emulation possible by defining:
     const char* _GetProjectionRef() override; // note leading underscore
     const OGRSpatialReference* GetSpatialRef() const override {
         return GetSpatialRefFromOldGetProjectionRef();
@@ -35,7 +35,7 @@ Out-of-tree drivers:
 
 * GDALDataset::SetProjection() made non-virtual.
   Replaced by SetSpatialRef() virtual method.
-  Compatibility emulation possible by definining:
+  Compatibility emulation possible by defining:
     CPLErr SetProjection(const char*) override; // note leading underscore
     CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
         return OldSetProjectionFromSetSpatialRef(poSRS);
@@ -43,7 +43,7 @@ Out-of-tree drivers:
 
 * GDALDataset::GetGCPProjection() made non-virtual.
   Replaced by GetGCPSpatialRef() virtual method.
-  Compatibility emulation possible by definining:
+  Compatibility emulation possible by defining:
     const char* _GetGCPProjectionRef() override; // note leading underscore
     const OGRSpatialReference* GetGCPSpatialRef() const override {
         return GetGCPSpatialRefFromOldGetGCPProjection();
