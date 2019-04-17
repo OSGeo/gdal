@@ -560,6 +560,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_EEDA();
 #endif
 
+#ifdef FRMT_daas
+    GDALRegister_DAAS();
+#endif
+
 #ifdef FRMT_null
     GDALRegister_NULL();
 #endif
