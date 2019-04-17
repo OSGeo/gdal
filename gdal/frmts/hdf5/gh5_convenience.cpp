@@ -137,7 +137,9 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
     H5Aread(hAttr, hAttrNativeType, buf);
 
     // Translate to double.
-    if( H5Tequal(H5T_NATIVE_INT, hAttrNativeType) )
+    if( H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType) )
+        dfResult = *((short *)buf);
+    else if( H5Tequal(H5T_NATIVE_INT, hAttrNativeType) )
         dfResult = *((int *)buf);
     else if( H5Tequal(H5T_NATIVE_FLOAT,    hAttrNativeType) )
         dfResult = *((float *)buf);
