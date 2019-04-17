@@ -569,45 +569,6 @@
                 "analytic_sur_refl_b01",
                 "analytic_sur_refl_b02"
             ]
-        },
-        "CustomL3A" : {
-            "fields": [
-                { "name": "acquired", "type": "datetime" },
-                { "name": "anomalous_pixels", "type": "double" },
-                { "name": "black_fill", "type": "double" },
-                { "name": "catalog_id", "type": "string" },
-                { "name": "cloud_cover", "type": "double" },
-                { "name": "data_type", "type": "string" },
-                { "name": "columns", "type": "int" },
-                { "name": "epsg_code", "type": "int" },
-                { "name": "grid_cell", "type": "string" },
-                { "name": "ground_control", "type": "boolean" },
-                { "name": "gsd", "type": "double" },
-                { "name": "item_type", "type": "string" },
-                { "name": "origin_x", "type": "double" },
-                { "name": "origin_y", "type": "double" },
-                { "name": "pixel_resolution", "type": "double" },
-                { "name": "provider", "type": "string" },
-                { "name": "published", "type": "datetime" },
-                { "name": "rows", "type": "int" },
-                { "name": "quality_category", "type": "string" },
-                { "name": "satellite_id", "type": "string" },
-                { "name": "strip_id", "type": "string" },
-                { "name": "sun_azimuth", "type": "double" },
-                { "name": "sun_elevation", "type": "double" },
-                { "name": "updated", "type": "datetime" },
-                { "name": "usable_data", "type": "double" },
-                { "name": "view_angle", "type": "double" }
-            ],
-            "assets": [
-                "analytic",
-                "analytic_dn",
-                "analytic_dn_xml",
-                "analytic_xml",
-                "udm",
-                "visual",
-                "visual_xml"
-            ]
         }
     }
 }
