@@ -117,6 +117,9 @@ protected:
     int         CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
                                GDALDataType eBufType);
 
+    int         CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
+                               GDALDataType eBufType,
+                               GDALRasterIOExtraArg* psExtraArg);
 public:
 
     enum class OwnFP

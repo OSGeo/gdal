@@ -536,11 +536,21 @@ int RawRasterBand::IsSignificantNumberOfLinesLoaded( int nLineOff, int nLines )
 /*                           CanUseDirectIO()                           */
 /************************************************************************/
 
+int RawRasterBand::CanUseDirectIO(int nXOff,
+                                  int nYOff,
+                                  int nXSize,
+                                  int nYSize,
+                                  GDALDataType eBufType)
+{
+    return CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType, nullptr);
+}
+
 int RawRasterBand::CanUseDirectIO(int /* nXOff */,
                                   int nYOff,
                                   int nXSize,
                                   int nYSize,
-                                  GDALDataType /* eBufType*/)
+                                  GDALDataType /* eBufType*/,
+                                  GDALRasterIOExtraArg* psExtraArg)
 {
 
     // Use direct IO without caching if:
@@ -553,7 +563,8 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     // width of the requested chunk is less than 40% of the whole scanline and
     // no significant number of requested scanlines are already in the cache.
 
-    if( nPixelOffset < 0 )
+    if( nPixelOffset < 0 ||
+        (psExtraArg != nullptr && psExtraArg->eResampleAlg != GRIORA_NearestNeighbour) )
     {
         return FALSE;
     }
@@ -595,7 +606,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 #endif
     const int nBufDataSize = GDALGetDataTypeSizeBytes(eBufType);
 
-    if( !CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType) )
+    if( !CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType, psExtraArg) )
     {
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff,
                                          nXSize, nYSize,
@@ -1127,7 +1138,7 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                 GetRasterBand(panBandMap[iBandIndex]));
             if( poBand == nullptr ||
                 !poBand->CanUseDirectIO(nXOff, nYOff,
-                                        nXSize, nYSize, eBufType) )
+                                        nXSize, nYSize, eBufType, psExtraArg) )
             {
                 break;
             }
