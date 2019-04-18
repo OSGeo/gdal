@@ -7022,6 +7022,46 @@ def test_tiff_write_rewrite_lzw_strip():
 
 
 ###############################################################################
+# Test COPY_SRC_OVERVIEWS on a configuration with overviews, mask, but no
+# overview on the mask
+
+def test_tiff_write_overviews_mask_no_ovr_on_mask():
+
+    tmpfile = '/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask.tif'
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ds = gdaltest.tiff_drv.Create(tmpfile, 100, 100)
+        ds.GetRasterBand(1).Fill(255)
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+
+    ds = gdal.Open(tmpfile)
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds.BuildOverviews('NEAR', overviewlist=[2])
+    assert gdal.GetLastErrorMsg() == 'Building external overviews whereas there is an internal mask is not fully supported. The overviews of the non-mask bands will be created, but not the overviews of the mask band.'
+    # No overview on the mask
+    assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
+    ds = None
+
+    tmpfile2 = '/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask_copy.tif'
+    src_ds = gdal.Open(tmpfile)
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.CreateCopy(tmpfile2, src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
+    assert gdal.GetLastErrorMsg() == 'Source dataset has a mask band on full resolution, overviews on the regular bands, but lacks overviews on the mask band.'
+    assert ds
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+    # No overview on the mask
+    assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
+    ds = None
+
+    gdaltest.tiff_drv.Delete(tmpfile)
+    gdaltest.tiff_drv.Delete(tmpfile2)
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 
