@@ -2035,6 +2035,9 @@ GDALPDFObjectType GDALPDFObjectPdfium::GetType()
         case PDFOBJ_ARRAY:                    return PDFObjectType_Array;
         case PDFOBJ_DICTIONARY:               return PDFObjectType_Dictionary;
         case PDFOBJ_STREAM:                   return PDFObjectType_Dictionary;
+        case PDFOBJ_REFERENCE:
+            // unresolved reference
+            return PDFObjectType_Unknown;
         default:
           CPLAssert(false);
           return PDFObjectType_Unknown;
