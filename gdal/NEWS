@@ -1,4 +1,4 @@
-= GDAL/OGR 2.5.0 Release Notes (Preliminary, up to fc3766bbbd266b66a292f824a920b87b81e47a00) =
+= GDAL/OGR 2.5.0 Release Notes (Preliminary, up to 0f569d394dc77da244c8cc1d5d791e0bbe5010c6) =
 
 == In a nutshell... ==
 
@@ -10,13 +10,16 @@
  * New OGR drivers:
   - MongoDBv3: read/write driver using libmongocxx v3.4.0 client (for MongoDB >= 4.0)
  * Improved drivers:
-   - FITS
+   - FITS: read/write support for scale, offset and CRS
    - netCDF: read support for groups
+   - PDF: add a COMPOSITION_FILE creation option to generate a complex document
    - PDS4: subdataset creation support, read/write table/vector support
  * Support for minimal builds on Unix (#1250)
  * Continued code linting
 
 == New installed files ==
+
+ * Resource file: pdfcomposition.xsd
 
 == Removed installed files ==
 
@@ -54,6 +57,7 @@ Port:
  * MiniXML: Fix wrong node order when calling CPLAddXMLAttributeAndValue() after CPLCreateXMLElementAndValue()
  * /vsicurl/: ReadMultiRange(): use default implementation if there is a single range (#1206)
  * /vsicurl/: ignore proxy CONNECT response headers (#1211)
+ * /vsicurl/: automatically detect signed URLs where host ends with a port number; also detect signed URLs as created iwth the AWS4-HMAC-SHA256 method (#1456)
  * /vsizip/: Add config option to create zip64 extra fields by default (#1267)
  * /vsis3/, /vsigs/, /vsiaz/: add HTTP retry logic in writing code paths
  * Fix data race in VSIFileManager::Get
@@ -67,9 +71,10 @@ Port:
 Core:
  * Support blocks larger than 2 billion pixels/bytes
  * Make CPLHaveRuntimeSSSE3() and CPLHaveRuntimeAVX() use GCC constructor functions
-  * Move RawDataset base class to gcore/ (#1268)
-  * RasterBand/Dataset::RasterIO(): enforce access mode on write
-  * PAM: preserve existing metadata when setting new one (#1430)
+ * Move RawDataset base class to gcore/ (#1268)
+ * RasterBand/Dataset::RasterIO(): enforce access mode on write
+ * PAM: preserve existing metadata when setting new one (#1430)
+ * RawDataset: use generic RasterIO() implementation when non-nearest resampling is asked (#1301)
 
 Algorithms:
  * RPC transformer: test success code of GDALRPCTransform() in GDALCreateRPCTransformer()
@@ -123,6 +128,7 @@ GTiff diver:
  * only report scale/offset deduced from ModelTiepointTag and ModelPixelScaleTag if the SRS has a vertical component (and thus currently if GTIFF_REPORT_COMPD_CS is set) (https://issues.qgis.org/issues/20493)
  * TIFF Lerc: properly initialize state after Create() so that BuildOverviews() succeed (#1257)
  * emit merged consecutive multi-range reads (#1297)
+ * add warnings when using unsupported combination of internal mask+external overview, and fix COPY_SRC_OVERVIEWS=YES so that it does not copy ALL_VALID masks (#1455)
  * Internal libtiff and libgeotiff: resync with upstream
 
 FITS driver:
@@ -134,6 +140,8 @@ GeoRaster driver:
 HDF5 driver:
  * support reading blocks larger than 2GB
  * fix handling of attributes of type SCHAR, UCHAR, USHORT and UINT (https://github.com/mapbox/rasterio/issues/1663)
+ * detect nodata from netCDF _FillValue (#1451)
+ * add more strict checks for accepting datasets for GCP, and handle nodata in GCP too (#1451)
 
 IGNFHeightAsciiGrid driver:
  * add support for RAF18.mnt
@@ -169,10 +177,13 @@ PCIDSK driver:
  * avoid uint overflow and too big memory allocation attempt. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12893 
 
 PDF driver:
+ * Add a COMPOSITION_FILE creation option to generate a complex document
+ * And a gdal_create_pdf.py sample script
  * avoid division by zero when generating from vector content whose bounding box is almost a horizontal or vertical line. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13408
 
 PDS3:
  * fix decoding of band interleaved images (such as for CRISM HSP) (#1239)
+ * add support for ENCODING_TYPE=DCT_DECOMPRESSED (#1457)
 
 PDS4 driver:
  * add subdataset creation support, and getting/setting the band unit
@@ -258,6 +269,7 @@ GML driver:
 
 GMLAS driver:
  * avoid null pointer dereference on some schemas
+ * do not use space as separator for schema filename in XSD open option (#1452)
 
 MongoDB driver:
  * fix releated to filters in GetFeature()
@@ -303,6 +315,9 @@ PDS4 driver:
 PGDump driver:
  * in WRITE_EWKT_GEOM=YES non-default mode, export geometries to ISO WKT so as to be able to export XYZM (#1327)
  * Fix emitted SQL when UNLOGGED=ON
+
+PLScenes driver:
+ * update plscenesconf.json with SkySatCollect
 
 SDTS driver:
  * error out if too many errors are raised to avoid timeout in oss-fuzz. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13819.
