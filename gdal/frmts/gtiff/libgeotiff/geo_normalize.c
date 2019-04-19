@@ -3050,14 +3050,14 @@ void GTIFAttachPROJContext( GTIF *psGTIF, void* pjContext )
 /*                         GTIFGetPROJContext()                         */
 /*                                                                      */
 /*      Return the PROJ context attached to the GTIF handle.            */
-/*      If it has not yet been instanciated and instanciateIfNeeded=TRUE*/
-/*      then, it will be instanciated (and owned by GTIF handle).       */
+/*      If it has not yet been instantiated and instantiateIfNeeded=TRUE*/
+/*      then, it will be instantiated (and owned by GTIF handle).       */
 /************************************************************************/
 
-void *GTIFGetPROJContext( GTIF *psGTIF, int instanciateIfNeeded,
+void *GTIFGetPROJContext( GTIF *psGTIF, int instantiateIfNeeded,
                           int* out_gtif_own_pj_context )
 {
-    if( psGTIF->pj_context || !instanciateIfNeeded )
+    if( psGTIF->pj_context || !instantiateIfNeeded )
     {
         if( out_gtif_own_pj_context )
         {

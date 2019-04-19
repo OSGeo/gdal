@@ -765,7 +765,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         if( !m_pj )
         {
             CPLError( CE_Failure, CPLE_NotSupported,
-                      "Cannot instanciate pipeline %s",
+                      "Cannot instantiate pipeline %s",
                       options.d->osCoordOperation.c_str() );
             return FALSE;
         }
@@ -915,13 +915,13 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
 
     auto src = proj_create(ctx, pszSrcSRS);
     if( !src ) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot instanciate source_crs");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot instantiate source_crs");
         return false;
     }
 
     auto dst = proj_create(ctx, pszTargetSRS);
     if( !dst ) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot instanciate target_crs");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot instantiate target_crs");
         proj_destroy(src);
         return false;
     }
