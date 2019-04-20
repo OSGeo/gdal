@@ -364,7 +364,7 @@ if HAVE_NUMPY:
 
 packages = ["osgeo", ]
 
-readme = str(open('README.txt', 'rb').read())
+readme = str(open('README.rst', 'rb').read())
 
 name = 'GDAL'
 version = gdal_version
@@ -408,6 +408,7 @@ setup_kwargs = dict(
     maintainer=maintainer,
     maintainer_email=maintainer_email,
     long_description=readme,
+    long_description_content_type='text/x-rst',
     description=description,
     license=license_type,
     classifiers=classifiers,
