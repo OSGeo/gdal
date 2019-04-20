@@ -581,10 +581,6 @@ ifneq ($(PCIDSK_SETTING),no)
 GDAL_FORMATS += pcidsk
 endif
 
-ifeq ($(HAVE_SQLITE),yes)
-GDAL_FORMATS := $(GDAL_FORMATS) rasterlite mbtiles
-endif
-
 ifeq ($(HAVE_POSTGISRASTER),yes)
 GDAL_FORMATS := $(GDAL_FORMATS) postgisraster
 endif

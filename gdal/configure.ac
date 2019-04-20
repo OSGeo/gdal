@@ -1354,9 +1354,12 @@ OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
 AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen til tsx usgsdem xpm xyz zmap])
-AC_DEFUN([INTERNAL_OPT_FORMATS],[eeda grib plmosaic ozi pdf rda rik wcs wms wmts daas])
+AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
 AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo geoconcept georss gml gmt gpsbabel gpx gtm htf jml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
+AC_DEFUN([INTERNAL_CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas])dnl
 AC_DEFUN([INTERNAL_CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic gft ngw plscenes wfs])dnl
+AC_DEFUN([INTERNAL_SQLITE_FORMATS],[rasterlite mbtiles])dnl
+AC_DEFUN([INTERNAL_SQLITE_DRIVERS],[gpkg vfk osm])dnl
 
 AC_ARG_ENABLE(all-optional-drivers, AS_HELP_STRING([--disable-all-optional-drivers], [disable all non-mandatory internal drivers. Individual drivers can be added with --enable-driver-XXX]))
 if test "x$enable_all_optional_drivers" = "xno"; then :
@@ -1438,9 +1441,45 @@ else
 fi
 ])
 
+m4_foreach_w([frmt],INTERNAL_CURL_FORMATS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt format support (enabled by default, requires curl)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
 m4_foreach_w([frmt],INTERNAL_CURL_DRIVERS,
 [
 AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default, requires curl)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],INTERNAL_SQLITE_FORMATS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt format support (enabled by default, requires sqlite3)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],INTERNAL_SQLITE_DRIVERS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default, requires sqlite3)]))dnl
 ARG_DRIVER_ENABLED(frmt)
 if test "$cur_driver_enabled" = "yes"; then :
   m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
@@ -3924,7 +3963,6 @@ if test "$CURL_SETTING" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-AC_DEFUN([INTERNAL_CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas])dnl
 m4_foreach_w([frmt],INTERNAL_CURL_FORMATS,[
   driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
   if test "x$driver_enabled" = "xyes"; then
@@ -4099,6 +4137,25 @@ AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
 AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
 AC_SUBST([SQLITE_HAS_COLUMN_METADATA], $SQLITE_HAS_COLUMN_METADATA)
 HAVE_SQLITE=$HAVE_SQLITE3
+
+if test "$HAVE_SQLITE3" = "yes"; then
+m4_foreach_w([frmt],INTERNAL_SQLITE_FORMATS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
+  fi 
+])
+
+m4_foreach_w([frmt],INTERNAL_SQLITE_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi 
+])
+
+fi
+
 
 dnl ---------------------------------------------------------------------------
 dnl Check for librasterlite2.
