@@ -1628,7 +1628,7 @@ char **WCSDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:CoverageOffering", NULL);
+                                   "xml:CoverageOffering", nullptr);
 }
 
 /************************************************************************/

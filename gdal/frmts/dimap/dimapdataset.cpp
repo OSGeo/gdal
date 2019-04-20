@@ -189,7 +189,7 @@ char **DIMAPDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:dimap", NULL);
+                                   "xml:dimap", nullptr);
 }
 
 /************************************************************************/

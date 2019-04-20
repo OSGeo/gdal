@@ -255,7 +255,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
                                  pabyScanlines, nXSize, size_y, GDT_Byte,
                                  nBands, NULL,
                                  nBands,
-                                 nBands * nXSize, 1, NULL);
+                                 nBands * nXSize, 1, nullptr);
 
         if (eErr != CE_None)
             break;

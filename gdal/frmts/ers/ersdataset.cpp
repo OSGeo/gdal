@@ -244,7 +244,7 @@ char **ERSDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "ERS", NULL);
+                                   "ERS", nullptr);
 }
 
 /************************************************************************/

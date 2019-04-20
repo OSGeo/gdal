@@ -3503,7 +3503,7 @@ char **BAGDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:BAG", NULL);
+                                   "xml:BAG", nullptr);
 }
 
 /************************************************************************/
