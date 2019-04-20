@@ -96,7 +96,7 @@ bindings on Windows:
 
 As explained in the README_EXE.txt file, after unzipping the GDAL binaries you 
 will need to modify your system path and variables. If you're not sure how to 
-do this, read the `Microsoft KnowledgeBase doc`_ 
+do this, read the `Microsoft Knowledge Base doc`_ 
 
 1. Add the installation directory bin folder to your system PATH, remember 
    to put a semicolon in front of it before you add to the existing path.
