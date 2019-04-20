@@ -111,10 +111,6 @@ ifeq ($(HAVE_SOSI),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DSOSI_ENABLED
 endif
 
-ifeq ($(HAVE_SQLITE),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DVFK_ENABLED
-endif
-
 ifeq ($(GEOMEDIA_SETTING),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DGEOMEDIA_ENABLED
 endif
@@ -133,10 +129,6 @@ endif
 
 ifeq ($(HAVE_EXPAT),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DXLSX_ENABLED
-endif
-
-ifeq ($(HAVE_SQLITE),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DOSM_ENABLED
 endif
 
 ifeq ($(ODBC_SETTING),yes)
