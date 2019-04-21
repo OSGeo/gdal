@@ -1583,7 +1583,7 @@ else
       LIBS="${PG_LIB} ${LIBS}"
     fi
   else
-    if "x$with_pg" = "xyes"; then
+    if test "x$with_pg" = "xyes"; then
       AC_MSG_ERROR([--with-pg was requested, but libpq is not available])
     fi
   fi

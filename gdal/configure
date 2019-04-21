@@ -28764,7 +28764,7 @@ fi
       LIBS="${PG_LIB} ${LIBS}"
     fi
   else
-    if "x$with_pg" = "xyes"; then
+    if test "x$with_pg" = "xyes"; then
       as_fn_error $? "--with-pg was requested, but libpq is not available" "$LINENO" 5
     fi
   fi
@@ -44372,9 +44372,6 @@ echo "  Google libkml support:     ${HAVE_LIBKML}"
 
 
 echo "  ODBC support:              ${ODBC_SETTING}"
-
-
-echo "  PGeo support:              ${ODBC_SETTING}"
 
 
 echo "  FGDB support:              ${FGDB_ENABLED}"
