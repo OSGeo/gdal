@@ -739,7 +739,6 @@ HAVE_EXPAT
 EXPAT_VERSION
 EXPAT_LDFLAGS
 EXPAT_CFLAGS
-HAVE_NAS
 XERCES_INCLUDE
 HAVE_XERCES
 XERCES_LDFLAGS
@@ -1114,6 +1113,16 @@ enable_driver_mbtiles
 enable_driver_gpkg
 enable_driver_vfk
 enable_driver_osm
+enable_driver_ods
+enable_driver_xlsx
+enable_driver_nas
+enable_driver_ili
+enable_driver_gmlas
+enable_driver_odbc
+enable_driver_pgeo
+enable_driver_mssqlspatial
+enable_driver_geomedia
+enable_driver_walk
 with_pg
 with_grass
 with_libgrass
@@ -2057,6 +2066,28 @@ Optional Features:
                           requires sqlite3)
   --disable-driver-osm    disable osm driver support (enabled by default,
                           requires sqlite3)
+  --disable-driver-ods    disable ods driver support (enabled by default,
+                          requires expat)
+  --disable-driver-xlsx   disable xlsx driver support (enabled by default,
+                          requires expat)
+  --disable-driver-nas    disable nas driver support (enabled by default,
+                          requires xerces-c)
+  --disable-driver-ili    disable ili driver support (enabled by default,
+                          requires xerces-c)
+  --disable-driver-gmlas  disable gmlas driver support (enabled by default,
+                          requires xerces-c)
+  --disable-driver-odbc   disable odbc driver support (enabled by default,
+                          requires odbc)
+  --disable-driver-pgeo   disable pgeo driver support (enabled by default,
+                          requires odbc)
+  --disable-driver-mssqlspatial
+                          disable mssqlspatial driver support (enabled by default,
+                          requires odbc)
+  --disable-driver-geomedia
+                          disable geomedia driver support (enabled by default,
+                          requires odbc)
+  --disable-driver-walk   disable walk driver support (enabled by default,
+                          requires odbc)
   --enable-pdf-plugin     enable PDF driver as a plugin (included in libgdal
                           by default)
 
@@ -28171,6 +28202,282 @@ else
 fi
 
 
+
+# Check whether --enable-driver-ods was given.
+if test "${enable_driver_ods+set}" = set; then :
+  enableval=$enable_driver_ods;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ods
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_ods_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED ods"
+  INTERNAL_FORMAT_ods_ENABLED=no
+fi
+
+# Check whether --enable-driver-xlsx was given.
+if test "${enable_driver_xlsx+set}" = set; then :
+  enableval=$enable_driver_xlsx;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_xlsx
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_xlsx_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED xlsx"
+  INTERNAL_FORMAT_xlsx_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-nas was given.
+if test "${enable_driver_nas+set}" = set; then :
+  enableval=$enable_driver_nas;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_nas
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_nas_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED nas"
+  INTERNAL_FORMAT_nas_ENABLED=no
+fi
+
+# Check whether --enable-driver-ili was given.
+if test "${enable_driver_ili+set}" = set; then :
+  enableval=$enable_driver_ili;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ili
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_ili_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED ili"
+  INTERNAL_FORMAT_ili_ENABLED=no
+fi
+
+# Check whether --enable-driver-gmlas was given.
+if test "${enable_driver_gmlas+set}" = set; then :
+  enableval=$enable_driver_gmlas;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gmlas
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_gmlas_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gmlas"
+  INTERNAL_FORMAT_gmlas_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-odbc was given.
+if test "${enable_driver_odbc+set}" = set; then :
+  enableval=$enable_driver_odbc;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_odbc
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_odbc_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED odbc"
+  INTERNAL_FORMAT_odbc_ENABLED=no
+fi
+
+# Check whether --enable-driver-pgeo was given.
+if test "${enable_driver_pgeo+set}" = set; then :
+  enableval=$enable_driver_pgeo;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_pgeo
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_pgeo_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED pgeo"
+  INTERNAL_FORMAT_pgeo_ENABLED=no
+fi
+
+# Check whether --enable-driver-mssqlspatial was given.
+if test "${enable_driver_mssqlspatial+set}" = set; then :
+  enableval=$enable_driver_mssqlspatial;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_mssqlspatial
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_mssqlspatial_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED mssqlspatial"
+  INTERNAL_FORMAT_mssqlspatial_ENABLED=no
+fi
+
+# Check whether --enable-driver-geomedia was given.
+if test "${enable_driver_geomedia+set}" = set; then :
+  enableval=$enable_driver_geomedia;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_geomedia
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_geomedia_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED geomedia"
+  INTERNAL_FORMAT_geomedia_ENABLED=no
+fi
+
+# Check whether --enable-driver-walk was given.
+if test "${enable_driver_walk+set}" = set; then :
+  enableval=$enable_driver_walk;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_walk
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_walk_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED walk"
+  INTERNAL_FORMAT_walk_ENABLED=no
+fi
+
+
 OGRFORMATS_ENABLED=$OGRFORMATS_ENABLED
 
 OGRFORMATS_ENABLED_CFLAGS=$OGRFORMATS_ENABLED_CFLAGS
@@ -34150,20 +34457,32 @@ $as_echo "$as_me: WARNING: Xerces C++ Parser support requested but headers or li
 
 if test "$HAVE_XERCES" = "yes"; then
     LIBS="$XERCES_LDFLAGS $LIBS"
+
+
+  driver_enabled=$INTERNAL_FORMAT_nas_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED nas"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DNAS_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_ili_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED ili"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DILI_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_gmlas_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gmlas"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGMLAS_ENABLED"
+  fi
+
+
 fi
 
 HAVE_XERCES=$HAVE_XERCES
 
 XERCES_INCLUDE=$XERCES_CFLAGS
-
-
-
-if test "$HAVE_XERCES" = "yes" ; then
-  HAVE_NAS=yes
-else
-  HAVE_NAS=no
-fi
-HAVE_NAS=$HAVE_NAS
 
 
 
@@ -34529,6 +34848,21 @@ $as_echo "$as_me: WARNING: Expat XML Parser support requested but headers or lib
 
 if test "$HAVE_EXPAT" = "yes"; then
     LIBS="$EXPAT_LDFLAGS $LIBS"
+
+
+  driver_enabled=$INTERNAL_FORMAT_ods_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED ods"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DODS_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_xlsx_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED xlsx"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DXLSX_ENABLED"
+  fi
+
+
 fi
 
 HAVE_EXPAT=$HAVE_EXPAT
@@ -35396,6 +35730,40 @@ fi
   EXTRA_INCLUDES="-I$with_odbc -I$with_odbc/include $EXTRA_INCLUDES"
 
   echo "using odbc library from $with_odbc."
+fi
+
+if test "$ODBC_SETTING" = "yes"  ; then
+
+  driver_enabled=$INTERNAL_FORMAT_odbc_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED odbc"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DODBC_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_pgeo_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED pgeo"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DPGEO_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_mssqlspatial_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED mssqlspatial"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DMSSQLSPATIAL_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_geomedia_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED geomedia"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGEOMEDIA_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_walk_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED walk"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DWALK_ENABLED"
+  fi
+
 fi
 
 ODBC_SETTING=$ODBC_SETTING
@@ -43992,9 +44360,6 @@ echo "  Ingres support:            ${HAVE_INGRES}"
 
 
 echo "  Xerces-C support:          ${HAVE_XERCES}"
-
-
-echo "  NAS support:               ${HAVE_NAS}"
 
 
 echo "  Expat support:             ${HAVE_EXPAT}"
