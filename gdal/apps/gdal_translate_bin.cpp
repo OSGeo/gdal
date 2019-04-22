@@ -56,7 +56,7 @@ static void Usage(const char* pszErrorMsg, int bShort)
             "       [-projwin ulx uly lrx lry] [-projwin_srs srs_def]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-a_scale value] [-a_offset value]\n"
-            "       [-gcp pixel line easting northing [elevation]]*\n"
+            "       [-nogcp] [-gcp pixel line easting northing [elevation]]*\n"
             "       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]\n"
             "       |-colorinterp {red|green|blue|alpha|gray|undefined},...]\n"
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
