@@ -10283,8 +10283,11 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 /* -------------------------------------------------------------------- */
 /*      Create overviews for the mask.                                  */
 /* -------------------------------------------------------------------- */
-    if( eErr == CE_None )
+    if( eErr == CE_None && nSrcOverviews > 0 &&
+        poSrcDS->GetRasterBand(1)->GetOverview(0)->GetMaskFlags() == GMF_PER_DATASET )
+    {
         eErr = CreateInternalMaskOverviews(nOvrBlockXSize, nOvrBlockYSize);
+    }
 
     return eErr;
 }
@@ -10426,9 +10429,18 @@ CPLErr GTiffDataset::IBuildOverviews(
             return CE_Failure;
         }
 
-        return GDALDataset::IBuildOverviews(
+        CPLErr eErr = GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
             nBandsIn, panBandList, pfnProgress, pProgressData );
+        if( eErr == CE_None && poMaskDS )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Building external overviews whereas there is an internal "
+                     "mask is not fully supported. "
+                     "The overviews of the non-mask bands will be created, "
+                     "but not the overviews of the mask band.");
+        }
+        return eErr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -17726,8 +17738,22 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             {
                 GDALRasterBand* poOvrBand =
                     poSrcDS->GetRasterBand(1)->GetOverview(i);
-                dfTotalPixels += static_cast<double>(poOvrBand->GetXSize()) *
-                                poOvrBand->GetYSize() * nBandsWidthMask;
+                const double dfOvrPixels =
+                    static_cast<double>(poOvrBand->GetXSize()) *
+                                poOvrBand->GetYSize();
+                dfTotalPixels += dfOvrPixels * l_nBands;
+                if( poOvrBand->GetMaskFlags() == GMF_PER_DATASET )
+                {
+                    dfTotalPixels += dfOvrPixels;
+                }
+                else if( i == 0 &&
+                         poDS->GetRasterBand(1)->GetMaskFlags() == GMF_PER_DATASET )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Source dataset has a mask band on full "
+                             "resolution, overviews on the regular bands, "
+                             "but lacks overviews on the mask band.");
+                }
             }
 
             char* papszCopyWholeRasterOptions[2] = { nullptr, nullptr };
@@ -17772,7 +17798,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 poDS->papoOverviewDS[iOvrLevel]->FlushCache();
 
                 // Copy mask of the overview.
-                if( eErr == CE_None && poDS->poMaskDS != nullptr )
+                if( eErr == CE_None &&
+                    poOvrBand->GetMaskFlags() == GMF_PER_DATASET &&
+                    poDS->papoOverviewDS[iOvrLevel]->poMaskDS != nullptr )
                 {
                     dfNextCurPixels +=
                         static_cast<double>(poOvrBand->GetXSize()) *

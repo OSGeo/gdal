@@ -115,7 +115,8 @@ protected:
                       GDALRasterIOExtraArg* psExtraArg ) override;
 
     int         CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
-                               GDALDataType eBufType);
+                               GDALDataType eBufType,
+                               GDALRasterIOExtraArg* psExtraArg);
 
 public:
 

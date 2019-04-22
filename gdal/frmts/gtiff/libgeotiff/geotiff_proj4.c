@@ -34,6 +34,36 @@
 #include "geo_normalize.h"
 #include "geovalues.h"
 #include "geo_tiffp.h"
+#include "proj.h"
+
+/************************************************************************/
+/*                    GTIFProj4AppendEllipsoid()                        */
+/************************************************************************/
+
+static void GTIFProj4AppendEllipsoid(GTIFDefn* psDefn, char* pszProjection)
+{
+/* ==================================================================== */
+/*      Handle ellipsoid information.                                   */
+/* ==================================================================== */
+    if( psDefn->Ellipsoid == Ellipse_WGS_84 )
+        strcat( pszProjection, "+ellps=WGS84 " );
+    else if( psDefn->Ellipsoid == Ellipse_Clarke_1866 )
+        strcat( pszProjection, "+ellps=clrk66 " );
+    else if( psDefn->Ellipsoid == Ellipse_Clarke_1880 )
+        strcat( pszProjection, "+ellps=clrk80 " );
+    else if( psDefn->Ellipsoid == Ellipse_GRS_1980 )
+        strcat( pszProjection, "+ellps=GRS80 " );
+    else
+    {
+        if( psDefn->SemiMajor != 0.0 && psDefn->SemiMinor != 0.0 )
+        {
+            sprintf( pszProjection+strlen(pszProjection),
+                     "+a=%.3f +b=%.3f ",
+                     psDefn->SemiMajor,
+                     psDefn->SemiMinor );
+        }
+    }
+}
 
 /************************************************************************/
 /*                          OSRProj4Tokenize()                          */
@@ -941,6 +971,21 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Oblique Mercator                                                */
+/* -------------------------------------------------------------------- */
+    else if( psDefn->CTProjection == CT_ObliqueMercator_Laborde )
+    {
+        sprintf( szProjection+strlen(szProjection),
+           "+proj=labrd +lat_0=%.9f +lon_0=%.9f +azi=%.9f +k=%f +x_0=%.3f +y_0=%.3f ",
+                 psDefn->ProjParm[0],
+                 psDefn->ProjParm[1],
+                 psDefn->ProjParm[2],
+                 psDefn->ProjParm[4],
+                 dfFalseEasting,
+                 dfFalseNorthing );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Mercator							*/
 /* -------------------------------------------------------------------- */
     else if( psDefn->CTProjection == CT_Mercator )
@@ -1313,27 +1358,8 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
             }*/
         }
     }
-/* ==================================================================== */
-/*      Handle ellipsoid information.                                   */
-/* ==================================================================== */
-    if( psDefn->Ellipsoid == Ellipse_WGS_84 )
-        strcat( szProjection, "+ellps=WGS84 " );
-    else if( psDefn->Ellipsoid == Ellipse_Clarke_1866 )
-        strcat( szProjection, "+ellps=clrk66 " );
-    else if( psDefn->Ellipsoid == Ellipse_Clarke_1880 )
-        strcat( szProjection, "+ellps=clrk80 " );
-    else if( psDefn->Ellipsoid == Ellipse_GRS_1980 )
-        strcat( szProjection, "+ellps=GRS80 " );
-    else
-    {
-        if( psDefn->SemiMajor != 0.0 && psDefn->SemiMinor != 0.0 )
-        {
-            sprintf( szProjection+strlen(szProjection),
-                     "+a=%.3f +b=%.3f ",
-                     psDefn->SemiMajor,
-                     psDefn->SemiMinor );
-        }
-    }
+
+    GTIFProj4AppendEllipsoid(psDefn, szProjection);
 
     strcat( szProjection, szUnits );
 
@@ -1342,9 +1368,6 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 
     return CPLStrdup( szProjection );
 }
-
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
-#include "proj_api.h"
 
 /************************************************************************/
 /*                        GTIFProj4FromLatLong()                        */
@@ -1357,9 +1380,11 @@ int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
                           double *padfX, double *padfY )
 
 {
-    char	*pszProjection, **papszArgs;
-    projPJ	*psPJ;
+    char        szLongLat[256];
+    char	*pszProjection;
+    PJ	        *psPJ;
     int		i;
+    PJ_CONTEXT* ctx;
 
 /* -------------------------------------------------------------------- */
 /*      Get a projection definition.                                    */
@@ -1369,19 +1394,17 @@ int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
     if( pszProjection == NULL )
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Parse into tokens for pj_init(), and initialize the projection. */
-/* -------------------------------------------------------------------- */
+    ctx = proj_context_create();
 
-    papszArgs = CSLTokenizeStringComplex( pszProjection, " +", TRUE, FALSE );
-    free( pszProjection );
+    strcpy(szLongLat, "+proj=longlat ");
+    GTIFProj4AppendEllipsoid(psDefn, szLongLat);
 
-    psPJ = pj_init( CSLCount(papszArgs), papszArgs );
-
-    CSLDestroy( papszArgs );
+    psPJ = proj_create_crs_to_crs( ctx, szLongLat, pszProjection, NULL );
+    CPLFree( pszProjection );
 
     if( psPJ == NULL )
     {
+        proj_context_destroy(ctx);
         return FALSE;
     }
 
@@ -1390,18 +1413,20 @@ int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nPoints; i++ )
     {
-        projUV	sUV;
+        PJ_COORD coord;
+        coord.xyzt.x = padfX[i];
+        coord.xyzt.y = padfY[i];
+        coord.xyzt.z = 0;
+        coord.xyzt.t = 0;
 
-        sUV.u = padfX[i] * DEG_TO_RAD;
-        sUV.v = padfY[i] * DEG_TO_RAD;
+        coord = proj_trans(psPJ, PJ_FWD, coord);
 
-        sUV = pj_fwd( sUV, psPJ );
-
-        padfX[i] = sUV.u;
-        padfY[i] = sUV.v;
+        padfX[i] = coord.xyzt.x;
+        padfY[i] = coord.xyzt.y;
     }
 
-    pj_free( psPJ );
+    proj_destroy( psPJ );
+    proj_context_destroy(ctx);
 
     return TRUE;
 }
@@ -1417,9 +1442,11 @@ int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
                         double *padfX, double *padfY )
 
 {
-    char	*pszProjection, **papszArgs;
-    projPJ	*psPJ;
+    char        szLongLat[256];
+    char	*pszProjection;
+    PJ	        *psPJ;
     int		i;
+    PJ_CONTEXT* ctx;
 
 /* -------------------------------------------------------------------- */
 /*      Get a projection definition.                                    */
@@ -1429,19 +1456,17 @@ int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
     if( pszProjection == NULL )
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Parse into tokens for pj_init(), and initialize the projection. */
-/* -------------------------------------------------------------------- */
+    ctx = proj_context_create();
 
-    papszArgs = CSLTokenizeStringComplex( pszProjection, " +", TRUE, FALSE );
-    free( pszProjection );
+    strcpy(szLongLat, "+proj=longlat ");
+    GTIFProj4AppendEllipsoid(psDefn, szLongLat);
 
-    psPJ = pj_init( CSLCount(papszArgs), papszArgs );
-
-    CSLDestroy( papszArgs );
+    psPJ = proj_create_crs_to_crs( ctx, pszProjection, szLongLat, NULL );
+    CPLFree( pszProjection );
 
     if( psPJ == NULL )
     {
+        proj_context_destroy(ctx);
         return FALSE;
     }
 
@@ -1450,18 +1475,20 @@ int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nPoints; i++ )
     {
-        projUV	sUV;
+        PJ_COORD coord;
+        coord.xyzt.x = padfX[i];
+        coord.xyzt.y = padfY[i];
+        coord.xyzt.z = 0;
+        coord.xyzt.t = 0;
 
-        sUV.u = padfX[i];
-        sUV.v = padfY[i];
+        coord = proj_trans(psPJ, PJ_FWD, coord);
 
-        sUV = pj_inv( sUV, psPJ );
-
-        padfX[i] = sUV.u * RAD_TO_DEG;
-        padfY[i] = sUV.v * RAD_TO_DEG;
+        padfX[i] = coord.xyzt.x;
+        padfY[i] = coord.xyzt.y;
     }
 
-    pj_free( psPJ );
+    proj_destroy( psPJ );
+    proj_context_destroy(ctx);
 
     return TRUE;
 }

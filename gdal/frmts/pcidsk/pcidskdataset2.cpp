@@ -711,7 +711,7 @@ char **PCIDSK2Band::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamRasterBand::GetMetadataDomainList(),
                                    TRUE,
-                                   "", NULL);
+                                   "", nullptr);
 }
 
 /************************************************************************/
@@ -1148,7 +1148,7 @@ char **PCIDSK2Dataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "", NULL);
+                                   "", nullptr);
 }
 
 /************************************************************************/

@@ -210,6 +210,17 @@ def test_ogr_gmt_5():
 
     assert feat is None, 'did not get null feature when expected.'
 
+###############################################################################
+# Test reading a file with just point coordinates
+
+
+def test_ogr_gmt_coord_only():
+
+    with gdaltest.tempfile('/vsimem/test.gmt', """1 2 3\n"""):
+        ds = ogr.Open('/vsimem/test.gmt')
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert not ogrtest.check_feature_geometry(f, 'POINT Z (1 2 3)'), f.GetGeometryRef().ExportToIsoWkt()
 
 ###############################################################################
 #

@@ -1,0 +1,66 @@
+%PDF-1.6
+%ÿÿÿÿ
+3 0 obj
+<< /Name (Layer of page 1) /Type /OCG >>
+endobj
+4 0 obj
+<< /Name (Layer of page 2) /Type /OCG >>
+endobj
+5 0 obj
+<< /Contents 6 0 R /Group << /CS /DeviceRGB /S /Transparency /Type /Group >> /MediaBox [ 0 0 20 20 ] /Parent 1 0 R /Resources 7 0 R /Type /Page /UserUnit 1 >>
+endobj
+6 0 obj
+<< /Length 8 0 R >>
+stream
+/OC /Lyr3 BDC
+EMC
+endstream
+endobj
+8 0 obj
+   18
+endobj
+7 0 obj
+<< /Properties << /Lyr3 3 0 R >> >>
+endobj
+9 0 obj
+<< /Contents 10 0 R /Group << /CS /DeviceRGB /S /Transparency /Type /Group >> /MediaBox [ 0 0 20 20 ] /Parent 1 0 R /Resources 11 0 R /Type /Page /UserUnit 1 >>
+endobj
+10 0 obj
+<< /Length 12 0 R >>
+stream
+/OC /Lyr4 BDC
+EMC
+endstream
+endobj
+12 0 obj
+   18
+endobj
+11 0 obj
+<< /Properties << /Lyr4 4 0 R >> >>
+endobj
+1 0 obj
+<< /Count 2 /Kids [ 5 0 R 9 0 R ] /Type /Pages >>
+endobj
+2 0 obj
+<< /OCProperties << /D << /ListMode /VisiblePages /Order [ 3 0 R 4 0 R ] >> /OCGs [ 3 0 R 4 0 R ] >> /Pages 1 0 R /Type /Catalog >>
+endobj
+xref
+0 13
+0000000000 65535 f 
+0000000765 00000 n 
+0000000830 00000 n 
+0000000015 00000 n 
+0000000071 00000 n 
+0000000127 00000 n 
+0000000301 00000 n 
+0000000392 00000 n 
+0000000371 00000 n 
+0000000443 00000 n 
+0000000619 00000 n 
+0000000713 00000 n 
+0000000691 00000 n 
+trailer
+<< /Root 2 0 R /Size 13 >>
+startxref
+977
+%%EOF

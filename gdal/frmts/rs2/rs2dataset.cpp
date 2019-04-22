@@ -1206,9 +1206,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                     psUtmParams, "hemisphere", "" );
 #if 0
                 origEasting = CPLStrtod(CPLGetXMLValue(
-                    psUtmParams, "mapOriginFalseEasting", "0.0" ), NULL);
+                    psUtmParams, "mapOriginFalseEasting", "0.0" ), nullptr);
                 origNorthing = CPLStrtod(CPLGetXMLValue(
-                    psUtmParams, "mapOriginFalseNorthing", "0.0" ), NULL);
+                    psUtmParams, "mapOriginFalseNorthing", "0.0" ), nullptr);
 #endif
                 if ( STARTS_WITH_CI(pszHemisphere, "southern") )
                     bNorth = FALSE;
@@ -1477,7 +1477,7 @@ char **RS2Dataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "SUBDATASETS", NULL);
+                                   "SUBDATASETS", nullptr);
 }
 
 /************************************************************************/

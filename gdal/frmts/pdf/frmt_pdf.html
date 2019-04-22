@@ -322,6 +322,9 @@ EXTRA_LAYER_NAME and OGR_DISPLAY_LAYER_NAMES.
 <li><p><b>JAVASCRIPT_FILE=script_filename</b>: Name of Javascript file to embed and run at document opening. See
 <a href="http://partners.adobe.com/public/developer/en/acrobat/sdk/AcroJS.pdf">Acrobat(R) JavaScript Scripting Reference</a>.</p></li>
 
+<li><p><b>COMPOSITION_FILE=xml_filename</b>: (GDAL &gt;= 2.5.0) See below paragraph
+"Creation of PDF file from a XML composition file"</p></li>
+
 </ul>
 
 <h2>Update of existing files (GDAL &gt;= 1.10.0)</h2>
@@ -341,6 +344,129 @@ selected by setting the GDAL_PDF_GEO_ENCODING configuration option to OGC_BP.<p>
 
 Updated elements are written at the end of the file, following the incremental update method described in
 the PDF specification.<p>
+
+<h2>Creation of PDF file from a XML composition file (GDAL &gt;= 2.5.0)</h2>
+
+A PDF file can be generate from a XML file that describes the composition
+of the PDF:
+<ul>
+<li>number of pages</li>
+<li>layer tree, with visibility state, exclusion groups</li>
+<li>definition or 0, 1 or several georeferenced areas per page</li>
+<li>page content made of rasters, vectors or labels</li>
+</ul>
+<p>
+The GDALCreate() API must be used with width = height = bands = 0 and
+datatype = GDT_Unknown and COMPOSITION_FILE must be the single creation option.
+<p>
+The XML schema against which the composition file must validate is
+<a href="https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/data/pdfcomposition.xsd">pdfcomposition.xsd</a>
+<p>
+Example on how to use the API:
+<pre>
+char** papszOptions = CSLSetNameValue(nullptr, "COMPOSITION_FILE", "the.xml");
+GDALDataset* ds = GDALCreate("the.pdf", 0, 0, 0, GDT_Unknown, papszOptions);
+// return a non-null (fake) dataset in case of success, nullptr otherwise.
+GDALClose(ds);
+CSLDestroy(papszOptions);
+</pre>
+<p>
+A sample Python script
+<a href="https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/swig/python/samples/gdal_create_pdf.py">gdal_create_pdf.py</a>
+is also available.
+
+<p>
+Example of a composition XML file:
+<pre>
+&lt;PDFComposition&gt;
+    &lt;Metadata&gt;
+        &lt;Author&gt;Even&lt;/Author&gt;
+    &lt;/Metadata&gt;
+
+    &lt;LayerTree displayOnlyOnVisiblePages="true"&gt;
+        &lt;Layer id="l1" name="Satellite imagery"/&gt;
+        &lt;Layer id="l2" name="OSM data"&gt;
+            &lt;Layer id="l2.1" name="Roads" initiallyVisible="false"/&gt;
+            &lt;Layer id="l2.2" name="Buildings" mutuallyExclusiveGroupId="group1"&gt;
+                &lt;Layer id="l2.2.text" name="Buildings name"/&gt;
+            &lt;/Layer&gt;
+            &lt;Layer id="l2.3" name="Cadastral parcels" mutuallyExclusiveGroupId="group1"/&gt;
+        &lt;/Layer&gt;
+    &lt;/LayerTree&gt;
+
+    &lt;Page id="page_1"&gt;
+        &lt;DPI&gt;72&lt;/DPI&gt;
+        &lt;Width&gt;10&lt;/Width&gt;
+        &lt;Height&gt;15&lt;/Height&gt;
+        &lt;Georeferencing id="georeferenced"&gt; 
+            &lt;SRS dataAxisToSRSAxisMapping="2,1"&gt;EPSG:4326&lt;/SRS&gt; 
+            &lt;BoundingBox x1="1" y1="1" x2="9" y2="14"/&gt;
+            &lt;BoundingPolygon&gt;POLYGON((1 1,9 1,9 14,1 14,1 1))&lt;/BoundingPolygon&gt;
+            &lt;ControlPoint x="1"  y="1"  GeoY="48"  GeoX="2"/&gt;
+            &lt;ControlPoint x="1"  y="14" GeoY="49"  GeoX="2"/&gt;
+            &lt;ControlPoint x="9"  y="1"  GeoY="49"  GeoX="3"/&gt;
+            &lt;ControlPoint x="9"  y="14" GeoY="48"  GeoX="3"/&gt;
+        &lt;/Georeferencing&gt;
+
+        &lt;Content&gt;
+            &lt;IfLayerOn layerId="l1"&gt;
+                &lt;!-- image drawn, and stretched to (x1,y1)-&gt;(x2,y2), without reading its georeferencing --&gt;
+                &lt;Raster dataset="satellite.png" x1="1" y1="1" x2="9" y2="14"/&gt;
+            &lt;/IfLayerOn&gt;
+            &lt;IfLayerOn layerId="l2"&gt;
+                &lt;IfLayerOn layerId="l2.1"&gt;
+                    &lt;Raster dataset="roads.jpg" x1="1" y1="1" x2="9" y2="14"/&gt;
+                    &lt;!-- vector drawn with coordinates in PDF coordinate space --&gt;
+                    &lt;Vector dataset="roads_pdf_units.shp" layer="roads_pdf_units" visible="false"&gt;
+                        &lt;LogicalStructure displayLayerName="Roads" fieldToDisplay="road_name"/&gt;>
+                    &lt;/Vector&gt;
+                &lt;/IfLayerOn&gt;
+                &lt;IfLayerOn layerId="l2.2"&gt;
+                    &lt;!-- image drawn by taking into account its georeferencing --&gt;
+                    &lt;Raster dataset="buildings.tif" georeferencingId="georeferenced"/&gt;
+                    &lt;IfLayerOn layerId="l2.2.text"&gt;
+                        &lt;!-- vector drawn by taking into account its georeferenced coordinates --&gt;
+                        &lt;VectorLabel dataset="labels.shp" layer="labels" georeferencingId="georeferenced"&gt;
+                        &lt;/VectorLabel&gt;
+                    &lt;/IfLayerOn&gt;
+                &lt;/IfLayerOn&gt;
+                &lt;IfLayerOn layerId="l2.3"&gt;
+                    &lt;PDF dataset="parcels.pdf"&gt;
+                        &lt;Blending function="Normal" opacity="0.7"/&gt;
+                    &lt;/PDF&gt;
+                &lt;/IfLayerOn&gt;
+            &lt;/IfLayerOn&gt;
+        &lt;/Content&gt;
+    &lt;/Page&gt;
+
+    &lt;Page id="page_2"&gt;
+        &lt;DPI&gt;72&lt;/DPI&gt;
+        &lt;Width&gt;10&lt;/Width&gt;
+        &lt;Height&gt;15&lt;/Height&gt;
+        &lt;Content&gt;
+        &lt;/Content&gt;
+    &lt;/Page&gt;
+
+    &lt;Outline&gt;
+        &lt;OutlineItem name="turn only layer 'Satellite imagery' on, and switch to fullscreen" italic="true" bold="true"&gt;
+            &lt;Actions&gt;
+                &lt;SetAllLayersStateAction visible="false"/&gt;
+                &lt;SetLayerStateAction visible="true" layerId="l1"/&gt;
+                &lt;JavascriptAction&gt;app.fs.isFullScreen = true;&lt;/JavascriptAction&gt;
+            &lt;/Actions&gt;
+        &lt;/OutlineItem&gt;
+        &lt;OutlineItem name="Page 1" pageId="page_1"&gt;
+            &lt;OutlineItem name="Important feature !"&gt;
+                &lt;Actions&gt;
+                    &lt;GotoPageAction pageId="page_1" x1="1" y1="2" x2="3" y2="4"&lt;/GotoPageAction&gt;
+                &lt;/Actions&gt;
+            &lt;/OutlineItem&gt;
+        &lt;/OutlineItem&gt;
+        &lt;OutlineItem name="Page 2" pageId="page_2"/&gt;
+    &lt;/Outline&gt;
+
+&lt;/PDFComposition&gt;
+</pre>
 
 <h2>Build dependencies</h2>
 

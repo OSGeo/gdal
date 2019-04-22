@@ -154,6 +154,7 @@ OGRCARTOTableLayer::OGRCARTOTableLayer(OGRCARTODataSource* poDSIn,
     bCartodbfy = false;
     nMaxChunkSize = atoi(CPLGetConfigOption("CARTO_MAX_CHUNK_SIZE",
             CPLGetConfigOption("CARTODB_MAX_CHUNK_SIZE", "15"))) * 1024 * 1024;
+    bDropOnCreation = false;
 }
 
 /************************************************************************/
@@ -1875,9 +1876,14 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
     bDeferredCreation = false;
 
     CPLString osSQL;
-    osSQL.Printf("CREATE TABLE %s ( %s SERIAL,",
-                 OGRCARTOEscapeIdentifier(osName).c_str(),
-                 osFIDColName.c_str());
+    CPLDebug( "CARTO", "Overwrite on creation (%d)", bDropOnCreation );
+    if ( bDropOnCreation )
+        osSQL.Printf("BEGIN; DROP TABLE IF EXISTS %s;",
+                     OGRCARTOEscapeIdentifier(osName).c_str());
+
+    osSQL += CPLSPrintf("CREATE TABLE %s ( %s SERIAL,",
+                        OGRCARTOEscapeIdentifier(osName).c_str(),
+                        osFIDColName.c_str());
 
     for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
@@ -1936,6 +1942,11 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
     osSQL += CPLSPrintf("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval('%s')",
                         OGRCARTOEscapeIdentifier(osName).c_str(),
                         osFIDColName.c_str(), osSeqName.c_str());
+
+    if ( bDropOnCreation )
+        osSQL += "; COMMIT;";
+
+    bDropOnCreation = false;
 
     json_object* poObj = poDS->RunSQL(osSQL);
     if( poObj == nullptr )

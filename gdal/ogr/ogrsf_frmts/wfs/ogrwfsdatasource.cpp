@@ -305,7 +305,7 @@ char** OGRWFSDataSource::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "", "xml:capabilities", NULL);
+                                   "", "xml:capabilities", nullptr);
 }
 
 /************************************************************************/

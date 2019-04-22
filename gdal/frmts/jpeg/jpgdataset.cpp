@@ -240,7 +240,7 @@ char **JPGDatasetCommon::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:XMP", "COLOR_PROFILE", NULL);
+                                   "xml:XMP", "COLOR_PROFILE", nullptr);
 }
 
 /************************************************************************/

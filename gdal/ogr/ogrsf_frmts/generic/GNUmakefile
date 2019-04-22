@@ -55,18 +55,6 @@ ifeq ($(HAVE_FME),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DFME_ENABLED
 endif
 
-ifeq ($(ODBC_SETTING),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DODBC_ENABLED
-endif
-
-ifeq ($(PGEO_SETTING),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DPGEO_ENABLED
-endif
-
-ifeq ($(MSSQLSPATIAL_SETTING),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DMSSQLSPATIAL_ENABLED
-endif
-
 ifeq ($(HAVE_DODS),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DDODS_ENABLED
 endif
@@ -77,18 +65,6 @@ endif
 
 ifeq ($(HAVE_GRASS),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DGRASS_ENABLED
-endif
-
-ifeq ($(HAVE_XERCES),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DILI_ENABLED
-endif
-
-ifeq ($(HAVE_XERCES),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DGMLAS_ENABLED
-endif
-
-ifeq ($(HAVE_NAS),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DNAS_ENABLED
 endif
 
 ifeq ($(HAVE_LIBKML),yes)
@@ -103,20 +79,8 @@ ifeq ($(HAVE_IDB),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DIDB_ENABLED
 endif
 
-ifeq ($(HAVE_PANORAMA),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DPANORAMA_ENABLED
-endif
-
 ifeq ($(HAVE_SOSI),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DSOSI_ENABLED
-endif
-
-ifeq ($(HAVE_SQLITE),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DVFK_ENABLED
-endif
-
-ifeq ($(GEOMEDIA_SETTING),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DGEOMEDIA_ENABLED
 endif
 
 ifeq ($(MDB_ENABLED),yes)
@@ -127,32 +91,12 @@ ifeq ($(HAVE_FREEXL),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DXLS_ENABLED
 endif
 
-ifeq ($(HAVE_EXPAT),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DODS_ENABLED
-endif
-
-ifeq ($(HAVE_EXPAT),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DXLSX_ENABLED
-endif
-
-ifeq ($(HAVE_SQLITE),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DOSM_ENABLED
-endif
-
-ifeq ($(ODBC_SETTING),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DWALK_ENABLED
-endif
-
 ifeq ($(HAVE_MONGODB),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMONGODB_ENABLED
 endif
 
 ifeq ($(HAVE_MONGOCXXV3),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMONGODBV3_ENABLED
-endif
-
-ifeq ($(HAVE_CAD),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DCAD_ENABLED
 endif
 
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)

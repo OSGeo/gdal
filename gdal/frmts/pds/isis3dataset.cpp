@@ -1511,7 +1511,7 @@ CPLErr ISIS3Dataset::SetGeoTransform( double * padfTransform )
 char **ISIS3Dataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(
-        nullptr, FALSE, "", "json:ISIS3", NULL);
+        nullptr, FALSE, "", "json:ISIS3", nullptr);
 }
 
 /************************************************************************/
