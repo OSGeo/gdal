@@ -1231,7 +1231,12 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     {
         lt_uint32 iWidth, iHeight;
         dfCurrentMag = LTIUtils::levelToMag( iZoom );
-        poImageReader->getDimsAtMag( dfCurrentMag, iWidth, iHeight );
+        auto eLTStatus = poImageReader->getDimsAtMag( dfCurrentMag, iWidth, iHeight );
+        if( !LT_SUCCESS(eLTStatus))
+        {
+            CPLDebug( "MrSID", "Cannot open zoom level %d", iZoom);
+            return CE_Failure;
+        }
         nRasterXSize = iWidth;
         nRasterYSize = iHeight;
     }
@@ -1675,9 +1680,14 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
         {
             poDS->papoOverviewDS[i] = new MrSIDDataset(bIsJP2);
             poDS->papoOverviewDS[i]->poImageReader = poDS->poImageReader;
-            poDS->papoOverviewDS[i]->OpenZoomLevel( i + 1 );
             poDS->papoOverviewDS[i]->bIsOverview = TRUE;
             poDS->papoOverviewDS[i]->poParentDS = poDS;
+            if( poDS->papoOverviewDS[i]->OpenZoomLevel( i + 1 ) != CE_None )
+            {
+                delete poDS->papoOverviewDS[i];
+                poDS->nOverviewCount = i;
+                break;
+            }
         }
     }
 
@@ -1685,7 +1695,11 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 /*      Create object for the whole image.                              */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->OpenZoomLevel( 0 );
+    if( poDS->OpenZoomLevel( 0 ) != CE_None )
+    {
+        delete poDS;
+        return nullptr;
+    }
 
     CPLDebug( "MrSID",
               "Opened image: width %d, height %d, bands %d",
