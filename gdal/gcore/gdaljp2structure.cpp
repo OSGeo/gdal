@@ -1291,6 +1291,32 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x58 ) /* PLT */
         {
+            READ_MARKER_FIELD_UINT8("Zplt");
+            int i = 0;
+            unsigned nPacketLength = 0;
+            while( nRemainingMarkerSize >= 1 )
+            {
+                auto nLastVal = *pabyMarkerDataIter;
+                nPacketLength |= (nLastVal & 0x7f);
+                if (nLastVal & 0x80)
+                {
+                    nPacketLength <<= 7;
+                }
+                else
+                {
+                    AddField(psMarker, psLastChild,
+                             CPLSPrintf("Iplt%d", i), nPacketLength);
+                    nPacketLength = 0;
+                    i ++;
+                }
+                pabyMarkerDataIter += 1;
+                nRemainingMarkerSize -= 1;
+            }
+            if( nPacketLength != 0 )
+            {
+                AddError(psMarker, psLastChild,
+                         "Incorrect PLT marker");
+            }
         }
         else if( abyMarker[1] == 0x5C ) /* QCD */
         {
