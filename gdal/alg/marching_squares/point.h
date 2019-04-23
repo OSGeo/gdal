@@ -47,13 +47,13 @@ struct Point
 };
 
 inline
-bool operator==(Point lhs, Point rhs)
+bool operator==(const Point& lhs, const Point& rhs)
 {
     return (lhs.x == rhs.x) && (lhs.y == rhs.y);
 }
 
 inline
-std::ostream & operator<<(std::ostream & o, Point p)
+std::ostream & operator<<(std::ostream & o, const Point& p)
 {
     o << p.x << " " << p.y;
     return o;
