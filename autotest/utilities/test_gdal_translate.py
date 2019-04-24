@@ -838,6 +838,27 @@ def test_gdal_translate_38():
     ds = None
 
 ###############################################################################
+# Test -nogcp options
+
+
+def test_gdal_translate_39():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        pytest.skip()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -nogcp ../gcore/data/byte_gcp.tif tmp/test39.tif')
+
+    ds = gdal.Open('tmp/test39.tif')
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
+
+    gcps = ds.GetGCPs()
+    assert len(gcps) == 0, 'GCP count wrong.'
+
+    ds = None
+
+
+###############################################################################
 # Cleanup
 
 

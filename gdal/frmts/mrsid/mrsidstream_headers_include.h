@@ -1,11 +1,12 @@
 /******************************************************************************
  *
- * Project:  Marching square algorithm
- * Purpose:  Core algorithm implementation for contour line generation.
- * Author:   Oslandia <infos at oslandia dot com>
+ * Project:  Multi-resolution Seamless Image Database (MrSID)
+ * Purpose:  Read/write LizardTech's MrSID file format - Version 4+ SDK.
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2018, Oslandia <infos at oslandia dot com>
+ * Copyright (c) 2003, Andrey Kiselev <dron@ak4719.spb.edu>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,63 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef MARCHING_SQUARE_POINT_H
-#define MARCHING_SQUARE_POINT_H
+#ifndef MRSIDSTREAM_HEADERS_INCLUDE_H
+#define MRSIDSTREAM_HEADERS_INCLUDE_H
 
-#include "utility.h"
-#include <ostream>
-#include <algorithm>
-#include <cmath>
-#include <list>
+#include "cpl_port.h"
 
-namespace marching_squares {
-
-// regular point
-struct Point
-{
-    Point(): x(NaN), y(NaN) {} // just to be able to make an uninitialized list
-    Point(double x_, double y_): x(x_), y(y_) {}
-    double x;
-    double y;
-};
-
-inline
-bool operator==(const Point& lhs, const Point& rhs)
-{
-    return (lhs.x == rhs.x) && (lhs.y == rhs.y);
-}
-
-inline
-std::ostream & operator<<(std::ostream & o, const Point& p)
-{
-    o << p.x << " " << p.y;
-    return o;
-}
-
-// LineString type
-typedef std::list<Point> LineString;
-
-inline
-std::ostream & operator<<(std::ostream & o, const LineString& ls)
-{
-    o << "{";
-    for ( const auto& p: ls )
-    {
-        o << p << ", ";
-    }
-    o << "}";
-    return o;
-}
-
-// Point with a value
-struct ValuedPoint
-{
-    ValuedPoint(double x_, double y_, double value_): x(x_), y(y_), value(value_) {}
-    const double x;
-    const double y;
-    const double value;
-};
-
-}
-
+#ifdef HAVE_GCC_SYSTEM_HEADER
+#pragma GCC system_header
 #endif
+
+#include "lt_base.h"
+#include "lt_ioStreamInf.h"
+
+#endif // MRSIDSTREAM_HEADERS_INCLUDE_H

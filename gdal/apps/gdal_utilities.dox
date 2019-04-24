@@ -327,7 +327,7 @@ gdal_translate [--help-general]
        [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-a_scale value] [-a_offset value]
-       [-gcp pixel line easting northing [elevation]]*
+       [-nogcp] [-gcp pixel line easting northing [elevation]]*
        |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
        |-colorinterp {red|green|blue|alpha|gray|undefined},...]
        [-mo "META-TAG=VALUE"]* [-q] [-sds]
@@ -458,6 +458,9 @@ value to set on the output dataset if possible.</dd>
 output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
 href="formats_list.html" title="GDAL Raster Formats">format specific
 documentation for legal creation options for each format</a>.</dd>
+<dt> <b>-nogcp</b></dt><dd>
+Do not copy the GCPs in the source dataset to the output dataset. 
+</dd>
 <dt> <b>-gcp</b> <i>pixel line easting northing elevation</i>:</dt><dd>
 Add the indicated ground control point to the output dataset.  This option
 may be provided multiple times to provide a set of GCPs.

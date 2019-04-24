@@ -1,13 +1,13 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Multi-resolution Seamless Image Database (MrSID)
  * Purpose:  Input/output stream wrapper for usage with LizardTech's
- *           MrSID SDK, wrapper class declaration.
+ *           MrSID SDK, implementation of the wrapper class methods.
  * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
  * Copyright (c) 2008, Andrey Kiselev <dron@ak4719.spb.edu>
+ * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,8 +31,8 @@
 #ifndef MRSIDSTREAM_H_INCLUDED
 #define MRSIDSTREAM_H_INCLUDED
 
-#include "lt_base.h"
-#include "lt_ioStreamInf.h"
+#include "mrsidstream_headers_include.h"
+
 #include "cpl_vsi_virtual.h"
 
 LT_USE_NAMESPACE(LizardTech)
@@ -45,23 +45,23 @@ class LTIVSIStream : public LTIOStreamInf
     LT_STATUS initialize( LTIVSIStream* ltiVSIStream );
     ~LTIVSIStream();
 
-    bool isEOF();
-    bool isOpen();
+    bool isEOF() override;
+    bool isOpen() override;
 
-    LT_STATUS open();
-    LT_STATUS close();
+    LT_STATUS open() override;
+    LT_STATUS close() override;
 
-    lt_uint32 read( lt_uint8 *, lt_uint32 );
-    lt_uint32 write( const lt_uint8 *, lt_uint32 );
+    lt_uint32 read( lt_uint8 *, lt_uint32 ) override;
+    lt_uint32 write( const lt_uint8 *, lt_uint32 ) override;
 
-    LT_STATUS seek( lt_int64, LTIOSeekDir );
-    lt_int64 tell();
+    LT_STATUS seek( lt_int64, LTIOSeekDir ) override;
+    lt_int64 tell() override;
 
-    LTIOStreamInf* duplicate();
+    LTIOStreamInf* duplicate() override;
 
-    LT_STATUS getLastError() const;
+    LT_STATUS getLastError() const override;
 
-    const char* getID() const;
+    const char* getID() const override;
 
   private:
     VSIVirtualHandle    *poFileHandle;
