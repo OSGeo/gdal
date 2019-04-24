@@ -511,6 +511,12 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SAGA();
 #endif
 
+#ifdef FRMT_ignfheightasciigrid
+    // IGNFHeightASCIIGrid must come before XYZ, otherwise XYZ might
+    // try and fail opening such files
+    GDALRegister_IGNFHeightASCIIGrid();
+#endif
+
 #ifdef FRMT_xyz
     GDALRegister_XYZ();
 #endif
@@ -570,10 +576,6 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_sigdem
     GDALRegister_SIGDEM();
-#endif
-
-#ifdef FRMT_ignfheightasciigrid
-    GDALRegister_IGNFHeightASCIIGrid();
 #endif
 
     // NOTE: you need to generally your own driver before that line.
