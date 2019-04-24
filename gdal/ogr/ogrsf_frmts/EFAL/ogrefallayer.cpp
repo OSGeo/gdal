@@ -1135,7 +1135,7 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
 		{
 			if (!first) { command += ","; values += ","; } first = false;
 			command += fieldName;
-			values += "nullptr";
+			values += "NULL";
 		}
 		else
 		{
