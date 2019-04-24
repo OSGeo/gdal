@@ -242,6 +242,25 @@ def test_xyz_8():
 
     assert cs == 35
 
+###############################################################################
+# Test case of XYZ file with header file with 3 columns not named X Y Z, and quoted
+
+
+def test_xyz_9():
+
+    content = """"A"    "B"     "C"
+0 0 50
+10 0 100
+0 10 150
+10 10 200
+"""
+
+    with gdaltest.tempfile('/vsimem/grid.xyz', content):
+        ds = gdal.Open('/vsimem/grid.xyz')
+        assert ds.RasterXSize == 2 and ds.RasterYSize == 2
+        cs = ds.GetRasterBand(1).Checksum()
+
+    assert cs == 22
 
 ###############################################################################
 # Cleanup
