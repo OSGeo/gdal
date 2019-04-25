@@ -85,7 +85,7 @@ RUN wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION%.
     && cd ../.. \
     && rm -rf hdf5-${HDF5_VERSION}
 
-ENV NETCDF_VERSION=4.6.2
+ENV NETCDF_VERSION=4.6.3
 # Build netCDF
 RUN wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
     && tar xzf v${NETCDF_VERSION}.tar.gz \
@@ -100,8 +100,22 @@ RUN wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.g
     && cd ../.. \
     && rm -rf v${NETCDF_VERSION}
 
-ARG PROJ_VERSION=master
+ENV FREEXL_VERSION=1.0.5
+# Build freexl
+RUN wget -q http://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
+    && tar xzf freexl-${FREEXL_VERSION}.tar.gz \
+    && rm -f freexl-${FREEXL_VERSION}.tar.gz \
+    && cd freexl-${FREEXL_VERSION} \
+    && ./configure --prefix=/usr --disable-static \
+    && make -j$(nproc) \
+    && make install \
+    && mkdir -p /build/usr/lib \
+    && cp -P /usr/lib/libfreexl*.so* /build/usr/lib \
+    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd ../.. \
+    && rm -rf freexl-${FREEXL_VERSION}
 
+ARG PROJ_VERSION=master
 # Build PROJ
 RUN wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.zip -O proj.4-${PROJ_VERSION}.zip \
     && unzip -q proj.4-${PROJ_VERSION}.zip \
@@ -132,7 +146,7 @@ RUN wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && cd libspatialite-${SPATIALITE_VERSION} \
-    && CFLAGS="-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H -O2" ./configure --prefix=/usr --disable-static --disable-freexl \
+    && CFLAGS="-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H -O2" ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
     && mkdir -p /build/usr/lib \
@@ -167,6 +181,7 @@ RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${
     && rm -rf gdal-${GDAL_VERSION} \
     && strip -s /build/usr/lib/libgdal.so.2.5.0 \
     && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build/usr/lib/python2.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \
             # unused
