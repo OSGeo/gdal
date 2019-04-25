@@ -68,5 +68,5 @@ See [ubuntu-full/Dockerfile](ubuntu-full/Dockerfile)
 
 ```shell
 docker pull osgeo/gdal:alpine-small-latest
-docker --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.tif
+docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.tif
 ```
