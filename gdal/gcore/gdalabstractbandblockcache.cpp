@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <new>
 
