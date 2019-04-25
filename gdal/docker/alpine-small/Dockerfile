@@ -1,7 +1,7 @@
 ##
 # osgeo/gdal:alpine-small
 
-# Ths file is available at the option of the licensee under:
+# This file is available at the option of the licensee under:
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 

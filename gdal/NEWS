@@ -57,7 +57,7 @@ Port:
  * MiniXML: Fix wrong node order when calling CPLAddXMLAttributeAndValue() after CPLCreateXMLElementAndValue()
  * /vsicurl/: ReadMultiRange(): use default implementation if there is a single range (#1206)
  * /vsicurl/: ignore proxy CONNECT response headers (#1211)
- * /vsicurl/: automatically detect signed URLs where host ends with a port number; also detect signed URLs as created iwth the AWS4-HMAC-SHA256 method (#1456)
+ * /vsicurl/: automatically detect signed URLs where host ends with a port number; also detect signed URLs as created with the AWS4-HMAC-SHA256 method (#1456)
  * /vsizip/: Add config option to create zip64 extra fields by default (#1267)
  * /vsis3/, /vsigs/, /vsiaz/: add HTTP retry logic in writing code paths
  * Fix data race in VSIFileManager::Get
