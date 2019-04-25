@@ -2474,7 +2474,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
             "", nRequestWidth, nRequestHeight, 0, eBufferDataType, nullptr);
         for( int i = 0; i < static_cast<int>(anRequestedBands.size()); i++ )
         {
-            char szBuffer0[64] = {};
+            char szBuffer0[128] = {};
             char szBuffer[64] = {};
             int nRet = CPLPrintPointer(
                 szBuffer,
