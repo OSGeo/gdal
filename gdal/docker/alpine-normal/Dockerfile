@@ -37,7 +37,7 @@ RUN wget -q http://mirror.ibcp.fr/pub/apache/xerces/c/3/sources/xerces-c-${XERCE
     && mkdir -p /build/usr/lib \
     && cp -P /usr/lib/libxerces-c*.so* /build/usr/lib \
     && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd ../.. \
+    && cd .. \
     && rm -rf xerces-c-${XERCESC_VERSION}
 
 # Build geos
@@ -52,7 +52,7 @@ RUN wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && mkdir -p /build/usr/lib \
     && cp -P /usr/lib/libgeos*.so* /build/usr/lib \
     && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd ../.. \
+    && cd .. \
     && rm -rf geos-${GEOS_VERSION}
 
 ENV SZIP_VERSION=2.1.1
@@ -67,7 +67,7 @@ RUN wget -q https://support.hdfgroup.org/ftp/lib-external/szip/${SZIP_VERSION}/s
     && mkdir -p /build/usr/lib \
     && cp -P /usr/lib/libsz*.so* /build/usr/lib \
     && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd ../.. \
+    && cd .. \
     && rm -rf szip-${SZIP_VERSION}
 
 ENV HDF5_VERSION=1.10.5
@@ -82,7 +82,7 @@ RUN wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION%.
     && mkdir -p /build/usr/lib \
     && cp -P /usr/lib/libhdf5*.so* /build/usr/lib \
     && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd ../.. \
+    && cd .. \
     && rm -rf hdf5-${HDF5_VERSION}
 
 ENV NETCDF_VERSION=4.6.3
@@ -97,8 +97,8 @@ RUN wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.g
     && mkdir -p /build/usr/lib \
     && cp -P /usr/lib/libnetcdf*.so* /build/usr/lib \
     && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd ../.. \
-    && rm -rf v${NETCDF_VERSION}
+    && cd .. \
+    && rm -rf netcdf-c-${NETCDF_VERSION}
 
 ENV FREEXL_VERSION=1.0.5
 # Build freexl
@@ -112,7 +112,7 @@ RUN wget -q http://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
     && mkdir -p /build/usr/lib \
     && cp -P /usr/lib/libfreexl*.so* /build/usr/lib \
     && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd ../.. \
+    && cd .. \
     && rm -rf freexl-${FREEXL_VERSION}
 
 ARG PROJ_VERSION=master
@@ -152,8 +152,8 @@ RUN wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}
     && mkdir -p /build/usr/lib \
     && cp -P /usr/lib/libspatialite*.so* /build/usr/lib \
     && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd ../.. \
-    && rm -rf v${SPATIALITE_VERSION}
+    && cd .. \
+    && rm -rf libspatialite-${SPATIALITE_VERSION}
 
 ARG GDAL_VERSION=master
 
@@ -179,7 +179,7 @@ RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${
     && make install DESTDIR="/build" \
     && cd ../.. \
     && rm -rf gdal-${GDAL_VERSION} \
-    && strip -s /build/usr/lib/libgdal.so.2.5.0 \
+    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build/usr/lib/python2.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
