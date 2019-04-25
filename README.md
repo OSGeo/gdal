@@ -37,7 +37,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### Docker images
 
-See [gdal/docker/README.md](gdal/docker/README.md)
+See [gdal/docker/](gdal/docker/)
 
 ### Citing GDAL/OGR in publications
 
