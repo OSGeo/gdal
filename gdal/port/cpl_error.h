@@ -254,6 +254,11 @@ class CPLErrorStateBackuper
 
 }
 
+#ifdef GDAL_COMPILATION
+// internal only
+bool CPLIsDefaultErrorHandlerAndCatchDebug();
+#endif
+
 #endif
 
 /*! @endcond */

@@ -1016,14 +1016,23 @@ class CPL_DLL GDALAbstractBandBlockCache
         CPLMutex         *hCondMutex = nullptr;
         volatile int      nKeepAliveCounter = 0;
 
+        volatile int      m_nDirtyBlocks = 0;
+
         CPL_DISALLOW_COPY_ASSIGN(GDALAbstractBandBlockCache)
 
     protected:
         GDALRasterBand   *poBand;
 
+        int               m_nInitialDirtyBlocksInFlushCache = 0;
+        int               m_nLastTick = -1;
+
         void              FreeDanglingBlocks();
         void              UnreferenceBlockBase();
         void              WaitKeepAliveCounter();
+
+        void              StartDirtyBlockFlushingLog();
+        void              UpdateDirtyBlockFlushingLog();
+        void              EndDirtyBlockFlushingLog();;
 
     public:
             explicit GDALAbstractBandBlockCache(GDALRasterBand* poBand);
@@ -1031,6 +1040,7 @@ class CPL_DLL GDALAbstractBandBlockCache
 
             GDALRasterBlock* CreateBlock(int nXBlockOff, int nYBlockOff);
             void             AddBlockToFreeList( GDALRasterBlock * );
+            void             IncDirtyBlocks(int nInc);
 
             virtual bool             Init() = 0;
             virtual bool             IsInitOK() = 0;
@@ -1067,6 +1077,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void           SetFlushBlockErr( CPLErr eErr );
     CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
     void           SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
+    void           IncDirtyBlocks(int nInc);
 
   protected:
 //! @cond Doxygen_Suppress
