@@ -20,8 +20,8 @@ esac
 IMAGE_NAME=osgeo/gdal:ubuntu-small-latest
 
 docker build \
-    --build-arg PROJ_VERSION=`curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"` \
-    --build-arg GDAL_VERSION=`curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"` \
+    --build-arg PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha") \
+    --build-arg GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha") \
     -t ${IMAGE_NAME} ${SCRIPT_DIR}
 
 docker run --rm ${IMAGE_NAME} gdalinfo --version
