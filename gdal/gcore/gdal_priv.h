@@ -1032,7 +1032,7 @@ class CPL_DLL GDALAbstractBandBlockCache
 
         void              StartDirtyBlockFlushingLog();
         void              UpdateDirtyBlockFlushingLog();
-        void              EndDirtyBlockFlushingLog();;
+        void              EndDirtyBlockFlushingLog();
 
     public:
             explicit GDALAbstractBandBlockCache(GDALRasterBand* poBand);
