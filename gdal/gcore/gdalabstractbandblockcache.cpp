@@ -245,22 +245,22 @@ void GDALAbstractBandBlockCache::UpdateDirtyBlockFlushingLog()
         {
             if( m_nLastTick < 0 )
             {
-                fprintf(stderr, "GDAL: Flushing dirty blocks: ");
-                fflush(stderr);
+                fprintf(stderr, "GDAL: Flushing dirty blocks: "); /*ok*/
+                fflush(stderr); /*ok*/
             }
             while( nThisTick > m_nLastTick )
             {
                 ++m_nLastTick;
                 if( m_nLastTick % 4 == 0 )
-                    fprintf( stderr, "%d", (m_nLastTick / 4) * 10 );
+                    fprintf( stderr, "%d", (m_nLastTick / 4) * 10 ); /*ok*/
                 else
-                    fprintf( stderr, "." );
+                    fprintf( stderr, "." ); /*ok*/
             }
 
             if( nThisTick == 40 )
-                fprintf( stderr, " - done.\n" );
+                fprintf( stderr, " - done.\n" ); /*ok*/
             else
-                fflush( stderr );
+                fflush( stderr ); /*ok*/
         }
     }
 }
