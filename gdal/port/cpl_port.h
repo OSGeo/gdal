@@ -345,13 +345,21 @@ typedef unsigned int  GUIntptr_t;
 #ifndef CPL_DLL
 #if defined(_MSC_VER) && !defined(CPL_DISABLE_DLL)
 #  define CPL_DLL     __declspec(dllexport)
+#  define CPL_INTERNAL
 #else
 #  if defined(USE_GCC_VISIBILITY_FLAG)
 #    define CPL_DLL     __attribute__ ((visibility("default")))
+#    if !defined(__MINGW32__)
+#        define CPL_INTERNAL __attribute__((visibility("hidden")))
+#    else
+#        define CPL_INTERNAL
+#    endif
 #  else
 #    define CPL_DLL
+#    define CPL_INTERNAL
 #  endif
 #endif
+
 #endif
 
 /*! @cond Doxygen_Suppress */
