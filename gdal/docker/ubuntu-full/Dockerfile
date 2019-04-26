@@ -42,10 +42,12 @@ RUN wget -q https://bitbucket.org/chchrsc/kealib/get/c6d36f3db5e4.zip \
         -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5/serial \
         -DHDF5_LIB_PATH=/usr/lib/x86_64-linux-gnu/hdf5/serial -DLIBKEA_WITH_GDAL=OFF \
     && make -j$(nproc) \
-    && make install DESTDIR="/build" \
+    && make install DESTDIR="/build_thirdparty" \
     && make install \
     && cd ../.. \
-    && rm -rf chchrsc-kealib-c6d36f3db5e4
+    && rm -rf chchrsc-kealib-c6d36f3db5e4 \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongo-c-driver
 RUN wget -q https://github.com/mongodb/mongo-c-driver/releases/download/1.13.0/mongo-c-driver-1.13.0.tar.gz \
@@ -56,10 +58,12 @@ RUN wget -q https://github.com/mongodb/mongo-c-driver/releases/download/1.13.0/m
     && cd build_cmake \
     && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
     && make -j$(nproc) \
-    && make install DESTDIR="/build" \
+    && make install DESTDIR="/build_thirdparty" \
     && make install \
     && cd ../.. \
-    && rm -rf mongo-c-driver-1.13.0
+    && rm -rf mongo-c-driver-1.13.0 \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongocxx
 RUN wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r3.4.0.tar.gz \
@@ -70,10 +74,12 @@ RUN wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r3.4.0.tar.gz \
     && cd build_cmake \
     && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
     && make -j$(nproc) \
-    && make install DESTDIR="/build" \
+    && make install DESTDIR="/build_thirdparty" \
     && make install \
     && cd ../.. \
-    && rm -rf mongo-cxx-driver-r3.4.0
+    && rm -rf mongo-cxx-driver-r3.4.0 \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
 RUN wget -q https://github.com/TileDB-Inc/TileDB/archive/1.5.0.tar.gz -O TileDB-1.5.0.tar.gz \
@@ -84,10 +90,12 @@ RUN wget -q https://github.com/TileDB-Inc/TileDB/archive/1.5.0.tar.gz -O TileDB-
     && cd build_cmake \
     && ../bootstrap --prefix=/usr \
     && make -j$(nproc) \
-    && make install-tiledb DESTDIR="/build" \
+    && make install-tiledb DESTDIR="/build_thirdparty" \
     && make install-tiledb \
     && cd ../.. \
-    && rm -rf TileDB-1.5.0
+    && rm -rf TileDB-1.5.0 \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 ARG PROJ_VERSION=master
 
@@ -149,13 +157,13 @@ FROM ubuntu:18.04 as runner
 
 RUN date
 
-# PROJ
+# PROJ dependencies
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libsqlite3-0 \
         curl unzip
 
-# GDAL
+# GDAL dependencies
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libcharls1 libopenjp2-7 libcairo2 python-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.6.2 libgeos-c1v5 \
@@ -168,22 +176,31 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
         libarmadillo8
 
+# Order layers starting with less frequently varying ones
+RUN \
+    mkdir -p /usr/local/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -j -u -o proj-datumgrid-latest.zip  -d /usr/local/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-europe-latest.zip \
+    && unzip -j -u -o proj-datumgrid-europe-latest.zip -d /usr/local/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-oceania-latest.zip \
+    && unzip -j -u -o proj-datumgrid-oceania-latest.zip -d /usr/local/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-world-latest.zip  \
+    && unzip -j -u -o proj-datumgrid-world-latest.zip -d /usr/local/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-north-america-latest.zip \
+    && unzip -j -u -o proj-datumgrid-north-america-latest.zip -d /usr/local/share/proj  \
+    && rm -f *.zip
+
+COPY --from=builder  /build_thirdparty/usr/ /usr/
+
+COPY --from=builder  /build/usr/local/share/proj/ /usr/local/share/proj/
+COPY --from=builder  /build/usr/local/include/ /usr/local/include/
 COPY --from=builder  /build/usr/local/bin/ /usr/local/bin/
 COPY --from=builder  /build/usr/local/lib/ /usr/local/lib/
-COPY --from=builder  /build/usr/local/include/ /usr/local/include/
-COPY --from=builder  /build/usr/local/share/proj/ /usr/local/share/proj/
 
+COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build/usr/bin/ /usr/bin/
 COPY --from=builder  /build/usr/lib/ /usr/lib/
-COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
-
-RUN \
-    curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip && unzip -j -u -o proj-datumgrid-latest.zip  -d /usr/local/share/proj && \
-    curl -LOs http://download.osgeo.org/proj/proj-datumgrid-europe-latest.zip &&  unzip -j -u -o proj-datumgrid-europe-latest.zip -d /usr/local/share/proj && \
-    curl -LOs http://download.osgeo.org/proj/proj-datumgrid-oceania-latest.zip &&  unzip -j -u -o proj-datumgrid-oceania-latest.zip -d /usr/local/share/proj && \
-    curl -LOs http://download.osgeo.org/proj/proj-datumgrid-world-latest.zip &&  unzip -j -u -o proj-datumgrid-world-latest.zip -d /usr/local/share/proj && \
-    curl -LOs http://download.osgeo.org/proj/proj-datumgrid-north-america-latest.zip &&  unzip -j -u -o proj-datumgrid-north-america-latest.zip -d /usr/local/share/proj && \
-    rm -f *.zip
 
 RUN ldconfig

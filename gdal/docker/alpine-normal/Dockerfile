@@ -34,9 +34,9 @@ RUN wget -q http://mirror.ibcp.fr/pub/apache/xerces/c/3/sources/xerces-c-${XERCE
     && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build/usr/lib \
-    && cp -P /usr/lib/libxerces-c*.so* /build/usr/lib \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libxerces-c*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf xerces-c-${XERCESC_VERSION}
 
@@ -49,9 +49,9 @@ RUN wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build/usr/lib \
-    && cp -P /usr/lib/libgeos*.so* /build/usr/lib \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libgeos*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf geos-${GEOS_VERSION}
 
@@ -64,9 +64,9 @@ RUN wget -q https://support.hdfgroup.org/ftp/lib-external/szip/${SZIP_VERSION}/s
     && CFLAGS=-O2 ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build/usr/lib \
-    && cp -P /usr/lib/libsz*.so* /build/usr/lib \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libsz*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf szip-${SZIP_VERSION}
 
@@ -79,9 +79,9 @@ RUN wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION%.
     && CFLAGS=-O2 ./configure --prefix=/usr --disable-static --with-szlib=/usr \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build/usr/lib \
-    && cp -P /usr/lib/libhdf5*.so* /build/usr/lib \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libhdf5*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf hdf5-${HDF5_VERSION}
 
@@ -94,9 +94,9 @@ RUN wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.g
     && CFLAGS=-O2 ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build/usr/lib \
-    && cp -P /usr/lib/libnetcdf*.so* /build/usr/lib \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libnetcdf*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf netcdf-c-${NETCDF_VERSION}
 
@@ -109,9 +109,9 @@ RUN wget -q http://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
     && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build/usr/lib \
-    && cp -P /usr/lib/libfreexl*.so* /build/usr/lib \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libfreexl*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf freexl-${FREEXL_VERSION}
 
@@ -125,11 +125,11 @@ RUN mkdir proj \
     && ./configure --prefix=/usr --disable-static --enable-lto \
     && make -j$(nproc) \
     && make install \
-    && make install DESTDIR="/build" \
+    && make install DESTDIR="/build_proj" \
     && cd .. \
     && rm -rf proj \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 ENV SPATIALITE_VERSION=4.3.0a
 # Build spatialite
@@ -140,9 +140,9 @@ RUN wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}
     && CFLAGS="-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H -O2" ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build/usr/lib \
-    && cp -P /usr/lib/libspatialite*.so* /build/usr/lib \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && mkdir -p /build_spatialite/usr/lib \
+    && cp -P /usr/lib/libspatialite*.so* /build_spatialite/usr/lib \
+    && for i in /build_spatialite/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf libspatialite-${SPATIALITE_VERSION}
 
@@ -191,8 +191,9 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
        ;do rm $i; done)
 
 RUN \
-    curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build/usr/share/proj \
+    mkdir -p /build_projgrids/usr/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
     && rm -f *.zip
 
 # Build final image
@@ -216,8 +217,19 @@ RUN apk add --no-cache \
     # Remove .py files since we have already the .pyc
     && find /usr/lib/python2.7/site-packages -name "*.py" -exec rm {} \;
 
+# Order layers starting with less frequently varying ones
+COPY --from=builder  /build_thirdparty/usr/ /usr/
+
+COPY --from=builder  /build_projgrids/usr/ /usr/
+
+COPY --from=builder  /build_spatialite/usr/ /usr/
+
+COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/
+COPY --from=builder  /build_proj/usr/include/ /usr/include/
+COPY --from=builder  /build_proj/usr/bin/ /usr/bin/
+COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
+
+COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build/usr/bin/ /usr/bin/
 COPY --from=builder  /build/usr/lib/ /usr/lib/
-COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
-COPY --from=builder  /build/usr/share/proj/ /usr/share/proj/

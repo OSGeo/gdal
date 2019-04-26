@@ -86,13 +86,13 @@ FROM ubuntu:18.04 as runner
 
 RUN date
 
-# PROJ
+# PROJ dependencies
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
         libsqlite3-0 \
         curl unzip
 
-# GDAL
+# GDAL dependencies
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
         libopenjp2-7 python-numpy \
         libjpeg-turbo8 libgeos-3.6.2 libgeos-c1v5 \
@@ -101,18 +101,21 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
         libwebp6 \
         libzstd1 bash libpq5 libssl1.1
 
+# Order layers starting with less frequently varying ones
+RUN \
+    mkdir -p  /usr/local/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -j -u -o proj-datumgrid-latest.zip  -d /usr/local/share/proj \
+    && rm -f *.zip
+
+COPY --from=builder  /build/usr/local/share/proj/ /usr/local/share/proj/
+COPY --from=builder  /build/usr/local/include/ /usr/local/include/
 COPY --from=builder  /build/usr/local/bin/ /usr/local/bin/
 COPY --from=builder  /build/usr/local/lib/ /usr/local/lib/
-COPY --from=builder  /build/usr/local/include/ /usr/local/include/
-COPY --from=builder  /build/usr/local/share/proj/ /usr/local/share/proj/
 
+COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build/usr/bin/ /usr/bin/
 COPY --from=builder  /build/usr/lib/ /usr/lib/
-COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
-
-RUN \
-    curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip && unzip -j -u -o proj-datumgrid-latest.zip  -d /usr/local/share/proj && \
-    rm -f *.zip
 
 RUN ldconfig

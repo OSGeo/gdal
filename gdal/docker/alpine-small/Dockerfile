@@ -31,11 +31,11 @@ RUN mkdir proj \
     && ./configure --prefix=/usr --disable-static --enable-lto \
     && make -j$(nproc) \
     && make install \
-    && make install DESTDIR="/build" \
+    && make install DESTDIR="/build_proj" \
     && cd .. \
     && rm -rf proj \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
@@ -80,8 +80,9 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
        ;do rm $i; done)
 
 RUN \
-    curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build/usr/share/proj \
+    mkdir -p /build_projgrids/usr/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
     && rm -f *.zip
 
 # Build final image
@@ -100,8 +101,15 @@ RUN apk add --no-cache \
     # Only libwebp.so is used by GDAL
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
+# Order layers starting with less frequently varying ones
+COPY --from=builder  /build_projgrids/usr/ /usr/
+
+COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/
+COPY --from=builder  /build_proj/usr/include/ /usr/include/
+COPY --from=builder  /build_proj/usr/bin/ /usr/bin/
+COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
+
+COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build/usr/bin/ /usr/bin/
 COPY --from=builder  /build/usr/lib/ /usr/lib/
-COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
-COPY --from=builder  /build/usr/share/proj/ /usr/share/proj/
