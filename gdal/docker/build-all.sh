@@ -17,9 +17,7 @@ case $SCRIPT_DIR in
         ;;
 esac
 
-export SCRIPT_DIR
-TAG_NAME=$(basename "${SCRIPT_DIR}")
-export BASE_IMAGE_NAME=osgeo/gdal:${TAG_NAME}
-
-export TEST_PYTHON=YES
-"${SCRIPT_DIR}/../util.sh" "$@"
+subdirs=$(find "${SCRIPT_DIR}" -mindepth 1 -maxdepth 1 -type d)
+for d in ${subdirs}; do
+    "${d}/build.sh" "$@";
+done

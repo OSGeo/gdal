@@ -41,7 +41,7 @@
 #include "gdallinearsystem.h"
 
 #ifdef HAVE_ARMADILLO
-#include "armadillo"
+#include "armadillo_headers.h"
 #endif
 
 #include <cstdio>

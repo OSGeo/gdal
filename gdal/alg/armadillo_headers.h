@@ -1,11 +1,12 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  GDAL
- * Purpose:  Linear system solver
- * Author:   VIZRT Development Team.
+ * Purpose:  Includes armadillo header
+ * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2017 Alan Thomas <alant@outlook.com.au>
+ * Copyright (c) 2019, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,16 +25,17 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+ *****************************************************************************/
 
-/*! @cond Doxygen_Suppress */
+#ifndef ARMADILLO_HEADERS_H
+#define ARMADILLO_HEADERS_H
 
-#ifndef GDALLINEARSYSTEM_H_INCLUDED
-#define GDALLINEARSYSTEM_H_INCLUDED
+#include "cpl_port.h"
 
-bool GDALLinearSystemSolve( const int nDim, const int nRHS,
-    const double adfA[], const double adfRHS[], double adfOut[] );
+#ifdef HAVE_GCC_SYSTEM_HEADER
+#pragma GCC system_header
+#endif
 
-#endif /* #ifndef GDALLINEARSYSTEM_H_INCLUDED */
+#include "armadillo"
 
-/*! @endcond */
+#endif // ARMADILLO_HEADERS_H
