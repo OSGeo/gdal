@@ -17,6 +17,7 @@ case $SCRIPT_DIR in
         ;;
 esac
 
-for d in $(find ${SCRIPT_DIR} -mindepth 1 -maxdepth 1 -type d); do
-    ${d}/build.sh "$@";
+subdirs=$(find "${SCRIPT_DIR}" -mindepth 1 -maxdepth 1 -type d)
+for d in ${subdirs}; do
+    "${d}/build.sh" "$@";
 done
