@@ -23,35 +23,39 @@ RUN apk add --no-cache \
 ARG PROJ_VERSION=master
 
 # Build PROJ
-RUN wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.zip -O proj.4-${PROJ_VERSION}.zip \
-    && unzip -q proj.4-${PROJ_VERSION}.zip \
-    && rm -f proj.4-${PROJ_VERSION}.zip \
-    && cd proj.4-${PROJ_VERSION} \
+RUN mkdir proj \
+    && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
+        | tar xz -C proj --strip-components=1 \
+    && cd proj \
     && ./autogen.sh \
-    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \
-        ./configure --prefix=/usr/local --disable-static --enable-lto \
+    && ./configure --prefix=/usr --disable-static --enable-lto \
     && make -j$(nproc) \
+    && make install \
     && make install DESTDIR="/build" \
     && cd .. \
-    && rm -rf proj.4-${PROJ_VERSION} \
-    && mv /build/usr/local/lib/libproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so.15.0.0 \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so.15 \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so \
-    && rm /build/usr/local/lib/libproj.*  \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libproj.so.15 \
-    && strip -s /build/usr/local/lib/libinternalproj.so.15.0.0 \
-    && for i in /build/usr/local/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && rm -rf proj \
+    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 ARG GDAL_VERSION=master
+ARG GDAL_RELEASE_DATE
+ARG GDAL_BUILD_IS_RELEASE
 
 # Build GDAL
-RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${GDAL_VERSION}.zip \
-    && unzip -q gdal-${GDAL_VERSION}.zip \
-    && rm -f gdal-${GDAL_VERSION}.zip \
-    && cd gdal-${GDAL_VERSION}/gdal \
+RUN if test "${GDAL_VERSION}" = "master"; then \
+        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
+    fi \
+    && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
+        export GDAL_SHA1SUM=${GDAL_VERSION}; \
+    fi \
+    && mkdir gdal \
+    && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
+        | tar xz -C gdal --strip-components=1 \
+    && cd gdal/gdal \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
-    --with-proj=/build/usr/local \
+    --with-proj=/usr \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --disable-all-optional-drivers \
@@ -68,8 +72,8 @@ RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && cd ../.. \
-    && rm -rf gdal-${GDAL_VERSION} \
-    && strip -s /build/usr/lib/libgdal.so.2.5.0 \
+    && rm -rf gdal \
+    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \
@@ -123,7 +127,7 @@ RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${
 
 RUN \
     curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build/usr/local/share/proj \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build/usr/share/proj \
     && rm -f *.zip
 
 # Build final image
@@ -142,12 +146,8 @@ RUN apk add --no-cache \
     # Only libwebp.so is used by GDAL
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
-COPY --from=builder  /build/usr/local/bin/ /usr/local/bin/
-COPY --from=builder  /build/usr/local/lib/ /usr/local/lib/
-COPY --from=builder  /build/usr/local/include/ /usr/local/include/
-COPY --from=builder  /build/usr/local/share/proj/ /usr/local/share/proj/
-
 COPY --from=builder  /build/usr/bin/ /usr/bin/
 COPY --from=builder  /build/usr/lib/ /usr/lib/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder  /build/usr/share/proj/ /usr/share/proj/

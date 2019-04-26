@@ -23,7 +23,7 @@ RUN apt-get update -y \
        libcharls-dev libopenjp2-7-dev libcairo2-dev \
        python-dev python-numpy \
        libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
-       libcurl4-gnutls-dev libxml2-dev libexpat-dev libxerces-c-dev \
+       curl libcurl4-gnutls-dev libxml2-dev libexpat-dev libxerces-c-dev \
        libnetcdf-dev libpoppler-dev libpoppler-private-dev \
        libspatialite-dev swig libhdf4-alt-dev libhdf5-serial-dev \
        libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev \
@@ -92,17 +92,17 @@ RUN wget -q https://github.com/TileDB-Inc/TileDB/archive/1.5.0.tar.gz -O TileDB-
 ARG PROJ_VERSION=master
 
 # Build PROJ
-RUN wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.zip -O proj.4-${PROJ_VERSION}.zip \
-    && unzip -q proj.4-${PROJ_VERSION}.zip \
-    && rm -f proj.4-${PROJ_VERSION}.zip \
-    && cd proj.4-${PROJ_VERSION} \
+RUN mkdir proj \
+    && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
+        | tar xz -C proj --strip-components=1 \
+    && cd proj \
     && ./autogen.sh \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \
         ./configure --prefix=/usr/local --disable-static \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && cd .. \
-    && rm -rf proj.4-${PROJ_VERSION} \
+    && rm -rf proj \
     && mv /build/usr/local/lib/libproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so.15.0.0 \
     && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so.15 \
     && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so \
@@ -112,12 +112,21 @@ RUN wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.zip -O proj.
     && for i in /build/usr/local/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 ARG GDAL_VERSION=master
+ARG GDAL_RELEASE_DATE
+ARG GDAL_BUILD_IS_RELEASE
 
 # Build GDAL
-RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${GDAL_VERSION}.zip \
-    && unzip -q gdal-${GDAL_VERSION}.zip \
-    && rm -f gdal-${GDAL_VERSION}.zip \
-    && cd gdal-${GDAL_VERSION}/gdal \
+RUN if test "${GDAL_VERSION}" = "master"; then \
+        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
+    fi \
+    && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
+        export GDAL_SHA1SUM=${GDAL_VERSION}; \
+    fi \
+    && mkdir gdal \
+    && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
+        | tar xz -C gdal --strip-components=1 \
+    && cd gdal/gdal \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
@@ -131,8 +140,8 @@ RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && cd ../.. \
-    && rm -rf gdal-${GDAL_VERSION} \
-    && strip -s /build/usr/lib/libgdal.so.2.5.0 \
+    && rm -rf gdal \
+    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image

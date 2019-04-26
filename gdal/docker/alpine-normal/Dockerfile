@@ -117,28 +117,19 @@ RUN wget -q http://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
 
 ARG PROJ_VERSION=master
 # Build PROJ
-RUN wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.zip -O proj.4-${PROJ_VERSION}.zip \
-    && unzip -q proj.4-${PROJ_VERSION}.zip \
-    && rm -f proj.4-${PROJ_VERSION}.zip \
-    && cd proj.4-${PROJ_VERSION} \
+RUN mkdir proj \
+    && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
+        | tar xz -C proj --strip-components=1 \
+    && cd proj \
     && ./autogen.sh \
     && ./configure --prefix=/usr --disable-static --enable-lto \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build/usr/bin \
-    && cp /usr/bin/proj /build/usr/bin \
-    && cp /usr/bin/projinfo /build/usr/bin \
-    && cp /usr/bin/cs2cs /build/usr/bin \
-    && cp /usr/bin/geod /build/usr/bin \
-    && cp /usr/bin/cct /build/usr/bin \
-    && mkdir -p /build/usr/lib \
-    && cp -P /usr/lib/libproj*.so* /build/usr/lib \
-    && mkdir -p /build/usr/share \
-    && cp -r /usr/share/proj /build/usr/share \
-    && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && make install DESTDIR="/build" \
     && cd .. \
-    && rm -rf proj.4-${PROJ_VERSION}
+    && rm -rf proj \
+    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 ENV SPATIALITE_VERSION=4.3.0a
 # Build spatialite
@@ -156,12 +147,21 @@ RUN wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}
     && rm -rf libspatialite-${SPATIALITE_VERSION}
 
 ARG GDAL_VERSION=master
+ARG GDAL_RELEASE_DATE
+ARG GDAL_BUILD_IS_RELEASE
 
 # Build GDAL
-RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${GDAL_VERSION}.zip \
-    && unzip -q gdal-${GDAL_VERSION}.zip \
-    && rm -f gdal-${GDAL_VERSION}.zip \
-    && cd gdal-${GDAL_VERSION}/gdal \
+RUN if test "${GDAL_VERSION}" = "master"; then \
+        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
+    fi \
+    && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
+        export GDAL_SHA1SUM=${GDAL_VERSION}; \
+    fi \
+    && mkdir gdal \
+    && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
+        | tar xz -C gdal --strip-components=1 \
+    && cd gdal/gdal \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-proj=/usr \
@@ -178,7 +178,7 @@ RUN wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.zip -O gdal-${
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && cd ../.. \
-    && rm -rf gdal-${GDAL_VERSION} \
+    && rm -rf gdal \
     && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build/usr/lib/python2.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \

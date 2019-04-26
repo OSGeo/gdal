@@ -17,13 +17,9 @@ case $SCRIPT_DIR in
         ;;
 esac
 
-IMAGE_NAME=osgeo/gdal:ubuntu-small-latest
+export SCRIPT_DIR
+TAG_NAME=$(basename "${SCRIPT_DIR}")
+export BASE_IMAGE_NAME=osgeo/gdal:${TAG_NAME}
 
-docker build \
-    --build-arg PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha") \
-    --build-arg GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha") \
-    -t ${IMAGE_NAME} ${SCRIPT_DIR}
-
-docker run --rm ${IMAGE_NAME} gdalinfo --version
-docker run --rm ${IMAGE_NAME} projinfo EPSG:4326
-docker run --rm ${IMAGE_NAME} python -c "from osgeo import gdal, gdalnumeric; print(gdal.VersionInfo(''))"
+export TEST_PYTHON=YES
+"${SCRIPT_DIR}/../util.sh" "$@"
