@@ -175,9 +175,10 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     if (img.pagesize.c == 1) {
         ret = poTiff->GetRasterBand(1)->ReadBlock(0,0,dst.buffer);
     } else {
+        int dtsize = GDALGetDataTypeSizeBytes(img.dt);
         ret = poTiff->RasterIO(GF_Read,0,0,img.pagesize.x,img.pagesize.y,
             dst.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
-            nullptr, 0,0,0
+            nullptr, dtsize * img.pagesize.c , dtsize * img.pagesize.c * img.pagesize.x, dtsize
 #if GDAL_VERSION_MAJOR >= 2
             ,nullptr
 #endif
