@@ -106,8 +106,10 @@ void OGRRegisterAllInternal()
 #ifdef GMT_ENABLED
     RegisterOGRGMT();
 #endif
-#ifdef SQLITE_ENABLED
+#ifdef GPKG_ENABLED
     RegisterOGRGeoPackage();
+#endif
+#ifdef SQLITE_ENABLED
     RegisterOGRSQLite();
 #endif
 #ifdef DODS_ENABLED

@@ -2884,7 +2884,7 @@ char **GDALGeoPackageDataset::GetMetadataDomainList()
         GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "SUBDATASETS", NULL);
+                                   "SUBDATASETS", nullptr);
 }
 
 /************************************************************************/

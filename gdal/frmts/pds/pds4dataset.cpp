@@ -3298,7 +3298,7 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                         CPLString osCartSchema;
                         if( strstr(psSchemaLoc->psChild->pszValue, "PDS4_PDS_1B00.xsd") )
                         {
-                            osCartSchema = "https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd";
+                            osCartSchema = "https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd";
                             bCartNeedsInternalReference = true;
                             bCart1B00OrLater = true;
                         }

@@ -1443,7 +1443,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * into account.
  * <li> AREA_OF_INTEREST=west_lon_deg,south_lat_deg,east_lon_deg,north_lat_deg.
  * (GDAL &gt;= 2.5) Area of interest, used to compute the best coordinate operation
- * betwen the source and target SRS. If not specified, the bounding box of the
+ * between the source and target SRS. If not specified, the bounding box of the
  * source raster will be used.
  * </ul>
  *

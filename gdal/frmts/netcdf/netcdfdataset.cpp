@@ -2239,7 +2239,7 @@ bool netCDFDataset::SetDefineMode( bool bNewDefineMode )
 char **netCDFDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", NULL);
+                                   "SUBDATASETS", nullptr);
 }
 
 /************************************************************************/

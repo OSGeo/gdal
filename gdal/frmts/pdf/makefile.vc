@@ -1,5 +1,5 @@
 
-OBJ	=	pdfdataset.obj pdfio.obj pdfobject.obj pdfcreatecopy.obj ogrpdflayer.obj pdfwritabledataset.obj pdfreadvectors.obj
+OBJ	=	pdfdataset.obj pdfio.obj pdfobject.obj pdfcreatecopy.obj ogrpdflayer.obj pdfwritabledataset.obj pdfreadvectors.obj pdfcreatefromcomposition.obj
 
 PLUGIN_DLL =	gdal_PDF.dll
 

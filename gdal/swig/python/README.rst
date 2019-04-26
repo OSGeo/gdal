@@ -16,7 +16,7 @@ reference documentation, but the `GDAL API Tutorial`_ includes Python examples.
 Dependencies
 ------------
  
- * libgdal (2.4.0 or greater) and header files (gdal-devel)
+ * libgdal (2.5.0 or greater) and header files (gdal-devel)
  * numpy (1.0.0 or greater) and header files (numpy-devel) (not explicitly 
    required, but many examples and utilities will not work without it)
 
@@ -96,7 +96,7 @@ bindings on Windows:
 
 As explained in the README_EXE.txt file, after unzipping the GDAL binaries you 
 will need to modify your system path and variables. If you're not sure how to 
-do this, read the `Microsoft KnowledgeBase doc`_ 
+do this, read the `Microsoft Knowledge Base doc`_ 
 
 1. Add the installation directory bin folder to your system PATH, remember 
    to put a semicolon in front of it before you add to the existing path.

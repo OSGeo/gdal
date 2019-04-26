@@ -58,8 +58,9 @@ def validate_xml(filename):
                                   force_download=True):
         pytest.skip()
 
-    if not gdaltest.download_file('https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd',
-                                  'raw.githubusercontent.com_thareUSGS_ldd_cart_master_build_1.B.0.0_PDS4_CART_1B00.xsd',
+
+    if not gdaltest.download_file('https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd',
+                                  'raw.githubusercontent.com_nasa_pds_data_dictionaries_ldd_cart_master_build_1.B.0.0_PDS4_CART_1B00.xsd',
                                   force_download=True):
         pytest.skip()
 

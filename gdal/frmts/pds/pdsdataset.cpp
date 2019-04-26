@@ -730,16 +730,18 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     /* -------------------------------------------------------------------- */
     /*      Checks to see if this is raw PDS image not compressed image     */
     /*      so ENCODING_TYPE either does not exist or it equals "N/A".      */
+    /*      or "DCT_DECOMPRESSED".                                          */
     /*      Compressed types will not be supported in this routine          */
     /* -------------------------------------------------------------------- */
 
     CPLString osEncodingType = GetKeyword(osPrefix+"IMAGE.ENCODING_TYPE","N/A");
     CleanString(osEncodingType);
-    if ( !EQUAL(osEncodingType.c_str(),"N/A") )
+    if ( !EQUAL(osEncodingType,"N/A") &&
+         !EQUAL(osEncodingType,"DCT_DECOMPRESSED") )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "*** PDS image file has an ENCODING_TYPE parameter:\n"
-                  "*** gdal pds driver does not support compressed image types\n"
+                  "*** GDAL PDS driver does not support compressed image types\n"
                   "found: (%s)\n\n", osEncodingType.c_str() );
         return FALSE;
     }

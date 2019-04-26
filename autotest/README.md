@@ -27,8 +27,12 @@ pytest gcore/
 
 # run a particular module only
 pytest gcore/basic_test.py
+
+# run a particular test case in a module
+pytest gcore/basic_test.py::test_basic_test_1
 ```
 
+Full documentation of pytest at https://docs.pytest.org/en/latest/
 
 ## GDAL's tests are not independent
 

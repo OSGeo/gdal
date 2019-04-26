@@ -1,0 +1,102 @@
+%PDF-1.6
+%ÿÿÿÿ
+3 0 obj
+<< /BBox [ 10 5 105 105 ] /Measure 4 0 R /Name (Layer) /Type /Viewport >>
+endobj
+4 0 obj
+<< /GCS 5 0 R /GPTS [ 49 2 50 2 49 3 50 3 ] /LPTS [ -0.0526315789473684 0 -0.0526315789473684 1 1 0 1 1 ] /Subtype /GEO /Type /Measure >>
+endobj
+5 0 obj
+<< /EPSG 4326 /Type /GEOGCS /WKT (GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]) >>
+endobj
+9 0 obj
+<< /A << /O /UserProperties /P [ << /N (OGR_STYLE) /V <FEFF00530059004D0042004F004C00280063003A0023003000300046004600300030002C00690064003A0022006F00670072002D00730079006D002D00310022002C0073003A0031007000740029003B004C004100420045004C00280074003A00220066006F006F0022002C0073003A00310032007000740029> >> ] >> /K 0 /P 8 0 R /Pg 6 0 R /S /feature /T (feature0) >>
+endobj
+8 0 obj
+<< /A << /O /UserProperties >> /K [ 9 0 R ] /P 7 0 R /S /Layer /T (test) >>
+endobj
+10 0 obj
+<< /BBox [ 0 0 110 110 ] /Length 11 0 R /Resources << /Font << /F1 << /BaseFont /Helvetica /Encoding /WinAnsiEncoding /Subtype /Type1 /Type /Font >> >> >> /Subtype /Form /Type /XObject >>
+stream
+q
+BT
+100.000000 0.000000 -0.000000 100.000000 55.000000 55.000000 Tm
+0.000000 0.000000 0.000000 rg
+/F1 0.042333 Tf
+(foo) Tj
+ET
+Qendstream
+endobj
+11 0 obj
+   128
+endobj
+12 0 obj
+[ 9 0 R  ]
+endobj
+6 0 obj
+<< /Contents 13 0 R /Group << /CS /DeviceRGB /S /Transparency /Type /Group >> /MediaBox [ 0 0 110 110 ] /Parent 1 0 R /Resources 14 0 R /StructParents 0 /Type /Page /UserUnit 1 /VP [ 3 0 R ] >>
+endobj
+13 0 obj
+<< /Length 15 0 R >>
+stream
+/feature <</MCID 0>> BDC
+q
+1.000000 w
+0 J
+0 j
+10 M
+[]0 d
+0.000000 1.000000 0.000000 RG
+0.000000 1.000000 0.000000 rg
+54.647222 54.647222 m
+55.352778 55.352778 l
+54.647222 55.352778 m
+55.352778 54.647222 l
+S
+Q
+EMC
+/Label10 Do
+endstream
+endobj
+15 0 obj
+   225
+endobj
+14 0 obj
+<< /XObject << /Label10 10 0 R >> >>
+endobj
+1 0 obj
+<< /Count 1 /Kids [ 6 0 R ] /Type /Pages >>
+endobj
+16 0 obj
+<< /Nums [ 0 12 0 R  ] >> 
+endobj
+7 0 obj
+<< /Type /StructTreeRoot /ParentTree 16 0 R /K [ 8 0 R ] >>
+endobj
+2 0 obj
+<< /MarkInfo << /UserProperties true >> /Pages 1 0 R /StructTreeRoot 7 0 R /Type /Catalog >>
+endobj
+xref
+0 17
+0000000000 65535 f 
+0000001887 00000 n 
+0000002064 00000 n 
+0000000015 00000 n 
+0000000104 00000 n 
+0000000257 00000 n 
+0000001323 00000 n 
+0000001989 00000 n 
+0000000833 00000 n 
+0000000456 00000 n 
+0000000924 00000 n 
+0000001273 00000 n 
+0000001296 00000 n 
+0000001532 00000 n 
+0000001834 00000 n 
+0000001811 00000 n 
+0000001946 00000 n 
+trailer
+<< /Root 2 0 R /Size 17 >>
+startxref
+2172
+%%EOF

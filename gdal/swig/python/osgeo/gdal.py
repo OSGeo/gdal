@@ -282,7 +282,7 @@ def TranslateOptions(options=None, format=None,
               creationOptions=None, srcWin=None, projWin=None, projWinSRS=None, strict = False,
               unscale = False, scaleParams=None, exponents=None,
               outputBounds=None, metadataOptions=None,
-              outputSRS=None, GCPs=None,
+              outputSRS=None, nogcp=False, GCPs=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, resampleAlg=None,
               callback=None, callback_data=None):
@@ -310,6 +310,7 @@ def TranslateOptions(options=None, format=None,
           outputBounds --- assigned output bounds: [ulx, uly, lrx, lry]
           metadataOptions --- list of metadata options
           outputSRS --- assigned output SRS
+          nogcp --- ignore GCP in the raster
           GCPs --- list of GCPs
           noData --- nodata value (or "none" to unset it)
           rgbExpand --- Color palette expansion mode: "gray", "rgb", "rgba"
@@ -362,6 +363,8 @@ def TranslateOptions(options=None, format=None,
                 new_options += ['-mo', opt]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS)]
+        if nogcp:
+            new_options += ['-nogcp']
         if GCPs is not None:
             for gcp in GCPs:
                 new_options += ['-gcp', _strHighPrec(gcp.GCPPixel), _strHighPrec(gcp.GCPLine), _strHighPrec(gcp.GCPX), str(gcp.GCPY), _strHighPrec(gcp.GCPZ)]

@@ -3039,7 +3039,7 @@ char **NITFDataset::GetMetadataDomainList()
                                    TRUE,
                                    "NITF_METADATA", "NITF_DES", "NITF_DES_METADATA",
                                    "NITF_FILE_HEADER_TRES", "NITF_IMAGE_SEGMENT_TRES",
-                                   "CGM", "TEXT", "TRE", "xml:TRE", "OVERVIEWS", NULL);
+                                   "CGM", "TEXT", "TRE", "xml:TRE", "OVERVIEWS", nullptr);
 }
 
 /************************************************************************/

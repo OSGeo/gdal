@@ -752,7 +752,7 @@ char **RasterliteDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "SUBDATASETS", "IMAGE_STRUCTURE", NULL);
+                                   "SUBDATASETS", "IMAGE_STRUCTURE", nullptr);
 }
 
 /************************************************************************/

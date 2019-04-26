@@ -35,6 +35,10 @@ GDAL is an open source X/MIT licensed translator library for raster and vector g
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
 
+### Docker images
+
+See [gdal/docker/](gdal/docker/)
+
 ### Citing GDAL/OGR in publications
 
 See [CITATION](CITATION)

@@ -6512,6 +6512,20 @@ void GDALRasterBand::SetFlushBlockErr( CPLErr eErr )
 }
 
 /************************************************************************/
+/*                         IncDirtyBlocks()                             */
+/************************************************************************/
+
+/**
+ * \brief Increment/decrement the number of dirty blocks
+ */
+
+void GDALRasterBand::IncDirtyBlocks( int nInc )
+{
+    if( poBandBlockCache )
+        poBandBlockCache->IncDirtyBlocks(nInc);
+}
+
+/************************************************************************/
 /*                            ReportError()                             */
 /************************************************************************/
 

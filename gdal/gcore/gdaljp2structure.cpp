@@ -939,6 +939,13 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
     }
     GByte* pabyMarkerData = static_cast<GByte*>(CPLMalloc(65535+1));
     GIntBig nNextTileOffset = 0;
+    int Csiz = -1;
+    const auto lambdaPOCType = [](GByte v) {
+                return (v == 0) ? "LRCP" :
+                        (v == 1) ? "RLCP" :
+                        (v == 2) ? "RPCL" :
+                        (v == 3) ? "PCRL" :
+                        (v == 4) ? "CPRL" : nullptr; };
     while( true )
     {
         GIntBig nOffset = static_cast<GIntBig>(VSIFTellL(fp));
@@ -1128,9 +1135,9 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT32("YTsiz");
             READ_MARKER_FIELD_UINT32("XTOSiz");
             READ_MARKER_FIELD_UINT32("YTOSiz");
-            int CSiz = READ_MARKER_FIELD_UINT16("Csiz");
+            Csiz = READ_MARKER_FIELD_UINT16("Csiz");
             bError = false;
-            for(int i=0;i<CSiz && !bError;i++)
+            for(int i=0;i<Csiz && !bError;i++)
             {
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("Ssiz%d", i), [](GByte v) {
                         return GetInterpretationOfBPC(v); });
@@ -1174,12 +1181,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 AddError(psMarker, psLastChild,
                          CPLSPrintf("Cannot read field %s", "Scod"));
             }
-            READ_MARKER_FIELD_UINT8("SGcod_Progress",  [](GByte v) {
-                return (v == 0) ? "LRCP" :
-                        (v == 1) ? "RLCP" :
-                        (v == 2) ? "RPCL" :
-                        (v == 3) ? "PCRL" :
-                        (v == 4) ? "CPRL" : nullptr; });
+            READ_MARKER_FIELD_UINT8("SGcod_Progress",  lambdaPOCType);
             READ_MARKER_FIELD_UINT16("SGcod_NumLayers");
             READ_MARKER_FIELD_UINT8("SGcod_MCT");
             READ_MARKER_FIELD_UINT8("SPcod_NumDecompositions");
@@ -1291,6 +1293,32 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x58 ) /* PLT */
         {
+            READ_MARKER_FIELD_UINT8("Zplt");
+            int i = 0;
+            unsigned nPacketLength = 0;
+            while( nRemainingMarkerSize >= 1 )
+            {
+                auto nLastVal = *pabyMarkerDataIter;
+                nPacketLength |= (nLastVal & 0x7f);
+                if (nLastVal & 0x80)
+                {
+                    nPacketLength <<= 7;
+                }
+                else
+                {
+                    AddField(psMarker, psLastChild,
+                             CPLSPrintf("Iplt%d", i), nPacketLength);
+                    nPacketLength = 0;
+                    i ++;
+                }
+                pabyMarkerDataIter += 1;
+                nRemainingMarkerSize -= 1;
+            }
+            if( nPacketLength != 0 )
+            {
+                AddError(psMarker, psLastChild,
+                         "Incorrect PLT marker");
+            }
         }
         else if( abyMarker[1] == 0x5C ) /* QCD */
         {
@@ -1303,6 +1331,39 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x5F ) /* POC */
         {
+            const int nPOCEntrySize = Csiz < 257 ? 7 : 9;
+            int i = 0;
+            while( nRemainingMarkerSize >= nPOCEntrySize )
+            {
+                READ_MARKER_FIELD_UINT8(CPLSPrintf("RSpoc%d", i));
+                if( nPOCEntrySize == 7 )
+                {
+                    READ_MARKER_FIELD_UINT8(CPLSPrintf("CSpoc%d", i));
+                }
+                else
+                {
+                    READ_MARKER_FIELD_UINT16(CPLSPrintf("CSpoc%d", i));
+                }
+                READ_MARKER_FIELD_UINT16(CPLSPrintf("LYEpoc%d", i));
+                READ_MARKER_FIELD_UINT8(CPLSPrintf("REpoc%d", i));
+                if( nPOCEntrySize == 7 )
+                {
+                    READ_MARKER_FIELD_UINT8(CPLSPrintf("CEpoc%d", i));
+                }
+                else
+                {
+                    READ_MARKER_FIELD_UINT16(CPLSPrintf("CEpoc%d", i));
+                }
+                READ_MARKER_FIELD_UINT8(CPLSPrintf("Ppoc%d", i), lambdaPOCType);
+                i ++;
+            }
+            if( nRemainingMarkerSize > 0 )
+            {
+                AddElement( psMarker, psLastChild,
+                    CPLCreateXMLElementAndValue(
+                        nullptr, "RemainingBytes",
+                        CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
+            }
         }
         else if( abyMarker[1] == 0x60 ) /* PPM */
         {
