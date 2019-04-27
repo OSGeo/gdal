@@ -250,9 +250,17 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && make install DESTDIR="/build" \
     && cd ../.. \
     && rm -rf gdal \
-    && for i in /build/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build/usr/lib/python2.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && mkdir -p /build_gdal_python/usr/lib \
+    && mkdir -p /build_gdal_python/usr/bin \
+    && mkdir -p /build_gdal_version_changing/usr/include \
+    && mv /build/usr/lib/python2.7          /build_gdal_python/usr/lib \
+    && mv /build/usr/lib                    /build_gdal_version_changing/usr \
+    && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
+    && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
+    && mv /build/usr/bin                    /build_gdal_version_changing/usr \
+    && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python2.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \
             # unused
@@ -303,5 +311,5 @@ COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build/usr/bin/ /usr/bin/
-COPY --from=builder  /build/usr/lib/ /usr/lib/
+COPY --from=builder  /build_gdal_python/usr/ /usr/
+COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
