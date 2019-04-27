@@ -77,7 +77,6 @@ class TileDBDataset : public GDALPamDataset
         CPLErr TryLoadXML(char **papszSiblingFiles = nullptr) override;
         CPLErr TrySaveXML() override;
         char** GetMetadata(const char *pszDomain) override;
-
         static GDALDataset      *Open( GDALOpenInfo * );
         static int              Identify( GDALOpenInfo * );
         static CPLErr           Delete( const char * pszFilename );
@@ -114,7 +113,6 @@ class TileDBRasterBand : public GDALPamRasterBand
     protected:
         TileDBDataset  *poGDS;
         bool bStats;
-        bool bAdviseRead = false;
         CPLString osAttrName;
         std::unique_ptr<tiledb::Query> m_query;
         void   Finalize( );
@@ -123,15 +121,6 @@ class TileDBRasterBand : public GDALPamRasterBand
         virtual CPLErr IReadBlock( int, int, void * ) override;
         virtual CPLErr IWriteBlock( int, int, void * ) override;
         virtual GDALColorInterp GetColorInterpretation() override;
-        virtual CPLErr AdviseRead( 
-                        int     nXOff,
-                        int     nYOff,
-                        int     nXSize,
-                        int     nYSize,
-                        int     nBufXSize,
-                        int     nBufYSize,
-                        GDALDataType  eBufType,
-                        char ** papszOptions ) override;
 };
 
 /************************************************************************/
@@ -220,12 +209,13 @@ TileDBRasterBand::TileDBRasterBand(
         m_query->set_layout( TILEDB_ROW_MAJOR );
 
      // initialize to complete image block layout
-    std::vector<size_t> oaSubarray = { 0, 
+    std::vector<size_t> oaSubarray = { size_t( nBand ),
+                                    size_t( nBand ),
+                                    0,
                                     size_t( poDSIn->nBlocksY * nBlockYSize ) - 1,
                                     0,
                                     size_t( poDSIn->nBlocksX * nBlockXSize ) - 1, 
-                                    size_t( nBand ),
-                                    size_t( nBand ) };
+                                    };
 
     if ( EQUAL( TILEDB_VALUES, osAttrName ) )
     {
@@ -235,7 +225,8 @@ TileDBRasterBand::TileDBRasterBand(
     {
 
         m_query->set_subarray( std::vector<size_t> (
-            oaSubarray.cbegin(), oaSubarray.cbegin() + 4 ) );
+                                    oaSubarray.cbegin() + 2,
+                                    oaSubarray.cend() ) );
     }
 }
 
@@ -253,36 +244,25 @@ void TileDBRasterBand::Finalize()
 }
 
 /************************************************************************/
-/*                             AdviseRead()                             */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr TileDBRasterBand::AdviseRead( 
-                        int     nXOff,
-                        int     nYOff,
-                        int     nXSize,
-                        int     nYSize,
-                        CPL_UNUSED int      nBufXSize,
-                        CPL_UNUSED int      nBufYSize,
-                        CPL_UNUSED GDALDataType eBufType,
-                        CPL_UNUSED char **      papszOptions 
-                    )
-
+CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff, 
+                                    int nBlockYOff,
+                                    void * pImage )
 {
-    bAdviseRead = true;
-
-    // find min and max blockss
-    size_t nStartX = (size_t) ( nXOff / nBlockXSize ) * nBlockXSize;
-    size_t nStartY = (size_t) ( nYOff / nBlockYSize ) * nBlockYSize;
-    size_t nEndX = (size_t) DIV_ROUND_UP( nXOff + nXSize, nBlockXSize ) * nBlockXSize;
-    size_t nEndY = (size_t) DIV_ROUND_UP( nYOff + nYSize, nBlockYSize ) * nBlockYSize;
+    int nStartX = nBlockXSize * nBlockXOff;
+    int nStartY = nBlockYSize * nBlockYOff;
+    size_t nEndX =  nStartX + nBlockXSize;
+    size_t nEndY =  nStartY + nBlockYSize;
 
     std::vector<size_t> oaSubarray = {
+                                    size_t( nBand ),
+                                    size_t( nBand ),
                                     (size_t) nStartY,
                                     (size_t) nEndY - 1,
                                     (size_t) nStartX,
-                                    (size_t) nEndX - 1,
-                                    size_t( nBand ),
-                                    size_t( nBand ) };
+                                    (size_t) nEndX - 1 };
 
     if ( EQUAL( TILEDB_VALUES, osAttrName ) )
     {
@@ -291,44 +271,8 @@ CPLErr TileDBRasterBand::AdviseRead(
     else
     {
         m_query->set_subarray( std::vector<size_t> (
-            oaSubarray.cbegin(), oaSubarray.cbegin() + 4 ) );
-    }
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff, 
-                                    int nBlockYOff,
-                                    void * pImage )
-{
-    if ( !bAdviseRead )
-    {
-        int nStartX = nBlockXSize * nBlockXOff;
-        int nStartY = nBlockYSize * nBlockYOff;
-        size_t nEndX =  nStartX + nBlockXSize;
-        size_t nEndY =  nStartY + nBlockYSize;
-
-        std::vector<size_t> oaSubarray = {
-                                        (size_t) nStartY,
-                                        (size_t) nEndY - 1,
-                                        (size_t) nStartX,
-                                        (size_t) nEndX - 1,
-                                        size_t( nBand ),
-                                        size_t( nBand ) };
-
-        if ( EQUAL( TILEDB_VALUES, osAttrName ) )
-        {
-            m_query->set_subarray( oaSubarray );
-        }
-        else
-        {
-            m_query->set_subarray( std::vector<size_t> (
-                oaSubarray.cbegin(), oaSubarray.cbegin() + 4 ) );
-        }
+                                    oaSubarray.cbegin() + 2,
+                                    oaSubarray.cend() ) );
     }
 
     SetBuffer(m_query.get(), eDataType, osAttrName, 
@@ -344,7 +288,7 @@ CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff,
         tiledb::Stats::dump(stdout);
         tiledb::Stats::disable();
     }
-    
+
     if ( ( status == tiledb::Query::Status::FAILED ) )
         return CE_Failure;
     else
@@ -965,8 +909,10 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             if ( dims.size() == 3 )
             {
-                poDS->nBands = dims[2].domain<size_t>().second
-                                - dims[2].domain<size_t>().first + 1;
+                poDS->nBands = dims[0].domain<size_t>().second
+                                - dims[0].domain<size_t>().first + 1;
+                poDS->nBlockYSize = dims[1].tile_extent<size_t>();
+                poDS->nBlockXSize = dims[2].tile_extent<size_t>();
             }
             else
             {
@@ -975,11 +921,10 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
                 if ( pszBands )
                 {
                     poDS->nBands = atoi( pszBands );
+                    poDS->nBlockYSize = dims[0].tile_extent<size_t>();
+                    poDS->nBlockXSize = dims[1].tile_extent<size_t>();
                 }
             }
-                
-            poDS->nBlockXSize = dims[0].tile_extent<size_t>();
-            poDS->nBlockYSize = dims[1].tile_extent<size_t>();
         }
         else
         {
@@ -1408,18 +1353,20 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
         // Note the dimension bounds are inclusive and are expanded to the match the block size
         poDS->nBlocksX = DIV_ROUND_UP( nXSize, poDS->nBlockXSize );
         poDS->nBlocksY = DIV_ROUND_UP( nYSize, poDS->nBlockYSize );
+
         size_t w = poDS->nBlocksX * poDS->nBlockXSize - 1;
         size_t h = poDS->nBlocksY * poDS->nBlockYSize - 1;
-        
+
         auto d1 = tiledb::Dimension::create<size_t>(
                     *poDS->m_ctx, "X", {0, w},
                     size_t( poDS->nBlockXSize ) );
         auto d2 = tiledb::Dimension::create<size_t>( *poDS->m_ctx, "Y", {0, h}, size_t( poDS->nBlockYSize ) );
+
         if ( nBands > 0 )
         {
             auto d3 = tiledb::Dimension::create<size_t>( *poDS->m_ctx, "BANDS", {1, size_t( nBands )}, 1);
             // row-major
-            domain.add_dimensions( d2, d1, d3 );
+            domain.add_dimensions( d3, d2, d1 );
         }
         else
         {
@@ -1427,7 +1374,7 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
             domain.add_dimensions( d2, d1 );
         }
         
-        poDS->m_schema->set_domain( domain );
+        poDS->m_schema->set_domain( domain ).set_order({{TILEDB_ROW_MAJOR, TILEDB_ROW_MAJOR}});;
 
         return poDS.release();
     }
