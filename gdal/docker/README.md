@@ -38,7 +38,7 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 * Image size: ~ 155 MB
 * Raster drivers: small + netCDF, HDF5, BAG
 * Vector drivers: small + Spatialite, XLS
-* External libraries enabled: small + libgeos, libhdf5, libnetcdf, libfreexl,
+* External libraries enabled: small + libgeos, libhdf5, libhdf5, libkea, libnetcdf, libfreexl,
   libspatialite, libxml2, libpoppler
 * GDAL Python (Python 2.7)
 * Base PROJ grid package

@@ -14,109 +14,157 @@ MAINTAINER Even Rouault <even.rouault@spatialys.com>
 RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
 # For GDAL
+ARG POPPLER=poppler
+ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
     curl-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
     py-numpy-dev python2-dev py2-numpy \
-    poppler-dev postgresql-dev
-
-# For spatialite (and GDAL)
-RUN apk add --no-cache libxml2-dev
+    ${POPPLER_DEV} postgresql-dev \
+    # For spatialite (and GDAL)
+    libxml2-dev \
+    && mkdir -p /build_thirdparty/usr/lib
 
 # Build xerces-c
-ENV XERCESC_VERSION=3.2.2
-RUN wget -q http://mirror.ibcp.fr/pub/apache/xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.zip \
+ARG XERCESC_VERSION=3.2.2
+RUN if test "${XERCESC_VERSION}" != ""; then ( \
+    wget -q http://mirror.ibcp.fr/pub/apache/xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.zip \
     && unzip -q xerces-c-${XERCESC_VERSION}.zip  \
     && rm -f xerces-c-${XERCESC_VERSION}.zip \
     && cd xerces-c-${XERCESC_VERSION} \
     && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libxerces-c*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
-    && rm -rf xerces-c-${XERCESC_VERSION}
+    && rm -rf xerces-c-${XERCESC_VERSION} \
+    ); fi
 
 # Build geos
-ENV GEOS_VERSION=3.7.1
-RUN wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
+ARG GEOS_VERSION=3.7.1
+RUN if test "${GEOS_VERSION}" != ""; then ( \
+    wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
     && rm -f geos-${GEOS_VERSION}.tar.bz2 \
     && cd geos-${GEOS_VERSION} \
     && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libgeos*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
-    && rm -rf geos-${GEOS_VERSION}
+    && rm -rf geos-${GEOS_VERSION} \
+    ); fi
 
-ENV SZIP_VERSION=2.1.1
 # Build szip
-RUN wget -q https://support.hdfgroup.org/ftp/lib-external/szip/${SZIP_VERSION}/src/szip-${SZIP_VERSION}.tar.gz \
+ARG SZIP_VERSION=2.1.1
+RUN if test "${SZIP_VERSION}" != ""; then ( \
+    wget -q https://support.hdfgroup.org/ftp/lib-external/szip/${SZIP_VERSION}/src/szip-${SZIP_VERSION}.tar.gz \
     && tar xzf szip-${SZIP_VERSION}.tar.gz \
     && rm -f szip-${SZIP_VERSION}.tar.gz \
     && cd szip-${SZIP_VERSION} \
     && CFLAGS=-O2 ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libsz*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
-    && rm -rf szip-${SZIP_VERSION}
+    && rm -rf szip-${SZIP_VERSION} \
+    ); fi
 
-ENV HDF5_VERSION=1.10.5
 # Build hdf5
-RUN wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION%.*}/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz \
+ARG HDF5_VERSION=1.10.5
+RUN if test "${HDF5_VERSION}" != ""; then ( \
+    wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION%.*}/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz \
     && tar xzf hdf5-${HDF5_VERSION}.tar.gz \
     && rm -f hdf5-${HDF5_VERSION}.tar.gz \
     && cd hdf5-${HDF5_VERSION} \
-    && CFLAGS=-O2 ./configure --prefix=/usr --disable-static --with-szlib=/usr \
+    && CFLAGS=-O2 CXXFLAGS=-O2 ./configure --prefix=/usr --disable-static --with-szlib=/usr --enable-cxx \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libhdf5*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
-    && rm -rf hdf5-${HDF5_VERSION}
+    && rm -rf hdf5-${HDF5_VERSION} \
+    ); fi
 
-ENV NETCDF_VERSION=4.6.3
 # Build netCDF
-RUN wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
+ARG NETCDF_VERSION=4.6.3
+RUN if test "${NETCDF_VERSION}" != ""; then ( \
+    wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
     && tar xzf v${NETCDF_VERSION}.tar.gz \
     && rm -f v${NETCDF_VERSION}.tar.gz \
     && cd netcdf-c-${NETCDF_VERSION} \
     && CFLAGS=-O2 ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libnetcdf*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
-    && rm -rf netcdf-c-${NETCDF_VERSION}
+    && rm -rf netcdf-c-${NETCDF_VERSION} \
+    ); fi
 
-ENV FREEXL_VERSION=1.0.5
+# Build hdf4
+ARG HDF4_VERSION=4.2.14
+RUN if test "${HDF4_VERSION}" != ""; then ( \
+    apk add --no-cache byacc flex portablexdr-dev \
+    && mkdir hdf4 \
+    && wget -q https://support.hdfgroup.org/ftp/HDF/releases/HDF${HDF4_VERSION}/src/hdf-${HDF4_VERSION}.tar.gz -O - \
+        | tar xz -C hdf4 --strip-components=1 \
+    && cd hdf4 \
+    && LDFLAGS=-lportablexdr ./configure --prefix=/usr --enable-shared --disable-static \
+        --with-szlib=/usr --disable-fortran --disable-netcdf \
+    && make -j$(nproc) \
+    && make install \
+    && cp -P /usr/lib/libdf*.so* /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libmfhdf*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf hdf4 \
+    && apk del byacc flex portablexdr-dev \
+    ); fi
+
 # Build freexl
-RUN wget -q http://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
+ARG FREEXL_VERSION=1.0.5
+RUN if test "${FREEXL_VERSION}" != ""; then ( \
+    wget -q http://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
     && tar xzf freexl-${FREEXL_VERSION}.tar.gz \
     && rm -f freexl-${FREEXL_VERSION}.tar.gz \
     && cd freexl-${FREEXL_VERSION} \
     && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libfreexl*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
-    && rm -rf freexl-${FREEXL_VERSION}
+    && rm -rf freexl-${FREEXL_VERSION} \
+    ); fi
 
-ARG PROJ_VERSION=master
+# Build likbkea
+ARG KEA_VERSION=c6d36f3db5e4
+RUN if test "${KEA_VERSION}" != ""; then ( \
+    apk add --no-cache cmake \
+    && wget -q https://bitbucket.org/chchrsc/kealib/get/${KEA_VERSION}.zip \
+    && unzip -q ${KEA_VERSION}.zip \
+    && rm -f ${KEA_VERSION}.zip \
+    && cd chchrsc-kealib-${KEA_VERSION}/trunk \
+    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5 \
+        -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF \
+    && make -j$(nproc) \
+    && make install \
+    && cd ../.. \
+    && rm -rf chchrsc-kealib-${KEA_VERSION} \
+    && cp -P /usr/lib/libkea*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && apk del cmake \
+    ); fi
+
 # Build PROJ
+ARG PROJ_VERSION=master
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
@@ -131,9 +179,10 @@ RUN mkdir proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
-ENV SPATIALITE_VERSION=4.3.0a
 # Build spatialite
-RUN wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}.tar.gz \
+ARG SPATIALITE_VERSION=4.3.0a
+RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
+    wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && cd libspatialite-${SPATIALITE_VERSION} \
@@ -144,20 +193,46 @@ RUN wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}
     && cp -P /usr/lib/libspatialite*.so* /build_spatialite/usr/lib \
     && for i in /build_spatialite/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
-    && rm -rf libspatialite-${SPATIALITE_VERSION}
+    && rm -rf libspatialite-${SPATIALITE_VERSION} \
+    ); else \
+        mkdir -p /build_spatialite/usr/lib; \
+    fi
 
+# Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
-
-# Build GDAL
-RUN if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
-        export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
-    fi \
-    && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
+RUN if test "${GDAL_VERSION}" = "master"; then ( \
+        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha") \
+        && export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
+    ); fi \
+    && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then ( \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
-    fi \
+    ); fi \
+    && export GDAL_EXTRA_ARGS="" \
+    && if test "${GEOS_VERSION}" != ""; then ( \
+        export GDAL_EXTRA_ARGS="--with-geos ${GDAL_EXTRA_ARGS}" \
+    ); fi \
+    && if test "${XERCESC_VERSION}" != ""; then ( \
+        export GDAL_EXTRA_ARGS="--with-xerces ${GDAL_EXTRA_ARGS}" \
+    ); fi \
+    && if test "${HDF4_VERSION}" != ""; then ( \
+        apk add --no-cache portablexdr-dev \
+        && export LDFLAGS="-lportablexdr ${LDFLAGS}" \
+        && export GDAL_EXTRA_ARGS="--with-hdf4 ${GDAL_EXTRA_ARGS}" \
+    ); fi \
+    && if test "${HDF5_VERSION}" != ""; then ( \
+        export GDAL_EXTRA_ARGS="--with-hdf5 ${GDAL_EXTRA_ARGS}" \
+    ); fi \
+    && if test "${NETCDF_VERSION}" != ""; then ( \
+        export GDAL_EXTRA_ARGS="--with-netcdf ${GDAL_EXTRA_ARGS}" \
+    ); fi \
+    && if test "${SPATIALITE_VERSION}" != ""; then ( \
+        export GDAL_EXTRA_ARGS="--with-spatialite ${GDAL_EXTRA_ARGS}" \
+    ); fi \
+    && if test "${POPPLER_DEV}" != ""; then ( \
+        export GDAL_EXTRA_ARGS="--with-poppler ${GDAL_EXTRA_ARGS}" \
+    ); fi \
     && mkdir gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
@@ -168,12 +243,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     # --enable-lto
-    --with-geos \
-    --with-xerces \
-    --with-netcdf \
-    --with-hdf5 \
-    --with-poppler \
-    --with-spatialite \
+    ${GDAL_EXTRA_ARGS} \
     --with-python \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
@@ -207,7 +277,7 @@ RUN apk add --no-cache \
         libcurl \
         zlib zstd-libs\
         libjpeg-turbo libpng openjpeg libwebp expat \
-        python2 py2-numpy poppler pcre libpq libxml2 \
+        python2 py2-numpy ${POPPLER} pcre libpq libxml2 portablexdr \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
     # libpoppler-cpp.so is not used by GDAL. Only libpoppler.so*
