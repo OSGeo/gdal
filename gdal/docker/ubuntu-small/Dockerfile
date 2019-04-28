@@ -5,6 +5,8 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
+ARG PROJ_INSTALL_PREFIX=/usr/local
+
 FROM ubuntu:18.04 as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -29,6 +31,14 @@ RUN apt-get update -y \
        libpq-dev libssl-dev \
        autoconf automake sqlite3 bash-completion
 
+ARG PROJ_INSTALL_PREFIX
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+RUN \
+    mkdir -p /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
+    && rm -f *.zip
+
 ARG PROJ_VERSION=master
 
 # Build PROJ
@@ -38,18 +48,20 @@ RUN mkdir proj \
     && cd proj \
     && ./autogen.sh \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \
-        ./configure --prefix=/usr/local --disable-static \
+        ./configure --prefix=${PROJ_INSTALL_PREFIX} --disable-static \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && cd .. \
     && rm -rf proj \
-    && mv /build/usr/local/lib/libproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so.15.0.0 \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so.15 \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so \
-    && rm /build/usr/local/lib/libproj.*  \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libproj.so.15 \
-    && strip -s /build/usr/local/lib/libinternalproj.so.15.0.0 \
-    && for i in /build/usr/local/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && PROJ_SO=$(readlink /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | sed "s/libproj\.so\.//") \
+    && PROJ_SO_FIRST=$(echo $PROJ_SO | awk 'BEGIN {FS="."} {print $1}') \
+    && mv /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so \
+    && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST} \
+    && strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
+    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
@@ -71,7 +83,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-hide-internal-symbols \
     --with-jpeg12 \
     --with-python \
-    --with-webp --with-proj=/build/usr/local \
+    --with-webp --with-proj=/build${PROJ_INSTALL_PREFIX} \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     && make -j$(nproc) \
@@ -111,16 +123,13 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
         libzstd1 bash libpq5 libssl1.1
 
 # Order layers starting with less frequently varying ones
-RUN \
-    mkdir -p  /usr/local/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -j -u -o proj-datumgrid-latest.zip  -d /usr/local/share/proj \
-    && rm -f *.zip
+COPY --from=builder  /build_projgrids/usr/ /usr/
 
-COPY --from=builder  /build/usr/local/share/proj/ /usr/local/share/proj/
-COPY --from=builder  /build/usr/local/include/ /usr/local/include/
-COPY --from=builder  /build/usr/local/bin/ /usr/local/bin/
-COPY --from=builder  /build/usr/local/lib/ /usr/local/lib/
+ARG PROJ_INSTALL_PREFIX
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/

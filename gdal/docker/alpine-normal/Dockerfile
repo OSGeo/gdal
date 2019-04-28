@@ -13,8 +13,14 @@ MAINTAINER Even Rouault <even.rouault@spatialys.com>
 # Setup build env for PROJ
 RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+RUN \
+    mkdir -p /build_projgrids/usr/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
+    && rm -f *.zip
+
 # For GDAL
-ARG POPPLER=poppler
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
@@ -268,12 +274,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
             # unused
             /build/usr/share/gdal/*.png \
        ;do rm $i; done)
-
-RUN \
-    mkdir -p /build_projgrids/usr/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
-    && rm -f *.zip
 
 # Build final image
 FROM alpine:latest as runner

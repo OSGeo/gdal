@@ -20,6 +20,13 @@ RUN apk add --no-cache \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev postgresql-dev
 
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+RUN \
+    mkdir -p /build_projgrids/usr/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
+    && rm -f *.zip
+
 ARG PROJ_VERSION=master
 
 # Build PROJ
@@ -82,12 +89,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
             # netCDF driver
             /build/usr/share/gdal/netcdf_config.xsd \
        ;do rm $i; done)
-
-RUN \
-    mkdir -p /build_projgrids/usr/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
-    && rm -f *.zip
 
 # Build final image
 FROM alpine:latest as runner

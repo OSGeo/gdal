@@ -61,6 +61,8 @@ check_image()
     fi
 }
 
+PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
+
 if test "${GDAL_VERSION}" != ""; then
     IMAGE_NAME="${BASE_IMAGE_NAME}-${GDAL_VERSION}"
     BUILDER_IMAGE_NAME="${IMAGE_NAME}_builder"
@@ -68,12 +70,14 @@ if test "${GDAL_VERSION}" != ""; then
         PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
     fi
     docker build \
+        --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         --build-arg PROJ_VERSION="${PROJ_VERSION}" \
         --build-arg GDAL_VERSION="${GDAL_VERSION}" \
         --build-arg GDAL_BUILD_IS_RELEASE=YES \
         --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
     docker build \
+        --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         --build-arg PROJ_VERSION="${PROJ_VERSION}" \
         --build-arg GDAL_VERSION="${GDAL_VERSION}" \
         --build-arg GDAL_BUILD_IS_RELEASE=YES \
@@ -92,12 +96,14 @@ else
     GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
     GDAL_RELEASE_DATE=$(date "+%Y%m%d")
     docker build \
+        --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         --build-arg PROJ_VERSION="${PROJ_VERSION}" \
         --build-arg GDAL_VERSION="${GDAL_VERSION}" \
         --build-arg GDAL_RELEASE_DATE="${GDAL_RELEASE_DATE}" \
         --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
     docker build \
+        --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         --build-arg PROJ_VERSION="${PROJ_VERSION}" \
         --build-arg GDAL_VERSION="${GDAL_VERSION}" \
         --build-arg GDAL_RELEASE_DATE="${GDAL_RELEASE_DATE}" \
