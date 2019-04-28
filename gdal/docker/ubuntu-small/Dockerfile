@@ -39,18 +39,38 @@ RUN \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
     && rm -f *.zip
 
-ARG PROJ_VERSION=master
+RUN apt-get update -y \
+    && apt-get install -y --fix-missing --no-install-recommends rsync ccache
+ARG RSYNC_REMOTE
 
 # Build PROJ
+ARG PROJ_VERSION=master
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
+        echo "Finished"; \
+        export CC="ccache gcc"; \
+        export CXX="ccache g++"; \
+        ccache -M 100M; \
+    fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \
         ./configure --prefix=${PROJ_INSTALL_PREFIX} --disable-static \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && cd .. \
     && rm -rf proj \
     && PROJ_SO=$(readlink /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | sed "s/libproj\.so\.//") \
@@ -63,17 +83,24 @@ RUN mkdir proj \
     && strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
     && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
+# Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
-
-# Build GDAL
 RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
+    fi \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        echo "Finished"; \
+        export CC="ccache gcc"; \
+        export CXX="ccache g++"; \
+        ccache -M 1G; \
     fi \
     && mkdir gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
@@ -88,6 +115,15 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && cd ../.. \
     && rm -rf gdal \
     && mkdir -p /build_gdal_python/usr/lib \

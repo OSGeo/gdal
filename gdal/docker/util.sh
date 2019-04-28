@@ -61,6 +61,19 @@ check_image()
     fi
 }
 
+cleanup_rsync()
+{
+    rm -f "${RSYNC_DAEMON_TEMPFILE}"
+    kill "${RSYNC_PID}" || /bin/true
+}
+
+trap_ctrlc()
+{
+    echo "Ctrl-C caught... clean up"
+    cleanup_rsync
+    exit 1
+}
+
 PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
 
 if test "${GDAL_VERSION}" != ""; then
@@ -95,18 +108,59 @@ else
     PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
     GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
     GDAL_RELEASE_DATE=$(date "+%Y%m%d")
+
+    # If rsync is available then start it as a temporary daemon
+    if [ -x "$(command -v rsync)" ]; then
+        RSYNC_DAEMON_TEMPFILE=$(mktemp)
+        RSYNC_SERVER_IP=172.17.0.1
+        cat <<EOF > "${RSYNC_DAEMON_TEMPFILE}"
+[gdal-docker-cache]
+        path = $HOME/gdal-docker-cache
+        comment = GDAL Docker cache
+        hosts allow = ${RSYNC_SERVER_IP}/24
+        use chroot = false
+        read only = false
+EOF
+        RSYNC_PORT=23985
+        while /bin/true; do
+            rsync --port=${RSYNC_PORT} --config="${RSYNC_DAEMON_TEMPFILE}" --daemon --no-detach &
+            RSYNC_PID=$!
+            sleep 1
+            kill -0 ${RSYNC_PID} 2>/dev/null && break
+            echo "Port ${RSYNC_PORT} is in use. Trying next one"
+            RSYNC_PORT=$((RSYNC_PORT+1))
+        done
+        echo "rsync daemon forked as process ${RSYNC_PID} listening on port ${RSYNC_PORT}"
+        # Trap SIGINT
+        trap "trap_ctrlc" 2
+        RSYNC_REMOTE="rsync://${RSYNC_SERVER_IP}:${RSYNC_PORT}/gdal-docker-cache/${BASE_IMAGE_NAME}"
+        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/proj"
+        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/gdal"
+        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/spatialite"
+    else
+        RSYNC_REMOTE=""
+    fi
+
     docker build \
         --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         --build-arg PROJ_VERSION="${PROJ_VERSION}" \
         --build-arg GDAL_VERSION="${GDAL_VERSION}" \
         --build-arg GDAL_RELEASE_DATE="${GDAL_RELEASE_DATE}" \
+        --build-arg RSYNC_REMOTE="${RSYNC_REMOTE}" \
         --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
+
+    if test "${RSYNC_REMOTE}" != ""; then
+        cleanup_rsync
+        trap - 2
+    fi
+
     docker build \
         --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         --build-arg PROJ_VERSION="${PROJ_VERSION}" \
         --build-arg GDAL_VERSION="${GDAL_VERSION}" \
         --build-arg GDAL_RELEASE_DATE="${GDAL_RELEASE_DATE}" \
+        --build-arg RSYNC_REMOTE="${RSYNC_REMOTE}" \
         -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
     check_image "${IMAGE_NAME}"
