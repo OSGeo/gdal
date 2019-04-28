@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "netcdfdataset.h"
+#include "netcdfsg.h"
 #include "cpl_time.h"
 
 CPL_CVSID("$Id$")
@@ -163,6 +164,7 @@ bool netCDFLayer::Create(char **papszOptions,
                          "geometry type.");
             }
         }
+
         else if( EQUAL(pszFeatureType, "PROFILE") )
         {
             if( wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint )

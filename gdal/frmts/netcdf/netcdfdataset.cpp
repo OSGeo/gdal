@@ -51,6 +51,7 @@
 // Must be included after standard includes, otherwise VS2015 fails when
 // including <ctime>
 #include "netcdfdataset.h"
+#include "netcdfsg.h"
 #include "netcdfuffd.h"
 
 #include "cpl_conv.h"
@@ -7127,6 +7128,14 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         }
     }
 
+    // Figure out whether or not the listed dataset has support for simple geometries (CF-1.8)
+    poDS->nCFMinorVersion = nccfdriver::getCFMinorVersion(cdfid);
+    if(poDS->nCFMinorVersion >= 8)
+    {
+        poDS->bSGSupport = true;
+    }
+    else poDS->bSGSupport = false;
+
     char szConventions[NC_MAX_NAME + 1];
     szConventions[0] = '\0';
     nc_type nAttype = NC_NAT;
@@ -10954,7 +10963,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
                                              int nVarXId, int nVarYId, int nVarZId,
                                              int nProfileDimId,
                                              int nParentIndexVarID,
-                                             bool bKeepRasters )
+					      bool bKeepRasters )
 {
     char *pszGroupName = nullptr;
     NCDFGetGroupFullName(nCdfId, &pszGroupName);

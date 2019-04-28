@@ -821,6 +821,8 @@ class netCDFDataset final: public GDALPamDataset
     bool          bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
     char         *pszCFProjection;
     const char   *pszCFCoordinates;
+    int          nCFMinorVersion;
+    bool         bSGSupport;
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
 
@@ -902,6 +904,10 @@ class netCDFDataset final: public GDALPamDataset
                                   int nVarXId, int nVarYId, int nVarZId,
                                   int nProfileDimId, int nParentIndexVarID,
                                   bool bKeepRasters );
+
+    CPLErr DetectAndFillSGLayers( int ncid );
+    CPLErr LoadSGVarIntoLayer( int ncid, int nc_basevarId );
+
   protected:
 
     CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
@@ -1019,6 +1025,7 @@ class netCDFLayer final: public OGRLayer
         int             m_nProfileVarID;
         bool            m_bProfileVarUnlimited;
         int             m_nParentIndexVarID;
+	bool		m_legacyFeature;
 
         const netCDFWriterConfigLayer* m_poLayerConfig;
 

@@ -95,6 +95,11 @@ namespace nccfdriver
 		 */
 		bool is_interior();
 
+		/* geom_t getGeometryType()
+		 * Retrieves the associated geometry type with this geometry
+		 */
+		geom_t getGeometryType() { return this->type; }
+
 		/* void SGeometry::get_geometry_count()
 		 * returns a size, indicating the amount of geometries
 		 * contained in the variable
