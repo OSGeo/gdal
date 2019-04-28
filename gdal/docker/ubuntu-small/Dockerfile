@@ -94,18 +94,23 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
-        echo "Finished"; \
-        export CC="ccache gcc"; \
-        export CXX="ccache g++"; \
-        ccache -M 1G; \
-    fi \
     && mkdir gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal/gdal \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        echo "Finished"; \
+        # Little trick to avoid issues with Python bindings
+        printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
+        chmod +x ccache_gcc.sh; \
+        printf "#!/bin/sh\nccache g++ \$*" > ccache_g++.sh; \
+        chmod +x ccache_g++.sh; \
+        export CC=$PWD/ccache_gcc.sh; \
+        export CXX=$PWD/ccache_g++.sh; \
+        ccache -M 1G; \
+    fi \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
