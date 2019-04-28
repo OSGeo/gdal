@@ -7136,6 +7136,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     }
     else poDS->bSGSupport = false;
 
+    if(poDS->bSGSupport)
+    {
+         poDS->DetectAndFillSGLayers(cdfid);
+    }
+
     char szConventions[NC_MAX_NAME + 1];
     szConventions[0] = '\0';
     nc_type nAttype = NC_NAT;

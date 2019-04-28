@@ -39,6 +39,7 @@
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "netcdf.h"
+#include "netcdfsg.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 #include "netcdfuffd.h"
