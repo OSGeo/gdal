@@ -44,6 +44,8 @@ RUN mkdir proj \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
+        ccache -M 100M; \
     fi \
     && ./configure --prefix=/usr --disable-static --enable-lto \
     && make -j$(nproc) \
@@ -57,7 +59,6 @@ RUN mkdir proj \
         rm -rf $HOME/.ccache; \
         unset CC; \
         unset CXX; \
-        ccache -M 100M; \
     fi \
     && cd .. \
     && rm -rf proj \

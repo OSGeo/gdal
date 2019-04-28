@@ -129,6 +129,7 @@ RUN mkdir proj \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \

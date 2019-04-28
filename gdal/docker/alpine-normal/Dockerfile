@@ -185,6 +185,7 @@ RUN mkdir proj \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
     && ./configure --prefix=/usr --disable-static --enable-lto \
