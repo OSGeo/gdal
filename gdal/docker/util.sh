@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # This file is available at the option of the licensee under:
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
@@ -15,41 +15,90 @@ if test "x${BASE_IMAGE_NAME}" = "x"; then
     exit 1
 fi
 
-# Other environment variable: TEST_PYTHON
-
 usage()
 {
-    echo "Usage: build.sh [--push] [GDAL_tag_name]"
+    echo "Usage: build.sh [--push] [--tag name] [--gdal tag|sha1|master] [--proj tag|sha1|master] [--release]"
+    # Non-documented: --test-python
+    echo ""
+    echo "--push: push image to Docker hub"
+    echo "--tag name: suffix to append to image name. Defaults to 'latest' for non release builds or the GDAL tag name for release builds"
+    echo "--gdal tag|sha1|master: GDAL version to use. Defaults to master"
+    echo "--proj tag|sha1|master: PROJ version to use. Defaults to master"
+    echo "--release. Whether this is a release build.In which case --gdal tag must be used."
     exit 1
 }
 
-for i in "$@"
+RELEASE=no
+while (( "$#" ));
 do
-    case $i in
+    case "$1" in
         -h|--help)
             usage
         ;;
 
         --push)
             PUSH_GDAL_DOCKER_IMAGE=yes
+            shift
+        ;;
+
+        --gdal)
+            shift
+            GDAL_VERSION="$1"
+            shift
+        ;;
+
+        --proj)
+            shift
+            PROJ_VERSION="$1"
+            shift
+        ;;
+
+        --tag)
+            shift
+            TAG_NAME="$1"
+            shift
+        ;;
+
+        --release)
+            RELEASE=yes
+            shift
+        ;;
+
+        --test-python)
+            TEST_PYTHON=yes
+            shift
         ;;
 
         # Unknown option
-        -*)
-            echo "Unrecognized option: ${i}"
+        *)
+            echo "Unrecognized option: $1"
             usage
         ;;
 
-        #Default
-        *)
-            if test "${GDAL_VERSION}" != ""; then
-                echo "too many arguments"
-                usage
-            fi
-            GDAL_VERSION="$1"
-        ;;
     esac
 done
+
+if test "${RELEASE}" = "yes"; then
+    if test "${GDAL_VERSION}" = ""; then
+        echo "--gdal tag must be specified when --release is used."
+        exit 1
+    fi
+    if test "${GDAL_VERSION}" = "master"; then
+        echo "--gdal master not allowed when --release is used."
+        exit 1
+    fi
+    if test "${PROJ_VERSION}" = ""; then
+        echo "--proj tag|sha1|master must be specified when --release is used."
+        exit 1
+    fi
+    if test "${TAG_NAME}" = ""; then
+        TAG_NAME="${GDAL_VERSION}"
+    fi
+else
+    if test "${TAG_NAME}" = ""; then
+        TAG_NAME=latest
+    fi
+fi
 
 check_image()
 {
@@ -64,54 +113,65 @@ check_image()
 cleanup_rsync()
 {
     rm -f "${RSYNC_DAEMON_TEMPFILE}"
-    kill "${RSYNC_PID}" || /bin/true
+    if test "${RSYNC_PID}" != ""; then
+        kill "${RSYNC_PID}" || /bin/true
+    fi
 }
 
-trap_ctrlc()
+trap_error_exit()
 {
-    echo "Ctrl-C caught... clean up"
+    echo "Exit on error... clean up"
     cleanup_rsync
     exit 1
 }
 
 PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
 
-if test "${GDAL_VERSION}" != ""; then
-    IMAGE_NAME="${BASE_IMAGE_NAME}-${GDAL_VERSION}"
-    BUILDER_IMAGE_NAME="${IMAGE_NAME}_builder"
-    if test "x${PROJ_VERSION}" = "x"; then
-        PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
-    fi
-    docker build \
-        --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
-        --build-arg PROJ_VERSION="${PROJ_VERSION}" \
-        --build-arg GDAL_VERSION="${GDAL_VERSION}" \
-        --build-arg GDAL_BUILD_IS_RELEASE=YES \
-        --target builder \
+if test "${PROJ_VERSION}" = "" -o "${PROJ_VERSION}" = "master"; then
+    PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+fi
+echo "Using PROJ_VERSION=${PROJ_VERSION}"
+
+if test "${GDAL_VERSION}" = "" -o "${GDAL_VERSION}" = "master"; then
+    GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+fi
+echo "Using GDAL_VERSION=${GDAL_VERSION}"
+
+IMAGE_NAME="${BASE_IMAGE_NAME}-${TAG_NAME}"
+BUILDER_IMAGE_NAME="${IMAGE_NAME}_builder"
+
+if test "${RELEASE}" = "yes"; then
+
+    BUILD_ARGS=(
+        "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
+        "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
+        "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
+        "--build-arg" "GDAL_BUILD_IS_RELEASE=YES" \
+    )
+
+    docker build "${BUILD_ARGS[@]}" --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
-    docker build \
-        --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
-        --build-arg PROJ_VERSION="${PROJ_VERSION}" \
-        --build-arg GDAL_VERSION="${GDAL_VERSION}" \
-        --build-arg GDAL_BUILD_IS_RELEASE=YES \
-        -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
     check_image "${IMAGE_NAME}"
 
 else
 
-    IMAGE_NAME="${BASE_IMAGE_NAME}-latest"
-    BUILDER_IMAGE_NAME="${IMAGE_NAME}_builder"
     OLD_BUILDER_ID=$(docker image ls "${BUILDER_IMAGE_NAME}" -q)
     OLD_IMAGE_ID=$(docker image ls "${IMAGE_NAME}" -q)
 
-    PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
-    GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
-    GDAL_RELEASE_DATE=$(date "+%Y%m%d")
+    if test "${GDAL_RELEASE_DATE}" = ""; then
+        GDAL_RELEASE_DATE=$(date "+%Y%m%d")
+    fi
+    echo "Using GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}"
 
     # If rsync is available then start it as a temporary daemon
-    if [ -x "$(command -v rsync)" ]; then
+    if test "${USE_CACHE:-yes}" = "yes" -a -x "$(command -v rsync)"; then
         RSYNC_DAEMON_TEMPFILE=$(mktemp)
+
+        # Trap exit
+        trap "trap_error_exit" EXIT
+
         RSYNC_SERVER_IP=172.17.0.1
         cat <<EOF > "${RSYNC_DAEMON_TEMPFILE}"
 [gdal-docker-cache]
@@ -131,8 +191,7 @@ EOF
             RSYNC_PORT=$((RSYNC_PORT+1))
         done
         echo "rsync daemon forked as process ${RSYNC_PID} listening on port ${RSYNC_PORT}"
-        # Trap SIGINT
-        trap "trap_ctrlc" 2
+
         RSYNC_REMOTE="rsync://${RSYNC_SERVER_IP}:${RSYNC_PORT}/gdal-docker-cache/${BASE_IMAGE_NAME}"
         mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/proj"
         mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/gdal"
@@ -141,27 +200,23 @@ EOF
         RSYNC_REMOTE=""
     fi
 
-    docker build \
-        --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
-        --build-arg PROJ_VERSION="${PROJ_VERSION}" \
-        --build-arg GDAL_VERSION="${GDAL_VERSION}" \
-        --build-arg GDAL_RELEASE_DATE="${GDAL_RELEASE_DATE}" \
-        --build-arg RSYNC_REMOTE="${RSYNC_REMOTE}" \
-        --target builder \
+    BUILD_ARGS=(
+        "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
+        "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
+        "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
+        "--build-arg" "GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}" \
+        "--build-arg" "RSYNC_REMOTE=${RSYNC_REMOTE}" \
+    )
+
+    docker build "${BUILD_ARGS[@]}" --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
 
     if test "${RSYNC_REMOTE}" != ""; then
         cleanup_rsync
-        trap - 2
+        trap - EXIT
     fi
 
-    docker build \
-        --build-arg PROJ_DATUMGRID_LATEST_LAST_MODIFIED="${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
-        --build-arg PROJ_VERSION="${PROJ_VERSION}" \
-        --build-arg GDAL_VERSION="${GDAL_VERSION}" \
-        --build-arg GDAL_RELEASE_DATE="${GDAL_RELEASE_DATE}" \
-        --build-arg RSYNC_REMOTE="${RSYNC_REMOTE}" \
-        -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
     check_image "${IMAGE_NAME}"
 
