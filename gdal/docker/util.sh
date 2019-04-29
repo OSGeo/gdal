@@ -188,7 +188,7 @@ else
 EOF
         RSYNC_PORT=23985
         while /bin/true; do
-            rsync --port=${RSYNC_PORT} --config="${RSYNC_DAEMON_TEMPFILE}" --daemon --no-detach &
+            rsync --port=${RSYNC_PORT} --address="${RSYNC_SERVER_IP}" --config="${RSYNC_DAEMON_TEMPFILE}" --daemon --no-detach &
             RSYNC_PID=$!
             sleep 1
             kill -0 ${RSYNC_PID} 2>/dev/null && break
