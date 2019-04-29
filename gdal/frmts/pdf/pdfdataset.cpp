@@ -3348,7 +3348,8 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
             else
                 osTopLayer = osName;
             AddLayer(osTopLayer.c_str());
-            oLayerOCGMapPoppler[osTopLayer.c_str()] = nullptr;
+            oLayerOCGListPoppler.push_back(
+                std::pair<CPLString, OptionalContentGroup*>(osTopLayer, nullptr));
         }
         else if (poObj->GetType() == PDFObjectType_Array)
         {
@@ -3377,7 +3378,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
                 if (ocg)
                 {
                     AddLayer(osCurLayer.c_str());
-                    oLayerOCGMapPoppler[osCurLayer.c_str()] = ocg;
+                    oLayerOCGListPoppler.push_back(std::make_pair(osCurLayer, ocg));
                     osLayerWithRefList.AddString(
                         CPLSPrintf("%s %d %d", osCurLayer.c_str(), r.num, r.gen));
                 }
@@ -3423,7 +3424,7 @@ void PDFDataset::FindLayersPoppler()
                 const char* pszLayerName = (const char*)ocg->getName()->getCString();
 #endif
                 AddLayer(pszLayerName);
-                oLayerOCGMapPoppler[pszLayerName] = ocg;
+                oLayerOCGListPoppler.push_back(std::make_pair(CPLString(pszLayerName), ocg));
             }
         }
     }
@@ -3463,10 +3464,15 @@ void PDFDataset::TurnLayersOnOffPoppler()
         char** papszLayers = CSLTokenizeString2(pszLayers, ",", 0);
         for(i=0;!bAll && papszLayers[i] != nullptr;i++)
         {
-            std::map<CPLString, OptionalContentGroup*>::iterator oIter =
-                oLayerOCGMapPoppler.find(papszLayers[i]);
-            if (oIter != oLayerOCGMapPoppler.end())
+            bool isFound = false;
+            for (auto oIter2 = oLayerOCGListPoppler.begin();
+                oIter2 != oLayerOCGListPoppler.end(); ++oIter2)
             {
+                if (oIter2->first != papszLayers[i])
+                    continue;
+
+                isFound = true;
+                auto oIter = oIter2;
                 if (oIter->second)
                 {
                     //CPLDebug("PDF", "Turn '%s' on", papszLayers[i]);
@@ -3477,8 +3483,8 @@ void PDFDataset::TurnLayersOnOffPoppler()
                 // in the list.
                 size_t nLen = strlen(papszLayers[i]);
                 int bFoundChildLayer = FALSE;
-                oIter = oLayerOCGMapPoppler.begin();
-                for( ; oIter != oLayerOCGMapPoppler.end() && !bFoundChildLayer; oIter ++)
+                oIter = oLayerOCGListPoppler.begin();
+                for (; oIter != oLayerOCGListPoppler.end() && !bFoundChildLayer; ++oIter)
                 {
                     if (oIter->first.size() > nLen &&
                         strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
@@ -3487,15 +3493,18 @@ void PDFDataset::TurnLayersOnOffPoppler()
                         for(int j=0;papszLayers[j] != nullptr;j++)
                         {
                             if (strcmp(papszLayers[j], oIter->first.c_str()) == 0)
+                            {
                                 bFoundChildLayer = TRUE;
+                                break;
+                            }
                         }
                     }
                 }
 
                 if( !bFoundChildLayer )
                 {
-                    oIter = oLayerOCGMapPoppler.begin();
-                    for( ; oIter != oLayerOCGMapPoppler.end() && !bFoundChildLayer; oIter ++)
+                    oIter = oLayerOCGListPoppler.begin();
+                    for (; oIter != oLayerOCGListPoppler.end() && !bFoundChildLayer; ++oIter)
                     {
                         if (oIter->first.size() > nLen &&
                             strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
@@ -3511,22 +3520,23 @@ void PDFDataset::TurnLayersOnOffPoppler()
                 }
 
                 // Turn parent layers on too
-                char* pszLastDot = nullptr;
-                while( (pszLastDot = strrchr(papszLayers[i], '.')) != nullptr)
+                std::string layer(papszLayers[i]);
+                std::string::size_type j;
+                while ((j = layer.find_last_of('.')) != std::string::npos)
                 {
-                    *pszLastDot = '\0';
-                    oIter = oLayerOCGMapPoppler.find(papszLayers[i]);
-                    if (oIter != oLayerOCGMapPoppler.end())
+                    layer.resize(j);
+                    oIter = oLayerOCGListPoppler.begin();
+                    for (; oIter != oLayerOCGListPoppler.end(); ++oIter)
                     {
-                        if (oIter->second)
+                        if (oIter->first == layer && oIter->second)
                         {
-                            //CPLDebug("PDF", "Turn '%s' on too", papszLayers[i]);
+                            //CPLDebug("PDF", "Turn '%s' on too", layer.c_str());
                             oIter->second->setState(OptionalContentGroup::On);
                         }
                     }
                 }
             }
-            else
+            if (!isFound)
             {
                 CPLError(CE_Warning, CPLE_AppDefined, "Unknown layer '%s'",
                             papszLayers[i]);
@@ -3544,10 +3554,15 @@ void PDFDataset::TurnLayersOnOffPoppler()
         char** papszLayersOFF = CSLTokenizeString2(pszLayersOFF, ",", 0);
         for(int i=0;papszLayersOFF[i] != nullptr;i++)
         {
-            std::map<CPLString, OptionalContentGroup*>::iterator oIter =
-                oLayerOCGMapPoppler.find(papszLayersOFF[i]);
-            if (oIter != oLayerOCGMapPoppler.end())
+            bool isFound = false;
+            for (auto oIter2 = oLayerOCGListPoppler.begin();
+                oIter2 != oLayerOCGListPoppler.end(); ++oIter2)
             {
+                if (oIter2->first != papszLayersOFF[i])
+                    continue;
+
+                isFound = true;
+                auto oIter = oIter2;
                 if (oIter->second)
                 {
                     //CPLDebug("PDF", "Turn '%s' off", papszLayersOFF[i]);
@@ -3556,8 +3571,8 @@ void PDFDataset::TurnLayersOnOffPoppler()
 
                 // Turn child layers off too
                 size_t nLen = strlen(papszLayersOFF[i]);
-                oIter = oLayerOCGMapPoppler.begin();
-                for( ; oIter != oLayerOCGMapPoppler.end(); oIter ++)
+                oIter = oLayerOCGListPoppler.begin();
+                for (; oIter != oLayerOCGListPoppler.end(); ++oIter)
                 {
                     if (oIter->first.size() > nLen &&
                         strncmp(oIter->first.c_str(), papszLayersOFF[i], nLen) == 0 &&
@@ -3571,7 +3586,7 @@ void PDFDataset::TurnLayersOnOffPoppler()
                     }
                 }
             }
-            else
+            if (!isFound)
             {
                 CPLError(CE_Warning, CPLE_AppDefined, "Unknown layer '%s'",
                             papszLayersOFF[i]);

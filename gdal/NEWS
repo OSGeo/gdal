@@ -1,4 +1,4 @@
-= GDAL/OGR 2.5.0 Release Notes (Preliminary, up to 0f569d394dc77da244c8cc1d5d791e0bbe5010c6) =
+= GDAL/OGR 2.5.0 Release Notes =
 
 == In a nutshell... ==
 
@@ -15,6 +15,7 @@
    - PDF: add a COMPOSITION_FILE creation option to generate a complex document
    - PDS4: subdataset creation support, read/write table/vector support
  * Support for minimal builds on Unix (#1250)
+ * Add a docker/ directory with Dockerfile for different configurations
  * Continued code linting
 
 == New installed files ==
@@ -48,7 +49,7 @@ All:
  * PROJ >= 6.0 is a required external dependency
  * libgeotiff >= 1.5 should be used for builds with external libgeotiff
  * Poppler: drop support for Poppler older than 0.23.0
- * Poppler: add support for 0.72.0, 0.73.0, 0.75.0
+ * Poppler: add support for 0.72.0, 0.73.0, 0.75.0, 0.76.0
 
 == GDAL X.Y.Z - Overview of Changes ==
 
@@ -57,7 +58,7 @@ Port:
  * MiniXML: Fix wrong node order when calling CPLAddXMLAttributeAndValue() after CPLCreateXMLElementAndValue()
  * /vsicurl/: ReadMultiRange(): use default implementation if there is a single range (#1206)
  * /vsicurl/: ignore proxy CONNECT response headers (#1211)
- * /vsicurl/: automatically detect signed URLs where host ends with a port number; also detect signed URLs as created iwth the AWS4-HMAC-SHA256 method (#1456)
+ * /vsicurl/: automatically detect signed URLs where host ends with a port number; also detect signed URLs as created with the AWS4-HMAC-SHA256 method (#1456)
  * /vsizip/: Add config option to create zip64 extra fields by default (#1267)
  * /vsis3/, /vsigs/, /vsiaz/: add HTTP retry logic in writing code paths
  * Fix data race in VSIFileManager::Get
@@ -75,6 +76,7 @@ Core:
  * RasterBand/Dataset::RasterIO(): enforce access mode on write
  * PAM: preserve existing metadata when setting new one (#1430)
  * RawDataset: use generic RasterIO() implementation when non-nearest resampling is asked (#1301)
+ * DumpJPK2CodeStream(): dump PLT and POC markers
 
 Algorithms:
  * RPC transformer: test success code of GDALRPCTransform() in GDALCreateRPCTransformer()
@@ -88,6 +90,7 @@ Algorithms:
  * rasterize: fix crash when working buffer is larger than 2GB (#1338)
 
 Utilities:
+ * gdal_translate: add "-nogcp" option (#1469)
  * gdaldem hillshade: add -igor option (#1330)
  * gdalwarp -crop_to_cutline: do not round computed target extent to be aligned on the grid of the source raster if -tr is set (restore partially pre 2.4 behaviour) (#1173)
  * gdalwarp: assume -tap when using -crop_to_cutline, -tr and -wo CUTLINE_ALL_TOUCHED=TRUE, so as to avoid issues with polygons smaller than 1x1 pixels (#1360)
@@ -159,6 +162,9 @@ MRF driver:
  * sparse index and internal resampling fixes
  * fix integer overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13974
 
+MrSID driver:
+ * fix potential crash when a zoom level cannot be opened
+
 netCDF driver:
  * implement support for NetCDF-4 groups on reading (#1180)
  * support complex data types (#1218)
@@ -179,6 +185,7 @@ PCIDSK driver:
 PDF driver:
  * Add a COMPOSITION_FILE creation option to generate a complex document
  * And a gdal_create_pdf.py sample script
+ * Fix selection of Poppler PDF layers with duplicate names (#1477)
  * avoid division by zero when generating from vector content whose bounding box is almost a horizontal or vertical line. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13408
 
 PDS3:
@@ -206,6 +213,7 @@ XPM driver:
 
 XYZ driver:
  * add creation options DECIMAL_PRECISION and SIGNIFICANT_DIGITS like with AAIGrid
+ * fix regression regarding header lines that are not X,Y,Z (#1472)
 
 == OGR X.Y.Z - Overview of Changes ==
 
@@ -271,6 +279,9 @@ GMLAS driver:
  * avoid null pointer dereference on some schemas
  * do not use space as separator for schema filename in XSD open option (#1452)
 
+GMT driver:
+ * use file extension based detection to accept files without header (#1461)
+
 MongoDB driver:
  * fix releated to filters in GetFeature()
 
@@ -317,7 +328,7 @@ PGDump driver:
  * Fix emitted SQL when UNLOGGED=ON
 
 PLScenes driver:
- * update plscenesconf.json with SkySatCollect
+ * update plscenesconf.json with SkySatCollect and add missing fields for PSOrthoTile
 
 SDTS driver:
  * error out if too many errors are raised to avoid timeout in oss-fuzz. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13819.
@@ -356,7 +367,7 @@ All bindings:
 Python bindings:
  * fix Dataset.ReadAsRaster() on CInt16 data type (#82)
  * adding overviewLevel option to WarpOptions
-
+ * add noGCP options to gdal.Translate()
 
 = GDAL/OGR 2.4.0 Release Notes =
 

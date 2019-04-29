@@ -268,7 +268,7 @@ class PDFDataset final: public GDALPamDataset
     void         ExploreLayersPoppler(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
     void         FindLayersPoppler();
     void         TurnLayersOnOffPoppler();
-    std::map<CPLString, OptionalContentGroup*> oLayerOCGMapPoppler;
+    std::vector<std::pair<CPLString, OptionalContentGroup*> > oLayerOCGListPoppler;
 #endif
 
 #ifdef HAVE_PDFIUM

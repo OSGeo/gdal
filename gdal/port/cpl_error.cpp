@@ -207,7 +207,6 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
         psCtx->psHandlerStack->pUserData : pErrorHandlerUserData );
 }
 
-
 static void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
                         CPLErrorNum err_no, const char *pszMessage)
 {
@@ -1337,4 +1336,12 @@ void CPLCleanupErrorMutex()
         CPLDestroyMutex(hErrorMutex);
         hErrorMutex = nullptr;
     }
+}
+
+bool CPLIsDefaultErrorHandlerAndCatchDebug()
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+    return (psCtx == nullptr || psCtx->psHandlerStack == nullptr) &&
+            gbCatchDebug &&
+           pfnErrorHandler == CPLDefaultErrorHandler;
 }

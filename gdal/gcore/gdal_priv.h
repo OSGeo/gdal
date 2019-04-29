@@ -346,7 +346,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend class GDALProxyDataset;
     friend class GDALDriverManager;
 
-    void AddToDatasetOpenList();
+    CPL_INTERNAL void AddToDatasetOpenList();
 
   protected:
 //! @cond Doxygen_Suppress
@@ -463,7 +463,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
         friend class GDALDataset;
         GDALDataset* m_poSelf;
-        explicit Bands(GDALDataset* poSelf): m_poSelf(poSelf) {}
+        CPL_INTERNAL explicit Bands(GDALDataset* poSelf): m_poSelf(poSelf) {}
 
         class CPL_DLL Iterator
         {
@@ -634,7 +634,7 @@ private:
     class Private;
     Private *m_poPrivate;
 
-    OGRLayer*       BuildLayerFromSelectInfo(swq_select* psSelectInfo,
+    CPL_INTERNAL OGRLayer*       BuildLayerFromSelectInfo(swq_select* psSelectInfo,
                                              OGRGeometry *poSpatialFilter,
                                              const char *pszDialect,
                                              swq_select_parse_options* poSelectParseOptions);
@@ -654,7 +654,7 @@ private:
 
         friend class GDALDataset;
         GDALDataset* m_poSelf;
-        explicit Layers(GDALDataset* poSelf): m_poSelf(poSelf) {}
+        CPL_INTERNAL explicit Layers(GDALDataset* poSelf): m_poSelf(poSelf) {}
 
       public:
 
@@ -717,7 +717,7 @@ private:
 
         friend class GDALDataset;
         GDALDataset* m_poSelf;
-        explicit Features(GDALDataset* poSelf): m_poSelf(poSelf) {}
+        CPL_INTERNAL explicit Features(GDALDataset* poSelf): m_poSelf(poSelf) {}
 
         class CPL_DLL Iterator
         {
@@ -868,10 +868,10 @@ class CPL_DLL GDALRasterBlock
 
     bool                 bMustDetach;
 
-    void        Detach_unlocked( void );
-    void        Touch_unlocked( void );
+    CPL_INTERNAL void        Detach_unlocked( void );
+    CPL_INTERNAL void        Touch_unlocked( void );
 
-    void        RecycleFor( int nXOffIn, int nYOffIn );
+    CPL_INTERNAL void        RecycleFor( int nXOffIn, int nYOffIn );
 
   public:
                 GDALRasterBlock( GDALRasterBand *, int, int );
@@ -946,7 +946,7 @@ class CPL_DLL GDALRasterBlock
 
     /* Should only be called by GDALDestroyDriverManager() */
 //! @cond Doxygen_Suppress
-    static void DestroyRBMutex();
+    CPL_INTERNAL static void DestroyRBMutex();
 //! @endcond
 
   private:
@@ -1002,10 +1002,9 @@ public:
  //! @cond Doxygen_Suppress
 
 //! This manages how a raster band store its cached block.
-// CPL_DLL is just technical here. This is really a private concept
 // only used by GDALRasterBand implementation.
 
-class CPL_DLL GDALAbstractBandBlockCache
+class GDALAbstractBandBlockCache
 {
         // List of blocks that can be freed or recycled, and its lock
         CPLLock          *hSpinLock = nullptr;
@@ -1016,14 +1015,23 @@ class CPL_DLL GDALAbstractBandBlockCache
         CPLMutex         *hCondMutex = nullptr;
         volatile int      nKeepAliveCounter = 0;
 
+        volatile int      m_nDirtyBlocks = 0;
+
         CPL_DISALLOW_COPY_ASSIGN(GDALAbstractBandBlockCache)
 
     protected:
         GDALRasterBand   *poBand;
 
+        int               m_nInitialDirtyBlocksInFlushCache = 0;
+        int               m_nLastTick = -1;
+
         void              FreeDanglingBlocks();
         void              UnreferenceBlockBase();
         void              WaitKeepAliveCounter();
+
+        void              StartDirtyBlockFlushingLog();
+        void              UpdateDirtyBlockFlushingLog();
+        void              EndDirtyBlockFlushingLog();
 
     public:
             explicit GDALAbstractBandBlockCache(GDALRasterBand* poBand);
@@ -1031,6 +1039,7 @@ class CPL_DLL GDALAbstractBandBlockCache
 
             GDALRasterBlock* CreateBlock(int nXBlockOff, int nYBlockOff);
             void             AddBlockToFreeList( GDALRasterBlock * );
+            void             IncDirtyBlocks(int nInc);
 
             virtual bool             Init() = 0;
             virtual bool             IsInitOK() = 0;
@@ -1064,9 +1073,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPLErr eFlushBlockErr = CE_None;
     GDALAbstractBandBlockCache* poBandBlockCache = nullptr;
 
-    void           SetFlushBlockErr( CPLErr eErr );
-    CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
-    void           SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
+    CPL_INTERNAL void           SetFlushBlockErr( CPLErr eErr );
+    CPL_INTERNAL CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
+    CPL_INTERNAL void           SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
+    CPL_INTERNAL void           IncDirtyBlocks(int nInc);
 
   protected:
 //! @cond Doxygen_Suppress
