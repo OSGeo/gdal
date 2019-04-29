@@ -345,6 +345,7 @@ GDALDataset *MRRDataset::OpenMRR(GDALOpenInfo * poOpenInfo)
 			CPLFree(poDS->pszProjection);
 			oSRS.exportToWkt(&poDS->pszProjection);
 		}
+		poDS->SetProjection(poDS->pszProjection);
 		CPLFree(pCoordSys);
 
 		// -------------------------------------------------------------------- //
