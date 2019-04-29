@@ -167,12 +167,17 @@ else
 
     # If rsync is available then start it as a temporary daemon
     if test "${USE_CACHE:-yes}" = "yes" -a -x "$(command -v rsync)"; then
+
+        RSYNC_SERVER_IP=$(ip -4 -o addr show docker0 | awk '{print $4}' | cut -d "/" -f 1)
+        if test "${RSYNC_SERVER_IP}" = ""; then
+            exit 1
+        fi
+
         RSYNC_DAEMON_TEMPFILE=$(mktemp)
 
         # Trap exit
         trap "trap_error_exit" EXIT
 
-        RSYNC_SERVER_IP=172.17.0.1
         cat <<EOF > "${RSYNC_DAEMON_TEMPFILE}"
 [gdal-docker-cache]
         path = $HOME/gdal-docker-cache
