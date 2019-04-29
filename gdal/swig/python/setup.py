@@ -240,6 +240,7 @@ class gdal_ext(build_ext):
         self.gdaldir = None
         self.gdal_config = self.GDAL_CONFIG
         self.extra_cflags = []
+        self.parallel = True # Python 3.5 only
 
     def get_compiler(self):
         return self.compiler or get_default_compiler()
@@ -323,6 +324,23 @@ class gdal_ext(build_ext):
         ext.extra_compile_args.extend(self.extra_cflags)
         return build_ext.build_extension(self, ext)
 
+# This is only needed with Python 2.
+if sys.version_info < (3,):
+    try:
+        import multiprocessing
+        from concurrent.futures import ThreadPoolExecutor as Pool
+
+        num_jobs = multiprocessing.cpu_count()
+
+        def parallel_build_extensions(self):
+            self.check_extensions_list(self.extensions)
+
+            with Pool(num_jobs) as pool:
+                pool.map(self.build_extension, self.extensions)
+
+        build_ext.build_extensions = parallel_build_extensions
+    except:
+        pass
 
 extra_link_args = []
 extra_compile_args = []
