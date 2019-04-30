@@ -7061,6 +7061,39 @@ def test_tiff_write_overviews_mask_no_ovr_on_mask():
     gdaltest.tiff_drv.Delete(tmpfile)
     gdaltest.tiff_drv.Delete(tmpfile2)
 
+
+###############################################################################
+# Test that -co PHOTOMETRIC=YCBCR -co COMPRESS=JPEG does not create a TIFFTAG_GDAL_METADATA
+
+def test_tiff_write_no_gdal_metadata_tag_for_ycbcr_jpeg():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        pytest.skip()
+
+    tmpfile = '/vsimem/test_tiff_write_no_gdal_metadata_tag_for_ycbcr_jpeg.tif'
+    assert gdaltest.tiff_drv.Create(tmpfile, 16, 16, 3, gdal.GDT_Byte, options=['PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG'])
+    statBuf = gdal.VSIStatL(tmpfile + '.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    assert statBuf is None, 'did not expect PAM file'
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_') is None, \
+        'did not expect TIFFTAG_GDAL_METADATA tag'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+
+    tmpfile2 = tmpfile + "2"
+    assert gdaltest.tiff_drv.CreateCopy(tmpfile2, ds, options=['PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG'])
+    ds = None
+
+    ds = gdal.Open(tmpfile2)
+    assert ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_') is None, \
+        'did not expect TIFFTAG_GDAL_METADATA tag'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    ds = None
+
+    gdaltest.tiff_drv.Delete(tmpfile)
+    gdaltest.tiff_drv.Delete(tmpfile2)
+
 ###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
