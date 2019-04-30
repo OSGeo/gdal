@@ -73,8 +73,6 @@ static void Usage(const char* pszErrorMsg = nullptr)
 static void CreateElevAttrib(const char* pszElevAttrib, OGRLayerH hLayer)
 {
     OGRFieldDefnH hFld = OGR_Fld_Create( pszElevAttrib, OFTReal );
-    OGR_Fld_SetWidth( hFld, 12 );
-    OGR_Fld_SetPrecision( hFld, 3 );
     OGRErr eErr = OGR_L_CreateField( hLayer, hFld, FALSE );
     OGR_Fld_Destroy( hFld );
     if( eErr == OGRERR_FAILURE )
