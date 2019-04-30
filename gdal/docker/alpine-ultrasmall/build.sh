@@ -21,4 +21,4 @@ export SCRIPT_DIR
 TAG_NAME=$(basename "${SCRIPT_DIR}")
 export BASE_IMAGE_NAME=osgeo/gdal:${TAG_NAME}
 
-"${SCRIPT_DIR}/../util.sh" "$@" --test-python
+"${SCRIPT_DIR}/../util.sh" "$@"
