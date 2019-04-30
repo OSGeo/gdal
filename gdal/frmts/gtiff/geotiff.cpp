@@ -680,6 +680,8 @@ GTiffJPEGOverviewDS::GTiffJPEGOverviewDS( GTiffDataset* poParentDSIn,
     poJPEGDS(nullptr),
     nBlockId(-1)
 {
+    ShareLockWithParentDataset(poParentDSIn);
+
     osTmpFilenameJPEGTable.Printf("/vsimem/jpegtable_%p", this);
 
     const GByte abyAdobeAPP14RGB[] = {
@@ -10061,6 +10063,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
                                                 int l_nJpegQuality)
 {
     GTiffDataset* poODS = new GTiffDataset();
+    poODS->ShareLockWithParentDataset(this);
     poODS->osFilename = osFilename;
     poODS->nJpegQuality = l_nJpegQuality;
     poODS->nZLevel = nZLevel;
@@ -10344,6 +10347,7 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                 }
 
                 GTiffDataset *poODS = new GTiffDataset();
+                poODS->ShareLockWithParentDataset(this);
                 poODS->osFilename = osFilename;
                 if( poODS->OpenOffset( hTIFF, ppoActiveDSRef,
                                        nOverviewOffset, false,
@@ -14918,6 +14922,7 @@ void GTiffDataset::ScanDirectories()
             nOverviewCount < 30 /* to avoid DoS */ )
         {
             GTiffDataset *poODS = new GTiffDataset();
+            poODS->ShareLockWithParentDataset(this);
             poODS->osFilename = osFilename;
             if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, false,
                                    eAccess ) != CE_None
@@ -14945,6 +14950,7 @@ void GTiffDataset::ScanDirectories()
                  poMaskDS == nullptr )
         {
             poMaskDS = new GTiffDataset();
+            poMaskDS->ShareLockWithParentDataset(this);
             poMaskDS->osFilename = osFilename;
 
             // The TIFF6 specification - page 37 - only allows 1
@@ -14988,6 +14994,7 @@ void GTiffDataset::ScanDirectories()
                  iDirIndex != 1 )
         {
             GTiffDataset* poDS = new GTiffDataset();
+            poDS->ShareLockWithParentDataset(this);
             poDS->osFilename = osFilename;
             if( poDS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, FALSE,
                                   eAccess ) != CE_None
@@ -18817,6 +18824,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
             return CE_Failure;
 
         poMaskDS = new GTiffDataset();
+        poMaskDS->ShareLockWithParentDataset(this);
         poMaskDS->bPromoteTo8Bits =
             CPLTestBool(
                 CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "YES"));
