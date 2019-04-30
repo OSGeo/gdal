@@ -310,6 +310,11 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                     CPLError(CE_Failure, CPLE_AppDefined,
                                 "Field %d out of record extents", nFields);
                     CSLDestroy(papszTokens);
+                    if( nFields == 0 )
+                    {
+                        CPLFree(pasFieldDesc);
+                        pasFieldDesc = nullptr;
+                    }
                     break;
                 }
             }
