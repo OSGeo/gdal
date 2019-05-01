@@ -11522,6 +11522,11 @@ static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
             }
         }
     }
+    else if( nPhotometric == PHOTOMETRIC_YCBCR &&
+             poSrcDS->GetRasterCount() == 3 )
+    {
+        // do nothing
+    }
     else
     {
         bStardardColorInterp = false;

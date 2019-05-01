@@ -110,6 +110,7 @@ check_image()
     fi
 }
 
+# No longer used
 cleanup_rsync()
 {
     rm -f "${RSYNC_DAEMON_TEMPFILE}"
@@ -118,11 +119,65 @@ cleanup_rsync()
     fi
 }
 
+# No longer used
 trap_error_exit()
 {
     echo "Exit on error... clean up"
     cleanup_rsync
     exit 1
+}
+
+# No longer used
+start_rsync_host()
+{
+    # If rsync is available then start it as a temporary daemon
+    if test "${USE_CACHE:-yes}" = "yes" -a -x "$(command -v rsync)"; then
+
+        RSYNC_SERVER_IP=$(ip -4 -o addr show docker0 | awk '{print $4}' | cut -d "/" -f 1)
+        if test "${RSYNC_SERVER_IP}" = ""; then
+            exit 1
+        fi
+
+        RSYNC_DAEMON_TEMPFILE=$(mktemp)
+
+        # Trap exit
+        trap "trap_error_exit" EXIT
+
+        cat <<EOF > "${RSYNC_DAEMON_TEMPFILE}"
+[gdal-docker-cache]
+        path = $HOME/gdal-docker-cache
+        comment = GDAL Docker cache
+        hosts allow = ${RSYNC_SERVER_IP}/24
+        use chroot = false
+        read only = false
+EOF
+        RSYNC_PORT=23985
+        while /bin/true; do
+            rsync --port=${RSYNC_PORT} --address="${RSYNC_SERVER_IP}" --config="${RSYNC_DAEMON_TEMPFILE}" --daemon --no-detach &
+            RSYNC_PID=$!
+            sleep 1
+            kill -0 ${RSYNC_PID} 2>/dev/null && break
+            echo "Port ${RSYNC_PORT} is in use. Trying next one"
+            RSYNC_PORT=$((RSYNC_PORT+1))
+        done
+        echo "rsync daemon forked as process ${RSYNC_PID} listening on port ${RSYNC_PORT}"
+
+        RSYNC_REMOTE="rsync://${RSYNC_SERVER_IP}:${RSYNC_PORT}/gdal-docker-cache/${BASE_IMAGE_NAME}"
+        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/proj"
+        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/gdal"
+        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/spatialite"
+    else
+        RSYNC_REMOTE=""
+    fi
+}
+
+# No longer used
+stop_rsync_host()
+{
+    if test "${RSYNC_REMOTE}" != ""; then
+        cleanup_rsync
+        trap - EXIT
+    fi
 }
 
 PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
@@ -165,45 +220,53 @@ else
     fi
     echo "Using GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}"
 
-    # If rsync is available then start it as a temporary daemon
-    if test "${USE_CACHE:-yes}" = "yes" -a -x "$(command -v rsync)"; then
+    RSYNC_DAEMON_CONTAINER=gdal_rsync_daemon
+    BUILD_NETWORK=docker_build_gdal
+    HOST_CACHE_DIR="$HOME/gdal-docker-cache"
 
-        RSYNC_SERVER_IP=$(ip -4 -o addr show docker0 | awk '{print $4}' | cut -d "/" -f 1)
-        if test "${RSYNC_SERVER_IP}" = ""; then
-            exit 1
+    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/proj"
+    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/gdal"
+    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/spatialite"
+
+    # Start a Docker container that has a rsync daemon, mounting HOST_CACHE_DIR
+    if ! docker ps | grep "${RSYNC_DAEMON_CONTAINER}"; then
+        RSYNC_DAEMON_IMAGE=osgeo/gdal:gdal_rsync_daemon
+        docker rmi "${RSYNC_DAEMON_IMAGE}" 2>/dev/null || /bin/true
+        docker build -t "${RSYNC_DAEMON_IMAGE}" - <<EOF
+FROM alpine
+
+VOLUME /opt/gdal-docker-cache
+EXPOSE 23985
+
+RUN apk add --no-cache rsync \
+    && mkdir -p /opt/gdal-docker-cache \
+    && echo "[gdal-docker-cache]" > /etc/rsyncd.conf \
+    && echo "path = /opt/gdal-docker-cache" >> /etc/rsyncd.conf  \
+    && echo "hosts allow = *" >> /etc/rsyncd.conf \
+    && echo "read only = false" >> /etc/rsyncd.conf \
+    && echo "use chroot = false" >> /etc/rsyncd.conf
+
+CMD rsync --daemon --port 23985 && while sleep 1; do /bin/true; done
+
+EOF
+
+        if ! docker network ls | grep "${BUILD_NETWORK}"; then
+            docker network create "${BUILD_NETWORK}"
         fi
 
-        RSYNC_DAEMON_TEMPFILE=$(mktemp)
+        THE_UID=$(id -u "${USER}")
+        THE_GID=$(id -g "${USER}")
 
-        # Trap exit
-        trap "trap_error_exit" EXIT
+        docker run -d -u "${THE_UID}:${THE_GID}" --rm \
+            -v "${HOST_CACHE_DIR}":/opt/gdal-docker-cache \
+            --name "${RSYNC_DAEMON_CONTAINER}" \
+            --network "${BUILD_NETWORK}" \
+            --network-alias "${RSYNC_DAEMON_CONTAINER}" \
+            "${RSYNC_DAEMON_IMAGE}"
 
-        cat <<EOF > "${RSYNC_DAEMON_TEMPFILE}"
-[gdal-docker-cache]
-        path = $HOME/gdal-docker-cache
-        comment = GDAL Docker cache
-        hosts allow = ${RSYNC_SERVER_IP}/24
-        use chroot = false
-        read only = false
-EOF
-        RSYNC_PORT=23985
-        while /bin/true; do
-            rsync --port=${RSYNC_PORT} --address="${RSYNC_SERVER_IP}" --config="${RSYNC_DAEMON_TEMPFILE}" --daemon --no-detach &
-            RSYNC_PID=$!
-            sleep 1
-            kill -0 ${RSYNC_PID} 2>/dev/null && break
-            echo "Port ${RSYNC_PORT} is in use. Trying next one"
-            RSYNC_PORT=$((RSYNC_PORT+1))
-        done
-        echo "rsync daemon forked as process ${RSYNC_PID} listening on port ${RSYNC_PORT}"
-
-        RSYNC_REMOTE="rsync://${RSYNC_SERVER_IP}:${RSYNC_PORT}/gdal-docker-cache/${BASE_IMAGE_NAME}"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/proj"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/gdal"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/spatialite"
-    else
-        RSYNC_REMOTE=""
     fi
+
+    RSYNC_REMOTE="rsync://${RSYNC_DAEMON_CONTAINER}:23985/gdal-docker-cache/${BASE_IMAGE_NAME}"
 
     BUILD_ARGS=(
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
@@ -213,13 +276,8 @@ EOF
         "--build-arg" "RSYNC_REMOTE=${RSYNC_REMOTE}" \
     )
 
-    docker build "${BUILD_ARGS[@]}" --target builder \
+    docker build  --network "${BUILD_NETWORK}" "${BUILD_ARGS[@]}" --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
-
-    if test "${RSYNC_REMOTE}" != ""; then
-        cleanup_rsync
-        trap - EXIT
-    fi
 
     docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
