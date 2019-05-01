@@ -1032,7 +1032,16 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszDataType = CSLFetchNameValue( papszStructMeta, "DATA_TYPE");
         if ( pszDataType )
         {
-            poDS->eDataType = static_cast<GDALDataType>( atoi( pszDataType ) );
+            // handle the case where arrays have been written with int type (2.5.0)
+            GDALDataType eDT = GDALGetDataTypeByName( pszDataType );
+            if ( eDT == GDT_Unknown )
+            {
+                poDS->eDataType = static_cast<GDALDataType>( atoi( pszDataType ) );
+            }
+            else
+            {
+                poDS->eDataType = eDT;
+            }
         }
 
         poDS->eAccess = poOpenInfo->eAccess;
@@ -1299,7 +1308,7 @@ CPLErr TileDBDataset::CreateAttribute( GDALDataType eType,
 
                 CPLAddXMLAttributeAndValue( 
                     CPLCreateXMLElementAndValue( psMetaNode, "MDI", 
-                        CPLString().Printf( "%d", eType ) ),
+                        CPLString().Printf( "%s", GDALGetDataTypeName( eType ) ) ),
                     "KEY",
                     "DATA_TYPE"
                 );
@@ -1772,7 +1781,7 @@ TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBa
         papszImageStruct = CSLAddNameValue(papszImageStruct, "NBITS",
                         CPLString().Printf( "%d", poDS->nBitsPerSample ) );
         papszImageStruct = CSLAddNameValue(papszImageStruct, "DATA_TYPE",
-                        CPLString().Printf( "%d", poDS->eDataType ) );
+                        CPLString().Printf( "%s", GDALGetDataTypeName( poDS->eDataType ) ) );
         papszImageStruct = CSLAddNameValue(papszImageStruct, "X_SIZE",
                         CPLString().Printf( "%d", poDS->nRasterXSize ) );
         papszImageStruct = CSLAddNameValue(papszImageStruct, "Y_SIZE",
