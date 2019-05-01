@@ -93,14 +93,15 @@ def test_tiledb_write_attributes():
     w, h, num_bands = src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount
 
     # build attribute data in memory
-    gdal.GetDriverByName('GTiff').Create('/vsimem/temp.tif', w, h, num_bands, gdal.GDT_Int32)
+    gdal.GetDriverByName('GTiff').Create('/vsimem/temp1.tif', w, h, num_bands, gdal.GDT_Int32)
+    gdal.GetDriverByName('GTiff').Create('/vsimem/temp2.tif', w, h, num_bands, gdal.GDT_Float32)
 
     options = [
-        'TILEDB_ATTRIBUTE=%s' % ('/vsimem/temp.tif')
+        'TILEDB_ATTRIBUTE=%s' % ('/vsimem/temp1.tif'),
+        'TILEDB_ATTRIBUTE=%s' % ('/vsimem/temp2.tif')
     ]
 
     new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_rgb_atts', src_ds, options=options)
-
     assert new_ds is not None
     assert new_ds.RasterXSize == src_ds.RasterXSize
     assert new_ds.RasterYSize == src_ds.RasterYSize
@@ -109,20 +110,32 @@ def test_tiledb_write_attributes():
     new_ds = None
 
     # check we can open the attributes with the band as well as the pixel values
-    att_ds = gdal.OpenEx('tmp/tiledb_rgb_atts', open_options=['TILEDB_ATTRIBUTE=temp'])
+    att1_ds = gdal.OpenEx('tmp/tiledb_rgb_atts', open_options=['TILEDB_ATTRIBUTE=temp1'])
+    att2_ds = gdal.OpenEx('tmp/tiledb_rgb_atts', open_options=['TILEDB_ATTRIBUTE=temp2'])
     val_ds = gdal.Open('tmp/tiledb_rgb_atts')
 
-    assert att_ds is not None
+    meta = val_ds.GetMetadata('IMAGE_STRUCTURE')
+    assert 'TILEDB_ATTRIBUTE_1' in meta
+    assert meta['TILEDB_ATTRIBUTE_1'] == 'temp1'
+    assert 'TILEDB_ATTRIBUTE_2' in meta
+    assert meta['TILEDB_ATTRIBUTE_2'] == 'temp2'
+
+    assert att1_ds is not None
+    assert att2_ds is not None
     assert val_ds is not None
 
-    assert att_ds.GetRasterBand(1).DataType == gdal.GDT_Int32
+    assert att1_ds.GetRasterBand(1).DataType == gdal.GDT_Int32
+    assert att2_ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+    assert val_ds.RasterCount == src_ds.RasterCount
     assert val_ds.GetRasterBand(1).DataType == src_ds.GetRasterBand(1).DataType
 
     src_ds = None
-    att_ds = None
+    att1_ds = None
+    att2_ds = None
     val_ds = None
 
-    gdal.GetDriverByName('GTiff').Delete('/vsimem/temp.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/temp1.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/temp2.tif')
     gdaltest.tiledb_drv.Delete('tmp/tiledb_rgb_atts')
 
 
