@@ -112,3 +112,23 @@ def test_tiledb_write_subdatasets():
     assert not src_ds
 
     gdaltest.tiledb_drv.Delete('tmp/test_sds_array')
+
+@pytest.mark.require_driver('TileDB')
+def test_tiledb_write_band_meta():
+    gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
+
+    src_ds = gdal.Open('../gcore/data/rgbsmall.tif')
+
+    new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_meta', src_ds)
+
+    bnd = new_ds.GetRasterBand(1)
+    bnd.SetMetadataItem('Item', 'Value')
+
+    bnd = None
+    new_ds = None
+    src_ds = None
+    
+    new_ds = gdal.Open('tmp/tiledb_meta')
+    assert new_ds.GetRasterBand(1).GetMetadataItem('Item') == 'Value'
+
+    gdaltest.tiledb_drv.Delete('tmp/tiledb_meta')
