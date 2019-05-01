@@ -47,7 +47,6 @@ def test_tiledb_write_complex():
 
     bnd = None
     new_ds = None
-
     gdaltest.tiledb_drv.Delete('tmp/tiledb_complex64')
 
 @pytest.mark.require_driver('TileDB')
@@ -85,6 +84,47 @@ def test_tiledb_write_rgb():
     new_ds = None
 
     gdaltest.tiledb_drv.Delete('tmp/tiledb_rgb')    
+
+@pytest.mark.require_driver('TileDB')
+def test_tiledb_write_attributes():
+    gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
+
+    src_ds = gdal.Open('../gcore/data/rgbsmall.tif')
+    w, h, num_bands = src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount
+
+    # build attribute data in memory
+    gdal.GetDriverByName('GTiff').Create('/vsimem/temp.tif', w, h, num_bands, gdal.GDT_Int32)
+
+    options = [
+        'TILEDB_ATTRIBUTE=%s' % ('/vsimem/temp.tif')
+    ]
+
+    new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/tiledb_rgb_atts', src_ds, options=options)
+
+    assert new_ds is not None
+    assert new_ds.RasterXSize == src_ds.RasterXSize
+    assert new_ds.RasterYSize == src_ds.RasterYSize
+    assert new_ds.RasterCount == src_ds.RasterCount
+
+    new_ds = None
+
+    # check we can open the attributes with the band as well as the pixel values
+    att_ds = gdal.OpenEx('tmp/tiledb_rgb_atts', open_options=['TILEDB_ATTRIBUTE=temp'])
+    val_ds = gdal.Open('tmp/tiledb_rgb_atts')
+
+    assert att_ds is not None
+    assert val_ds is not None
+
+    assert att_ds.GetRasterBand(1).DataType == gdal.GDT_Int32
+    assert val_ds.GetRasterBand(1).DataType == src_ds.GetRasterBand(1).DataType
+
+    src_ds = None
+    att_ds = None
+    val_ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/temp.tif')
+    gdaltest.tiledb_drv.Delete('tmp/tiledb_rgb_atts')
+
 
 @pytest.mark.require_driver('TileDB')
 @pytest.mark.require_driver('HDF5')
