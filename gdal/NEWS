@@ -1,4 +1,4 @@
-= GDAL/OGR 2.5.0 Release Notes =
+= GDAL/OGR 3.0.0 Release Notes =
 
 == In a nutshell... ==
 
@@ -30,7 +30,7 @@
 
 See MIGRATION_GUIDE.txt
 
-== GDAL/OGR 2.5.0 - General Changes ==
+== GDAL/OGR 3.0.0 - General Changes ==
 
 Build(Unix):
  * Allow internal drivers to be disabled (#1250)

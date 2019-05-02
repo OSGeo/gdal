@@ -147,7 +147,7 @@ of metadata strings.</dd>
 <dt> <b>-noextent</b></dt><dd>(starting with GDAL 2.0)  Suppress spatial extent printing.</dd>
 <dt> <b>\-\-formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
-<dt> <b>-wkt_format</b> <em>WKT1/WKT2/...</em></dt><dd> (GDAL >= 2.5.0) WKT format
+<dt> <b>-wkt_format</b> <em>WKT1/WKT2/...</em></dt><dd> (GDAL >= 3.0) WKT format
 used to display the SRS. Currently supported values are: WKT1,
 WKT2 (latest WKT version, currently WKT2_2018), WKT2_2015, WKT2_2018 </dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename,
@@ -375,7 +375,7 @@ GDAL 2.1</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
-<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 2.5)
+<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 3.0)
 A PROJ string (single step operation or multiple step string
 starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
 or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default

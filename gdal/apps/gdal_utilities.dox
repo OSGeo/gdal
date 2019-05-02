@@ -227,7 +227,7 @@ of metadata strings.</dd>
 "all" can be used to report metadata in all domains</dd>
 <dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the
 file list.</dd>
-<dt> <b>-wkt_format</b> <em>WKT1/WKT2/...</em></dt><dd> (GDAL >= 2.5.0) WKT format
+<dt> <b>-wkt_format</b> <em>WKT1/WKT2/...</em></dt><dd> (GDAL >= 3.0.0) WKT format
 used to display the SRS. Currently supported values are: WKT1,
 WKT2 (latest WKT version, currently WKT2_2018), WKT2_2015, WKT2_2018 </dd>
 <dt> <b>-sd</b> <i>subdataset</i></dt><dd> (GDAL >= 1.9.0) If the input
@@ -1417,7 +1417,7 @@ The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
 (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
 containing well known text.</dd>
-<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 2.5)
+<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 3.0)
 A PROJ string (single step operation or multiple step string
 starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
 or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
@@ -1440,7 +1440,7 @@ available GCPs.</dd>
 <dt> <em>dstfile</em>:</dt><dd> File with destination projection definition. </dd>
 </dl>
 
-Coordinates are read as pairs, triples for 3D or, since GDAL 2.5.0, quadruplets
+Coordinates are read as pairs, triples for 3D or, since GDAL 3.0.0, quadruplets
 for X,Y,Z,time of numbers per line from standard
 input, transformed, and written out to standard output in the same way. All
 transformations offered by gdalwarp are handled, including gcp-based ones.
@@ -2474,7 +2474,7 @@ The following specific options are available :
 <dt> <b>-alt</b> <i>altitude</i>:</dt><dd>altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.</dd>
 <dt> <b>-combined</b>:</dt><dd>(starting with GDAL 1.10) combined shading, a combination of slope and oblique shading.</dd>
 <dt> <b>-multidirectional</b>:</dt><dd>(starting with GDAL 2.2) multidirectional shading, a combination of hillshading illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.</dd>
-<dt> <b>-igor</b>:</dt><dd>(starting with GDAL 2.5) shading which tries to minimize effects on other map features beneath. Can't be used with -alt option.</dd>
+<dt> <b>-igor</b>:</dt><dd>(starting with GDAL 3.0) shading which tries to minimize effects on other map features beneath. Can't be used with -alt option.</dd>
 </dl>
 
 Multidirectional hillshading applies the formula of http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf.
