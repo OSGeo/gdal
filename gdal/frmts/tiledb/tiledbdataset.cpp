@@ -1032,7 +1032,16 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszDataType = CSLFetchNameValue( papszStructMeta, "DATA_TYPE");
         if ( pszDataType )
         {
-            poDS->eDataType = static_cast<GDALDataType>( atoi( pszDataType ) );
+            // handle the case where arrays have been written with int type (2.5.0)
+            GDALDataType eDT = GDALGetDataTypeByName( pszDataType );
+            if ( eDT == GDT_Unknown )
+            {
+                poDS->eDataType = static_cast<GDALDataType>( atoi( pszDataType ) );
+            }
+            else
+            {
+                poDS->eDataType = eDT;
+            }
         }
 
         poDS->eAccess = poOpenInfo->eAccess;
@@ -1299,7 +1308,7 @@ CPLErr TileDBDataset::CreateAttribute( GDALDataType eType,
 
                 CPLAddXMLAttributeAndValue( 
                     CPLCreateXMLElementAndValue( psMetaNode, "MDI", 
-                        CPLString().Printf( "%d", eType ) ),
+                        CPLString().Printf( "%s", GDALGetDataTypeName( eType ) ) ),
                     "KEY",
                     "DATA_TYPE"
                 );
@@ -1768,23 +1777,29 @@ TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBa
         for( int i = 0; i < poDS->nBands;i++ )
             poDS->SetBand( i+1, new TileDBRasterBand( poDS.get(), i+1 ) );
 
-        poDS->SetMetadataItem( "NBITS", 
-                CPLString().Printf( "%d", poDS->nBitsPerSample ),
-                "IMAGE_STRUCTURE" );
-        poDS->SetMetadataItem( "DATA_TYPE", 
-                CPLString().Printf( "%d", poDS->eDataType ),
-                "IMAGE_STRUCTURE" );
-
-        poDS->SetMetadataItem( "X_SIZE", CPLString().Printf( "%d", poDS->nRasterXSize ), "IMAGE_STRUCTURE" );
-        poDS->SetMetadataItem( "Y_SIZE", CPLString().Printf( "%d", poDS->nRasterYSize ), "IMAGE_STRUCTURE" );
+        char** papszImageStruct = nullptr;
+        papszImageStruct = CSLAddNameValue(papszImageStruct, "NBITS",
+                        CPLString().Printf( "%d", poDS->nBitsPerSample ) );
+        papszImageStruct = CSLAddNameValue(papszImageStruct, "DATA_TYPE",
+                        CPLString().Printf( "%s", GDALGetDataTypeName( poDS->eDataType ) ) );
+        papszImageStruct = CSLAddNameValue(papszImageStruct, "X_SIZE",
+                        CPLString().Printf( "%d", poDS->nRasterXSize ) );
+        papszImageStruct = CSLAddNameValue(papszImageStruct, "Y_SIZE",
+                        CPLString().Printf( "%d", poDS->nRasterYSize ) );
 
         if ( poDS->lpoAttributeDS.size() > 0 )
         {
+            int i = 0;
             for ( auto const& poAttrDS: poDS->lpoAttributeDS )
             {
-                poDS->SetMetadataItem( "TILEDB_ATTRIBUTE", CPLGetBasename( poAttrDS->GetDescription() ), "IMAGE_STRUCTURE" );
+                papszImageStruct = CSLAddNameValue( papszImageStruct,
+                                CPLString().Printf( "TILEDB_ATTRIBUTE_%i", ++i ),
+                                CPLGetBasename( poAttrDS->GetDescription() ) );
             }
         }
+        poDS->SetMetadata(papszImageStruct, "IMAGE_STRUCTURE");
+
+        CSLDestroy( papszImageStruct );
 
         return poDS.release();
     }
