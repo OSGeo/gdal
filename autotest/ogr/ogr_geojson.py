@@ -3675,6 +3675,34 @@ def test_ogr_geojson_single_feature_random_reading_with_id():
 
 ###############################################################################
 
+def test_ogr_geojson_3D_geom_type():
+
+    if gdaltest.geojson_drv is None:
+        pytest.skip()
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+###############################################################################
+
 
 def test_ogr_geojson_cleanup():
 
