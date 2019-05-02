@@ -835,7 +835,7 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
  * When a projection definition is not available an empty (but not NULL)
  * string is returned.
  *
- * \note Startig with GDAL 2.5, this is a compatibility layer around
+ * \note Startig with GDAL 3.0, this is a compatibility layer around
  * GetSpatialRef()
  *
  * @return a pointer to an internal projection reference string.  It should
@@ -895,7 +895,7 @@ const char *GDALDataset::_GetProjectionRef() { return (""); }
  *
  * When a projection definition is not available, null is returned
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  *
  * @return a pointer to an internal object. It should not be altered or freed.
  * Its lifetime will be the one of the dataset object, or until the next
@@ -916,7 +916,7 @@ const OGRSpatialReference* GDALDataset::GetSpatialRef() const
 /**
  * \brief Fetch the projection definition string for this dataset.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  *
  * @see GDALDataset::GetSpatialRef()
  */
@@ -988,7 +988,7 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
  *
  * This method is the same as the C GDALSetProjection() function.
  *
- * \note Startig with GDAL 2.5, this is a compatibility layer around
+ * \note Startig with GDAL 3.0, this is a compatibility layer around
  * SetSpatialRef()
 
  * @param pszProjection projection reference string.
@@ -1027,7 +1027,7 @@ CPLErr GDALDataset::SetProjection( const char *pszProjection )
  *
  * This method is the same as the C GDALSetSpatialRef() function.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
 
  * @param poSRS spatial reference system object. nullptr can potentially be
  * passed for drivers that support unsetting the SRS.
@@ -1050,7 +1050,7 @@ CPLErr GDALDataset::SetSpatialRef( CPL_UNUSED const OGRSpatialReference* poSRS )
 /**
  * \brief Set the spatial reference system for this dataset.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  *
  * @see GDALDataset::SetSpatialRef()
  */
@@ -1526,7 +1526,7 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
  *
  * The projection string follows the normal rules from GetProjectionRef().
  *
- * \note Startig with GDAL 2.5, this is a compatibility layer around
+ * \note Startig with GDAL 3.0, this is a compatibility layer around
  * GetGCPSpatialRef()
  *
  * @return internal projection string or "" if there are no GCPs.
@@ -1583,7 +1583,7 @@ const char *GDALDataset::_GetGCPProjection() { return ""; }
  *
  * When a SRS is not available, null is returned
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  *
  * @return a pointer to an internal object. It should not be altered or freed.
  * Its lifetime will be the one of the dataset object, or until the next
@@ -1602,7 +1602,7 @@ const OGRSpatialReference* GDALDataset::GetGCPSpatialRef() const
 /**
  * \brief Get output spatial reference system for GCPs.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  *
  * @see GDALDataset::GetGCPSpatialRef()
  */
@@ -1710,7 +1710,7 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
  * Most formats do not support setting of GCPs, even formats that can
  * handle GCPs.  These formats will return CE_Failure.
  *
- * \note Startig with GDAL 2.5, this is a compatibility layer around
+ * \note Startig with GDAL 3.0, this is a compatibility layer around
  * SetGCPs(int, const GDAL_GCP*, const char*)
  *
  * @param nGCPCount number of GCPs being assigned.
@@ -1764,7 +1764,7 @@ CPLErr GDALDataset::SetGCPs( int nGCPCount,
  * Most formats do not support setting of GCPs, even formats that can
  * handle GCPs.  These formats will return CE_Failure.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  *
  * @param nGCPCount number of GCPs being assigned.
  *
@@ -1862,7 +1862,7 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
 /**
  * \brief Assign GCPs.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  * @see GDALDataset::SetGCPs(int, const GDAL_GCP*, const OGRSpatialReference*)
  */
 
