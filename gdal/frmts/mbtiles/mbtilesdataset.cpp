@@ -1162,6 +1162,7 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
     for(int i=0; i<m_nOverviewCount; i++)
     {
         MBTilesDataset* poOvrDS = new MBTilesDataset();
+        poOvrDS->ShareLockWithParentDataset(this);
         int nBlockSize;
         GetRasterBand(1)->GetBlockSize(&nBlockSize, &nBlockSize);
         poOvrDS->InitRaster ( this, i, nBands,
@@ -2832,6 +2833,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         for( int iLevel = nMaxLevel - 1; iLevel >= nMinLevel; iLevel-- )
         {
             MBTilesDataset* poOvrDS = new MBTilesDataset();
+            poOvrDS->ShareLockWithParentDataset(poDS);
             poOvrDS->InitRaster ( poDS, iLevel, nBands, nTileSize,
                                   dfMinX, dfMinY, dfMaxX, dfMaxY );
 
