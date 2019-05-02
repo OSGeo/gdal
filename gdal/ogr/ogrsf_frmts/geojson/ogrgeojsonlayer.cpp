@@ -529,17 +529,9 @@ void OGRGeoJSONLayer::DetectGeometryType()
         if( nullptr != poGeometry )
         {
             OGRwkbGeometryType eGeomType = poGeometry->getGeometryType();
-            if( bFirstGeometry )
+            if( !OGRGeoJSONUpdateLayerGeomType(
+                    this, bFirstGeometry, eGeomType, eLayerGeomType) )
             {
-                eLayerGeomType = eGeomType;
-                GetLayerDefn()->SetGeomType( eGeomType );
-                bFirstGeometry = false;
-            }
-            else if( eGeomType != eLayerGeomType )
-            {
-                CPLDebug( "GeoJSON",
-                    "Detected layer of mixed-geometry type features." );
-                GetLayerDefn()->SetGeomType( DefaultGeometryType );
                 delete poFeature;
                 break;
             }

@@ -2025,41 +2025,14 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
             CPL_json_object_object_get(poObj, "geometry");
         if( poGeomObj && json_object_get_type(poGeomObj) == json_type_object )
         {
-            json_object* poGeomTypeObj =
-                CPL_json_object_object_get(poGeomObj, "type");
-            if( poGeomTypeObj &&
-                json_object_get_type(poGeomTypeObj) == json_type_string )
+            auto poGeom = OGRGeoJSONReadGeometry(poGeomObj);
+            if( poGeom )
             {
-                const char* pszType = json_object_get_string(poGeomTypeObj);
-                OGRwkbGeometryType eType = wkbUnknown;
-                if( EQUAL( pszType, "Point" ) )
-                    eType = wkbPoint;
-                else if( EQUAL( pszType, "LineString" ) )
-                    eType = wkbLineString;
-                else if( EQUAL( pszType, "Polygon" ) )
-                    eType = wkbPolygon;
-                else if( EQUAL( pszType, "MultiPoint" ) )
-                    eType = wkbMultiPoint;
-                else if( EQUAL( pszType, "MultiLineString" ) )
-                    eType = wkbMultiLineString;
-                else if( EQUAL( pszType, "MultiPolygon" ) )
-                    eType = wkbMultiPolygon;
-                else if( EQUAL( pszType, "GeometryCollection" ) )
-                    eType = wkbGeometryCollection;
-                if( m_bFirstGeometry )
-                {
-                    m_eLayerGeomType = eType;
-                    poLayer->GetLayerDefn()->SetGeomType( m_eLayerGeomType );
-                    m_bFirstGeometry = false;
-                }
-                else if( eType != m_eLayerGeomType )
-                {
-                    CPLDebug( "GeoJSON",
-                        "Detected layer of mixed-geometry type features." );
-                    poLayer->GetLayerDefn()->SetGeomType( wkbUnknown );
-                    m_bDetectLayerGeomType = false;
-                }
+                const auto eType = poGeom->getGeometryType();
+                m_bDetectLayerGeomType = OGRGeoJSONUpdateLayerGeomType(
+                    poLayer, m_bFirstGeometry, eType, m_eLayerGeomType);
             }
+            delete poGeom;
         }
     }
 
@@ -2174,6 +2147,42 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
     }
 
     return bSuccess;
+}
+
+/************************************************************************/
+/*                   OGRGeoJSONUpdateLayerGeomType()                    */
+/************************************************************************/
+
+bool OGRGeoJSONUpdateLayerGeomType( OGRLayer* poLayer,
+                                    bool& bFirstGeom,
+                                    OGRwkbGeometryType eGeomType,
+                                    OGRwkbGeometryType& eLayerGeomType )
+{
+    if( bFirstGeom )
+    {
+        eLayerGeomType = eGeomType;
+        poLayer->GetLayerDefn()->SetGeomType( eLayerGeomType );
+        bFirstGeom = false;
+    }
+    else if( OGR_GT_HasZ(eGeomType) && !OGR_GT_HasZ(eLayerGeomType) &&
+             wkbFlatten(eGeomType) == wkbFlatten(eLayerGeomType) )
+    {
+        eLayerGeomType = eGeomType;
+        poLayer->GetLayerDefn()->SetGeomType( eLayerGeomType );
+    }
+    else if( !OGR_GT_HasZ(eGeomType) && OGR_GT_HasZ(eLayerGeomType) &&
+             wkbFlatten(eGeomType) == wkbFlatten(eLayerGeomType) )
+    {
+        // ok
+    }
+    else if( eGeomType != eLayerGeomType )
+    {
+        CPLDebug( "GeoJSON",
+            "Detected layer of mixed-geometry type features." );
+        poLayer->GetLayerDefn()->SetGeomType( wkbUnknown );
+        return false;
+    }
+    return true;
 }
 
 /************************************************************************/
