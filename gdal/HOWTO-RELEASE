@@ -40,9 +40,11 @@ Process :
       if new command line switches have been added. scripts/completionFinder.py
       must also be edited before if new utilities/scripts are added/removed.
 
-2) Update the release date, and number information in gcore/gdal_version.h.in
-   (*NOT* gdal_version.h which is a generated file)
-   Note: the format of GDAL_RELEASE_DATE should be YYYYMMDD.
+2.1) Update the release date, and number information in gcore/gdal_version.h.in
+     (*NOT* gdal_version.h which is a generated file)
+     Note: the format of GDAL_RELEASE_DATE should be YYYYMMDD.
+
+2.2) Update two instances of year in ../CITATION file to the current year.
 
 3) Update the VERSION file.
 
