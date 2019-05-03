@@ -3531,7 +3531,7 @@ static OGRBoolean OGRGEOSBooleanPredicate(
  * @return a newly allocated geometry now owned by the caller, or NULL
  * on failure.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 OGRGeometry *OGRGeometry::MakeValid() const
 {
@@ -3618,7 +3618,7 @@ OGRGeometry *OGRGeometry::MakeValid() const
  * @return a newly allocated geometry now owned by the caller, or NULL
  * on failure.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 
 OGRGeometryH OGR_G_MakeValid( OGRGeometryH hGeom )

@@ -424,6 +424,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                 GDALRasterIOExtraArg* psExtraArg,
                                 int* pbTried);
 
+    void  ShareLockWithParentDataset(GDALDataset* poParentDataset);
+
 //! @endcond
     virtual int         CloseDependentDatasets();
 //! @cond Doxygen_Suppress

@@ -1,4 +1,4 @@
-MIGRATION GUIDE FROM GDAL 2.4 to GDAL 2.5
+MIGRATION GUIDE FROM GDAL 2.4 to GDAL 3.0
 -----------------------------------------
 
 - Unix Build: ./configure arguments --without-bsb, --without-grib,

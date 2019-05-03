@@ -1,4 +1,4 @@
-= GDAL/OGR 2.5.0 Release Notes =
+= GDAL/OGR 3.0.0 Release Notes =
 
 == In a nutshell... ==
 
@@ -30,7 +30,7 @@
 
 See MIGRATION_GUIDE.txt
 
-== GDAL/OGR 2.5.0 - General Changes ==
+== GDAL/OGR 3.0.0 - General Changes ==
 
 Build(Unix):
  * Allow internal drivers to be disabled (#1250)
@@ -51,7 +51,7 @@ All:
  * Poppler: drop support for Poppler older than 0.23.0
  * Poppler: add support for 0.72.0, 0.73.0, 0.75.0, 0.76.0
 
-== GDAL X.Y.Z - Overview of Changes ==
+== GDAL 3.0.0 - Overview of Changes ==
 
 Port:
  * Add capability to define external VSI virtual file systems from C API (#1289)
@@ -91,6 +91,7 @@ Algorithms:
 
 Utilities:
  * gdal_translate: add "-nogcp" option (#1469)
+ * gdal_contour: remove explicit width/precision=12/3 of the elev field (#1487)
  * gdaldem hillshade: add -igor option (#1330)
  * gdalwarp -crop_to_cutline: do not round computed target extent to be aligned on the grid of the source raster if -tr is set (restore partially pre 2.4 behaviour) (#1173)
  * gdalwarp: assume -tap when using -crop_to_cutline, -tr and -wo CUTLINE_ALL_TOUCHED=TRUE, so as to avoid issues with polygons smaller than 1x1 pixels (#1360)
@@ -105,6 +106,9 @@ Utilities:
  * gdal_edit.py: allow setting band-specific scale and offset values (#1444)
  * validate_cloud_optimized_geotiff.py: check if file is only greater than 512px (#1403)
  * validate_cloud_optimized_geotiff.py: report headers size
+
+Multidriver fixes:
+  * GTiff, GPKG, MBTiles, PostgisRaster drivers: ensure that main dataset and overviews share the same lock, so as to avoid crashing concurrent access (#1488)
 
 ADRG driver:
  * modified to ensure that there is no confliction between ADRG and SRP when opening a .gen file (#953)
@@ -132,6 +136,7 @@ GTiff diver:
  * TIFF Lerc: properly initialize state after Create() so that BuildOverviews() succeed (#1257)
  * emit merged consecutive multi-range reads (#1297)
  * add warnings when using unsupported combination of internal mask+external overview, and fix COPY_SRC_OVERVIEWS=YES so that it does not copy ALL_VALID masks (#1455)
+ * do not generate a TIFFTAG_GDAL_METADATA with color interpretation information for JPEG YCbCr compression
  * Internal libtiff and libgeotiff: resync with upstream
 
 FITS driver:
@@ -215,7 +220,7 @@ XYZ driver:
  * add creation options DECIMAL_PRECISION and SIGNIFICANT_DIGITS like with AAIGrid
  * fix regression regarding header lines that are not X,Y,Z (#1472)
 
-== OGR X.Y.Z - Overview of Changes ==
+== OGR 3.0.0 - Overview of Changes ==
 
 Core:
  * Add OGR_G_MakeValid() (requires GEOS 3.8)
@@ -266,6 +271,7 @@ Elasticsearch driver:
 
 GeoJSON driver:
  * speed-up random reading with GetFeature() by storing a map FID->(start,size) to retrieve performance similar to GDAL 2.2 or before (https://issues.qgis.org/issues/21085)
+ * report 3D layer geometry types (#1495)
 
 GeoJSONSeq driver:
  * be more robust to invalid objects, and fixes performance issue on corrupted files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13770.

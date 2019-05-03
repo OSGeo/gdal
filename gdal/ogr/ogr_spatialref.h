@@ -764,7 +764,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
 /**
  * Context for coordinate transformation.
  * 
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 
 struct CPL_DLL OGRCoordinateTransformationOptions
