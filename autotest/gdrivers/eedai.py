@@ -82,7 +82,7 @@ def test_eedai_2():
             {
                 "id": "B1",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 65535
                     }
@@ -105,7 +105,7 @@ def test_eedai_2():
             {
                 "id": "B2",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 65535
                     }
@@ -128,7 +128,7 @@ def test_eedai_2():
             {
                 "id": "B9",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 65535
                     }
@@ -522,7 +522,7 @@ def test_eedai_4():
             {
                 "id": "B1",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 255
                     }
@@ -544,7 +544,7 @@ def test_eedai_4():
             {
                 "id": "B2",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 255
                     }
@@ -566,7 +566,7 @@ def test_eedai_4():
             {
                 "id": "B3",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 255
                     }
@@ -654,7 +654,7 @@ def test_eedai_geotiff():
             {
                 "id": "B1",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 65535
                     }
