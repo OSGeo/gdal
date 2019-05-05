@@ -38,6 +38,11 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                          CPLString &osResult, bool bReportError )
 
 {
+    if( !bReportError && H5Aexists(loc_id, pszAttrName) <= 0 )
+    {
+        return false;
+    }
+
     hid_t hAttr = H5Aopen_name(loc_id, pszAttrName);
 
     osResult.clear();
@@ -91,6 +96,11 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                          double &dfResult, bool bReportError )
 
 {
+    if( !bReportError && H5Aexists(loc_id, pszAttrName) <= 0 )
+    {
+        return false;
+    }
+
     const hid_t hAttr = H5Aopen_name(loc_id, pszAttrName);
 
     dfResult = 0.0;
