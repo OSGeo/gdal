@@ -666,5 +666,14 @@ def test_bag_write_south_up():
 
     gdal.Unlink('/vsimem/out.bag')
 
+###############################################################################
+#
 
 
+def test_bag_read_invalid_bag_vlen_bag_version():
+
+    if gdaltest.bag_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/invalid_bag_vlen_bag_version.bag')
+    assert not ds
