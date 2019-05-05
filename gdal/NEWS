@@ -123,7 +123,7 @@ COSAR driver:
  * avoid out-of-bound write on corrupted dataset. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12360.
 
 EEDA driver:
- * report 'path' metdata in 'path' field
+ * switch to v1alpha API (#1506)
 
 GPKG driver:
  * allow negative srs_id values in gpkg_spatial_ref_sys
