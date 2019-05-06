@@ -63,6 +63,7 @@ jp2ecw_drv = None
 jp2mrsid_drv = None
 jp2openjpeg_drv = None
 jp2lura_drv = None
+mrr_drv = None
 jp2kak_drv_unregistered = False
 jpeg2000_drv_unregistered = False
 jp2ecw_drv_unregistered = False
