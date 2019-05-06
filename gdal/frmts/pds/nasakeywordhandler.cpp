@@ -244,6 +244,9 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
         std::vector<char> oStackArrayBeginChar;
         CPLString osWord;
 
+        oStackArrayBeginChar.push_back(*pszHeaderNext);
+        osValue += *pszHeaderNext;
+        pszHeaderNext++;
 
         while( ReadWord( osWord, m_bStripSurroundingQuotes,
                          true, &bIsString ) )
