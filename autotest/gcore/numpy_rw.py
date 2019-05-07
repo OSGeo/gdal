@@ -702,6 +702,34 @@ def test_numpy_rw_18():
     res = ds.ReadAsArray(interleave='pixel')
     assert numpy.all(img == res)
 
+###############################################################################
+# The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
+
+def test_numpy_rw_failure_in_readasarray():
+
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/idontexist2.vrt')
+    assert ds is not None
+
+    exception_raised = False
+    with gdaltest.enable_exceptions():
+        try:
+            ds.ReadAsArray()
+        except RuntimeError:
+            exception_raised = True
+    assert exception_raised
+
+    exception_raised = False
+    with gdaltest.enable_exceptions():
+        try:
+            ds.GetRasterBand(1).ReadAsArray()
+        except RuntimeError:
+            exception_raised = True
+    assert exception_raised
+
+
 
 def test_numpy_rw_cleanup():
     gdaltest.numpy_drv = None

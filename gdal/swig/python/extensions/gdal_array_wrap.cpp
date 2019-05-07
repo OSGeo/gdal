@@ -3458,6 +3458,25 @@ static void GDALPythonFreeCStr(void* ptr, int bToFree)
 
 
 
+#include "cpl_conv.h"
+
+
+// Note: copied&pasted from python_exceptions.i
+static void _StoreLastException()
+{
+    const char* pszLastErrorMessage =
+        CPLGetThreadLocalConfigOption("__last_error_message", NULL);
+    const char* pszLastErrorCode =
+        CPLGetThreadLocalConfigOption("__last_error_code", NULL);
+    if( pszLastErrorMessage != NULL && pszLastErrorCode != NULL )
+    {
+        CPLErrorSetState( CE_Failure,
+            static_cast<CPLErrorNum>(atoi(pszLastErrorCode)),
+            pszLastErrorMessage);
+    }
+}
+
+
 #include "gdal_priv.h"
 #ifdef _DEBUG
 #undef _DEBUG
@@ -4837,6 +4856,22 @@ SWIGINTERN PyObject *VirtualMem_swigregister(PyObject *SWIGUNUSEDPARM(self), PyO
   return SWIG_Py_Void();
 }
 
+SWIGINTERN PyObject *_wrap__StoreLastException(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":_StoreLastException")) SWIG_fail;
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    _StoreLastException();
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_TermProgress_nocb(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   double arg1 ;
@@ -5654,6 +5689,7 @@ static PyMethodDef SwigMethods[] = {
 		"VirtualMem_Pin(VirtualMem self)\n"
 		""},
 	 { (char *)"VirtualMem_swigregister", VirtualMem_swigregister, METH_VARARGS, NULL},
+	 { (char *)"_StoreLastException", _wrap__StoreLastException, METH_VARARGS, (char *)"_StoreLastException()"},
 	 { (char *)"TermProgress_nocb", (PyCFunction) _wrap_TermProgress_nocb, METH_VARARGS | METH_KEYWORDS, (char *)"TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"},
 	 { (char *)"TermProgress_swigconstant", TermProgress_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"OpenNumPyArray", _wrap_OpenNumPyArray, METH_VARARGS, (char *)"OpenNumPyArray(PyArrayObject * psArray, bool binterleave) -> Dataset"},
