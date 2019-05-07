@@ -1633,6 +1633,25 @@ def tempfile(filename, content):
     finally:
         gdal.Unlink(filename)
 
+###############################################################################
+# Temporarily enable exceptions
+
+
+@contextlib.contextmanager
+def enable_exceptions():
+    if gdal.GetUseExceptions():
+        try:
+            yield
+        finally:
+            pass
+        return
+
+    gdal.UseExceptions()
+    try:
+        yield
+    finally:
+        gdal.DontUseExceptions()
+
 
 ###############################################################################
 run_func = gdaltestaux.run_func
