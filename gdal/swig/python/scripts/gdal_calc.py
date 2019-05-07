@@ -249,9 +249,6 @@ def doit(opts, args):
 
     # use the block size of the first layer to read efficiently
     myBlockSize = myFiles[0].GetRasterBand(myBands[0]).GetBlockSize()
-    # store these numbers in variables that may change later
-    nXValid = myBlockSize[0]
-    nYValid = myBlockSize[1]
     # find total x and y blocks to be read
     nXBlocks = (int)((DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0])
     nYBlocks = (int)((DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1])
@@ -274,15 +271,18 @@ def doit(opts, args):
         ################################################################
         # start looping through blocks of data
         ################################################################
+        
+        # store these numbers in variables that may change later
+        nXValid = myBlockSize[0]
+        nYValid = myBlockSize[1]
 
         # loop through X-lines
         for X in range(0, nXBlocks):
 
-            # in the rare (impossible?) case that the blocks don't fit perfectly
+            # in case the blocks don't fit perfectly
             # change the block size of the final piece
             if X == nXBlocks - 1:
                 nXValid = DimensionsCheck[0] - X * myBlockSize[0]
-                myBufSize = nXValid * nYValid
 
             # find X offset
             myX = X * myBlockSize[0]
