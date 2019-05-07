@@ -9906,6 +9906,7 @@ void GTiffDataset::FlushDirectory()
             if( !SetDirectory() )
                 return;
             WriteGeoTIFFInfo();
+            bGeoTIFFInfoChanged = false;
         }
 
         if( bNoDataChanged )
