@@ -322,6 +322,8 @@ CPLErr TileDBRasterBand::IWriteBlock( int nBlockXOff,
                && nBlockYOff >= 0
                && pImage != nullptr );
 
+    std::vector<std::unique_ptr<void, decltype(&VSIFree)>> aBlocks;
+
     if ( poGDS->lpoAttributeDS.size() > 0 )
     {
         for ( auto const& poAttrDS: poGDS->lpoAttributeDS )
@@ -331,6 +333,7 @@ CPLErr TileDBRasterBand::IWriteBlock( int nBlockXOff,
             int nBytes = GDALGetDataTypeSizeBytes( eAttrType );
             int nValues = nBlockXSize * nBlockYSize;
             void* pAttrBlock = VSIMalloc( nBytes * nValues );
+            aBlocks.emplace_back(pAttrBlock, &VSIFree);
 
             if ( pAttrBlock == nullptr )
             {
@@ -357,7 +360,6 @@ CPLErr TileDBRasterBand::IWriteBlock( int nBlockXOff,
                 pAttrBlock, nBlockXSize, nBlockYSize,
                 eAttrType, 0, 0, nullptr );
 
-
             if ( eErr == CE_None )
             {
                 CPLString osName = CPLString().Printf( "%s",
@@ -366,11 +368,9 @@ CPLErr TileDBRasterBand::IWriteBlock( int nBlockXOff,
                 SetBuffer(m_query.get(), eAttrType,
                     osName,
                     pAttrBlock, nBlockXSize * nBlockYSize );
-                CPLFree( pAttrBlock );
             }
             else
             {
-                CPLFree( pAttrBlock );
                 return eErr;
             }
         }
@@ -1704,7 +1704,7 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
         {
             for ( int i = 0; i < poDstDS->nBlocksX;++i)
             {
-                std::vector<void*> aBlocks;
+                std::vector<std::unique_ptr<void, decltype(&VSIFree)>> aBlocks;
                 // have to write set all tiledb attributes on write
                 int iAttr = 0;
                 for ( auto& poSubDS : apoDatasets )
@@ -1716,8 +1716,8 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
                     {
                         int nBytes = GDALGetDataTypeSizeBytes( eDT );
                         int nValues = nBytes * poDstDS->nBlockXSize * poDstDS->nBlockYSize;
-                        void* pBlock = CPLMalloc( nBytes * nValues );
-                        aBlocks.push_back( pBlock );
+                        void* pBlock = VSIMalloc( nBytes * nValues );
+                        aBlocks.emplace_back( pBlock, &VSIFree );
                         GDALRasterBand* poBand = poSubDS->GetRasterBand( b );
                         if ( poBand->ReadBlock( i, j, pBlock ) == CE_None )
                         {
@@ -1738,9 +1738,6 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
                     tiledb::Stats::dump(stdout);
                     tiledb::Stats::disable();
                 }
-
-                for (auto pBlk: aBlocks)
-                    CPLFree( pBlk );
 
                 if ( status == tiledb::Query::Status::FAILED )
                 {
