@@ -7094,6 +7094,25 @@ def test_tiff_write_no_gdal_metadata_tag_for_ycbcr_jpeg():
     gdaltest.tiff_drv.Delete(tmpfile)
     gdaltest.tiff_drv.Delete(tmpfile2)
 
+
+###############################################################################
+# Test that repated flushing after SetGeoTransform() does not grow file size
+# indefinitely
+
+def test_tiff_write_setgeotransform_flush():
+
+    tmpfile = '/vsimem/test_tiff_write_setgeotransform_flush.tif'
+    gdal.GetDriverByName('GTiff').Create(tmpfile,1,1)
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    ds.SetGeoTransform([2,0,1,49,0,-1])
+    for i in range(10):
+        ds.FlushCache()
+    ds = None
+
+    assert gdal.VSIStatL(tmpfile).size < 1000
+
+    gdaltest.tiff_drv.Delete(tmpfile)
+
 ###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
