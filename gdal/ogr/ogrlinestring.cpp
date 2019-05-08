@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <limits>
+#include <cmath>
 
 CPL_CVSID("$Id$")
 
