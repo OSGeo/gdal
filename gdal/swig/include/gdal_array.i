@@ -66,6 +66,27 @@ typedef int GDALRIOResampleAlg;
 %include "python_strings.i"
 
 %{
+#include "cpl_conv.h"
+%}
+
+%inline %{
+// Note: copied&pasted from python_exceptions.i
+static void _StoreLastException()
+{
+    const char* pszLastErrorMessage =
+        CPLGetThreadLocalConfigOption("__last_error_message", NULL);
+    const char* pszLastErrorCode =
+        CPLGetThreadLocalConfigOption("__last_error_code", NULL);
+    if( pszLastErrorMessage != NULL && pszLastErrorCode != NULL )
+    {
+        CPLErrorSetState( CE_Failure,
+            static_cast<CPLErrorNum>(atoi(pszLastErrorCode)),
+            pszLastErrorMessage);
+    }
+}
+%}
+
+%{
 #include "gdal_priv.h"
 #ifdef _DEBUG
 #undef _DEBUG
@@ -1157,6 +1178,11 @@ def NumericTypeCodeToGDALTypeCode(numeric_type):
 def GDALTypeCodeToNumericTypeCode(gdal_code):
     return flip_code(gdal_code)
 
+def _RaiseException():
+    if gdal.GetUseExceptions():
+        _StoreLastException()
+        raise RuntimeError(gdal.GetLastErrorMsg())
+
 def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,
              buf_xsize=None, buf_ysize=None, buf_type=None,
              resample_alg=gdal.GRIORA_NearestNeighbour,
@@ -1258,6 +1284,7 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
 
     if DatasetIONumPy(ds, 0, xoff, yoff, win_xsize, win_ysize,
                       buf_obj, buf_type, resample_alg, callback, callback_data, interleave) != 0:
+        _RaiseException()
         return None
 
     return buf_obj
@@ -1314,6 +1341,7 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
 
     if BandRasterIONumPy(band, 0, xoff, yoff, win_xsize, win_ysize,
                          buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
+        _RaiseException()
         return None
 
     return buf_obj
@@ -1345,8 +1373,11 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
     if not datatype:
         raise ValueError("array does not have corresponding GDAL data type")
 
-    return BandRasterIONumPy(band, 1, xoff, yoff, xsize, ysize,
+    ret = BandRasterIONumPy(band, 1, xoff, yoff, xsize, ysize,
                              array, datatype, resample_alg, callback, callback_data)
+    if ret != 0:
+        _RaiseException()
+    return ret
 
 def RATWriteArray(rat, array, field, start=0):
     """
@@ -1381,7 +1412,10 @@ def RATWriteArray(rat, array, field, start=0):
     else:
         raise ValueError("Array not of a supported type (integer, double or string)")
 
-    return RATValuesIONumPyWrite(rat, field, start, array)
+    ret = RATValuesIONumPyWrite(rat, field, start, array)
+    if ret != 0:
+        _RaiseException()
+    return ret
 
 def RATReadArray(rat, field, start=0, length=None):
     """
@@ -1391,7 +1425,10 @@ def RATReadArray(rat, field, start=0, length=None):
     if length is None:
         length = rat.GetRowCount() - start
 
-    return RATValuesIONumPyRead(rat, field, start, length)
+    ret = RATValuesIONumPyRead(rat, field, start, length)
+    if ret is None:
+        _RaiseException()
+    return ret
 
 def CopyDatasetInfo(src, dst, xoff=0, yoff=0):
     """

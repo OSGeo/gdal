@@ -3320,6 +3320,7 @@ static void ClearErrorState()
 
 static void StoreLastException() CPL_UNUSED;
 
+// Note: this is also copy&pasted in gdal_array.i
 static void StoreLastException()
 {
     const char* pszLastErrorMessage =
