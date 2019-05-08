@@ -216,15 +216,8 @@ def test_tiff_write_5():
 
 ###############################################################################
 # Test a mixture of reading and writing on a DEFLATE compressed file.
-# May crash with libtiff <= 3.8.2, so skip it if BigTIFF is not supported
-# (this is a sign of an older libtiff...)
-
 
 def test_tiff_write_6():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32',
                'COMPRESS=DEFLATE', 'PREDICTOR=2']
@@ -251,15 +244,8 @@ def test_tiff_write_6():
 
 ###############################################################################
 # Test a mixture of reading and writing on a LZW compressed file.
-# Will cause older libtiff versions (<=3.8.2 for sure) to crash, so skip it
-# if BigTIFF is not supported (this is a sign of an older libtiff...)
-
 
 def test_tiff_write_7():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     options = ['TILED=YES', 'COMPRESS=LZW', 'PREDICTOR=2']
     ds = gdaltest.tiff_drv.Create('tmp/test_7.tif', 200, 200, 1,
@@ -758,9 +744,7 @@ def test_tiff_write_19():
 
 ###############################################################################
 # Test write and read of some TIFF tags
-# Expected to fail (properly) with older libtiff versions (<=3.8.2 for sure)
 # Also test unsetting those tags (#5619)
-
 
 def test_tiff_write_20():
 
@@ -1091,10 +1075,6 @@ def test_tiff_write_29():
 
 def test_tiff_write_30():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 1, 1, 1, options=['BigTIFF=YES'])
     ds = None
 
@@ -1118,10 +1098,6 @@ def test_tiff_write_30():
 
 
 def test_tiff_write_31():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 100000, 100000, 1,
                                   options=['SPARSE_OK=TRUE'])
@@ -1790,11 +1766,6 @@ def test_tiff_write_55():
 
 def test_tiff_write_56():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
@@ -1828,11 +1799,6 @@ def test_tiff_write_56():
 
 
 def test_tiff_write_57():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     # copy a file to tmp dir to modify.
     open('tmp/tiff57.tif', 'wb').write(open('data/byte.tif', 'rb').read())
@@ -1981,10 +1947,6 @@ def test_tiff_write_60():
 
 def test_tiff_write_61():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 50000, 50000, 1,
                                   options=['BIGTIFF=IF_NEEDED', 'SPARSE_OK=TRUE'])
     ds = None
@@ -2010,10 +1972,6 @@ def test_tiff_write_61():
 
 def test_tiff_write_62():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 50000, 50000, 1,
                                   options=['BIGTIFF=IF_SAFER', 'SPARSE_OK=TRUE'])
     ds = None
@@ -2038,12 +1996,6 @@ def test_tiff_write_62():
 
 
 def test_tiff_write_63():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-    if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
-        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 150000, 150000, 1,
@@ -2232,10 +2184,6 @@ def test_tiff_write_70():
 def test_tiff_write_71():
 
     import struct
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
@@ -2839,10 +2787,6 @@ def test_tiff_write_84():
 
     md = gdaltest.tiff_drv.GetMetadata()
 
-    # Crashes with libtiff < 4.0
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3085,9 +3029,6 @@ def test_tiff_write_87():
 
 
 def test_tiff_write_88():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     # The file would be > 4.2 GB without SPARSE_OK
     src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_88_src.tif', 60000, 60000, 1,
@@ -3142,9 +3083,6 @@ def test_tiff_write_88():
 
 def test_tiff_write_89():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3194,9 +3132,6 @@ def test_tiff_write_89():
 
 def test_tiff_write_90():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3236,9 +3171,6 @@ def test_tiff_write_90():
 
 def test_tiff_write_91():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3284,9 +3216,6 @@ def test_tiff_write_91():
 
 def test_tiff_write_92():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3335,9 +3264,6 @@ def test_tiff_write_92():
 
 def test_tiff_write_93():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3395,9 +3321,6 @@ def test_tiff_write_93():
 
 def test_tiff_write_94():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3642,11 +3565,8 @@ def test_tiff_write_100():
 
 def test_tiff_write_101():
 
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
-
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+    if not gdaltest.run_slow_tests():
         pytest.skip()
 
     if sys.platform.startswith('linux'):
@@ -3803,11 +3723,6 @@ def test_tiff_write_104():
 
 
 def test_tiff_write_105():
-
-    # This hangs forever with libtiff 3.8.2, so skip it
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     shutil.copyfile('data/bug4468.tif', 'tmp/bug4468.tif')
 
@@ -4016,10 +3931,9 @@ def test_tiff_write_116():
 
 
 def test_tiff_write_117():
-    # This will also fail with a libtiff 4.x older than 2012-08-13
-    # Might be good to be able to test internal libtiff presence
+    # This fail with a libtiff 4.x older than 2012-08-13
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+    if md['LIBTIFF'] != 'INTERNAL':
         pytest.skip()
 
     import random
@@ -4718,9 +4632,6 @@ def test_tiff_write_128():
 
 def test_tiff_write_129():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -4761,9 +4672,6 @@ def test_tiff_write_129():
 
 def test_tiff_write_130():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -5537,10 +5445,6 @@ def test_tiff_write_143():
 
 def test_tiff_write_144():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
@@ -6149,8 +6053,6 @@ def test_tiff_write_159():
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        pytest.skip()
-    if md['DMD_CREATIONOPTIONLIST'].find('BIGTIFF') == -1:
         pytest.skip()
 
     prev_table = ''

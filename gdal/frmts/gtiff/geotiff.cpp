@@ -5319,13 +5319,7 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
         TIFFSetField( m_poGDS->m_hTIFF, TIFFTAG_PHOTOMETRIC,
                       PHOTOMETRIC_MINISBLACK );
 
-#ifdef HAVE_UNSETFIELD
         TIFFUnsetField( m_poGDS->m_hTIFF, TIFFTAG_COLORMAP );
-#else
-        CPLDebug(
-            "GTiff",
-            "TIFFUnsetField() not supported, colormap may not be cleared." );
-#endif
 
         if( m_poGDS->m_poColorTable )
         {
@@ -9796,7 +9790,6 @@ void GTiffDataset::FlushDirectory()
 
             if( m_bForceUnsetRPC )
             {
-#ifdef HAVE_UNSETFIELD
                 double *padfRPCTag = nullptr;
                 uint16 nCount;
                 if( TIFFGetField( m_hTIFF, TIFFTAG_RPCCOEFFICIENT, &nCount, &padfRPCTag ) )
@@ -9806,7 +9799,7 @@ void GTiffDataset::FlushDirectory()
                     TIFFUnsetField( m_hTIFF, TIFFTAG_RPCCOEFFICIENT );
                     m_bNeedsRewrite = true;
                 }
-#endif
+
                 GDALWriteRPCTXTFile( m_pszFilename, nullptr );
                 GDALWriteRPBFile( m_pszFilename, nullptr );
             }
@@ -9838,8 +9831,6 @@ void GTiffDataset::FlushDirectory()
 
         if( m_bNeedsRewrite )
         {
-#if defined(TIFFLIB_VERSION)
-#if defined(HAVE_TIFFGETSIZEPROC)
             if( !SetDirectory() )
                 return;
 
@@ -9852,13 +9843,6 @@ void GTiffDataset::FlushDirectory()
             TIFFRewriteDirectory( m_hTIFF );
 
             TIFFSetSubDirectory( m_hTIFF, m_nDirOffset );
-#elif TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
-            if( !SetDirectory() )
-                return;
-
-            TIFFRewriteDirectory( m_hTIFF );
-#endif
-#endif
             m_bNeedsRewrite = false;
         }
     }
@@ -9868,7 +9852,6 @@ void GTiffDataset::FlushDirectory()
     // case we should not risk a flush.
     if( GetAccess() == GA_Update && TIFFCurrentDirOffset(m_hTIFF) == m_nDirOffset )
     {
-#if defined(BIGTIFF_SUPPORT)
         const TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( m_hTIFF );
 
         toff_t nNewDirOffset = pfnSizeProc( TIFFClientdata( m_hTIFF ) );
@@ -9883,11 +9866,6 @@ void GTiffDataset::FlushDirectory()
             CPLDebug( "GTiff",
                       "directory moved during flush in FlushDirectory()" );
         }
-#else
-        // For libtiff 3.X, the above causes regressions and crashes in
-        // tiff_write.py and tiff_ovr.py.
-        TIFFFlush( m_hTIFF );
-#endif
     }
 }
 
@@ -10389,56 +10367,7 @@ CPLErr GTiffDataset::IBuildOverviews(
         return CleanOverviews();
     }
 
-/* -------------------------------------------------------------------- */
-/*      libtiff 3.X has issues when generating interleaved overviews.   */
-/*      so generate them one after another one.                         */
-/* -------------------------------------------------------------------- */
-
     CPLErr eErr = CE_None;
-
-#ifndef BIGTIFF_SUPPORT
-    if( nOverviews > 1 )
-    {
-        double* padfOvrRasterFactor =
-            static_cast<double*>( CPLMalloc(sizeof(double) * nOverviews) );
-        double dfTotal = 0;
-        for( int i = 0; i < nOverviews; ++i )
-        {
-            if( panOverviewList[i] <= 0 )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid overview factor : %d", panOverviewList[i]);
-                eErr = CE_Failure;
-                break;
-            }
-            padfOvrRasterFactor[i] =
-                1.0 / (panOverviewList[i] * panOverviewList[i]);
-            dfTotal += padfOvrRasterFactor[i];
-        }
-
-        double dfAcc = 0.0;
-        for( int i = 0; i < nOverviews && eErr == CE_None; ++i )
-        {
-            void *pScaledProgressData =
-                GDALCreateScaledProgress(
-                    dfAcc / dfTotal,
-                    (dfAcc + padfOvrRasterFactor[i]) / dfTotal,
-                    pfnProgress, pProgressData );
-            dfAcc += padfOvrRasterFactor[i];
-
-            eErr = IBuildOverviews(
-                pszResampling, 1, &panOverviewList[i],
-                nBandsIn, panBandList, GDALScaledProgress,
-                pScaledProgressData );
-
-            GDALDestroyScaledProgress(pScaledProgressData);
-        }
-
-        CPLFree(padfOvrRasterFactor);
-
-        return eErr;
-    }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Initialize progress counter.                                    */
@@ -10915,11 +10844,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
         m_bNeedsRewrite = true;
         m_bForceUnsetGTOrGCPs = false;
 
-#ifdef HAVE_UNSETFIELD
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEOPIXELSCALE );
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEOTIEPOINTS );
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEOTRANSMATRIX );
-#endif
     }
 
     if( m_bForceUnsetProjection )
@@ -10927,13 +10854,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
         m_bNeedsRewrite = true;
         m_bForceUnsetProjection = false;
 
-#ifdef HAVE_UNSETFIELD
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEOKEYDIRECTORY );
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEODOUBLEPARAMS );
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEOASCIIPARAMS );
-#else
-        GTiffWriteDummyGeokeyDirectory(m_hTIFF);
-#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -10947,11 +10870,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /*      Clear old tags to ensure we don't end up with conflicting       */
 /*      information. (#2625)                                            */
 /* -------------------------------------------------------------------- */
-#ifdef HAVE_UNSETFIELD
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEOPIXELSCALE );
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEOTIEPOINTS );
         TIFFUnsetField( m_hTIFF, TIFFTAG_GEOTRANSMATRIX );
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Write the transform.  If we have a normal north-up image we     */
@@ -11313,14 +11234,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                      (asTIFFTags[iTag].eType == GTIFFTAGTYPE_BYTE_STRING &&
                       TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &nCount, &pszText ))) )
                 {
-#ifdef HAVE_UNSETFIELD
                     TIFFUnsetField( hTIFF, asTIFFTags[iTag].nTagVal );
-#else
-                    if( asTIFFTags[iTag].eType == GTIFFTAGTYPE_STRING )
-                    {
-                        TIFFSetField( hTIFF, asTIFFTags[iTag].nTagVal, "" );
-                    }
-#endif
                 }
             }
         }
@@ -11663,11 +11577,7 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
         char* pszText = nullptr;
         if( TIFFGetField( l_hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
         {
-#ifdef HAVE_UNSETFIELD
             TIFFUnsetField( l_hTIFF, TIFFTAG_GDAL_METADATA );
-#else
-            TIFFSetField( l_hTIFF, TIFFTAG_GDAL_METADATA, "" );
-#endif
         }
     }
 
@@ -11914,11 +11824,7 @@ void GTiffDataset::WriteNoDataValue( TIFF *l_hTIFF, double dfNoData )
 void GTiffDataset::UnsetNoDataValue( TIFF *l_hTIFF )
 
 {
-#ifdef HAVE_UNSETFIELD
     TIFFUnsetField( l_hTIFF, TIFFTAG_GDAL_NODATA );
-#else
-    TIFFSetField( l_hTIFF, TIFFTAG_GDAL_NODATA, "" );
-#endif
 }
 
 /************************************************************************/
@@ -12050,17 +11956,6 @@ int GTiffDataset::Identify( GDALOpenInfo *poOpenInfo )
         && (poOpenInfo->pabyHeader[0] != 'M'
         || poOpenInfo->pabyHeader[1] != 'M'))
         return FALSE;
-
-#ifndef BIGTIFF_SUPPORT
-    if( (poOpenInfo->pabyHeader[2] == 0x2B && poOpenInfo->pabyHeader[3] == 0) ||
-        (poOpenInfo->pabyHeader[2] == 0 && poOpenInfo->pabyHeader[3] == 0x2B) )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "This is a BigTIFF file.  BigTIFF is not supported by this "
-                  "version of GDAL and libtiff." );
-        return FALSE;
-    }
-#endif
 
     if( (poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0)
         && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0)
@@ -13548,7 +13443,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( !TIFFGetField( m_hTIFF, TIFFTAG_COMPRESSION, &(m_nCompression) ) )
         m_nCompression = COMPRESSION_NONE;
 
-#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION > 20031007 // 3.6.0
     if( m_nCompression != COMPRESSION_NONE &&
         !TIFFIsCODECConfigured(m_nCompression) )
     {
@@ -13556,7 +13450,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                   "Cannot open TIFF file due to missing codec." );
         return CE_Failure;
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      YCbCr JPEG compressed images should be translated on the fly    */
@@ -13753,11 +13646,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         && !bTreatAsRGBA
         && CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")) )
     {
-        // libtiff 3.9.2 (20091104) and older, libtiff 4.0.0beta5 (also
+        // libtiff 4.0.0beta5 (also
         // 20091104) and older will crash when trying to open a
         // all-in-one-strip YCbCr JPEG compressed TIFF (see #3259).
-#if (TIFFLIB_VERSION <= 20091104 && !defined(BIGTIFF_SUPPORT)) || \
-    (TIFFLIB_VERSION <= 20091104 && defined(BIGTIFF_SUPPORT))
+#if (TIFFLIB_VERSION <= 20091104)
         if( m_nPhotometric == PHOTOMETRIC_YCBCR &&
             m_nCompression == COMPRESSION_JPEG )
         {
@@ -13795,7 +13687,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 /*      We can't support 'chunks' bigger than 2GB on 32 bit builds      */
 /* -------------------------------------------------------------------- */
-#if defined(BIGTIFF_SUPPORT) && SIZEOF_VOIDP == 4
+#if SIZEOF_VOIDP == 4
     uint64 nChunkSize = 0;
     if( m_bTreatAsSplit || m_bTreatAsSplitBitmap )
     {
@@ -15384,20 +15276,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         GDALGetDataTypeSizeBytes(eType)
         + dfExtraSpaceForOverviews;
 
-    if( l_nCompression == COMPRESSION_NONE
-        && dfUncompressedImageSize > 4200000000.0 )
-    {
-#ifndef BIGTIFF_SUPPORT
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
-            "A %d pixels x %d lines x %d bands %s image would be larger than "
-            "4GB but this is the largest size a TIFF can be, and BigTIFF "
-            "is unavailable.  Creation failed.",
-            nXSize, nYSize, l_nBands, GDALGetDataTypeName(eType) );
-        return nullptr;
-#endif
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Check free space (only for big, non sparse, uncompressed)       */
 /* -------------------------------------------------------------------- */
@@ -15457,16 +15335,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             return nullptr;
         }
     }
-
-#ifndef BIGTIFF_SUPPORT
-    if( bCreateBigTIFF )
-    {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "BigTIFF requested, but GDAL built without BigTIFF "
-                  "enabled libtiff, request ignored." );
-        bCreateBigTIFF = false;
-    }
-#endif
 
     if( bCreateBigTIFF )
         CPLDebug( "GTiff", "File being created as a BigTIFF." );
@@ -15946,12 +15814,11 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         CPLFree( panTBlue );
     }
 
-    // Would perhaps works with libtiff 3.X but didn't bother trying This trick
+    // This trick
     // creates a temporary in-memory file and fetches its JPEG tables so that
     // we can directly set them, before tif_jpeg.c compute them at the first
     // strip/tile writing, which is too late, since we have already crystalized
     // the directory. This way we avoid a directory rewriting.
-#if defined(BIGTIFF_SUPPORT)
     if( l_nCompression == COMPRESSION_JPEG &&
         !STARTS_WITH(pszFilename, szJPEGGTiffDatasetTmpPrefix) &&
         CPLTestBool(
@@ -15963,7 +15830,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                               CSLFetchNameValue(papszParmList,
                                                 "JPEGTABLESMODE") );
     }
-#endif
 
     *pfpL = l_fpL;
 
@@ -15986,12 +15852,11 @@ void GTiffWriteJPEGTables( TIFF* hTIFF,
                            const char* pszJPEGQuality,
                            const char* pszJPEGTablesMode )
 {
-    // Would perhaps works with libtiff 3.X but didn't bother trying This trick
+    // This trick
     // creates a temporary in-memory file and fetches its JPEG tables so that
     // we can directly set them, before tif_jpeg.c compute them at the first
     // strip/tile writing, which is too late, since we have already crystalized
     // the directory. This way we avoid a directory rewriting.
-#if defined(BIGTIFF_SUPPORT)
     uint16 nBands = 0;
     if( !TIFFGetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL,
                         &nBands ) )
@@ -16080,7 +15945,6 @@ void GTiffWriteJPEGTables( TIFF* hTIFF,
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
     }
     VSIUnlink(osTmpFilenameIn);
-#endif
 }
 
 /************************************************************************/
@@ -16545,37 +16409,6 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszParmList);
 #endif
     poDS->InitCreationOrOpenOptions(papszParmList);
-
-#if !defined(BIGTIFF_SUPPORT)
-/* -------------------------------------------------------------------- */
-/*      If we are writing jpeg compression we need to write some        */
-/*      imagery to force the jpegtables to get created.  This is,       */
-/*      likely only needed with libtiff >= 3.9.3 (#3633)                */
-/* -------------------------------------------------------------------- */
-    if( poDS->m_nCompression == COMPRESSION_JPEG
-        && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != nullptr )
-    {
-        CPLDebug( "GDAL",
-                  "Writing zero block to force creation of JPEG tables." );
-        if( TIFFIsTiled( l_hTIFF ) )
-        {
-            const auto cc = TIFFTileSize( l_hTIFF );
-            unsigned char *pabyZeros =
-                static_cast<unsigned char *>(CPLCalloc(cc, 1));
-            TIFFWriteEncodedTile(l_hTIFF, 0, pabyZeros, cc);
-            CPLFree( pabyZeros );
-        }
-        else
-        {
-            const auto cc = TIFFStripSize( l_hTIFF );
-            unsigned char *pabyZeros =
-                static_cast<unsigned char *>(CPLCalloc(cc, 1));
-            TIFFWriteEncodedStrip(l_hTIFF, 0, pabyZeros, cc);
-            CPLFree( pabyZeros );
-        }
-        poDS->bDontReloadFirstBlock = true;
-    }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -17263,41 +17096,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 #endif
 
-#if defined(HAVE_LIBJPEG) && !defined(BIGTIFF_SUPPORT)
-    else
-#endif
-
-#if !defined(BIGTIFF_SUPPORT)
-    /* -------------------------------------------------------------------- */
-    /*      If we are writing jpeg compression we need to write some        */
-    /*      imagery to force the jpegtables to get created.  This is,       */
-    /*      likely only needed with libtiff >= 3.9.3 (#3633)                */
-    /* -------------------------------------------------------------------- */
-    if( l_nCompression == COMPRESSION_JPEG
-            && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != nullptr )
-    {
-        CPLDebug( "GDAL",
-                  "Writing zero block to force creation of JPEG tables." );
-        if( TIFFIsTiled( l_hTIFF ) )
-        {
-            const auto cc = TIFFTileSize( l_hTIFF );
-            unsigned char *pabyZeros =
-                static_cast<unsigned char *>( CPLCalloc(cc, 1) );
-            TIFFWriteEncodedTile( l_hTIFF, 0, pabyZeros, cc );
-            CPLFree( pabyZeros );
-        }
-        else
-        {
-            const auto cc = TIFFStripSize( l_hTIFF );
-            unsigned char *pabyZeros =
-                static_cast<unsigned char *>( CPLCalloc(cc,1) );
-            TIFFWriteEncodedStrip( l_hTIFF, 0, pabyZeros, cc );
-            CPLFree( pabyZeros );
-        }
-        l_bDontReloadFirstBlock = true;
-    }
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
@@ -17877,7 +17675,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 
         // Necessary to be able to read the file without re-opening.
-#if defined(HAVE_TIFFGETSIZEPROC)
         TIFFSizeProc pfnSizeProc = TIFFGetSizeProc( l_hTIFF );
 
         TIFFFlushData( l_hTIFF );
@@ -17885,17 +17682,14 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         toff_t nNewDirOffset = pfnSizeProc( TIFFClientdata( l_hTIFF ) );
         if( (nNewDirOffset % 2) == 1 )
             ++nNewDirOffset;
-#endif
 
         TIFFFlush( l_hTIFF );
 
-#if defined(HAVE_TIFFGETSIZEPROC)
         if( poDS->m_nDirOffset != TIFFCurrentDirOffset( l_hTIFF ) )
         {
             poDS->m_nDirOffset = nNewDirOffset;
             CPLDebug( "GTiff", "directory moved during flush." );
         }
-#endif
     }
     else if( 
 #if defined(HAVE_LIBJPEG) || defined(JPEG_DIRECT_COPY)
@@ -18371,13 +18165,7 @@ CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
         }
         else
         {
-#ifdef HAVE_UNSETFIELD
             TIFFUnsetField( m_hTIFF, TIFFTAG_XMLPACKET );
-#else
-            CPLDebug(
-                "GTiff",
-                "TIFFUnsetField() not supported, xml:XMP may not be cleared." );
-#endif
         }
     }
 
@@ -18850,7 +18638,6 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 static void
 GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
 {
-#ifdef BIGTIFF_SUPPORT
     if( strcmp(fmt, "Maximum TIFF file size exceeded") == 0 )
     {
         // Ideally there would be a thread-safe way of setting this flag,
@@ -18866,7 +18653,6 @@ GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
                 "Maximum TIFF file size exceeded. "
                 "Use BIGTIFF=YES creation option.";
     }
-#endif
 
     char* pszModFmt = PrepareTIFFErrorFormat( module, fmt );
     CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
@@ -18947,7 +18733,7 @@ int GTiffOneTimeInit()
     // detected by the following code - is "-ltiff -lgdal". "-lgdal -ltiff"
     // works for the GTiff driver but probably breaks the application that
     // believes it uses libtiff 3.X but we cannot detect that.
-#if defined(BIGTIFF_SUPPORT) && !defined(RENAME_INTERNAL_LIBTIFF_SYMBOLS)
+#if !defined(RENAME_INTERNAL_LIBTIFF_SYMBOLS)
 #if defined(HAVE_DLFCN_H) && !defined(WIN32)
     const char* (*pfnVersion)(void);
 #ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
@@ -18970,7 +18756,7 @@ int GTiffOneTimeInit()
         }
     }
 #endif  // HAVE_DLFCN_H
-#endif  // BIGTIFF_SUPPORT
+#endif // !defined(RENAME_INTERNAL_LIBTIFF_SYMBOLS)
 
     _ParentExtender = TIFFSetTagExtender(GTiffTagExtender);
 
@@ -19044,7 +18830,6 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
                   "%s=%s value not recognised, ignoring.",
                   pszVariableName,pszValue );
 
-#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION > 20031007  // 3.6.0
     if( nCompression != COMPRESSION_NONE &&
         !TIFFIsCODECConfigured(static_cast<uint16>(nCompression)) )
     {
@@ -19053,7 +18838,6 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
             "Cannot create TIFF file due to missing codec for %s.", pszValue );
         return -1;
     }
-#endif
 
     return nCompression;
 }
@@ -19084,15 +18868,6 @@ void GDALRegister_GTiff()
 /* -------------------------------------------------------------------- */
     osCompressValues = "       <Value>NONE</Value>";
 
-#if TIFFLIB_VERSION <= 20040919
-    osCompressValues +=
-            "       <Value>PACKBITS</Value>"
-            "       <Value>JPEG</Value>"
-            "       <Value>LZW</Value>"
-            "       <Value>DEFLATE</Value>";
-    bool bHasLZW = true;
-    bool bHasDEFLATE = true;
-#else
     bool bHasLZW = false;
     bool bHasDEFLATE = false;
     TIFFCodec *codecs = TIFFGetConfiguredCODECs();
@@ -19168,7 +18943,6 @@ void GDALRegister_GTiff()
     }
 #endif
     _TIFFfree( codecs );
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Build full creation option list.                                */
@@ -19254,14 +19028,12 @@ void GDALRegister_GTiff()
 "       <Value>DEFAULT</Value>"
 "       <Value>SIGNEDBYTE</Value>"
 "   </Option>"
-#ifdef BIGTIFF_SUPPORT
 "   <Option name='BIGTIFF' type='string-select' description='Force creation of BigTIFF file'>"
 "     <Value>YES</Value>"
 "     <Value>NO</Value>"
 "     <Value>IF_NEEDED</Value>"
 "     <Value>IF_SAFER</Value>"
 "   </Option>"
-#endif
 "   <Option name='ENDIANNESS' type='string-select' default='NATIVE' description='Force endianness of created file. For DEBUG purpose mostly'>"
 "       <Value>NATIVE</Value>"
 "       <Value>INVERTED</Value>"

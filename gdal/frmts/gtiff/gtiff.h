@@ -75,15 +75,6 @@ uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault);
 /* https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html */
 #define TIFFTAG_GEO_METADATA   50909
 
-#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
-#  define HAVE_UNSETFIELD
-#endif
-
-#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION > 20041016
-/* We need at least TIFF 3.7.0 for TIFFGetSizeProc and TIFFClientdata */
-#  define HAVE_TIFFGETSIZEPROC
-#endif
-
 #if !defined(PREDICTOR_NONE)
 #define PREDICTOR_NONE 1
 #endif
