@@ -345,23 +345,36 @@ bool OGRShapeDataSource::OpenFile( const char *pszNewName, bool bUpdate )
 /*      Care is taken to suppress the error and only reissue it if      */
 /*      we think it is appropriate.                                     */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
     CPLPushErrorHandler( CPLQuietErrorHandler );
     SHPHandle hSHP = bUpdate ?
         DS_SHPOpen( pszNewName, "r+" ) :
         DS_SHPOpen( pszNewName, "r" );
     CPLPopErrorHandler();
 
-    if( hSHP == nullptr
-        && (!EQUAL(CPLGetExtension(pszNewName),"dbf")
-            || strstr(CPLGetLastErrorMsg(),".shp") == nullptr) )
+    const bool bRestoreSHX =
+        CPLTestBool( CPLGetConfigOption("SHAPE_RESTORE_SHX", "FALSE") );
+    if( bRestoreSHX && EQUAL(CPLGetExtension(pszNewName),"dbf") &&
+        CPLGetLastErrorMsg()[0] != '\0' )
     {
         CPLString osMsg = CPLGetLastErrorMsg();
 
-        CPLError( CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str() );
-
-        return false;
+        CPLError( CE_Warning, CPLE_AppDefined, "%s", osMsg.c_str() );
     }
-    CPLErrorReset();
+    else
+    {
+        if( hSHP == nullptr
+            && (!EQUAL(CPLGetExtension(pszNewName),"dbf")
+                || strstr(CPLGetLastErrorMsg(),".shp") == nullptr) )
+        {
+            CPLString osMsg = CPLGetLastErrorMsg();
+
+            CPLError( CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str() );
+
+            return false;
+        }
+        CPLErrorReset();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open the .dbf file, if it exists.  To open a dbf file, the      */
