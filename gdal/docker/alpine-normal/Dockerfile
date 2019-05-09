@@ -13,8 +13,14 @@ MAINTAINER Even Rouault <even.rouault@spatialys.com>
 # Setup build env for PROJ
 RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+RUN \
+    mkdir -p /build_projgrids/usr/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
+    && rm -f *.zip
+
 # For GDAL
-ARG POPPLER=poppler
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
@@ -163,6 +169,9 @@ RUN if test "${KEA_VERSION}" != ""; then ( \
     && apk del cmake \
     ); fi
 
+RUN apk add --no-cache rsync ccache
+ARG RSYNC_REMOTE
+
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN mkdir proj \
@@ -170,10 +179,28 @@ RUN mkdir proj \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
+        echo "Finished"; \
+        export CC="ccache gcc"; \
+        export CXX="ccache g++"; \
+        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
+        ccache -M 100M; \
+    fi \
     && ./configure --prefix=/usr --disable-static --enable-lto \
     && make -j$(nproc) \
     && make install \
     && make install DESTDIR="/build_proj" \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && cd .. \
     && rm -rf proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -186,9 +213,26 @@ RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && cd libspatialite-${SPATIALITE_VERSION} \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/spatialite/ $HOME/; \
+        echo "Finished"; \
+        export CC="ccache gcc"; \
+        export CXX="ccache g++"; \
+        ccache -M 100M; \
+    fi \
     && CFLAGS="-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H -O2" ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/spatialite/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && mkdir -p /build_spatialite/usr/lib \
     && cp -P /usr/lib/libspatialite*.so* /build_spatialite/usr/lib \
     && for i in /build_spatialite/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -238,6 +282,19 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal/gdal \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        echo "Finished"; \
+        # Little trick to avoid issues with Python bindings
+        printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
+        chmod +x ccache_gcc.sh; \
+        printf "#!/bin/sh\nccache g++ \$*" > ccache_g++.sh; \
+        chmod +x ccache_g++.sh; \
+        export CC=$PWD/ccache_gcc.sh; \
+        export CXX=$PWD/ccache_g++.sh; \
+        ccache -M 1G; \
+    fi \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-proj=/usr \
@@ -248,6 +305,15 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-python \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && cd ../.. \
     && rm -rf gdal \
     && mkdir -p /build_gdal_python/usr/lib \
@@ -268,12 +334,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
             # unused
             /build/usr/share/gdal/*.png \
        ;do rm $i; done)
-
-RUN \
-    mkdir -p /build_projgrids/usr/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
-    && rm -f *.zip
 
 # Build final image
 FROM alpine:latest as runner

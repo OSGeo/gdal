@@ -147,9 +147,28 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     psWOptions->hSrcDS = hSrcDS;
     psWOptions->hDstDS = hDstDS;
 
+    int nSrcBands = GDALGetRasterCount(hSrcDS);
+    {
+        GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, nSrcBands );
+        if( hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand )
+        {
+            psWOptions->nSrcAlphaBand = nSrcBands;
+            nSrcBands --;
+        }
+    }
+
+    int nDstBands = GDALGetRasterCount(hDstDS);
+    {
+        GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, nDstBands );
+        if( hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand )
+        {
+            psWOptions->nDstAlphaBand = nDstBands;
+            nDstBands --;
+        }
+    }
+
     GDALWarpInitDefaultBandMapping(
-        psWOptions, std::min(GDALGetRasterCount(hSrcDS),
-                                    GDALGetRasterCount(hDstDS)));
+        psWOptions, std::min(nSrcBands, nDstBands));
 
 /* -------------------------------------------------------------------- */
 /*      Set source nodata values if the source dataset seems to have    */
@@ -158,11 +177,6 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     for( int iBand = 0; iBand < psWOptions->nBandCount; iBand++ )
     {
         GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, iBand+1 );
-
-        if (GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
-        {
-            psWOptions->nSrcAlphaBand = iBand + 1;
-        }
 
         int bGotNoData = FALSE;
         double dfNoDataValue = GDALGetRasterNoDataValue( hBand, &bGotNoData );
@@ -174,10 +188,6 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
         // Deal with target band.
         hBand = GDALGetRasterBand( hDstDS, iBand+1 );
-        if (hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
-        {
-            psWOptions->nDstAlphaBand = iBand + 1;
-        }
 
         dfNoDataValue = GDALGetRasterNoDataValue( hBand, &bGotNoData );
         if( bGotNoData )

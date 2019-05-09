@@ -6,7 +6,7 @@ CPPFLAGS:=$(filter-out -DGDAL_COMPILATION,$(CPPFLAGS))
 
 CFLAGS += -I. -Itut $(GDAL_INCLUDE)
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file test_include_from_cpp_file test_include_from_cpp_file_with_extern_c test_osr_set_proj_search_paths
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file test_include_from_cpp_file test_include_from_cpp_file_with_extern_c test_osr_set_proj_search_paths bug1488
 
 all: $(PROGS)
 
@@ -14,7 +14,7 @@ test check: all
 	make quick_test
 	./testperfcopywords
 
-quick_test: gdal_unit_test testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testmultithreadedwriting testdestroy
+quick_test: gdal_unit_test testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testmultithreadedwriting testdestroy bug1488
 	./gdal_unit_test
 	./testcopywords
 	./testclosedondestroydm
@@ -32,6 +32,7 @@ quick_test: gdal_unit_test testcopywords testclosedondestroydm testthreadcond te
 	./testmultithreadedwriting
 	./testdestroy
 	./test_osr_set_proj_search_paths
+	./bug1488
 
 test_sse:
 	$(CXX) -g -O2  testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
@@ -122,6 +123,9 @@ test_osr_set_proj_search_paths.o: test_osr_set_proj_search_paths.cpp
 	$(CXX) $(CXXFLAGS) $(PROJ_INCLUDE) $(PROJ_CFLAGS) -c $<
 
 test_osr_set_proj_search_paths: test_osr_set_proj_search_paths.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
+
+bug1488: bug1488.o
 	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
 vsipreload.so: ../../gdal/port/vsipreload.o

@@ -327,11 +327,6 @@ def test_tiff_ovr_8(both_endian):
 def test_tiff_ovr_9(both_endian):
     gdaltest.tiff_drv.Delete('tmp/ovr9.tif')
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     shutil.copyfile('data/rgbsmall.tif', 'tmp/ovr9.tif')
 
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
@@ -405,15 +400,6 @@ def test_tiff_ovr_11(both_endian):
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr11.tif', src_ds)
     src_ds = None
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-        ds = None
-        ds = gdal.Open('tmp/ovr11.tif', gdal.GA_Update)
-
     ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     ds = None
@@ -442,15 +428,6 @@ def test_tiff_ovr_12(both_endian):
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr12.tif', src_ds, options=['COMPRESS=DEFLATE'])
     src_ds = None
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-        ds = None
-        ds = gdal.Open('tmp/ovr12.tif', gdal.GA_Update)
 
     ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
@@ -531,15 +508,6 @@ def test_tiff_ovr_15(both_endian):
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr15.tif', src_ds, options=['COMPRESS=DEFLATE'])
     src_ds = None
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-        ds = None
-        ds = gdal.Open('tmp/ovr15.tif', gdal.GA_Update)
 
     ds.BuildOverviews('GAUSS', overviewlist=[2])
 
@@ -631,16 +599,9 @@ def test_tiff_ovr_18(both_endian):
 
 ###############################################################################
 # Check that we can create overviews on a newly create file (#2621)
-# Will cause older libtiff versions (<=3.8.2 for sure) to crash, so skip it
-# if BigTIFF is not supported (this is a sign of an older libtiff...)
 
 
 def test_tiff_ovr_19(both_endian):
-
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/ovr19.tif', 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
@@ -667,11 +628,6 @@ def test_tiff_ovr_19(both_endian):
 # Test BIGTIFF_OVERVIEW=YES option
 
 def test_tiff_ovr_20(both_endian):
-
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr20.tif', 100, 100, 1)
     ds = None
@@ -701,11 +657,6 @@ def test_tiff_ovr_20(both_endian):
 
 def test_tiff_ovr_21(both_endian):
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/ovr21.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
@@ -734,11 +685,6 @@ def test_tiff_ovr_21(both_endian):
 
 def test_tiff_ovr_22(both_endian):
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/ovr22.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
@@ -766,11 +712,6 @@ def test_tiff_ovr_22(both_endian):
 
 
 def test_tiff_ovr_23(both_endian):
-
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr23.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
@@ -801,11 +742,6 @@ def test_tiff_ovr_23(both_endian):
 
 
 def test_tiff_ovr_24(both_endian):
-
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr24.tif', 85000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
@@ -1000,11 +936,6 @@ def test_tiff_ovr_31(both_endian):
 
 
 def test_tiff_ovr_32(both_endian):
-
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     # 4 regular band
     shutil.copyfile('data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif')
@@ -1257,11 +1188,6 @@ def test_tiff_ovr_37(both_endian):
 
 
 def test_tiff_ovr_38(both_endian):
-
-    # Skip with old libtiff (crash with 3.8.2)
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr38.tif', src_ds, options=['COMPRESS=LZW', 'PREDICTOR=2'])
@@ -1549,10 +1475,6 @@ def test_tiff_ovr_45(both_endian):
 
 
 def test_tiff_ovr_46():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     if not gdaltest.run_slow_tests():
         pytest.skip()

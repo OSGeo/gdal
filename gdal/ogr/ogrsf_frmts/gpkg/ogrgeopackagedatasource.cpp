@@ -1131,13 +1131,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     /* Requirement 7: The SQLite PRAGMA foreign_key_check() SQL with no */
     /* parameter value SHALL return an empty result set */
     /* http://opengis.github.io/geopackage/#_file_integrity */
-    if ( CPLTestBool(CPLGetConfigOption("OGR_GPKG_FOREIGN_KEY_CHECK", "YES")) &&
+    /* Disable the check by default, since it is to corrupt databases, and */
+    /* that causes issues to downstream software that can't open them. */
+    if ( CPLTestBool(CPLGetConfigOption("OGR_GPKG_FOREIGN_KEY_CHECK", "NO")) &&
          OGRERR_NONE != PragmaCheck("foreign_key_check", "", 0) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "pragma foreign_key_check on '%s' failed. You can disable "
-                  "this check by setting the OGR_GPKG_FOREIGN_KEY_CHECK "
-                  "configuration option to NO",
+                  "pragma foreign_key_check on '%s' failed.",
                   m_pszFilename);
         return FALSE;
     }
@@ -2096,6 +2096,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     for( int i = 1; i < oResult.nRowCount; i++ )
     {
         GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
+        poOvrDS->ShareLockWithParentDataset(this);
         if( !poOvrDS->InitRaster(
             this, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
             pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
@@ -2423,6 +2424,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         if( i < m_nZoomLevel )
         {
             GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
+            poOvrDS->ShareLockWithParentDataset(this);
             poOvrDS->InitRaster( this, m_osRasterTable, i, nBands,
                                  m_dfTMSMinX, m_dfTMSMaxY,
                                  dfPixelXSizeZoomLevel, dfPixelYSizeZoomLevel,
@@ -2779,6 +2781,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     m_papoOverviewDS[k]->m_nZoomLevel ++;
 
                 GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
+                poOvrDS->ShareLockWithParentDataset(this);
                 poOvrDS->InitRaster(
                     this, m_osRasterTable,
                     nNewZoomLevel, nBands,

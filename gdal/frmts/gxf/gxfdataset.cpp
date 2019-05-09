@@ -273,27 +273,21 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      we also now verify that there is a #GRID keyword before         */
 /*      passing it off to GXFOpen().  We check in the first 50K.        */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
-
-    const size_t BIGBUFSIZE = 50000;
-    char *pszBigBuf = (char *) CPLMalloc(BIGBUFSIZE);
-    const int nBytesRead =
-        static_cast<int>(VSIFReadL( pszBigBuf, 1, BIGBUFSIZE, fp ));
-    VSIFCloseL( fp );
-
+    poOpenInfo->TryToIngest(50000);
     bool bGotGrid = false;
 
-    for( int i = 0; i < nBytesRead - 5 && !bGotGrid; i++ )
+    const char* pszBigBuf = (const char*)poOpenInfo->pabyHeader;
+    for( int i = 0; i < poOpenInfo->nHeaderBytes - 5 && !bGotGrid; i++ )
     {
         if( pszBigBuf[i] == '#' && STARTS_WITH_CI(pszBigBuf+i+1, "GRID") )
-            bGotGrid = TRUE;
+            bGotGrid = true;
     }
-
-    CPLFree( pszBigBuf );
 
     if( !bGotGrid )
         return nullptr;
+
+    VSIFCloseL( poOpenInfo->fpL );
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */

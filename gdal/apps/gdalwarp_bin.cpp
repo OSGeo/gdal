@@ -94,7 +94,7 @@ containing well known text. Starting with GDAL 2.2, if the SRS has an explicit
 vertical datum that points to a PROJ.4 geoidgrids, and the input dataset is a
 single band dataset, a vertical correction will be applied to the values of the
 dataset.</dd>
-<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 2.5)
+<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 3.0)
 A PROJ string (single step operation or multiple step string
 starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
 or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default

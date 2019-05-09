@@ -1191,7 +1191,7 @@ bool GDALEEDAIDataset::ComputeQueryStrategy()
 
     if( EQUAL(m_osPixelEncoding, "PNG") ||
         EQUAL(m_osPixelEncoding, "JPEG") ||
-        EQUAL(m_osPixelEncoding, "AUTO_PNG_JPEG") )
+        EQUAL(m_osPixelEncoding, "AUTO_JPEG_PNG") )
     {
         if( nBands != 1 && nBands != 3 )
         {
@@ -1253,7 +1253,7 @@ CPLErr GDALEEDAIDataset::GetGeoTransform( double* adfGeoTransform )
 bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
 {
     m_osBaseURL = CPLGetConfigOption("EEDA_URL",
-                            "https://earthengine.googleapis.com/v1/");
+                            "https://earthengine.googleapis.com/v1alpha/");
 
     m_osAsset =
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "ASSET", "");
@@ -1658,7 +1658,7 @@ void GDALRegister_EEDAI()
 "       <Value>PNG</Value>"
 "       <Value>JPEG</Value>"
 "       <Value>GEO_TIFF</Value>"
-"       <Value>AUTO_PNG_JPEG</Value>"
+"       <Value>AUTO_JPEG_PNG</Value>"
 "       <Value>NPY</Value>"
 "   </Option>"
 "  <Option name='BLOCK_SIZE' type='integer' "

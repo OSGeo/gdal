@@ -20,34 +20,69 @@ RUN apk add --no-cache \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev postgresql-dev
 
-ARG PROJ_VERSION=master
+RUN apk add --no-cache rsync ccache
+
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+RUN \
+    mkdir -p /build_projgrids/usr/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
+    && rm -f *.zip
+
+ARG RSYNC_REMOTE
 
 # Build PROJ
+ARG PROJ_VERSION=master
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
+        echo "Finished"; \
+        export CC="ccache gcc"; \
+        export CXX="ccache g++"; \
+        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
+        ccache -M 100M; \
+    fi \
     && ./configure --prefix=/usr --disable-static --enable-lto \
     && make -j$(nproc) \
     && make install \
     && make install DESTDIR="/build_proj" \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && cd .. \
     && rm -rf proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
+# Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
-
-# Build GDAL
 RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
+    fi \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        echo "Finished"; \
+        export CC="ccache gcc"; \
+        export CXX="ccache g++"; \
+        ccache -M 1G; \
     fi \
     && mkdir gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
@@ -61,6 +96,15 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --enable-lto \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && cd ../.. \
     && rm -rf gdal \
     && mkdir -p /build_gdal_version_changing/usr/include \
@@ -82,12 +126,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
             # netCDF driver
             /build/usr/share/gdal/netcdf_config.xsd \
        ;do rm $i; done)
-
-RUN \
-    mkdir -p /build_projgrids/usr/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
-    && rm -f *.zip
 
 # Build final image
 FROM alpine:latest as runner

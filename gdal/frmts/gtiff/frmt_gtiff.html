@@ -457,11 +457,12 @@ string as the value of PCSCitationGeoKey.</p></li>
 
 <h3>Subdatasets</h3>
 
-<p>Multi-page TIFF files are exposed as subdatasets. A subdataset name is
+<p>Multi-page TIFF files are exposed as subdatasets. On opening, a subdataset name is
 GTIFF_DIR:{index}:filename.tif, where {index} starts at 1.</p>
 
-<p>Starting with GDAL 2.5.0, subdataset creation is possible by using the
-APPEND_SUBDATASET=YES creation option. Creating overviews on a multi-page
+<p>Starting with GDAL 3.0, subdataset creation is possible by using the
+APPEND_SUBDATASET=YES creation option. The filename passed to Create() / CreateCopy()
+should be the regular filename (not with GTIFF_DIR: syntax. Creating overviews on a multi-page
 TIFF is not supported.</p>
 
 <h3>About JPEG compression of RGB images </h3>

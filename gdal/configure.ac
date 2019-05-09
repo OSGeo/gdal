@@ -1985,14 +1985,11 @@ else
 
 fi
 
-if test "${HAVE_BIGTIFF}" = "yes" ; then
-  TIFF_OPTS="-DBIGTIFF_SUPPORT"
-
-  LOC_MSG([BigTIFF support enabled.])
+if test "${HAVE_BIGTIFF}" != "yes" ; then
+  AC_MSG_ERROR([libtiff >= 4.0 is required.])
 fi
 
 AC_SUBST(TIFF_SETTING,${TIFF_SETTING})
-AC_SUBST(TIFF_OPTS,${TIFF_OPTS})
 
 dnl ---------------------------------------------------------------------------
 dnl Select a libgeotiff library to use.

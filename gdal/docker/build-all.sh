@@ -19,5 +19,6 @@ esac
 
 subdirs=$(find "${SCRIPT_DIR}" -mindepth 1 -maxdepth 1 -type d)
 for d in ${subdirs}; do
+    echo "Building ${d}..."
     "${d}/build.sh" "$@";
 done

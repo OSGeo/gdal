@@ -4525,6 +4525,38 @@ def test_ogr_shape_112_delete_layer():
 
     shape_drv.DeleteDataSource(dirname)
 
+
+###############################################################################
+
+
+def test_ogr_shape_113_restore_shx_empty_shp_shx():
+
+    dirname = '/vsimem/test_ogr_shape_113_restore_shx_empty_shp_shx'
+    dbfname = dirname + "/foo.dbf"
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(dbfname)
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = 'bar'
+    lyr.CreateFeature(f)
+    ds = None
+
+    gdal.FileFromMemBuffer(dirname + '/foo.shp', '')
+    gdal.FileFromMemBuffer(dirname + '/foo.shx', '')
+
+    with gdaltest.config_option('SHAPE_RESTORE_SHX', 'YES'):
+        with gdaltest.error_handler():
+            ds = ogr.Open(dbfname)
+    assert ds
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['foo'] == 'bar'
+    ds = None
+
+    shape_drv.DeleteDataSource(dbfname)
+
+
 ###############################################################################
 
 

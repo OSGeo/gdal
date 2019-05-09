@@ -2563,8 +2563,36 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 pszCondVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, NULL);
                 if (pszCondVal == NULL)
                 {
+                    /* Needed for SENSRB */
+                    /* See https://github.com/OSGeo/gdal/issues/1520 */
+                    /* If the condition variable is not found at this level, */
+                    /* try to research it at upper levels by shortening on _ */
+                    /* separators */
+                    char* pszMDPrefixShortened = CPLStrdup(pszMDPrefix);
+                    char* pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
+                    if( pszLastUnderscore )
+                    {
+                        *pszLastUnderscore = 0;
+                        pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
+                    }
+                    while( pszLastUnderscore )
+                    {
+                        pszLastUnderscore[1] = 0;
+                        CPLFree(pszMDItemName);
+                        pszMDItemName = CPLStrdup(
+                            CPLSPrintf("%s%s", pszMDPrefixShortened, pszCondVar));
+                        pszCondVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, NULL);
+                        if( pszCondVal )
+                            break;
+                        *pszLastUnderscore = 0;
+                        pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
+                    }
+                    CPLFree(pszMDPrefixShortened);
+                }
+                if( pszCondVal == NULL )
+                {
                     CPLDebug("NITF", "Cannot find if cond variable %s",
-                             pszMDItemName);
+                            pszCondVar);
                 }
                 else if ((bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) == 0) ||
                          (!bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0))

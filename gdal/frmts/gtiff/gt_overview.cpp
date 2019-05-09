@@ -651,19 +651,6 @@ GTIFFBuildOverviews( const char * pszFilename,
                 nOXSize * static_cast<double>(nOYSize) * nBands * nDataTypeSize;
         }
 
-        if( nCompression == COMPRESSION_NONE
-            && dfUncompressedOverviewSize > 4200000000.0 )
-        {
-    #ifndef BIGTIFF_SUPPORT
-            CPLError(
-                CE_Failure, CPLE_NotSupported,
-                "The overview file would be larger than 4GB, "
-                "but this is the largest size a TIFF can be, "
-                "and BigTIFF is unavailable.  "
-                "Creation failed." );
-            return CE_Failure;
-    #endif
-        }
     /* -------------------------------------------------------------------- */
     /*      Should the file be created as a bigtiff file?                   */
     /* -------------------------------------------------------------------- */
@@ -705,17 +692,6 @@ GTIFFBuildOverviews( const char * pszFilename,
                 return CE_Failure;
             }
         }
-
-    #ifndef BIGTIFF_SUPPORT
-        if( bCreateBigTIFF )
-        {
-            CPLError(
-                CE_Warning, CPLE_NotSupported,
-                "BigTIFF requested, but GDAL built without BigTIFF "
-                "enabled libtiff, request ignored." );
-            bCreateBigTIFF = false;
-        }
-    #endif
 
         if( bCreateBigTIFF )
             CPLDebug( "GTiff", "File being created as a BigTIFF." );

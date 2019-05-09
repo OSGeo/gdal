@@ -814,7 +814,6 @@ HAVE_CHARLS
 JPEG_SETTING
 GEOTIFF_INCLUDE
 GEOTIFF_SETTING
-TIFF_OPTS
 TIFF_SETTING
 PCIDSK_INCLUDE
 PCIDSK_LIB
@@ -29677,17 +29676,11 @@ fi
 
 fi
 
-if test "${HAVE_BIGTIFF}" = "yes" ; then
-  TIFF_OPTS="-DBIGTIFF_SUPPORT"
-
-
-echo "BigTIFF support enabled."
-
+if test "${HAVE_BIGTIFF}" != "yes" ; then
+  as_fn_error $? "libtiff >= 4.0 is required." "$LINENO" 5
 fi
 
 TIFF_SETTING=${TIFF_SETTING}
-
-TIFF_OPTS=${TIFF_OPTS}
 
 
 

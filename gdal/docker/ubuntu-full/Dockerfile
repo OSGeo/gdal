@@ -5,6 +5,8 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
+ARG PROJ_INSTALL_PREFIX=/usr/local
+
 FROM ubuntu:18.04 as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -32,6 +34,14 @@ RUN apt-get update -y \
        libcfitsio-dev openjdk-8-jdk libzstd1-dev \
        libpq-dev libssl-dev libboost-dev \
        autoconf automake bash-completion libarmadillo-dev
+
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+ARG PROJ_INSTALL_PREFIX
+RUN \
+    mkdir -p /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
+    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
+    && rm -f *.zip
 
 # Build likbkea
 ARG KEA_VERSION=c6d36f3db5e4
@@ -102,27 +112,50 @@ RUN mkdir tiledb \
     && for i in /build_thirdparty/usr/lib/x86_64-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
-ARG PROJ_VERSION=master
+RUN apt-get update -y \
+    && apt-get install -y --fix-missing --no-install-recommends rsync ccache
+ARG RSYNC_REMOTE
 
 # Build PROJ
+ARG PROJ_VERSION=master
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
+        echo "Finished"; \
+        export CC="ccache gcc"; \
+        export CXX="ccache g++"; \
+        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
+        ccache -M 100M; \
+    fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \
-        ./configure --prefix=/usr/local --disable-static \
+        ./configure --prefix=${PROJ_INSTALL_PREFIX} --disable-static \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && cd .. \
     && rm -rf proj \
-    && mv /build/usr/local/lib/libproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so.15.0.0 \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so.15 \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libinternalproj.so \
-    && rm /build/usr/local/lib/libproj.*  \
-    && ln -s libinternalproj.so.15.0.0 /build/usr/local/lib/libproj.so.15 \
-    && strip -s /build/usr/local/lib/libinternalproj.so.15.0.0 \
-    && for i in /build/usr/local/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && PROJ_SO=$(readlink /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | sed "s/libproj\.so\.//") \
+    && PROJ_SO_FIRST=$(echo $PROJ_SO | awk 'BEGIN {FS="."} {print $1}') \
+    && mv /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so \
+    && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST} \
+    && strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
+    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
@@ -140,6 +173,19 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal/gdal \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        echo "Finished"; \
+        # Little trick to avoid issues with Python bindings
+        printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
+        chmod +x ccache_gcc.sh; \
+        printf "#!/bin/sh\nccache g++ \$*" > ccache_g++.sh; \
+        chmod +x ccache_g++.sh; \
+        export CC=$PWD/ccache_gcc.sh; \
+        export CXX=$PWD/ccache_g++.sh; \
+        ccache -M 1G; \
+    fi \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
@@ -152,6 +198,15 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-crypto \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        ccache -s; \
+        echo "Uploading cache..."; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
+        echo "Finished"; \
+        rm -rf $HOME/.ccache; \
+        unset CC; \
+        unset CXX; \
+    fi \
     && cd ../.. \
     && rm -rf gdal \
     && mkdir -p /build_gdal_python/usr/lib \
@@ -191,26 +246,28 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libarmadillo8
 
 # Order layers starting with less frequently varying ones
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+ARG PROJ_INSTALL_PREFIX
 RUN \
-    mkdir -p /usr/local/share/proj \
+    mkdir -p ${PROJ_INSTALL_PREFIX}/share/proj \
     && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -j -u -o proj-datumgrid-latest.zip  -d /usr/local/share/proj \
+    && unzip -j -u -o proj-datumgrid-latest.zip  -d ${PROJ_INSTALL_PREFIX}/share/proj \
     && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-europe-latest.zip \
-    && unzip -j -u -o proj-datumgrid-europe-latest.zip -d /usr/local/share/proj \
+    && unzip -j -u -o proj-datumgrid-europe-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
     && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-oceania-latest.zip \
-    && unzip -j -u -o proj-datumgrid-oceania-latest.zip -d /usr/local/share/proj \
+    && unzip -j -u -o proj-datumgrid-oceania-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
     && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-world-latest.zip  \
-    && unzip -j -u -o proj-datumgrid-world-latest.zip -d /usr/local/share/proj \
+    && unzip -j -u -o proj-datumgrid-world-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
     && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-north-america-latest.zip \
-    && unzip -j -u -o proj-datumgrid-north-america-latest.zip -d /usr/local/share/proj  \
+    && unzip -j -u -o proj-datumgrid-north-america-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj  \
     && rm -f *.zip
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
-COPY --from=builder  /build/usr/local/share/proj/ /usr/local/share/proj/
-COPY --from=builder  /build/usr/local/include/ /usr/local/include/
-COPY --from=builder  /build/usr/local/bin/ /usr/local/bin/
-COPY --from=builder  /build/usr/local/lib/ /usr/local/lib/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/

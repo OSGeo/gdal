@@ -2251,14 +2251,20 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                      psOptions->pszFormat);
         }
 
-        const char* pszOGRCompatFormat = psOptions->pszFormat;
+        CPLString osOGRCompatFormat(psOptions->pszFormat);
         // Special processing for non-unified drivers that have the same name
-        // as GDAL and OGR drivers
-        // Other candidates could be VRT, SDTS, OGDI and PDS, but they don't
-        // have write capabilities.
-        if( EQUAL(pszOGRCompatFormat, "GMT") )
-            pszOGRCompatFormat = "OGR_GMT";
-        poDriver = poDM->GetDriverByName(pszOGRCompatFormat);
+        // as GDAL and OGR drivers. GMT should become OGR_GMT.
+        // Other candidates could be VRT, SDTS and PDS, but they don't
+        // have write capabilities. But do the substitution to get a sensible
+        // error message
+        if( EQUAL(osOGRCompatFormat, "GMT") ||
+            EQUAL(osOGRCompatFormat, "VRT") |
+            EQUAL(osOGRCompatFormat, "SDTS") ||
+            EQUAL(osOGRCompatFormat, "PDS") )
+        {
+            osOGRCompatFormat = "OGR_" + osOGRCompatFormat;
+        }
+        poDriver = poDM->GetDriverByName(osOGRCompatFormat);
         if( poDriver == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,

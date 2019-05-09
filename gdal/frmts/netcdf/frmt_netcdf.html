@@ -343,9 +343,9 @@ The driver has undergone significant changes in GDAL 1.9.0, see NEWS file and <a
 Since GDAL 2.4, and with Linux kernel &gt;=4.3 and libnetcdf &gt;=4.5,
 read operations on /vsi file systems are supported.<p>
 
-<h2>NetCDF-4 groups support on reading (GDAL >= 2.5.0)</h2>
+<h2>NetCDF-4 groups support on reading (GDAL >= 3.0)</h2>
 
-The driver has undergone significant changes in GDAL 2.5.0 to support NetCDF-4 groups on reading:
+The driver has undergone significant changes in GDAL 3.0 to support NetCDF-4 groups on reading:
 <ul>
 <li><p>Explore recursively all nested groups to create the subdatasets list</p></li>
 <li><p>Subdatasets in nested groups use the /group1/group2/.../groupn/var standard NetCDF-4 convention, except for variables in the root group which do not have a leading slash for backward compatibility with the NetCDF-3 driver</p></li>

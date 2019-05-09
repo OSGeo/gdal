@@ -26,6 +26,8 @@ cpp/testmultithreadedwriting
 cpp/testperfcopywords
 cpp/testthreadcond
 cpp/testvirtualmem
+cpp/test_osr_set_proj_search_paths
+cpp/bug1488
 ogr/tmp
 ogr/data/delete_nas.gfs
 ogr/data/replace_nas.gfs

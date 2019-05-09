@@ -141,7 +141,7 @@ void OSRCleanupTLSContext()
 /** \brief Set the search path(s) for PROJ resource files.
  * 
  * @param papszPaths NULL terminated list of directory paths.
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 void OSRSetPROJSearchPaths( const char* const * papszPaths )
 {

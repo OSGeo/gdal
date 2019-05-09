@@ -39,7 +39,7 @@ interface in the "xml:PDS4" metadata domain.</p>
 
 <h2>Open options (vector only)</h2>
 
-(Starting with GDAL 2.5.0)
+(Starting with GDAL 3.0)
 
 <p>When opening a PDS4 vector dataset, the following open options are available:</p>
 
@@ -93,8 +93,8 @@ Array_2D_Spectrum/Array_3D/Array_3D_Image/Array_3D_Movie/Array_3D_Spectrum.
 To set the XML element that defines the type of array. Defaults to Array_3D_Image.
 Using a Array_2D* for a multiband image is not supported. When using a
 Array_2D* value, INTERLEAVE will be ignored.</li>
-<li> <b>ARRAY_IDENTIFIER</b>=string. (GDAL &gt;= 2.5.0) Identifier to put in the Array element.</li>
-<li> <b>UNIT</b>=string. (GDAL &gt;= 2.5.0) Content of the Element_Array.unit.
+<li> <b>ARRAY_IDENTIFIER</b>=string. (GDAL &gt;= 3.0) Identifier to put in the Array element.</li>
+<li> <b>UNIT</b>=string. (GDAL &gt;= 3.0) Content of the Element_Array.unit.
 If not provided, the unit of the source band in case of copying from another
 raster will be used (if present on the source band).</li>
 </ul>
@@ -131,7 +131,7 @@ bounding box</li>
 
 <h2>Layer creation options (vector/table datasets)</h2>
 
-(Starting with GDAL 2.5.0)
+(Starting with GDAL 3.0)
 
 When creating a PDS4 vector dataset, or appending a new table to an existing
 table, the following layer creation options are available:
@@ -175,7 +175,7 @@ If several Array objects are present in the label, they will be reported as
 separate subdatasets (typically the main subdataset is an Array3D, and
 backplanes are represented as Array2D).</p>
 
-<p>Since GDAL 2.5.0, creation of new datasets with
+<p>Since GDAL 3.0, creation of new datasets with
 subdatasets is supported (through the APPEND_SUBDATASET=YES creation option).
 One important restriction is that, given that the georeferencing information in
 the PDS4 XML label is global for the whole dataset, all subdatasets must share

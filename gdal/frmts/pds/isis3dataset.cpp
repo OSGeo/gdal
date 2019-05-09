@@ -3591,7 +3591,15 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
                 {
                     CPLString osVal = oItem.ToString();
                     const char* pszVal = osVal.c_str();
-                    if( nFirstPos < WIDTH && nCurPos + strlen(pszVal) > WIDTH )
+                    if( pszVal[0] == '\0' ||
+                        strchr(pszVal, ' ') || strstr(pszVal, "\\n") ||
+                        strstr(pszVal, "\\r") )
+                    {
+                        osVal.replaceAll("\\n", "\n");
+                        osVal.replaceAll("\\r", "\r");
+                        VSIFPrintfL(fp, "\"%s\"", osVal.c_str());
+                    }
+                    else if( nFirstPos < WIDTH && nCurPos + strlen(pszVal) > WIDTH )
                     {
                         if( idx > 0 )
                         {
