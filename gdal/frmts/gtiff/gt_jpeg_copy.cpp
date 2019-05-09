@@ -35,10 +35,6 @@
 #  include "vrt/vrtdataset.h"
 #endif
 
-#ifndef BIGTIFF_SUPPORT
-#define tmsize_t tsize_t
-#endif
-
 #include <algorithm>
 
 // Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly

@@ -294,12 +294,9 @@ JPEG12_SUPPORTED = 1
 #PNGDIR = c:/projects/libpng-1.0.8
 #PNG_LIB = $(PNGDIR)/libpng.lib
 
-# if using an external libtiff library
+# if using an external libtiff library. Must be libtiff >= 4.0
 #TIFF_INC =	-Ic:/warmerda/libtiff/libtiff
 #TIFF_LIB =	c:/warmerda/libtiff/libtiff/libtiff_i.lib
-# uncomment following line, if you have libtiff version >= 4.0 to
-# enable BigTIFF support
-#TIFF_OPTS=	-DBIGTIFF_SUPPORT
 
 # if using an external libgeotiff library
 #GEOTIFF_INC =   -Ic:/warmerda/libgeotiff -Ic:/warmerda/libgeotiff/libxtiff

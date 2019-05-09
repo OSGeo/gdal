@@ -1061,11 +1061,6 @@ def test_tiff_read_online_2():
 
 def test_tiff_read_huge4GB():
 
-    # Need libtiff 4.X anyway
-    md = gdal.GetDriverByName('GTiff').GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
         ds = gdal.Open('data/huge4GB.tif')
         assert ds is not None
@@ -1088,10 +1083,6 @@ def test_tiff_read_huge4GB():
 
 
 def test_tiff_read_bigtiff():
-
-    md = gdal.GetDriverByName('GTiff').GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdal.Open('data/byte_bigtiff_strip5lines.tif')
     cs = ds.GetRasterBand(1).Checksum()
