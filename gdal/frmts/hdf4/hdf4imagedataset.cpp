@@ -117,6 +117,7 @@ class HDF4ImageDataset final: public HDF4Dataset
     int         iYDim;
     int         iBandDim;
     int         i4Dim;
+    int         i5Dim;
     int         nBandCount;
     char        **papszLocalMetadata;
     uint8       aiPaletteData[N_COLOR_ENTRIES][3]; // XXX: Static array for now
@@ -146,6 +147,7 @@ class HDF4ImageDataset final: public HDF4Dataset
     void                GetImageDimensions( char * );
     void                GetSwatAttrs( int32 );
     void                GetGridAttrs( int32 hGD );
+    void                GetOpenOptions(char **, HDF4ImageDataset *);
     void                CaptureNRLGeoTransform(void);
     void                CaptureL1GMTLInfo(void);
     void                CaptureCoastwatchGCTPInfo(void);
@@ -326,6 +328,9 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLErr eErr = CE_None;
     int32 aiStart[H4_MAX_NC_DIMS] = {};
     int32 aiEdges[H4_MAX_NC_DIMS] = {};
+    int dim_4 = 0;
+    int dim_5 = 0;
+    int dim_3 = 0;
 
     switch ( poGDS->iDatasetType )
     {
@@ -361,16 +366,74 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           */
           switch ( poGDS->iRank )
           {
-            case 4:     // 4Dim: volume-time
-                        // FIXME: needs sample file. Does not work currently.
-              aiStart[3] = 0;  // range: 0--aiDimSizes[3]-1
-              aiEdges[3] = 1;
-              aiStart[2] = 0;  // range: 0--aiDimSizes[2]-1
-              aiEdges[2] = 1;
-              aiStart[1] = nYOff;
-              aiEdges[1] = nYSize;
-              aiStart[0] = nBlockXOff;
-              aiEdges[0] = nBlockXSize;
+          case 5:
+              dim_4 = poGDS->aiDimSizes[poGDS->i4Dim];
+              dim_5 = poGDS->aiDimSizes[poGDS->i5Dim];
+              dim_3 = poGDS->aiDimSizes[poGDS->iBandDim];
+              if(nBand - 1 < dim_5)
+                  {
+                      aiStart[poGDS->i5Dim] = nBand - 1;
+                      aiStart[poGDS->i4Dim]
+                          = aiStart[poGDS->iBandDim]
+                          = aiStart[poGDS->iYDim] 
+                          = aiStart[poGDS->iXDim]
+                          = 0;
+                  }
+              else if((nBand - 1) >= dim_5 &&
+                      (nBand - 1) < dim_5 * dim_4)
+                  {
+                      aiStart[poGDS->i5Dim] = (nBand - 1) % dim_5;
+                      aiStart[poGDS->i4Dim] = (nBand - 1) / dim_5;
+                      aiStart[poGDS->iBandDim]
+                          = aiStart[poGDS->iYDim]
+                          = aiStart[poGDS->iXDim] = 0;
+                  }
+              else if((nBand - 1) >= dim_5 * dim_4 &&
+                      (nBand - 1) < dim_5 * dim_4 * dim_3)
+                  {
+
+                      int sum45 = (nBand - 1)
+                          - aiStart[poGDS->iBandDim] * (dim_5 * dim_4);
+                      aiStart[poGDS->i5Dim] = sum45 % dim_5;
+                      aiStart[poGDS->i4Dim] = sum45 / dim_5;
+                      aiStart[poGDS->iBandDim]
+                          = (nBand - 1) / (dim_5 * dim_4);
+                      aiStart[poGDS->iYDim] = aiStart[poGDS->iXDim] = 0;
+                  }
+              aiEdges[poGDS->iXDim] = nBlockXSize;
+              aiEdges[poGDS->iYDim] = nYSize;
+              aiEdges[poGDS->i5Dim]
+                  = aiEdges[poGDS->i4Dim]
+                  = aiEdges[poGDS->iBandDim]
+                  = 1;
+
+              break;
+              
+          case 4:
+              dim_4 = poGDS->aiDimSizes[poGDS->i4Dim];
+              dim_3 = poGDS->aiDimSizes[poGDS->iBandDim];
+
+              if(nBand - 1 < dim_4)
+                  {
+                      aiStart[poGDS->i4Dim] = nBand - 1;
+                      aiStart[4] = aiStart[poGDS->iBandDim]
+                          = aiStart[poGDS->iYDim]
+                          = aiStart[poGDS->iXDim]
+                          = 0;
+                  }
+              else if((nBand - 1) >= dim_4 &&
+                      (nBand - 1) < dim_3 * dim_4)
+                  {
+                      aiStart[poGDS->iBandDim] = (nBand - 1) / dim_4;
+                      aiStart[poGDS->i4Dim] = (nBand - 1) % dim_4;
+                      aiStart[4] =
+                          aiStart[poGDS->iYDim] =
+                          aiStart[poGDS->iXDim] = 0;
+                  }
+
+              aiEdges[poGDS->iXDim] = nBlockXSize;
+              aiEdges[poGDS->iYDim] = nYSize;
+              aiEdges[poGDS->i4Dim] = aiEdges[poGDS->iBandDim] = 1;
               break;
             case 3: // 3Dim: volume
               aiStart[poGDS->iBandDim] = nBand - 1;
@@ -2938,6 +3001,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     CSLDestroy( papszSubdatasetName );
 
+    char** papszOpenOptions = poOpenInfo->papszOpenOptions;
+
+    
     switch ( poDS->iDatasetType )
     {
       case HDF4_EOS:
@@ -3025,6 +3091,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
                 poDS->GetImageDimensions( pszDimList );
+                if (papszOpenOptions != NULL) {
+                    poDS->GetOpenOptions(papszOpenOptions, poDS);
+                }
 
 #ifdef DEBUG
                 CPLDebug( "HDF4Image",
@@ -3127,6 +3196,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                           poDS->pszFieldName, szDimList);
 #endif
                 poDS->GetImageDimensions( szDimList );
+                if (papszOpenOptions != NULL) {
+                    poDS->GetOpenOptions(papszOpenOptions, poDS);
+                }
 
                 int32 tilecode = 0;
                 int32 tilerank = 0;
@@ -3490,9 +3562,20 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                   }
               }
               poDS->nBandCount = poDS->aiDimSizes[poDS->iBandDim];
+              if (papszOpenOptions != NULL) {
+                  poDS->GetOpenOptions(papszOpenOptions, poDS);
+              }              
               break;
             case 4: // FIXME
               poDS->nBandCount = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
+              if (papszOpenOptions != NULL) {
+                  poDS->GetOpenOptions(papszOpenOptions, poDS);
+              }
+              break;
+            case 5:
+              if (papszOpenOptions != NULL) {
+                  poDS->GetOpenOptions(papszOpenOptions, poDS);
+              }
               break;
             default:
               break;
@@ -4113,4 +4196,53 @@ void GDALRegister_HDF4Image()
     poDriver->pfnCreate = HDF4ImageDataset::Create;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
+}
+
+/************************************************************************/
+/*                            GetOpenOptions()                          */
+/************************************************************************/
+void HDF4ImageDataset::GetOpenOptions(char** papszOpenOptions, HDF4ImageDataset* poDS)
+{
+    const char* pszShapeEncoding = NULL;
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTERXDIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->iXDim = atoi(pszShapeEncoding);
+    }
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTERYDIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->iYDim = atoi(pszShapeEncoding);
+    }
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTERBDIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->iBandDim = atoi(pszShapeEncoding);
+    }
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTER4DIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->i4Dim = atoi(pszShapeEncoding);
+    }
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTER5DIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->i5Dim = atoi(pszShapeEncoding);
+    }    
+    
+    if( poDS->iRank == 3 && poDS->iBandDim != -1 )
+    {
+        poDS->nBandCount = poDS->aiDimSizes[poDS->iBandDim];
+        poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];        
+    }
+    
+    if( poDS->iRank == 4 && poDS->iBandDim != -1 )
+    {
+        poDS->nBandCount = poDS->aiDimSizes[poDS->iBandDim] *
+            poDS->aiDimSizes[poDS->i4Dim];
+        poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];        
+    }
+
+    if( poDS->iRank == 5 && poDS->iBandDim != -1 )
+    {
+        poDS->nBandCount = poDS->aiDimSizes[poDS->iBandDim] *
+            poDS->aiDimSizes[poDS->i4Dim] *
+            poDS->aiDimSizes[poDS->i5Dim];
+        poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];        
+    }        
 }
