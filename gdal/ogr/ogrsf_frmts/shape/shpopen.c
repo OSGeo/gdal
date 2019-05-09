@@ -1059,7 +1059,6 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
         psHooks->Error( pszMessage );
         free( pszMessage );
 
-        psHooks->FClose( fpSHX );
         psHooks->FClose( fpSHP );
 
         free( pabyBuf );
@@ -1075,6 +1074,7 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     pabySHXHeader = STATIC_CAST(char *, malloc ( 100 ));
     memcpy( pabySHXHeader, pabyBuf, 100 );
     psHooks->FWrite( pabySHXHeader, 100, 1, fpSHX );
+    free ( pabyBuf );
 
     while( nCurrentSHPOffset < nSHPFilesize )
     {
@@ -1118,7 +1118,6 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     psHooks->FClose( fpSHP );
     psHooks->FClose( fpSHX );
 
-    free ( pabyBuf );
     free ( pszFullname );
     free ( pabySHXHeader );
 
