@@ -72,7 +72,7 @@ namespace nccfdriver
 		if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr) { delete[] attrVal; return; }
 
 		// Find geometry type
-		this->type = getGeometryType(ncId, geoVarId); 
+		this->type = nccfdriver::getGeometryType(ncId, geoVarId); 
 		delete[] attrVal;
 
 		// Find a list of node counts and part node count
@@ -256,6 +256,74 @@ namespace nccfdriver
 		else return false;
 	}
 
+	/* serializeToWKB(SGeometry * sg)
+	 * Takes the geometry in SGeometry at a given index and converts it into WKB format.
+	 * Converting SGeometry into WKB automatically allocates the required buffer space
+	 * and returns a buffer that MUST be free'd
+	 */
+	void * SGeometry::serializeToWKB(int featureInd, size_t& wkbSize)
+	{
+		if(featureInd < 0) return nullptr;
+		void * ret = nullptr;
+		// Serialization occurs differently depending on geometry
+		// The memory requirements also differ between geometries
+		switch(this->getGeometryType())
+		{
+			case POLYGON:
+				// A polygon has:
+				// 1 byte header
+				// 4 byte Type (=3 for polygon)
+				// 4 byte ring count (1 (exterior) or 2 (exterior and interior)
+				// For each ring:
+				// 4 byte point count, 8 byte double x point count x 2 dimension
+				// (This is equivalent to requesting enough for all points and a point count header for each point)
+				// (Or 8 byte double x node count x 2 dimension + 4 byte point count x part_count)
+				// At the end: EOF
+
+				int8_t header = 1;
+				int32_t t = wkbPolygon;
+				int32_t rc = parts_count[featureInd];
+				int pc = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous
+				const int32_t end = EOF;
+				
+				// case: no part node counts, no interior rings
+				if(this->pnode_counts.size() == 0)
+				{
+					
+				}
+
+				else
+				{
+					wkbSize = 1 + 4 + 4 + 8 * node_counts[featureInd] * 2 + 4 * rc + 4;
+					ret = new int8_t[wkbSize];
+					void * writer = ret;
+					writer = mempcpy(writer, &header, 1);
+					writer = mempcpy(writer, &t, 4);
+					writer = mempcpy(writer, &rc, 4);
+					
+					int32_t parts = pnode_counts[pc];
+					pc++;
+					writer = mempcpy(writer, &parts, 4);	
+						
+					// Check for dimension error / touple order < 2 still to implement					
+
+					for(int node = 0; node < parts; node++)
+					{
+						Point * pt= this->next_pt();
+						double x = (*pt)[0]; double y = (*pt)[1];
+						writer = mempcpy(writer, &x, 8);
+						writer = mempcpy(writer, &y, 8);
+					}
+
+					next_geometry();
+					memcpy(writer, &end, 4);
+				}
+
+				break;
+		}
+
+		return ret;
+	}
 	// Helpers
 	// following is a short hand for a clean up and exit, since goto isn't allowed
 	int getCFMinorVersion(int ncid)
@@ -367,5 +435,4 @@ namespace nccfdriver
 		// stub
 		return -1; 
 	}
-
 }

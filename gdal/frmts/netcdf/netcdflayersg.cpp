@@ -37,6 +37,7 @@ namespace nccfdriver
 
 		return ret;	
 	}	
+
 }
 
 CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
@@ -56,10 +57,10 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 		delete cont;
 	}
 
-	for(size_t si = 0; si < vidList.size(); si++)
-	{
-		LoadSGVarIntoLayer(ncid, vidList[si]);
-	}
+//	for(size_t si = 0; si < vidList.size(); si++)
+//	{
+		LoadSGVarIntoLayer(ncid, vidList[0]);
+//	}
 	return CE_None;
 }
 
@@ -69,16 +70,34 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType());
 
 	// Geometry Type invalid, avoid further processing
-	if(owgt == wkbUnknown)
+	if(owgt == wkbNone)
 	{
+		delete sg;
 		return CE_None;	// change to appropriate error
 	}
+	
 
-	bool unt = false;
 	char baseName[256];
 	nc_inq_varname(ncid, nc_basevarId, baseName);
 
+	OGRFeatureDefn * defn = new OGRFeatureDefn(baseName);
+	defn->Reference();
+	defn->SetGeomType(owgt);
+
 	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr);
+	
+//	for(int featCt = 0; featCt < sg->get_geometry_count(); featCt++)
+//	{
+		OGRPolygon * poly = new OGRPolygon;
+		int out; size_t r_size = 0;
+		void * wkb_rep = sg->serializeToWKB(0, r_size);
+		poly->importFromWkb((const unsigned char*)wkb_rep, r_size, wkbVariantIso, out);
+		OGRFeature * feat = new OGRFeature(defn);
+		feat -> SetGeometryDirectly(poly);
+		feat->SetFID(0);
+		delete wkb_rep;
+		poL->AddSimpleGeometryFeature(feat);
+//	}
 
 	papoLayers = (netCDFLayer**)reallocarray(papoLayers, nLayers + 1, sizeof(netCDFLayer *)); 
 	papoLayers[nLayers] = poL;

@@ -112,6 +112,11 @@ namespace nccfdriver
 		 */
 		bool getValid() { return this->valid; }
 
+		/*
+		 *
+		 */
+		void * serializeToWKB(int featureInd, size_t& wkbSize);
+
 		/* ncID - as used in netcdf.h
 		 * baseVarId - the id of a variable with a geometry container attribute 
 		 */

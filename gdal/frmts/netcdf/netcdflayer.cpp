@@ -1175,8 +1175,16 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
 OGRFeature *netCDFLayer::GetNextFeature()
 {
+    if(this->m_sgFeatureList.size() > 0)
+    {
+	OGRFeature * ft = m_sgFeatureList[m_sgFeatureList.size() - 1];	
+	m_sgFeatureList.pop_back();
+	return ft;
+    }
+
     while( true )
     {
+
         OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == nullptr )
             return nullptr;
