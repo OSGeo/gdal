@@ -76,7 +76,12 @@ class HDF5ImageDataset : public HDF5Dataset
     hsize_t      *maxdims;
     HDF5GroupObjects *poH5Objects;
     int          ndims;
-    int          dimensions;
+	int          dimensions;
+    int          iXDim;
+    int          iYDim;
+    int          iBandDim;
+    int          i4Dim;
+    int          i5Dim;    
     hid_t        dataset_id;
     hid_t        dataspace_id;
     hsize_t      size;
@@ -88,6 +93,7 @@ class HDF5ImageDataset : public HDF5Dataset
     bool         bHasGeoTransform;
 
     CPLErr CreateODIMH5Projection();
+    void   GetOpenOptions(char **, HDF5ImageDataset *);
 
 public:
     HDF5ImageDataset();
@@ -118,8 +124,8 @@ public:
                GetCSKProductType() == PROD_CSK_L1A &&
                ndims == 3;
     }
-    int GetYIndex() const { return IsComplexCSKL1A() ? 0 : ndims - 2; }
-    int GetXIndex() const { return IsComplexCSKL1A() ? 1 : ndims - 1; }
+    int GetYIndex() const; // { return IsComplexCSKL1A() ? 0 : ndims - 2; }
+    int GetXIndex() const; // { return IsComplexCSKL1A() ? 1 : ndims - 1; }
 
     /**
      * Identify if the subdataset has a known product format
@@ -172,7 +178,14 @@ HDF5ImageDataset::HDF5ImageDataset() :
     maxdims(nullptr),
     poH5Objects(nullptr),
     ndims(0),
-    dimensions(0),
+	dimensions(0),
+
+    iXDim(-1),
+    iYDim(-1),
+    iBandDim(-1),
+    i4Dim(-1),
+    i5Dim(-1),
+
     dataset_id(-1),
     dataspace_id(-1),
     size(0),
@@ -355,9 +368,16 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else if( poGDS->ndims == 3 )
     {
         rank = 3;
-        offset[0] = nBand - 1;
-        count[0] = 1;
-        col_dims[0] = 1;
+        if (poGDS->iBandDim > 0) {
+            offset[poGDS->iBandDim]   = nBand-1;
+            count[poGDS->iBandDim]    = 1;
+            col_dims[poGDS->iBandDim] = 1;            
+        }
+        else {
+            offset[0]   = nBand-1;
+            count[0]    = 1;
+            col_dims[0] = 1;
+        }
     }
     // Defaults to rank = 2;
 
@@ -541,17 +561,26 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
     // Check if the hdf5 is a well known product type
     poDS->IdentifyProductType();
 
-    poDS->nRasterYSize =
-        static_cast<int>(poDS->dims[poDS->GetYIndex()]);  // nRows
-    poDS->nRasterXSize =
-        static_cast<int>(poDS->dims[poDS->GetXIndex()]);  // nCols
+    char** papszOpenOptions = poOpenInfo->papszOpenOptions;
+    
+    if (papszOpenOptions != NULL) {
+        poDS->GetOpenOptions(papszOpenOptions, poDS);
+    }
+
+    poDS->nRasterYSize = static_cast<int>(poDS->dims[poDS->GetYIndex()]); // nRows
+    poDS->nRasterXSize = static_cast<int>(poDS->dims[poDS->GetXIndex()]); // nCols
     if( poDS->IsComplexCSKL1A() )
     {
         poDS->nBands = static_cast<int>(poDS->dims[2]);
     }
     else if( poDS->ndims == 3 )
     {
-        poDS->nBands = static_cast<int>(poDS->dims[0]);
+        if (poDS->iBandDim > 0) {
+            poDS->nBands=static_cast<int>(poDS->dims[poDS->iBandDim]);
+        }
+        else {
+            poDS->nBands=static_cast<int>(poDS->dims[0]);
+        }
     }
     else
     {
@@ -1247,5 +1276,78 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
             // Free the returned coordinates.
             CPLFree(pdCornerCoordinates);
         }
+    }
+}
+
+/**
+ *                            GetOpenOptions()                          
+ */
+void HDF5ImageDataset::GetOpenOptions(char **papszOpenOptions,
+                                      HDF5ImageDataset *poDS)
+{
+    const char* pszShapeEncoding = NULL;
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTERXDIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->iXDim = atoi(pszShapeEncoding);
+    }
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTERYDIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->iYDim = atoi(pszShapeEncoding);
+    }
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTERBDIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->iBandDim = atoi(pszShapeEncoding);
+    }
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTER4DIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->i4Dim = atoi(pszShapeEncoding);
+    }
+    pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTER5DIM");
+    if(pszShapeEncoding != NULL ) {
+      poDS->i5Dim = atoi(pszShapeEncoding);
+    }    
+    
+    if( poDS->ndims == 3 && poDS->iBandDim != -1 )
+    {
+        poDS->nBands = (int) poDS->dims[poDS->iBandDim];        
+    }
+    
+    if( poDS->ndims == 4 && poDS->iBandDim != -1 )
+    {
+        poDS->nBands = (int) (poDS->dims[poDS->iBandDim] *
+                              poDS->dims[poDS->i4Dim]);
+    }
+
+    if( poDS->ndims == 5 && poDS->iBandDim != -1 )
+    {
+        poDS->nBands = (int) (poDS->dims[poDS->iBandDim] *
+                              poDS->dims[poDS->i4Dim] *
+                              poDS->dims[poDS->i5Dim]);
+    }        
+}
+
+int HDF5ImageDataset::GetYIndex() const
+{
+    if (IsComplexCSKL1A()) {
+        return 0;
+    }
+    else if (iYDim > -1) {
+        return iYDim;
+    }
+    else {
+        return ndims - 2;
+    }
+}
+
+int HDF5ImageDataset::GetXIndex() const
+{
+    if (IsComplexCSKL1A()) {
+        return 0;
+    }
+    else if (iXDim > -1) {
+        return iXDim;
+     }
+    else {
+        return ndims - 1;
     }
 }
