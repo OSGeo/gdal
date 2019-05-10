@@ -1895,9 +1895,12 @@ bool ENVIDataset::ReadHeader( VSILFILE *fpHdr )
 
         if( iEqual != std::string::npos && iEqual > 0 )
         {
-            const char *pszValue = osWorkingLine + iEqual + 1;
-            while( *pszValue == ' ' || *pszValue == '\t' )
-                pszValue++;
+            CPLString osValue(osWorkingLine.substr(iEqual + 1));
+            auto found = osValue.find_first_not_of(" \t");
+            if( found != std::string::npos )
+                osValue = osValue.substr(found);
+            else
+                osValue.clear();
 
             osWorkingLine.resize(iEqual);
             iEqual --;
@@ -1916,7 +1919,7 @@ bool ENVIDataset::ReadHeader( VSILFILE *fpHdr )
                     osWorkingLine[i] = '_';
             }
 
-            m_aosHeader.SetNameValue(osWorkingLine, pszValue);
+            m_aosHeader.SetNameValue(osWorkingLine, osValue);
         }
     }
 
