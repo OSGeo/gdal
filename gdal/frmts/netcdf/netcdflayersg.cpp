@@ -57,10 +57,11 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 		delete cont;
 	}
 
-//	for(size_t si = 0; si < vidList.size(); si++)
-//	{
+	// To still do: support multiple geometry containers
+	if(vidList.size() != 0)
+	{
 		LoadSGVarIntoLayer(ncid, vidList[0]);
-//	}
+	}
 	return CE_None;
 }
 
@@ -86,18 +87,18 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 
 	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr);
 	
-//	for(int featCt = 0; featCt < sg->get_geometry_count(); featCt++)
-//	{
+	for(int featCt = 0; featCt < sg->get_geometry_count(); featCt++)
+	{
 		OGRPolygon * poly = new OGRPolygon;
 		int out; size_t r_size = 0;
-		void * wkb_rep = sg->serializeToWKB(0, r_size);
+		void * wkb_rep = sg->serializeToWKB(featCt, r_size);
 		poly->importFromWkb((const unsigned char*)wkb_rep, r_size, wkbVariantIso, out);
 		OGRFeature * feat = new OGRFeature(defn);
 		feat -> SetGeometryDirectly(poly);
 		feat->SetFID(0);
 		delete wkb_rep;
 		poL->AddSimpleGeometryFeature(feat);
-//	}
+	}
 
 	papoLayers = (netCDFLayer**)reallocarray(papoLayers, nLayers + 1, sizeof(netCDFLayer *)); 
 	papoLayers[nLayers] = poL;
