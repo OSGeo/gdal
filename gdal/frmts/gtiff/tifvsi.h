@@ -38,6 +38,7 @@
 #include "tiffio.h"
 
 TIFF* VSI_TIFFOpen( const char* name, const char* mode, VSILFILE* fp );
+TIFF* VSI_TIFFOpenChild( TIFF* parent ); // the returned handle must be closed before the parent. They share the same underlying VSILFILE
 VSILFILE* VSI_TIFFGetVSILFile( thandle_t th );
 int VSI_TIFFFlushBufferedWrite( thandle_t th );
 int VSI_TIFFHasCachedRanges( thandle_t th );
