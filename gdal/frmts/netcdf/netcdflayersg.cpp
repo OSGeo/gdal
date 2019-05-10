@@ -89,13 +89,40 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	
 	for(int featCt = 0; featCt < sg->get_geometry_count(); featCt++)
 	{
-		OGRPolygon * poly = new OGRPolygon;
+		OGRGeometry * featureDesc;
+
+		switch(owgt)
+		{		
+			case wkbPoint:
+				featureDesc = new OGRPoint;
+				break;
+			case wkbLineString:
+				featureDesc = new OGRLineString;	
+				break;
+			case wkbPolygon:
+				featureDesc = new OGRPolygon;
+				break;
+			case wkbMultiPoint:
+				featureDesc = new OGRMultiPoint;
+				break;
+			case wkbMultiLineString:
+				featureDesc = new OGRMultiLineString;
+				break;
+			case wkbMultiPolygon:
+				featureDesc = new OGRMultiPolygon;
+				break;
+			default:
+				// Unsupported feature type?
+				// Still: to crash
+				break;
+		}
+
 		int out; size_t r_size = 0;
 		void * wkb_rep = sg->serializeToWKB(featCt, r_size);
-		poly->importFromWkb((const unsigned char*)wkb_rep, r_size, wkbVariantIso, out);
+		featureDesc->importFromWkb((const unsigned char*)wkb_rep, r_size, wkbVariantIso, out);
 		OGRFeature * feat = new OGRFeature(defn);
-		feat -> SetGeometryDirectly(poly);
-		feat->SetFID(0);
+		feat -> SetGeometryDirectly(featureDesc);
+		feat->SetFID(featCt);
 		delete wkb_rep;
 		poL->AddSimpleGeometryFeature(feat);
 	}
