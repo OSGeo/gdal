@@ -5037,6 +5037,27 @@ def test_tiff_write_134():
             ds = None
             gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
+    # Error cases
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1', 'PHOTOMETRIC=PALETTE'])
+    assert gdal.GetLastErrorMsg() != ''
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        # Too many elements
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1,2'])
+    assert gdal.GetLastErrorMsg() != ''
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        # Too many elements
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1', 'NBITS=7'])
+    assert gdal.GetLastErrorMsg() != ''
+
 ###############################################################################
 # Test clearing GCPs (#5945)
 
