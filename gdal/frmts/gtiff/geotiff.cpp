@@ -8790,6 +8790,41 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
 /*                          DiscardLsb()                                */
 /************************************************************************/
 
+template<class T> static void DiscardLsbT(GByte* pabyBuffer, 
+                                         GPtrDiff_t nBytes,
+                                         int iBand,
+                                         int nBands,
+                                         uint16 nPlanarConfig,
+                                         const GTiffDataset::MaskOffset* panMaskOffsetLsb)
+{
+    if( nPlanarConfig == PLANARCONFIG_SEPARATE )
+    {
+        const int nMask = panMaskOffsetLsb[iBand].nMask;
+        const int nOffset = panMaskOffsetLsb[iBand].nOffset;
+        for( decltype(nBytes) i = 0; i < nBytes/2; ++i )
+        {
+            reinterpret_cast<T*>(pabyBuffer)[i] =
+                static_cast<T>(
+                    (reinterpret_cast<T *>(pabyBuffer)[i] & nMask) |
+                    nOffset);
+        }
+    }
+    else
+    {
+        for( decltype(nBytes) i = 0; i < nBytes/2; i += nBands )
+        {
+            for( int j = 0; j < nBands; ++j )
+            {
+                reinterpret_cast<T*>(pabyBuffer)[i + j] =
+                    static_cast<T>(
+                        (reinterpret_cast<T*>(pabyBuffer)[i + j] &
+                            panMaskOffsetLsb[j].nMask) |
+                        panMaskOffsetLsb[j].nOffset);
+            }
+        }
+    }
+}
+
 void GTiffDataset::DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand ) const
 {
     if( m_nBitsPerSample == 8 )
@@ -8823,59 +8858,13 @@ void GTiffDataset::DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand )
     }
     else if( m_nBitsPerSample == 16 )
     {
-        if( m_nPlanarConfig == PLANARCONFIG_SEPARATE )
-        {
-            const int nMask = m_panMaskOffsetLsb[iBand].nMask;
-            const int nOffset = m_panMaskOffsetLsb[iBand].nOffset;
-            for( decltype(nBytes) i = 0; i < nBytes/2; ++i )
-            {
-                reinterpret_cast<GUInt16*>(pabyBuffer)[i] =
-                    static_cast<GUInt16>(
-                        (reinterpret_cast<GUInt16 *>(pabyBuffer)[i] & nMask) |
-                        nOffset);
-            }
-        }
-        else
-        {
-            for( decltype(nBytes) i = 0; i < nBytes/2; i += nBands )
-            {
-                for( int j = 0; j < nBands; ++j )
-                {
-                    reinterpret_cast<GUInt16*>(pabyBuffer)[i + j] =
-                        static_cast<GUInt16>(
-                            (reinterpret_cast<GUInt16*>(pabyBuffer)[i + j] &
-                             m_panMaskOffsetLsb[j].nMask) |
-                            m_panMaskOffsetLsb[j].nOffset);
-                }
-            }
-        }
+        DiscardLsbT<GUInt16>(pabyBuffer, nBytes, iBand, nBands, m_nPlanarConfig,
+                            m_panMaskOffsetLsb);
     }
     else if( m_nBitsPerSample == 32 )
     {
-        if( m_nPlanarConfig == PLANARCONFIG_SEPARATE )
-        {
-            const int nMask = m_panMaskOffsetLsb[iBand].nMask;
-            const int nOffset = m_panMaskOffsetLsb[iBand].nOffset;
-            for( decltype(nBytes) i = 0; i < nBytes/4; ++i )
-            {
-                reinterpret_cast<GUInt32 *>(pabyBuffer)[i] =
-                    (reinterpret_cast<GUInt32*>(pabyBuffer)[i] & nMask) |
-                    nOffset;
-            }
-        }
-        else
-        {
-            for( decltype(nBytes) i = 0; i < nBytes/4; i += nBands )
-            {
-                for( int j = 0; j < nBands; ++j )
-                {
-                    reinterpret_cast<GUInt32 *>(pabyBuffer)[i + j] =
-                        (reinterpret_cast<GUInt32 *>(pabyBuffer)[i + j] &
-                         m_panMaskOffsetLsb[j].nMask) |
-                        m_panMaskOffsetLsb[j].nOffset;
-                }
-            }
-        }
+        DiscardLsbT<GUInt32>(pabyBuffer, nBytes, iBand, nBands, m_nPlanarConfig,
+                            m_panMaskOffsetLsb);
     }
 }
 
