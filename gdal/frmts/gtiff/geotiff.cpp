@@ -245,6 +245,14 @@ enum class GTiffProfile: GByte
 
 class GTiffDataset final : public GDALPamDataset
 {
+public:
+    struct MaskOffset
+    {
+        int nMask;
+        int nOffset;
+    };
+
+private:
     CPL_DISALLOW_COPY_ASSIGN(GTiffDataset)
 
     friend class GTiffBitmapBand;
@@ -280,11 +288,6 @@ class GTiffDataset final : public GDALPamDataset
     CPLWorkerThreadPool  *m_poCompressThreadPool = nullptr;
     CPLMutex             *m_hCompressThreadPoolMutex = nullptr;
 
-    struct MaskOffset
-    {
-        int nMask;
-        int nOffset;
-    };
     MaskOffset* m_panMaskOffsetLsb = nullptr;
     char       *m_pszVertUnit = nullptr;
     char       *m_pszFilename = nullptr;
