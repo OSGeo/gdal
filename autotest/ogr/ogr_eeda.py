@@ -253,9 +253,9 @@ def test_eeda_2():
     lyr.SetSpatialFilter(None)
 
     # Test time equality with second granularity
-    lyr.SetAttributeFilter("startTime >= '1980-01-01T00:00:00Z' AND endTime <= '1980-01-02T23:59:00Z'")
+    lyr.SetAttributeFilter("startTime >= '1980-01-01T00:00:00Z' AND endTime <= '1980-01-02T23:59:59Z'")
 
-    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T00%3A00%3A01Z'
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D02T23%3A59%3A59Z'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
         'images': [
             {
