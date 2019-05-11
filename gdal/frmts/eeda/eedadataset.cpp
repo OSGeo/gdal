@@ -793,8 +793,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node* poNode, bool bIsAndTopLevel)
     else if( bIsAndTopLevel &&
              poNode->eNodeType == SNT_OPERATION &&
              (poNode->nOperation == SWQ_EQ ||
-              poNode->nOperation == SWQ_GE ||
-              poNode->nOperation == SWQ_LE) &&
+              poNode->nOperation == SWQ_GE) &&
              poNode->nSubExprCount == 2 &&
              poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
              poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
@@ -802,46 +801,53 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node* poNode, bool bIsAndTopLevel)
                     m_poFeatureDefn->GetFieldIndex("startTime") &&
              poNode->papoSubExpr[1]->field_type == SWQ_TIMESTAMP )
     {
-        if( poNode->nOperation == SWQ_GE || poNode->nOperation == SWQ_EQ )
+        int nTerms = GDALEEDALayerParseDateTime(poNode->papoSubExpr[1]->string_value,
+                SWQ_GE,
+                nYear, nMonth, nDay, nHour, nMinute, nSecond);
+        if( nTerms >= 3 )
         {
-            int nTerms = GDALEEDALayerParseDateTime(poNode->papoSubExpr[1]->string_value,
-                    SWQ_GE,
-                    nYear, nMonth, nDay, nHour, nMinute, nSecond);
-            if( nTerms >= 3 )
-            {
-                m_osStartTime = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
-                                    nYear, nMonth, nDay, nHour, nMinute, nSecond);
-            }
-            else
-            {
-                m_bFilterMustBeClientSideEvaluated = true;
-            }
+            m_osStartTime = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+                                nYear, nMonth, nDay, nHour, nMinute, nSecond);
         }
-        if( poNode->nOperation == SWQ_LE || poNode->nOperation == SWQ_EQ )
+        else
         {
-            int nTerms = GDALEEDALayerParseDateTime(poNode->papoSubExpr[1]->string_value,
-                    SWQ_LE,
-                    nYear, nMonth, nDay, nHour, nMinute, nSecond);
-            if( nTerms >= 3 )
+            m_bFilterMustBeClientSideEvaluated = true;
+        }
+        return "";
+    }
+    else if( bIsAndTopLevel &&
+             poNode->eNodeType == SNT_OPERATION &&
+             (poNode->nOperation == SWQ_EQ ||
+              poNode->nOperation == SWQ_LE) &&
+             poNode->nSubExprCount == 2 &&
+             poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+             poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
+             poNode->papoSubExpr[0]->field_index ==
+                    m_poFeatureDefn->GetFieldIndex("endTime") &&
+             poNode->papoSubExpr[1]->field_type == SWQ_TIMESTAMP )
+    {
+        int nTerms = GDALEEDALayerParseDateTime(poNode->papoSubExpr[1]->string_value,
+                SWQ_LE,
+                nYear, nMonth, nDay, nHour, nMinute, nSecond);
+        if( nTerms >= 3 )
+        {
+            if( poNode->nOperation == SWQ_EQ && nTerms == 6 )
             {
-                if( poNode->nOperation == SWQ_EQ && nTerms == 6 )
-                {
-                    if( nSecond < 59 )
-                        nSecond ++;
-                    else if( nMinute < 59 )
-                        nMinute ++;
-                    else if( nHour < 23 )
-                        nHour ++;
-                    else
-                        nDay ++;
-                }
-                m_osEndTime = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
-                                    nYear, nMonth, nDay, nHour, nMinute, nSecond);
+                if( nSecond < 59 )
+                    nSecond ++;
+                else if( nMinute < 59 )
+                    nMinute ++;
+                else if( nHour < 23 )
+                    nHour ++;
+                else
+                    nDay ++;
             }
-            else
-            {
-                m_bFilterMustBeClientSideEvaluated = true;
-            }
+            m_osEndTime = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+                                nYear, nMonth, nDay, nHour, nMinute, nSecond);
+        }
+        else
+        {
+            m_bFilterMustBeClientSideEvaluated = true;
         }
         return "";
     }
