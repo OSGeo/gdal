@@ -2755,12 +2755,12 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             {
                 int nSrcLineK =
                     nYOff + static_cast<int>((y + k + 0.5) * dfSrcYInc);
-                const int m_nBlockYOffK = nSrcLineK / m_nBlockYSize;
+                const int nBlockYOffK = nSrcLineK / m_nBlockYSize;
                 if( k < 256)
                     anSrcYOffset[k] =
                         ((nSrcLineK % m_nBlockYSize) - nYOffsetIm_nBlock) *
                         m_nBlockXSize * nBandsPerBlockDTSize;
-                if( m_nBlockYOffK != m_nBlockYOff )
+                if( nBlockYOffK != m_nBlockYOff )
                 {
                     break;
                 }
@@ -2913,12 +2913,12 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 {
                     const int nSrcLineK =
                         nYOff + static_cast<int>((y + k + 0.5) * dfSrcYInc);
-                    const int m_nBlockYOffK = nSrcLineK / m_nBlockYSize;
+                    const int nBlockYOffK = nSrcLineK / m_nBlockYSize;
                     if( k < 256)
                         anSrcYOffset[k] =
                             ((nSrcLineK % m_nBlockYSize) - nYOffsetIm_nBlock) *
                             m_nBlockXSize * nBandsPerBlockDTSize;
-                    if( m_nBlockYOffK != m_nBlockYOff )
+                    if( nBlockYOffK != m_nBlockYOff )
                     {
                         break;
                     }
