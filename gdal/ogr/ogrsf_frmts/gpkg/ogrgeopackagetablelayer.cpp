@@ -1045,8 +1045,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     }
                 }
             }
-            SQLResultFree(&oResultTable);
         }
+        SQLResultFree(&oResultTable);
     }
 
     /* Update the columns string */
