@@ -41,6 +41,7 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode, VSILFILE* fp );
 TIFF* VSI_TIFFOpenChild( TIFF* parent ); // the returned handle must be closed before the parent. They share the same underlying VSILFILE
 VSILFILE* VSI_TIFFGetVSILFile( thandle_t th );
 int VSI_TIFFFlushBufferedWrite( thandle_t th );
+int VSI_TIFFWrite( TIFF* tif, const void* buffer, size_t buffersize );
 int VSI_TIFFHasCachedRanges( thandle_t th );
 void VSI_TIFFSetCachedRanges( thandle_t th, int nRanges,
                               void ** ppData, // memory pointed by ppData[i] must be kept alive by caller

@@ -3000,12 +3000,21 @@ def test_tiff_write_87():
     data_ovr_1 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
     data_ovr_0 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
     data_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+    size_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF'))
+    with open('tmp/tiff_write_87_dst.tif', 'rb') as f:
+        f.seek(data_main - 4)
+        size_from_header = struct.unpack('<I', f.read(4))[0]
+        assert size_main == size_from_header
+        f.seek(data_main + size_main - 4)
+        last_bytes = f.read(4)
+        last_bytes_repeated = f.read(4)
+        assert last_bytes == last_bytes_repeated
 
     ds = None
 
     import validate_cloud_optimized_geotiff
     try:
-        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
+        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False, full_check=True)
         assert not errors, 'validate_cloud_optimized_geotiff failed'
     except OSError:
         pytest.fail('validate_cloud_optimized_geotiff failed')
@@ -3368,11 +3377,11 @@ def test_tiff_write_95():
 # Test that COPY_SRC_OVERVIEWS combined with GDAL_TIFF_INTERNAL_MASK=YES work well
 
 
-def test_tiff_write_96():
+def test_tiff_write_96(other_options = [], nbands = 1, nbits = 8):
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100)
-    src_ds.GetRasterBand(1).Fill(255)
+    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100, nbands, options = ['NBITS=' + str(nbits)])
+    src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     from sys import version_info
     if version_info >= (3, 0, 0):
@@ -3387,7 +3396,7 @@ def test_tiff_write_96():
     expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
     expected_cs_ovr_mask_2 = src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'] + other_options + ['NBITS=' + str(nbits)])
     ds = None
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
 
@@ -3398,9 +3407,15 @@ def test_tiff_write_96():
     cs_ovr_mask_1 = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
     cs_ovr_2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     cs_ovr_mask_2 = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
-
     ds = None
     src_ds = None
+
+    import validate_cloud_optimized_geotiff
+    try:
+        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_96_dst.tif', check_tiled=False, full_check=True)
+        assert not errors, 'validate_cloud_optimized_geotiff failed'
+    except OSError:
+        pytest.fail('validate_cloud_optimized_geotiff failed')
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_96_src.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_96_dst.tif')
@@ -3408,6 +3423,12 @@ def test_tiff_write_96():
     assert [expected_cs, expected_cs_mask, expected_cs_ovr_1, expected_cs_ovr_mask_1, expected_cs_ovr_2, expected_cs_ovr_mask_2] == \
        [cs, cs_mask, cs_ovr_1, cs_ovr_mask_1, cs_ovr_2, cs_ovr_mask_2], \
         'did not get expected checksums'
+
+def test_tiff_write_96_tiled_threads_nbits7_nbands1():
+    return test_tiff_write_96(['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32', 'NUM_THREADS=ALL_CPUS'], nbands = 1, nbits = 7)
+
+def test_tiff_write_96_tiled_threads_nbits7_nbands2():
+    return test_tiff_write_96(['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32', 'NUM_THREADS=ALL_CPUS'], nbands = 2, nbits = 7)
 
 ###############################################################################
 # Create a simple file by copying from an existing one - PixelIsPoint
