@@ -1,6 +1,6 @@
 # This file may be used to create an environment using:
 # $ pip install --upgrade -r <this file>
-breathe == 4.13.0.post0
+breathe == 4.13.0
 exhale == 0.2.2
 sphinx == 2.0.1
 sphinx-rtd-theme == 0.4.3
