@@ -16,8 +16,10 @@ jobs:
           addToPath: true
       - script: |
           python --version
-          cd gdal/doc
-          pip --upgrade install -r requirements.txt
+          python -m pip install --upgrade pip
+          pip install -r gdal/doc/requirements.txt
+        displayName: 'Setup Python'
       - script: |
           cd gdal/doc
           make html
+        displayName: 'Build documentation'
