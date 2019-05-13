@@ -59,6 +59,7 @@
 #include <mutex>
 #include <set>
 #include <string>
+#include <queue>
 #include <vector>
 
 #include "cpl_config.h"
@@ -244,6 +245,14 @@ enum class GTiffProfile: GByte
 
 class GTiffDataset final : public GDALPamDataset
 {
+public:
+    struct MaskOffset
+    {
+        int nMask;
+        int nOffset;
+    };
+
+private:
     CPL_DISALLOW_COPY_ASSIGN(GTiffDataset)
 
     friend class GTiffBitmapBand;
@@ -279,11 +288,6 @@ class GTiffDataset final : public GDALPamDataset
     CPLWorkerThreadPool  *m_poCompressThreadPool = nullptr;
     CPLMutex             *m_hCompressThreadPoolMutex = nullptr;
 
-    struct MaskOffset
-    {
-        int nMask;
-        int nOffset;
-    };
     MaskOffset* m_panMaskOffsetLsb = nullptr;
     char       *m_pszVertUnit = nullptr;
     char       *m_pszFilename = nullptr;
@@ -362,6 +366,7 @@ class GTiffDataset final : public GDALPamDataset
     GDALMultiDomainMetadata m_oGTiffMDMD{};
 
     std::vector<GTiffCompressionJob> m_asCompressionJobs{};
+    std::queue<int> m_asQueueStrileIds{}; // queue of strile id being compressed in worker threads
 
     bool        m_bStreamingIn:1;
     bool        m_bStreamingOut:1;
@@ -464,7 +469,7 @@ class GTiffDataset final : public GDALPamDataset
     void           InitCompressionThreads( char** papszOptions );
     void           InitCreationOrOpenOptions( char** papszOptions );
     static void    ThreadCompressionFunc( void* pData );
-    void           WaitCompletionForBlock( int nBlockId );
+    int            WaitCompletionForBlock( int nBlockId );
     void           WriteRawStripOrTile( int nStripOrTile,
                                         GByte* pabyCompressedBuffer,
                                         GPtrDiff_t nCompressedBufferSize );
@@ -2750,12 +2755,12 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             {
                 int nSrcLineK =
                     nYOff + static_cast<int>((y + k + 0.5) * dfSrcYInc);
-                const int m_nBlockYOffK = nSrcLineK / m_nBlockYSize;
+                const int nBlockYOffK = nSrcLineK / m_nBlockYSize;
                 if( k < 256)
                     anSrcYOffset[k] =
                         ((nSrcLineK % m_nBlockYSize) - nYOffsetIm_nBlock) *
                         m_nBlockXSize * nBandsPerBlockDTSize;
-                if( m_nBlockYOffK != m_nBlockYOff )
+                if( nBlockYOffK != m_nBlockYOff )
                 {
                     break;
                 }
@@ -2908,12 +2913,12 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 {
                     const int nSrcLineK =
                         nYOff + static_cast<int>((y + k + 0.5) * dfSrcYInc);
-                    const int m_nBlockYOffK = nSrcLineK / m_nBlockYSize;
+                    const int nBlockYOffK = nSrcLineK / m_nBlockYSize;
                     if( k < 256)
                         anSrcYOffset[k] =
                             ((nSrcLineK % m_nBlockYSize) - nYOffsetIm_nBlock) *
                             m_nBlockXSize * nBandsPerBlockDTSize;
-                    if( m_nBlockYOffK != m_nBlockYOff )
+                    if( nBlockYOffK != m_nBlockYOff )
                     {
                         break;
                     }
@@ -8665,7 +8670,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
 /*                        WaitCompletionForBlock()                      */
 /************************************************************************/
 
-void GTiffDataset::WaitCompletionForBlock(int nBlockId)
+int GTiffDataset::WaitCompletionForBlock(int nBlockId)
 {
     if( m_poCompressThreadPool != nullptr )
     {
@@ -8673,17 +8678,33 @@ void GTiffDataset::WaitCompletionForBlock(int nBlockId)
         {
             if( m_asCompressionJobs[i].nStripOrTile == nBlockId )
             {
-                CPLDebug("GTIFF",
-                         "Waiting for worker job to finish handling block %d",
-                         nBlockId);
-
-                CPLAcquireMutex(m_hCompressThreadPoolMutex, 1000.0);
-                const bool bReady = m_asCompressionJobs[i].bReady;
-                CPLReleaseMutex(m_hCompressThreadPoolMutex);
-                if( !bReady )
+                while( !m_asQueueStrileIds.empty() && m_asQueueStrileIds.front() != nBlockId )
                 {
-                    m_poCompressThreadPool->WaitCompletion(0);
-                    CPLAssert( m_asCompressionJobs[i].bReady );
+                    WaitCompletionForBlock(m_asQueueStrileIds.front());
+                    m_asQueueStrileIds.pop();
+                }
+
+                bool bHasWarned = false;
+                while( true )
+                {
+                    CPLAcquireMutex(m_hCompressThreadPoolMutex, 1000.0);
+                    const bool bReady = m_asCompressionJobs[i].bReady;
+                    CPLReleaseMutex(m_hCompressThreadPoolMutex);
+                    if( !bReady )
+                    {
+                        if( !bHasWarned )
+                        {
+                            CPLDebug("GTIFF",
+                                    "Waiting for worker job to finish handling block %d",
+                                    nBlockId);
+                            bHasWarned = true;
+                        }
+                        m_poCompressThreadPool->WaitEvent();
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
 
                 if( m_asCompressionJobs[i].nCompressedBufferSize )
@@ -8696,10 +8717,11 @@ void GTiffDataset::WaitCompletionForBlock(int nBlockId)
                 m_asCompressionJobs[i].nBufferSize = 0;
                 m_asCompressionJobs[i].bReady = false;
                 m_asCompressionJobs[i].nStripOrTile = -1;
-                return;
+                return i;
             }
         }
     }
+    return -1;
 }
 
 /************************************************************************/
@@ -8723,31 +8745,23 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
         return false;
 
     int nNextCompressionJobAvail = -1;
-    // Wait that at least one job is finished.
-    m_poCompressThreadPool->WaitCompletion(
-        static_cast<int>(m_asCompressionJobs.size() - 1) );
-    for( int i = 0; i < static_cast<int>(m_asCompressionJobs.size()); ++i )
+
+    if( m_asQueueStrileIds.size() == m_asCompressionJobs.size() )
     {
-        CPLAcquireMutex(m_hCompressThreadPoolMutex, 1000.0);
-        const bool bReady = m_asCompressionJobs[i].bReady;
-        CPLReleaseMutex(m_hCompressThreadPoolMutex);
-        if( bReady )
+        CPLAssert( !m_asQueueStrileIds.empty() );
+        nNextCompressionJobAvail = WaitCompletionForBlock(m_asQueueStrileIds.front());
+        m_asQueueStrileIds.pop();
+    }
+    else
+    {
+        const int nJobs = static_cast<int>(m_asCompressionJobs.size());
+        for( int i = 0; i < nJobs; ++i )
         {
-            if( m_asCompressionJobs[i].nCompressedBufferSize )
+            if( m_asCompressionJobs[i].nBufferSize == 0 )
             {
-                WriteRawStripOrTile( m_asCompressionJobs[i].nStripOrTile,
-                                m_asCompressionJobs[i].pabyCompressedBuffer,
-                                m_asCompressionJobs[i].nCompressedBufferSize );
-            }
-            m_asCompressionJobs[i].pabyCompressedBuffer = nullptr;
-            m_asCompressionJobs[i].nBufferSize = 0;
-            m_asCompressionJobs[i].bReady = false;
-            m_asCompressionJobs[i].nStripOrTile = -1;
-        }
-        if( m_asCompressionJobs[i].nBufferSize == 0 )
-        {
-            if( nNextCompressionJobAvail < 0 )
                 nNextCompressionJobAvail = i;
+                break;
+            }
         }
     }
     CPLAssert(nNextCompressionJobAvail >= 0);
@@ -8770,12 +8784,49 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
     }
 
     m_poCompressThreadPool->SubmitJob(ThreadCompressionFunc, psJob);
+    m_asQueueStrileIds.push(nStripOrTile);
+
     return true;
 }
 
 /************************************************************************/
 /*                          DiscardLsb()                                */
 /************************************************************************/
+
+template<class T> static void DiscardLsbT(GByte* pabyBuffer, 
+                                         GPtrDiff_t nBytes,
+                                         int iBand,
+                                         int nBands,
+                                         uint16 nPlanarConfig,
+                                         const GTiffDataset::MaskOffset* panMaskOffsetLsb)
+{
+    if( nPlanarConfig == PLANARCONFIG_SEPARATE )
+    {
+        const int nMask = panMaskOffsetLsb[iBand].nMask;
+        const int nOffset = panMaskOffsetLsb[iBand].nOffset;
+        for( decltype(nBytes) i = 0; i < nBytes/2; ++i )
+        {
+            reinterpret_cast<T*>(pabyBuffer)[i] =
+                static_cast<T>(
+                    (reinterpret_cast<T *>(pabyBuffer)[i] & nMask) |
+                    nOffset);
+        }
+    }
+    else
+    {
+        for( decltype(nBytes) i = 0; i < nBytes/2; i += nBands )
+        {
+            for( int j = 0; j < nBands; ++j )
+            {
+                reinterpret_cast<T*>(pabyBuffer)[i + j] =
+                    static_cast<T>(
+                        (reinterpret_cast<T*>(pabyBuffer)[i + j] &
+                            panMaskOffsetLsb[j].nMask) |
+                        panMaskOffsetLsb[j].nOffset);
+            }
+        }
+    }
+}
 
 void GTiffDataset::DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand ) const
 {
@@ -8810,59 +8861,13 @@ void GTiffDataset::DiscardLsb( GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand )
     }
     else if( m_nBitsPerSample == 16 )
     {
-        if( m_nPlanarConfig == PLANARCONFIG_SEPARATE )
-        {
-            const int nMask = m_panMaskOffsetLsb[iBand].nMask;
-            const int nOffset = m_panMaskOffsetLsb[iBand].nOffset;
-            for( decltype(nBytes) i = 0; i < nBytes/2; ++i )
-            {
-                reinterpret_cast<GUInt16*>(pabyBuffer)[i] =
-                    static_cast<GUInt16>(
-                        (reinterpret_cast<GUInt16 *>(pabyBuffer)[i] & nMask) |
-                        nOffset);
-            }
-        }
-        else
-        {
-            for( decltype(nBytes) i = 0; i < nBytes/2; i += nBands )
-            {
-                for( int j = 0; j < nBands; ++j )
-                {
-                    reinterpret_cast<GUInt16*>(pabyBuffer)[i + j] =
-                        static_cast<GUInt16>(
-                            (reinterpret_cast<GUInt16*>(pabyBuffer)[i + j] &
-                             m_panMaskOffsetLsb[j].nMask) |
-                            m_panMaskOffsetLsb[j].nOffset);
-                }
-            }
-        }
+        DiscardLsbT<GUInt16>(pabyBuffer, nBytes, iBand, nBands, m_nPlanarConfig,
+                            m_panMaskOffsetLsb);
     }
     else if( m_nBitsPerSample == 32 )
     {
-        if( m_nPlanarConfig == PLANARCONFIG_SEPARATE )
-        {
-            const int nMask = m_panMaskOffsetLsb[iBand].nMask;
-            const int nOffset = m_panMaskOffsetLsb[iBand].nOffset;
-            for( decltype(nBytes) i = 0; i < nBytes/4; ++i )
-            {
-                reinterpret_cast<GUInt32 *>(pabyBuffer)[i] =
-                    (reinterpret_cast<GUInt32*>(pabyBuffer)[i] & nMask) |
-                    nOffset;
-            }
-        }
-        else
-        {
-            for( decltype(nBytes) i = 0; i < nBytes/4; i += nBands )
-            {
-                for( int j = 0; j < nBands; ++j )
-                {
-                    reinterpret_cast<GUInt32 *>(pabyBuffer)[i + j] =
-                        (reinterpret_cast<GUInt32 *>(pabyBuffer)[i + j] &
-                         m_panMaskOffsetLsb[j].nMask) |
-                        m_panMaskOffsetLsb[j].nOffset;
-                }
-            }
-        }
+        DiscardLsbT<GUInt32>(pabyBuffer, nBytes, iBand, nBands, m_nPlanarConfig,
+                            m_panMaskOffsetLsb);
     }
 }
 
@@ -9749,21 +9754,10 @@ void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
         m_poCompressThreadPool->WaitCompletion();
 
         // Flush remaining data
-        for( int i = 0; i < static_cast<int>(m_asCompressionJobs.size()); ++i )
+        while( !m_asQueueStrileIds.empty() )
         {
-            if( m_asCompressionJobs[i].bReady )
-            {
-                if( m_asCompressionJobs[i].nCompressedBufferSize )
-                {
-                    WriteRawStripOrTile( m_asCompressionJobs[i].nStripOrTile,
-                                   m_asCompressionJobs[i].pabyCompressedBuffer,
-                                   m_asCompressionJobs[i].nCompressedBufferSize );
-                }
-                m_asCompressionJobs[i].pabyCompressedBuffer = nullptr;
-                m_asCompressionJobs[i].nBufferSize = 0;
-                m_asCompressionJobs[i].bReady = false;
-                m_asCompressionJobs[i].nStripOrTile = -1;
-            }
+            WaitCompletionForBlock(m_asQueueStrileIds.front());
+            m_asQueueStrileIds.pop();
         }
     }
 

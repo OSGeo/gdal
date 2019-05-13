@@ -32,6 +32,7 @@ import os
 import sys
 import array
 import shutil
+import struct
 from osgeo import gdal
 from osgeo import osr
 import pytest
@@ -1451,7 +1452,6 @@ def test_tiff_write_45():
 # Test correct round-tripping of ReadBlock/WriteBlock
 
 def test_tiff_write_46():
-    import struct
 
     with gdaltest.SetCacheMax(0):
 
@@ -1847,7 +1847,6 @@ def test_tiff_write_58():
 
 
 def test_tiff_write_59():
-    import struct
 
     ret = 'success'
 
@@ -2182,8 +2181,6 @@ def test_tiff_write_70():
 # Test reading in a real BigTIFF file (on filesystems supporting sparse files)
 
 def test_tiff_write_71():
-
-    import struct
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
@@ -3071,7 +3068,6 @@ def test_tiff_write_88():
     os.remove('tmp/tiff_write_88_src.tif')
     os.remove('tmp/tiff_write_88_dst.tif')
 
-    import struct
     ar = struct.unpack('B' * 8, data)
     assert ar[2] == 43, 'not a BIGTIFF file'
     assert ar[4] == 8 and ar[5] == 0 and ar[6] == 0 and ar[7] == 0, \
@@ -4997,46 +4993,70 @@ def test_tiff_write_133():
 
 def test_tiff_write_134():
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options=['DISCARD_LSB=0,1,3'])
-    ds.GetRasterBand(1).Fill(127)
-    ds.GetRasterBand(2).Fill(127)
-    ds.GetRasterBand(3).Fill(127)
-    ds = None
-    ds = gdal.Open('/vsimem/tiff_write_134.tif')
-    cs1 = ds.GetRasterBand(1).Checksum()
-    cs2 = ds.GetRasterBand(2).Checksum()
-    cs3 = ds.GetRasterBand(3).Checksum()
-    assert cs1 == 1 and cs2 == 0 and cs3 == 5
-    ds = None
-    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+    for interleave in ['BAND', 'PIXEL']:
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options=['DISCARD_LSB=0,1,3', 'INTERLEAVE='+interleave])
+        ds.GetRasterBand(1).Fill(127)
+        ds.GetRasterBand(2).Fill(127)
+        ds.GetRasterBand(3).Fill(127)
+        ds = None
+        ds = gdal.Open('/vsimem/tiff_write_134.tif')
+        val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster())[0]
+        val2 = struct.unpack('B', ds.GetRasterBand(2).ReadRaster())[0]
+        val3 = struct.unpack('B', ds.GetRasterBand(3).ReadRaster())[0]
+        assert val1 == 127 and val2 == 126 and val3 == 124
+        ds = None
+        gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
     src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134_src.tif', 1, 1, 3)
     src_ds.GetRasterBand(1).Fill(127)
     src_ds.GetRasterBand(2).Fill(127)
-    src_ds.GetRasterBand(3).Fill(127)
+    src_ds.GetRasterBand(3).Fill(255)
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_134.tif', src_ds, options=['DISCARD_LSB=0,1,3'])
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_134.tif')
-    cs1 = ds.GetRasterBand(1).Checksum()
-    cs2 = ds.GetRasterBand(2).Checksum()
-    cs3 = ds.GetRasterBand(3).Checksum()
-    assert cs1 == 1 and cs2 == 0 and cs3 == 5
+    val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster())[0]
+    val2 = struct.unpack('B', ds.GetRasterBand(2).ReadRaster())[0]
+    val3 = struct.unpack('B', ds.GetRasterBand(3).ReadRaster())[0]
+    assert val1 == 127 and val2 == 126 and val3 == 255
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options=['DISCARD_LSB=3'])
-    ds.GetRasterBand(1).Fill(127)
-    ds.GetRasterBand(2).Fill(127)
-    ds.GetRasterBand(3).Fill(127)
-    ds = None
-    ds = gdal.Open('/vsimem/tiff_write_134.tif')
-    cs1 = ds.GetRasterBand(1).Checksum()
-    cs2 = ds.GetRasterBand(2).Checksum()
-    cs3 = ds.GetRasterBand(3).Checksum()
-    assert cs1 == 5 and cs2 == 5 and cs3 == 5
-    ds = None
-    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+    for interleave in ['BAND', 'PIXEL']:
+        for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, dt, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).Fill(127)
+            ds.GetRasterBand(2).Fill(127)
+            ds.GetRasterBand(3).Fill(127)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
+            val2 = struct.unpack('B', ds.GetRasterBand(2).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
+            val3 = struct.unpack('B', ds.GetRasterBand(3).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
+            assert val1 == 124 and val2 == 124 and val3 == 124
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    # Error cases
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1', 'PHOTOMETRIC=PALETTE'])
+    assert gdal.GetLastErrorMsg() != ''
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        # Too many elements
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1,2'])
+    assert gdal.GetLastErrorMsg() != ''
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        # Too many elements
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1', 'NBITS=7'])
+    assert gdal.GetLastErrorMsg() != ''
 
 ###############################################################################
 # Test clearing GCPs (#5945)
@@ -5231,7 +5251,6 @@ def test_tiff_write_138():
 
 
 def test_tiff_write_139():
-    import struct
 
     drv = gdal.GetDriverByName('GTiff')
     # Only post 4.0.5 has the fix for non-byte swabing case
@@ -5737,8 +5756,6 @@ def test_tiff_write_153():
 
 def test_tiff_write_154():
 
-    import struct
-
     src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500)
 
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['BLOCKYSIZE=256'])
@@ -5902,8 +5919,6 @@ def test_tiff_write_156():
 
 
 def test_tiff_write_157():
-
-    import struct
 
     # Write controlled values of Float16
     vals = struct.pack('H' * 14,

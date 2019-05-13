@@ -89,7 +89,8 @@ will not done.</p>
 <tr><td>id</td><td>String</td><td>Image ID; equivalent to name without the "projects/*/assets/" prefix (e.g. users/USER/ASSET)</td><td>No</td></tr>
 <tr><td>path</td><td>String</td><td>(Deprecated) Image path; equivalent to id</td><td>No</td></tr>
 <tr><td>gdal_dataset</td><td>String</td><td>GDAL dataset name (e.g. EEDAI:projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)<br/>that can be opened with the <a href="frmt_eedai.html">Google Earth Engine Data API Image driver</a></td><td>No</td></tr>
-<tr><td>time</td><td>DateTime</td><td>Acquisition date</td><td><b>Yes</b></td></tr>
+<tr><td>startTime</td><td>DateTime</td><td>Acquisition start date</td><td><b>Yes (restricted to &gt;= comparison on top level)</b></td></tr>
+<tr><td>endTime</td><td>DateTime</td><td>Acquisition end date</td><td><b>Yes (restricted to &lt;= comparison on top level)</b></td></tr>
 <tr><td>updateTime</td><td>DateTime</td><td>Update date</td><td>No</td></tr>
 <tr><td>sizeBytes</td><td>Integer64</td><td>File size in bytes</td><td>No</td></tr>
 <tr><td>band_count</td><td>Integer</td><td>Number of bands</td><td>No</td></tr>
@@ -154,7 +155,7 @@ ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -spat -1
 <li>
 Listing all images available matching criteria :
 <pre>
-ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -where "time &gt;= '2015/03/26 00:00:00' AND CLOUDY_PIXEL_PERCENTAGE &lt; 10" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -where "startTime &gt;= '2015/03/26 00:00:00' AND endTime &lt;= '2015/06/30 00:00:00' AND CLOUDY_PIXEL_PERCENTAGE &lt; 10" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 </pre>
 <p>
 
