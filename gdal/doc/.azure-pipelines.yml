@@ -19,5 +19,5 @@ jobs:
           cd gdal/doc
           pip --upgrade install -r requirements.txt
       - script: |
-        cd gdal/doc
-        make html
+          cd gdal/doc
+          make html
