@@ -45,20 +45,10 @@ OGRSXFDriver::~OGRSXFDriver()
 }
 
 /************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRSXFDriver::GetName()
-
-{
-    return "SXF";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRSXFDriver::Open( const char * pszFilename, int bUpdate )
+GDALDataset *OGRSXFDriver::Open(GDALOpenInfo* poOpenInfo)
 
 {
 /* -------------------------------------------------------------------- */
@@ -66,14 +56,16 @@ OGRDataSource *OGRSXFDriver::Open( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
 
     VSIStatBufL sStatBuf;
-    if (!EQUAL(CPLGetExtension(pszFilename), "sxf") ||
-        VSIStatL(pszFilename, &sStatBuf) != 0 ||
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
+        VSIStatL(poOpenInfo->pszFilename, &sStatBuf) != 0 ||
         !VSI_ISREG(sStatBuf.st_mode))
         return nullptr;
 
     OGRSXFDataSource   *poDS = new OGRSXFDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    if( !poDS->Open( poOpenInfo->pszFilename,
+                     poOpenInfo->eAccess == GA_Update,
+                     poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         poDS = nullptr;
@@ -86,7 +78,7 @@ OGRDataSource *OGRSXFDriver::Open( const char * pszFilename, int bUpdate )
 /*                           DeleteDataSource()                         */
 /************************************************************************/
 
-OGRErr OGRSXFDriver::DeleteDataSource(const char* pszName)
+CPLErr OGRSXFDriver::DeleteDataSource(const char* pszName)
 {
     //TODO: add more extensions if aplicable
     static const char * const apszExtensions[] = { "szf", "rsc", "SZF", "RSC", nullptr };
@@ -98,7 +90,7 @@ OGRErr OGRSXFDriver::DeleteDataSource(const char* pszName)
             "%s does not appear to be a valid sxf file.",
             pszName);
 
-        return OGRERR_FAILURE;
+        return CE_Failure;
     }
 
     for( int iExt = 0; apszExtensions[iExt] != nullptr; iExt++ )
@@ -109,7 +101,7 @@ OGRErr OGRSXFDriver::DeleteDataSource(const char* pszName)
             VSIUnlink(pszFile);
     }
 
-    return OGRERR_NONE;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -130,13 +122,25 @@ int OGRSXFDriver::TestCapability( const char * pszCap )
 /************************************************************************/
 void RegisterOGRSXF()
 {
-    OGRSFDriver* poDriver = new OGRSXFDriver;
+    if( GDALGetDriverByName( "SXF" ) != nullptr )
+        return;
 
+    OGRSXFDriver* poDriver = new OGRSXFDriver;
+
+    poDriver->SetDescription( "SXF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Storage and eXchange Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sxf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sxf" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='SXF_RSC_FILENAME' type='string' description='RSC file name' default=''/>"
+        "</OpenOptionList>");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->pfnOpen = OGRSXFDriver::Open;
+    poDriver->pfnDelete = OGRSXFDriver::DeleteDataSource;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

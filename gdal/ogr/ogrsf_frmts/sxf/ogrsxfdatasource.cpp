@@ -156,7 +156,8 @@ OGRLayer *OGRSXFDataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRSXFDataSource::Open(const char * pszFilename, bool bUpdateIn,
+                           const char* const* papszOpenOpts)
 {
     if( bUpdateIn )
     {
@@ -245,8 +246,10 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*---------------- TRY READ THE RSC FILE HEADER  -----------------------*/
 
     CPLString soRSCRileName;
-    const char* pszRSCRileName = CPLGetConfigOption("SXF_RSC_FILENAME", "");
-    if (CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
+    const char* pszRSCRileName =
+        CSLFetchNameValueDef(papszOpenOpts, "SXF_RSC_FILENAME",
+                             CPLGetConfigOption("SXF_RSC_FILENAME", ""));
+    if (pszRSCRileName != nullptr && CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
     {
         soRSCRileName = pszRSCRileName;
     }

@@ -126,8 +126,8 @@ public:
                         OGRSXFDataSource();
                         virtual ~OGRSXFDataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open(const char * pszFilename, bool bUpdate,
+                             const char* const* papszOpenOpts = nullptr );
 
     virtual const char*     GetName() override { return pszName; }
 
@@ -142,15 +142,14 @@ public:
 /*                         OGRSXFDriver                          */
 /************************************************************************/
 
-class OGRSXFDriver : public OGRSFDriver
+class OGRSXFDriver : public GDALDriver
 {
   public:
                 ~OGRSXFDriver();
 
-    const char*     GetName() override;
-    OGRDataSource*  Open( const char *, int ) override;
-    OGRErr          DeleteDataSource(const char* pszName) override;
-    int             TestCapability(const char *) override;
+    static GDALDataset* Open( GDALOpenInfo * );
+    static CPLErr       DeleteDataSource(const char* pszName);
+    int                 TestCapability(const char *);
 };
 
 #endif
