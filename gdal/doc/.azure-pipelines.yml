@@ -8,21 +8,11 @@ jobs:
   - job: 'Documentation'
     pool:
       vmImage: 'ubuntu-16.04'
-    # container:
-    #   image: osgeo/gdal-docs
-    #   options: --privileged
     steps:
-      # - script: |
-      #     python3 --version
-      #     sphinx-build --version
-      #   displayName: 'Sphinx version'
-      # - script: |
-      #     cd gdal/doc
-      #     make html
-      #   displayName: 'Build'
+      - checkout: none
       - task: DownloadSecureFile@1
         inputs:
           secureFile: 'pdal-docs-ssh-key'
       - script: |
-          echo $(DownloadSecureFile.secureFilePath)
+          echo $$DOWNLOADSECUREFILE_SECUREFILEPATH
         displayName: 'Deploy'
