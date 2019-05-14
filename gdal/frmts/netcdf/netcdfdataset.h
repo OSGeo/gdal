@@ -1015,6 +1015,8 @@ class netCDFLayer final: public OGRLayer
         CPLString       m_osCoordinatesValue;
         std::vector<FieldDesc> m_aoFieldDesc;
 	std::vector<OGRFeature*> m_sgFeatureList;
+	std::vector<OGRFeature*>::iterator m_sgFeatItr;
+	bool		m_sgItrInit;
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
         bool            m_bWriteGDALTags;

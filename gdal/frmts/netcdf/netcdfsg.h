@@ -117,6 +117,12 @@ namespace nccfdriver
 		 */
 		void * serializeToWKB(int featureInd, size_t& wkbSize);
 
+		/* Return a point at a specific index specifically
+		 * this point should NOT be explicitly freed.
+		 *
+		 */
+		Point* operator[](int ind);
+
 		/* ncID - as used in netcdf.h
 		 * baseVarId - the id of a variable with a geometry container attribute 
 		 */
@@ -136,6 +142,10 @@ namespace nccfdriver
 	 * Returns: the equivalent geometry type
 	 */
 	geom_t getGeometryType(int ncid, int varid); 
+	
+	void inPlaceSerialize_MultiPoint(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
+	void inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
+	void inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin);
 
 	/* Given a variable name, and the ncid, returns a SGeometry reference object, which acts more of an iterator of a geometry container
 	 *

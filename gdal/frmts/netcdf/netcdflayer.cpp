@@ -68,7 +68,8 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nProfileVarID(-1),
         m_bProfileVarUnlimited(false),
         m_nParentIndexVarID(-1),
-        m_poLayerConfig(nullptr)
+        m_poLayerConfig(nullptr),
+	m_sgItrInit(false)
 {
     m_uXVarNoData.nVal64 = 0;
     m_uYVarNoData.nVal64 = 0;
@@ -84,7 +85,10 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
 /*                           ~netCDFLayer()                             */
 /************************************************************************/
 
-netCDFLayer::~netCDFLayer() { m_poFeatureDefn->Release(); }
+netCDFLayer::~netCDFLayer()
+{ 
+	m_poFeatureDefn->Release();
+}
 
 /************************************************************************/
 /*                   netCDFWriteAttributesFromConf()                    */
@@ -1175,11 +1179,15 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
 OGRFeature *netCDFLayer::GetNextFeature()
 {
-    if(this->m_sgFeatureList.size() > 0)
+    if(!this->m_sgItrInit && m_sgFeatureList.size() > 0)
     {
-	OGRFeature * ft = m_sgFeatureList[m_sgFeatureList.size() - 1];	
-	m_sgFeatureList.pop_back();
-	return ft;
+	this->m_sgFeatItr = m_sgFeatureList.begin();
+	this->m_sgItrInit = true;
+    }
+
+    if(this->m_sgItrInit && this->m_sgFeatItr != m_sgFeatureList.end())
+    {
+	return *(m_sgFeatItr++);
     }
 
     while( true )
@@ -2069,7 +2077,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
             osVarName = CPLSPrintf("%s%d", poFieldDefn->GetNameRef(), i);
             status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
             if( status != NC_NOERR )
-                break;
+            break;
         }
         CPLDebug("netCDF", "Field %s is written in variable %s",
                  poFieldDefn->GetNameRef(), osVarName.c_str());

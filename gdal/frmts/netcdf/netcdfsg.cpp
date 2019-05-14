@@ -256,21 +256,61 @@ namespace nccfdriver
 		else return false;
 	}
 
+	Point* SGeometry::operator[](int index)
+	{
+	/*	if(index >= this->node_counts[cur_geometry_ind])
+		{
+			return nullptr;
+		}
+*/
+		for(int order = 0; order < touple_order; order++)
+		{
+			Point& pt = *(this->pt_buffer);
+			double data;
+			size_t full_ind = bound_list[cur_geometry_ind] + current_vert_ind;
+
+			// Read a single coord
+			int err = nc_get_var1_double(ncid, nodec_varIds[order], &full_ind, &data);
+			// To do: optimize through multiple reads at once, instead of one datum
+
+			if(err != NC_NOERR)
+			{
+				return nullptr;
+			}
+
+			pt[order] = data;
+		}	
+
+		return (this->pt_buffer);
+	}
+
 	/* serializeToWKB(SGeometry * sg)
 	 * Takes the geometry in SGeometry at a given index and converts it into WKB format.
 	 * Converting SGeometry into WKB automatically allocates the required buffer space
 	 * and returns a buffer that MUST be free'd
 	 */
 	void * SGeometry::serializeToWKB(int featureInd, size_t& wkbSize)
-	{
+	{		
 		if(featureInd < 0) return nullptr;
 		void * ret = nullptr;
+		int nc =  node_counts[featureInd];
+		int sb = bound_list[featureInd];
 		// Serialization occurs differently depending on geometry
 		// The memory requirements also differ between geometries
 		switch(this->getGeometryType())
 		{
+			case POINT:
+
+				break;
+
+			case LINE:
+				wkbSize = 1 + 4 + 4 + 16 * nc;
+				ret = new uint8_t[wkbSize];
+				inPlaceSerialize_LineString(this, nc, sb, ret);
+				break;
+
 			case POLYGON:
-				// A polygon has:
+				/*// A polygon has:
 				// 1 byte header
 				// 4 byte Type (=3 for polygon)
 				// 4 byte ring count (1 (exterior) or 2 (exterior and interior)
@@ -278,47 +318,63 @@ namespace nccfdriver
 				// 4 byte point count, 8 byte double x point count x 2 dimension
 				// (This is equivalent to requesting enough for all points and a point count header for each point)
 				// (Or 8 byte double x node count x 2 dimension + 4 byte point count x part_count)
-				// At the end: EOF
 
-				int8_t header = 1;
-				int32_t t = wkbPolygon;
 				int32_t rc = parts_count[featureInd];
-				int pc = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous
-				const int32_t end = EOF;
-				
-				// case: no part node counts, no interior rings
-				if(this->pnode_counts.size() == 0)
+				int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous	
+				size_t wkbSize = 1 + 4 + 4 + 8 * node_counts[featureInd] * 2 + 4 * rc;
+				int serial_start = bound_list[featureInd];
+
+				std::vector<int> pnc;
+
+				// Build sub vector for part_node_counts
+				for(int itr = 0; itr < rc; itr++)
 				{
-					
+					pnc.push_back(parts_count[pc_begin + itr]);	
 				}
+	
 
-				else
+				// Now allocate and serialize
+				ret = new[wkbSize];
+				inPlaceSerialize_Polygon(this, pnc, rc, seek_begin, ret);
+				*/
+				break;
+
+			case MULTIPOINT:
+				wkbSize = 1 + 4 + 4 + 16 * nc;
+				ret = new uint8_t[wkbSize];
+				inPlaceSerialize_MultiPoint(this, nc, sb, ret); 
+				break;
+
+			case MULTILINE:
+				break;
+
+			case MULTIPOLYGON:
+				// A multipolygon has:
+				// 1 byte header
+				// 4 byte Type (=6 for multipolygon)
+				// 4 byte ring count
+				// For each ring:
+				// 4 byte point count, 8 byte double x point count x 2 dimension
+				// (This is equivalent to requesting enough for all points and a point count header for each point)
+				// (Or 8 byte double x node count x 2 dimension + 4 byte point count x part_count)
+
+				int32_t rc = parts_count[featureInd];
+				int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous	
+				wkbSize = 1 + 4 + 4 + 8 * node_counts[featureInd] * 2 + 4 * rc;
+				int seek_begin = bound_list[featureInd];
+
+				std::vector<int> pnc;
+
+				// Build sub vector for part_node_counts
+				for(int itr = 0; itr < rc; itr++)
 				{
-					wkbSize = 1 + 4 + 4 + 8 * node_counts[featureInd] * 2 + 4 * rc + 4;
-					ret = new int8_t[wkbSize];
-					void * writer = ret;
-					writer = mempcpy(writer, &header, 1);
-					writer = mempcpy(writer, &t, 4);
-					writer = mempcpy(writer, &rc, 4);
-					
-					int32_t parts = pnode_counts[pc];
-					pc++;
-					writer = mempcpy(writer, &parts, 4);	
-						
-					// Check for dimension error / touple order < 2 still to implement					
-
-					for(int node = 0; node < parts; node++)
-					{
-						Point * pt= this->next_pt();
-						double x = (*pt)[0]; double y = (*pt)[1];
-						writer = mempcpy(writer, &x, 8);
-						writer = mempcpy(writer, &y, 8);
-					}
-
-					next_geometry();
-					memcpy(writer, &end, 4);
+					pnc.push_back(parts_count[pc_begin + itr]);	
 				}
+	
 
+				// Now allocate and serialize
+				ret = new uint8_t[wkbSize];
+				inPlaceSerialize_Polygon(this, pnc, rc, seek_begin, ret);
 				break;
 		}
 
@@ -399,28 +455,113 @@ namespace nccfdriver
 	{
 		geom_t ret = NONE;
 		char * gt_name = attrf(ncid, varid, CF_SG_GEOMETRY_TYPE);
-
+		
 		// Points	
 		if(!strcmp(gt_name, CF_SG_TYPE_POINT))
 		{
-			// still to do, add detection for multipart geometry
-			ret = POINT;	
+			// Node Count present? Assume that it is a multipoint.
+			if(nc_inq_att(ncid, varid, CF_SG_NODE_COUNT, NULL, NULL) == NC_ENOTATT)
+			{
+				ret = POINT;	
+			}
+			else ret = MULTIPOINT;
 		}
 
 		// Lines
 		else if(!strcmp(gt_name, CF_SG_TYPE_LINE))
 		{
-			ret = LINE;
+			// Part Node Count present? Assume multiline
+			if(nc_inq_att(ncid, varid, CF_SG_PART_NODE_COUNT, NULL, NULL) == NC_ENOTATT)
+			{
+				ret = LINE;
+			}
+			else ret = MULTILINE;
 		}
 
 		// Polygons
 		else if(!strcmp(gt_name, CF_SG_TYPE_POLY))
 		{
-			ret = POLYGON;
+			/* Polygons versus MultiPolygons, slightly ambiguous
+			 * Part Node Count & no Interior Ring - MultiPolygon
+			 * no Part Node Count & no Interior Ring - Polygon
+			 * Part Node Count & Interior Ring - assume that it is a MultiPolygon
+			 */
+			int pnc_present = nc_inq_att(ncid, varid, CF_SG_PART_NODE_COUNT, NULL, NULL);
+			int ir_present = nc_inq_att(ncid, varid, CF_SG_INTERIOR_RING, NULL, NULL);
+
+			if(pnc_present == NC_ENOTATT && ir_present == NC_ENOTATT)
+			{
+				ret = POLYGON;
+			}
+			else ret = MULTIPOLYGON;
 		}
 
 		delete[] gt_name;
 		return ret;
+	}
+
+	void inPlaceSerialize_PointLocusGeneric(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin, uint32_t type)
+	{
+		uint8_t order = 1;
+		uint32_t t = type;
+		uint32_t nc = (uint32_t) node_count;
+		
+		serializeBegin = mempcpy(serializeBegin, &order, 1);
+		serializeBegin = mempcpy(serializeBegin, &t, 4);
+		serializeBegin = mempcpy(serializeBegin, &nc, 4);
+
+		// Now serialize points
+		for(int ind = 0; ind < node_count; ind++)
+		{
+			Point * p = (*ge)[seek_begin + ind];
+			double x = (*p)[0];
+			double y = (*p)[1];
+			serializeBegin = mempcpy(serializeBegin, &x, 8);
+			serializeBegin = mempcpy(serializeBegin, &y, 8);	
+		}
+	}
+	
+	void inPlaceSerialize_MultiPoint(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
+	{
+		inPlaceSerialize_PointLocusGeneric(ge, node_count, seek_begin, serializeBegin, wkbMultiPoint);
+	}
+
+	void inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
+	{
+		inPlaceSerialize_PointLocusGeneric(ge, node_count, seek_begin, serializeBegin, wkbLineString);
+	}
+
+	void inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin)
+	{
+			
+		int8_t header = 1;
+		int32_t t = wkbPolygon;
+		int32_t rc = (int32_t)ring_count;
+				
+		void * writer = serializeBegin;
+		writer = mempcpy(writer, &header, 1);
+		writer = mempcpy(writer, &t, 4);
+		writer = mempcpy(writer, &rc, 4);
+		int cmoffset = 0;
+						
+		// Check for dimension error / touple order < 2 still to implement					
+		for(int ring_c = 0; ring_c < ring_count; ring_c++)
+		{
+			int32_t node_count = pnc[ring_c];
+			writer = mempcpy(writer, &node_count, 4);
+
+			int pind = 0;
+			for(pind = 0; pind < pnc[ring_c]; pind++)
+			{
+				Point * pt= (*ge)[seek_begin + cmoffset + pind];
+				double x = (*pt)[0]; double y = (*pt)[1];
+				writer = mempcpy(writer, &x, 8);
+				writer = mempcpy(writer, &y, 8);
+			}
+
+			cmoffset += pind;
+		}
+
 	}
 
 	SGeometry* getGeometryRef(int ncid, const char * varName )
@@ -435,4 +576,5 @@ namespace nccfdriver
 		// stub
 		return -1; 
 	}
+
 }

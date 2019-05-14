@@ -122,7 +122,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		featureDesc->importFromWkb((const unsigned char*)wkb_rep, r_size, wkbVariantIso, out);
 		OGRFeature * feat = new OGRFeature(defn);
 		feat -> SetGeometryDirectly(featureDesc);
-		feat->SetFID(featCt);
+		feat -> SetFID(featCt);
 		delete wkb_rep;
 		poL->AddSimpleGeometryFeature(feat);
 	}
