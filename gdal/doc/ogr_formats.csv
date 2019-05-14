@@ -38,7 +38,7 @@ GMT,GMT
 GPSBabel,GPSBabel
 GPX,GPX
 GRASS Vector Format,GRASS
-"GPSTrackMaker (.gtm, .gtz),GPSTrackMaker
+GPSTrackMaker (.gtm, .gtz),GPSTrackMaker
 Hydrographic Transfer Format,HTF
 Idrisi Vector (.VCT),Idrisi
 Informix DataBlade,IDB
@@ -64,7 +64,7 @@ Oracle Spatial,OCI
 ODBC,ODBC
 MS SQL Spatial,MSSQLSpatial
 Open Document Spreadsheet,ODS
-"OGDI Vectors (VPF, VMAP, DCW),OGDI
+OGDI Vectors (VPF, VMAP, DCW),OGDI
 OpenAir,OpenAir
 ESRI FileGDB,OpenFileGDB
 OpenStreetMap XML and PBF,OSM

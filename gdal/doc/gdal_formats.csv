@@ -4,7 +4,7 @@ ADRG/ARC Digitilized Raster Graphics (.gen/.thf),ADRG
 Arc/Info Binary Grid (.adf),AIG
 AIRSAR Polarimetric,AIRSAR
 Azavea Raster Grid,ARG
-"Magellan BLX Topo (.blx, .xlb)",BLX
+Magellan BLX Topo (.blx, .xlb),BLX
 Bathymetry Attributed Grid (.bag),BAG
 Microsoft Windows Device Independent Bitmap (.bmp),BMP
 BPG (Better Portable Graphics),BPG
@@ -28,7 +28,7 @@ ELAS DIPEx,DIPEx
 DODS / OPeNDAP,DODS
 First Generation USGS DOQ (.doq),DOQ1
 New Labelled USGS DOQ (.doq),DOQ2
-"Military Elevation Data (.dt0, .dt1, .dt2)",DTED
+Military Elevation Data (.dt0, .dt1, .dt2),DTED
 Arc/Info Export E00 GRID,E00GRID
 ECRG Table Of Contents (TOC.xml),ECRGTOC
 ERDAS Compressed Wavelets (.ecw),ECW
@@ -67,7 +67,7 @@ HF2/HFZ heightfield raster,HF2
 Erdas Imagine (.img),HFA
 Image Display and Analysis (WinDisp),IDA
 IGN-France height correction ASCII grids,IGNFHeightASCIIGrid
-"ILWIS Raster Map (.mpr,.mpl)",ILWIS
+ILWIS Raster Map (.mpr,.mpl),ILWIS
 Intergraph Raster,INGR
 IRIS,IRIS
 ISCE raster,ISCE
@@ -77,12 +77,12 @@ JAXA PALSAR Product Reader (Level 1.1/1.5),JAXAPALSAR
 Japanese DEM (.mem),JDEM
 JPEG JFIF (.jpg),JPEG
 JPEG-LS,JPEGLS
-"JPEG2000 (.jp2, .j2k)",JPEG2000
-"JPEG2000 (.jp2, .j2k)",JP2ECW
-"JPEG2000 (.jp2, .j2k)",JP2KAK
-"JPEG2000 (.jp2, .j2k)",JP2Lura
-"JPEG2000 (.jp2, .j2k)",JP2MrSID
-"JPEG2000 (.jp2, .j2k)",JP2OpenJPEG
+JPEG2000 (.jp2, .j2k),JPEG2000
+JPEG2000 (.jp2, .j2k),JP2ECW
+JPEG2000 (.jp2, .j2k),JP2KAK
+JPEG2000 (.jp2, .j2k),JP2Lura
+JPEG2000 (.jp2, .j2k),JP2MrSID
+JPEG2000 (.jp2, .j2k),JP2OpenJPEG
 JPIP (based on Kakadu),JPIPKAK
 KEA,KEA
 KMLSUPEROVERLAY,KMLSUPEROVERLAY
@@ -104,7 +104,7 @@ Meteosat Second Generation,MSG
 EUMETSAT Archive native (.nat),MSGN
 NLAPS Data Format,NDF
 NOAA NGS Geoid Height Grids,NGSGEOID
-"NITF (.ntf, .nsf, .gn?, .hr?, .ja?, .jg?, .jn?, .lf?, .on?, .tl?, .tp?, etc.)",NITF
+NITF (.ntf, .nsf, .gn?, .hr?, .ja?, .jg?, .jn?, .lf?, .on?, .tl?, .tp?, etc.),NITF
 NextGIS Web rasters,NGW
 NetCDF,netCDF
 NTv1 Datum Grid Shift,NTv1
@@ -121,17 +121,17 @@ NASA Planetary Data System (Version 4),PDS4
 Planet Labs Mosaics API,PLMosaic
 Portable Network Graphics (.png),PNG
 PostGIS Raster (previously WKTRaster),PostGISRaster
-"Netpbm (.ppm,.pgm)",PNM
-"PHOTOMOD raster file (.prf,.x-dem)",PRF
+Netpbm (.ppm,.pgm),PNM
+PHOTOMOD raster file (.prf,.x-dem),PRF
 R Object Data Store,R
 Rasdaman,RASDAMAN
 Rasterlite - Rasters in SQLite DB,Rasterlite
 Rasterlite2 - Rasters in SQLite DB,SQLite
 DigitalGlobe Raster Data Access,RDA
 Swedish Grid RIK (.rik),RIK
-"Raster Matrix Format (*.rsw, .mtw)",RMF
+Raster Matrix Format (*.rsw, .mtw),RMF
 ROI_PAC Raster,ROI_PAC
-"Raster Product Format/RPF (CADRG, CIB)",RPFTOC
+Raster Product Format/RPF (CADRG, CIB),RPFTOC
 RadarSat2 XML (product.xml),RS2
 R Raster (.grd),RRASTER
 Idrisi Raster,RST
@@ -155,7 +155,7 @@ VICAR,VICAR
 GDAL Virtual (.vrt),VRT
 OGC Web Coverage Service,WCS
 WEBP,WEBP
-"OGC Web Map Service, and TMS, WorldWind, On Earth tiled, VirtualEarth, ArcGIS REST, IIP)",WMS
+OGC Web Map Service, and TMS, WorldWind, On Earth tiled, VirtualEarth, ArcGIS REST, IIP),WMS
 OGC Web Map Tile Service,WMTS
 X11 Pixmap (.xpm),XPM
 ASCII Gridded XYZ,XYZ
