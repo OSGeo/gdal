@@ -12,6 +12,11 @@ FAQ
        :depth: 3
        :backlinks: none
 
+.. toctree::
+   :hidden:
+
+   software_using_gdal
+
 What does GDAL stand for?
 +++++++++++++++++++++++++
 

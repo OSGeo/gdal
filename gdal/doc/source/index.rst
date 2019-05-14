@@ -8,13 +8,12 @@ Welcome to GDAL's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    about
    download
    programs/index
    drivers/index
-   user_doc/index
+   User <user/index>
    api/index
    tutorials/index
    community
@@ -25,5 +24,4 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

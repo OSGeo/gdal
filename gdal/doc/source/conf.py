@@ -49,16 +49,16 @@ html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'canonical_url': '',
     'analytics_id': '',  #  Provided by Google in your dashboard
-    'logo_only': False,
+    'logo_only': True,
     'display_version': True,
-    'prev_next_buttons_location': 'bottom',
+    'prev_next_buttons_location': 'both',
     'style_external_links': False,
-    'vcs_pageview_mode': '',
+    #'vcs_pageview_mode': '',
     'style_nav_header_background': 'white',
     # Toc options
     'collapse_navigation': True,
     'sticky_navigation': True,
-    'navigation_depth': 4,
+    #'navigation_depth': 4,
     'includehidden': True,
     'titles_only': False
 }
@@ -68,6 +68,10 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# If true, links to the reST sources are added to the pages.
+html_show_sourcelink = False
+
+html_logo = '../images/gdalicon.png'
 
 # -- Breathe -------------------------------------------------
 
