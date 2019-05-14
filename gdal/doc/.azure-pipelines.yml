@@ -8,8 +8,18 @@ jobs:
   - job: 'Documentation'
     pool:
       vmImage: 'ubuntu-16.04'
+    container:
+      image: osgeo/gdal-docs
+        options: --privileged
     steps:
-      - checkout: none
+      - script: |
+          python3 --version
+          sphinx-build --version
+        displayName: 'Sphinx version'
+      - script: |
+          cd $AZURE_BUILDDIRECTORY/gdal/doc
+          make html
+        displayName: 'Build'
       - task: DownloadSecureFile@1
         inputs:
           secureFile: 'pdal-docs-ssh-key'
@@ -20,7 +30,7 @@ jobs:
           ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
         displayName: 'Deploy the key'
       - script: |
-          mkdir gdal-docs && cd gdal-docs
+          mv $AZURE_BUILDDIRECTORY/gdal/doc/build/html $AZURE_BUILDDIRECTORY/gdal-docs
           git init
           git config user.email "proj4bot@proj4.bot"
           git config user.name "GDAL Bot"
