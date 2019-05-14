@@ -1,5 +1,5 @@
 # Azure Pipelines to build GDAL documentation
-
+#
 variables:
   system.debug: true
   configuration: release
