@@ -1,0 +1,99 @@
+Aeronav FAA files,AeronavFAA
+AmigoCloud API,AmigoCloud
+ESRI ArcObjects,ArcObjects
+Arc/Info Binary Coverage,AVCBin
+Arc/Info .E00 (ASCII) Coverage,AVCE00
+Arc/Info Generate,ARCGEN
+Atlas BNA,BNA
+AutoCAD DWG,CAD
+AutoCAD DWG,DWG
+AutoCAD DXF,DXF
+Carto,Carto
+Cloudant / CouchDB,Cloudant
+CouchDB / GeoCouch,CouchDB
+Comma Separated Value (.csv),CSV
+OGC CSW (Catalog Service for the Web),CSW
+Czech Cadastral Exchange Data Format,VFK
+DB2 Spatial,DB2ODBC
+DODS/OPeNDAP,DODS
+Google Earth Engine Data API,EEDA
+EDIGEO,EDIGEO
+ElasticSearch,ElasticSearch
+ESRI FileGDB,FileGDB
+ESRI Personal GeoDatabase,PGeo
+ESRI ArcSDE,SDE
+ESRIJSON,ESRIJSON
+ESRI Shapefile / DBF,ESRI Shapefile
+FMEObjects Gateway,FMEObjects Gateway
+GeoJSON,GeoJSON
+GeoJSON sequences,GeoJSONSeq
+Géoconcept Export,Geoconcept
+Geomedia .mdb,Geomedia
+GeoPackage,GPKG
+GeoRSS,GeoRSS
+Google Fusion Tables,GFT
+GML,GML
+GMLAS,GMLAS
+GMT,GMT
+GPSBabel,GPSBabel
+GPX,GPX
+GRASS Vector Format,GRASS
+"GPSTrackMaker (.gtm, .gtz),GPSTrackMaker
+Hydrographic Transfer Format,HTF
+Idrisi Vector (.VCT),Idrisi
+Informix DataBlade,IDB
+Interlis 1,ILI1
+Interlis 2,ILI2
+INGRES,INGRES
+OpenJUMP .jml,JML
+KML,KML
+LIBKML,LIBKML
+Mapinfo File,MapInfo File
+Microstation DGN v7,DGN
+Microstation DGN v8,DGNv8
+Access MDB (PGeo and Geomedia capable),MDB
+Memory,Memory
+MongoDB,MongoDB
+MongoDBv3,MongoDBv3
+Mapbox Vector Tiles,MVT
+MySQL,MySQL
+NAS - ALKIS,NAS
+NetCDF,netCDF
+NextGIS Web,NGW
+Oracle Spatial,OCI
+ODBC,ODBC
+MS SQL Spatial,MSSQLSpatial
+Open Document Spreadsheet,ODS
+"OGDI Vectors (VPF, VMAP, DCW),OGDI
+OpenAir,OpenAir
+ESRI FileGDB,OpenFileGDB
+OpenStreetMap XML and PBF,OSM
+PCI Geomatics Database File,PCIDSK
+Geospatial PDF,PDF
+PDS,PDS
+Planet Labs Scenes API,PLScenes
+PostgreSQL SQL dump,PGDump
+PostgreSQL/PostGIS,PostgreSQL/PostGIS
+EPIInfo .REC,REC
+S-57 (ENC),S57
+SDTS,SDTS
+SEG-P1 / UKOOA P1/90,SEGUKOOA
+SEG-Y,SEGY
+Selafin/Seraphin format,Selafin
+Norwegian SOSI Standard,SOSI
+SQLite/SpatiaLite,SQLite
+SUA,SUA
+SVG,SVG
+Storage and eXchange Format,SXF
+U.S. Census TIGER/Line,TIGER
+TopoJSON,TopoJSON
+UK .NTF,UK. NTF
+VDV-451/VDV-452/IDF,VDV
+VRT - Virtual Datasource,VRT
+Walk,Walk
+WAsP .map format,WAsP
+OGC WFS (Web Feature Service),WFS
+OGC WFS 3.0 (Web Feature Service) (experimental),WFS3
+MS Excel format,XLS
+MS Office Open XML spreadsheet,XLSX
+X-Plane/Flightgear aeronautical data,XPLANE
