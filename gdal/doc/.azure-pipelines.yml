@@ -13,7 +13,7 @@ jobs:
       options: --privileged
     steps:
       - script: |
-          python --version
+          python3 --version
           sphinx-build --version
         displayName: 'Sphinx version'
       - script: |
