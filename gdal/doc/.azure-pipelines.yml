@@ -1,7 +1,7 @@
 # Azure Pipelines to build GDAL documentation
 
 variables:
-  system.debug: true
+  #system.debug: true
   configuration: release
 
 jobs:
@@ -16,3 +16,6 @@ jobs:
           cd gdal/doc
           make html
         displayName: 'Build'
+      - script: |
+          echo TODO
+        displayName: 'Deploy'
