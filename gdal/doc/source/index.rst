@@ -12,9 +12,14 @@ Welcome to GDAL's documentation!
 
    about
    download
-   community
+   programs/index
+   drivers/index
+   user_doc/index
    api/index
-   rst_style
+   tutorials/index
+   community
+   contributing/index
+   faq
 
 Indices and tables
 ==================

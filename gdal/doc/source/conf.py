@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'GDAL'
-copyright = '2019, Frank Warmerdam, Even Rouault, and others'
+copyright = '1998-2019, Frank Warmerdam, Even Rouault, and others'
 author = 'Frank Warmerdam, Even Rouault, and others'
 
 
