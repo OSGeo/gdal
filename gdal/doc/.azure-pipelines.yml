@@ -1,7 +1,7 @@
 # Azure Pipelines to build GDAL documentation
 
 variables:
-  #system.debug: true
+  system.debug: true
   configuration: release
 
 jobs:
@@ -18,9 +18,6 @@ jobs:
           versionSpec: '3.7'
           addToPath: true
       - script: |
-          sudo -E apt-get update
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install doxygen
-
           python --version
           python -m pip install --upgrade pip
           pip install -r gdal/doc/requirements.txt
