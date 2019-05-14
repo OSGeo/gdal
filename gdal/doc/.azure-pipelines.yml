@@ -8,9 +8,10 @@ jobs:
   - job: 'Documentation'
     pool:
       vmImage: 'ubuntu-16.04'
+    container:
+      image: osgeo/proj-docs
+      options: --privileged
     steps:
-      - checkout: self
-        fetchDepth: 1
       - task: UsePythonVersion@0
         displayName: 'Setup Python'
         inputs:
