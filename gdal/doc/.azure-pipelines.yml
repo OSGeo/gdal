@@ -17,7 +17,9 @@ jobs:
           sphinx-build --version
         displayName: 'Sphinx version'
       - script: |
-          cd $AGENT_BUILDDIRECTORY/gdal/gdal/doc
+          pwd
+          ls
+          cd $(Agent.BuildDirectory)/gdal/doc
           make html
         displayName: 'Build'
       - task: DownloadSecureFile@1
@@ -30,7 +32,7 @@ jobs:
           ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
         displayName: 'Deploy the key'
       - script: |
-          mv $AGENT_BUILDDIRECTORY/gdal/gdal/doc/build/html $AGENT_BUILDDIRECTORY/gdal-docs
+          mv $(Agent.BuildDirectory)/gdal/doc/build/html $(Agent.BuildDirectory)/gdal-docs
           git init
           git config user.email "proj4bot@proj4.bot"
           git config user.name "GDAL Bot"
