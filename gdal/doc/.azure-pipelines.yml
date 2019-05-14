@@ -1,7 +1,7 @@
 # Azure Pipelines to build GDAL documentation
 #
 variables:
-  system.debug: true
+  #system.debug: true
   configuration: release
 
 jobs:
@@ -13,9 +13,19 @@ jobs:
       - task: DownloadSecureFile@1
         inputs:
           secureFile: 'pdal-docs-ssh-key'
-        displayName: 'Get deploy key'
+        displayName: 'Get the deploy key'
       - script: |
           mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
           chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-        displayName: 'Deploy'
+        displayName: 'Deploy the key'
+      - script: |
+          mkdir gdal-docs && cd gdal-docs
+          git init
+          git config user.email "proj4bot@proj4.bot"
+          git config user.name "GDAL Bot"
+          git remote add origin git@github.com:OSGeo/gdal-docs.git
+          echo Test > tREADME.md
+          git commit -m "Update with https://github.com/OSGeo/gdal/commit/$BUILD_SOURCEVERSION"
+          git push -f origin master
+        displayName: 'Deploy the docs'
