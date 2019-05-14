@@ -1,25 +1,28 @@
 # Azure Pipelines to build GDAL documentation
 
 variables:
-  #system.debug: true
+  system.debug: true
   configuration: release
 
 jobs:
   - job: 'Documentation'
     pool:
       vmImage: 'ubuntu-16.04'
-    container:
-      image: osgeo/gdal-docs
-      options: --privileged
+    # container:
+    #   image: osgeo/gdal-docs
+    #   options: --privileged
     steps:
+      # - script: |
+      #     python3 --version
+      #     sphinx-build --version
+      #   displayName: 'Sphinx version'
+      # - script: |
+      #     cd gdal/doc
+      #     make html
+      #   displayName: 'Build'
+      - task: DownloadSecureFile@1
+        inputs:
+        secureFile: 'pdal-docs-ssh-key'
       - script: |
-          python3 --version
-          sphinx-build --version
-        displayName: 'Sphinx version'
-      - script: |
-          cd gdal/doc
-          make html
-        displayName: 'Build'
-      - script: |
-          echo TODO
+          echo $(DownloadSecureFile.secureFilePath)
         displayName: 'Deploy'
