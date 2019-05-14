@@ -10,7 +10,7 @@ jobs:
       vmImage: 'ubuntu-16.04'
     container:
       image: osgeo/gdal-docs
-        options: --privileged
+      options: --privileged
     steps:
       - script: |
           python3 --version
