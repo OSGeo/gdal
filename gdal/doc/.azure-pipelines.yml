@@ -18,7 +18,7 @@ jobs:
           python --version
           python -m pip install --upgrade pip
           pip install -r gdal/doc/requirements.txt
-        displayName: 'Setup Python'
+        displayName: 'Install dependencies'
       - script: |
           cd gdal/doc
           make html
