@@ -13,8 +13,8 @@ Welcome to GDAL's documentation!
    about
    download
    community
-
-
+   api/index
+   rst_style
 
 Indices and tables
 ==================
