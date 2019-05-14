@@ -136,6 +136,7 @@ void RegisterOGRSXF()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
+        "  <Option name='SXF_LAYER_FULLNAME' type='string' description='Use long layer names' default='NO'/>"
         "  <Option name='SXF_RSC_FILENAME' type='string' description='RSC file name' default=''/>"
         "</OpenOptionList>");
 

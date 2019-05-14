@@ -304,7 +304,7 @@ int OGRSXFDataSource::Open(const char * pszFilename, bool bUpdateIn,
         {
             CPLDebug( "OGRSXFDataSource", "RSC Filename: %s",
                       soRSCRileName.c_str() );
-            CreateLayers(fpRSC);
+            CreateLayers(fpRSC, papszOpenOpts);
             VSIFCloseL(fpRSC);
         }
     }
@@ -996,7 +996,7 @@ void OGRSXFDataSource::CreateLayers()
     nLayers++;
 }
 
-void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
+void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC, const char* const* papszOpenOpts)
 {
 
     RSCHeader stRSCFileHeader;
@@ -1031,10 +1031,11 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
     for( GUInt32 i = 0; i < stRSCFileHeader.Layers.nRecordCount; ++i )
     {
         VSIFReadL(&LAYER, nLayerStructSize, 1, fpRSC);
-
         papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-        bool bLayerFullName = CPLTestBool(CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO"));
-
+        bool bLayerFullName = CPLTestBool(
+                 CSLFetchNameValueDef(papszOpenOpts,
+                                      "SXF_LAYER_FULLNAME",
+                                       CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO")));
         char* pszRecoded = nullptr;
         if (bLayerFullName)
         {
