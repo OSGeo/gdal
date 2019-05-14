@@ -22,7 +22,7 @@ jobs:
       #   displayName: 'Build'
       - task: DownloadSecureFile@1
         inputs:
-        secureFile: 'pdal-docs-ssh-key'
+          secureFile: 'pdal-docs-ssh-key'
       - script: |
           echo $(DownloadSecureFile.secureFilePath)
         displayName: 'Deploy'
