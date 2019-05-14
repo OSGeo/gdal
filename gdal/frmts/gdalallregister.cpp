@@ -404,6 +404,9 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_TileDB();
 #endif
 
+#ifdef FRMT_rdb
+    GDALRegister_RDB();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Put raw formats at the end of the list. These drivers support   */
 /*      various ASCII-header labeled formats, so the driver could be    */
