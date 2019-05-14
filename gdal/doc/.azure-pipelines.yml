@@ -12,17 +12,7 @@ jobs:
       image: osgeo/proj-docs
       options: --privileged
     steps:
-      - task: UsePythonVersion@0
-        displayName: 'Setup Python'
-        inputs:
-          versionSpec: '3.7'
-          addToPath: true
-      - script: |
-          python --version
-          python -m pip install --upgrade pip
-          pip install -r gdal/doc/requirements.txt
-        displayName: 'Install dependencies'
       - script: |
           cd gdal/doc
           make html
-        displayName: 'Build documentation'
+        displayName: 'Build'
