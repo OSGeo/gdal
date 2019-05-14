@@ -104,7 +104,8 @@ namespace nccfdriver
 		 * returns a size, indicating the amount of geometries
 		 * contained in the variable
 		 */
-		size_t get_geometry_count() { return this->node_counts.size(); }
+		size_t get_geometry_count() { if(type == POINT) return 1; // still to do: find node counts
+						else  return this->node_counts.size(); }
 
 		/* bool SGeometry::getValid()
 		 * Gets the valid flag of this geometry.
@@ -143,9 +144,10 @@ namespace nccfdriver
 	 */
 	geom_t getGeometryType(int ncid, int varid); 
 	
-	void inPlaceSerialize_MultiPoint(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
-	void inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
-	void inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin);
+	void* inPlaceSerialize_MultiPoint(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
+	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
+	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
+	void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin);
 
 	/* Given a variable name, and the ncid, returns a SGeometry reference object, which acts more of an iterator of a geometry container
 	 *
