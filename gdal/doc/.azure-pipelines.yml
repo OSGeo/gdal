@@ -13,6 +13,10 @@ jobs:
       options: --privileged
     steps:
       - script: |
+          python --version
+          sphinx-build --version
+        displayName: 'Sphinx version'
+      - script: |
           cd gdal/doc
           make html
         displayName: 'Build'
