@@ -13,6 +13,9 @@ jobs:
       - task: DownloadSecureFile@1
         inputs:
           secureFile: 'pdal-docs-ssh-key'
+        displayName: 'Get deploy key'
       - script: |
-          echo $$DOWNLOADSECUREFILE_SECUREFILEPATH
+          mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
+          chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
         displayName: 'Deploy'

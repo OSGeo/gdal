@@ -1,0 +1,162 @@
+Arc/Info ASCII Grid,AAIGrid
+ACE2,ACE2
+ADRG/ARC Digitilized Raster Graphics (.gen/.thf),ADRG
+Arc/Info Binary Grid (.adf),AIG
+AIRSAR Polarimetric,AIRSAR
+Azavea Raster Grid,ARG
+"Magellan BLX Topo (.blx, .xlb)",BLX
+Bathymetry Attributed Grid (.bag),BAG
+Microsoft Windows Device Independent Bitmap (.bmp),BMP
+BPG (Better Portable Graphics),BPG
+BSB Nautical Chart Format (.kap),BSB
+VTP Binary Terrain Format (.bt),BT
+Natural Resources Canada's Geoid BYN (.byn),BYN
+AutoCAD DWG Raster layer,CAD
+CALS Type I,CALS
+CEOS (Spot for instance),CEOS
+DRDC COASP SAR Processor Raster,COASP
+TerraSAR-X Complex SAR Data Product,COSAR
+Convair PolGASP data,CPG
+CTable2 Datum Grid Shift,CTable2
+USGS LULC Composite Theme Grid,CTG
+Airbus DS Intelligence Data As A Service,DAAS
+DB2,DB2
+DirectDraw Surface,DDS
+Derived,DERIVED
+Spot DIMAP (metadata.dim),DIMAP
+ELAS DIPEx,DIPEx
+DODS / OPeNDAP,DODS
+First Generation USGS DOQ (.doq),DOQ1
+New Labelled USGS DOQ (.doq),DOQ2
+"Military Elevation Data (.dt0, .dt1, .dt2)",DTED
+Arc/Info Export E00 GRID,E00GRID
+ECRG Table Of Contents (TOC.xml),ECRGTOC
+ERDAS Compressed Wavelets (.ecw),ECW
+Google Earth Engine Data API Image,EEDAI
+ESRI .hdr Labelled,EHdr
+Erdas Imagine Raw,EIR
+NASA ELAS,ELAS
+ENVI .hdr Labelled Raster,ENVI
+Epsilon - Wavelet compressed images,EPSILON
+ERMapper (.ers),ERS
+Envisat Image Product (.n1),ESAT
+EOSAT FAST Format,FAST
+FIT,FIT
+FITS (.fits),FITS
+Fuji BAS Scanner Image,FujiBAS
+Generic Binary (.hdr Labelled),GENBIN
+GeoPackage,GPKG
+Oracle Spatial GeoRaster,GEORASTER
+GSat File Format,GFF
+Graphics Interchange Format (.gif),GIF
+WMO GRIB1/GRIB2 (.grb),GRIB
+GMT Compatible netCDF,GMT
+GRASS Raster Format,GRASS
+GRASS ASCII Grid,GRASSASCIIGrid
+Golden Software ASCII Grid,GSAG
+Golden Software Binary Grid,GSBG
+Golden Software Surfer 7 Binary Grid,GS7BG
+GSC Geogrid,GSC
+Generic Tagged Arrays (.gta),GTA
+TIFF / BigTIFF / GeoTIFF (.tif),GTiff
+NOAA .gtx vertical datum shift,GTX
+GXF - Grid eXchange File,GXF
+Hierarchical Data Format Release 4 (HDF4),HDF4
+Hierarchical Data Format Release 5 (HDF5),HDF5
+HF2/HFZ heightfield raster,HF2
+Erdas Imagine (.img),HFA
+Image Display and Analysis (WinDisp),IDA
+IGN-France height correction ASCII grids,IGNFHeightASCIIGrid
+"ILWIS Raster Map (.mpr,.mpl)",ILWIS
+Intergraph Raster,INGR
+IRIS,IRIS
+ISCE raster,ISCE
+USGS Astrogeology ISIS cube (Version 2),ISIS2
+USGS Astrogeology ISIS cube (Version 3),ISIS3
+JAXA PALSAR Product Reader (Level 1.1/1.5),JAXAPALSAR
+Japanese DEM (.mem),JDEM
+JPEG JFIF (.jpg),JPEG
+JPEG-LS,JPEGLS
+"JPEG2000 (.jp2, .j2k)",JPEG2000
+"JPEG2000 (.jp2, .j2k)",JP2ECW
+"JPEG2000 (.jp2, .j2k)",JP2KAK
+"JPEG2000 (.jp2, .j2k)",JP2Lura
+"JPEG2000 (.jp2, .j2k)",JP2MrSID
+"JPEG2000 (.jp2, .j2k)",JP2OpenJPEG
+JPIP (based on Kakadu),JPIPKAK
+KEA,KEA
+KMLSUPEROVERLAY,KMLSUPEROVERLAY
+KRO,KRO
+NOAA Polar Orbiter Level 1b Data Set (AVHRR),L1B
+Erdas 7.x .LAN and .GIS,LAN
+FARSITE v.4 LCP Format,LCP
+Daylon Leveller Heightfield,Leveller
+NADCON .los/.las Datum Grid Shift,LOSLAS
+MBTiles,MBTiles
+OziExplorer .MAP,MAP
+In Memory Raster,MEM
+Vexcel MFF,MFF
+Vexcel MFF2,MFF2 (HKV)
+MG4 Encoded Lidar,MG4Lidar
+Meta Raster Format,MRF
+Multi-resolution Seamless Image Database,MrSID
+Meteosat Second Generation,MSG
+EUMETSAT Archive native (.nat),MSGN
+NLAPS Data Format,NDF
+NOAA NGS Geoid Height Grids,NGSGEOID
+"NITF (.ntf, .nsf, .gn?, .hr?, .ja?, .jg?, .jn?, .lf?, .on?, .tl?, .tp?, etc.)",NITF
+NextGIS Web rasters,NGW
+NetCDF,netCDF
+NTv1 Datum Grid Shift,NTv1
+NTv2 Datum Grid Shift,NTv2
+Northwood/VerticalMapper Classified Grid Format .grc/.tab,NWT_GRC
+Northwood/VerticalMapper Numeric Grid Format .grd/.tab,NWT_GRD
+OZI OZF2/OZFX3,OZI
+PCI .aux Labelled,PAux
+PCI Geomatics Database File,PCIDSK
+PCRaster,PCRaster
+Geospatial PDF,PDF
+NASA Planetary Data System,PDS
+NASA Planetary Data System (Version 4),PDS4
+Planet Labs Mosaics API,PLMosaic
+Portable Network Graphics (.png),PNG
+PostGIS Raster (previously WKTRaster),PostGISRaster
+"Netpbm (.ppm,.pgm)",PNM
+"PHOTOMOD raster file (.prf,.x-dem)",PRF
+R Object Data Store,R
+Rasdaman,RASDAMAN
+Rasterlite - Rasters in SQLite DB,Rasterlite
+Rasterlite2 - Rasters in SQLite DB,SQLite
+DigitalGlobe Raster Data Access,RDA
+Swedish Grid RIK (.rik),RIK
+"Raster Matrix Format (*.rsw, .mtw)",RMF
+ROI_PAC Raster,ROI_PAC
+"Raster Product Format/RPF (CADRG, CIB)",RPFTOC
+RadarSat2 XML (product.xml),RS2
+R Raster (.grd),RRASTER
+Idrisi Raster,RST
+Sentinel 1 SAR SAFE (manifest.safe),SAFE
+Sentinel 2,SENTINEL2
+SAGA GIS Binary format,SAGA
+SAR CEOS,SAR_CEOS
+ArcSDE Raster,SDE
+USGS SDTS DEM (*CATD.DDF),SDTS
+SGI Image Format,SGI
+Scaled Integer Gridded DEM,SIGDEM
+Snow Data Assimilation System,SNODAS
+Standard Raster Product (ASRP/USRP),SRP
+SRTM HGT Format,SRTMHGT
+Terragen Heightfield (.ter),TERRAGEN
+EarthWatch/DigitalGlobe .TIL,TIL
+TileDB,TileDB
+TerraSAR-X Product,TSX
+USGS ASCII DEM / CDED (.dem),USGSDEM
+VICAR,VICAR
+GDAL Virtual (.vrt),VRT
+OGC Web Coverage Service,WCS
+WEBP,WEBP
+"OGC Web Map Service, and TMS, WorldWind, On Earth tiled, VirtualEarth, ArcGIS REST, IIP)",WMS
+OGC Web Map Tile Service,WMTS
+X11 Pixmap (.xpm),XPM
+ASCII Gridded XYZ,XYZ
+ZMap Plus Grid,ZMap
