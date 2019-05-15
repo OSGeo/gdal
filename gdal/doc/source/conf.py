@@ -73,6 +73,23 @@ html_show_sourcelink = False
 
 html_logo = '../images/gdalicon.png'
 
+# -- Options for manual page output ---------------------------------------
+
+# One entry per manual page. List of tuples
+# (source start file, name, description, authors, manual section).
+man_pages = [
+    (
+        'programs/gdalinfo',
+        'gdalinfo',
+        u'Lists various information about a GDAL supported raster dataset',
+        ['Frank Warmerdam'],
+        1
+    ),
+]
+
+# If true, show URL addresses after external links.
+#man_show_urls = False
+
 # -- Breathe -------------------------------------------------
 
 # Setup the breathe extension
