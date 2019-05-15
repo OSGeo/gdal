@@ -258,19 +258,14 @@ namespace nccfdriver
 
 	Point* SGeometry::operator[](int index)
 	{
-	/*	if(index >= this->node_counts[cur_geometry_ind])
-		{
-			return nullptr;
-		}
-*/
 		for(int order = 0; order < touple_order; order++)
 		{
 			Point& pt = *(this->pt_buffer);
 			double data;
-			size_t full_ind = bound_list[cur_geometry_ind] + current_vert_ind;
+			size_t real_ind = index;
 
 			// Read a single coord
-			int err = nc_get_var1_double(ncid, nodec_varIds[order], &full_ind, &data);
+			int err = nc_get_var1_double(ncid, nodec_varIds[order], &real_ind, &data);
 			// To do: optimize through multiple reads at once, instead of one datum
 
 			if(err != NC_NOERR)
@@ -319,7 +314,7 @@ namespace nccfdriver
 				break;
 
 			case POLYGON:
-				/*// A polygon has:
+				// A polygon has:
 				// 1 byte header
 				// 4 byte Type (=3 for polygon)
 				// 4 byte ring count (1 (exterior) or 2 (exterior and interior)
@@ -328,29 +323,15 @@ namespace nccfdriver
 				// (This is equivalent to requesting enough for all points and a point count header for each point)
 				// (Or 8 byte double x node count x 2 dimension + 4 byte point count x part_count)
 
-				int32_t rc = parts_count[featureInd];
-				int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous	
-				size_t wkbSize = 1 + 4 + 4 + 8 * node_counts[featureInd] * 2 + 4 * rc;
-				int serial_start = bound_list[featureInd];
-
-				std::vector<int> pnc;
-
-				// Build sub vector for part_node_counts
-				for(int itr = 0; itr < rc; itr++)
-				{
-					pnc.push_back(parts_count[pc_begin + itr]);	
-				}
-	
-
-				// Now allocate and serialize
-				ret = new[wkbSize];
-				inPlaceSerialize_Polygon(this, pnc, rc, seek_begin, ret);
-				*/
+				// if interior ring, then assume that it will be a multipolygon (maybe future work?)
+				wkbSize = 1 + 4 + 4 + 4 + 16 * nc;
+				ret = new int8_t[wkbSize];
+				inPlaceSerialize_PolygonExtOnly(this, nc, sb, ret);
 				break;
 
 			case MULTIPOINT:
 				wkbSize = 1 + 4 + 4 + 16 * nc;
-				ret = new uint8_t[wkbSize];
+				ret = new int8_t[wkbSize];
 				inPlaceSerialize_MultiPoint(this, nc, sb, ret); 
 				break;
 
@@ -384,7 +365,7 @@ namespace nccfdriver
 				// Build sub vector for part_node_counts
 				for(int itr = 0; itr < rc; itr++)
 				{
-					pnc.push_back(parts_count[pc_begin + itr]);	
+					pnc.push_back(pnode_counts[pc_begin + itr]);	
 				}	
 
 				// Figure out each Polygon's space requirements
@@ -392,7 +373,7 @@ namespace nccfdriver
 				{
 					for(int ss = 0; ss < rc; ss++)
 					{
-					 	wkbSize += 16 * pnc[ss] + 1 + 4 + 4;
+					 	wkbSize += 16 * pnc[ss] + 1 + 4 + 4 + 4;
 					}
 				}
 
