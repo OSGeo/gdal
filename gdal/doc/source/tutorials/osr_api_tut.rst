@@ -1,7 +1,7 @@
-.. _raster_driver_tut:
+.. _osr_api_tut:
 
 ================================================================================
-Raster driver implementation tutorial (TODO)
+OGRSpatialReference API tutorial (TODO)
 ================================================================================
 
 TODO

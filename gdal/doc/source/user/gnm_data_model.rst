@@ -1,7 +1,7 @@
-.. _raster_driver_tut:
+.. _gnm_data_model:
 
 ================================================================================
-Raster driver implementation tutorial (TODO)
+Geographic Networks Data Model (TODO)
 ================================================================================
 
 TODO

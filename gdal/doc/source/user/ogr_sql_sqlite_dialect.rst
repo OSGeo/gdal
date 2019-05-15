@@ -1,7 +1,7 @@
-.. _raster_driver_tut:
+.. _ogr_sql_sqlite_dialect:
 
 ================================================================================
-Raster driver implementation tutorial (TODO)
+OGR SQL dialect and SQLITE SQL dialect (TODO)
 ================================================================================
 
 TODO

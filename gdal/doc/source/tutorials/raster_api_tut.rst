@@ -1,7 +1,7 @@
-.. _raster_driver_tut:
+.. _raster_api_tut:
 
 ================================================================================
-Raster driver implementation tutorial (TODO)
+Raster API tutorial (TODO)
 ================================================================================
 
 TODO

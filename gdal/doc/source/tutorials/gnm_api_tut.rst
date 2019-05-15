@@ -1,7 +1,7 @@
-.. _raster_driver_tut:
+.. _gnm_api_tut:
 
 ================================================================================
-Raster driver implementation tutorial (TODO)
+GNM API tutorial (TODO)
 ================================================================================
 
 TODO
