@@ -10,3 +10,4 @@ GDALRasterBand class
 .. doxygenclass:: GDALRasterBand
    :project: api
    :members:
+   :protected-members:

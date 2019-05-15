@@ -1,4 +1,4 @@
-:.. _gdallocationinfo:
+.. _gdallocationinfo:
 
 ================================================================================
 gdallocationinfo (TODO)
