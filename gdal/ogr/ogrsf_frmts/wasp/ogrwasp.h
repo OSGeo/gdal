@@ -159,8 +159,6 @@ class OGRWAsPLayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature() override;
     OGRFeature *GetNextRawFeature();
-    virtual OGRwkbGeometryType  GetGeomType() override { return wkbLineString25D; }
-    virtual OGRSpatialReference *GetSpatialRef() override { return poSpatialReference; }
     virtual const char *GetName() override { return sName.c_str(); }
 };
 
