@@ -1329,7 +1329,14 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
         bGeoTransformValid = TRUE;
     }
 
-    SetProjection(CPLGetXMLValue(config, "GeoTags.Projection", ""));
+    OGRSpatialReference oSRS;
+    char *pszRawProj = const_cast<char *>(CPLGetXMLValue(config, "GeoTags.Projection", ""));
+    if (strlen(pszRawProj) == 0 || oSRS.SetFromUserInput(pszRawProj) != OGRERR_NONE 
+        || oSRS.exportToWkt(&pszRawProj) != OGRERR_NONE)
+        pszRawProj = CPLStrdup("");
+    SetProjection(pszRawProj);
+    CPLFree(pszRawProj);
+    
 
     // Copy the full size to current, data and index are not yet open
     current = full;
