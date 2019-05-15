@@ -4,8 +4,8 @@
 Tutorials
 ================================================================================
 
-Raster topics
--------------
+Raster
+------
 
 .. toctree::
    :maxdepth: 1
@@ -14,8 +14,8 @@ Raster topics
    raster_driver_tut
    warp_tut
 
-Vector topics
--------------
+Vector
+------
 
 .. toctree::
    :maxdepth: 1
@@ -23,8 +23,8 @@ Vector topics
    vector_api_tut
    vector_driver_tut
 
-Geographic Network Model topics
--------------------------------
+Geographic Network Model
+------------------------
 
 .. toctree::
    :maxdepth: 1
