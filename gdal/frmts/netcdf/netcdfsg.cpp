@@ -486,7 +486,7 @@ namespace nccfdriver
 
 				else
 				{
-					inPlaceSerialize_Polygon(this, pnc, rc, seek_begin, ret);
+					// still to do: implement interior ring resolution
 				}
 
 				break;
@@ -631,10 +631,10 @@ namespace nccfdriver
 		return serializeBegin;
 	}
 
-	void* inPlaceSerialize_PointLocusGeneric(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin, uint32_t type)
+	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
 	{
 		uint8_t order = 1;
-		uint32_t t = type;
+		uint32_t t = wkbLineString;
 		uint32_t nc = (uint32_t) node_count;
 		
 		serializeBegin = mempcpy(serializeBegin, &order, 1);
@@ -652,12 +652,6 @@ namespace nccfdriver
 		}
 
 		return serializeBegin;
-	}
-	
-
-	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
-	{
-		return inPlaceSerialize_PointLocusGeneric(ge, node_count, seek_begin, serializeBegin, wkbLineString);
 	}
 
 	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
