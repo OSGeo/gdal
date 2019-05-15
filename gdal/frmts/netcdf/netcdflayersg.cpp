@@ -86,8 +86,9 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	defn->SetGeomType(owgt);
 
 	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr);
+	size_t shape_count = sg->get_geometry_count();
 	
-	for(int featCt = 0; featCt < sg->get_geometry_count(); featCt++)
+	for(size_t featCt = 0; featCt < shape_count; featCt++)
 	{
 		OGRGeometry * featureDesc;
 

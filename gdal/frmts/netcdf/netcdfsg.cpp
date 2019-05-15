@@ -279,6 +279,16 @@ namespace nccfdriver
 		return (this->pt_buffer);
 	}
 
+	size_t SGeometry::get_geometry_count()
+	{
+		if(type == POINT)
+		{
+			return 1; // still to implement
+		}
+
+		else return this->node_counts.size();
+	}
+
 	/* serializeToWKB(SGeometry * sg)
 	 * Takes the geometry in SGeometry at a given index and converts it into WKB format.
 	 * Converting SGeometry into WKB automatically allocates the required buffer space
@@ -336,8 +346,43 @@ namespace nccfdriver
 				break;
 
 			case MULTILINE:
-				// Calculate wkbSize
-				wkbSize = 0;
+				{
+					int32_t header = 1;
+					int32_t t = wkbMultiLineString;
+					int32_t lc = parts_count[featureInd];
+					int seek_begin = bound_list[featureInd];
+					int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous	
+					wkbSize = 1 + 4 + 4;
+					std::vector<int> pnc;
+
+					// Build sub vector for part_node_counts
+					// + Calculate wkbSize
+					for(int itr = 0; itr < lc; itr++)
+					{
+						pnc.push_back(pnode_counts[pc_begin + itr]);	
+					 	wkbSize += 16 * pnc[itr] + 1 + 4 + 4;
+					}
+
+				
+					int cur_point = seek_begin;
+					int32_t pcount = pnc.size();
+
+					// Allocate and set pointers
+					ret = new int8_t[wkbSize];
+					void * worker = ret;
+
+					// Begin Writing
+					worker = mempcpy(worker, &header, 1);
+					worker = mempcpy(worker, &t, 4);
+					worker = mempcpy(worker, &pcount, 4);
+
+					for(int32_t itr = 0; itr < pcount; itr++)
+					{
+							worker = inPlaceSerialize_LineString(this, pnc[itr], cur_point, worker);
+							cur_point = pnc[itr] + cur_point;
+					}
+				}
+
 				break;
 
 			case MULTIPOLYGON:
@@ -346,20 +391,15 @@ namespace nccfdriver
 				// 4 byte Type (=6 for multipolygon)
 				// 4 byte polygon count
 				// For each Polygon:
-				// 1 + 4 + 4 + 8 * 2 * node_count
+				// 1 + 4 + 4 + 4 + 8 * 2 * node_count
 
 				int32_t header = 1;
 				int32_t t = wkbMultiPolygon;
 				bool noInteriors = this->int_rings.size() == 0 ? true : false;
 				int32_t rc = parts_count[featureInd];
-				int first_pt = bound_list[featureInd];
-				int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous	
-				
-				wkbSize = 1 + 4 + 4;
-					
-
 				int seek_begin = bound_list[featureInd];
-
+				int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous		
+				wkbSize = 1 + 4 + 4;
 				std::vector<int> pnc;
 
 				// Build sub vector for part_node_counts
@@ -387,7 +427,7 @@ namespace nccfdriver
 
 				if(noInteriors)
 				{
-					int cur_point = first_pt;
+					int cur_point = seek_begin;
 					int32_t pcount = pnc.size();
 					worker = mempcpy(worker, &pcount, 4);
 

@@ -104,10 +104,7 @@ namespace nccfdriver
 		 * returns a size, indicating the amount of geometries
 		 * contained in the variable
 		 */
-		size_t get_geometry_count() { //if(type == POINT) return 1; // still to do: find node counts
-					//	else  return this->node_counts.size(); }
-					return 1;
-					}	
+		size_t get_geometry_count();
 
 		/* bool SGeometry::getValid()
 		 * Gets the valid flag of this geometry.
