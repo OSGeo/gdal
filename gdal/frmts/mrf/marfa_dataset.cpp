@@ -1140,7 +1140,7 @@ VSILFILE *GDALMRFDataset::DataFP() {
     if (source.empty())
         goto io_error;
 
-    // Cloud be there but read only, remember that it was open that way
+    // May be there but read only, remember that it was open that way
     mode = "rb";
     dfp.acc = GF_Read;
     dfp.FP = VSIFOpenL(current.datfname, mode);
