@@ -5,12 +5,11 @@ User oriented documentation
 ================================================================================
 
 TODO: migrate .dox file for:
-    Raster data model
     Vector data model
     OGR SQL dialect and SQLITE SQL dialect
-    Virtual File Systems (compressed, network hosted, etc...): /vsimem, /vsizip, /vsitar, /vsicurl, ...
 
 .. toctree::
    :maxdepth: 1
 
+   raster_data_model
    GDAL Virtual File Systems <virtual_file_systems>
