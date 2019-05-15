@@ -28,8 +28,8 @@ author = 'Frank Warmerdam, Even Rouault, and others'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'breathe'
-    'configoptions',
+    'breathe',
+    'configoptions'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
