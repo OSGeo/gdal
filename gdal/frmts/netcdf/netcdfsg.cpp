@@ -385,7 +385,7 @@ namespace nccfdriver
 					// Add points
 					for(int pts = 0; pts < nc; pts++)
 					{
-						worker = inPlaceSerialize_Point(this, pts, worker);								
+						worker = inPlaceSerialize_Point(this, sb + pts, worker);								
 					}
 				}
 
