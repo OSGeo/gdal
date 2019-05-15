@@ -9,3 +9,8 @@ TODO: migrate .dox file for:
     Vector data model
     OGR SQL dialect and SQLITE SQL dialect
     Virtual File Systems (compressed, network hosted, etc...): /vsimem, /vsizip, /vsitar, /vsicurl, ...
+
+.. toctree::
+   :maxdepth: 1
+
+   GDAL Virtual File Systems <virtual_file_systems>
