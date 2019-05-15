@@ -124,10 +124,14 @@ namespace nccfdriver
 		// Create bound list
 		int rc = 0;
 		bound_list.push_back(0);// start with 0
-		for(size_t i = 0; i < node_counts.size() - 1; i++)
+
+		if(node_counts.size() > 0)
 		{
-			rc = rc + node_counts[i];
-			bound_list.push_back(rc);	
+			for(size_t i = 0; i < node_counts.size() - 1; i++)
+			{
+				rc = rc + node_counts[i];
+				bound_list.push_back(rc);	
+			}
 		}
 
 		// Create parts count list and an offset list for parts indexing	
@@ -283,7 +287,31 @@ namespace nccfdriver
 	{
 		if(type == POINT)
 		{
-			return 1; // still to implement
+			// If nodes global attribute is available, use that
+
+			// Otherwise, don't fail- use dimension length of one of x
+
+			if(this->nodec_varIds.size() < 1) return 0;
+
+			// If more than one dim, then error. Otherwise inquire its length and return that
+			int dims;
+			if(nc_inq_varndims(this->ncid, nodec_varIds[0], &dims) != NC_NOERR) return 0;
+			if(dims != 1) return 0;
+			
+			// Find which dimension is used for x
+			int index;
+			if(nc_inq_vardimid(this->ncid, nodec_varIds[0], &index) != NC_NOERR)
+			{
+				return 0;
+			}
+
+			// Finally find the length
+			size_t len;
+			if(nc_inq_dimlen(this->ncid, index, &len) != NC_NOERR)
+			{
+				return 0;
+			}
+			return len;	
 		}
 
 		else return this->node_counts.size();
@@ -298,23 +326,24 @@ namespace nccfdriver
 	{		
 		if(featureInd < 0) return nullptr;
 		void * ret = nullptr;
-		// to do: revise for single point case
-		int nc = node_counts[featureInd];
-		int sb = bound_list[featureInd];
+
+		int nc = 0; int sb = 0;
+
+		// Points don't have node_count entry... only inspect and set node_counts if not a point
+		if(this->getGeometryType() != POINT)
+		{
+			nc = node_counts[featureInd];
+			sb = bound_list[featureInd];
+		}
+
 		// Serialization occurs differently depending on geometry
 		// The memory requirements also differ between geometries
 		switch(this->getGeometryType())
 		{
 			case POINT:
-				{
-					wkbSize = 16;
-					ret = new int8_t[wkbSize];
-					Point * single = (*this)[featureInd];
-					double x = (*single)[0]; double y = (*single)[1];
-					void * worker = (void*)ret;
-					worker = mempcpy(worker, &x, 8);
-					worker = mempcpy(worker, &y, 8);
-				}
+				wkbSize = 1 + 4 + 16;
+				ret = new int8_t[wkbSize];
+				inPlaceSerialize_Point(this, featureInd, ret);
 				break;
 
 			case LINE:
@@ -544,7 +573,7 @@ namespace nccfdriver
 		// Points	
 		if(!strcmp(gt_name, CF_SG_TYPE_POINT))
 		{
-			// Node Count present? Assume that it is a multipoint.
+			// Node Count not present? Assume that it is a multipoint.
 			if(nc_inq_att(ncid, varid, CF_SG_NODE_COUNT, NULL, NULL) == NC_ENOTATT)
 			{
 				ret = POINT;	
