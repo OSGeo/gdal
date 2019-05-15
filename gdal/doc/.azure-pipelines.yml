@@ -15,6 +15,7 @@ jobs:
       - script: |
           python3 --version
           sphinx-build --version
+          pip3 install breathe
         displayName: 'Sphinx version'
       - script: |
           echo "X $PWD"
