@@ -9,7 +9,7 @@ jobs:
     pool:
       vmImage: 'ubuntu-16.04'
     container:
-      image: osgeo/gdal-docs
+      image: osgeo/proj-docs
       options: --privileged
     steps:
       - script: |
