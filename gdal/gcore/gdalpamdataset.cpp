@@ -451,7 +451,10 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
 /* -------------------------------------------------------------------- */
 /*      Apply any dataset level metadata.                               */
 /* -------------------------------------------------------------------- */
-    oMDMD.XMLInit( psTree, TRUE );
+    if( oMDMD.XMLInit( psTree, TRUE ) )
+    {
+        psPam->bHasMetadata = TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try loading ESRI xml encoded GeodataXform.                      */

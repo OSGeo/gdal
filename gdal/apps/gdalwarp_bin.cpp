@@ -51,7 +51,7 @@ Usage:
 
 \verbatim
 gdalwarp [--help-general] [--formats]
-    [-s_srs srs_def] [-t_srs srs_def] [-ct proj_string] [-to "NAME=VALUE"]* [-novshiftgrid]
+    [-s_srs srs_def] [-t_srs srs_def] [-ct string] [-to "NAME=VALUE"]* [-novshiftgrid]
     [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
     [-refine_gcps tolerance [minimum_gcps]]
     [-te xmin ymin xmax ymax] [-te_srs srs_def]
@@ -94,8 +94,10 @@ containing well known text. Starting with GDAL 2.2, if the SRS has an explicit
 vertical datum that points to a PROJ.4 geoidgrids, and the input dataset is a
 single band dataset, a vertical correction will be applied to the values of the
 dataset.</dd>
-<dt> <b>-ct</b> <em>proj_string</em>:</dt><dd> (GDAL &gt;= 2.5)
-PROJ string overriding the default
+<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 3.0)
+A PROJ string (single step operation or multiple step string
+starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
+or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
 transformation from the source to the target CRS. It must take into account the
 axis order of the source and target CRS.</dd>
 <dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
@@ -190,8 +192,10 @@ considered as a source alpha band. </dd>
 considered as such (it will be warped as a regular band) (GDAL>=2.2). </dd>
 <dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify
 nodata (unset/transparent) pixels. </dd>
-<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
-megabytes) that the warp API is allowed to use for caching.</dd>
+<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory that the
+warp API is allowed to use for caching. The value is interpreted as being
+in megabytes if the value is less than 10000. For values &gt;=10000, this is
+interpreted as bytes.</dd>
 <dt> <b>-multi</b>:</dt><dd> Use multithreaded warping implementation.
 Two threads will be used to process chunks of image and perform
 input/output operation simultaneously. Note that computation is not

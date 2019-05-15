@@ -439,7 +439,7 @@ public:
                             int nLevels,
                             const char* pszResampling,
                             bool bInternal = false );
-    bool                DeletePyramid();
+    void                DeletePyramid();
     void                PrepareToOverwrite();
     bool                InitializeMask( int nLevel,
                                                 int nBlockColumns,

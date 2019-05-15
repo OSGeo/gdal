@@ -50,70 +50,7 @@ double GTIFAngleToDD( double dfAngle, int nUOMAngle );
 void CPL_DLL LibgeotiffOneTimeInit();
 CPL_C_END
 
-// Key Macros from Makefile:
-//   MRSID_ESDK: Means we have the encoding SDK (version 5 or newer required)
-//   MRSID_J2K: Means we are enabling MrSID SDK JPEG2000 support.
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-
-#include "lt_types.h"
-#include "lt_base.h"
-#include "lt_fileSpec.h"
-#include "lt_ioFileStream.h"
-#include "lt_utilStatusStrings.h"
-#include "lti_geoCoord.h"
-#include "lti_pixel.h"
-#include "lti_navigator.h"
-#include "lti_sceneBuffer.h"
-#include "lti_metadataDatabase.h"
-#include "lti_metadataRecord.h"
-#include "lti_utils.h"
-#include "lti_delegates.h"
-#include "lt_utilStatus.h"
-#include "MrSIDImageReader.h"
-
-#ifdef MRSID_J2K
-#  include "J2KImageReader.h"
-#endif
-
-// It seems that LT_STS_UTIL_TimeUnknown was added in version 6, also
-// the first version with lti_version.h
-#ifdef LT_STS_UTIL_TimeUnknown
-#  include "lti_version.h"
-#endif
-
-// Are we using version 6 or newer?
-#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 6
-#  define MRSID_POST5
-#endif
-
-#ifdef MRSID_ESDK
-# include "MG3ImageWriter.h"
-# include "MG3WriterParams.h"
-# include "MG2ImageWriter.h"
-# include "MG2WriterParams.h"
-# ifdef MRSID_HAVE_MG4WRITE
-#   include "MG4ImageWriter.h"
-#   include "MG4WriterParams.h"
-# endif
-# ifdef MRSID_J2K
-#   ifdef MRSID_POST5
-#     include "JP2WriterManager.h"
-#     include "JPCWriterParams.h"
-#   else
-#     include "J2KImageWriter.h"
-#     include "J2KWriterParams.h"
-#   endif
-# endif
-#endif /* MRSID_ESDK */
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+#include "mrsiddataset_headers_include.h"
 
 #ifdef MRSID_POST5
 #  define MRSID_HAVE_GETWKT
@@ -211,7 +148,7 @@ class MrSIDProgress : public LTIProgressDelegate
 public:
     MrSIDProgress(GDALProgressFunc f, void *arg) : m_f(f), m_arg(arg) {}
     virtual ~MrSIDProgress() {}
-    virtual LT_STATUS setProgressStatus(float fraction)
+    virtual LT_STATUS setProgressStatus(float fraction) override
     {
         if (!m_f)
             return LT_STS_BadContext;
@@ -351,7 +288,7 @@ class MrSIDRasterBand final: public GDALPamRasterBand
                                   double *pdfMean, double *pdfStdDev ) override;
 
 #ifdef MRSID_ESDK
-    virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual CPLErr          IWriteBlock( int, int, void * ) override;
 #endif
 };
 
@@ -1231,7 +1168,12 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     {
         lt_uint32 iWidth, iHeight;
         dfCurrentMag = LTIUtils::levelToMag( iZoom );
-        poImageReader->getDimsAtMag( dfCurrentMag, iWidth, iHeight );
+        auto eLTStatus = poImageReader->getDimsAtMag( dfCurrentMag, iWidth, iHeight );
+        if( !LT_SUCCESS(eLTStatus))
+        {
+            CPLDebug( "MrSID", "Cannot open zoom level %d", iZoom);
+            return CE_Failure;
+        }
         nRasterXSize = iWidth;
         nRasterYSize = iHeight;
     }
@@ -1675,9 +1617,14 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
         {
             poDS->papoOverviewDS[i] = new MrSIDDataset(bIsJP2);
             poDS->papoOverviewDS[i]->poImageReader = poDS->poImageReader;
-            poDS->papoOverviewDS[i]->OpenZoomLevel( i + 1 );
             poDS->papoOverviewDS[i]->bIsOverview = TRUE;
             poDS->papoOverviewDS[i]->poParentDS = poDS;
+            if( poDS->papoOverviewDS[i]->OpenZoomLevel( i + 1 ) != CE_None )
+            {
+                delete poDS->papoOverviewDS[i];
+                poDS->nOverviewCount = i;
+                break;
+            }
         }
     }
 
@@ -1685,7 +1632,11 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 /*      Create object for the whole image.                              */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->OpenZoomLevel( 0 );
+    if( poDS->OpenZoomLevel( 0 ) != CE_None )
+    {
+        delete poDS;
+        return nullptr;
+    }
 
     CPLDebug( "MrSID",
               "Opened image: width %d, height %d, bands %d",

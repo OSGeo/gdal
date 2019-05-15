@@ -1,0 +1,86 @@
+<html>
+<head>
+<title>DAAS (Airbus DS Intelligence Data As A Service driver)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>DAAS (Airbus DS Intelligence Data As A Service driver)</h1>
+
+(GDAL/OGR &gt;= 3.0)<p>
+
+This driver can connect to the Airbus DS Intelligence Data As A Service API.
+GDAL/OGR must be built with Curl support in order for the
+DAAS driver to be compiled.<p>
+
+Orthorectified (with geotransform) and raw (with RPCs) images are
+supported.<p>
+
+Overviews are supported.<p>
+
+The API is not publicly available but will be released soon. Further information will be found here:  <a href="https://api.oneatlas.airbus.com/">https://api.oneatlas.airbus.com/</a>
+
+<h2>Dataset name syntax</h2>
+
+<p>The nominal syntax to open a datasource is :</p>
+<pre>DAAS:https://example.com/path/to/image/metadata</pre><p>
+
+<p>A more minimal syntax can be used:</p>
+<pre>DAAS:</pre>
+<p>provided that the GET_METADATA_URL open option is filled.</p>
+
+<h2>Authentication</h2>
+
+<p>Access to the API requires an authentication token. There are two
+methods supported:</p>
+<ul>
+<li>Authentication with an API key and a client id. They must be provided
+respectively with the API_KEY open option (or GDAL_DAAS_API_KEY configuration
+option) and the CLIENT_ID open option (or GDAL_DAAS_CLIENT_Id open option).
+In that case, the driver will authenticate against the authentication endpoint
+to get an access token.</li>
+<li>Directly providing the access token with the ACCESS_TOKEN open option
+(or GDAL_DAAS_ACCESS_TOKEN open option).</li>
+</ul>
+<p>In both cases, the X_FORWARDED_USER open option (or GDAL_DAAS_X_FORWARDED_USER
+configuration option) can be specified to fill the HTTP X-Forwarded-User
+header in requests sent to the DAAS service endpoint with the user from which
+the request originates from.</p>
+
+<p>See <a href="https://api.oneatlas.airbus.com/guides/g-authentication/">https://api.oneatlas.airbus.com/guides/g-authentication/</a> for further details</p>
+
+<h2>Open options</h2>
+
+The following open options are available :
+<ul>
+<li><b>GET_METADATA_URL</b>=value: URL to the GetImageMetadata endpoint.
+Required if not specified in the connection string.</li>
+<li><b>API_KEY</b>=value: API key for authentication. If specified, must be used together with
+the CLIENT_ID option. Can be specified also through the GDAL_DAAS_API_KEY
+configuration option.</li>
+<li><b>CLIENT_ID</b>=value: Client id for authentication. If specified, must be used together with
+the API_KEY option. Can be specified also through the GDAL_DAAS_CLIENT_ID
+configuration option.</li>
+<li><b>ACCESS_TOKEN</b>=value: Access token. Can be specified also through the
+GDAL_DAAS_ACCESS_TOKEN configuration option. Exclusive of API_KEY/CLIENT_ID</li>
+<li><b>X_FORWARDED_USER</b>=value: User from which the request originates from.
+Can be specified also through the GDAL_DAAS_X_FORWARDED_USER configuration option.</li>
+<li><b>BLOCK_SIZE</b>=value. Size of a block in pixels requested to the server. Defaults
+to 512 pixels. Between 64 and 8192.</li> 
+<li><b>PIXEL_ENCODING</b>=value. Format in which pixels are queried. Defaults to
+<ul>
+<li><b>AUTO</b>: for 1, 3 or 4-band images of type Byte, resolves to PNG.
+Otherwise to RAW</li>
+<li><b>RAW</b>: compatible of all images. Pixels are requested in a uncompressed
+raw format.</li>
+<li><b>PNG</b>: compatible of 1, 3 or 4-band images of type Byte</li>
+<li><b>JPEG</b>: compatible of 1 or 3-band images of type Byte</li>
+<li><b>JPEG2000</b>: compatible of all images. Requires GDAL to be built with
+one of its JPEG2000-capable drivers.</li>
+</ul>
+</li>
+<li><b>MASKS</b>=YES/NO. Whether to expose mask bands. Default to YES.</li>
+</ul>
+
+</body>
+</html>

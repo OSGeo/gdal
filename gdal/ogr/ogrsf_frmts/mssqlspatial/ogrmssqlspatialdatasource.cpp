@@ -52,6 +52,11 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
     nGeometryFormat = MSSQLGEOMETRY_NATIVE;
     pszConnection = nullptr;
 
+    sMSSQLVersion.nMajor = 0;
+    sMSSQLVersion.nMinor = 0;
+    sMSSQLVersion.nBuild = 0;
+    sMSSQLVersion.nRevision = 0;
+
     bUseGeometryColumns = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_COLUMNS", "YES"));
     bAlwaysOutputFid = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_ALWAYS_OUTPUT_FID", "NO"));
     bListAllTables = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_LIST_ALL_TABLES", "NO"));
@@ -93,6 +98,70 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
     CPLFree( papoSRS );
     CPLFree( pszConnection );
 }
+/************************************************************************/
+/*                      OGRMSSQLDecodeVersionString()                   */
+/************************************************************************/
+
+void OGRMSSQLSpatialDataSource::OGRMSSQLDecodeVersionString(MSSQLVer* psVersion, const char* pszVer)
+{
+    while (*pszVer == ' ') pszVer++;
+
+    const char* ptr = pszVer;
+    // get Version string
+    while (*ptr && *ptr != ' ') ptr++;
+    GUInt32 iLen = static_cast<int>(ptr - pszVer);
+    char szVer[20] = {};
+    if (iLen > sizeof(szVer) - 1) iLen = sizeof(szVer) - 1;
+    strncpy(szVer, pszVer, iLen);
+    szVer[iLen] = '\0';
+
+    ptr = pszVer = szVer;
+
+    // get Major number
+    while (*ptr && *ptr != '.') ptr++;
+    iLen = static_cast<int>(ptr - pszVer);
+    char szNum[20] = {};
+    if (iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+    strncpy(szNum, pszVer, iLen);
+    szNum[iLen] = '\0';
+    psVersion->nMajor = atoi(szNum);
+
+    if (*ptr == 0)
+        return;
+    pszVer = ++ptr;
+
+    // get Minor number
+    while (*ptr && *ptr != '.') ptr++;
+    iLen = static_cast<int>(ptr - pszVer);
+    if (iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+    strncpy(szNum, pszVer, iLen);
+    szNum[iLen] = '\0';
+    psVersion->nMinor = atoi(szNum);
+
+    if (*ptr == 0)
+        return;
+    pszVer = ++ptr;
+
+    // get Build number
+    while (*ptr && *ptr != '.') ptr++;
+    iLen = static_cast<int>(ptr - pszVer);
+    if (iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+    strncpy(szNum, pszVer, iLen);
+    szNum[iLen] = '\0';
+    psVersion->nBuild = atoi(szNum);
+
+    if (*ptr == 0)
+        return;
+    pszVer = ++ptr;
+
+    // get Revision number
+    while (*ptr && *ptr != '.') ptr++;
+    iLen = static_cast<int>(ptr - pszVer);
+    if (iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+    strncpy(szNum, pszVer, iLen);
+    szNum[iLen] = '\0';
+    psVersion->nRevision = atoi(szNum);
+}
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -108,6 +177,12 @@ int OGRMSSQLSpatialDataSource::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,ODsCCreateLayer) || EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
     if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return TRUE;
+    if (EQUAL(pszCap, OLCFastGetExtent))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCCurveGeometries))
+        return TRUE;
+    else if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return TRUE;
     else
         return FALSE;
@@ -813,6 +888,29 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
         CPLFree(pszGeometryFormat);
         CPLFree(pszConnectionName);
         return FALSE;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Find out SQLServer version                                      */
+    /* -------------------------------------------------------------------- */
+    if (true) {
+        sMSSQLVersion.nMajor = -1;
+        sMSSQLVersion.nMinor = -1;
+        sMSSQLVersion.nBuild = -1;
+        sMSSQLVersion.nRevision = -1;
+
+        CPLODBCStatement oStmt(&oSession);
+
+        /* Use join to make sure the existence of the referred column/table */
+        oStmt.Append("SELECT SERVERPROPERTY('ProductVersion') AS ProductVersion;");
+
+        if (oStmt.ExecuteSQL())
+        {
+            while (oStmt.Fetch())
+            {
+                OGRMSSQLDecodeVersionString(&sMSSQLVersion, oStmt.GetColData(0));
+            }
+        }
     }
 
     char** papszTypes = nullptr;

@@ -742,9 +742,14 @@ LogLuvEncodeTile(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 #undef exp2  /* Conflict with C'99 function */
 #define exp2(x)		exp(M_LN2*(x))
 
-#define itrunc(x,m)	((m)==SGILOGENCODE_NODITHER ? \
-				(int)(x) : \
-				(int)((x) + rand()*(1./RAND_MAX) - .5))
+static int itrunc(double x, int m)
+{
+    if( m == SGILOGENCODE_NODITHER )
+        return (int)x;
+    /* Silence CoverityScan warning about bad crypto function */
+    /* coverity[dont_call] */
+    return (int)(x + rand()*(1./RAND_MAX) - .5);
+}
 
 #if !LOGLUV_PUBLIC
 static
@@ -1507,7 +1512,7 @@ LogLuvSetupEncode(TIFF* tif)
 	switch (td->td_photometric) {
 	case PHOTOMETRIC_LOGLUV:
 		if (!LogLuvInitState(tif))
-			break;
+			return (0);
 		if (td->td_compression == COMPRESSION_SGILOG24) {
 			tif->tif_encoderow = LogLuvEncode24;
 			switch (sp->user_datafmt) {
@@ -1540,7 +1545,7 @@ LogLuvSetupEncode(TIFF* tif)
 		break;
 	case PHOTOMETRIC_LOGL:
 		if (!LogL16InitState(tif))
-			break;
+			return (0);
 		tif->tif_encoderow = LogL16Encode;  
 		switch (sp->user_datafmt) {
 		case SGILOGDATAFMT_FLOAT:
@@ -1556,7 +1561,7 @@ LogLuvSetupEncode(TIFF* tif)
 		TIFFErrorExt(tif->tif_clientdata, module,
 		    "Inappropriate photometric interpretation %d for SGILog compression; %s",
 		    td->td_photometric, "must be either LogLUV or LogL");
-		break;
+		return (0);
 	}
 	sp->encoder_state = 1;
 	return (1);

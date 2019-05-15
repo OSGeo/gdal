@@ -120,7 +120,14 @@ static void uffd_cleanup(void * ptr)
   return;
 }
 
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic pop
+#endif
 
 static int64_t get_page_limit()
 {
@@ -189,6 +196,11 @@ static void cpl_uffd_fault_handler(void * ptr)
             struct sigaction old_segv;
             struct sigaction bus;
             struct sigaction old_bus;
+
+            memset(&segv, 0, sizeof(segv));
+            memset(&old_segv, 0, sizeof(old_segv));
+            memset(&bus, 0, sizeof(bus));
+            memset(&old_bus, 0, sizeof(old_bus));
 
             // Step 1 from the block comment above
             segv.sa_handler = signal_handler;
@@ -268,6 +280,8 @@ static void cpl_uffd_fault_handler(void * ptr)
             // Step 5.  Solution: Cannot unregister special handlers before
             // any such threads have been handled by them, so sleep for
             // 1/100th of a second.
+            // Coverity complains about sleeping under a mutex
+            // coverity[sleep]
             usleep(10000);
             if (sigaction(SIGSEGV, &old_segv, nullptr) == -1) {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -377,7 +391,7 @@ cpl_uffd_context* CPLCreateUserFaultMapping(const char * pszFilename, void ** pp
   }
 
   // Attempt to acquire a scratch page to use to fulfill requests.
-  ctx->page_ptr = mmap(nullptr, ctx->page_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  ctx->page_ptr = mmap(nullptr, static_cast<size_t>(ctx->page_size), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   if (ctx->page_ptr == BAD_MMAP) {
     ctx->page_ptr = nullptr;
     uffd_cleanup(ctx);

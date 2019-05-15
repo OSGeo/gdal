@@ -129,7 +129,8 @@ public:
     void           Dump( FILE *fp, int depth );
     swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables,
                           int bAllowMismatchTypeOnFieldComparison,
-                          swq_custom_func_registrar* poCustomFuncRegistrar );
+                          swq_custom_func_registrar* poCustomFuncRegistrar,
+                          int depth = 0 );
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher,
                              void *record );
     swq_expr_node* Clone();

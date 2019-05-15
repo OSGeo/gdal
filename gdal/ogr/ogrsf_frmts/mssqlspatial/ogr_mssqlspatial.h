@@ -63,13 +63,16 @@ class OGRMSSQLSpatialDataSource;
 
 /* sqlgeometry constants */
 
+#define VA_KATMAI 0x01
+#define VA_DENALI 0x02
+
 #define SP_NONE 0
 #define SP_HASZVALUES 1
 #define SP_HASMVALUES 2
 #define SP_ISVALID 4
 #define SP_ISSINGLEPOINT 8
 #define SP_ISSINGLELINESEGMENT 0x10
-#define SP_ISWHOLEGLOBE 0x20
+#define SP_ISLARGERTHANAHEMISPHERE 0x20
 
 #define ST_UNKNOWN 0
 #define ST_POINT 1
@@ -79,6 +82,24 @@ class OGRMSSQLSpatialDataSource;
 #define ST_MULTILINESTRING 5
 #define ST_MULTIPOLYGON 6
 #define ST_GEOMETRYCOLLECTION 7
+#define ST_CIRCULARSTRING 8
+#define ST_COMPOUNDCURVE 9
+#define ST_CURVEPOLYGON 10
+#define ST_FULLGLOBE 11
+
+#define FA_INTERIORRING 0x00
+#define FA_STROKE 0x01
+#define FA_EXTERIORRING 0x02
+
+#define FA_NONE 0x00
+#define FA_LINE 0x01
+#define FA_ARC 0x02
+#define FA_CURVE 0x03
+
+#define SMT_LINE 0
+#define SMT_ARC 1
+#define SMT_FIRSTLINE 2
+#define SMT_FIRSTARC 3
 
 /************************************************************************/
 /*                         OGRMSSQLAppendEscaped( )                     */
@@ -93,28 +114,49 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
 class OGRMSSQLGeometryValidator
 {
 protected:
-    int bIsValid;
+    bool bIsValid;
     OGRGeometry*    poValidGeometry;
     OGRGeometry*    poOriginalGeometry;
+    int             nGeomColumnType;
 
 public:
-    explicit         OGRMSSQLGeometryValidator(OGRGeometry* poGeom);
+    explicit         OGRMSSQLGeometryValidator(OGRGeometry* poGeom, int nGeomColumnType);
                     ~OGRMSSQLGeometryValidator();
 
-    // cppcheck-suppress functionStatic
-    int             ValidatePoint(OGRPoint * poGeom);
-    // cppcheck-suppress functionStatic
-    int             ValidateMultiPoint(OGRMultiPoint * poGeom);
-    int             ValidateLineString(OGRLineString * poGeom);
-    int             ValidateLinearRing(OGRLinearRing * poGeom);
-    int             ValidateMultiLineString(OGRMultiLineString * poGeom);
-    int             ValidatePolygon(OGRPolygon* poGeom);
-    int             ValidateMultiPolygon(OGRMultiPolygon* poGeom);
-    int             ValidateGeometryCollection(OGRGeometryCollection* poGeom);
-    int             ValidateGeometry(OGRGeometry* poGeom);
+    bool            IsValidLatLon(double longitude, double latitude);
+    bool            IsValidCircularZ(double z1, double z2);
+    bool            IsValidPolygonRingCount(OGRCurve* poGeom);
+    bool            IsValidPolygonRingClosed(OGRCurve* poGeom);
+    bool            IsValid(OGRPoint* poGeom);
+    bool            IsValid(OGRMultiPoint* poGeom);
+    bool            IsValid(OGRLineString* poGeom);
+    bool            IsValid(OGRCircularString* poGeom);
+    bool            IsValid(OGRSimpleCurve* poGeom);
+    bool            IsValid(OGRCompoundCurve* poGeom);
+    bool            IsValid(OGRLinearRing* poGeom);
+    bool            IsValid(OGRMultiLineString* poGeom);
+    bool            IsValid(OGRPolygon* poGeom);
+    bool            IsValid(OGRCurvePolygon* poGeom);
+    bool            IsValid(OGRMultiPolygon* poGeom);
+    bool            IsValid(OGRGeometryCollection* poGeom);
+    bool            IsValid(OGRGeometry* poGeom);
+    void            MakeValid(OGRPoint* poGeom);
+    void            MakeValid(OGRMultiPoint* poGeom);
+    void            MakeValid(OGRLineString* poGeom);
+    void            MakeValid(OGRCircularString* poGeom);
+    void            MakeValid(OGRSimpleCurve* poGeom);
+    void            MakeValid(OGRCompoundCurve* poGeom);
+    void            MakeValid(OGRLinearRing* poGeom);
+    void            MakeValid(OGRMultiLineString* poGeom);
+    void            MakeValid(OGRPolygon* poGeom);
+    void            MakeValid(OGRCurvePolygon* poGeom);
+    void            MakeValid(OGRMultiPolygon* poGeom);
+    void            MakeValid(OGRGeometryCollection* poGeom);
+    void            MakeValid(OGRGeometry* poGeom);
+    bool            ValidateGeometry(OGRGeometry* poGeom);
 
     OGRGeometry*    GetValidGeometryRef();
-    int             IsValid() { return bIsValid; }
+    bool            IsValid() { return bIsValid; }
 };
 
 /************************************************************************/
@@ -125,6 +167,8 @@ class OGRMSSQLGeometryParser
 {
 protected:
     unsigned char* pszData;
+    /* version information */
+    char chVersion;
     /* serialization properties */
     char chProps;
     /* point array */
@@ -137,18 +181,29 @@ protected:
     /* shape array */
     int nShapePos;
     int nNumShapes;
+    /* segmenttype array */
+    int nSegmentPos;
+    int nNumSegments;
+    int iSegment;
     int nSRSId;
     /* geometry or geography */
     int nColType;
 
 protected:
-    OGRPoint*           ReadPoint(int iShape);
+    OGRPoint*           ReadPoint(int iFigure);
     OGRMultiPoint*      ReadMultiPoint(int iShape);
-    OGRLineString*      ReadLineString(int iShape);
+    OGRErr              ReadSimpleCurve(OGRSimpleCurve* poCurve, int iPoint, int iNextPoint);
+    OGRLineString*      ReadLineString(int iFigure);
+    OGRLinearRing*      ReadLinearRing(int iFigure);
     OGRMultiLineString* ReadMultiLineString(int iShape);
     OGRPolygon*         ReadPolygon(int iShape);
     OGRMultiPolygon*    ReadMultiPolygon(int iShape);
     OGRGeometryCollection* ReadGeometryCollection(int iShape);
+    OGRCircularString*  ReadCircularString(int iFigure);
+    OGRCompoundCurve*   ReadCompoundCurve(int iFigure);
+    void AddCurveSegment(OGRCompoundCurve* poCompoundCurve,
+        OGRSimpleCurve* poCurve, int iPoint, int iNextPoint);
+    OGRCurvePolygon*    ReadCurvePolygon(int iShape);
 
 public:
     explicit            OGRMSSQLGeometryParser( int nGeomColumnType );
@@ -167,6 +222,8 @@ protected:
     OGRGeometry *poGeom2;
     unsigned char* pszData;
     int nLen;
+    /* version information */
+    char chVersion;
     /* serialization properties */
     char chProps;
     /* point array */
@@ -182,6 +239,10 @@ protected:
     int nShapePos;
     int nNumShapes;
     int iShape;
+    /* segmenttype array */
+    int nSegmentPos;
+    int nNumSegments;
+    int iSegment;
     int nSRSId;
     /* geometry or geography */
     int nColType;
@@ -190,8 +251,14 @@ protected:
     void             WritePoint(OGRPoint* poGeom);
     void             WritePoint(double x, double y);
     void             WritePoint(double x, double y, double z);
-    void             WriteLineString(OGRLineString* poGeom);
+    void             WritePoint(double x, double y, double z, double m);
+    void             WriteSimpleCurve(OGRSimpleCurve* poGeom);
+    void             WriteSimpleCurve(OGRSimpleCurve* poGeom, int iStartIndex);
+    void             WriteSimpleCurve(OGRSimpleCurve* poGeom, int iStartIndex, int nCount);
+    void             WriteCompoundCurve(OGRCompoundCurve* poGeom);
+    void             WriteCurve(OGRCurve* poGeom);
     void             WritePolygon(OGRPolygon* poGeom);
+    void             WriteCurvePolygon(OGRCurvePolygon* poGeom);
     void             WriteGeometryCollection(OGRGeometryCollection* poGeom, int iParent);
     void             WriteGeometry(OGRGeometry* poGeom, int iParent);
     void             TrackGeometry(OGRGeometry* poGeom);
@@ -302,6 +369,7 @@ typedef union {
 class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
 {
     bool                bUpdateAccess = true;
+    bool                bUseGeometryValidation = false;
     int                 bLaunderColumnNames = FALSE;
     int                 bPreservePrecision = FALSE;
     int                 bNeedSpatialIndex = FALSE;
@@ -352,6 +420,9 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
 
     OGRErr              CreateSpatialIndex();
     void                DropSpatialIndex();
+
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) override { return GetExtent(0, psExtent, bForce); }
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override;
 
     virtual void        ResetReading() override;
     virtual GIntBig     GetFeatureCount( int ) override;
@@ -443,6 +514,14 @@ class OGRMSSQLSpatialSelectLayer final: public OGRMSSQLSpatialLayer
 
 class OGRMSSQLSpatialDataSource final: public OGRDataSource
 {
+    typedef struct
+    {
+        int nMajor;
+        int nMinor;
+        int nBuild;
+        int nRevision;
+    } MSSQLVer;
+
     OGRMSSQLSpatialTableLayer    **papoLayers;
     int                 nLayers;
 
@@ -471,9 +550,13 @@ class OGRMSSQLSpatialDataSource final: public OGRDataSource
 
     OGRMSSQLSpatialTableLayer *poLayerInCopyMode;
 
+    static void               OGRMSSQLDecodeVersionString(MSSQLVer* psVersion, const char* pszVer);
+
     char                *pszConnection;
 
-  public:
+public:
+    MSSQLVer            sMSSQLVersion;
+
                         OGRMSSQLSpatialDataSource();
                         virtual ~OGRMSSQLSpatialDataSource();
 

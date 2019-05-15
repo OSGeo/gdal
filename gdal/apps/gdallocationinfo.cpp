@@ -254,6 +254,7 @@ MAIN_START(argc, argv)
         else if( i < argc-1 && EQUAL(argv[i],"-l_srs") )
         {
             CPLFree(pszSourceSRS);
+            // coverity[tainted_data]
             pszSourceSRS = SanitizeSRS(argv[++i]);
         }
         else if( EQUAL(argv[i],"-geoloc") )

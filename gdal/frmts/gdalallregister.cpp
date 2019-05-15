@@ -399,6 +399,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_mrf();
 #endif
 
+#ifdef FRMT_tiledb
+    GDALRegister_TileDB();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Put raw formats at the end of the list. These drivers support   */
 /*      various ASCII-header labeled formats, so the driver could be    */
@@ -507,6 +511,12 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SAGA();
 #endif
 
+#ifdef FRMT_ignfheightasciigrid
+    // IGNFHeightASCIIGrid must come before XYZ, otherwise XYZ might
+    // try and fail opening such files
+    GDALRegister_IGNFHeightASCIIGrid();
+#endif
+
 #ifdef FRMT_xyz
     GDALRegister_XYZ();
 #endif
@@ -556,16 +566,16 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_EEDA();
 #endif
 
+#ifdef FRMT_daas
+    GDALRegister_DAAS();
+#endif
+
 #ifdef FRMT_null
     GDALRegister_NULL();
 #endif
 
 #ifdef FRMT_sigdem
     GDALRegister_SIGDEM();
-#endif
-
-#ifdef FRMT_ignfheightasciigrid
-    GDALRegister_IGNFHeightASCIIGrid();
 #endif
 
     // NOTE: you need to generally your own driver before that line.

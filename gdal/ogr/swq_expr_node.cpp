@@ -179,9 +179,17 @@ swq_field_type
 swq_expr_node::Check( swq_field_list *poFieldList,
                       int bAllowFieldsInSecondaryTables,
                       int bAllowMismatchTypeOnFieldComparison,
-                      swq_custom_func_registrar* poCustomFuncRegistrar )
+                      swq_custom_func_registrar* poCustomFuncRegistrar,
+                      int nDepth )
 
 {
+    if( nDepth == 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too many recursion levels in expression");
+        return SWQ_ERROR;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Otherwise we take constants literally.                          */
 /* -------------------------------------------------------------------- */
@@ -253,7 +261,8 @@ swq_expr_node::Check( swq_field_list *poFieldList,
     {
         if( papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables,
                                   bAllowMismatchTypeOnFieldComparison,
-                                  poCustomFuncRegistrar) == SWQ_ERROR )
+                                  poCustomFuncRegistrar,
+                                  nDepth + 1) == SWQ_ERROR )
             return SWQ_ERROR;
     }
 
@@ -708,7 +717,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     if( nRecLevel == 32 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too many recursion levels in expression to evaluate");
+                 "Too many recursion levels in expression");
         return nullptr;
     }
 

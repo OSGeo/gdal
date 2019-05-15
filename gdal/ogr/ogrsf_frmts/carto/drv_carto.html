@@ -96,6 +96,10 @@ in chunks until they reach 15 MB (can be changed with the CARTO_MAX_CHUNK_SIZE
 configuration option, with a value in MB), at which point they are transferred
 to the server. By setting CARTO_MAX_CHUNK_SIZE to 0, immediate transfer occurs.<p>
 
+<b>WARNING</b>: Don't use DeleteLayer() + CreateLayer() to overwrite a table.
+Instead only call CreateLayer() with OVERWRITE=YES. This will avoid CARTO
+deleting maps that depend on this table<p>
+
 <h2>SQL</h2>
 
 SQL commands provided to the OGRDataSource::ExecuteSQL() call are executed on the server side, unless the OGRSQL
@@ -123,7 +127,14 @@ layer name to be created. Defaults to NO.</li>
 can be NULL. Defaults to YES.</li>
 
 <li><b>CARTODBFY</b>=YES/NO: Whether the created layer should be "Cartodbifi'ed"
- (i.e. registered in dashboard). Defaults to YES.</li>
+ (i.e. registered in dashboard). Defaults to YES. Requires:
+   <ul>
+   <li><b>SRS</b>: Output SRS must be  EPSG:4326. You can use <tt>-a_srs</tt> or
+   <tt>-t_srs</tt> to assign or transform to 4326 before importing.</li>
+   <li><b>Geometry type</b>: Must be different than NONE. You can set to
+    something generic with <tt>-nlt GEOMETRY</tt>.</li>
+   </ul>
+</li>
 
 <li> <b>LAUNDER</b>=YES/NO: This may be "YES" to force new fields created on this
 layer to have their field names "laundered" into a form more compatible with
@@ -135,20 +146,29 @@ The default value is "YES".  If enabled the table (layer) name will also be laun
 
 
 <h2>Examples</h2>
-
+<ul>
 <li>
-Acceccing data from a public table:
+Accessing data from a public table:
 <pre>
 ogrinfo -ro "Carto:gdalautotest2 tables=tm_world_borders_simpl_0_3"
 </pre>
-<p>
 
 <li>
 Creating and populating a table from a shapefile:
 <pre>
 ogr2ogr --config CARTO_API_KEY abcdefghijklmnopqrstuvw -f Carto "Carto:myaccount" myshapefile.shp
 </pre>
-<p>
+</li>
+
+<li>
+Creating and populating a table from a CSV containing geometries on EPSG:4326:
+<pre>
+ogr2ogr --config CARTO_API_KEY abcdefghijklmnopqrstuvw -f Carto "Carto:myaccount" file.csv -a_srs 4326 -nlt GEOMETRY
+</pre>
+<b>NOTE</b>: <tt>-a_srs</tt> and <tt>-nlt</tt> must be provided to CARTODBFY
+since the information isn't extracted from the CSV.
+</li>
+</ul>
 
 <h2>See Also</h2>
 

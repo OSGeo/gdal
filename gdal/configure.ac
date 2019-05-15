@@ -1194,7 +1194,7 @@ AC_ARG_WITH(proj,[  --with-proj=ARG Compile with PROJ.x (ARG=yes or path)],,)
 PROJ_INCLUDE=""
 if test "x$with_proj" = "xno" ; then
 
-  AC_MSG_ERROR([PROJ 6 is a required dependency.])
+  AC_MSG_ERROR([PROJ >= 6 is a required dependency.])
 
 else
 
@@ -1354,9 +1354,15 @@ OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
 AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen til tsx usgsdem xpm xyz zmap])
-AC_DEFUN([INTERNAL_OPT_FORMATS],[eeda grib plmosaic ozi pdf rda rik wcs wms wmts])
+AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
 AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo geoconcept georss gml gmt gpsbabel gpx gtm htf jml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
-AC_DEFUN([INTERNAL_CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic gft ngw plscenes wfs])dnl
+AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas])dnl
+AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic gft ngw plscenes wfs])dnl
+AC_DEFUN([SQLITE_FORMATS],[rasterlite mbtiles])dnl
+AC_DEFUN([SQLITE_DRIVERS],[gpkg vfk osm])dnl
+AC_DEFUN([EXPAT_DRIVERS],[ods xlsx])dnl
+AC_DEFUN([XERCES_DRIVERS],[nas ili gmlas])dnl
+AC_DEFUN([ODBC_DRIVERS],[odbc pgeo mssqlspatial geomedia walk])dnl
 
 AC_ARG_ENABLE(all-optional-drivers, AS_HELP_STRING([--disable-all-optional-drivers], [disable all non-mandatory internal drivers. Individual drivers can be added with --enable-driver-XXX]))
 if test "x$enable_all_optional_drivers" = "xno"; then :
@@ -1438,9 +1444,81 @@ else
 fi
 ])
 
-m4_foreach_w([frmt],INTERNAL_CURL_DRIVERS,
+m4_foreach_w([frmt],CURL_FORMATS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt format support (enabled by default, requires curl)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],CURL_DRIVERS,
 [
 AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default, requires curl)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],SQLITE_FORMATS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt format support (enabled by default, requires sqlite3)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],SQLITE_DRIVERS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default, requires sqlite3)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],EXPAT_DRIVERS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default, requires expat)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],XERCES_DRIVERS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default, requires xerces-c)]))dnl
+ARG_DRIVER_ENABLED(frmt)
+if test "$cur_driver_enabled" = "yes"; then :
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED frmt"
+  m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=no
+fi
+])
+
+m4_foreach_w([frmt],ODBC_DRIVERS,
+[
+AC_ARG_ENABLE(driver-frmt, AS_HELP_STRING([--disable-driver-frmt], [disable frmt driver support (enabled by default, requires odbc)]))dnl
 ARG_DRIVER_ENABLED(frmt)
 if test "$cur_driver_enabled" = "yes"; then :
   m4_join([_],[INTERNAL_FORMAT],frmt,[ENABLED])=yes
@@ -1473,12 +1551,10 @@ PG_CONFIG=no
 
 AC_ARG_WITH(pg,
 	    AS_HELP_STRING([--with-pg[=ARG]],
-	       [Include PostgreSQL GDAL/OGR Support (ARG=path to pg_config)]),,)
+	       [Include PostgreSQL GDAL/OGR Support (ARG=yes,no)]),,)
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
-  AC_PATH_PROG(PG_CONFIG, pg_config, no)
-else
-  PG_CONFIG=$with_pg
+  PG_CONFIG=yes
 fi
 
 AC_MSG_CHECKING([for PostgreSQL])
@@ -1492,23 +1568,24 @@ if test "x$PG_CONFIG" = "xno" ; then
   AC_MSG_RESULT([no])
 
 else
-  if test -d ${PG_CONFIG} ; then
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a directory.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
-  fi
 
-  if test \! -x ${PG_CONFIG} ; then
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a not an executable file.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
-  fi
-
-  AC_MSG_RESULT([yes])
-
-  AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no,-L`$PG_CONFIG --libdir`)
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([PQ],[libpq > 9.1], [HAVE_PG=yes], [HAVE_PG=no])
 
   if test "${HAVE_PG}" = "yes" ; then
-    LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
-    PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
+    PG_LIB="${PQ_LIBS}"
+    PG_INC="${PQ_CFLAGS}"
+    SAVED_LIBS="${LIBS}"
+    LIBS="${PG_LIBS}"
+    AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no)
+    LIBS="${SAVED_LIBS}"
+    if test "${HAVE_PG}" = "yes" ; then
+      LIBS="${PG_LIB} ${LIBS}"
+    fi
+  else
+    if test "x$with_pg" = "xyes"; then
+      AC_MSG_ERROR([--with-pg was requested, but libpq is not available])
+    fi
   fi
 
 fi
@@ -1908,14 +1985,11 @@ else
 
 fi
 
-if test "${HAVE_BIGTIFF}" = "yes" ; then
-  TIFF_OPTS="-DBIGTIFF_SUPPORT"
-
-  LOC_MSG([BigTIFF support enabled.])
+if test "${HAVE_BIGTIFF}" != "yes" ; then
+  AC_MSG_ERROR([libtiff >= 4.0 is required.])
 fi
 
 AC_SUBST(TIFF_SETTING,${TIFF_SETTING})
-AC_SUBST(TIFF_OPTS,${TIFF_OPTS})
 
 dnl ---------------------------------------------------------------------------
 dnl Select a libgeotiff library to use.
@@ -2929,7 +3003,7 @@ AC_SUBST([NETCDF_SETTING], [$NETCDF_SETTING])
 
 if test "$NETCDF_SETTING" != "no" ; then
 
-   AC_CHECK_HEADERS([$NETCDF_INCLUDEDIR/netcdf_mem.h], [NETCDF_MEM=yes], [NETCDF_MEM=no],)
+   AC_CHECK_HEADERS([$NETCDF_INCLUDEDIR/netcdf_mem.h], [NETCDF_MEM=yes], [NETCDF_MEM=no], [#include <$NETCDF_INCLUDEDIR/netcdf.h>])
 
    AC_SUBST([NETCDF_MEM], [$NETCDF_MEM])
    AC_SUBST([NETCDF_ROOT], [$NETCDF_ROOT])
@@ -3661,21 +3735,19 @@ AX_LIB_XERCES($XERCES_REQ_VERSION)
 
 if test "$HAVE_XERCES" = "yes"; then
     LIBS="$XERCES_LDFLAGS $LIBS"
+
+m4_foreach_w([frmt],XERCES_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi 
+])
+
 fi
 
 AC_SUBST([HAVE_XERCES], $HAVE_XERCES)
 AC_SUBST([XERCES_INCLUDE], $XERCES_CFLAGS)
-
-dnl ---------------------------------------------------------------------------
-dnl Enable NAS if we have Xerces.
-dnl ---------------------------------------------------------------------------
-
-if test "$HAVE_XERCES" = "yes" ; then
-  HAVE_NAS=yes
-else
-  HAVE_NAS=no
-fi
-AC_SUBST([HAVE_NAS], $HAVE_NAS)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for Expat configuration.
@@ -3687,6 +3759,15 @@ AX_LIB_EXPAT($EXPAT_REQ_VERSION)
 
 if test "$HAVE_EXPAT" = "yes"; then
     LIBS="$EXPAT_LDFLAGS $LIBS"
+
+m4_foreach_w([frmt],EXPAT_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi 
+])
+
 fi
 
 AC_SUBST([HAVE_EXPAT], $HAVE_EXPAT)
@@ -3767,6 +3848,16 @@ else
   EXTRA_INCLUDES="-I$with_odbc -I$with_odbc/include $EXTRA_INCLUDES"
 
   echo "using odbc library from $with_odbc."
+fi
+
+if test "$ODBC_SETTING" = "yes"  ; then
+m4_foreach_w([frmt],ODBC_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi 
+])
 fi
 
 AC_SUBST(ODBC_SETTING,$ODBC_SETTING)
@@ -3925,14 +4016,13 @@ if test "$CURL_SETTING" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-AC_DEFUN([INTERNAL_CURL_FORMATS],[eeda plmosaic rda wcs wms wmts])dnl
-m4_foreach_w([frmt],INTERNAL_CURL_FORMATS,[
+m4_foreach_w([frmt],CURL_FORMATS,[
   driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
   if test "x$driver_enabled" = "xyes"; then
     GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
   fi 
 ])
-m4_foreach_w([frmt],INTERNAL_CURL_DRIVERS,[
+m4_foreach_w([frmt],CURL_DRIVERS,[
   driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
@@ -4100,6 +4190,25 @@ AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
 AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
 AC_SUBST([SQLITE_HAS_COLUMN_METADATA], $SQLITE_HAS_COLUMN_METADATA)
 HAVE_SQLITE=$HAVE_SQLITE3
+
+if test "$HAVE_SQLITE3" = "yes"; then
+m4_foreach_w([frmt],SQLITE_FORMATS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
+  fi 
+])
+
+m4_foreach_w([frmt],SQLITE_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi 
+])
+
+fi
+
 
 dnl ---------------------------------------------------------------------------
 dnl Check for librasterlite2.
@@ -5333,6 +5442,43 @@ AC_SUBST(HDFS_INC,$HDFS_INC)
 AC_SUBST(JNI_LIB,$JNI_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl TileDB support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(tiledb,[  --with-tiledb[=ARG]    Include TileDB support (ARG=no, yes or tiledb install root path)],,)
+
+TILEDB_SETTING=no
+
+if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
+
+  AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,)
+  
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-ltiledb $LIBS"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+elif test "$with_tiledb" != "no" -a "$with_tiledb" != ""; then
+
+  AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,-L$with_tiledb/lib -ltiledb)
+
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-L$with_tiledb/lib -ltiledb $LIBS"
+    EXTRA_INCLUDES="-I$with_tiledb/include $EXTRA_INCLUDES"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+fi
+
+AC_SUBST(TILEDB_SETTING,$TILEDB_SETTING)
+
+if test "$TILEDB_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl MDB driver
 dnl ---------------------------------------------------------------------------
 
@@ -5852,12 +5998,10 @@ LOC_MSG([  LERC support:              ${HAVE_LERC}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
-LOC_MSG([  NAS support:               ${HAVE_NAS}])
 LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
 LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
-LOC_MSG([  PGeo support:              ${ODBC_SETTING}])
 LOC_MSG([  FGDB support:              ${FGDB_ENABLED}])
 LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
@@ -5888,6 +6032,7 @@ LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
+LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
 LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])

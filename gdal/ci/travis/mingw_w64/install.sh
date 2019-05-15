@@ -33,7 +33,7 @@ tar xzf sqlite-autoconf-3250100.tar.gz
 (cd sqlite-autoconf-3250100 && ./configure  --host=x86_64-w64-mingw32 --prefix=/tmp/install && make -j3 && make install)
 
 # Build proj
-(cd proj; ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' SQLITE3_CFLAGS='-I/tmp/install/include' SQLITE3_LIBS='-L/tmp/install/lib -lsqlite3' ./configure  --host=x86_64-w64-mingw32 --prefix=/tmp/install && make -j3)
+(cd proj; ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' SQLITE3_CFLAGS='-I/tmp/install/include' SQLITE3_LIBS='-L/tmp/install/lib -lsqlite3' ./configure --disable-static --host=x86_64-w64-mingw32 --prefix=/tmp/install && make -j3)
 (cd proj; sudo make -j3 install)
 
 # build GDAL
@@ -43,7 +43,7 @@ make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf.exe
 cd ..
-ln -sf $PWD/.libs/libgdal-20.dll $HOME/.wine/drive_c/windows
+ln -sf $PWD/.libs/libgdal-*.dll $HOME/.wine/drive_c/windows
 ln -sf /tmp/install/bin/libproj-15.dll $HOME/.wine/drive_c/windows
 ln -sf /tmp/install/bin/libsqlite3-0.dll $HOME/.wine/drive_c/windows
 # Python bindings

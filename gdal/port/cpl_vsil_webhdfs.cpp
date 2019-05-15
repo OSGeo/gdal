@@ -662,8 +662,8 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
             }
         }
     }
-    if( pbGotFileList )
-        *pbGotFileList = bOK;
+
+    *pbGotFileList = bOK;
 
     CPLFree(sWriteFuncData.pBuffer);
     curl_easy_cleanup(hCurlHandle);

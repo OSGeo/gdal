@@ -55,8 +55,8 @@ def validate_xml(filename):
                                   force_download=True):
         pytest.skip()
 
-    if not gdaltest.download_file('https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd',
-                                  'raw.githubusercontent.com_thareUSGS_ldd_cart_master_build_1.B.0.0_PDS4_CART_1B00.xsd',
+    if not gdaltest.download_file('https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd',
+                                  'raw.githubusercontent.com_nasa_pds_data_dictionaries_ldd_cart_master_build_1.B.0.0_PDS4_CART_1B00.xsd',
                                   force_download=True):
         pytest.skip()
 
@@ -297,6 +297,8 @@ def test_ogr_pds4_create_table_character():
 
     assert validate_xml('/vsimem/test.xml')
 
+    assert gdal.VSIStatL('/vsimem/test/foo.dat')
+
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 8
@@ -334,6 +336,7 @@ def test_ogr_pds4_create_table_character():
     ds = None
 
     ogr.GetDriverByName('PDS4').DeleteDataSource('/vsimem/test.xml')
+    gdal.Rmdir('/vsimem/test')
 
 
 def test_ogr_pds4_create_with_srs():
@@ -342,13 +345,21 @@ def test_ogr_pds4_create_with_srs():
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
     lyr = ds.CreateLayer('bar', geom_type = ogr.wkbPoint25D, srs = sr,
-                         options=['TABLE_TYPE=CHARACTER'])
+                         options=['TABLE_TYPE=CHARACTER', 'SAME_DIRECTORY=YES'])
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT Z (1 2 3)'))
     lyr.CreateFeature(f)
     ds = None
 
     assert validate_xml('/vsimem/test.xml')
+
+    assert gdal.VSIStatL('/vsimem/bar.dat')
+
+    f = gdal.VSIFOpenL('/vsimem/test.xml', 'rb')
+    data = gdal.VSIFReadL(1, 100000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+    assert '<local_identifier_reference>bar</local_identifier_reference>' in data
+    assert '<local_identifier>bar</local_identifier>' in data
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('bar')
@@ -485,6 +496,7 @@ def test_ogr_pds4_create_table_binary():
     ds = None
 
     ogr.GetDriverByName('PDS4').DeleteDataSource('/vsimem/test.xml')
+    gdal.Rmdir('/vsimem/test')
 
 
 def test_ogr_pds4_create_table_delimited():
@@ -544,7 +556,7 @@ def test_ogr_pds4_create_table_delimited():
     assert 'foo.vrt' in fl[2]
     ds= None
 
-    for filename in [ '/vsimem/test.xml', '/vsimem/foo.vrt' ]:
+    for filename in [ '/vsimem/test.xml', '/vsimem/test/foo.vrt' ]:
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldCount() == 8, filename
@@ -583,6 +595,7 @@ def test_ogr_pds4_create_table_delimited():
     ds = None
 
     ogr.GetDriverByName('PDS4').DeleteDataSource('/vsimem/test.xml')
+    gdal.Rmdir('/vsimem/test')
 
 
 def test_ogr_pds4_read_table_binary_group_field():
@@ -627,6 +640,7 @@ def test_ogr_pds4_create_table_delimited_with_srs_no_vrt():
     ds = None
 
     ogr.GetDriverByName('PDS4').DeleteDataSource('/vsimem/test.xml')
+    gdal.Rmdir('/vsimem/test')
 
 
 def test_ogr_pds4_read_table_delimited_test_ogrsf():
@@ -660,3 +674,13 @@ def test_ogr_pds4_read_table_delimited_group_field():
     assert f['group_second_field_1'] == '3'
     assert f['group_first_field_2'] == 4
     assert f['group_second_field_2'] == '5'
+
+
+def test_ogr_pds4_read_product_collection():
+
+    ds = ogr.Open('data/pds4/product_collection.xml')
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    f = lyr.GetNextFeature()
+    assert f['Member Status'] == 'P'
+    assert f['LIDVID_LID'] == 'urn:nasa:pds:orex.ocams:data_reduced:20160919t162205s722_map_l1pan_v031.fits::1.0'

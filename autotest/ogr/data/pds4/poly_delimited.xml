@@ -84,7 +84,7 @@
               </cart:Planar_Coordinate_Information>
             </cart:Planar>
             <cart:Geodetic_Model>
-              <cart:latitude_type>planetocentric</cart:latitude_type>
+              <cart:latitude_type>Planetocentric</cart:latitude_type>
               <cart:spheroid_name>OSGB_1936</cart:spheroid_name>
               <cart:semi_major_radius unit="m">6377563.39599999972</cart:semi_major_radius>
               <cart:semi_minor_radius unit="m">6377563.39599999972</cart:semi_minor_radius>

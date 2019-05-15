@@ -347,7 +347,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             }
             else
             {
-                poGeom->exportToWkt( &pszWKT );
+                poGeom->exportToWkt( &pszWKT, wkbVariantIso );
 
                 if( pszWKT != nullptr )
                 {
@@ -1218,7 +1218,7 @@ CPLString OGRPGCommonLayerGetType( OGRFieldDefn& oField,
     {
         if (oField.GetSubType() == OFSTJSON )
             pszFieldType = CPLGetConfigOption("OGR_PG_JSON_TYPE", "JSON");
-        else if (oField.GetWidth() > 0 &&  bPreservePrecision )
+        else if (oField.GetWidth() > 0 && oField.GetWidth() < 10485760 && bPreservePrecision )
             pszFieldType = CPLSPrintf( "VARCHAR(%d)",  oField.GetWidth() );
         else
             pszFieldType = CPLGetConfigOption("OGR_PG_STRING_TYPE", "VARCHAR");

@@ -5,6 +5,17 @@
 /*!
 \page credits Acknowledgements and Credits
 
+\section warning WARNING
+
+Acknowledging and crediting all those who have contributed to GDAL is a
+daunting task. The rest of this page reflects the credits that were relevant
+from GDAL debut in 1998 until 2008-2009.
+
+You can have an idea of current and past contributors at
+https://github.com/OSGeo/gdal/graphs/contributors
+
+\section credits_1998_2009 Credits by Frank Warmerdam for period 1998-2009
+
 There are too many people who have helped since GDAL/OGR was launched in
 late 1998 for me to thank them all.  I have received moral support,
 financial support, code contributions, sample datasets, and bug reports

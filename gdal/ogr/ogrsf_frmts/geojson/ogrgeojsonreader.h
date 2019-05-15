@@ -238,6 +238,11 @@ json_object CPL_DLL*  CPL_json_object_object_get( struct json_object* obj,
 bool CPL_DLL OGRJSonParse( const char* pszText, json_object** ppoObj,
                            bool bVerboseError = true );
 
+bool OGRGeoJSONUpdateLayerGeomType( OGRLayer* poLayer,
+                                    bool& bFirstGeom,
+                                    OGRwkbGeometryType eGeomType,
+                                    OGRwkbGeometryType& eLayerGeomType );
+
 /************************************************************************/
 /*                 GeoJSON Geometry Translators                         */
 /************************************************************************/

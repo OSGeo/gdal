@@ -227,7 +227,7 @@ of metadata strings.</dd>
 "all" can be used to report metadata in all domains</dd>
 <dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the
 file list.</dd>
-<dt> <b>-wkt_format</b> <em>WKT1/WKT2/...</em></dt><dd> (GDAL >= 2.5.0) WKT format
+<dt> <b>-wkt_format</b> <em>WKT1/WKT2/...</em></dt><dd> (GDAL >= 3.0.0) WKT format
 used to display the SRS. Currently supported values are: WKT1,
 WKT2 (latest WKT version, currently WKT2_2018), WKT2_2015, WKT2_2018 </dd>
 <dt> <b>-sd</b> <i>subdataset</i></dt><dd> (GDAL >= 1.9.0) If the input
@@ -327,7 +327,7 @@ gdal_translate [--help-general]
        [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-a_scale value] [-a_offset value]
-       [-gcp pixel line easting northing [elevation]]*
+       [-nogcp] [-gcp pixel line easting northing [elevation]]*
        |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
        |-colorinterp {red|green|blue|alpha|gray|undefined},...]
        [-mo "META-TAG=VALUE"]* [-q] [-sds]
@@ -458,6 +458,9 @@ value to set on the output dataset if possible.</dd>
 output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
 href="formats_list.html" title="GDAL Raster Formats">format specific
 documentation for legal creation options for each format</a>.</dd>
+<dt> <b>-nogcp</b></dt><dd>
+Do not copy the GCPs in the source dataset to the output dataset. 
+</dd>
 <dt> <b>-gcp</b> <i>pixel line easting northing elevation</i>:</dt><dd>
 Add the indicated ground control point to the output dataset.  This option
 may be provided multiple times to provide a set of GCPs.
@@ -754,6 +757,12 @@ gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
 \section gdaltindex_author AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
+
+\section gdaltindex_seealso See also
+
+\ref gdal_utilities_switches for other
+command-line options, and in particular the --optfile switch that can be used to
+specify a list of input datasets.
 */
 
 
@@ -994,11 +1003,12 @@ clockwise around a top.
 
 <dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
 
-<dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. </dd>
+<dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached.
+Ignored in polygonal contouring (-p) mode.</dd>
 
-<dt> <b>-amin</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the minimum elevation of contour polygon. If not provided no minimum elevation attribute is attached. </dd>
+<dt> <b>-amin</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the minimum elevation of contour polygon. If not provided no minimum elevation attribute is attached. Ignored in default line contouring mode.</dd>
 
-<dt> <b>-amax</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the maximum elevation of contour polygon. If not provided no maximim elevation attribute is attached. </dd>
+<dt> <b>-amax</b> <em>name</em>:</dt><dd>(Since GDAL 2.4) provides a name for the attribute in which to put the maximum elevation of contour polygon. If not provided no maximim elevation attribute is attached. Ignored in default line contouring mode.</dd>
 
 <dt> <b>-3d</b>:</dt> <dd>
       Force production of 3D vectors instead of 2D.  Includes elevation at
@@ -1090,17 +1100,17 @@ formats.
 Note that on the fly reprojection of vector data to the coordinate system of the
 raster data is only supported since GDAL 2.1.0.
 
-Prior to GDAL 1.8.0, gdal_rasterize could only modify existing raster images. 
-Since 1.8.0, it will create a new target raster image when any of the -of, 
--a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are used. 
+Prior to GDAL 1.8.0, gdal_rasterize could only modify existing raster images.
+Since 1.8.0, it will create a new target raster image when any of the -of,
+-a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are used.
 The resolution or size must be specified using the -tr or -ts option for all new
-rasters.  The target raster will be overwritten if it already exists and any of 
+rasters.  The target raster will be overwritten if it already exists and any of
 these creation-related options are used.
 
 <dl>
 <dt> <b>-b</b> <em>band</em>: </dt><dd>
 The band(s) to burn values into.  Multiple -b arguments may be used to burn
-into a list of bands.  The default is to burn into band 1.  Not used when 
+into a list of bands.  The default is to burn into band 1.  Not used when
 creating a new raster.</dd>
 
 <dt> <b>-i</b>: </dt><dd>
@@ -1210,9 +1220,9 @@ non-error output.</dd>
 Any OGR supported readable datasource.</dd>
 
 <dt> <em>dst_filename</em>: </dt><dd>
-The GDAL supported output file.  Must support update mode access.  As of GDAL 
-1.8.0, this file will be created (or overwritten if it already exists) if the 
--of, -a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are 
+The GDAL supported output file.  Must support update mode access.  As of GDAL
+1.8.0, this file will be created (or overwritten if it already exists) if the
+-of, -a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are
 used.</dd>
 
 </dl>
@@ -1238,7 +1248,7 @@ gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_de
 \endverbatim
 
 The following would burn all polygons from footprint.shp into a new 1000x1000
-rgb TIFF as the color red.  Note that -b is not used; the order of the -burn 
+rgb TIFF as the color red.  Note that -b is not used; the order of the -burn
 options determines the bands of the output raster.
 
 \verbatim
@@ -1407,8 +1417,10 @@ The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
 (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
 containing well known text.</dd>
-<dt> <b>-ct</b> <em>proj_string</em>:</dt><dd> (GDAL &gt;= 2.5)
-PROJ string overriding the default
+<dt> <b>-ct</b> <em>string</em>:</dt><dd> (GDAL &gt;= 3.0)
+A PROJ string (single step operation or multiple step string
+starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
+or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
 transformation from the source to the target CRS. It must take into account the
 axis order of the source and target CRS.</dd>
 <dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
@@ -1428,7 +1440,7 @@ available GCPs.</dd>
 <dt> <em>dstfile</em>:</dt><dd> File with destination projection definition. </dd>
 </dl>
 
-Coordinates are read as pairs, triples for 3D or, since GDAL 2.5.0, quadruplets
+Coordinates are read as pairs, triples for 3D or, since GDAL 3.0.0, quadruplets
 for X,Y,Z,time of numbers per line from standard
 input, transformed, and written out to standard output in the same way. All
 transformations offered by gdalwarp are handled, including gcp-based ones.
@@ -1523,7 +1535,7 @@ can be treated as transparent when mosaicing.
 created.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL 1.8.0 or later) Select the output format.
 Starting with GDAL 2.3, if not specified, the format is guessed from the extension (previously
-was ERDAS Imagine .img). 
+was ERDAS Imagine .img).
 Use the short format name (GTiff for GeoTIFF for example).</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL 1.8.0 or later) Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
@@ -2359,7 +2371,7 @@ Usage:
     gdaldem hillshade input_dem output_hillshade
                 [-z ZFactor (default=1)] [-s scale* (default=1)]"
                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]
-                [-alg ZevenbergenThorne] [-combined | -multidirectional]
+                [-alg ZevenbergenThorne] [-combined | -multidirectional | -igor]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 - To generate a slope map from any GDAL-supported elevation raster :
@@ -2462,9 +2474,12 @@ The following specific options are available :
 <dt> <b>-alt</b> <i>altitude</i>:</dt><dd>altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.</dd>
 <dt> <b>-combined</b>:</dt><dd>(starting with GDAL 1.10) combined shading, a combination of slope and oblique shading.</dd>
 <dt> <b>-multidirectional</b>:</dt><dd>(starting with GDAL 2.2) multidirectional shading, a combination of hillshading illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.</dd>
+<dt> <b>-igor</b>:</dt><dd>(starting with GDAL 3.0) shading which tries to minimize effects on other map features beneath. Can't be used with -alt option.</dd>
 </dl>
 
 Multidirectional hillshading applies the formula of http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf.
+
+Igor's hillshading uses formula from Maperitive http://maperitive.net/docs/Commands/GenerateReliefImageIgor.html.
 
 \subsection gdaldem_slope slope
 

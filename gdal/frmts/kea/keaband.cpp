@@ -194,7 +194,10 @@ CPLErr KEARasterBand::SetHistogramFromString(const char *pszString)
     if( nCol == -1 )
     {
         if( pTable->CreateColumn("Histogram", GFT_Real, GFU_PixelCount) != CE_None )
+        {
+            CPLFree(pszBinValues);
             return CE_Failure;
+        }
 
         nCol = pTable->GetColumnCount() - 1;
     }
@@ -483,7 +486,10 @@ CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
                 else if( EQUAL( pszName, "STATISTICS_HISTOBINVALUES" ) )
                 {
                     if( this->SetHistogramFromString(pszValue) != CE_None )
+                    {
+                        CPLFree(pszName);
                         return CE_Failure;
+                    }
                 }
                 else
                 {

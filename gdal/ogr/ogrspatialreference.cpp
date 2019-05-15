@@ -59,6 +59,9 @@
 
 CPL_CVSID("$Id$")
 
+#define STRINGIFY(s) #s
+#define XSTRINGIFY(s) STRINGIFY(s)
+
 struct OGRSpatialReference::Private
 {
     struct Listener: public OGR_SRSNode::Listener
@@ -1112,7 +1115,7 @@ const char * CPL_STDCALL OSRGetAttrValue( OGRSpatialReferenceH hSRS,
  * The returned value is only short lived and should not be used after other
  * calls to methods on this object.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 
 const char* OGRSpatialReference::GetName() const
@@ -1133,7 +1136,7 @@ const char* OGRSpatialReference::GetName() const
  * The returned value is only short lived and should not be used after other
  * calls to methods on this object.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 const char* OSRGetName( OGRSpatialReferenceH hSRS )
 
@@ -1222,7 +1225,7 @@ void OGRSpatialReference::dumpReadable()
  * Note that the returned WKT string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
  *
- * The WKT version can be overriden by using the OSR_WKT_FORMAT configuration
+ * The WKT version can be overridden by using the OSR_WKT_FORMAT configuration
  * option. Valid values are the one of the FORMAT option of
  * exportToWkt( char ** ppszResult, const char* const* papszOptions ) const
  *
@@ -1256,7 +1259,7 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
  * \brief Convert this SRS into a nicely formatted WKT 1 string for display to a
  * person.
  *
- * The WKT version can be overriden by using the OSR_WKT_FORMAT configuration
+ * The WKT version can be overridden by using the OSR_WKT_FORMAT configuration
  * option. Valid values are the one of the FORMAT option of
  * exportToWkt( char ** ppszResult, const char* const* papszOptions ) const
  *
@@ -1288,7 +1291,7 @@ OGRErr CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppsz
  * Note that the returned WKT string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
  *
- * The WKT version can be overriden by using the OSR_WKT_FORMAT configuration
+ * The WKT version can be overridden by using the OSR_WKT_FORMAT configuration
  * option. Valid values are the one of the FORMAT option of
  * exportToWkt( char ** ppszResult, const char* const* papszOptions ) const
  *
@@ -1334,7 +1337,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult ) const
  * </ul>
  *
  * @return OGRERR_NONE if successful.
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 
 OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
@@ -1445,7 +1448,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
  * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
  * for implementation details of WKT in OGR.
  *
- * The WKT version can be overriden by using the OSR_WKT_FORMAT configuration
+ * The WKT version can be overridden by using the OSR_WKT_FORMAT configuration
  * option. Valid values are the one of the FORMAT option of
  * exportToWkt( char ** ppszResult, const char* const* papszOptions ) const
  *
@@ -1471,6 +1474,8 @@ OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS,
  * \brief Convert this SRS into WKT format.
  * 
  * This function is the same as OGRSpatialReference::exportToWkt(char ** ppszResult,const char* const* papszOptions ) const
+ * 
+ * @since GDAL 3.0
  */
 
 OGRErr OSRExportToWktEx( OGRSpatialReferenceH hSRS,
@@ -3979,7 +3984,7 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
 /************************************************************************/
 
 /**
- * \brief Get spheroid semi major axis (in metres starting with GDAL 2.5)
+ * \brief Get spheroid semi major axis (in metres starting with GDAL 3.0)
  *
  * This method does the same thing as the C function OSRGetSemiMajor().
  *
@@ -8445,9 +8450,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[0].name = EPSG_NAME_PARAMETER_X_AXIS_TRANSLATION;
     params[0].auth_name = "EPSG";
-    CPLString osCode0;
-    osCode0.Printf("%d", EPSG_CODE_PARAMETER_X_AXIS_TRANSLATION);
-    params[0].code = osCode0.c_str();
+    params[0].code = XSTRINGIFY(EPSG_CODE_PARAMETER_X_AXIS_TRANSLATION);
     params[0].value = dfDX;
     params[0].unit_name = "metre";
     params[0].unit_conv_factor = 1.0;
@@ -8455,9 +8458,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[1].name = EPSG_NAME_PARAMETER_Y_AXIS_TRANSLATION;
     params[1].auth_name = "EPSG";
-    CPLString osCode1;
-    osCode1.Printf("%d", EPSG_CODE_PARAMETER_Y_AXIS_TRANSLATION);
-    params[1].code = osCode1.c_str();
+    params[1].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Y_AXIS_TRANSLATION);
     params[1].value = dfDY;
     params[1].unit_name = "metre";
     params[1].unit_conv_factor = 1.0;
@@ -8465,9 +8466,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[2].name = EPSG_NAME_PARAMETER_Z_AXIS_TRANSLATION;
     params[2].auth_name = "EPSG";
-    CPLString osCode2;
-    osCode2.Printf("%d", EPSG_CODE_PARAMETER_Z_AXIS_TRANSLATION);
-    params[2].code = osCode2.c_str();
+    params[2].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Z_AXIS_TRANSLATION);
     params[2].value = dfDZ;
     params[2].unit_name = "metre";
     params[2].unit_conv_factor = 1.0;
@@ -8475,9 +8474,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[3].name = EPSG_NAME_PARAMETER_X_AXIS_ROTATION;
     params[3].auth_name = "EPSG";
-    CPLString osCode3;
-    osCode3.Printf("%d", EPSG_CODE_PARAMETER_X_AXIS_ROTATION);
-    params[3].code = osCode3.c_str();
+    params[3].code = XSTRINGIFY(EPSG_CODE_PARAMETER_X_AXIS_ROTATION);
     params[3].value = dfEX;
     params[3].unit_name = "arc-second";
     params[3].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8485,9 +8482,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[4].name = EPSG_NAME_PARAMETER_Y_AXIS_ROTATION;
     params[4].auth_name = "EPSG";
-    CPLString osCode4;
-    osCode4.Printf("%d", EPSG_CODE_PARAMETER_Y_AXIS_ROTATION);
-    params[4].code = osCode4.c_str();
+    params[4].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Y_AXIS_ROTATION);
     params[4].value = dfEY;
     params[4].unit_name = "arc-second";
     params[4].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8495,9 +8490,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[5].name = EPSG_NAME_PARAMETER_Z_AXIS_ROTATION;
     params[5].auth_name = "EPSG";
-    CPLString osCode5;
-    osCode5.Printf("%d", EPSG_CODE_PARAMETER_Z_AXIS_ROTATION);
-    params[5].code = osCode5.c_str();
+    params[5].code = XSTRINGIFY(EPSG_CODE_PARAMETER_Z_AXIS_ROTATION);
     params[5].value = dfEZ;
     params[5].unit_name = "arc-second";
     params[5].unit_conv_factor = 1. / 3600 * M_PI / 180;
@@ -8505,9 +8498,7 @@ OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
 
     params[6].name = EPSG_NAME_PARAMETER_SCALE_DIFFERENCE;
     params[6].auth_name = "EPSG";
-    CPLString osCode6;
-    osCode6.Printf("%d", EPSG_CODE_PARAMETER_SCALE_DIFFERENCE);
-    params[6].code = osCode6.c_str();
+    params[6].code = XSTRINGIFY(EPSG_CODE_PARAMETER_SCALE_DIFFERENCE);
     params[6].value = dfPPM;
     params[6].unit_name = "parts per million";
     params[6].unit_conv_factor = 1e-6;
@@ -8877,7 +8868,7 @@ void OSRCleanup( void )
 /**
  * \brief Return the number of axis of the coordinate system of the CRS.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 int OGRSpatialReference::GetAxesCount() const
 {
@@ -9527,6 +9518,12 @@ OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
 OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
 {
+    if( strlen(pszProj4) >= 10000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long PROJ string");
+        return OGRERR_CORRUPT_DATA;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
@@ -9590,7 +9587,7 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * will be returned along with OGRERR_NONE.
  *
  * Special processing for Transverse Mercator:
- * Starting with GDAL 2.5, if the OSR_USE_APPROX_TMERC configuration option is
+ * Starting with GDAL 3.0, if the OSR_USE_APPROX_TMERC configuration option is
  * set to YES, the PROJ definition built from the SRS will use the +approx flag
  * for the tmerc and utm projection methods, rather than the more accurate method.
  *
@@ -9671,7 +9668,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
  * renaming a variety of projections and arguments, and stripping out
  * nodes note recognised by ESRI (like AUTHORITY and AXIS).
  *
- * \note Since GDAL 2.5, this function has only user-visible effects at
+ * \note Since GDAL 3.0, this function has only user-visible effects at
  * exportToWkt() time. It is recommended to use instead exportToWkt(char**, const char* const char*) const
  * with options having FORMAT=WKT1_ESRI.
  *
@@ -9721,7 +9718,7 @@ OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
  * datums to "standard" names, as defined by Adam Gawne-Cain's reference
  * translation of EPSG to WKT for the CT specification.
  *
- * \note Since GDAL 2.5, this function is essentially a no-operation, since
+ * \note Since GDAL 3.0, this function is essentially a no-operation, since
  * morphing from ESRI is automatically done by importFromWkt(). Its only
  * effect is to undo the effect of a potential prior call to morphToESRI().
  *
@@ -10018,7 +10015,7 @@ OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
  * Currently this returns TRUE for all geographic coordinate systems
  * with an EPSG code set, and axes set defining it as lat, long.
  *
- * \note Important change of behaviour since GDAL 2.5. In previous versions,
+ * \note Important change of behaviour since GDAL 3.0. In previous versions,
  * geographic CRS imported with importFromEPSG() would cause this method to
  * return FALSE on them, whereas now it returns TRUE, since importFromEPSG()
  * is now equivalent to importFromEPSGA().
@@ -10099,7 +10096,7 @@ int OSREPSGTreatsAsLatLong( OGRSpatialReferenceH hSRS )
  * Currently this returns TRUE for all projected coordinate systems
  * with an EPSG code set, and axes set defining it as northing, easting.
  * 
- * \note Important change of behaviour since GDAL 2.5. In previous versions,
+ * \note Important change of behaviour since GDAL 3.0. In previous versions,
  * projected CRS with northing, easting axis order imported with
  * importFromEPSG() would cause this method to
  * return FALSE on them, whereas now it returns TRUE, since importFromEPSG()
@@ -10365,7 +10362,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT(
  *     SetDataAxisToSRSAxisMapping()
  * </ul>
  * @return the the data axis to CRS axis mapping strategy.
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 OSRAxisMappingStrategy OGRSpatialReference::GetAxisMappingStrategy() const
 {
@@ -10379,7 +10376,7 @@ OSRAxisMappingStrategy OGRSpatialReference::GetAxisMappingStrategy() const
 /** \brief Retun the data axis to CRS axis mapping strategy.
  * 
  * See OGRSpatialReference::GetAxisMappingStrategy()
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 OSRAxisMappingStrategy OSRGetAxisMappingStrategy( OGRSpatialReferenceH hSRS )
 {
@@ -10395,7 +10392,7 @@ OSRAxisMappingStrategy OSRGetAxisMappingStrategy( OGRSpatialReferenceH hSRS )
 /** \brief Set the data axis to CRS axis mapping strategy.
  * 
  * See OGRSpatialReference::GetAxisMappingStrategy()
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 void OGRSpatialReference::SetAxisMappingStrategy(OSRAxisMappingStrategy strategy)
 {
@@ -10410,7 +10407,7 @@ void OGRSpatialReference::SetAxisMappingStrategy(OSRAxisMappingStrategy strategy
 /** \brief Set the data axis to CRS axis mapping strategy.
  * 
  * See OGRSpatialReference::SetAxisMappingStrategy()
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 void OSRSetAxisMappingStrategy( OGRSpatialReferenceH hSRS,
                                 OSRAxisMappingStrategy strategy )
@@ -10432,7 +10429,7 @@ void OSRSetAxisMappingStrategy( OGRSpatialReferenceH hSRS,
  * If m = GetDataAxisToSRSAxisMapping(), then m[0] is the data axis number
  * for the first axis of the CRS.
  * 
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 const std::vector<int>& OGRSpatialReference::GetDataAxisToSRSAxisMapping() const
 {
@@ -10447,7 +10444,7 @@ const std::vector<int>& OGRSpatialReference::GetDataAxisToSRSAxisMapping() const
  * 
  * See OGRSpatialReference::GetDataAxisToSRSAxisMapping()
  * 
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 const int *OSRGetDataAxisToSRSAxisMapping( OGRSpatialReferenceH hSRS, int* pnCount )
 {
@@ -10469,7 +10466,7 @@ const int *OSRGetDataAxisToSRSAxisMapping( OGRSpatialReferenceH hSRS, int* pnCou
  * Automatically implies SetAxisMappingStrategy(OAMS_CUSTOM)
  * 
  * See OGRSpatialReference::GetAxisMappingStrategy()
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 OGRErr OGRSpatialReference::SetDataAxisToSRSAxisMapping(const std::vector<int>& mapping)
 {
@@ -10504,7 +10501,7 @@ OGRErr OGRSpatialReference::SetDataAxisToSRSAxisMapping(const std::vector<int>& 
  * use. Might be NULL. Note that *ppszAreaName is short-lived and might be invalidated
  * by further calls.
  * @return true in case of success
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 bool OGRSpatialReference::GetAreaOfUse( double* pdfWestLongitudeDeg,
                                         double* pdfSouthLatitudeDeg,
@@ -10542,7 +10539,7 @@ bool OGRSpatialReference::GetAreaOfUse( double* pdfWestLongitudeDeg,
  *
  * This function is the same as the OGRSpatialReference::GetAreaOfUse() method.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 int OSRGetAreaOfUse( OGRSpatialReferenceH hSRS,
                      double* pdfWestLongitudeDeg,
@@ -10576,7 +10573,7 @@ int OSRGetAreaOfUse( OGRSpatialReferenceH hSRS,
  * @return an array of OSRCRSInfo* pointers to be freed with
  * OSRDestroyCRSInfoList(), or NULL in case of error.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 OSRCRSInfo **OSRGetCRSInfoListFromDatabase(
                                       const char *pszAuthName,
@@ -10646,7 +10643,7 @@ OSRCRSInfo **OSRGetCRSInfoListFromDatabase(
 /** \brief Destroy the result returned by
  * OSRGetCRSInfoListFromDatabase().
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 void OSRDestroyCRSInfoList(OSRCRSInfo** list)
 {

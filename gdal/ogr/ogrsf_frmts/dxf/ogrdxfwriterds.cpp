@@ -583,18 +583,19 @@ bool OGRDXFWriterDS::TransferUpdateTrailer( VSILFILE *fpOut )
 /* -------------------------------------------------------------------- */
 /*      Copy the remainder of the file.                                 */
 /* -------------------------------------------------------------------- */
+    bool ret = true;
     while( (nCode = oReader.ReadValue( szLineBuf, sizeof(szLineBuf) )) != -1 )
     {
         if( !WriteValue( fpOut, nCode, szLineBuf ) )
         {
-            VSIFCloseL( fp );
-            return false;
+            ret = false;
+            break;
         }
     }
 
     VSIFCloseL( l_fp );
 
-    return true;
+    return ret;
 }
 
 /************************************************************************/

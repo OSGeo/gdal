@@ -278,10 +278,20 @@ def test_gdal_edit_py_7():
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -scale 2 -offset 3")
-
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     assert ds.GetRasterBand(1).GetScale() == 2
-    assert ds.GetRasterBand(1).GetOffset() == 3
+    assert ds.GetRasterBand(1).GetOffset() == 3  
+    ds = None
+    
+    shutil.copy('../gcore/data/1bit_2bands.tif', 'tmp/test_gdal_edit_py.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -scale 2 4 -offset 10 20")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    for i in [1, 2]:
+        assert ds.GetRasterBand(i).GetScale() == i*2
+        assert ds.GetRasterBand(i).GetOffset() == i*10
+        
+    ds = None
 
 ###############################################################################
 # Test -colorinterp_X

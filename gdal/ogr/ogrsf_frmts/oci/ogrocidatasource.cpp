@@ -963,6 +963,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( poSRS2->exportToWkt( &pszWKT, apszOptions ) != OGRERR_NONE )
     {
         delete poSRS2;
+        CPLFree(pszWKT);
         return -1;
     }
 

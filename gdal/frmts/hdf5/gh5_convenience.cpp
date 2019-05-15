@@ -38,6 +38,11 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                          CPLString &osResult, bool bReportError )
 
 {
+    if( !bReportError && H5Aexists(loc_id, pszAttrName) <= 0 )
+    {
+        return false;
+    }
+
     hid_t hAttr = H5Aopen_name(loc_id, pszAttrName);
 
     osResult.clear();
@@ -51,18 +56,43 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
         return false;
     }
 
+    const hid_t hAttrSpace = H5Aget_space(hAttr);
+    hsize_t anSize[H5S_MAX_RANK] = {};
+    const unsigned int nAttrDims =
+        H5Sget_simple_extent_dims(hAttrSpace, anSize, nullptr);
+    if( nAttrDims != 0 && !(nAttrDims == 1 && anSize[0] == 1) )
+    {
+        H5Sclose(hAttrSpace);
+        H5Aclose(hAttr);
+        return false;
+    }
+
     hid_t hAttrTypeID = H5Aget_type(hAttr);
     hid_t hAttrNativeType = H5Tget_native_type(hAttrTypeID, H5T_DIR_DEFAULT);
 
     bool retVal = false;
     if( H5Tget_class(hAttrNativeType) == H5T_STRING )
     {
-        const size_t nAttrSize = H5Tget_size(hAttrTypeID);
-        char *pachBuffer = static_cast<char *>(CPLCalloc(nAttrSize + 1, 1));
-        H5Aread(hAttr, hAttrNativeType, pachBuffer);
+        if ( H5Tis_variable_str(hAttrNativeType) )
+        {
+            char* aszBuffer[1] = { nullptr };
+            H5Aread(hAttr, hAttrNativeType, aszBuffer);
 
-        osResult = pachBuffer;
-        CPLFree(pachBuffer);
+            if( aszBuffer[0] )
+                osResult = aszBuffer[0];
+
+            H5Dvlen_reclaim(hAttrNativeType, hAttrSpace, H5P_DEFAULT,
+                            aszBuffer);
+        }
+        else
+        {
+            const size_t nAttrSize = H5Tget_size(hAttrTypeID);
+            char *pachBuffer = static_cast<char *>(CPLCalloc(nAttrSize + 1, 1));
+            H5Aread(hAttr, hAttrNativeType, pachBuffer);
+
+            osResult = pachBuffer;
+            CPLFree(pachBuffer);
+        }
 
         retVal = true;
     }
@@ -77,6 +107,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
         retVal = false;
     }
 
+    H5Sclose(hAttrSpace);
     H5Tclose(hAttrNativeType);
     H5Tclose(hAttrTypeID);
     H5Aclose(hAttr);
@@ -91,6 +122,11 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                          double &dfResult, bool bReportError )
 
 {
+    if( !bReportError && H5Aexists(loc_id, pszAttrName) <= 0 )
+    {
+        return false;
+    }
+
     const hid_t hAttr = H5Aopen_name(loc_id, pszAttrName);
 
     dfResult = 0.0;
@@ -108,7 +144,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
 
     // Confirm that we have a single element value.
     hid_t hAttrSpace = H5Aget_space(hAttr);
-    hsize_t anSize[64] = {};
+    hsize_t anSize[H5S_MAX_RANK] = {};
     int nAttrDims = H5Sget_simple_extent_dims(hAttrSpace, anSize, nullptr);
 
     int i, nAttrElements = 1;
@@ -137,7 +173,9 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
     H5Aread(hAttr, hAttrNativeType, buf);
 
     // Translate to double.
-    if( H5Tequal(H5T_NATIVE_INT, hAttrNativeType) )
+    if( H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType) )
+        dfResult = *((short *)buf);
+    else if( H5Tequal(H5T_NATIVE_INT, hAttrNativeType) )
         dfResult = *((int *)buf);
     else if( H5Tequal(H5T_NATIVE_FLOAT,    hAttrNativeType) )
         dfResult = *((float *)buf);
@@ -227,6 +265,21 @@ GDALDataType GH5_GetDataType(hid_t TypeID)
 bool GH5_CreateAttribute (hid_t loc_id, const char *pszAttrName,
                           hid_t TypeID, unsigned nMaxLen)
 {
+#ifdef notdef_write_variable_length_string
+    if (TypeID == H5T_C_S1)
+    {
+        hsize_t   dims[1] = {1};
+        hid_t dataspace = H5Screate_simple(1, dims, nullptr);
+        hid_t type = H5Tcopy(TypeID);
+        H5Tset_size (type, H5T_VARIABLE);
+        hid_t att = H5Acreate(loc_id,pszAttrName, type, dataspace, H5P_DEFAULT);
+        H5Tclose(type);
+        H5Aclose(att);
+        H5Sclose(dataspace);
+        return true;
+    }
+#endif
+
     hid_t hDataSpace = H5Screate(H5S_SCALAR);
     if (hDataSpace < 0)
         return false;
@@ -287,7 +340,11 @@ bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
     bool bSuccess = false;
     if( H5Tget_class(hAttrNativeType) == H5T_STRING )
     {
+#ifdef notdef_write_variable_length_string
+        bSuccess = H5Awrite(hAttr, hDataType, &pszValue) >= 0;
+#else
         bSuccess = H5Awrite(hAttr, hDataType, pszValue) >= 0;
+#endif
     }
     else
     {

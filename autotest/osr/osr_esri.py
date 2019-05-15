@@ -467,7 +467,7 @@ def test_osr_esri_17():
 
     srs.MorphToESRI()
     wkt = srs.ExportToWkt()
-    if wkt != expected:
+    if wkt not in (expected, expected.replace('ETRS89_ETRS_LAEA', 'ETRS89_ETRS-LAEA')):
         print('')
         print('Got:      ', wkt)
         print('Expected: ', expected)

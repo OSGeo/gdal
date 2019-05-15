@@ -70,7 +70,7 @@ struct OGRCoordinateTransformationOptions::Private
 
 /** \brief Constructs a new OGRCoordinateTransformationOptions.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 OGRCoordinateTransformationOptions::OGRCoordinateTransformationOptions():
     d(new Private())
@@ -83,7 +83,7 @@ OGRCoordinateTransformationOptions::OGRCoordinateTransformationOptions():
 
 /** \brief Destroys a OGRCoordinateTransformationOptions.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 OGRCoordinateTransformationOptions::~OGRCoordinateTransformationOptions()
 {
@@ -97,7 +97,7 @@ OGRCoordinateTransformationOptions::~OGRCoordinateTransformationOptions()
  *
  * To be freed with OCTDestroyCoordinateTransformationOptions()
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 OGRCoordinateTransformationOptionsH OCTNewCoordinateTransformationOptions(void)
 {
@@ -110,7 +110,7 @@ OGRCoordinateTransformationOptionsH OCTNewCoordinateTransformationOptions(void)
 
 /** \brief Destroy coordinate transformation options.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 void OCTDestroyCoordinateTransformationOptions(
                             OGRCoordinateTransformationOptionsH hOptions)
@@ -125,7 +125,7 @@ void OCTDestroyCoordinateTransformationOptions(
 /** \brief Sets an area of interest.
  *
  * The west longitude is generally lower than the east longitude, except for
- * areas of interest that go accross the anti-meridian.
+ * areas of interest that go across the anti-meridian.
  *
  * @param dfWestLongitudeDeg West longitude (in degree). Must be in [-180,180]
  * @param dfSouthLatitudeDeg South latitude (in degree). Must be in [-90,90]
@@ -133,7 +133,7 @@ void OCTDestroyCoordinateTransformationOptions(
  * @param dfNorthLatitudeDeg North latitude (in degree). Must be in [-90,90]
  * @return true in case of success.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 bool OGRCoordinateTransformationOptions::SetAreaOfInterest(
         double dfWestLongitudeDeg, double dfSouthLatitudeDeg,
@@ -181,7 +181,7 @@ bool OGRCoordinateTransformationOptions::SetAreaOfInterest(
  *
  * See OGRCoordinateTransformationOptions::SetAreaOfInterest()
  * 
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 int OCTCoordinateTransformationOptionsSetAreaOfInterest(
     OGRCoordinateTransformationOptionsH hOptions,
@@ -207,14 +207,14 @@ int OCTCoordinateTransformationOptionsSetAreaOfInterest(
  * SRS.
  *
  * The pipeline may be provided as a PROJ string (single step operation or
- * multiple step string starting with +proj=pipeline), or a WKT2 string
- * describing a CoordinateOperation.
+ * multiple step string starting with +proj=pipeline), a WKT2 string describing
+ * a CoordinateOperation, or a "urn:ogc:def:coordinateOperation:EPSG::XXXX" URN
  *
  * @param pszCO PROJ or WKT string describing a coordinate operation
  * @param bReverseCO Whether the PROJ or WKT string should be evaluated in the reverse path
  * @return true in case of success.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 bool OGRCoordinateTransformationOptions::SetCoordinateOperation(const char* pszCO, bool bReverseCO)
 {
@@ -231,7 +231,7 @@ bool OGRCoordinateTransformationOptions::SetCoordinateOperation(const char* pszC
  *
  * See OGRCoordinateTransformationOptions::SetCoordinateTransformation()
  * 
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 int OCTCoordinateTransformationOptionsSetOperation(
     OGRCoordinateTransformationOptionsH hOptions,
@@ -397,7 +397,7 @@ void OGRCoordinateTransformation::DestroyCT( OGRCoordinateTransformation* poCT )
  * 
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
- * To have a behaviour similar to GDAL &lt; 2.5, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
+ * To have a behaviour similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
  * configuration option can be set to YES.
  *
  * @param poSource source spatial reference system.
@@ -427,7 +427,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  * 
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
- * To have a behaviour similar to GDAL &lt; 2.5, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
+ * To have a behaviour similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
  * configuration option can be set to YES.
  *
  * The source SRS and target SRS should generally not be NULL. This is only
@@ -446,7 +446,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  * @param poTarget target spatial reference system.
  * @param options Coordinate transformation options.
  * @return NULL on failure or a ready to use transformation object.
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 
 OGRCoordinateTransformation*
@@ -483,7 +483,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  * 
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
- * To have a behaviour similar to GDAL &lt; 2.5, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
+ * To have a behaviour similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
  * configuration option can be set to YES.
  *
  * @param hSourceSRS source spatial reference system.
@@ -522,7 +522,7 @@ OCTNewCoordinateTransformation(
  *
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
- * To have a behaviour similar to GDAL &lt; 2.5, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
+ * To have a behaviour similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
  * configuration option can be set to YES.
  *
  * If options contains a user defined coordinate transformation pipeline, it
@@ -538,7 +538,7 @@ OCTNewCoordinateTransformation(
  * @param hTargetSRS target spatial reference system.
  * @param hOptions Coordinate transformation options.
  * @return NULL on failure or a ready to use transformation object.
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 
 OGRCoordinateTransformationH
@@ -616,7 +616,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     if( poTargetIn )
         poSRSTarget = poTargetIn->Clone();
 
-    // To easy quick&dirty compatibility with GDAL < 2.5
+    // To easy quick&dirty compatibility with GDAL < 3.0
     if( CPLTestBool(CPLGetConfigOption("OGR_CT_FORCE_TRADITIONAL_GIS_ORDER", "NO")) )
     {
         if( poSRSSource )
@@ -765,7 +765,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         if( !m_pj )
         {
             CPLError( CE_Failure, CPLE_NotSupported,
-                      "Cannot instanciate pipeline %s",
+                      "Cannot instantiate pipeline %s",
                       options.d->osCoordOperation.c_str() );
             return FALSE;
         }
@@ -915,13 +915,13 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
 
     auto src = proj_create(ctx, pszSrcSRS);
     if( !src ) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot instanciate source_crs");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot instantiate source_crs");
         return false;
     }
 
     auto dst = proj_create(ctx, pszTargetSRS);
     if( !dst ) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot instanciate target_crs");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot instantiate target_crs");
         proj_destroy(src);
         return false;
     }
@@ -1588,8 +1588,9 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                                 y, sizeof(double), nCount,
                                 z, z ? sizeof(double) : 0, z ? nCount : 0,
                                 t, t ? sizeof(double) : 0, t ? nCount : 0);
-        err == ( static_cast<int>(nRet) == nCount ) ?
+        err = ( static_cast<int>(nRet) == nCount ) ?
                     0 : proj_context_errno(ctx);
+        if( err == 0 )
         {
             memcpy(padfTargetX, x, sizeof(double) * nCount);
             memcpy(padfTargetY, y, sizeof(double) * nCount);
@@ -1607,8 +1608,9 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                 padfTargetY, sizeof(double), nCount,
                 z ? padfTargetZ : nullptr, z ? sizeof(double) : 0, z ? nCount : 0,
                 t ? padfTargetT : nullptr, t ? sizeof(double) : 0, t ? nCount : 0);
-            err == ( static_cast<int>(nRet) == nCount ) ?
+            err = ( static_cast<int>(nRet) == nCount ) ?
                     0 : proj_context_errno(ctx);
+            if( err == 0 )
             {
                 for( int i = 0; i < nCount; i++ )
                 {
@@ -1630,7 +1632,7 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                                 y, sizeof(double), nCount,
                                 z, z ? sizeof(double) : 0, z ? nCount : 0,
                                 t, t ? sizeof(double) : 0, t ? nCount : 0);
-        err == ( static_cast<int>(nRet) == nCount ) ?
+        err = ( static_cast<int>(nRet) == nCount ) ?
                     0 : proj_context_errno(ctx);
     }
 
@@ -1789,7 +1791,7 @@ int CPL_STDCALL OCTTransformEx( OGRCoordinateTransformationH hTransform,
  * @param z Array of nCount z values. Might be NULL
  * @param t Array of nCount time values. Might be NULL
  * @param pabSuccess Output array of nCount value that will be set to TRUE/FALSE. Might be NULL.
- * @since GDAL 2.5
+ * @since GDAL 3.0
  * @return TRUE or FALSE
  */
 int OCTTransform4D( OGRCoordinateTransformationH hTransform,

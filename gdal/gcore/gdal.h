@@ -346,6 +346,9 @@ typedef GIntBig GSpacing;
  */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 
+/** Capability set by a driver that can copy over subdatasets. */
+#define GDAL_DCAP_SUBCREATECOPY "DCAP_SUBCREATECOPY"
+
 /** Capability set by a driver that can read/create datasets through the VSI*L API. */
 #define GDAL_DCAP_VIRTUALIO  "DCAP_VIRTUALIO"
 
@@ -966,6 +969,13 @@ void CPL_DLL CPL_STDCALL
                    void * CPL_RESTRICT pDstData,
                    GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
+
+void CPL_DLL CPL_STDCALL
+    GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
+                     GDALDataType eSrcType, int nSrcPixelOffset,
+                     void * CPL_RESTRICT pDstData,
+                     GDALDataType eDstType, int nDstPixelOffset,
+                     GPtrDiff_t nWordCount );
 
 void CPL_DLL
 GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,

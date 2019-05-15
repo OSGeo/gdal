@@ -1076,7 +1076,7 @@ def TranslateOptions(options=None, format=None,
               creationOptions=None, srcWin=None, projWin=None, projWinSRS=None, strict = False,
               unscale = False, scaleParams=None, exponents=None,
               outputBounds=None, metadataOptions=None,
-              outputSRS=None, GCPs=None,
+              outputSRS=None, nogcp=False, GCPs=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, resampleAlg=None,
               callback=None, callback_data=None):
@@ -1104,6 +1104,7 @@ def TranslateOptions(options=None, format=None,
           outputBounds --- assigned output bounds: [ulx, uly, lrx, lry]
           metadataOptions --- list of metadata options
           outputSRS --- assigned output SRS
+          nogcp --- ignore GCP in the raster
           GCPs --- list of GCPs
           noData --- nodata value (or "none" to unset it)
           rgbExpand --- Color palette expansion mode: "gray", "rgb", "rgba"
@@ -1156,6 +1157,8 @@ def TranslateOptions(options=None, format=None,
                 new_options += ['-mo', opt]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS)]
+        if nogcp:
+            new_options += ['-nogcp']
         if GCPs is not None:
             for gcp in GCPs:
                 new_options += ['-gcp', _strHighPrec(gcp.GCPPixel), _strHighPrec(gcp.GCPLine), _strHighPrec(gcp.GCPX), str(gcp.GCPY), _strHighPrec(gcp.GCPZ)]
@@ -1229,6 +1232,7 @@ def WarpOptions(options=None, format=None,
          cutlineLayer=None, cutlineWhere=None, cutlineSQL=None, cutlineBlend=None, cropToCutline = False,
          copyMetadata = True, metadataConflictValue=None,
          setColorInterpretation = False,
+         overviewLevel = 'AUTO',
          callback=None, callback_data=None):
     """ Create a WarpOptions() object that can be passed to gdal.Warp()
         Keyword arguments are :
@@ -1269,6 +1273,7 @@ def WarpOptions(options=None, format=None,
           copyMetadata --- whether to copy source metadata
           metadataConflictValue --- metadata data conflict value
           setColorInterpretation --- whether to force color interpretation of input bands to output bands
+          overviewLevel --- To specify which overview level of source files must be used
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -1368,6 +1373,19 @@ def WarpOptions(options=None, format=None,
             new_options += ['-cvmd', str(metadataConflictValue)]
         if setColorInterpretation:
             new_options += ['-setci']
+
+        if overviewLevel is None or _is_str_or_unicode(overviewLevel):
+            pass
+        elif isinstance(overviewLevel, int):
+            if overviewLevel < 0:
+                overviewLevel = 'AUTO' + str(overviewLevel)
+            else:
+                overviewLevel = str(overviewLevel)
+        else:
+            overviewLevel = None
+
+        if overviewLevel:
+            new_options += ['-ovr', overviewLevel]
 
     return (GDALWarpAppOptions(new_options), callback, callback_data)
 
@@ -1555,7 +1573,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 def DEMProcessingOptions(options=None, colorFilename=None, format=None,
               creationOptions=None, computeEdges=False, alg='Horn', band=1,
               zFactor=None, scale=None, azimuth=None, altitude=None,
-              combined=False, multiDirectional=False,
+              combined=False, multiDirectional=False, igor=False,
               slopeFormat=None, trigonometric=False, zeroForFlat=False,
               addAlpha=None,
               callback=None, callback_data=None):
@@ -1572,8 +1590,9 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
           scale --- ratio of vertical units to horizontal.
           azimuth --- (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
           altitude ---(hillshade only) altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.
-          combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading.
-          multiDirectional --- (hillshade only) whether to compute multi-directional shading
+          combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading. Only one of combined, multiDirectional and igor can be specified.
+          multiDirectional --- (hillshade only) whether to compute multi-directional shading. Only one of combined, multiDirectional and igor can be specified.
+          igor --- (hillshade only) whether to use Igor's hillshading from Maperitive.  Only one of combined, multiDirectional and igor can be specified.
           slopeformat --- (slope only) "degree" or "percent".
           trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
           zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
@@ -1609,6 +1628,8 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
             new_options += ['-combined']
         if multiDirectional:
             new_options += ['-multidirectional']
+        if igor:
+            new_options += ['-igor']
         if slopeFormat == 'percent':
             new_options += ['-p']
         if trigonometric:

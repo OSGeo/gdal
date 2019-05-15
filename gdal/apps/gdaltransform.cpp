@@ -168,6 +168,7 @@ MAIN_START(argc, argv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszSRS = argv[++i];
+            // coverity[tainted_data]
             if( !IsValidSRS(pszSRS) )
                 exit(1);
             aosTO.SetNameValue("SRC_SRS", pszSRS );

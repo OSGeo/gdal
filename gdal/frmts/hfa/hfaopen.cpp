@@ -2163,6 +2163,9 @@ HFAHandle HFACreate( const char *pszFilename,
             ((( nBlockSize < 32 ) || (nBlockSize > 2048)) &&
             !CPLTestBool(CPLGetConfigOption("FORCE_BLOCKSIZE", "NO"))) )
         {
+            if( nBlockSize != 0 )
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Forcing BLOCKSIZE to %d", 64);
             nBlockSize = 64;
         }
     }
@@ -2183,8 +2186,14 @@ HFAHandle HFACreate( const char *pszFilename,
         return nullptr;
     }
     const int nBlocks = nBlocksPerRow * nBlocksPerColumn;
-    const int nBytesPerBlock =
-        (nBlockSize * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
+    const GInt64 nBytesPerBlock64 =
+        (static_cast<GInt64>(nBlockSize) * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
+    if( nBytesPerBlock64 > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Too large block");
+        return nullptr;
+    }
+    const int nBytesPerBlock = static_cast<int>(nBytesPerBlock64);
 
     // Create the low level structure.
     HFAHandle psInfo = HFACreateLL(pszFilename);

@@ -394,6 +394,21 @@ def test_hdf5_single_char_varname():
     ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
     assert ds is not None
 
+def test_hdf5_attr_all_datatypes():
+
+    ds = gdal.Open('data/attr_all_datatypes.h5')
+    assert ds is not None
+    assert ds.GetMetadata() == {'attr_float16': '125 ',
+                                'attr_float32': '125 ',
+                                'attr_float64': '125 ',
+                                'attr_int16': '125 ',
+                                'attr_int32': '125 ',
+                                'attr_int8': '125 ',
+                                'attr_uint16': '125 ',
+                                'attr_uint32': '125 ',
+                                'attr_uint8': '125 '}
+
+
 
 def test_hdf5_virtual_file():
     hdf5_files = [

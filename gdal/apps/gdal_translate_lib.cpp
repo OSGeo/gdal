@@ -192,6 +192,9 @@ struct GDALTranslateOptions
         GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the WKT. */
     char *pszOutputSRS;
 
+    /*! does not copy source GCP into destination dataset (when TRUE) */
+    bool bNoGCP;
+
     /*! number of GCPS to be added to the output dataset */
     int nGCPCount;
 
@@ -555,7 +558,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if(pbUsageError)
         *pbUsageError = FALSE;
-
+ 
     if(psOptions->adfULLR[0] != 0.0 || psOptions->adfULLR[1] != 0.0 || psOptions->adfULLR[2] != 0.0 || psOptions->adfULLR[3] != 0.0)
         bGotBounds = true;
 
@@ -655,9 +658,11 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if( psOptions->panBandList == nullptr )
     {
+
         psOptions->nBandCount = GDALGetRasterCount( hSrcDataset );
-        if( psOptions->nBandCount == 0 )
+        if( ( psOptions->nBandCount == 0 ) && (psOptions->bStrict ) )
         {
+            // if not strict then the driver can fail if it doesn't support zero bands
             CPLError( CE_Failure, CPLE_AppDefined, "Input file has no bands, and so cannot be translated." );
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
@@ -925,6 +930,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         && CSLCount(psOptions->papszMetadataOptions) == 0 && bAllBandsInOrder
         && psOptions->eMaskMode == MASK_AUTO
         && bSpatialArrangementPreserved
+        && !psOptions->bNoGCP
         && psOptions->nGCPCount == 0 && !bGotBounds
         && psOptions->pszOutputSRS == nullptr && !psOptions->bSetNoData && !psOptions->bUnsetNoData
         && psOptions->nRGBExpand == 0 && !psOptions->bNoRAT
@@ -983,7 +989,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "General options of gdal_translate make the "
-                 "COPY_SRC_OVERVIEWS creation option ineffective");
+                 "COPY_SRC_OVERVIEWS creation option ineffective as they hide "
+                 "the overviews");
     }
 
 /* -------------------------------------------------------------------- */
@@ -1212,7 +1219,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         poVDS->SetGCPs( psOptions->nGCPCount, psOptions->pasGCPs, pszGCPProjection );
     }
 
-    else if( GDALGetGCPCount( hSrcDataset ) > 0 )
+    else if( !psOptions->bNoGCP && GDALGetGCPCount( hSrcDataset ) > 0 )
     {
         const int nGCPs = GDALGetGCPCount(hSrcDataset);
 
@@ -2101,6 +2108,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     psOptions->dfLRX = 0.0;
     psOptions->dfLRY = 0.0;
     psOptions->pszOutputSRS = nullptr;
+    psOptions->bNoGCP = false;
     psOptions->nGCPCount = 0;
     psOptions->pasGCPs = nullptr;
     psOptions->adfULLR[0] = 0;
@@ -2250,6 +2258,10 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         {
             if( psOptionsForBinary )
                 psOptionsForBinary->bCopySubDatasets = TRUE;
+        }
+        else if (EQUAL(papszArgv[i], "-nogcp"))
+        {
+            psOptions->bNoGCP = true;
         }
         else if( i + 4 < argc && EQUAL(papszArgv[i],"-gcp") )
         {
@@ -2642,6 +2654,14 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
         }
+    }
+
+    if (psOptions->nGCPCount > 0 && psOptions->bNoGCP)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "-nogcp and -gcp cannot be used as the same time" );
+        GDALTranslateOptionsFree(psOptions);
+        return nullptr;
     }
 
     if( bOutsideExplicitlySet &&

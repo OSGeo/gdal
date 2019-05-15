@@ -133,7 +133,9 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     poTransfer = new SDTSTransfer();
 
-    if( !poTransfer->Open( pszFilename ) )
+    GUInt32 nInitialErrorCounter = CPLGetErrorCounter();
+    if( !poTransfer->Open( pszFilename ) ||
+        CPLGetErrorCounter() > nInitialErrorCounter + 100 )
     {
         delete poTransfer;
         poTransfer = nullptr;
@@ -172,6 +174,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Initialize a layer for each source dataset layer.               */
 /* -------------------------------------------------------------------- */
+
     for( int iLayer = 0; iLayer < poTransfer->GetLayerCount(); iLayer++ )
     {
         if( poTransfer->GetLayerType( iLayer ) == SLTRaster )
@@ -181,6 +184,8 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
             poTransfer->GetLayerIndexedReader( iLayer );
         if( poReader == nullptr )
             continue;
+        if( CPLGetErrorCounter() > nInitialErrorCounter + 100 )
+            return FALSE;
 
         papoLayers = (OGRSDTSLayer **)
             CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );

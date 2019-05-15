@@ -438,6 +438,23 @@ def test_gdal_translate_lib_colorinterp():
             gdal.Translate('', src_ds, options='-f MEM -colorinterp_0 alpha')
             
 
+###############################################################################
+# Test nogcp options
+
+
+def test_gdal_translate_lib_110():
+
+    ds = gdal.Open('../gcore/data/byte_gcp.tif')
+    ds = gdal.Translate('tmp/test110.tif', ds, nogcp='True')
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
+
+    gcps = ds.GetGCPs()
+    assert len(gcps) == 0, 'GCP count wrong.'
+
+    ds = None
+
     
 ###############################################################################
 # Cleanup

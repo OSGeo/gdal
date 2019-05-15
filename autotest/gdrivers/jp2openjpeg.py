@@ -1807,6 +1807,12 @@ def test_jp2openjpeg_43():
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
     assert ret is not None
 
+    ret = gdal.GetJPEG2000StructureAsString('data/byte_tlm_plt.jp2', ['ALL=YES'])
+    assert ret is not None
+
+    ret = gdal.GetJPEG2000StructureAsString('data/byte_one_poc.j2k', ['ALL=YES'])
+    assert ret is not None
+
 ###############################################################################
 # Check a file against a OrthoimageryCoverage document
 

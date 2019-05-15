@@ -75,7 +75,7 @@ OGRNGWDataset::OGRNGWDataset() :
 OGRNGWDataset::~OGRNGWDataset()
 {
     // Last sync with server.
-    FlushCache();
+    OGRNGWDataset::FlushCache();
 
     if( poRasterDS != nullptr )
     {

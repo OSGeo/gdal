@@ -99,15 +99,20 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     if( papszArgv != nullptr && hSrcDS != nullptr )
     {
-        OGRLayerH hLayer = GDALDatasetGetLayer(hSrcDS, 0);
-        if( hLayer )
+        const int nLayerCount = GDALDatasetGetLayerCount(hSrcDS);
+        for( int i = 0; i < nLayerCount; i++ )
         {
-            int nFieldCount = OGR_FD_GetFieldCount(
-                OGR_L_GetLayerDefn(hLayer));
-            if( nFieldCount > 100 )
+            OGRLayerH hLayer = GDALDatasetGetLayer(hSrcDS, i);
+            if( hLayer )
             {
-                papszArgv = CSLAddString(papszArgv, "-limit");
-                papszArgv = CSLAddString(papszArgv, "100");
+                int nFieldCount = OGR_FD_GetFieldCount(
+                    OGR_L_GetLayerDefn(hLayer));
+                if( nFieldCount > 100 )
+                {
+                    papszArgv = CSLAddString(papszArgv, "-limit");
+                    papszArgv = CSLAddString(papszArgv, "100");
+                    break;
+                }
             }
         }
 

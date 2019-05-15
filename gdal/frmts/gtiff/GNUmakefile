@@ -6,6 +6,7 @@ OBJ	=	geotiff.o gt_wkt_srs.o gt_citation.o  gt_overview.o \
 
 SUBLIBS 	=
 
+TIFF_OPTS	=
 ifeq ($(TIFF_SETTING),internal)
 
 SUBLIBS	:= lib-tiff $(SUBLIBS)

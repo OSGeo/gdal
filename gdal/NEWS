@@ -1,3 +1,380 @@
+= GDAL/OGR 3.0.0 Release Notes =
+
+== In a nutshell... ==
+
+ * Implement RFC 73: Integration of PROJ6 for WKT2, late binding capabilities, time-support and unified CRS database. PROJ >= 6 is now a build requirement
+    https://trac.osgeo.org/gdal/wiki/rfc73_proj6_wkt2_srsbarn
+ * New GDAL drivers:
+  - DAAS: read driver for Airbus DS Intelligence Data As A Service
+  - TileDB: read/write driver for https://www.tiledb.io (#1402)
+ * New OGR drivers:
+  - MongoDBv3: read/write driver using libmongocxx v3.4.0 client (for MongoDB >= 4.0)
+ * Improved drivers:
+   - FITS: read/write support for scale, offset and CRS
+   - netCDF: read support for groups
+   - PDF: add a COMPOSITION_FILE creation option to generate a complex document
+   - PDS4: subdataset creation support, read/write table/vector support
+ * Support for minimal builds on Unix (#1250)
+ * Add a docker/ directory with Dockerfile for different configurations
+ * Continued code linting
+
+== New installed files ==
+
+ * Resource file: pdfcomposition.xsd
+
+== Removed installed files ==
+
+ * Removal of resource files related to EPSG and ESRI CRS databases: compdcs.csv, coordinate_axis.csv, datum_shift.csv, ellipsoid.csv, esri_epsg.wkt, esri_extra.wkt, esri_Wisconsin_extra.wkt, gcs.csv, gcs.override.csv, gdal_datum.csv, geoccs.csv, pcs.csv, pcs.override.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv, vertcs.csv, vertcs.override.csv
+
+== Backward compatibility issues ==
+
+See MIGRATION_GUIDE.txt
+
+== GDAL/OGR 3.0.0 - General Changes ==
+
+Build(Unix):
+ * Allow internal drivers to be disabled (#1250)
+ * Fix build with OpenBSD which doesn't support RLIMIT_AS (#1163)
+ * Fix MacOS build failures due to json-c
+ * Poppler: require pkg-config
+ * PostgreSQL: Switch from pg_config to pkg-config (#1418)
+ * fix build --without-lerc (#1224)
+ * fix netcdf_mem.h detection in netcdf 4.6.2 (#1328)
+ * Fix build --with-curl --without-threads (#1386)
+
+Build(Windows):
+ * nmake.opt: remove unicode character at line starting with '# 4275' that apparently cause build issues with some MSVC versions (#1169)
+
+All:
+ * PROJ >= 6.0 is a required external dependency
+ * libgeotiff >= 1.5 should be used for builds with external libgeotiff
+ * Poppler: drop support for Poppler older than 0.23.0
+ * Poppler: add support for 0.72.0, 0.73.0, 0.75.0, 0.76.0
+
+== GDAL 3.0.0 - Overview of Changes ==
+
+Port:
+ * Add capability to define external VSI virtual file systems from C API (#1289)
+ * MiniXML: Fix wrong node order when calling CPLAddXMLAttributeAndValue() after CPLCreateXMLElementAndValue()
+ * /vsicurl/: ReadMultiRange(): use default implementation if there is a single range (#1206)
+ * /vsicurl/: ignore proxy CONNECT response headers (#1211)
+ * /vsicurl/: automatically detect signed URLs where host ends with a port number; also detect signed URLs as created with the AWS4-HMAC-SHA256 method (#1456)
+ * /vsizip/: Add config option to create zip64 extra fields by default (#1267)
+ * /vsis3/, /vsigs/, /vsiaz/: add HTTP retry logic in writing code paths
+ * Fix data race in VSIFileManager::Get
+ * cpl_zipOpenNewFileInZip3: fix memory leak in error code path. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13103.
+ * VSIGZipWriteHandleMT: avoid potential deadlock in case of error
+ * Fix assertion in CPLGetValueType when testing non-ASCII chars
+ * /vsihdfs/: fix Read() when more than one hdfsRead call is needed (#1349)
+ * Fix potential buffer overflow in CPLODBCSession::Failed (#1390)
+ * /vsitar/: handle .tar file header with space padding instead of 0 for file size (#1396)
+
+Core:
+ * Support blocks larger than 2 billion pixels/bytes
+ * Make CPLHaveRuntimeSSSE3() and CPLHaveRuntimeAVX() use GCC constructor functions
+ * Move RawDataset base class to gcore/ (#1268)
+ * RasterBand/Dataset::RasterIO(): enforce access mode on write
+ * PAM: preserve existing metadata when setting new one (#1430)
+ * RawDataset: use generic RasterIO() implementation when non-nearest resampling is asked (#1301)
+ * DumpJPK2CodeStream(): dump PLT and POC markers
+
+Algorithms:
+ * RPC transformer: test success code of GDALRPCTransform() in GDALCreateRPCTransformer()
+ * RPC transformer: add a RPC_FOOTPRINT transformer option to provide a polygon in long/lat space where the RPC is valid, and also make gdalwarp use GDALSuggestedWarpOutput2() to restrict the bounding box of the output dataset
+ * GDALFillNodata(): fix wrong comparison in QUAD_CHECK() macro: nNoDataVal is only assigned to target_y values (#1228)
+ * GDALFillNodata(): reinitialize panLastY array to nNoDataVal before bottom to top pass (#1228)
+ * GDALFillNodata(): do an extra iteration to reach the maximum search distance in all quadrants (#1228)
+ * GDALRasterizeLayersBuf():support any GDAL data type for buffer,and pixel and line spaceing arguments
+ * GDALResampleChunk32R_Mode: performance improvement
+ * Rasterize with MERGE_ALG=ADD: avoid burning several times intermediate points of linestrings (#1307)
+ * rasterize: fix crash when working buffer is larger than 2GB (#1338)
+
+Utilities:
+ * gdal_translate: add "-nogcp" option (#1469)
+ * gdal_contour: remove explicit width/precision=12/3 of the elev field (#1487)
+ * gdaldem hillshade: add -igor option (#1330)
+ * gdalwarp -crop_to_cutline: do not round computed target extent to be aligned on the grid of the source raster if -tr is set (restore partially pre 2.4 behaviour) (#1173)
+ * gdalwarp: assume -tap when using -crop_to_cutline, -tr and -wo CUTLINE_ALL_TOUCHED=TRUE, so as to avoid issues with polygons smaller than 1x1 pixels (#1360)
+ * gdal2tiles: give local tile layer and basemap layers same min/max zoom levels as generated tile cache
+ * gdal2tiles: fix breakage of openlayers.html getURL() javascript function, introduced in GDAL 2.3.3 / 2.4.0 (#1127)
+ * gdal2tiles: prevent accidental copy of full GeoTIFF into temporary .vrt file
+  gdal2tiles: Refactor and fix multiprocessing completion handling
+ * gdal_fillnodata.py: preserve color interpretation and table
+ * gdal_fillnodata.py: do not set geotransform if source doesn't have one
+ * gdalsrsinfo: do not silence errors when calling SetFromUserInput()
+ * gdal_retile: Use nodata value from origin dataset
+ * gdal_edit.py: allow setting band-specific scale and offset values (#1444)
+ * validate_cloud_optimized_geotiff.py: check if file is only greater than 512px (#1403)
+ * validate_cloud_optimized_geotiff.py: report headers size
+
+Multidriver fixes:
+  * GTiff, GPKG, MBTiles, PostgisRaster drivers: ensure that main dataset and overviews share the same lock, so as to avoid crashing concurrent access (#1488)
+
+ADRG driver:
+ * modified to ensure that there is no confliction between ADRG and SRP when opening a .gen file (#953)
+
+AIGRID / AVCBin:
+ * fix filename case adjustment that failed on /vsi filesystems (#1385)
+
+BAG driver:
+ * fix potential nullptr deref on corrupted file
+
+COSAR driver:
+ * avoid out-of-bound write on corrupted dataset. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12360.
+
+EEDA driver:
+ * report 'path' metdata in 'path' field
+
+GPKG driver:
+ * allow negative srs_id values in gpkg_spatial_ref_sys
+ * reduce memory requirements for cached tiles
+
+GTiff diver:
+ * supports tiles/strips larger than 2GB
+ * add APPEND_SUBDATASET=YES capability to create subdataset / new TIFF page to an existing file
+ * only report scale/offset deduced from ModelTiepointTag and ModelPixelScaleTag if the SRS has a vertical component (and thus currently if GTIFF_REPORT_COMPD_CS is set) (https://issues.qgis.org/issues/20493)
+ * TIFF Lerc: properly initialize state after Create() so that BuildOverviews() succeed (#1257)
+ * emit merged consecutive multi-range reads (#1297)
+ * add warnings when using unsupported combination of internal mask+external overview, and fix COPY_SRC_OVERVIEWS=YES so that it does not copy ALL_VALID masks (#1455)
+ * do not generate a TIFFTAG_GDAL_METADATA with color interpretation information for JPEG YCbCr compression
+ * Internal libtiff and libgeotiff: resync with upstream
+
+FITS driver:
+ * new functions for Scale Offset and FITS World Coordinate System read and write (#1298)
+
+GeoRaster driver:
+ * Fix memory leaks
+
+HDF5 driver:
+ * support reading blocks larger than 2GB
+ * fix handling of attributes of type SCHAR, UCHAR, USHORT and UINT (https://github.com/mapbox/rasterio/issues/1663)
+ * detect nodata from netCDF _FillValue (#1451)
+ * add more strict checks for accepting datasets for GCP, and handle nodata in GCP too (#1451)
+
+IGNFHeightAsciiGrid driver:
+ * add support for RAF18.mnt
+
+JPEG driver:
+ * fix GDAL 2.3.0 performance regression when decoding JPEG (or GPKG using JPEG) images (#1324)
+
+KEA driver:
+ * add support for /vsi file systems
+
+KMLSuperOverlay driver:
+ * report color table of single overlay datasets, and also handle some variation in the KML structure (https://issues.qgis.org/issues/20173)
+
+MRF driver:
+ * sparse index and internal resampling fixes
+ * fix integer overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13974
+
+MrSID driver:
+ * fix potential crash when a zoom level cannot be opened
+
+netCDF driver:
+ * implement support for NetCDF-4 groups on reading (#1180)
+ * support complex data types (#1218)
+ * fix crash when opening a dataset with an attribute of length 0 (#1303)
+ * fix IWriteBlock() to support non-scanline blocks, and use the chunk size
+ * better deal with datasets indexed with unusual order for x/y dimensions
+ * avoid inappropriate shift by -360 when attribute axis=X is set (#1440)
+
+NGW driver:
+ * Add CreateCopy function
+
+NITF driver:
+ * avoid harmless floating point division by zero. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12844.
+
+PCIDSK driver:
+ * avoid uint overflow and too big memory allocation attempt. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12893 
+
+PDF driver:
+ * Add a COMPOSITION_FILE creation option to generate a complex document
+ * And a gdal_create_pdf.py sample script
+ * Fix selection of Poppler PDF layers with duplicate names (#1477)
+ * avoid division by zero when generating from vector content whose bounding box is almost a horizontal or vertical line. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13408
+
+PDS3:
+ * fix decoding of band interleaved images (such as for CRISM HSP) (#1239)
+ * add support for ENCODING_TYPE=DCT_DECOMPRESSED (#1457)
+
+PDS4 driver:
+ * add subdataset creation support, and getting/setting the band unit
+ * update template and code to PDS v1B00 schema versions
+
+VRT driver:
+ * Python pixel functions: add shared object name for python 3.7
+ * VRT: in case of no SourceProperties, do not use global shared datasets, but only shared to the owning VRTDataset, to avoid potential reference cycles and annoying related issues. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13476.
+
+WCS driver:
+ * avoid potential out-of-bound access
+
+WMS driver:
+ * use proper JSon parsing for ESRI MapServer document (#1416)
+ * Add url parameters escaping to ArcGIS Server minidriver
+ * avoid warning when a wms cache doesn't exist
+
+XPM driver:
+ * fix read heap buffer overflow on corrupted image. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13455.
+
+XYZ driver:
+ * add creation options DECIMAL_PRECISION and SIGNIFICANT_DIGITS like with AAIGrid
+ * fix regression regarding header lines that are not X,Y,Z (#1472)
+
+== OGR 3.0.0 - Overview of Changes ==
+
+Core:
+ * Add OGR_G_MakeValid() (requires GEOS 3.8)
+ * change prototye of OGRFeature::SetField( int iField, int nBytes, GByte *pabyData ) to ( ... , const void* pabyData), and same for OGR_F_SetFieldBinary().
+ * Polyhedral surface: fix importFromWKT to properly fix Z/M flag
+ * OGRBuildPolygonFromLines: avoid generating effectively duplicate points
+ * OGRBuildPolygonFromEdges(): improve performance. https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13798
+ * OGRGeometryFactory::transformWithOptions(): if WRAPDATELINE=YES, test that the geometry SRS is geographic
+ * OGRGeometryFactory::GetCurveParmeters(): fix assertion when coordinates are very near 0
+ * Expat XML parsing: add OGR_EXPAT_UNLIMITED_MEM_ALLOC=YES config option to workaround failure for very specific cases
+ * OGRLineString::segmentize(): fix issues when segment length is divisible by maxlength (#1341)
+ * OGR SQL: limit recursion in swq_expr_node::Check(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13540
+ * OGRGeometry / SFCGAL: fix dead code, memory leaks and potential nullptr deref.
+
+OGRSpatialReference:
+ * Deep rework due to RFC 73 integration
+ * SRS_WKT_WGS84 macro replaced by SRS_WKT_WGS84_LAT_LONG
+ * Add OSRSetPROJSearchPaths(), OSRExportToWktEx(), OSRGetName(), OSRIsSameEx(), OSRGetCRSInfoListFromDatabase(), OSRGetAreaOfUse(),OSRGetAxisMappingStrategy(), OSRSetAxisMappingStrategy(), OSRGetDataAxisToSRSAxisMapping()
+ * Add OCTNewCoordinateTransformationOptions(), OCTCoordinateTransformationOptionsSetOperation(), OCTCoordinateTransformationOptionsSetAreaOfInterest(), OCTDestroyCoordinateTransformationOptions(), OCTNewCoordinateTransformationEx(), OCTTransform4D()
+ * Remove OSRFixupOrdering(), OSRFixup(), OSRStripCTParms(), OCTProj4Normalize(), OCTCleanupProjMutex(), OPTGetProjectionMethods(), OPTGetParameterList(), OPTGetParameterInfo()
+
+Utilities:
+ * ogrinfo: report TITLE metadata in summary layer listing
+ * ogr2ogr: for drivers supporting ODsCCreateGeomFieldAfterCreateLayer, do not create geometry column if -nlt none
+ * ogrmerge.py: add shared='1' to speed-up -single mode with many layers
+
+CARTO driver:
+ * Overwrite tables in single transactions
+ * Improve documentation and warnings around CARTODBFY (#1445)
+
+CSW driver:
+ * fix crash when geometry parsing fails (#1248)
+
+DODS driver:
+ * fixes related to memory leaks and null pointer dereferences
+
+DXF driver:
+ * support RGB true color values
+ * fix the coloring of ByBlock entities inserted via a ByLayer INSERT
+ * fix double-free issue in case of writing error. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13516.
+
+FileGDB/OpenFileGDB drivers:
+ * be robust when winding order of outer ring is incorrect (#1369)
+
+Elasticsearch driver:
+ * Fixed index comparison bug when a index have at least one mapping
+ * Fix _mapping url for Elasticsearch 7 compatibility
+
+GeoJSON driver:
+ * speed-up random reading with GetFeature() by storing a map FID->(start,size) to retrieve performance similar to GDAL 2.2 or before (https://issues.qgis.org/issues/21085)
+ * report 3D layer geometry types (#1495)
+
+GeoJSONSeq driver:
+ * be more robust to invalid objects, and fixes performance issue on corrupted files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13770.
+
+GML driver:
+ * write SRSName element in .gfs when parsing a GML file with srsName only on top-level boundedBy element (#1210)
+ * Add "FeatureType" to list of suffixes recognized by XSD parser (#1313)
+ * GML/WFS: add minimum support for 'hexBinary' type (as string) (#1375)
+
+GMLAS driver:
+ * avoid null pointer dereference on some schemas
+ * do not use space as separator for schema filename in XSD open option (#1452)
+
+GMT driver:
+ * use file extension based detection to accept files without header (#1461)
+
+MongoDB driver:
+ * fix releated to filters in GetFeature()
+
+MITAB driver:
+ * Add encode/decode feature labels to/from UTF-8 encoding while MIF file read/write (#1151)
+ * .tab: fix deleting a feature without geometry (#1232)
+ * adapt dynamically default projection bounds to false_easting/false_northing values (#1316)
+ * avoid potential assertion or stack buffer overflow on corrupted .ind files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11999
+ * prevent potential infinite recursion on broken indexes. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12739.
+ * TAB_CSLLoad(): fix performance issue. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13588
+ * avoid long processing on corrupted .mif files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13152
+
+MSSQLSpatial driver:
+ * Add support for curve geometries (#1299)
+ * Add option to expose the FID column as a feature attribute (#1227)
+ * Adding improved extent queries
+ * Fix extent calculation for geography type, take care of invalid geometries
+
+NGW driver:
+ * Fix get children API. Add authorization support to create dataset options
+ * Add support for feature extensions in OGRFeature native data
+ * Add feature query via chunks, attribute and spatial filter support
+ * Add resource type and parent identifier to metadata
+ * Fix batch update features
+ * Add JSON_DEPTH open option
+ * Add check forbidden field names, check duplicate field names.
+
+OCI driver:
+ * Add MULTI_LOAD to open options (#1233)
+ * Fix memory leaks
+
+ODS driver:
+ * allow opening tables with empty cells with huge values of columns-repeated attribute at end of line (#1243)
+ * avoid potential null pointer dereference when writing to corrupted filename. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12976.
+
+OGDI driver:
+ * switch incorrect order for east/west bounds of spatial filter
+
+PDS4 driver:
+ * add read/write support for tables (vector support)
+
+PGDump driver:
+ * in WRITE_EWKT_GEOM=YES non-default mode, export geometries to ISO WKT so as to be able to export XYZM (#1327)
+ * Fix emitted SQL when UNLOGGED=ON
+
+PLScenes driver:
+ * update plscenesconf.json with SkySatCollect and add missing fields for PSOrthoTile
+
+SDTS driver:
+ * error out if too many errors are raised to avoid timeout in oss-fuzz. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13819.
+
+Selafin driver:
+ * avoid null pointer dereference on corrupted files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12356.
+
+Shapefile driver:
+* DeleteLayer(): make it delete .cpg, .sbn, .sbx, .qpj and other sidecar files (#1405)
+ * speed-up creation of lots of fields with name collisions. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13065
+
+SQLite driver:
+ * set sqlite3_busy_timeout, handle SQLITE_BUSY during tile read (#1370)
+ * close database before freeing the spatialite context. Fix crashes on dataset closing, with VirtualShape and recent spatialite versions
+ * Spatialite: fix update of geometry_columns_statistics when extent goes to infinity (#1438)
+
+S57 driver:
+ * avoid long procession on corrupted datasets. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13238
+
+SXF driver:
+ * Fix wrong EPSG codes range (#1278)
+ * Fix memory leaks in SetVertCS()
+
+VFK driver:
+ * fix curved geometries being ignored (#1351)
+
+WFS3 driver:
+ * handle paging wth missing type for rel:next, and better deal with user:pwd in URL
+ * use 'id' attribute of collection items, if 'name' not available
+
+== SWIG Language Bindings ==
+
+All bindings:
+ * add Geometry::MakeValid()
+
+Python bindings:
+ * fix Dataset.ReadAsRaster() on CInt16 data type (#82)
+ * adding overviewLevel option to WarpOptions
+ * add noGCP options to gdal.Translate()
+
 = GDAL/OGR 2.4.0 Release Notes =
 
 == In a nutshell... ==

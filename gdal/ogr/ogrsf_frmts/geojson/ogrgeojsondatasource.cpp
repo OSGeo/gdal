@@ -390,9 +390,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
                         "Failed to create coordinate transformation between the "
-                        "input coordinate system and WGS84.  This may be because "
-                        "they are not transformable, or because projection "
-                        "services (PROJ.4 DLL/.so) could not be loaded." );
+                        "input coordinate system and WGS84." );
 
                     return nullptr;
                 }
@@ -814,7 +812,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
         GDALOpenInfo oOpenInfo(pszUnprefixed, GA_ReadOnly);
         if( oOpenInfo.fpL == nullptr || oOpenInfo.pabyHeader == nullptr )
             return;
-        oOpenInfo.TryToIngest(6000);
+        CPL_IGNORE_RET_VAL(oOpenInfo.TryToIngest(6000));
         CPLFree(pszGeoData_);
         pszGeoData_ = CPLStrdup(
                         reinterpret_cast<const char*>(oOpenInfo.pabyHeader));

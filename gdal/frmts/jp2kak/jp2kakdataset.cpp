@@ -140,8 +140,17 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
     kdu_dims tile_dims;
     oCodeStream.get_valid_tiles(valid_tiles);
     oCodeStream.get_tile_dims(valid_tiles.pos, -1, tile_dims);
-    nBlockXSize = std::min(std::min(tile_dims.size.x, 2048), nRasterXSize);
-    nBlockYSize = std::min(std::min(tile_dims.size.y, 2048), nRasterYSize);
+    // Configuration option only for testing purposes
+    if( CPLTestBool(CPLGetConfigOption("USE_TILE_AS_BLOCK", "NO")) )
+    {
+        nBlockXSize = std::min(tile_dims.size.x, nRasterXSize);
+        nBlockYSize = std::min(tile_dims.size.y, nRasterYSize);
+    }
+    else
+    {
+        nBlockXSize = std::min(std::min(tile_dims.size.x, 2048), nRasterXSize);
+        nBlockYSize = std::min(std::min(tile_dims.size.y, 2048), nRasterYSize);
+    }
     CPLDebug( "JP2KAK", "JP2KAKRasterBand::JP2KAKRasterBand() : "
             "Tile dimension : %d X %d\n",
             nBlockXSize, nBlockYSize);
@@ -380,7 +389,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if( nXSize != nBlockXSize || nYSize != nBlockYSize )
-        memset(pImage, 0, nBlockXSize * nBlockYSize * nWordSize);
+        memset(pImage, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize * nWordSize);
 
     // By default we invoke just for the requested band, directly
     // into the target buffer.
@@ -419,7 +428,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         GF_Read, nWXOff, nWYOff, nWXSize, nWYSize, pabyWrkBuffer, nXSize,
         nYSize, eDataType, static_cast<int>(anBands.size()), &anBands[0],
         nWordSize, nWordSize * nBlockXSize,
-        nWordSize * nBlockXSize * nBlockYSize, &sExtraArg);
+        static_cast<GSpacing>(nWordSize) * nBlockXSize * nBlockYSize, &sExtraArg);
 
     if( eErr == CE_None )
     {
@@ -431,7 +440,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 // Application requested band.
                 memcpy(pImage, pabyWrkBuffer + nBandStart,
-                       nWordSize * nBlockXSize * nBlockYSize);
+                       static_cast<size_t>(nWordSize) * nBlockXSize * nBlockYSize);
             }
             else
             {
@@ -479,12 +488,12 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 if( poBlock )
                 {
                     memcpy(poBlock->GetDataRef(), pabyWrkBuffer + nBandStart,
-                           nWordSize * nBlockXSize * nBlockYSize);
+                           static_cast<size_t>(nWordSize) * nBlockXSize * nBlockYSize);
                     poBlock->DropLock();
                 }
             }
 
-            nBandStart += nWordSize * nBlockXSize * nBlockYSize;
+            nBandStart += static_cast<size_t>(nWordSize) * nBlockXSize * nBlockYSize;
         }
     }
 
@@ -1407,7 +1416,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
 
         // Special case where the data is being requested exactly at
         // this resolution.  Avoid any extra sampling pass.
-        if( nBufXSize == l_dims.size.x && nBufYSize == l_dims.size.y )
+        if( nBufXSize == l_dims.size.x && nBufYSize == l_dims.size.y &&
+            (nBandCount - 1) * nBandSpace / GDALGetDataTypeSizeBytes(eBufType) < INT_MAX )
         {
             kdu_stripe_decompressor decompressor;
             decompressor.start(*poCodeStream, false, false, poThreadEnv);
@@ -1534,7 +1544,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
                                                 + iY*nLineSpace
                                                 + i*nBandSpace] =
                                     pabyIntermediate[iSrcX*nBandCount
-                                                    + iSrcY*l_dims.size.x*nBandCount
+                                                    + static_cast<GPtrDiff_t>(iSrcY)*l_dims.size.x*nBandCount
                                                     + i];
                             else if( eBufType == GDT_Int16
                                     || eBufType == GDT_UInt16 )
@@ -1543,7 +1553,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
                                                 + i*nBandSpace/2] =
                                     ((GUInt16 *)pabyIntermediate)[
                                         iSrcX*nBandCount
-                                        + iSrcY*l_dims.size.x*nBandCount
+                                        + static_cast<GPtrDiff_t>(iSrcY)*l_dims.size.x*nBandCount
                                         + i];
                         }
                     }

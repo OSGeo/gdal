@@ -732,14 +732,11 @@ Error""")
     gdal.PopErrorHandler()
     assert lyr is None
 
-    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
+    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=BEGIN; DROP TABLE IF EXISTS "table1";CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom Geometry(MULTIPOLYGON,0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"'); COMMIT;&api_key=foo""",
                            """{"rows":[], "fields":{}}"""):
         lyr = ds.CreateLayer('table1', geom_type=ogr.wkbPolygon, options=['OVERWRITE=YES', 'CARTODBFY=NO'])
-
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 0,0 0))'))
-    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom Geometry(MULTIPOLYGON,0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
-                           """{"rows":[], "fields":{}}"""):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 0,0 0))'))
         assert lyr.CreateFeature(f) == 0
 
     gdal.ErrorReset()
@@ -751,15 +748,12 @@ Error""")
 
     ds = gdal.OpenEx('CARTO:foo', gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=['COPY_MODE=NO'])
 
-    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=DROP TABLE "table1"&api_key=foo""",
+    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=BEGIN; DROP TABLE IF EXISTS "table1";CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom Geometry(MULTIPOLYGON,0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"'); COMMIT;&api_key=foo""",
                            """{"rows":[], "fields":{}}"""):
         lyr = ds.CreateLayer('table1', geom_type=ogr.wkbPolygon, options=['OVERWRITE=YES', 'CARTODBFY=NO'])
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(100)
 
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFID(100)
-
-    with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom Geometry(MULTIPOLYGON,0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"')&api_key=foo""",
-                           """{"rows":[], "fields":{}}"""):
         with gdaltest.tempfile("""/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("cartodb_id") VALUES (100);COMMIT;&api_key=foo""",
                                """{"rows":[], "fields":{}}"""):
             assert lyr.CreateFeature(f) == 0

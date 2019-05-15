@@ -1,53 +1,66 @@
-<html>
+<!DOCTYPE html
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>WFS3 - OGC WFS 3.0 service (experimental)</title>
 </head>
 
-<body bgcolor="#ffffff">
+<body>
 
 <h1>WFS3 - OGC WFS 3.0 service (experimental)</h1>
-
-(GDAL/OGR &gt;= 2.3.0)<p>
-
-<b>NOTE: THIS IS BASED ON A DRAFT VERSION OF THE WFS 3.0 SPECIFICATION</b><p>
-
+<p>
+(GDAL/OGR &gt;= 2.3.0)
+</p>
+<p>
+<b>NOTE: THIS IS BASED ON A DRAFT VERSION OF THE WFS 3.0 SPECIFICATION</b>
+</p>
+<p>
 This driver can connect to a OGC WFS 3.0 service. It assumes that the
 service supports OpenAPI 3.0/JSON/GeoJSON encoding for respectively API
-description, feature collection metadata and feature collection data.<p>
+description, feature collection metadata and feature collection data.
+</p>
 
 <h2>Dataset name syntax</h2>
 
-The syntax to open a WFS datasource is : <i>WFS3:http://path/to/WFS/endpoint</i></p>
+<p>The syntax to open a WFS datasource is : <i>WFS3:http://path/to/WFS/endpoint</i></p>
 
 <h2>Layer schema</h2>
 
+<p>
 OGR needs a fixed schema per layer, but WFS 3.0 Core doesn't impose fixed schema.
 So the driver will retrieve the first page of features (10 features) and establish
-a schema from this.<p>
+a schema from this.</p>
 
 <h2>Filtering</h2>
 
+<p>
 The driver will forward any spatial filter set with SetSpatialFilter() to the server.
 In WFS 3.0 Core, only a subset of attributes allowed by the server can be
 queried for equalities, potentially combined with a AND logical operator.
-More complex requests will be partly or completely evaluated on client-side.<p>
+More complex requests will be partly or completely evaluated on client-side.</p>
 
-Rectangular spatial filtering is forward to the server as well.<p>
+<p>
+Rectangular spatial filtering is forward to the server as well.</p>
 
 <h2>Open options</h2>
 
+<p>
 The following options are available:
+</p>
 <ul>
 <li><b>URL</b>=url: URL to the WFS server endpoint. Required when using the
 "WFS:" string as the connection string.</li>
 <li><b>PAGE_SIZE</b>=integer: Number of features to retrieve per request.
 Defaults to 10. Minimum is 1, maximum 10000.</li>
 <li><b>USERPWD</b>: May be supplied with <i>userid:password</i> to pass a
-userid and password to the remote server.
+userid and password to the remote server.</li>
 </ul>
 
 <h2>Examples</h2>
 
+<ul>
 <li>
 Listing the types of a WFS server :
 <pre>
@@ -58,9 +71,8 @@ INFO: Open of `WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn'
 1: flurstueck (Multi Polygon)
 2: gebaeudebauwerk (Multi Polygon)
 3: verwaltungseinheit (Multi Polygon)
-e
 </pre>
-<p>
+</li>
 
 <li>
 Listing the summary information of a WFS layer :
@@ -99,7 +111,7 @@ gemeinde: String (0.0)
 lagebeztxt: String (0.0)
 tntxt: String (0.0)
 </pre>
-<p>
+</li>
 
 <li>
 Filtering on a property
@@ -128,7 +140,7 @@ OGRFeature(flurstueck):1
 
 [...]
 </pre>
-<p>
+</li>
 
 <li>
 Spatial filtering
@@ -156,13 +168,14 @@ OGRFeature(flurstueck):1
   MULTIPOLYGON (((8.768521 51.494915,8.768535 51.494882,8.768569 51.494908,8.768563 51.494925,8.768521 51.494915)))
 [...]
 </pre>
-<p>
+</li>
+</ul>
 
 <h2>See Also</h2>
 
 <ul>
-<li> <a href="https://rawgit.com/opengeospatial/WFS_FES/master/docs/17-069.html">OGC WFS 3.0 Standard (DRAFT)</a><p>
-<li> <a href="drv_wfs.html">WFS (1.0,1.1,2.0) driver documentation</a></a><p>
+<li> <a href="https://rawgit.com/opengeospatial/WFS_FES/master/docs/17-069.html">OGC WFS 3.0 Standard (DRAFT)</a></li>
+<li> <a href="drv_wfs.html">WFS (1.0,1.1,2.0) driver documentation</a></li>
 </ul>
 
 </body>

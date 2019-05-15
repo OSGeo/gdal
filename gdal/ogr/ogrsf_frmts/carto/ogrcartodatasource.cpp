@@ -417,16 +417,21 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Do we already have this layer?  If so, should we blow it        */
+/*      Do we already have this layer?  If so, set it up for overwrite  */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
+    bool bOverwriteOption = CSLFetchNameValue( papszOptions, "OVERWRITE" ) != nullptr
+                            && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO");
+
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
+        if( EQUAL(pszNameIn, papoLayers[iLayer]->GetName()) )
         {
-            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != nullptr
-                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            if( bOverwriteOption )
             {
+                /* We set DropOnCreation so the remote table isn't dropped */
+                /* As we are going to overwrite it in a single transaction */
+                papoLayers[iLayer]->SetDropOnCreation( true );
                 DeleteLayer( iLayer );
             }
             else
@@ -450,9 +455,12 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
     }
 
     OGRCARTOTableLayer* poLayer = new OGRCARTOTableLayer(this, osName);
+    if ( bOverwriteOption )
+        poLayer->SetDropOnCreation( true );
+
     const bool bGeomNullable =
         CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
-    int nSRID = (poSpatialRef && eGType != wkbNone) ? FetchSRSId( poSpatialRef ) : 0;
+    int nSRID = poSpatialRef ? FetchSRSId( poSpatialRef ) : 0;
     bool bCartoify = CPLFetchBool(papszOptions, "CARTODBFY",
                                   CPLFetchBool(papszOptions, "CARTODBIFY",
                                                true));
@@ -460,12 +468,19 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
     {
         if( nSRID != 4326 )
         {
-            if( eGType != wkbNone )
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                        "Cannot register table in dashboard with "
-                        "cdb_cartodbfytable() since its SRS is not EPSG:4326");
-            }
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Cannot register table in dashboard with "
+                    "cdb_cartodbfytable() since its SRS is not EPSG:4326."
+                    " Check the documentation for more information"
+                );
+            bCartoify = false;
+        } else if( eGType == wkbNone )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Cannot register table in dashboard with "
+                    "cdb_cartodbfytable() since its geometry type isn't defined."
+                    " Check the documentation for more information"
+                );
             bCartoify = false;
         }
     }
@@ -519,6 +534,7 @@ OGRErr OGRCARTODataSource::DeleteLayer(int iLayer)
     CPLDebug( "CARTO", "DeleteLayer(%s)", osLayerName.c_str() );
 
     int bDeferredCreation = papoLayers[iLayer]->GetDeferredCreation();
+    bool bDropOnCreation = papoLayers[iLayer]->GetDropOnCreation();
     papoLayers[iLayer]->CancelDeferredCreation();
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
@@ -528,7 +544,7 @@ OGRErr OGRCARTODataSource::DeleteLayer(int iLayer)
     if (osLayerName.empty())
         return OGRERR_NONE;
 
-    if( !bDeferredCreation )
+    if( !bDeferredCreation && !bDropOnCreation )
     {
         CPLString osSQL;
         osSQL.Printf("DROP TABLE %s",

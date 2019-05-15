@@ -717,7 +717,7 @@ char **ADRGDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "SUBDATASETS", NULL);
+                                   "SUBDATASETS", nullptr);
 }
 
 /************************************************************************/
@@ -1422,6 +1422,14 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             // TODO: Fix the non-GIN section or remove it.
             if( strcmp(RTY, "GIN") != 0 )
                 continue;
+
+            /* make sure that the GEN file is part of an ADRG dataset, not a SRP dataset, by checking that the GEN field contains a NWO subfield */
+            const char* NWO = record->GetStringSubfield("GEN", 0, "NWO", 0);
+            if( NWO == nullptr )
+            {
+                CSLDestroy(papszFileNames);
+                return nullptr;
+            }
 
             field = record->GetField(3);
             if( field == nullptr )

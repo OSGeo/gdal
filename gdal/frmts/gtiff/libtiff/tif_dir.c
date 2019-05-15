@@ -29,7 +29,6 @@
  * (and also some miscellaneous stuff)
  */
 #include "tiffiop.h"
-#include <float.h>
 
 /*
  * These are used in the backwards compatibility code...
@@ -165,15 +164,6 @@ bad:
 	    td->td_samplesperpixel,
 	    td->td_samplesperpixel-i);
 	return (0);
-}
-
-static float TIFFClampDoubleToFloat( double val )
-{
-    if( val > FLT_MAX )
-        return FLT_MAX;
-    if( val < -FLT_MAX )
-        return -FLT_MAX;
-    return (float)val;
 }
 
 static int
@@ -346,13 +336,13 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
         dblval = va_arg(ap, double);
         if( dblval < 0 )
             goto badvaluedouble;
-		td->td_xresolution = TIFFClampDoubleToFloat( dblval );
+		td->td_xresolution = _TIFFClampDoubleToFloat( dblval );
 		break;
 	case TIFFTAG_YRESOLUTION:
         dblval = va_arg(ap, double);
         if( dblval < 0 )
             goto badvaluedouble;
-		td->td_yresolution = TIFFClampDoubleToFloat( dblval );
+		td->td_yresolution = _TIFFClampDoubleToFloat( dblval );
 		break;
 	case TIFFTAG_PLANARCONFIG:
 		v = (uint16) va_arg(ap, uint16_vap);
@@ -361,10 +351,10 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		td->td_planarconfig = (uint16) v;
 		break;
 	case TIFFTAG_XPOSITION:
-		td->td_xposition = TIFFClampDoubleToFloat( va_arg(ap, double) );
+		td->td_xposition = _TIFFClampDoubleToFloat( va_arg(ap, double) );
 		break;
 	case TIFFTAG_YPOSITION:
-		td->td_yposition = TIFFClampDoubleToFloat( va_arg(ap, double) );
+		td->td_yposition = _TIFFClampDoubleToFloat( va_arg(ap, double) );
 		break;
 	case TIFFTAG_RESOLUTIONUNIT:
 		v = (uint16) va_arg(ap, uint16_vap);
@@ -710,7 +700,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				case TIFF_SRATIONAL:
 				case TIFF_FLOAT:
 					{
-						float v2 = TIFFClampDoubleToFloat(va_arg(ap, double));
+						float v2 = _TIFFClampDoubleToFloat(va_arg(ap, double));
 						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;

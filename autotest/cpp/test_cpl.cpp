@@ -26,6 +26,8 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
+#define GDAL_COMPILATION
+
 #include "gdal_unit_test.h"
 
 #include "cpl_error.h"
@@ -2593,4 +2595,14 @@ namespace tut
         CPLFree(str);
     }
 
+    // Test CPLCharUniquePtr
+    template<>
+    template<>
+    void object::test<38>()
+    {
+        CPLCharUniquePtr x;
+        ensure( x.get() == nullptr );
+        x.reset(CPLStrdup("foo"));
+        ensure_equals( std::string(x.get()), "foo");
+    }
 } // namespace tut

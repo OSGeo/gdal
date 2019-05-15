@@ -336,7 +336,7 @@ char **OGRDGNV8DataSource::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "DGN", NULL);
+                                   "DGN", nullptr);
 }
 
 /************************************************************************/

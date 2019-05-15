@@ -2721,12 +2721,20 @@ const char *GTIFDecToDMS( double dfAngle, const char * pszAxis,
     double	dfRound;
     int		i;
 
+    if( !(dfAngle >= -360 && dfAngle <= 360) )
+        return "";
+
     dfRound = 0.5/60;
     for( i = 0; i < nPrecision; i++ )
         dfRound = dfRound * 0.1;
 
     nDegrees = (int) ABS(dfAngle);
     nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60 + dfRound);
+    if( nMinutes == 60 )
+    {
+        nDegrees ++;
+        nMinutes = 0;
+    }
     dfSeconds = ABS((ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60));
 
     if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
@@ -3050,14 +3058,14 @@ void GTIFAttachPROJContext( GTIF *psGTIF, void* pjContext )
 /*                         GTIFGetPROJContext()                         */
 /*                                                                      */
 /*      Return the PROJ context attached to the GTIF handle.            */
-/*      If it has not yet been instanciated and instanciateIfNeeded=TRUE*/
-/*      then, it will be instanciated (and owned by GTIF handle).       */
+/*      If it has not yet been instantiated and instantiateIfNeeded=TRUE*/
+/*      then, it will be instantiated (and owned by GTIF handle).       */
 /************************************************************************/
 
-void *GTIFGetPROJContext( GTIF *psGTIF, int instanciateIfNeeded,
+void *GTIFGetPROJContext( GTIF *psGTIF, int instantiateIfNeeded,
                           int* out_gtif_own_pj_context )
 {
-    if( psGTIF->pj_context || !instanciateIfNeeded )
+    if( psGTIF->pj_context || !instantiateIfNeeded )
     {
         if( out_gtif_own_pj_context )
         {
@@ -3073,3 +3081,17 @@ void *GTIFGetPROJContext( GTIF *psGTIF, int instanciateIfNeeded,
     }
     return psGTIF->pj_context;
 }
+
+
+void GTIFDeaccessCSV( void )
+{
+    /* No operation */
+}
+
+#ifndef GDAL_COMPILATION
+void SetCSVFilenameHook( const char *(*CSVFileOverride)(const char *) )
+{
+    (void)CSVFileOverride;
+    /* No operation */
+}
+#endif

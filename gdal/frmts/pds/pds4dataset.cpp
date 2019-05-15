@@ -675,7 +675,8 @@ int PDS4Dataset::Identify(GDALOpenInfo* poOpenInfo)
     const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
     return poOpenInfo->nHeaderBytes > 0 &&
            (strstr(pszHeader, "Product_Observational") != nullptr ||
-            strstr(pszHeader, "Product_Ancillary") != nullptr) &&
+            strstr(pszHeader, "Product_Ancillary") != nullptr ||
+            strstr(pszHeader, "Product_Collection") != nullptr) &&
            strstr(pszHeader, "http://pds.nasa.gov/pds4/pds/v1") != nullptr;
 }
 
@@ -1149,7 +1150,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
         const char* pszLatitudeType = CPLGetXMLValue(psGeodeticModel,
                                                      "latitude_type",
                                                      "");
-        bool bIsOgraphic = EQUAL(pszLatitudeType, "planetographic");
+        bool bIsOgraphic = EQUAL(pszLatitudeType, "Planetographic");
 
         double dfSemiMajor = GetLinearValue(psGeodeticModel,
                                             "semi_major_radius");
@@ -2009,7 +2010,9 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
 /*                         WriteGeoreferencing()                        */
 /************************************************************************/
 
-void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart, const char* pszWKT)
+void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
+                                      const char* pszWKT,
+                                      bool bCart1B00OrLater)
 {
     bool bHasBoundingBox = false;
     double adfX[4] = {0};
@@ -2372,16 +2375,24 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart, const char* pszWKT)
                 "unit", "deg");
         }
 
-        CPLXMLNode* psPCI = CPLCreateXMLNode(psPlanar, CXT_Element,
-                        (osPrefix + "Planar_Coordinate_Information").c_str());
-        CPLCreateXMLElementAndValue(psPCI,
-            (osPrefix + "planar_coordinate_encoding_method").c_str(),
-            "Coordinate Pair");
-        CPLXMLNode* psCR = CPLCreateXMLNode(psPCI, CXT_Element,
-                        (osPrefix + "Coordinate_Representation").c_str());
+        CPLXMLNode* psCR = nullptr;
+        if( m_bGotTransform || !bCart1B00OrLater )
+        {
+            CPLXMLNode* psPCI = CPLCreateXMLNode(psPlanar, CXT_Element,
+                            (osPrefix + "Planar_Coordinate_Information").c_str());
+            CPLCreateXMLElementAndValue(psPCI,
+                (osPrefix + "planar_coordinate_encoding_method").c_str(),
+                "Coordinate Pair");
+            psCR = CPLCreateXMLNode(psPCI, CXT_Element,
+                            (osPrefix + "Coordinate_Representation").c_str());
+        }
         const double dfLinearUnits = oSRS.GetLinearUnits();
         const double dfDegToMeter = oSRS.GetSemiMajor() * M_PI / 180.0;
-        if( !m_bGotTransform )
+        if( psCR == nullptr )
+        {
+            // do nothing
+        }
+        else if( !m_bGotTransform )
         {
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
@@ -2495,28 +2506,31 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart, const char* pszWKT)
     {
         CPLXMLNode* psGeographic = CPLCreateXMLNode(psHCSD, CXT_Element,
                     (osPrefix + "Geographic").c_str());
-        CPLAddXMLAttributeAndValue(
-                    CPLCreateXMLElementAndValue(psGeographic,
-                        (osPrefix + "latitude_resolution").c_str(),
-                        "0"),
-                    "unit", "deg");
-        CPLAddXMLAttributeAndValue(
-                    CPLCreateXMLElementAndValue(psGeographic,
-                        (osPrefix + "longitude_resolution").c_str(),
-                        "0"),
-                    "unit", "deg");
+        if( !bCart1B00OrLater )
+        {
+            CPLAddXMLAttributeAndValue(
+                        CPLCreateXMLElementAndValue(psGeographic,
+                            (osPrefix + "latitude_resolution").c_str(),
+                            "0"),
+                        "unit", "deg");
+            CPLAddXMLAttributeAndValue(
+                        CPLCreateXMLElementAndValue(psGeographic,
+                            (osPrefix + "longitude_resolution").c_str(),
+                            "0"),
+                        "unit", "deg");
+        }
     }
 
     CPLXMLNode* psGM = CPLCreateXMLNode(psHCSD, CXT_Element,
                                         (osPrefix + "Geodetic_Model").c_str());
     const char* pszLatitudeType =
         CSLFetchNameValueDef(m_papszCreationOptions, "LATITUDE_TYPE",
-                             "planetocentric");
+                             "Planetocentric");
     // Fix case
-    if( EQUAL(pszLatitudeType, "planetocentric") )
-        pszLatitudeType = "planetocentric";
-    else if( EQUAL(pszLatitudeType, "planetographic") )
-        pszLatitudeType = "planetographic";
+    if( EQUAL(pszLatitudeType, "Planetocentric") )
+        pszLatitudeType = "Planetocentric";
+    else if( EQUAL(pszLatitudeType, "Planetographic") )
+        pszLatitudeType = "Planetographic";
     CPLCreateXMLElementAndValue(psGM,
                                 (osPrefix + "latitude_type").c_str(),
                                 pszLatitudeType);
@@ -3059,18 +3073,18 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
                 psMC = CPLCreateXMLElementAndValue(nullptr,
                     (osPrefix + "missing_constant").c_str(),
                     CPLSPrintf("%.18g", dfNoData));
+                CPLXMLNode* psNext;
                 if( psSaturatedConstant )
                 {
-                    CPLXMLNode* psNext = psSaturatedConstant->psNext;
+                    psNext = psSaturatedConstant->psNext;
                     psSaturatedConstant->psNext = psMC;
-                    psMC->psNext = psNext;
                 }
                 else
                 {
-                    CPLXMLNode* psNext = psTemplateSpecialConstants->psChild;
+                    psNext = psTemplateSpecialConstants->psChild;
                     psTemplateSpecialConstants->psChild = psMC;
-                    psMC->psNext = psNext;
                 }
+                psMC->psNext = psNext;
             }
         }
     }
@@ -3115,6 +3129,10 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
                       poLayer->GetName());
         }
 
+        const CPLString osRelativePath(
+            CPLExtractRelativePath(
+                CPLGetPath(m_osXMLFilename), poLayer->GetFileName(), nullptr));
+
         bool bFound = false;
         for( CPLXMLNode* psIter = psProduct->psChild;
                 psIter != nullptr; psIter = psIter->psNext )
@@ -3125,7 +3143,7 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
                 const char* pszFilename = CPLGetXMLValue(psIter,
                             (osPrefix + "File." + osPrefix + "file_name").c_str(),
                             "");
-                if( strcmp(pszFilename, CPLGetFilename(poLayer->GetFileName()) ) == 0 )
+                if( strcmp(pszFilename, osRelativePath) == 0 )
                 {
                     poLayer->RefreshFileAreaObservational(psIter);
                     bFound = true;
@@ -3140,7 +3158,7 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
             CPLXMLNode* psFile = CPLCreateXMLNode(psFAO,
                 CXT_Element, (osPrefix + "File").c_str());
             CPLCreateXMLElementAndValue(psFile, (osPrefix + "file_name").c_str(),
-                                        CPLGetFilename(poLayer->GetFileName()));
+                                        osRelativePath);
             poLayer->RefreshFileAreaObservational(psFAO);
         }
     }
@@ -3151,7 +3169,8 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
 /************************************************************************/
 
 void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
-                               bool bCartNeedsInternalReference)
+                               bool bCartNeedsInternalReference,
+                               bool bCart1B00OrLater)
 {
     CPLString osPrefix;
     if( STARTS_WITH(psProduct->pszValue, "pds:") )
@@ -3279,8 +3298,9 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                         CPLString osCartSchema;
                         if( strstr(psSchemaLoc->psChild->pszValue, "PDS4_PDS_1B00.xsd") )
                         {
-                            osCartSchema = "https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd";
+                            osCartSchema = "https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd";
                             bCartNeedsInternalReference = true;
+                            bCart1B00OrLater = true;
                         }
                         else
                         {
@@ -3309,7 +3329,8 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                     psDisciplineArea,
                     "disp:Display_Settings.Local_Internal_Reference."
                                                     "local_identifier_reference",
-                    GetRasterCount() == 0 ? "first_table" : "image");
+                    GetRasterCount() == 0 && GetLayerCount() > 0 ?
+                        GetLayer(0)->GetName() : "image");
                 CPLXMLNode* psLIR = CPLCreateXMLNode(psCart, CXT_Element,
                                         (osPrefix + "Local_Internal_Reference").c_str());
                 CPLCreateXMLElementAndValue(psLIR,
@@ -3320,7 +3341,7 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                             "cartography_parameters_to_image_object");
             }
 
-            WriteGeoreferencing(psCart, osWKT);
+            WriteGeoreferencing(psCart, osWKT, bCart1B00OrLater);
         }
     }
     else
@@ -3497,6 +3518,7 @@ void PDS4Dataset::WriteHeader()
     if( m_bCreateHeader )
     {
         bool bCartNeedsInternalReference = false;
+        bool bCart1B00OrLater = false;
         char* pszXML = CPLSerializeXMLTree(psRoot);
         if( pszXML )
         {
@@ -3512,6 +3534,8 @@ void PDS4Dataset::WriteHeader()
                         CPLString osVersion(pszCartSchema + strlen("PDS4_CART_"), 4);
                         bCartNeedsInternalReference =
                             strtol(osVersion, nullptr, 16) >= strtol("1900", nullptr, 16);
+                        bCart1B00OrLater =
+                            strtol(osVersion, nullptr, 16) >= strtol("1B00", nullptr, 16);
                         break;
                     }
                     else
@@ -3528,7 +3552,7 @@ void PDS4Dataset::WriteHeader()
             CPLFree(pszXML);
         }
 
-        CreateHeader(psProduct, bCartNeedsInternalReference);
+        CreateHeader(psProduct, bCartNeedsInternalReference, bCart1B00OrLater);
     }
 
     WriteVectorLayers(psProduct);
@@ -3557,9 +3581,41 @@ OGRLayer* PDS4Dataset::ICreateLayer( const char *pszName,
     const char* pszExt = EQUAL(pszTableType, "CHARACTER") ? "dat" :
                          EQUAL(pszTableType, "BINARY") ? "bin" : "csv";
 
-    CPLString osFullFilename =
-                CPLFormFilename( CPLGetPath(m_osXMLFilename.c_str()),
-                                 pszName, pszExt );
+    bool bSameDirectory = CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                                           "SAME_DIRECTORY",
+                                                           "NO"));
+    CPLString osFullFilename;
+    if( bSameDirectory )
+    {
+        osFullFilename = CPLFormFilename( CPLGetPath(m_osXMLFilename.c_str()),
+                                          pszName, pszExt );
+        VSIStatBufL sStat;
+        if( VSIStatL(osFullFilename, &sStat) == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s already exists. Please delete it before, or "
+                     "rename the layer",
+                     osFullFilename.c_str());
+            return nullptr;
+        }
+    }
+    else
+    {
+        CPLString osDirectory = CPLFormFilename(
+            CPLGetPath(m_osXMLFilename),
+            CPLGetBasename(m_osXMLFilename),
+            nullptr);
+        VSIStatBufL sStat;
+        if( VSIStatL(osDirectory, &sStat) != 0 &&
+            VSIMkdir(osDirectory, 0755) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create directory %s", osDirectory.c_str());
+            return nullptr;
+        }
+        osFullFilename = CPLFormFilename( osDirectory, pszName, pszExt );
+    }
+
     if( EQUAL(pszTableType, "DELIMITED") )
     {
         std::unique_ptr<PDS4DelimitedTable> poLayer(
@@ -3624,6 +3680,9 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
         return poDS;
     }
+
+    if( nXSize == 0 )
+        return nullptr;
 
     if( !(eType == GDT_Byte || eType == GDT_Int16 || eType == GDT_UInt16 ||
           eType == GDT_Int32 || eType == GDT_UInt32 || eType == GDT_Float32 ||
@@ -4161,9 +4220,9 @@ void GDALRegister_PDS4()
     "description='Whether to use source label in PDS4 to PDS4 conversions' "
     "default='YES'/>"
 "  <Option name='LATITUDE_TYPE' type='string-select' scope='raster,vector' "
-    "description='Value of latitude_type' default='planetocentric'>"
-"     <Value>planetocentric</Value>"
-"     <Value>planetographic</Value>"
+    "description='Value of latitude_type' default='Planetocentric'>"
+"     <Value>Planetocentric</Value>"
+"     <Value>Planetographic</Value>"
 "  </Option>"
 "  <Option name='LONGITUDE_DIRECTION' type='string-select' scope='raster,vector' "
     "description='Value of longitude_direction' "
@@ -4216,6 +4275,9 @@ void GDALRegister_PDS4()
                     "'Name of a field containing a Altitude value' default='Altitude'/>"
 "  <Option name='WKT' type='string' description="
                     "'Name of a field containing a WKT value' default='WKT'/>"
+"  <Option name='SAME_DIRECTORY' type='boolean' description="
+                    "'Whether table files should be created in the same "
+                    "directory, or in a subdirectory' default='NO'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );

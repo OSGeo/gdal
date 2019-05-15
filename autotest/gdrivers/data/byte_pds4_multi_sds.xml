@@ -74,7 +74,7 @@
               </cart:Geo_Transformation>
             </cart:Planar>
             <cart:Geodetic_Model>
-              <cart:latitude_type>planetocentric</cart:latitude_type>
+              <cart:latitude_type>Planetocentric</cart:latitude_type>
               <cart:spheroid_name>North_American_Datum_1927</cart:spheroid_name>
               <cart:semi_major_radius unit="km">6378.2064</cart:semi_major_radius>
               <cart:semi_minor_radius unit="m">6378206.4</cart:semi_minor_radius>

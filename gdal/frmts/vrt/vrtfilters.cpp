@@ -218,21 +218,27 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
 /*      read, with the extra edge pixels as well. This will be the      */
 /*      source data fed into the filter.                                */
 /* -------------------------------------------------------------------- */
+    if( nOutXSize > INT_MAX - 2 * m_nExtraEdgePixels ||
+        nOutYSize > INT_MAX - 2 * m_nExtraEdgePixels )
+    {
+        return CE_Failure;
+    }
     const int nExtraXSize = nOutXSize + 2 * m_nExtraEdgePixels;
     const int nExtraYSize = nOutYSize + 2 * m_nExtraEdgePixels;
 
-    // FIXME? : risk of multiplication overflow
     GByte *pabyWorkData = static_cast<GByte *>(
-        VSI_CALLOC_VERBOSE( nExtraXSize * nExtraYSize,
-                   GDALGetDataTypeSize(eOperDataType) / 8 ) );
+        VSI_MALLOC3_VERBOSE( nExtraXSize, nExtraYSize,
+                             GDALGetDataTypeSizeBytes(eOperDataType)) );
 
     if( pabyWorkData == nullptr )
     {
         return CE_Failure;
     }
 
-    const int nPixelOffset = GDALGetDataTypeSizeBytes( eOperDataType );
-    const int nLineOffset = nPixelOffset * nExtraXSize;
+    const GPtrDiff_t nPixelOffset = GDALGetDataTypeSizeBytes( eOperDataType );
+    const GPtrDiff_t nLineOffset = nPixelOffset * nExtraXSize;
+
+    memset( pabyWorkData, 0, nLineOffset * nExtraYSize );
 
 /* -------------------------------------------------------------------- */
 /*      Allocate the output buffer in the same dimensions as the work   */
@@ -324,7 +330,7 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
                 GDALCopyWords( pabyWorkData + nPixelOffset * nLeftFill
                                + i * nLineOffset, eOperDataType, 0,
                                pabyWorkData + i * nLineOffset, eOperDataType,
-                               nPixelOffset, nLeftFill );
+                               static_cast<int>(nPixelOffset), nLeftFill );
 
             if( nRightFill != 0 )
                 GDALCopyWords( pabyWorkData + i * nLineOffset
@@ -332,7 +338,8 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
                                eOperDataType, 0,
                                pabyWorkData + i * nLineOffset
                                + nPixelOffset * (nExtraXSize - nRightFill),
-                               eOperDataType, nPixelOffset, nRightFill );
+                               eOperDataType,
+                               static_cast<int>(nPixelOffset), nRightFill );
         }
     }
 
@@ -374,7 +381,7 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
     for( int i = 0; i < nOutYSize; i++,
          pabySrcRow += nLineOffset, pabyDstRow += nLineSpace )
     {
-        GDALCopyWords( pabySrcRow, eOperDataType, nPixelOffset,
+        GDALCopyWords( pabySrcRow, eOperDataType, static_cast<int>(nPixelOffset),
                        pabyDstRow, eBufType, static_cast<int>(nPixelSpace),
                        nOutXSize );
     }
@@ -510,7 +517,7 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
             const int nJMin =          (m_bSeparable ? 0 : m_nExtraEdgePixels);
             const int nJMax = nJSize - (m_bSeparable ? 0 : m_nExtraEdgePixels);
 
-            for( int iJ = nJMin; iJ < nJMax; ++iJ )
+            for( GPtrDiff_t iJ = nJMin; iJ < nJMax; ++iJ )
             {
                 if( nAxis == 1 )
                     memcpy( pafSrcData + iJ * nJStride,
@@ -519,7 +526,7 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
 
                 for( int iI = nIMin; iI < nIMax; ++iI )
                 {
-                    const int iIndex = iI * nIStride + iJ * nJStride;
+                    const GPtrDiff_t iIndex = iI * nIStride + iJ * nJStride;
 
                     if( bHasNoData && pafSrcData[iIndex] == fNoData )
                     {
@@ -529,10 +536,10 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
 
                     double dfSum = 0.0, dfKernSum = 0.0;
 
-                    for( int iII  = -m_nExtraEdgePixels, iK = 0;
+                    for( GPtrDiff_t iII  = -m_nExtraEdgePixels, iK = 0;
                              iII <=  m_nExtraEdgePixels; ++iII )
                     {
-                        for( int iJJ  = (m_bSeparable ? 0 : -m_nExtraEdgePixels);
+                        for( GPtrDiff_t iJJ  = (m_bSeparable ? 0 : -m_nExtraEdgePixels);
                                  iJJ <= (m_bSeparable ? 0 :  m_nExtraEdgePixels);
                                  ++iJJ, ++iK )
                         {
@@ -568,12 +575,14 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
 
 CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
                                          const char *pszVRTPath,
-                                         void* pUniqueHandle )
+                                         void* pUniqueHandle,
+                                         std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     {
         const CPLErr eErr = VRTFilteredSource::XMLInit( psTree, pszVRTPath,
-                                                        pUniqueHandle );
+                                                        pUniqueHandle,
+                                                        oMapSharedSources );
         if( eErr != CE_None )
             return eErr;
     }
@@ -670,13 +679,14 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
 /************************************************************************/
 
 VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath,
-                                  void* pUniqueHandle )
+                                  void* pUniqueHandle,
+                                  std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     if( EQUAL(psChild->pszValue, "KernelFilteredSource") )
     {
         VRTSource *poSrc = new VRTKernelFilteredSource();
-        if( poSrc->XMLInit( psChild, pszVRTPath, pUniqueHandle ) == CE_None )
+        if( poSrc->XMLInit( psChild, pszVRTPath, pUniqueHandle, oMapSharedSources ) == CE_None )
             return poSrc;
 
         delete poSrc;

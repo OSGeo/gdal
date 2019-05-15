@@ -175,7 +175,9 @@ if dst_filename is not None:
     wkt = src_ds.GetProjection()
     if wkt != '':
         dst_ds.SetProjection(wkt)
-    dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
+    gt = src_ds.GetGeoTransform(can_return_null=True)
+    if gt:
+        dst_ds.SetGeoTransform(gt)
 
     dstband = dst_ds.GetRasterBand(1)
     CopyBand(srcband, dstband)
