@@ -39,7 +39,7 @@ namespace rdb
 template <typename T> struct CPLMallocGuard
 {
     T *const pData;
-    CPLMallocGuard(std::size_t count)
+    explicit CPLMallocGuard(std::size_t count)
         : pData(static_cast<T *>(CPLMalloc(sizeof(T) * count)))
     {
     }
@@ -530,6 +530,10 @@ RDBRasterBand::RDBRasterBand(
     int nBandIn, GDALDataType eDataTypeIn)
     : osAttributeName(osAttributeNameIn), oPointAttribute(oPointAttributeIn)
 {
+
+    osDescription.Printf("%s (%s)", oPointAttribute.title.c_str(),
+                         osAttributeName.c_str());
+
     poDS = poDSIn;
     nBand = nBandIn;
 
@@ -560,7 +564,7 @@ double RDBRasterBand::GetNoDataValue(int *pbSuccess)
 }
 const char *RDBRasterBand::GetDescription() const
 {
-    return osAttributeName.c_str();
+    return osDescription.c_str();
 }
 
 }  // namespace rdb

@@ -56,7 +56,7 @@ class RDBDataset : public GDALPamDataset
     double adfMaximum[2] = {};
 
   public:
-    RDBDataset(GDALOpenInfo *poOpenInfo);
+    explicit RDBDataset(GDALOpenInfo *poOpenInfo);
     ~RDBDataset();
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
@@ -79,6 +79,7 @@ class RDBRasterBand : public GDALPamRasterBand
 {
   protected:
     CPLString osAttributeName;
+    CPLString osDescription;
     riegl::rdb::pointcloud::PointAttribute oPointAttribute;
 
   public:
