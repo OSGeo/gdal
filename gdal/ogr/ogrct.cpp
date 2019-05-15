@@ -1388,6 +1388,19 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
     {
         constexpr double REVERSE_SPHERE_RADIUS = 1.0 / 6378137.0;
 
+        if( poSRSSource )
+        {
+            OGRAxisOrientation orientation;
+            poSRSSource->GetAxis(nullptr, 0, &orientation);
+            if( orientation != OAO_East )
+            {
+                for( int i = 0; i < nCount; i++ )
+                {
+                    std::swap(x[i], y[i]);
+                }
+            }
+        }
+
         double y0 = y[0];
         for( int i = 0; i < nCount; i++ )
         {
@@ -1447,6 +1460,19 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                         M_PI / 2.0 -
                         2.0 * atan(exp(-y[i] * REVERSE_SPHERE_RADIUS));
                     y[i] *= RAD_TO_DEG;
+                }
+            }
+        }
+
+        if( poSRSTarget )
+        {
+            OGRAxisOrientation orientation;
+            poSRSTarget->GetAxis(nullptr, 0, &orientation);
+            if( orientation != OAO_East )
+            {
+                for( int i = 0; i < nCount; i++ )
+                {
+                    std::swap(x[i], y[i]);
                 }
             }
         }
@@ -1705,7 +1731,7 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
 /*      Apply data axis to target CRS mapping.                          */
 /* -------------------------------------------------------------------- */
-    if( !bWebMercatorToWGS84LongLat && poSRSTarget )
+    if( poSRSTarget )
     {
         const auto& mapping = poSRSTarget->GetDataAxisToSRSAxisMapping();
         if( mapping.size() >= 2 && (mapping[0] != 1 || mapping[1] != 2) )
