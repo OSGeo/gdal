@@ -4,9 +4,6 @@
 GDALDataset C++ API
 ================================================================================
 
-GDALDataset class
------------------
-
 .. doxygenclass:: GDALDataset
    :project: api
    :members:

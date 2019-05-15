@@ -12,6 +12,7 @@ Raster topics
 
    raster_api_tut
    raster_driver_tut
+   warp_tut
 
 Vector topics
 -------------

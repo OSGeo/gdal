@@ -4,9 +4,6 @@
 OGRLayer C++ API
 ================================================================================
 
-OGRLayer class
---------------
-
 .. doxygenclass:: OGRLayer
    :project: api
    :members:

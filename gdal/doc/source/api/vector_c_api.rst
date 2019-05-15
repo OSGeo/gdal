@@ -4,8 +4,5 @@
 ogr_api.h: Vector C API
 ================================================================================
 
-ogr_api.h
----------
-
 .. doxygenfile:: ogr_api.h
    :project: api

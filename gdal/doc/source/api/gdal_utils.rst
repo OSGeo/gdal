@@ -4,8 +4,5 @@
 gdal_utils.h: GDAL Algorithms C API
 ================================================================================
 
-gdal_utils.h
-------------
-
 .. doxygenfile:: gdal_utils.h
    :project: api

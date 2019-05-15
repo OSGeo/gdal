@@ -1,10 +1,8 @@
-.. _gdal_rasterband_cpp:
+.. _gdalwarp_cpp:
 
 ================================================================================
-GDALRasterBand C++ API
+Warper C++ API
 ================================================================================
 
-.. doxygenclass:: GDALRasterBand
+.. doxygenfile:: gdalwarper.h
    :project: api
-   :members:
-   :protected-members:

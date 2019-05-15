@@ -26,6 +26,7 @@ C++ API
     gdaldriver_cpp
     gdaldataset_cpp
     gdalrasterband_cpp
+    gdalwarp_cpp
     ogrlayer_cpp
     ogrfeature_cpp
     ogrgeometry_cpp
