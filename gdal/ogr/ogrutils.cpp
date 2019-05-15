@@ -249,7 +249,7 @@ std::string OGRFormatDouble(double val, OGRWktOptions opts)
     else
     {
         // Uppercase because OGC spec says capital 'E'.
-        oss << std::defaultfloat << std::uppercase;
+        oss << std::uppercase;
         opts.round = false;
     }
     oss << std::setprecision(opts.precision);
