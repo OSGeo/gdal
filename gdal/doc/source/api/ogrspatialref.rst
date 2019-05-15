@@ -1,12 +1,11 @@
-.. _gdaldataset_cpp:
+.. _ogrspatialref:
 
 ================================================================================
-GDALDataset C++ API
+Spatial Reference System C++ API
 ================================================================================
 
-GDALDataset class
------------------
+ogr_spatialref.h
+----------------
 
-.. doxygenclass:: GDALDataset
+.. doxygenfile:: ogr_spatialref.h
    :project: api
-   :members:

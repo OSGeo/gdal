@@ -5,11 +5,11 @@ User oriented documentation
 ================================================================================
 
 TODO: migrate .dox file for:
-    Vector data model
     OGR SQL dialect and SQLITE SQL dialect
 
 .. toctree::
    :maxdepth: 1
 
    raster_data_model
+   vector_data_model
    GDAL Virtual File Systems <virtual_file_systems>

@@ -23,8 +23,10 @@ C++ API
 .. toctree::
     :maxdepth: 1
 
+    gdaldriver_cpp
     gdaldataset_cpp
     gdalrasterband_cpp
     ogrlayer_cpp
     ogrfeature_cpp
     ogrgeometry_cpp
+    ogrspatialref

@@ -4,6 +4,15 @@
 OGRGeometry C++ API
 ================================================================================
 
+Include file: ogr_geometry.h
+
+OGRGeometryFactory class
+------------------------
+
+.. doxygenclass:: OGRGeometryFactory
+   :project: api
+   :members:
+
 OGRGeometry class
 -----------------
 
@@ -29,6 +38,13 @@ OGRLinearRing class
 -------------------
 
 .. doxygenclass:: OGRLinearRing
+   :project: api
+   :members:
+
+OGRCircularString class
+-----------------------
+
+.. doxygenclass:: OGRCircularString
    :project: api
    :members:
 
