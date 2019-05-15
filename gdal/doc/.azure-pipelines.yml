@@ -33,6 +33,7 @@ jobs:
       - script: |
           echo "X $PWD"
           mv gdal/doc/build/html gdal-docs
+          cd gdal-docs
           git init
           git config user.email "proj4bot@proj4.bot"
           git config user.name "GDAL Bot"
