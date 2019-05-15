@@ -310,7 +310,7 @@ namespace nccfdriver
 					wkbSize = 16;
 					ret = new int8_t[wkbSize];
 					Point * single = (*this)[featureInd];
-					int32_t x = (*single)[0]; int32_t y = (*single)[1];
+					double x = (*single)[0]; double y = (*single)[1];
 					void * worker = (void*)ret;
 					worker = mempcpy(worker, &x, 8);
 					worker = mempcpy(worker, &y, 8);
@@ -340,9 +340,26 @@ namespace nccfdriver
 				break;
 
 			case MULTIPOINT:
-				wkbSize = 1 + 4 + 4 + 16 * nc;
-				ret = new int8_t[wkbSize];
-				inPlaceSerialize_MultiPoint(this, nc, sb, ret); 
+				{
+					wkbSize = 1 + 4 + 4 + nc * (1 + 4 + 16);
+					ret = new int8_t[wkbSize];
+
+					void * worker = ret;
+					int8_t header = 1;
+					int32_t t = wkbMultiPoint;
+
+					// Add metadata
+					worker = mempcpy(worker, &header, 1);
+					worker = mempcpy(worker, &t, 4);
+					worker = mempcpy(worker, &nc, 4);
+
+					// Add points
+					for(int pts = 0; pts < nc; pts++)
+					{
+						worker = inPlaceSerialize_Point(this, pts, worker);								
+					}
+				}
+
 				break;
 
 			case MULTILINE:
@@ -568,6 +585,23 @@ namespace nccfdriver
 		return ret;
 	}
 
+	void* inPlaceSerialize_Point(SGeometry * ge, int seek_pos, void * serializeBegin)
+	{
+		uint8_t order = 1;
+		uint32_t t = wkbPoint;
+
+		serializeBegin = mempcpy(serializeBegin, &order, 1);
+		serializeBegin = mempcpy(serializeBegin, &t, 4);
+
+		// Now get point data;
+		Point * p = (*ge)[seek_pos];
+		double x = (*p)[0];
+		double y = (*p)[1];
+		serializeBegin = mempcpy(serializeBegin, &x, 8);
+		serializeBegin = mempcpy(serializeBegin, &y, 8);
+		return serializeBegin;
+	}
+
 	void* inPlaceSerialize_PointLocusGeneric(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin, uint32_t type)
 	{
 		uint8_t order = 1;
@@ -591,10 +625,6 @@ namespace nccfdriver
 		return serializeBegin;
 	}
 	
-	void* inPlaceSerialize_MultiPoint(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
-	{
-		return inPlaceSerialize_PointLocusGeneric(ge, node_count, seek_begin, serializeBegin, wkbMultiPoint);
-	}
 
 	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
 	{

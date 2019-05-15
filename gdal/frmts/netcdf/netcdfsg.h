@@ -143,7 +143,7 @@ namespace nccfdriver
 	 */
 	geom_t getGeometryType(int ncid, int varid); 
 	
-	void* inPlaceSerialize_MultiPoint(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
+	void* inPlaceSerialize_Point(SGeometry * ge, int seek_pos, void * serializeBegin);
 	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
 	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
 	void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin);
