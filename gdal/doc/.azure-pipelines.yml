@@ -1,5 +1,5 @@
 # Azure Pipelines to build GDAL documentation
-#
+
 variables:
   #system.debug: true
   configuration: release
@@ -17,9 +17,8 @@ jobs:
           sphinx-build --version
         displayName: 'Sphinx version'
       - script: |
-          pwd
-          ls
-          cd $(Agent.BuildDirectory)/gdal/doc
+          echo "X $PWD"
+          cd gdal/doc
           make html
         displayName: 'Build'
       - task: DownloadSecureFile@1
@@ -32,7 +31,8 @@ jobs:
           ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
         displayName: 'Deploy the key'
       - script: |
-          mv $(Agent.BuildDirectory)/gdal/doc/build/html $(Agent.BuildDirectory)/gdal-docs
+          echo "X $PWD"
+          mv gdal/doc/build/html gdal-docs
           git init
           git config user.email "proj4bot@proj4.bot"
           git config user.name "GDAL Bot"
