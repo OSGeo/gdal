@@ -17,7 +17,6 @@ jobs:
           sphinx-build --version
         displayName: 'Sphinx version'
       - script: |
-          echo "X $PWD"
           cd gdal/doc
           make html
         displayName: 'Build'
@@ -31,7 +30,6 @@ jobs:
           ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
         displayName: 'Deploy the key'
       - script: |
-          echo "X $PWD"
           mv gdal/doc/build/html gdal-docs
           cd gdal-docs
           git init
@@ -39,6 +37,7 @@ jobs:
           git config user.name "GDAL Bot"
           git remote add origin git@github.com:OSGeo/gdal-docs.git
           echo "gdal.dev" > CNAME
+          touch .nojekyll
           git add -A
           git commit -m "Update with https://github.com/OSGeo/gdal/commit/$BUILD_SOURCEVERSION"
           git push -f origin master
