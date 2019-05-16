@@ -1,7 +1,11 @@
 .. _ogr_sql_sqlite_dialect:
 
 ================================================================================
-OGR SQL dialect and SQLITE SQL dialect (TODO)
+OGR SQL dialect and SQLITE SQL dialect (TODO: to remove when subpages are done)
 ================================================================================
 
-TODO
+.. toctree::
+   :maxdepth: 1
+
+   ogr_sql_dialect
+   sql_sqlite_dialect

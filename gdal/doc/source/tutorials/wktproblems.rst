@@ -108,7 +108,7 @@ underscores. This produces well behaved datum names like
 "Nouvelle_Triangulation_Francaise".
 
 However, other vendors have done different things. ESRI seems to follow
-a similar convention but prefixes all datum names with "D_" as well,
+a similar convention but prefixes all datum names with "D\_" as well,
 giving names like "D_WGS_1972". Also they have lots of other differences
 for reasons that are not clear. For instance for what Cadcorp and OGR
 call "Nouvelle_Triangulation_Francaise", they call it "D_NTF". Oracle
