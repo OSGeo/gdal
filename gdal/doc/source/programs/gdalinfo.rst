@@ -1,7 +1,7 @@
 .. _gdalinfo:
 
 ================================================================================
-GDAL: gdalinfo
+gdalinfo
 ================================================================================
 
 .. only:: html
@@ -80,37 +80,60 @@ The following command line parameters can appear in any order
 
 .. option:: -listmdd
 
-    (GDAL >= 1.11) List all metadata domains available for the dataset.
+    List all metadata domains available for the dataset.
 
-.. option:: -mdd <domain>
+    .. versionadded:: 1.11
 
-    Report metadata for the specified *domain*. Starting with GDAL 1.11,
-    "all" can be used to report metadata in all domains
+.. option:: -mdd <domain>|all
+
+    adds metadata using:
+
+    ``domain`` Report metadata for the specified domain.
+
+    ``all`` Report metadata for all domains.
+
+        .. versionadded:: 1.9.0
 
 .. option:: -nofl
 
-    (GDAL >= 1.9.0) Only display the first file of the file list.
+    Only display the first file of the file list.
 
-.. option:: -wkt_format <format>
+    .. versionadded:: 1.9.0
 
-    (GDAL >= 3.0.0)  Where *format* is the WKT format used to display the SRS.
-    Currently supported values are: *WKT1*, *WKT2* (latest WKT version,
-    currently *WKT2_2018*), *WKT2_2015*, *WKT2_2018*.
+.. option:: -wkt_format WKT1|WKT2|WKT2_2015|WKT2_2018
+
+    Where *format* is the WKT format used to display the SRS.
+    Currently supported values are:
+
+    ``WKT1``
+
+    ``WKT2`` (latest WKT version, currently *WKT2_2018*)
+
+    ``WKT2_2015``
+
+    ``WKT2_2018``
+
+    .. versionadded:: 3.0.0
 
 .. option:: -sd <n>
 
-    (GDAL >= 1.9.0) If the input dataset contains several subdatasets
-    read and display a subdataset with specified *n* number (starting
-    from 1). This is an alternative of giving the full subdataset name.
+    If the input dataset contains several subdatasets read and display
+    a subdataset with specified ``n`` number (starting from 1).
+    This is an alternative of giving the full subdataset name.
+
+    .. versionadded:: 1.9.0
 
 .. option:: -proj4
 
-    (GDAL >= 1.9.0) Report a PROJ.4 string corresponding to the file's
-    coordinate system.
+    Report a PROJ.4 string corresponding to the file's coordinate system.
+
+    .. versionadded:: 1.9.0
 
 .. option:: -oo <NAME=VALUE>
 
-    (starting with GDAL 2.0) Dataset open option (format specific)
+    Dataset open option (format specific).
+
+    .. versionadded:: 2.0
 
 The gdalinfo will report all of the following (if known):
 
@@ -137,8 +160,10 @@ The gdalinfo will report all of the following (if known):
 C API
 -----
 
-Starting with GDAL 2.1, this utility is also callable from C with
+This utility is also callable from C with
 `GDALInfo() <gdal__utils_8h.html#a39aaaa537474fead1ef4575e61e9b96d>`__.
+
+.. versionadded:: 2.1
 
 Example
 -------
