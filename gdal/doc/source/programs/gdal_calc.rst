@@ -1,4 +1,4 @@
-.. _gdal_calc.py
+.. _gdal_calc:
 
 ================================================================================
 gdal_calc.py
@@ -63,6 +63,9 @@ performed.
 
     GDAL format for output file.
 
+
+.. _creation-option:
+
 .. option:: --creation-option=<option>
 
     Passes a creation option to the output format driver.  Multiple
@@ -71,7 +74,7 @@ performed.
 
 .. option:: --co=<option>
 
-        The same as :option:`--create-option`.
+        The same as creation-option_.
 
 .. option:: --allBands=[A-Z]
 
