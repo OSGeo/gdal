@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('_extensions'))
 # -- Project information -----------------------------------------------------
 
 project = 'GDAL'
-copyright = '1998-2019, Frank Warmerdam, Even Rouault, and others'
+copyright = '1998-2019'
 author = 'Frank Warmerdam, Even Rouault, and others'
 
 
@@ -45,9 +45,10 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme_path = ['.']
+html_theme = 'gdal_rtd'
 html_theme_options = {
-    'canonical_url': '',
+        'canonical_url': 'https://gdal.dev',
     'analytics_id': '',  #  Provided by Google in your dashboard
     'logo_only': True,
     'display_version': True,
