@@ -55,6 +55,10 @@ tar xzf FileGDB_API_1_5_64gcc51.tar.gz
 sudo cp FileGDB_API-64gcc51/lib/* "$chroot/usr/lib"
 sudo chroot "$chroot" ldconfig
 
+wget https://github.com/TileDB-Inc/TileDB/archive/1.5.1.tar.gz
+tar xzf 1.5.1.tar.gz
+sudo mv TileDB-1.5.1 $PWD/TileDB
+
 sudo chroot "$chroot" sh -c "curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | python"
 sudo chroot "$chroot" pip install flake8
 # flake8 codes to just emulate pyflakes (http://flake8.pycqa.org/en/latest/user/error-codes.html)

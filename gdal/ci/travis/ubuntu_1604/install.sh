@@ -27,11 +27,13 @@ sudo chroot "$chroot" sh -c "cd $PWD && cd sl && make -j3 install"
 chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && cd rl2 && fossil open ../librasterlite2.fossil && CCACHE_CPP2=yes CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' ./configure --disable-static --prefix=/usr --disable-lz4 --disable-zstd && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD && cd rl2 && make -j3 install"
 
+chroot "$chroot" sh -c "cd $PWD/TileDB && mkdir build && cd build && CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' LDFLAGS='-lstdc++' && ../bootstrap --prefix=/usr/local && make -j2 && make install-tiledb"
+
 # Build proj
 chroot "$chroot" sh -c "cd $PWD/proj && ./autogen.sh && CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' LDFLAGS='-lstdc++' ./configure --disable-static --prefix=/usr/local && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD/proj && make -j3 install && mv /usr/local/lib/libproj.so.15.0.0 /usr/local/lib/libinternalproj.so.15.0.0 && rm /usr/local/lib/libproj.so*  && rm /usr/local/lib/libproj.la && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so.15 && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so"
 
-chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-podofo --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --with-fgdb=$PWD/FileGDB_API-64gcc51"
+chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-podofo --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --with-fgdb=$PWD/FileGDB_API-64gcc51 --with-tiledb"
 
 chroot "$chroot" bash -c "cd $PWD/gdal && scripts/cppcheck.sh"
 
