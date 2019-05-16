@@ -1,5 +1,63 @@
 @import url(theme.css);
 
+
+/*! Open Source Geospatial Foundation (OSGeo) Web Fonts
+    Open Font License (OFL 1.1 - see https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
+    Available for download at https://github.com/OSGeo/osgeo/tree/master/marketing/branding/fonts
+    Sintony - By Eduardo Rodriguez Tunni (https://github.com/etunni/sintony)
+    MiriamLibre - By Michal Sahar (https://github.com/MichalSahar/Miriam-Libre)
+*/
+
+@font-face {
+    font-family: 'sintonybold';
+    src: url('../fonts/sintony-bold-webfont.eot');
+    src: url('../fonts/sintony-bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/sintony-bold-webfont.woff2') format('woff2'),
+         url('../fonts/sintony-bold-webfont.woff') format('woff'),
+         url('../fonts/sintony-bold-webfont.ttf') format('truetype'),
+         url('../fonts/sintony-bold-webfont.svg#sintonybold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'sintonyregular';
+    src: url('../fonts/sintony-regular-webfont.eot');
+    src: url('../fonts/sintony-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/sintony-regular-webfont.woff2') format('woff2'),
+         url('../fonts/sintony-regular-webfont.woff') format('woff'),
+         url('../fonts/sintony-regular-webfont.ttf') format('truetype'),
+         url('../fonts/sintony-regular-webfont.svg#sintonyregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'miriamlibrebold';
+    src: url('../fonts/miriamlibre-bold-webfont.eot');
+    src: url('../fonts/miriamlibre-bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/miriamlibre-bold-webfont.woff2') format('woff2'),
+         url('../fonts/miriamlibre-bold-webfont.woff') format('woff'),
+         url('../fonts/miriamlibre-bold-webfont.ttf') format('truetype'),
+         url('../fonts/miriamlibre-bold-webfont.svg#miriam_librebold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'miriamlibreregular';
+    src: url('../fonts/miriamlibre-regular-webfont.eot');
+    src: url('../fonts/miriamlibre-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/miriamlibre-regular-webfont.woff2') format('woff2'),
+         url('../fonts/miriamlibre-regular-webfont.woff') format('woff'),
+         url('../fonts/miriamlibre-regular-webfont.ttf') format('truetype'),
+         url('../fonts/miriamlibre-regular-webfont.svg#miriam_libreregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
 /* Boundless Fonts */
 
 @font-face {
@@ -22,13 +80,17 @@ h1, h2, h3, h4, h5, h6, legend
 {
 	margin-top: 0;
 	font-weight: 700;
-	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+	font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
 }
 
+body
+{
+	font-family: "sintonyregular", "Lato", "Proxima Nova", "Helvetica", Arial, sans-serif;
+}
 .rst-content .sidebar .sidebar-title
 {
 	display: block;
-	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+	font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
 	font-weight: bold;
 	background: #e1e4e5;
 	padding: 6px 12px;
@@ -39,7 +101,7 @@ h1, h2, h3, h4, h5, h6, legend
 
 h1, h2, h3, h4, h5, h6
 {
-	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+	font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
 	font-weight: bold;
 	margin-top: 0.8em;
 }
@@ -118,7 +180,7 @@ pre
 /* format TOC entries */
 .rst-content .toctree-wrapper
 {
-	  font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+	  font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
     /*font-size: 14px;*/
     font-weight: bold;
 }
@@ -126,7 +188,7 @@ pre
 /* format captions */
 .rst-content .caption-text
 {
-	  font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+	  font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
     font-size: 14px;
     font-style: italic;
 }
