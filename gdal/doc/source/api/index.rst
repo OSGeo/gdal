@@ -31,3 +31,4 @@ C++ API
     ogrfeature_cpp
     ogrgeometry_cpp
     ogrspatialref
+    gnm_cpp
