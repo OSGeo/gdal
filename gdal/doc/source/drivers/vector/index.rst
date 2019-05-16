@@ -5,12 +5,6 @@ Vector drivers
 ================================================================================
 
 .. toctree::
-   :hidden:
-
-   aspatial
-
-
-.. toctree::
    :maxdepth: 1
 
    aeronavfaa
@@ -32,6 +26,7 @@ Vector drivers
    dods
    dwg
    dxf
+   eeda
    edigeo
    elasticsearch
    esrijson

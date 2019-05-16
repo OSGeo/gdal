@@ -20,12 +20,12 @@ Raster drivers
    dted
    ecw
    eedai
-   eeda
    elas
    epsilon
    ers
    fast
    format
+   geopackage
    georaster
    gif
    grass

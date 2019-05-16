@@ -1,4 +1,4 @@
-.. _raster.eeda:
+.. vector.eeda:
 
 Google Earth Engine Data API
 ============================

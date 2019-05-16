@@ -1,5 +1,10 @@
 .. _vector.geopackage:
 
+.. toctree::
+   :hidden:
+
+   aspatial
+
 GeoPackage vector
 =================
 
@@ -293,54 +298,30 @@ Level of support of GeoPackage Extensions
 
 (Restricted to those have a vector scope)
 
-Extension name
+.. list-table:: Extensions
+   :header-rows: 1
 
-OGC adopted extension ?
-
-Supported by GDAL?
-
-`Non-Linear Geometry
-Types <http://www.geopackage.org/guidance/extensions/nonlinear_geometry_types.html>`__
-
-Yes
-
-Yes, since GDAL 2.1
-
-`RTree Spatial
-Indexes <http://www.geopackage.org/guidance/extensions/rtree_spatial_indexes.html>`__
-
-Yes
-
-Yes, since GDAL 2.0
-
-`Metadata <http://www.geopackage.org/guidance/extensions/metadata.html>`__
-
-Yes
-
-Yes, since GDAL 1.11
-
-`Schema <http://www.geopackage.org/guidance/extensions/schema.html>`__
-
-Yes
-
-No
-
-`WKT for Coordinate Reference
-Systems <http://www.geopackage.org/guidance/extensions/wkt_for_crs.md>`__
-(WKT v2)
-
-Yes
-
-Partially, since GDAL 2.2. GDAL can read databases using this extension,
-but cannot interpret a SRS entry that has only a WKT v2 entry.
-
-`Aspatial
-support <file:///home/even/gdal/git/gdal/gdal/ogr/ogrsf_frmts/gpkg/geopackage_aspatial.html>`__
-
-No
-
-Yes, since GDAL 2.0. Deprecated in GDAL 2.2 for the *attributes*
-official data_type
+   * - Extension name
+     - OGC adopted extension ?
+     - Supported by GDAL?
+   * - `Non-Linear Geometry Types <http://www.geopackage.org/guidance/extensions/nonlinear_geometry_types.html>`__
+     - Yes
+     - Yes, since GDAL 2.1
+   * - `RTree Spatial Indexes <http://www.geopackage.org/guidance/extensions/rtree_spatial_indexes.html>`__
+     - Yes
+     - Yes, since GDAL 2.0
+   * - `Metadata <http://www.geopackage.org/guidance/extensions/metadata.html>`__
+     - Yes
+     - Yes, since GDAL 1.11
+   * - `Schema <http://www.geopackage.org/guidance/extensions/schema.html>`__
+     - Yes
+     - No
+   * - `WKT for Coordinate Reference Systems <http://www.geopackage.org/guidance/extensions/wkt_for_crs.md>`__ (WKT v2)
+     - Yes
+     -  Partially, since GDAL 2.2. GDAL can read databases using this extension, but cannot interpret a SRS entry that has only a WKT v2 entry.
+   * - `Aspatial support <file:///home/even/gdal/git/gdal/gdal/ogr/ogrsf_frmts/gpkg/geopackage_aspatial.html>`__
+     - No
+     - Yes, since GDAL 2.0. Deprecated in GDAL 2.2 for the *attributes* official data_type
 
 Examples
 ~~~~~~~~
