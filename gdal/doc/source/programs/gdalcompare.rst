@@ -46,7 +46,7 @@ count of 1 (the binary difference) should be considered acceptable.
     The file being compared to the golden file, referred to as the new
     file.
 
-Note that the gdalcompare.py script can also be called as a library from
+Note that the :program:`gdalcompare.py` script can also be called as a library from
 python code though it is not typically in the python path for including.
 The primary entry point is `gdalcompare.compare()` which takes a golden
 `gdal.Dataset` and a new `gdal.Dataset` as arguments and returns a
