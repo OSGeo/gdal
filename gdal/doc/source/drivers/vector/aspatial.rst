@@ -1,5 +1,8 @@
 .. _vector.aspatial:
 
+GeoPackage aspatial extension
+=============================
+
 .. container:: page
 
    .. container:: previewPage
@@ -135,7 +138,3 @@
             :name: geopackage-sqlite-extension
 
          None
-
-   .. container::
-
-       

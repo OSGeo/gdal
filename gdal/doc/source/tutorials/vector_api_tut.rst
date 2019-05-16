@@ -19,7 +19,7 @@ utility for dumping point layers from an OGR data source to stdout in
 comma-delimited format.
 
 Initially it is necessary to register all the format drivers that are desired.
-This is normally accomplished by calling :ref:func:`GDALAllRegister` which registers
+This is normally accomplished by calling :cpp:func:`GDALAllRegister` which registers
 all format drivers built into GDAL/OGR.
 
 In C++ :
@@ -49,7 +49,7 @@ Next we need to open the input OGR datasource.  Datasources can be files,
 RDBMSes, directories full of files, or even remote web services depending on
 the driver being used.  However, the datasource name is always a single
 string.  In this case we are hardcoded to open a particular shapefile.
-The second argument (GDAL_OF_VECTOR) tells the :ref:func:`OGROpen` method
+The second argument (GDAL_OF_VECTOR) tells the :cpp:func:`OGROpen` method
 that we want a vector driver to be use and that don't require update access.
 On failure NULL is returned, and
 we report an error.

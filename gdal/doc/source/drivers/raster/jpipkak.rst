@@ -256,7 +256,7 @@ Driver originally developed by `ITT VIS <http://www.ittvis.com>`__ and
 donated to GDAL to enable SSL enabled JPIP client streaming of remote
 JPEG 2000 datasets.
 
-.. |JPIP Sequence Diagram| image:: jpipsequence.png
-.. |Component Diagram| image:: components.PNG
-.. |GDAL Sequence Diagram| image:: gdalsequence.PNG
+.. |JPIP Sequence Diagram| image:: ../../../images/jpipsequence.PNG
+.. |Component Diagram| image:: ../../../images/components.PNG
+.. |GDAL Sequence Diagram| image:: ../../../images/gdalsequence.PNG
 
