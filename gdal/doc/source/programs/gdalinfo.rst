@@ -160,8 +160,7 @@ The gdalinfo will report all of the following (if known):
 C API
 -----
 
-This utility is also callable from C with
-`GDALInfo() <gdal__utils_8h.html#a39aaaa537474fead1ef4575e61e9b96d>`__.
+This utility is also callable from C with :cpp:func:`GDALInfo`.
 
 .. versionadded:: 2.1
 
