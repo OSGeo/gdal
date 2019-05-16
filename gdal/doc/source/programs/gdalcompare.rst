@@ -37,11 +37,11 @@ count of 1 (the binary difference) should be considered acceptable.
     If this flag is passed the script will compare all subdatasets that
     are part of the dataset, otherwise subdatasets are ignored.
 
-.. option:: golden_file
+.. option:: <golden_file>
 
     The file that is considered correct, referred to as the golden file.
 
-.. option:: new_file
+.. option:: <new_file>
 
     The file being compared to the golden file, referred to as the new
     file.
