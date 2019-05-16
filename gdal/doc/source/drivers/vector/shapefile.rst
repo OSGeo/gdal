@@ -3,8 +3,6 @@
 ESRI Shapefile / DBF
 ====================
 
-:tree:`SOMEWHERE`
-
 All varieties of ESRI Shapefiles should be available for reading, and
 simple 3D files can be created. The driver can also handle standalone
 DBF files without associated .shp files.
