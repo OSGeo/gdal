@@ -25,17 +25,17 @@ The :program:`gdalmanage` program can perform various operations on raster data
 files, depending on the chosen *mode*. This includes identifying raster
 data types and deleting, renaming or copying the files.
 
-.. option:: mode
+.. option:: <mode>
 
     Mode of operation
 
-    **identify** *datasetname*:
+    **identify** *<datasetname>*:
         List data format of file.
-    **copy** *datasetname* *newdatasetname*:
+    **copy** *<datasetname>* *<newdatasetname>*:
         Create a copy of the raster file with a new name.
-    **rename** *datasetname*  *newdatasetname*:
+    **rename** *<datasetname>*  *<newdatasetname>*:
         Change the name of the raster file.
-    **delete** *datasetname*:
+    **delete** *<datasetname>*:
         Delete raster file.
 
 .. option:: -r
@@ -46,16 +46,16 @@ data types and deleting, renaming or copying the files.
 
     Report failures if file type is unidentified.
 
-.. option:: -f
+.. option:: -f <format>
 
     Specify format of raster file if unknown by the application. Uses
     short data format name (e.g. *GTiff*).
 
-.. option:: datasetname
+.. option:: <datasetname>
 
     Raster file to operate on.
 
-.. option:: newdatasetname
+.. option:: <newdatasetname>
 
     For copy and rename modes, you provide a *source* filename and a
     *target* filename, just like copy and move commands in an operating
