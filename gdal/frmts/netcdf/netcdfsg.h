@@ -1,6 +1,8 @@
 #ifndef __NETCDFSG_H__
 #define __NETCDFSG_H__
 #include <cstring>
+#include <map>
+#include <string>
 #include <vector>
 
 // Interface used for netCDF functions
@@ -112,6 +114,8 @@ namespace nccfdriver
 		 */
 		bool getValid() { return this->valid; }
 
+		int getContainerId() { return gc_varId; }
+
 		/*
 		 *
 		 */
@@ -128,6 +132,25 @@ namespace nccfdriver
 		 */
 		SGeometry(int ncId, int baseVarId); 
 		~SGeometry();
+	};
+
+	/* SGeometry_PropertyReader
+	 * Holds properties for geometry containers
+	 * Pass in the geometry_container ID, automatically scans the netcdf Dataset for properties associated
+	 *
+	 * to construct: pass in the ncid which the reader should work over
+	 */
+	class SGeometry_PropertyReader
+	{
+		std::map<int, std::vector<std::pair<int, std::string>>> m; // key: varID of geometry container, value: a vector of: {varId of property, name}
+		int max_seek;
+		int nc;
+		
+		public:
+			void open(int container_id);	// opens and intializes a geometry_container into the map
+			std::vector<std::pair<std::string, std::string>> fetch(int cont_lookup, size_t seek_pos);
+							// returns for each property {Property_Name, Property_Value} at a certain position
+			SGeometry_PropertyReader(int ncid) : max_seek(0), nc(ncid) {}
 	};
 
 	// Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h

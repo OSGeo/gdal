@@ -494,6 +494,115 @@ namespace nccfdriver
 
 		return ret;
 	}
+
+	void SGeometry_PropertyReader::open(int container_id)
+	{
+		std::vector<std::pair<int, std::string>> addition;
+
+		// First check for container_id, if variable doesn't exist error out
+		if(nc_inq_var(this->nc, container_id, NULL, NULL, NULL, NULL, NULL) != NC_NOERR)
+		{
+			return;	// change to exception
+		}
+
+		// Now exists, see what variables refer to this one
+		// First get name of this container
+		char contname[NC_MAX_NAME];
+		if(nc_inq_varname(this->nc, container_id, contname) != NC_NOERR)
+		{
+			return;
+		}
+
+		// Then scan throughout the netcdfDataset if those variables geometry_container
+		// atrribute matches the container
+		int varCount = 0;
+		if(nc_inq_nvars(this->nc, &varCount) != NC_NOERR)
+		{
+			return;
+		}
+
+		for(int curr = 0; curr < varCount; curr++)
+		{
+			size_t contname2_len = 0;
+			char * buf = nullptr;
+			
+			// First find container length, and make buf that size in chars
+			if(nc_inq_attlen(this->nc, curr, CF_SG_GEOMETRY, &contname2_len) != NC_NOERR)
+			{
+				// not a geometry variable, continue
+				continue;
+			}
+
+			// Also if present but empty, go on
+			if(contname2_len == 0) continue;
+
+			// Otherwise, geometry: see what container it has
+			buf = new char[contname2_len];
+			if(nc_get_att_text(this->nc, curr, CF_SG_GEOMETRY, buf)!= NC_NOERR)
+			{
+				delete[] buf;
+				continue;
+			}
+
+			// If matches, then establish a reference by placing this variable's {id, name} pair into the map
+			if(!strcmp(contname, buf))
+			{
+				char property_name[NC_MAX_NAME];
+				nc_inq_varname(this->nc, curr, property_name);
+				
+				std::string n(property_name);
+				std::pair<int, std::string> p;
+				p.first = curr;
+				p.second = n;
+
+				addition.push_back(p);	
+			}
+			
+			delete[] buf;
+		}
+
+		// Finally, insert the list into m
+		std::pair<int, std::vector<std::pair<int, std::string>>> m_add;
+		m_add.first = container_id;
+		m_add.second = addition;
+		m.insert(m_add);
+	}
+
+	std::vector<std::pair<std::string, std::string>>
+	SGeometry_PropertyReader::fetch(int cont_lookup, size_t seek_pos)
+	{
+		std::vector<std::pair<std::string, std::string>> ret;
+
+		// First get the list of variable {id, name}
+		std::vector<std::pair<int, std::string>> vars = m.at(cont_lookup);
+
+		// Now for each variable, index at seek_pos and push a {key, value} pair
+		for(int itr = 0; itr < vars.size(); itr++)
+		{
+			nc_type t = 0;
+			
+			// Inspect the type first
+			if(nc_inq_vartype(this->nc, vars[itr].first, &t) != NC_NOERR) continue;
+
+			// Depending on type use a different netCDF reading capability
+			if(t == NC_CHAR)
+			{
+				char value[NC_MAX_CHAR];
+				size_t * seek = new size_t[1];
+				seek[0] = seek_pos;
+				nc_get_var1_text(this->nc, vars[itr].first, seek, value);
+				std::pair<std::string, std::string> p;
+				p.first = vars[itr].second;
+				p.second = "TEST";
+				ret.push_back(p);
+				delete seek;
+			}
+			
+		}
+
+		return ret;
+	}	
+
 	// Helpers
 	// following is a short hand for a clean up and exit, since goto isn't allowed
 	int getCFMinorVersion(int ncid)

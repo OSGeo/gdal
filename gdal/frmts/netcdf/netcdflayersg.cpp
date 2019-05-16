@@ -4,6 +4,7 @@
  */
 #include "netcdfsg.h"
 #include "netcdfdataset.h"
+#include "ogr_core.h"
 
 namespace nccfdriver
 {
@@ -68,6 +69,9 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 {
 	nccfdriver::SGeometry * sg = new nccfdriver::SGeometry(ncid, nc_basevarId);
+	nccfdriver::SGeometry_PropertyReader pr(ncid);
+	int cont_id = sg->getContainerId();
+	pr.open(cont_id);
 	OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType());
 
 	// Geometry Type invalid, avoid further processing
@@ -84,10 +88,20 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	OGRFeatureDefn * defn = new OGRFeatureDefn(baseName);
 	defn->Reference();
 	defn->SetGeomType(owgt);
+	
+	// Add properties
+	std::vector<std::pair<std::string, std::string>> props = pr.fetch(cont_id, 0); // make a header fetch, fix this
+//	for(int itr = 0; itr < props.size(); itr++)
+	//{
+//		int len = strlen(props[itr].first.c_str());
+//		char * n = new char[len];
+//		strcpy(n, props[itr].first.c_str());
+//	}
+
 
 	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr);
 	size_t shape_count = sg->get_geometry_count();
-	
+
 	for(size_t featCt = 0; featCt < shape_count; featCt++)
 	{
 		OGRGeometry * featureDesc;
@@ -123,6 +137,14 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		featureDesc->importFromWkb((const unsigned char*)wkb_rep, r_size, wkbVariantIso, out);
 		OGRFeature * feat = new OGRFeature(defn);
 		feat -> SetGeometryDirectly(featureDesc);
+		
+		std::vector<std::pair<std::string, std::string>> full_prop = pr.fetch(cont_id, featCt);
+
+/*		for(int itr = 0; itr < props.size(); itr++)
+		{
+			feat->SetField(full_prop[itr].first.c_str(), "Default");
+		}*/
+
 		feat -> SetFID(featCt);
 		delete wkb_rep;
 		poL->AddSimpleGeometryFeature(feat);
