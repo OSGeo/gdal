@@ -101,22 +101,6 @@ namespace nccfdriver
 			}	
 		}	
 	
-		if((inter_name = attrf(ncId, geoVarId, CF_SG_INTERIOR_RING)) != nullptr
-						&&
-					this->type == POLYGON	
-		)
-		{
-			bound = 0;
-			// to do: check for error cond and exit
-			nc_inq_varid(ncId, inter_name, &inter_vid);
-			while(nc_get_var1_int(ncId, inter_vid, &bound, &buf) == NC_NOERR)
-			{
-				bool has_ring = buf == 1 ? true : false;
-				this->pnode_counts.push_back(has_ring);
-				bound++;	
-			}	
-		}	
-
 		delete[] nc_name;
 		delete[] pnc_name;
 		delete[] inter_name;
@@ -138,10 +122,13 @@ namespace nccfdriver
 		if(this->node_counts.size() > 0)
 		{
 			// to do: check for out of bounds
-			int ind = 0; int parts = 0; int prog = 0;
+			int ind = 0; int parts = 0; int prog = 0; int c = 0;
 			for(size_t pcnt = 0; pcnt < pnode_counts.size() ; pcnt++)
 			{
 				if(prog == 0) pnc_bl.push_back(pcnt);
+
+				if(int_rings.size() > 0) if(!int_rings[pcnt]) c++;
+
 				prog = prog + pnode_counts[pcnt];
 				parts++;
 
@@ -149,6 +136,8 @@ namespace nccfdriver
 				{
 					ind++;
 					this->parts_count.push_back(parts);
+					if(int_rings.size() > 0) this->poly_count.push_back(c);
+					c = 0;
 					prog = 0; parts = 0;
 				}	
 				else if(prog > node_counts[ind])
@@ -186,13 +175,7 @@ namespace nccfdriver
 		this->current_vert_ind = 0;	
 		this->ncid = ncId;
 		
-		if(this->type == POLYGON)
-		{
-			// still to implement
-			this->interior = false;
-		}
-		else this->interior = false;
-
+		this->interior = false;
 		this -> valid = true;
 	}
 
@@ -432,13 +415,6 @@ namespace nccfdriver
 				break;
 
 			case MULTIPOLYGON:
-				// A multipolygon has:
-				// 1 byte header
-				// 4 byte Type (=6 for multipolygon)
-				// 4 byte polygon count
-				// For each Polygon:
-				// 1 + 4 + 4 + 4 + 8 * 2 * node_count
-
 				int32_t header = 1;
 				int32_t t = wkbMultiPolygon;
 				bool noInteriors = this->int_rings.size() == 0 ? true : false;
@@ -461,6 +437,24 @@ namespace nccfdriver
 					{
 					 	wkbSize += 16 * pnc[ss] + 1 + 4 + 4 + 4;
 					}
+				}
+
+				else
+				{
+					// Total space requirements for Polygons:
+					// (1 + 4 + 4) * number of Polygons
+					// 4 * number of Rings Total
+					// 16 * number of Points
+		
+
+					// Each ring collection corresponds to a polygon
+					wkbSize += (1 + 4 + 4) * poly_count[featureInd]; // (headers)
+
+					// Add header requirements for rings
+					wkbSize += 4 * parts_count[featureInd];
+
+					// Add requirements for number of points
+					wkbSize += 16 * nc;
 				}
 
 				// Now allocate and serialize
@@ -486,7 +480,46 @@ namespace nccfdriver
 
 				else
 				{
-					// still to do: implement interior ring resolution
+					int32_t polys = poly_count[featureInd];
+					worker = mempcpy(worker, &polys, 4);
+
+					int base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
+					int seek = seek_begin; // beginning of node range for this multigeometry
+					int ir_base = base + 1;
+					int rc_m = 1; 
+					int part_ind = 1;
+
+					// has interior rings,
+					for(int32_t itr = 0; itr < polys; itr++)
+					{	
+						rc_m = 1;
+
+						// count how many parts belong to each Polygon		
+						while(ir_base < int_rings.size() && int_rings[ir_base])
+						{
+							rc_m++;
+							ir_base++;	
+						}
+
+						if(rc_m == 1) ir_base++;	// single polygon case
+
+						std::vector<int> poly_parts;
+
+						// Make part node count sub vector
+						for(int itr_2 = 0; itr_2 < rc_m; itr_2++)
+						{
+							poly_parts.push_back(pnc[base]);
+							base++;
+						}
+
+						worker = inPlaceSerialize_Polygon(this, poly_parts, rc_m, seek, ret);
+
+						// Update seek position
+						for(int itr_3 = 0; itr_3 < poly_parts.size(); itr_3++)
+						{
+							seek += poly_parts[itr_3];
+						}
+					}
 				}
 
 				break;

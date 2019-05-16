@@ -57,6 +57,7 @@ namespace nccfdriver
 		std::vector<bool> int_rings;	// list of parts that are interior rings
 		std::vector<int> pnc_bl;	// a quick list of indicies for part counts corresponding to a geometry
 		std::vector<int> parts_count;	// a count of total parts in a single geometry instance
+		std::vector<int> poly_count;	// count of polygons, for use only when interior rings are present
 		size_t current_vert_ind;	// used to keep track of current point being used
 		size_t cur_geometry_ind;	// used to keep track of current geometry index
 		size_t cur_part_ind;		// used to keep track of current part index
@@ -116,8 +117,9 @@ namespace nccfdriver
 
 		int getContainerId() { return gc_varId; }
 
-		/*
-		 *
+		/* void * serializeToWKB
+		 * Returns a pre-allocated array which serves as the WKB reference to this geometry
+		 * the size of the WKB representation is written to the passed in wkbSize
 		 */
 		void * serializeToWKB(int featureInd, size_t& wkbSize);
 
