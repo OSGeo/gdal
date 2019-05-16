@@ -90,6 +90,7 @@ Raster drivers
    tiledb
    usgsdem
    various
+   vrt
    wcs
    webp
    wms

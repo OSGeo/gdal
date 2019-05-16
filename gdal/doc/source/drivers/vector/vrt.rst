@@ -29,7 +29,7 @@ conditions are met :
    features, that is to say, the *FID* element is not specified
 
 Virtual File Format
-===================
+-------------------
 
 The root element of the XML control file is **OGRVRTDataSource**. It has
 an **OGRVRTLayer** (or **OGRVRTWarpedLayer** or **OGRVRTUnionLayer**

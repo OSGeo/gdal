@@ -1,28 +1,27 @@
 .. _vector.db2:
 
-Note
-~~~~
-
-The DB2 driver is based largely on the source code for the OGR/DB2
-GeoPackage (GPKG) driver, replaceing SQLITE functionality with
-corresponding DB2 functionality. Appreciation is expressed for the major
-development required to produce the GeoPackage driver which dramatically
-reduced the effort to produce the DB2 driver. At some point it may be
-worthwhile to explore whether refactoring of the class structure to
-share common functionality is practical.
-
-The DB2 driver largely implements the GeoPackage standard, with the main
-difference that the "gpkg_" prefix is replaced with "gpkg." in the DB2
-table name, assigning them to a distinct database schema.
-
-The documentation below is largely copied from the
-drv_geopackage_raster.html documentation. References to the GeoPackage
-standard have been left as such. References to the implementation have
-been changed to DB2. In some cases it isn't clear whether we should
-refer to "DB2 tiles" or "GeoPackage tiles".
-
 DB2 raster
 ==========
+
+.. note::
+
+    The DB2 driver is based largely on the source code for the OGR/DB2
+    GeoPackage (GPKG) driver, replaceing SQLITE functionality with
+    corresponding DB2 functionality. Appreciation is expressed for the major
+    development required to produce the GeoPackage driver which dramatically
+    reduced the effort to produce the DB2 driver. At some point it may be
+    worthwhile to explore whether refactoring of the class structure to
+    share common functionality is practical.
+
+    The DB2 driver largely implements the GeoPackage standard, with the main
+    difference that the "gpkg\_" prefix is replaced with "gpkg." in the DB2
+    table name, assigning them to a distinct database schema.
+
+    The documentation below is largely copied from the
+    drv_geopackage_raster.html documentation. References to the GeoPackage
+    standard have been left as such. References to the implementation have
+    been changed to DB2. In some cases it isn't clear whether we should
+    refer to "DB2 tiles" or "GeoPackage tiles".
 
 Starting with GDAL 2.0, this driver implements full read/creation/update
 of tables containing raster tiles in the `OGC GeoPackage format
