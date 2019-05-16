@@ -1,4 +1,4 @@
-.. _raster_creating_new_files:
+.. _common_options:
 
 ================================================================================
 Common command line options
