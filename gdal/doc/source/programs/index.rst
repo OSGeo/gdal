@@ -58,7 +58,7 @@ Raster programs
 - :ref:`gdal2tiles`: Generates directory with TMS tiles, KMLs and simple web viewers.
 - :ref:`gdal_rasterize`: Burns vector geometries into a raster.
 - :ref:`gdaltransform`: Transforms coordinates.
-- :ref:`nearblack`
+- :ref:`nearblack`: Convert nearly black/white borders to black.
 - :ref:`gdal_retile`
 - :ref:`gdal_grid`
 - :ref:`gdal_proximity`

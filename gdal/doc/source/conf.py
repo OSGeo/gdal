@@ -194,6 +194,13 @@ man_pages = [
         1
     ),
     (
+        'programs/nearblack',
+        'nearblack',
+        u'Convert nearly black/white borders to black.',
+        [author_frankw],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
