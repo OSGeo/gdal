@@ -82,8 +82,6 @@ The following command line parameters can appear in any order
 
     List all metadata domains available for the dataset.
 
-    .. versionadded:: 1.11
-
 .. option:: -mdd <domain>|all
 
     adds metadata using:
@@ -92,13 +90,9 @@ The following command line parameters can appear in any order
 
     ``all`` Report metadata for all domains.
 
-        .. versionadded:: 1.9.0
-
 .. option:: -nofl
 
     Only display the first file of the file list.
-
-    .. versionadded:: 1.9.0
 
 .. option:: -wkt_format WKT1|WKT2|WKT2_2015|WKT2_2018
 
@@ -121,19 +115,13 @@ The following command line parameters can appear in any order
     a subdataset with specified ``n`` number (starting from 1).
     This is an alternative of giving the full subdataset name.
 
-    .. versionadded:: 1.9.0
-
 .. option:: -proj4
 
     Report a PROJ.4 string corresponding to the file's coordinate system.
 
-    .. versionadded:: 1.9.0
-
 .. option:: -oo <NAME=VALUE>
 
     Dataset open option (format specific).
-
-    .. versionadded:: 2.0
 
 The gdalinfo will report all of the following (if known):
 
