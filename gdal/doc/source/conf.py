@@ -256,7 +256,94 @@ man_pages = [
         [author_frankw, 'Etienne Tourigny <etourigny.dev-at-gmail-dot-com>'],
         1
     ),
-   (
+    (
+        'programs/gdalmove',
+        'gdalmove',
+        u'Transform georeferencing of raster file in place.',
+        [author_frankw],
+        1
+    ),
+    (
+        'programs/gdal_edit',
+        'gdal_edit',
+        u'Edit in place various information of an existing GDAL dataset.',
+        [author_evenr],
+        1
+    ),
+    (
+        'programs/gdal_calc',
+        'gdal_calc',
+        u'Command line raster calculator with numpy syntax.',
+        ['Chris Yesson <chris dot yesson at ioz dot ac dot uk>', 'Etienne Tourigny <etourigny dot dev at gmail dot com>'],
+        1
+    ),
+    (
+        'programs/gdal_pansharpen',
+        'gdal_pansharpen',
+        u' Perform a pansharpen operation.',
+        [author_evenr],
+        1
+    ),
+    (
+        'programs/gdal-config',
+        'gdal-config',
+        u' Determines various information about a GDAL installation.',
+        [author_frankw],
+        1
+    ),
+    (
+        'programs/gdalmanage',
+        'gdalmanage',
+        u' Identify, delete, rename and copy raster data files.',
+        [author_frankw],
+        1
+    ),
+    (
+        'programs/gdalcompare',
+        'gdalcompare',
+        u' Compare two images.',
+        [author_frankw],
+        1
+    ),
+
+    (
+        'programs/ogrinfo',
+        'ogrinfo',
+        u'Lists information about an OGR-supported data source.',
+        [author_frankw, author_silker],
+        1
+    ),
+    (
+        'programs/ogr2ogr',
+        'ogr2ogr',
+        u'Converts simple features data between file formats.',
+        [author_frankw, author_silker],
+        1
+    ),
+    (
+        'programs/ogrtindex',
+        'ogrtindex',
+        u'Creates a tileindex.',
+        [author_frankw, author_silker],
+        1
+    ),
+    (
+        'programs/ogrlineref',
+        'ogrlineref',
+        u'Create linear reference and provide some calculations using it.',
+        [author_dmitryb],
+        1
+    ),
+    (
+        'programs/ogrmerge',
+        'ogrmerge',
+        u' Merge several vector datasets into a single one.',
+        [author_evenr],
+        1
+    ),
+
+
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
