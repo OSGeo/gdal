@@ -82,7 +82,7 @@ the OGR connection type.
 
     .. versionadded:: 2.2.0
 
-.. option:: -accept_different_schemas**:
+.. option:: -accept_different_schemas
 
     By default ogrtindex checks that all layers inserted into the index
     have the same attribute schemas. If you specify this option, this
@@ -112,4 +112,3 @@ in the :file:`wrk` directory:
       1069126.900,419815.500 1069126.900,419808.200 1069116.500,419798.700
       1069117.600,419794.100 1069115.100,419796.300 1069109.100,419801.800
       1069106.800,419805.000  1069107.300)
-
