@@ -64,8 +64,8 @@ namespace nccfdriver
 		this->type = nccfdriver::getGeometryType(ncId, geoVarId); 
 
 		// Find a list of node counts and part node count
-		char * nc_name = nullptr; char * pnc_name = nullptr; char * inter_name = nullptr;
-		int pnc_vid = -2; int nc_vid = -2; int inter_vid = -2;
+		char * nc_name = nullptr; char * pnc_name = nullptr; char * inter_name = nullptr; char * ir_name = nullptr;
+		int pnc_vid = -2; int nc_vid = -2; int inter_vid = -2; int ir_vid = -2;
 		size_t bound = 0; int buf;
 		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) != nullptr)
 		{
@@ -89,9 +89,22 @@ namespace nccfdriver
 			}	
 		}	
 	
+		if((ir_name = attrf(ncId, geoVarId, CF_SG_INTERIOR_RING)) != nullptr)
+		{
+			bound = 0;
+			nc_inq_varid(ncId, ir_name, &ir_vid);
+			while(nc_get_var1_int(ncId, ir_vid, &bound, &buf) == NC_NOERR)
+			{
+				bool store = buf == 0 ? false : true;
+				this->int_rings.push_back(store);
+				bound++;
+			}
+		}
+
 		delete[] nc_name;
 		delete[] pnc_name;
 		delete[] inter_name;
+		delete[] ir_name;
 
 		// Create bound list
 		int rc = 0;
@@ -501,11 +514,10 @@ namespace nccfdriver
 						// Make part node count sub vector
 						for(int itr_2 = 0; itr_2 < rc_m; itr_2++)
 						{
-							poly_parts.push_back(pnc[base]);
-							base++;
+							poly_parts.push_back(pnode_counts[base + itr_2]);
 						}
 
-						worker = inPlaceSerialize_Polygon(this, poly_parts, rc_m, seek, ret);
+						worker = inPlaceSerialize_Polygon(this, poly_parts, rc_m, seek, worker);
 
 						// Update seek position
 						for(int itr_3 = 0; itr_3 < poly_parts.size(); itr_3++)
