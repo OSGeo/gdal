@@ -201,6 +201,20 @@ man_pages = [
         1
     ),
     (
+        'programs/gdal_retile',
+        'gdal_retile',
+        u'Retiles a set of tiles and/or build tiled pyramid levels.',
+        ['Christian Mueller <christian.mueller@nvoe.at>'],
+        1
+    ),
+    (
+        'programs/gdal_grid',
+        'gdal_grid',
+        u'Creates regular grid from the scattered data.',
+        ['Andrey Kiselev <dron@ak4719.spb.edu>'],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',

@@ -59,8 +59,8 @@ Raster programs
 - :ref:`gdal_rasterize`: Burns vector geometries into a raster.
 - :ref:`gdaltransform`: Transforms coordinates.
 - :ref:`nearblack`: Convert nearly black/white borders to black.
-- :ref:`gdal_retile`
-- :ref:`gdal_grid`
+- :ref:`gdal_retile`: Retiles a set of tiles and/or build tiled pyramid levels.
+- :ref:`gdal_grid`: Creates regular grid from the scattered data.
 - :ref:`gdal_proximity`
 - :ref:`gdal_polygonize`
 - :ref:`gdal_sieve`: Removes small raster polygons.
