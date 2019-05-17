@@ -60,6 +60,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTMaxWidthDimId(-1),
         m_nWKTVarID(-1),
         m_nWKTNCDFType(NC_NAT),
+	m_HasCFSG1_8(false),
         m_nCurFeatureId(1),
         m_bWriteGDALTags(true),
         m_bUseStringInNC4(true),
@@ -1067,6 +1068,10 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
             break;
         }
     }
+
+    // For CF-1.8 simple geometry specifically 
+    // Only need fields to be set here
+    if( this-> m_HasCFSG1_8 ) return true;
 
     if( m_nXVarID >= 0 && m_nYVarID >= 0 &&
         (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID) )

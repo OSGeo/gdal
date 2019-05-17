@@ -1017,6 +1017,7 @@ class netCDFLayer final: public OGRLayer
 	std::vector<OGRFeature*> m_sgFeatureList;
 	std::vector<OGRFeature*>::iterator m_sgFeatItr;
 	bool		m_sgItrInit;
+	bool		m_HasCFSG1_8;
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
         bool            m_bWriteGDALTags;
@@ -1043,7 +1044,6 @@ class netCDFLayer final: public OGRLayer
         void            GetNoDataValueForFloat( int nVarId, NCDFNoDataUnion* puNoData );
         void            GetNoDataValueForDouble( int nVarId, NCDFNoDataUnion* puNoData );
         void            GetNoDataValue( int nVarId, nc_type nVarType, NCDFNoDataUnion* puNoData );
-        bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
         bool            FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
 
     public:
@@ -1055,12 +1055,14 @@ class netCDFLayer final: public OGRLayer
         virtual ~netCDFLayer();
 
         bool            Create(char** papszOptions, const netCDFWriterConfigLayer* poLayerConfig);
+        bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
         void            SetRecordDimID(int nRecordDimID);
         void            SetXYZVars(int nXVarId, int nYVarId, int nZVarId);
         void            SetWKTGeometryField(const char* pszWKTVarName);
         void            SetGridMapping(const char* pszGridMapping);
         void            SetProfile(int nProfileDimID, int nParentIndexVarID);
 	void		AddSimpleGeometryFeature(OGRFeature * sg) { this->m_sgFeatureList.push_back(sg); }
+	void		EnableSGBypass() { this-> m_HasCFSG1_8 = true; }
         bool            AddField(int nVarId);
 
         int             GetCDFID() const { return m_nLayerCDFId; }

@@ -81,19 +81,17 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	nc_inq_varname(ncid, nc_basevarId, baseName);
 
 	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr);
+	poL->EnableSGBypass();
 	OGRFeatureDefn * defn = poL->GetLayerDefn();
 	defn->SetGeomType(owgt);
 
 	size_t shape_count = sg->get_geometry_count();
 
 	// Add properties
-	std::vector<std::string> props = pr.headers(cont_id);
-	for(int itr = 0; itr < props.size(); itr++)
+	std::vector<int> props = pr.ids(cont_id);
+	for(size_t itr = 0; itr < props.size(); itr++)
 	{
-		OGRFieldDefn fd(props[itr].c_str(), OFTString);
-		fd.SetDefault("empty");
-		fd.SetWidth(NC_MAX_CHAR);
-		defn->AddFieldDefn(&fd);
+		poL->AddField(props[itr]);	
 	}
 
 	for(size_t featCt = 0; featCt < shape_count; featCt++)
@@ -131,13 +129,29 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		featureDesc->importFromWkb((const unsigned char*)wkb_rep, r_size, wkbVariantIso, out);
 		OGRFeature * feat = new OGRFeature(defn);
 		feat -> SetGeometryDirectly(featureDesc);
-		
-		std::vector<std::pair<std::string, std::string>> full_prop = pr.fetch(cont_id, featCt);
+			
+		int dimId = -1;	
 
+		// Find all dims, assume instance dimension is the first dimension
+		if(props.size() > 0)
+		{
+			// All property values of a geometry container have the same inst. dim
+			// So just, use one of them
+			int dim_c;
+			nc_inq_varndims(ncid, props[0], &dim_c);
+			int * dim_ids = new int[dim_c];
+			nc_inq_vardimid(ncid, props[0], dim_ids);
+			
+			// Take the first delete the rest
+			dimId = dim_ids[0];
+			delete[] dim_ids;
+		}
+		
+		// Fill fields
 		for(int itr = 0; itr < props.size(); itr++)
 		{
-			feat->SetField(itr, "Default");
-			//feat->SetField(full_prop[itr].first.c_str(), "Default");
+					
+			poL->FillFeatureFromVar(feat, dimId, featCt);
 		}
 
 		feat -> SetFID(featCt);
