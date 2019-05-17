@@ -80,22 +80,21 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	memset(baseName, 0, NC_MAX_CHAR);
 	nc_inq_varname(ncid, nc_basevarId, baseName);
 
-	OGRFeatureDefn * defn = new OGRFeatureDefn(baseName);
-	defn->Reference();
-	defn->SetGeomType(owgt);
-	
-	// Add properties
-	std::vector<std::pair<std::string, std::string>> props = pr.fetch(cont_id, 0); // make a header fetch, fix this
-//	for(int itr = 0; itr < props.size(); itr++)
-	//{
-//		int len = strlen(props[itr].first.c_str());
-//		char * n = new char[len];
-//		strcpy(n, props[itr].first.c_str());
-//	}
-
-
 	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr);
+	OGRFeatureDefn * defn = poL->GetLayerDefn();
+	defn->SetGeomType(owgt);
+
 	size_t shape_count = sg->get_geometry_count();
+
+	// Add properties
+	std::vector<std::string> props = pr.headers(cont_id);
+	for(int itr = 0; itr < props.size(); itr++)
+	{
+		OGRFieldDefn fd(props[itr].c_str(), OFTString);
+		fd.SetDefault("empty");
+		fd.SetWidth(NC_MAX_CHAR);
+		defn->AddFieldDefn(&fd);
+	}
 
 	for(size_t featCt = 0; featCt < shape_count; featCt++)
 	{
@@ -135,10 +134,11 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		
 		std::vector<std::pair<std::string, std::string>> full_prop = pr.fetch(cont_id, featCt);
 
-/*		for(int itr = 0; itr < props.size(); itr++)
+		for(int itr = 0; itr < props.size(); itr++)
 		{
-			feat->SetField(full_prop[itr].first.c_str(), "Default");
-		}*/
+			feat->SetField(itr, "Default");
+			//feat->SetField(full_prop[itr].first.c_str(), "Default");
+		}
 
 		feat -> SetFID(featCt);
 		delete wkb_rep;

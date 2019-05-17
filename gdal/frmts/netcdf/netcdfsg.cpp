@@ -641,6 +641,36 @@ namespace nccfdriver
 		return ret;
 	}	
 
+	std::vector<std::string> SGeometry_PropertyReader::headers(int cont_lookup)
+	{
+		std::vector<std::string> ret;
+
+		std::vector<std::pair<int, std::string>> props(m.at(cont_lookup));
+		
+		// Remove IDs
+		for(size_t itr = 0; itr < props.size(); itr++)
+		{
+			ret.push_back(props[itr].second);
+		}
+
+		return ret;
+	}
+
+	std::vector<int> SGeometry_PropertyReader::ids(int cont_lookup)
+	{
+		std::vector<int> ret;
+
+		std::vector<std::pair<int, std::string>> props(m.at(cont_lookup));
+		
+		// Remove Headers 
+		for(size_t itr = 0; itr < props.size(); itr++)
+		{
+			ret.push_back(props[itr].first);
+		}
+
+		return ret;
+	}
+
 	// Helpers
 	// following is a short hand for a clean up and exit, since goto isn't allowed
 	int getCFMinorVersion(int ncid)
@@ -910,12 +940,6 @@ namespace nccfdriver
 		int varId = 0;
 		nc_inq_varid(ncid, varName, &varId);
 		return new SGeometry(ncid, varId);
-	}
-
-	int putGeometryRef(int ncid, SGeometry * geometry)
-	{
-		// stub
-		return -1; 
 	}
 
 }

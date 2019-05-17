@@ -151,6 +151,8 @@ namespace nccfdriver
 			void open(int container_id);	// opens and intializes a geometry_container into the map
 			std::vector<std::pair<std::string, std::string>> fetch(int cont_lookup, size_t seek_pos);
 							// returns for each property {Property_Name, Property_Value} at a certain position
+			std::vector<std::string> headers(int cont_lookup);
+			std::vector<int> ids(int cont_lookup);
 			SGeometry_PropertyReader(int ncid) : max_seek(0), nc(ncid) {}
 	};
 
@@ -193,7 +195,7 @@ namespace nccfdriver
 	 *
 	 * Returns: an error code if failure, 0 on success
 	 */
-	int putGeometryRef(int ncid, SGeometry* geometry);
+	//int putGeometryRef(int ncid, SGeometry* geometry);
 
 	/* Fetches a one dimensional string attribute
 	 * using the given ncid, variable ID (varID), and attribute key (attrName)
