@@ -57,6 +57,7 @@
     font-style: normal;
 }
 
+@import url(theme.css);
 
 /* Boundless Fonts */
 
@@ -80,17 +81,13 @@ h1, h2, h3, h4, h5, h6, legend
 {
 	margin-top: 0;
 	font-weight: 700;
-	font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
+	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
 }
 
-body
-{
-	font-family: "sintonyregular", "Lato", "Proxima Nova", "Helvetica", Arial, sans-serif;
-}
 .rst-content .sidebar .sidebar-title
 {
 	display: block;
-	font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
+	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
 	font-weight: bold;
 	background: #e1e4e5;
 	padding: 6px 12px;
@@ -101,7 +98,7 @@ body
 
 h1, h2, h3, h4, h5, h6
 {
-	font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
+	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
 	font-weight: bold;
 	margin-top: 0.8em;
 }
@@ -126,13 +123,6 @@ footer .logo-link
     font-size: 90%;
 }
 
-footer .logo-link .osgeo-logo
-{
-	background: url("../img/osgeo-emblem-24x24.png") no-repeat;
-	height: 24px;
-	width: 24px;
-	display: inline-block;
-}
 
 footer .copyright
 {
@@ -180,7 +170,7 @@ pre
 /* format TOC entries */
 .rst-content .toctree-wrapper
 {
-	  font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
+	  font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
     /*font-size: 14px;*/
     font-weight: bold;
 }
@@ -188,7 +178,7 @@ pre
 /* format captions */
 .rst-content .caption-text
 {
-	  font-family: "miriamlibrebold", "Montserrat", "Helvetica", Arial, sans-serif;
+	  font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
     font-size: 14px;
     font-style: italic;
 }
@@ -283,4 +273,12 @@ div[class ^= "admonition-demo"].admonition
 div[class ^= "admonition-demo"] > p.admonition-title
 {
     background-color: #f58d50;
+}
+
+footer .logo-link .osgeo-logo
+{
+	background: url("../img/osgeo-emblem-24x24.png") no-repeat;
+	height: 24px;
+	width: 24px;
+	display: inline-block;
 }

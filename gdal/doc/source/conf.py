@@ -48,6 +48,14 @@ exclude_patterns = []
 #
 html_theme_path = ['.']
 html_theme = 'gdal_rtd'
+
+html_context = {
+  'display_github': True,
+  'github_user': 'hobu',
+  'github_repo': 'GDAL',
+  'github_version': '/doc-sprint/gdal/doc/source/'
+}
+
 html_theme_options = {
         'canonical_url': 'https://gdal.dev',
     'analytics_id': '',  #  Provided by Google in your dashboard
