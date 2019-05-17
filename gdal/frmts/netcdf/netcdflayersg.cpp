@@ -51,10 +51,12 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 	nccfdriver::scanForGeometryContainers(ncid, vidList);	
 
 	// To still do: support multiple geometry containers
-	if(vidList.size() != 0)
+
+	for(size_t itr = 0; itr < vidList.size(); itr++)
 	{
-		LoadSGVarIntoLayer(ncid, vidList[0]);
+		LoadSGVarIntoLayer(ncid, vidList[itr]);
 	}
+
 	return CE_None;
 }
 
@@ -75,6 +77,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	
 
 	char baseName[NC_MAX_CHAR];
+	memset(baseName, 0, NC_MAX_CHAR);
 	nc_inq_varname(ncid, nc_basevarId, baseName);
 
 	OGRFeatureDefn * defn = new OGRFeatureDefn(baseName);
