@@ -56,7 +56,7 @@ Raster programs
 - :ref:`pct2rgb`: Convert an 8bit paletted image to 24bit RGB.
 - :ref:`gdal_merge`: Mosaics a set of images.
 - :ref:`gdal2tiles`: Generates directory with TMS tiles, KMLs and simple web viewers.
-- :ref:`gdal_rasterize`
+- :ref:`gdal_rasterize`: Burns vector geometries into a raster.
 - :ref:`gdaltransform`
 - :ref:`nearblack`
 - :ref:`gdal_retile`

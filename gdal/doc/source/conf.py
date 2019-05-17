@@ -180,6 +180,13 @@ man_pages = [
         1
     ),
     (
+        'programs/gdal_rasterize',
+        'gdal_rasterize',
+        u'Burns vector geometries into a raster.',
+        [author_frankw],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
