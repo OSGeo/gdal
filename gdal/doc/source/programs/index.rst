@@ -66,7 +66,7 @@ Raster programs
 - :ref:`gdal_sieve`: Removes small raster polygons.
 - :ref:`gdal_fillnodata`: Fill raster regions by interpolation from edges.
 - :ref:`gdallocationinfo`: Raster query tool
-- :ref:`gdalsrsinfo`
+- :ref:`gdalsrsinfo`: Lists info about a given SRS in number of formats (WKT, PROJ.4, etc.)
 - :ref:`gdalmove`
 - :ref:`gdal_edit`: Edit in place various information of an existing GDAL dataset.
 - :ref:`gdal_calc`: Command line raster calculator with numpy syntax.

@@ -250,6 +250,13 @@ man_pages = [
         1
     ),
     (
+        'programs/gdalsrsinfo',
+        'gdalsrsinfo',
+        u'Lists info about a given SRS in number of formats (WKT, PROJ.4, etc.)',
+        [author_frankw, 'Etienne Tourigny <etourigny.dev-at-gmail-dot-com>'],
+        1
+    ),
+   (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
