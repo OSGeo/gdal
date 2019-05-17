@@ -23,7 +23,7 @@ def gather_redirects():
             entry = {'%s_%s.html'% (prefix,driver) : os.path.join(path,driver)+'.html' }
             d.update(entry)
 
-    fetch('./drivers/raster', output, 'frmts')
+    fetch('./drivers/raster', output, 'frmt')
     fetch('./drivers/vector', output, 'drv')
 
     return output
