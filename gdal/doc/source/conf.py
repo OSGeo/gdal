@@ -87,6 +87,13 @@ man_pages = [
         1
     ),
     (
+        'programs/gdal_translate',
+        'gdal_translate',
+        u'Converts raster data between different formats.',
+        ['Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>'],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
