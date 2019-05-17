@@ -8,7 +8,7 @@ ogrmerge
 
     Merge several vector datasets into a single one.
 
-.. Index:: ogrinfo
+.. Index:: ogrmerge
 
 Synopsis
 --------
