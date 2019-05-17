@@ -4,11 +4,9 @@
 gdaltindex
 ================================================================================
 
-Builds a shapefile as a raster tileindex.
-
 .. only:: html
 
-    Lists information about a raster dataset.
+    Builds a shapefile as a raster tileindex.
 
 .. Index:: gdaltindex
 

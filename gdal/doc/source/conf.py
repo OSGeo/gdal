@@ -187,6 +187,13 @@ man_pages = [
         1
     ),
     (
+        'programs/gdaltransform',
+        'gdaltransform',
+        u'Transforms coordinates.',
+        [author_frankw, "Jan Hartmann <j.l.h.hartmann@uva.nl>"],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
