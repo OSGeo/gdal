@@ -29,7 +29,8 @@ author = 'Frank Warmerdam, Even Rouault, and others'
 # ones.
 extensions = [
     'breathe',
-    'configoptions'
+    'configoptions',
+    'redirects'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -101,3 +102,7 @@ breathe_default_project = "api"
 
 # Tell sphinx what the primary language being documented is.
 primary_domain = 'cpp'
+
+import redirects
+redirect_files = redirects.gather_redirects()
+
