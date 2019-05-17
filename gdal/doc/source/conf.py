@@ -93,6 +93,13 @@ man_pages = [
         ['Mikhail Gusev <gusevmihs@gmail.com>','Dmitry Baryshnikov <polimax@mail.ru>'],
         1
     ),
+    (
+        'programs/gnmanalyse',
+        'gnmanalyse',
+        u'Analyses networks',
+        ['Mikhail Gusev <gusevmihs@gmail.com>','Dmitry Baryshnikov <polimax@mail.ru>'],
+        1
+    ),
 ]
 
 # If true, show URL addresses after external links.
