@@ -54,8 +54,8 @@ Raster programs
 - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
 - :ref:`rgb2pct`: Convert a 24bit RGB image to 8bit paletted.
 - :ref:`pct2rgb`: Convert an 8bit paletted image to 24bit RGB.
-- :ref:`gdal_merge`
-- :ref:`gdal2tiles`
+- :ref:`gdal_merge`: Mosaics a set of images.
+- :ref:`gdal2tiles`: Generates directory with TMS tiles, KMLs and simple web viewers.
 - :ref:`gdal_rasterize`
 - :ref:`gdaltransform`
 - :ref:`nearblack`
@@ -102,6 +102,10 @@ Geographic network programs
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    gnmmanage
    gnmanalyse
+
+- :ref:`gnmmanage`: Manages networks
+- :ref:`gnmanalyse`: Analyses networks

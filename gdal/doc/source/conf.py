@@ -166,6 +166,20 @@ man_pages = [
         1
     ),
     (
+        'programs/gdal_merge',
+        'gdal_merge',
+        u'Mosaics a set of images.',
+        [author_frankw, author_silker],
+        1
+    ),
+    (
+        'programs/gdal2tiles',
+        'gdal2tiles',
+        u'Generates directory with TMS tiles, KMLs and simple web viewers.',
+        ['Klokan Petr Pridal <klokan@klokan.cz>'],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
