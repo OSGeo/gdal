@@ -65,7 +65,7 @@ Raster programs
 - :ref:`gdal_polygonize`: Produces a polygon feature layer from a raster.
 - :ref:`gdal_sieve`: Removes small raster polygons.
 - :ref:`gdal_fillnodata`: Fill raster regions by interpolation from edges.
-- :ref:`gdallocationinfo`
+- :ref:`gdallocationinfo`: Raster query tool
 - :ref:`gdalsrsinfo`
 - :ref:`gdalmove`
 - :ref:`gdal_edit`: Edit in place various information of an existing GDAL dataset.

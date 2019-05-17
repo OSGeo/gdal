@@ -243,6 +243,13 @@ man_pages = [
         1
     ),
     (
+        'programs/gdallocationinfo',
+        'gdallocationinfo',
+        u'Raster query tool.',
+        [author_frankw],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
