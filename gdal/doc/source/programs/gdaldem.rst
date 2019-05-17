@@ -141,13 +141,9 @@ The following general options are available:
 
     Do the computation at raster edges and near nodata values
 
-    .. versionadded:: 1.8.0
-
 .. option:: alg ZevenbergenThorne
 
     Use Zevenbergen & Thorne formula, instead of Horn's formula, to compute slope & aspect. The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.
-
-    .. versionadded:: 1.8.0
 
 .. option:: -b <band>
 
@@ -167,8 +163,6 @@ For all algorithms, except color-relief, a nodata value in the target dataset
 will be emitted if at least one pixel set to the nodata value is found in the
 3x3 window centered around each source pixel. The consequence is that there
 will be a 1-pixel border around each image set with nodata value.
-
-.. versionadded:: 1.8.0
 
     If :option:`-compute_edges` is specified, gdaldem will compute values
     at image edges or if a nodata value is found in the 3x3 window,
@@ -204,15 +198,19 @@ The following specific options are available :
 
 .. option:: -combined
 
-    (starting with GDAL 1.10) combined shading, a combination of slope and oblique shading.
+    combined shading, a combination of slope and oblique shading.
 
 .. option:: -multidirectional
 
-    (starting with GDAL 2.2) multidirectional shading, a combination of hillshading illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.
+    multidirectional shading, a combination of hillshading illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.
+
+    .. versionadded:: 2.2
 
 .. option:: -igor
 
-    (starting with GDAL 3.0) shading which tries to minimize effects on other map features beneath. Can't be used with -alt option.
+    shading which tries to minimize effects on other map features beneath. Can't be used with -alt option.
+
+    .. versionadded:: 3.0
 
 Multidirectional hillshading applies the formula of http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf.
 
@@ -231,9 +229,9 @@ The following specific options are available :
 
     If specified, the slope will be expressed as percent slope. Otherwise, it is expressed as degrees
 
-.. option:: -s <scale>
+:option:`-s`
 
-    Rratio of vertical units to horizontal. If the horizontal unit of the source DEM is degrees (e.g Lat/Long WGS84 projection), you can use scale=111120 if the vertical units are meters (or scale=370400 if they are in feet).
+    Ratio of vertical units to horizontal. If the horizontal unit of the source DEM is degrees (e.g Lat/Long WGS84 projection), you can use scale=111120 if the vertical units are meters (or scale=370400 if they are in feet).
 
 aspect
 ^^^^^^
@@ -301,8 +299,6 @@ instead of the RGB triplet. The supported list is: white, black, red,
 green, blue, yellow, magenta, cyan, aqua, grey/gray, orange, brown,
 purple/violet and indigo.
 
-.. versionadded:: 1.8.0
-
     GMT :file:`.cpt` palette files are also supported (COLOR_MODEL = RGB only).
 
 Note: the syntax of the color configuration file is derived from the one
@@ -357,7 +353,9 @@ There are no specific options.
 C API
 -----
 
-Starting with GDAL 2.1, this utility is also callable from C with :c:func:`GDALDEMProcessing`.
+This utility is also callable from C with :cpp:func:`GDALDEMProcessing`.
+
+.. versionadded:: 2.1
 
 Authors
 -------
