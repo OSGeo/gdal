@@ -134,7 +134,8 @@ The following general options are available:
 
     .. versionadded:: 2.3.0
 
-        If not specified, the format is guessed from the extension (previously was GTiff). Use the short format name.
+        If not specified, the format is guessed from the extension
+        (previously was :ref:`raster.gtiff`). Use the short format name.
 
 .. option:: -compute_edges
 
@@ -154,7 +155,9 @@ The following general options are available:
 
 .. option:: -co <"NAME=VALUE">
 
-    Passes a creation option to the output format driver. Multiple -co options may be listed. See format specific documentation for legal creation options for each format
+    Passes a creation option to the output format driver.
+    Multiple :option:`-co` options may be listed. See format specific
+    documentation for legal creation options for each format.
 
 .. option:: -q
 
@@ -247,8 +250,9 @@ The following specifics options are available :
 
     Return 0 for flat areas with slope=0, instead of -9999.
 
-By using those 2 options, the aspect returned by gdaldem aspect should be identical to the one of GRASS r.slope.aspect.
-Otherwise, it's identical to the one of Matthew Perry's :file:`aspect.cpp` utility.
+By using those 2 options, the aspect returned by gdaldem aspect should be
+identical to the one of GRASS r.slope.aspect. Otherwise, it's identical to
+the one of Matthew Perry's :file:`aspect.cpp` utility.
 
 color-relief
 ^^^^^^^^^^^^
@@ -274,22 +278,37 @@ The following specifics options are available :
 
     Use the RGBA quadruplet corresponding to the closest entry in the color configuration file.
 
-The color-relief mode is the only mode that supports VRT as output format. In that case, it will translate the color configuration file into appropriate LUT elements. Note that elevations specified as percentage will be translated as absolute values, which must be taken into account when the statistics of the source raster differ from the one that was used when building the VRT.
+The color-relief mode is the only mode that supports VRT as output format.
+In that case, it will translate the color configuration file into appropriate
+LUT elements. Note that elevations specified as percentage will be translated
+as absolute values, which must be taken into account when the statistics of
+the source raster differ from the one that was used when building the VRT.
 
-The text-based color configuration file generally contains 4 columns per line : the elevation value and the corresponding Red, Green, Blue component (between 0 and 255). The elevation value can be any floating point value, or the nv keyword for the nodata value.. The elevation can also be expressed as a percentage : 0% being the minimum value found in the raster, 100% the maximum value.
+The text-based color configuration file generally contains 4 columns
+per line: the elevation value and the corresponding Red, Green, Blue
+component (between 0 and 255). The elevation value can be any floating
+point value, or the nv keyword for the nodata value.
+The elevation can also be expressed as a percentage: 0% being the minimum
+value found in the raster, 100% the maximum value.
 
 An extra column can be optionally added for the alpha component.
 If it is not specified, full opacity (255) is assumed.
 
-Various field separators are accepted : comma, tabulation, spaces, ':'.
+Various field separators are accepted: comma, tabulation, spaces, ':'.
 
-Common colors used by GRASS can also be specified by using their name, instead of the RGB triplet. The supported list is : white, black, red, green, blue, yellow, magenta, cyan, aqua, grey/gray, orange, brown, purple/violet and indigo.
+Common colors used by GRASS can also be specified by using their name,
+instead of the RGB triplet. The supported list is: white, black, red,
+green, blue, yellow, magenta, cyan, aqua, grey/gray, orange, brown,
+purple/violet and indigo.
 
 .. versionadded:: 1.8.0
 
     GMT :file:`.cpt` palette files are also supported (COLOR_MODEL = RGB only).
 
-Note: the syntax of the color configuration file is derived from the one supported by GRASS r.colors utility. ESRI HDR color table files (.clr) also match that syntax. The alpha component and the support of tab and comma as separators are GDAL specific extensions.
+Note: the syntax of the color configuration file is derived from the one
+supported by GRASS r.colors utility. ESRI HDR color table files (.clr)
+also match that syntax. The alpha component and the support of tab and
+comma as separators are GDAL specific extensions.
 
 For example :
 
@@ -303,7 +322,10 @@ nv     0   0   0   0
 TRI
 ^^^
 
-This command outputs a single-band raster with values computed from the elevation. TRI stands for Terrain Ruggedness Index, which is defined as the mean difference between a central pixel and its surrounding cells (see Wilson et al 2007, Marine Geodesy 30:3-35).
+This command outputs a single-band raster with values computed from the elevation.
+`TRI` stands for Terrain Ruggedness Index, which is defined as the mean difference
+between a central pixel and its surrounding cells (see Wilson et al 2007,
+Marine Geodesy 30:3-35).
 
 The value -9999 is used as the output nodata value.
 
@@ -312,7 +334,10 @@ There are no specific options.
 TPI
 ^^^
 
-This command outputs a single-band raster with values computed from the elevation. TPI stands for Topographic Position Index, which is defined as the difference between a central pixel and the mean of its surrounding cells (see Wilson et al 2007, Marine Geodesy 30:3-35).
+This command outputs a single-band raster with values computed from the elevation.
+`TPI` stands for Topographic Position Index, which is defined as the difference
+between a central pixel and the mean of its surrounding cells (see Wilson et al
+2007, Marine Geodesy 30:3-35).
 
 The value -9999 is used as the output nodata value.
 
@@ -321,7 +346,9 @@ There are no specific options.
 roughness
 ^^^^^^^^^
 
-This command outputs a single-band raster with values computed from the elevation. Roughness is the largest inter-cell difference of a central pixel and its surrounding cell, as defined in Wilson et al (2007, Marine Geodesy 30:3-35).
+This command outputs a single-band raster with values computed from the elevation.
+Roughness is the largest inter-cell difference of a central pixel and its surrounding
+cell, as defined in Wilson et al (2007, Marine Geodesy 30:3-35).
 
 The value -9999 is used as the output nodata value.
 
@@ -330,17 +357,22 @@ There are no specific options.
 C API
 -----
 
-Starting with GDAL 2.1, this utility is also callable from C with GDALDEMProcessing().
+Starting with GDAL 2.1, this utility is also callable from C with :c:func:`GDALDEMProcessing`.
 
-AUTHORS
+Authors
 -------
 
-Matthew Perry perrygeo@gmail.com, Even Rouault even.rouault@mines-paris.org, Howard Butler hobu.inc@gmail.com, Chris Yesson chris.yesson@ioz.ac.uk
+Matthew Perry perrygeo@gmail.com, Even Rouault even.rouault@mines-paris.org,
+Howard Butler hobu.inc@gmail.com, Chris Yesson chris.yesson@ioz.ac.uk
 
-Derived from code by Michael Shapiro, Olga Waupotitsch, Marjorie Larson, Jim Westervelt : U.S. Army CERL, 1993. GRASS 4.1 Reference Manual. U.S. Army Corps of Engineers, Construction Engineering Research Laboratories, Champaign, Illinois, 1-425.
+Derived from code by Michael Shapiro, Olga Waupotitsch, Marjorie Larson, Jim Westervelt:
+U.S. Army CERL, 1993. GRASS 4.1 Reference Manual. U.S. Army Corps of Engineers,
+Construction Engineering Research Laboratories, Champaign, Illinois, 1-425.
+
 See also
+--------
 
-Documentation of related GRASS utilities :
+Documentation of related GRASS utilities:
 
 http://grass.osgeo.org/grass64/manuals/html64_user/r.slope.aspect.html
 
