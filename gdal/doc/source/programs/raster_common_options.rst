@@ -4,7 +4,7 @@
 Common options for raster programs
 ================================================================================
 
-All GDAL command line programs support the following common general options.
+All GDAL command line programs support the following common options.
 
 .. option:: --version
 
