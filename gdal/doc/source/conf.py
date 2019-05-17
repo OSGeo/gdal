@@ -218,7 +218,28 @@ man_pages = [
         'programs/gdal_proximity',
         'gdal_proximity',
         u'Produces a raster proximity map.',
-        [author_evenr],
+        [author_frankw],
+        1
+    ),
+    (
+        'programs/gdal_polygonize',
+        'gdal_polygonize',
+        u'Produces a polygon feature layer from a raster.',
+        [author_frankw],
+        1
+    ),
+    (
+        'programs/gdal_sieve',
+        'gdal_sieve',
+        u'Removes small raster polygons.',
+        [author_frankw],
+        1
+    ),
+    (
+        'programs/gdal_fillnodata',
+        'gdal_fillnodata',
+        u'Fill raster regions by interpolation from edges.',
+        [author_frankw],
         1
     ),
     (
