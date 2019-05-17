@@ -103,7 +103,7 @@ This example would create a shapefile (:file:`tindex.shp`) containing
 a tile index of the ``BL2000_LINK`` layers in all the NTF files
 in the :file:`wrk` directory:
 
-.. code:: fragment
+.. code-block::
 
     % ogrtindex tindex.shp wrk/*.NTF 1069148.900,419873.100 1069147.500,419870.200
       1069146.400,419862.100 1069143.000,419860 1069142,419854.900
