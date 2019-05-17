@@ -79,47 +79,60 @@ html_logo = '../images/gdalicon.png'
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
+
+author_frankw = 'Frank Warmerdam <warmerdam@pobox.com>'
+author_silker = 'Silke Reimer <silke@intevation.de>'
+author_mikhailg = 'Mikhail Gusev <gusevmihs@gmail.com>'
+author_dmitryb = 'Dmitry Baryshnikov <polimax@mail.ru>'
+
 man_pages = [
     (
         'programs/gdalinfo',
         'gdalinfo',
         u'Lists various information about a GDAL supported raster dataset',
-        ['Frank Warmerdam'],
+        [author_frankw],
         1
     ),
     (
         'programs/gdal_translate',
         'gdal_translate',
         u'Converts raster data between different formats.',
-        ['Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>'],
+        [author_frankw, author_silker],
         1
     ),
     (
         'programs/gdaladdo',
         'gdaladdo',
         u'Builds or rebuilds overview images.',
-        ['Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>'],
+        [author_frankw, author_silker],
         1
     ),
     (
         'programs/gdalwarp',
         'gdalwarp',
         u'Image reprojection and warping utility.',
-        ['Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>'],
+        [author_frankw, author_silker],
+        1
+    ),
+    (
+        'programs/gdaltindex',
+        'gdaltindex',
+        u'Builds a shapefile as a raster tileindex.',
+        [author_frankw],
         1
     ),
     (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
-        ['Mikhail Gusev <gusevmihs@gmail.com>','Dmitry Baryshnikov <polimax@mail.ru>'],
+        [author_mikhailg, author_dmitryb],
         1
     ),
     (
         'programs/gnmanalyse',
         'gnmanalyse',
         u'Analyses networks',
-        ['Mikhail Gusev <gusevmihs@gmail.com>','Dmitry Baryshnikov <polimax@mail.ru>'],
+        [author_mikhailg, author_dmitryb],
         1
     ),
 ]
