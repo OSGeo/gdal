@@ -864,6 +864,7 @@ namespace nccfdriver
 		for(int itr = 0; itr < nvars; itr++)
 		{
 			char c[NC_MAX_CHAR];
+			memset(c, 0, NC_MAX_CHAR);
 			if(nc_get_att_text(ncid, itr, CF_SG_GEOMETRY, c) != NC_NOERR)
 			{
 				continue;
