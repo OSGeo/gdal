@@ -47,7 +47,6 @@ namespace nccfdriver
 	{
 		geom_t type;	 	// internal geometry type structure
 		int ncid;		// ncid - as used in netcdf.h
-		int base_varId;		// var with geometry_container attribute
 		int gc_varId;		// the name of the underlying geometry_container variable
 		int touple_order;	// amount of "coordinates" in a point
 		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
@@ -172,6 +171,14 @@ namespace nccfdriver
 	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
 	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
 	void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin);
+
+	/* scanForGeometryContainers
+	 * A simple function that scans a netCDF File for Geometry Containers
+	 * -
+	 * Scans the given ncid for geometry containers
+	 * The vector passed in will be overwritten with a vector of scan results
+	 */
+	int scanForGeometryContainers(int ncid, std::vector<int> & r_ids);
 
 	/* Given a variable name, and the ncid, returns a SGeometry reference object, which acts more of an iterator of a geometry container
 	 *

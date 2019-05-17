@@ -47,16 +47,8 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 	int var_count;
 	nc_inq_nvars(ncid, &var_count);	
 	std::vector<int> vidList;
-	
-	for(int cur = 0; cur < var_count; cur++)
-	{
-		char * cont = nccfdriver::attrf(ncid, cur, CF_SG_GEOMETRY);		
-		if(cont != nullptr)
-		{
-			vidList.push_back(cur);
-		}
-		delete cont;
-	}
+
+	nccfdriver::scanForGeometryContainers(ncid, vidList);	
 
 	// To still do: support multiple geometry containers
 	if(vidList.size() != 0)
@@ -82,7 +74,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	}
 	
 
-	char baseName[256];
+	char baseName[NC_MAX_CHAR];
 	nc_inq_varname(ncid, nc_basevarId, baseName);
 
 	OGRFeatureDefn * defn = new OGRFeatureDefn(baseName);
