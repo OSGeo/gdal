@@ -21,7 +21,7 @@ Synopsis
             [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [--formats] [[-oo NAME=VALUE] ...]
             [-nomd] [-listmdd] [-mdd domain|`all`]*
             [-nocount] [-noextent] [-wkt_format WKT1|WKT2|...]
-            datasource_name [layer [layer ...]]
+            <datasource_name> [<layer> [<layer> ...]]
 
 Description
 -----------
@@ -137,10 +137,10 @@ source to stdout (the terminal).
 
     List the format drivers that are enabled.
 
-.. option:: -wkt_format WKT1/WKT2/...
+.. option:: -wkt_format <format>
 
-    Where *format* is the WKT format used to display the SRS.
-    Currently supported values are:
+    The WKT format used to display the SRS.
+    Currently supported values for the ``format`` are:
 
     ``WKT1``
 
@@ -152,12 +152,12 @@ source to stdout (the terminal).
 
     .. versionadded:: 3.0.0
 
-.. option:: datasource_name
+.. option:: <datasource_name>
 
     The data source to open. May be a filename, directory or other virtual
     name. See the OGR Vector Formats list for supported datasources.
 
-.. option:: layer
+.. option:: <layer>
 
     One or more layer names may be reported.  If no layer names are passed then
     ogrinfo will report a list of available layers (and their layer wide
