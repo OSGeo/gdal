@@ -61,7 +61,7 @@ Raster programs
 - :ref:`nearblack`: Convert nearly black/white borders to black.
 - :ref:`gdal_retile`: Retiles a set of tiles and/or build tiled pyramid levels.
 - :ref:`gdal_grid`: Creates regular grid from the scattered data.
-- :ref:`gdal_proximity`
+- :ref:`gdal_proximity`: Produces a raster proximity map.
 - :ref:`gdal_polygonize`
 - :ref:`gdal_sieve`: Removes small raster polygons.
 - :ref:`gdal_fillnodata`: Fill raster regions by interpolation from edges.

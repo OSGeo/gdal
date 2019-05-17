@@ -215,6 +215,13 @@ man_pages = [
         1
     ),
     (
+        'programs/gdal_proximity',
+        'gdal_proximity',
+        u'Produces a raster proximity map.',
+        [author_evenr],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
