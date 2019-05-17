@@ -154,8 +154,15 @@ man_pages = [
     (
         'programs/rgb2pct',
         'rgb2pct',
-        u'Builds or rebuilds overview images.',
-        [author_evenr],
+        u'Convert a 24bit RGB image to 8bit paletted.',
+        [author_frankw],
+        1
+    ),
+    (
+        'programs/pct2rgb',
+        'pct2rgb',
+        u'Convert an 8bit paletted image to 24bit RGB.',
+        [author_frankw, author_silker],
         1
     ),
     (

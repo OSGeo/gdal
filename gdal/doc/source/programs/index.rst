@@ -11,7 +11,7 @@ Raster programs
    :maxdepth: 1
    :hidden:
 
-   raster_common_options
+   Common options <raster_common_options>
    gdalinfo
    gdal_translate
    gdaladdo
@@ -52,8 +52,8 @@ Raster programs
 - :ref:`gdalbuildvrt`: Builds a VRT from a list of datasets.
 - :ref:`gdal_contour`: Builds vector contour lines from a raster elevation model.
 - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
-- :ref:`rgb2pct`: Builds or rebuilds overview images.
-- :ref:`pct2rgb`
+- :ref:`rgb2pct`: Convert a 24bit RGB image to 8bit paletted.
+- :ref:`pct2rgb`: Convert an 8bit paletted image to 24bit RGB.
 - :ref:`gdal_merge`
 - :ref:`gdal2tiles`
 - :ref:`gdal_rasterize`
@@ -94,7 +94,7 @@ Vector programs
 - :ref:`ogrinfo`: Lists information about an OGR-supported data source.
 - :ref:`ogr2ogr`: Converts simple features data between file formats.
 - :ref:`ogrtindex`: Creates a tileindex.
-- :ref:`ogrlineref`
+- :ref:`ogrlineref`: Create linear reference and provide some calculations using it.
 - :ref:`ogrmerge`: Merge several vector datasets into a single one.
 
 Geographic network programs

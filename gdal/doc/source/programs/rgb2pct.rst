@@ -6,7 +6,7 @@ rgb2pct
 
 .. only:: html
 
-    Builds or rebuilds overview images.
+    Convert a 24bit RGB image to 8bit paletted. 
 
 .. Index:: rgb2pct
 
