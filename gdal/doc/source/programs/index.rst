@@ -10,7 +10,7 @@ Raster programs
 .. toctree::
    :maxdepth: 1
 
-   common_options
+   raster_common_options
    gdalinfo
    gdal_translate
    gdaladdo
@@ -49,7 +49,7 @@ Vector programs
 .. toctree::
    :maxdepth: 1
 
-   vector_general_switches
+   vector_common_options
    ogrinfo
    ogr2ogr
    ogrtindex
