@@ -84,6 +84,7 @@ author_frankw = 'Frank Warmerdam <warmerdam@pobox.com>'
 author_silker = 'Silke Reimer <silke@intevation.de>'
 author_mikhailg = 'Mikhail Gusev <gusevmihs@gmail.com>'
 author_dmitryb = 'Dmitry Baryshnikov <polimax@mail.ru>'
+author_evenr = 'Even Rouault <even.rouault@spatialys.com>'
 
 man_pages = [
     (
@@ -119,6 +120,27 @@ man_pages = [
         'gdaltindex',
         u'Builds a shapefile as a raster tileindex.',
         [author_frankw],
+        1
+    ),
+    (
+        'programs/gdalbuildvrt',
+        'gdalbuildvrt',
+        u'Builds a VRT from a list of datasets.',
+        [author_evenr],
+        1
+    ),
+    (
+        'programs/gdal_contour',
+        'gdal_contour',
+        u'Builds vector contour lines from a raster elevation model.',
+        [author_frankw, author_silker],
+        1
+    ),
+    (
+        'programs/gdaldem',
+        'gdaldem',
+        u'Tools to analyze and visualize DEMs.',
+        ['Matthew Perry <perrygeo@gmail.com>', author_evenr, 'Howard Butler <hobu.inc@gmail.com>', 'Chris Yesson <chris.yesson@ioz.ac.uk>'],
         1
     ),
     (

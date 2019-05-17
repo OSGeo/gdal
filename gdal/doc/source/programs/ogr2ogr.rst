@@ -298,7 +298,7 @@ output coordinate system or even reprojecting the features during translation.
 
     Maximum distance between 2 nodes. Used to create intermediate points.
 
-.. option:: -fieldTypeToString type1, ...
+.. option:: -fieldTypeToString type1,...
 
     Converts any field of the specified type to a field of type string in the
     destination layer. Valid types are : Integer, Integer64, Real, String,
@@ -308,7 +308,7 @@ output coordinate system or even reprojecting the features during translation.
     avoid typing a long SQL query. Note that this does not influence the field
     types used by the source driver, and is only an afterwards conversion.
 
-.. option:: -mapFieldType srctype|All=dsttype, ...
+.. option:: -mapFieldType srctype|All=dsttype,...
 
     Converts any field of the specified type to another type. Valid types are :
     Integer, Integer64, Real, String, Date, Time, DateTime, Binary,

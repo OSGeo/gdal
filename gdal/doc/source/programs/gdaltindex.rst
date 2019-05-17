@@ -110,5 +110,5 @@ into the same output projection:
 See also
 --------
 
-:ref:`common_options` for other command-line options, and in particular the
-:ref:`--optfile <common_options_optfile>` switch that can be used to specify a list of input datasets.
+:ref:`raster_common_options` for other command-line options, and in particular the
+:ref:`--optfile <raster_common_options_optfile>` switch that can be used to specify a list of input datasets.

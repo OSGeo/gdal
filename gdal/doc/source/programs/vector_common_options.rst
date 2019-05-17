@@ -1,4 +1,4 @@
-.. _vector_general_switches:
+.. _vector_common_options:
 
 ================================================================================
 Common options for vector programs

@@ -6,7 +6,7 @@ ogrtindex
 
 .. only:: html
 
-    Lists information about an OGR supported data source.
+    Creates a tileindex.
 
 .. Index:: ogrtindex
 

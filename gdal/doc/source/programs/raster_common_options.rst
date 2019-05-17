@@ -1,4 +1,4 @@
-.. _common_options:
+.. _raster_common_options:
 
 ================================================================================
 Common options for raster programs
@@ -18,7 +18,7 @@ All GDAL command line programs support the following common options.
 
     List detailed information about a single format driver. The format should be the short name reported in the --formats list, such as GTiff.
 
-.. _common_options_optfile:
+.. _raster_common_options_optfile:
 .. option:: --optfile <filename>
 
     Read the named file and substitute the contents into the command line options list. Lines beginning with # will be ignored. Multi-word arguments may be kept together with double quotes.
