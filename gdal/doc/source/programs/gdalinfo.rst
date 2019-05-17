@@ -102,8 +102,8 @@ The following command line parameters can appear in any order
 
 .. option:: -wkt_format WKT1|WKT2|WKT2_2015|WKT2_2018
 
-    Where *format* is the WKT format used to display the SRS.
-    Currently supported values are:
+    WKT format used to display the SRS.
+    Currently the supported values are:
 
     ``WKT1``
 

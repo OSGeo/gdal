@@ -87,6 +87,34 @@ man_pages = [
         ['Frank Warmerdam'],
         1
     ),
+    (
+        'programs/gdal_translate',
+        'gdal_translate',
+        u'Converts raster data between different formats.',
+        ['Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>'],
+        1
+    ),
+    (
+        'programs/gdaladdo',
+        'gdaladdo',
+        u'Builds or rebuilds overview images.',
+        ['Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>'],
+        1
+    ),
+    (
+        'programs/gnmmanage',
+        'gnmmanage',
+        u'Manages networks',
+        ['Mikhail Gusev <gusevmihs@gmail.com>','Dmitry Baryshnikov <polimax@mail.ru>'],
+        1
+    ),
+    (
+        'programs/gnmanalyse',
+        'gnmanalyse',
+        u'Analyses networks',
+        ['Mikhail Gusev <gusevmihs@gmail.com>','Dmitry Baryshnikov <polimax@mail.ru>'],
+        1
+    ),
 ]
 
 # If true, show URL addresses after external links.
