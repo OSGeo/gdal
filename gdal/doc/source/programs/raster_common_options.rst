@@ -1,7 +1,7 @@
 .. _common_options:
 
 ================================================================================
-Common options
+Common options for raster programs
 ================================================================================
 
 All GDAL command line programs support the following common general options.
