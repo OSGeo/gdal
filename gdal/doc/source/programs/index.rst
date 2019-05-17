@@ -52,7 +52,7 @@ Raster programs
 - :ref:`gdalbuildvrt`: Builds a VRT from a list of datasets.
 - :ref:`gdal_contour`: Builds vector contour lines from a raster elevation model.
 - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
-- :ref:`rgb2pct`
+- :ref:`rgb2pct`: Builds or rebuilds overview images.
 - :ref:`pct2rgb`
 - :ref:`gdal_merge`
 - :ref:`gdal2tiles`

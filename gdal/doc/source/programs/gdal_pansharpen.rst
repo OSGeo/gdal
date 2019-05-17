@@ -31,7 +31,7 @@ The :program:`gdal_pansharpen.py` script performs a pan-sharpening operation. It
 can create a "classic" output dataset (such as GeoTIFF), or a VRT
 dataset describing the pan-sharpening operation.
 
-More details can be found in the `VRT tutorial <gdal_vrttut.html#gdal_vrttut_pansharpen>`__.
+More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
 .. option:: -of <format>:
 

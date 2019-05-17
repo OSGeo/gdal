@@ -152,6 +152,13 @@ man_pages = [
         1
     ),
     (
+        'programs/rgb2pct',
+        'rgb2pct',
+        u'Builds or rebuilds overview images.',
+        [author_evenr],
+        1
+    ),
+    (
         'programs/gnmmanage',
         'gnmmanage',
         u'Manages networks',
