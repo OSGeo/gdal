@@ -1,7 +1,7 @@
 .. _common_options:
 
 ================================================================================
-Common command line options
+Common options
 ================================================================================
 
 All GDAL command line programs support the following common general options.
