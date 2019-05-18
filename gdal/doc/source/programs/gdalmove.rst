@@ -23,15 +23,15 @@ Description
 
 The :program:`gdalmove.py` script transforms the bounds of a raster file from
 one coordinate system to another, and then updates the coordinate system and
-geotransform of the file. This is done without altering pixel values at all.
-It is loosely similar to using gdalwarp to transform an image but avoiding
-the resampling step in order to avoid image damage. It is generally only
-suitable for transformations that are effectively linear in the area of the file.
+geotransform of the file. This is done without altering pixel values at all. It
+is loosely similar to using gdalwarp to transform an image but avoiding the
+resampling step in order to avoid image damage. It is generally only suitable
+for transformations that are effectively linear in the area of the file.
 
 If no error threshold value (:option:`-et`) is provided then the file is not
-actually updated, but the errors that would be incurred are reported.
-If :option:`-et` is provided then the file is only modify if the apparent
-error being introduced is less than the indicate threshold (in pixels).
+actually updated, but the errors that would be incurred are reported. If
+:option:`-et` is provided then the file is only modify if the apparent error
+being introduced is less than the indicate threshold (in pixels).
 
 Currently the transformed geotransform is computed based on the transformation
 of the top left, top right, and bottom left corners. A reduced overall error
