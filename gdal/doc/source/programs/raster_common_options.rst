@@ -10,6 +10,7 @@ All GDAL command line programs support the following common options.
 
     Report the version of GDAL and exit.
 
+.. _raster_common_options_formats:
 .. option:: --formats
 
     List all raster formats supported by this GDAL build (read-only and read-write) and exit. The format support is indicated as follows: 'ro' is read-only driver; 'rw' is read or write (i.e. supports CreateCopy); 'rw+' is read, write and update (i.e. supports Create). A 'v' is appended for formats supporting virtual IO (/vsimem, /vsigzip, /vsizip, etc). A 's' is appended for formats supporting subdatasets. Note: The valid formats for the output of gdalwarp are formats that support the Create() method (marked as rw+), not just the CreateCopy() method.
@@ -58,20 +59,7 @@ and are introduced here.
         If not specified, the format is guessed from the extension.
         Previously, it was generally GTiff for raster, or ESRI Shapefile for vector.
 
-.. option:: -co <NAME=VALUE>
-
-    Many formats have one or more optional creation options that can be
-    used to control particulars about the file created. For instance,
-    the GeoTIFF driver supports creation options to control compression,
-    and whether the file should be tiled.
-
-    The creation options available vary by format driver, and some
-    simple formats have no creation options at all. A list of options
-    supported for a format can be listed with the :option:`--formats`
-    command line option but the web page for the format is the
-    definitive source of information on driver creation options.
-    See `format specific documentation for legal creation options for each
-    format <formats_list.html>`__
+.. include:: options/co.rst
 
 .. option:: -a_srs <srs>
 .. option:: -s_srs <srs>

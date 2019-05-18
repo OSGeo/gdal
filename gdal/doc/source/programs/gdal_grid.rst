@@ -42,15 +42,9 @@ computer.
 
 .. program:: gdaladdo
 
-.. option:: -ot <type>
+.. include:: options/ot.rst
 
-    For the output bands to be of the indicated data type.
-
-.. option:: -of <format>
-
-    Select the output format. Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was GTiff). Use the short format name.
+.. include:: options/of.rst
 
 .. option:: -txe <xmin> <xmax>
 
@@ -143,11 +137,7 @@ computer.
     An SQL statement to be evaluated against the datasource to produce a
     virtual layer of features to be processed.
 
-.. option:: -co NAME=VALUE
-
-    Passes a creation option to the output format driver.  Multiple
-    :option:`-co` options may be listed. See :ref:`raster_drivers` format
-    specific documentation for legal creation options for each format.
+.. include:: options/co.rst
 
 .. option:: -q
 

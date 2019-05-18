@@ -36,21 +36,11 @@ the last image will be copied over earlier ones.
     The name of the output file,
     which will be created if it does not already exist (defaults to "out.tif").
 
-.. option:: -of <format>
+.. include:: options/of.rst
 
-    Select the output format. Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was GTiff). Use the short format name.
+.. include:: options/co.rst
 
-.. option:: -co <NAME=VALUE>
-
-    Creation option for output file.  Multiple options can be specified.
-    See :ref:`raster_drivers` format
-    specific documentation for legal creation options for each format.
-
-.. option:: -ot <datatype>
-
-    Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
+.. include:: options/ot.rst
 
 .. option:: -ps <pixelsize_x> <pixelsize_y>
 

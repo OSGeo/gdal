@@ -50,21 +50,11 @@ raster for which the raster pixel value is in the set of target pixel values.
 
     Identifies the band in the destination file to use (default is 1).
 
-.. option:: -of <format>
+.. include:: options/of.rst
 
-    Select the output format. Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was GTiff). Use the short format name.
+.. include:: options/co.rst
 
-.. option:: -co NAME=VALUE
-
-    Passes a creation option to the output format driver.  Multiple
-    :option:`-co` options may be listed. See :ref:`raster_drivers` format
-    specific documentation for legal creation options for each format.
-
-.. option:: -ot <datatype>
-
-    Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
+.. include:: options/ot.rst
 
 .. option:: -values <n>,<n>,<n>
 

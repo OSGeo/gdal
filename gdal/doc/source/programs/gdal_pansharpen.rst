@@ -36,8 +36,8 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 .. option:: -of <format>:
 
     Select the output format. Starting with GDAL 2.3, if not specified,
-    the format is guessed from the extension (previously was GTiff). Use
-    the short format name. "VRT" can also be used.
+    the format is guessed from the extension (previously was ``GTiff``). Use
+    the short format name. ``VRT`` can also be used.
 
 .. option:: -b <band>
 
@@ -78,11 +78,7 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
     *SpatialExtentAdjustment* documentation in `VRT
     tutorial <gdal_vrttut.html#gdal_vrttut_pansharpen>`__
 
-.. option:: -co NAME=VALUE
-
-    Passes a creation option to the output format driver. Multiple
-    :option:`-co` options may be listed. See `format specific documentation
-    for legal creation options for each format <formats_list.html>`__.
+.. include:: options/co.rst
 
 .. option:: -q
 

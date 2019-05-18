@@ -102,11 +102,7 @@ raster data is only supported since GDAL 2.1.0.
 
     .. versionadded:: 2.1
 
-.. option:: -o <format>
-
-    Select the output format.  Starting with
-    GDAL 2.3, if not specified, the format is guessed from the extension (previously
-    was GTiff). Use the short format name.
+.. include:: options/of.rst
 
 .. option:: -a_nodata <value>
 
@@ -136,11 +132,7 @@ raster data is only supported since GDAL 2.1.0.
 
     .. versionadded:: 2.3
 
-.. option:: -co NAME=VALUE
-
-    Passes a creation option to the output format driver.  Multiple
-    :option:`-co` options may be listed. See :ref:`raster_drivers` format
-    specific documentation for legal creation options for each format.
+.. include:: options/co.rst
 
 .. option:: -te <xmin> <ymin> <xmax> <ymax>
 
@@ -166,7 +158,7 @@ raster data is only supported since GDAL 2.1.0.
 
 .. option:: -ot <type>
 
-    For the output bands to be of the indicated data type. Defaults to Float64
+    Force the output bands to be of the indicated data type. Defaults to ``Float64``
 
 .. option:: -q
 

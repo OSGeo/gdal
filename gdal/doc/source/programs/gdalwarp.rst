@@ -46,25 +46,13 @@ with control information.
 
     Set source spatial reference.
 
-    The coordinate systems that can be passed are anything supported by the
-    OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-    (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
-    containing well known text. Starting with GDAL 2.2, if the SRS has an explicit
-    vertical datum that points to a PROJ.4 geoidgrids, and the input dataset is a
-    single band dataset, a vertical correction will be applied to the values of the
-    dataset.
+    .. include:: options/srs_def_gdalwarp.rst
 
 .. option:: -t_srs <srs_def>
 
     Set target spatial reference.
 
-    The coordinate systems that can be passed are anything supported by the
-    OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
-    (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
-    containing well known text. Starting with GDAL 2.2, if the SRS has an explicit
-    vertical datum that points to a PROJ.4 geoidgrids, and the input dataset is a
-    single band dataset, a vertical correction will be applied to the values of the
-    dataset.
+    .. include:: options/srs_def_gdalwarp.rst
 
 .. option:: -ct <string>
 
@@ -168,10 +156,8 @@ with control information.
     Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
     Multiple :option:`-wo` options may be listed.
 
-.. option:: -ot <type>
+.. include:: options/ot.rst
 
-    For the output bands to be of the indicated data type.
-    
 .. option:: -wt <type>
 
     Working pixel data type. The data type of pixels in the source image and
@@ -258,15 +244,9 @@ with control information.
 
     Be quiet.
 
-.. option:: -of <format>
+.. include:: options/of.rst
 
-    Select the output format. Use the short format name. 
-
-.. option:: -co <"NAME=VALUE">
-
-    Passes a creation option to
-    the output format driver. Multiple :option:`-co` options may be listed. See
-    :ref:`format specific documentation <raster_drivers>` for legal creation options for each format.
+.. include:: options/co.rst
 
 .. option:: -cutline <datasource>
 

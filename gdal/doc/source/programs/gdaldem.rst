@@ -149,11 +149,7 @@ The following general options are available:
 
     Select an input band to be processed. Bands are numbered from 1.
 
-.. option:: -co <"NAME=VALUE">
-
-    Passes a creation option to the output format driver.
-    Multiple :option:`-co` options may be listed. See format specific
-    documentation for legal creation options for each format.
+.. include:: options/co.rst
 
 .. option:: -q
 

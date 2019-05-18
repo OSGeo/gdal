@@ -45,19 +45,11 @@ If your number of input tiles exhausts the command line buffer, use the general
     in  sub-directories  numbered  from  1. Created tile names have a numbering
     schema and contain the name of the source tiles(s)
 
-.. option:: -of <format>
+.. include:: options/of.rst
 
-    Output format, defaults to GeoTIFF (GTiff).
+.. include:: options/co.rst
 
-.. option:: -co
-
-    Passes a creation option to the output format driver.  Multiple
-    :option:`-co` options may be listed. See :ref:`raster_drivers` format
-    specific documentation for legal creation options for each format.
-
-.. option:: -ot <datatype>
-
-    Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
+.. include:: options/ot.rst
 
 .. option:: -ps <pixelsize_x> <pixelsize_y>
 

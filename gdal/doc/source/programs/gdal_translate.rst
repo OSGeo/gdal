@@ -44,20 +44,14 @@ resampling, and rescaling pixels in the process.
 
 .. program:: gdal_translate
 
-.. option:: -ot <type>
-
-    For the output bands to be of the indicated data type.
+.. include:: options/ot.rst
 
 .. option:: -strict
 
     Don't be forgiving of mismatches and lost data when translating to the
     output format.
 
-.. option:: -of <format>
-
-    Select the output format. Starting with GDAL 2.3, if not specified, the
-    format is guessed from the extension (previously was GTiff). Use the short
-    format name.
+.. include:: options/of.rst
 
 .. option:: -b <band>
 
@@ -221,11 +215,7 @@ resampling, and rescaling pixels in the process.
 
     Passes a metadata key and value to set on the output dataset if possible.
 
-.. option:: -co "NAME=VALUE"
-
-    Passes a creation option to the output format driver.  Multiple
-    :option:`-co` options may be listed. See :ref:`raster_drivers` format
-    specific documentation for legal creation options for each format.
+.. include:: options/co.rst
 
 .. option:: -nogcp
 
