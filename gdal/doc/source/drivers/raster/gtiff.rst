@@ -3,6 +3,12 @@
 GTiff -- GeoTIFF File Format
 ============================
 
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   wld
+
 Most forms of TIFF and GeoTIFF files are supported by GDAL for reading,
 and somewhat less varieties can be written.
 
@@ -34,8 +40,8 @@ Georeferencing from GeoTIFF is supported in the form of one tiepoint and
 pixel size, a transformation matrix, or a list of GCPs.
 
 If no georeferencing information is available in the TIFF file itself,
-GDAL will also check for, and use an ESRI `world
-file <frmt_various.html#WLD>`__ with the extension .tfw, .tifw/.tiffw or
+GDAL will also check for, and use an ESRI :ref:`world
+file <raster.wld>` with the extension .tfw, .tifw/.tiffw or
 .wld, as well as a MapInfo .tab file.
 
 By default, information is fetched in following order (first listed is
@@ -326,8 +332,7 @@ Creation Options
 ~~~~~~~~~~~~~~~~
 
 -  **TFW=YES**: Force the generation of an associated ESRI world file
-   (.tfw).See a `World Files <frmt_various.html#WLD>`__ section for
-   details.
+   (.tfw).See the :ref:`World Files <raster.wld>` page for details.
 
 -  **RPB=YES**: Force the generation of an associated .RPB file to
    describe RPC (Rational Polynomial Coefficients), if RPC information

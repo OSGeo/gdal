@@ -4,7 +4,7 @@ SAFE -- Sentinel-1 SAFE XML Product
 ===================================
 
 Driver for Sentinel products. Currently supports only Sentinel-1 SAR
-products. See also the `GDAL Sentinel-2 driver <frmt_sentinel2.html>`__
+products. See also the :ref:`GDAL Sentinel-2 driver <raster.sentinel2>`
 
 SENTINEL data products are distributed using a SENTINEL-specific
 variation of the Standard Archive Format for Europe (SAFE) format
@@ -253,4 +253,4 @@ See Also:
    Online) <https://sentinel.esa.int/web/sentinel/user-guides/sentinel-1-sar/data-formats/sar-formats>`__
 -  `SAFE Specification (ESA Sentinel
    Online) <https://sentinel.esa.int/web/sentinel/user-guides/sentinel-1-sar/data-formats/safe-specification>`__
--  `GDAL Sentinel-2 driver <frmt_sentinel2.html>`__
+-  :ref:`GDAL Sentinel-2 driver <raster.sentinel2>`

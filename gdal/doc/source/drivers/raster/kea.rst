@@ -90,4 +90,4 @@ See Also:
 -  `The KEAimage file format, by Peter Bunting and Sam Gillingham,
    published in
    Computers&Geosciences <http://www.sciencedirect.com/science/article/pii/S0098300413001015>`__
--  `HDF5 driver page <frmt_hdf5>`__
+-  :ref:`HDF5 driver page <raster.hdf5>`

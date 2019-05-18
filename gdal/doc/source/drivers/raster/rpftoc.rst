@@ -27,7 +27,7 @@ Result of a gdalinfo on a A.TOC file.
      SUBDATASET_13_NAME=NITF_TOC_ENTRY:CADRG_JNC_2M_8_13:GNCJNCN/rpf/a.toc
      SUBDATASET_13_DESC=CADRG:JNC:Jet Navigation Chart:2M:8:13
 
-In some situations, `NITF <frmt_nitf.html>`__ tiles inside a subdataset
+In some situations, :ref:`raster.nitf` tiles inside a subdataset
 don't share the same palettes. The RPFTOC driver will do its best to
 remap palettes to the reported palette by gdalinfo (which is the palette
 of the first tile of the subdataset). In situations where it would not
@@ -49,9 +49,6 @@ metadata, as well as the list of the NITF tiles of the subdataset.
 
 See Also:
 
--  `OGDI Bridge <frmt_ogdi.html>`__ : the RPFTOC driver gives an
-   equivalent functionality (without external dependency) to the RPF
-   driver from the OGDI library.
 -  `MIL-PRF-89038 <http://www.everyspec.com/MIL-PRF/MIL-PRF+%28080000+-+99999%29/MIL-PRF-89038_25371/>`__
    : specification of RPF, CADRG, CIB products
 

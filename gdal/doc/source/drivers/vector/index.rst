@@ -64,6 +64,7 @@ Vector drivers
    mvt
    mysql
    nas
+   netcdf
    ngw
    ntf
    oci

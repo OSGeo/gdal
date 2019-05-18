@@ -158,7 +158,6 @@ Raster drivers
    vrt
    wcs
    webp
-   wld
    wms
    wmts
    xpm

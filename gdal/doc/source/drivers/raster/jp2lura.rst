@@ -64,8 +64,10 @@ Creation Options
    2.0.1 <http://docs.opengeospatial.org/is/08-085r5/08-085r5.html>`__
    specification should be included in the file. *filename* must point
    to a file with a JSon content that defines how the GMLJP2 v2 box
-   should be built. See `JP2OpenJPEG page <frmt_jp2openjpeg.html>`__ for
-   syntax of the JSon configuration file. It is also possible to
+   should be built. See :ref:`GMLJP2v2 definition file
+   section <gmjp2v2def>` in documentation of
+   the JP2OpenJPEG driver for the syntax of the JSon configuration file.
+   It is also possible to
    directly pass the JSon content inlined as a string. If filename is
    just set to YES, a minimal instance will be built.
 -  **GeoJP2=YES/NO**: Indicates whether a UUID/GeoTIFF box conforming to
@@ -261,16 +263,16 @@ See Also:
 
 Other JPEG2000 GDAL drivers :
 
--  `JP2OpenJPEG: based on Openjpeg library (open
-   source) <frmt_jp2openjpeg.html>`__
+-  :ref:`JP2OpenJPEG: based on Openjpeg library (open
+   source) <raster.jp2openjpeg>`
 
--  `JPEG2000: based on Jasper library (open
-   source) <frmt_jpeg2000.html>`__
+-  :ref:`JPEG2000: based on Jasper library (open
+   source) <raster.jpeg2000>`
 
--  `JP2ECW: based on Erdas ECW library
-   (proprietary) <frmt_jp2ecw.html>`__
+-  :ref:`JP2ECW: based on Erdas ECW library
+   (proprietary) <raster.jp2ecw>`
 
--  `JP2MRSID: based on LizardTech MrSID library
-   (proprietary) <frmt_jp2mrsid.html>`__
+-  :ref:`JP2MRSID: based on LizardTech MrSID library
+   (proprietary) <raster.jp2mrsid>`
 
--  `JP2KAK: based on Kakadu library (proprietary) <frmt_jp2kak.html>`__
+-  :ref:`JP2KAK: based on Kakadu library (proprietary) <raster.jp2kak>`

@@ -336,4 +336,4 @@ See Also:
 ---------
 
 -  `OGC WMTS Standard <http://www.opengeospatial.org/standards/wmts>`__
--  `GDAL WMS driver documentation page <frmt_wms.html>`__
+-  :ref:`raster.wms` driver page.

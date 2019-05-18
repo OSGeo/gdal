@@ -530,13 +530,13 @@ See Also:
 
 Other JPEG2000 GDAL drivers :
 
--  `JPEG2000: based on Jasper library (open
-   source) <frmt_jpeg2000.html>`__
+-  :ref:`JPEG2000: based on Jasper library (open
+   source) <raster.jpeg2000>`
 
--  `JP2ECW: based on Erdas ECW library
-   (proprietary) <frmt_jp2ecw.html>`__
+-  :ref:`JP2ECW: based on Erdas ECW library
+   (proprietary) <raster.jp2ecw>`
 
--  `JP2MRSID: based on LizardTech MrSID library
-   (proprietary) <frmt_jp2mrsid.html>`__
+-  :ref:`JP2MRSID: based on LizardTech MrSID library
+   (proprietary) <raster.jp2mrsid>`
 
--  `JP2KAK: based on Kakadu library (proprietary) <frmt_jp2kak.html>`__
+-  :ref:`JP2KAK: based on Kakadu library (proprietary) <raster.jp2kak>`
