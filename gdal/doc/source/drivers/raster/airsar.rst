@@ -31,8 +31,8 @@ band descriptions.
 The AIRSAR product format includes (potentially) several headers of
 information. This information is captured and represented as metadata on
 the file as a whole. Information items from the main header are prefixed
-with "MH_", items from the parameter header are prefixed with "PH_" and
-information from the calibration header are prefixed with "CH_". The
+with "MH\_", items from the parameter header are prefixed with "PH\_" and
+information from the calibration header are prefixed with "CH\_". The
 metadata item names are derived automatically from the names of the
 fields within the header itself.
 

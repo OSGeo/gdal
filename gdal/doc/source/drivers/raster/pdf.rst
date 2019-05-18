@@ -11,7 +11,7 @@ documents will also be recognized by the driver.
 
 Starting with GDAL >= 1.10.0, PDF documents can be created from other
 GDAL raster datasets, and OGR datasources can also optionally be drawn
-on top of the raster layer (see OGR_\* creation options in the below
+on top of the raster layer (see OGR\_\* creation options in the below
 section).
 
 The driver supports reading georeferencing encoded in either of the 2

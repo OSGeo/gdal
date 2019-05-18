@@ -14,7 +14,7 @@ raster data on a small scales.
 
 PRF files has two variations: 'prf' for imagery data and 'x-dem' for
 elevation data. Files can be georeferenced, but projection information
-can be stored only in external files (*.prj).
+can be stored only in external files (\*.prj).
 
 Image format has the following structure:
 

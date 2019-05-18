@@ -86,7 +86,7 @@ The following attributes will always be present:
 Field name          Type      Meaning                                                                                                                Server-side filter compatible
 =================== ========= ====================================================================================================================== ==================================================
 name                String    Image name (e.g. projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)              No
-id                  String    Image ID; equivalent to name without the "projects/*/assets/" prefix (e.g. users/USER/ASSET)                           No
+id                  String    Image ID; equivalent to name without the "projects/\*/assets/" prefix (e.g. users/USER/ASSET)                          No
 path                String    (Deprecated) Image path; equivalent to id                                                                              No
 gdal_dataset        String    GDAL dataset name (e.g. EEDAI:projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG) No
                               that can be opened with the `Google Earth Engine Data API Image driver <frmt_eedai.html>`__                           

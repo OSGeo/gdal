@@ -5,7 +5,7 @@ MSG -- Meteosat Second Generation
 
 This driver implements reading support for Meteosat Second Generation
 files. These are files with names like
-H-000-MSG1__-MSG1________-HRV______-000007___-200405311115-C_, commonly
+H-000-MSG1\_\_-MSG1\_\_\_\_\_\_\_\_-HRV\_\_\_\_\_\_-000007\_\_\_-200405311115-C\_, commonly
 distributed into a folder structure with dates (e.g. 2004\05\31 for the
 file mentioned).
 

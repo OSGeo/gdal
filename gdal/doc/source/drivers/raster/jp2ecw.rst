@@ -153,7 +153,7 @@ impact decoding speed and compatibility with other JPEG2000 toolkits.
         </Metadata>
       </GDALMultiDomainMetadata>
 
-   If there are metadata domain whose name starts with "xml:BOX_", they
+   If there are metadata domain whose name starts with "xml:BOX\_", they
    will be written each as separate JP2 XML box.
 
    If there is a metadata domain whose name is "xml:XMP", its content

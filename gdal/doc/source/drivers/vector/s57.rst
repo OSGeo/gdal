@@ -190,7 +190,7 @@ see the S-57 standard for a more detailed description):
 -  **S57_NALL**: Lexical level used for the NATF fields. Default is 0.
    (GDAL >= 2.4)
 -  **S57_NOMR**: Number of meta records (objects with acronym starting
-   with "M_"). Default is 0.
+   with "M\_"). Default is 0.
 -  **S57_NOGR**: Number of geo records. Default is 0.
 -  **S57_NOLR**: Number of collection records. Default is 0.
 -  **S57_NOIN**: Number of isolated node records. Default is 0.

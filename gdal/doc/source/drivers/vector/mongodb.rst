@@ -94,7 +94,7 @@ The open options available are :
 -  **BULK_INSERT**\ =YES/NO. Whether to use bulk insert for feature
    creation. Defaults to YES.
 
-Note: the SSL_\* and FIPS_MODE options must be set to the same values
+Note: the SSL\_\* and FIPS_MODE options must be set to the same values
 when opening multiple types MongoDB databases. This is a limitation of
 the Mongo C++ driver.
 

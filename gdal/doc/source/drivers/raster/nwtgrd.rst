@@ -8,7 +8,7 @@ is also known as Vertical Mapper Grid or MapInfo Grid and is commonly
 used in MapInfo Pro software
 
 Full read/write support of \*.grd (grid) files is available, read-only
-support is available for classified grids (*.grc).
+support is available for classified grids (\*.grc).
 
 For writing, Float32 is the only supported band type.
 

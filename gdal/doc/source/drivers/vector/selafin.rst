@@ -64,9 +64,9 @@ one of the following types:
 | Element               | Internal              | Comments              |
 |                       | representation        |                       |
 +=======================+=======================+=======================+
-| Integer               | = = = =               | Integers are stored   |
-|                       | a b c d               | on 4 bytes in         |
-|                       | = = = =               | big-endian format     |
+| Integer               | a b c d               | Integers are stored   |
+|                       |                       | on 4 bytes in         |
+|                       |                       | big-endian format     |
 |                       |                       | (most significant     |
 |                       |                       | byte first). The      |
 |                       |                       | value of the integer  |
@@ -75,9 +75,9 @@ one of the following types:
 |                       |                       | p:`16`.b+2\ :sup:`8`. |
 |                       |                       | c+d.                  |
 +-----------------------+-----------------------+-----------------------+
-| Floating point        | = = = =               | Floating point values |
-|                       | a b c d               | are stored on 4 bytes |
-|                       | = = = =               | in IEEE 754 format    |
+| Floating point        | a b c d               | Floating point values |
+|                       |                       | are stored on 4 bytes |
+|                       |                       | in IEEE 754 format    |
 |                       |                       | and under big-endian  |
 |                       |                       | convention (most      |
 |                       |                       | significant byte      |
@@ -87,12 +87,12 @@ one of the following types:
 |                       |                       | first floating point  |
 |                       |                       | value is read.        |
 +-----------------------+-----------------------+-----------------------+
-| String                | ====== = = = = = ===  | Strings are stored in |
-|                       | ======                | three parts:          |
-|                       | Length 1 2 3 4 5 ...  |                       |
-|                       | Length                | -  an integer holding |
-|                       | ====== = = = = = ===  |    the length (in     |
-|                       | ======                |    characters) of the |
+| String                | Length 1 2 ... Length | Strings are stored in |
+|                       |                       | three parts:          |
+|                       |                       |                       |
+|                       |                       | -  an integer holding |
+|                       |                       |    the length (in     |
+|                       |                       |    characters) of the |
 |                       |                       |    string, over 4     |
 |                       |                       |    bytes;             |
 |                       |                       | -  the sequence of    |
@@ -105,12 +105,12 @@ one of the following types:
 |                       |                       |    the string         |
 |                       |                       |    repeated           |
 +-----------------------+-----------------------+-----------------------+
-| Array of integers     | ====== = = = === ==== | Arrays of integers    |
-|                       | ==                    | are stored in three   |
-|                       | Length 1 2 3 ... Leng | parts:                |
-|                       | th                    |                       |
-|                       | ====== = = = === ==== | -  an integer holding |
-|                       | ==                    |    the length (in     |
+| Array of integers     | Length 1 2 ... Length | Arrays of integers    |
+|                       |                       | are stored in three   |
+|                       |                       | parts:                |
+|                       |                       |                       |
+|                       |                       | -  an integer holding |
+|                       |                       |    the length (in     |
 |                       |                       |    bytes, thus 4      |
 |                       |                       |    times the number   |
 |                       |                       |    of elements) of    |
@@ -126,12 +126,12 @@ one of the following types:
 |                       |                       |    with the length of |
 |                       |                       |    the array repeated |
 +-----------------------+-----------------------+-----------------------+
-| Array of floating     | ====== = = = === ==== | Arrays of floating    |
-| point values          | ==                    | point values are      |
-|                       | Length 1 2 3 ... Leng | stored in three       |
-|                       | th                    | parts:                |
-|                       | ====== = = = === ==== |                       |
-|                       | ==                    | -  an integer holding |
+| Array of floating     | Length 1 2 ... Length | Arrays of floating    |
+| point values          |                       | point values are      |
+|                       |                       | stored in three       |
+|                       |                       | parts:                |
+|                       |                       |                       |
+|                       |                       | -  an integer holding |
 |                       |                       |    the length (in     |
 |                       |                       |    bytes, thus 4      |
 |                       |                       |    times the number   |

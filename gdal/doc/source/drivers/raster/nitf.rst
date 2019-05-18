@@ -59,7 +59,7 @@ Creation Options:
    ``"FTITLE=Image of abandoned missile silo south west of Karsk"`` in
    the creation option list would result in setting of the FTITLE field
    in the NITF file header. Use the official field names from the NITF
-   specification document; do not put the "NITF_" prefix that is
+   specification document; do not put the "NITF\_" prefix that is
    reported when asking the metadata list.
 -  **IC=NC/C3/M3/C8** : Set the compression method.
 

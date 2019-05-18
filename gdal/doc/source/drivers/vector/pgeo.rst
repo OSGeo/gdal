@@ -101,10 +101,10 @@ file.
    CPTimeout  =
    CPReuse    =
 
--  [Microsoft Access Driver (*.mdb)] - remember to use "Microsoft Access
-   Driver (*.mdb)" as the name of section because PGeo driver composes
+-  [Microsoft Access Driver (\*.mdb)] - remember to use "Microsoft Access
+   Driver (\*.mdb)" as the name of section because PGeo driver composes
    ODBC connection string for Personal Geodatabase using
-   "DRIVER=Microsoft Access Driver (*.mdb);" string.
+   "DRIVER=Microsoft Access Driver (\*.mdb);" string.
 -  Description - put short description of this driver definition.
 -  Driver - full path of ODBC driver for MDB Tools.
 

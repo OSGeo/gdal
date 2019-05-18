@@ -265,7 +265,7 @@ Creation Options
         </Metadata>
       </GDALMultiDomainMetadata>
 
-   If there are metadata domain whose name starts with "xml:BOX_", they
+   If there are metadata domain whose name starts with "xml:BOX\_", they
    will be written each as separate JP2 'xml ' box.
 
    If there is a metadata domain whose name is "xml:XMP", its content

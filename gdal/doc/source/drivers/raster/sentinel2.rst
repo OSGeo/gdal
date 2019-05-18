@@ -9,7 +9,7 @@ are also supported.
 
 The SENTINEL2 driver will be used if the main metadata .xml file at the
 root of a SENTINEL2 data product is opened (whose name is typically
-S2A_OPER_MTD_SAFL1C_....xml). It can also accept directly .zip files
+S2A_OPER_MTD_SAFL1C\_....xml). It can also accept directly .zip files
 downloaded from the `Sentinels Scientific Data
 Hub <https://scihub.copernicus.eu/>`__
 

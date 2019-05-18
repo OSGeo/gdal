@@ -23,7 +23,7 @@ Synopsis
                 [-s_srs srs_def] [-t_srs srs_def | -a_srs srs_def]
                 [-progress] [-skipfailures] [--help-general]
 
-Options specific to the :option:`-single` option:
+Options specific to the :ref:`-single <ogrmerge_single_option>` option:
 
 .. code-block::
 
@@ -50,32 +50,12 @@ There are essential two modes:
    assumes that the schema of those vector layers is more or less the
    same.
 
-Internally this generates a `VRT <drv_vrt.html>`__ file, and if the
+Internally this generates a :ref:`vector.vrt` file, and if the
 output format is not VRT, final translation is done with :program:`ogr2ogr`
 or :py:func:`gdal.VectorTranslate`. So, for advanced uses, output to VRT,
 potential manual editing of it and :program:`ogr2ogr` can be done.
 
-Merge several vector datasets into a single one.
-
-.. code-block::
-
-    ogrmerge.py -o <out_dsname> <src_dsname> [<src_dsname>]*
-                [-f format] [-single] [-nln layer_name_template]
-                [-update | -overwrite_ds] [-append | -overwrite_layer]
-                [-src_geom_type geom_type_name[,geom_type_name]*]
-                [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
-                [-s_srs srs_def] [-t_srs srs_def | -a_srs srs_def]
-                [-progress] [-skipfailures] [--help-general]
-
-    Options specific to -single:
-                [-field_strategy FirstLayer|Union|Intersection]
-                [-src_layer_field_name name]
-                [-src_layer_field_content layer_name_template]
-
-.. rubric::  DESCRIPTION
-   :name: description
-
-(Available since GDAL 2.2)
+.. program:: ogrmerge.py
 
 .. option:: -o <out_dsname
 
@@ -91,6 +71,7 @@ Merge several vector datasets into a single one.
     the format is guessed from the extension (previously was ESRI
     Shapefile). Use the short format name
 
+.. _ogrmerge_single_option:
 .. option:: -single
 
     If specified, all input vector layers will be merged into a single one.
