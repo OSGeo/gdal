@@ -42,5 +42,5 @@ See Also:
 ---------
 
 -  Implemented as ``gdal/frmts/pds/isis2dataset.cpp``.
--  `GDAL PDS Driver <frmt_pds.html>`__
--  `GDAL ISIS3 Driver <frmt_isis3.html>`__
+-  :ref:`raster.pds` driver
+-  :ref:`raster.isis3` driver

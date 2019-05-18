@@ -119,6 +119,7 @@ Raster drivers
    palsar
    paux
    pcidsk
+   pcraster
    pdf
    pds
    pds4
@@ -134,7 +135,7 @@ Raster drivers
    rik
    rmf
    roi_pac
-   rpf
+   rpftoc
    rraster
    rs2
    safe

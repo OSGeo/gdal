@@ -88,5 +88,5 @@ See Also:
 
 -  Implemented as ``gdal/frmts/pds/pdsdataset.cpp``.
 -  `NASA Planetary Data System <http://pds.nasa.gov/>`__
--  `GDAL ISIS2 Driver <frmt_isis2.html>`__
--  `GDAL ISIS3 Driver <frmt_isis3.html>`__
+-  :ref:`raster.isis2` driver.
+-  :ref:`raster.isis3` driver.

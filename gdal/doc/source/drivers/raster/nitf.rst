@@ -3,6 +3,12 @@
 NITF -- National Imagery Transmission Format
 ============================================
 
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   nitf_advanced
+
 GDAL supports reading of several subtypes of NITF image files, and
 writing simple NITF 2.1 files. NITF 1.1, NITF 2.0, NITF 2.1 and NSIF 1.0
 files with uncompressed, ARIDPCM, JPEG compressed, JPEG2000 (with
@@ -66,9 +72,8 @@ Creation Options:
    -  NC is the default value, and means no compression.
    -  C3 means JPEG compression and is only available for the
       CreateCopy() method. The QUALITY and PROGRESSIVE JPEG-specific
-      creation options can be used. See the `JPEG driver
-      documentation <frmt_jpeg.html>`__. Starting with GDAL 1.7.0,
-      multi-block images can be written.
+      creation options can be used. See the :ref:`raster.jpeg` driver.
+      Multi-block images can be written.
    -  M3 is a variation of C3. The only difference is that a block map
       is written, which allow for fast seeking to any block. (Starting
       with GDAL 1.7.0.)
@@ -77,20 +82,19 @@ Creation Options:
       available if the JP2ECW, JP2KAK, JP2OpenJPEG or Jasper driver are
       available (tried in that order when several ones are available)
 
-      -  `JP2ECW <frmt_jp2ecw.html>`__: The TARGET and PROFILE
+      -  :ref:`JP2ECW <raster.jp2ecw>`: The TARGET and PROFILE
          JP2ECW-specific creation options can be used. Both CreateCopy()
          and/or Create() methods are available. By default the NPJE
          PROFILE will be used (thus implying
          BLOCKXSIZE=BLOCKYSIZE=1024).
-      -  `JP2KAK <frmt_jp2kak.html>`__ : The QUALITY, BLOCKXSIZE,
+      -  :ref:`JP2KAK <raster.jp2kak>`: The QUALITY, BLOCKXSIZE,
          BLOCKYSIZE, LAYERS, ROI JP2KAK-specific creation options can be
          used. Only CreateCopy() method is available.
-      -  `JP2OpenJPEG <frmt_jp2openjpeg.html>`__ driver: starting with
-         GDAL 2.2.0, in the CreateCopy() case. The QUALITY, BLOCKXSIZE
+      -  :ref:`JP2OpenJPEG <raster.jp2openjpeg>`:
+         (only in the CreateCopy() case). The QUALITY, BLOCKXSIZE
          and BLOCKYSIZE JP2OpenJPEG-specific creation options can be
          used. By default BLOCKXSIZE=BLOCKYSIZE=1024 will be used.
-      -  Jasper JPEG2000 driver: starting with GDAL 1.7.0, in the
-         CreateCopy() case.
+      -  Jasper JPEG2000 driver: only in the CreateCopy() case.
 
 -  **NUMI=n** : (Starting with GDAL 1.7.0) Number of images. Default =
    1. This option is only compatible with IC=NC (uncompressed images).
@@ -150,16 +154,14 @@ Creation Options:
 Links
 -----
 
--  `Advanced GDAL NITF Driver Information <frmt_nitf_advanced.html>`__
+-  :ref:`Advanced GDAL NITF Driver Information <raster.nitf_advanced>`
 -  `NITFS Technical Board Public Page <http://www.gwg.nga.mil/ntb/>`__
 -  `DIGEST Part 2 Annex D (describe encoding of NITF Spatial Data
    Extensions) <http://www.gwg.nga.mil/ntb/baseline/docs/digest/part2_annex_d.pdf>`__
--  `RPFTOC <frmt_various.html#RPFTOC>`__ driver : to read the Table Of
-   Contents of CIB and CADRG products.
+-  :ref:`raster.rpftoc`: to read the Table Of  Contents of CIB and CADRG products.
 -  `MIL-PRF-89038 <http://www.everyspec.com/MIL-PRF/MIL-PRF+%28080000+-+99999%29/MIL-PRF-89038_25371/>`__
    : specification of RPF, CADRG, CIB products
--  `ECRGTOC <frmt_various.html#ECRGTOC>`__ driver : to read the Table Of
-   Contents of ECRG products.
+-  :ref:`raster.ecrgtoc`: to read the Table Of Contents of ECRG products.
 -  `MIL-PRF-32283 <http://www.everyspec.com/MIL-PRF/MIL-PRF+%28030000+-+79999%29/MIL-PRF-32283_26022/>`__
    : specification of ECRG products
 

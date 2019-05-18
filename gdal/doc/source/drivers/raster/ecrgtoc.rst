@@ -24,7 +24,7 @@ Result of a gdalinfo on a TOC.xml file.
 
 See Also:
 
--  `NITF driver <frmt_nitf.html>`__ : format of the ECRG frames
+-  :ref:`raster.nitf`: format of the ECRG frames
 -  `MIL-PRF-32283 <http://www.everyspec.com/MIL-PRF/MIL-PRF+%28030000+-+79999%29/MIL-PRF-32283_26022/>`__
    : specification of ECRG products
 

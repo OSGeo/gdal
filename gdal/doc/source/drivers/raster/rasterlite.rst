@@ -14,7 +14,7 @@ creating Rasterlite databases.
   overviews/pyramids, spatial reference system and spatial extent.
 
 Wavelet compressed tiles are not supported by default by GDAL, unless
-the `EPSILON <frmt_epsilon.html>`__ driver is compiled.
+the :ref:`raster.epsilon` driver is compiled.
 
 GDAL/OGR must be compiled with OGR SQLite driver support. For read
 support, linking against spatialite library is not required, but recent

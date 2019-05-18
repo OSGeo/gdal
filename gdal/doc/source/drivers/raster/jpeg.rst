@@ -322,6 +322,6 @@ See Also:
 
 -  `Independent JPEG Group <http://www.ijg.org/>`__
 -  `libjpeg-turbo <http://sourceforge.net/projects/libjpeg-turbo/>`__
--  `GDAL GeoTIFF driver <frmt_gtiff.html>`__
+-  :ref:`raster.gtiff`
 -  `EXIF v2.31
    specification <http://www.cipa.jp/std/documents/e/DC-008-Translation-2016-E.pdf>`__

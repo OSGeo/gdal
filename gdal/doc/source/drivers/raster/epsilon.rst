@@ -3,9 +3,8 @@
 Epsilon - Wavelet compressed images
 ===================================
 
-Starting with GDAL 1.7.0, GDAL can read and write wavelet-compressed
-images through the Epsilon library. Starting with GDAL 1.9.0, epsilon
-0.9.1 is required.
+GDAL can read and write wavelet-compressed
+images through the Epsilon library. epsilon 0.9.1 is required.
 
 The driver rely on the Open Source EPSILON library (dual LGPL/GPL
 licence v3). In its current state, the driver will only be able to read
@@ -14,8 +13,7 @@ images with regular internal tiling.
 The EPSILON driver only supports 1 band (grayscale) and 3 bands (RGB)
 images
 
-This is mainly intended to be used by the
-`Rasterlite <frmt_rasterlite.html>`__ driver.
+This is mainly intended to be used by the :ref:`raster.rasterlite` driver.
 
 Creation options
 ----------------

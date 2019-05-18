@@ -25,8 +25,7 @@ quality and high performance JPEG2000 library in wide used in the
 geospatial and general imaging community. However, it is not free, and
 so normally builds of GDAL from source will not include support for this
 driver unless the builder purchases a license for the library and
-configures accordingly. GDAL includes `another JPEG2000
-driver <frmt_jpeg2000.html>`__ based on the free JasPer library.
+configures accordingly.
 
 When reading images this driver will represent the bands as being Byte
 (8bit unsigned), 16 bit signed or 16 bit unsigned. Georeferencing and
@@ -133,8 +132,8 @@ Creation Options:
    2 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
    specification should be included in the file. *filename* must point
    to a file with a JSon content that defines how the GMLJP2 v2 box
-   should be built. See `GMLJP2v2 definition file
-   section <frmt_jp2openjpeg.html#GMLJP2v2Def>`__ in documentation of
+   should be built. See :ref:`GMLJP2v2 definition file
+   section <gmjp2v2def>` in documentation of
    the JP2OpenJPEG driver for the syntax of the JSon configuration file.
    It is also possible to directly pass the JSon content inlined as a
    string. If filename is just set to YES, a minimal instance will be
@@ -199,4 +198,4 @@ See Also:
    GDAL with eg.
    ``CXXFLAGS="-DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=3 -DKDU_PATCH_VERSION=2"``
    for Kakadu version 7.3.2.
--  Alternate `JPEG2000 driver <frmt_jpeg2000.html>`__.
+-  Alternate :ref:`raster.jp2openjpeg` driver.

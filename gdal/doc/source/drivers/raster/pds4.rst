@@ -400,5 +400,5 @@ See Also:
    documentation <https://pds.nasa.gov/pds4/doc/index.shtml>`__
 -  `Schemas, including the cartography
    extension <https://pds.nasa.gov/pds4/schema/released/>`__
--  `GDAL PDS Driver <frmt_pds.html>`__
--  `GDAL ISIS3 Driver <frmt_isis3.html>`__
+-  :ref:`raster.pds` driver.
+-  :ref:`raster.isis3` driver.

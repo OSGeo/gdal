@@ -19,7 +19,7 @@ The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands
 (RGBA) starting with GDAL 1.10 and libwebp 0.1.4.
 
 The WEBP driver can be used as the internal format used by the
-`Rasterlite <frmt_rasterlite.html>`__ driver.
+:ref:`raster.rasterlite` driver.
 
 Starting with GDAL 1.10, XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.

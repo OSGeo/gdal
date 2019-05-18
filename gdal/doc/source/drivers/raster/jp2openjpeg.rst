@@ -300,6 +300,8 @@ options are defined :
 -  REVERSIBLE=YES
 -  YCBCR420=NO (which is the default)
 
+.. _gmjp2v2def:
+
 GMLJP2v2 definition file
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -311,7 +313,7 @@ extension. The value of the GMLJP2V2_DEF creation option should be a
 file that conforms with the below syntax (elements starting with "#" are
 documentation, and can be omitted):
 
-::
+.. code-block:: json
 
    {
        "#doc" : "Unless otherwise specified, all elements are optional",

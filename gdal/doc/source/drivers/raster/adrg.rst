@@ -20,9 +20,6 @@ image, GDAL will open it directly.
 Overviews, legends and insets are not used. Polar zones (ARC zone 9 and
 18) are not supported (due to the lack of test data).
 
-This is an alternative to using the `OGDI Bridge <frmt_ogdi.html>`__ for
-ADRG datasets.
-
 See also : the `ADRG specification
 (MIL-A-89007) <http://earth-info.nga.mil/publications/specs/printed/89007/89007_ADRG.pdf>`__
 
