@@ -2,8 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = --keep-going -j auto
-# -W
+SPHINXOPTS    = --keep-going -j auto -W
 SPHINXBUILD   = sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
@@ -20,7 +19,7 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .doxygen_up_to_date:
-	mkdir -p build/xml && cd .. && ((cat Doxyfile; printf "GENERATE_HTML=NO\nGENERATE_XML=YES\nXML_OUTPUT=doc/build/xml\nXML_PROGRAMLISTING=NO") | doxygen -)
+	mkdir -p build/xml && cd .. && ((cat Doxyfile | sed "s/PREDEFINED             = /PREDEFINED             = DOXYGEN_XML /"; printf "GENERATE_HTML=NO\nGENERATE_XML=YES\nXML_OUTPUT=doc/build/xml\nXML_PROGRAMLISTING=NO") | doxygen -)
 	touch .doxygen_up_to_date
 
 .PHONY: html
