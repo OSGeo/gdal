@@ -67,14 +67,13 @@ Raster programs
 - :ref:`gdal_fillnodata`: Fill raster regions by interpolation from edges.
 - :ref:`gdallocationinfo`: Raster query tool
 - :ref:`gdalsrsinfo`: Lists info about a given SRS in number of formats (WKT, PROJ.4, etc.)
-- :ref:`gdalmove`
+- :ref:`gdalmove`: Transform georeferencing of raster file in place.
 - :ref:`gdal_edit`: Edit in place various information of an existing GDAL dataset.
 - :ref:`gdal_calc`: Command line raster calculator with numpy syntax.
 - :ref:`gdal_pansharpen`: Perform a pansharpen operation.
 - :ref:`gdal-config`: Determines various information about a GDAL installation.
 - :ref:`gdalmanage`: Identify, delete, rename and copy raster data files.
 - :ref:`gdalcompare`: Compare two images.
-
 
 Vector programs
 ---------------
