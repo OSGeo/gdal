@@ -1,12 +1,12 @@
-.. _vector.geopackage:
+.. _vector.gpkg:
 
 .. toctree::
    :hidden:
 
    aspatial
 
-GeoPackage vector
-=================
+GPKG -- GeoPackage vector
+=========================
 
 This driver implements support for access to spatial tables in the `OGC
 GeoPackage format
@@ -354,7 +354,7 @@ Examples
 See Also
 ~~~~~~~~
 
--  `GeoPackage raster <drv_geopackage_raster.html>`__ documentation page
+-  :ref:`GeoPackage raster <raster.gpkg>` documentation page
 -  `Getting Started With
    GeoPackage <http://www.geopackage.org/guidance/getting-started.html>`__
 -  `OGC GeoPackage format standard <http://www.geopackage.org/spec/>`__

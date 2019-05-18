@@ -1,9 +1,9 @@
-.. _raster.format:
+.. _raster.arcinfo_grid_format:
 
 Arc/Info Binary Grid Format
 ===========================
 
-*by*\ `Frank Warmerdam <http://pobox.com/~warmerdam>`__
+*by* `Frank Warmerdam <http://pobox.com/~warmerdam>`__
 (warmerdam@pobox.com)
 
 The Arc/Info Binary Grid format is the internal working format of the

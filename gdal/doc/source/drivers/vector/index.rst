@@ -37,12 +37,12 @@ Vector drivers
    geojson
    geojsonseq
    geomedia
-   geopackage
    georss
    gft
    gmlas
    gml
    gmt
+   gpkg
    gpsbabel
    gpx
    grass

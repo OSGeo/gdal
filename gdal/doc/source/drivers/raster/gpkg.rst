@@ -1,7 +1,7 @@
-.. raster.geopackage:
+.. _raster.gpkg:
 
-GeoPackage raster
-=================
+GPKG -- GeoPackage raster
+=========================
 
 Starting with GDAL 2.0, this driver implements full read/creation/update
 of tables containing raster tiles in the `OGC GeoPackage format
@@ -512,7 +512,7 @@ Examples
 See Also
 ~~~~~~~~
 
--  `GeoPackage vector <drv_geopackage.html>`__ documentation page
+-  :ref:`GeoPackage vector <vector.gpkg>` documentation page
 -  `Getting Started With
    GeoPackage <http://www.geopackage.org/guidance/getting-started.html>`__
 -  `OGC GeoPackage format standard <http://www.geopackage.org/spec/>`__
@@ -521,9 +521,9 @@ See Also
 -  `OGC GeoPackage Encoding
    Standard <http://www.opengeospatial.org/standards/geopackage>`__ page
 -  `SQLite <http://sqlite.org/>`__
--  `PNG driver <frmt_various.html#PNG>`__ documentation page
--  `JPEG driver <frmt_jpeg.html>`__ documentation page
--  `WEBP driver <frmt_webp.html>`__ documentation page
+-  :ref:`PNG driver <raster.png>` documentation page
+-  :ref:`JPEG driver <raster.jpeg>` documentation page
+-  :ref:`WEBP driver <raster.webp>` documentation page
 -  `OGC 07-057r7 WMTS
    1.0 <http://portal.opengeospatial.org/files/?artifact_id=35326>`__
    specification

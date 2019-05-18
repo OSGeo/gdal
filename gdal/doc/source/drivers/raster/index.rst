@@ -7,40 +7,81 @@ Raster drivers
 .. toctree::
    :maxdepth: 1
 
+   aaigrid
+   ace2
+   adrg
+   aig
    airsar
+   arg
    bag
    blx
    bmp
+   bpg
+   bsb
+   bt
    byn
+   cad
    cals
+   ceos
+   coasp
    cosar
+   cpg
+   ctable2
+   ctg
    daas
+   dds
    derived
+   dimap
+   dipex
    dods
+   doq1
+   doq2
    dted
+   e00grid
+   ecrgtoc
    ecw
    eedai
+   ehdr
+   eir
    elas
+   envi
    epsilon
+   esat
    ers
    fast
-   format
-   geopackage
+   fit
+   fits
+   fujibas
+   genbin
    georaster
+   gff
    gif
+   gmt
+   gpkg
    grass
+   grassasciigrid
    grib
+   gs7bg
+   gsag
+   gsbg
+   gsc
    gta
    gtiff
+   gxf
    hdf4
    hdf5
    hf2
    hfa
+   ida
    Idrisi
+   ignfheightasciigrid
    ilwis
    intergraphraster
+   iris
+   isce
    isis2
    isis3
+   jdem
    jp2ecw
    jp2kak
    jp2lura
@@ -51,49 +92,75 @@ Raster drivers
    jpeg
    jpipkak
    kea
+   kmlsuperoverlay
+   kro
+   lan
    l1b
    lcp
    leveller
-   list
+   loslas
    map
    marfa
    mbtiles
    mem
+   mff
    mff2
    mrsid
-   msgn
    msg
+   msgn
+   ndf
    netcdf
    ngsgeoid
    nitf
+   ntv1
+   ntv2
    nwtgrd
    ozi
    palsar
+   paux
    pcidsk
    pdf
-   pds4
    pds
+   pds4
    plmosaic
+   png
+   pnm
    postgisraster
    prf
    rasdaman
    rasterlite
+   r
    rda
    rik
    rmf
-   r
+   roi_pac
+   rpf
+   rraster
    rs2
    safe
+   sar_ceos
+   sdat
+   sdts
    sde
    sentinel2
+   sgi
+   sigdem
+   snodas
+   srp
+   srtmhgt
    terragen
+   til
    tiledb
+   tsx
    usgsdem
-   various
+   vicar
    vrt
    wcs
    webp
+   wld
    wms
    wmts
+   xpm
    xyz
+   zmap
 

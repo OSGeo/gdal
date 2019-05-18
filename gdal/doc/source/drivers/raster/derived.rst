@@ -241,5 +241,4 @@ still reachable with the syntax presented above.
 See Also:
 ---------
 
--  `Using Derived Bands part of the GDAL VRT
-   tutorial <http://gdal.org/gdal_vrttut.html#gdal_vrttut_creation>`__
+-  :ref:`Using Derived Bands part of the GDAL VRT tutorial <vrt_derived_bands>`

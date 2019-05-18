@@ -669,6 +669,8 @@ should be specified with the above SetMetadata() / SetMetadataItem() examples.
 
   delete poVRTDS;
 
+.. _vrt_derived_bands:
+
 Using Derived Bands (with pixel functions in C/C++)
 ---------------------------------------------------
 

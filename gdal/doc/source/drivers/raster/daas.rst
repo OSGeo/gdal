@@ -3,7 +3,7 @@
 DAAS (Airbus DS Intelligence Data As A Service driver)
 ======================================================
 
-(GDAL/OGR >= 3.0)
+.. versionadded:: 3.0
 
 This driver can connect to the Airbus DS Intelligence Data As A Service
 API. GDAL/OGR must be built with Curl support in order for the DAAS

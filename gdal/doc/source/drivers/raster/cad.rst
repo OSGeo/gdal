@@ -1,0 +1,16 @@
+.. _raster.cad:
+
+CAD -- AutoCAD DWG raster layer
+-------------------------------
+
+(GDAL >= 2.2.0)
+
+OGR DWG support is based on libopencad, so the list of supported DWG
+(DXF) versions can be seen in libopencad documentation. All drawing
+entities are separated into layers as they are in DWG file. The rasters
+are usually a separate georeferenced files (GeoTiff, Jpeg, Png etc.)
+which exist in DWG file as separate layers. The driver try to get
+spatial reference and other methadata from DWG Image description and set
+it to GDALDataset.
+
+NOTE: Implemented as ``ogr/ogrsf_frmts/cad/gdalcaddataset.cpp``.

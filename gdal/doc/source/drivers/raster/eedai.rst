@@ -1,9 +1,9 @@
 .. _raster.eedai:
 
-Google Earth Engine Data API Image
-==================================
+EEDAI - Google Earth Engine Data API Image
+==========================================
 
-GDAL/OGR >= 2.4
+.. versionadded:: 2.4
 
 The driver supports read-only operations to access image content, using
 Google Earth Engine REST API.

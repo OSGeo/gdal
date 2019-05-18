@@ -20,11 +20,15 @@ def gather_redirects():
         files = os.listdir(path)
         for f in files:
             driver = f.split('.')[0]
-            entry = {'%s_%s.html'% (prefix,driver) : os.path.join(path,driver)+'.html' }
-            d.update(entry)
+            if driver not in 'gpkg':
+                entry = {'%s_%s.html'% (prefix,driver) : os.path.join(path,driver)+'.html' }
+                d.update(entry)
 
     fetch('./drivers/raster', output, 'frmt')
     fetch('./drivers/vector', output, 'drv')
+
+    output.update({ 'drv_geopackage.html' : os.path.join('./drivers/vector', 'gpkg') + '.html' })
+    output.update({ 'drv_geopackage_raster.html' : os.path.join('./drivers/raster', 'gpkg') + '.html' })
 
     return output
 
