@@ -310,8 +310,12 @@ VSIDIR CPL_DLL *VSIOpenDir( const char *pszPath,
                             int nRecurseDepth,
                             const char* const *papszOptions);
 
+/*! @cond Doxygen_Suppress */
+typedef struct VSIDIREntry VSIDIREntry;
+/*! @endcond */
+
 /** Directory entry. */
-typedef struct VSIDIREntry
+struct VSIDIREntry
 {
     /** Filename */
     char*        pszName;
@@ -338,7 +342,7 @@ typedef struct VSIDIREntry
     VSIDIREntry& operator=(VSIDIREntry&) = delete;
 /*! @endcond */
 #endif
-} VSIDIREntry;
+};
 
 const VSIDIREntry CPL_DLL *VSIGetNextDirEntry(VSIDIR* dir);
 void CPL_DLL VSICloseDir(VSIDIR* dir);

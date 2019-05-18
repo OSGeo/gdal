@@ -1832,6 +1832,18 @@ def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_RPC_FOOTPRINT():
         cs = dstDS.GetRasterBand(1).Checksum()
         assert cs == 53230
 
+
+###############################################################################
+# Test warping from EPSG:4326 to EPSG:3857
+
+def test_gdalwarp_lib_bug_4326_to_3857():
+
+    ds = gdal.Warp('', 'data/test_bug_4326_to_3857.tif',
+              options = '-f MEM -t_srs EPSG:3857 -ts 20 20')
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 4672
+
+
 ###############################################################################
 # Cleanup
 

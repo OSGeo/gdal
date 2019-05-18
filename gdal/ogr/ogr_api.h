@@ -66,6 +66,7 @@ typedef void *OGRGeometryH;
 #define DEFINED_OGRSpatialReferenceH
 /*! @endcond */
 
+#ifndef DOXYGEN_XML
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
 typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
@@ -74,6 +75,7 @@ typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
 typedef void *OGRSpatialReferenceH;
 /** Opaque type for a coordinate transformation object */
 typedef void *OGRCoordinateTransformationH;
+#endif
 #endif
 
 #endif /* DEFINED_OGRSpatialReferenceH */
