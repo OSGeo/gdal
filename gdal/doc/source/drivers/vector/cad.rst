@@ -1,15 +1,16 @@
 .. _vector.cad:
 
+================================================================================
 AutoCAD DWG
-===========
+================================================================================
 
-OGR DWG support is based on libopencad, so the list of supported DWG
-(DXF) versions can be seen in libopencad documentation. All drawing
-entities are separated into layers as they are in DWG file, not in 1
-layer as DXF Driver does.
+OGR DWG support is based on libopencad, so the list of supported DWG (DXF)
+versions can be seen in libopencad documentation. All drawing entities are
+separated into layers as they are in DWG file, not in 1 layer as DXF Driver
+does.
 
-DWG files are considered to have no georeferencing information through
-OGR. Features will all have the following generic attributes:
+DWG files are considered to have no georeferencing information through OGR.
+Features will all have the following generic attributes:
 
 -  CADGeometry: CAD Type of the presented geometry.
 -  Thickness: Thickness of the object drawing units (if it is not
@@ -32,8 +33,8 @@ The following element types are supported:
 
 The driver is read-only.
 
-See also:
+See Also
+--------
 
--  `ODA DWG
-   Reference <https://www.opendesign.com/files/guestdownloads/OpenDesign_Specification_for_.dwg_files.pdf>`__
+-  `ODA DWG Reference <https://www.opendesign.com/files/guestdownloads/OpenDesign_Specification_for_.dwg_files.pdf>`__
 -  `Libopencad repository <https://github.com/sandyre/libopencad>`__

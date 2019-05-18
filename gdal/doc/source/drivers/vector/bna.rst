@@ -1,56 +1,53 @@
 .. _vector.bna:
 
+================================================================================
 BNA - Atlas BNA
-===============
+================================================================================
 
-The BNA format is an ASCII exchange format for 2D vector data supported
-by many software packages. It only contains geometry and a few
-identifiers per record. Attributes must be stored into external files.
-It does not support any coordinate system information.
+The BNA format is an ASCII exchange format for 2D vector data supported by many
+software packages. It only contains geometry and a few identifiers per record.
+Attributes must be stored into external files. It does not support any
+coordinate system information.
 
 OGR has support for BNA reading and writing.
 
-The OGR driver supports reading and writing of all the BNA feature types
-:
+The OGR driver supports reading and writing of all the BNA feature types:
 
--  points
--  polygons
--  lines
--  ellipses/circles
+- points
+- polygons
+- lines
+- ellipses/circles
 
-As the BNA format is lacking from a formal specification, there can be
-various forms of BNA data files. The OGR driver does it best to parse
-BNA datasets and supports single line or multi line record formats,
-records with 2, 3 or 4 identifiers, etc etc. If you have a BNA data file
-that cannot be parsed correctly by the BNA driver, please report on the
-GDAL track system.
+As the BNA format is lacking from a formal specification, there can be various
+forms of BNA data files. The OGR driver does it best to parse BNA datasets and
+supports single line or multi line record formats, records with 2, 3 or 4
+identifiers, etc etc. If you have a BNA data file that cannot be parsed
+correctly by the BNA driver, please report on the GDAL track system.
 
-To be recognized as BNA, the file extension must be ".bna". When reading
-a BNA file, the driver will scan it entirely to find out which layers
-are available. If the file name is foo.bna, the layers will be named
-foo_points, foo_polygons, foo_lines and foo_ellipses.
+To be recognized as BNA, the file extension must be ".bna". When reading a BNA
+file, the driver will scan it entirely to find out which layers are available.
+If the file name is foo.bna, the layers will be named foo_points, foo_polygons,
+foo_lines and foo_ellipses.
 
-The BNA driver support reading of polygons with holes or lakes. It
-determines what is a hole or a lake only from geometrical analysis
-(inclusion, non-intersection tests) and ignores completely the notion of
-polygon winding (whether the polygon edges are described clockwise or
-counter-clockwise). GDAL must be built with GEOS enabled to make
-geometry test work. Polygons are exposed as multipolygons in the OGR
-Simple Feature model.
+The BNA driver support reading of polygons with holes or lakes. It determines
+what is a hole or a lake only from geometrical analysis (inclusion,
+non-intersection tests) and ignores completely the notion of polygon winding
+(whether the polygon edges are described clockwise or counter-clockwise). GDAL
+must be built with GEOS enabled to make geometry test work. Polygons are
+exposed as multipolygons in the OGR Simple Feature model.
 
 Ellipses and circles are discretized as polygons with 360 points.
 
 Creation Issues
 ---------------
 
-On export all layers are written to a single BNA file. Update of
-existing files is not currently supported.
+On export all layers are written to a single BNA file. Update of existing files
+is not currently supported.
 
-If the output file already exits, the writing will not occur. You have
-to delete the existing file first.
+If the output file already exits, the writing will not occur. You have to
+delete the existing file first.
 
-The BNA writer supports the following creation options (dataset
-options):
+The BNA writer supports the following creation options (dataset options):
 
 -  **LINEFORMAT**: By default when creating new .BNA files they are
    created with the line termination conventions of the local platform
@@ -84,7 +81,9 @@ options):
 VSI Virtual File System API support
 -----------------------------------
 
-(Some features below might require OGR >= 1.9.0)
+.. versionadded:: 1.9.0
+
+    Some features below might require OGR >= 1.9.0
 
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which include "regular" files, as well as files in the
@@ -98,24 +97,21 @@ Example
 
 The ogrinfo utility can be used to dump the content of a BNA datafile :
 
-::
+.. code-block::
 
    ogrinfo -ro -al a_bna_file.bna
 
 The ogr2ogr utility can be used to do BNA to BNA translation :
 
-::
+.. code-block::
 
    ogr2ogr -f BNA -dsco "NB_IDS=2" -dsco "ELLIPSES_AS_ELLIPSES=NO" output.bna input.bna
 
 See Also
 --------
 
--  `Description of the BNA file
-   format <http://www.softwright.com/faq/support/boundary_file_bna_format.html>`__
--  `Another description of the BNA file
-   format <http://64.145.236.125/forum/topic.asp?topic_id=1930&forum_id=1&Topic_Title=how+to+edit+*.bna+files%3F&forum_title=Surfer+Support&M=False>`__
--  `Archive of Census Related Products
-   (ACRP) <http://sedac.ciesin.org/plue/cenguide.html>`__ : downloadable
+-  `Description of the BNA file format <http://www.softwright.com/faq/support/boundary_file_bna_format.html>`__
+-  `Another description of the BNA file format <http://64.145.236.125/forum/topic.asp?topic_id=1930&forum_id=1&Topic_Title=how+to+edit+*.bna+files%3F&forum_title=Surfer+Support&M=False>`__
+-  `Archive of Census Related Products (ACRP) <http://sedac.ciesin.org/plue/cenguide.html>`__ : downloadable
    BNA datasets of boundary files based on TIGER 1992 files containing
    U.S. census geographies
