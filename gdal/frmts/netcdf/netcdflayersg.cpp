@@ -8,7 +8,7 @@
 
 namespace nccfdriver
 {
-	OGRwkbGeometryType RawToOGR(geom_t type)
+	static OGRwkbGeometryType RawToOGR(geom_t type)
 	{
 		OGRwkbGeometryType ret = wkbNone;
 
@@ -54,7 +54,17 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 
 	for(size_t itr = 0; itr < vidList.size(); itr++)
 	{
-		LoadSGVarIntoLayer(ncid, vidList[itr]);
+		try
+		{
+			LoadSGVarIntoLayer(ncid, vidList[itr]);
+
+		}
+		
+		catch(nccfdriver::SG_Exception * e)
+		{
+			CPLError(CE_Warning, CPLE_NotSupported, "Translation of a simple geometry layer has been terminated due to an error: %s", e->get_err_msg());
+			delete e;
+		}
 	}
 
 	return CE_None;
@@ -72,12 +82,12 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	if(owgt == wkbNone)
 	{
 		delete sg;
-		return CE_None;	// change to appropriate error
+		throw new nccfdriver::SG_Exception_BadFeature();
 	}
 	
 
-	char baseName[NC_MAX_CHAR];
-	memset(baseName, 0, NC_MAX_CHAR);
+	char baseName[NC_MAX_CHAR + 1];
+	memset(baseName, 0, NC_MAX_CHAR + 1);
 	nc_inq_varname(ncid, nc_basevarId, baseName);
 
 	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr);
@@ -98,30 +108,38 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	{
 		OGRGeometry * featureDesc;
 
-		switch(owgt)
-		{		
-			case wkbPoint:
-				featureDesc = new OGRPoint;
-				break;
-			case wkbLineString:
-				featureDesc = new OGRLineString;	
-				break;
-			case wkbPolygon:
-				featureDesc = new OGRPolygon;
-				break;
-			case wkbMultiPoint:
-				featureDesc = new OGRMultiPoint;
-				break;
-			case wkbMultiLineString:
-				featureDesc = new OGRMultiLineString;
-				break;
-			case wkbMultiPolygon:
-				featureDesc = new OGRMultiPolygon;
-				break;
-			default:
-				// Unsupported feature type?
-				// Still: to crash
-				break;
+		try
+		{
+			switch(owgt)
+			{		
+				case wkbPoint:
+					featureDesc = new OGRPoint;
+					break;
+				case wkbLineString:
+					featureDesc = new OGRLineString;	
+					break;
+				case wkbPolygon:
+					featureDesc = new OGRPolygon;
+					break;
+				case wkbMultiPoint:
+					featureDesc = new OGRMultiPoint;
+					break;
+				case wkbMultiLineString:
+					featureDesc = new OGRMultiLineString;
+					break;
+				case wkbMultiPolygon:
+					featureDesc = new OGRMultiPolygon;
+					break;
+				default:
+					throw new nccfdriver::SG_Exception_BadFeature();
+					break;
+			}
+		}
+		// This may be unncessary, given the check previously...
+		catch(nccfdriver::SG_Exception * e)
+		{
+			delete poL;
+			throw;
 		}
 
 		int out; size_t r_size = 0;
@@ -148,14 +166,15 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		}
 		
 		// Fill fields
-		for(int itr = 0; itr < props.size(); itr++)
+		for(size_t itr = 0; itr < props.size(); itr++)
 		{
-					
+			// to do: add check to fill only as fields are defined	
 			poL->FillFeatureFromVar(feat, dimId, featCt);
 		}
 
 		feat -> SetFID(featCt);
-		delete wkb_rep;
+		char * wkb_rep_del = (char*)wkb_rep; // no compiler warning then
+		delete wkb_rep_del;
 		poL->AddSimpleGeometryFeature(feat);
 	}
 

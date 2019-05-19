@@ -10,7 +10,7 @@
 //
 // Author: wchen329
 namespace nccfdriver
-{
+{	
 	// Enum used for easily identifying Geometry types
 	enum geom_t
 	{
@@ -45,9 +45,10 @@ namespace nccfdriver
 	// as a pseudo reference to a NC variable
 	class SGeometry
 	{
+		char * container_name;	// name of the underlying geometry container
 		geom_t type;	 	// internal geometry type structure
 		int ncid;		// ncid - as used in netcdf.h
-		int gc_varId;		// the name of the underlying geometry_container variable
+		int gc_varId;		// the id of the underlying geometry_container variable
 		int touple_order;	// amount of "coordinates" in a point
 		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
 		std::vector<int> node_counts;	// node counts of each geometry in a container
@@ -57,7 +58,7 @@ namespace nccfdriver
 		std::vector<int> pnc_bl;	// a quick list of indicies for part counts corresponding to a geometry
 		std::vector<int> parts_count;	// a count of total parts in a single geometry instance
 		std::vector<int> poly_count;	// count of polygons, for use only when interior rings are present
-		size_t current_vert_ind;	// used to keep track of current point being used
+		int current_vert_ind;	// used to keep track of current point being used
 		size_t cur_geometry_ind;	// used to keep track of current geometry index
 		size_t cur_part_ind;		// used to keep track of current part index
 		bool interior;		// interior ring = true. only meaningful for polygons
@@ -154,6 +155,82 @@ namespace nccfdriver
 			std::vector<std::string> headers(int cont_lookup);
 			std::vector<int> ids(int cont_lookup);
 			SGeometry_PropertyReader(int ncid) : max_seek(0), nc(ncid) {}
+	};
+
+	// General exception interface for Simple Geometries
+	// Whatever pointer returned should NOT be freed- it will be deconstructed automatically, if needed
+	class SG_Exception
+	{
+		public:
+			virtual char * get_err_msg() = 0;	
+			virtual ~SG_Exception();
+	};
+
+	// Mismatched dimension exception
+	class SG_Exception_Dim_MM : public SG_Exception
+	{
+		char * err_msg;	
+		SG_Exception_Dim_MM(SG_Exception_Dim_MM&);
+		SG_Exception_Dim_MM& operator=(SG_Exception_Dim_MM&);
+
+		public:
+			char* get_err_msg() override { return err_msg; }
+
+		SG_Exception_Dim_MM(char* geometry_container, const char* field_1, const char *field_2);
+		~SG_Exception_Dim_MM(){ delete[] err_msg; }
+	};
+
+	// Missing (existential) property error
+	class SG_Exception_Existential: public SG_Exception
+	{
+		char * err_msg;
+		SG_Exception_Existential(SG_Exception_Existential&);
+		SG_Exception_Existential& operator=(SG_Exception_Existential&);
+
+		public:
+			char* get_err_msg() override { return err_msg; }
+		
+		SG_Exception_Existential(char* geometry_container, const char* missing_name);
+		~SG_Exception_Existential(){ delete[] err_msg; }
+	};
+
+	// Missing dependent property (arg_1 is dependent on arg_2)
+	class SG_Exception_Dep: public SG_Exception
+	{
+		char * err_msg;
+		SG_Exception_Dep(SG_Exception_Dep&);
+		SG_Exception_Dep& operator=(SG_Exception_Dep&);
+
+		public:
+			char* get_err_msg() override { return err_msg; }
+		
+		SG_Exception_Dep(char* geometry_container, const char* arg_1, const char* arg_2);
+		~SG_Exception_Dep(){ delete[] err_msg; }
+	};
+
+	// The sum of all values in a variable does not match the sum of another variable
+	class SG_Exception_BadSum : public SG_Exception
+	{
+		char * err_msg;
+		SG_Exception_BadSum(SG_Exception_BadSum&);
+		SG_Exception_BadSum& operator=(SG_Exception_BadSum&);
+
+		public:
+			char* get_err_msg() override { return err_msg; }
+		
+		SG_Exception_BadSum(char* geometry_container, const char* arg_1, const char* arg_2);
+		~SG_Exception_BadSum(){ delete[] err_msg; }
+	};
+
+	// Unsupported Feature Type
+	class SG_Exception_BadFeature : public SG_Exception
+	{
+		const char * err_msg;
+
+		public:
+			char* get_err_msg() override { return (char*)err_msg; }
+		
+		SG_Exception_BadFeature() : err_msg("Unsupported or unrecognized feature type.") {}
 	};
 
 	// Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h

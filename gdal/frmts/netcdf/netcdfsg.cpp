@@ -59,13 +59,21 @@ namespace nccfdriver
 	{
 
 		char * cart = nullptr;
+		this->pt_buffer = nullptr;
+		this->container_name = new char[NC_MAX_NAME + 1];
+
+		// Get geometry container name
+		if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
+		{
+			throw new SG_Exception_Existential((char*)"new geometry container:", "the variable of the given ID"); 	
+		}
 
 		// Find geometry type
 		this->type = nccfdriver::getGeometryType(ncId, geoVarId); 
 
 		// Find a list of node counts and part node count
 		char * nc_name = nullptr; char * pnc_name = nullptr; char * inter_name = nullptr; char * ir_name = nullptr;
-		int pnc_vid = -2; int nc_vid = -2; int inter_vid = -2; int ir_vid = -2;
+		int pnc_vid = -2; int nc_vid = -2; int ir_vid = -2;
 		size_t bound = 0; int buf;
 		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) != nullptr)
 		{
@@ -106,6 +114,47 @@ namespace nccfdriver
 		delete[] inter_name;
 		delete[] ir_name;
 
+		/* Enforcement of well formed CF files
+		 * If these are not met then the dataset is malformed and will halt further processing of
+		 * simple geometries. (Slightly permissive, letts other netCDF items to be processed)
+		 */
+
+		// part node count exists only when node count exists
+		if(pnode_counts.size() > 0 && node_counts.size() == 0)
+		{
+			throw new SG_Exception_Dep(container_name, CF_SG_NODE_COUNT, CF_SG_PART_NODE_COUNT);
+		}
+
+		// interior rings only exist when part node counts exist
+		if(int_rings.size() > 0 && pnode_counts.size() == 0)
+		{
+			throw new SG_Exception_Dep(container_name, CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
+		}	
+
+	
+		// cardinality of part_node_counts == cardinality of interior_ring (if interior ring > 0)
+		if(int_rings.size() > 0)
+		{
+			if(int_rings.size() != pnode_counts.size())
+			{
+				throw new SG_Exception_Dim_MM(container_name, CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
+			}
+		}
+
+		// cardinality of node_counts == cardinality of x and y node_coordinates
+
+		// lines and polygons require node_counts, multipolygons are checked with part_node_count
+		if(this->type == POLYGON || this->type == LINE)
+		{
+			if(node_counts.size() < 1)
+			{
+				throw new SG_Exception_Existential(container_name, CF_SG_NODE_COUNT);
+			}
+		}
+
+		/* Safety checks End
+		 */
+
 		// Create bound list
 		int rc = 0;
 		bound_list.push_back(0);// start with 0
@@ -122,7 +171,7 @@ namespace nccfdriver
 		// Node Coordinates
 		if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr)
 		{
-			return;
+			throw new SG_Exception_Existential(container_name, CF_SG_NODE_COORDINATES);
 		}	
 
 		// Create parts count list and an offset list for parts indexing	
@@ -150,7 +199,7 @@ namespace nccfdriver
 				else if(prog > node_counts[ind])
 				{
 					delete[] cart;
-					return;
+					throw new SG_Exception_BadSum(container_name, CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
 				}
 			} 
 		}
@@ -168,8 +217,7 @@ namespace nccfdriver
 				this->nodec_varIds.push_back(axis_id);
 			}
 
-			dim = strtok(NULL, " ");
-
+			dim = strtok(NULL, " "); 
 		}
 
 		delete[] cart;
@@ -187,6 +235,7 @@ namespace nccfdriver
 
 	SGeometry::~SGeometry()
 	{
+		delete[] this->container_name;
 		delete this->pt_buffer;
 	}
 
@@ -421,113 +470,118 @@ namespace nccfdriver
 				break;
 
 			case MULTIPOLYGON:
-				int32_t header = 1;
-				int32_t t = wkbMultiPolygon;
-				bool noInteriors = this->int_rings.size() == 0 ? true : false;
-				int32_t rc = parts_count[featureInd];
-				int seek_begin = bound_list[featureInd];
-				int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous		
-				wkbSize = 1 + 4 + 4;
-				std::vector<int> pnc;
-
-				// Build sub vector for part_node_counts
-				for(int itr = 0; itr < rc; itr++)
 				{
-					pnc.push_back(pnode_counts[pc_begin + itr]);	
-				}	
+					int32_t header = 1;
+					int32_t t = wkbMultiPolygon;
+					bool noInteriors = this->int_rings.size() == 0 ? true : false;
+					int32_t rc = parts_count[featureInd];
+					int seek_begin = bound_list[featureInd];
+					int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous		
+					wkbSize = 1 + 4 + 4;
+					std::vector<int> pnc;
 
-				// Figure out each Polygon's space requirements
-				if(noInteriors)
-				{
-					for(int ss = 0; ss < rc; ss++)
+					// Build sub vector for part_node_counts
+					for(int itr = 0; itr < rc; itr++)
 					{
-					 	wkbSize += 16 * pnc[ss] + 1 + 4 + 4 + 4;
-					}
-				}
+						pnc.push_back(pnode_counts[pc_begin + itr]);	
+					}	
 
-				else
-				{
-					// Total space requirements for Polygons:
-					// (1 + 4 + 4) * number of Polygons
-					// 4 * number of Rings Total
-					// 16 * number of Points
+					// Figure out each Polygon's space requirements
+					if(noInteriors)
+					{
+						for(int ss = 0; ss < rc; ss++)
+						{
+						 	wkbSize += 16 * pnc[ss] + 1 + 4 + 4 + 4;
+						}
+					}
+
+					else
+					{
+						// Total space requirements for Polygons:
+						// (1 + 4 + 4) * number of Polygons
+						// 4 * number of Rings Total
+						// 16 * number of Points
 		
 
-					// Each ring collection corresponds to a polygon
-					wkbSize += (1 + 4 + 4) * poly_count[featureInd]; // (headers)
+						// Each ring collection corresponds to a polygon
+						wkbSize += (1 + 4 + 4) * poly_count[featureInd]; // (headers)
 
-					// Add header requirements for rings
-					wkbSize += 4 * parts_count[featureInd];
+						// Add header requirements for rings
+						wkbSize += 4 * parts_count[featureInd];
 
-					// Add requirements for number of points
-					wkbSize += 16 * nc;
-				}
+						// Add requirements for number of points
+						wkbSize += 16 * nc;
+					}
 
-				// Now allocate and serialize
-				ret = new uint8_t[wkbSize];
+					// Now allocate and serialize
+					ret = new uint8_t[wkbSize];
 				
-				// Create Multipolygon headers
-				void * worker = (void*)ret;
-				worker = mempcpy(worker, &header, 1);
-				worker = mempcpy(worker, &t, 4);
+					// Create Multipolygon headers
+					void * worker = (void*)ret;
+					worker = mempcpy(worker, &header, 1);
+					worker = mempcpy(worker, &t, 4);
 
-				if(noInteriors)
-				{
-					int cur_point = seek_begin;
-					int32_t pcount = pnc.size();
-					worker = mempcpy(worker, &pcount, 4);
-
-					for(int32_t itr = 0; itr < pcount; itr++)
+					if(noInteriors)
 					{
-						worker = inPlaceSerialize_PolygonExtOnly(this, pnc[itr], cur_point, worker);
-						cur_point = pnc[itr] + cur_point;
-					}
-				}
+						int cur_point = seek_begin;
+						int32_t pcount = pnc.size();
+						worker = mempcpy(worker, &pcount, 4);
 
-				else
-				{
-					int32_t polys = poly_count[featureInd];
-					worker = mempcpy(worker, &polys, 4);
-
-					int base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
-					int seek = seek_begin; // beginning of node range for this multigeometry
-					int ir_base = base + 1;
-					int rc_m = 1; 
-					int part_ind = 1;
-
-					// has interior rings,
-					for(int32_t itr = 0; itr < polys; itr++)
-					{	
-						rc_m = 1;
-
-						// count how many parts belong to each Polygon		
-						while(ir_base < int_rings.size() && int_rings[ir_base])
+						for(int32_t itr = 0; itr < pcount; itr++)
 						{
-							rc_m++;
-							ir_base++;	
-						}
-
-						if(rc_m == 1) ir_base++;	// single polygon case
-
-						std::vector<int> poly_parts;
-
-						// Make part node count sub vector
-						for(int itr_2 = 0; itr_2 < rc_m; itr_2++)
-						{
-							poly_parts.push_back(pnode_counts[base + itr_2]);
-						}
-
-						worker = inPlaceSerialize_Polygon(this, poly_parts, rc_m, seek, worker);
-
-						// Update seek position
-						for(int itr_3 = 0; itr_3 < poly_parts.size(); itr_3++)
-						{
-							seek += poly_parts[itr_3];
+							worker = inPlaceSerialize_PolygonExtOnly(this, pnc[itr], cur_point, worker);
+							cur_point = pnc[itr] + cur_point;
 						}
 					}
-				}
 
+					else
+					{
+						int32_t polys = poly_count[featureInd];
+						worker = mempcpy(worker, &polys, 4);
+	
+						int base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
+						int seek = seek_begin; // beginning of node range for this multigeometry
+						size_t ir_base = base + 1;
+						int rc_m = 1; 
+
+						// has interior rings,
+						for(int32_t itr = 0; itr < polys; itr++)
+						{	
+							rc_m = 1;
+
+							// count how many parts belong to each Polygon		
+							while(ir_base < int_rings.size() && int_rings[ir_base])
+							{
+								rc_m++;
+								ir_base++;	
+							}
+
+							if(rc_m == 1) ir_base++;	// single polygon case
+
+							std::vector<int> poly_parts;
+
+							// Make part node count sub vector
+							for(int itr_2 = 0; itr_2 < rc_m; itr_2++)
+							{
+								poly_parts.push_back(pnode_counts[base + itr_2]);
+							}
+
+							worker = inPlaceSerialize_Polygon(this, poly_parts, rc_m, seek, worker);
+
+							// Update seek position
+							for(size_t itr_3 = 0; itr_3 < poly_parts.size(); itr_3++)
+							{
+								seek += poly_parts[itr_3];
+							}
+						}
+					}
+				}	
 				break;
+
+				default:
+
+					throw new SG_Exception_BadFeature();	
+					break;
 		}
 
 		return ret;
@@ -615,7 +669,7 @@ namespace nccfdriver
 		std::vector<std::pair<int, std::string>> vars = m.at(cont_lookup);
 
 		// Now for each variable, index at seek_pos and push a {key, value} pair
-		for(int itr = 0; itr < vars.size(); itr++)
+		for(size_t itr = 0; itr < vars.size(); itr++)
 		{
 			nc_type t = 0;
 			
@@ -669,6 +723,52 @@ namespace nccfdriver
 		}
 
 		return ret;
+	}
+
+	// Exception Class Implementations
+	SG_Exception_Dim_MM::SG_Exception_Dim_MM(char* container_name, const char* field_1, const char* field_2)
+	{
+		const char * format = "%s: Dimensions of \"%s\" and \"%s\" must match but do not match.";
+		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
+		size_t s = strlen(field_1) + strlen(field_2) + strlen(format) + strlen(container_name) + 1;
+		err_msg = new char[s];
+		snprintf(err_msg, s, format, container_name, field_1, field_2);
+	}
+
+	SG_Exception_Existential::SG_Exception_Existential(char* container_name, const char* missing_name)
+	{
+		const char * format = "%s: The property or the variable associated with property \"%s\" is missing.";
+
+		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
+		size_t s = strlen(missing_name) + strlen(format) + strlen(container_name) + 1;
+		err_msg = new char[s];
+		snprintf(err_msg, s, format, container_name, missing_name);
+	}
+
+	SG_Exception_Dep::SG_Exception_Dep(char* container_name, const char* arg1, const char* arg2)
+	{
+		const char * format = "%s: The attribute \"%s\" may not exist without the attribute \"%s\" existing.";
+		
+		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
+		size_t s = strlen(arg1) + strlen(arg2) + strlen(format) + strlen(container_name) + 1;
+		err_msg = new char[s];
+		snprintf(err_msg, s, format, container_name, arg1, arg2);
+	}
+	
+	SG_Exception_BadSum::SG_Exception_BadSum(char* container_name, const char* arg1, const char* arg2)
+	{
+		const char * format = "%s: The sum of all values in \"%s\" and the sum of all values in \"%s\" do not match.";
+		
+		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
+		size_t s = strlen(arg1) + strlen(arg2) + strlen(format) + strlen(container_name) + 1;
+		err_msg = new char[s];
+		snprintf(err_msg, s, format, container_name, arg1, arg2);
+	}
+
+	// to get past linker
+	SG_Exception::~SG_Exception()
+	{
+
 	}
 
 	// Helpers
@@ -921,7 +1021,7 @@ namespace nccfdriver
 			// Now have variable ID. See if vector contains it, and if not
 			// insert
 			bool contains = false;
-			for(int itr_1 = 0; itr_1 < r_ids.size(); itr_1++)
+			for(size_t itr_1 = 0; itr_1 < r_ids.size(); itr_1++)
 			{
 				if(r_ids[itr_1] == varID) contains = true;	
 			}
