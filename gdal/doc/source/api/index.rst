@@ -35,3 +35,8 @@ API
        ogrgeometry_cpp
        ogrspatialref
        gnm_cpp
+
+.. only:: latex
+
+    API is omitted in this PDF document. You can consult it on
+    https://gdal.org/api/index.html

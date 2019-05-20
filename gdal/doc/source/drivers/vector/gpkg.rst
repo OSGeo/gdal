@@ -1,10 +1,5 @@
 .. _vector.gpkg:
 
-.. toctree::
-   :hidden:
-
-   aspatial
-
 GPKG -- GeoPackage vector
 =========================
 
@@ -323,7 +318,7 @@ Level of support of GeoPackage Extensions
      - Yes, since GDAL 2.0. Deprecated in GDAL 2.2 for the *attributes* official data_type
 
 Examples
-~~~~~~~~
+--------
 
 -  Simple translation of a single shapefile into GeoPackage. The table
    'abc' will be created with the features from abc.shp and attributes
@@ -352,7 +347,7 @@ Examples
       % ogr2ogr -f GPKG filename.gpkg PG:'dbname=mydatabase host=localhost'
 
 See Also
-~~~~~~~~
+--------
 
 -  :ref:`GeoPackage raster <raster.gpkg>` documentation page
 -  `Getting Started With
@@ -363,3 +358,8 @@ See Also
 -  `OGC GeoPackage Encoding
    Standard <http://www.opengeospatial.org/standards/geopackage>`__ page
 -  `SQLite <http://sqlite.org/>`__
+
+.. toctree::
+   :hidden:
+
+   aspatial

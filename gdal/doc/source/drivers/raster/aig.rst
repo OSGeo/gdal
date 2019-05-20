@@ -1,11 +1,5 @@
 .. _raster.aig:
 
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   arcinfo_grid_format
-
 AIG -- Arc/Info Binary Grid
 ===========================
 
@@ -35,3 +29,8 @@ Driver capabilities
 
 .. supports_virtualio::
 
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   arcinfo_grid_format

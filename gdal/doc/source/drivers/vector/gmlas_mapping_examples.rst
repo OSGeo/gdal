@@ -1,5 +1,3 @@
-:orphan:
-
 .. _gmlas_mapping_examples:
 
 GMLAS - Mapping examples

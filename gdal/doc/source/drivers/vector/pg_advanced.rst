@@ -1,5 +1,3 @@
-:orphan:
-
 .. _vector.pg_advanced:
 
 PostgreSQL / PostGIS - Advanced Driver Information
@@ -300,10 +298,10 @@ Note: in reality, the PG drivers fetches 500 features at once. The FETCH
 1 is for clarity of the explanation.
 
 Advanced Examples
-~~~~~~~~~~~~~~~~~
+-----------------
 
 -  This example shows using ogrinfo to list only the layers specified by
-   the *tables=* options. (Starting with GDAL 1.6.0)
+   the *tables=* options.
 
    ::
 
@@ -374,6 +372,6 @@ Advanced Examples
       ogr2ogr -overwrite -f PostgreSQL "PG:dbname=warmerda active_schema=apt200810" apt200810
 
 See Also
-~~~~~~~~
+--------
 
 -  :ref:`OGR PostgreSQL driver Information <vector.pg>`

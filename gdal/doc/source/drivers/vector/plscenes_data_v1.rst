@@ -1,5 +1,3 @@
-:orphan:
-
 .. _vector.plscenes_data_v1:
 
 PLScenes (Planet Labs Scenes), Data V1 API

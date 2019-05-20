@@ -373,3 +373,11 @@ European Environment Agency.
 Development of special processing of some Sensor Web Enablement (SWE)
 Common Data Model swe:DataRecord and swe:DataArray constructs has been
 funded by Bureau des Recherches Géologiques et Minières (BRGM).
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gmlas_mapping_examples
+   gmlas_metadata_layers
+

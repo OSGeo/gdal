@@ -293,7 +293,7 @@ Examples
       ogrinfo "pg:dbname=mydb" poly.shp -doo "PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO '1h';" -doo CLOSING_STATEMENTS=COMMIT
 
 FAQs
-~~~~
+----
 
 -  **Why can't I see my tables? PostGIS is installed and I have data**
    You must have permissions on all tables you want to read *and*
@@ -306,7 +306,7 @@ FAQs
    PG_LIST_ALL_TABLES YES PG:xxxxx)
 
 See Also
-~~~~~~~~
+--------
 
 -  :ref:`Advanced OGR PostgreSQL driver Information <vector.pg_advanced>`
 -  :ref:`OGR PostgreSQL SQL Dump driver Page <vector.pgdump>`
@@ -314,3 +314,9 @@ See Also
 -  `PostGIS <http://postgis.net/>`__
 -  `PostGIS / OGR Wiki Examples
    Page <http://trac.osgeo.org/postgis/wiki/UsersWikiOGR>`__
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   pg_advanced
