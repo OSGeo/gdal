@@ -1,7 +1,7 @@
 .. _raster.lcp:
 
-GDAL Driver for FARSITE v.4 LCP Format
---------------------------------------
+LCP -- FARSITE v.4 LCP Format
+=============================
 
 FARSITE v. 4 landscape file (LCP) is a multi-band raster format used by
 wildland fire behavior and fire effect simulation models such as

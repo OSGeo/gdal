@@ -1,7 +1,7 @@
 .. _raster.ace2:
 
 ACE2 -- ACE2
-------------
+============
 
 This is a convenience driver to read ACE2 DEMs. Those files contain raw
 binary data. The georeferencing is entirely determined by the filename.

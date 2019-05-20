@@ -1,7 +1,7 @@
 .. _raster.pdf:
 
-Geospatial PDF
-==============
+PDF -- Geospatial PDF
+=====================
 
 GDAL supports reading Geospatial PDF documents, by extracting
 georeferencing information and rasterizing the data. Non-geospatial PDF

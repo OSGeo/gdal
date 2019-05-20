@@ -1,7 +1,7 @@
 .. _raster.cad:
 
 CAD -- AutoCAD DWG raster layer
--------------------------------
+===============================
 
 .. versionadded:: 2.2
 

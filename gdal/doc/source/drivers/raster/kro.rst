@@ -1,7 +1,7 @@
 .. _raster.kro:
 
 KRO -- KOLOR Raw format
------------------------
+=======================
 
 Supported for read access, update and creation. This format is a binary
 raw format, that supports data of several depths ( 8 bit, unsigned
