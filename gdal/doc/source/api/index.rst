@@ -4,31 +4,33 @@
 API
 ================================================================================
 
-C API
------
+.. only:: not latex
 
-.. toctree::
-    :maxdepth: 1
+   C API
+   -----
 
-    cpl
-    raster_c_api
-    vector_c_api
-    gdal_alg
-    ogr_srs_api
-    gdal_utils
+   .. toctree::
+       :maxdepth: 1
 
-C++ API
--------
+       cpl
+       raster_c_api
+       vector_c_api
+       gdal_alg
+       ogr_srs_api
+       gdal_utils
 
-.. toctree::
-    :maxdepth: 1
+   C++ API
+   -------
 
-    gdaldriver_cpp
-    gdaldataset_cpp
-    gdalrasterband_cpp
-    gdalwarp_cpp
-    ogrlayer_cpp
-    ogrfeature_cpp
-    ogrgeometry_cpp
-    ogrspatialref
-    gnm_cpp
+   .. toctree::
+       :maxdepth: 1
+
+       gdaldriver_cpp
+       gdaldataset_cpp
+       gdalrasterband_cpp
+       gdalwarp_cpp
+       ogrlayer_cpp
+       ogrfeature_cpp
+       ogrgeometry_cpp
+       ogrspatialref
+       gnm_cpp
