@@ -7,7 +7,8 @@ GDAL
     about
     download
     programs/index
-    drivers/index
+    drivers/raster/index
+    drivers/vector/index
     User <user/index>
     api/index
     tutorials/index
