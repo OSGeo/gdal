@@ -35,6 +35,7 @@ jobs:
         displayName: 'Deploy the key'
       - script: |
           mv gdal/doc/build/html gdal-docs
+          rm gdal-docs/gdal.pdf
           cp gdal/doc/build/latex/gdal.pdf gdal-docs
           cd gdal-docs
           git init
