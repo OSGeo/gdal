@@ -377,7 +377,9 @@ latex_elements = {
 
 # Additional stuff for the LaTeX preamble.
 'preamble': preamble,
-'inputenc':'\\usepackage[utf8]{inputenc}\n\\usepackage[russian,english]{babel}\n\\usepackage{CJKutf8}\n\\usepackage{substitutefont}'
+'inputenc':'\\usepackage[utf8]{inputenc}\n\\usepackage{CJKutf8}\n\\usepackage{substitutefont}',
+'babel':'\\usepackage[russian,main=english]{babel}\n\\selectlanguage{english}',
+'fontenc':'\\usepackage[LGR,X2,T1]{fontenc}'
 
 # Latex figure (float) alignment
 #'figure_align': 'htbp',

@@ -1,22 +1,41 @@
 GDAL
 ================================
 
-.. toctree::
-   :maxdepth: 2
+.. only:: html
 
-   about
-   download
-   programs/index
-   drivers/index
-   User <user/index>
-   api/index
-   tutorials/index
-   community
-   contributing/index
-   faq
+    .. toctree::
+       :maxdepth: 2
 
-Indices and tables
-==================
+       about
+       download
+       programs/index
+       drivers/index
+       User <user/index>
+       api/index
+       tutorials/index
+       community
+       contributing/index
+       faq
 
-* :ref:`genindex`
-* :ref:`search`
+    Index
+    =====
+
+    * :ref:`genindex`
+
+
+.. only:: not html
+
+    .. toctree::
+       :maxdepth: 4
+       :hidden:
+
+       about
+       download
+       programs/index
+       drivers/index
+       User <user/index>
+       api/index
+       tutorials/index
+       community
+       contributing/index
+       faq

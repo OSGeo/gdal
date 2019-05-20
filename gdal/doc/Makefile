@@ -24,7 +24,7 @@ help:
 
 .PHONY: html latexpdf
 html: .doxygen_up_to_date
-	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -W $(O)
 
 latexpdf: .doxygen_up_to_date
 	$(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
