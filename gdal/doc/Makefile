@@ -20,16 +20,20 @@ help:
 
 .doxygen_up_to_date:
 	mkdir -p build/xml && cd .. && ((cat Doxyfile | sed "s/PREDEFINED             = /PREDEFINED             = DOXYGEN_XML /"; printf "GENERATE_HTML=NO\nGENERATE_XML=YES\nXML_OUTPUT=doc/build/xml\nXML_PROGRAMLISTING=NO") | doxygen -)
+	mkdir -p build/doxygen_html && cd .. && ((cat Doxyfile; printf "HTML_OUTPUT=doc/build/doxygen_html") | doxygen -)
 	touch .doxygen_up_to_date
 
 .PHONY: html latexpdf
 html: .doxygen_up_to_date
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	rm -rf build/html/doxygen
+	cp -r build/doxygen_html build/html/doxygen
 
 latexpdf: .doxygen_up_to_date
 	$(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
 	rm -rf build/xml
+	rm -rf build/doxygen_html
 	rm -rf .doxygen_up_to_date
 	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

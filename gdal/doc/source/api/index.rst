@@ -6,6 +6,9 @@ API
 
 .. only:: not latex
 
+   `Full Doyxgen output <../doxygen/index.html>`_
+   ----------------------------------------------
+
    C API
    -----
 
