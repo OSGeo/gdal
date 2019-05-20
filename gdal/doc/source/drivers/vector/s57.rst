@@ -26,8 +26,15 @@ S-57 reader will normally read and apply all updates files to the in
 memory version of the base file on the fly. The feature data provided to
 the application therefore includes all the updates.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Feature Translation
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Normally all features read from S-57 are assigned to a layer based on
 the name of the object class (OBJL) to which they belong. For instance,
@@ -106,7 +113,7 @@ The following are present if LNAM_REFS is enabled:
                      the LNAM_REFS relationships.
 
 Soundings
-~~~~~~~~~
+---------
 
 Depth soundings are handled somewhat specially in S-57 format, in order
 to efficiently represent the many available data points. In S-57 one
@@ -116,7 +123,7 @@ s57_type of \`s57_point3d'. All the soundings from a single feature
 record will have the same AGEN, FIDN, FIDS and LNAM value.
 
 S57 Control Options
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 There are several control options which can be used to alter the
 behavior of the S-57 reader. Users can set these by appending them in
@@ -161,7 +168,7 @@ Example:
    set OGR_S57_OPTIONS = "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
 
 S-57 Export
-~~~~~~~~~~~
+-----------
 
 Preliminary S-57 export capability has been added in GDAL/OGR 1.2.0 but
 is intended only for specialized use, and is not properly documented at
@@ -206,7 +213,7 @@ see the S-57 standard for a more detailed description):
    (sounding) values. Default is 10. (GDAL >= 2.4)
 
 See Also
-~~~~~~~~
+--------
 
 -  `S-57 Online Object/Attribute Catalog <http://www.s-57.com/>`__
 -  `Frank's S-57 Page (at

@@ -45,6 +45,13 @@ processing for features not within the spatial window.
 Random (by FID) reads of arcs, and polygons is supported it may not be
 supported for other feature types.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
 --------
 

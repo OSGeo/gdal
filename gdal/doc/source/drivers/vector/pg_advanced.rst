@@ -13,13 +13,13 @@ Starting with GDAL 1.8.0, the database opening should be significantly
 faster than in previous versions, so using tables= or schemas= options
 will not bring further noticeable speed-ups.
 
-Starting with GDAL 1.6.0, the set of tables to be scanned can be
+The set of tables to be scanned can be
 overridden by specifying
 *tables=[schema.]table[(geom_column_name)][,[schema2.]table2[(geom_column_name2)],...]*
 within the connection string. If the parameter is found, the driver
 skips enumeration of the tables as described in the next paragraph.
 
-Starting with GDAL 1.7.0, it is possible to restrict the schemas that
+It is possible to restrict the schemas that
 will be scanned while establishing the list of tables. This can be done
 by specifying *schemas=schema_name[,schema_name2]* within the connection
 string. This can also be a way of speeding up the connection to a
@@ -29,7 +29,7 @@ schema is listed, it will also be made automatically the active schema
 active schema is still 'public', unless otherwise specified by the
 *active_schema=* option.
 
-Starting with GDAL 1.7.0, the active schema ('public' being the default)
+The active schema ('public' being the default)
 can be overridden by specifying *active_schema=schema_name* within the
 connection string. The active schema is the schema where tables are
 created or looked for when their name is not explicitly prefixed by a
@@ -83,7 +83,7 @@ inspected to determine how to read it. It can be a PostGIS **geometry**
 field, which is assumed to come back in OGC WKT, or type BYTEA or OID in
 which case it is used as a source of OGC WKB geometry.
 
-Starting with GDAL 1.6.0, tables inherited from spatial tables are
+Tables inherited from spatial tables are
 supported.
 
 If there is an "ogc_fid" field, it will be used to set the feature id of
@@ -93,7 +93,7 @@ The layer name may be of the form "schema.table". The schema must exist,
 and the user needs to have write permissions for the target and the
 public schema.
 
-Starting with GDAL 1.7.0, if the user defines the environment variable
+If the user defines the environment variable
 
 ::
 
@@ -117,7 +117,7 @@ must usually be done by hand with a SQL statement like :
 
    "INSERT INTO geometry_columns VALUES ( '', 'public', 'name_of_my_view', 'name_of_geometry_column', 2, 4326, 'POINT');"
 
-Starting with GDAL 1.6.0, it is also possible to use named views without
+It is also possible to use named views without
 inserting a row in the geometry_columns table. For that, you need to
 explicitly specify the name of the view in the "tables=" option of the
 connection string. See above. The drawback is that OGR will not be able
@@ -308,7 +308,7 @@ Advanced Examples
       ogrinfo -ro PG:'dbname=warmerda tables=table1,table2'
 
 -  This example shows using ogrinfo to query a table 'foo' with multiple
-   geometry columns ('geom1' and 'geom2'). (Starting with GDAL 1.6.0)
+   geometry columns ('geom1' and 'geom2').
 
    ::
 
@@ -316,7 +316,7 @@ Advanced Examples
 
 -  This example show how to list only the layers inside the schema
    apt200810 and apt200812. The layer names will be prefixed by the name
-   of the schema they belong to. (Starting with GDAL 1.7.0)
+   of the schema they belong to.
 
    ::
 
@@ -324,8 +324,7 @@ Advanced Examples
 
 -  This example shows using ogrinfo to list only the layers inside the
    schema named apt200810. Note that the layer names will not be
-   prefixed by apt200810 as only one schema is listed. (Starting with
-   GDAL 1.7.0)
+   prefixed by apt200810 as only one schema is listed.
 
    ::
 
@@ -334,7 +333,6 @@ Advanced Examples
 -  This example shows how to convert a set of shapefiles inside the
    apt200810 directory into an existing Postgres schema apt200810. In
    that example, we could have use the schemas= option instead.
-   (Starting with GDAL 1.7.0)
 
    ::
 
@@ -343,7 +341,7 @@ Advanced Examples
 -  This example shows how to convert all the tables inside the schema
    apt200810 as a set of shapefiles inside the apt200810 directory. Note
    that the layer names will not be prefixed by apt200810 as only one
-   schema is listed (Starting with GDAL 1.7.0)
+   schema is listed 
 
    ::
 
@@ -362,8 +360,8 @@ Advanced Examples
 
    If you need to overwrite many tables located in a schema at once, the
    -nln option is not the more appropriate, so it might be more
-   convenient to use the active_schema connection string (Starting with
-   GDAL 1.7.0). The following example will overwrite, if necessary, all
+   convenient to use the active_schema connection string.
+   The following example will overwrite, if necessary, all
    the PostgreSQL tables corresponding to a set of shapefiles inside the
    apt200810 directory :
 

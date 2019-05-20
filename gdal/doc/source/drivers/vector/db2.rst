@@ -16,6 +16,13 @@ LUW <http://www-01.ibm.com/support/knowledgecenter/SSEPGG_10.5.0/com.ibm.db2.luw
 
 This driver is currently supported only in the Windows environment.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Connecting to a database
 ------------------------
 

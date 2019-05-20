@@ -3,7 +3,9 @@
 RasterLite2 - Rasters in SQLite DB
 ==================================
 
-Starting with GDAL 2.2, the SQLite driver allows reading and writing
+.. versionadded::2.2
+
+The SQLite driver allows reading and writing
 SQLite databases containing RasterLite2 coverages.
 
 | Those databases can be produced by the utilities of the
@@ -19,6 +21,15 @@ and libspatialite.
 
 The driver is implemented a unified SQLite / SpatiaLite / RasterLite2
 vector and raster capable driver./p>
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Opening syntax
 --------------
@@ -126,7 +137,8 @@ Examples
 
       gdaladdo rgb.rl2 2 4 8 16
 
-See Also:
+See Also
+--------
 
 -  `Rasterlite2 home
    page <https://www.gaia-gis.it/fossil/libRasterLite2/home>`__

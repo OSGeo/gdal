@@ -13,6 +13,15 @@ are ``.txt`` or ``.gxt``.
 Currently the GeoConcept driver only supports multi-polygons, lines and
 points.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+    
 GeoConcept Text File Format (gxt)
 ---------------------------------
 

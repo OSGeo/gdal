@@ -11,6 +11,15 @@ with Curl support in order for the AmigoCloud driver to be compiled.
 
 The driver supports read and write operations.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Dataset name syntax
 -------------------
 

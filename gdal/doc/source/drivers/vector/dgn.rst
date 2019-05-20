@@ -23,6 +23,15 @@ take advantage of the extents information at the beginning of each
 element to minimize processing of elements outside the current spatial
 filter window when in effect.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Supported Elements
 ------------------
 

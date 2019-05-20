@@ -15,6 +15,13 @@ instead use the :ref:`PostgreSQL SQL Dump driver <vector.pgdump>`.
 You can find additional information on the driver in the :ref:`Advanced OGR
 PostgreSQL driver Information <vector.pg_advanced>` page.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Connecting to a database
 ------------------------
 

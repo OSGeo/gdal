@@ -3,13 +3,18 @@
 GFT - Google Fusion Tables
 ==========================
 
-(GDAL/OGR >= 1.9.0)
-
 This driver can connect to the Google Fusion Tables service. GDAL/OGR
 must be built with Curl support in order to the GFT driver to be
 compiled.
 
 The driver supports read and write operations.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
 
 Dataset name syntax
 -------------------

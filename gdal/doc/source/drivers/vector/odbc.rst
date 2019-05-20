@@ -54,6 +54,11 @@ commands with the `OGR SQL <ogr_sql.html>`__ engine, by passing
 **"OGRSQL"** string to the ExecuteSQL() method, as name of the SQL
 dialect.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Access Databases (.MDB) support
 -------------------------------
 

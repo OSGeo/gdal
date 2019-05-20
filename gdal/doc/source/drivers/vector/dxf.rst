@@ -30,6 +30,13 @@ fields:
 -  EntityHandle: The hexadecimal entity handle. A sort of feature id.
 -  Text: The text of labels.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_virtualio::
+
 Supported Entities
 ------------------
 

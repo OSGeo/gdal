@@ -3,8 +3,6 @@
 Access MDB databases
 ====================
 
-GDAL/OGR >= 1.9.0
-
 OGR optionally supports reading access .mdb files by using the Java
 `Jackcess <http://jackcess.sourceforge.net/>`__ library.
 

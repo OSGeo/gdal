@@ -12,6 +12,13 @@ Note : starting with OGR 1.11, the :ref:`OpenFileGDB
 driver <vector.openfilegdb>` driver exists as an alternative
 built-in i.e. not depending on a third-party library) read-only driver.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Requirements
 ------------
 

@@ -19,6 +19,15 @@ Starting with GDAL 2.2, another driver, :ref:`GMLAS <vector.gmlas>`, for
 GML driven by application schemas, is also available. Both GML and GMLAS
 drivers have their use cases.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Parsers
 -------
 

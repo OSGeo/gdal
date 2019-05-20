@@ -3,13 +3,20 @@
 WAsP - WAsP .map format
 =======================
 
-(GDAL/OGR >= 1.11.0)
-
 This driver writes .map files to be used with WAsP. The only allowed
 geometries are linestrings.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Configuration options
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 -  WASP_FIELDS : a comma separated list of fields. For elevation, the
    name of the height field. For roughness, the name of the left and

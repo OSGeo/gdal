@@ -18,6 +18,11 @@ represented as more features (one for each category).
 
 Both 2D and 3D maps are supported.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Datasource name
 ---------------
 

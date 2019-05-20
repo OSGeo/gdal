@@ -3,8 +3,6 @@
 OSM - OpenStreetMap XML and PBF
 ===============================
 
-(GDAL/OGR >= 1.10.0)
-
 This driver reads OpenStreetMap files, in .osm (XML based) and .pbf
 (optimized binary) formats.
 
@@ -25,8 +23,15 @@ The driver will categorize features into 5 layers :
 -  **other_relations** : "relation" features that do not belong to the
    above 2 layers.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Configuration
-~~~~~~~~~~~~~
+-------------
 
 In the *data* folder of the GDAL distribution, you can find a
 `osmconf.ini <http://svn.osgeo.org/gdal/trunk/gdal/data/osmconf.ini>`__
@@ -57,8 +62,6 @@ For example :
 "all_tags" field
 ~~~~~~~~~~~~~~~~
 
-(OGR >= 1.11)
-
 Similar to "other_tags", except that it contains both keys specifically
 identified to be reported as dedicated fields, as well as other keys.
 
@@ -66,7 +69,7 @@ identified to be reported as dedicated fields, as well as other keys.
 with "other_tags".
 
 Internal working and performance tweaking
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------
 
 The driver will use an internal SQLite database to resolve geometries.
 If that database remains under 100 MB it will reside in RAM. If it grows
@@ -95,7 +98,7 @@ option will be less efficient. This option consumes addionnal 60 MB of
 RAM.
 
 Interleaved reading
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Due to the nature of OSM files and how the driver works internally, the
 default reading mode that works per-layer might not work correctly,
@@ -135,7 +138,7 @@ Note : the ogr2ogr application has been modified to use that
 OGR_INTERLEAVED_READING mode without any particular user action.
 
 Spatial filtering
-~~~~~~~~~~~~~~~~~
+-----------------
 
 Due to way .osm or .pbf files are structured and the parsing of the file
 is done, for efficiency reasons, a spatial filter applied on the points
@@ -150,7 +153,7 @@ conversion of the file to another format, and filtering of the resulting
 lines or polygons layers would be needed.
 
 Reading .osm.bz2 files and/or online files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------
 
 .osm.bz2 are not natively recognized, however you can process them (on
 Unix), with the following command :
@@ -191,7 +194,7 @@ Open options
    interleaved reading. Defaults to NO.
 
 See Also
-~~~~~~~~
+--------
 
 -  `OpenStreetMap home page <http://www.openstreetmap.org/>`__
 -  `OSM XML Format

@@ -3,7 +3,7 @@
 VDV - VDV-451/VDV-452/INTREST Data Format
 =========================================
 
-(GDAL/OGR >= 2.1.0)
+.. versionadded:: 2.1
 
 This driver can read and create text files following the VDV-451 file
 format, which is a text format similar to CSV files, potentially
@@ -23,6 +23,15 @@ Link layer.
 
 Interleave reading among layers is supported in files with multiple
 layers.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Creations issues
 ----------------

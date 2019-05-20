@@ -4,11 +4,16 @@
 ARCGEN - Arc/Info Generate
 ================================================================================
 
-.. versionadded:: 1.9.0
-
 This driver reads files in Arc/Info Generate format. Those files are simple
 ASCII files that contain points, lines or polygons (one type of geometry per
 file).
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 See Also
 --------

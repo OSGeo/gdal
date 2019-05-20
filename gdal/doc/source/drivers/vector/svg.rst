@@ -3,8 +3,6 @@
 SVG - Scalable Vector Graphics
 ==============================
 
-(OGR >= 1.9.0)
-
 OGR has support for SVG reading (if GDAL is built with *expat* library
 support).
 
@@ -18,6 +16,13 @@ The driver will return 3 layers :
 -  points
 -  lines
 -  polygons
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 See Also
 --------

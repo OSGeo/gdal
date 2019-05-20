@@ -3,8 +3,6 @@
 Idrisi Vector (.VCT)
 ====================
 
-(GDAL/OGR >= 1.9.0)
-
 This driver reads Idrisi vector files with .vct extension. The driver
 recognized point, lines and polygons geometries.
 
@@ -26,5 +24,11 @@ the REF files. That is the case for RDC file that specify "utm-30n" or
 other geographical reference system will generate a suggested REF
 content in the comment section of the RDC file.
 
-Starting with OGR 1.10, the driver can retrieve attributes from .ADC /
-.AVL ASCII files.
+The driver can retrieve attributes from .ADC / .AVL ASCII files.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

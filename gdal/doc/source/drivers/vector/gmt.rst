@@ -14,6 +14,15 @@ information including geometry type, layer extents, coordinate system
 and attribute field declarations in comments in the header, and for each
 feature can have attributes.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Issues
 ---------------
 

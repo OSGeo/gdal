@@ -3,8 +3,6 @@
 JML: OpenJUMP JML format
 ========================
 
-(Driver available in GDAL 2.0 or later)
-
 OGR has support for reading and writing .JML files used by the OpenJUMP
 software. Read support is only available if GDAL is built with *expat*
 library support
@@ -19,6 +17,15 @@ definition of fields is embedded in the .jml file, at its beginning.
 
 Support for reading and writing spatial reference systems requires GDAL
 2.3 or later.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Encoding issues
 ---------------

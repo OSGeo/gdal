@@ -38,6 +38,15 @@ exposed as multipolygons in the OGR Simple Feature model.
 
 Ellipses and circles are discretized as polygons with 360 points.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Issues
 ---------------
 

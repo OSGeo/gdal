@@ -51,6 +51,11 @@ A DAS definition for an OGR layer might look something like:
        }
    }
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Caveats
 -------
 
@@ -59,6 +64,6 @@ Caveats
    enabling DODS caching. Try setting USE_CACHE=1 in your ~/.dodsrc.
 
 See Also
-~~~~~~~~
+--------
 
 -  `OPeNDAP <http://www.opendap.org/>`__

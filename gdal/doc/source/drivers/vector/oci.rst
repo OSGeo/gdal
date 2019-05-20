@@ -27,6 +27,13 @@ feature id by OGR (and it will not appear as a regular attribute). When
 loading data into Oracle Spatial OGR will always create the OGR_FID
 field.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 SQL Issues
 ----------
 

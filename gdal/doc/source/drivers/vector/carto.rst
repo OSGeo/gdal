@@ -4,12 +4,17 @@
 Carto
 ================================================================================
 
-.. versionadded:: 1.11.0
-
 This driver can connect to the services implementing the Carto API. GDAL/OGR
 must be built with Curl support in order for the Carto driver to be compiled.
 
 The driver supports read and write operations.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
 
 Dataset name syntax
 -------------------

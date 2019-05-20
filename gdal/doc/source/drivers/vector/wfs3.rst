@@ -3,13 +3,18 @@
 WFS3 - OGC WFS 3.0 service (experimental)
 =========================================
 
-(GDAL/OGR >= 2.3.0)
+.. versionadded:: 2.3
 
 **NOTE: THIS IS BASED ON A DRAFT VERSION OF THE WFS 3.0 SPECIFICATION**
 
 This driver can connect to a OGC WFS 3.0 service. It assumes that the
 service supports OpenAPI 3.0/JSON/GeoJSON encoding for respectively API
 description, feature collection metadata and feature collection data.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
 
 Dataset name syntax
 -------------------

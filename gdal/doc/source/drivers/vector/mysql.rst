@@ -30,6 +30,13 @@ engine. It's also possible to request the driver to handle SQL commands
 with `OGR SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Caveats
 -------
 

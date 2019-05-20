@@ -17,6 +17,13 @@ and attribute queries are still evaluated against all features. Fetching
 features by feature id should be very fast (just an array lookup and
 feature copy).
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Creation Issues
 ---------------
 

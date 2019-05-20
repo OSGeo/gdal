@@ -28,6 +28,15 @@ CURVEPOLYGON, MULTICURVE and MULTISURFACE
 Starting with GDAL 2.0, GeoPackage raster/tiles are supported. See
 :ref:`GeoPackage raster <raster.gpkg>` documentation page
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Specification version
 ---------------------
 

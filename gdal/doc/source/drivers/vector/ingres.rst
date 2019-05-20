@@ -69,6 +69,11 @@ The INGRES driver supports OGC SFSQL 1.1 compliant spatial types and
 functions, including types: POINT, LINESTRING, POLYGON, MULTI\*
 versions, and GEOMETRYCOLLECTION.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
 Caveats
 -------
 

@@ -3,8 +3,6 @@
 CouchDB - CouchDB/GeoCouch
 ==========================
 
-(GDAL/OGR >= 1.9.0)
-
 This driver can connect to the a CouchDB service, potentially enabled
 with the GeoCouch spatial extension.
 
@@ -12,6 +10,13 @@ GDAL/OGR must be built with Curl support in order to the CouchDB driver
 to be compiled.
 
 The driver supports read and write operations.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
 
 CouchDB vs OGR concepts
 -----------------------

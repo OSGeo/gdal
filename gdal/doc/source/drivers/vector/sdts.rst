@@ -23,8 +23,15 @@ but can be accessed separately as their own layers.
 
 This driver has no support for raster (DEM) SDTS datasets.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
-~~~~~~~~
+--------
 
 -  `SDTS Abstraction
    Library <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/sdts/index.html>`__: The base

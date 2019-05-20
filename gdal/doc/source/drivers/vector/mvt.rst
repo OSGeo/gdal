@@ -3,7 +3,9 @@
 MVT: Mapbox Vector Tiles
 ========================
 
-Starting with GDAL 2.3, the MVT driver can read and write Mapbox Vector
+.. versionadded:: 2.3
+
+The MVT driver can read and write Mapbox Vector
 Tile files, as standalone files, uncompressed or gzip-compressed
 (typical extensions are .pbf, .mvt, .mvt.gz), or a tileset at a given
 zoom level of such files. Write support requires GDAL to be built with
@@ -44,6 +46,15 @@ Otherwise integer coordinates will be reported.
 Note: When opening a zoom level of a tileset, the driver will make no
 effort of stiching together geometries for features that overlap several
 tiles.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Connection strings
 ------------------

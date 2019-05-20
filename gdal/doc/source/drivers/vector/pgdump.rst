@@ -3,8 +3,6 @@
 PostgreSQL SQL Dump
 ===================
 
-(GDAL/OGR >= 1.8.0)
-
 This write-only driver implements support for generating a SQL dump file
 that can later be injected into a live PostgreSQL instance. It supports
 PostgreSQL extended with the `PostGIS <http://postgis.net/>`__
@@ -17,6 +15,15 @@ Most creation options are shared with the regular PostgreSQL driver.
 Starting with OGR 1.11, the PGDump driver supports creating tables with
 multiple PostGIS geometry columns (following `RFC
 41 <http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields>`__)
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Creation options
 ----------------

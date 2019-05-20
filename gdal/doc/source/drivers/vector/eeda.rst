@@ -3,10 +3,15 @@
 Google Earth Engine Data API
 ============================
 
-GDAL/OGR >= 2.4
+.. versionadded:: 2.4
 
 The driver supports read-only operations to list images and their
 metadata as a vector layer, using Google Earth Engine REST API.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
 
 Dataset name syntax
 -------------------

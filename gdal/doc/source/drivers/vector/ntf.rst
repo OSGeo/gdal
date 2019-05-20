@@ -17,13 +17,18 @@ NTF features are always returned with the British National Grid
 coordinate system. This may be inappropriate for NTF files written by
 organizations other than the UK Ordnance Survey.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
-~~~~~~~~
+--------
 
 -  `General UK NTF
    Information <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/ntf/index.html>`__
-
---------------
 
 Implementation Notes
 --------------------

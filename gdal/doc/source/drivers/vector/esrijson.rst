@@ -25,6 +25,13 @@ add a sort clause on a field, typically the OBJECTID with a
 "&orderByFields=OBJECTID+ASC" parameter in the URL, so that the server
 returns the results in a reliable way.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Datasource
 ----------
 

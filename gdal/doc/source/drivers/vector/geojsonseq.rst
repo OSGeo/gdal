@@ -3,7 +3,7 @@
 GeoJSONSeq: sequence of GeoJSON features
 ========================================
 
-Starting with GDAL 2.4
+.. versionadded:: 2.4
 
 This driver implements read/creation support for features encoded
 individually as `GeoJSON <http://geojson.org/>`__ Feature objects,
@@ -14,6 +14,15 @@ Sequences)
 
 Such files are equivalent to a GeoJSON FeatureCollection, but are more
 friendly for incremental parsing.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Datasource
 ----------

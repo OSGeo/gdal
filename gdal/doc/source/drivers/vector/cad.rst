@@ -19,6 +19,13 @@ Features will all have the following generic attributes:
 -  ExtendedEntity: Where available, extended entity attributes all
    appended to form a single text attribute.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Supported Elements
 ------------------
 

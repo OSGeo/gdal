@@ -43,3 +43,10 @@ available.
 This driver was implemented within the context of the `PostNAS
 project <http://trac.wheregroup.com/PostNAS>`__, which has more
 information on its use and other related projects.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

@@ -22,6 +22,15 @@ Starting with GDAL 2.1.0, the GeoJSON driver supports updating existing
 GeoJSON files. In that case, the default value for the NATIVE_DATA open
 option will be YES.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Datasource
 ----------
 

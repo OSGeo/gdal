@@ -3,8 +3,6 @@
 OpenAir - OpenAir Special Use Airspace Format
 =============================================
 
-(GDAL/OGR >= 1.8.0)
-
 This driver reads files describing Special Use Airspaces in the OpenAir
 format
 
@@ -19,8 +17,15 @@ An extra layer called 'labels' will contain a feature for each label (AT
 element). There can be multiple AT records for a single airspace
 segment. The fields are the same as the 'airspaces' layer.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
-~~~~~~~~
+--------
 
 -  `Description of OpenAir
    format <http://www.winpilot.com/UsersGuide/UserAirspace.asp>`__

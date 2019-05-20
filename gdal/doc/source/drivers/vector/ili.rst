@@ -1,7 +1,7 @@
 .. _vector.ili:
 
-INTERLIS
-========
+"INTERLIS 1" and "INTERLIS 2" drivers
+=====================================
 
 | OGR has support for INTERLIS reading and writing.
 | `INTERLIS <http://www.interlis.ch/>`__ is a standard which has been
@@ -27,6 +27,15 @@ limitations:
 -  Embedded INTERLIS 2 structures and line attributes are not supported
 -  Incremental transfer is not supported
 -  Transfer id (TID) is used as feature id
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Model support
 -------------
@@ -91,20 +100,6 @@ Arc interpolation
   into subarcs of no more than a threshold angle. This angle is the
   OGR_ARC_STEPSIZE. This defaults to one degree, but may be overridden
   by setting the configuration variable OGR_ARC_STEPSIZE.
-
-OGR versions prior to 2.0
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Arcs are always interpolated and the interpolation angle can be
-configured with the environment variable ARC_DEGREES.
-
-OGR versions prior to 1.11
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For using the INTERLIS model (.ili) a Java interpreter is needed at
-runtime and ili2c.jar (included in the `Compiler for INTERLIS
-2 <http://interlis.ch/interlis2/download23_e.php#outils>`__) must be in
-the Java path.
 
 Other Notes
 -----------

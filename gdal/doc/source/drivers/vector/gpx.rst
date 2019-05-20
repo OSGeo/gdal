@@ -3,8 +3,6 @@
 GPX - GPS Exchange Format
 =========================
 
-(Starting with GDAL 1.5.0)
-
 GPX (the GPS Exchange Format) is a light-weight XML data format for the
 interchange of GPS data (waypoints, routes, and tracks) between
 applications and Web services on the Internet.
@@ -42,6 +40,15 @@ routes and tracks.
 By default, up to 2 *<link>* elements can be taken into account by
 feature. This default number can be changed with the GPX_N_MAX_LINKS
 environment variable.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Encoding issues
 ---------------

@@ -3,8 +3,6 @@
 PDS - Planetary Data Systems TABLE
 ==================================
 
-(GDAL/OGR >= 1.8.0)
-
 This driver reads TABLE objects from PDS datasets. Note there is a GDAL
 PDS driver to read the raster IMAGE objects from PDS datasets.
 
@@ -23,8 +21,13 @@ by ^STRUCTURE.
 If the table has a LONGITUDE and LATITUDE columns of type REAL and with
 UNIT=DEGREE, they will be used to return POINT geometries.
 
+Driver capabilities
+-------------------
+
+.. supports_virtualio::
+
 See Also
-~~~~~~~~
+--------
 
 -  `Description of PDS
    format <https://pds.jpl.nasa.gov/tools/standards-reference.shtml>`__

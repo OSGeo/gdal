@@ -57,6 +57,15 @@ Starting with GDAL 2.0, automatic field type guessing can also be done
 if specifying the open options described in the below "Open options"
 section.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Format
 ------
 

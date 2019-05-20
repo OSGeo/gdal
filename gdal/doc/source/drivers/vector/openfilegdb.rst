@@ -3,8 +3,6 @@
 ESRI File Geodatabase (OpenFileGDB)
 ===================================
 
-(Available in GDAL >= 1.11)
-
 The OpenFileGDB driver provides read access to vector layers of File
 Geodatabases (.gdb directories) created by ArcGIS 9 and above. The
 dataset name must be the directory/folder name, and it must end with the
@@ -17,6 +15,13 @@ A specific .gdbtable file (including "system" tables) can also be opened
 directly.
 
 Curve in geometries are supported with GDAL >= 2.2.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Spatial filtering
 -----------------

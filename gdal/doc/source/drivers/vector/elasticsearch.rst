@@ -3,7 +3,6 @@
 ElasticSearch: Geographically Encoded Objects for ElasticSearch
 ===============================================================
 
-| (Driver available in GDAL 1.10 or later)
 | Driver is read-write starting with GDAL 2.1 (was write only in GDAL
   2.0 or earlier)
 | As of GDAL 2.1, ElasticSearch 1.X and, partially, 2.X versions are
@@ -14,6 +13,13 @@ ElasticSearch: Geographically Encoded Objects for ElasticSearch
 search engine for a variety of data sources. It supports full-text
 indexing and geospatial querying of those data in a fast and efficient
 manor using a predefined REST API.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
 
 Opening dataset name syntax
 ---------------------------

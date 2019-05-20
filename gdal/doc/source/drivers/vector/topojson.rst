@@ -6,8 +6,15 @@ TopoJSON driver
 (Note: prior to GDAL 2.3, the functionality of this driver was available
 in the GeoJSON driver. They are now distinct drivers)
 
-Starting with OGR 1.11, the driver can read the `TopoJSON
+The driver can read the `TopoJSON
 format <https://github.com/topojson/topojson-specification/blob/master/README.md>`__
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Datasource
 ----------

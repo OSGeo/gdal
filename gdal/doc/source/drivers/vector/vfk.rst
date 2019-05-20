@@ -14,6 +14,13 @@ Points are represented as wkbPoints, lines and boundaries as
 wkbLineStrings and areas as wkbPolygons. wkbMulti\* features are not
 used. Feature types cannot be mixed in one layer.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Open options
 ------------
 

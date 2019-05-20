@@ -14,6 +14,15 @@ At this time, only vector layers are handled by the KML driver. *(there
 are additional scripts supplied with the GDAL project that can build
 other kinds of output)*
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 KML Reading
 ~~~~~~~~~~~
 

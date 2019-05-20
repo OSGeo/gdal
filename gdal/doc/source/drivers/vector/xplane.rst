@@ -34,6 +34,13 @@ true for apt.dat). This option forces the driver not to cache features
 in RAM, but just to fetch the features of the current layer. Of course,
 this will have a negative impact on performance.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Examples
 --------
 

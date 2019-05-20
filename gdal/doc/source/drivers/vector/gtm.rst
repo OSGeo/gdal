@@ -3,8 +3,6 @@
 GTM - GPS TrackMaker
 ====================
 
-(Starting with GDAL 1.7.0)
-
 `GPSTrackMaker <http://www.gpstm.com/>`__ is a program that is
 compatible with more than 160 GPS models. It allows you to create your
 own maps. It supports vector maps and images.
@@ -19,6 +17,15 @@ the GTM driver will only read properly GTM files georeferenced as WGS
 1984 (if not the case a warning will be issued).
 
 The OGR driver supports just POINT, LINESTRING, and MULTILINESTRING.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Example
 -------

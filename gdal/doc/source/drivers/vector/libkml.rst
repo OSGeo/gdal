@@ -25,6 +25,15 @@ vary. Please try a few KML files as samples to get a sense of what is
 understood. In particular, nesting of feature sets more than one deep
 will be flattened to support ogr's internal format.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Datasource
 ----------
 

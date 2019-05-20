@@ -3,6 +3,8 @@
 NextGIS Web
 ===========
 
+.. versionadded:: 2.4
+
 NextGIS Web - is a server GIS, which allows to store and edit geodata
 and to display maps in web browser. Also NextGIS Web can share geodata
 with other NextGIS software.
@@ -26,11 +28,15 @@ NextGIS Web - is an open source software (license GPL v2+, see `GNU
 General Public License, version
 2 <https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html>`__).
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Driver
 ------
 
-The driver is available since GDAL/OGR >= **2.4**. NextGIS Web supports
-several raster types:
+NextGIS Web supports several raster types:
 
 -  Raster style
 -  Vector style

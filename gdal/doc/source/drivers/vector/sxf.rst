@@ -3,8 +3,6 @@
 Storage and eXchange Format - SXF
 =================================
 
-(GDAL/OGR >= 1.10.2)
-
 This driver reads SXF files, open format often associated with Russian
 GIS Software Panorama.
 
@@ -44,8 +42,15 @@ type).
 If config option **SXF_SET_VERTCS** set to ON, the layers spatial
 reference will include vertical coordinate system description if exist.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
-~~~~~~~~
+--------
 
 -  `Panorama web page <http://gisinfo.ru>`__
 -  `SXF binary format description v.4 (rus) -

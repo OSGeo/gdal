@@ -3,8 +3,6 @@
 EDIGEO
 ======
 
-(GDAL/OGR >= 1.9.0)
-
 This driver reads files encoded in the French EDIGEO exchange format, a
 text based file format aimed at exchanging geographical information
 between GIS, with powerful description capabilities, topology modeling,
@@ -26,8 +24,15 @@ PROJ.4 resource files.
 The whole set of files will be parsed into memory. This may be a
 limitation if dealing with big EDIGEO exchanges.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Labels
-~~~~~~
+------
 
 For EDIGEO PCI files, the labels are contained in the ID_S_OBJ_Z_1_2_2
 layer. OGR will export styling following the :ref:`ogr_feature_style`.
@@ -53,7 +58,7 @@ of xxx=OBJ_OBJ_LNK_LAYER. This can be disabled by setting
 OGR_EDIGEO_CREATE_LABEL_LAYERS to NO.
 
 See Also
-~~~~~~~~
+--------
 
 -  `Introduction to the EDIGEO
    standard <http://georezo.net/wiki/main/donnees/edigeo>`__ (in French)

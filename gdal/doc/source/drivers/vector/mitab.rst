@@ -26,6 +26,15 @@ dataset with one single layer.
 MapInfo coordinate system information is supported for reading and
 writing.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Issues
 ---------------
 

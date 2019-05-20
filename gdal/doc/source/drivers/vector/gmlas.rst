@@ -3,7 +3,7 @@
 GMLAS - Geography Markup Language (GML) driven by application schemas
 =====================================================================
 
-Available in GDAL >= 2.2
+.. versionadded:: 2.2
 
 This driver can read and write XML files of arbitrary structure,
 included those containing so called Complex Features, provided that they
@@ -16,6 +16,13 @@ The driver requires Xerces-C >= 3.1.
 
 The driver can deal with files of arbitrary size with a very modest RAM
 usage, due to its working in streaming mode.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Opening syntax
 --------------

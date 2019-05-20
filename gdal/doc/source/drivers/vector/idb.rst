@@ -25,8 +25,17 @@ to determine how to read it.
 
 Driver supports automatic FID detection.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Environment variables
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 -  **INFORMIXDIR**: It should be set to Informix client SDK install dir
 -  **INFORMIXSERVER**: Default Informix server name
@@ -38,7 +47,7 @@ For more information about Informix variables read documentation of
 Informix Client SDK
 
 Example
-~~~~~~~
+-------
 
 This example shows using ogrinfo to list Informix DataBlade layers on a
 different host.

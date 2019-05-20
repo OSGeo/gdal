@@ -3,7 +3,9 @@
 NetCDF: Network Common Data Form - Vector
 =========================================
 
-Starting with GDAL 2.1, the netCDF driver support read and write
+.. versionadded:: 2.1
+
+The netCDF driver support read and write
 (creation from scratch and append operations) to vector datasets (you
 can find documentation for the :ref:`raster side <raster.netcdf>`)
 
@@ -14,6 +16,15 @@ The driver handles the "point" and "profile" `feature
 types <http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_features_and_feature_types>`__
 of the CF 1.6 convention. It also supports a more custom approach for
 non-point geometries.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Mapping of concepts
 -------------------

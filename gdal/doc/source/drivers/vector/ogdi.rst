@@ -48,8 +48,13 @@ coordinate system cannot be translated.
 
 There is no update or creation support in the OGDI driver.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Error handling
-~~~~~~~~~~~~~~
+--------------
 
 Starting with GDAL 2.2 and OGDI > 3.2.0beta2, if the OGDI_STOP_ON_ERROR
 environment variable is set to NO, some errors can be gracefully
@@ -60,7 +65,7 @@ Note: be aware that this is a work in progress. Not all recoverable
 errors can be recovered, and some errors might be recovered silently.
 
 Examples
-~~~~~~~~
+--------
 
 | Usage example 'ogrinfo':
 
@@ -90,7 +95,7 @@ of the layer name.
               -sql 'select * from "polbndl@bnd(*)_line" where use=26'
 
 See Also
-~~~~~~~~
+--------
 
 -  `OGDI.SourceForge.Net <http://ogdi.sourceforge.net/>`__
 -  `VMap0

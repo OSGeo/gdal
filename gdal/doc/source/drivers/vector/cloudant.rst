@@ -3,8 +3,6 @@
 CouchDB - Cloudant
 ==================
 
-(GDAL/OGR >= 2.0.0)
-
 Cloudant and CouchDB are API compatible and based on the same core
 technology. The geospatial extension for Cloudant is separate to
 GeoCouch. This driver can connect to the a Cloudant service, potentially
@@ -14,6 +12,13 @@ GDAL/OGR must be built with Curl support in order to the Cloudant driver
 to be compiled.
 
 The driver supports read and write operations.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
 
 Cloudant vs OGR concepts
 ------------------------

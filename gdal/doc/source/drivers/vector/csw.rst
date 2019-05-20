@@ -3,8 +3,6 @@
 CSW - OGC CSW (Catalog Service for the Web)
 ===========================================
 
-(GDAL/OGR >= 2.0)
-
 This driver can connect to a OGC CSW service. It supports CSW 2.0.2
 protocol. GDAL/OGR must be built with Curl support in order to the CSW
 driver to be compiled. And the GML driver should be set-up for read
@@ -12,6 +10,11 @@ support (thus requiring GDAL/OGR to be built with Xerces or Expat
 support).
 
 It retrieves records with Dublin Core metadata.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
 
 Dataset name syntax
 -------------------

@@ -59,6 +59,15 @@ override the encoding interpretation of the shapefile with any encoding
 supported by CPLRecode or to "" to avoid any recoding. (Recoding support
 is new for GDAL/OGR 1.9.0)
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Open options
 ------------
 

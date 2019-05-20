@@ -3,7 +3,7 @@
 MongoDB
 =======
 
-(GDAL/OGR >= 2.1.0)
+.. versionadded:: 2.1
 
 This driver can connect to the a MongoDB service.
 
@@ -16,6 +16,15 @@ connect to MongoDB 3.0 or later servers, starting with GDAL 3.0, use the
 new :ref:`MongoDBv3 <vector.mongodbv3>` driver which uses the MongoDB C++
 v3.4.0 client library. This driver will be eventually in favor of
 MongoDBv3
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 MongoDB vs OGR concepts
 -----------------------

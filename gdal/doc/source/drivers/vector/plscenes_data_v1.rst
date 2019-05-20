@@ -3,12 +3,17 @@
 PLScenes (Planet Labs Scenes), Data V1 API
 ==========================================
 
-GDAL/OGR >= 2.2
+.. versionadded:: 2.2
 
 The driver supports read-only operations to list scenes and their
 metadata as a vector layer per item-types: "PSOrthoTile", "REOrthoTile",
 "PSScene3Band", "PSScene4Band", "REScene", "Landsat8L1G",
 "Sentinel2L1C". It can also access raster scenes.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
 
 Dataset name syntax
 -------------------

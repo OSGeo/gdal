@@ -3,8 +3,6 @@
 HTF - Hydrographic Transfer Format
 ==================================
 
-(GDAL/OGR >= 1.8.0)
-
 This driver reads files containing sounding data following the
 Hydrographic Transfer Format (HTF), which is used by the Australian
 Hydrographic Office (AHO).
@@ -83,8 +81,15 @@ fields :
 Some fields may be never set, depending on the value of the Field
 Population Key. Extra fields may also be added.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
-~~~~~~~~
+--------
 
 -  `HTF - Hydrographic Transfer Format home
    page <http://www.hydro.gov.au/tools/htf/htf.htm>`__

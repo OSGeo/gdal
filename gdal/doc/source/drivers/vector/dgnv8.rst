@@ -3,7 +3,7 @@
 Microstation DGN v8
 ===================
 
-Available since GDAL 2.2
+.. versionadded:: 2.2
 
 Microstation DGN files from Microstation version 8.0 are supported for
 reading and writing. Each model of the file is represented by a OGR
@@ -21,6 +21,15 @@ OGR. Features will all have the following generic attributes:
 -  ColorIndex: The color index from the dgn palette.
 -  Weight: The drawing weight (thickness) for the element.
 -  Style: The style value for the element.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Supported Elements
 ------------------

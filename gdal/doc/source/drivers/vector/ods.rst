@@ -3,8 +3,6 @@
 ODS - Open Document Spreadsheet
 ===============================
 
-(GDAL/OGR >= 1.10.0)
-
 This driver can read, write and update spreadsheets in Open Document
 Spreadsheet format, used by applications like OpenOffice / LibreOffice /
 KSpread / etc...
@@ -22,8 +20,15 @@ formatting, formulas and other concepts (charts, drawings, macros, ...)
 not understood by OGR will be lost : the document is re-written from
 scratch from the OGR data model.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_virtualio::
+
 Configuration options
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 -  OGR_ODS_HEADERS = FORCE / DISABLE / AUTO : By default, the driver
    will read the first lines of each sheet to detect if the first line

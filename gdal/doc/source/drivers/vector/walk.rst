@@ -3,8 +3,6 @@
 Walk - Walk Spatial Data
 ========================
 
-(OGR >= 1.11)
-
 OGR optionally supports reading Walk spatial data via ODBC. Walk spatial
 data is a Microsoft Access database developed by Walkinfo Technologies
 mainly for land surveying, evaluation, planning, checking and data
@@ -32,6 +30,11 @@ engine. SQL commands can also be passed directly to the ODBC database
 engine when SQL dialect is not "OGRSQL". In that case, the queries will
 deal with tables (such as "XXXXFeatures", where XXXX is the name of a
 layer) instead of layers.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
 
 How to use Walk driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------

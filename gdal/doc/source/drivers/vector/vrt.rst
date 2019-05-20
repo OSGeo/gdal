@@ -13,12 +13,19 @@ an anchor file for access to non-file oriented datasources.
 
 The virtual files are currently normally prepared by hand.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Issues
 ---------------
 
-Before GDAL 1.7.0, the OGR VRT driver was read-only.
-
-Since GDAL 1.7.0, the CreateFeature(), SetFeature() and DeleteFeature()
+The CreateFeature(), SetFeature() and DeleteFeature()
 operations are supported on a layer of a VRT dataset, if the following
 conditions are met :
 

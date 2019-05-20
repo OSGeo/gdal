@@ -38,6 +38,13 @@ Random (by FID) reads of arcs, and polygons is supported it may not be
 supported for other feature types. Random access to E00 files is generally
 slow.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
 --------
 

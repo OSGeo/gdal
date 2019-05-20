@@ -4,10 +4,15 @@
 Aeronav FAA
 ================================================================================
 
-.. versionadded:: 1.8.0
-
 This driver reads text files describing aeronav information - obstacles,
 navaids and routes - as provided by the FAA.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 See Also
 --------

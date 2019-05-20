@@ -13,7 +13,7 @@ database can be checked from the SQLITE debug info value "OGR style
 SQLite DB found/ SpatiaLite DB found/SpatiaLite v4 DB found" obtained by
 running **"ogrinfo db.sqlite --debug on"**
 
-Starting with GDAL 2.20, the SQLite driver can also read databases with
+Starting with GDAL 2.2, the SQLite driver can also read databases with
 :ref:`RasterLite2 raster coverages <raster.rasterlite2>`.
 
 The SQLite database is essentially typeless, but the SQLite driver will
@@ -40,7 +40,7 @@ engine. It's also possible to request the driver to handle SQL commands
 with `OGR SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
-Starting with OGR 1.8.0, the OGR_SQLITE_SYNCHRONOUS configuration option
+The OGR_SQLITE_SYNCHRONOUS configuration option
 has been added. When set to OFF, this issues a 'PRAGMA synchronous =
 OFF' command to the SQLite database. This has the advantage of
 speeding-up some write operations (e.g. on EXT4 filesystems), but at the
@@ -48,10 +48,19 @@ expense of data safety w.r.t system/OS crashes. So use it carefully in
 production environments and read the SQLite `related
 documentation <http://www.sqlite.org/pragma.html#pragma_synchronous>`__.
 
-Starting with OGR 1.11, any SQLite
+Any SQLite
 `pragma <http://www.sqlite.org/pragma.html>`__ can be specified with the
 OGR_SQLITE_PRAGMA configuration option. The syntax is OGR_SQLITE_PRAGMA
 = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*".
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 "Regular" SQLite databases
 --------------------------
@@ -74,7 +83,7 @@ to be slow (use Spatialite for that). Attributes queries may be fast,
 especially if indexes are built for appropriate attribute columns using
 the "CREATE INDEX ON ( )" SQL command.
 
-Starting with GDAL 2.0, the driver also supports reading and writing the
+The driver also supports reading and writing the
 following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE,
 CURVEPOLYGON, MULTICURVE and MULTISURFACE. Note: this is not true for
 Spatialite databases, since those geometry types are not supported by
@@ -83,39 +92,19 @@ current Spatialite versions.
 Tables with multiple geometry columns
 -------------------------------------
 
-Starting with GDAL 2.0, layers with multiple geometry columns can be
+Layers with multiple geometry columns can be
 created, modified or read, following new API described in `RFC
 41 <http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields>`__
-
-In GDAL 1.10, such support was read-only and there were as many OGR
-layers exposed as there are geometry columns. They were named
-"table_name(geometry_column_name)". Such syntax is still possible with
-GDAL 2.0 when explicitly querying a layer with GetLayerByName()
 
 REGEXP operator
 ---------------
 
 By default, the REGEXP operator has no implementation in SQLite. With
-OGR >= 1.10 built against the PCRE library, the REGEXP operator is
+OGRbuilt against the PCRE library, the REGEXP operator is
 available in SQL statements run by OGR.
-
-VSI Virtual File System API support
------------------------------------
-
-(Require OGR >= 1.9.0 and SQLite >= 3.6.0)
-
-The driver supports reading and writing to files managed by VSI Virtual
-File System API, which include "regular" files, as well as files in the
-/vsimem/ (read-write), /vsizip/ (read-only), /vsigzip/ (read-only),
-/vsicurl/ (read-only) domains.
-
-Note: for regular files, the standard I/O operations provided by SQLite
-are used, in order to benefit from its integrity guarantees.
 
 Using the SpatiaLite library (Spatial extension for SQLite)
 -----------------------------------------------------------
-
-(Starting with GDAL 1.7.0)
 
 The SQLite driver can read and write SpatiaLite databases. Creating or
 updating a spatialite database requires explicit linking against
@@ -137,7 +126,7 @@ A few examples :
 Opening with 'VirtualShape:'
 ----------------------------
 
-(Require OGR >= 1.9.0 and Spatialite support)
+(Require Spatialite support)
 
 It is possible to open on-the-fly a shapefile as a VirtualShape with
 Spatialite. The syntax to use for the datasource is

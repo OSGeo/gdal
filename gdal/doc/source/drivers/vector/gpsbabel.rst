@@ -3,13 +3,18 @@
 GPSBabel
 ========
 
-(GDAL/OGR >= 1.8.0)
-
 The GPSBabel driver for now that relies on the
 `GPSBabel <http://www.gpsbabel.org>`__ utility to access various GPS
 file formats.
 
 The GPSBabel executable must be accessible through the PATH.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
 
 Read support
 ------------

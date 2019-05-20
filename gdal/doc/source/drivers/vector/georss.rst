@@ -2,9 +2,6 @@
 
 GeoRSS : Geographically Encoded Objects for RSS feeds
 =====================================================
-
-(Driver available in GDAL 1.7.0 or later)
-
 GeoRSS is a way of encoding location in RSS or Atom feeds.
 
 OGR has support for GeoRSS reading and writing. Read support is only
@@ -34,6 +31,15 @@ Feature model.
 A single layer is returned while reading a RSS document. Features are
 retrieved from the content of <item> (RSS document) or <entry> (Atom
 document) elements.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Encoding issues
 ---------------

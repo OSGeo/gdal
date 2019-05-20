@@ -25,6 +25,15 @@ at the same time on a single datasource can lead to irreversible data
 corruption. The driver issues a warning each time a datasource is opened
 in update mode.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Magic bytes
 -----------
 

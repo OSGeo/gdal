@@ -7,6 +7,13 @@ This driver implements support for access to spatial tables in Microsoft
 SQL Server 2008+ which contains the geometry and geography data types to
 represent the geometry columns.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Connecting to a database
 ------------------------
 

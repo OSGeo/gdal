@@ -61,8 +61,15 @@ also been reported to work fine. It is believe that any TIGER/Line
 product from the 1990's should work with the reader, with the possible
 loss of some version specific information.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Feature Representation
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 With a few exceptions, a feature is created for each record of a
 TIGER/Line data file. Each file (i.e. .RT1, .RTA) is translated to an
@@ -228,7 +235,7 @@ features have a many to one relationship with CompleteChain features.
 These features have no associated geometry.
 
 See Also
-~~~~~~~~
+--------
 
 http://www.census.gov/geo/www/tiger/: More information on the TIGER/Line
 file format, and data product can be found on this U.S. Census web page.

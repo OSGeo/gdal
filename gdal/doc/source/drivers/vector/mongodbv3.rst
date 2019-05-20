@@ -3,7 +3,7 @@
 MongoDBv3
 =========
 
-(GDAL/OGR >= 3.0)
+.. versionadded:: 3.0
 
 This driver can connect to the a MongoDB service.
 
@@ -12,6 +12,15 @@ documents/features and collections/layers. The MongoDB database must
 exist before operating on it with OGR.
 
 This driver requires the MongoDB C++ v3.4.0 client library.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 MongoDB vs OGR concepts
 -----------------------
