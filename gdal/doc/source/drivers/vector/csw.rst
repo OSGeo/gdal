@@ -91,4 +91,4 @@ See Also
 --------
 
 -  `OGC CSW Standard <http://www.opengeospatial.org/standards/cat>`__
--  `GML driver documentation <drv_gml.html>`__
+-  :ref:`GML driver documentation <vector.gml>`

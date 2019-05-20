@@ -29,6 +29,7 @@ def gather_redirects():
 
     output.update({ 'drv_geopackage.html' : os.path.join('./drivers/vector', 'gpkg') + '.html' })
     output.update({ 'drv_geopackage_raster.html' : os.path.join('./drivers/raster', 'gpkg') + '.html' })
+    output.update({ 'ogr_feature_style.html' : os.path.join('./user', 'ogr_feature_style') + '.html' })
 
     return output
 

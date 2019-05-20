@@ -41,14 +41,14 @@ to the ExecuteSQL() method, as name of the SQL dialect.
 How to use Geomedia driver with unixODBC and MDB Tools (on Unix and Linux)
 --------------------------------------------------------------------------
 
-Starting with GDAL/OGR 1.9.0, the `MDB <drv_mdb.html>`__ driver is an
+Starting with GDAL/OGR 1.9.0, the :ref:`MDB <vector.mdb>` driver is an
 alternate way of reading Geomedia .mdb files without requiring unixODBC
 and MDB Tools
 
-Refer to the similar section of the `PGeo <drv_pgeo.html>`__ driver. The
+Refer to the similar section of the :ref:`PGeo <vector.pgeo>` driver. The
 prefix to use for this driver is Geomedia:
 
 See also
 --------
 
--  `MDB <drv_mdb.html>`__ driver page
+-  :ref:`MDB <vector.mdb>` driver page

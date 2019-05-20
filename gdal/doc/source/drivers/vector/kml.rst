@@ -151,4 +151,4 @@ See Also
 -  `KML Specification <https://developers.google.com/kml/?csw=1>`__
 -  `KML
    Tutorial <https://developers.google.com/kml/documentation/kml_tut>`__
--  `LIBKML driver <drv_libkml.html>`__ An alternative GDAL KML driver
+-  :ref:`LIBKML driver <vector.libkml>` An alternative GDAL KML driver

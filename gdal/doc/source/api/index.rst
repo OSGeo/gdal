@@ -31,6 +31,7 @@ API
        gdalwarp_cpp
        ogrlayer_cpp
        ogrfeature_cpp
+       ogrfeaturestyle_cpp
        ogrgeometry_cpp
        ogrspatialref
        gnm_cpp

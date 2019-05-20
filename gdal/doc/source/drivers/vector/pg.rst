@@ -10,11 +10,10 @@ without PostGIS but with less functionalities.
 
 This driver requires a connection to a Postgres database. If you want to
 prepare a SQL dump to inject it later into a Postgres database, you can
-instead use the `PostgreSQL SQL Dump driver <drv_pgdump.html>`__
-(GDAL/OGR >= 1.8.0)
+instead use the :ref:`PostgreSQL SQL Dump driver <vector.pgdump>`.
 
-You can find additional information on the driver in the `Advanced OGR
-PostgreSQL driver Information <drv_pg_advanced.html>`__ page.
+You can find additional information on the driver in the :ref:`Advanced OGR
+PostgreSQL driver Information <vector.pg_advanced>` page.
 
 Connecting to a database
 ------------------------
@@ -250,7 +249,7 @@ Examples
       % ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
 
 -  This second example loads a political boundaries layer from VPF (via
-   the `OGDI driver <drv_ogdi.html>`__), and renames the layer from the
+   the :ref:`OGDI driver <vector.ogdi>`), and renames the layer from the
    cryptic OGDI layer name to something more sensible. If an existing
    table of the desired name exists it is overwritten.
 
@@ -309,8 +308,8 @@ FAQs
 See Also
 ~~~~~~~~
 
--  `Advanced OGR PostgreSQL driver Information <drv_pg_advanced.html>`__
--  `OGR PostgreSQL SQL Dump driver Page <drv_pgdump.html>`__
+-  :ref:`Advanced OGR PostgreSQL driver Information <vector.pg_advanced>`
+-  :ref:`OGR PostgreSQL SQL Dump driver Page <vector.pgdump>`
 -  `PostgreSQL Home Page <http://www.postgresql.org/>`__
 -  `PostGIS <http://postgis.net/>`__
 -  `PostGIS / OGR Wiki Examples

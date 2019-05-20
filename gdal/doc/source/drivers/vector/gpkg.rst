@@ -31,7 +31,7 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE,
 CURVEPOLYGON, MULTICURVE and MULTISURFACE
 
 Starting with GDAL 2.0, GeoPackage raster/tiles are supported. See
-`GeoPackage raster <drv_geopackage_raster.html>`__ documentation page
+:ref:`GeoPackage raster <raster.gpkg>` documentation page
 
 Specification version
 ---------------------
@@ -171,8 +171,8 @@ raster) are available:
    add a gpkg_ogr_contents table to keep feature count, and associated
    triggers. Defaults to YES.
 
-Other options are available for raster. See the `GeoPackage
-raster <drv_geopackage_raster.html>`__ documentation page
+Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
+documentation page
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~

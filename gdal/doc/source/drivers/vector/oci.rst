@@ -196,7 +196,7 @@ created with the features from abc.shp and attributes from abc.dbf.
    % ogr2ogr -f OCI OCI:warmerda/password@gdal800.dreadfest.com abc.shp
 
 This second example loads a political boundaries layer from VPF (via the
-`OGDI driver <drv_ogdi.html>`__), and renames the layer from the cryptic
+:ref:`OGDI driver <vector.ogdi>`), and renames the layer from the cryptic
 OGDI layer name to something more sensible. If an existing table of the
 desired name exists it is overwritten.
 

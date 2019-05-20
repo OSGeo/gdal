@@ -4,7 +4,7 @@ Microstation DGN
 ================
 
 Microstation DGN files from Microstation versions predating version 8.0
-are supported for reading (a `DGNv8 driver <drv_dgnv8.html>`__, using
+are supported for reading (a :ref:`DGNv8 driver <vector.dgnv8>`, using
 Teigha libraries, is available to read and write DGN v8 files). The
 entire file is represented as one layer (named "elements").
 
@@ -113,6 +113,5 @@ The dataset creation supports the following options:
 --------------
 
 -  `Dgnlib Page <http://dgnlib.maptools.org/>`__
--  `OGR Feature Style
-   Specification <http://gdal.org/ogr_feature_style.html>`__
--  `DGNv8 driver <drv_dgnv8.html>`__ (using Teigha libraries)
+-  :ref:`ogr_feature_style`
+-  :ref:`DGNv8 driver <vector.dgnv8>` (using Teigha libraries)

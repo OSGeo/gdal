@@ -138,6 +138,5 @@ The layer creation supports the following options:
 
 --------------
 
--  `DGN (v7) driver <drv_dgn.html>`__
--  `OGR Feature Style
-   Specification <http://gdal.org/ogr_feature_style.html>`__
+-  :ref:`DGN (v7) driver <vector.dgn>`
+-  :ref:`ogr_feature_style`

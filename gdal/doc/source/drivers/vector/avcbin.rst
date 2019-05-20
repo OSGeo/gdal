@@ -25,7 +25,7 @@ info attributes will be appended to coverage layers, but the geometry should
 still be accessible.
 
 If the directory contains files with names like w001001.adf then the coverage
-is a `grid coverage <http://www.gdal.org/frmt_various.html#AIG>`__ suitable
+is a :ref:`grid coverage <raster.aig>` suitable
 to read with GDAL, not a vector coverage supported by OGR.
 
 The layers are named as follows:
@@ -49,4 +49,4 @@ See Also
 --------
 
 -  `AVCE00 Library Page <http://avce00.maptools.org/>`__
--  `AVCE00 OGR Driver (.E00) <drv_avce00.html>`__
+-  :ref:`AVCE00 OGR Driver (.E00) <vector.avce00>`

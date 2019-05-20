@@ -1,7 +1,9 @@
-.. _vector.rasterlite2:
+.. _raster.rasterlite2:
 
 RasterLite2 - Rasters in SQLite DB
 ==================================
+
+Technically this is the ``SQLite`` driver.
 
 Starting with GDAL 2.2, the SQLite driver allows reading and writing
 SQLite databases containing RasterLite2 coverages.

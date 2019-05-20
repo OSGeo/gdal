@@ -12,7 +12,7 @@ support for MBTiles raster datasets.
 
 Starting with GDAL 2.3, the MBTiles driver has read and write support
 for MBTiles vector datasets. For standalone Mapbox Vector Tile files or
-set of MVT files, see the `MVT <drv_mvt.html>`__ driver. Note: vector
+set of MVT files, see the :ref:`MVT <vector.mvt>` driver. Note: vector
 write support requires GDAL to be built with GEOS.
 
 GDAL/OGR must be compiled with OGR SQLite driver support, and JPEG and
@@ -307,7 +307,7 @@ containing vector tiles conforming to the Mapbox Vector Tile format
 
 The driver requires the 'metadata' table to contain a name='json' entry,
 that has a 'vector_layers' array describing layers and their schema. See
-`metadata.json <drv_mvt.html#metadata_json>`__
+:ref:`metadata.json <mvt_metadata_json>`
 
 Note: The driver will make no effort of stiching together geometries for
 features that overlap several tiles.
@@ -435,4 +435,4 @@ See Also:
 -  `MBTiles specification <https://github.com/mapbox/mbtiles-spec>`__
 -  `UTFGrid
    specification <https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md>`__
--  `Mapbox Vector tiles driver <drv_mvt.html>`__
+-  :ref:`Mapbox Vector tiles driver <vector.mvt>`

@@ -185,8 +185,8 @@ against the XML Schema.
 
 When translating from a source dataset, it may be necessary to rename
 the field names from the source dataset to the expected GPX attribute
-names, such as <name>, <desc>, etc... This can be done with a `OGR
-VRT <drv_vrt.html>`__ dataset, or by using the "-sql" option of the
+names, such as <name>, <desc>, etc... This can be done with a :ref:`OGR
+VRT <vector.vrt>` dataset, or by using the "-sql" option of the
 ogr2ogr utility.
 
 Issues when translating to Shapefile

@@ -153,7 +153,7 @@ Example
 See Also
 ~~~~~~~~
 
--  `OGR PostgreSQL driver Page <drv_pg.html>`__
+-  :ref:`OGR PostgreSQL driver Page <vector.pg>`
 -  `PostgreSQL Home Page <http://www.postgresql.org/>`__
 -  `PostGIS <http://postgis.net/>`__
 -  `PostGIS / OGR Wiki Examples

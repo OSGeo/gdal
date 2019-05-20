@@ -27,6 +27,6 @@ TopoJSON: to avoid any ambiguity with other drivers.
 See Also
 --------
 
--  `GeoJSON driver <drv_geojson.html>`__
+-  :ref:`GeoJSON driver <vector.geojson>`
 -  `TopoJSON Format
    Specification <https://github.com/topojson/topojson-specification/blob/master/README.md>`__

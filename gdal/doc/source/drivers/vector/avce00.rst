@@ -42,4 +42,4 @@ See Also
 --------
 
 -  `AVCE00 Library Page <http://avce00.maptools.org/>`__
--  `AVCBin OGR Driver (Binary Coverage) <drv_avcbin.html>`__
+-  :ref:`AVCBin OGR Driver (Binary Coverage) <vector.avcbin>`

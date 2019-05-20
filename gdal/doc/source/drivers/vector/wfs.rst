@@ -337,5 +337,5 @@ See Also
 --------
 
 -  `OGC WFS Standard <http://www.opengeospatial.org/standards/wfs>`__
--  `GML driver documentation <drv_gml.html>`__
--  `WFS 3.0 (experimental) driver documentation <drv_wfs3.html>`__
+-  :ref:`GML driver documentation <vector.gml>`
+-  :ref:`WFS 3.0 (experimental) driver documentation <vector.wfs3>`

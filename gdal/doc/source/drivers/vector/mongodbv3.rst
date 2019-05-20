@@ -33,7 +33,7 @@ There are two main possible syntaxes:
 
 Note: the MONGODBV3: prefix before a URI starting with *mongodb://* is
 required to make it recognize by this driver, instead of the legacy
-`MongoDB <drv_mongodb.html>`__ driver. If the URI is starting with
+:ref:`MongoDB <vector.mongodb>` driver. If the URI is starting with
 *mongodb+srv://*, then it is not needed.
 
 The open options available are :

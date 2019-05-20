@@ -12,8 +12,8 @@ need to build libkml from its latest SVN version (libkml 1.2 isn't
 enough).
 
 Note that if you build and include this LIBKML driver, it will become
-the default reader of KML for ogr, overriding the previous `KML
-driver <drv_kml.html>`__ . You can still specify either KML or LIBKML as
+the default reader of KML for ogr, overriding the previous :ref:`KML
+driver <vector.kml>`. You can still specify either KML or LIBKML as
 the output driver via the command line
 
 Libkml from Google provides reading services for any valid KML file.
@@ -47,8 +47,7 @@ Datasource style tables are written to the
 in a .kml, style/style.kml in a kmz file, or style.kml in a directory,
 as one or more
 `<Style> <https://developers.google.com/kml/documentation/kmlreference#style>`__
-elements. Not all of `OGR Feature
-Style <http://www.gdal.org/ogr_feature_style.html>`__ can translate into
+elements. Not all of :ref:`ogr_feature_style` can translate into
 KML.
 
 Datasource creation options
@@ -729,9 +728,9 @@ Example
 -------
 
 The following bash script will build a
-`csv <http://www.gdal.org/drv_csv.html>`__ file and a
-`vrt <http://www.gdal.org/drv_vrt.html>`__ file, and then translate them
-to KML using `ogr2ogr <http://www.gdal.org/ogr2ogr.html>`__ into a .kml
+:ref:`csv <vector.csv>` file and a
+:ref:`vrt <vector.vrt>` file, and then translate them
+to KML using :ref:`ogr2ogr` into a .kml
 file with timestamps and styling.
 
 ::

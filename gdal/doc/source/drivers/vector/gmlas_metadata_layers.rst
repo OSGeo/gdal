@@ -1,4 +1,6 @@
-.. _drv_gmlas_metadata_layers:
+:orphan:
+
+.. _gmlas_metadata_layers:
 
 GMLAS - Metadata layers
 =======================

@@ -46,7 +46,7 @@ compute the z_order attribute.
 When keys are not strictly identified in the *osmconf.ini* file, the
 key/value pair is appended in a "other_tags" field, with a syntax
 compatible with the PostgreSQL HSTORE type. See the *COLUMN_TYPES* layer
-creation option of the `PG driver <drv_pg.html>`__.
+creation option of the :ref:`PG driver <vector.pg>`.
 
 For example :
 

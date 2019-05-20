@@ -208,4 +208,4 @@ See Also
    API <https://docs.planet.com/reference#basemaps-and-mosaics>`__
 -  `API
    Authentication <https://docs.planet.com/docs/api-mechanics#section-authentication>`__
--  `Vector PLScenes / Planet Scenes API driver <drv_plscenes.html>`__
+-  :ref:`Vector PLScenes / Planet Scenes API driver <vector.plscenes>`

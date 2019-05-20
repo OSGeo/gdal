@@ -250,4 +250,4 @@ See Also:
    howto <http://www.gaia-gis.it/gaia-sins/rasterlite-docs/rasterlite-how-to.pdf>`__
 -  `Sample
    databases <http://www.gaia-gis.it/spatialite-2.3.1/resources.html>`__
--  `OGR SQLite driver <http://gdal.org/drv_sqlite.html>`__
+-  :ref:`OGR SQLite driver <vector.sqlite>`

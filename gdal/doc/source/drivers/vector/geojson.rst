@@ -353,6 +353,6 @@ See Also
 -  `GeoJSON 2008 <http://geojson.org/geojson-spec.html>`__ specification
    (obsoleted by RFC 7946).
 -  `JSON <http://json.org/>`__ - JavaScript Object Notation
--  `GeoJSON sequence driver <drv_geojsonseq.html>`__
--  `ESRI JSon / FeatureService driver <drv_esrijson.html>`__
--  `TopoJSON driver <drv_topojson.html>`__
+-  :ref:`GeoJSON sequence driver <vector.geojsonseq>`
+-  :ref:`ESRI JSon / FeatureService driver <vector.esrijson>`
+-  :ref:`TopoJSON driver <vector.topojson>`

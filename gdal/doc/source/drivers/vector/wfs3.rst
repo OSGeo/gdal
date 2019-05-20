@@ -160,4 +160,4 @@ See Also
 
 -  `OGC WFS 3.0 Standard
    (DRAFT) <https://rawgit.com/opengeospatial/WFS_FES/master/docs/17-069.html>`__
--  `WFS (1.0,1.1,2.0) driver documentation <drv_wfs.html>`__
+-  :ref:`WFS (1.0,1.1,2.0) driver documentation <vector.wfs>`

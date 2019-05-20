@@ -13,7 +13,7 @@ exist before operating on it with OGR.
 
 This driver uses the legacy MongoDB C++ driver client library. To
 connect to MongoDB 3.0 or later servers, starting with GDAL 3.0, use the
-new `MongoDBv3 <drv_mongodbv3.html>`__ driver which uses the MongoDB C++
+new :ref:`MongoDBv3 <vector.mongodbv3>` driver which uses the MongoDB C++
 v3.4.0 client library. This driver will be eventually in favor of
 MongoDBv3
 

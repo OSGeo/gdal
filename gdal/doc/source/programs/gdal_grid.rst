@@ -316,8 +316,7 @@ Often you have a text file with a list of comma separated XYZ values to work
 with (so called CSV file). You can easily use that kind of data source in \ref
 gdal_grid. All you need is create a virtual dataset header (VRT) for you CSV
 file and use it as input datasource for \ref gdal_grid. You can find details
-on VRT format at <a href="ogr/drv_vrt.html">Virtual Format</a> description
-page.
+on VRT format at :ref:`vector.vrt` description page.
 
 Here is a small example. Let we have a CSV file called <i>dem.csv>
 containing

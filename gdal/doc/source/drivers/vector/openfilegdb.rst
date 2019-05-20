@@ -92,6 +92,6 @@ Examples
 Links
 -----
 
--  `FileGDB driver <drv_filegdb.html>`__, relying on the FileGDB API SDK
+-  :ref:`FileGDB driver <vector.filegdb>`, relying on the FileGDB API SDK
 -  Reverse-engineered specification of the `FileGDB
    format <https://github.com/rouault/dump_gdbtable/wiki/FGDB-Spec>`__

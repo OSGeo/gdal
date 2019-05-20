@@ -8,15 +8,14 @@ files is not supported.
 
 Supported GML flavors :
 
-============ ======================================= =================================
-OGR version  Read                                    Write
-============ ======================================= =================================
-OGR >= 1.8.0 GML2 and GML3 that can                  GML 2.1.2 or GML 3 SF-0
-             be translated into simple feature model (GML 3.1.1 Compliance level SF-0)
-OGR < 1.8.0  GML2 and limited GML3                   GML 2.1.2
-============ ======================================= =================================
+======================================= =================================
+Read                                    Write
+======================================= =================================
+GML2 and GML3 that can                  GML 2.1.2 or GML 3 SF-0
+be translated into simple feature model (GML 3.1.1 Compliance level SF-0)
+======================================= =================================
 
-Starting with GDAL 2.2, another driver, `GMLAS <drv_gmlas.html>`__, for
+Starting with GDAL 2.2, another driver, :ref:`GMLAS <vector.gmlas>`, for
 GML driven by application schemas, is also available. Both GML and GMLAS
 drivers have their use cases.
 
@@ -126,7 +125,7 @@ profiles such as UK Ordnance Survey MasterMap. OGR 1.8.0 also brings
 support for reading IntegerList, RealList and StringList field types
 when a GML element has several occurrences.
 
-Since OGR 1.8.0, a specialized GML driver - the `NAS <drv_nas.html>`__
+Since OGR 1.8.0, a specialized GML driver - the :ref:`NAS <vector.nas>`
 driver - is available to read German AAA GML Exchange Format
 (NAS/ALKIS).
 
@@ -1095,10 +1094,10 @@ See Also
    Corrigendum) (GML 3.2.1) - OGC(R)
    10-100r3 <https://portal.opengeospatial.org/files/?artifact_id=42729>`__
 -  `Xerces <http://xml.apache.org/xerces2-j/index.html>`__
--  `GMLAS - Geography Markup Language (GML) driven by application
-   schemas <drv_gmlas.html>`__
--  `NAS/ALKIS : specialized GML driver for cadastral data in
-   Germany <drv_nas.html>`__
+-  :ref:`GMLAS - Geography Markup Language (GML) driven by application
+   schemas <vector.gmlas>`
+-  :ref:`NAS/ALKIS : specialized GML driver for cadastral data in
+   Germany <vector.nas>`
 
 Credits
 -------

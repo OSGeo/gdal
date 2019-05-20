@@ -61,6 +61,6 @@ server:
 See Also
 --------
 
--  `GeoJSON driver <drv_geojson.html>`__
+-  :ref:`GeoJSON driver <vector.geojson>`
 -  `GeoServices REST
    Specification <http://www.esri.com/industries/landing-pages/geoservices/geoservices.html>`__

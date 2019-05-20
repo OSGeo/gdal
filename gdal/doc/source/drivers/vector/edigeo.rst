@@ -30,8 +30,7 @@ Labels
 ~~~~~~
 
 For EDIGEO PCI files, the labels are contained in the ID_S_OBJ_Z_1_2_2
-layer. OGR will export styling following the `OGR Feature Style
-specification <http://gdal.org/ogr_feature_style.html>`__.
+layer. OGR will export styling following the :ref:`ogr_feature_style`.
 
 It will also add the following fields :
 

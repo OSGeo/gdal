@@ -36,5 +36,5 @@ layer) instead of layers.
 How to use Walk driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------
 
-Refer to the similar section of the `PGeo <drv_pgeo.html>`__ driver. The
+Refer to the similar section of the :ref:`PGeo <vector.pgeo>` driver. The
 prefix to use for this driver is Walk:

@@ -42,7 +42,7 @@ to the ExecuteSQL() method, as name of the SQL dialect.
 How to use PGeo driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------
 
-Starting with GDAL/OGR 1.9.0, the `MDB <drv_mdb.html>`__ driver is an
+Starting with GDAL/OGR 1.9.0, the :ref:`MDB <vector.mdb>` driver is an
 alternate way of reading ESRI Personal GeoDatabase .mdb files without
 requiring unixODBC and MDB Tools
 
@@ -196,4 +196,4 @@ Resources
 See also
 --------
 
--  `MDB <drv_mdb.html>`__ driver page
+-  :ref:`MDB <vector.mdb>` driver page

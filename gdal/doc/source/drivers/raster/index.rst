@@ -29,6 +29,7 @@ Raster drivers
    ctable2
    ctg
    daas
+   db2
    dds
    derived
    dimap
@@ -130,6 +131,7 @@ Raster drivers
    prf
    rasdaman
    rasterlite
+   rasterlite2
    r
    rda
    rik

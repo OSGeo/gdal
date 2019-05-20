@@ -20,8 +20,8 @@ This driver reads and writes SQLite files from the file system, so it
 must be run by a user with read/write access to the files it is working
 with.
 
-The driver can also handle GeoPackage vectors. See `GeoPackage
-vector <drv_geopackage.html>`__ documentation page
+The driver can also handle GeoPackage vectors. See :ref:`GeoPackage
+vector <vector.gpkg>` documentation page
 
 Various kind of input datasets can be converted to GeoPackage raster :
 

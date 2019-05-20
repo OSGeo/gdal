@@ -39,8 +39,8 @@ Feature style support
 ---------------------
 
 For write support, the driver has partial support for the style
-information attached to features, encoded according to the `OGR Feature
-Style Specification <ogr_feature_style.html>`__.
+information attached to features, encoded according to the
+:ref:`ogr_feature_style`.
 
 The following tools are recognized:
 
@@ -650,7 +650,7 @@ See also
 
 Specifications :
 
--  `OGR Feature Style Specification <ogr_feature_style.html>`__
+-  :ref:`ogr_feature_style`
 -  `OGC GeoPDF Encoding Best Practice Version 2.2
    (08-139r3) <http://portal.opengeospatial.org/files/?artifact_id=40537>`__
 -  `Adobe Supplement to ISO

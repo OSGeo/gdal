@@ -14,7 +14,7 @@ SQLite DB found/ SpatiaLite DB found/SpatiaLite v4 DB found" obtained by
 running **"ogrinfo db.sqlite --debug on"**
 
 Starting with GDAL 2.20, the SQLite driver can also read databases with
-`RasterLite2 raster coverages <frmt_rasterlite2.html>`__.
+:ref:`RasterLite2 raster coverages <raster.rasterlite2>`.
 
 The SQLite database is essentially typeless, but the SQLite driver will
 attempt to classify attributes field as text, integer or floating point
@@ -417,4 +417,4 @@ Links
 -  http://www.gaia-gis.it/spatialite/: SpatiaLite extension to SQLite.
 -  `FDO RFC 16 <http://trac.osgeo.org/fdo/wiki/FDORfc16>`__: FDO
    Provider for SQLite
--  `RasterLite2 driver <frmt_rasterlite2.html>`__
+-  :ref:`RasterLite2 driver <raster.rasterlite2>`

@@ -67,7 +67,7 @@ The JML writer supports the following *layer* creation options:
 See Also
 --------
 
--  `OGR - Feature Style Specification <ogr_feature_style.html>`__
+- :ref:`ogr_feature_style`
 
 Credits
 -------

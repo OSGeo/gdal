@@ -124,4 +124,4 @@ or
 See Also:
 ---------
 
--  `Google Earth Engine Data API driver <drv_eeda.html>`__
+-  :ref:`Google Earth Engine Data API driver <vector.eeda>`

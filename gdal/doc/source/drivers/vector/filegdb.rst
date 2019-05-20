@@ -8,8 +8,8 @@ File Geodatabases (.gdb directories) created by ArcGIS 10 and above. The
 dataset name must be the directory/folder name, and it must end with the
 .gdb extension.
 
-Note : starting with OGR 1.11, the `OpenFileGDB
-driver <drv_openfilegdb.html>`__ driver exists as an alternative
+Note : starting with OGR 1.11, the :ref:`OpenFileGDB
+driver <vector.openfilegdb>` driver exists as an alternative
 built-in i.e. not depending on a third-party library) read-only driver.
 
 Requirements
@@ -181,5 +181,5 @@ Links
 
 -  `ESRI File Geodatabase API
    Page <https://github.com/Esri/file-geodatabase-api/>`__
--  `OpenFileGDB driver <drv_openfilegdb.html>`__, not depending on a
+-  :ref:`OpenFileGDB driver <vector.openfilegdb>`, not depending on a
    third-party library/SDK

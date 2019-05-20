@@ -52,7 +52,7 @@ Layer creation options
 See Also
 --------
 
--  `GeoJSON driver <drv_geojson.html>`__
+-  :ref:`GeoJSON driver <vector.geojson>`
 -  `RFC 7946 <https://tools.ietf.org/html/rfc7946>`__ standard: the
    GeoJSON Format.
 -  `RFC 8142 <https://tools.ietf.org/html/rfc8142>`__ standard: GeoJSON

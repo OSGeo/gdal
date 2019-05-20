@@ -3,13 +3,6 @@
 GMLAS - Geography Markup Language (GML) driven by application schemas
 =====================================================================
 
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   drv_gmlas_metadata_layers
-   drv_gmlas_mapping_examples
-
 Available in GDAL >= 2.2
 
 This driver can read and write XML files of arbitrary structure,
@@ -59,7 +52,7 @@ the schemas. Unexpected content in the document will be silently
 ignored, as well as content required by the schema and absent from the
 document.
 
-Consult the :ref:`GMLAS mapping examples <drv_gmlas_mapping_examples>`
+Consult the :ref:`GMLAS mapping examples <gmlas_mapping_examples>`
 page for more details.
 
 By default in the configuration, swe:DataRecord and swe:DataArray
@@ -86,7 +79,7 @@ individually retrieved by specifying their name in calls to
 GetLayerByName(), or on as layer names with the ogrinfo and ogr2ogr
 utility.
 
-Consult the :ref:`GMLAS metadata layers <drv_gmlas_metadata_layers>`
+Consult the :ref:`GMLAS metadata layers <gmlas_metadata_layers>`
 page for more details.
 
 Configuration file
@@ -365,9 +358,9 @@ Converting to Spatialite and back to GML
 See Also
 --------
 
--  `GML <drv_gml.html>`__: general purpose driver not requiring the
+-  :ref:`GML <vector.gml>`: general purpose driver not requiring the
    presence of schemas, but with limited support for complex features
--  `NAS/ALKIS <drv_nas.html>`__: specialized GML driver for cadastral
+-  :ref:`NAS/ALKIS <vector.nas>`: specialized GML driver for cadastral
    data in Germany
 
 Credits

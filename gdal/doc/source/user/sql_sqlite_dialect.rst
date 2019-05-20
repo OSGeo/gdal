@@ -166,7 +166,7 @@ OGR datasource SQL functions
 
 The ``ogr_datasource_load_layers(datasource_name[, update_mode[, prefix]])``
 function can be used to automatically load all the layers of a datasource as
-<a href="http://gdal.org/drv_sqlite.html">VirtualOGR tables</a>.
+:ref:`VirtualOGR tables <vector.sqlite>`.
 
 ::
 

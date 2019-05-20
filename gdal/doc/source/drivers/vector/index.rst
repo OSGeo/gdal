@@ -32,7 +32,6 @@ Vector drivers
    esrijson
    filegdb
    fme
-   formats
    geoconcept
    geojson
    geojsonseq

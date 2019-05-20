@@ -5,7 +5,7 @@ NetCDF: Network Common Data Form - Vector
 
 Starting with GDAL 2.1, the netCDF driver support read and write
 (creation from scratch and append operations) to vector datasets (you
-can find documentation for the `raster side <frmt_netcdf.html>`__)
+can find documentation for the :ref:`raster side <raster.netcdf>`)
 
 NetCDF is an interface for array-oriented data access and is used for
 representing scientific data.

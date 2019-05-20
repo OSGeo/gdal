@@ -14,7 +14,7 @@ The GPSBabel executable must be accessible through the PATH.
 Read support
 ------------
 
-The driver needs the `GPX <drv_gpx.html>`__ driver to be fully
+The driver needs the :ref:`GPX <vector.gpx>` driver to be fully
 configured with read support (through Expat library) to be able to parse
 the output of GPSBabel, as GPX is used as the intermediate pivot format.
 
@@ -69,7 +69,7 @@ will be finally translated by GPSBabel to the desired GPSBabel format.
 GPSBabel write support.).
 
 The support geometries, options and other creation issues are the ones
-of the GPX driver. Please refer to its `documentation <drv_gpx.html>`__
+of the GPX driver. Please refer to its :ref:`documentation <vector.gpx>`
 for more details.
 
 The syntax to specify an output datasource is :
@@ -111,4 +111,4 @@ See Also
 -  `GPSBabel Home Page <http://www.gpsbabel.org>`__
 -  `GPSBabel file
    formats <http://www.gpsbabel.org/capabilities.shtml>`__
--  `GPX driver page <drv_gpx.html>`__
+-  :ref:`GPX driver page <vector.gpx>`

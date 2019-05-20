@@ -74,6 +74,6 @@ See Also
 
 -  `MSDN ODBC API
    Reference <http://msdn.microsoft.com/en-us/library/ms714562(VS.85).aspx>`__
--  `PGeo driver <drv_pgeo.html>`__
--  `Geomedia driver <drv_geomedia.html>`__
--  `MDB driver <drv_mdb.html>`__
+-  :ref:`PGeo driver <vector.pgeo>`
+-  :ref:`Geomedia driver <vector.geomedia>`
+-  :ref:`MDB driver <vector.mdb>`

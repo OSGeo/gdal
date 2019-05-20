@@ -13,8 +13,8 @@ overcome the issues often met with the MDBTools library that acts as the
 ODBC driver for MDB databases.
 
 The driver can detect ESRI Personal Geodatabases and Geomedia MDB
-databases, and will deal them exactly as the `PGeo <drv_pgeo.html>`__
-and `Geomedia <drv_geomedia.html>`__ drivers do. For other MDB
+databases, and will deal them exactly as the :ref:`PGeo <vector.pgeo>`
+and :ref:`Geomedia <vector.geomedia>` drivers do. For other MDB
 databases, all the tables will be presented as OGR layers.
 
 How to build the MDB driver (on Linux)
@@ -65,5 +65,5 @@ Resources
 See also
 --------
 
--  `PGeo <drv_pgeo.html>`__ driver page
--  `Geomedia <drv_geomedia.html>`__ driver page
+-  :ref:`PGeo <vector.pgeo>` driver page
+-  :ref:`Geomedia <vector.geomedia>` driver page
