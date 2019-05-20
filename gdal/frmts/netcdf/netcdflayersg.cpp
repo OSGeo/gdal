@@ -137,7 +137,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 			}
 		}
 		// This may be unncessary, given the check previously...
-		catch(nccfdriver::SG_Exception * e)
+		catch(nccfdriver::SG_Exception*)
 		{
 			delete poL;
 			throw;
@@ -180,6 +180,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	}
 
 	papoLayers = (netCDFLayer**)realloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *)); 
+	if(papoLayers == NULL) CPLError(CE_Failure, CPLE_OutOfMemory, "Allocation for additional netCDFLayer pointer failed.");
 	papoLayers[nLayers] = poL;
 	nLayers++;
 
