@@ -1576,7 +1576,7 @@ else
     PG_LIB="${PQ_LIBS}"
     PG_INC="${PQ_CFLAGS}"
     SAVED_LIBS="${LIBS}"
-    LIBS="${PG_LIBS}"
+    LIBS="${PG_LIB}"
     AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no)
     LIBS="${SAVED_LIBS}"
     if test "${HAVE_PG}" = "yes" ; then
