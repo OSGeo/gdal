@@ -10,6 +10,17 @@
 #include "netcdfsg.h"
 namespace nccfdriver
 {
+	/* Re-implementation of mempcpy
+	 * but compatible with libraries which only implement memcpy
+	 */
+	static void* memcpy_jump(void *dest, const void *src, size_t n)
+	{
+		memcpy(dest, src, n);
+		char * a = (char*)dest + n; // otherwise unneccesary casting to stop compiler warnings
+		void * b = (void*)a;	
+		return b;
+	}
+
 	/* Attribute Fetch
 	 * -
 	 * A function which makes it a bit easier to fetch single text attribute values
@@ -36,9 +47,6 @@ namespace nccfdriver
 			return nullptr;		
 		}
 
-		//char * ret = new char[len];
-		//strcpy(ret, attr_vals[0]);
-		//nc_free_string(len, attr_vals);
 		return attr_vals;
 	}
 
@@ -412,9 +420,9 @@ namespace nccfdriver
 					int32_t t = wkbMultiPoint;
 
 					// Add metadata
-					worker = mempcpy(worker, &header, 1);
-					worker = mempcpy(worker, &t, 4);
-					worker = mempcpy(worker, &nc, 4);
+					worker = memcpy_jump(worker, &header, 1);
+					worker = memcpy_jump(worker, &t, 4);
+					worker = memcpy_jump(worker, &nc, 4);
 
 					// Add points
 					for(int pts = 0; pts < nc; pts++)
@@ -452,9 +460,9 @@ namespace nccfdriver
 					void * worker = ret;
 
 					// Begin Writing
-					worker = mempcpy(worker, &header, 1);
-					worker = mempcpy(worker, &t, 4);
-					worker = mempcpy(worker, &pcount, 4);
+					worker = memcpy_jump(worker, &header, 1);
+					worker = memcpy_jump(worker, &t, 4);
+					worker = memcpy_jump(worker, &pcount, 4);
 
 					for(int32_t itr = 0; itr < pcount; itr++)
 					{
@@ -514,14 +522,14 @@ namespace nccfdriver
 				
 					// Create Multipolygon headers
 					void * worker = (void*)ret;
-					worker = mempcpy(worker, &header, 1);
-					worker = mempcpy(worker, &t, 4);
+					worker = memcpy_jump(worker, &header, 1);
+					worker = memcpy_jump(worker, &t, 4);
 
 					if(noInteriors)
 					{
 						int cur_point = seek_begin;
 						int32_t pcount = pnc.size();
-						worker = mempcpy(worker, &pcount, 4);
+						worker = memcpy_jump(worker, &pcount, 4);
 
 						for(int32_t itr = 0; itr < pcount; itr++)
 						{
@@ -533,7 +541,7 @@ namespace nccfdriver
 					else
 					{
 						int32_t polys = poly_count[featureInd];
-						worker = mempcpy(worker, &polys, 4);
+						worker = memcpy_jump(worker, &polys, 4);
 	
 						int base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
 						int seek = seek_begin; // beginning of node range for this multigeometry
@@ -857,15 +865,15 @@ namespace nccfdriver
 		uint8_t order = 1;
 		uint32_t t = wkbPoint;
 
-		serializeBegin = mempcpy(serializeBegin, &order, 1);
-		serializeBegin = mempcpy(serializeBegin, &t, 4);
+		serializeBegin = memcpy_jump(serializeBegin, &order, 1);
+		serializeBegin = memcpy_jump(serializeBegin, &t, 4);
 
 		// Now get point data;
 		Point & p = (*ge)[seek_pos];
 		double x = p[0];
 		double y = p[1];
-		serializeBegin = mempcpy(serializeBegin, &x, 8);
-		serializeBegin = mempcpy(serializeBegin, &y, 8);
+		serializeBegin = memcpy_jump(serializeBegin, &x, 8);
+		serializeBegin = memcpy_jump(serializeBegin, &y, 8);
 		return serializeBegin;
 	}
 
@@ -875,9 +883,9 @@ namespace nccfdriver
 		uint32_t t = wkbLineString;
 		uint32_t nc = (uint32_t) node_count;
 		
-		serializeBegin = mempcpy(serializeBegin, &order, 1);
-		serializeBegin = mempcpy(serializeBegin, &t, 4);
-		serializeBegin = mempcpy(serializeBegin, &nc, 4);
+		serializeBegin = memcpy_jump(serializeBegin, &order, 1);
+		serializeBegin = memcpy_jump(serializeBegin, &t, 4);
+		serializeBegin = memcpy_jump(serializeBegin, &nc, 4);
 
 		// Now serialize points
 		for(int ind = 0; ind < node_count; ind++)
@@ -885,8 +893,8 @@ namespace nccfdriver
 			Point & p = (*ge)[seek_begin + ind];
 			double x = p[0];
 			double y = p[1];
-			serializeBegin = mempcpy(serializeBegin, &x, 8);
-			serializeBegin = mempcpy(serializeBegin, &y, 8);	
+			serializeBegin = memcpy_jump(serializeBegin, &x, 8);
+			serializeBegin = memcpy_jump(serializeBegin, &y, 8);	
 		}
 
 		return serializeBegin;
@@ -899,19 +907,19 @@ namespace nccfdriver
 		int32_t rc = 1;
 				
 		void * writer = serializeBegin;
-		writer = mempcpy(writer, &header, 1);
-		writer = mempcpy(writer, &t, 4);
-		writer = mempcpy(writer, &rc, 4);
+		writer = memcpy_jump(writer, &header, 1);
+		writer = memcpy_jump(writer, &t, 4);
+		writer = memcpy_jump(writer, &rc, 4);
 						
 		int32_t nc = (int32_t)node_count;
-		writer = mempcpy(writer, &node_count, 4);
+		writer = memcpy_jump(writer, &node_count, 4);
 
 		for(int pind = 0; pind < nc; pind++)
 		{
 			Point & pt= (*ge)[seek_begin + pind];
 			double x = pt[0]; double y = pt[1];
-			writer = mempcpy(writer, &x, 8);
-			writer = mempcpy(writer, &y, 8);
+			writer = memcpy_jump(writer, &x, 8);
+			writer = memcpy_jump(writer, &y, 8);
 		}
 
 		return writer;
@@ -925,24 +933,24 @@ namespace nccfdriver
 		int32_t rc = (int32_t)ring_count;
 				
 		void * writer = serializeBegin;
-		writer = mempcpy(writer, &header, 1);
-		writer = mempcpy(writer, &t, 4);
-		writer = mempcpy(writer, &rc, 4);
+		writer = memcpy_jump(writer, &header, 1);
+		writer = memcpy_jump(writer, &t, 4);
+		writer = memcpy_jump(writer, &rc, 4);
 		int cmoffset = 0;
 						
 		// Check for dimension error / touple order < 2 still to implement					
 		for(int ring_c = 0; ring_c < ring_count; ring_c++)
 		{
 			int32_t node_count = pnc[ring_c];
-			writer = mempcpy(writer, &node_count, 4);
+			writer = memcpy_jump(writer, &node_count, 4);
 
 			int pind = 0;
 			for(pind = 0; pind < pnc[ring_c]; pind++)
 			{
 				Point & pt= (*ge)[seek_begin + cmoffset + pind];
 				double x = pt[0]; double y = pt[1];
-				writer = mempcpy(writer, &x, 8);
-				writer = mempcpy(writer, &y, 8);
+				writer = memcpy_jump(writer, &x, 8);
+				writer = memcpy_jump(writer, &y, 8);
 			}
 
 			cmoffset += pind;

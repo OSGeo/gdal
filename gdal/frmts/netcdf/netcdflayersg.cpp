@@ -179,7 +179,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		poL->AddSimpleGeometryFeature(feat);
 	}
 
-	papoLayers = (netCDFLayer**)reallocarray(papoLayers, nLayers + 1, sizeof(netCDFLayer *)); 
+	papoLayers = (netCDFLayer**)realloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *)); 
 	papoLayers[nLayers] = poL;
 	nLayers++;
 

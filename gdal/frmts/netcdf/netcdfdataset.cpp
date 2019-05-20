@@ -10930,6 +10930,7 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
             (EQUAL(osFeatureType, "profile") &&
              oMapDimIdToCount.size() == 2 && nProfileDimId >= 0)) )
         {
+	if(!bSGSupport)
             CPLError(CE_Warning, CPLE_AppDefined,
                     "The dataset has several variables that could be "
                     "identified as vector fields, but not all share the same "
