@@ -19,6 +19,7 @@ jobs:
       - script: |
           cd gdal/doc
           make html
+          make latexpdf
         displayName: 'Build'
       - task: DownloadSecureFile@1
         inputs:
@@ -31,6 +32,7 @@ jobs:
         displayName: 'Deploy the key'
       - script: |
           mv gdal/doc/build/html gdal-docs
+          cp gdal/doc/build/latex/gdal.pdf gdal-docs
           cd gdal-docs
           git init
           git config user.email "proj4bot@proj4.bot"
