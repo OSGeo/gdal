@@ -964,6 +964,7 @@ class netCDFDataset final: public GDALPamDataset
 
 class netCDFLayer final: public OGRLayer
 {
+	friend class netCDFDataset;
         typedef union
         {
             signed char chVal;
@@ -1045,6 +1046,8 @@ class netCDFLayer final: public OGRLayer
         void            GetNoDataValue( int nVarId, nc_type nVarType, NCDFNoDataUnion* puNoData );
         bool            FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
 
+    protected:
+        bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
     public:
                 netCDFLayer(netCDFDataset* poDS,
                             int nLayerCDFId,
@@ -1054,7 +1057,6 @@ class netCDFLayer final: public OGRLayer
         virtual ~netCDFLayer();
 
         bool            Create(char** papszOptions, const netCDFWriterConfigLayer* poLayerConfig);
-        bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
         void            SetRecordDimID(int nRecordDimID);
         void            SetXYZVars(int nXVarId, int nYVarId, int nZVarId);
         void            SetWKTGeometryField(const char* pszWKTVarName);

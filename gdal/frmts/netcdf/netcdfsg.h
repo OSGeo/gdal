@@ -12,6 +12,9 @@
 // Author: wchen329
 namespace nccfdriver
 {	
+	// Constants
+	const int INVALID_VAR_ID = -2;	
+
 	// Enum used for easily identifying Geometry types
 	enum geom_t
 	{
@@ -50,6 +53,7 @@ namespace nccfdriver
 		geom_t type;	 	// internal geometry type structure
 		int ncid;		// ncid - as used in netcdf.h
 		int gc_varId;		// the id of the underlying geometry_container variable
+		int gm_varId;		// id used for grid mapping
 		int touple_order;	// amount of "coordinates" in a point
 		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
 		std::vector<int> node_counts;	// node counts of each geometry in a container
@@ -71,6 +75,7 @@ namespace nccfdriver
 		/* Point& SGeometry::next_pt()
 		 * returns a pointer to the next pt in sequence, if any. If none, returns a nullptr
 		 * calling next_pt does not have additional space requirements
+		 * The point iterator is suitable for mostly only the point feature type.
 		 */
 		Point& next_pt(); 
 		bool has_next_pt(); // returns whether or not the geometry has another point
@@ -84,18 +89,10 @@ namespace nccfdriver
 		void next_geometry(); // simply reuses the host structure
 		bool has_next_geometry();
 
-		/* int SGeometry::get_part_num()
-		 * Retrieves the corresponding part number of the part within a geometry that the next_pt() belongs to. 
-		 * Part number meaning the number of that part within a geometry
-		 * If a geometry is single part, or the variable explicitly contains no multipart geometries, then it is "1"
-		 */
-		int get_part_num();
-
-		/* bool SGeometry::is_interior()
-		 * Retrieves whether or not the point to be returned through next_pt() is a part of
-		 * an interior ring structure. If the structure has no interior rings, then false by default
-		 */
-		bool is_interior();
+		/* int SGeometry::getGridMappingVarID();
+		 * returns the varID of the associated grid mapping variable ID
+		 */	
+		int getGridMappingVarID() { return this -> gm_varId; }
 
 		/* geom_t getGeometryType()
 		 * Retrieves the associated geometry type with this geometry

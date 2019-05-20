@@ -87,11 +87,19 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	}
 	
 
+	// Process grid mapping characteristic if needed
+	if(sg->getGridMappingVarID() != nccfdriver::INVALID_VAR_ID)
+	{
+		// further work, pull this apart from possible conflicts
+		SetProjectionFromVar(65536, sg->getGridMappingVarID(), true);
+	}
+
 	char baseName[NC_MAX_CHAR + 1];
 	memset(baseName, 0, NC_MAX_CHAR + 1);
 	nc_inq_varname(ncid, nc_basevarId, baseName);
 
-	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr);
+	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, (OGRSpatialReference*)this->GetSpatialRef());
+
 	poL->EnableSGBypass();
 	OGRFeatureDefn * defn = poL->GetLayerDefn();
 	defn->SetGeomType(owgt);

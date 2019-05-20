@@ -80,9 +80,23 @@ namespace nccfdriver
 		// Find geometry type
 		this->type = nccfdriver::getGeometryType(ncId, geoVarId); 
 
+		// Get grid mapping variable, if it exists
+		char * gm_name = nullptr;
+		this->gm_varId = INVALID_VAR_ID;
+		if((gm_name = attrf(ncId, geoVarId, CF_GRD_MAPPING)) != nullptr)
+		{
+			int gmVID;
+			if(nc_inq_varid(ncId, gm_name, &gmVID) == NC_NOERR)
+			{
+				this->gm_varId = gmVID;	
+			}
+		}	
+		
+		delete[] gm_name;
+
 		// Find a list of node counts and part node count
 		char * nc_name = nullptr; char * pnc_name = nullptr; char * inter_name = nullptr; char * ir_name = nullptr;
-		int pnc_vid = -2; int nc_vid = -2; int ir_vid = -2;
+		int pnc_vid = INVALID_VAR_ID; int nc_vid = INVALID_VAR_ID; int ir_vid = INVALID_VAR_ID;
 		size_t bound = 0; int buf;
 		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) != nullptr)
 		{
