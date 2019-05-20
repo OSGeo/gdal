@@ -1,6 +1,8 @@
 GDAL
 ================================
 
+This documentation is also available as a `PDF file <gdal.pdf>`_.
+
 .. toctree::
     :maxdepth: 2
 

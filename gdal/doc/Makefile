@@ -28,6 +28,7 @@ html: .doxygen_up_to_date
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	rm -rf build/html/doxygen
 	cp -r build/doxygen_html build/html/doxygen
+	ln -sf ../latex/gdal.pdf build/html
 
 latexpdf: .doxygen_up_to_date
 	$(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
