@@ -366,7 +366,7 @@ private:
     GDALMultiDomainMetadata m_oGTiffMDMD{};
 
     std::vector<GTiffCompressionJob> m_asCompressionJobs{};
-    std::queue<int> m_asQueueStrileIds{}; // queue of strile id being compressed in worker threads
+    std::queue<int> m_asQueueJobIdx{}; // queue of index of m_asCompressionJobs being compressed in worker threads
 
     bool        m_bStreamingIn:1;
     bool        m_bStreamingOut:1;
@@ -469,7 +469,8 @@ private:
     void           InitCompressionThreads( char** papszOptions );
     void           InitCreationOrOpenOptions( char** papszOptions );
     static void    ThreadCompressionFunc( void* pData );
-    int            WaitCompletionForBlock( int nBlockId );
+    void           WaitCompletionForJobIdx( int i );
+    void           WaitCompletionForBlock( int nBlockId );
     void           WriteRawStripOrTile( int nStripOrTile,
                                         GByte* pabyCompressedBuffer,
                                         GPtrDiff_t nCompressedBufferSize );
@@ -8667,10 +8668,56 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
 }
 
 /************************************************************************/
+/*                        WaitCompletionForJobIdx()                     */
+/************************************************************************/
+
+void GTiffDataset::WaitCompletionForJobIdx(int i)
+{
+    CPLAssert( i >= 0 && static_cast<size_t>(i) < m_asCompressionJobs.size() );
+    CPLAssert( m_asCompressionJobs[i].nStripOrTile >= 0 );
+    CPLAssert( !m_asQueueJobIdx.empty() );
+
+    bool bHasWarned = false;
+    while( true )
+    {
+        CPLAcquireMutex(m_hCompressThreadPoolMutex, 1000.0);
+        const bool bReady = m_asCompressionJobs[i].bReady;
+        CPLReleaseMutex(m_hCompressThreadPoolMutex);
+        if( !bReady )
+        {
+            if( !bHasWarned )
+            {
+                CPLDebug("GTIFF",
+                        "Waiting for worker job to finish handling block %d",
+                        m_asCompressionJobs[i].nStripOrTile);
+                bHasWarned = true;
+            }
+            m_poCompressThreadPool->WaitEvent();
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if( m_asCompressionJobs[i].nCompressedBufferSize )
+    {
+        WriteRawStripOrTile(m_asCompressionJobs[i].nStripOrTile,
+                        m_asCompressionJobs[i].pabyCompressedBuffer,
+                        m_asCompressionJobs[i].nCompressedBufferSize);
+    }
+    m_asCompressionJobs[i].pabyCompressedBuffer = nullptr;
+    m_asCompressionJobs[i].nBufferSize = 0;
+    m_asCompressionJobs[i].bReady = false;
+    m_asCompressionJobs[i].nStripOrTile = -1;
+    m_asQueueJobIdx.pop();
+}
+
+/************************************************************************/
 /*                        WaitCompletionForBlock()                      */
 /************************************************************************/
 
-int GTiffDataset::WaitCompletionForBlock(int nBlockId)
+void GTiffDataset::WaitCompletionForBlock(int nBlockId)
 {
     if( m_poCompressThreadPool != nullptr )
     {
@@ -8678,50 +8725,17 @@ int GTiffDataset::WaitCompletionForBlock(int nBlockId)
         {
             if( m_asCompressionJobs[i].nStripOrTile == nBlockId )
             {
-                while( !m_asQueueStrileIds.empty() && m_asQueueStrileIds.front() != nBlockId )
+                while( !m_asQueueJobIdx.empty() &&
+                       m_asCompressionJobs[m_asQueueJobIdx.front()].nStripOrTile != nBlockId )
                 {
-                    WaitCompletionForBlock(m_asQueueStrileIds.front());
-                    m_asQueueStrileIds.pop();
+                    WaitCompletionForJobIdx(m_asQueueJobIdx.front());
                 }
-
-                bool bHasWarned = false;
-                while( true )
-                {
-                    CPLAcquireMutex(m_hCompressThreadPoolMutex, 1000.0);
-                    const bool bReady = m_asCompressionJobs[i].bReady;
-                    CPLReleaseMutex(m_hCompressThreadPoolMutex);
-                    if( !bReady )
-                    {
-                        if( !bHasWarned )
-                        {
-                            CPLDebug("GTIFF",
-                                    "Waiting for worker job to finish handling block %d",
-                                    nBlockId);
-                            bHasWarned = true;
-                        }
-                        m_poCompressThreadPool->WaitEvent();
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-
-                if( m_asCompressionJobs[i].nCompressedBufferSize )
-                {
-                    WriteRawStripOrTile(m_asCompressionJobs[i].nStripOrTile,
-                                  m_asCompressionJobs[i].pabyCompressedBuffer,
-                                  m_asCompressionJobs[i].nCompressedBufferSize);
-                }
-                m_asCompressionJobs[i].pabyCompressedBuffer = nullptr;
-                m_asCompressionJobs[i].nBufferSize = 0;
-                m_asCompressionJobs[i].bReady = false;
-                m_asCompressionJobs[i].nStripOrTile = -1;
-                return i;
+                CPLAssert( !m_asQueueJobIdx.empty() &&
+                          m_asCompressionJobs[m_asQueueJobIdx.front()].nStripOrTile == nBlockId );
+                WaitCompletionForJobIdx(m_asQueueJobIdx.front());
             }
         }
     }
-    return -1;
 }
 
 /************************************************************************/
@@ -8746,11 +8760,11 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
 
     int nNextCompressionJobAvail = -1;
 
-    if( m_asQueueStrileIds.size() == m_asCompressionJobs.size() )
+    if( m_asQueueJobIdx.size() == m_asCompressionJobs.size() )
     {
-        CPLAssert( !m_asQueueStrileIds.empty() );
-        nNextCompressionJobAvail = WaitCompletionForBlock(m_asQueueStrileIds.front());
-        m_asQueueStrileIds.pop();
+        CPLAssert( !m_asQueueJobIdx.empty() );
+        nNextCompressionJobAvail = m_asQueueJobIdx.front();
+        WaitCompletionForJobIdx(nNextCompressionJobAvail);
     }
     else
     {
@@ -8784,7 +8798,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
     }
 
     m_poCompressThreadPool->SubmitJob(ThreadCompressionFunc, psJob);
-    m_asQueueStrileIds.push(nStripOrTile);
+    m_asQueueJobIdx.push(nNextCompressionJobAvail);
 
     return true;
 }
@@ -9754,10 +9768,9 @@ void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
         m_poCompressThreadPool->WaitCompletion();
 
         // Flush remaining data
-        while( !m_asQueueStrileIds.empty() )
+        while( !m_asQueueJobIdx.empty() )
         {
-            WaitCompletionForBlock(m_asQueueStrileIds.front());
-            m_asQueueStrileIds.pop();
+            WaitCompletionForJobIdx(m_asQueueJobIdx.front());
         }
     }
 
