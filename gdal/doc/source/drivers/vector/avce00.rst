@@ -4,6 +4,8 @@
 Arc/Info E00 (ASCII) Coverage
 ================================================================================
 
+.. shortname:: AVCE00
+
 Arc/Info E00 Coverages (eg. Arc/Info V7 and earlier) are supported by OGR for
 read access.
 

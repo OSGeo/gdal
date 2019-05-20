@@ -2,6 +2,9 @@
 
 GeoRSS : Geographically Encoded Objects for RSS feeds
 =====================================================
+
+.. shortname:: GeoRSS
+
 GeoRSS is a way of encoding location in RSS or Atom feeds.
 
 OGR has support for GeoRSS reading and writing. Read support is only

@@ -5,6 +5,8 @@ NextGIS Web
 
 .. versionadded:: 2.4
 
+.. shortname:: NGW
+
 NextGIS Web - is a server GIS, which allows to store and edit geodata
 and to display maps in web browser. Also NextGIS Web can share geodata
 with other NextGIS software.

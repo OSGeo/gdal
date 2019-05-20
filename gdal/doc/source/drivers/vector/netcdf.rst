@@ -5,6 +5,8 @@ NetCDF: Network Common Data Form - Vector
 
 .. versionadded:: 2.1
 
+.. shortname:: netCDF
+
 The netCDF driver support read and write
 (creation from scratch and append operations) to vector datasets (you
 can find documentation for the :ref:`raster side <raster.netcdf>`)

@@ -5,6 +5,8 @@ MongoDB
 
 .. versionadded:: 2.1
 
+.. shortname:: MongoDB
+
 This driver can connect to the a MongoDB service.
 
 The driver supports read, creation, update and delete operations of

@@ -1,7 +1,9 @@
 .. _vector.vrt:
 
-Virtual Format
-==============
+VRT -- Virtual Format
+=====================
+
+.. shortname:: VRT
 
 OGR Virtual Format is a driver that transforms features read from other
 drivers based on criteria specified in an XML control file. It is

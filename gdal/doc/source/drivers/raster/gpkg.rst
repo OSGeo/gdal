@@ -3,6 +3,8 @@
 GPKG -- GeoPackage raster
 =========================
 
+.. shortname:: GPKG
+
 Starting with GDAL 2.0, this driver implements full read/creation/update
 of tables containing raster tiles in the `OGC GeoPackage format
 standard <http://www.geopackage.org/spec/>`__. The GeoPackage standard

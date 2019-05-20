@@ -3,6 +3,8 @@
 EIR -- Erdas Imagine Raw
 ========================
 
+.. shortname:: EIR
+
 GDAL supports the Erdas Imagine Raw format for read access including 1,
 2, 4, 8, 16 and 32bit unsigned integers, 16 and 32bit signed integers
 and 32 and 64bit complex floating point. Georeferencing is supported.

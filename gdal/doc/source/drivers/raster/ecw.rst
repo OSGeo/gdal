@@ -3,6 +3,8 @@
 ECW -- Enhanced Compressed Wavelets (.ecw)
 ==========================================
 
+.. shortname:: ECW
+
 GDAL supports reading and writing ECW files using the ERDAS ECW/JP2 SDK
 developed by Hexagon Geospatial (formerly Intergraph, ERDAS, ERMapper).
 Support is optional and requires linking in the libraries available from

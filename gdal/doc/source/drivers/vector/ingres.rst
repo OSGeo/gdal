@@ -3,6 +3,8 @@
 INGRES
 ======
 
+.. shortname:: INGRES
+
 This driver implements read and write access for spatial data in
 `INGRES <http://www.actian.com/products/ingres/geospatial/>`__ database
 tables. This functionality was introduced in GDAL/OGR 1.6.0.

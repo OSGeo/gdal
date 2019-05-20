@@ -3,6 +3,8 @@
 Storage and eXchange Format - SXF
 =================================
 
+.. shortname:: SXF
+
 This driver reads SXF files, open format often associated with Russian
 GIS Software Panorama.
 

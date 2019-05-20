@@ -3,6 +3,8 @@
 GPKG -- GeoPackage vector
 =========================
 
+.. shortname:: GPKG
+
 This driver implements support for access to spatial tables in the `OGC
 GeoPackage format
 standard <http://www.opengeospatial.org/standards/geopackage>`__ The

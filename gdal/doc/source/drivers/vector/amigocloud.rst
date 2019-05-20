@@ -6,6 +6,8 @@ AmigoCloud
 
 .. versionadded:: 2.1.0
 
+.. shortname:: AmigoCloud
+
 This driver can connect to the AmigoCloud API services. GDAL/OGR must be built
 with Curl support in order for the AmigoCloud driver to be compiled.
 

@@ -3,7 +3,7 @@
 HF2 -- HF2/HFZ heightfield raster
 =================================
 
-(Available for GDAL >= 1.8.0)
+.. shortname:: HF2
 
 GDAL supports reading and writing HF2/HFZ/HF2.GZ heightfield raster
 datasets.

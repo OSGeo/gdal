@@ -5,6 +5,8 @@ MVT: Mapbox Vector Tiles
 
 .. versionadded:: 2.3
 
+.. shortname:: MVT
+
 The MVT driver can read and write Mapbox Vector
 Tile files, as standalone files, uncompressed or gzip-compressed
 (typical extensions are .pbf, .mvt, .mvt.gz), or a tileset at a given

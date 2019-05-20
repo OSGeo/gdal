@@ -3,6 +3,8 @@
 SEG-P1 / UKOOA P1/90
 ====================
 
+.. shortname:: SEGUKOOA
+
 This driver reads files in SEG-P1 and UKOOA P1/90 formats. Those files
 are simple ASCII files that contain seismic shotpoints. Two layers are
 reported : one with the points, and another ones where sequential points

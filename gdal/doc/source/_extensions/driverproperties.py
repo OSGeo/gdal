@@ -2,12 +2,19 @@
 
 import sphinx.locale
 import docutils.statemachine
+sphinx.locale.admonitionlabels['shortname'] = u''
 sphinx.locale.admonitionlabels['supports_create'] = u'' #u'Supports Create()'
 sphinx.locale.admonitionlabels['supports_createcopy'] = u'' #u'Supports CreateCopy()'
 sphinx.locale.admonitionlabels['supports_georeferencing'] = u'' #u'Supports georeferencing'
 sphinx.locale.admonitionlabels['supports_virtualio'] = u'' #u'Supports VirtualIO'
 
 def setup(app):
+    app.add_node(shortname,
+                 html=(visit_shortname_node, depart_node),
+                 latex=(visit_admonition, depart_node),
+                 text=(visit_admonition, depart_node))
+    app.add_directive('shortname', ShortName)
+
     app.add_node(supports_create,
                  html=(visit_supports_create_node, depart_node),
                  latex=(visit_admonition, depart_node),
@@ -44,6 +51,12 @@ def visit_admonition(self, node):
 def depart_node(self, node):
     self.depart_admonition(node)
 
+class shortname(nodes.General, nodes.Element):
+    pass
+
+def visit_shortname_node(self, node):
+    self.body.append(self.starttag(
+            node, 'div', CLASS=('admonition shortname')))
 
 class supports_create(nodes.Admonition, nodes.Element):
     pass
@@ -99,6 +112,19 @@ def finish_directive(_self, directive, node):
     })
 
     return [targetnode, node]
+
+
+class ShortName(Directive):
+
+    # this enables content in the directive
+    has_content = True
+
+    def run(self):
+
+        node = supports_create('\n'.join(self.content))
+        node += nodes.title(_('Driver short name'), _('Driver short name'))
+
+        return finish_directive(self, 'shortname', node)
 
 
 class CreateDirective(Directive):
@@ -161,7 +187,8 @@ class VirtualIODirective(Directive):
 
 
 def purge_driverproperties(app, env, docname):
-    for directive in ['all_supports_create',
+    for directive in ['all_shortname',
+                      'all_supports_create',
                       'all_supports_createcopy',
                       'all_supports_georeferencing',
                       'all_supports_virtualio']:

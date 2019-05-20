@@ -3,6 +3,8 @@
 OSM - OpenStreetMap XML and PBF
 ===============================
 
+.. shortname:: OSM
+
 This driver reads OpenStreetMap files, in .osm (XML based) and .pbf
 (optimized binary) formats.
 

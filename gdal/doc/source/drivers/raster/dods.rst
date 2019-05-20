@@ -3,6 +3,8 @@
 DODS -- OPeNDAP Grid Client
 ===========================
 
+.. shortname:: DODS
+
 GDAL optionally includes read support for 2D grids and arrays via the
 OPeNDAP (DODS) protocol.
 

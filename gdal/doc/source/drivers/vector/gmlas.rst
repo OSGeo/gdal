@@ -5,6 +5,8 @@ GMLAS - Geography Markup Language (GML) driven by application schemas
 
 .. versionadded:: 2.2
 
+.. shortname:: GMLAS
+
 This driver can read and write XML files of arbitrary structure,
 included those containing so called Complex Features, provided that they
 are accompanied by one or several XML schemas that describe the

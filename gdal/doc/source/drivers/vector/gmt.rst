@@ -3,6 +3,8 @@
 GMT ASCII Vectors (.gmt)
 ========================
 
+.. shortname:: GMT
+
 OGR supports reading and writing GMT ASCII vector format. This is the
 format used by the Generic Mapping Tools (GMT) package, and includes
 recent additions to the format to handle more geometry types, and

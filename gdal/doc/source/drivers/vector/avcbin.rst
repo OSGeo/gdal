@@ -4,6 +4,8 @@
 Arc/Info Binary Coverage
 ================================================================================
 
+.. shortname:: AVCBIN
+
 Arc/Info Binary Coverages (eg. Arc/Info V7 and earlier) are supported by OGR
 for read access.
 

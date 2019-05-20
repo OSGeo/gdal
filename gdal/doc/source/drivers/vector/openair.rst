@@ -3,6 +3,8 @@
 OpenAir - OpenAir Special Use Airspace Format
 =============================================
 
+.. shortname:: OpenAir
+
 This driver reads files describing Special Use Airspaces in the OpenAir
 format
 

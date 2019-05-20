@@ -3,6 +3,8 @@
 BSB -- Maptech/NOAA BSB Nautical Chart Format
 =============================================
 
+.. shortname:: BSB
+
 BSB Nautical Chart format is supported for read access, including
 reading the colour table and the reference points (as GCPs). Note that
 the .BSB files cannot be selected directly. Instead select the .KAP

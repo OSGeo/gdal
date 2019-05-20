@@ -3,6 +3,8 @@
 RPFTOC -- Raster Product Format/RPF (a.toc)
 ===========================================
 
+.. shortname:: RPFTOC
+
 This is a read-only reader for RPF products, like CADRG or CIB, that
 uses the table of content file - A.TOC - from a RPF exchange, and
 exposes it as a virtual dataset whose coverage is the set of frames

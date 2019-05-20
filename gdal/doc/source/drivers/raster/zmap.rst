@@ -3,6 +3,8 @@
 ZMap -- ZMap Plus Grid
 ======================
 
+.. shortname:: ZMAP
+
 Supported for read access and creation. This format is an ASCII
 interchange format for gridded data in an ASCII line format for
 transport and storage. It is commonly used in applications in the Oil

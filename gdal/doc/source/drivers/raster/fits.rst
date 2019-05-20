@@ -3,6 +3,8 @@
 FITS -- Flexible Image Transport System
 =======================================
 
+.. shortname:: FITS
+
 FITS is a format used mainly by astronomers, but it is a relatively
 simple format that supports arbitrary image types and multi-spectral
 images, and so has found its way into GDAL. FITS support is implemented

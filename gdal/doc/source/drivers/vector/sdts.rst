@@ -3,6 +3,8 @@
 SDTS
 ====
 
+.. shortname:: SDTS
+
 SDTS TVP (Topological Vector Profile) and Point Profile datasets are
 supported for read access. Each primary attribute, node (point), line
 and polygon module is treated as a distinct layer.

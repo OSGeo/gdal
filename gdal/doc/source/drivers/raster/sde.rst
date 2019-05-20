@@ -3,6 +3,8 @@
 ESRI ArcSDE Raster
 ==================
 
+.. shortname:: SDE
+
 ESRI ArcSDE provides an abstraction layer over numerous databases that
 allows the storage of raster data. ArcSDE supports n-band imagery at
 many bit depths, and the current implementation of the GDAL driver

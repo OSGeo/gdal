@@ -3,6 +3,8 @@
 Selafin files
 =============
 
+.. shortname:: Selafin
+
 OGR supports reading from 2D Selafin/Seraphin files. Selafin/Seraphin is
 the generic output and input format of geographical files in the
 open-source `Telemac hydraulic model <http://www.opentelemac.org>`__.

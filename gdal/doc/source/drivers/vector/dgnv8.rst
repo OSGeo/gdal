@@ -5,6 +5,8 @@ Microstation DGN v8
 
 .. versionadded:: 2.2
 
+.. shortname:: DGNv8
+
 Microstation DGN files from Microstation version 8.0 are supported for
 reading and writing. Each model of the file is represented by a OGR
 layer.

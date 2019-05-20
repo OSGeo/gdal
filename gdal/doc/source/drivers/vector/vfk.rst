@@ -3,12 +3,13 @@
 VFK - Czech Cadastral Exchange Data Format
 ==========================================
 
+.. shortname:: VFK
+
 This driver reads VFK files, i.e. data in the *Czech cadastral exchange
 data format*. The VFK file is recognized as an datasource with zero or
 more layers.
 
-Note: starting with GDAL 1.10, the driver is compiled only if GDAL is
-*built with SQLite support*.
+The driver is compiled only if GDAL is *built with SQLite support*.
 
 Points are represented as wkbPoints, lines and boundaries as
 wkbLineStrings and areas as wkbPolygons. wkbMulti\* features are not

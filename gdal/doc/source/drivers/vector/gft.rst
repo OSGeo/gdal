@@ -3,6 +3,8 @@
 GFT - Google Fusion Tables
 ==========================
 
+.. shortname:: GFT
+
 This driver can connect to the Google Fusion Tables service. GDAL/OGR
 must be built with Curl support in order to the GFT driver to be
 compiled.

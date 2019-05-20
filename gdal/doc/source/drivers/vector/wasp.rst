@@ -3,6 +3,8 @@
 WAsP - WAsP .map format
 =======================
 
+.. shortname:: WAsP
+
 This driver writes .map files to be used with WAsP. The only allowed
 geometries are linestrings.
 

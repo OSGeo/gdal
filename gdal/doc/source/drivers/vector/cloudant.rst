@@ -1,7 +1,9 @@
 .. _vector.cloudant:
 
-CouchDB - Cloudant
-==================
+Cloudant -- Cloudant
+====================
+
+.. shortname:: Cloudant
 
 Cloudant and CouchDB are API compatible and based on the same core
 technology. The geospatial extension for Cloudant is separate to

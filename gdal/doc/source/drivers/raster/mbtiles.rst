@@ -3,7 +3,9 @@
 MBTiles
 =======
 
-Starting with GDAL 1.10, the MBTiles driver allows reading rasters in
+.. shortname:: MBTiles
+
+The MBTiles driver allows reading rasters in
 the MBTiles format, which is a specification for storing tiled map data
 in SQLite databases.
 

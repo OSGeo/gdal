@@ -1,7 +1,9 @@
 .. _raster.vrt:
 
-GDAL Virtual Format
-===================
+VRT -- GDAL Virtual Format
+==========================
+
+.. shortname:: VRT
 
 Introduction
 ------------

@@ -3,6 +3,8 @@
 WEBP - WEBP
 ===========
 
+.. shortname:: WEBP
+
 GDAL can read and write WebP images through
 the WebP library.
 

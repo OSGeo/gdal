@@ -3,6 +3,8 @@
 XPM -- X11 Pixmap
 =================
 
+.. shortname:: XPM
+
 GDAL includes support for reading and writing XPM (X11 Pixmap Format)
 image files. These are colormapped one band images primarily used for
 simple graphics purposes in X11 applications. It has been incorporated

@@ -5,6 +5,8 @@ MongoDBv3
 
 .. versionadded:: 3.0
 
+.. shortname:: MongoDBv3
+
 This driver can connect to the a MongoDB service.
 
 The driver supports read, creation, update and delete operations of

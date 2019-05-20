@@ -3,6 +3,8 @@
 EHdr -- ESRI .hdr Labelled
 ==========================
 
+.. shortname:: EHdr
+
 GDAL supports reading and writing the ESRI .hdr labeling format, often
 referred to as ESRI BIL format. Eight, sixteen and thirty-two bit
 integer raster data types are supported as well as 32 bit floating

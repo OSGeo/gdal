@@ -3,6 +3,8 @@
 JP2OpenJPEG --- JPEG2000 driver based on OpenJPEG library
 =========================================================
 
+.. shortname:: JP2OpenJPEG
+
 This driver is an implementation of a JPEG2000 reader/writer based on
 OpenJPEG library **v2**.
 

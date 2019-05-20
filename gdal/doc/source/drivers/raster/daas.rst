@@ -3,6 +3,8 @@
 DAAS (Airbus DS Intelligence Data As A Service driver)
 ======================================================
 
+.. shortname:: DAAS
+
 .. versionadded:: 3.0
 
 This driver can connect to the Airbus DS Intelligence Data As A Service

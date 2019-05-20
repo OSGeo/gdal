@@ -4,6 +4,8 @@
 BNA - Atlas BNA
 ================================================================================
 
+.. shortname:: BNA
+
 The BNA format is an ASCII exchange format for 2D vector data supported by many
 software packages. It only contains geometry and a few identifiers per record.
 Attributes must be stored into external files. It does not support any

@@ -3,6 +3,8 @@
 XYZ -- ASCII Gridded XYZ
 ========================
 
+.. shortname:: XYZ
+
 GDAL supports reading and writing ASCII **gridded** XYZ raster datasets
 (i.e. ungridded XYZ, LIDAR XYZ etc. must be opened by other means. See
 the documentation of the `gdal_grid <gdal_grid.html>`__ utility).

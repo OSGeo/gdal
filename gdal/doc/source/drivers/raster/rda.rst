@@ -3,6 +3,8 @@
 RDA (DigitalGlobe Raster Data Access)
 =====================================
 
+.. shortname:: RDA
+
 .. versionadded:: 2.3
 
 This driver can connect to DigitalGlobe RDA REST API. GDAL/OGR must be

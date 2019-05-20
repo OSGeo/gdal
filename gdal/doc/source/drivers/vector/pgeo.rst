@@ -3,6 +3,8 @@
 ESRI Personal GeoDatabase
 =========================
 
+.. shortname:: PGeo
+
 OGR optionally supports reading ESRI Personal GeoDatabase .mdb files via
 ODBC. Personal GeoDatabase is a Microsoft Access database with a set of
 tables defined by ESRI for holding geodatabase metadata, and with

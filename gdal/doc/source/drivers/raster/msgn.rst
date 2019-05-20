@@ -3,6 +3,8 @@
 MSGN -- Meteosat Second Generation (MSG) Native Archive Format (.nat)
 =====================================================================
 
+.. shortname:: MSGN
+
 GDAL supports reading only of MSG native files. These files may have
 anything from 1 to 12 bands, all at 10-bit resolution.
 

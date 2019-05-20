@@ -3,6 +3,8 @@
 DERIVED -- Derived subdatasets driver
 =====================================
 
+.. shortname:: DERIVED
+
 This driver allows to access to subdatasets derived from a given
 dataset. Those derived datasets have the same projection reference,
 geo-transform and metadata than the original dataset, but derives new

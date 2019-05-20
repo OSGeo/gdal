@@ -3,6 +3,8 @@
 SAR_CEOS -- CEOS SAR Image
 ==========================
 
+.. shortname:: SAR_CEOS
+
 This is a read-only reader for CEOS SAR image files. To use, select the
 main imagery file.
 

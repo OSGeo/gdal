@@ -1,8 +1,10 @@
 .. _vector.cad:
 
 ================================================================================
-AutoCAD DWG
+CAD -- AutoCAD DWG
 ================================================================================
+
+.. shortname:: CAD
 
 OGR DWG support is based on libopencad, so the list of supported DWG (DXF)
 versions can be seen in libopencad documentation. All drawing entities are

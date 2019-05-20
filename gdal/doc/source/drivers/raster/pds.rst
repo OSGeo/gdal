@@ -3,6 +3,8 @@
 PDS -- Planetary Data System v3
 ===============================
 
+.. shortname:: PDS
+
 PDS is a format used primarily by NASA to store and distribute solar,
 lunar and planetary imagery data. GDAL provides read-only access to PDS
 formatted imagery data.

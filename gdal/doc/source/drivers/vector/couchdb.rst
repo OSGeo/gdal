@@ -3,6 +3,8 @@
 CouchDB - CouchDB/GeoCouch
 ==========================
 
+.. shortname:: CouchDB
+
 This driver can connect to the a CouchDB service, potentially enabled
 with the GeoCouch spatial extension.
 

@@ -78,7 +78,6 @@ Vector drivers
    pgeo
    pg
    plscenes
-   rasterlite2
    s57
    sde
    sdts

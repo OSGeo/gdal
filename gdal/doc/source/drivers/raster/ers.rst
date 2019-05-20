@@ -3,6 +3,8 @@
 ERS -- ERMapper .ERS
 ====================
 
+.. shortname:: ERS
+
 GDAL supports reading and writing raster files with .ers header files,
 with some limitations. The .ers ascii format is used by ERMapper for
 labeling raw data files, as well as for providing extended metadata, and

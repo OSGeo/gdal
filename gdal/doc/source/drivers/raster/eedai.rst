@@ -3,6 +3,8 @@
 EEDAI - Google Earth Engine Data API Image
 ==========================================
 
+.. shortname:: EEDAI
+
 .. versionadded:: 2.4
 
 The driver supports read-only operations to access image content, using

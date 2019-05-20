@@ -3,6 +3,10 @@
 HDF5 --- Hierarchical Data Format Release 5 (HDF5)
 ==================================================
 
+.. shortname:: HDF5
+
+.. shortname:: HDF5Image
+
 This driver intended for HDF5 file formats importing.
 
 Driver capabilities

@@ -3,6 +3,8 @@
 GRASS Raster Format
 ===================
 
+.. shortname:: GRASS
+
 GDAL optionally supports reading of existing GRASS raster maps or
 imagery groups, but not writing or export. The support for GRASS raster
 format is determined when the library is configured, and requires

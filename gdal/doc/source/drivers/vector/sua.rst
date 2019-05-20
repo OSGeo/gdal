@@ -3,6 +3,8 @@
 SUA - Tim Newport-Peace's Special Use Airspace Format
 =====================================================
 
+.. shortname:: SUA
+
 This driver reads files describing Special Use Airspaces in the Tim
 Newport-Peace's .SUA format
 

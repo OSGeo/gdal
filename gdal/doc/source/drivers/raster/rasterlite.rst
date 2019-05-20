@@ -3,6 +3,8 @@
 Rasterlite - Rasters in SQLite DB
 =================================
 
+.. shortname:: Rasterlite
+
 The Rasterlite driver allows reading and
 creating Rasterlite databases.
 

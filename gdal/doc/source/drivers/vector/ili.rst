@@ -3,6 +3,11 @@
 "INTERLIS 1" and "INTERLIS 2" drivers
 =====================================
 
+.. shortname:: INTERLIS 1
+
+.. shortname:: INTERLIS 2
+
+
 | OGR has support for INTERLIS reading and writing.
 | `INTERLIS <http://www.interlis.ch/>`__ is a standard which has been
   especially composed in order to fulfill the requirements of modeling

@@ -3,9 +3,11 @@
 JPEG2000 --- Implementation of the JPEG-2000 part 1
 ===================================================
 
+.. shortname:: JPEG2000
+
 This implementation based on JasPer software (see below).
 
-Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000
+XMP metadata can be extracted from JPEG2000
 files, and will be stored as XML raw content in the xml:XMP metadata
 domain.
 

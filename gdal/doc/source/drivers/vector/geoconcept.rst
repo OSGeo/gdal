@@ -3,6 +3,8 @@
 GeoConcept text export
 ======================
 
+.. shortname:: Geoconcept
+
 GeoConcept text export files should be available for writing and
 reading.
 

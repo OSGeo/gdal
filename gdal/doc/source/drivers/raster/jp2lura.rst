@@ -3,6 +3,8 @@
 JP2Lura --- JPEG2000 driver based on Lurawave library
 =====================================================
 
+.. shortname:: JP2LURA
+
 .. versionadded:: 2.2
 
 This driver is an implementation of a JPEG2000 reader/writer based on

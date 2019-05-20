@@ -3,6 +3,8 @@
 SIGDEM -- Scaled Integer Gridded DEM
 ====================================
 
+.. shortname:: SIGDEM
+
 .. versionadded:: 2.4
 
 The SIGDEM driver supports reading and writing `Scaled Integer Gridded

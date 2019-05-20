@@ -3,6 +3,10 @@
 NWT_GRD/NWT_GRC -- Northwood/Vertical Mapper File Format
 ========================================================
 
+.. shortname:: NWT_GRD
+
+.. shortname:: NWT_GRC
+
 Support for reading & writing Northwood GRID raster formats. This format
 is also known as Vertical Mapper Grid or MapInfo Grid and is commonly
 used in MapInfo Pro software

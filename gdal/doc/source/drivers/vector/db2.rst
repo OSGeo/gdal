@@ -3,6 +3,8 @@
 DB2 Spatial
 ===========
 
+.. shortname:: DB2
+
 This driver implements support for access to spatial tables in the IBM
 DB2 for Linux, Unix and Windows (DB2 LUW) and the IBM DB2 for z/OS
 relational databases using the default ODBC support incorporated into

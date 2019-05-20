@@ -3,6 +3,8 @@
 INGR --- Intergraph Raster Format
 =================================
 
+.. shortname:: INGR
+
 This format is supported for read and writes access.
 
 The Intergraph Raster File Format was the native file format used by

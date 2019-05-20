@@ -3,6 +3,8 @@
 FMEObjects Gateway
 ==================
 
+.. shortname:: FME
+
 Feature sources supported by FMEObjects are supported for reading by OGR
 if the FMEObjects gateway is configured, and if a licensed copy of
 FMEObjects is installed and accessible.

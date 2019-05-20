@@ -3,6 +3,8 @@
 JML: OpenJUMP JML format
 ========================
 
+.. shortname:: JML
+
 OGR has support for reading and writing .JML files used by the OpenJUMP
 software. Read support is only available if GDAL is built with *expat*
 library support

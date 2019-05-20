@@ -3,6 +3,8 @@
 PDS4 -- NASA Planetary Data System (Version 4)
 ==============================================
 
+.. shortname:: PDS4
+
 PDS4 is a format used primarily by NASA to store and distribute solar,
 lunar and planetary imagery data. GDAL provides read-write access to
 PDS4 formatted imagery data.

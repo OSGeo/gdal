@@ -3,6 +3,8 @@
 GFF -- Sandia National Laboratories GSAT File Format
 ====================================================
 
+.. shortname:: GFF
+
 This read-only GDAL driver is designed to provide access to processed
 data from Sandia National Laboratories' various experimental sensors.
 The format is essentially an arbitrary length header containing

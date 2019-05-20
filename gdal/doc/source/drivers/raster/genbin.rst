@@ -3,6 +3,8 @@
 GenBin -- Generic Binary (.hdr labelled)
 ========================================
 
+.. shortname:: GenBin
+
 This driver supporting reading "Generic Binary" files labelled with a
 .hdr file, but distinct from the more common ESRI labelled .hdr format
 (EHdr driver). The origin of this format is not entirely clear. The .hdr

@@ -3,6 +3,8 @@
 NAS - ALKIS
 ===========
 
+.. shortname:: NAS
+
 The NAS driver reads the NAS/ALKIS format used for cadastral data in
 Germany. The format is a GML profile with fairly complex GML3 objects
 not easily read with the general OGR GML driver.

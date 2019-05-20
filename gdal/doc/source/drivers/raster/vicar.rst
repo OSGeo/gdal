@@ -3,6 +3,8 @@
 VICAR -- VICAR 
 ==============
 
+.. shortname:: VICAR
+
 See `VICAR documentation <https://www-mipl.jpl.nasa.gov/external/vicar.htm>`_
 
 NOTE: Implemented as ``gdal/frmts/pds/vicardataset.cpp``.

@@ -3,6 +3,8 @@
 Access MDB databases
 ====================
 
+.. shortname:: MDB
+
 OGR optionally supports reading access .mdb files by using the Java
 `Jackcess <http://jackcess.sourceforge.net/>`__ library.
 

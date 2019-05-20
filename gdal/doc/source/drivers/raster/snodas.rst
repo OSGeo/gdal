@@ -3,6 +3,8 @@
 SNODAS -- Snow Data Assimilation System
 =======================================
 
+.. shortname:: SNODAS
+
 This is a convenience driver to read Snow Data Assimilation System data.
 Those files contain Int16 raw binary data. The file to provide to GDAL
 is the .Hdr file.

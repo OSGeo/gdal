@@ -5,6 +5,8 @@ WFS3 - OGC WFS 3.0 service (experimental)
 
 .. versionadded:: 2.3
 
+.. shortname:: WFS3
+
 **NOTE: THIS IS BASED ON A DRAFT VERSION OF THE WFS 3.0 SPECIFICATION**
 
 This driver can connect to a OGC WFS 3.0 service. It assumes that the

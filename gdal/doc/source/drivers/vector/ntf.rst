@@ -3,6 +3,8 @@
 UK .NTF
 =======
 
+.. shortname:: ``UK .NTF``
+
 The National Transfer Format, mostly used by the UK Ordnance Survey, is
 supported for read access.
 

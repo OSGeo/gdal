@@ -3,6 +3,8 @@
 MAP --- OziExplorer .MAP
 ========================
 
+.. shortname:: MAP
+
 OziExplorer MAP files.
 
 Driver capabilities

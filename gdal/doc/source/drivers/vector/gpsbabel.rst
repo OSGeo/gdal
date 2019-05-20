@@ -3,6 +3,8 @@
 GPSBabel
 ========
 
+.. shortname:: GPSBabel
+
 The GPSBabel driver for now that relies on the
 `GPSBabel <http://www.gpsbabel.org>`__ utility to access various GPS
 file formats.

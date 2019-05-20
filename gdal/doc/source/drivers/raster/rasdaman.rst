@@ -1,7 +1,9 @@
 .. _raster.rasdaman:
 
-Rasdaman GDAL driver
-====================
+Rasdaman
+========
+
+.. shortname:: Rasdaman
 
 Rasdaman is a raster database middleware offering an SQL-style query
 language on multi-dimensional arrays of unlimited size, stored in a

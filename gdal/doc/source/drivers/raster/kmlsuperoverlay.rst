@@ -3,6 +3,8 @@
 KMLSuperoverlay -- KMLSuperoverlay
 ==================================
 
+.. shortname:: KMLSuperoverlay
+
 NOTE: Implemented as ``gdal/frmts/kmlsuperoverlay/kmlsuperoverlay.cpp``.
 
 

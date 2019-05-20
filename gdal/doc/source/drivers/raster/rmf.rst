@@ -3,6 +3,8 @@
 RMF --- Raster Matrix Format
 ============================
 
+.. shortname:: RMF
+
 RMF is a simple tiled raster format used in the GIS "Integration" and
 "Panorama" GIS. The format itself has very poor capabilities.
 

@@ -3,9 +3,10 @@
 MySQL
 =====
 
+.. shortname:: MySQL
+
 This driver implements read and write access for spatial data in
-`MySQL <http://www.mysql.org/>`__ tables. This functionality was
-introduced in GDAL/OGR 1.3.2.
+`MySQL <http://www.mysql.org/>`__ tables.
 
 When opening a database, its name should be specified in the form
 "MYSQL:dbname[,options]" where the options can include comma separated

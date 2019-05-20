@@ -3,6 +3,8 @@
 RRASTER -- R Raster
 ===================
 
+.. shortname:: RRASTER
+
 .. versionadded:: 2.2
 
 This is a read-only reader for the datasets handled by the `R Raster

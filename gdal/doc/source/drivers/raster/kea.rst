@@ -3,6 +3,8 @@
 KEA
 ===
 
+.. shortname:: KEA
+
 Starting with GDAL 2.0, GDAL can read, create and update files in the
 KEA format, through the libkea library.
 

@@ -3,6 +3,8 @@
 SVG - Scalable Vector Graphics
 ==============================
 
+.. shortname:: SVG
+
 OGR has support for SVG reading (if GDAL is built with *expat* library
 support).
 

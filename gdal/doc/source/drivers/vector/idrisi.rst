@@ -3,6 +3,8 @@
 Idrisi Vector (.VCT)
 ====================
 
+.. shortname:: IDRISI
+
 This driver reads Idrisi vector files with .vct extension. The driver
 recognized point, lines and polygons geometries.
 

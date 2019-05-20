@@ -3,6 +3,8 @@
 WMS -- Web Map Services
 =======================
 
+.. shortname:: WMS
+
 Accessing several different types of web image services is possible
 using the WMS format in GDAL.
 

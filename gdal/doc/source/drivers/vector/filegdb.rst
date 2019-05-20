@@ -3,6 +3,8 @@
 ESRI File Geodatabase (FileGDB)
 ===============================
 
+.. shortname:: FileGDB
+
 The FileGDB driver provides read and write access to vector layers of
 File Geodatabases (.gdb directories) created by ArcGIS 10 and above. The
 dataset name must be the directory/folder name, and it must end with the

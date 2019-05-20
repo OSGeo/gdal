@@ -3,6 +3,8 @@
 MEM -- In Memory Raster
 =======================
 
+.. shortname:: MEM
+
 GDAL supports the ability to hold rasters in a temporary in-memory
 format. This is primarily useful for temporary datasets in scripts or
 internal to applications. It is not generally of any use to application

@@ -3,6 +3,8 @@
 PLScenes (Planet Labs Scenes/Catalog API)
 =========================================
 
+.. shortname:: PLScenes
+
 This driver can connect to Planet Labs Data V1 API. GDAL/OGR must be
 built with Curl support in order for the PLScenes driver to be compiled.
 

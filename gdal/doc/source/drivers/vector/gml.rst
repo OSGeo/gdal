@@ -3,6 +3,8 @@
 GML - Geography Markup Language
 ===============================
 
+.. shortname:: GML
+
 OGR has limited support for GML reading and writing. Update of existing
 files is not supported.
 

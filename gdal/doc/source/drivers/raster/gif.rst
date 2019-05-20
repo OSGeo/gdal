@@ -3,6 +3,8 @@
 GIF -- Graphics Interchange Format
 ==================================
 
+.. shortname:: GIF
+
 GDAL supports reading and writing of normal, and interlaced GIF files.
 Gif files always appear as having one colormapped eight bit band. GIF
 files have no support for georeferencing.

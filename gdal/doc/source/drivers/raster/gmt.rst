@@ -3,6 +3,8 @@
 GMT -- GMT Compatible netCDF
 ============================
 
+.. shortname:: GMT
+
 GDAL has limited support for reading and writing netCDF *grid* files.
 NetCDF files that are not recognised as grids (they lack variables
 called dimension, and z) will be silently ignored by this driver. This

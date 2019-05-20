@@ -3,6 +3,8 @@
 HTF - Hydrographic Transfer Format
 ==================================
 
+.. shortname:: HTF
+
 This driver reads files containing sounding data following the
 Hydrographic Transfer Format (HTF), which is used by the Australian
 Hydrographic Office (AHO).

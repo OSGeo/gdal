@@ -3,11 +3,13 @@
 PDF -- Geospatial PDF
 =====================
 
+.. shortname:: PDF
+
 GDAL supports reading Geospatial PDF documents, by extracting
 georeferencing information and rasterizing the data. Non-geospatial PDF
 documents will also be recognized by the driver.
 
-Starting with GDAL >= 1.10.0, PDF documents can be created from other
+PDF documents can be created from other
 GDAL raster datasets, and OGR datasources can also optionally be drawn
 on top of the raster layer (see OGR\_\* creation options in the below
 section).

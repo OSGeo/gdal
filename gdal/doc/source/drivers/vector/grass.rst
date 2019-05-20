@@ -3,6 +3,8 @@
 GRASS Vector Format
 ===================
 
+.. shortname:: GRASS
+
 GRASS driver can read GRASS (version 6.0 and higher) vector maps. Each
 GRASS vector map is represented as one datasource. A GRASS vector map
 may have 0, 1 or more layers.

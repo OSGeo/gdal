@@ -3,8 +3,10 @@
 SENTINEL2 -- Sentinel-2 Products
 ================================
 
-Driver for Sentinel-2 Level-1B, Level-1C and Level-2A products. (GDAL >=
-2.1). Starting with GDAL 2.1.3, Level-1C with "Safe Compact" encoding
+.. shortname:: SENTINEL2
+
+Driver for Sentinel-2 Level-1B, Level-1C and Level-2A products.
+Starting with GDAL 2.1.3, Level-1C with "Safe Compact" encoding
 are also supported.
 
 The SENTINEL2 driver will be used if the main metadata .xml file at the

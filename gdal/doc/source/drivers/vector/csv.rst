@@ -3,6 +3,8 @@
 Comma Separated Value (.csv)
 ============================
 
+.. shortname:: CSV
+
 OGR supports reading and writing primarily non-spatial tabular data
 stored in text CSV files. CSV files are a common interchange format
 between software packages supporting tabular data and are also easily

@@ -3,6 +3,8 @@
 LAN -- Erdas 7.x .LAN and .GIS
 ==============================
 
+.. shortname:: LAN
+
 GDAL supports reading and writing Erdas 7.x .LAN and .GIS raster files.
 Currently 4bit, 8bit and 16bit pixel data types are supported for
 reading and 8bit and 16bit for writing.

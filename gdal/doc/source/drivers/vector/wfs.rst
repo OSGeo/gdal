@@ -3,6 +3,8 @@
 WFS - OGC WFS service
 =====================
 
+.. shortname:: WFS
+
 This driver can connect to a OGC WFS service. It supports WFS 1.0, 1.1
 and 2.0 protocols. GDAL/OGR must be built with Curl support in order to
 the WFS driver to be compiled. Usually WFS requests return results in

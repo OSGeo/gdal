@@ -3,6 +3,8 @@
 BT -- VTP .bt Binary Terrain Format
 ===================================
 
+.. shortname:: BT
+
 The .bt format is used for elevation data in the VTP software. The
 driver includes support for reading and writing .bt 1.3 format including
 support for Int16, Int32 and Float32 pixel data types.

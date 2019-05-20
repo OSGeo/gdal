@@ -3,6 +3,8 @@
 PostgreSQL / PostGIS
 ====================
 
+.. shortname:: PostgreSQL
+
 This driver implements support for access to spatial tables in
 PostgreSQL extended with the `PostGIS <http://postgis.net/>`__ spatial
 data support. Some support exists in the driver for use with PostgreSQL

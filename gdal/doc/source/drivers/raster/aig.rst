@@ -3,6 +3,8 @@
 AIG -- Arc/Info Binary Grid
 ===========================
 
+.. shortname:: AIG
+
 Supported by GDAL for read access. This format is the internal binary
 format for Arc/Info Grid, and takes the form of a coverage level
 directory in an Arc/Info database. To open the coverage select the

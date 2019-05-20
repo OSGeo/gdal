@@ -3,6 +3,8 @@
 ESRI ArcSDE
 ===========
 
+.. shortname:: SDE
+
 OGR optionally supports reading ESRI ArcSDE database instances. ArcSDE
 is a middleware spatial solution for storing spatial data in a variety
 of backend relational databases. The OGR ArcSDE driver depends on being

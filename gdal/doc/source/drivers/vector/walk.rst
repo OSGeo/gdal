@@ -3,6 +3,8 @@
 Walk - Walk Spatial Data
 ========================
 
+.. shortname:: Walk
+
 OGR optionally supports reading Walk spatial data via ODBC. Walk spatial
 data is a Microsoft Access database developed by Walkinfo Technologies
 mainly for land surveying, evaluation, planning, checking and data

@@ -3,6 +3,8 @@
 SEG-Y / SEGY
 ============
 
+.. shortname:: SEGY
+
 This driver reads files in SEG-Y format. Those files are binary files
 that contain single-line seismic digital data. The driver will report
 the attributes of the trace header (in their raw form, see the SEG-Y

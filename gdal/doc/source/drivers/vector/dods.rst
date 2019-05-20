@@ -3,6 +3,8 @@
 DODS/OPeNDAP
 ============
 
+.. shortname:: DODS
+
 This driver implements read-only support for reading feature data from
 OPeNDAP (DODS) servers. It is optionally included in OGR if built with
 OPeNDAP support libraries.

@@ -3,6 +3,8 @@
 NGSGEOID - NOAA NGS Geoid Height Grids
 ======================================
 
+.. shortname:: NGSGEOID
+
 GDAL supports reading NOAA NGS geoid height grids in binary format (.bin
 files). Those files can be used for vertical datum transformations.
 

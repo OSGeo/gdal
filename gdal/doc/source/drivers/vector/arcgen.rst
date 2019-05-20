@@ -4,6 +4,8 @@
 ARCGEN - Arc/Info Generate
 ================================================================================
 
+.. shortname:: ARCGEN
+
 This driver reads files in Arc/Info Generate format. Those files are simple
 ASCII files that contain points, lines or polygons (one type of geometry per
 file).

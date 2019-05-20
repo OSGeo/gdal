@@ -3,8 +3,11 @@
 TileDB - TileDB
 ===============
 
-Starting with GDAL 3.0, GDAL can read and write TileDB arrays through
-the TileDB library.
+.. shortname:: TileDB
+
+.. versionadded:: 3.0
+
+GDAL can read and write TileDB arrays through the TileDB library.
 
 The driver relies on the Open Source TileDB
 `library <https://github.com/TileDB-Inc/TileDB>`__ (MIT licensed).

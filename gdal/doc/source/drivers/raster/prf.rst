@@ -3,6 +3,8 @@
 PHOTOMOD Raster File
 ====================
 
+.. shortname:: PRF
+
 PRF or MegaTIFF is an internal format of PHOTOMOD software for storing
 large images.
 

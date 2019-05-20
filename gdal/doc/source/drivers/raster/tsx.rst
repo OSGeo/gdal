@@ -3,6 +3,8 @@
 TSX --  TerraSAR-X Product 
 ==========================
 
+.. shortname:: TSX
+
 NOTE: Implemented as ``gdal/frmts/tsx/tsxdataset.cpp``.
 
 

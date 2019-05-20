@@ -3,6 +3,8 @@
 BMP --- Microsoft Windows Device Independent Bitmap
 ===================================================
 
+.. shortname:: BMP
+
 MS Windows Device Independent Bitmaps supported by the Windows kernel
 and mostly used for storing system decoration images. Due to the nature
 of the BMP format it has several restrictions and could not be used for

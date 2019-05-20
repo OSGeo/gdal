@@ -5,6 +5,8 @@ Google Earth Engine Data API
 
 .. versionadded:: 2.4
 
+.. shortname:: EEDA
+
 The driver supports read-only operations to list images and their
 metadata as a vector layer, using Google Earth Engine REST API.
 

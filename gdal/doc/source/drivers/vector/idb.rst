@@ -3,6 +3,8 @@
 IDB
 ===
 
+.. shortname:: IDB
+
 This driver implements support for access to spatial tables in IBM
 Informix extended with the DataBlade spatial module.
 

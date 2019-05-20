@@ -3,6 +3,8 @@
 GTA - Generic Tagged Arrays
 ===========================
 
+.. shortname:: GTA
+
 GDAL can read and write GTA data files through
 the libgta library.
 

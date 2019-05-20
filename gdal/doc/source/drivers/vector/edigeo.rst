@@ -3,6 +3,8 @@
 EDIGEO
 ======
 
+.. shortname:: EDIGEO
+
 This driver reads files encoded in the French EDIGEO exchange format, a
 text based file format aimed at exchanging geographical information
 between GIS, with powerful description capabilities, topology modeling,

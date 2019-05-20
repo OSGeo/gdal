@@ -3,6 +3,8 @@
 WMTS -- OGC Web Map Tile Service
 ================================
 
+.. shortname:: WMTS
+
 .. versionadded:: 2.1
 
 Access to WMTS layers is possible with the GDAL WMTS

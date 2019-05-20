@@ -3,6 +3,8 @@
 ISIS2 -- USGS Astrogeology ISIS Cube (Version 2)
 ================================================
 
+.. shortname:: ISIS2
+
 ISIS2 is a format used by the USGS Planetary Cartography group to store
 and distribute planetary imagery data. GDAL provides read and write
 access to ISIS2 formatted imagery data.

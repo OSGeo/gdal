@@ -3,6 +3,8 @@
 AIRSAR -- AIRSAR Polarimetric Format
 ====================================
 
+.. shortname:: AIRSAR
+
 Most variants of the AIRSAR Polarimetric Format produced by the AIRSAR
 Integrated Processor are supported for reading by GDAL. AIRSAR products
 normally include various associated data files, but only the imagery

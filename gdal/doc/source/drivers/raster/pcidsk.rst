@@ -3,6 +3,8 @@
 PCIDSK --- PCI Geomatics Database File
 ======================================
 
+.. shortname:: PCIDSK
+
 PCIDSK database file used by PCI EASI/PACE software for image analysis.
 It is supported for reading, and writing by GDAL. All pixel data types,
 and data organizations (pixel interleaved, band interleaved, file

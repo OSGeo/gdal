@@ -3,6 +3,8 @@
 BLX -- Magellan BLX Topo File Format
 ====================================
 
+.. shortname:: BLX
+
 BLX is the format for storing topographic data in Magellan GPS units.
 This driver supports both reading and writing. In addition the 4
 overview levels inherent in the BLX format can be used with the driver.

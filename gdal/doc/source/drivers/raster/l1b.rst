@@ -3,6 +3,8 @@
 L1B -- NOAA Polar Orbiter Level 1b Data Set (AVHRR)
 ===================================================
 
+.. shortname:: L1B
+
 GDAL supports NOAA Polar Orbiter Level 1b Data Set format for reading.
 Now it can read NOAA-9(F) --- NOAA-17(M) datasets. NOTE: only AVHRR
 instrument supported now, if you want read data from other instruments,
