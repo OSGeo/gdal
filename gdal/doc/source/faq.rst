@@ -12,11 +12,6 @@ FAQ
        :depth: 3
        :backlinks: none
 
-.. toctree::
-   :hidden:
-
-   software_using_gdal
-
 What does GDAL stand for?
 +++++++++++++++++++++++++
 
@@ -65,6 +60,11 @@ Is there a graphical user interface to GDAL/OGR?
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
 See :ref:`software_using_gdal`
+
+.. toctree::
+   :hidden:
+
+   software_using_gdal
 
 What compiler can I use to build GDAL/OGR?
 ++++++++++++++++++++++++++++++++++++++++++++++++

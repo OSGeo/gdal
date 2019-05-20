@@ -47,3 +47,8 @@ DEALINGS IN THE SOFTWARE.
 The full licensing terms are available in the `LICENSE.TXT`_ file.
 
 .. _`LICENSE.TXT`: https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/LICENSE.TXT
+
+Software using GDAL
+--------------------------------------------------------------------------------
+
+See :ref:`software_using_gdal`
