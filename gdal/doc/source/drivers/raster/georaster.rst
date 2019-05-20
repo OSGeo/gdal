@@ -1,7 +1,8 @@
 .. _raster.georaster:
 
+================================================================================
 Oracle Spatial GeoRaster
-========================
+================================================================================
 
 .. shortname:: GeoRaster
 
@@ -88,7 +89,7 @@ Where clause.
    % gdalinfo
    georaster:scott/tiger@db1,table_name,georaster_column,city='Brasilia'
 
-| 
+|
 | Note that the result of those queries are returned as GDAL metadata
   sub-datasets, e.g.:
 

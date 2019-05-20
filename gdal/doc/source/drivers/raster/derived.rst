@@ -1,7 +1,8 @@
 .. _raster.derived:
 
+================================================================================
 DERIVED -- Derived subdatasets driver
-=====================================
+================================================================================
 
 .. shortname:: DERIVED
 
@@ -170,7 +171,7 @@ still reachable with the syntax presented above.
 ::
 
        $ gdalinfo -mdd DERIVED_SUBDATASETS cint_sar.tif
-     
+
 
 ::
 

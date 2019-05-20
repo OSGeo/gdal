@@ -1,7 +1,8 @@
 .. _raster.arcinfo_grid_format:
 
+================================================================================
 Arc/Info Binary Grid Format
-===========================
+================================================================================
 
 *by* `Frank Warmerdam <http://pobox.com/~warmerdam>`__
 (warmerdam@pobox.com)

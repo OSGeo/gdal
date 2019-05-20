@@ -1,7 +1,8 @@
 .. _wktproblems:
 
+================================================================================
 OGC WKT Coordinate System Issues
-================================
+================================================================================
 
 This document is intended to discuss some issues that arrise in
 attempting to use OpenGIS Well Known Text descriptions of coordinate
@@ -129,7 +130,7 @@ instance the BNF for the PROJCS item in the CT spec is
 
 ::
 
-   <projected cs> = 
+   <projected cs> =
      PROJCS["<name>", <geographic cs>, <projection>, {<parameter>,}* <linear unit> {,<twin axes>}{,<authority>}]
 
 This clearly states that the PROJECTION keyword follows the GEOGCS,
@@ -218,10 +219,10 @@ What units should the prime meridian appear in?
 
    ::
 
-      GEOGCS [ "Longitude / Latitude (NTF with Paris prime meridian)", 
-        DATUM ["NTF (Paris meridian)", 
-          SPHEROID ["Clarke 1880 (IGN)", 6378249.200000, 293.466021]], 
-        PRIMEM [ "", 0.000649 ], 
+      GEOGCS [ "Longitude / Latitude (NTF with Paris prime meridian)",
+        DATUM ["NTF (Paris meridian)",
+          SPHEROID ["Clarke 1880 (IGN)", 6378249.200000, 293.466021]],
+        PRIMEM [ "", 0.000649 ],
         UNIT ["Decimal Degree", 0.01745329251994330]]
 
 Sign of TOWGS84 Rotations

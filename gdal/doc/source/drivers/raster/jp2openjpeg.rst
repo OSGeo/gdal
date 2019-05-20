@@ -1,7 +1,8 @@
 .. _raster.jp2openjpeg:
 
-JP2OpenJPEG --- JPEG2000 driver based on OpenJPEG library
-=========================================================
+================================================================================
+JP2OpenJPEG -- JPEG2000 driver based on OpenJPEG library
+================================================================================
 
 .. shortname:: JP2OpenJPEG
 

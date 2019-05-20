@@ -1,7 +1,8 @@
 .. _raster.nitf_advanced:
 
+================================================================================
 NITF -- Advanced Driver Information
-===================================
+================================================================================
 
 The NITF (National Imagery Transmission Format) driver in GDAL includes
 a number of advanced, and somewhat esoteric options not suitable for the

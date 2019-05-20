@@ -1,7 +1,8 @@
 .. _raster.vrt:
 
+================================================================================
 VRT -- GDAL Virtual Format
-==========================
+================================================================================
 
 .. shortname:: VRT
 
@@ -213,7 +214,7 @@ The allowed subelements for VRTRasterBand are :
 
   <Scale>0.0</Scale>
 
-- **Overview**: This optional element describes one overview level for the band.  It should have a child SourceFilename and SourceBand element.  The SourceFilename may have a relativeToVRT boolean attribute.  Multiple elements may be used to describe multiple overviews. 
+- **Overview**: This optional element describes one overview level for the band.  It should have a child SourceFilename and SourceBand element.  The SourceFilename may have a relativeToVRT boolean attribute.  Multiple elements may be used to describe multiple overviews.
 
 .. code-block:: xml
 
@@ -222,7 +223,7 @@ The allowed subelements for VRTRasterBand are :
       <SourceBand>1</SourceBand>
     </Overview>
 
-- **CategoryNames**: This optional element contains a list of Category subelements with the names of the categories for classified raster band. 
+- **CategoryNames**: This optional element contains a list of Category subelements with the names of the categories for classified raster band.
 
 .. code-block:: xml
 
@@ -1024,7 +1025,7 @@ with hillshading.py:
             for i in range(radius, out_ar.shape[1]-radius):
                 win = win_line[:,i-radius:i+radius+1].tolist()
                 x = inv_ewres * ((win[0][0] + win[1][0] + win[1][0] + win[2][0])-\
-                                (win[0][2] + win[1][2] + win[1][2] + win[2][2])) 
+                                (win[0][2] + win[1][2] + win[1][2] + win[2][2]))
                 y = inv_nsres * ((win[2][0] + win[2][1] + win[2][1] + win[2][2])-\
                                 (win[0][0] + win[0][1] + win[0][1] + win[0][2]))
                 xx_plus_yy = x * x + y * y
@@ -1037,7 +1038,7 @@ with hillshading.py:
                 else:
                     out_ar[j,i] = 1 + round(cang_mul_254)
 
-    def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, 
+    def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
                 raster_ysize, radius, gt, **kwargs):
         z = float(kwargs['z_factor'])
         scale= float(kwargs['scale'])
@@ -1122,7 +1123,7 @@ Given the following mandelbrot.py file :
     # the jit decorated function with the expected signature.
     def mandelbrot(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
                             raster_ysize, r, gt, **kwargs):
-        mandelbrot_jit(out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, 
+        mandelbrot_jit(out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
     g_max_iterations)
 
     # Will make sure that the code is compiled to pure native code without Python

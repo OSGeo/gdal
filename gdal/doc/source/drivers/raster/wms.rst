@@ -1,7 +1,8 @@
 .. _raster.wms:
 
+================================================================================
 WMS -- Web Map Services
-=======================
+================================================================================
 
 .. shortname:: WMS
 
@@ -26,7 +27,7 @@ supported image services. It is important that there be no spaces or
 other content before the ``<GDAL_WMS>`` element.
 
 ========================================================================== ===============================================================================================================================================================================================================================================================================================================================
-<GDAL_WMS>                                                                
+<GDAL_WMS>
 <Service name="WMS">                                                       Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)
 <Version>1.1.1</Version>                                                   WMS version. (optional, defaults to 1.1.1)
 <ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>                WMS server URL. (required)
@@ -39,7 +40,7 @@ other content before the ``<GDAL_WMS>`` element.
 <Styles></Styles>                                                          Comma separated list of styles. (optional)
 <BBoxOrder>xyXY</BBoxOrder>                                                Reorder bbox coordinates arbitrarily. May be required for version 1.3 servers. (optional)
                                                                            x - low X coordinate, y - low Y coordinate, X - high X coordinate, Y - high Y coordinate
-</Service>                                                                
+</Service>
 <DataWindow>                                                               Define size and extents of the data. (required, except for TiledWMS and VirtualEarth)
 <UpperLeftX>-180.0</UpperLeftX>                                            X (longitude) coordinate of upper-left corner. (optional, defaults to -180.0, except for VirtualEarth)
 <UpperLeftY>90.0</UpperLeftY>                                              Y (latitude) coordinate of upper-left corner. (optional, defaults to 90.0, except for VirtualEarth)
@@ -53,7 +54,7 @@ other content before the ``<GDAL_WMS>`` element.
 <TileCountX>0</TileCountX>                                                 Can be used to define image size, SizeX = TileCountX \* BlockSizeX \* 2\ :sup:`TileLevel`. (tiled image sources only, optional, defaults to 0)
 <TileCountY>0</TileCountY>                                                 Can be used to define image size, SizeY = TileCountY \* BlockSizeY \* 2\ :sup:`TileLevel`. (tiled image sources only, optional, defaults to 0)
 <YOrigin>top</YOrigin>                                                     Can be used to define the position of the Y origin with respect to the tile grid. Possible values are 'top', 'bottom', and 'default', where the default behavior is mini-driver-specific. (TMS mini-driver only, optional, defaults to 'bottom' for TMS)
-</DataWindow>                                                             
+</DataWindow>
 <Projection>EPSG:4326</Projection>                                         Image projection (optional, defaults to value reported by mini-driver or EPSG:4326)
 <IdentificationTolerance>2</IdentificationTolerance>                       Identification tolerance (optional, defaults to 2)
 <BandsCount>3</BandsCount>                                                 Number of bands/channels, 1 for grayscale data, 3 for RGB, 4 for RGBA. (optional, defaults to 3)
@@ -70,7 +71,7 @@ other content before the ``<GDAL_WMS>`` element.
 <Expires>604800</Expires>                                                  Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web. Default value is 7 days (604800s).
 <MaxSize>67108864</MaxSize>                                                The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted. Default value is 64 Mb (67108864 bytes).
 <Unique>True</Unique>                                                      If set to true the path will appended with md5 hash of ServerURL. Default value is true.
-</Cache>                                                                  
+</Cache>
 <MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2)
 <Timeout>300</Timeout>                                                     Connection timeout in seconds. (optional, defaults to 300)
 <OfflineMode>true</OfflineMode>                                            Do not download any new images, use only what is in cache. Useful only with cache enabled. (optional, defaults to false)
@@ -83,8 +84,8 @@ other content before the ``<GDAL_WMS>`` element.
 <Referer>http://example.foo/</Referer>                                     HTTP Referer string. Some servers might require it (optional). Added in GDAL 1.9.0
 <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>                           Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. Added in GDAL 1.9.0. (optional, defaults to 204)
 <ZeroBlockOnServerException>true</ZeroBlockOnServerException>              Whether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the request. Added in 1.9.0. (optional, defaults to false)
-</GDAL_WMS>                                                               
-\                                                                         
+</GDAL_WMS>
+\
 ========================================================================== ===============================================================================================================================================================================================================================================================================================================================
 
 Minidrivers
@@ -112,7 +113,7 @@ object.
                                BBOX=-1.15841845090625E7,5479006.186718751,-1.1505912992109375E7,5557277.703671876&
                                FORMAT=image/png&TILESIZE=256&OVERVIEWCOUNT=25&MINRESOLUTION=0.0046653459640220&TILED=true"
                               -geoloc -11547071.455 5528616 -xml -b 1
-       
+
 
 Output:
 
@@ -153,7 +154,7 @@ Output:
        <Value>255</Value>
      </BandReport>
    </Report>
-       
+
 
 TileService
 ~~~~~~~~~~~
@@ -270,7 +271,7 @@ band object.
 ::
 
    gdallocationinfo -wgs84 "<GDAL_WMS><Service name=\"AGS\"><ServerUrl>http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>" -75.704 39.75
-       
+
 
 Internet Imaging Protocol (IIP) (GDAL 2.1 and later)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,7 +1,8 @@
 .. _raster.pdf:
 
+================================================================================
 PDF -- Geospatial PDF
-=====================
+================================================================================
 
 .. shortname:: PDF
 
@@ -486,8 +487,8 @@ Example of a composition XML file:
            <DPI>72</DPI>
            <Width>10</Width>
            <Height>15</Height>
-           <Georeferencing id="georeferenced"> 
-               <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS> 
+           <Georeferencing id="georeferenced">
+               <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
                <BoundingBox x1="1" y1="1" x2="9" y2="14"/>
                <BoundingPolygon>POLYGON((1 1,9 1,9 14,1 14,1 1))</BoundingPolygon>
                <ControlPoint x="1"  y="1"  GeoY="48"  GeoX="2"/>

@@ -1,7 +1,8 @@
 .. _raster.wld:
 
+================================================================================
 WLD -- ESRI World File
-----------------------
+================================================================================
 
 A world file file is a plain ASCII text file consisting of six values
 separated by newlines. The format is:

@@ -1,7 +1,8 @@
 .. _raster.intergraphraster:
 
+================================================================================
 INGR --- Intergraph Raster Format
-=================================
+================================================================================
 
 .. shortname:: INGR
 
@@ -120,7 +121,7 @@ The following is a partial listing of INGR file extensions:
 
    Source: \ http://www.oreilly.com/www/centers/gff/formats/ingr/index.htm
 
-| 
+|
 | The INGR driver does not require any especial file extension in order
   to identify or create an INGR file.
 

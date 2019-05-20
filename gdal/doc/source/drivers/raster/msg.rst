@@ -1,7 +1,8 @@
 .. _raster.msg:
 
+================================================================================
 MSG -- Meteosat Second Generation
-=================================
+================================================================================
 
 .. shortname:: MSG
 
@@ -80,7 +81,7 @@ It is also possible to use the following syntax for opening the MSG
 files:
 
 -  MSG(source_folder,timestamp,(channel,channel,...,channel),use_root_folder,data_conversion,nr_cycles,step)
--  
+-
 
    -  source_folder: a path to a folder structure that contains the
       files
@@ -93,7 +94,7 @@ files:
       the source_folder specified. N to indicate that the files reside
       in date structured folders: source_folder/YYYY/MM/DD
    -  data_conversion:
-   -  
+   -
 
       -  N to keep the original 10 bits DN values. The result is UInt16.
       -  B to convert to 8 bits (handy for GIF and JPEG images). The

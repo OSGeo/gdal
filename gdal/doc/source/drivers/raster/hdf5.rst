@@ -1,7 +1,8 @@
 .. _raster.hdf5:
 
+================================================================================
 HDF5 --- Hierarchical Data Format Release 5 (HDF5)
-==================================================
+================================================================================
 
 .. shortname:: HDF5
 
@@ -161,7 +162,7 @@ Now select one of the subdatasets, described as
              (10.5,0.5) -> (170.011,-85.7315,0)
    GCP[  6]: Id=, Info=
              (12.5,0.5) -> (162.987,-85.2337,0)
-   ... 3000 GCPs are read from the file if Latitude and Longitude arrays are presents 
+   ... 3000 GCPs are read from the file if Latitude and Longitude arrays are presents
 
 Corner Coordinates: Upper Left ( 0.0, 0.0) Lower Left ( 0.0, 1645.0)
 Upper Right ( 60.0, 0.0) Lower Right ( 60.0, 1645.0) Center ( 30.0,
