@@ -70,4 +70,4 @@ See Also
 --------
 
 -  `GRASS GIS home page <http://grass.osgeo.org>`__
--  `libgrass page <http://home.gdal.org/projects/grass/>`__
+-  `libgrass page <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/grass/>`__

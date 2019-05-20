@@ -27,7 +27,7 @@ See Also
 ~~~~~~~~
 
 -  `SDTS Abstraction
-   Library <http://home.gdal.org/projects/sdts/index.html>`__: The base
+   Library <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/sdts/index.html>`__: The base
    library used to implement this driver.
 -  `http://mcmcweb.er.usgs.gov/sdts <http://mcmcweb.er.usgs.gov/sdts/>`__:
    Main USGS SDTS web page.

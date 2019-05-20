@@ -21,7 +21,7 @@ See Also
 ~~~~~~~~
 
 -  `General UK NTF
-   Information <http://home.gdal.org/projects/ntf/index.html>`__
+   Information <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/ntf/index.html>`__
 
 --------------
 

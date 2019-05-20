@@ -43,8 +43,7 @@ example:
 
    java -jar ili2c.jar --ilidirs '%ILI_DIR;http://models.interlis.ch/;%JAR_DIR' -oIMD --out models.imd model1.ili [model2.ili ...]
 
-Some possible transformations using
-`ogr2ogr <http://www.gdal.org/ogr2ogr.html>`__.
+Some possible transformations using :ref:`ogr2ogr`.
 
 -  Interlis 1 -> Shape:
 

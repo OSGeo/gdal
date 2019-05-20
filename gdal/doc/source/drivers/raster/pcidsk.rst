@@ -40,4 +40,4 @@ See Also:
 ---------
 
 -  Implemented as ``gdal/frmts/pcidsk/pcidskdataset2.cpp``.
--  `PCIDSK SDK <http://home.gdal.org/projects/pcidsk/index.html>`__
+-  `PCIDSK SDK <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/pcidsk/index.html>`__

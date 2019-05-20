@@ -48,9 +48,7 @@ If find that some adjustments are needed in the makefile and/or the msg
 source files, please "commit" them. The Eumetsat library promises to be
 "platform independent", but as we are working with Microsoft Windows and
 Visual Studio 6.0, we did not have the facilities to check if the rest
-of the msg driver is. Furthermore, apply steps 4 to 7 from the `GDAL
-Driver Implementation
-Tutorial <http://www.gdal.org/gdal_drivertut.html>`__, section "Adding
+of the msg driver is. Furthermore, apply steps 4 to 7 from the :ref:`raster_driver_tut`, section "Adding
 Driver to GDAL Tree".
 
 MSG Wiki page is available at http://trac.osgeo.org/gdal/wiki/MSG. It's

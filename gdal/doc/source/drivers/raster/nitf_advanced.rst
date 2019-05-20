@@ -78,8 +78,7 @@ provide access to the first image segment. The subdataset metadata for a
 In this case opening "multi_image_jpeg_2.0.ntf" directly will give
 access to "NITF_IM:0:multi_image_jpeg_2.0.ntf". To open the others use
 the corresponding subdataset names. The Subdataset mechanism is generic
-GDAL concept discussed in the `GDAL Data
-Model <http://www.gdal.org/gdal_datamodel.html>`__ document.
+GDAL concept discussed in the :ref:`raster_data_model` document.
 
 Text Segments
 -------------

@@ -28,6 +28,7 @@ def gather_redirects():
     fetch('./drivers/vector', output, 'drv')
 
     output.update({ 'drv_geopackage.html' : os.path.join('./drivers/vector', 'gpkg') + '.html' })
+    output.update({ 'geopackage_aspatial.html' : os.path.join('./driver/vector', 'aspatial') + '.html' })
     output.update({ 'drv_geopackage_raster.html' : os.path.join('./drivers/raster', 'gpkg') + '.html' })
     output.update({ 'ogr_feature_style.html' : os.path.join('./user', 'ogr_feature_style') + '.html' })
 

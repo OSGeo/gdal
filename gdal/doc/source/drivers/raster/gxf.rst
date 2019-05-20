@@ -13,7 +13,7 @@ From GDAL 1.8.0, you can specify the datatype by setting the
 GXF_DATATYPE configuration option (Float64 supported currently)
 
 Details on the supporting code, and format can be found on the
-`GXF-3 <http://home.gdal.org/projects/gxf/index.html>`__ page.
+`GXF-3 <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/gxf/index.html>`__ page.
 
 NOTE: Implemented as ``gdal/frmts/gxf/gxfdataset.cpp``.
 

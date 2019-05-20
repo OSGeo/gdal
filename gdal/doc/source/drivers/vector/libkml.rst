@@ -28,8 +28,7 @@ will be flattened to support ogr's internal format.
 Datasource
 ----------
 
-You may specify a
-`datasource <http://www.gdal.org/ogr_arch.html#ogr_arch_data_source>`__
+You may specify a datasource
 as a kml file ``somefile.kml`` , a directory ``somedir/`` , or a kmz
 file ``somefile.kmz`` .
 
@@ -182,7 +181,7 @@ element.
 Layer
 -----
 
-`Layers <http://www.gdal.org/ogr_arch.html#ogr_arch_layer>`__ are mapped
+:cpp:class:`OGRLayer` are mapped
 to kml files as a
 `<Document> <https://developers.google.com/kml/documentation/kmlreference#document>`__
 or
@@ -325,7 +324,7 @@ element:
 Feature
 -------
 
-An OGR `feature <http://www.gdal.org/ogr_arch.html#ogr_arch_feature>`__
+An :cpp:class:`OGRFeature`
 generally translates to kml as a
 `<Placemark> <https://developers.google.com/kml/documentation/kmlreference#placemark>`__,
 and vice-versa.
@@ -680,8 +679,7 @@ OGR_STYLE
 Geometry
 --------
 
-Translation of OGR
-`Geometry <http://www.gdal.org/ogr_arch.html#ogr_arch_geometry>`__ to
+Translation of :cpp:class:`OGRGeometry` to
 KML Geometry is pretty strait forwards with only a couple of exceptions.
 Point to
 `<Point> <https://developers.google.com/kml/documentation/kmlreference#point>`__
