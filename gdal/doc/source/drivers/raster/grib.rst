@@ -67,6 +67,13 @@ template definitions to assemble several bytes that make a template item
 into a 16 or 32 bit signed/unsigned integers, whereas
 GRIB_PDS_TEMPLATE_NUMBERS expose raw bytes
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Configuration options
 ---------------------
 

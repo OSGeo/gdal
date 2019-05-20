@@ -44,6 +44,17 @@ obtained with the gdallocationinfo utility, or with a
 GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band
 object.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Opening options
 ---------------
 
@@ -430,7 +441,8 @@ Examples:
 
       $ ogr2ogr -f MBTILES target.mbtiles source.gpkg -dsco MAXZOOM=10
 
-See Also:
+See Also
+--------
 
 -  `MBTiles specification <https://github.com/mapbox/mbtiles-spec>`__
 -  `UTFGrid

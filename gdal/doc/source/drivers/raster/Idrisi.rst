@@ -39,8 +39,19 @@ suggested REF content in the comment section of the RDC file.
 -  ".smp" the color table file
 -  ".ref" the geographical reference file
 
-See Also:
----------
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/idrisi/idrisiraster.cpp``.
 -  `www.idrisi.com <http://www.idrisi.com>`__

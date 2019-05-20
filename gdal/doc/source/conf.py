@@ -30,7 +30,8 @@ author = 'Frank Warmerdam, Even Rouault, and others'
 extensions = [
     'breathe',
     'configoptions',
-    'redirects'
+    'redirects',
+    'driverproperties'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

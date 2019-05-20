@@ -40,7 +40,13 @@ No effort is made to read files associated with the AIRSAR product such
 as *mission*\ \_l.mocomp, *mission*\ \_meta.airsar or
 *mission*\ \_meta.podaac.
 
-See Also:
+Driver capabilities
+-------------------
+
+.. supports_virtualio::
+
+See Also
+--------
 
 -  `AIRSAR Data
    Format <http://airsar.jpl.nasa.gov/documents/dataformat.htm>`__

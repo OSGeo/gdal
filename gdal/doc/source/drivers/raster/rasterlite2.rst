@@ -20,7 +20,16 @@ GDAL/OGR must be compiled with sqlite support and against librasterlite2
 and libspatialite.
 
 The driver is implemented a unified SQLite / SpatiaLite / RasterLite2
-vector and raster capable driver./p>
+vector and raster capable driver.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Opening syntax
 --------------
@@ -128,7 +137,8 @@ Examples
 
       gdaladdo rgb.rl2 2 4 8 16
 
-See Also:
+See Also
+--------
 
 -  `Rasterlite2 home
    page <https://www.gaia-gis.it/fossil/libRasterLite2/home>`__

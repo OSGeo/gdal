@@ -1,7 +1,7 @@
 .. _raster.esat:
 
 ESAT -- Envisat Image Product
------------------------------
+=============================
 
 GDAL supports the Envisat product format for read access. All sample
 types are supported. Files with two matching measurement datasets (MDS)
@@ -24,3 +24,7 @@ NOTE: Implemented as ``gdal/frmts/envisat/envisatdataset.cpp``.
 See Also: `Envisat Data
 Products <http://envisat.esa.int/dataproducts/>`__ at ESA.
 
+Driver capabilities
+-------------------
+
+.. supports_virtualio::

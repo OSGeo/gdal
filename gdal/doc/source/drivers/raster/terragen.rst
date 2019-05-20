@@ -10,6 +10,18 @@ as Leveller, but the driver only recognizes Terragen files). The driver
 ID is "Terragen". The dataset is file-based and has only one elevation
 band. Void elevations are not supported. Pixels are considered points.
 
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Reading
 -------
 
@@ -51,17 +63,8 @@ Roundtripping
    systems are written. Large degree-based DEMs incur unavoidable
    distortions since the driver currently only uses meters.
 
-   |  
-
-History
--------
-
-| v1.0 (Mar 26/06): Created.
-| v1.1 (Apr 20/06): Added Create() support and SIZE-only read fix.
-| v1.2 (Jun 6/07): Improved baseheight/scale determination when writing.
-
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/terragen/terragendataset.cpp``.
 -  See `readme.txt <./readme.txt>`__ for installation and support

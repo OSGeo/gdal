@@ -1,7 +1,7 @@
 .. _raster.jdem:
 
 JDEM -- Japanese DEM (.mem)
----------------------------
+===========================
 
 GDAL includes read support for Japanese DEM files, normally having the
 extension .mem. These files are a product of the Japanese Geographic
@@ -17,4 +17,11 @@ NOTE: Implemented as ``gdal/frmts/jdem/jdemdataset.cpp``.
 
 See Also: `Geographic Survey Institute (GSI) Web
 Site. <http://www.gsi.go.jp/ENGLISH/>`__
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

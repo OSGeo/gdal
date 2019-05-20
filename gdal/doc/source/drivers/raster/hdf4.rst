@@ -13,6 +13,15 @@ Currently EOS use HDF4-EOS for data storing (telemetry form \`Terra' and
 \`Aqua' satellites). In the future they will switch to HDF5-EOS format,
 which will be used for telemetry from \`Aura' satellite.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Multiple Image Handling (Subdatasets)
 -------------------------------------
 
@@ -222,8 +231,8 @@ If you need open more HDF4 files simultaneously you should change this
 value and rebuild HDF4 library (and relink GDAL if using static HDF
 libraries).
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/hdf4/hdf4dataset.cpp`` and
    ``gdal/frmts/hdf4/hdf4imagedataset.cpp``.

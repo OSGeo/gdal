@@ -3,7 +3,7 @@
 MRF -- Meta Raster Format
 =========================
 
-Integrated in GDAL >= 2.1. Available as plugin for prior versions.
+.. versionadded:: 2.1
 
 Access to a indexed heap of regular tiles (blocks). Controlled by an xml
 file, usually organized as a pyramid of overviews, with level zero being
@@ -11,6 +11,17 @@ the full resolution image. None, PNG, JPEG, ZLIB tile packing are
 implemented
 
 For file creation options, see "gdalinfo --format MRF"
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Links
 -----

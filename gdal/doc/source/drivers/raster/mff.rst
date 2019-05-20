@@ -1,7 +1,7 @@
 .. _raster.mff:
 
 MFF -- Vexcel MFF Raster
-------------------------
+========================
 
 GDAL includes read, update, and creation support for Vexcel's MFF raster
 format. MFF dataset consist of a header file (typically with the
@@ -28,3 +28,13 @@ endian). This may be manually added to the .hdr file if required.
 
 NOTE: Implemented as ``gdal/frmts/raw/mffdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

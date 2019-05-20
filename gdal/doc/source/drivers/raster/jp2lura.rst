@@ -3,13 +3,22 @@
 JP2Lura --- JPEG2000 driver based on Lurawave library
 =====================================================
 
-(GDAL >= 2.2.0)
+.. versionadded:: 2.2
 
 This driver is an implementation of a JPEG2000 reader/writer based on
 Lurawave library.
 
 The driver uses the VSI Virtual File API, so it can read JPEG2000
 compressed NITF files.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Georeferencing
 --------------
@@ -255,8 +264,8 @@ Proper support of JPEG-2000 images with
 Int32/UInt32/Float32-IEEE754-split on Linux 64 bits require a v2.1.00.17
 or later SDK.
 
-See Also:
----------
+See Also
+--------
 
 -  `LuraTech JPEG-2000
    SDK <https://www.luratech.com/en/solutions/applications/data-compression-imaging-with-jpeg-2000/>`__

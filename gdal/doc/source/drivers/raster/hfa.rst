@@ -20,6 +20,17 @@ recognized form. The metadata is stored in a table called GDAL_MetaData
 with each column being a metadata item. The title is the key and the row
 1 value is the value.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Issues
 ---------------
 
@@ -102,7 +113,8 @@ by the HFA driver:
    configuration option to a power- of-two value between 32 and 2048.
    The default value is 64.
 
-See Also:
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/hfa/hfadataset.cpp``.
 -  More information, and other tools are available on the `Imagine

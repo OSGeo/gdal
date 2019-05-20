@@ -1,7 +1,7 @@
 .. _raster.envi:
 
 ENVI -- ENVI .hdr Labelled Raster
----------------------------------
+=================================
 
 GDAL supports some variations of raw raster files with associated ENVI
 style .hdr files describing the format. To select an existing ENVI
@@ -16,7 +16,7 @@ and 64bit complex floating point. There is limited support for
 recognising map_info keywords with the coordinate system and
 georeferencing. In particular, UTM and State Plane should work.
 
-Starting with GDAL 1.10, all ENVI header fields will be stored in the
+All ENVI header fields are stored in the
 ENVI metadata domain, and all of these can then be written out to the
 header file.
 
@@ -32,4 +32,15 @@ Creation Options:
    "file.hdr" header file will be created.
 
 NOTE: Implemented as ``gdal/frmts/raw/envidataset.cpp``.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

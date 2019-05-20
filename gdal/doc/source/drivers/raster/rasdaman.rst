@@ -37,6 +37,7 @@ by the concrete bounding box computed from the input tile coordinates.
 Currently there is no support for reading or writing georeferencing
 information.
 
-See Also:
+See Also
+--------
 
 -  `Rasdaman Project <http://www.rasdaman.org/>`__

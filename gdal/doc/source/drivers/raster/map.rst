@@ -3,11 +3,14 @@
 MAP --- OziExplorer .MAP
 ========================
 
-(GDAL >= 1.10)
-
 OziExplorer MAP files.
 
-This driver does not support file creation.
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 See Also:
 ---------

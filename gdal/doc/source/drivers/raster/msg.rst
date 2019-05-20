@@ -27,6 +27,11 @@ General Public License as published by the Free Software Foundation.
   Instructions <#MSG_Build_Instructions>`__ on how to include this
   driver in your GDAL library.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Build Instructions
 ------------------
 
@@ -189,7 +194,8 @@ GIS packages don't recognize this projection (we only know of ILWIS that
 does have this projection), but gdalwarp.exe can be used to re-project
 the images.
 
-See Also:
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/msg/msgdataset.cpp``.
 -  http://www.eumetsat.int - European Organisation for the Exploitation

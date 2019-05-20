@@ -1,7 +1,7 @@
 .. _raster.pcraster:
 
 PCRaster -- PCRaster raster file format
----------------------------------------
+=======================================
 
 GDAL includes support for reading and writing PCRaster raster files.
 PCRaster is a dynamic modeling system for distributed simulation models.
@@ -54,3 +54,13 @@ NOTE: Implemented as ``gdal/frmts/pcraster/pcrasterdataset.cpp``.
 See also: `PCRaster website at Utrecht
 University <http://pcraster.geo.uu.nl>`__.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

@@ -8,6 +8,15 @@ Elevation data is returned as 16 bit signed integer. Appropriate
 projection and georeferencing information is also returned. A variety of
 header fields are returned dataset level metadata.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Read Issues
 -----------
 
@@ -69,7 +78,7 @@ The DTED driver does support creating new files, but the input data must
 be exactly formatted as a Level 0, 1 or 2 cell. That is the size, and
 bounds must be appropriate for a cell.
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/dted/dteddataset.cpp``.

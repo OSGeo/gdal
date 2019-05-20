@@ -16,6 +16,15 @@ fixed to -32768. In the BLX format undefined values are only really
 supported on tile level. For undefined pixels in non-empty tiles see the
 FILLUNDEF/FILLUNDEFVAL options.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Georeferencing
 --------------
 

@@ -18,6 +18,14 @@ selected other header metadata.
 Implementation of this driver was supported by the United States
 Geological Survey.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+Georeferencing
 --------------
 
 Due to ambiguities in the PDS specification, the georeferencing of some
@@ -83,8 +91,9 @@ megt90n000cb.lbl out_MOLA_4ppd_32bit.tif
 
 PDS is part of a family of related formats including ISIS2 and ISIS3.
 
-See Also:
----------
+
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/pds/pdsdataset.cpp``.
 -  `NASA Planetary Data System <http://pds.nasa.gov/>`__

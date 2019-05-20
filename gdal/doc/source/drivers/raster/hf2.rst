@@ -18,6 +18,15 @@ vertical precision parameter.
 GDAL can read and write georeferencing information through extended
 header blocks.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation options
 ----------------
 

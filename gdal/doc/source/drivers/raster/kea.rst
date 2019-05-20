@@ -28,6 +28,19 @@ The KEA format supports the following features of the GDAL data model:
 -  Per-band RAT (Raster Attribute Table) of arbitrary size
 -  Internal overviews and mask bands
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. versionadded:: 3.0
+
+    .. supports_virtualio::
+
 Creation options
 ----------------
 
@@ -77,13 +90,8 @@ the working of the underlying HDF5 format.
 -  **THEMATIC**\ =YES/NO: If YES then all bands are set to thematic.
    Defaults to NO
 
-VSI Virtual File System API support
------------------------------------
-
-Since GDAL 3.0, read-only operations on /vsi file systems are supported.
-
-See Also:
----------
+See Also
+--------
 
 -  `libkea bitbucket
    repository <https://bitbucket.org/chchrsc/kealib>`__

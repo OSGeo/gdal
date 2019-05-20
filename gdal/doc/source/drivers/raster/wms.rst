@@ -4,7 +4,21 @@ WMS -- Web Map Services
 =======================
 
 Accessing several different types of web image services is possible
-using the WMS format in GDAL. Services are accessed by creating a local
+using the WMS format in GDAL.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+XML description file
+--------------------
+
+Services are accessed by creating a local
 service description XML file -- there are examples below for each of the
 supported image services. It is important that there be no spaces or
 other content before the ``<GDAL_WMS>`` element.
@@ -431,8 +445,8 @@ mentioned in "Open syntax" and as output an XML file. For example:
 The generated file will come with default values that you may need to
 edit.
 
-See Also:
----------
+See Also
+--------
 
 -  `OGC WMS Standards <http://www.opengeospatial.org/standards/wms>`__
 -  `WMS Tiling Client Recommendation

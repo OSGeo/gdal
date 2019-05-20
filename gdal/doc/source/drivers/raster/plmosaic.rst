@@ -16,6 +16,11 @@ For mosaics of type Byte, overviews are available by using the tile API.
 For other data types, there is no support for overviews, so requests
 that involve downsampling may take a long time to complete.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Dataset name syntax
 -------------------
 

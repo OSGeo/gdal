@@ -25,6 +25,15 @@ VTP code by Ben Discoe. See the `Virtual
 Terrain <http://www.vterrain.org/>`__ project for more information on
 VTP.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Issues
 ---------------
 

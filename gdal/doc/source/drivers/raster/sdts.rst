@@ -1,7 +1,7 @@
 .. _raster.sdts:
 
 SDTS -- USGS SDTS DEM
----------------------
+=====================
 
 GDAL includes support for reading USGS SDTS formatted DEMs. USGS DEMs
 are always returned with a data type of signed sixteen bit integer, or
@@ -17,3 +17,9 @@ on a band will attempt to return if the units are Feet ("ft") or Meters
 
 NOTE: Implemented as ``gdal/frmts/sdts/sdtsdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

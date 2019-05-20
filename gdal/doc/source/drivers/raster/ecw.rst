@@ -8,8 +8,19 @@ developed by Hexagon Geospatial (formerly Intergraph, ERDAS, ERMapper).
 Support is optional and requires linking in the libraries available from
 the ECW/JP2 SDK Download page.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Licensing
-~~~~~~~~~
+---------
 
 The ERDAS ECW/JP2 SDK v5.x is available under multiple license types.
 For Desktop usage, decoding any sized ECW/JP2 image is made available
@@ -18,7 +29,7 @@ unlimited sized files on Mobile platforms a license must be purchased
 from Hexagon Geospatial.
 
 History
-~~~~~~~
+-------
 
 -  v3.x - Last release, 2006
 -  v4.x - Last release, 2012

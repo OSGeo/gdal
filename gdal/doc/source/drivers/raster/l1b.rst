@@ -9,6 +9,13 @@ instrument supported now, if you want read data from other instruments,
 write to me (Andrey Kiselev, dron@ak4719.spb.edu). AVHRR LAC/HRPT (1 km
 resolution) and GAC (4 km resolution) should be processed correctly.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Georeference
 ------------
 
@@ -91,8 +98,6 @@ for NOAA >=15.
 Subdatasets
 -----------
 
-(Starting with GDAL 1.11)
-
 NOAA <=14 datasets advertize a
 L1B_SOLAR_ZENITH_ANGLES:"l1b_dataset_name" subdataset that contains a
 maximum of 51 solar zenith angles for each scanline ( beginning at
@@ -113,15 +118,13 @@ cloudy; 3 = partly cloudy.
 Nodata mask
 -----------
 
-(Starting with GDAL 2.0)
-
 NOAA >=15 datasets that report in their header to have missing scan
 lines will expose a per-dataset mask band (following `RFC 15: Band
 Masks <https://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask>`__) to
 indicate such scan lines.
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/l1b/l1bdataset.cpp``.
 -  NOAA Polar Orbiter Level 1b Data Set documented in the \``POD User's

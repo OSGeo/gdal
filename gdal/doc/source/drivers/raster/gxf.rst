@@ -1,7 +1,7 @@
 .. _raster.gxf:
 
 GXF -- Grid eXchange File
--------------------------
+=========================
 
 This is a raster exchange format propagated by Geosoft, and made a
 standard in the gravity/magnetics field. GDAL supports reading (but not
@@ -16,4 +16,11 @@ Details on the supporting code, and format can be found on the
 `GXF-3 <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/gxf/index.html>`__ page.
 
 NOTE: Implemented as ``gdal/frmts/gxf/gxfdataset.cpp``.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

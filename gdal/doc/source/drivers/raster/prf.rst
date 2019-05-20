@@ -26,6 +26,11 @@ Image format has the following structure:
 The driver support the data type among Byte, UInt16, UInt32, Float32 or
 Float64.
 
+Driver capabilities
+-------------------
+
+.. supports_virtualio::
+
 See Also
 --------
 

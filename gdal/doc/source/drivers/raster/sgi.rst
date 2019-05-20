@@ -1,7 +1,7 @@
 .. _raster.sgi:
 
 SGI -- SGI Image Format
------------------------
+=======================
 
 The SGI driver currently supports the reading and writing of SGI Image
 files.
@@ -22,3 +22,11 @@ See Also:
 
 NOTE: Implemented as ``gdal/frmts/sgi/sgidataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_virtualio::

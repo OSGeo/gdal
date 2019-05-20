@@ -63,3 +63,12 @@ There are no supported creation options.
 The MEM format is one of the few that supports the AddBand() method. The
 AddBand() method supports DATAPOINTER, PIXELOFFSET and LINEOFFSET
 options to reference an existing memory array.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::

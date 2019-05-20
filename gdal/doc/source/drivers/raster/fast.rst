@@ -19,6 +19,13 @@ This driver wants administrative file for input. Filenames of images
 will be extracted and data will be imported, every file will be
 interpreted as band.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Data
 ----
 
@@ -102,8 +109,8 @@ Calibration coefficients for each band reported as metadata items.
 -  **BIASn**: Bias value for the channel **n**.
 -  **GAINn**: Gain value for the channel **n**.
 
-See Also:
----------
+See Also
+--------
 
 Implemented as ``gdal/frmts/raw/fastdataset.cpp``.
 

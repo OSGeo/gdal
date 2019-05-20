@@ -1434,3 +1434,14 @@ Linux is limited to 1024 simultaneously opened files, and you should let some
 margin for shared libraries, etc...
 As of GDAL 2.0, gdal_translate and gdalwarp, by default, increase the pool size
 to 450.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

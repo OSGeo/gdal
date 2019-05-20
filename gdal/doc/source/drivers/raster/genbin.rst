@@ -1,7 +1,7 @@
 .. _raster.genbin:
 
 GenBin -- Generic Binary (.hdr labelled)
-----------------------------------------
+========================================
 
 This driver supporting reading "Generic Binary" files labelled with a
 .hdr file, but distinct from the more common ESRI labelled .hdr format
@@ -23,3 +23,7 @@ when provided.
 
 NOTE: Implemented as ``gdal/frmts/raw/genbindataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_virtualio::

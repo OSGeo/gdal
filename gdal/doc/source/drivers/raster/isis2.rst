@@ -20,6 +20,17 @@ Geological Survey.
 
 ISIS2 is part of a family of related formats including PDS and ISIS3.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Issues
 ---------------
 
@@ -38,8 +49,8 @@ Creation Options
    image files, defaults to "cub". Only used if
    LABELING_METHOD=DETACHED.
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/pds/isis2dataset.cpp``.
 -  :ref:`raster.pds` driver

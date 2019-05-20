@@ -13,6 +13,15 @@ preserved as NODATA value when available.
 
 NOTE: Implemented as ``gdal/frmts/netcdf/netcdfdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Multiple Image Handling (Subdatasets)
 -------------------------------------
 
@@ -435,7 +444,3 @@ See Also:
    libraries <http://www.unidata.ucar.edu/downloads/netcdf/index.jsp>`__
 -  `NetCDF
    Documentation <http://www.unidata.ucar.edu/software/netcdf/docs/>`__
-
---------------
-
-`Full list of GDAL Raster Formats <formats_list.html>`__

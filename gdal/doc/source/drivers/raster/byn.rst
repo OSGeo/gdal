@@ -35,8 +35,19 @@ NOTE: Files with extension ".err" are also in the ".byn" format. An
 the same name (e.g., CGG2013n83.byn and CGG2013n83.err). The ".err" file
 will have variable Data equal to 1 or 3.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Factor
-~~~~~~
+------
 
 When translating from or into BYN file to or from another formats the
 scale will afect the result profundly.
@@ -58,10 +69,8 @@ gdal_translate CGG2013an83.err test2.tif -unscale -ot Float32
 NOTE: The BYN header variable **Factor** is the inverse of GDAL
 **Scale**. (Scale = 1.0 / Factor).
 
-| 
-
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/raw/byndataset.{h,cpp}``.
 -  `www.nrcan.gc.ca <https://www.nrcan.gc.ca>`__

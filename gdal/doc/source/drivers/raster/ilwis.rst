@@ -28,3 +28,14 @@ Limitations:
 NOTE: Implemented in ``gdal/frmts/ilwis``.
 
 See Also: http://www.itc.nl/ilwis/default.asp .
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

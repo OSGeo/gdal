@@ -3,7 +3,7 @@
 CAD -- AutoCAD DWG raster layer
 -------------------------------
 
-(GDAL >= 2.2.0)
+.. versionadded:: 2.2
 
 OGR DWG support is based on libopencad, so the list of supported DWG
 (DXF) versions can be seen in libopencad documentation. All drawing
@@ -14,3 +14,10 @@ spatial reference and other methadata from DWG Image description and set
 it to GDALDataset.
 
 NOTE: Implemented as ``ogr/ogrsf_frmts/cad/gdalcaddataset.cpp``.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

@@ -3,8 +3,6 @@
 Geospatial PDF
 ==============
 
-(Available for GDAL >= 1.8.0)
-
 GDAL supports reading Geospatial PDF documents, by extracting
 georeferencing information and rasterizing the data. Non-geospatial PDF
 documents will also be recognized by the driver.
@@ -21,10 +19,19 @@ according to the Adobe Supplement to ISO 32000.
 Multipage documents are exposed as subdatasets, one subdataset par page
 of the document.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Vector support
 --------------
 
-Starting with GDAL 1.10, this driver can read and write geospatial PDF
+This driver can read and write geospatial PDF
 with vector features. Vector read support requires linking to one of the
 above mentioned dependent libraries, but write support does not. The
 driver can read vector features encoded according to PDF's logical

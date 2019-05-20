@@ -6,6 +6,11 @@ DODS -- OPeNDAP Grid Client
 GDAL optionally includes read support for 2D grids and arrays via the
 OPeNDAP (DODS) protocol.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Dataset Naming
 --------------
 
@@ -162,8 +167,7 @@ It will have the following subitems:
             ...
           }
 
---------------
-
-See Also:
+See Also
+--------
 
 -  `OPeNDAP Website <http://www.opendap.org/>`__

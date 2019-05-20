@@ -31,7 +31,15 @@ find the various image files (the IMG-\* files), as well as the Leader
 file. Note that the Leader file is essential for correct operation of
 the driver.
 
-See Also:
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+See Also
+--------
 
 -  `RESTEC Sample
    Data <http://www.alos-restec.jp/en/staticpages/index.php/service-sampledata>`__

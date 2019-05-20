@@ -41,6 +41,17 @@ supported in read and creation :
 -  *gpkg_zoom_other*: when resolution of consecutive zoom levels does
    not vary with a factor of 2.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Opening options
 ---------------
 
@@ -510,7 +521,7 @@ Examples
       % gdalinfo my.gpkg -oo TABLE=a_table
 
 See Also
-~~~~~~~~
+--------
 
 -  :ref:`GeoPackage vector <vector.gpkg>` documentation page
 -  `Getting Started With
@@ -532,7 +543,7 @@ See Also
    specification
 
 Other notes
-~~~~~~~~~~~
+-----------
 
 Development of raster support in the GeoPackage driver was financially
 supported by `Safe Software <http://www.safe.com>`__.

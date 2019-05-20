@@ -1,7 +1,7 @@
 .. _raster.dimap:
 
 DIMAP -- Spot DIMAP
--------------------
+===================
 
 This is a read-only read for Spot DIMAP described images. To use, select
 the METADATA.DIM file in a product directory, or the product directory
@@ -19,3 +19,9 @@ way of getting this information.
 
 NOTE: Implemented as ``gdal/frmts/dimap/dimapdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

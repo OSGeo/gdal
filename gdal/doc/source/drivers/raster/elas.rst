@@ -7,7 +7,19 @@ ELAS is an old remote sensing system still used for a variety of
 research projects within NASA. The ELAS format support can be found in
 gdal/frmts/elas.
 
-See Also:
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+See Also
+--------
 
 -  `Short announcement of ELAS driver in
    GDAL <http://lists.osgeo.org/pipermail/gdal-dev/1999-May/002942.html>`__

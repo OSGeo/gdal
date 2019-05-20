@@ -24,6 +24,18 @@ The LCP driver reads the linear unit, cell size, and extent, but the LCP
 file does not specify the projection. UTM projections are typical, but
 other projections are possible.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+Metadata
+--------
+
 The GDAL LCP driver reports dataset- and band-level metadata:
 
 Dataset
@@ -51,7 +63,7 @@ declared in gdal/frmts/raw. It should be implemented as
 gdal/frmts/raw/lcpdataset.cpp.
 
 Creation Options
-~~~~~~~~~~~~~~~~
+----------------
 
 The LCP driver supports CreateCopy() and metadata values can be set via
 creation options. Below is a list of options with default values listed

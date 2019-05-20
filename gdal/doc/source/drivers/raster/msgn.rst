@@ -18,3 +18,10 @@ Georeferencing is currently supported, but the results may not be
 acceptable (accurate enough), depending on your requirements. The
 current workaround is to implement the CGMS Geostationary projection
 directly, using the code available from EUMETSAT.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

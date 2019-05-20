@@ -11,3 +11,10 @@ This driver is based on the work done in the
 `TRikPanel <http://sourceforge.net/projects/trikpanel/>`__ project.
 
 NOTE: Implemented as ``gdal/frmts/rik/rikdataset.cpp``.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

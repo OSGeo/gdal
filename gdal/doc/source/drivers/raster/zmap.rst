@@ -1,9 +1,7 @@
 .. _raster.zmap:
 
 ZMap -- ZMap Plus Grid
-----------------------
-
-(GDAL >= 1.9.0)
+======================
 
 Supported for read access and creation. This format is an ASCII
 interchange format for gridded data in an ASCII line format for
@@ -25,3 +23,11 @@ thread <http://lists.osgeo.org/pipermail/gdal-dev/2011-June/029173.html>`__
 
 NOTE: Implemented as ``gdal/frmts/zmap/zmapdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

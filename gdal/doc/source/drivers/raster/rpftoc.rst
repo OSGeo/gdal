@@ -1,7 +1,7 @@
 .. _raster.rpftoc:
 
 RPFTOC -- Raster Product Format/RPF (a.toc)
--------------------------------------------
+===========================================
 
 This is a read-only reader for RPF products, like CADRG or CIB, that
 uses the table of content file - A.TOC - from a RPF exchange, and
@@ -54,3 +54,9 @@ See Also:
 
 NOTE: Implemented as ``gdal/frmts/nitf/rpftocdataset.cpp``
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

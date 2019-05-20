@@ -8,6 +8,11 @@ access, code stream reordering and incremental decoding is highly
 exploitable in a networked environment allowing access to remote large
 files using limited bandwidth connections or high contention networks.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 JPIPKAK - JPIP Overview
 -----------------------
 
@@ -241,7 +246,8 @@ JPIPKAK - installation requirements
 Currently only a Windows makefile is provided, however this should
 compile on Linux as well as there are no Windows dependencies.
 
-See Also:
+See Also
+--------
 
 -  `JPEG 2000 Interactive Protocol (Part 9 –
    JPIP) <http://www.jpeg.org/jpeg2000/j2kpart9.html>`__

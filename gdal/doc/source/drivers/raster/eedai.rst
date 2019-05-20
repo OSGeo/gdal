@@ -8,6 +8,11 @@ EEDAI - Google Earth Engine Data API Image
 The driver supports read-only operations to access image content, using
 Google Earth Engine REST API.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Dataset name syntax
 -------------------
 
@@ -121,7 +126,7 @@ or
 
    gdalinfo "EEDAI:projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 
-See Also:
----------
+See Also
+--------
 
 -  :ref:`Google Earth Engine Data API driver <vector.eeda>`

@@ -1,7 +1,7 @@
 .. _raster.ceos:
 
 CEOS -- CEOS Image
-------------------
+==================
 
 This is a simple, read-only reader for ceos image files. To use, select
 the main imagery file. This driver reads only the image data, and does
@@ -16,3 +16,9 @@ data products.
 
 NOTE: Implemented as ``gdal/frmts/ceos/ceosdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_virtualio::

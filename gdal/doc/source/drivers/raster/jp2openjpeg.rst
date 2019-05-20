@@ -24,6 +24,15 @@ of georeferencing or metadata of existing file is also supported.
 Optional intellectual property metdata can be read/written in the
 xml:IPR box.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Georeferencing
 --------------
 
@@ -507,7 +516,7 @@ Feature collections can be linked from the GMLJP2 v2 box to a remote
 location. By default, the link is not followed. It will be followed if
 the open option OPEN_REMOTE_GML is set to YES.
 
-See Also:
+See Also
 ---------
 
 -  Implemented as ``gdal/frmts/openjpeg/openjpegdataset.cpp``.

@@ -1,9 +1,7 @@
 .. _raster.dds:
 
 DDS -- DirectDraw Surface
--------------------------
-
-(GDAL >= 1.10.0)
+=========================
 
 Supported for writing and creation. The DirectDraw Surface file format
 (uses the filename extension DDS), from Microsoft, is a standard for
@@ -23,3 +21,9 @@ More information about `Crunch Lib <http://code.google.com/p/crunch/>`__
 
 NOTE: Implemented as ``gdal/frmts/dds/ddsdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::

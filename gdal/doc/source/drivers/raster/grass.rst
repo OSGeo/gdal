@@ -55,6 +55,11 @@ The following features are supported by the GDAL/GRASS link.
    conversions may be flawed, in particular in handling of datums and
    units.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Notes on driver variations
 --------------------------
 

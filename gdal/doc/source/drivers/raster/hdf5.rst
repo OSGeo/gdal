@@ -5,6 +5,15 @@ HDF5 --- Hierarchical Data Format Release 5 (HDF5)
 
 This driver intended for HDF5 file formats importing.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. versionadded:: 2.4
+
+    .. supports_virtualio::
+
 Multiple Image Handling (Subdatasets)
 -------------------------------------
 
@@ -193,13 +202,8 @@ writable (especially if you are using Cygwin) and that the DLLs can be
 located somewhere by your PATH environment variable. You may also
 download source code NCSA HDF Home Page (see links below).
 
-VSI Virtual File System API support
------------------------------------
-
-Since GDAL 2.4, operations on /vsi file systems are supported.
-
-See Also:
----------
+See Also
+--------
 
 Implemented as ``gdal/frmts/hdf5/hdf5dataset.cpp`` and
 ``gdal/frmts/hdf5/hdf5imagedataset.cpp``.

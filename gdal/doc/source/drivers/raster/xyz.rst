@@ -3,8 +3,6 @@
 XYZ -- ASCII Gridded XYZ
 ========================
 
-(Available for GDAL >= 1.8.0)
-
 GDAL supports reading and writing ASCII **gridded** XYZ raster datasets
 (i.e. ungridded XYZ, LIDAR XYZ etc. must be opened by other means. See
 the documentation of the `gdal_grid <gdal_grid.html>`__ utility).
@@ -46,7 +44,16 @@ Creation options
    of decimal places to output when writing floating-point numbers (%f
    format; alternative to SIGNIFICANT_DIGITS).
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See also
 --------
 
--  Documentation of `gdal_grid <gdal_grid.html>`__ utility
+-  Documentation of :ref:`gdal_grid`

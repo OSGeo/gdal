@@ -30,6 +30,17 @@ points, and the projection is needed to do the conversion).
 
 NOTE: Implemented as ``gdal/frmts/raw/hkvdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Format Details
 --------------
 

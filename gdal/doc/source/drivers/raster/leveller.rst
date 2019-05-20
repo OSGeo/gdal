@@ -16,6 +16,17 @@ The band type is always Float32, even though format versions 4 and 5
 physically use 16.16 fixed-point. The driver auto-converts them to
 floating-point.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Reading
 -------
 
@@ -53,16 +64,6 @@ elevations to physical elevations.
 
 Header information is written out on the first call to
 ``band::IWriteBlock``.
-
-History
--------
-
-v1.3 (Aug 30/14): Added v9 read support, fixed missing typecast
-warnings.
-
-v1.2 (Jul 17/07): Added v7 and Create support.
-
-v1.1 (Oct 20/05): Fixed coordsys and elev scaling errors.
 
 See Also:
 ---------

@@ -1,9 +1,7 @@
 .. _raster.ctg:
 
 CTG -- USGS LULC Composite Theme Grid
--------------------------------------
-
-(GDAL >= 1.9.0)
+=====================================
 
 This driver can read USGS Land Use and Land Cover (LULC) grids encoded
 in the Character Composite Theme Grid (CTG) format. Each file is
@@ -30,4 +28,11 @@ grid_cell2.gz on the USGS site.
    100K <http://edcftp.cr.usgs.gov/pub/data/LULC>`__
 
 NOTE: Implemented as ``gdal/frmts/ctg/ctgdataset.cpp``.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

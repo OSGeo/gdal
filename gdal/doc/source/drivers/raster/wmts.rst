@@ -3,9 +3,18 @@
 WMTS -- OGC Web Map Tile Service
 ================================
 
-Since GDAL 2.1, access to WMTS layers is possible with the GDAL WMTS
+.. versionadded:: 2.1
+
+Access to WMTS layers is possible with the GDAL WMTS
 client driver (needs Curl support). It support both RESTful and KVP
 protocols.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Open syntax
 -----------
@@ -309,7 +318,7 @@ mentioned in "Open syntax" and as output an XML file. For example:
 
 generates the following file:
 
-::
+.. code-block:: xml
 
    <GDAL_WMTS>
      <GetCapabilitiesUrl>http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml</GetCapabilitiesUrl>
@@ -332,8 +341,8 @@ generates the following file:
 The generated file will come with default values that you may need to
 edit.
 
-See Also:
----------
+See Also
+--------
 
 -  `OGC WMTS Standard <http://www.opengeospatial.org/standards/wmts>`__
 -  :ref:`raster.wms` driver page.

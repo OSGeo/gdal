@@ -19,6 +19,13 @@ A CALS dataset is exposed by the driver as a single-band 1-bit raster
 with a 2-entry color table. The first entry (0) is white
 (RGB=255,255,255) and the second entry (1) is black (RGB=0,0,0).
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_virtualio::
+
 Metadata
 --------
 
@@ -55,8 +62,8 @@ and 1 to be white. If the input raster has a (2 entries) color table,
 the value for the black and white color will be determined from the
 color table.
 
-See Also:
----------
+See Also
+--------
 
 -  `MIL-PRF-28002C <http://everyspec.com/MIL-PRF/MIL-PRF-010000-29999/MIL-PRF-28002C_4830/>`__
 -  `MIL-STD-1840C <http://everyspec.com/MIL-STD/MIL-STD-1800-1999/MIL-STD-1840C_4779/>`__

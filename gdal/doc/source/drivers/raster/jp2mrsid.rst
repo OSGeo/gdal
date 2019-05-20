@@ -9,6 +9,15 @@ also supported for writing with the MrSID ESDK.
 JPEG2000 MrSID support is only available with the version 5.x or newer
 DSDK and ESDK.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Georeferencing
 --------------
 
@@ -84,8 +93,8 @@ JPEG2000 files. The following creation options are supported.
         </Codestream>
       </Jp2Profile>
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/mrsid/mrsiddataset.cpp``.
 -  `Extensis web site <http://www.extensis.com/support/developers>`__

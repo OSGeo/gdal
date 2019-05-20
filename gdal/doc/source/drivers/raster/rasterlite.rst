@@ -3,7 +3,7 @@
 Rasterlite - Rasters in SQLite DB
 =================================
 
-Starting with GDAL 1.7.0, the Rasterlite driver allows reading and
+The Rasterlite driver allows reading and
 creating Rasterlite databases.
 
 | Those databases can be produced by the utilities of the
@@ -30,6 +30,15 @@ driver supports reading and writing internal tiles in any format handled
 by GDAL. Furthermore, the Rasterlite driver also allow reading and
 writing as many bands and as many band types as supported by the driver
 for the internal tiles.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Connection string syntax in read mode
 -------------------------------------
@@ -136,8 +145,8 @@ in order to optimize the database, and increase read performances
 afterwards. This is particularly true with big rasterlite datasets. Note
 that the operation might take a long time.
 
-Examples:
----------
+Examples
+--------
 
 -  Accessing a rasterlite DB with a single raster table :
 
@@ -240,7 +249,10 @@ Examples:
 
       $ gdaladdo RASTERLITE:my_db.sqlite,table=source 2 4 8 16 --config RASTERLITE_OVR_OPTIONS DRIVER=GTiff,COMPRESS=JPEG,PHOTOMETRIC=YCbCr
 
-See Also:
+:
+
+See Also
+--------
 
 -  `Spatialite and Rasterlite home
    page <http://www.gaia-gis.it/spatialite>`__

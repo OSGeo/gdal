@@ -7,7 +7,7 @@
    arcinfo_grid_format
 
 AIG -- Arc/Info Binary Grid
----------------------------
+===========================
 
 Supported by GDAL for read access. This format is the internal binary
 format for Arc/Info Grid, and takes the form of a coverage level
@@ -27,4 +27,11 @@ limited. Additional sample prj.adf files may be sent to the maintainer,
 warmerdam@pobox.com.
 
 NOTE: Implemented as ``gdal/frmts/aigrid/aigdataset.cpp``.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

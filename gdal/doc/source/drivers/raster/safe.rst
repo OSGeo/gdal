@@ -24,6 +24,13 @@ however, at this time this driver only supports specific Sentinel-1 SAR
 products. All other will be ignored, or result in various runtime
 errors.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Multiple measurements
 ---------------------
 
@@ -246,8 +253,8 @@ Data Calibration
 
 Currently the driver does not apply calibration information.
 
-See Also:
----------
+See Also
+--------
 
 -  `SAR Formats (ESA Sentinel
    Online) <https://sentinel.esa.int/web/sentinel/user-guides/sentinel-1-sar/data-formats/sar-formats>`__

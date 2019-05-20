@@ -1,7 +1,13 @@
 .. _raster.til:
 
-TIL -- EarthWatch/DigitalGlobe .TIL 
------------------------------------
+TIL -- EarthWatch/DigitalGlobe .TIL
+===================================
 
 NOTE: Implemented as ``gdal/frmts/raw/tildataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

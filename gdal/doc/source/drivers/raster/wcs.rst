@@ -43,6 +43,16 @@ fallback to the first offered format. However, the user may set the
 preferred format. Coordinate systems are read from the DescribeCoverage
 result.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+Service description file
+------------------------
+
 The service description file has the following elements as immediate
 children of the document element. Note that when the "WCS:<URL>" syntax
 for dataset name is used, the contents of the service description file
@@ -296,7 +306,7 @@ GeoServer:
    "WCS:https://beta-karttakuva.maanmittauslaitos.fi/wcs/service/ows?version=2.0.1&coverage=ortokuva__ortokuva" \
    scaled.tiff
 
-See Also:
-~~~~~~~~~
+See Also
+--------
 
 -  `OGC WCS Standards <http://www.opengeospatial.org/standards/wcs>`__

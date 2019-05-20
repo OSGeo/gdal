@@ -1,7 +1,7 @@
 .. _raster.ida:
 
 IDA -- Image Display and Analysis
----------------------------------
+=================================
 
 GDAL supports reading and writing IDA images with some limitations. IDA
 images are the image format of WinDisp 4. The files are always one band
@@ -25,3 +25,13 @@ NOTE: Implemented as ``gdal/frmts/raw/idadataset.cpp``.
 See Also:
 `WinDisp <http://www.fao.org/giews/english/windisp/windisp.htm>`__
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

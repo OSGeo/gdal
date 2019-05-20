@@ -26,6 +26,17 @@ Geological Survey.
 
 ISIS3 is part of a family of related formats including PDS and ISIS2.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Metadata
 --------
 
@@ -255,8 +266,8 @@ Python :
    out_ds = None
    src_ds = None
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/pds/isis3dataset.cpp``.
 -  :ref:`GDAL PDS Driver <raster.pds>`

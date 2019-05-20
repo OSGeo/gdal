@@ -1,7 +1,7 @@
 .. _raster.ndf:
 
 NDF -- NLAPS Data Format
-------------------------
+========================
 
 GDAL has limited support for reading NLAPS Data Format files. This is a
 format primarily used by the Eros Data Center for distribution of
@@ -18,4 +18,11 @@ NOTE: Implemented as ``gdal/frmts/raw/ndfdataset.cpp``.
 
 See Also: `NLAPS Data Format
 Specification <http://landsat.usgs.gov/documents/NLAPSII.pdf>`__.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

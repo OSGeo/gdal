@@ -1,7 +1,7 @@
 .. _raster.paux:
 
 PAux -- PCI .aux Labelled Raw Format
-------------------------------------
+====================================
 
 GDAL includes a partial implementation of the PCI .aux labelled raw
 raster file for read, write and creation. To open a PCI labelled file,
@@ -21,3 +21,12 @@ NOTE: Implemented as ``gdal/frmts/raw/pauxdataset.cpp``.
 
 See Also: `PCI's .aux Format
 Description <http://www.pcigeomatics.com/cgi-bin/pcihlp/GDB%7CSupported+File+Formats%7CRaw+Binary+Image+Format+(RAW)%7CRaw+.aux+Format>`__
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_virtualio::

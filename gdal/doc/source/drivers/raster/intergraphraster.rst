@@ -9,6 +9,17 @@ The Intergraph Raster File Format was the native file format used by
 Intergraph software applications to store raster data. It is
 manifested in several internal data formats.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Reading INGR Files
 ------------------
 
@@ -127,8 +138,8 @@ The following creation option and bandset metadata is available.
 
 -  RESOLUTION: This is the DPI (dots per inch). Microns not supported.
 
-See Also:
----------
+See Also
+--------
 
 For more information:
 

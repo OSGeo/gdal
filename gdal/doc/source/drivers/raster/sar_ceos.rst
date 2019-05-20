@@ -1,7 +1,7 @@
 .. _raster.sar_ceos:
 
 SAR_CEOS -- CEOS SAR Image
---------------------------
+==========================
 
 This is a read-only reader for CEOS SAR image files. To use, select the
 main imagery file.
@@ -54,4 +54,11 @@ the matrix are complex values, while the diagonal values are real
 The identities of the bands are also reflected in the metadata.
 
 NOTE: Implemented as ``gdal/frmts/ceos2/sar_ceosdataset.cpp``.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

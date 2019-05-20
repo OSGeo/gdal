@@ -25,6 +25,13 @@ supports specific RadarSat 2 polarimetric products. All other will be
 ignored, or result in various runtime errors. It is hoped that this
 driver can be generalized when other product samples become available.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Data Calibration
 ----------------
 
@@ -52,6 +59,7 @@ calibration selected. The uncalibrated data is provided as
 GDT_Int16/GDT_Byte/GDT_CInt16, also depending on the type of product
 selected.
 
-See Also:
+See Also
+--------
 
 -  RadarSat document RN-RP-51-27.

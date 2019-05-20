@@ -37,6 +37,15 @@ Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000
 files, and will be stored as XML raw content in the xml:XMP metadata
 domain.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Configuration Options
 ---------------------
 
@@ -190,8 +199,8 @@ unistd.h in kdu_arch.cpp. This means that \_SC_NPROCESSORS_ONLN and
 always return 0. Therefore the jp2kak driver might not default to
 creating worker threads.
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as `gdal/frmts/jp2kak/jp2kakdataset.cpp`.
 -  If you're using a Kakadu release before v7.5, configure & compile

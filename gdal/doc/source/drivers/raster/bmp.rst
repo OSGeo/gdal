@@ -18,14 +18,25 @@ resampled to 8 bit.
 If an ESRI world file exists with the .bpw, .bmpw or .wld extension, it
 will be read and used to establish the geotransform for the image.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Options
 ----------------
 
 -  **WORLDFILE=YES**: Force the generation of an associated ESRI world
    file (with the extension .wld).
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/bmp/bmpdataset.cpp``.
 -  `Wikipedia BMP file

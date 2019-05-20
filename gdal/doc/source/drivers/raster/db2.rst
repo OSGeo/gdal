@@ -61,6 +61,15 @@ supported in read and creation :
 -  *gpkg.zoom_other*: when resolution of consecutive zoom levels does
    not vary with a factor of 2.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
 Opening options
 ---------------
 
@@ -390,7 +399,7 @@ Examples
       % gdalinfo DB2ODBC:database=sample;DSN=SAMPLE -oo TABLE=a_table
 
 See Also
-~~~~~~~~
+--------
 
 -  :ref:`DB2 vector <vector.db2>` documentation page
 -  :ref:`PNG driver <raster.png>` documentation page

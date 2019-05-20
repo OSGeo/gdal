@@ -1,7 +1,7 @@
 .. _raster.ehdr:
 
 EHdr -- ESRI .hdr Labelled
---------------------------
+==========================
 
 GDAL supports reading and writing the ESRI .hdr labeling format, often
 referred to as ESRI BIL format. Eight, sixteen and thirty-two bit
@@ -37,7 +37,19 @@ This driver may be sufficient to read GTOPO30 data.
 
 NOTE: Implemented as ``gdal/frmts/raw/ehdrdataset.cpp``.
 
-See Also:
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+See Also
+--------
 
 -  `ESRI whitepaper: + Extendable Image Formats for ArcView GIS 3.1 and
    3.2 <http://downloads.esri.com/support/whitepapers/other_/eximgav.pdf>`__
@@ -50,4 +62,3 @@ See Also:
    specification <http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download>`__
    (in French)
 -  `SRTMHGT Driver <#SRTMHGT>`__
-

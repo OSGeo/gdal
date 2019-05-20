@@ -13,6 +13,17 @@ channel colormapped or three channel RGB images. Only 8-bit data can be
 stored in RSW. Simple georeferencing can be provided for both image
 types.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Metadata
 --------
 

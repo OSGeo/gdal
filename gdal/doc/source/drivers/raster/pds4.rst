@@ -27,6 +27,17 @@ Starting with GDAL 2.5, the PDS4 driver supports reading and writing
 ASCII fixed-with, binary fixed-with and delimited(CSV) tables as OGR
 vector layers.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Metadata
 --------
 
@@ -39,7 +50,7 @@ interface in the "xml:PDS4" metadata domain.
 Open options (vector only)
 --------------------------
 
-(Starting with GDAL 3.0)
+.. versionadded:: 3.0
 
 When opening a PDS4 vector dataset, the following open options are
 available:

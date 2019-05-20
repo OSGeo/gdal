@@ -38,6 +38,13 @@ B11       20             1610                    90              Snow / ice / cl
 B12       20             2190                    180             Snow / ice / cloud discrimination
 ========= ============== ======================= =============== =================================
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Level-1B
 --------
 
@@ -432,8 +439,8 @@ Examples
         Description = B8, central wavelength 842 nm
       [...]
 
-See Also:
----------
+See Also
+--------
 
 -  `Sentinels Scientific Data Hub <https://scihub.esa.int/>`__
 -  `Sentinel 2 User

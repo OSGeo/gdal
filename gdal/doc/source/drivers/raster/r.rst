@@ -13,6 +13,13 @@ organization. It will not read most R object files.
 Currently there is no support for reading or writing georeferencing
 information.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_virtualio::
+
 Creation Options
 ----------------
 

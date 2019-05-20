@@ -1,7 +1,7 @@
 .. _raster.gmt:
 
 GMT -- GMT Compatible netCDF
-----------------------------
+============================
 
 GDAL has limited support for reading and writing netCDF *grid* files.
 NetCDF files that are not recognised as grids (they lack variables
@@ -27,3 +27,9 @@ NOTE: Implemented as ``gdal/frmts/netcdf/gmtdataset.cpp``.
 See Also: `Unidata NetCDF
 Page <http://www.unidata.ucar.edu/software/netcdf/>`__
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::

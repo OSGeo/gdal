@@ -1,7 +1,7 @@
 .. _raster.srtmhgt:
 
 SRTMHGT -- SRTM HGT Format
---------------------------
+==========================
 
 The SRTM HGT driver currently supports the reading of SRTM-3 and SRTM-1
 V2 (HGT) files. The files must be named like NXXEYYY.hgt, or starting
@@ -25,3 +25,9 @@ See Also:
 
 NOTE: Implemented as ``gdal/frmts/srtmhgt/srtmhgtdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

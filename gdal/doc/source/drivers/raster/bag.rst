@@ -22,6 +22,15 @@ The full XML metadata is available in the "xml:BAG" metadata domain.
 
 Nodata, minimum and maximum values for each band are also reported.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Variable resolution (VR) grid support
 -------------------------------------
 
@@ -314,8 +323,8 @@ Usage examples
 
       $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo RESX=5 -oo RESY=5 out.bag -co "VAR_ABSTRACT=My abstract"
 
-See Also:
----------
+See Also
+--------
 
 -  Implemented as ``gdal/frmts/hdf5/bagdataset.cpp``.
 -  `The Open Navigation Surface Project <http://www.opennavsurf.org>`__

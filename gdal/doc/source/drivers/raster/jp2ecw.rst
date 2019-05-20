@@ -13,8 +13,19 @@ degree of support is included for GeoJP2 (tm) (GeoTIFF-in-JPEG2000),
 ERDAS GML-in-JPEG2000, and the new GML-in-JPEG2000 specification
 developed at OGC.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Licensing
-~~~~~~~~~
+---------
 
 The ERDAS ECW/JP2 SDK v5.x is available under multiple license types.
 For Desktop usage, decoding any sized ECW/JP2 image is made available
@@ -23,7 +34,7 @@ unlimited sized files on Mobile platforms a license must be purchased
 from Hexagon Geospatial.
 
 History
-~~~~~~~
+-------
 
 -  v3.x - Last release, 2006
 -  v4.x - Last release, 2012

@@ -1,7 +1,7 @@
 .. _raster.lan:
 
 LAN -- Erdas 7.x .LAN and .GIS
-------------------------------
+==============================
 
 GDAL supports reading and writing Erdas 7.x .LAN and .GIS raster files.
 Currently 4bit, 8bit and 16bit pixel data types are supported for
@@ -20,3 +20,9 @@ NOTE: Implemented as ``gdal/frmts/raw/landataset.cpp``
 Development of this driver was financially supported by Kevin Flanders
 of (`PeopleGIS <http://www.peoplegis.com>`__).
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

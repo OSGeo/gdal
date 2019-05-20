@@ -44,8 +44,19 @@ left empty (",,") and the TNSNAME will be used.
 Note: If  the query results in more than one GeoRaster it will be
 treated as a GDAL metadata's list of sub-datasets (see below)
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Browsing the database for GeoRasters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 By providing some basic information the GeoRaster driver is capable of
 listing the existing rasters stored on the server:
@@ -88,7 +99,7 @@ Where clause.
   SUBDATASET_2_DESC=Table:GDAL_IMPORT
 
 Creation Options
-~~~~~~~~~~~~~~~~
+----------------
 
 -  **BLOCKXSIZE**: The number of pixel columns on raster block.
 -  **BLOCKYSIZE**: The number of pixel rows on raster block.
@@ -170,7 +181,7 @@ MDSYS.SDO_GEORASTER)" \\
    older than 11.
 
 Importing GeoRaster
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 During the process of importing raster into a GeoRaster object it is
 possible to give the driver a simple SQL table definition and also a SQL
@@ -213,7 +224,7 @@ RDT, the RID will be given automatically by the server, example:
 | % gdal_translate -of georaster input.tif “geor:scott/tiger@dbdemo”
 
 Exporting GeoRaster
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 | A GeoRaster can be identified by a Where clause or by a pair of RDT &
   RID:
@@ -223,7 +234,7 @@ Exporting GeoRaster
   output.tif
 
 Cross schema access
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 | As long as the user was granted full access the GeoRaster table and
   the Raster Data Table, e.g.:
@@ -253,7 +264,7 @@ Cross schema access
     -co INSERT="(1,'Rio de Janeiro',sdo_geor.init('cities_rdt'))"
 
 General use of GeoRaster
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 | GeoRaster can be used in any GDAL command line tool with all the
   available options. Like a image subset extraction or re-project:
@@ -275,5 +286,3 @@ General use of GeoRaster
 | % gdal_translate -of VRT geor:scott/tiger@dbdemo,landsat,scene,id=54
   view_54.vrt
   % openenv view_54.vrt
-
-

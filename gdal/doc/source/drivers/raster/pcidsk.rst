@@ -36,6 +36,17 @@ though other organizations are supported for read.
 -  **TILESIZE=n**: When INTERLEAVING is TILED, the tilesize may be
    selected with this parameter - the default is 127 for 127x127.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also:
 ---------
 

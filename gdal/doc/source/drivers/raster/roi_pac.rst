@@ -1,7 +1,7 @@
 .. _raster.roi_pac:
 
 ROI_PAC -- ROI_PAC
-------------------
+==================
 
 Driver for the image formats used in the JPL's ROI_PAC project
 (https://aws.roipac.org/). All image type are supported excepted .raw
@@ -18,3 +18,13 @@ output an error.
 
 NOTE: Implemented as ``gdal/frmts/raw/roipacdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

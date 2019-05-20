@@ -3,8 +3,6 @@
 KRO -- KOLOR Raw format
 -----------------------
 
-(GDAL >= 1.11)
-
 Supported for read access, update and creation. This format is a binary
 raw format, that supports data of several depths ( 8 bit, unsigned
 integer 16 bit and floating point 32 bit) and with several band number
@@ -16,3 +14,12 @@ format <http://www.autopano.net/wiki-en/Format_KRO>`__
 
 NOTE: Implemented as ``gdal/frmts/raw/krodataset.cpp``.
 
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_virtualio::

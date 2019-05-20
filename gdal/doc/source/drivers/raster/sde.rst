@@ -10,6 +10,11 @@ should support as many bands as you can throw at it. ArcSDE supports the
 storage of LZW, JP2K, and uncompressed data and transparently presents
 this through its C API SDK.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 GDAL ArcSDE Raster driver features
 ----------------------------------
 

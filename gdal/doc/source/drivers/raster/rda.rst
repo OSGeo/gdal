@@ -3,7 +3,7 @@
 RDA (DigitalGlobe Raster Data Access)
 =====================================
 
-(GDAL/OGR >= 2.3)
+.. versionadded:: 2.3
 
 This driver can connect to DigitalGlobe RDA REST API. GDAL/OGR must be
 built with Curl support in order for the RDA driver to be compiled.
@@ -16,6 +16,11 @@ Any valid graph or template is supported via the DigitalGlobe RDA REST
 API.
 
 There is no support for overviews.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
 
 Dataset name syntax
 -------------------

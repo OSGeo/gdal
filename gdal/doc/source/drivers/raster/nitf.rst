@@ -39,6 +39,17 @@ ones stored in external \_rpc.txt.
 Most file header and image header fields are returned as dataset level
 metadata.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Creation Issues
 ---------------
 

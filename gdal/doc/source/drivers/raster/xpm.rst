@@ -1,7 +1,7 @@
 .. _raster.xpm:
 
 XPM -- X11 Pixmap
------------------
+=================
 
 GDAL includes support for reading and writing XPM (X11 Pixmap Format)
 image files. These are colormapped one band images primarily used for
@@ -16,3 +16,9 @@ will be reduced to about 70 colors automatically.
 
 NOTE: Implemented as ``gdal/frmts/xpm/xpmdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_virtualio::

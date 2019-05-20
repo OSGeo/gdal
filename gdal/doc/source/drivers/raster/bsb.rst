@@ -1,7 +1,7 @@
 .. _raster.bsb:
 
 BSB -- Maptech/NOAA BSB Nautical Chart Format
----------------------------------------------
+=============================================
 
 BSB Nautical Chart format is supported for read access, including
 reading the colour table and the reference points (as GCPs). Note that
@@ -22,3 +22,10 @@ GRY, PRC, PRG...
 
 NOTE: Implemented as ``gdal/frmts/bsb/bsbdataset.cpp``.
 
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

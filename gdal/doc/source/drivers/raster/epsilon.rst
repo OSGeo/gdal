@@ -15,6 +15,13 @@ images
 
 This is mainly intended to be used by the :ref:`raster.rasterlite` driver.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_virtualio::
+
 Creation options
 ----------------
 
@@ -38,7 +45,8 @@ Creation options
 -  **RGB_RESAMPLE**\ =[YES/NO] : Whether RGB buffer must be resampled to
    4:2:0. Defaults to YES
 
-See Also:
+See Also
+--------
 
 -  `EPSILON home
    page <http://sourceforge.net/projects/epsilon-project>`__

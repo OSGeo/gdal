@@ -1,9 +1,9 @@
 .. _raster.ignfheightasciigrid:
 
 IGNFHeightASCIIGrid -- IGN-France height correction ASCII grids
----------------------------------------------------------------
+===============================================================
 
-(GDAL >= 2.4.0)
+.. versionadded:: 2.4
 
 Supports reading IGN-France height correction ASCII grids (.txt, .mnt,
 .gra).
@@ -15,3 +15,10 @@ See also:
 -  `Height correction
    grids <https://geodesie.ign.fr/index.php?page=grilles>`__
 
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

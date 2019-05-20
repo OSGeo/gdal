@@ -1,7 +1,7 @@
 .. _raster.adrg:
 
 ADRG -- ADRG/ARC Digitized Raster Graphics (.gen/.thf)
-------------------------------------------------------
+======================================================
 
 Supported by GDAL for read access. Creation is possible, but it must be
 considered as experimental and a means of testing read access (although
@@ -23,3 +23,14 @@ Overviews, legends and insets are not used. Polar zones (ARC zone 9 and
 See also : the `ADRG specification
 (MIL-A-89007) <http://earth-info.nga.mil/publications/specs/printed/89007/89007_ADRG.pdf>`__
 
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

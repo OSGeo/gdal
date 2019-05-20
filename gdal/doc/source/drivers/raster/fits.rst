@@ -1,7 +1,7 @@
 .. _raster.fits:
 
 FITS -- Flexible Image Transport System
----------------------------------------
+=======================================
 
 FITS is a format used mainly by astronomers, but it is a relatively
 simple format that supports arbitrary image types and multi-spectral
@@ -28,3 +28,14 @@ values from/to the file.
 
 NOTE: Implemented as ``gdal/frmts/fits/fitsdataset.cpp``.
 
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

@@ -1,7 +1,7 @@
 .. _raster.bt:
 
 BT -- VTP .bt Binary Terrain Format
------------------------------------
+===================================
 
 The .bt format is used for elevation data in the VTP software. The
 driver includes support for reading and writing .bt 1.3 format including
@@ -23,4 +23,15 @@ NOTE: Implemented as ``gdal/frmts/raw/btdataset.cpp``.
 See Also: The `BT file
 format <http://www.vterrain.org/Implementation/Formats/BT.html>`__ is
 defined on the `VTP <http://www.vterrain.org/>`__ web site.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

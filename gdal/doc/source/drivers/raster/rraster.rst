@@ -1,9 +1,9 @@
 .. _raster.rraster:
 
 RRASTER -- R Raster
--------------------
+===================
 
-(GDAL >= 2.2)
+.. versionadded:: 2.2
 
 This is a read-only reader for the datasets handled by the `R Raster
 package <https://cran.r-project.org/web/packages/raster/index.html>`__.
@@ -28,7 +28,19 @@ The following creation options are supported:
 -  PIXELTYPE=SIGNEDBYTE. To write Byte bands as signed byte instead of
    unsigned byte.
 
-See Also:
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+See Also
+--------
 
 -  Description of the `"rasterfile"
    format <https://cran.r-project.org/web/packages/raster/vignettes/rasterfile.pdf>`__

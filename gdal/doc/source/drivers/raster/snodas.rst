@@ -1,9 +1,7 @@
 .. _raster.snodas:
 
 SNODAS -- Snow Data Assimilation System
----------------------------------------
-
-(GDAL >= 1.9.0)
+=======================================
 
 This is a convenience driver to read Snow Data Assimilation System data.
 Those files contain Int16 raw binary data. The file to provide to GDAL
@@ -14,3 +12,9 @@ NSIDC <http://nsidc.org/data/docs/noaa/g02158_snodas_snow_cover_model/index.html
 
 NOTE: Implemented as ``gdal/frmts/raw/snodasdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

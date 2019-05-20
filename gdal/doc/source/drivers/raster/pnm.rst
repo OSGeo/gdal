@@ -1,7 +1,7 @@
 .. _raster.pnm:
 
 PNM -- Netpbm (.pgm, .ppm)
---------------------------
+==========================
 
 GDAL includes support for reading, and creating .pgm (greyscale), and
 .ppm (RGB color) files compatible with the Netpbm tools. Only the binary
@@ -17,3 +17,9 @@ Creation Options:
 
 NOTE: Implemented as ``gdal/frmts/raw/pnmdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_virtualio::

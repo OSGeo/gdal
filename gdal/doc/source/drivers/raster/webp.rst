@@ -3,7 +3,7 @@
 WEBP - WEBP
 ===========
 
-Starting with GDAL 1.9.0, GDAL can read and write WebP images through
+GDAL can read and write WebP images through
 the WebP library.
 
 WebP is a new image format that provides lossy compression for
@@ -21,8 +21,15 @@ The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands
 The WEBP driver can be used as the internal format used by the
 :ref:`raster.rasterlite` driver.
 
-Starting with GDAL 1.10, XMP metadata can be extracted from the file,
+XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_virtualio::
 
 Creation options
 ----------------
@@ -38,6 +45,7 @@ Various creation options exists, among them :
    default, lossy compression is used. If set to True, lossless
    compression will be used.
 
-See Also:
+See Also
+--------
 
 -  `WebP home page <https://developers.google.com/speed/webp/>`__

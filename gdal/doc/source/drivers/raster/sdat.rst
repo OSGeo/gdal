@@ -1,9 +1,7 @@
 .. _raster.sdat:
 
-SDAT -- SAGA GIS Binary Grid File Format
-----------------------------------------
-
-(starting with GDAL 1.7.0)
+SAGA -- SAGA GIS Binary Grid File Format
+========================================
 
 The driver supports both reading and writing (including create, delete,
 and copy) SAGA GIS binary grids. SAGA binary grid datasets are made of
@@ -27,4 +25,15 @@ Currently the driver does not support zFactors other than 1 and reading
 SAGA grids which are written TOPTOBOTTOM.
 
 NOTE: Implemented as ``gdal/frmts/saga/sagadataset.cpp``.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 

@@ -3,12 +3,6 @@
 GTiff -- GeoTIFF File Format
 ============================
 
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   wld
-
 Most forms of TIFF and GeoTIFF files are supported by GDAL for reading,
 and somewhat less varieties can be written.
 
@@ -26,6 +20,17 @@ As well, one bit files, and some other unusual formulations of GeoTIFF
 file, such as YCbCr color model files, are automatically translated into
 RGBA (red, green, blue, alpha) form, and treated as four eight bit
 bands.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Georeferencing
 --------------
@@ -699,3 +704,10 @@ See Also:
    format <http://www.awaresystems.be/imaging/tiff/bigtiff.html>`__
 -  `How to generate and read cloud optimized GeoTIFF
    files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__
+
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   wld

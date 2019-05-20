@@ -1,9 +1,7 @@
 .. _raster.grassasciigrid:
 
 GRASSASCIIGrid -- GRASS ASCII Grid
-----------------------------------
-
-(GDAL >= 1.9.0)
+==================================
 
 Supports reading GRASS ASCII grid format (similar to Arc/Info ASCIIGRID
 command).
@@ -18,3 +16,9 @@ currently)
 
 NOTE: Implemented as ``gdal/frmts/aaigrid/aaigriddataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

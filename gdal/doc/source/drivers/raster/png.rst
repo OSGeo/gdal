@@ -1,7 +1,7 @@
 .. _raster.png:
 
 PNG -- Portable Network Graphics
---------------------------------
+================================
 
 GDAL includes support for reading, and creating .png files. Greyscale,
 pseudo-colored, Paletted, RGB and RGBA PNG files are supported as well
@@ -12,7 +12,7 @@ can be very inefficient (resulting in many restarts of decompression
 from the start of the file).
 
 Text chunks are translated into metadata, typically with multiple lines
-per item. `World files <#WLD>`__ with the extensions of .pgw, .pngw or
+per item. :ref:`raster.wld` with the extensions of .pgw, .pngw or
 .wld will be read. Single transparency values in greyscale files will be
 recognised as a nodata value in GDAL. Transparent index in paletted
 images are preserved when the color table is read.
@@ -25,6 +25,15 @@ pixel types other than 16bit unsigned will be written as eight bit.
 
 Starting with GDAL 1.9.0, XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
 
 Color Profile Metadata
 ----------------------
@@ -72,4 +81,3 @@ NOTE: Implemented as ``gdal/frmts/png/pngdataset.cpp``.
 
 PNG support is implemented based on the libpng reference library. More
 information is available at http://www.libpng.org/pub/png.
-

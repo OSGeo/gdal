@@ -1,9 +1,7 @@
 .. _raster.srp:
 
 SRP -- Standard Product Format (ASRP/USRP) (.gen)
--------------------------------------------------
-
-(starting with GDAL 1.7.0)
+=================================================
 
 The ASRP and USRP raster products (as defined by DGIWG) are variations
 on a common standard product format and are supported for reading by
@@ -22,3 +20,9 @@ references just one image, GDAL will open it directly.
 
 NOTE: Implemented as ``gdal/frmts/adrg/srpdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

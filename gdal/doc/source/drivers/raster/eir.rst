@@ -1,7 +1,7 @@
 .. _raster.eir:
 
 EIR -- Erdas Imagine Raw
-------------------------
+========================
 
 GDAL supports the Erdas Imagine Raw format for read access including 1,
 2, 4, 8, 16 and 32bit unsigned integers, 16 and 32bit signed integers
@@ -15,3 +15,10 @@ extension .bl.
 
 NOTE: Implemented as ``gdal/frmts/raw/eirdataset.cpp``.
 
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

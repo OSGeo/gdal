@@ -1,7 +1,7 @@
 .. _raster.gff:
 
 GFF -- Sandia National Laboratories GSAT File Format
-----------------------------------------------------
+====================================================
 
 This read-only GDAL driver is designed to provide access to processed
 data from Sandia National Laboratories' various experimental sensors.
@@ -21,3 +21,7 @@ The extension for GFF formats is .gff.
 
 NOTE: Implemented as ``gdal/frmts/gff/gff_dataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_virtualio::

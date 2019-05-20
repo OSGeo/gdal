@@ -17,6 +17,11 @@ Overviews are supported.
 The API is not publicly available but will be released soon. Further
 information will be found here: https://api.oneatlas.airbus.com/
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
 Dataset name syntax
 -------------------
 

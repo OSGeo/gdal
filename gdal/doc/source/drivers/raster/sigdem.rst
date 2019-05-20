@@ -1,9 +1,9 @@
 .. _raster.sigdem:
 
 SIGDEM -- Scaled Integer Gridded DEM
-------------------------------------
+====================================
 
-(GDAL >= 2.4.0)
+.. versionadded:: 2.4
 
 The SIGDEM driver supports reading and writing `Scaled Integer Gridded
 DEM <https://github.com/revolsys/sigdem>`__ files.
@@ -17,3 +17,11 @@ be written or read.
 
 NOTE: Implemented as ``gdal/frmts/sigdem/sigdemdataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

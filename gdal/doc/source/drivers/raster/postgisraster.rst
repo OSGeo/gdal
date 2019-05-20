@@ -13,6 +13,13 @@ significantly improved since then.
 Currently, the driver provides read-only support to PostGIS Raster data
 sources.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
 Connecting to a database
 ------------------------
 

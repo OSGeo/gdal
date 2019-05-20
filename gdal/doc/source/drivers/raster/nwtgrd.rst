@@ -12,6 +12,24 @@ support is available for classified grids (\*.grc).
 
 For writing, Float32 is the only supported band type.
 
+Driver capabilities (NWT_GRD)
+-----------------------------
+
+.. supports_createcopy::
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+Driver capabilities (NWT_GRC)
+-----------------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Color Information
 -----------------
 

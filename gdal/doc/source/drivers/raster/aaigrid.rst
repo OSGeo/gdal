@@ -1,7 +1,7 @@
 .. _raster.aaigrid:
 
 AAIGrid -- Arc/Info ASCII Grid
-------------------------------
+==============================
 
 Supported for read and write access, including reading of an affine
 georeferencing transform and some projections. This format is the ASCII
@@ -46,3 +46,11 @@ format.
 
 NOTE: Implemented as ``gdal/frmts/aaigrid/aaigriddataset.cpp``.
 
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::

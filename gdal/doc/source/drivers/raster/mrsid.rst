@@ -21,6 +21,13 @@ versions (2.95.x and 3.x).
 Latest versions of the DSDK also support decoding JPEG2000 file format,
 so this driver can be used for JPEG2000 too.
 
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 Metadata
 --------
 
@@ -36,7 +43,7 @@ GDAL with \`_' during translation. So if you are using other software to
 work with MrSID be ready that names of metadata keys will be shown
 differently in GDAL.
 
-Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000
+XMP metadata can be extracted from JPEG2000
 files, and will be stored as XML raw content in the xml:XMP metadata
 domain.
 

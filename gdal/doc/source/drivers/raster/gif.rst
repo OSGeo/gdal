@@ -14,8 +14,15 @@ returned as the NoData value for the band.
 If an ESRI world file exists with the .gfw, .gifw or .wld extension, it
 will be read and used to establish the geotransform for the image.
 
-Starting with GDAL 1.9.0, XMP metadata can be extracted from the file,
+XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
+
+Driver capabilities
+-------------------
+
+.. supports_createcopy::
+
+.. supports_virtualio::
 
 Creation Issues
 ---------------
@@ -39,6 +46,7 @@ The driver was written with the financial support of the `DM Solutions
 Group <http://www.dmsolutions.ca/>`__, and `CIET
 International <http://www.ciet.org/>`__.
 
-See Also:
+See Also
+--------
 
 -  `giflib Home Page <http://sourceforge.net/projects/giflib/>`__

@@ -18,6 +18,12 @@ is stored in a single burst.
 Support for ScanSAR data is currently under way, due to the difficulties
 in fitting the ScanSAR "burst" identifiers into the GDAL model.
 
-See Also:
+Driver capabilities
+-------------------
+
+.. supports_virtualio::
+
+See Also
+--------
 
 -  DLR Document TX-GS-DD-3307 "Level 1b Product Format Specification."
