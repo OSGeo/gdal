@@ -577,7 +577,7 @@ HTML_HEADER            =
 # each generated HTML page. If it is left blank doxygen will generate a
 # standard footer.
 
-HTML_FOOTER            = doc/doxygen/gdal_footer.html
+HTML_FOOTER            = doc/gdal_footer.html
 
 # Custom layout (see http://www.stack.nl/~dimitri/doxygen/manual/customize.html)
 LAYOUT_FILE 	       = DoxygenLayout.xml
