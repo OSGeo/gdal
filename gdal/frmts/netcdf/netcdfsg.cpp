@@ -55,12 +55,13 @@ namespace nccfdriver
 	 * (implementations)
 	 *
 	 */
-	SGeometry::SGeometry(int ncId, int geoVarId) : gc_varId(geoVarId)
+	SGeometry::SGeometry(int ncId, int geoVarId)
+		: gc_varId(geoVarId), touple_order(0), current_vert_ind(0), cur_geometry_ind(0), cur_part_ind(0)
 	{
 
 		char * cart = nullptr;
 		this->pt_buffer = nullptr;
-		this->container_name = new char[NC_MAX_NAME + 1];
+		memset(this->container_name, 0, NC_MAX_NAME+1);
 
 		// Get geometry container name
 		if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
@@ -228,22 +229,18 @@ namespace nccfdriver
 		this->gc_varId = geoVarId; 
 		this->current_vert_ind = 0;	
 		this->ncid = ncId;
-		
-		this->interior = false;
-		this -> valid = true;
 	}
 
 	SGeometry::~SGeometry()
 	{
-		delete[] this->container_name;
 		delete this->pt_buffer;
 	}
 
-	Point* SGeometry::next_pt()
+	Point& SGeometry::next_pt()
 	{
 		if(!this->has_next_pt())
 		{
-			return nullptr;
+			throw new SG_Exception_BadPoint();
 		}
 
 		// Fill pt
@@ -260,14 +257,14 @@ namespace nccfdriver
 
 			if(err != NC_NOERR)
 			{
-				return nullptr;
+				throw new SG_Exception_BadPoint();
 			}
 
 			pt[order] = data;
 		}	
 		
 		this->current_vert_ind++;
-		return (this->pt_buffer);	
+		return *(this->pt_buffer);	
 	}
 
 	bool SGeometry::has_next_pt()
@@ -298,7 +295,7 @@ namespace nccfdriver
 		else return false;
 	}
 
-	Point* SGeometry::operator[](int index)
+	Point& SGeometry::operator[](int index)
 	{
 		for(int order = 0; order < touple_order; order++)
 		{
@@ -308,17 +305,16 @@ namespace nccfdriver
 
 			// Read a single coord
 			int err = nc_get_var1_double(ncid, nodec_varIds[order], &real_ind, &data);
-			// To do: optimize through multiple reads at once, instead of one datum
 
 			if(err != NC_NOERR)
 			{
-				return nullptr;
+				throw new SG_Exception_BadPoint();
 			}
 
 			pt[order] = data;
 		}	
 
-		return (this->pt_buffer);
+		return *(this->pt_buffer);
 	}
 
 	size_t SGeometry::get_geometry_count()
@@ -660,41 +656,6 @@ namespace nccfdriver
 		m.insert(m_add);
 	}
 
-	std::vector<std::pair<std::string, std::string>>
-	SGeometry_PropertyReader::fetch(int cont_lookup, size_t seek_pos)
-	{
-		std::vector<std::pair<std::string, std::string>> ret;
-
-		// First get the list of variable {id, name}
-		std::vector<std::pair<int, std::string>> vars = m.at(cont_lookup);
-
-		// Now for each variable, index at seek_pos and push a {key, value} pair
-		for(size_t itr = 0; itr < vars.size(); itr++)
-		{
-			nc_type t = 0;
-			
-			// Inspect the type first
-			if(nc_inq_vartype(this->nc, vars[itr].first, &t) != NC_NOERR) continue;
-
-			// Depending on type use a different netCDF reading capability
-			if(t == NC_CHAR)
-			{
-				char value[NC_MAX_CHAR];
-				size_t * seek = new size_t[1];
-				seek[0] = seek_pos;
-				nc_get_var1_text(this->nc, vars[itr].first, seek, value);
-				std::pair<std::string, std::string> p;
-				p.first = vars[itr].second;
-				p.second = "TEST";
-				ret.push_back(p);
-				delete seek;
-			}
-			
-		}
-
-		return ret;
-	}	
-
 	std::vector<std::string> SGeometry_PropertyReader::headers(int cont_lookup)
 	{
 		std::vector<std::string> ret;
@@ -900,9 +861,9 @@ namespace nccfdriver
 		serializeBegin = mempcpy(serializeBegin, &t, 4);
 
 		// Now get point data;
-		Point * p = (*ge)[seek_pos];
-		double x = (*p)[0];
-		double y = (*p)[1];
+		Point & p = (*ge)[seek_pos];
+		double x = p[0];
+		double y = p[1];
 		serializeBegin = mempcpy(serializeBegin, &x, 8);
 		serializeBegin = mempcpy(serializeBegin, &y, 8);
 		return serializeBegin;
@@ -921,9 +882,9 @@ namespace nccfdriver
 		// Now serialize points
 		for(int ind = 0; ind < node_count; ind++)
 		{
-			Point * p = (*ge)[seek_begin + ind];
-			double x = (*p)[0];
-			double y = (*p)[1];
+			Point & p = (*ge)[seek_begin + ind];
+			double x = p[0];
+			double y = p[1];
 			serializeBegin = mempcpy(serializeBegin, &x, 8);
 			serializeBegin = mempcpy(serializeBegin, &y, 8);	
 		}
@@ -947,8 +908,8 @@ namespace nccfdriver
 
 		for(int pind = 0; pind < nc; pind++)
 		{
-			Point * pt= (*ge)[seek_begin + pind];
-			double x = (*pt)[0]; double y = (*pt)[1];
+			Point & pt= (*ge)[seek_begin + pind];
+			double x = pt[0]; double y = pt[1];
 			writer = mempcpy(writer, &x, 8);
 			writer = mempcpy(writer, &y, 8);
 		}
@@ -978,8 +939,8 @@ namespace nccfdriver
 			int pind = 0;
 			for(pind = 0; pind < pnc[ring_c]; pind++)
 			{
-				Point * pt= (*ge)[seek_begin + cmoffset + pind];
-				double x = (*pt)[0]; double y = (*pt)[1];
+				Point & pt= (*ge)[seek_begin + cmoffset + pind];
+				double x = pt[0]; double y = pt[1];
 				writer = mempcpy(writer, &x, 8);
 				writer = mempcpy(writer, &y, 8);
 			}

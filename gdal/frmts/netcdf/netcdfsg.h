@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "netcdf.h"
 
 // Interface used for netCDF functions
 // implementing awareness for the CF-1.8 convention
@@ -45,7 +46,7 @@ namespace nccfdriver
 	// as a pseudo reference to a NC variable
 	class SGeometry
 	{
-		char * container_name;	// name of the underlying geometry container
+		char container_name[NC_MAX_NAME + 1];	// name of the underlying geometry container
 		geom_t type;	 	// internal geometry type structure
 		int ncid;		// ncid - as used in netcdf.h
 		int gc_varId;		// the id of the underlying geometry_container variable
@@ -61,19 +62,17 @@ namespace nccfdriver
 		int current_vert_ind;	// used to keep track of current point being used
 		size_t cur_geometry_ind;	// used to keep track of current geometry index
 		size_t cur_part_ind;		// used to keep track of current part index
-		bool interior;		// interior ring = true. only meaningful for polygons
-		bool valid;		// true if geometry is valid, or false if construction failed, improve by using exception
 		Point * pt_buffer;	// holds the current point
 		SGeometry(SGeometry &);
 		SGeometry operator=(const SGeometry &);
 
 		public:
 
-		/* Point* SGeometry::next_pt()
+		/* Point& SGeometry::next_pt()
 		 * returns a pointer to the next pt in sequence, if any. If none, returns a nullptr
 		 * calling next_pt does not have additional space requirements
 		 */
-		Point* next_pt(); 
+		Point& next_pt(); 
 		bool has_next_pt(); // returns whether or not the geometry has another point
 			
 		/* void SGeometry::next_geometry()
@@ -109,12 +108,9 @@ namespace nccfdriver
 		 */
 		size_t get_geometry_count();
 
-		/* bool SGeometry::getValid()
-		 * Gets the valid flag of this geometry.
-		 * Future work: replace by exception handling
+		/* int SGeometry::getContainerId()
+		 * Get the ncID of the geometry_container variable
 		 */
-		bool getValid() { return this->valid; }
-
 		int getContainerId() { return gc_varId; }
 
 		/* void * serializeToWKB
@@ -127,7 +123,7 @@ namespace nccfdriver
 		 * this point should NOT be explicitly freed.
 		 *
 		 */
-		Point* operator[](int ind);
+		Point& operator[](int ind);
 
 		/* ncID - as used in netcdf.h
 		 * baseVarId - the id of a variable with a geometry container attribute 
@@ -137,7 +133,7 @@ namespace nccfdriver
 	};
 
 	/* SGeometry_PropertyReader
-	 * Holds properties for geometry containers
+	 * Holds names of properties for geometry containers
 	 * Pass in the geometry_container ID, automatically scans the netcdf Dataset for properties associated
 	 *
 	 * to construct: pass in the ncid which the reader should work over
@@ -150,8 +146,6 @@ namespace nccfdriver
 		
 		public:
 			void open(int container_id);	// opens and intializes a geometry_container into the map
-			std::vector<std::pair<std::string, std::string>> fetch(int cont_lookup, size_t seek_pos);
-							// returns for each property {Property_Name, Property_Value} at a certain position
 			std::vector<std::string> headers(int cont_lookup);
 			std::vector<int> ids(int cont_lookup);
 			SGeometry_PropertyReader(int ncid) : max_seek(0), nc(ncid) {}
@@ -231,6 +225,17 @@ namespace nccfdriver
 			char* get_err_msg() override { return (char*)err_msg; }
 		
 		SG_Exception_BadFeature() : err_msg("Unsupported or unrecognized feature type.") {}
+	};
+	
+	// Failed Read
+	class SG_Exception_BadPoint : public SG_Exception
+	{
+		const char * err_msg;
+
+		public:
+			char* get_err_msg() override { return (char*)err_msg; }
+		
+		SG_Exception_BadPoint() : err_msg("An attempt was made to read an invalid point (likely index out of bounds).") {}
 	};
 
 	// Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h

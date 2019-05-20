@@ -62,7 +62,8 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 		
 		catch(nccfdriver::SG_Exception * e)
 		{
-			CPLError(CE_Warning, CPLE_NotSupported, "Translation of a simple geometry layer has been terminated due to an error: %s", e->get_err_msg());
+			CPLError(CE_Warning, CPLE_AppDefined, "Translation of a simple geometry layer has been terminated due to an error.");
+			CPLError(CE_Warning, CPLE_AppDefined, "ERROR: %s", e->get_err_msg());
 			delete e;
 		}
 	}
