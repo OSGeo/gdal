@@ -1,8 +1,11 @@
+:orphan:
+
 GDAL
 ================================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 4
+    :hidden:
 
     about
     download
@@ -14,8 +17,3 @@ GDAL
     community
     contributing/index
     faq
-
-Index
-=====
-
-* :ref:`genindex`

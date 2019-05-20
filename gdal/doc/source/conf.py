@@ -386,10 +386,12 @@ latex_elements = {
 }
 
 latex_documents = [
-    ('index', 'gdal.tex', project, author, 'manual'),
+    ('index_pdf', 'gdal.tex', project, author, 'manual'),
 ]
 
 latex_toplevel_sectioning = 'chapter'
+
+latex_logo = '../images/gdalicon_big.png'
 
 # If true, show URL addresses after external links.
 #man_show_urls = False
