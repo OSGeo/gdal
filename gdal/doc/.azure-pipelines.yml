@@ -19,8 +19,10 @@ jobs:
       - script: |
           cd gdal/doc
           make html
+        displayName: 'Make html'
+      - script: |
           make latexpdf
-        displayName: 'Build'
+        displayName: 'Make pdf'
       - task: DownloadSecureFile@1
         inputs:
           secureFile: 'pdal-docs-ssh-key'
