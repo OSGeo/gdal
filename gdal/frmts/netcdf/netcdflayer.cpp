@@ -60,6 +60,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTMaxWidthDimId(-1),
         m_nWKTVarID(-1),
         m_nWKTNCDFType(NC_NAT),
+	m_sgItrInit(false),
 	m_HasCFSG1_8(false),
         m_nCurFeatureId(1),
         m_bWriteGDALTags(true),
@@ -69,8 +70,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nProfileVarID(-1),
         m_bProfileVarUnlimited(false),
         m_nParentIndexVarID(-1),
-        m_poLayerConfig(nullptr),
-	m_sgItrInit(false)
+        m_poLayerConfig(nullptr)
 {
     m_uXVarNoData.nVal64 = 0;
     m_uYVarNoData.nVal64 = 0;

@@ -1030,7 +1030,6 @@ class netCDFLayer final: public OGRLayer
         int             m_nProfileVarID;
         bool            m_bProfileVarUnlimited;
         int             m_nParentIndexVarID;
-	bool		m_legacyFeature;
 
         const netCDFWriterConfigLayer* m_poLayerConfig;
 

@@ -2104,9 +2104,10 @@ netCDFDataset::netCDFDataset() :
     eFormat(NCDF_FORMAT_NONE),
     bIsGdalFile(false),
     bIsGdalCfFile(false),
-
     pszCFProjection(nullptr),
     pszCFCoordinates(nullptr),
+    nCFMinorVersion(6),
+    bSGSupport(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
 
     // projection/GT.
@@ -2135,6 +2136,7 @@ netCDFDataset::netCDFDataset() :
     bSignedData(true),
     nLayers(0),
     papoLayers(nullptr)
+
 {
     // Projection/GT.
     adfGeoTransform[0] = 0.0;
