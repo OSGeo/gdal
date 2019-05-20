@@ -110,7 +110,7 @@ def GetOutputDriverFor(filename):
         else:
             raise Exception("Cannot guess driver for %s" % filename)
     elif len(drv_list) > 1:
-        print("Several drivers matching %s extension. Using %s" % (ext, drv_list[0]))
+        print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
 
 #############################################################################
