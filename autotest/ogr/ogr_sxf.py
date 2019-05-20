@@ -83,6 +83,39 @@ def test_ogr_sxf_3():
         lyr = sxf_ds.GetLayer(layer_n)
         assert lyr_names[layer_n] == lyr.GetName()
 
+###############################################################################
+# Open SXF datasource with layers fullname.
+
+def test_ogr_sxf_4(capsys):
+
+    lyr_names = ['СИСТЕМНЫЙ',
+                 'ВОДНЫЕ ОБЪЕКТЫ',
+                 'НАСЕЛЕННЫЕ ПУНКТЫ',
+                 'ИНФРАСТРУКТУРА',
+                 'ЗЕМЛЕПОЛЬЗОВАНИЕ',
+                 'РЕЛЬЕФ СУШИ',
+                 'ГИДРОГРАФИЯ (РЕЛЬЕФ)',
+                 'МАТЕМАТИЧЕСКАЯ ОСНОВА',
+                 'Not_Classified']
+    sxf_name = 'data/100_test.sxf'
+    sxf_ds = gdal.OpenEx(sxf_name, gdal.OF_VECTOR, open_options=['SXF_LAYER_FULLNAME=YES'])
+
+    assert sxf_ds is not None
+    assert sxf_ds.GetLayerCount() == len(lyr_names)
+
+    with capsys.disabled():
+        print('Expected:')
+        for n in lyr_names:
+            print(n)
+        print('In fact:')
+        for layer_n in range(sxf_ds.GetLayerCount()):
+            lyr = sxf_ds.GetLayer(layer_n)
+            print(lyr.GetName())
+
+    for layer_n in range(sxf_ds.GetLayerCount()):
+        lyr = sxf_ds.GetLayer(layer_n)
+        assert lyr_names[layer_n] == lyr.GetName()
+
 
 ###############################################################################
 #
