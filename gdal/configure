@@ -28715,7 +28715,7 @@ fi
     PG_LIB="${PQ_LIBS}"
     PG_INC="${PQ_CFLAGS}"
     SAVED_LIBS="${LIBS}"
-    LIBS="${PG_LIBS}"
+    LIBS="${PG_LIB}"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQconnectdb in -lpq" >&5
 $as_echo_n "checking for PQconnectdb in -lpq... " >&6; }
 if ${ac_cv_lib_pq_PQconnectdb+:} false; then :
