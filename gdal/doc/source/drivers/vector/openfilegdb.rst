@@ -73,15 +73,21 @@ Examples
 
 -  Read layer from FileGDB and load into PostGIS:
 
-   ``ogr2ogr -overwrite -f "PostgreSQL" PG:"host=myhost user=myuser dbname=mydb password=mypass" "C:\somefolder\BigFileGDB.gdb" "MyFeatureClass"``
+   ::
+
+      ogr2ogr -overwrite -f "PostgreSQL" PG:"host=myhost user=myuser dbname=mydb password=mypass" "C:\somefolder\BigFileGDB.gdb" "MyFeatureClass"
 
 -  Get detailed info for FileGDB:
 
-   ``ogrinfo -al "C:\somefolder\MyGDB.gdb"``
+   ::
+
+      ogrinfo -al "C:\somefolder\MyGDB.gdb"
 
 -  Get detailed info for a zipped FileGDB:
 
-   ``ogrinfo -al "C:\somefolder\MyGDB.gdb.zip"``
+   ::
+
+      ogrinfo -al "C:\somefolder\MyGDB.gdb.zip"
 
 Links
 -----

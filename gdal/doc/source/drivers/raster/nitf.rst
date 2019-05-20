@@ -62,7 +62,7 @@ Creation Options:
    set with appropriate **creation options** (although they are reported
    as metadata item, but must not be set as metadata). For instance
    setting
-   ``"FTITLE=Image of abandoned missile silo south west of Karsk"`` in
+   `"FTITLE=Image of abandoned missile silo south west of Karsk"` in
    the creation option list would result in setting of the FTITLE field
    in the NITF file header. Use the official field names from the NITF
    specification document; do not put the "NITF\_" prefix that is

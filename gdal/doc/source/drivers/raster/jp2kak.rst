@@ -193,9 +193,9 @@ creating worker threads.
 See Also:
 ---------
 
--  Implemented as ``gdal/frmts/jp2kak/jp2kakdataset.cpp``.
+-  Implemented as `gdal/frmts/jp2kak/jp2kakdataset.cpp`.
 -  If you're using a Kakadu release before v7.5, configure & compile
    GDAL with eg.
-   ``CXXFLAGS="-DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=3 -DKDU_PATCH_VERSION=2"``
+   `CXXFLAGS="-DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=3 -DKDU_PATCH_VERSION=2"`
    for Kakadu version 7.3.2.
 -  Alternate :ref:`raster.jp2openjpeg` driver.

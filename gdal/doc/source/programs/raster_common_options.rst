@@ -107,7 +107,7 @@ and are introduced here.
         (ArcGIS :file:`.prj` files), and these may be used in a similar manner
         o WKT files, but the filename should be prefixed with ``ESRI::``.
 
-        For example, :samp:`"ESRI::NAD 1927 StatePlane Wyoming West FIPS 4904.prj"`.
+        For example, `"ESRI::NAD 1927 StatePlane Wyoming West FIPS 4904.prj"`.
 
     * ``Spatial References from URLs``
 

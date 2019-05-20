@@ -359,6 +359,36 @@ man_pages = [
     ),
 ]
 
+
+# latex
+
+preamble = r"""
+\ifdefined\DeclareUnicodeCharacter
+  \DeclareUnicodeCharacter{2032}{$'$}% prime
+\fi
+"""
+
+latex_elements = {
+# The paper size ('letterpaper' or 'a4paper').
+#'papersize': 'letterpaper',
+
+# The font size ('10pt', '11pt' or '12pt').
+#'pointsize': '10pt',
+
+# Additional stuff for the LaTeX preamble.
+'preamble': preamble,
+'inputenc':'\\usepackage[utf8]{inputenc}\n\\usepackage[russian,english]{babel}\n\\usepackage{CJKutf8}\n\\usepackage{substitutefont}'
+
+# Latex figure (float) alignment
+#'figure_align': 'htbp',
+}
+
+latex_documents = [
+    ('index', 'gdal.tex', project, author, 'manual'),
+]
+
+latex_toplevel_sectioning = 'chapter'
+
 # If true, show URL addresses after external links.
 #man_show_urls = False
 
@@ -375,4 +405,5 @@ primary_domain = 'cpp'
 
 import redirects
 redirect_files = redirects.gather_redirects()
+
 

@@ -213,7 +213,7 @@ output coordinate system or even reprojecting the features during translation.
     processed.  Operates exclusive of the spatial or attribute queries. Note: if
     you want to select several features based on their feature id, you can also
     use the fact the 'fid' is a special field recognized by OGR SQL. So,
-    ``-where "fid in (1,3,5)"`` would select features 1, 3 and 5.
+    `-where "fid in (1,3,5)"` would select features 1, 3 and 5.
 
 .. option:: -limit nb_features
 
@@ -404,7 +404,7 @@ output coordinate system or even reprojecting the features during translation.
     To disable copying of metadata from source dataset and layers into target
     dataset and layers, when supported by output driver.
 
-.. option:: -mo "META-TAG=VALUE"
+.. option:: -mo META-TAG=VALUE
 
     Passes a metadata key and value to set on the output dataset, when
     supported by output driver.

@@ -39,7 +39,7 @@ can be treated as transparent when mosaicing.
     was ERDAS Imagine .img).
     Use the short format name (GTiff for GeoTIFF for example).
 
-.. option:: -co "NAME=VALUE"
+.. option:: -co `"NAME=VALUE"`
 
     Passes a creation option to the output format driver.  Multiple
     :option:`-co` options may be listed. See :ref:`raster_drivers` format

@@ -7,12 +7,12 @@ The optional GDAL WCS driver allows use of a coverage in a WCS server as
 a raster dataset. GDAL acts as a client to the WCS server.
 
 Accessing a WCS server is accomplished by creating a local service
-description file that contains one ``<WCS_GDAL>`` XML element. It is
+description file that contains one `<WCS_GDAL>` XML element. It is
 important that there is no spaces or other content outside that element.
 Starting at version 2.3 the service description file is meant to be
 managed by the driver in a cache directory. User should control the
 contents of the service file using options. The dataset name is
-``"WCS:<URL>"``, where the <URL> is the URL of the server appended
+:samp:`WCS:<URL>`, where the <URL> is the URL of the server appended
 potentially appended with WCS version, coverage, and possibly other
 parameters. If the WCS version is 2.0.1 further parameters can be given
 to control how the data model of the coverage is mapped to the GDAL data
@@ -197,7 +197,7 @@ In the case the URL does not contain coverage name, the service
 description file is not used and thus in that case the options are not
 written into it. Open options are given separate to the dataset name,
 with GDAL utility programs they are given using the -oo switch
-(``-oo "NAME=VALUE"``). The -oo swicth expects only one option but more
+(`-oo "NAME=VALUE"`). The -oo swicth expects only one option but more
 options can be given repeating the switch.
 
 In addition to DescribeCoverageExtra and GetCoverageExtra, which are

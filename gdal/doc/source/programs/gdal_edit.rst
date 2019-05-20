@@ -162,13 +162,13 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 2.0
 
-.. option:: -mo "META-TAG=VALUE"
+.. option:: -mo META-TAG=VALUE
 
     Passes a metadata key and value to set on the output dataset if possible.
     This metadata is added to the existing metadata items, unless :option:`-unsetmd`
     is also specified.
 
-.. option:: -oo "NAME=VALUE"
+.. option:: -oo NAME=VALUE
 
     Open option (format specific).
 

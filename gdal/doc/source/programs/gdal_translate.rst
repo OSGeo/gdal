@@ -104,7 +104,7 @@ resampling, and rescaling pixels in the process.
     source data. -scale can be repeated several times (if specified only once,
     it also applies to all bands of the output dataset), so as to specify per
     band parameters. It is also possible to use the "-scale_bn" syntax where bn
-    is a band number (e.g. "-scale_2" for the 2nd band of the output dataset) 
+    is a band number (e.g. "-scale_2" for the 2nd band of the output dataset)
     to specify the parameters of one or several specific bands.
 
 .. option:: -exponent <exp_val>
@@ -125,7 +125,7 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -srcwin <xoff> <yoff> <xsize> <ysize>
 
-    Selects a subwindow from the source image for copying based on pixel/line location.  
+    Selects a subwindow from the source image for copying based on pixel/line location.
 
 .. option:: -projwin <ulx> <uly> <lrx> <lry>
 
@@ -149,7 +149,7 @@ resampling, and rescaling pixels in the process.
     complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
 
     .. warning::
-        This does not cause reprojection of the dataset to the specified SRS. 
+        This does not cause reprojection of the dataset to the specified SRS.
 
 .. option:: -epo
 
@@ -187,7 +187,7 @@ resampling, and rescaling pixels in the process.
     Assign/override the georeferenced bounds of the output file.  This assigns
     georeferenced bounds to the output file, ignoring what would have been
     derived from the source file. So this does not cause reprojection to the
-    specified SRS. 
+    specified SRS.
 
 .. option:: -a_nodata <value>
 
@@ -211,7 +211,7 @@ resampling, and rescaling pixels in the process.
 
     .. versionadded:: 2.3
 
-.. option:: -mo "META-TAG=VALUE"
+.. option:: -mo META-TAG=VALUE
 
     Passes a metadata key and value to set on the output dataset if possible.
 
@@ -219,7 +219,7 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -nogcp
 
-    Do not copy the GCPs in the source dataset to the output dataset. 
+    Do not copy the GCPs in the source dataset to the output dataset.
 
 .. option:: -gcp <pixel> <line> <easting> <northing> <elevation>
 

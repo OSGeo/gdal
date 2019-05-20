@@ -119,7 +119,7 @@ data members:
     int         nHeaderBytes;
     GByte       *pabyHeader;
 
-The driver can inspect these to establish if the file is supported. If the ``pszFilename`` refers to an object in the file system, the ``bStatOK`` flag will be set to TRUE. As well, if the file was successfully opened, the first kilobyte or so is read in, and put in pabyHeader, with the exact size in ``nHeaderBytes``.
+The driver can inspect these to establish if the file is supported. If the `pszFilename` refers to an object in the file system, the `bStatOK` flag will be set to TRUE. As well, if the file was successfully opened, the first kilobyte or so is read in, and put in pabyHeader, with the exact size in `nHeaderBytes`.
 
 In this typical testing example it is verified that the file was successfully opened, that we have at least enough header information to perform our test, and that various parts of the header are as expected for this format. In this case, there are no magic numbers for JDEM format so we check various date fields to ensure they have reasonable century values. If the test fails, we quietly return NULL indicating this file isn't of our supported format.
 
@@ -187,7 +187,7 @@ Next we need to create an instance of the database class in which we will set va
 
 At this point we "borrow" the file handle that was held by GDALOpenInfo*. This file pointer uses the VSI*L GDAL API to access files on disk. This virtualized POSIX-style API allows some special capabilities like supporting large files, in-memory files and zipped files.
 
-Next the X and Y size are extracted from the header. The ``nRasterXSize`` and ``nRasterYSize`` are data fields inherited from the GDALDataset base class, and must be set by the Open() method.
+Next the X and Y size are extracted from the header. The `nRasterXSize` and `nRasterYSize` are data fields inherited from the GDALDataset base class, and must be set by the Open() method.
 
 .. code-block::
 
@@ -424,7 +424,7 @@ GDAL allows file formats to make pre-built overviews available to applications v
 
 Formats can also report that they have arbitrary overviews, by overriding the :cpp:func:`GDALRasterBand::HasArbitraryOverviews` method on the GDALRasterBand, returning TRUE. In this case the raster band object is expected to override the :cpp:func:`GDALRasterBand::RasterIO` method itself, to implement efficient access to imagery with resampling. This is also involved, and there are a lot of requirements for correct implementation of the RasterIO() method. An example of this can be found in the OGDI and ECW formats.
 
-However, by far the most common approach to implementing overviews is to use the default support in GDAL for external overviews stored in TIFF files with the same name as the dataset, but the extension .ovr appended. In order to enable reading and creation of this style of overviews it is necessary for the GDALDataset to initialize the ``oOvManager`` object within itself. This is typically accomplished with a call like the following near the end of the Open() method (after the PAM :cpp:func:`GDALDataset::TryLoadXML`).
+However, by far the most common approach to implementing overviews is to use the default support in GDAL for external overviews stored in TIFF files with the same name as the dataset, but the extension .ovr appended. In order to enable reading and creation of this style of overviews it is necessary for the GDALDataset to initialize the `oOvManager` object within itself. This is typically accomplished with a call like the following near the end of the Open() method (after the PAM :cpp:func:`GDALDataset::TryLoadXML`).
 
 .. code-block::
 
@@ -448,7 +448,7 @@ CreateCopy
 
 The GDALDriver::CreateCopy() method call is passed through directly, so that method should be consulted for details of arguments. However, some things to keep in mind are:
 
-- If the ``bStrict`` flag is FALSE the driver should try to do something reasonable when it cannot exactly represent the source dataset, transforming data types on the fly, dropping georeferencing and so forth.
+- If the `bStrict` flag is FALSE the driver should try to do something reasonable when it cannot exactly represent the source dataset, transforming data types on the fly, dropping georeferencing and so forth.
 - Implementing progress reporting correctly is somewhat involved. The return result of the progress function needs always to be checked for cancellation, and progress should be reported at reasonable intervals. The JPEGCreateCopy() method demonstrates good handling of the progress function.
 - Special creation options should be documented in the on-line help. If the options take the format "NAME=VALUE" the papszOptions list can be manipulated with :cpp:func:`CPLFetchNameValue` as demonstrated in the handling of the QUALITY and PROGRESSIVE flags for JPEGCreateCopy().
 - The returned GDALDataset handle can be in ReadOnly or Update mode. Return it in Update mode if practical, otherwise in ReadOnly mode is fine.

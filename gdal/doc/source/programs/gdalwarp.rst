@@ -151,7 +151,7 @@ with control information.
     generated with a low quality resampling method, and the warping is done using a
     higher quality resampling method).
 
-.. option:: -wo "NAME=VALUE"
+.. option:: -wo `"NAME=VALUE"`
 
     Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
     Multiple :option:`-wo` options may be listed.
@@ -212,7 +212,7 @@ with control information.
 .. option:: -srcalpha
 
     Force the last band of a source image to be
-    considered as a source alpha band. 
+    considered as a source alpha band.
 
 .. option:: -nosrcalpha
 
@@ -223,7 +223,7 @@ with control information.
 
 .. option:: -dstalpha
 
-    Create an output alpha band to identify nodata (unset/transparent) pixels. 
+    Create an output alpha band to identify nodata (unset/transparent) pixels.
 
 .. option:: -wm <memory_in_mb>
 
@@ -285,7 +285,7 @@ with control information.
 .. option:: -cvmd <meta_conflict_value>
 
     Value to set metadata items that conflict between source datasets
-    (default is "*"). Use "" to remove conflicting items. 
+    (default is "*"). Use "" to remove conflicting items.
 
 .. option:: -setci
 
@@ -304,11 +304,11 @@ with control information.
 
 .. option:: <srcfile>
 
-    The source file name(s). 
+    The source file name(s).
 
 .. option:: <dstfile>
 
-    The destination file name. 
+    The destination file name.
 
 
 Mosaicing into an existing output file is supported if the output file
@@ -324,7 +324,7 @@ not yet existing target dataset, its extent will be the one of the
 original raster unless -te or -crop_to_cutline are specified.
 
 When doing vertical shift adjustments, the transformer option -to ERROR_ON_MISSING_VERT_SHIFT=YES
-can be used to error out as soon as a vertical shift value is missing (instead of 
+can be used to error out as soon as a vertical shift value is missing (instead of
 0 being used).
 
 Examples

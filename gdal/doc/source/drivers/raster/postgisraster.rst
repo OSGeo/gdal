@@ -7,7 +7,7 @@ PostGIS Raster (previously known as WKT Raster) is the project that
 provides raster support on PostGIS. Since September 26st, 2010, is an
 official part of PostGIS 2.0+.
 
-This driver was started during the ​Google Summer of Code 2009, and
+This driver was started during the Google Summer of Code 2009, and
 significantly improved since then.
 
 Currently, the driver provides read-only support to PostGIS Raster data
@@ -24,7 +24,7 @@ specifying the database name, with additional parameters as necessary
    PG:"[host=''] [port:''] dbname='' [user=''] [password=''] [schema=''] [table=''] [column=''] [where=''] [mode=''] [outdb_resolution='']"
 
 Note that the string, up to the part starting with "table='" is a
-libpq-style ​connection string. That means that you can leave out
+libpq-style connection string. That means that you can leave out
 unnecessary fields (like password, in some cases).
 
 -  **schema** - name of PostgreSQL schema where requested raster table
@@ -101,7 +101,7 @@ To get a summary about your raster via GDAL use gdalinfo:
 
    gdalinfo  "PG:host=localhost port=5432 dbname='mydb' user='postgres' password='secret' schema='public' table=mytable"
 
-For more examples, check the PostGIS Raster FAQ section: `​Can I export
+For more examples, check the PostGIS Raster FAQ section: `Can I export
 my PostGIS Raster data to other raster
 formats? <https://postgis.net/docs/RT_FAQ.html#idm28288>`__
 

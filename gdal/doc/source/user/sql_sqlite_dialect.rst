@@ -17,7 +17,7 @@ is available through the GDALDataset::ExecuteSQL() method by specifying the pszD
 utility, you must specify the "-dialect SQLITE" option.
 
 This is mainly aimed to execute SELECT statements, but, for datasources that support
-update, INSERT/UPDATE/DELETE statements can also be run. GDAL is internally using  
+update, INSERT/UPDATE/DELETE statements can also be run. GDAL is internally using
 `the Virtual Table Mechanism of SQLite <https://sqlite.org/vtab.html>`_
 and therefore operations like ALTER TABLE are not supported.
 
@@ -295,7 +295,6 @@ returns:
     OGRFeature(SELECT):6
     id (Real) = 7
     city (String) = Beijing
-    country (String) = 中华人民共和国
     POINT (116.391195 39.9064702)
 
     OGRFeature(SELECT):7

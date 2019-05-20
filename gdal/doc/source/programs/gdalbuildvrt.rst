@@ -69,13 +69,13 @@ changed in later versions.
     In case the resolution of all input files is not the same, the -resolution flag
     enables the user to control the way the output resolution is computed.
 
-    ``highest`` will pick the smallest values of pixel dimensions within the set of source rasters.
+    `highest` will pick the smallest values of pixel dimensions within the set of source rasters.
 
-    ``lowest`` will pick the largest values of pixel dimensions within the set of source rasters.
+    `lowest` will pick the largest values of pixel dimensions within the set of source rasters.
 
-    ``average`` is the default and will compute an average of pixel dimensions within the set of source rasters.
+    `average` is the default and will compute an average of pixel dimensions within the set of source rasters.
 
-    ``user`` must be used in combination with the :option:`-tr` option to specify the target resolution.
+    `user` must be used in combination with the :option:`-tr` option to specify the target resolution.
 
 .. option:: -tr <res> <yres>
 
@@ -118,7 +118,7 @@ changed in later versions.
     together as a single operating system argument. If the option is not specified, the
     intrinsic nodata settings on the source datasets will be used (if they exist). The value set by this option
     is written in the NODATA element of each ComplexSource element. Use a value of
-    ``None`` to ignore intrinsic nodata settings on the source datasets.
+    `None` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: -b <band>
 
@@ -140,7 +140,7 @@ changed in later versions.
     as a single operating system argument.  If the option is not specified,
     intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
     is written in the NoDataValue element of each VRTRasterBand element. Use a value of
-    ``None`` to ignore intrinsic nodata settings on the source datasets.
+    `None` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: -separate
 

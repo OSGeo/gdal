@@ -90,8 +90,8 @@ source to stdout (the terminal).
     If provided, only the feature with this feature id will be reported.
     Operates exclusive of the spatial or attribute queries. Note: if you want
     to select several features based on their feature id, you can also use the
-    fact the 'fid' is a special field recognized by OGR SQL. So, ``-where "fid
-    in (1,3,5)"`` would select features 1, 3 and 5.
+    fact the 'fid' is a special field recognized by OGR SQL. So, `-where "fid in (1,3,5)"`
+    would select features 1, 3 and 5.
 
 .. option:: -fields YES|NO:
 
