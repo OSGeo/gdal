@@ -30,4 +30,4 @@ For example:
 You can construct that file simply by using your favorite text editor.
 
 World file usually has suffix ``.wld``, but sometimes it may has ``.tfw``,
-``.tifw`, `.jgw` or other suffixes depending on the image file it comes with.
+``.tifw``, ``.jgw`` or other suffixes depending on the image file it comes with.
