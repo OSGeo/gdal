@@ -74,9 +74,8 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 {
 	nccfdriver::SGeometry * sg = new nccfdriver::SGeometry(ncid, nc_basevarId);
-	nccfdriver::SGeometry_PropertyReader pr(ncid);
 	int cont_id = sg->getContainerId();
-	pr.open(cont_id);
+	nccfdriver::SGeometry_PropertyScanner pr(ncid, cont_id);
 	OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType());
 
 	// Geometry Type invalid, avoid further processing
@@ -100,7 +99,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	size_t shape_count = sg->get_geometry_count();
 
 	// Add properties
-	std::vector<int> props = pr.ids(cont_id);
+	std::vector<int> props = pr.ids();
 	for(size_t itr = 0; itr < props.size(); itr++)
 	{
 		poL->AddField(props[itr]);	

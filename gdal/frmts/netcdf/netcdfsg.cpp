@@ -604,10 +604,8 @@ namespace nccfdriver
 		return ret;
 	}
 
-	void SGeometry_PropertyReader::open(int container_id)
+	void SGeometry_PropertyScanner::open(int container_id)
 	{
-		std::vector<std::pair<int, std::string>> addition;
-
 		// First check for container_id, if variable doesn't exist error out
 		if(nc_inq_var(this->nc, container_id, NULL, NULL, NULL, NULL, NULL) != NC_NOERR)
 		{
@@ -653,58 +651,19 @@ namespace nccfdriver
 				continue;
 			}
 
-			// If matches, then establish a reference by placing this variable's {id, name} pair into the map
+			// If matches, then establish a reference by placing this variable's data in both vectors
 			if(!strcmp(contname, buf))
 			{
 				char property_name[NC_MAX_NAME];
 				nc_inq_varname(this->nc, curr, property_name);
 				
 				std::string n(property_name);
-				std::pair<int, std::string> p;
-				p.first = curr;
-				p.second = n;
-
-				addition.push_back(p);	
+				v_ids.push_back(curr);
+				v_headers.push_back(n);
 			}
 			
 			delete[] buf;
 		}
-
-		// Finally, insert the list into m
-		std::pair<int, std::vector<std::pair<int, std::string>>> m_add;
-		m_add.first = container_id;
-		m_add.second = addition;
-		m.insert(m_add);
-	}
-
-	std::vector<std::string> SGeometry_PropertyReader::headers(int cont_lookup)
-	{
-		std::vector<std::string> ret;
-
-		std::vector<std::pair<int, std::string>> props(m.at(cont_lookup));
-		
-		// Remove IDs
-		for(size_t itr = 0; itr < props.size(); itr++)
-		{
-			ret.push_back(props[itr].second);
-		}
-
-		return ret;
-	}
-
-	std::vector<int> SGeometry_PropertyReader::ids(int cont_lookup)
-	{
-		std::vector<int> ret;
-
-		std::vector<std::pair<int, std::string>> props(m.at(cont_lookup));
-		
-		// Remove Headers 
-		for(size_t itr = 0; itr < props.size(); itr++)
-		{
-			ret.push_back(props[itr].first);
-		}
-
-		return ret;
 	}
 
 	// Exception Class Implementations

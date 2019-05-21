@@ -1,7 +1,6 @@
 #ifndef __NETCDFSG_H__
 #define __NETCDFSG_H__
 #include <cstring>
-#include <map>
 #include <string>
 #include <vector>
 #include "netcdf.h"
@@ -129,23 +128,24 @@ namespace nccfdriver
 		~SGeometry();
 	};
 
-	/* SGeometry_PropertyReader
+	/* SGeometry_PropertyScanner
 	 * Holds names of properties for geometry containers
 	 * Pass in the geometry_container ID, automatically scans the netcdf Dataset for properties associated
 	 *
 	 * to construct: pass in the ncid which the reader should work over
 	 */
-	class SGeometry_PropertyReader
+	class SGeometry_PropertyScanner
 	{
-		std::map<int, std::vector<std::pair<int, std::string>>> m; // key: varID of geometry container, value: a vector of: {varId of property, name}
-		int max_seek;
+		std::vector<int> v_ids;
+		std::vector<std::string> v_headers;
 		int nc;
 		
+		void open(int container_id);	// opens and intializes a geometry_container into the scanner 
+		
 		public:
-			void open(int container_id);	// opens and intializes a geometry_container into the map
-			std::vector<std::string> headers(int cont_lookup);
-			std::vector<int> ids(int cont_lookup);
-			SGeometry_PropertyReader(int ncid) : max_seek(0), nc(ncid) {}
+			std::vector<std::string>& headers() { return this->v_headers; }
+			std::vector<int>& ids() { return this->v_ids; }
+			SGeometry_PropertyScanner(int ncid, int cid) : nc(ncid) { this->open(cid); }
 	};
 
 	// General exception interface for Simple Geometries
