@@ -114,7 +114,7 @@ namespace nccfdriver
 		 * Returns a pre-allocated array which serves as the WKB reference to this geometry
 		 * the size of the WKB representation is written to the passed in wkbSize
 		 */
-		void * serializeToWKB(int featureInd, size_t& wkbSize);
+		void * serializeToWKB(size_t featureInd, int& wkbSize);
 
 		/* Return a point at a specific index specifically
 		 * this point should NOT be explicitly freed.

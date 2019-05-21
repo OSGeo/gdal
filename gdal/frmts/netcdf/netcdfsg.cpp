@@ -378,9 +378,8 @@ namespace nccfdriver
 	 * Converting SGeometry into WKB automatically allocates the required buffer space
 	 * and returns a buffer that MUST be free'd
 	 */
-	void * SGeometry::serializeToWKB(int featureInd, size_t& wkbSize)
+	void * SGeometry::serializeToWKB(size_t featureInd, int& wkbSize)
 	{		
-		if(featureInd < 0) return nullptr;
 		void * ret = nullptr;
 
 		int nc = 0; int sb = 0;
@@ -467,7 +466,7 @@ namespace nccfdriver
 
 				
 					int cur_point = seek_begin;
-					int32_t pcount = pnc.size();
+					size_t pcount = pnc.size();
 
 					// Allocate and set pointers
 					ret = new int8_t[wkbSize];
@@ -478,7 +477,7 @@ namespace nccfdriver
 					worker = memcpy_jump(worker, &t, 4);
 					worker = memcpy_jump(worker, &pcount, 4);
 
-					for(int32_t itr = 0; itr < pcount; itr++)
+					for(size_t itr = 0; itr < pcount; itr++)
 					{
 							worker = inPlaceSerialize_LineString(this, pnc[itr], cur_point, worker);
 							cur_point = pnc[itr] + cur_point;
@@ -542,10 +541,10 @@ namespace nccfdriver
 					if(noInteriors)
 					{
 						int cur_point = seek_begin;
-						int32_t pcount = pnc.size();
+						size_t pcount = pnc.size();
 						worker = memcpy_jump(worker, &pcount, 4);
 
-						for(int32_t itr = 0; itr < pcount; itr++)
+						for(size_t itr = 0; itr < pcount; itr++)
 						{
 							worker = inPlaceSerialize_PolygonExtOnly(this, pnc[itr], cur_point, worker);
 							cur_point = pnc[itr] + cur_point;
