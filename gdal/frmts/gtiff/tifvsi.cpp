@@ -113,6 +113,24 @@ static void SetActiveGTH(GDALTiffHandle* psGTH)
     }
 }
 
+void* VSI_TIFFGetCachedRange( thandle_t th, vsi_l_offset nOffset, size_t nSize )
+{
+    GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
+    for( int i = 0; i < psGTH->nCachedRanges; i++ )
+    {
+        if( nOffset >= psGTH->panCachedOffsets[i] &&
+            nOffset + nSize <=
+                psGTH->panCachedOffsets[i] + psGTH->panCachedSizes[i] )
+        {
+            return static_cast<GByte*>(psGTH->ppCachedData[i]) +
+                            (nOffset - psGTH->panCachedOffsets[i]);
+        }
+        if( nOffset < psGTH->panCachedOffsets[i] )
+            break;
+    }
+    return nullptr;
+}
+
 static tsize_t
 _tiffReadProc( thandle_t th, tdata_t buf, tsize_t size )
 {
@@ -122,23 +140,20 @@ _tiffReadProc( thandle_t th, tdata_t buf, tsize_t size )
     if( psGTH->nCachedRanges )
     {
         const vsi_l_offset nCurOffset = VSIFTellL( psGTH->psShared->fpL );
-        for( int i = 0; i < psGTH->nCachedRanges; i++ )
+        void* data = VSI_TIFFGetCachedRange(th, nCurOffset, static_cast<size_t>(size));
+        if( data )
         {
-            if( nCurOffset >= psGTH->panCachedOffsets[i] &&
-                nCurOffset + static_cast<size_t>(size) <=
-                    psGTH->panCachedOffsets[i] + psGTH->panCachedSizes[i] )
-            {
-                memcpy( buf,
-                        static_cast<GByte*>(psGTH->ppCachedData[i]) +
-                            (nCurOffset - psGTH->panCachedOffsets[i]), size );
-                VSIFSeekL( psGTH->psShared->fpL, nCurOffset + size, SEEK_SET );
-                return size;
-            }
-            if( nCurOffset < psGTH->panCachedOffsets[i] )
-                break;
+            memcpy(buf, data, size);
+            VSIFSeekL( psGTH->psShared->fpL, nCurOffset + size, SEEK_SET );
+            return size;
         }
     }
 
+#ifdef DEBUG_VERBOSE_EXTRA
+    CPLDebug("GTiff", "Reading %d bytes at offset " CPL_FRMT_GUIB,
+             static_cast<int>(size),
+             VSIFTellL( psGTH->psShared->fpL ));
+#endif
     return VSIFReadL( buf, 1, size, psGTH->psShared->fpL );
 }
 

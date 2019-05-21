@@ -47,5 +47,6 @@ void VSI_TIFFSetCachedRanges( thandle_t th, int nRanges,
                               void ** ppData, // memory pointed by ppData[i] must be kept alive by caller
                               const vsi_l_offset* panOffsets,
                               const size_t* panSizes );
+void* VSI_TIFFGetCachedRange( thandle_t th, vsi_l_offset nOffset, size_t nSize );
 
 #endif // TIFVSI_H_INCLUDED

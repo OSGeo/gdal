@@ -182,6 +182,51 @@ TIFFWriteDirectory(TIFF* tif)
 }
 
 /*
+ * This is an advanced writing function that must be used in a particular
+ * sequence, and generally together with TIFFForceStrileArrayWriting(),
+ * to make its intended effect. Its aim is to modify the location
+ * where the [Strip/Tile][Offsets/ByteCounts] arrays are located in the file.
+ * More precisely, when TIFFWriteCheck() will be called, the tag entries for
+ * those arrays will be written with type = count = offset = 0 as a temporary
+ * value.
+ *
+ * Its effect is only valid for the current directory, and before
+ * TIFFWriteDirectory() is first called, and  will be reset when
+ * changing directory.
+ *
+ * The typical sequence of calls is:
+ * TIFFOpen()
+ * [ TIFFCreateDirectory(tif) ]
+ * Set fields with calls to TIFFSetField(tif, ...)
+ * TIFFDeferStrileArrayWriting(tif)
+ * TIFFWriteCheck(tif, ...)
+ * TIFFWriteDirectory(tif)
+ * ... potentially create other directories and come back to the above directory
+ * TIFFForceStrileArrayWriting(tif): emit the arrays at the end of file
+ *
+ * Returns 1 in case of success, 0 otherwise.
+ */
+int TIFFDeferStrileArrayWriting(TIFF* tif)
+{
+    static const char module[] = "TIFFDeferStrileArrayWriting";
+    if (tif->tif_mode == O_RDONLY)
+    {
+        TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+                     "File opened in read-only mode");
+        return 0;
+    }
+    if( tif->tif_diroff != 0 )
+    {
+        TIFFErrorExt(tif->tif_clientdata, module,
+                     "Directory has already been written");
+        return 0;
+    }
+
+    tif->tif_dir.td_deferstrilearraywriting = TRUE;
+    return 1;
+}
+
+/*
  * Similar to TIFFWriteDirectory(), writes the directory out
  * but leaves all data structures in memory so that it can be
  * written again.  This will make a partially written TIFF file
@@ -1705,6 +1750,11 @@ TIFFWriteDirectoryTagLongLong8Array(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, 
         return(1);
     }
 
+    if( tif->tif_dir.td_deferstrilearraywriting )
+    {
+        return TIFFWriteDirectoryTagData(tif, ndir, dir, tag, TIFF_NOTYPE, 0, 0, NULL);
+    }
+
     if( tif->tif_flags&TIFF_BIGTIFF )
     {
         int write_aslong8 = 1;
@@ -2513,7 +2563,12 @@ TIFFWriteDirectoryTagData(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag
 	dir[m].tdir_count=count;
 	dir[m].tdir_offset.toff_long8 = 0;
 	if (datalength<=((tif->tif_flags&TIFF_BIGTIFF)?0x8U:0x4U))
-		_TIFFmemcpy(&dir[m].tdir_offset,data,datalength);
+        {
+            if( data && datalength )
+            {
+                _TIFFmemcpy(&dir[m].tdir_offset,data,datalength);
+            }
+        }
 	else
 	{
 		uint64 na,nb;
@@ -2906,6 +2961,53 @@ _TIFFRewriteField(TIFF* tif, uint16 tag, TIFFDataType in_datatype,
     }
 
 /* -------------------------------------------------------------------- */
+/*      When a dummy tag was written due to TIFFDeferStrileArrayWriting() */
+/* -------------------------------------------------------------------- */
+    if( entry_offset == 0 && entry_count == 0 && entry_type == 0 )
+    {
+        if( tag == TIFFTAG_TILEOFFSETS || tag == TIFFTAG_STRIPOFFSETS )
+        {
+            entry_type = (tif->tif_flags&TIFF_BIGTIFF) ? TIFF_LONG8 : TIFF_LONG; 
+        }
+        else
+        {
+            int write_aslong8 = 1;
+            if( count > 1 && tag == TIFFTAG_STRIPBYTECOUNTS )
+            {
+                write_aslong8 = WriteAsLong8(tif, TIFFStripSize64(tif));
+            }
+            else if( count > 1 && tag == TIFFTAG_TILEBYTECOUNTS )
+            {
+                write_aslong8 = WriteAsLong8(tif, TIFFTileSize64(tif));
+            }
+            if( write_aslong8 )
+            {
+                entry_type = TIFF_LONG8;
+            }
+            else
+            {
+                int write_aslong4 = 1;
+                if( count > 1 && tag == TIFFTAG_STRIPBYTECOUNTS )
+                {
+                    write_aslong4 = WriteAsLong4(tif, TIFFStripSize64(tif));
+                }
+                else if( count > 1 && tag == TIFFTAG_TILEBYTECOUNTS )
+                {
+                    write_aslong4 = WriteAsLong4(tif, TIFFTileSize64(tif));
+                }
+                if( write_aslong4 )
+                {
+                    entry_type = TIFF_LONG;
+                }
+                else
+                {
+                    entry_type = TIFF_SHORT;
+                }
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      What data type do we want to write this as?                     */
 /* -------------------------------------------------------------------- */
     if( TIFFDataWidth(in_datatype) == 8 && !(tif->tif_flags&TIFF_BIGTIFF) )
@@ -3036,6 +3138,23 @@ _TIFFRewriteField(TIFF* tif, uint16 tag, TIFFDataType in_datatype,
         }
     }
 
+    if( (tag == TIFFTAG_TILEOFFSETS || tag == TIFFTAG_STRIPOFFSETS) &&
+        tif->tif_dir.td_stripoffset_entry.tdir_count == 0 &&
+        tif->tif_dir.td_stripoffset_entry.tdir_type == 0 &&
+        tif->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8 == 0 )
+    {
+        tif->tif_dir.td_stripoffset_entry.tdir_type = datatype;
+        tif->tif_dir.td_stripoffset_entry.tdir_count = count;
+    }
+    else if( (tag == TIFFTAG_TILEBYTECOUNTS || tag == TIFFTAG_STRIPBYTECOUNTS) &&
+        tif->tif_dir.td_stripbytecount_entry.tdir_count == 0 &&
+        tif->tif_dir.td_stripbytecount_entry.tdir_type == 0 &&
+        tif->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8 == 0 )
+    {
+        tif->tif_dir.td_stripbytecount_entry.tdir_type = datatype;
+        tif->tif_dir.td_stripbytecount_entry.tdir_count = count;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If the tag type, and count match, then we just write it out     */
 /*      over the old values without altering the directory entry at     */
@@ -3087,6 +3206,7 @@ _TIFFRewriteField(TIFF* tif, uint16 tag, TIFFDataType in_datatype,
 /*      Adjust the directory entry.                                     */
 /* -------------------------------------------------------------------- */
     entry_type = datatype;
+    entry_count = (uint64)count;
     memcpy( direntry_raw + 2, &entry_type, sizeof(uint16) );
     if (tif->tif_flags&TIFF_SWAB)
         TIFFSwabShort( (uint16 *) (direntry_raw + 2) );
