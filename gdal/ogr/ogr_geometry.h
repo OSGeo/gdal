@@ -3012,7 +3012,8 @@ class CPL_DLL OGRGeometryFactory
                               double dfPrimaryRadius, double dfSecondaryAxis,
                               double dfRotation,
                               double dfStartAngle, double dfEndAngle,
-                              double dfMaxAngleStepSizeDegrees );
+                              double dfMaxAngleStepSizeDegrees,
+                              const bool bUseMaxGap = false );
 
     static int GetCurveParmeters( double x0, double y0,
                                   double x1, double y1,

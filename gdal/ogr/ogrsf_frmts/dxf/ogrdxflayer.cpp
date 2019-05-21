@@ -1183,6 +1183,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     if(nPolylineFlag & 0x01)
         smoothPolyline.Close();
 
+    smoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
     poFeature->ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
@@ -1454,6 +1455,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
     if(nPolylineFlag & 0x01)
         smoothPolyline.Close();
 
+    smoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
 
     if( (nPolylineFlag & 8) == 0 )
@@ -1745,7 +1747,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                   dfRadius, dfRadius, 0.0,
                                                   0.0, 360.0,
-                                                  0.0 )->toLineString();
+                                                  0.0, poDS->InlineBlocks() )->toLineString();
 
     const int nPoints = poCircle->getNumPoints();
 
@@ -1960,13 +1962,15 @@ OGRDXFFeature *OGRDXFLayer::TranslateELLIPSE()
 
     if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
     {
+        // Only honor OGR_DXF_MAX_GAP if this geometry isn't at risk of
+        // being enlarged or shrunk as part of a block insertion.
         OGRGeometry *poEllipse =
             OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                     dfPrimaryRadius,
                                                     dfSecondaryRadius,
                                                     dfRotation,
                                                     dfStartAngle, dfEndAngle,
-                                                    0.0 );
+                                                    0.0, poDS->InlineBlocks() );
 
         if( !bHaveZ )
             poEllipse->flattenTo2D();
@@ -2064,7 +2068,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateARC()
             OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                     dfRadius, dfRadius, 0.0,
                                                     dfStartAngle, dfEndAngle,
-                                                    0.0 );
+                                                    0.0, poDS->InlineBlocks() );
         if( !bHaveZ )
             poArc->flattenTo2D();
 
