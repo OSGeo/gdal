@@ -780,12 +780,9 @@ JPEGFixupTagsSubsampling(TIFF* tif)
 	 */
 	static const char module[] = "JPEGFixupTagsSubsampling";
 	struct JPEGFixupTagsSubsamplingData m;
+        uint64 fileoffset = TIFFGetStrileOffset(tif, 0);
 
-        _TIFFFillStriles( tif );
-        
-        if( tif->tif_dir.td_stripbytecount == NULL
-            || tif->tif_dir.td_stripoffset == NULL
-            || tif->tif_dir.td_stripbytecount[0] == 0 )
+        if( fileoffset == 0 )
         {
             /* Do not even try to check if the first strip/tile does not
                yet exist, as occurs when GDAL has created a new NULL file
@@ -804,9 +801,9 @@ JPEGFixupTagsSubsampling(TIFF* tif)
 	}
 	m.buffercurrentbyte=NULL;
 	m.bufferbytesleft=0;
-	m.fileoffset=tif->tif_dir.td_stripoffset[0];
+	m.fileoffset=fileoffset;
 	m.filepositioned=0;
-	m.filebytesleft=tif->tif_dir.td_stripbytecount[0];
+	m.filebytesleft=TIFFGetStrileByteCount(tif, 0);
 	if (!JPEGFixupTagsSubsamplingSec(&m))
 		TIFFWarningExt(tif->tif_clientdata,module,
 		    "Unable to auto-correct subsampling values, likely corrupt JPEG compressed data in first strip/tile; auto-correcting skipped");
