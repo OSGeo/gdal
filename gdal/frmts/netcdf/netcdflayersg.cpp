@@ -90,9 +90,8 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	char baseName[NC_MAX_CHAR + 1];
 	memset(baseName, 0, NC_MAX_CHAR + 1);
 	nc_inq_varname(ncid, nc_basevarId, baseName);
-	OGRSpatialReference* poSRS = (OGRSpatialReference*)this->GetSpatialRef();
 
-	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS); 
+	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr); 
 
 	poL->EnableSGBypass();
 	OGRFeatureDefn * defn = poL->GetLayerDefn();
