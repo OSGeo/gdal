@@ -244,6 +244,7 @@ int OCTCoordinateTransformationOptionsSetOperation(
 /*                              OGRProjCT                               */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 class OGRProjCT : public OGRCoordinateTransformation
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRProjCT)
@@ -334,6 +335,7 @@ public:
     void SetEmitErrors( bool bEmitErrors ) override
         { m_bEmitErrors = bEmitErrors; }
 };
+//! @endcond
 
 /************************************************************************/
 /*                 OCTDestroyCoordinateTransformation()                 */
@@ -559,6 +561,7 @@ OCTNewCoordinateTransformationEx(
 /*                             OGRProjCT()                             */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRProjCT::OGRProjCT()
 {
 }
@@ -1264,29 +1267,6 @@ int OGRCoordinateTransformation::Transform(
 }
 
 /************************************************************************/
-/*                            OCTTransform()                            */
-/************************************************************************/
-
-/** Transform an array of points
- *
- * @param hTransform Transformation object
- * @param nCount Number of points
- * @param x Array of nCount x values.
- * @param y Array of nCount y values.
- * @param z Array of nCount z values.
- * @return TRUE or FALSE
- */
-int CPL_STDCALL OCTTransform( OGRCoordinateTransformationH hTransform,
-                              int nCount, double *x, double *y, double *z )
-
-{
-    VALIDATE_POINTER1( hTransform, "OCTTransform", FALSE );
-
-    return OGRCoordinateTransformation::FromHandle(hTransform)->
-        Transform( nCount, x, y, z );
-}
-
-/************************************************************************/
 /*                             Transform()                              */
 /************************************************************************/
 
@@ -1777,6 +1757,30 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
     }
 
     return TRUE;
+}
+//! @endcond
+
+/************************************************************************/
+/*                            OCTTransform()                            */
+/************************************************************************/
+
+/** Transform an array of points
+ *
+ * @param hTransform Transformation object
+ * @param nCount Number of points
+ * @param x Array of nCount x values.
+ * @param y Array of nCount y values.
+ * @param z Array of nCount z values.
+ * @return TRUE or FALSE
+ */
+int CPL_STDCALL OCTTransform( OGRCoordinateTransformationH hTransform,
+                              int nCount, double *x, double *y, double *z )
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTTransform", FALSE );
+
+    return OGRCoordinateTransformation::FromHandle(hTransform)->
+        Transform( nCount, x, y, z );
 }
 
 /************************************************************************/

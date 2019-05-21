@@ -1275,7 +1275,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                int nMaskFlagStop = 0,
                                double* pdfDataPct = nullptr );
 
+#ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
+#endif
 
     /** Convert a GDALRasterBand* to a GDALRasterBandH.
      * @since GDAL 2.3
