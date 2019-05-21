@@ -82,7 +82,7 @@ static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char *
     GDALDataset *poTiff = poTiffDriver->Create(fname, img.pagesize.x, img.pagesize.y,
                                                img.pagesize.c, img.dt, papszOptions );
 
-    // Read directly to avoid double caching in GDAL
+    // Write directly to avoid double caching in GDAL
     // Unfortunately not possible for multiple bands
     if (img.pagesize.c == 1) {
         ret = poTiff->GetRasterBand(1)->WriteBlock(0,0,src.buffer);
@@ -157,10 +157,18 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 
     const GDALDataType eGTiffDT = poTiff->GetRasterBand(1)->GetRasterDataType();
     const int nDTSize = GDALGetDataTypeSizeBytes(eGTiffDT);
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
+    if( poTiff->GetRasterCount() )
+    {
+        poTiff->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    }
     if( poTiff->GetRasterXSize() != img.pagesize.x ||
         poTiff->GetRasterYSize() != img.pagesize.y ||
         poTiff->GetRasterCount() != img.pagesize.c ||
         img.dt != eGTiffDT ||
+        nBlockXSize != poTiff->GetRasterXSize() ||
+        nBlockYSize != poTiff->GetRasterYSize() ||
         static_cast<size_t>(img.pagesize.x) * img.pagesize.y * nDTSize * img.pagesize.c != dst.size )
     {
         CPLError(CE_Failure,CPLE_AppDefined,
