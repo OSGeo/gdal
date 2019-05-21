@@ -87,18 +87,12 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	}
 	
 
-	// Process grid mapping characteristic if needed
-	if(sg->getGridMappingVarID() != nccfdriver::INVALID_VAR_ID)
-	{
-		// further work, pull this apart from possible conflicts
-		SetProjectionFromVar(65536, sg->getGridMappingVarID(), true);
-	}
-
 	char baseName[NC_MAX_CHAR + 1];
 	memset(baseName, 0, NC_MAX_CHAR + 1);
 	nc_inq_varname(ncid, nc_basevarId, baseName);
+	OGRSpatialReference* poSRS = (OGRSpatialReference*)this->GetSpatialRef();
 
-	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, (OGRSpatialReference*)this->GetSpatialRef());
+	netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS); 
 
 	poL->EnableSGBypass();
 	OGRFeatureDefn * defn = poL->GetLayerDefn();
@@ -160,6 +154,9 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		int dimId = -1;	
 
 		// Find all dims, assume instance dimension is the first dimension
+		/* Update to CF-1.8 standard likely to change
+		 * use "geometry_dimension" instead
+		 */
 		if(props.size() > 0)
 		{
 			// All property values of a geometry container have the same inst. dim
