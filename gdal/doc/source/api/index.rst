@@ -39,6 +39,12 @@ API
        ogrspatialref
        gnm_cpp
 
+   `Python API <../python/index.html>`_
+   ------------------------------------
+
+   `Java API <../java/index.html>`_
+   --------------------------------
+
 .. only:: latex
 
     API is omitted in this PDF document. You can consult it on

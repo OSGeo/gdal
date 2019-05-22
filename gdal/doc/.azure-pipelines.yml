@@ -5,6 +5,7 @@ trigger:
   branches:
     include:
     - master
+    - doc-sprint # remove me later
 
 pr:
   autoCancel: true
@@ -48,10 +49,15 @@ jobs:
         displayName: 'Deploy the key'
         condition: notin(variables['Build.Reason'], 'PullRequest')
       - script: |
+          apt install wget unzip
           mv gdal/doc/build/html gdal-docs
           rm gdal-docs/gdal.pdf
           cp gdal/doc/build/latex/gdal.pdf gdal-docs
           cd gdal-docs
+          wget https://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
+          wget https://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
+          unzip -q /tmp/javadoc.zip
+          tar xzf /tmp/python-doc.tar.gz
           git init
           git config user.email "proj4bot@proj4.bot"
           git config user.name "GDAL Bot"
