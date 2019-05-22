@@ -23,7 +23,8 @@ namespace nccfdriver
 		LINE,		// OGRLineString
 		MULTILINE,	// OGRMultiLineString
 		POINT,		// OGRPoint
-		MULTIPOINT	// OGRMultiPoint
+		MULTIPOINT,	// OGRMultiPoint
+		UNSUPPORTED	// Unsupported feature type	
 	};	
 
 	// Concrete "Point" class, holds n dimensional double precision floating point value, defaults to all zero values

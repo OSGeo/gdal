@@ -34,6 +34,8 @@ namespace nccfdriver
 			case MULTIPOINT:
 				ret = wkbMultiPoint;
 				break;
+			case UNSUPPORTED:
+				break;
 		}
 
 		return ret;	

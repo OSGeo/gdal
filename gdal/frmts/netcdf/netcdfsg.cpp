@@ -80,6 +80,11 @@ namespace nccfdriver
 		// Find geometry type
 		this->type = nccfdriver::getGeometryType(ncId, geoVarId); 
 
+		if(this->type == NONE)
+		{
+			throw new SG_Exception_Existential(container_name, CF_SG_GEOMETRY_TYPE);
+		}
+
 		// Get grid mapping variable, if it exists
 		char * gm_name = nullptr;
 		this->gm_varId = INVALID_VAR_ID;
@@ -836,8 +841,13 @@ namespace nccfdriver
 
 	geom_t getGeometryType(int ncid, int varid)
 	{
-		geom_t ret = NONE;
+		geom_t ret = UNSUPPORTED;
 		char * gt_name = attrf(ncid, varid, CF_SG_GEOMETRY_TYPE);
+
+		if(gt_name == nullptr)
+		{
+			return NONE;
+		}
 		
 		// Points	
 		if(!strcmp(gt_name, CF_SG_TYPE_POINT))
