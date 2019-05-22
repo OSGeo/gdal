@@ -235,6 +235,17 @@ namespace nccfdriver
 		SG_Exception_BadPoint() : err_msg("An attempt was made to read an invalid point (likely index out of bounds).") {}
 	};
 
+	// Too many dimensions on node coordinates variable
+	class SG_Exception_Not1D : public SG_Exception
+	{
+		const char * err_msg;
+
+		public:
+			char* get_err_msg() override { return (char*)err_msg; }
+		
+		SG_Exception_Not1D() : err_msg("A node coordinates axis variable is not one dimensional.") {}
+	};
+
 	// Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h
 	
 	/* Retrieves the minor version from the value Conventions global attr

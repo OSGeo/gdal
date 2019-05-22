@@ -74,7 +74,7 @@ namespace nccfdriver
 		// Get geometry container name
 		if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
 		{
-			throw new SG_Exception_Existential((char*)"new geometry container:", "the variable of the given ID"); 	
+			throw new SG_Exception_Existential((char*)"new geometry container", "the variable of the given ID"); 	
 		}
 
 		// Find geometry type
@@ -98,12 +98,14 @@ namespace nccfdriver
 		char * nc_name = nullptr; char * pnc_name = nullptr; char * inter_name = nullptr; char * ir_name = nullptr;
 		int pnc_vid = INVALID_VAR_ID; int nc_vid = INVALID_VAR_ID; int ir_vid = INVALID_VAR_ID;
 		size_t bound = 0; int buf;
+		size_t total_node_count = 0; // used in error checks later
 		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) != nullptr)
 		{
 			nc_inq_varid(ncId, nc_name, &nc_vid);
 			while(nc_get_var1_int(ncId, nc_vid, &bound, &buf) == NC_NOERR)
 			{
 				this->node_counts.push_back(buf);
+				total_node_count += buf;
 				bound++;	
 			}	
 
@@ -145,7 +147,7 @@ namespace nccfdriver
 		// part node count exists only when node count exists
 		if(pnode_counts.size() > 0 && node_counts.size() == 0)
 		{
-			throw new SG_Exception_Dep(container_name, CF_SG_NODE_COUNT, CF_SG_PART_NODE_COUNT);
+			throw new SG_Exception_Dep(container_name, CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
 		}
 
 		// interior rings only exist when part node counts exist
@@ -164,8 +166,6 @@ namespace nccfdriver
 			}
 		}
 
-		// cardinality of node_counts == cardinality of x and y node_coordinates
-
 		// lines and polygons require node_counts, multipolygons are checked with part_node_count
 		if(this->type == POLYGON || this->type == LINE)
 		{
@@ -175,7 +175,7 @@ namespace nccfdriver
 			}
 		}
 
-		/* Safety checks End
+		/* Basic Safety checks End
 		 */
 
 		// Create bound list
@@ -229,21 +229,72 @@ namespace nccfdriver
 
 		// (1) the touple order for a single point
 		// (2) the variable ids with the relevant coordinate values
-		// (3) initialize the point buffer
 		char * dim = strtok(cart,  " ");
 		int axis_id = 0;
 		
 		while(dim != NULL)
 		{
 			if(nc_inq_varid(ncId, dim, &axis_id) == NC_NOERR)
-			{ this->touple_order++;
+			{
+				this->touple_order++;
 				this->nodec_varIds.push_back(axis_id);
+			}
+			else
+			{
+				throw new SG_Exception_Existential(container_name, dim);	
 			}
 
 			dim = strtok(NULL, " "); 
 		}
 
 		delete[] cart;
+
+		/* Final Checks for node coordinates
+		 * (1) Each axis has one and only one dimension, dim length of each node coordinates are all equal
+		 * (2) total node count == dim length of each node coordinates (if node_counts not empty)
+		 * (3) there are at least two node coordinate variable ids
+		 */
+
+		int all_dim = INVALID_VAR_ID; bool dim_set = false;
+		int dimC = 0;
+		//(1) one dimension check, each node_coordinates have same dimension
+		for(size_t nvitr = 0; nvitr < nodec_varIds.size(); nvitr++)
+		{
+			dimC = 0;
+			nc_inq_varndims(ncId, nodec_varIds[nvitr], &dimC);
+
+			if(dimC != 1)
+			{
+				throw new SG_Exception_Not1D();
+			}
+
+			// check that all have same dimension
+			int inter_dim[1];
+			nc_inq_vardimid(ncId, nodec_varIds[nvitr], inter_dim);
+			
+			if(!dim_set)
+			{
+				all_dim = inter_dim[0];
+			}	
+
+			else{if (inter_dim[0] != all_dim) throw new SG_Exception_Dim_MM(container_name, "X, Y", "in general all node coordinate axes"); } 
+		}
+
+		// (2) check equality one
+		if(node_counts.size() > 0)
+		{
+			size_t diml;
+			nc_inq_dimlen(ncId, all_dim, &diml);
+		
+			if(diml != total_node_count) throw new SG_Exception_BadSum(container_name, "node_count", "node coordinate dimension length");
+		}
+	
+
+		// (3) check touple order
+		if(this->touple_order < 2)
+		{
+			throw new SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");	
+		}
 
 		this->pt_buffer = new Point(this->touple_order);
 		
@@ -669,7 +720,7 @@ namespace nccfdriver
 	// Exception Class Implementations
 	SG_Exception_Dim_MM::SG_Exception_Dim_MM(char* container_name, const char* field_1, const char* field_2)
 	{
-		const char * format = "%s: Dimensions of \"%s\" and \"%s\" must match but do not match.";
+		const char * format = "%s: One or more dimensions of \"%s\" and \"%s\" must match but do not match.";
 		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
 		size_t s = strlen(field_1) + strlen(field_2) + strlen(format) + strlen(container_name) + 1;
 		err_msg = new char[s];
@@ -678,7 +729,7 @@ namespace nccfdriver
 
 	SG_Exception_Existential::SG_Exception_Existential(char* container_name, const char* missing_name)
 	{
-		const char * format = "%s: The property or the variable associated with property \"%s\" is missing.";
+		const char * format = "[%s] The property or the variable associated with \"%s\" is missing.";
 
 		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
 		size_t s = strlen(missing_name) + strlen(format) + strlen(container_name) + 1;
@@ -688,7 +739,7 @@ namespace nccfdriver
 
 	SG_Exception_Dep::SG_Exception_Dep(char* container_name, const char* arg1, const char* arg2)
 	{
-		const char * format = "%s: The attribute \"%s\" may not exist without the attribute \"%s\" existing.";
+		const char * format = "[%s] The attribute \"%s\" may not exist without the attribute \"%s\" existing.";
 		
 		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
 		size_t s = strlen(arg1) + strlen(arg2) + strlen(format) + strlen(container_name) + 1;
@@ -698,7 +749,7 @@ namespace nccfdriver
 	
 	SG_Exception_BadSum::SG_Exception_BadSum(char* container_name, const char* arg1, const char* arg2)
 	{
-		const char * format = "%s: The sum of all values in \"%s\" and the sum of all values in \"%s\" do not match.";
+		const char * format = "[%s] The sum of all values in \"%s\" and \"%s\" do not match.";
 		
 		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
 		size_t s = strlen(arg1) + strlen(arg2) + strlen(format) + strlen(container_name) + 1;
