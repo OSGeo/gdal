@@ -4231,7 +4231,8 @@ class Feature(_object):
 
         iField:  the field to set, from 0 to GetFieldCount()-1.
 
-        papszValues:  the values to assign. 
+        papszValues:  the values to assign. List of NUL-terminated string,
+        ending with a NULL pointer. 
         """
         return _ogr.Feature_SetFieldStringList(self, *args)
 
@@ -6642,7 +6643,33 @@ class Geometry(_object):
 
 
     def MakeValid(self, *args):
-        """MakeValid(Geometry self) -> Geometry"""
+        """
+        MakeValid(Geometry self) -> Geometry
+
+        OGRGeometryH
+        OGR_G_MakeValid(OGRGeometryH hGeom)
+
+        Attempts to make an invalid geometry valid without losing vertices.
+
+        Already-valid geometries are cloned without further intervention.
+
+        This function is the same as the C++ method OGRGeometry::MakeValid().
+
+        This function is built on the GEOS >= 3.8 library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        >= 3.8 library, this function will return a clone of the input
+        geometry if it is valid, or NULL if it is invalid
+
+        Parameters:
+        -----------
+
+        hGeom:  The Geometry to make valid.
+
+        a newly allocated geometry now owned by the caller, or NULL on
+        failure.
+
+        GDAL 3.0 
+        """
         return _ogr.Geometry_MakeValid(self, *args)
 
 
@@ -6702,6 +6729,10 @@ class Geometry(_object):
         two geometries operated on. The OGR_G_Intersects() function can be
         used to test if two geometries intersect.
 
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
+
         This function is the same as the C++ method
         OGRGeometry::Intersection().
 
@@ -6735,6 +6766,10 @@ class Geometry(_object):
         Generates a new geometry which is the region of union of the two
         geometries operated on.
 
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
+
         This function is the same as the C++ method OGRGeometry::Union().
 
         This function is built on the GEOS library, check it for the
@@ -6762,6 +6797,10 @@ class Geometry(_object):
         OGR_G_UnionCascaded(OGRGeometryH hThis)
 
         Compute union using cascading.
+
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
 
         This function is the same as the C++ method
         OGRGeometry::UnionCascaded().
@@ -6792,6 +6831,10 @@ class Geometry(_object):
 
         Generates a new geometry which is the region of this geometry with the
         region of the other geometry removed.
+
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
 
         This function is the same as the C++ method OGRGeometry::Difference().
 
@@ -6824,6 +6867,10 @@ class Geometry(_object):
 
         Generates a new geometry which is the symmetric difference of this
         geometry and the other geometry.
+
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
 
         This function is the same as the C++ method
         OGRGeometry::SymmetricDifference().
@@ -7131,6 +7178,10 @@ class Geometry(_object):
 
         Tests if this geometry and the other geometry are disjoint.
 
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
+
         This function is the same as the C++ method OGRGeometry::Disjoint().
 
         This function is built on the GEOS library, check it for the
@@ -7160,6 +7211,10 @@ class Geometry(_object):
         Test for touching.
 
         Tests if this geometry and the other geometry are touching.
+
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
 
         This function is the same as the C++ method OGRGeometry::Touches().
 
@@ -7191,6 +7246,10 @@ class Geometry(_object):
 
         Tests if this geometry and the other geometry are crossing.
 
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
+
         This function is the same as the C++ method OGRGeometry::Crosses().
 
         This function is built on the GEOS library, check it for the
@@ -7220,6 +7279,10 @@ class Geometry(_object):
         Test for containment.
 
         Tests if this geometry is within the other geometry.
+
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
 
         This function is the same as the C++ method OGRGeometry::Within().
 
@@ -7251,6 +7314,10 @@ class Geometry(_object):
 
         Tests if this geometry contains the other geometry.
 
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
+
         This function is the same as the C++ method OGRGeometry::Contains().
 
         This function is built on the GEOS library, check it for the
@@ -7281,6 +7348,10 @@ class Geometry(_object):
 
         Tests if this geometry and the other geometry overlap, that is their
         intersection has a non-zero area.
+
+        Geometry validity is not checked. In case you are unsure of the
+        validity of the input geometries, call IsValid() before, otherwise the
+        result might be wrong.
 
         This function is the same as the C++ method OGRGeometry::Overlaps().
 
