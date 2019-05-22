@@ -2701,6 +2701,45 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfRatio);
                 }
             }
+            else if( EQUAL(pszResampling, "AVERAGE_QUADRATIC") )
+            {
+                double dfTotalR = 0.0;
+                double dfTotalI = 0.0;
+                double dfR = 0.0;
+                double dfI = 0.0;
+                int nCount = 0;
+
+                for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                {
+                    for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
+                    {
+                        dfR = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
+                        dfI = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
+                        dfTotalR += dfR * dfR - dfI *dfI;
+                        dfTotalI += 2. * dfR * dfI;
+                        ++nCount;
+                    }
+                }
+
+                CPLAssert( nCount > 0 );
+                if( nCount == 0 )
+                {
+                    pafDstScanline[iDstPixel*2] = 0.0;
+                    pafDstScanline[iDstPixel*2+1] = 0.0;
+                }
+                else
+                {
+                    /* compute mean */
+                    dfTotalR = dfTotalR/nCount;
+                    dfTotalI = dfTotalI/nCount;
+                    /* compute square root of the complex mean */
+                    dfR = sqrt((dfTotalR + sqrt(dfTotalR * dfTotalR + dfTotalI * dfTotalI))/2.);
+                    dfI = dfTotalI / fabs(dfTotalI) * sqrt((-dfTotalR + sqrt(dfTotalR * dfTotalR + dfTotalI * dfTotalI)) / 2.);
+
+                    pafDstScanline[iDstPixel*2  ] = static_cast<float>(dfR);
+                    pafDstScanline[iDstPixel*2+1] = static_cast<float>(dfI);
+                }
+            }
             else if( STARTS_WITH_CI(pszResampling, "AVER") )
             {
                 double dfTotalR = 0.0;
