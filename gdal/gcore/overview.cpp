@@ -370,6 +370,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     // AVERAGE_BIT2GRAYSCALE
     const bool bBit2Grayscale =
         CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_BIT2G" ) );
+    const bool bQuadraticAverage =
+        CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_QUADRA" ) );
     if( bBit2Grayscale )
         poColorTable = nullptr;
 
@@ -526,16 +528,24 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
             {
                 // Optimized case : no nodata, overview by a factor of 2 and
                 // regular x and y src spacing.
+                Tsum nTotal;
                 const T* pSrcScanlineShifted =
                     pChunk + panSrcXOffShifted[0] +
                     static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
                 for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
                 {
-                    const Tsum nTotal =
-                        pSrcScanlineShifted[0]
-                        + pSrcScanlineShifted[1]
-                        + pSrcScanlineShifted[nChunkXSize]
-                        + pSrcScanlineShifted[1+nChunkXSize];
+                    if(bQuadraticAverage)
+                        nTotal =
+                            pSrcScanlineShifted[0]*pSrcScanlineShifted[0]
+                            + pSrcScanlineShifted[1]*pSrcScanlineShifted[1]
+                            + pSrcScanlineShifted[nChunkXSize]*pSrcScanlineShifted[nChunkXSize]
+                            + pSrcScanlineShifted[1+nChunkXSize]*pSrcScanlineShifted[1+nChunkXSize];
+                    else
+                        nTotal =
+                            pSrcScanlineShifted[0]
+                            + pSrcScanlineShifted[1]
+                            + pSrcScanlineShifted[nChunkXSize]
+                            + pSrcScanlineShifted[1+nChunkXSize];
 
                     auto nVal = static_cast<T>((nTotal + 2) / 4);
                     if( bHasNoData && nVal == tNoDataValue )
@@ -565,7 +575,10 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                             if( pabyChunkNodataMask == nullptr ||
                                 pabyChunkNodataMask[iX + iY *nChunkXSize] )
                             {
-                                dfTotal += val;
+                                if(bQuadraticAverage)
+                                    dfTotal += val * val;
+                                else
+                                    dfTotal += val;
                                 ++nCount;
                             }
                         }
@@ -581,6 +594,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                              eWrkDataType == GDT_UInt16)
                     {
                         auto nVal = static_cast<T>((dfTotal + nCount / 2) / nCount);
+                        if(bQuadraticAverage)
+                            nVal = static_cast<T>(sqrt(nVal));
                         if( bHasNoData && nVal == tNoDataValue )
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
@@ -588,6 +603,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     else
                     {
                         auto nVal = static_cast<T>(dfTotal / nCount);
+                        if(bQuadraticAverage)
+                            nVal = static_cast<T>(sqrt(nVal));
                         if( bHasNoData && nVal == tNoDataValue )
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
@@ -619,9 +636,18 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         if( nVal >= 0 && nVal < nEntryCount &&
                             aEntries[nVal].c4 )
                         {
-                            nTotalR += aEntries[nVal].c1;
-                            nTotalG += aEntries[nVal].c2;
-                            nTotalB += aEntries[nVal].c3;
+                            if(bQuadraticAverage)
+                            {
+                                nTotalR += aEntries[nVal].c1*aEntries[nVal].c1;
+                                nTotalG += aEntries[nVal].c2*aEntries[nVal].c2;
+                                nTotalB += aEntries[nVal].c3*aEntries[nVal].c3;
+                            }
+                            else
+                            {
+                                nTotalR += aEntries[nVal].c1;
+                                nTotalG += aEntries[nVal].c2;
+                                nTotalB += aEntries[nVal].c3;
+                            }
                             ++nCount;
                         }
                     }
@@ -638,6 +664,12 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     int nR = static_cast<int>((nTotalR + nCount / 2) / nCount),
                         nG = static_cast<int>((nTotalG + nCount / 2) / nCount),
                         nB = static_cast<int>((nTotalB + nCount / 2) / nCount);
+                    if(bQuadraticAverage)
+                    {
+                        nR = static_cast<int>(sqrt(nR));
+                        nG = static_cast<int>(sqrt(nG));
+                        nB = static_cast<int>(sqrt(nB));
+                    }
                     pDstScanline[iDstPixel] = static_cast<T>(GDALFindBestEntry(
                         nEntryCount, aEntries, nR, nG, nB));
                 }
@@ -710,392 +742,6 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             bPropagateNoData );
     else if( eWrkDataType == GDT_Float32 )
         return GDALResampleChunk32R_AverageT<float, double>(
-            dfXRatioDstToSrc, dfYRatioDstToSrc,
-            dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
-            static_cast<float *>( pChunk ),
-            pabyChunkNodataMask,
-            nChunkXOff, nChunkXSize,
-            nChunkYOff, nChunkYSize,
-            nDstXOff, nDstXOff2,
-            nDstYOff, nDstYOff2,
-            poOverview,
-            pszResampling,
-            bHasNoData, fNoDataValue,
-            poColorTable,
-            bPropagateNoData );
-
-    CPLAssert(false);
-    return CE_Failure;
-}
-
-/************************************************************************/
-/*                    GDALResampleChunk32R_QAverage()                    */
-/************************************************************************/
-
-template <class T, class Tsum>
-static CPLErr
-GDALResampleChunk32R_QAverageT( double dfXRatioDstToSrc,
-                               double dfYRatioDstToSrc,
-                               double dfSrcXDelta,
-                               double dfSrcYDelta,
-                               GDALDataType eWrkDataType,
-                               T* pChunk,
-                               GByte * pabyChunkNodataMask,
-                               int nChunkXOff, int nChunkXSize,
-                               int nChunkYOff, int nChunkYSize,
-                               int nDstXOff, int nDstXOff2,
-                               int nDstYOff, int nDstYOff2,
-                               GDALRasterBand * poOverview,
-                               const char * pszResampling,
-                               int bHasNoData,  // TODO(schwehr): bool.
-                               float fNoDataValue,
-                               GDALColorTable* poColorTable,
-                               bool bPropagateNoData )
-{
-    // AVERAGE_BIT2GRAYSCALE
-    const bool bBit2Grayscale =
-        CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_BIT2G" ) );
-    if( bBit2Grayscale )
-        poColorTable = nullptr;
-
-    T tNoDataValue;
-    if( !bHasNoData )
-        tNoDataValue = 0;
-    else
-        tNoDataValue = static_cast<T>(fNoDataValue);
-    const T tReplacementVal = static_cast<T>(GetReplacementValueIfNoData(
-        poOverview->GetRasterDataType(), bHasNoData, fNoDataValue));
-
-    int nChunkRightXOff = nChunkXOff + nChunkXSize;
-    int nChunkBottomYOff = nChunkYOff + nChunkYSize;
-    int nDstXWidth = nDstXOff2 - nDstXOff;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate scanline buffer.                                       */
-/* -------------------------------------------------------------------- */
-
-    T *pDstScanline = static_cast<T *>(
-        VSI_MALLOC_VERBOSE(
-            nDstXWidth * GDALGetDataTypeSizeBytes(eWrkDataType) ) );
-    int* panSrcXOffShifted = static_cast<int *>(
-        VSI_MALLOC_VERBOSE(2 * nDstXWidth * sizeof(int) ) );
-
-    if( pDstScanline == nullptr || panSrcXOffShifted == nullptr )
-    {
-        VSIFree(pDstScanline);
-        VSIFree(panSrcXOffShifted);
-        return CE_Failure;
-    }
-
-    int nEntryCount = 0;
-    GDALColorEntry* aEntries = nullptr;
-    int nTransparentIdx = -1;
-
-    if( poColorTable &&
-        !ReadColorTableAsArray(poColorTable, nEntryCount, aEntries,
-                               nTransparentIdx) )
-    {
-        VSIFree(pDstScanline);
-        VSIFree(panSrcXOffShifted);
-        return CE_Failure;
-    }
-
-    // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
-    // it as nodata value
-    if( bHasNoData && fNoDataValue >= 0.0f && tNoDataValue < nEntryCount )
-    {
-        if( aEntries == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_ObjectNull, "No aEntries.");
-            VSIFree(pDstScanline);
-            VSIFree(panSrcXOffShifted);
-            return CE_Failure;
-        }
-        aEntries[static_cast<int>(tNoDataValue)].c4 = 0;
-    }
-    // Or if we have no explicit nodata, but a color table entry that is
-    // transparent, consider it as the nodata value
-    else if( !bHasNoData && nTransparentIdx >= 0 )
-    {
-        bHasNoData = TRUE;
-        tNoDataValue = static_cast<T>(nTransparentIdx);
-    }
-
-/* ==================================================================== */
-/*      Precompute inner loop constants.                                */
-/* ==================================================================== */
-    bool bSrcXSpacingIsTwo = true;
-    int nLastSrcXOff2 = -1;
-    for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; ++iDstPixel )
-    {
-        double dfSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
-        // Apply some epsilon to avoid numerical precision issues
-        int nSrcXOff = static_cast<int>(dfSrcXOff + 1e-8);
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfXRatioDstToSrc > 1 && dfSrcXOff - nSrcXOff > 0.9 &&
-            nSrcXOff < nChunkRightXOff)
-            nSrcXOff ++;
-#endif
-        if( nSrcXOff < nChunkXOff )
-            nSrcXOff = nChunkXOff;
-
-        double dfSrcXOff2 = dfSrcXDelta + (iDstPixel+1)* dfXRatioDstToSrc;
-        int nSrcXOff2 = static_cast<int>(ceil(dfSrcXOff2 - 1e-8));
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfXRatioDstToSrc > 1 && nSrcXOff2 - dfSrcXOff2 > 0.9 &&
-            nSrcXOff2 > nChunkXOff)
-            nSrcXOff2 --;
-#endif
-        if( nSrcXOff2 == nSrcXOff )
-            nSrcXOff2 ++;
-        if( nSrcXOff2 > nChunkRightXOff )
-            nSrcXOff2 = nChunkRightXOff;
-
-        panSrcXOffShifted[2 * (iDstPixel - nDstXOff)] = nSrcXOff - nChunkXOff;
-        panSrcXOffShifted[2 * (iDstPixel - nDstXOff) + 1] =
-            nSrcXOff2 - nChunkXOff;
-        if( nSrcXOff2 - nSrcXOff != 2 ||
-            (nLastSrcXOff2 >= 0 && nLastSrcXOff2 != nSrcXOff) )
-        {
-            bSrcXSpacingIsTwo = false;
-        }
-        nLastSrcXOff2 = nSrcXOff2;
-    }
-
-/* ==================================================================== */
-/*      Loop over destination scanlines.                                */
-/* ==================================================================== */
-    CPLErr eErr = CE_None;
-    for( int iDstLine = nDstYOff;
-         iDstLine < nDstYOff2 && eErr == CE_None;
-         ++iDstLine )
-    {
-        double dfSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
-        int nSrcYOff = static_cast<int>(dfSrcYOff + 1e-8);
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfYRatioDstToSrc > 1 && dfSrcYOff - nSrcYOff > 0.9 &&
-            nSrcYOff < nChunkBottomYOff)
-            nSrcYOff ++;
-#endif
-        if( nSrcYOff < nChunkYOff )
-            nSrcYOff = nChunkYOff;
-
-        double dfSrcYOff2 = dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc;
-        int nSrcYOff2 = static_cast<int>(ceil(dfSrcYOff2 - 1e-8));
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfYRatioDstToSrc > 1 && nSrcYOff2 - dfSrcYOff2 > 0.9 &&
-            nSrcYOff2 > nChunkYOff)
-            nSrcYOff2 --;
-#endif
-        if( nSrcYOff2 == nSrcYOff )
-            ++nSrcYOff2;
-        if( nSrcYOff2 > nChunkBottomYOff )
-            nSrcYOff2 = nChunkBottomYOff;
-
-/* -------------------------------------------------------------------- */
-/*      Loop over destination pixels                                    */
-/* -------------------------------------------------------------------- */
-        if( poColorTable == nullptr )
-        {
-            if( bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
-                pabyChunkNodataMask == nullptr &&
-                (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16) )
-            {
-                // Optimized case : no nodata, overview by a factor of 2 and
-                // regular x and y src spacing.
-                const T* pSrcScanlineShifted =
-                    pChunk + panSrcXOffShifted[0] +
-                    (nSrcYOff - nChunkYOff) * nChunkXSize;
-                for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
-                {
-                    const Tsum nTotal =
-                        pSrcScanlineShifted[0] * pSrcScanlineShifted[0]
-                        + pSrcScanlineShifted[1] * pSrcScanlineShifted[1]
-                        + pSrcScanlineShifted[nChunkXSize] *pSrcScanlineShifted[nChunkXSize]
-                        + pSrcScanlineShifted[1+nChunkXSize] * pSrcScanlineShifted[1+nChunkXSize];
-
-                    auto nVal = static_cast<T>(sqrt((nTotal + 2) / 4));
-                    if( bHasNoData && nVal == tNoDataValue )
-                        nVal = tReplacementVal;
-                    pDstScanline[iDstPixel] = nVal;
-                    pSrcScanlineShifted += 2;
-                }
-            }
-            else
-            {
-                nSrcYOff -= nChunkYOff;
-                nSrcYOff2 -= nChunkYOff;
-
-                for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
-                {
-                    const int nSrcXOff = panSrcXOffShifted[2 * iDstPixel];
-                    const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
-
-                    Tsum dfTotal = 0;
-                    int nCount = 0;
-
-                    for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
-                    {
-                        for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
-                        {
-                            const T val = pChunk[iX + iY *nChunkXSize];
-                            if( pabyChunkNodataMask == nullptr ||
-                                pabyChunkNodataMask[iX + iY *nChunkXSize] )
-                            {
-                                dfTotal += val * val;
-                                ++nCount;
-                            }
-                        }
-                    }
-
-                    if( nCount == 0 ||
-                        (bPropagateNoData && nCount <
-                            (nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)))
-                    {
-                        pDstScanline[iDstPixel] = tNoDataValue;
-                    }
-                    else if( eWrkDataType == GDT_Byte ||
-                             eWrkDataType == GDT_UInt16)
-                    {
-                        auto nVal = static_cast<T>(sqrt((dfTotal + nCount / 2) / nCount));
-                        if( bHasNoData && nVal == tNoDataValue )
-                            nVal = tReplacementVal;
-                        pDstScanline[iDstPixel] = nVal;
-                    }
-                    else
-                    {
-                        auto nVal = static_cast<T>(sqrt(dfTotal / nCount));
-                        if( bHasNoData && nVal == tNoDataValue )
-                            nVal = tReplacementVal;
-                        pDstScanline[iDstPixel] = nVal;
-                    }
-                }
-            }
-        }
-        else
-        {
-            nSrcYOff -= nChunkYOff;
-            nSrcYOff2 -= nChunkYOff;
-
-            for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
-            {
-                const int nSrcXOff = panSrcXOffShifted[2 * iDstPixel];
-                const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
-
-                int nTotalR = 0;
-                int nTotalG = 0;
-                int nTotalB = 0;
-                int nCount = 0;
-
-                for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
-                {
-                    for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
-                    {
-                        const T val = pChunk[iX + iY *nChunkXSize];
-                        int nVal = static_cast<int>(val);
-                        if( nVal >= 0 && nVal < nEntryCount &&
-                            aEntries[nVal].c4 )
-                        {
-                            nTotalR += aEntries[nVal].c1 * aEntries[nVal].c1;
-                            nTotalG += aEntries[nVal].c2 * aEntries[nVal].c2;
-                            nTotalB += aEntries[nVal].c3 * aEntries[nVal].c3;
-                            ++nCount;
-                        }
-                    }
-                }
-
-                if( nCount == 0 ||
-                    (bPropagateNoData && nCount <
-                        (nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)) )
-                {
-                    pDstScanline[iDstPixel] = tNoDataValue;
-                }
-                else
-                {
-                    int nR = static_cast<int>(sqrt((nTotalR + nCount / 2) / nCount)),
-                        nG = static_cast<int>(sqrt((nTotalG + nCount / 2) / nCount)),
-                        nB = static_cast<int>(sqrt((nTotalB + nCount / 2) / nCount));
-                    pDstScanline[iDstPixel] = static_cast<T>(GDALFindBestEntry(
-                        nEntryCount, aEntries, nR, nG, nB));
-                }
-            }
-        }
-
-        eErr = poOverview->RasterIO(
-            GF_Write, nDstXOff, iDstLine, nDstXWidth, 1,
-            pDstScanline, nDstXWidth, 1, eWrkDataType,
-            0, 0, nullptr );
-    }
-
-    CPLFree( pDstScanline );
-    CPLFree( aEntries );
-    CPLFree( panSrcXOffShifted );
-
-    return eErr;
-}
-
-static CPLErr
-GDALResampleChunk32R_QAverage( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
-                              double dfSrcXDelta,
-                              double dfSrcYDelta,
-                              GDALDataType eWrkDataType,
-                              void * pChunk,
-                              GByte * pabyChunkNodataMask,
-                              int nChunkXOff, int nChunkXSize,
-                              int nChunkYOff, int nChunkYSize,
-                              int nDstXOff, int nDstXOff2,
-                              int nDstYOff, int nDstYOff2,
-                              GDALRasterBand * poOverview,
-                              const char * pszResampling,
-                              int bHasNoData, float fNoDataValue,
-                              GDALColorTable* poColorTable,
-                              GDALDataType /* eSrcDataType */,
-                              bool bPropagateNoData )
-{
-    if( eWrkDataType == GDT_Byte )
-        return GDALResampleChunk32R_QAverageT<GByte, int>(
-            dfXRatioDstToSrc, dfYRatioDstToSrc,
-            dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
-            static_cast<GByte *>( pChunk ),
-            pabyChunkNodataMask,
-            nChunkXOff, nChunkXSize,
-            nChunkYOff, nChunkYSize,
-            nDstXOff, nDstXOff2,
-            nDstYOff, nDstYOff2,
-            poOverview,
-            pszResampling,
-            bHasNoData, fNoDataValue,
-            poColorTable,
-            bPropagateNoData );
-    else if( eWrkDataType == GDT_UInt16 &&
-             dfXRatioDstToSrc * dfYRatioDstToSrc < 65536 )
-        return GDALResampleChunk32R_QAverageT<GUInt16, GUInt32>(
-            dfXRatioDstToSrc, dfYRatioDstToSrc,
-            dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
-            static_cast<GUInt16 *>( pChunk ),
-            pabyChunkNodataMask,
-            nChunkXOff, nChunkXSize,
-            nChunkYOff, nChunkYSize,
-            nDstXOff, nDstXOff2,
-            nDstYOff, nDstYOff2,
-            poOverview,
-            pszResampling,
-            bHasNoData, fNoDataValue,
-            poColorTable,
-            bPropagateNoData );
-    else if( eWrkDataType == GDT_Float32 )
-        return GDALResampleChunk32R_QAverageT<float, double>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
             eWrkDataType,
