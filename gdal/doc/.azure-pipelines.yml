@@ -1,5 +1,17 @@
 # Azure Pipelines to build GDAL documentation
 
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - master
+
 variables:
   #system.debug: true
   configuration: release
@@ -28,11 +40,13 @@ jobs:
         inputs:
           secureFile: 'pdal-docs-ssh-key'
         displayName: 'Get the deploy key'
+        condition: notin(variables['Build.Reason'], 'PullRequest')
       - script: |
           mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
           chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
         displayName: 'Deploy the key'
+        condition: notin(variables['Build.Reason'], 'PullRequest')
       - script: |
           mv gdal/doc/build/html gdal-docs
           rm gdal-docs/gdal.pdf
@@ -48,3 +62,4 @@ jobs:
           git commit -m "Update with https://github.com/OSGeo/gdal/commit/$BUILD_SOURCEVERSION"
           git push -f origin master
         displayName: 'Deploy the docs'
+        condition: notin(variables['Build.Reason'], 'PullRequest')
