@@ -49,7 +49,6 @@ jobs:
         displayName: 'Deploy the key'
         condition: notin(variables['Build.Reason'], 'PullRequest')
       - script: |
-          apt install wget unzip
           mv gdal/doc/build/html gdal-docs
           rm gdal-docs/gdal.pdf
           cp gdal/doc/build/latex/gdal.pdf gdal-docs
