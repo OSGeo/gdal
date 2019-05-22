@@ -536,10 +536,10 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                 {
                     if(bQuadraticAverage)
                         nTotal =
-                            pSrcScanlineShifted[0]*pSrcScanlineShifted[0]
-                            + pSrcScanlineShifted[1]*pSrcScanlineShifted[1]
-                            + pSrcScanlineShifted[nChunkXSize]*pSrcScanlineShifted[nChunkXSize]
-                            + pSrcScanlineShifted[1+nChunkXSize]*pSrcScanlineShifted[1+nChunkXSize];
+                            pSrcScanlineShifted[0] * pSrcScanlineShifted[0]
+                            + pSrcScanlineShifted[1] * pSrcScanlineShifted[1]
+                            + pSrcScanlineShifted[nChunkXSize] * pSrcScanlineShifted[nChunkXSize]
+                            + pSrcScanlineShifted[1+nChunkXSize] * pSrcScanlineShifted[1+nChunkXSize];
                     else
                         nTotal =
                             pSrcScanlineShifted[0]
@@ -638,9 +638,9 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         {
                             if(bQuadraticAverage)
                             {
-                                nTotalR += aEntries[nVal].c1*aEntries[nVal].c1;
-                                nTotalG += aEntries[nVal].c2*aEntries[nVal].c2;
-                                nTotalB += aEntries[nVal].c3*aEntries[nVal].c3;
+                                nTotalR += aEntries[nVal].c1 * aEntries[nVal].c1;
+                                nTotalG += aEntries[nVal].c2 * aEntries[nVal].c2;
+                                nTotalB += aEntries[nVal].c3 * aEntries[nVal].c3;
                             }
                             else
                             {
