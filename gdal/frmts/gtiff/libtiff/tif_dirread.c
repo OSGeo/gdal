@@ -206,6 +206,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryByte(TIFF* tif, TIFFDirEntry* di
 	switch (direntry->tdir_type)
 	{
 		case TIFF_BYTE:
+		case TIFF_UNDEFINED:	/* Support to read TIFF_UNDEFINED with field_readcount==1 */
 			TIFFReadDirEntryCheckedByte(tif,direntry,value);
 			return(TIFFReadDirEntryErrOk);
 		case TIFF_SBYTE:

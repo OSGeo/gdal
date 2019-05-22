@@ -2928,7 +2928,7 @@ _TIFFRewriteField(TIFF* tif, uint16 tag, TIFFDataType in_datatype,
         else if( in_datatype == TIFF_SLONG8 &&
             (entry_type == TIFF_SLONG || entry_type == TIFF_SLONG8 ) )
             datatype = entry_type;
-        if( in_datatype == TIFF_IFD8 &&
+        else if( in_datatype == TIFF_IFD8 &&
             (entry_type == TIFF_IFD || entry_type == TIFF_IFD8 ) )
             datatype = entry_type;
         else
