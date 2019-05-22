@@ -11,14 +11,14 @@ for example used by the X-Plane and Flightgear software.
 
 The driver is able to read the following files :
 
-========================================= ================= ==================
-Filename                                  Description       Supported versions
-========================================= ================= ==================
-`apt.dat <#apt.dat>`__                    Airport data      850, 810
-`nav.dat <#nav.dat>`__ (or earth_nav.dat) Navigation aids   810, 740
-`fix.dat <#fix.dat>`__ (or earth_fix.dat) IFR intersections 600
-`awy.dat <#awy.dat>`__ (or earth_awy.dat) Airways           640
-========================================= ================= ==================
+============================================== ================= ==================
+Filename                                       Description       Supported versions
+============================================== ================= ==================
+:ref:`apt.dat <xplane_apt>`                    Airport data      850, 810
+:ref:`nav.dat <xplane_nav>` (or earth_nav.dat) Navigation aids   810, 740
+:ref:`fix.dat <xplane_fix>` (or earth_fix.dat) IFR intersections 600
+:ref:`awy.dat <xplane_awy>` (or earth_awy.dat) Airways           640
+============================================== ================= ==================
 
 Each file will be reported as a set of layers whose data schema is given
 below. The data schema is generally as close as possible to the original
@@ -67,7 +67,7 @@ See Also
 -  `X-Plane data file
    definitions <http://data.x-plane.com/designers.html>`__
 
---------------
+.. _xplane_apt:
 
 Airport data (apt.dat)
 ----------------------
@@ -483,7 +483,8 @@ Fields:
    abbreviation (such as GND for "Ground").
 -  freq_mhz: Real (7.3). Frequency in MHz.
 
---------------
+
+.. _xplane_nav:
 
 Navigation aids (nav.dat)
 -------------------------
@@ -630,7 +631,8 @@ Fields:
 -  bias_km: Real (6.2). This bias must be subtracted from the calculated
    distance to the DME to give the desired cockpit reading
 
---------------
+
+.. _xplane_fix:
 
 IFR intersections (fix.dat)
 ---------------------------
@@ -648,7 +650,8 @@ Fields:
 
 -  fix_name: String (5.0). Intersection name. \*NOT\* unique.
 
---------------
+
+.. _xplane_awy:
 
 Airways (awy.dat)
 -----------------

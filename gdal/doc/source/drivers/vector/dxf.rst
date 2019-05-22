@@ -264,40 +264,28 @@ file (but many DXF layers can be created - see below).
 Only the first tool (PEN, BRUSH, etc) in the style string is read. The
 following style string parameters are understood:
 
-Tool
+.. list-table::
+   :header-rows: 1
 
-Available on geometry types
-
-Supported parameters
-
-PEN
-
-Point, (Multi)LineString
-
-color (c); width (w); dash pattern (p)
-
-BRUSH
-
-(Multi)Polygon, Triangle
-
-foreground color (fc)
-
-SYMBOL
-
-Point
-
-color (c)
-
-LABEL
-
-Point
-
-GDAL >= 2.3.0: text (t); font name (f); font size (s), treated as cap
-height; bold (bo); italic (it); text color (c); x and y offsets (dx,
-dy); angle (a); anchor point (p); stretch (w)
-
-GDAL <= 2.2.x: text (t); font size (s), treated as cap height; text
-color (c); angle (a); anchor point (p)
+   * - Tool
+     - Available on geometry types
+     - Supported parameters
+   * - PEN
+     - Point, (Multi)LineString
+     - color (c); width (w); dash pattern (p)
+   * - BRUSH
+     - (Multi)Polygon, Triangle
+     - foreground color (fc)
+   * - SYMBOL
+     - Point
+     - color (c)
+   * - LABEL
+     - Point
+     - | GDAL >= 2.3.0: text (t); font name (f); font size (s), treated as cap
+       | height; bold (bo); italic (it); text color (c); x and y offsets (dx,
+       | dy); angle (a); anchor point (p); stretch (w)
+       | GDAL <= 2.2.x: text (t); font size (s), treated as cap height; text
+       | color (c); angle (a); anchor point (p)
 
 The dataset creation supports the following dataset creation options:
 
