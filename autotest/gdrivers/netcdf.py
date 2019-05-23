@@ -3068,6 +3068,17 @@ def test_netcdf_functions_2(filename, checksum, options, testfunction):
 ###############################################################################
 #  simple geometry tests
 
+#  basic tests
+def test_bad_cf1_8():
+    # basic resilience test, make sure it can exit "normally" 
+    # if not it will abort all tests
+    bad_feature = ogr.Open("data/netcdf-sg/bad_feature_test.nc")
+    missing_node_counts_test = ogr.Open("data/netcdf-sg/missing_node_counts_test.nc")
+
+    # error is not fatal
+    assert(bad_feature != None)
+    assert(missing_node_counts_test != None)
+
 def test_cf_1_8_open_sg_dataset():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
@@ -3099,6 +3110,20 @@ def test_open_all_ft():
     assert(multiline != None) 
     assert(polygon != None) 
     assert(multipolygon != None) 
+
+#  advanced tests
+def test_yahara():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+    yahara = ogr.Open("data/netcdf-sg/Yahara_alb.nc")
+    assert(yahara != None)
+
+    y_layer = yahara.GetLayerByName("geometry_container")
+    assert(y_layer != None)
+
+    # Assert some basic properties
+    #assert(y_layer.GetFeatureCount() == 72)
+    assert(y_layer.GetGeomType() == ogr.wkbMultiPolygon)
 
 def test_template():
     if gdaltest.netcdf_drv is None:
