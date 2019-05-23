@@ -3093,7 +3093,7 @@ def test_open_all_ft():
     polygon = ogr.Open("data/netcdf-sg/polygon_test.nc")
     multipolygon = ogr.Open("data/netcdf-sg/multipolygon_test.nc")
 
-    #assert(singleton_pt != None) 
+    assert(singleton_pt != None) 
     assert(multipoints != None) 
     assert(line != None) 
     assert(multiline != None) 
@@ -3103,5 +3103,6 @@ def test_open_all_ft():
 def test_template():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
+
 ###############################################################################
 #  other tests
