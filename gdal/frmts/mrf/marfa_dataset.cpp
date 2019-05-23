@@ -1330,13 +1330,23 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
     }
 
     OGRSpatialReference oSRS;
-    char *pszRawProj = const_cast<char *>(CPLGetXMLValue(config, "GeoTags.Projection", ""));
-    if (strlen(pszRawProj) == 0 || oSRS.SetFromUserInput(pszRawProj) != OGRERR_NONE 
-        || oSRS.exportToWkt(&pszRawProj) != OGRERR_NONE)
-        pszRawProj = CPLStrdup("");
-    SetProjection(pszRawProj);
-    CPLFree(pszRawProj);
-    
+    const char *pszRawProjFromXML = CPLGetXMLValue(config, "GeoTags.Projection", "");
+    if (strlen(pszRawProjFromXML) == 0 ||
+        oSRS.SetFromUserInput(pszRawProjFromXML) != OGRERR_NONE )
+    {
+        SetProjection("");
+    }
+    else
+    {
+        char* pszRawProj = nullptr;
+        if( oSRS.exportToWkt(&pszRawProj) != OGRERR_NONE )
+        {
+            CPLFree(pszRawProj);
+            pszRawProj = CPLStrdup("");
+        }
+        SetProjection(pszRawProj);
+        CPLFree(pszRawProj);
+    }
 
     // Copy the full size to current, data and index are not yet open
     current = full;
