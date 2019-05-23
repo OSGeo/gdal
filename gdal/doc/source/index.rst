@@ -12,7 +12,7 @@ This documentation is also available as a `PDF file <gdal.pdf>`_.
     programs/index
     drivers/raster/index
     drivers/vector/index
-    User <user/index>
+    Architecture <user/index>
     api/index
     tutorials/index
     community
