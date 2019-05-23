@@ -332,6 +332,6 @@ See Also
 -  Implemented as ``gdal/frmts/hdf5/bagdataset.cpp``.
 -  `The Open Navigation Surface Project <http://www.opennavsurf.org>`__
 -  `Description of Bathymetric Attributed Grid Object (BAG) Version
-   1.6 <https://bitbucket.org/ccomjhc/openns/raw/master/docs/BAG_FSD_Release_1.6.3.doc>`__
+   1.6 <https://github.com/OpenNavigationSurface/BAG/raw/master/docs/BAG_FSD_Release_1.6.3.doc>`__
 -  `Variable resolution grid extension for BAG
-   files <https://bitbucket.org/ccomjhc/openns/raw/master/docs/VariableResolution/2017-08-10_VariableResolution.docx>`__
+   files <https://github.com/OpenNavigationSurface/BAG/raw/master/docs/VariableResolution/2017-08-10_VariableResolution.docx>`__
