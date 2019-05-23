@@ -3064,6 +3064,44 @@ def test_netcdf_functions_2(filename, checksum, options, testfunction):
     ut = gdaltest.GDALTest('netcdf', filename, 1, checksum, options=options)
     getattr(ut, testfunction)()
 
+
+###############################################################################
+#  simple geometry tests
+
+def test_cf_1_8_open_sg_dataset():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    s = ogr.Open("data/netcdf-sg/serpenski_2nd.nc")
+
+    # check basic typing
+    assert(s != None) # Dataset opened successfully
+    
+    good_layer = s.GetLayerByName("serpenski")
+    assert(good_layer != None) # real layer
+
+    assert(good_layer.GetFeatureCount() == 1)
+    assert(good_layer.GetGeomType() == ogr.wkbMultiPolygon)
+
+
+def test_open_all_ft():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    singleton_pt = ogr.Open("data/netcdf-sg/point_test.nc")
+    multipoints = ogr.Open("data/netcdf-sg/multipoint_test.nc")
+    line = ogr.Open("data/netcdf-sg/line_test.nc")
+    multiline = ogr.Open("data/netcdf-sg/multiline_test.nc")
+    polygon = ogr.Open("data/netcdf-sg/polygon_test.nc")
+    multipolygon = ogr.Open("data/netcdf-sg/multipolygon_test.nc")
+
+    #assert(singleton_pt != None) 
+    assert(multipoints != None) 
+    assert(line != None) 
+    assert(multiline != None) 
+    assert(polygon != None) 
+    assert(multipolygon != None) 
+
+def test_template():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
 ###############################################################################
 #  other tests
-

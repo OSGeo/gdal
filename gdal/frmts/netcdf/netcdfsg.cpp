@@ -39,7 +39,8 @@ namespace nccfdriver
 			return nullptr;
 		}
 
-		char * attr_vals = new char[len];
+		char * attr_vals = new char[len + 1];
+		attr_vals[len] = '\0';
 		// Now look through this variable for the attribute
 		if(nc_get_att_text(ncid, varId, attrName, attr_vals) != NC_NOERR)
 		{
