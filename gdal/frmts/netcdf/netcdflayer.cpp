@@ -2405,7 +2405,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 {
     if( m_HasCFSG1_8 )
     {
-        return 72;
+        return m_sgFeatureList.size();
     }
 
     if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
