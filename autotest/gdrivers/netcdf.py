@@ -3122,7 +3122,7 @@ def test_yahara():
     assert(y_layer != None)
 
     # Assert some basic properties
-    assert(y_layer.GetFeatureCount() == 72)
+    assert(y_layer.GetFeatureCount() == 71)
     assert(y_layer.GetGeomType() == ogr.wkbMultiPolygon)
 
 def test_template():
