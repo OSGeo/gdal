@@ -18,7 +18,27 @@ RUN apk add --no-cache \
     linux-headers \
     curl-dev \
     zlib-dev zstd-dev \
-    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev
+    libjpeg-turbo-dev libpng-dev libwebp-dev
+
+# Build openjpeg
+ARG OPENJPEG_VERSION=2.3.1
+RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
+    apk add --no-cache cmake \
+    && wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
+    && rm -f v${OPENJPEG_VERSION}.tar.gz \
+    && cd openjpeg-${OPENJPEG_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+    && make -j$(nproc) \
+    && make install \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf openjpeg-${OPENJPEG_VERSION} \
+    && apk del cmake \
+    ); fi
 
 RUN apk add --no-cache rsync ccache
 
@@ -191,6 +211,8 @@ RUN apk add --no-cache \
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
 # Order layers starting with less frequently varying ones
+COPY --from=builder  /build_thirdparty/usr/ /usr/
+
 COPY --from=builder  /build_projgrids/usr/ /usr/
 
 COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/
