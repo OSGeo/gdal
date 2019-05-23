@@ -835,3 +835,14 @@ def test_vsifile_opendir():
 
 
 
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/1559
+
+
+def test_vsitar_verylongfilename():
+
+    f = gdal.VSIFOpenL('/vsitar/data/verylongfilename.tar/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ccccccccccccccccccccccccccccccccccc/ddddddddddddddddddddddddddddddddddddddd/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/fffffffffffffffffffffffffffffffffffffffffffffff/foo', 'rb')
+    assert f
+    data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+    assert data == 'bar'
