@@ -52,9 +52,9 @@ html_theme = 'gdal_rtd'
 
 html_context = {
   'display_github': True,
-  'github_user': 'hobu',
+  'github_user': 'OSGEo',
   'github_repo': 'GDAL',
-  'github_version': '/doc-sprint/gdal/doc/source/'
+  'github_version': '/master/gdal/doc/source/'
 }
 
 html_theme_options = {
