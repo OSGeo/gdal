@@ -374,10 +374,10 @@ int VSITarReader::GotoNextFile()
         {
             // If this is a large filename record, then read the filename
             osNextFileName.clear();
-            osNextFileName.resize(((nNextFileSize + 511) / 512) * 512);
+            osNextFileName.resize(static_cast<size_t>(((nNextFileSize + 511) / 512) * 512));
             if (VSIFReadL(&osNextFileName[0], osNextFileName.size(), 1, fp) != 1)
                 return FALSE;
-            osNextFileName.resize(nNextFileSize);
+            osNextFileName.resize(static_cast<size_t>(nNextFileSize));
             if( osNextFileName.back() == '\0' )
                 osNextFileName.resize(osNextFileName.size() - 1);
         }
