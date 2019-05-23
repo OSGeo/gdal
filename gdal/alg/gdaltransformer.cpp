@@ -1099,7 +1099,8 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /*      the center longitude of the dataset for wrapping purposes.      */
 /************************************************************************/
 
-static void InsertCenterLong( GDALDatasetH hDS, OGRSpatialReference* poSRS )
+static void InsertCenterLong( GDALDatasetH hDS, OGRSpatialReference* poSRS,
+                              CPLStringList& aosOptions )
 
 {
     if( !poSRS->IsGeographic())
@@ -1149,11 +1150,8 @@ static void InsertCenterLong( GDALDatasetH hDS, OGRSpatialReference* poSRS )
 /*      Insert center long.                                             */
 /* -------------------------------------------------------------------- */
     const double dfCenterLong = (dfMaxLong + dfMinLong) / 2.0;
-    OGR_SRSNode *poExt = new OGR_SRSNode( "EXTENSION" );
-    poExt->AddChild( new OGR_SRSNode( "CENTER_LONG" ) );
-    poExt->AddChild( new OGR_SRSNode( CPLString().Printf("%g", dfCenterLong) ));
-
-    poSRS->GetRoot()->AddChild( poExt );
+    aosOptions.SetNameValue("CENTER_LONG",
+                            CPLSPrintf("%g", dfCenterLong));
 }
 
 /************************************************************************/
@@ -1929,12 +1927,12 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
          (!oSrcSRS.IsSame(&oDstSRS) ||
           (oSrcSRS.IsGeographic() && bMayInsertCenterLong))) || pszCO )
     {
+        CPLStringList aosOptions;
+
         if( bMayInsertCenterLong )
         {
-            InsertCenterLong( hSrcDS, &oSrcSRS );
+            InsertCenterLong( hSrcDS, &oSrcSRS, aosOptions );
         }
-
-        CPLStringList aosOptions;
 
         if( !(dfWestLongitudeDeg == 0.0 && dfSouthLatitudeDeg == 0.0 &&
               dfEastLongitudeDeg == 0.0 && dfNorthLatitudeDeg == 0.0) )
@@ -2818,21 +2816,35 @@ void *GDALCreateReprojectionTransformerEx(
     }
     const char* pszCO = CSLFetchNameValue(papszOptions, "COORDINATE_OPERATION");
 
-    OGRCoordinateTransformationOptions options;
+    OGRCoordinateTransformationOptions optionsFwd;
+    OGRCoordinateTransformationOptions optionsInv;
     if( !(dfWestLongitudeDeg == 0.0 && dfSouthLatitudeDeg == 0.0 &&
           dfEastLongitudeDeg == 0.0 && dfNorthLatitudeDeg == 0.0) )
     {
-        options.SetAreaOfInterest(dfWestLongitudeDeg,
+        optionsFwd.SetAreaOfInterest(dfWestLongitudeDeg,
+                                  dfSouthLatitudeDeg,
+                                  dfEastLongitudeDeg,
+                                  dfNorthLatitudeDeg);
+        optionsInv.SetAreaOfInterest(dfWestLongitudeDeg,
                                   dfSouthLatitudeDeg,
                                   dfEastLongitudeDeg,
                                   dfNorthLatitudeDeg);
     }
     if( pszCO )
     {
-        options.SetCoordinateOperation(pszCO, false);
+        optionsFwd.SetCoordinateOperation(pszCO, false);
+        optionsInv.SetCoordinateOperation(pszCO, true);
     }
+
+    const char* pszCENTER_LONG = CSLFetchNameValue(papszOptions, "CENTER_LONG");
+    if( pszCENTER_LONG )
+    {
+        optionsFwd.SetSourceCenterLong(CPLAtof(pszCENTER_LONG));
+        optionsInv.SetTargetCenterLong(CPLAtof(pszCENTER_LONG));
+    }
+
     OGRCoordinateTransformation *poForwardTransform =
-        OGRCreateCoordinateTransformation(poSrcSRS, poDstSRS, options);
+        OGRCreateCoordinateTransformation(poSrcSRS, poDstSRS, optionsFwd);
 
     if( poForwardTransform == nullptr )
         // OGRCreateCoordinateTransformation() will report errors on its own.
@@ -2847,14 +2859,10 @@ void *GDALCreateReprojectionTransformerEx(
 
     psInfo->papszOptions = CSLDuplicate(papszOptions);
     psInfo->poForwardTransform = poForwardTransform;
-    if( pszCO )
-    {
-        options.SetCoordinateOperation(pszCO, true);
-    }
     psInfo->dfTime = CPLAtof(CSLFetchNameValueDef(papszOptions,
                                                   "COORDINATE_EPOCH", "0"));
     psInfo->poReverseTransform =
-        OGRCreateCoordinateTransformation(poDstSRS, poSrcSRS, options);
+        OGRCreateCoordinateTransformation(poDstSRS, poSrcSRS, optionsInv);
 
     memcpy( psInfo->sTI.abySignature,
             GDAL_GTI2_SIGNATURE,

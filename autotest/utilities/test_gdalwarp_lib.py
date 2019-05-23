@@ -1170,17 +1170,21 @@ def test_gdalwarp_lib_135():
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     src_ds.GetRasterBand(1).Fill(100)
 
-    grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid.tif', 1, 1)
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
+
+    src_ds_longlat = gdal.GetDriverByName('MEM').Create('', 2, 1)
+    src_ds_longlat.SetProjection(sr.ExportToWkt())
+    src_ds_longlat.SetGeoTransform([-180, 180, 0, 90, 0, -180])
+    src_ds_longlat.GetRasterBand(1).Fill(100)
+
+    grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid.tif', 1, 1)
     grid_ds.SetProjection(sr.ExportToWkt())
     grid_ds.SetGeoTransform([-180, 360, 0, 90, 0, -180])
     grid_ds.GetRasterBand(1).Fill(20)
     grid_ds = None
 
     grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid2.tif', 1, 1)
-    sr = osr.SpatialReference()
-    sr.SetFromUserInput("WGS84")
     grid_ds.SetProjection(sr.ExportToWkt())
     grid_ds.SetGeoTransform([-180, 360, 0, 90, 0, -180])
     grid_ds.GetRasterBand(1).Fill(5)
@@ -1195,11 +1199,25 @@ def test_gdalwarp_lib_135():
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, 'Bad value'
 
+    ds = gdal.Warp('', src_ds_longlat, format='MEM',
+                   srcSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
+                   dstSRS='EPSG:4979')
+    assert ds.GetGeoTransform() == (-180, 180, 0, 90, 0, -180)
+    data = struct.unpack('B' * 2, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 120, 'Bad value'
+
     # Inverse transform
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
                    dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 80, 'Bad value'
+
+    ds = gdal.Warp('', src_ds_longlat, format='MEM',
+                   srcSRS='EPSG:4979',
+                   dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
+    assert ds.GetGeoTransform() == (-180, 180, 0, 90, 0, -180)
+    data = struct.unpack('B' * 2, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 80, 'Bad value'
 
     # Both transforms

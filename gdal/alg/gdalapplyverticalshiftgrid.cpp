@@ -392,6 +392,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
     OGRSpatialReference oSrcSRS;
     if( pszSrcProjection != nullptr && pszSrcProjection[0] != '\0' )
     {
+        oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         oSrcSRS.SetFromUserInput(pszSrcProjection);
     }
     else
