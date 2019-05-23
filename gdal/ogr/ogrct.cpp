@@ -62,6 +62,12 @@ struct OGRCoordinateTransformationOptions::Private
 
     CPLString osCoordOperation{};
     bool bReverseCO = false;
+
+    bool bHasSourceCenterLong = false;
+    double dfSourceCenterLong = 0.0;
+
+    bool bHasTargetCenterLong = false;
+    double dfTargetCenterLong = 0.0;
 };
 
 /************************************************************************/
@@ -222,6 +228,30 @@ bool OGRCoordinateTransformationOptions::SetCoordinateOperation(const char* pszC
     d->bReverseCO = bReverseCO;
     return true;
 }
+
+/************************************************************************/
+/*                         SetSourceCenterLong()                        */
+/************************************************************************/
+
+/*! @cond Doxygen_Suppress */
+void OGRCoordinateTransformationOptions::SetSourceCenterLong(double dfCenterLong)
+{
+    d->dfSourceCenterLong = dfCenterLong;
+    d->bHasSourceCenterLong = true;
+}
+/*! @endcond */
+
+/************************************************************************/
+/*                         SetTargetCenterLong()                        */
+/************************************************************************/
+
+/*! @cond Doxygen_Suppress */
+void OGRCoordinateTransformationOptions::SetTargetCenterLong(double dfCenterLong)
+{
+    d->dfTargetCenterLong = dfCenterLong;
+    d->bHasTargetCenterLong = true;
+}
+/*! @endcond */
 
 /************************************************************************/
 /*            OCTCoordinateTransformationOptionsSetOperation()          */
@@ -660,11 +690,23 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         bSourceWrap = true;
         CPLDebug( "OGRCT", "Wrap source at %g.", dfSourceWrapLong );
     }
+    else if( bSourceLatLong && options.d->bHasSourceCenterLong)
+    {
+        dfSourceWrapLong = options.d->dfSourceCenterLong;
+        bSourceWrap = true;
+        CPLDebug( "OGRCT", "Wrap source at %g.", dfSourceWrapLong );
+    }
 
     pszCENTER_LONG = poSRSTarget ? poSRSTarget->GetExtension( "GEOGCS", "CENTER_LONG" ) : nullptr;
     if( pszCENTER_LONG != nullptr )
     {
         dfTargetWrapLong = CPLAtof(pszCENTER_LONG);
+        bTargetWrap = true;
+        CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
+    }
+    else if( bTargetLatLong && options.d->bHasTargetCenterLong)
+    {
+        dfTargetWrapLong = options.d->dfTargetCenterLong;
         bTargetWrap = true;
         CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
     }
