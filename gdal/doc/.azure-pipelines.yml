@@ -60,7 +60,7 @@ jobs:
           git config user.email "proj4bot@proj4.bot"
           git config user.name "GDAL Bot"
           git remote add origin git@github.com:OSGeo/gdal-docs.git
-          # echo "gdal.dev" > CNAME
+          echo "gdal.org" > CNAME
           touch .nojekyll
           git add -A
           git commit -m "Update with https://github.com/OSGeo/gdal/commit/$BUILD_SOURCEVERSION"
