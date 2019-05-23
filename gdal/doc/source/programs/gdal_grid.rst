@@ -157,6 +157,8 @@ Interpolation algorithms
 
 There are number of interpolation algorithms to choose from.
 
+.. _gdal_grid_invdist:
+
 invdist
 +++++++
 
@@ -206,6 +208,8 @@ max_points is used. It has following parameters:
   0.0).
 
 
+.. _gdal_grid_average:
+
 average
 +++++++
 
@@ -227,6 +231,8 @@ Moving average algorithm. It has following parameters:
 
 Note, that it is essential to set search ellipse for moving average method. It
 is a window that will be averaged when computing grid nodes values.
+
+.. _gdal_grid_nearest:
 
 nearest
 +++++++

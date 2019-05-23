@@ -13,6 +13,7 @@ Raster
    raster_api_tut
    raster_driver_tut
    warp_tut
+   gdal_grid_tut
 
 Vector
 ------
