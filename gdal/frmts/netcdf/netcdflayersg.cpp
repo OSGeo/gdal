@@ -64,8 +64,8 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 		
 		catch(nccfdriver::SG_Exception * e)
 		{
-			CPLError(CE_Warning, CPLE_AppDefined, "Translation of a simple geometry layer has been terminated prematurely due to an error.");
-			CPLError(CE_Warning, CPLE_AppDefined, "%s", e->get_err_msg());
+			CPLError(CE_Warning, CPLE_AppDefined,
+				"Translation of a simple geometry layer has been terminated prematurely due to an error.\n%s", e->get_err_msg());
 			delete e;
 		}
 	}
@@ -75,7 +75,7 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 
 CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 {
-	nccfdriver::SGeometry * sg = new nccfdriver::SGeometry(ncid, nc_basevarId);
+	std::unique_ptr<nccfdriver::SGeometry> sg (new nccfdriver::SGeometry(ncid, nc_basevarId));
 	int cont_id = sg->getContainerId();
 	nccfdriver::SGeometry_PropertyScanner pr(ncid, cont_id);
 	OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType());
@@ -83,7 +83,6 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	// Geometry Type invalid, avoid further processing
 	if(owgt == wkbNone)
 	{
-		delete sg;
 		throw new nccfdriver::SG_Exception_BadFeature();
 	}
 	
@@ -109,29 +108,36 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 
 	for(size_t featCt = 0; featCt < shape_count; featCt++)
 	{
-		OGRGeometry * featureDesc;
+		//std::unique_ptr<OGRGeometry> geometry;
+		OGRGeometry * geometry;
 
 		try
 		{
 			switch(owgt)
 			{		
 				case wkbPoint:
-					featureDesc = new OGRPoint;
+					geometry = new OGRPoint;
+					//geometry = std::unique_ptr<OGRGeometry>(new OGRPoint);
 					break;
 				case wkbLineString:
-					featureDesc = new OGRLineString;	
+					geometry = new OGRLineString;
+					//geometry = std::unique_ptr<OGRGeometry>(new OGRLineString);	
 					break;
 				case wkbPolygon:
-					featureDesc = new OGRPolygon;
+					geometry = new OGRPolygon;
+					//geometry = std::unique_ptr<OGRGeometry>(new OGRPolygon);
 					break;
 				case wkbMultiPoint:
-					featureDesc = new OGRMultiPoint;
+					geometry = new OGRMultiPoint;
+					//geometry = std::unique_ptr<OGRGeometry>(new OGRMultiPoint);
 					break;
 				case wkbMultiLineString:
-					featureDesc = new OGRMultiLineString;
+					geometry = new OGRMultiLineString;
+					//geometry = std::unique_ptr<OGRGeometry>(new OGRMultiLineString);
 					break;
 				case wkbMultiPolygon:
-					featureDesc = new OGRMultiPolygon;
+					geometry = new OGRMultiPolygon;
+					//geometry = std::unique_ptr<OGRGeometry>(new OGRMultiPolygon);
 					break;
 				default:
 					throw new nccfdriver::SG_Exception_BadFeature();
@@ -139,17 +145,18 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 			}
 		}
 		// This may be unncessary, given the check previously...
-		catch(nccfdriver::SG_Exception*)
+		catch(nccfdriver::SG_Exception * e)
 		{
 			delete poL;
 			throw;
 		}
 
 		int r_size = 0;
-		void * wkb_rep = sg->serializeToWKB(featCt, r_size);
-		featureDesc->importFromWkb((const unsigned char*)wkb_rep, r_size, wkbVariantIso);
+		char * wkb_rep = (char*)sg->serializeToWKB(featCt, r_size);
+		geometry->importFromWkb((unsigned const char*) wkb_rep, r_size, wkbVariantIso);
 		OGRFeature * feat = new OGRFeature(defn);
-		feat -> SetGeometryDirectly(featureDesc);
+		feat -> SetGeometryDirectly(geometry);
+		delete[] wkb_rep;
 			
 		int dimId = -1;	
 
@@ -179,16 +186,12 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		}
 
 		feat -> SetFID(featCt);
-		char * wkb_rep_del = (char*)wkb_rep; // no compiler warning then
-		delete wkb_rep_del;
 		poL->AddSimpleGeometryFeature(feat);
 	}
 
-	papoLayers = (netCDFLayer**)realloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *)); 
-	if(papoLayers == NULL) CPLError(CE_Failure, CPLE_OutOfMemory, "Allocation for additional netCDFLayer pointer failed.");
+	papoLayers = (netCDFLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *)); 
 	papoLayers[nLayers] = poL;
 	nLayers++;
 
-	delete sg;
 	return CE_None;
 }

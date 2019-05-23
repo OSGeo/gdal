@@ -1,6 +1,7 @@
 #ifndef __NETCDFSG_H__
 #define __NETCDFSG_H__
 #include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 #include "netcdf.h"
@@ -32,7 +33,7 @@ namespace nccfdriver
 	{
 		int size;
 		double * values;	
-		Point(Point &);
+		Point(Point&);
 		Point operator=(const Point &);
 
 		public:
@@ -66,9 +67,9 @@ namespace nccfdriver
 		int current_vert_ind;	// used to keep track of current point being used
 		size_t cur_geometry_ind;	// used to keep track of current geometry index
 		size_t cur_part_ind;		// used to keep track of current part index
-		Point * pt_buffer;	// holds the current point
-		SGeometry(SGeometry &);
-		SGeometry operator=(const SGeometry &);
+		std::unique_ptr<Point> pt_buffer;	// holds the current point
+		SGeometry(SGeometry&);
+		SGeometry operator=(const SGeometry&);
 
 		public:
 
@@ -126,7 +127,6 @@ namespace nccfdriver
 		 * baseVarId - the id of a variable with a geometry container attribute 
 		 */
 		SGeometry(int ncId, int baseVarId); 
-		~SGeometry();
 	};
 
 	/* SGeometry_PropertyScanner
@@ -154,73 +154,61 @@ namespace nccfdriver
 	class SG_Exception
 	{
 		public:
-			virtual char * get_err_msg() = 0;	
+			virtual const char * get_err_msg() = 0;	
 			virtual ~SG_Exception();
 	};
 
 	// Mismatched dimension exception
 	class SG_Exception_Dim_MM : public SG_Exception
 	{
-		char * err_msg;	
-		SG_Exception_Dim_MM(SG_Exception_Dim_MM&);
-		SG_Exception_Dim_MM& operator=(SG_Exception_Dim_MM&);
+		std::string err_msg;
 
 		public:
-			char* get_err_msg() override { return err_msg; }
+			const char* get_err_msg() override { return err_msg.c_str(); }
 
-		SG_Exception_Dim_MM(char* geometry_container, const char* field_1, const char *field_2);
-		~SG_Exception_Dim_MM(){ delete[] err_msg; }
+		SG_Exception_Dim_MM(const char* geometry_container, const char* field_1, const char *field_2);
 	};
 
 	// Missing (existential) property error
 	class SG_Exception_Existential: public SG_Exception
 	{
-		char * err_msg;
-		SG_Exception_Existential(SG_Exception_Existential&);
-		SG_Exception_Existential& operator=(SG_Exception_Existential&);
+		std::string err_msg;
 
 		public:
-			char* get_err_msg() override { return err_msg; }
+			const char* get_err_msg() override { return err_msg.c_str(); }
 		
-		SG_Exception_Existential(char* geometry_container, const char* missing_name);
-		~SG_Exception_Existential(){ delete[] err_msg; }
+		SG_Exception_Existential(const char* geometry_container, const char* missing_name);
 	};
 
 	// Missing dependent property (arg_1 is dependent on arg_2)
 	class SG_Exception_Dep: public SG_Exception
 	{
-		char * err_msg;
-		SG_Exception_Dep(SG_Exception_Dep&);
-		SG_Exception_Dep& operator=(SG_Exception_Dep&);
+		std::string err_msg;
 
 		public:
-			char* get_err_msg() override { return err_msg; }
+			const char* get_err_msg() override { return err_msg.c_str(); }
 		
-		SG_Exception_Dep(char* geometry_container, const char* arg_1, const char* arg_2);
-		~SG_Exception_Dep(){ delete[] err_msg; }
+		SG_Exception_Dep(const char* geometry_container, const char* arg_1, const char* arg_2);
 	};
 
 	// The sum of all values in a variable does not match the sum of another variable
 	class SG_Exception_BadSum : public SG_Exception
 	{
-		char * err_msg;
-		SG_Exception_BadSum(SG_Exception_BadSum&);
-		SG_Exception_BadSum& operator=(SG_Exception_BadSum&);
+		std::string err_msg;
 
 		public:
-			char* get_err_msg() override { return err_msg; }
+			const char* get_err_msg() override { return err_msg.c_str(); }
 		
-		SG_Exception_BadSum(char* geometry_container, const char* arg_1, const char* arg_2);
-		~SG_Exception_BadSum(){ delete[] err_msg; }
+		SG_Exception_BadSum(const char* geometry_container, const char* arg_1, const char* arg_2);
 	};
 
 	// Unsupported Feature Type
 	class SG_Exception_BadFeature : public SG_Exception
 	{
-		const char * err_msg;
+		std::string err_msg;
 
 		public:
-			char* get_err_msg() override { return (char*)err_msg; }
+			const char* get_err_msg() override { return err_msg.c_str(); }
 		
 		SG_Exception_BadFeature() : err_msg("Unsupported or unrecognized feature type.") {}
 	};
@@ -228,10 +216,10 @@ namespace nccfdriver
 	// Failed Read
 	class SG_Exception_BadPoint : public SG_Exception
 	{
-		const char * err_msg;
+		std::string err_msg;
 
 		public:
-			char* get_err_msg() override { return (char*)err_msg; }
+			const char* get_err_msg() override { return err_msg.c_str(); }
 		
 		SG_Exception_BadPoint() : err_msg("An attempt was made to read an invalid point (likely index out of bounds).") {}
 	};
@@ -239,10 +227,10 @@ namespace nccfdriver
 	// Too many dimensions on node coordinates variable
 	class SG_Exception_Not1D : public SG_Exception
 	{
-		const char * err_msg;
+		std::string err_msg;
 
 		public:
-			char* get_err_msg() override { return (char*)err_msg; }
+			const char* get_err_msg() override { return err_msg.c_str(); }
 		
 		SG_Exception_Not1D() : err_msg("A node coordinates axis variable is not one dimensional.") {}
 	};

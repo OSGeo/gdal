@@ -51,6 +51,7 @@ namespace nccfdriver
 		return attr_vals;
 	}
 
+
 	/* Point
 	 * (implementations)
 	 *
@@ -69,13 +70,12 @@ namespace nccfdriver
 	{
 
 		char * cart = nullptr;
-		this->pt_buffer = nullptr;
 		memset(this->container_name, 0, NC_MAX_NAME+1);
 
 		// Get geometry container name
 		if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
 		{
-			throw new SG_Exception_Existential((char*)"new geometry container", "the variable of the given ID"); 	
+			throw new SG_Exception_Existential(static_cast<const char *>("new geometry container"), "the variable of the given ID"); 	
 		}
 
 		// Find geometry type
@@ -83,7 +83,7 @@ namespace nccfdriver
 
 		if(this->type == NONE)
 		{
-			throw new SG_Exception_Existential(container_name, CF_SG_GEOMETRY_TYPE);
+			throw new SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_TYPE);
 		}
 
 		// Get grid mapping variable, if it exists
@@ -153,13 +153,13 @@ namespace nccfdriver
 		// part node count exists only when node count exists
 		if(pnode_counts.size() > 0 && node_counts.size() == 0)
 		{
-			throw new SG_Exception_Dep(container_name, CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
+			throw new SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
 		}
 
 		// interior rings only exist when part node counts exist
 		if(int_rings.size() > 0 && pnode_counts.size() == 0)
 		{
-			throw new SG_Exception_Dep(container_name, CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
+			throw new SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
 		}	
 
 	
@@ -168,7 +168,7 @@ namespace nccfdriver
 		{
 			if(int_rings.size() != pnode_counts.size())
 			{
-				throw new SG_Exception_Dim_MM(container_name, CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
+				throw new SG_Exception_Dim_MM(static_cast<const char *>(container_name), CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
 			}
 		}
 
@@ -177,7 +177,7 @@ namespace nccfdriver
 		{
 			if(node_counts.size() < 1)
 			{
-				throw new SG_Exception_Existential(container_name, CF_SG_NODE_COUNT);
+				throw new SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_NODE_COUNT);
 			}
 		}
 
@@ -283,7 +283,11 @@ namespace nccfdriver
 				all_dim = inter_dim[0];
 			}	
 
-			else{if (inter_dim[0] != all_dim) throw new SG_Exception_Dim_MM(container_name, "X, Y", "in general all node coordinate axes"); } 
+			else
+			{
+				if (inter_dim[0] != all_dim)
+					throw new SG_Exception_Dim_MM(container_name, "X, Y", "in general all node coordinate axes");
+			} 
 		}
 
 		// (2) check equality one
@@ -302,17 +306,12 @@ namespace nccfdriver
 			throw new SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");	
 		}
 
-		this->pt_buffer = new Point(this->touple_order);
+		this -> pt_buffer = std::unique_ptr<Point>(new Point(this->touple_order));
 		
 		// Set other values accordingly
-		this->gc_varId = geoVarId; 
-		this->current_vert_ind = 0;	
-		this->ncid = ncId;
-	}
-
-	SGeometry::~SGeometry()
-	{
-		delete this->pt_buffer;
+		this -> gc_varId = geoVarId; 
+		this -> current_vert_ind = 0;	
+		this -> ncid = ncId;
 	}
 
 	Point& SGeometry::next_pt()
@@ -336,7 +335,7 @@ namespace nccfdriver
 
 			if(err != NC_NOERR)
 			{
-				throw new SG_Exception_BadPoint();
+				throw SG_Exception_BadPoint();
 			}
 
 			pt[order] = data;
@@ -438,7 +437,6 @@ namespace nccfdriver
 	void * SGeometry::serializeToWKB(size_t featureInd, int& wkbSize)
 	{		
 		void * ret = nullptr;
-
 		int nc = 0; int sb = 0;
 
 		// Points don't have node_count entry... only inspect and set node_counts if not a point
@@ -486,7 +484,7 @@ namespace nccfdriver
 					ret = new int8_t[wkbSize];
 
 					void * worker = ret;
-					int8_t header = 1;
+					int8_t header = PLATFORM_HEADER;
 					int32_t t = wkbMultiPoint;
 
 					// Add metadata
@@ -505,7 +503,7 @@ namespace nccfdriver
 
 			case MULTILINE:
 				{
-					int32_t header = 1;
+					int32_t header = PLATFORM_HEADER;
 					int32_t t = wkbMultiLineString;
 					int32_t lc = parts_count[featureInd];
 					int seek_begin = bound_list[featureInd];
@@ -545,7 +543,7 @@ namespace nccfdriver
 
 			case MULTIPOLYGON:
 				{
-					int32_t header = 1;
+					int32_t header = PLATFORM_HEADER;
 					int32_t t = wkbMultiPolygon;
 					bool noInteriors = this->int_rings.size() == 0 ? true : false;
 					int32_t rc = parts_count[featureInd];
@@ -724,43 +722,54 @@ namespace nccfdriver
 	}
 
 	// Exception Class Implementations
-	SG_Exception_Dim_MM::SG_Exception_Dim_MM(char* container_name, const char* field_1, const char* field_2)
+	SG_Exception_Dim_MM::SG_Exception_Dim_MM(const char* container_name, const char* field_1, const char* field_2)
 	{
-		const char * format = "%s: One or more dimensions of \"%s\" and \"%s\" must match but do not match.";
-		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
-		size_t s = strlen(field_1) + strlen(field_2) + strlen(format) + strlen(container_name) + 1;
-		err_msg = new char[s];
-		snprintf(err_msg, s, format, container_name, field_1, field_2);
+		std::string cn_s(container_name);
+		std::string field1_s(field_1);
+		std::string field2_s(field_2);
+
+		this -> err_msg = "[" + cn_s + "] One or more dimensions of "
+				+ field1_s
+				+ " and "
+				+ field2_s
+				+ " do not match but must match.";
 	}
 
-	SG_Exception_Existential::SG_Exception_Existential(char* container_name, const char* missing_name)
+	SG_Exception_Existential::SG_Exception_Existential(const char* container_name, const char* missing_name)
 	{
-		const char * format = "[%s] The property or the variable associated with \"%s\" is missing.";
+		std::string cn_s(container_name);
+		std::string mn_s(missing_name);
 
-		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
-		size_t s = strlen(missing_name) + strlen(format) + strlen(container_name) + 1;
-		err_msg = new char[s];
-		snprintf(err_msg, s, format, container_name, missing_name);
+		this -> err_msg = "[" + cn_s + "] The property or the variable associated with "
+				+ mn_s
+				+ " is missing.";
 	}
 
-	SG_Exception_Dep::SG_Exception_Dep(char* container_name, const char* arg1, const char* arg2)
+	SG_Exception_Dep::SG_Exception_Dep(const char* container_name, const char* arg1, const char* arg2)
 	{
-		const char * format = "[%s] The attribute \"%s\" may not exist without the attribute \"%s\" existing.";
-		
-		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
-		size_t s = strlen(arg1) + strlen(arg2) + strlen(format) + strlen(container_name) + 1;
-		err_msg = new char[s];
-		snprintf(err_msg, s, format, container_name, arg1, arg2);
+		std::string cn_s(container_name);
+		std::string arg1_s(arg1);
+		std::string arg2_s(arg2);
+
+		this -> err_msg = "[" + cn_s + "] The attribute "
+				+ arg1_s
+				+ " may not exist without the attribute "
+				+ arg2_s
+				+ " existing.";
 	}
 	
-	SG_Exception_BadSum::SG_Exception_BadSum(char* container_name, const char* arg1, const char* arg2)
+	SG_Exception_BadSum::SG_Exception_BadSum(const char* container_name, const char* arg1, const char* arg2)
 	{
-		const char * format = "[%s] The sum of all values in \"%s\" and \"%s\" do not match.";
-		
-		// This may allocate a couple more than needed, potential improvement: optimize a couple of bytes later
-		size_t s = strlen(arg1) + strlen(arg2) + strlen(format) + strlen(container_name) + 1;
-		err_msg = new char[s];
-		snprintf(err_msg, s, format, container_name, arg1, arg2);
+		std::string cn_s(container_name);
+		std::string arg1_s(arg1);
+		std::string arg2_s(arg2);
+
+		this -> err_msg = "[" + cn_s + "]"
+				+ " The sum of all values in "
+				+ arg1_s
+				+ " and "
+				+ arg2_s
+				+ " do not match.";
 	}
 
 	// to get past linker
@@ -913,7 +922,7 @@ namespace nccfdriver
 
 	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
 	{
-		uint8_t order = 1;
+		uint8_t order = PLATFORM_HEADER;
 		uint32_t t = wkbLineString;
 		uint32_t nc = (uint32_t) node_count;
 		
@@ -936,7 +945,7 @@ namespace nccfdriver
 
 	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
 	{	
-		int8_t header = 1;
+		int8_t header = PLATFORM_HEADER;
 		int32_t t = wkbPolygon;
 		int32_t rc = 1;
 				
@@ -962,7 +971,7 @@ namespace nccfdriver
 	void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin)
 	{
 			
-		int8_t header = 1;
+		int8_t header = PLATFORM_HEADER;
 		int32_t t = wkbPolygon;
 		int32_t rc = (int32_t)ring_count;
 				

@@ -50,6 +50,11 @@
 #define ENABLE_NCDUMP
 #endif
 
+#if CPL_IS_LSB
+#define PLATFORM_HEADER 1
+#else
+#define PLATFORM_HEADER 0
+#endif
 
 /************************************************************************/
 /* ==================================================================== */

@@ -1071,7 +1071,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
     // For CF-1.8 simple geometry specifically 
     // Only need fields to be set here
-    if( this-> m_HasCFSG1_8 ) return true;
+    if( m_HasCFSG1_8 ) return true;
 
     if( m_nXVarID >= 0 && m_nYVarID >= 0 &&
         (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID) )
@@ -1184,15 +1184,15 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
 OGRFeature *netCDFLayer::GetNextFeature()
 {
-    if(!this->m_sgItrInit && m_sgFeatureList.size() > 0)
+    if( !m_sgItrInit && m_sgFeatureList.size() > 0 )
     {
-	this->m_sgFeatItr = m_sgFeatureList.begin();
-	this->m_sgItrInit = true;
+        this->m_sgFeatItr = m_sgFeatureList.begin();
+        this->m_sgItrInit = true;
     }
 
-    if(this->m_sgItrInit && this->m_sgFeatItr != m_sgFeatureList.end())
+    if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
     {
-	return *(m_sgFeatItr++);
+        return *(m_sgFeatItr++);
     }
 
     while( true )
@@ -2403,6 +2403,11 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
 GIntBig netCDFLayer::GetFeatureCount(int bForce)
 {
+    if( m_HasCFSG1_8 )
+    {
+        return 72;
+    }
+
     if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
     {
         size_t nDimLen;
