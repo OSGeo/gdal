@@ -62,11 +62,10 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 
 		}
 		
-		catch(nccfdriver::SG_Exception * e)
+		catch(nccfdriver::SG_Exception& e)
 		{
 			CPLError(CE_Warning, CPLE_AppDefined,
-				"Translation of a simple geometry layer has been terminated prematurely due to an error.\n%s", e->get_err_msg());
-			delete e;
+				"Translation of a simple geometry layer has been terminated prematurely due to an error.\n%s", e.get_err_msg());
 		}
 	}
 
@@ -145,7 +144,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 			}
 		}
 		// This may be unncessary, given the check previously...
-		catch(nccfdriver::SG_Exception * e)
+		catch(nccfdriver::SG_Exception& e)
 		{
 			delete poL;
 			throw;

@@ -75,7 +75,7 @@ namespace nccfdriver
 		// Get geometry container name
 		if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
 		{
-			throw new SG_Exception_Existential(static_cast<const char *>("new geometry container"), "the variable of the given ID"); 	
+			throw SG_Exception_Existential(static_cast<const char *>("new geometry container"), "the variable of the given ID"); 	
 		}
 
 		// Find geometry type
@@ -83,7 +83,7 @@ namespace nccfdriver
 
 		if(this->type == NONE)
 		{
-			throw new SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_TYPE);
+			throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_TYPE);
 		}
 
 		// Get grid mapping variable, if it exists
@@ -153,13 +153,13 @@ namespace nccfdriver
 		// part node count exists only when node count exists
 		if(pnode_counts.size() > 0 && node_counts.size() == 0)
 		{
-			throw new SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
+			throw SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
 		}
 
 		// interior rings only exist when part node counts exist
 		if(int_rings.size() > 0 && pnode_counts.size() == 0)
 		{
-			throw new SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
+			throw SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
 		}	
 
 	
@@ -168,7 +168,7 @@ namespace nccfdriver
 		{
 			if(int_rings.size() != pnode_counts.size())
 			{
-				throw new SG_Exception_Dim_MM(static_cast<const char *>(container_name), CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
+				throw SG_Exception_Dim_MM(static_cast<const char *>(container_name), CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
 			}
 		}
 
@@ -177,7 +177,7 @@ namespace nccfdriver
 		{
 			if(node_counts.size() < 1)
 			{
-				throw new SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_NODE_COUNT);
+				throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_NODE_COUNT);
 			}
 		}
 
@@ -200,7 +200,7 @@ namespace nccfdriver
 		// Node Coordinates
 		if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr)
 		{
-			throw new SG_Exception_Existential(container_name, CF_SG_NODE_COORDINATES);
+			throw SG_Exception_Existential(container_name, CF_SG_NODE_COORDINATES);
 		}	
 
 		// Create parts count list and an offset list for parts indexing	
@@ -228,7 +228,7 @@ namespace nccfdriver
 				else if(prog > node_counts[ind])
 				{
 					delete[] cart;
-					throw new SG_Exception_BadSum(container_name, CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
+					throw SG_Exception_BadSum(container_name, CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
 				}
 			} 
 		}
@@ -247,7 +247,7 @@ namespace nccfdriver
 			}
 			else
 			{
-				throw new SG_Exception_Existential(container_name, dim);	
+				throw SG_Exception_Existential(container_name, dim);	
 			}
 
 			dim = strtok(NULL, " "); 
@@ -271,7 +271,7 @@ namespace nccfdriver
 
 			if(dimC != 1)
 			{
-				throw new SG_Exception_Not1D();
+				throw SG_Exception_Not1D();
 			}
 
 			// check that all have same dimension
@@ -286,7 +286,7 @@ namespace nccfdriver
 			else
 			{
 				if (inter_dim[0] != all_dim)
-					throw new SG_Exception_Dim_MM(container_name, "X, Y", "in general all node coordinate axes");
+					throw SG_Exception_Dim_MM(container_name, "X, Y", "in general all node coordinate axes");
 			} 
 		}
 
@@ -296,14 +296,14 @@ namespace nccfdriver
 			size_t diml;
 			nc_inq_dimlen(ncId, all_dim, &diml);
 		
-			if(diml != total_node_count) throw new SG_Exception_BadSum(container_name, "node_count", "node coordinate dimension length");
+			if(diml != total_node_count) throw SG_Exception_BadSum(container_name, "node_count", "node coordinate dimension length");
 		}
 	
 
 		// (3) check touple order
 		if(this->touple_order < 2)
 		{
-			throw new SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");	
+			throw SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");	
 		}
 
 		this -> pt_buffer = std::unique_ptr<Point>(new Point(this->touple_order));
@@ -318,7 +318,7 @@ namespace nccfdriver
 	{
 		if(!this->has_next_pt())
 		{
-			throw new SG_Exception_BadPoint();
+			throw SG_Exception_BadPoint();
 		}
 
 		// Fill pt
@@ -386,7 +386,7 @@ namespace nccfdriver
 
 			if(err != NC_NOERR)
 			{
-				throw new SG_Exception_BadPoint();
+				throw SG_Exception_BadPoint();
 			}
 
 			pt[order] = data;
@@ -652,7 +652,7 @@ namespace nccfdriver
 
 				default:
 
-					throw new SG_Exception_BadFeature();	
+					throw SG_Exception_BadFeature();	
 					break;
 		}
 
