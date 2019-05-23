@@ -3079,13 +3079,186 @@ def test_bad_cf1_8():
     assert(bad_feature != None)
     assert(missing_node_counts_test != None)
 
-def test_cf_1_8_open_sg_dataset():
+def test_point_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    singleton_pt = ogr.Open("data/netcdf-sg/point_test.nc")
+
+    layer = singleton_pt.GetLayerByName("names_geometry")
+    assert(layer != None)
+
+    # Test each geometry directly
+
+    ft = layer.GetNextFeature()
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (1 -1)")
+    
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (2 -2)")
+
+    ft = layer.GetNextFeature()
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (3 -3)")
+    
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (4 -4)")
+    
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (5 -5)")
+
+def test_multipoint_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    multipoints = ogr.Open("data/netcdf-sg/multipoint_test.nc")
+    assert(multipoints != None) 
+
+    layer = multipoints.GetLayerByName("names_geometry")
+    assert(layer != None)
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (1 -1,2 -2,3 -3,4 -4)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (5 -5,6 -6,7 -7,8 -8)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (9 -9,10 -10,-1 1,-2 2)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (-3 3,-4 4,-5 5,-6 6)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (-7 7,-8 8,-9 9,-10 10)")
+
+def test_line_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    line = ogr.Open("data/netcdf-sg/line_test.nc")
+    assert(line != None) 
+
+    layer = line.GetLayerByName("names_geometry")
+    assert(layer != None)
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (1 -1,2 -2,3 -3,4 -4)")
+     
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (5 -5,6 -6,7 -7,8 -8)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (9 -9,10 -10,-1 1,-2 2)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (-3 3,-4 4,-5 5,-6 6)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (-7 7,-8 8,-9 9,-10 10)")
+     
+
+def test_multiline_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    multiline = ogr.Open("data/netcdf-sg/multiline_test.nc")
+    assert(multiline != None) 
+
+    layer = multiline.GetLayerByName("names_geometry")
+    assert(layer != None)
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((1 -1),(2 -2,3 -3,4 -4))")
+    
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((5 -5,6 -6,7 -7,8 -8))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((9 -9,10 -10,-1 1),(-2 2))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((-3 3,-4 4),(-5 5,-6 6))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((-7 7,-8 8,-9 9,-10 10))")
+
+def test_polygon_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    polygon = ogr.Open("data/netcdf-sg/polygon_test.nc")
+    assert(polygon != None)
+    
+    layer = polygon.GetLayerByName("names_geometry")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POLYGON ((0 0,1 0,1 1,0 0))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POLYGON ((3 0,4 0,4 1,3 1,3 0))")
+
+def test_multipolygon_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    multipolygon = ogr.Open("data/netcdf-sg/multipolygon_test.nc")
+    assert(multipolygon != None) 
+
+    layer = multipolygon.GetLayerByName("names_geometry")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
+     
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 0)),((3 0,4 1,3 1,3 0)))")
+
+def test_serpenski_two_ring():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
     s = ogr.Open("data/netcdf-sg/serpenski_2nd.nc")
 
-    # check basic typing
-    assert(s != None) # Dataset opened successfully
+    assert(s != None)
     
     good_layer = s.GetLayerByName("serpenski")
     assert(good_layer != None) # real layer
@@ -3093,25 +3266,15 @@ def test_cf_1_8_open_sg_dataset():
     assert(good_layer.GetFeatureCount() == 1)
     assert(good_layer.GetGeomType() == ogr.wkbMultiPolygon)
 
+    serpenski = good_layer.GetNextFeature()
+    triangle = serpenski.GetGeometryRef()
+    st_wkt = triangle.ExportToWkt()
 
-def test_open_all_ft():
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()			
-    singleton_pt = ogr.Open("data/netcdf-sg/point_test.nc")
-    multipoints = ogr.Open("data/netcdf-sg/multipoint_test.nc")
-    line = ogr.Open("data/netcdf-sg/line_test.nc")
-    multiline = ogr.Open("data/netcdf-sg/multiline_test.nc")
-    polygon = ogr.Open("data/netcdf-sg/polygon_test.nc")
-    multipolygon = ogr.Open("data/netcdf-sg/multipolygon_test.nc")
-
-    assert(singleton_pt != None) 
-    assert(multipoints != None) 
-    assert(line != None) 
-    assert(multiline != None) 
-    assert(polygon != None) 
-    assert(multipolygon != None) 
+    assert(st_wkt == \
+	"MULTIPOLYGON (((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0)))") 
 
 #  advanced tests
+
 def test_yahara():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
@@ -3125,9 +3288,30 @@ def test_yahara():
     assert(y_layer.GetFeatureCount() == 71)
     assert(y_layer.GetGeomType() == ogr.wkbMultiPolygon)
 
-def test_template():
+    # Test getting a single feature through iteration
+    first = y_layer.GetNextFeature()
+    assert(first != None)
+
+    # Check geometry
+    geometry_first = first.GetGeometryRef()
+    ## to still implement, point checking
+
+    # Check fields are set correctly
+    assert(first.GetFieldAsInteger("ID") == 1)
+    assert(first.GetFieldAsInteger("GRIDCODE") == 55)
+    assert(first.GetFieldAsDouble("X_COORD") == 577251.43302)
+    assert(first.GetFieldAsDouble("Y_COORD") == 319799.04918)
+
+def test_states():
+    # still to implement
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
+
+def test_full_nccfsg_layer():
+    # still to implement
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+
 
 ###############################################################################
 #  other tests
