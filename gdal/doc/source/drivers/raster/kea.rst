@@ -11,7 +11,7 @@ KEA format, through the libkea library.
 
 KEA is an image file format, named after the New Zealand bird, that
 provides a full implementation of the GDAL data model and is implemented
-within a HDF5 file. A software library, likea, is used to access the
+within a HDF5 file. A software library, libkea, is used to access the
 file format. The format has comparable performance with existing formats
 while producing smaller file sizes and is already within active use for
 a number of projects within Landcare Research, New Zealand, and the
