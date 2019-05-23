@@ -56,6 +56,7 @@ jobs:
           wget https://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
           unzip -q /tmp/javadoc.zip
           tar xzf /tmp/python-doc.tar.gz
+          cp _static/gdalicon.png . # For GDAL autotest...
           git init
           git config user.email "proj4bot@proj4.bot"
           git config user.name "GDAL Bot"
