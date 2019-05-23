@@ -669,7 +669,8 @@ namespace nccfdriver
 
 		// Now exists, see what variables refer to this one
 		// First get name of this container
-		char contname[NC_MAX_NAME];
+		char contname[NC_MAX_NAME + 1];
+		memset(contname, 0, NC_MAX_NAME + 1);
 		if(nc_inq_varname(this->nc, container_id, contname) != NC_NOERR)
 		{
 			return;
