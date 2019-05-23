@@ -165,8 +165,8 @@ docs:
 	doxygen -w html html/header.html html/footer.html html/stylesheet.css
 	sed -e 's,iso-8859-1,utf-8,g' html/header.html > html/header_ru.html
 	cp html/header.html html/header_br.html
-	(cd doc/ru ; doxygen ; cp html/*.* ../../html/. )
-	(cd doc/br ; doxygen ; cp html/*.* ../../html/. )
+	(cd doc/doxygen/ru ; doxygen ; cp html/*.* ../../../html/. )
+	(cd doc/doxygen/br ; doxygen ; cp html/*.* ../../../html/. )
 # Generate HTML docs
 # Current DoxygenLayout.xml works only with Doxygen >= 1.8
 	@if [ `doxygen --version | awk -F . '{print $$1}'` -eq "1" ] && [ `doxygen --version | awk -F . '{print $$2}'` -lt "8" ]; then \
@@ -177,7 +177,7 @@ docs:
 	fi
 	cp data/gdalicon.png html
 	cp doc/images/*.* html
-	cp doc/grid/*.png html
+	cp doc/doxygen/grid/*.png html
 	cp frmts/*.html frmts/*/frmt_*.html frmts/*/drv_*.html html
 	cp frmts/openjpeg/*.xml html
 	cp frmts/wms/frmt_*.xml html
