@@ -1152,14 +1152,39 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                                                      "");
         bool bIsOgraphic = EQUAL(pszLatitudeType, "Planetographic");
 
+        // Updated to use new PDS4 radius names at CART 1.B.1.0. Original names 
+        // were confusing and did not follow the recommended FGDC names. Using both 
+        // "semi" and "radius" in the same keyword, which both mean half, 
+        // does not make sense. Because of that, all PDS4 radius keywords were
+        // changed.  Thus "semi_major_radius" was changed to a_axis_radius 
+        // to be more compatible with PDS3. see next 2 sections for other updates.
         double dfSemiMajor = GetLinearValue(psGeodeticModel,
-                                            "semi_major_radius");
-        // according to the spec, it seems the semi_minor_radius is
-        // considered in the equatorial plane, which is rather unusual
-        // for WKT, we want to use the polar_radius as the actual semi minor
-        // axis
+                                            "a_axis_radius");
+        // Try to grab original PDS4 radius name from previous CART 
+        // schema pre-1.B.0.0 (pre LDD version 1.9.3.0)
+        if( dfDemiMajor != nullptr )
+        {
+            double dfSemiMajor = GetLinearValue(psGeodeticModel,
+                                                "semi_major_radius");
+        }
+
+        // The original CART spec confusingly named the b_axis_radius as
+        // "semi_minor_radius", which defined the radius in the equatorial plane
+        // not the polar radius. This is rather unusual for WKT projections. 
+        // This was change to b_axis_radius to be more compatible with PDS3.
+        // a_axis_radius and b_axis_radius should be the same in most cases 
+        // unless a triaxial body is being defined. This should be extremely 
+        // rare (and not used) since the IAU generally defines a best-fit sphere
+        // for triaxial bodies: https://astrogeology.usgs.gov/groups/IAU-WGCCRE
         double dfSemiMinorPDS4 = GetLinearValue(psGeodeticModel,
-                                            "semi_minor_radius");
+                                            "b_axis_radius");
+        // Try to grab original PDS4 radius name from previous CART 
+        // schema pre-1.B.0.0 (pre LDD version 1.9.3.0)
+        if( dfSemiMinorPDS4 != nullptr )
+        {
+            double dfSemiMinorPDS4 = GetLinearValue(psGeodeticModel,
+                                                    "semi_minor_radius");
+        }
         if( dfSemiMajor != dfSemiMinorPDS4 )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -1167,9 +1192,19 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                      "semi_major_radius = %f, will be ignored",
                      dfSemiMinorPDS4, dfSemiMajor);
         }
+
+        // The original CART spec named the c_axis_radius as polar_radius
+        // This was change to c_axis_radius to be more compatible with PDS3
         double dfPolarRadius = GetLinearValue(psGeodeticModel,
-                                              "polar_radius");
-        // Use the polar_radius as the actual semi minor
+                                              "c_axis_radius");
+        // Try to grab original PDS4 radius name from previous CART 
+        // schema pre-1.B.0.0 (pre LDD version 1.9.3.0)
+        if( dfPolarRadius != nullptr )
+        {
+            double dfPolarRadius = GetLinearValue(psGeodeticModel,
+                                                  "polar_radius");
+        }
+        // Use the c_axis_radius (polar_radius) as the actual semi minor
         const double dfSemiMinor = dfPolarRadius;
 
         // Compulsory
