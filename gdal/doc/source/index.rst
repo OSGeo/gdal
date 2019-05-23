@@ -15,6 +15,7 @@ This documentation is also available as a `PDF file <gdal.pdf>`_.
     User <user/index>
     api/index
     tutorials/index
+    development/index
     community
     contributing/index
     faq
