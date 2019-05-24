@@ -184,7 +184,7 @@ Open options
    links in its root element.
 -  **CONFIG_FILE**\ =filename or inline XML definition: filename of a
    XML configuration file conforming to the
-   `gmlasconf.xsd <http://svn.osgeo.org/gdal/trunk/gdal/data/gmlasconf.xsd>`__
+   `gmlasconf.xsd <https://github.com/OSGeo/gdal/blob/master/gdal/data/gmlasconf.xsd>`__
    schema. It is also possible to provide the XML content directly
    inlined provided that the very first characters are <Configuration.
 -  **EXPOSE_METADATA_LAYERS**\ =YES/NO: whether the metadata layers
@@ -297,7 +297,7 @@ The supported dataset creation options are:
    schemas and locations filled.
 -  **CONFIG_FILE**\ =filename or inline XML definition: filename of a
    XML configuration file conforming to the
-   `gmlasconf.xsd <http://svn.osgeo.org/gdal/trunk/gdal/data/gmlasconf.xsd>`__
+   `gmlasconf.xsd <https://github.com/OSGeo/gdal/blob/master/gdal/data/gmlasconf.xsd>`__
    schema. It is also possible to provide the XML content directly
    inlined provided that the very first characters are <Configuration>.
 -  **LAYERS**\ =layers. Comma separated list of layers to export as

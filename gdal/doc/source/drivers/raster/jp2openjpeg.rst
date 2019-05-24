@@ -420,7 +420,7 @@ documentation, and can be omitted):
                    "file": "converted/test_0.gml",
 
                    "#remote_resource_doc": "URL of a feature collection that must be referenced through a xlink:href",
-                   "remote_resource": "http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/expected_gml_gml32.gml",
+                   "remote_resource": "https://github.com/OSGeo/gdal/blob/master/autotest/ogr/data/expected_gml_gml32.gml",
 
                    "#namespace_doc": ["The namespace in schemaLocation for which to substitute",
                                      "its original schemaLocation with the one provided below.",

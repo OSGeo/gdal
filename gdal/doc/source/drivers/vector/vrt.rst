@@ -46,7 +46,7 @@ starting with GDAL 1.10.0) child for each layer in the virtual
 datasource, and a **Metadata** element.
 
 A `XML schema of the OGR VRT
-format <http://svn.osgeo.org/gdal/trunk/gdal/data/ogrvrt.xsd>`__ is
+format <https://github.com/OSGeo/gdal/blob/master/gdal/data/ogrvrt.xsd>`__ is
 available. Starting with GDAL 1.11, when GDAL is configured with libXML2
 support, that schema will be used to validate the VRT documents.
 Non-conformities will be reported only as warnings. That validation can
