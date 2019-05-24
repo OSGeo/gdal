@@ -4,12 +4,11 @@
 GDAL
 ================================================================================
 
-.. include:: ./about.rst
-
 .. toctree::
     :maxdepth: 4
     :hidden:
 
+    about
     download
     programs/index
     drivers/raster/index

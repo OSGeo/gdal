@@ -2,7 +2,7 @@
 GDAL
 ================================================================================
 
-.. include:: ./about.rst
+.. include:: ./about_no_title.rst
 
 This documentation is also available as a `PDF file <gdal.pdf>`_.
 
