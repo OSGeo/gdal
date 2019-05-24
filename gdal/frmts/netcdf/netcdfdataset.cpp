@@ -6085,14 +6085,22 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 
     CPLString osFilenameForNCOpen(osFilename);
 #ifdef WIN32
+    char *oldLocale;
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
-        osFilenameForNCOpen = pszTemp;
-        CPLFree(pszTemp);
+        oldLocale=setlocale(LC_ALL, "en_US.UTF-8"); 
+        //char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
+        //osFilenameForNCOpen = pszTemp;
+        //CPLFree(pszTemp);
     }
 #endif
     status = nc_open(osFilename, NC_WRITE, &cdfid);
+#ifdef WIN32
+    if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        setlocale(LC_ALL, oldLocale);
+    }
+#endif
     NCDF_ERR(status);
     if( status != NC_NOERR )
         return false;
@@ -6992,11 +7000,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                 (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ? NC_WRITE : NC_NOWRITE;
     CPLString osFilenameForNCOpen(poDS->osFilename);
 #ifdef WIN32
+    char *oldLocale;
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
-        osFilenameForNCOpen = pszTemp;
-        CPLFree(pszTemp);
+        oldLocale= setlocale(LC_ALL, "en_US.UTF-8");
+        //char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
+        //osFilenameForNCOpen = pszTemp;
+        //CPLFree(pszTemp);
     }
 #endif
     int status2;
@@ -7016,6 +7026,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
       status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #else
     status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+#endif
+#ifdef WIN32
+    if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        setlocale(LC_ALL, oldLocale);
+    }
 #endif
     if( status2 != NC_NOERR )
     {
