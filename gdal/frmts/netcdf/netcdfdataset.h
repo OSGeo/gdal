@@ -1020,8 +1020,8 @@ class netCDFLayer final: public OGRLayer
         nc_type         m_nWKTNCDFType;
         CPLString       m_osCoordinatesValue;
         std::vector<FieldDesc> m_aoFieldDesc;
-	std::vector<OGRFeature*> m_sgFeatureList;
-	std::vector<OGRFeature*>::iterator m_sgFeatItr;
+	std::vector<std::unique_ptr<OGRFeature>> m_sgFeatureList;
+	std::vector<std::unique_ptr<OGRFeature>>::iterator m_sgFeatItr;
 	bool		m_sgItrInit;
 	bool		m_HasCFSG1_8;
         int             m_nCurFeatureId;
@@ -1067,8 +1067,8 @@ class netCDFLayer final: public OGRLayer
         void            SetWKTGeometryField(const char* pszWKTVarName);
         void            SetGridMapping(const char* pszGridMapping);
         void            SetProfile(int nProfileDimID, int nParentIndexVarID);
-	void		AddSimpleGeometryFeature(OGRFeature * sg) { this->m_sgFeatureList.push_back(sg); }
-	void		EnableSGBypass() { this-> m_HasCFSG1_8 = true; }
+	void            AddSimpleGeometryFeature(OGRFeature* sg) { this->m_sgFeatureList.push_back(std::unique_ptr<OGRFeature>(sg)); }
+	void            EnableSGBypass() { this-> m_HasCFSG1_8 = true; }
         bool            AddField(int nVarId);
 
         int             GetCDFID() const { return m_nLayerCDFId; }

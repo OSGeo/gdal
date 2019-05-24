@@ -3320,9 +3320,38 @@ def test_yahara():
     assert(first.GetFieldAsDouble("Y_COORD") == 319799.04918)
 
 def test_states():
-    # still to implement
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
+    states = ogr.Open("data/netcdf-sg/cf1.8_states.nc")
+    assert(states != None)
+
+    s_layer = states.GetLayerByName("geometry_container")
+    assert(s_layer != None)
+
+    # Assert some basic properties (again)
+    assert(s_layer.GetFeatureCount() == 49)
+    assert(s_layer.GetGeomType() == ogr.wkbMultiPolygon)
+
+    # Test getting a single feature through single iteration 
+    first = s_layer.GetNextFeature()
+    assert(first != None)
+    second = s_layer.GetNextFeature()
+    assert(second != None)
+
+    # try resetting and then trying again
+    s_layer.ResetReading()
+	
+    first_2 = s_layer.GetNextFeature()
+    assert(first_2 != None)
+
+    # Did reset work correctly?
+    assert(first.Equal(first_2))
+
+    # Check fields are set correctly
+    assert(second.GetFieldAsString("STATE_NAME") == "Montana")
+    assert(second.GetFieldAsInteger("DRAWSEQ") == 3)
+    assert(second.GetFieldAsString("STATE_FIPS") == "30")
+    assert(second.GetFieldAsString("STATE_ABBR") == "MT")
 
 def test_full_nccfsg_layer():
     # still to implement

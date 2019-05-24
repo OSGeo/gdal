@@ -705,7 +705,20 @@ void netCDFLayer::SetProfile(int nProfileDimID, int nParentIndexVarID)
 /*                            ResetReading()                            */
 /************************************************************************/
 
-void netCDFLayer::ResetReading() { m_nCurFeatureId = 1; }
+void netCDFLayer::ResetReading()
+{
+    if( m_HasCFSG1_8 )
+    {
+        if( m_sgItrInit )
+        {
+           this->m_sgFeatItr = m_sgFeatureList.begin(); 
+        }
+    }
+    else
+    {
+        m_nCurFeatureId = 1;
+    }
+}
 
 /************************************************************************/
 /*                           Get1DVarAsDouble()                         */
@@ -1192,7 +1205,9 @@ OGRFeature *netCDFLayer::GetNextFeature()
 
     if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
     {
-        return *(m_sgFeatItr++);
+	OGRFeature * ret = (*(m_sgFeatItr))->Clone();
+	m_sgFeatItr++;
+	return ret;
     }
 
     while( true )
