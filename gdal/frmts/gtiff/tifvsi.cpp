@@ -71,6 +71,7 @@ struct GDALTiffHandleShared
 {
     VSILFILE       *fpL;
     bool            bReadOnly;
+    bool            bLazyStrileLoading;
     char           *pszName;
     GDALTiffHandle *psActiveHandle; // only used on the parent
     int             nUserCounter;
@@ -442,6 +443,7 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
     psGTH->psShared = static_cast<GDALTiffHandleShared *>(
         CPLCalloc(1, sizeof(GDALTiffHandleShared)) );
     psGTH->psShared->bReadOnly = (strchr(mode, '+') == nullptr);
+    psGTH->psShared->bLazyStrileLoading = (strchr(mode, 'D') != nullptr);
     psGTH->psShared->pszName = CPLStrdup(name);
     psGTH->psShared->fpL = fpL;
     psGTH->psShared->psActiveHandle = psGTH;
@@ -466,6 +468,9 @@ TIFF* VSI_TIFFOpenChild( TIFF* parent )
     SetActiveGTH(psGTH);
     VSIFSeekL( psGTH->psShared->fpL, 0, SEEK_SET );
 
-    const char* mode = psGTH->psShared->bReadOnly ? "r" : "r+";
+    const char* mode = 
+        psGTH->psShared->bReadOnly && psGTH->psShared->bLazyStrileLoading ? "rDO" :
+        psGTH->psShared->bReadOnly ? "r" :
+        psGTH->psShared->bLazyStrileLoading ? "r+D" : "r+";
     return VSI_TIFFOpen_common(psGTH, mode);
 }

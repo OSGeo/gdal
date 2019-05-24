@@ -169,6 +169,26 @@ RUN if test "${KEA_VERSION}" != ""; then ( \
     && apk del cmake \
     ); fi
 
+# Build openjpeg
+ARG OPENJPEG_VERSION=2.3.1
+RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
+    apk add --no-cache cmake \
+    && wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
+    && rm -f v${OPENJPEG_VERSION}.tar.gz \
+    && cd openjpeg-${OPENJPEG_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+    && make -j$(nproc) \
+    && make install \
+    && rm -f /usr/lib/libopenjp2.so.2.3.0 \
+    && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf openjpeg-${OPENJPEG_VERSION} \
+    && apk del cmake \
+    ); fi
+
 RUN apk add --no-cache rsync ccache
 ARG RSYNC_REMOTE
 
@@ -346,8 +366,10 @@ RUN apk add --no-cache \
         sqlite-libs \
         libcurl \
         zlib zstd-libs\
-        libjpeg-turbo libpng openjpeg libwebp expat \
+        libjpeg-turbo libpng libwebp expat \
         python2 py2-numpy ${POPPLER} pcre libpq libxml2 portablexdr \
+    # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
+    && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
     # libpoppler-cpp.so is not used by GDAL. Only libpoppler.so*

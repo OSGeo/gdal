@@ -786,6 +786,10 @@ public:
                            double dfNorthLatitudeDeg);
 
     bool SetCoordinateOperation(const char* pszCT, bool bReverseCT);
+/*! @cond Doxygen_Suppress */
+    void SetSourceCenterLong(double dfCenterLong);
+    void SetTargetCenterLong(double dfCenterLong);
+/*! @endcond */
 };
 
 

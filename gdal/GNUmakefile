@@ -158,54 +158,26 @@ GDALmake.opt:	GDALmake.opt.in config.status
 config.status:  configure
 	./config.status --recheck
 
+doxygen:
+	doxygen
+
 docs:
-	(cd html; rm -f *.*)
-# Generate translated docs. Should go first, because index.html page should
-# be overwritten with the main one later
-	doxygen -w html html/header.html html/footer.html html/stylesheet.css
-	sed -e 's,iso-8859-1,utf-8,g' html/header.html > html/header_ru.html
-	cp html/header.html html/header_br.html
-	(cd doc/ru ; doxygen ; cp html/*.* ../../html/. )
-	(cd doc/br ; doxygen ; cp html/*.* ../../html/. )
-# Generate HTML docs
-# Current DoxygenLayout.xml works only with Doxygen >= 1.8
-	@if [ `doxygen --version | awk -F . '{print $$1}'` -eq "1" ] && [ `doxygen --version | awk -F . '{print $$2}'` -lt "8" ]; then \
-	  echo "Using deprecated doxygen version. Removing custom layout"; \
-	  (cat Doxyfile; echo "LAYOUT_FILE=/dev/null") | doxygen -; \
-	else \
-	  doxygen Doxyfile; \
-	fi
-	cp data/gdalicon.png html
-	cp doc/images/*.* html
-	cp doc/grid/*.png html
-	cp frmts/*.html frmts/*/frmt_*.html frmts/*/drv_*.html html
-	cp frmts/openjpeg/*.xml html
-	cp frmts/wms/frmt_*.xml html
-	cp ogr/ogrsf_frmts/*/frmt_*.html html
-	cp ogr/ogrsf_frmts/*/drv_*.html html
-	cp ogr/ogrsf_frmts/ogr_formats.html html
-	cp ogr/*.html html
-	cp ogr/ogrsf_frmts/gpkg/geopackage_aspatial.html html
-	cp ogr/*.gif html
-	cp ogr/*.png html
+	(cd doc; make html)
 
 .PHONY: man
 
 man:
-# Generate man pages
-	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES" ; echo "LAYOUT_FILE=/dev/null") | doxygen -
-# Remove "Directory reference" file. Not sure if there's a better way of doing it.
-	 @find man -name '_home_*_gdal_apps_.1' -exec rm {} \;
+	(cd doc; make man)
 
 all:	default ogr-all
 
 install-docs:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)/gdal
-	cp html/*.* $(DESTDIR)$(INST_DOCS)/gdal
+	cp -r doc/build/html/* $(DESTDIR)$(INST_DOCS)/gdal
 
 install-man:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_MAN)/man1
-	for f in $(wildcard man/man1/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
+	for f in $(wildcard doc/build/man/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
 
 web-update:	docs
 	$(INSTALL_DIR) $(INST_HTML)
