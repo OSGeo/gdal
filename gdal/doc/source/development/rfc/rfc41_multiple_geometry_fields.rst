@@ -473,7 +473,7 @@ Updated drivers in the context of this RFC
       changes unrelated to this RFC)
 
 Other candidate drivers (upgrade not originally covered by this RFC)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  GML driver : currently, only one geometry per feature reported.
    Possibility of changing this by hand-editing of the .gfs file -->

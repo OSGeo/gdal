@@ -173,11 +173,11 @@ all:	default ogr-all
 
 install-docs:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)/gdal
-	cp html/*.* $(DESTDIR)$(INST_DOCS)/gdal
+	cp -r doc/build/html/* $(DESTDIR)$(INST_DOCS)/gdal
 
 install-man:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_MAN)/man1
-	for f in $(wildcard man/man1/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
+	for f in $(wildcard doc/build/man/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
 
 web-update:	docs
 	$(INSTALL_DIR) $(INST_HTML)
