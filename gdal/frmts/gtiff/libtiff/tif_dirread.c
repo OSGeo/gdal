@@ -3625,6 +3625,8 @@ TIFFReadDirectory(TIFF* tif)
         
 	tif->tif_flags &= ~TIFF_BEENWRITING;    /* reset before new dir */
 	tif->tif_flags &= ~TIFF_BUF4WRITE;      /* reset before new dir */
+	tif->tif_flags &= ~TIFF_CHOPPEDUPARRAYS;
+
 	/* free any old stuff and reinit */
 	TIFFFreeDirectory(tif);
 	TIFFDefaultDirectory(tif);
@@ -5778,7 +5780,7 @@ static void allocChoppedUpStripArrays(TIFF* tif, uint32 nstrips,
 #ifdef STRIPBYTECOUNTSORTED_UNUSED
     td->td_stripbytecountsorted = 1;
 #endif
-    tif->tif_flags &= ~TIFF_DEFERSTRILELOAD;
+    tif->tif_flags |= TIFF_CHOPPEDUPARRAYS;
 }
 
 
@@ -5990,7 +5992,7 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
     else
     {
         TIFFErrorExt(tif->tif_clientdata, module,
-                 "Invalid type for [Strip|Tile][Offset/ByteCounnt] tag");
+                 "Invalid type for [Strip|Tile][Offset/ByteCount] tag");
         panVals[strile] = 0;
         return 0;
     }
@@ -6196,7 +6198,7 @@ static uint64 _TIFFGetStrileOffsetOrByteCountValue(TIFF *tif, uint32 strile,
     TIFFDirectory *td = &tif->tif_dir;
     if( pbErr )
         *pbErr = 0;
-    if( tif->tif_flags&TIFF_DEFERSTRILELOAD )
+    if( (tif->tif_flags&TIFF_DEFERSTRILELOAD) && !(tif->tif_flags&TIFF_CHOPPEDUPARRAYS) )
     {
         if( !(tif->tif_flags&TIFF_LAZYSTRILELOAD) ||
             /* If the values may fit in the toff_long/toff_long8 member */
@@ -6271,7 +6273,7 @@ static int _TIFFFillStrilesInternal( TIFF *tif, int loadStripByteCount )
     int return_value = 1;
 
     /* Do not do anything if TIFF_DEFERSTRILELOAD is not set */
-    if( !(tif->tif_flags&TIFF_DEFERSTRILELOAD) )
+    if( !(tif->tif_flags&TIFF_DEFERSTRILELOAD) || (tif->tif_flags&TIFF_CHOPPEDUPARRAYS) != 0 )
         return 1;
 
     if( tif->tif_flags&TIFF_LAZYSTRILELOAD )
