@@ -36,7 +36,7 @@ Configuration
 -------------
 
 In the *data* folder of the GDAL distribution, you can find a
-`osmconf.ini <http://svn.osgeo.org/gdal/trunk/gdal/data/osmconf.ini>`__
+`osmconf.ini <https://github.com/OSGeo/gdal/blob/master/gdal/data/osmconf.ini>`__
 file that can be customized to fit your needs. You can also define an
 alternate path with the OSM_CONFIG_FILE configuration option.
 
