@@ -1,7 +1,7 @@
-.. _vector.ngw:
+.. _raster.ngw:
 
-NextGIS Web
-===========
+NGW -- NextGIS Web
+==================
 
 .. versionadded:: 2.4
 
@@ -180,8 +180,10 @@ Read raster details (1734 is raster layer identifier):
 
        gdalinfo NGW:https://demo.nextgis.com/resource/1734
 
-See also:
+See also
+--------
 
+-  :ref:`Vector side of the driver <vector.ngw>`
 -  `NextGIS Web
    documentation <http://docs.nextgis.com/docs_ngweb/source/toc.html>`__
 -  `NextGIS Web for

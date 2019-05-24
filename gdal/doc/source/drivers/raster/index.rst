@@ -113,6 +113,7 @@ Raster drivers
    ndf
    netcdf
    ngsgeoid
+   ngw
    nitf
    ntv1
    ntv2
