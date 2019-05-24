@@ -28,7 +28,7 @@ Motivations
    Subversion as the main source control management makes contributions
    less attractive.
 2. The `https://github.com/OSGeo/gdal <https://github.com/OSGeo/gdal>`__
-   mirror has existed since 2012 and has over time become the prefered
+   mirror has existed since 2012 and has over time become the preferred
    way for contributors without direct SVN access (or even those with
    SVN access) to submit their contributions, in particular because of
    the coupling with the continuous integratations services of Travis-CI

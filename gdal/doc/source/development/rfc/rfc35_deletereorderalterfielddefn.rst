@@ -60,7 +60,7 @@ The documentation of those new methods is :
    to reflect the deleted field.  Applications should never modify the OGRFeatureDefn
    used by a layer directly.
 
-   This method should not be called while there are feature objects in existance that
+   This method should not be called while there are feature objects in existence that
    were obtained or created with the previous layer definition.
 
    Not all drivers support this method. You can query a layer to check if it supports it
@@ -87,7 +87,7 @@ The documentation of those new methods is :
    to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
    used by a layer directly.
 
-   This method should not be called while there are feature objects in existance that
+   This method should not be called while there are feature objects in existence that
    were obtained or created with the previous layer definition.
 
    panMap is such that,for each field definition at position i after reordering,
@@ -124,7 +124,7 @@ The documentation of those new methods is :
    to reflect the reordering of the fields.  Applications should never modify the OGRFeatureDefn
    used by a layer directly.
 
-   This method should not be called while there are feature objects in existance that
+   This method should not be called while there are feature objects in existence that
    were obtained or created with the previous layer definition.
 
    The field definition that was at initial position iOldFieldPos will be moved at
@@ -158,7 +158,7 @@ The documentation of those new methods is :
    to reflect the altered field.  Applications should never modify the OGRFeatureDefn
    used by a layer directly.
 
-   This method should not be called while there are feature objects in existance that
+   This method should not be called while there are feature objects in existence that
    were obtained or created with the previous layer definition.
 
    Not all drivers support this method. You can query a layer to check if it supports it

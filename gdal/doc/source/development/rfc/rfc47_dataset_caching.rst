@@ -146,7 +146,7 @@ This is set at initialization of the dataset via:
 GDALRasterBand
 ^^^^^^^^^^^^^^
 
-In order to make caching safer and more effecient, a mutex as also
+In order to make caching safer and more efficient, a mutex as also
 introduced in GDALRasterBand as well. The job of this mutex is to
 protect the RasterBlock array per band (papoBlocks).
 

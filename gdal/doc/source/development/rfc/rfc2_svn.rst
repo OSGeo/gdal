@@ -100,4 +100,4 @@ Branch for 1.3
 Once the headers have been updated appropriately, a 1.3 branch will be
 established in subversion. The intent is that further 1.3.x releases
 would be made against this "stable branch" while trunk work is towards a
-1.4.0 release targetted for around the time of the OSGeo conference.
+1.4.0 release targeted for around the time of the OSGeo conference.

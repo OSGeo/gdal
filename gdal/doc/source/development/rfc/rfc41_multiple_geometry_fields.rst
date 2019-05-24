@@ -128,7 +128,7 @@ The OGRFeatureDefn class will be extended as the following :
            // Same for IsGeometryIgnored() and SetGeometryIgnored()
    }
 
-At instanciation, OGRFeatureDefn would create a default geometry field
+At instantiation, OGRFeatureDefn would create a default geometry field
 definition of name "" and type wkbUnknown. If SetGeomType() is called,
 this will be routed on papoGeomFieldDefn[0]. If only one geometry field
 definition exists, SetGeomType(wkbNone) will remove it.
@@ -187,7 +187,7 @@ The OGRFeature class will be extended as following :
 
 Note: before RFC41, SetGeometry() or SetGeometryDirectly() could work on
 a feature whose feature definition had a GetGeomType() == wkbNone (which
-was inconsistant). This will be no longer the case since the size of the
+was inconsistent). This will be no longer the case since the size of the
 papoGeometries array is now based on GetGeomFieldCount(), and when
 GetGeomType() == wkbNone, the geometry field count is 0. The VRT and CSV
 drivers will be fixed to declare their geometry type consistently.
@@ -347,7 +347,7 @@ still produce a meaningful result. The string reprentation of a 64bit
 integer is not that bad as a default behaviour.)
 
 GetFieldCount() would also take into account geometry fields, but in
-most cases, you would need to substract them.
+most cases, you would need to subtract them.
 
 A possible way of avoiding the above compatibility issue would be to
 have 2 sets of API at OGRFeatureDefn and OGRFeature level. The current
@@ -472,7 +472,7 @@ Updated drivers in the context of this RFC
    -  updated to support multiple geometry fields (as well as other
       changes unrelated to this RFC)
 
-Other candidate drivers (upgrade not originaly covered by this RFC)
+Other candidate drivers (upgrade not originally covered by this RFC)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  GML driver : currently, only one geometry per feature reported.

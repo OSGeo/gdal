@@ -91,8 +91,8 @@ ArcGIS is also expected to utilize this feature.
 Backward Compatibility Issues
 -----------------------------
 
-There are no known backward compatability issues. However, there may be
-forward compatability issues if we are not precise and consistent from
+There are no known backward compatibility issues. However, there may be
+forward compatibility issues if we are not precise and consistent from
 version to version on what supporting info is allowed to be omitted in
 fast open mode.
 

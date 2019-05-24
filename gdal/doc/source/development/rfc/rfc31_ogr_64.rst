@@ -367,7 +367,7 @@ significant figures has been considered. In OGR, this could be
 implemented as a full type like Integer, Integer64 etc., or possibly as
 a subtype of String (see `RFC 50: OGR field
 subtypes <./rfc50_ogr_field_subtype>`__). The latter approach would be
-easier to implement and mostly usefull for lossless conversion between
+easier to implement and mostly useful for lossless conversion between
 database drivers (and shapefile). The former approach would require more
 work, and would ideally involve OGR SQL support, which would require
 supporting arithmetic of arbitrary length. The use cases for such a

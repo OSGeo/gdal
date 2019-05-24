@@ -49,7 +49,7 @@ Reference documents
 Core changes
 ------------
 
-The new class hierarchy is the following and is mostly consistant with
+The new class hierarchy is the following and is mostly consistent with
 SQL/MM Part 3
 
 .. image:: ../../../images/rfc64/classOGRGeometry_RFC64.png
@@ -358,7 +358,7 @@ The FileGDB format support the MultiPatch object as well, with one
 extension. There is a new type of part, which is made of several
 triangles whose organization is not TriangleStrip or TriangleFan. Both
 drivers have been upgraded to work like the ShapeFile driver on the
-reading side. On the wirting side, the FileGDB driver will automatically
+reading side. On the writing side, the FileGDB driver will automatically
 write a MultiPatch if the layer geometry type is TIN or
 PolyhedralSurface. The layer option that existed before
 CREATE_MULTIPATCH=YES can still be used to force writing as MultiPatch

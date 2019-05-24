@@ -123,7 +123,7 @@ The existing CAST, and column summary functions COUNT, AVG, MIN, MAX and
 SUM will be treated more-or-less as functions but constrained to be root
 operations on column definitions and treated as a special case (still).
 
-Compatability Implications
+Compatibility Implications
 --------------------------
 
 Some identifiers that were previously allowed as unquoted field names

@@ -155,7 +155,7 @@ Changes to RPC Transformer
    elevation for the scene).
 -  Make RPC Transformer serializable (in VRT files, etc).
 
-Backward Compatability Issues
+Backward Compatibility Issues
 -----------------------------
 
 Previously the NITF driver returned RPC metadata in the default domain.
@@ -164,7 +164,7 @@ using this metadata would need to consult the RPC domain instead. The
 RPC\_ prefix on the metadata values has also been removed.
 
 The GDALCreateGenImgProjTransformer() function is preserved, so no
-compatability issues are anticipated by the addition of the new
+compatibility issues are anticipated by the addition of the new
 generalized factory.
 
 SWIG Bindings Issues
@@ -179,7 +179,7 @@ SWIG Bindings Issues
    on OGRCoordinateTransformation API binding. So far I have only found
    the TransformPoint( bDstToSrc, x, y, z ) entry point to be useful in
    Python and even that ends up returning a (bSuccess, (x, y, z)) result
-   which is somewhat ackward. Is there a better way of doing this?
+   which is somewhat awkward. Is there a better way of doing this?
 
 ::
 

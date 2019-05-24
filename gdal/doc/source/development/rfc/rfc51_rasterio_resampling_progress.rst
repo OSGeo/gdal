@@ -123,7 +123,7 @@ palette. A warning will be emitted if an attempt of doing so is done,
 and nearest neightbour will be used as a fallback.
 
 The GDAL_RASTERIO_RESAMPLING configuration option can be set as an
-alternate way of specifying the resampling algorithm. Mainly usefull for
+alternate way of specifying the resampling algorithm. Mainly useful for
 tests with applications that do not yet use the new API.
 
 Currently, the new resampling methods are only available for GF_Read
@@ -191,7 +191,7 @@ Changes in drivers
 -  VRT: the and elements can accept a 'resampling' attribute. The VRT
    driver will also set the dfXOff, dfYOff, dfXSize and dfYSize fields
    of GDALRasterIOExtraArg\* to have source sub-pixel accuracy, so that
-   GDALRasterBand::IRasterIO() leads to consistant results when
+   GDALRasterBand::IRasterIO() leads to consistent results when
    operating on a small area of interest or the whole raster. If that
    was not done, chunking done in GDALDatasetCopyWholeRaster() or other
    algorithms could lead to repeated lines due to integer rounding

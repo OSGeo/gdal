@@ -58,7 +58,7 @@ marker
        } Set;
 
 This is not strictly related to this work but the 3rd marker decreases
-the likelyhood of a genuine value to be misinterpreted as unset / null.
+the likelihood of a genuine value to be misinterpreted as unset / null.
 This does not increase the size of the structure that is already at
 least 12 bytes large.
 

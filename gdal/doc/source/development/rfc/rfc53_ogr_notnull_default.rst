@@ -17,7 +17,7 @@ This RFC addresses handling of NOT NULL constraints and DEFAULT values
 for OGR fields. NOT NULL constraints are useful to maintain basic data
 integrity and are handled by most (all?) drivers that have SQL
 capabilities. Default fields values may be used complementary or
-independantly of NOT NULL constraints to specify the value a field must
+independently of NOT NULL constraints to specify the value a field must
 be assigned to if it is not provided when inserting a feature into the
 layer.
 
@@ -30,7 +30,7 @@ feature/record to be unset (i.e. having a NULL value). This will still
 be the default, i.e. fields are assumed to be nullable. The OGRFieldDefn
 class is extended with a boolean attribute bNullable that defaults to
 TRUE and can be set to FALSE to express a NOT NULL constraint (bNullable
-has been prefered over bNotNullable to avoid confusion with double
+has been preferred over bNotNullable to avoid confusion with double
 negation). Drivers that can translate NOT NULL constraints in their
 storage will use that attribute to determine if the field definition
 must include a NOT NULL constraint. When opening a datasource, their
@@ -186,7 +186,7 @@ Default field values
 Fields with NOT NULL constraints are sometimes accompanied with a
 DEFAULT clause so as to be able to create a new feature without filling
 all fields, while maintaining integrity. DEFAULT values can also be set
-on nullable fields but for reasons exposed later it is recomended to
+on nullable fields but for reasons exposed later it is recommended to
 avoid that.
 
 Drivers that can translate DEFAULT values in their storage will use that

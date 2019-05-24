@@ -28,7 +28,7 @@ Some vector formats mix features that belong to different layers in an
 interleaved way, which make the current feature iteration per layer
 rather inefficient (this requires for each layer to read the whole
 file). One example of such drivers is the OSM driver. For this driver, a
-hack had been developped in the past to be able to use the
+hack had been developed in the past to be able to use the
 OGRLayer::GetNextFeature() method, but with a really particular
 semantics. See "Interleaved reading" paragraph of
 `http://gdal.org/drv_osm.html <http://gdal.org/drv_osm.html>`__ for more

@@ -159,7 +159,7 @@ output coordinate system or even reprojecting the features during translation.
     promote a non-linear type to its generalized curve type (``POLYGON`` to
     ``CURVEPOLYGON``, ``MULTIPOLYGON`` to ``MULTISURFACE``, ``LINESTRING`` to
     ``COMPOUNDCURVE``, ``MULTILINESTRING`` to ``MULTICURVE``). Starting with
-    verison 2.1 the type can be defined as measured ("25D" remains as an alias for
+    version 2.1 the type can be defined as measured ("25D" remains as an alias for
     single "Z"). Some forced geometry conversions may result in invalid
     geometries, for example when forcing conversion of multi-part multipolygons
     with ``-nlt POLYGON``, the resulting polygon will break the Simple Features

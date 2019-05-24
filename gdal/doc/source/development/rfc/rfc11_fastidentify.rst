@@ -223,7 +223,7 @@ VSIFilesystemHandler::ReadDir() already exist. This should essentially
 complete the virtualization of filesystem access services.
 
 CPLReadDir() will also be renamed VSIReadDir() but with a stub under the
-old name available for backward compatability.
+old name available for backward compatibility.
 
 Compatibility
 -------------

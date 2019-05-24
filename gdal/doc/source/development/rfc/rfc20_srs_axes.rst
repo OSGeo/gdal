@@ -220,7 +220,7 @@ Implementation would be done by Frank Warmerdam. Some aspects (such as
 properly capturing axis ordering for projected coordinate systems) might
 not be implemented immediately.
 
-Compatability Issues
+Compatibility Issues
 --------------------
 
 The greatest concern is that any existing WKT coordinate systems with

@@ -536,7 +536,7 @@ Funded through `gdalbarn <https://gdalbarn.com/>`__ sponsoring.
 While it is provided as a multiple commit for """easier""" review, it
 will be probably squashed in a single commit for inclusion in master, as
 intermediate steps are not all buildable, due to PROJ symbol renames
-having occured during the development, which would break bisectability.
+having occurred during the development, which would break bisectability.
 
 Voting history
 --------------

@@ -136,7 +136,7 @@ best illustrated by the following schemas :
    function. This is implemented as a virtual method at the
    GDALRasterBand level, so that drivers have a chance of overriding the
    base implementation. The base implementation justs uses
-   GDALRasterBandGetVirtualMem(). Overriden implementation may use the
+   GDALRasterBandGetVirtualMem(). Overridden implementation may use the
    memory file mapping mechanism instead. Such implementations will be
    done in the RawRasterBand object and in the GeoTIFF driver.
 
@@ -312,7 +312,7 @@ Implemented by cpl_virtualmem.cpp
     * @param  nOffset  Offset in the file to start the mapping from.
     * @param  nLength  Length of the portion of the file to map into memory.
     * @param eAccessMode Permission to use for the virtual memory mapping. This must
-    *                    be consistant with how the file has been opened.
+    *                    be consistent with how the file has been opened.
     * @param pfnFreeUserData callback that is called when the object is destroyed.
     * @param pCbkUserData user data passed to pfnFreeUserData.
     * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
@@ -330,7 +330,7 @@ Implemented by cpl_virtualmem.cpp
    /** Create a new virtual memory mapping derived from an other virtual memory
     *  mapping.
     *
-    * This may be usefull in case of creating mapping for pixel interleaved data.
+    * This may be useful in case of creating mapping for pixel interleaved data.
     *
     * The new mapping takes a reference on the base mapping.
     *
@@ -470,7 +470,7 @@ Implemented by cpl_virtualmem.cpp
 
    /** Make sure that a region of virtual memory will be realized.
     *
-    * Calling this function is not required, but might be usefull when debugging
+    * Calling this function is not required, but might be useful when debugging
     * a process with tools like gdb or valgrind that do not naturally like
     * segmentation fault signals.
     *
@@ -766,7 +766,7 @@ Implemented by gdalvirtualmem.cpp
     * "dirty" page) when the cache size limit has been reached.
     *
     * Contrary to GDALDatasetGetVirtualMem(), pixels will be organized by tiles
-    * instead of scanlines. Different ways of organizing pixel within/accross tiles
+    * instead of scanlines. Different ways of organizing pixel within/across tiles
     * can be selected with the eTileOrganization parameter.
     *
     * If nXSize is not a multiple of nTileXSize or nYSize is not a multiple of
@@ -1061,7 +1061,7 @@ that run on various OS is an evidence on its capacity of being ported to
 other platforms.
 
 The trickiest part is ensuring that things will work reliably when two
-concurrent threads that try to access the same initally unmapped page.
+concurrent threads that try to access the same initially unmapped page.
 Without special care, one thread could manage to access the page that is
 being filled by the other thread, before it is completely filled. On
 Linux this can be easily avoided with the mremap() call. When a page is
@@ -1137,8 +1137,8 @@ Some issues with system calls such as read() or write(), or easier
 multi-threading could potentially be solved by making a FUSE (File
 system in USEr space) driver that would expose a GDAL dataset as a file,
 and the mmap()'ing the file itself. However FUSE drivers are only
-available on POSIX OS, and need root priviledge to be mounted (a FUSE
-filesystem does not need root priviledge to run, but the mounting
+available on POSIX OS, and need root privilege to be mounted (a FUSE
+filesystem does not need root privilege to run, but the mounting
 operation does).
 
 Open questions
@@ -1151,7 +1151,7 @@ Backward compatibility issues
 -----------------------------
 
 C/C++ API --> compatible (new API). C ABI --> compatible (new API). C++
-ABI --> incompatiblity because GDALRasterBand has a new virtual method.
+ABI --> incompatibility because GDALRasterBand has a new virtual method.
 
 Updated drivers
 ---------------

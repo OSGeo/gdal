@@ -20,7 +20,7 @@ geometry class hierarchy of the "OpenGIS Simple Feature Access Part 1 :
 Common Architecture" (in its 1.1.0 version).
 
 This RFC covers the addition of new geometry types that have been added
-in ISO/IEC 13249 Part 3 Spatial (abreviated as ISO SQL/MM Part 3):
+in ISO/IEC 13249 Part 3 Spatial (abbreviated as ISO SQL/MM Part 3):
 
 -  circular string: a circular arc, or a sequence of connected circular
    arcs, each of them describe by 3 points: the first point of the arc,
@@ -73,7 +73,7 @@ Core changes
 New cass hierarchy
 ~~~~~~~~~~~~~~~~~~
 
-The new class hierarchy is the following and is mostly consistant with
+The new class hierarchy is the following and is mostly consistent with
 SQL/MM Part 3
 
 .. image:: ../../../images/rfc49/classOGRGeometry.png
@@ -110,7 +110,7 @@ values :
        wkbMultiCurveZ = 1011,      /**< wkbMultiCurve with Z component. ISO SQL/MM Part 3. GDAL >= 2.0 */
        wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL >= 2.0 */
 
-The codes have been taken from SFA 1.2.1, and are consistant with the
+The codes have been taken from SFA 1.2.1, and are consistent with the
 PostGIS 2 implementation. Note that ISO SQL/MM Part 3 allows alternates
 values for wkbCircularString (8 or 1000001) : see Table 15 in the above
 mentionned draft. The values in the range 10000XX probably date back
@@ -464,7 +464,7 @@ Changes in drivers
    the new geometry types only if the NAS file contains arcs.
 
 -  PG/PostGIS: Can read/write all the new geometry types for both
-   PostGIS 2.X and PostGIS 1.X. For PostGIS 1.X compatiblity, special
+   PostGIS 2.X and PostGIS 1.X. For PostGIS 1.X compatibility, special
    processing must be done in the importFromWkb()/exportToWkb() to deal
    with the non standard codes used by PostGIS 1.X for curvepolygon,
    multicurve and multisurface. This is done with a wkbVariantPostGIS1
@@ -509,7 +509,7 @@ Changes in utilities
    OGR_GT_GetLinear()) ). Note: this isn't strictly necessary as all
    drivers should be able to deal with the non-linear geometry types
    with the compatibility mechanism described in Backward compatibility.
-   But this might be usefull to produce a PostGIS table or GeoPackage
+   But this might be useful to produce a PostGIS table or GeoPackage
    database with linear geometry types even if the source contains
    non-linear geometries. "-nlt CONVERT_TO_LINEAR" can be combined with
    "-nlt PROMOTE_TO_MULTI".

@@ -44,7 +44,7 @@ the registered drivers and check if one or several drivers, with output
 capabilities, declare to recognize the extension of the output filename.
 
 -  When one and only one driver declares this extension (.tif, .png,
-   .jpg ect), it will be used automatically
+   .jpg etc), it will be used automatically
 -  When several drivers declare this extension (for example KML and
    LIBKML for .kml), the utility will select the first registered driver
    (except netCDF instead of GMT for .nc files), and a warning is

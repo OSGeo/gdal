@@ -147,13 +147,13 @@ OGRDataSource which inherits from GDALDataset).
     At the time of writing, transactions only apply on vector layers.
     
     Datasets that support transactions will advertize the ODsCTransactions capability.
-    Use of transactions at dataset level is generally prefered to transactions at
+    Use of transactions at dataset level is generally preferred to transactions at
     layer level, whose scope is rarely limited to the layer from which it was started.
     
     In case StartTransaction() fails, neither CommitTransaction() or RollbackTransaction()
     should be called.
     
-    If an error occurs after a successfull StartTransaction(), the whole
+    If an error occurs after a successful StartTransaction(), the whole
     transaction may or may not be implicitely cancelled, depending on drivers. (e.g.
     the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
     error, an explicit call to RollbackTransaction() should be done to keep things balanced.
@@ -348,7 +348,7 @@ the following additional information to clarify its semantics :
 ::
 
    Features returned by GetNextFeature() may or may not be affected by concurrent
-   modifications depending on drivers. A guaranteed way of seing modifications in
+   modifications depending on drivers. A guaranteed way of seeing modifications in
    effect is to call ResetReading() on layers where GetNextFeature() has been called,
    before reading again. Structural changes in layers (field addition, deletion, ...)
    when a read is in progress may or may not be possible depending on drivers.
@@ -491,7 +491,7 @@ help page :
    is for clarity of the explanation.
 
 It is recommended to do operations within explicit transactions for ease
-of mind (some troubles fixing ogr_pg.py, but which does admitedly weird
+of mind (some troubles fixing ogr_pg.py, but which does admittedly weird
 things like reopening connections, which does not fly very well with
 'implicit' transactions)
 

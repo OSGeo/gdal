@@ -166,7 +166,7 @@ Drivers and driver registration
    longer a list of drivers. The Open(), OpenShared(),
    ReleaseDataSource(), DeregisterDriver() and AutoLoadDrivers() methods
    are removed from the class. This change can have impact on C++ code.
-   A few adaptations in OGR utilities have been done to accomodate for
+   A few adaptations in OGR utilities have been done to accommodate for
    those changes. The RegisterDriver() API has been kept for legacy OGR
    drivers and it automatically sets SetMetadataItem( GDAL_DCAP_VECTOR,
    "YES" ). The GetDriverCount(), GetDriver() and GetDriverByName()
@@ -374,7 +374,7 @@ Datasets / Datasources
    view. Note that it is not true at the C++ level !
 
 -  OGRDataSource::SyncToDisk() has been removed. The equivalent
-   functionnality should be implemented in existing FlushCache().
+   functionality should be implemented in existing FlushCache().
    GDALDataset::FlushCache() nows does the job of the previous generic
    implementation of OGRDataSource::SyncToDisk(), i.e. iterate over all
    layers and call SyncToDisk() on them.

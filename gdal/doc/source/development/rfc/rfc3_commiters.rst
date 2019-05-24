@@ -67,7 +67,7 @@ access to folks, updating the COMMITTERS file, and other SVN related
 management. That person will need login access on the SVN server of
 course.
 
-Initially Frank Warmerdam will be the SVN Adminstrator.
+Initially Frank Warmerdam will be the SVN Administrator.
 
 SVN Commit Practices
 --------------------
@@ -80,7 +80,7 @@ project.
    entries when committing changes related to a ticket in Trac. The '#'
    character enables Trac to create a hyperlink from the changeset to
    the mentionned ticket.
--  After commiting changes related to a ticket in Trac, write the tree
+-  After committing changes related to a ticket in Trac, write the tree
    and revision in which it was fixed in the ticket description. Such as
    "Fixed in trunk (r12345) and in branches/1.7 (r12346)". The 'r'
    character enables Trac to create a hyperlink from the ticket to the

@@ -153,12 +153,12 @@ Drivers Updated
 
 It is anticipated that a majority of the commonly used drivers will be
 updated with custom GetFileList() methods that account for world files
-and other ideosyncratic files. A particular emphasis will made to handle
+and other idiosyncratic files. A particular emphasis will made to handle
 the various formats in gdal/frmts/raw that consist of a header file and
 a raw binary file.
 
 Drivers for "one file formats" that are not updated will still use the
-default logic which should work fairly well, but might neglect auxilary
+default logic which should work fairly well, but might neglect auxiliary
 world files.
 
 -  VRT: I do not anticipate updating the VRT driver at this time since
@@ -172,7 +172,7 @@ Additional Notes
 ----------------
 
 -  Subdatasets will generally return an empty file list from
-   GetFileList(), and will not be managable via Rename or Delete though
+   GetFileList(), and will not be manageable via Rename or Delete though
    a very sophisticated driver could implement these operations.
 -  There is no mechanism anticipated to ensure that files are closed
    before they are removed. If an application does not ensure this

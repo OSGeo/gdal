@@ -49,7 +49,7 @@ needed, and currently they always evaluate to TRUE.
 
 To avoid any ambiguities and more conformant to SQL, string literals
 should be single-quoted, and identifiers (column/table names) unquoted
-or surrounded by double-quote charachter if conflicting with reserved
+or surrounded by double-quote character if conflicting with reserved
 keywords.
 
 Implementation
@@ -94,7 +94,7 @@ SELECT 'non_existing_column' FROM "atable". On the contrary, PostgreSQL
 will not accept it. I'd be rather inclined to follow PostgreSQL stricter
 approach to keep things simple and understandable: "string literals
 should be single-quoted, and identifiers (column/table names) unquoted
-or surrounded by double-quote charachter"
+or surrounded by double-quote character"
 
 Testing
 -------

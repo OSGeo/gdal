@@ -125,7 +125,7 @@ The meaning as a return value is:
    still activity pending.
 -  GARIO_ERROR: Something has gone wrong. The asynchronous request
    should be ended.
--  GARIO_COMPLETE: An update has occured and there is no more pending
+-  GARIO_COMPLETE: An update has occurred and there is no more pending
    work on this request. The request should be ended and the buffer
    used.
 
