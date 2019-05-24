@@ -141,7 +141,7 @@ IMAGE_STRUCTURE Domain
 
 Metadata in the default domain is intended to be related to the image, and not particularly related to the way the image is stored on disk. That is, it is suitable for copying with the dataset when it is copied to a new format. Some information of interest is closely tied to a particular file format and storage mechanism. In order to prevent this getting copied along with datasets it is placed in a special domain called IMAGE_STRUCTURE that should not normally be copied to new formats.
 
-Currently the following items are defined by `RFC 14 <http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure>`_ as having specific semantics in the IMAGE_STRUCTURE domain.
+Currently the following items are defined by :ref:`rfc-14` as having specific semantics in the IMAGE_STRUCTURE domain.
 
 - COMPRESSION: The compression type used for this dataset or band. There is no fixed catalog of compression type names, but where a given format includes a COMPRESSION creation option, the same list of values should be used here as there.
 - NBITS: The actual number of bits used for this band, or the bands of this dataset. Normally only present when the number of bits is non-standard for the datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_Byte.

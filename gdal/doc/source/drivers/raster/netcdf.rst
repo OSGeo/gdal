@@ -335,9 +335,7 @@ Important Changes
 
 -  Added support for CF two-dimensional coordinate variables (see `CF
    Conventions <http://cfconventions.org/1.6.html#idp5559280>`__) via
-   GDAL GEOLOCATION arrays (see `RFC 4: Geolocation
-   Arrays <https://trac.osgeo.org/gdal/wiki/rfc4_geolocate>`__) (GDAL >=
-   1.10)
+   GDAL GEOLOCATION arrays (see :ref:`rfc-4`)
 
 Creation Options
 ~~~~~~~~~~~~~~~~

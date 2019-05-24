@@ -95,8 +95,7 @@ Tables with multiple geometry columns
 -------------------------------------
 
 Layers with multiple geometry columns can be
-created, modified or read, following new API described in `RFC
-41 <http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields>`__
+created, modified or read, following new API described in :ref:`rfc-41`
 
 REGEXP operator
 ---------------
@@ -225,8 +224,7 @@ tables to existing ones.
 Transaction support (GDAL >= 2.0)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The driver implements transactions at the database level, per `RFC
-54 <http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions>`__
+The driver implements transactions at the database level, per :ref:`rfc-54`
 
 Dataset open options
 ~~~~~~~~~~~~~~~~~~~~

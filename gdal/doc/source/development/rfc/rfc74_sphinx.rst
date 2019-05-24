@@ -1,4 +1,4 @@
-.. _rfc-73-migrate-gdalorg-to-rtd-style-sphinx-infrastructure:
+.. _rfc-74:
 
 ===========================================================
 RFC 74: Migrate gdal.org to RTD-style Sphinx infrastructure

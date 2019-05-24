@@ -199,8 +199,7 @@ control the behavior of this driver.
 Transaction support (GDAL >= 2.0)
 ---------------------------------
 
-The driver implements transactions at the dataset level, per `RFC
-54 <http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions>`__
+The driver implements transactions at the dataset level, per :ref:`rfc-54`
 
 Examples
 --------

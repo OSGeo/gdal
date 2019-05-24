@@ -1,3 +1,5 @@
+.. _rfc-59:
+
 =======================================================================================
 RFC 59 : GDAL/OGR utilities as a library
 =======================================================================================
@@ -6,8 +8,7 @@ Authors: Faza Mahamood
 
 Contact: fazamhd at gmail dot com
 
-Status: Retracted in favor of :ref:`RFC 59.1: GDAL/OGR utilities as a
-library <rfc59.1_utilities_as_a_library>`
+Status: Retracted in favor of :ref:`rfc-59.1`
 
 Summary
 -------

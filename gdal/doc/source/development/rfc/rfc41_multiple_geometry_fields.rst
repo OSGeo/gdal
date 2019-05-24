@@ -1,4 +1,4 @@
-.. _rfc-41--support-for-multiple-geometry-fields-in-ogr:
+.. _rfc-41:
 
 ====================================================
 RFC 41 : Support for multiple geometry fields in OGR

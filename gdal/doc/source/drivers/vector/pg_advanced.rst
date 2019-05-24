@@ -48,8 +48,7 @@ The PostgreSQL driver supports accessing
 tables with multiple PostGIS geometry columns.
 
 OGR supports reading, updating, creating tables with multiple
-PostGIS geometry columns (following `RFC
-41 <http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields>`__)
+PostGIS geometry columns (following :ref:`rfc-41`)
 For such a table, a single OGR layer will be reported with as many
 geometry fields as there are geometry columns in the table.
 
@@ -164,9 +163,7 @@ option OGR_PG_RETRIEVE_FID to FALSE.
 Issues with transactions
 ------------------------
 
-Note: this section mostly applies to GDAL 2.0, that implements `RFC 54 -
-Dataset
-transactions <http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions>`__
+Note: this section mostly applies to GDAL 2.0, that implements :ref:`rfc-54`
 Previous versions had different behaviour which made it impractical to
 handle both reading and writing with the same OGR datasource. Reading
 several layers in a interleaved way was also not working properly. The

@@ -15,8 +15,7 @@ This driver is very similar to the PostGIS shp2pgsql utility.
 Most creation options are shared with the regular PostgreSQL driver.
 
 Starting with OGR 1.11, the PGDump driver supports creating tables with
-multiple PostGIS geometry columns (following `RFC
-41 <http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields>`__)
+multiple PostGIS geometry columns (following :ref:`rfc-41`)
 
 Driver capabilities
 -------------------

@@ -26,8 +26,7 @@ external .ovr file.
 
 The driver also supports the "zlib compressed mask appended to the file"
 approach used by a few data providers to add a bitmask to identify
-pixels that are not valid data. See `RFC
-15 <http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask>`__ for further
+pixels that are not valid data. See :ref:`rfc-15` for further
 details.
 
 Starting with GDAL 1.10.1, the driver can deal with bitmask where the

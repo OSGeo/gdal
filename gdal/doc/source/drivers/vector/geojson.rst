@@ -122,8 +122,7 @@ its NativeMediaType property set to "application/vnd.geo+json" and its
 NativeData property set to a string that is a serialized JSon object,
 then extra members of this object (i.e. not the "property" dictionary,
 nor the first 3 dimensions of geometry coordinates) will be used to
-enhance the created JSon object from the OGRFeature. See `RFC
-60 <https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr>`__
+enhance the created JSon object from the OGRFeature. See :ref:`rfc-60`
 for more details.
 
 Geometry
@@ -262,9 +261,7 @@ Writing to /dev/stdout or /vsistdout/ is also supported.
 Round-tripping of extra JSon members
 ------------------------------------
 
-See `RFC
-60 <https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr>`__
-for more details.
+See :ref:`rfc-60` for more details.
 
 Starting with GDAL 2.1, extra JSon members at the FeatureCollection,
 Feature or geometry levels that are not normally reflected in the OGR

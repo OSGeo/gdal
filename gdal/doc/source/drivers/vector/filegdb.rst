@@ -64,8 +64,7 @@ Transaction support (OGR >= 2.0)
 --------------------------------
 
 The FileGDB driver implements transactions at the database level,
-through an emulation (as per `RFC
-54 <http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions>`__),
+through an emulation (as per :ref:`rfc-54`),
 since the FileGDB SDK itself does not offer it. This works by backing up
 the current state of a geodatabase when StartTransaction(force=TRUE) is
 called. If the transaction is committed, the backup copy is destroyed.

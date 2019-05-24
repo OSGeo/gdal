@@ -45,7 +45,7 @@ positions more precise than 1/128=0.0078125 of degree (~28"). In NOAA-15
 as 10000th of degree.
 
 Starting with GDAL 1.11, the GCPs will also be reported as a
-`geolocation array <http://trac.osgeo.org/gdal/wiki/rfc4_geolocate>`__,
+:ref:`geolocation array <rfc-41>`,
 with Lagrangian interpolation of the 51 GCPs per scanline to the number
 of pixels per scanline width.
 
@@ -122,8 +122,7 @@ Nodata mask
 -----------
 
 NOAA >=15 datasets that report in their header to have missing scan
-lines will expose a per-dataset mask band (following `RFC 15: Band
-Masks <https://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask>`__) to
+lines will expose a per-dataset mask band (following :ref:`rfc-15`) to
 indicate such scan lines.
 
 See Also

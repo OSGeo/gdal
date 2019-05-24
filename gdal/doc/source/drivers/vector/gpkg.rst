@@ -136,8 +136,7 @@ Starting with Spatialite 4.3, CastAutomagic is no longer needed.
 Transaction support (GDAL >= 2.0)
 ---------------------------------
 
-The driver implements transactions at the database level, per `RFC
-54 <http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions>`__
+The driver implements transactions at the database level, per :ref:`rfc-54`
 
 Opening options
 ---------------

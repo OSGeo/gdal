@@ -166,8 +166,7 @@ In addition to local files, this driver also supports access to
 streaming network imagery services using the proprietary "ECWP" protocol
 from the ERDAS APOLLO product. Use the full ecwp:// prefixed dataset url
 as input. When built with ECW/JP2 SDK v4.1 or newer it is also possible
-to take advantage of `RFC
-24 <http://trac.osgeo.org/gdal/wiki/rfc24_progressive_data_support>`__
+to take advantage of :ref:`rfc-24`
 for asynchronous / progressive streaming access to ECWP services.
 
 Metadata / Georeferencing

@@ -76,8 +76,7 @@ Location information
 The special *Pixel_{x}_{y}* metadata item of the *LocationInfo* metadata
 domain, where x is the column and y is the line in the mosaic, can be
 queried to get information about the scenes that compose the underneath
-quad. This is the syntax used by the gdallocationinfo utility (see `RFC
-32 <https://trac.osgeo.org/gdal/wiki/rfc32_gdallocationinfo>`__)
+quad. This is the syntax used by the gdallocationinfo utility (see :ref:`rfc-32`)
 
 Below an example of the return :
 

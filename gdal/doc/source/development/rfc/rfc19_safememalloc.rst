@@ -1,3 +1,5 @@
+.. _rfc-19:
+
 ================================================================================
 RFC 19: Safer memory allocation in GDAL
 ================================================================================
@@ -58,7 +60,7 @@ behaviour of VSIMalloc. Implementation of already existing memory
 allocation API (CPLMalloc, CPLCalloc, CPLRealloc, VSIMalloc, VSICalloc,
 VSIRealloc) will not be changed.
 
-`RFC-8 <http://trac.osgeo.org/gdal/wiki/rfc8_devguide>`__ will be
+:ref:`rfc-8` will be
 updated to promote new API for safer memory allocation. For example
 using VSIMalloc2(x, y) instead of doing CPLMalloc(x \* y) or VSIMalloc(x
 \* y).

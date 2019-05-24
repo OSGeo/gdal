@@ -73,8 +73,7 @@ GDAL can read and write the *RPCCoefficientTag* as described in the
 extension. The tag is written only for files created with the default
 profile GDALGeoTIFF. For other profiles, a .RPB file is created. In GDAL
 data model, the RPC coefficients are stored into the RPC metadata
-domain. For more details, see the `RPC Georeferencing
-RFC <http://trac.osgeo.org/gdal/wiki/rfc22_rpc>`__. If .RPB or \_RPC.TXT
+domain. For more details, see the :ref:`rfc-22`. If .RPB or \_RPC.TXT
 files are found, they will be used to read the RPCs, even if the
 *RPCCoefficientTag* tag is set.
 
@@ -94,8 +93,7 @@ When the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES and
 the GeoTIFF file is opened in update mode, the CreateMaskBand() method
 on a TIFF dataset or rasterband will create an internal transparency
 mask. Otherwise, the default behaviour of nodata mask creation will be
-used, that is to say the creation of a .msk file, as per `RFC
-15 <http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask>`__
+used, that is to say the creation of a .msk file, as per :ref:`rfc-15`.
 
 1-bit internal mask band are deflate compressed. When reading them back,
 to make conversion between mask band and alpha band easier, mask bands
@@ -651,8 +649,7 @@ the default behaviour of the GTiff driver.
    GeoTIFF (.ovr) format. Default value : FALSE
 -  GTIFF_POINT_GEO_IGNORE: Can be set to TRUE to revert back to the
    behaviour of GDAL < 1.8.0 regarding how PixelIsPoint is interpreted
-   w.r.t geotransform. See `RFC 33: GTiff - Fixing PixelIsPoint
-   Interpretation <http://trac.osgeo.org/gdal/wiki/rfc33_gtiff_pixelispoint>`__
+   w.r.t geotransform. See :ref:`rfc-33`
    for more details. Default value : FALSE
 -  GTIFF_REPORT_COMPD_CS: (GDAL >= 1.9.0). Can be set to TRUE to avoid
    stripping the vertical CS of compound CS when reading the SRS of a

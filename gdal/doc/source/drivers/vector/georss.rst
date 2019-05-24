@@ -191,8 +191,7 @@ When translating from a source dataset, it may be necessary to rename
 the field names from the source dataset to the expected RSS or ATOM
 attribute names, such as <title>, <description>, etc... This can be done
 with a :ref:`OGR VRT <vector.vrt>` dataset, or by using the "-sql" option
-of the ogr2ogr utility (see `RFC21: OGR SQL type cast and field name
-alias <http://trac.osgeo.org/gdal/wiki/rfc21_ogrsqlcast>`__)
+of the ogr2ogr utility (see :ref:`rfc-21`)
 
 VSI Virtual File System API support
 -----------------------------------

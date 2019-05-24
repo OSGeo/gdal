@@ -171,8 +171,7 @@ multiples) in the XML subtree describing the feature.
 But, starting with OGR 1.11, if the .xsd schema is understood by the XSD
 parser and declares several geometry fields, or the .gfs file declares
 several geometry fields, multiple geometry fields will be reported by
-the GML driver according to `RFC
-41 <http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields>`__.
+the GML driver according to :ref:`rfc-41`.
 
 Starting with OGR 1.10, in case of multiple geometry occurrences, if a
 geometry is in a <geometry> element, this will be the one selected. This
