@@ -1140,7 +1140,7 @@ VSILFILE *GDALMRFDataset::DataFP() {
     if (source.empty())
         goto io_error;
 
-    // Cloud be there but read only, remember that it was open that way
+    // May be there but read only, remember that it was open that way
     mode = "rb";
     dfp.acc = GF_Read;
     dfp.FP = VSIFOpenL(current.datfname, mode);
@@ -1329,7 +1329,24 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
         bGeoTransformValid = TRUE;
     }
 
-    SetProjection(CPLGetXMLValue(config, "GeoTags.Projection", ""));
+    OGRSpatialReference oSRS;
+    const char *pszRawProjFromXML = CPLGetXMLValue(config, "GeoTags.Projection", "");
+    if (strlen(pszRawProjFromXML) == 0 ||
+        oSRS.SetFromUserInput(pszRawProjFromXML) != OGRERR_NONE )
+    {
+        SetProjection("");
+    }
+    else
+    {
+        char* pszRawProj = nullptr;
+        if( oSRS.exportToWkt(&pszRawProj) != OGRERR_NONE )
+        {
+            CPLFree(pszRawProj);
+            pszRawProj = CPLStrdup("");
+        }
+        SetProjection(pszRawProj);
+        CPLFree(pszRawProj);
+    }
 
     // Copy the full size to current, data and index are not yet open
     current = full;

@@ -1170,17 +1170,21 @@ def test_gdalwarp_lib_135():
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     src_ds.GetRasterBand(1).Fill(100)
 
-    grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid.tif', 1, 1)
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
+
+    src_ds_longlat = gdal.GetDriverByName('MEM').Create('', 2, 1)
+    src_ds_longlat.SetProjection(sr.ExportToWkt())
+    src_ds_longlat.SetGeoTransform([-180, 180, 0, 90, 0, -180])
+    src_ds_longlat.GetRasterBand(1).Fill(100)
+
+    grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid.tif', 1, 1)
     grid_ds.SetProjection(sr.ExportToWkt())
     grid_ds.SetGeoTransform([-180, 360, 0, 90, 0, -180])
     grid_ds.GetRasterBand(1).Fill(20)
     grid_ds = None
 
     grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid2.tif', 1, 1)
-    sr = osr.SpatialReference()
-    sr.SetFromUserInput("WGS84")
     grid_ds.SetProjection(sr.ExportToWkt())
     grid_ds.SetGeoTransform([-180, 360, 0, 90, 0, -180])
     grid_ds.GetRasterBand(1).Fill(5)
@@ -1195,11 +1199,25 @@ def test_gdalwarp_lib_135():
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, 'Bad value'
 
+    ds = gdal.Warp('', src_ds_longlat, format='MEM',
+                   srcSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
+                   dstSRS='EPSG:4979')
+    assert ds.GetGeoTransform() == (-180, 180, 0, 90, 0, -180)
+    data = struct.unpack('B' * 2, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 120, 'Bad value'
+
     # Inverse transform
     ds = gdal.Warp('', src_ds, format='MEM',
                    srcSRS='+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
                    dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 80, 'Bad value'
+
+    ds = gdal.Warp('', src_ds_longlat, format='MEM',
+                   srcSRS='EPSG:4979',
+                   dstSRS='+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
+    assert ds.GetGeoTransform() == (-180, 180, 0, 90, 0, -180)
+    data = struct.unpack('B' * 2, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 80, 'Bad value'
 
     # Both transforms
@@ -1831,6 +1849,18 @@ def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_RPC_FOOTPRINT():
                 options = '-et 0 -to RPC_DEM=data/unstable_rpc_with_dem_elevation.tif -to RPC_MAX_ITERATIONS=40 -to RPC_DEM_MISSING_VALUE=0 -to "RPC_FOOTPRINT=POLYGON ((114.070906445526 22.329620213341,114.085953272341 22.3088955493586,114.075520805749 22.3027084861851,114.060942102434 22.3236815197571,114.060942102434 22.3236815197571,114.060942102434 22.3236815197571,114.060942102434 22.3236815197571,114.070906445526 22.329620213341))"')
         cs = dstDS.GetRasterBand(1).Checksum()
         assert cs == 53230
+
+
+###############################################################################
+# Test warping from EPSG:4326 to EPSG:3857
+
+def test_gdalwarp_lib_bug_4326_to_3857():
+
+    ds = gdal.Warp('', 'data/test_bug_4326_to_3857.tif',
+              options = '-f MEM -t_srs EPSG:3857 -ts 20 20')
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 4672
+
 
 ###############################################################################
 # Cleanup

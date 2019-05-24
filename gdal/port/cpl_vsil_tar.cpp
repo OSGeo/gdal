@@ -325,41 +325,66 @@ int VSITarReader::GotoNextFile()
         }
     }
 #endif
-    GByte abyHeader[512] = {};
-    if (VSIFReadL(abyHeader, 512, 1, fp) != 1)
-        return FALSE;
 
-    if (abyHeader[99] != '\0' || /* end of filename */
-        !(abyHeader[100] == 0x80 || abyHeader[107] == '\0') || /* start/end of filemode */
-        !(abyHeader[108] == 0x80 || abyHeader[115] == '\0') || /* start/end of owner ID */
-        !(abyHeader[116] == 0x80 || abyHeader[123] == '\0') || /* start/end of group ID */
-        (abyHeader[135] != '\0' && abyHeader[135] != ' ') || /* end of file size */
-        (abyHeader[147] != '\0' && abyHeader[147] != ' ')) /* end of mtime */
+    osNextFileName.clear();
+    while( true )
     {
-        return FALSE;
-    }
-    if( !(abyHeader[124] == ' ' || (abyHeader[124] >= '0' && abyHeader[124] <= '7')) )
-        return FALSE;
+        GByte abyHeader[512] = {};
+        if (VSIFReadL(abyHeader, 512, 1, fp) != 1)
+            return FALSE;
 
-    osNextFileName = reinterpret_cast<const char*>(abyHeader);
-    nNextFileSize = 0;
-    for(int i=0;i<11;i++)
-    {
-        if( abyHeader[124+i] != ' ' )
-            nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');
-    }
-    if( nNextFileSize > GINTBIG_MAX )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid file size for %s", osNextFileName.c_str());
-        return FALSE;
-    }
+        if (!(abyHeader[100] == 0x80 || abyHeader[107] == '\0') || /* start/end of filemode */
+            !(abyHeader[108] == 0x80 || abyHeader[115] == '\0') || /* start/end of owner ID */
+            !(abyHeader[116] == 0x80 || abyHeader[123] == '\0') || /* start/end of group ID */
+            (abyHeader[135] != '\0' && abyHeader[135] != ' ') || /* end of file size */
+            (abyHeader[147] != '\0' && abyHeader[147] != ' ')) /* end of mtime */
+        {
+            return FALSE;
+        }
+        if( !(abyHeader[124] == ' ' || (abyHeader[124] >= '0' && abyHeader[124] <= '7')) )
+            return FALSE;
 
-    nModifiedTime = 0;
-    for(int i=0;i<11;i++)
-    {
-        if( abyHeader[136+i] != ' ' )
-            nModifiedTime = nModifiedTime * 8 + (abyHeader[136+i] - '0');
+        if( osNextFileName.empty() )
+        {
+            osNextFileName.assign(reinterpret_cast<const char*>(abyHeader),
+                                  CPLStrnlen(reinterpret_cast<const char*>(abyHeader), 100));
+        }
+
+        nNextFileSize = 0;
+        for(int i=0;i<11;i++)
+        {
+            if( abyHeader[124+i] != ' ' )
+                nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');
+        }
+        if( nNextFileSize > GINTBIG_MAX )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Invalid file size for %s", osNextFileName.c_str());
+            return FALSE;
+        }
+
+        nModifiedTime = 0;
+        for(int i=0;i<11;i++)
+        {
+            if( abyHeader[136+i] != ' ' )
+                nModifiedTime = nModifiedTime * 8 + (abyHeader[136+i] - '0');
+        }
+
+        if( abyHeader[156] == 'L' && nNextFileSize > 0 && nNextFileSize < 32768 )
+        {
+            // If this is a large filename record, then read the filename
+            osNextFileName.clear();
+            osNextFileName.resize(static_cast<size_t>(((nNextFileSize + 511) / 512) * 512));
+            if (VSIFReadL(&osNextFileName[0], osNextFileName.size(), 1, fp) != 1)
+                return FALSE;
+            osNextFileName.resize(static_cast<size_t>(nNextFileSize));
+            if( osNextFileName.back() == '\0' )
+                osNextFileName.resize(osNextFileName.size() - 1);
+        }
+        else
+        {
+            break;
+        }
     }
 
     nCurOffset = VSIFTellL(fp);

@@ -147,8 +147,7 @@ uint64
 TIFFRawStripSize64(TIFF* tif, uint32 strip)
 {
 	static const char module[] = "TIFFRawStripSize64";
-	TIFFDirectory* td = &tif->tif_dir;
-	uint64 bytecount = td->td_stripbytecount[strip];
+	uint64 bytecount = TIFFGetStrileByteCount(tif, strip);
 
 	if (bytecount == 0)
 	{

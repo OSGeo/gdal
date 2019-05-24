@@ -990,7 +990,6 @@ OJPEGSubsamplingCorrect(TIFF* tif)
 	OJPEGState* sp=(OJPEGState*)tif->tif_data;
 	uint8 mh;
 	uint8 mv;
-        _TIFFFillStriles( tif );
         
 	assert(sp->subsamplingcorrect_done==0);
 	if ((tif->tif_dir.td_samplesperpixel!=3) || ((tif->tif_dir.td_photometric!=PHOTOMETRIC_YCBCR) &&
@@ -1989,29 +1988,21 @@ OJPEGReadBufferFill(OJPEGState* sp)
 				sp->in_buffer_source=osibsStrile;
                                 break;
 			case osibsStrile:
-				if (!_TIFFFillStriles( sp->tif ) 
-				    || sp->tif->tif_dir.td_stripoffset == NULL
-				    || sp->tif->tif_dir.td_stripbytecount == NULL)
-					return 0;
-
 				if (sp->in_buffer_next_strile==sp->in_buffer_strile_count)
 					sp->in_buffer_source=osibsEof;
 				else
 				{
-					sp->in_buffer_file_pos=sp->tif->tif_dir.td_stripoffset[sp->in_buffer_next_strile];
+					sp->in_buffer_file_pos=TIFFGetStrileOffset(sp->tif, sp->in_buffer_next_strile);
 					if (sp->in_buffer_file_pos!=0)
 					{
+                                                uint64 bytecount = TIFFGetStrileByteCount(sp->tif, sp->in_buffer_next_strile);
 						if (sp->in_buffer_file_pos>=sp->file_size)
 							sp->in_buffer_file_pos=0;
-						else if (sp->tif->tif_dir.td_stripbytecount==NULL)
+						else if (bytecount==0)
 							sp->in_buffer_file_togo=sp->file_size-sp->in_buffer_file_pos;
 						else
 						{
-							if (sp->tif->tif_dir.td_stripbytecount == 0) {
-								TIFFErrorExt(sp->tif->tif_clientdata,sp->tif->tif_name,"Strip byte counts are missing");
-								return(0);
-							}
-							sp->in_buffer_file_togo=sp->tif->tif_dir.td_stripbytecount[sp->in_buffer_next_strile];
+							sp->in_buffer_file_togo=bytecount;
 							if (sp->in_buffer_file_togo==0)
 								sp->in_buffer_file_pos=0;
 							else if (sp->in_buffer_file_pos+sp->in_buffer_file_togo>sp->file_size)

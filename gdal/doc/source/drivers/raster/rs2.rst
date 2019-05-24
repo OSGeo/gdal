@@ -1,0 +1,68 @@
+.. _raster.rs2:
+
+================================================================================
+RS2 -- RadarSat 2 XML Product
+================================================================================
+
+.. shortname:: RS2
+
+This driver will read some RadarSat 2 XML polarimetric products. In
+particular complex products, and 16bit magnitude detected products.
+
+The RadarSat 2 XML products are distributed with a primary XML file
+called product.xml, and a set of supporting XML data files with the
+actual imagery stored in TIFF files. The RS2 driver will be used if the
+product.xml or the containing directory is selected, and it can treat
+all the imagery as one consistent dataset.
+
+The complex products use "32bit void typed" TIFF files which are not
+meaningfully readable normally. The RS2 driver takes care of converting
+this into useful CInt16 format internally.
+
+The RS2 driver also reads geolocation tiepoints from the product.xml
+file and represents them as GCPs on the dataset.
+
+It is very likely that RadarSat International will be distributing other
+sorts of datasets in this format; however, at this time this driver only
+supports specific RadarSat 2 polarimetric products. All other will be
+ignored, or result in various runtime errors. It is hoped that this
+driver can be generalized when other product samples become available.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+Data Calibration
+----------------
+
+If you wish to have GDAL apply a particular calibration LUT to the data
+when you open it, you have to open the appropriate subdatasets. The
+following subdatasets exist within the SUBDATASET domain for RS2
+products:
+
+-  uncalibrated - open with RADARSAT_2_CALIB:UNCALIB: prepended to
+   filename
+-  beta\ :sub:`0` - open with RADARSAT_2_CALIB:BETA0: prepended to
+   filename
+-  sigma\ :sub:`0` - open with RADARSAT_2_CALIB:SIGMA0: prepended to
+   filename
+-  gamma - open with RADARSAT_2_CALIB:GAMMA: prepended to filename
+
+Note that geocoded (SPG/SSG) products do not have this functionality
+available. Also be aware that the LUTs must be in the product directory
+where specified in the product.xml, otherwise loading the product with
+the calibration LUT applied will fail.
+
+One caveat worth noting is that the RADARSAT-2 driver will supply the
+calibrated data as GDT_Float32 or GDT_CFloat32 depending on the type of
+calibration selected. The uncalibrated data is provided as
+GDT_Int16/GDT_Byte/GDT_CInt16, also depending on the type of product
+selected.
+
+See Also
+--------
+
+-  RadarSat document RN-RP-51-27.
