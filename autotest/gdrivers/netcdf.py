@@ -3273,6 +3273,23 @@ def test_serpenski_two_ring():
     assert(st_wkt == \
 	"MULTIPOLYGON (((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0)))") 
 
+def test_flipped_axis():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+    # similar to simple polygon test, but with flipped axis
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    polygon = ogr.Open("data/netcdf-sg/flipped_axes_test.nc")
+    assert(polygon != None)
+    
+    layer = polygon.GetLayerByName("names_geometry")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POLYGON ((0 0,1 0,1 1,0 0))")
+
 #  advanced tests
 
 def test_yahara():

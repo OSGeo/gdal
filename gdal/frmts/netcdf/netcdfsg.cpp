@@ -24,31 +24,35 @@ namespace nccfdriver
 	/* Attribute Fetch
 	 * -
 	 * A function which makes it a bit easier to fetch single text attribute values
-	 * attrgets returns a char. seq. on success, nullptr on failure 
-	 * attrgets takes in ncid and varId in which to look for the attribute with name attrName 
-	 *
-	 * The returned char. seq. must be free'd afterwards
+	 * ncid: as used in netcdf.h
+	 * varID: variable id in which to look for the attribute
+	 * attrName: name of attribute to fine
+	 * alloc: a reference to a string that will be filled with the attribute (i.e. truncated and filled with the return value)
+	 * Returns: a reference to the string to fill (a.k.a. string pointed to by alloc reference)
 	 */
-	char* attrf(int ncid, int varId, const char * attrName)
+	std::string& attrf(int ncid, int varId, const char * attrName, std::string& alloc)
 	{
+		alloc = "";
+
 		size_t len = 0;
 		nc_inq_attlen(ncid, varId, attrName, &len);
 		
 		if(len < 1)
 		{
-			return nullptr;
+			return alloc;
 		}
 
-		char * attr_vals = new char[len + 1];
-		attr_vals[len] = '\0';
+		char attr_vals[NC_MAX_NAME + 1];
+		memset(attr_vals, 0, NC_MAX_NAME + 1);
+
 		// Now look through this variable for the attribute
 		if(nc_get_att_text(ncid, varId, attrName, attr_vals) != NC_NOERR)
 		{
-			delete[] attr_vals;
-			return nullptr;		
+			return alloc;
 		}
 
-		return attr_vals;
+		alloc = std::string(attr_vals);
+		return alloc;
 	}
 
 
@@ -69,8 +73,7 @@ namespace nccfdriver
 		: gc_varId(geoVarId), touple_order(0), current_vert_ind(0), cur_geometry_ind(0), cur_part_ind(0)
 	{
 
-		char * cart = nullptr;
-		memset(this->container_name, 0, NC_MAX_NAME+1);
+		memset(this->container_name, 0, NC_MAX_NAME + 1);
 
 		// Get geometry container name
 		if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
@@ -87,10 +90,11 @@ namespace nccfdriver
 		}
 
 		// Get grid mapping variable, if it exists
-		char * gm_name = nullptr;
+		std::string gm_name_s;
 		this->gm_varId = INVALID_VAR_ID;
-		if((gm_name = attrf(ncId, geoVarId, CF_GRD_MAPPING)) != nullptr)
+		if(attrf(ncId, geoVarId, CF_GRD_MAPPING, gm_name_s) != "")
 		{
+			const char * gm_name = gm_name_s.c_str();
 			int gmVID;
 			if(nc_inq_varid(ncId, gm_name, &gmVID) == NC_NOERR)
 			{
@@ -98,15 +102,19 @@ namespace nccfdriver
 			}
 		}	
 		
-		delete[] gm_name;
-
 		// Find a list of node counts and part node count
-		char * nc_name = nullptr; char * pnc_name = nullptr; char * inter_name = nullptr; char * ir_name = nullptr;
-		int pnc_vid = INVALID_VAR_ID; int nc_vid = INVALID_VAR_ID; int ir_vid = INVALID_VAR_ID;
-		size_t bound = 0; int buf;
+		std::string nc_name_s;
+		std::string pnc_name_s; 
+		std::string ir_name_s;	
+		int pnc_vid = INVALID_VAR_ID;
+		int nc_vid = INVALID_VAR_ID;
+		int ir_vid = INVALID_VAR_ID;
+		size_t bound = 0;
+		int buf;
 		size_t total_node_count = 0; // used in error checks later
-		if((nc_name = attrf(ncId, geoVarId, CF_SG_NODE_COUNT)) != nullptr)
+		if(attrf(ncId, geoVarId, CF_SG_NODE_COUNT, nc_name_s) != "")
 		{
+			const char * nc_name = nc_name_s.c_str();
 			nc_inq_varid(ncId, nc_name, &nc_vid);
 			while(nc_get_var1_int(ncId, nc_vid, &bound, &buf) == NC_NOERR)
 			{
@@ -117,8 +125,9 @@ namespace nccfdriver
 
 		}	
 
-		if((pnc_name = attrf(ncId, geoVarId, CF_SG_PART_NODE_COUNT)) != nullptr)
+		if(attrf(ncId, geoVarId, CF_SG_PART_NODE_COUNT, pnc_name_s) != "")
 		{
+			const char * pnc_name = pnc_name_s.c_str();
 			bound = 0;
 			nc_inq_varid(ncId, pnc_name, &pnc_vid);
 			while(nc_get_var1_int(ncId, pnc_vid, &bound, &buf) == NC_NOERR)
@@ -128,8 +137,9 @@ namespace nccfdriver
 			}	
 		}	
 	
-		if((ir_name = attrf(ncId, geoVarId, CF_SG_INTERIOR_RING)) != nullptr)
+		if(attrf(ncId, geoVarId, CF_SG_INTERIOR_RING, ir_name_s) != "")
 		{
+			const char * ir_name = ir_name_s.c_str();
 			bound = 0;
 			nc_inq_varid(ncId, ir_name, &ir_vid);
 			while(nc_get_var1_int(ncId, ir_vid, &bound, &buf) == NC_NOERR)
@@ -139,11 +149,6 @@ namespace nccfdriver
 				bound++;
 			}
 		}
-
-		delete[] nc_name;
-		delete[] pnc_name;
-		delete[] inter_name;
-		delete[] ir_name;
 
 		/* Enforcement of well formed CF files
 		 * If these are not met then the dataset is malformed and will halt further processing of
@@ -197,8 +202,10 @@ namespace nccfdriver
 			}
 		}
 
+
+		std::string cart_s;
 		// Node Coordinates
-		if((cart = attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES)) == nullptr)
+		if(attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES, cart_s) == "")
 		{
 			throw SG_Exception_Existential(container_name, CF_SG_NODE_COORDINATES);
 		}	
@@ -206,8 +213,11 @@ namespace nccfdriver
 		// Create parts count list and an offset list for parts indexing	
 		if(this->node_counts.size() > 0)
 		{
-			// to do: check for out of bounds
-			int ind = 0; int parts = 0; int prog = 0; int c = 0;
+			int ind = 0;
+			int parts = 0;
+			int prog = 0;
+			int c = 0;
+
 			for(size_t pcnt = 0; pcnt < pnode_counts.size() ; pcnt++)
 			{
 				if(prog == 0) pnc_bl.push_back(pcnt);
@@ -227,7 +237,6 @@ namespace nccfdriver
 				}	
 				else if(prog > node_counts[ind])
 				{
-					delete[] cart;
 					throw SG_Exception_BadSum(container_name, CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
 				}
 			} 
@@ -235,25 +244,61 @@ namespace nccfdriver
 
 		// (1) the touple order for a single point
 		// (2) the variable ids with the relevant coordinate values
+		int X = INVALID_VAR_ID;
+		int Y = INVALID_VAR_ID;
+		int Z = INVALID_VAR_ID;
+
+		char cart[NC_MAX_NAME + 1];
+		memset(cart, 0, NC_MAX_NAME + 1);
+		strncpy(cart, cart_s.c_str(), NC_MAX_NAME);
+
 		char * dim = strtok(cart,  " ");
 		int axis_id = 0;
 		
-		while(dim != NULL)
+		while(dim != nullptr)
 		{
 			if(nc_inq_varid(ncId, dim, &axis_id) == NC_NOERR)
 			{
+
+				// Check axis signature
+				std::string a_sig;
+				attrf(ncId, axis_id, CF_AXIS, a_sig); 
+				
+				// If valid signify axis correctly
+				if(a_sig == "X")
+				{
+					X = axis_id;
+				}
+				else if(a_sig == "Y")
+				{
+					Y = axis_id;
+				}
+				else if(a_sig == "Z")
+				{
+					Z = axis_id;
+				}
+				else
+				{
+					throw SG_Exception_Dep(container_name, "A node_coordinates variable", CF_AXIS);
+				}
+
 				this->touple_order++;
-				this->nodec_varIds.push_back(axis_id);
 			}
 			else
 			{
 				throw SG_Exception_Existential(container_name, dim);	
 			}
 
-			dim = strtok(NULL, " "); 
+			dim = strtok(nullptr, " "); 
 		}
 
-		delete[] cart;
+		// Write axis in X, Y, Z order
+		if(X != INVALID_VAR_ID)
+			this->nodec_varIds.push_back(X);
+		if(Y != INVALID_VAR_ID)
+			this->nodec_varIds.push_back(Y);
+		if(Z != INVALID_VAR_ID)
+			this->nodec_varIds.push_back(Z);
 
 		/* Final Checks for node coordinates
 		 * (1) Each axis has one and only one dimension, dim length of each node coordinates are all equal
@@ -785,13 +830,18 @@ namespace nccfdriver
 	{
 		bool is_CF_conv = false;
 		int minor_ver = -1;
-		char * attrVal = nullptr;
+		std::string attrVal_s;
 
 		// Fetch the CF attribute
-		if((attrVal = attrf(ncid, NC_GLOBAL, NCDF_CONVENTIONS)) == nullptr)
+		if(attrf(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attrVal_s) == "")
 		{
 			return minor_ver;
 		}
+
+		char attrVal[NC_MAX_NAME + 1];
+		memset(attrVal, 0, NC_MAX_NAME + 1);
+
+		strncpy(attrVal, attrVal_s.c_str(), NC_MAX_NAME);
 
 		// Fetched without errors, now traverse	
 		char * parse = strtok(attrVal, "-");
@@ -810,13 +860,11 @@ namespace nccfdriver
 				// ensure correct formatting and only singly defined
 				if(strlen(parse) < 3 || minor_ver >= 0)
 				{
-					delete[] attrVal;
 					return minor_ver;
 				}	
 
 				if(parse[1] != '.')
 				{
-					delete[] attrVal;
 					return minor_ver;	
 				}
 
@@ -829,7 +877,6 @@ namespace nccfdriver
 					if(strlen(parse) != 3)
 						if(parse[2] != '0')
 					{
-						delete[] attrVal;
 						minor_ver = -1;
 					}
 				}
@@ -838,22 +885,20 @@ namespace nccfdriver
 			else
 			{
 				minor_ver = -1;
-				delete[] attrVal;
 				return minor_ver;	
 			}
 
 			parse = strtok(NULL, "-");
 		}
 	
-	
-		delete []attrVal;
 		return minor_ver;
 	}
 
 	geom_t getGeometryType(int ncid, int varid)
 	{
 		geom_t ret = UNSUPPORTED;
-		char * gt_name = attrf(ncid, varid, CF_SG_GEOMETRY_TYPE);
+		std::string gt_name_s;
+		const char * gt_name= attrf(ncid, varid, CF_SG_GEOMETRY_TYPE, gt_name_s).c_str();
 
 		if(gt_name == nullptr)
 		{
@@ -900,7 +945,6 @@ namespace nccfdriver
 			else ret = MULTIPOLYGON;
 		}
 
-		delete[] gt_name;
 		return ret;
 	}
 

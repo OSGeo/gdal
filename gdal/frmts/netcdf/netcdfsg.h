@@ -267,21 +267,16 @@ namespace nccfdriver
 	 */
 	SGeometry* getGeometryRef(int ncid, const char * varName );	
 
-	/* Writes a geometry to the specified NC file.
-	 * The write uses the following guidelines
-	 * - the geometry variable name is geometryX where X is some natural number
-	 * - the geometry container is called geometry_containerX, corresponding to some geometryX
-	 *
-	 * Returns: an error code if failure, 0 on success
+	/* Attribute Fetch
+	 * -
+	 * A function which makes it a bit easier to fetch single text attribute values
+	 * ncid: as used in netcdf.h
+	 * varID: variable id in which to look for the attribute
+	 * attrName: name of attribute to fine
+	 * alloc: a reference to a string that will be filled with the attribute (i.e. truncated and filled with the return value)
+	 * Returns: a reference to the string to fill (a.k.a. string pointed to by alloc reference)
 	 */
-	//int putGeometryRef(int ncid, SGeometry* geometry);
-
-	/* Fetches a one dimensional string attribute
-	 * using the given ncid, variable ID (varID), and attribute key (attrName)
-	 *
-	 * Returns: a NEW cstring of the attribute value, that must be separately deleted 
-	 */
-	char * attrf(int ncid, int varId, const char * attrName);
+	std::string& attrf(int ncid, int varId, const char * attrName, std::string & alloc);
 }
 
 #endif
