@@ -82,7 +82,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 	// Geometry Type invalid, avoid further processing
 	if(owgt == wkbNone)
 	{
-		throw new nccfdriver::SG_Exception_BadFeature();
+		throw nccfdriver::SG_Exception_BadFeature();
 	}
 	
 
@@ -139,7 +139,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 					//geometry = std::unique_ptr<OGRGeometry>(new OGRMultiPolygon);
 					break;
 				default:
-					throw new nccfdriver::SG_Exception_BadFeature();
+					throw nccfdriver::SG_Exception_BadFeature();
 					break;
 			}
 		}
