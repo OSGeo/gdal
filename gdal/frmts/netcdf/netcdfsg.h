@@ -1,3 +1,30 @@
+/******************************************************************************
+ *
+ * Project:  netCDF read/write Driver
+ * Purpose:  GDAL bindings over netCDF library.
+ * Author:   Winor Chen <wchen329 at wisc.edu>
+ *
+ ******************************************************************************
+ * Copyright (c) 2019, Winor Chen <wchen329 at wisc.edu>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 #ifndef __NETCDFSG_H__
 #define __NETCDFSG_H__
 #include <cstring>
@@ -14,6 +41,7 @@ namespace nccfdriver
 {	
 	// Constants
 	const int INVALID_VAR_ID = -2;	
+	const int INVALID_DIM_ID = INVALID_VAR_ID;
 
 	// Enum used for easily identifying Geometry types
 	enum geom_t
@@ -50,11 +78,12 @@ namespace nccfdriver
 	// as a pseudo reference to a NC variable
 	class SGeometry
 	{
-		char container_name[NC_MAX_NAME + 1];	// name of the underlying geometry container
+		std::string container_name_s;		// name of the underlying geometry container
 		geom_t type;	 	// internal geometry type structure
 		int ncid;		// ncid - as used in netcdf.h
 		int gc_varId;		// the id of the underlying geometry_container variable
 		int gm_varId;		// id used for grid mapping
+		int inst_dimId;		// dimension id for geometry instance dimension
 		int touple_order;	// amount of "coordinates" in a point
 		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
 		std::vector<int> node_counts;	// node counts of each geometry in a container
@@ -72,6 +101,11 @@ namespace nccfdriver
 		SGeometry operator=(const SGeometry&);
 
 		public:
+
+		/* int SGeometry::getInstDim()
+		 * Returns the geometry instance dimension of this geometry
+		 */
+		int getInstDim() { return this->inst_dimId; }
 
 		/* Point& SGeometry::next_pt()
 		 * returns a pointer to the next pt in sequence, if any. If none, returns a nullptr
@@ -93,7 +127,7 @@ namespace nccfdriver
 		/* int SGeometry::getGridMappingVarID();
 		 * returns the varID of the associated grid mapping variable ID
 		 */	
-		int getGridMappingVarID() { return this -> gm_varId; }
+		int getGridMappingVarID() { return this->gm_varId; }
 
 		/* geom_t getGeometryType()
 		 * Retrieves the associated geometry type with this geometry
@@ -105,6 +139,11 @@ namespace nccfdriver
 		 * contained in the variable
 		 */
 		size_t get_geometry_count();
+
+		/* const char* SGeometry::getContainerName()
+		 * Returns the container name as a string
+		 */
+		std::string& getContainerName() { return container_name_s; }
 
 		/* int SGeometry::getContainerId()
 		 * Get the ncID of the geometry_container variable

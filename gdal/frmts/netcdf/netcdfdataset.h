@@ -259,6 +259,7 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 
 /* Simple Geometries Special Names from CF-1.8 Draft - Chapter 7 section Geometries */
 #define CF_SG_GEOMETRY               "geometry"
+#define CF_SG_GEOMETRY_DIMENSION     "geometry_dimension"
 #define CF_SG_GEOMETRY_TYPE          "geometry_type"
 #define CF_SG_INTERIOR_RING          "interior_ring"
 #define CF_SG_NODES                  "nodes"

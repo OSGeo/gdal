@@ -1,7 +1,30 @@
-// Implementations of netCDF functions used for 
-// implementing CF-1.8 convention awareness
-//
-// Author: wchen329
+/******************************************************************************
+ *
+ * Project:  netCDF read/write Driver
+ * Purpose:  GDAL bindings over netCDF library.
+ * Author:   Winor Chen <wchen329 at wisc.edu>
+ *
+ ******************************************************************************
+ * Copyright (c) 2019, Winor Chen <wchen329 at wisc.edu>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 #include <cstdio>
 #include <cstring>
 #include <vector>
@@ -73,7 +96,8 @@ namespace nccfdriver
 		: gc_varId(geoVarId), touple_order(0), current_vert_ind(0), cur_geometry_ind(0), cur_part_ind(0)
 	{
 
-		memset(this->container_name, 0, NC_MAX_NAME + 1);
+		char container_name[NC_MAX_NAME + 1];
+		memset(container_name, 0, NC_MAX_NAME + 1);
 
 		// Get geometry container name
 		if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
@@ -81,12 +105,28 @@ namespace nccfdriver
 			throw SG_Exception_Existential(static_cast<const char *>("new geometry container"), "the variable of the given ID"); 	
 		}
 
+		// Establish string version of container_name
+		container_name_s = std::string(container_name);
+
 		// Find geometry type
 		this->type = nccfdriver::getGeometryType(ncId, geoVarId); 
 
 		if(this->type == NONE)
 		{
 			throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_TYPE);
+		}
+
+		int idi = INVALID_DIM_ID;
+		this->inst_dimId = INVALID_DIM_ID;
+		std::string inst_dim_name_s;
+		
+		// Look for geometry_dimension instance attribute to figure out instance dimension.
+		if(attrf(ncId, geoVarId, CF_SG_GEOMETRY_DIMENSION, inst_dim_name_s) != "")
+		{
+			if(nc_inq_dimid(ncId, inst_dim_name_s.c_str(), &idi) == NC_NOERR)	
+			{
+				this->inst_dimId = idi; 
+			}
 		}
 
 		// Get grid mapping variable, if it exists
@@ -152,7 +192,7 @@ namespace nccfdriver
 
 		/* Enforcement of well formed CF files
 		 * If these are not met then the dataset is malformed and will halt further processing of
-		 * simple geometries. (Slightly permissive, letts other netCDF items to be processed)
+		 * simple geometries.
 		 */
 
 		// part node count exists only when node count exists

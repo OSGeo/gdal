@@ -1,7 +1,30 @@
-/* NetCDF Simple Geometry specific implementations
- * for layers filled from CF 1.8 simple geometry variables
+/******************************************************************************
  *
- */
+ * Project:  netCDF read/write Driver
+ * Purpose:  GDAL bindings over netCDF library.
+ * Author:   Winor Chen <wchen329 at wisc.edu>
+ *
+ ******************************************************************************
+ * Copyright (c) 2019, Winor Chen <wchen329 at wisc.edu>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 #include "netcdfsg.h"
 #include "netcdfdataset.h"
 #include "ogr_core.h"
@@ -157,30 +180,35 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		feat -> SetGeometryDirectly(geometry);
 		delete[] wkb_rep;
 			
-		int dimId = -1;	
+		int dimId = sg -> getInstDim();	
 
-		// Find all dims, assume instance dimension is the first dimension
-		/* Update to CF-1.8 standard likely to change
-		 * use "geometry_dimension" instead
-		 */
-		if(props.size() > 0)
-		{
-			// All property values of a geometry container have the same inst. dim
-			// So just, use one of them
-			int dim_c;
-			nc_inq_varndims(ncid, props[0], &dim_c);
-			int * dim_ids = new int[dim_c];
-			nc_inq_vardimid(ncid, props[0], dim_ids);
+		// If instance dim is not specified, try to assume instance dimension is the first dimension
+		if(dimId == nccfdriver::INVALID_DIM_ID)
+		{	
+			if(props.size() > 0)
+			{
+				// All property values of a geometry container have the same inst. dim
+				// So just, use one of them
+				int dim_c;
+				nc_inq_varndims(ncid, props[0], &dim_c);
+				std::unique_ptr<int>dim_ids = std::unique_ptr<int>(new int[dim_c]);
+				nc_inq_vardimid(ncid, props[0], dim_ids.get());
 			
-			// Take the first delete the rest
-			dimId = dim_ids[0];
-			delete[] dim_ids;
+				// Take the first throwaway the rest
+				dimId = *dim_ids;
+			}
+		}
+
+		size_t dim_len = 0;
+
+		if(nc_inq_dimlen(ncid, dimId, &dim_len) != NC_NOERR)
+		{
+			throw nccfdriver::SG_Exception_Existential(sg->getContainerName().c_str(), CF_SG_GEOMETRY_DIMENSION);
 		}
 		
 		// Fill fields
-		for(size_t itr = 0; itr < props.size(); itr++)
+		for(size_t itr = 0; itr < props.size() && itr < dim_len; itr++)
 		{
-			// to do: add check to fill only as fields are defined	
 			poL->FillFeatureFromVar(feat, dimId, featCt);
 		}
 
