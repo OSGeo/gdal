@@ -106,7 +106,7 @@ check_image()
     docker run --rm "${IMAGE_NAME}" gdalinfo --version
     docker run --rm "${IMAGE_NAME}" projinfo EPSG:4326
     if test "x${TEST_PYTHON}" != "x"; then
-        docker run --rm "${IMAGE_NAME}" python -c "from osgeo import gdal, gdalnumeric; print(gdal.VersionInfo(''))"
+        docker run --rm "${IMAGE_NAME}" python3 -c "from osgeo import gdal, gdalnumeric; print(gdal.VersionInfo(''))"
     fi
 }
 

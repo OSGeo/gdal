@@ -22,7 +22,7 @@ RUN apt-get update -y \
 # Setup build env for GDAL
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends \
-       python-dev python-numpy \
+       python3-dev python3-numpy \
        libjpeg-dev libgeos-dev \
        curl libcurl4-gnutls-dev libexpat-dev libxerces-c-dev \
        libwebp-dev \
@@ -152,13 +152,13 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python2.7          /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/python3            /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python2.7/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
@@ -175,7 +175,7 @@ RUN apt-get update; \
 # GDAL dependencies
 RUN apt-get update -y; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
-        python-numpy \
+        python3-numpy \
         libjpeg-turbo8 libgeos-3.6.2 libgeos-c1v5 \
         libcurl4 libexpat1 \
         libxerces-c3.2 \
