@@ -570,7 +570,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 	}
 	if (tiles ^ isTiled(tif)) {
 		TIFFErrorExt(tif->tif_clientdata, module, tiles ?
-		    "Can not write tiles to a stripped image" :
+		    "Can not write tiles to a striped image" :
 		    "Can not write scanlines to a tiled image");
 		return (0);
 	}
