@@ -3278,8 +3278,6 @@ def test_flipped_axis():
         pytest.skip()
     # similar to simple polygon test, but with flipped axis
 
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()			
     polygon = ogr.Open("data/netcdf-sg/flipped_axes_test.nc")
     assert(polygon != None)
     
@@ -3289,6 +3287,34 @@ def test_flipped_axis():
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((0 0,1 0,1 1,0 0))")
+
+def test_multiple_layers_one_nc():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+    # tests whether or not an NC with multiple geometry containers can be read
+    # each geometry container a layer
+
+    s = ogr.Open("data/netcdf-sg/multiple_containers.nc")
+     
+    s_triangle = s.GetLayerByName("serpenski")
+    s_outline = s.GetLayerByName("serpenski_outline")
+
+    assert(s_triangle != None)
+    assert(s_outline != None)
+
+    triangle_ft = s_triangle.GetNextFeature()
+    triangle = triangle_ft.GetGeometryRef()
+    assert(triangle.GetGeometryType() == ogr.wkbMultiPolygon)
+    st_wkt = triangle.ExportToWkt() 
+    assert(st_wkt == \
+	"MULTIPOLYGON (((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0)))") 
+    
+    outline_ft = s_outline.GetNextFeature()
+    outline = outline_ft.GetGeometryRef()
+    assert(outline.GetGeometryType() == ogr.wkbMultiLineString)
+    so_wkt = outline.ExportToWkt() 
+    assert(so_wkt == \
+	"MULTILINESTRING ((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0))") 
 
 #  advanced tests
 
