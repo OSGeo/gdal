@@ -6209,7 +6209,9 @@ static uint64 _TIFFGetStrileOffsetOrByteCountValue(TIFF *tif, uint32 strile,
             {
                 if( pbErr )
                     *pbErr = 1;
-                return 0;
+                /* Do not return, as we want this function to always */
+                /* return the same value if called several times with */
+                /* the same arguments */
             }
         }
         else
