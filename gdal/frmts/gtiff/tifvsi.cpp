@@ -362,10 +362,15 @@ int VSI_TIFFHasCachedRanges( thandle_t th )
     return psGTH->nCachedRanges != 0;
 }
 
+toff_t VSI_TIFFSeek(TIFF* tif, toff_t off, int whence )
+{
+    thandle_t th = TIFFClientdata( tif );
+    return _tiffSeekProc(th, off, whence);
+}
+
 int VSI_TIFFWrite( TIFF* tif, const void* buffer, size_t buffersize )
 {
     thandle_t th = TIFFClientdata( tif );
-    _tiffSeekProc(th, 0, SEEK_END);
     return static_cast<size_t>(
         _tiffWriteProc( th, const_cast<tdata_t>(buffer), buffersize )) == buffersize;
 }

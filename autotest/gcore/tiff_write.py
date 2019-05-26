@@ -3463,7 +3463,7 @@ def test_tiff_write_ifd_offsets():
 
     filename = '/vsimem/test_tiff_write_ifd_offsets.tif'
     with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
-        ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'TILED=YES'])
+        ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'COMPRESS=LZW'])
     val0_ref = int(ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
     val1_ref = int(ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
     val2_ref = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('IFD_OFFSET', 'TIFF'))
@@ -3477,7 +3477,7 @@ def test_tiff_write_ifd_offsets():
     assert val2_ref < val3_ref
     assert val3_ref < val4_ref
     assert val4_ref < val5_ref
-    assert val5_ref < 1000
+    assert val5_ref < 1100
 
     # Retry with larger file
     src_ds = gdal.GetDriverByName('MEM').Create('', 4096, 4096)
@@ -3485,7 +3485,7 @@ def test_tiff_write_ifd_offsets():
     src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
 
     with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
-        ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'TILED=YES'])
+        ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'COMPRESS=LZW'])
     val0 = int(ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
     val1 = int(ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
     val2 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('IFD_OFFSET', 'TIFF'))
@@ -3493,6 +3493,26 @@ def test_tiff_write_ifd_offsets():
     val4 = int(ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
     val5 = int(ds.GetRasterBand(1).GetOverview(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
     ds = None
+
+    # Test rewriting but without changing strile size
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+    assert gdal.GetLastErrorMsg() == ''
+    f = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 1000, f).decode('LATIN1')
+    gdal.VSIFCloseL(f)
+    assert 'KNOWN_INCOMPATIBLE_EDITION=NO\n ' in data
+
+    # Test rewriting with changing strile size
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).WriteRaster(0,0,1,1,'x')
+    ds = None
+    assert gdal.GetLastErrorMsg() != ''
+    f = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 1000, f).decode('LATIN1')
+    gdal.VSIFCloseL(f)
+    assert 'KNOWN_INCOMPATIBLE_EDITION=YES\n' in data
 
     gdal.GetDriverByName('GTiff').Delete(filename)
 

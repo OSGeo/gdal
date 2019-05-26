@@ -417,11 +417,13 @@ private:
     bool        m_bLoadPam:1;
     bool        m_bHasGotSiblingFiles:1;
     bool        m_bHasIdentifiedAuthorizedGeoreferencingSources:1;
-    bool        m_bWriteHeaderTrailerStrile:1;
+    bool        m_bLayoutIFDSBeforeData:1;
     bool        m_bStrileOrderRowMajor:1;
     bool        m_bLeaderSizeAsUInt4:1;
     bool        m_bTrailerRepeatedLast4BytesRepeated:1;
     bool        m_bMaskInterleavedWithImagery:1;
+    bool        m_bKnownIncompatibleEdition:1;
+    bool        m_bWriteKnownIncompatibleEdition:1;
     bool        m_bHasUsedReadEncodedAPI:1; // for debugging
     bool        m_bWriteCOGLayout:1;
 
@@ -7676,11 +7678,13 @@ GTiffDataset::GTiffDataset():
     m_bLoadPam(false),
     m_bHasGotSiblingFiles(false),
     m_bHasIdentifiedAuthorizedGeoreferencingSources(false),
-    m_bWriteHeaderTrailerStrile(false),
+    m_bLayoutIFDSBeforeData(false),
     m_bStrileOrderRowMajor(false),
     m_bLeaderSizeAsUInt4(false),
     m_bTrailerRepeatedLast4BytesRepeated(false),
     m_bMaskInterleavedWithImagery(false),
+    m_bKnownIncompatibleEdition(false),
+    m_bWriteKnownIncompatibleEdition(false),
     m_bHasUsedReadEncodedAPI(false),
     m_bWriteCOGLayout(false)
 {
@@ -7855,6 +7859,24 @@ int GTiffDataset::Finalize()
     {
         if( m_fpL != nullptr )
         {
+            if( m_bWriteKnownIncompatibleEdition )
+            {
+                GByte abyHeader[4096];
+                VSIFSeekL( m_fpL, 0, SEEK_SET );
+                VSIFReadL( abyHeader, 1, sizeof(abyHeader), m_fpL );
+                const char* szKeyToLook = "KNOWN_INCOMPATIBLE_EDITION=NO\n "; // trailing space intended
+                for( size_t i = 0; i < sizeof(abyHeader) - strlen(szKeyToLook); i++ )
+                {
+                    if( memcmp(abyHeader + i, szKeyToLook, strlen(szKeyToLook)) == 0 )
+                    {
+                        const char* szNewKey = "KNOWN_INCOMPATIBLE_EDITION=YES\n";
+                        memcpy(abyHeader + i, szNewKey, strlen(szNewKey));
+                        VSIFSeekL( m_fpL, 0, SEEK_SET );
+                        VSIFWriteL( abyHeader, 1, sizeof(abyHeader), m_fpL );
+                        break;
+                    }
+                }
+            }
             if( VSIFCloseL( m_fpL ) != 0 )
             {
                 CPLError(CE_Failure, CPLE_FileIO, "I/O error");
@@ -8985,6 +9007,10 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
              nStripOrTile, static_cast<GUIntBig>(nCompressedBufferSize));
 #endif
     toff_t *panOffsets = nullptr;
+    toff_t* panByteCounts = nullptr;
+    bool bWriteAtEnd = true;
+    bool bWriteLeader = m_bLeaderSizeAsUInt4;
+    bool bWriteTrailer = m_bTrailerRepeatedLast4BytesRepeated;
     if( TIFFGetField(
             m_hTIFF,
             TIFFIsTiled( m_hTIFF ) ?
@@ -8992,17 +9018,102 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
             panOffsets != nullptr &&
             panOffsets[nStripOrTile] != 0 )
     {
-        // Make sure that if the tile/strip already exists,
-        // we write at end of file.
+        // Forces TIFFAppendStrip() to consider if the location of the tile/strip
+        // can be reused or if the strile should be written at end of file.
         TIFFSetWriteOffset(m_hTIFF, 0);
+
+        if( m_bStrileOrderRowMajor )
+        {
+            if( TIFFGetField(
+                m_hTIFF,
+                TIFFIsTiled( m_hTIFF ) ?
+                TIFFTAG_TILEBYTECOUNTS : TIFFTAG_STRIPBYTECOUNTS, &panByteCounts ) &&
+                panByteCounts != nullptr )
+            {
+                if( static_cast<GUIntBig>(nCompressedBufferSize) >
+                        panByteCounts[nStripOrTile] )
+                {
+                    GTiffDataset* poRootDS = m_poBaseDS ? m_poBaseDS : this;
+                    if( !poRootDS->m_bKnownIncompatibleEdition &&
+                        !poRootDS->m_bWriteKnownIncompatibleEdition )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                            "A strile cannot be rewritten in place, which "
+                            "invalidates the STRILE_ORDER optimization.");
+                        poRootDS->m_bKnownIncompatibleEdition = true;
+                        poRootDS->m_bWriteKnownIncompatibleEdition = true;
+                    }
+                }
+                // For mask interleaving, if the size is not exactly the same,
+                // completely give up (we could potentially move the mask in
+                // case the imagery is smaller)
+                else if( m_poMaskDS && m_bMaskInterleavedWithImagery &&
+                         static_cast<GUIntBig>(nCompressedBufferSize) !=
+                            panByteCounts[nStripOrTile] )
+                {
+                    GTiffDataset* poRootDS = m_poBaseDS ? m_poBaseDS : this;
+                    if( !poRootDS->m_bKnownIncompatibleEdition &&
+                        !poRootDS->m_bWriteKnownIncompatibleEdition )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                            "A strile cannot be rewritten in place, which "
+                            "invalidates the MASK_INTERLEAVED_WITH_IMAGERY "
+                            "optimization.");
+                        poRootDS->m_bKnownIncompatibleEdition = true;
+                        poRootDS->m_bWriteKnownIncompatibleEdition = true;
+                    }
+                    bWriteLeader = false;
+                    bWriteTrailer = false;
+                    if( m_bLeaderSizeAsUInt4 )
+                    {
+                        // If there was a valid leader, invalidat it
+                        VSI_TIFFSeek( m_hTIFF, panOffsets[nStripOrTile] - 4, SEEK_SET );
+                        uint32 nOldSize;
+                        VSIFReadL(&nOldSize, 1, 4, VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF)));
+                        CPL_LSBPTR32(&nOldSize);
+                        if( nOldSize == panByteCounts[nStripOrTile] )
+                        {
+                            uint32 nInvalidatedSize = 0;
+                            VSI_TIFFSeek( m_hTIFF, panOffsets[nStripOrTile] - 4, SEEK_SET );
+                            VSI_TIFFWrite(m_hTIFF, &nInvalidatedSize, sizeof(nInvalidatedSize));
+                        }
+                    }
+                }
+                else
+                {
+                    bWriteAtEnd = false;
+                }
+            }
+        }
     }
-    if( m_bWriteHeaderTrailerStrile &&
-        static_cast<GUIntBig>(nCompressedBufferSize) < 0xFFFFFFFFU )
+    if( bWriteLeader &&
+        static_cast<GUIntBig>(nCompressedBufferSize) <= 0xFFFFFFFFU )
     {
-        uint32 nSize = static_cast<uint32>(nCompressedBufferSize);
-        CPL_LSBPTR32(&nSize);
-        if( !VSI_TIFFWrite(m_hTIFF, &nSize, sizeof(nSize)) )
-            m_bWriteError = true;
+        if( bWriteAtEnd )
+        {
+            VSI_TIFFSeek( m_hTIFF, 0, SEEK_END );
+        }
+        else
+        {
+            // If we rewrite an existing strile in place with an existing leader,
+            // check that the leader is valid, before rewriting it.
+            // And if it is not valid, then do not write the trailer, as we
+            // could corrupt other data.
+            VSI_TIFFSeek( m_hTIFF, panOffsets[nStripOrTile] - 4, SEEK_SET );
+            uint32 nOldSize;
+            VSIFReadL(&nOldSize, 1, 4, VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF)));
+            CPL_LSBPTR32(&nOldSize);
+            bWriteLeader = panByteCounts && nOldSize == panByteCounts[nStripOrTile];
+            bWriteTrailer = bWriteLeader;
+            VSI_TIFFSeek( m_hTIFF, panOffsets[nStripOrTile] - 4, SEEK_SET );
+        }
+        if( bWriteLeader )
+        {
+            uint32 nSize = static_cast<uint32>(nCompressedBufferSize);
+            CPL_LSBPTR32(&nSize);
+            if( !VSI_TIFFWrite(m_hTIFF, &nSize, sizeof(nSize)) )
+                m_bWriteError = true;
+        }
     }
     tmsize_t written;
     if( TIFFIsTiled( m_hTIFF ) )
@@ -9013,8 +9124,8 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
                            nCompressedBufferSize );
     if( written != nCompressedBufferSize )
         m_bWriteError = true;
-    if( m_bWriteHeaderTrailerStrile &&
-        static_cast<GUIntBig>(nCompressedBufferSize) < 0xFFFFFFFFU )
+    if( bWriteTrailer &&
+        static_cast<GUIntBig>(nCompressedBufferSize) <= 0xFFFFFFFFU )
     {
         GByte abyLastBytes[4] = {};
         if( nCompressedBufferSize >= 4 )
@@ -9134,7 +9245,8 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             m_nCompression == COMPRESSION_LERC ||
             m_nCompression == COMPRESSION_WEBP) ) )
     {
-        if( m_bWriteHeaderTrailerStrile )
+        if( m_bStrileOrderRowMajor || m_bLeaderSizeAsUInt4 ||
+            m_bTrailerRepeatedLast4BytesRepeated )
         {
             GTiffCompressionJob sJob;
             memset(&sJob, 0, sizeof(sJob));
@@ -10517,6 +10629,16 @@ CPLErr GTiffDataset::IBuildOverviews(
 
         if( abRequireNewOverview[i] )
         {
+            if( m_bLayoutIFDSBeforeData && !m_bKnownIncompatibleEdition &&
+                !m_bWriteKnownIncompatibleEdition )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Adding new overviews invalidates the "
+                         "LAYOUT=IFDS_BEFORE_DATA property");
+                m_bKnownIncompatibleEdition = true;
+                m_bWriteKnownIncompatibleEdition = true;
+            }
+
             const int nOXSize =
                 (GetRasterXSize() + panOverviewList[i] - 1)
                 / panOverviewList[i];
@@ -12375,6 +12497,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         const char* pszStructuralMD = reinterpret_cast<const char*>(
             poOpenInfo->pabyHeader + nOffsetOfStructuralMetadata);
+        poDS->m_bLayoutIFDSBeforeData = strstr(pszStructuralMD,
+                            "LAYOUT=IFDS_BEFORE_DATA") != nullptr;
         poDS->m_bStrileOrderRowMajor = strstr(pszStructuralMD,
                             "STRILE_ORDER=ROW_MAJOR") != nullptr;
         poDS->m_bLeaderSizeAsUInt4 = strstr(pszStructuralMD,
@@ -12383,6 +12507,15 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                             "STRILE_TRAILER=LAST_4_BYTES_REPEATED") != nullptr;
         poDS->m_bMaskInterleavedWithImagery = strstr(pszStructuralMD,
                             "MASK_INTERLEAVED_WITH_IMAGERY=YES") != nullptr;
+        poDS->m_bKnownIncompatibleEdition = strstr(pszStructuralMD,
+                            "KNOWN_INCOMPATIBLE_EDITION=YES") != nullptr;
+        if( poDS->m_bKnownIncompatibleEdition )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "This file used to have optimizations in its layout, "
+                     "but those have been, at least partly, invalidated by "
+                     "later changes");
+        }
     }
 
     // In the case of GDAL_DISABLE_READDIR_ON_OPEN = NO / EMPTY_DIR
@@ -17127,9 +17260,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( (l_nBands == 1 || l_nPlanarConfig == PLANARCONFIG_CONTIG) &&
         bCopySrcOverviews )
     {
+        osHiddenStructuralMD += "LAYOUT=IFDS_BEFORE_DATA\n";
         osHiddenStructuralMD += "STRILE_ORDER=ROW_MAJOR\n";
         osHiddenStructuralMD += "STRILE_LEADER=SIZE_AS_UINT4\n";
         osHiddenStructuralMD += "STRILE_TRAILER=LAST_4_BYTES_REPEATED\n";
+        osHiddenStructuralMD += "KNOWN_INCOMPATIBLE_EDITION=NO\n "; // Final space intended, so this can be replaced by YES
     }
     if( !(nMaskFlags & (GMF_ALL_VALID|GMF_ALPHA|GMF_NODATA) )
         && (nMaskFlags & GMF_PER_DATASET) && !bStreaming )
@@ -17800,9 +17935,15 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     static_cast<double>(poOvrBand->GetXSize()) *
                     poOvrBand->GetYSize() * l_nBands;
 
-                poDstDS->m_bWriteHeaderTrailerStrile = true;
+                poDstDS->m_bStrileOrderRowMajor = true;
+                poDstDS->m_bLeaderSizeAsUInt4 = true;
+                poDstDS->m_bTrailerRepeatedLast4BytesRepeated = true;
                 if( poDstDS->m_poMaskDS )
-                    poDstDS->m_poMaskDS->m_bWriteHeaderTrailerStrile = true;
+                {
+                    poDstDS->m_poMaskDS->m_bStrileOrderRowMajor = true;
+                    poDstDS->m_poMaskDS->m_bLeaderSizeAsUInt4 = true;
+                    poDstDS->m_poMaskDS->m_bTrailerRepeatedLast4BytesRepeated = true;
+                }
 
                 if( l_nBands == 1 || poDstDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)
                 {
@@ -18067,10 +18208,15 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( bCopySrcOverviews &&
             (l_nBands == 1 || poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG) )
         {
-            poDS->m_bWriteHeaderTrailerStrile = true;
-
+            poDS->m_bStrileOrderRowMajor = true;
+            poDS->m_bLeaderSizeAsUInt4 = true;
+            poDS->m_bTrailerRepeatedLast4BytesRepeated = true;
             if( poDS->m_poMaskDS )
-                poDS->m_poMaskDS->m_bWriteHeaderTrailerStrile = true;
+            {
+                poDS->m_poMaskDS->m_bStrileOrderRowMajor = true;
+                poDS->m_poMaskDS->m_bLeaderSizeAsUInt4 = true;
+                poDS->m_poMaskDS->m_bTrailerRepeatedLast4BytesRepeated = true;
+            }
 
             if( poDS->m_poMaskDS )
             {
@@ -18846,6 +18992,16 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
                       "creating mask externally." );
 
             return GDALPamDataset::CreateMaskBand(nFlagsIn);
+        }
+
+        if( m_bLayoutIFDSBeforeData && !m_bKnownIncompatibleEdition &&
+            !m_bWriteKnownIncompatibleEdition )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                        "Adding a mask invalidates the "
+                        "LAYOUT=IFDS_BEFORE_DATA property");
+            m_bKnownIncompatibleEdition = true;
+            m_bWriteKnownIncompatibleEdition = true;
         }
 
         if( m_poBaseDS && !m_poBaseDS->SetDirectory() )
