@@ -30,6 +30,10 @@ jobs:
         displayName: 'Sphinx version'
       - script: |
           cd gdal/doc
+          if find . -name '*.rst' | xargs grep -P '\t'; then echo 'Tabs are bad, please use four spaces in .rst files.'; false; fi
+        displayName: 'Lint .rst files'
+      - script: |
+          cd gdal/doc
           make html
         displayName: 'Make html'
       - script: |
