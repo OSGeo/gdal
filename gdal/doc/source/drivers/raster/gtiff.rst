@@ -53,7 +53,7 @@ file <raster.wld>` with the extension .tfw, .tifw/.tiffw or
 .wld, as well as a MapInfo .tab file.
 
 By default, information is fetched in following order (first listed is
-the most prioritary): PAM (Persitant Auxiliary metadata) .aux.xml
+the most prioritary): PAM (Persistent Auxiliary metadata) .aux.xml
 sidecar file, INTERNAL (GeoTIFF keys and tags), TABFILE (.tab),
 WORLDFILE (.tfw, .tifw/.tiffw or .wld).
 
