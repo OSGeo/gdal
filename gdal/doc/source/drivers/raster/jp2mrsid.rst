@@ -26,11 +26,11 @@ Georeferencing
 
 Georeferencing information can come from different sources : internal
 (GeoJP2 or GMLJP2 boxes), worldfile .j2w/.wld sidecar files, or PAM
-(Persitant Auxiliary metadata) .aux.xml sidecar files. By default,
+(Persistent Auxiliary metadata) .aux.xml sidecar files. By default,
 information is fetched in following order (first listed is the most
 prioritary): PAM, GeoJP2, GMLJP2, WORLDFILE.
 
-Starting with GDAL 2.2, the allowed sources and their priority order can
+Starting with GDAL 2.2, the allowed sources and their priority order canper
 be changed with the GDAL_GEOREF_SOURCES configuration option (or
 GEOREF_SOURCES open option) whose value is a comma-separated list of the
 following keywords : PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for
