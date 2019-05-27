@@ -1499,7 +1499,7 @@ TIFFCheckRead(TIFF* tif, int tiles)
 	}
 	if (tiles ^ isTiled(tif)) {
 		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, tiles ?
-		    "Can not read tiles from a stripped image" :
+		    "Can not read tiles from a striped image" :
 		    "Can not read scanlines from a tiled image");
 		return (0);
 	}

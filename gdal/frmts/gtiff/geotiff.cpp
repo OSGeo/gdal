@@ -3245,7 +3245,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 }
             }
         }
-        else  // Contig, stripped organized.
+        else  // Contig, striped organized.
         {
             GByte* pabyData = static_cast<GByte*>(pData);
             for( int y = 0; y < nBufYSize; ++y )
@@ -3552,7 +3552,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 }
             }
         }
-        else  // Non-contig reading, stripped.
+        else  // Non-contig reading, striped.
         {
             for( int iBand = 0; iBand < nBandCount; ++iBand )
             {
@@ -15982,7 +15982,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->m_bWriteEmptyTiles = bStreaming ||
         (poDS->m_nCompression != COMPRESSION_NONE &&
          poDS->m_bFillEmptyTilesAtClosing);
-    // Only required for people writing non-compressed stripped files in the
+    // Only required for people writing non-compressed striped files in the
     // right order and wanting all tstrips to be written in the same order
     // so that the end result can be memory mapped without knowledge of each
     // strip offset.
@@ -17327,7 +17327,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             bStreaming ||
             (poDS->m_nCompression != COMPRESSION_NONE &&
              poDS->m_bFillEmptyTilesAtClosing);
-        // Only required for people writing non-compressed stripped files in the
+        // Only required for people writing non-compressed striped files in the
         // rightorder and wanting all tstrips to be written in the same order
         // so that the end result can be memory mapped without knowledge of each
         // strip offset

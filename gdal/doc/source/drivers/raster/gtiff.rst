@@ -356,7 +356,7 @@ Creation Options
    purposes, but some applications only support pixel interleaved TIFF
    files.
 
--  **TILED=YES**: By default stripped TIFF files are created. This
+-  **TILED=YES**: By default striped TIFF files are created. This
    option can be used to force creation of tiled TIFF files.
 
 -  **BLOCKXSIZE=n**: Sets tile width, defaults to 256.

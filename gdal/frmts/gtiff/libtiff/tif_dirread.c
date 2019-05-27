@@ -4260,7 +4260,7 @@ TIFFReadDirectory(TIFF* tif)
             ChopUpSingleUncompressedStrip(tif);
         }
 
-        /* There are also uncompressed stripped files with strips larger than */
+        /* There are also uncompressed striped files with strips larger than */
         /* 2 GB, which make them unfriendly with a lot of code. If possible, */
         /* try to expose smaller "virtual" strips. */
         if( tif->tif_dir.td_planarconfig == PLANARCONFIG_CONTIG &&
@@ -6209,7 +6209,9 @@ static uint64 _TIFFGetStrileOffsetOrByteCountValue(TIFF *tif, uint32 strile,
             {
                 if( pbErr )
                     *pbErr = 1;
-                return 0;
+                /* Do not return, as we want this function to always */
+                /* return the same value if called several times with */
+                /* the same arguments */
             }
         }
         else
