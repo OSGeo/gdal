@@ -2688,6 +2688,34 @@ def test_nitf_SENSRB():
     assert data == expected_data, data
 
 ###############################################################################
+# Verify we can read UDID metadata
+
+def test_nitf_valid_udid():
+
+    ds = gdal.Open('data/valid_udid.ntf')
+
+    md = ds.GetMetadata()
+    assert md['NITF_CSDIDA_YEAR'] == '2019', \
+        'UDID CSDIDA metadata has unexpected value.'
+
+    assert md['NITF_BLOCKA_BLOCK_INSTANCE_01'] == '01', \
+        'BLOCKA metadata has unexpected value.'
+
+###############################################################################
+# Verify that bad UDID metadata doesn't prevent reading IXSHD metadata
+
+def test_nitf_invalid_udid():
+
+    ds = gdal.Open('data/invalid_udid.ntf')
+
+    md = ds.GetMetadata()
+    assert 'NITF_CSDIDA_YEAR' not in md, \
+        'Unexpected parings of UDID CSDIDA metadata.'
+
+    assert md['NITF_BLOCKA_BLOCK_INSTANCE_01'] == '01', \
+        'BLOCKA metadata has unexpected value.'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 
