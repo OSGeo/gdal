@@ -56,6 +56,7 @@ Vector drivers
    libkml
    mdb
    memory
+   EFAL
    mitab
    mongodb
    mongodbv3
