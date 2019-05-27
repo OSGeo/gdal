@@ -433,9 +433,12 @@ JPEG12_SUPPORTED = 1
 #KAKDIR = C:\0_PGH\SRC_CSD\CSD_INTEGRATION\cots\kakadu\download\dev
 #KAKLIB = $(KAKDIR)\lib_x64\kdu_v79R.lib 	$(KAKDIR)\lib_x64\kdu_a79R.lib
 #KAKSRC = $(KAKDIR)\v7_9_1-01156C
+#KAKEXTRAINC=-I$(KAKDIR)
 #KAKOBJDIR =  $(KAKDIR)\v7_generated_x86
-KAKADU_7_5_OR_LATER = YES
 #JP2KAK_PLUGIN = YES
+!IFNDEF KAKADU_7_5_OR_LATER
+KAKADU_7_5_OR_LATER = YES
+!ENDIF
 
 # Uncomment the following and update to enable NCSA HDF Release 4 support.
 #HDF4_PLUGIN = NO
