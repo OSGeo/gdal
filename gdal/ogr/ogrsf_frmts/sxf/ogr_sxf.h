@@ -97,6 +97,8 @@ public:
     virtual bool AddRecord( long nFID, unsigned nClassCode,
                             vsi_l_offset nOffset, bool bHasSemantic,
                             size_t nSemanticsSize );
+private:
+    static int CanRecode(const char* pszEncoding);
 };
 
 /************************************************************************/

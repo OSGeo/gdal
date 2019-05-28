@@ -394,13 +394,41 @@ OGRFeature *OGRSXFLayer::GetNextFeature()
 }
 
 /************************************************************************/
+/*                              CanRecode()                             */
+/************************************************************************/
+int OGRSXFLayer::CanRecode(const char* pszEncoding)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    char* pszTest( CPLRecode( "test", pszEncoding, CPL_ENC_UTF8 ) );
+    CPLPopErrorHandler();
+
+    if( pszTest == nullptr )
+    {
+        return FALSE;
+    }
+
+    CPLFree( pszTest );
+
+    if( CPLGetLastErrorType() != 0 )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRSXFLayer::TestCapability( const char * pszCap )
 
 {
-    if (EQUAL(pszCap, OLCStringsAsUTF8))
+    if (EQUAL(pszCap, OLCStringsAsUTF8) &&
+        CanRecode("CP1251") && CanRecode("KOI8-R"))
         return TRUE;
     else if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;

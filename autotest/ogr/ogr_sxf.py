@@ -114,6 +114,8 @@ def test_ogr_sxf_4(capsys):
 
     for layer_n in range(sxf_ds.GetLayerCount()):
         lyr = sxf_ds.GetLayer(layer_n)
+        if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+            pytest.skip('skipping test: recode is not possible')
         assert lyr_names[layer_n] == lyr.GetName()
 
 
