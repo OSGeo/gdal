@@ -261,7 +261,8 @@ namespace nccfdriver
 			{
 				if(prog == 0) pnc_bl.push_back(pcnt);
 
-				if(int_rings.size() > 0 && int_rings[pcnt]) c++;
+				if(int_rings.size() > 0 && int_rings[pcnt])
+					c++;
 
 				prog = prog + pnode_counts[pcnt];
 				parts++;
