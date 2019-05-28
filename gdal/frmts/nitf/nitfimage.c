@@ -661,7 +661,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             sscanf(psImage->pachTRE + 6, "%*5d%n", &nFirstTagUsedLength);
             if (nFirstTagUsedLength != 5)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
+                CPLError(CE_Warning, CPLE_AppDefined,
                         "Cannot read User TRE. First tag's length is invalid");
                 CPLFree( psImage->pachTRE );
                 psImage->nTREBytes = 0;
