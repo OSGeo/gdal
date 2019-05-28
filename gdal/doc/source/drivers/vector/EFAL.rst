@@ -1,6 +1,20 @@
+.. _vector.EFAL:
+
+MapInfo EFAL
+============
+
+.. shortname:: EFAL
+
 This driver supports the MapInfo TAB file format. This Driver supports
 the MapInfo (Native) as well as the new MapInfo Extended (NATIVEX)
 formats.
+
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
 
 Contents
 --------
