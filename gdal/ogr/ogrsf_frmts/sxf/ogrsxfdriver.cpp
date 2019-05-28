@@ -105,19 +105,6 @@ CPLErr OGRSXFDriver::DeleteDataSource(const char* pszName)
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRSXFDriver::TestCapability( const char * pszCap )
-
-{
-    if (EQUAL(pszCap, ODrCDeleteDataSource))
-        return TRUE;
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                        RegisterOGRSXF()                       */
 /************************************************************************/
 void RegisterOGRSXF()
