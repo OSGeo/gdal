@@ -37,19 +37,19 @@ The WMTS driver can open :
 
       gdalinfo "<GDAL_WMTS><GetCapabilitiesUrl>http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml</GetCapabilitiesUrl><Layer>lb</Layer></GDAL_WMTS>"
 
--  a local GetCapabilities response of a WTMS service :
+-  a local GetCapabilities response of a WMTS service :
 
    ::
 
       gdalinfo WMTSCapabilities.xml
 
--  the URL to the GetCapabilities response of a WTMS service:
+-  the URL to the GetCapabilities response of a WMTS service:
 
    ::
 
       gdalinfo "http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml"
 
--  the URL to the GetCapabilities response of a WTMS service, prefixed
+-  the URL to the GetCapabilities response of a WMTS service, prefixed
    with *WMTS:*, and possibly with optional layer, tilematrixset,
    tilematrix/zoom_level, style and extendbeyonddateline parameters,
    with the following syntax
