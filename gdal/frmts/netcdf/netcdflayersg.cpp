@@ -130,7 +130,6 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 
 	for(size_t featCt = 0; featCt < shape_count; featCt++)
 	{
-		//std::unique_ptr<OGRGeometry> geometry;
 		OGRGeometry * geometry;
 
 		try
@@ -139,27 +138,21 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 			{		
 				case wkbPoint:
 					geometry = new OGRPoint;
-					//geometry = std::unique_ptr<OGRGeometry>(new OGRPoint);
 					break;
 				case wkbLineString:
 					geometry = new OGRLineString;
-					//geometry = std::unique_ptr<OGRGeometry>(new OGRLineString);	
 					break;
 				case wkbPolygon:
 					geometry = new OGRPolygon;
-					//geometry = std::unique_ptr<OGRGeometry>(new OGRPolygon);
 					break;
 				case wkbMultiPoint:
 					geometry = new OGRMultiPoint;
-					//geometry = std::unique_ptr<OGRGeometry>(new OGRMultiPoint);
 					break;
 				case wkbMultiLineString:
 					geometry = new OGRMultiLineString;
-					//geometry = std::unique_ptr<OGRGeometry>(new OGRMultiLineString);
 					break;
 				case wkbMultiPolygon:
 					geometry = new OGRMultiPolygon;
-					//geometry = std::unique_ptr<OGRGeometry>(new OGRMultiPolygon);
 					break;
 				default:
 					throw nccfdriver::SG_Exception_BadFeature();

@@ -102,7 +102,7 @@ namespace nccfdriver
 		// Get geometry container name
 		if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
 		{
-			throw SG_Exception_Existential(static_cast<const char *>("new geometry container"), "the variable of the given ID"); 	
+			throw SG_Exception_Existential("new geometry container", "the variable of the given ID"); 	
 		}
 
 		// Establish string version of container_name
