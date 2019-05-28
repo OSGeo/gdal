@@ -2106,7 +2106,7 @@ netCDFDataset::netCDFDataset() :
     bIsGdalCfFile(false),
     pszCFProjection(nullptr),
     pszCFCoordinates(nullptr),
-    nCFMinorVersion(6),
+    nCFVersion(1.6),
     bSGSupport(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
 
@@ -7131,8 +7131,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Figure out whether or not the listed dataset has support for simple geometries (CF-1.8)
-    poDS->nCFMinorVersion = nccfdriver::getCFMinorVersion(cdfid);
-    if(poDS->nCFMinorVersion >= 8)
+    poDS->nCFVersion = nccfdriver::getCFVersion(cdfid);
+    if(poDS->nCFVersion >= 1.8)
     {
         poDS->bSGSupport = true;
     }

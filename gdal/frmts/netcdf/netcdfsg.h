@@ -278,9 +278,9 @@ namespace nccfdriver
 	
 	/* Retrieves the minor version from the value Conventions global attr
 	 * Returns: a positive integer corresponding to the conventions value
-	 *	if not CF-1.x then return negative value, -1
+	 *	if not CF-x.y then return negative value, -1
 	 */
-	int getCFMinorVersion(int ncid);
+	double getCFVersion(int ncid);
 
 	/* Given a geometry_container varID, searches that variable for a geometry_type attribute
 	 * Returns: the equivalent geometry type

@@ -828,8 +828,8 @@ class netCDFDataset final: public GDALPamDataset
     bool          bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
     char         *pszCFProjection;
     const char   *pszCFCoordinates;
-    int          nCFMinorVersion;
-    bool         bSGSupport;
+    double        nCFVersion;
+    bool          bSGSupport;
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
 

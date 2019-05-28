@@ -867,72 +867,23 @@ namespace nccfdriver
 
 	// Helpers
 	// following is a short hand for a clean up and exit, since goto isn't allowed
-	int getCFMinorVersion(int ncid)
+	double getCFVersion(int ncid)
 	{
-		bool is_CF_conv = false;
-		int minor_ver = -1;
-		std::string attrVal_s;
+		double ver = -1.0;
+		std::string attrVal;
 
 		// Fetch the CF attribute
-		if(attrf(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attrVal_s) == "")
+		if(attrf(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attrVal) == "")
 		{
-			return minor_ver;
+			return ver;
 		}
 
-		char attrVal[NC_MAX_NAME + 1];
-		memset(attrVal, 0, NC_MAX_NAME + 1);
-
-		strncpy(attrVal, attrVal_s.c_str(), NC_MAX_NAME);
-
-		// Fetched without errors, now traverse	
-		char * parse = strtok(attrVal, "-");
-		while(parse != NULL)
+		if(sscanf(attrVal.c_str(), "CF-%lf", &ver) != 1)
 		{
-			// still todo, look for erroneous standards
-			// Test for CF Conventions
-			if(!strcmp(parse, "CF"))
-			{
-				is_CF_conv = true;		
-			}
-
-			// Test for Version to see if 
-			else if(parse[0] == '1' && is_CF_conv)
-			{
-				// ensure correct formatting and only singly defined
-				if(strlen(parse) < 3 || minor_ver >= 0)
-				{
-					return minor_ver;
-				}	
-
-				if(parse[1] != '.')
-				{
-					return minor_ver;	
-				}
-
-				char * minor = parse + sizeof(char) * 2;
-				minor_ver = atoi(minor);				
-
-				// check for "0" and potentially malformed, due to atoi return cond
-				if(minor_ver == 0)
-				{
-					if(strlen(parse) != 3)
-						if(parse[2] != '0')
-					{
-						minor_ver = -1;
-					}
-				}
-			}	
-
-			else
-			{
-				minor_ver = -1;
-				return minor_ver;	
-			}
-
-			parse = strtok(NULL, "-");
+			return -1.0;
 		}
-	
-		return minor_ver;
+
+		return ver;
 	}
 
 	geom_t getGeometryType(int ncid, int varid)
