@@ -39,9 +39,8 @@ namespace nccfdriver
 	static void* memcpy_jump(void *dest, const void *src, size_t n)
 	{
 		memcpy(dest, src, n);
-		char * a = (char*)dest + n; // otherwise unneccesary casting to stop compiler warnings
-		void * b = (void*)a;	
-		return b;
+		int8_t * byte_pointer = static_cast<int8_t*>(dest);
+		return static_cast<void*>(byte_pointer + n);
 	}
 
 	/* Attribute Fetch
@@ -520,9 +519,9 @@ namespace nccfdriver
 	 * Converting SGeometry into WKB automatically allocates the required buffer space
 	 * and returns a buffer that MUST be free'd
 	 */
-	void * SGeometry::serializeToWKB(size_t featureInd, int& wkbSize)
+	unsigned char * SGeometry::serializeToWKB(size_t featureInd, int& wkbSize)
 	{		
-		void * ret = nullptr;
+		unsigned char * ret = nullptr;
 		int nc = 0; size_t sb = 0;
 
 		// Points don't have node_count entry... only inspect and set node_counts if not a point
@@ -538,7 +537,7 @@ namespace nccfdriver
 		{
 			case POINT:
 				wkbSize = 1 + 4 + 16;
-				ret = new int8_t[wkbSize];
+				ret = new uint8_t[wkbSize];
 				inPlaceSerialize_Point(this, featureInd, ret);
 				break;
 
@@ -560,14 +559,14 @@ namespace nccfdriver
 
 				// if interior ring, then assume that it will be a multipolygon (maybe future work?)
 				wkbSize = 1 + 4 + 4 + 4 + 16 * nc;
-				ret = new int8_t[wkbSize];
+				ret = new uint8_t[wkbSize];
 				inPlaceSerialize_PolygonExtOnly(this, nc, sb, ret);
 				break;
 
 			case MULTIPOINT:
 				{
 					wkbSize = 1 + 4 + 4 + nc * (1 + 4 + 16);
-					ret = new int8_t[wkbSize];
+					ret = new uint8_t[wkbSize];
 
 					void * worker = ret;
 					int8_t header = PLATFORM_HEADER;
@@ -610,7 +609,7 @@ namespace nccfdriver
 					size_t pcount = pnc.size();
 
 					// Allocate and set pointers
-					ret = new int8_t[wkbSize];
+					ret = new uint8_t[wkbSize];
 					void * worker = ret;
 
 					// Begin Writing
