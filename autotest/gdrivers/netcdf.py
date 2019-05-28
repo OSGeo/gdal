@@ -3344,7 +3344,7 @@ def test_yahara():
     assert(first.GetFieldAsDouble("X_COORD") == 577251.43302)
     assert(first.GetFieldAsDouble("Y_COORD") == 319799.04918)
 
-def test_states():
+def test_states_full_layer():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
     states = ogr.Open("data/netcdf-sg/cf1.8_states.nc")
@@ -3379,12 +3379,6 @@ def test_states():
     assert(second.GetFieldAsInteger("DRAWSEQ") == 3)
     assert(second.GetFieldAsString("STATE_FIPS") == "30")
     assert(second.GetFieldAsString("STATE_ABBR") == "MT")
-
-def test_full_nccfsg_layer():
-    # still to implement
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()			
-
 
 ###############################################################################
 #  other tests

@@ -382,7 +382,8 @@ namespace nccfdriver
 			size_t diml;
 			nc_inq_dimlen(ncId, all_dim, &diml);
 		
-			if(diml != total_node_count) throw SG_Exception_BadSum(container_name, "node_count", "node coordinate dimension length");
+			if(diml != total_node_count)
+				throw SG_Exception_BadSum(container_name, "node_count", "node coordinate dimension length");
 		}
 	
 
