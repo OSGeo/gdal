@@ -88,9 +88,9 @@ namespace nccfdriver
 		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
 		std::vector<int> node_counts;	// node counts of each geometry in a container
 		std::vector<int> pnode_counts;	// part node counts of each geometry in a container
-		std::vector<int> bound_list;	// a quick list used to store the real beginning indicies of shapes
 		std::vector<bool> int_rings;	// list of parts that are interior rings
-		std::vector<int> pnc_bl;	// a quick list of indicies for part counts corresponding to a geometry
+		std::vector<size_t> bound_list;	// a quick list used to store the real beginning indicies of shapes
+		std::vector<size_t> pnc_bl;	// a quick list of indicies for part counts corresponding to a geometry
 		std::vector<int> parts_count;	// a count of total parts in a single geometry instance
 		std::vector<int> poly_count;	// count of polygons, for use only when interior rings are present
 		int current_vert_ind;	// used to keep track of current point being used
@@ -287,10 +287,10 @@ namespace nccfdriver
 	 */
 	geom_t getGeometryType(int ncid, int varid); 
 	
-	void* inPlaceSerialize_Point(SGeometry * ge, int seek_pos, void * serializeBegin);
-	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
-	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin);
-	void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin);
+	void* inPlaceSerialize_Point(SGeometry * ge, size_t seek_pos, void * serializeBegin);
+	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, size_t seek_begin, void * serializeBegin);
+	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, size_t seek_begin, void * serializeBegin);
+	void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, size_t seek_begin, void * serializeBegin);
 
 	/* scanForGeometryContainers
 	 * A simple function that scans a netCDF File for Geometry Containers

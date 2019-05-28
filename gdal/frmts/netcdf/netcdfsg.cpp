@@ -230,7 +230,7 @@ namespace nccfdriver
 		 */
 
 		// Create bound list
-		int rc = 0;
+		size_t rc = 0;
 		bound_list.push_back(0);// start with 0
 
 		if(node_counts.size() > 0)
@@ -262,7 +262,7 @@ namespace nccfdriver
 			{
 				if(prog == 0) pnc_bl.push_back(pcnt);
 
-				if(int_rings.size() > 0) if(!int_rings[pcnt]) c++;
+				if(int_rings.size() > 0 && int_rings[pcnt]) c++;
 
 				prog = prog + pnode_counts[pcnt];
 				parts++;
@@ -271,7 +271,8 @@ namespace nccfdriver
 				{
 					ind++;
 					this->parts_count.push_back(parts);
-					if(int_rings.size() > 0) this->poly_count.push_back(c);
+					if(int_rings.size() > 0)
+						this->poly_count.push_back(c);
 					c = 0;
 					prog = 0; parts = 0;
 				}	
@@ -522,7 +523,7 @@ namespace nccfdriver
 	void * SGeometry::serializeToWKB(size_t featureInd, int& wkbSize)
 	{		
 		void * ret = nullptr;
-		int nc = 0; int sb = 0;
+		int nc = 0; size_t sb = 0;
 
 		// Points don't have node_count entry... only inspect and set node_counts if not a point
 		if(this->getGeometryType() != POINT)
@@ -580,7 +581,7 @@ namespace nccfdriver
 					// Add points
 					for(int pts = 0; pts < nc; pts++)
 					{
-						worker = inPlaceSerialize_Point(this, sb + pts, worker);								
+						worker = inPlaceSerialize_Point(this, static_cast<size_t>(sb + pts), worker);								
 					}
 				}
 
@@ -591,8 +592,8 @@ namespace nccfdriver
 					int32_t header = PLATFORM_HEADER;
 					int32_t t = wkbMultiLineString;
 					int32_t lc = parts_count[featureInd];
-					int seek_begin = bound_list[featureInd];
-					int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous	
+					int seek_begin = sb;
+					size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous	
 					wkbSize = 1 + 4 + 4;
 					std::vector<int> pnc;
 
@@ -632,8 +633,8 @@ namespace nccfdriver
 					int32_t t = wkbMultiPolygon;
 					bool noInteriors = this->int_rings.size() == 0 ? true : false;
 					int32_t rc = parts_count[featureInd];
-					int seek_begin = bound_list[featureInd];
-					int pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous		
+					int seek_begin = sb;
+					size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous		
 					wkbSize = 1 + 4 + 4;
 					std::vector<int> pnc;
 
@@ -696,7 +697,7 @@ namespace nccfdriver
 						int32_t polys = poly_count[featureInd];
 						worker = memcpy_jump(worker, &polys, 4);
 	
-						int base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
+						size_t base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
 						int seek = seek_begin; // beginning of node range for this multigeometry
 						size_t ir_base = base + 1;
 						int rc_m = 1; 
@@ -988,7 +989,7 @@ namespace nccfdriver
 		return ret;
 	}
 
-	void* inPlaceSerialize_Point(SGeometry * ge, int seek_pos, void * serializeBegin)
+	void* inPlaceSerialize_Point(SGeometry * ge, size_t seek_pos, void * serializeBegin)
 	{
 		uint8_t order = 1;
 		uint32_t t = wkbPoint;
@@ -1005,7 +1006,7 @@ namespace nccfdriver
 		return serializeBegin;
 	}
 
-	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
+	void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, size_t seek_begin, void * serializeBegin)
 	{
 		uint8_t order = PLATFORM_HEADER;
 		uint32_t t = wkbLineString;
@@ -1028,7 +1029,7 @@ namespace nccfdriver
 		return serializeBegin;
 	}
 
-	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, int seek_begin, void * serializeBegin)
+	void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, size_t seek_begin, void * serializeBegin)
 	{	
 		int8_t header = PLATFORM_HEADER;
 		int32_t t = wkbPolygon;
@@ -1053,12 +1054,12 @@ namespace nccfdriver
 		return writer;
 	}
 
-	void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, int seek_begin, void * serializeBegin)
+	void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, size_t seek_begin, void * serializeBegin)
 	{
 			
 		int8_t header = PLATFORM_HEADER;
 		int32_t t = wkbPolygon;
-		int32_t rc = (int32_t)ring_count;
+		int32_t rc = static_cast<int32_t>(ring_count);
 				
 		void * writer = serializeBegin;
 		writer = memcpy_jump(writer, &header, 1);

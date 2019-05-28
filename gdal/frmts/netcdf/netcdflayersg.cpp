@@ -160,7 +160,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 			}
 		}
 		// This may be unncessary, given the check previously...
-		catch(nccfdriver::SG_Exception& e)
+		catch(nccfdriver::SG_Exception&)
 		{
 			delete poL;
 			throw;
