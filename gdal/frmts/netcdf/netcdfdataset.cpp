@@ -6085,6 +6085,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 
     CPLString osFilenameForNCOpen(osFilename);
 #ifdef WIN32
+    CPLString oldLocale = setlocale(LC_ALL, nullptr);
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char *p=setlocale(LC_ALL, "en_US.UTF-8");
@@ -6098,7 +6099,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 #ifdef WIN32
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        char *p=setlocale(LC_ALL, "");
+        char* p = setlocale(LC_ALL, (const char*)oldLocale);
         (void)p;
     }
 #endif
@@ -7001,6 +7002,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                 (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ? NC_WRITE : NC_NOWRITE;
     CPLString osFilenameForNCOpen(poDS->osFilename);
 #ifdef WIN32
+    CPLString oldLocale = setlocale(LC_ALL, nullptr);
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         char *p= setlocale(LC_ALL, "en_US.UTF-8");
@@ -7031,7 +7033,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
 #ifdef WIN32
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        char *p=setlocale(LC_ALL, "");
+        char* p = setlocale(LC_ALL, (const char*)oldLocale);
         (void)p;
     }
 #endif
