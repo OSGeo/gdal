@@ -619,7 +619,7 @@ namespace nccfdriver
 					int32_t header = PLATFORM_HEADER;
 					int32_t t = wkbMultiLineString;
 					int32_t lc = parts_count[featureInd];
-					int seek_begin = sb;
+					size_t seek_begin = sb;
 					size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous	
 					wkbSize = 1 + 4 + 4;
 					std::vector<int> pnc;
@@ -660,7 +660,7 @@ namespace nccfdriver
 					int32_t t = wkbMultiPolygon;
 					bool noInteriors = this->int_rings.size() == 0 ? true : false;
 					int32_t rc = parts_count[featureInd];
-					int seek_begin = sb;
+					size_t seek_begin = sb;
 					size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous		
 					wkbSize = 1 + 4 + 4;
 					std::vector<int> pnc;

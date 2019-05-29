@@ -68,7 +68,7 @@ namespace nccfdriver
 		~Point();	
 		Point(int dim = 0) : size(dim)
 			{ this->values = new double[dim]; } // memset(this->values, 0, dim*sizeof(double)); }	
-		double& operator[](int i) { return this->values[i]; }
+		double& operator[](size_t i) { return this->values[i]; }
 		int getOrder() { return this->size; }
 	};
 
@@ -102,6 +102,11 @@ namespace nccfdriver
 		SGeometry operator=(const SGeometry&);
 
 		public:
+
+		/* int SGeometry::get_axisCount()
+		 * Returns the count of axis (i.e. X, Y, Z)
+		 */
+		int get_axisCount() { return this->touple_order; }
 
 		/* int SGeometry::getInstDim()
 		 * Returns the geometry instance dimension ID of this geometry
