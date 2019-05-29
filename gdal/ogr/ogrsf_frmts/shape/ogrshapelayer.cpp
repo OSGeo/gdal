@@ -1644,8 +1644,6 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         if( hDBF == nullptr || DBFGetFieldCount( hDBF ) == 0 )
             return TRUE;
 
-        CPLClearRecodeWarningFlags();
-
         // Otherwise test that we can re-encode field names to UTF-8.
         const int nFieldCount = DBFGetFieldCount( hDBF );
         for( int i = 0; i < nFieldCount; i++ )
@@ -1656,14 +1654,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
             DBFGetFieldInfo( hDBF, i, szFieldName, &nWidth, &nPrecision );
 
-            CPLErrorReset();
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            char * const pszUTF8Field =
-                CPLRecode( szFieldName, osEncoding, CPL_ENC_UTF8);
-            CPLPopErrorHandler();
-            CPLFree( pszUTF8Field );
-
-            if( CPLGetLastErrorType() != 0 )
+            if(!CPLCanRecode(szFieldName, osEncoding, CPL_ENC_UTF8))
             {
                 return FALSE;
             }
