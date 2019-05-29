@@ -87,3 +87,11 @@ available at https://anaconda.org/conda-forge/gdal.
     conda install -c conda-forge gdal
 
 
+Linux Docker images
+................................................................................
+
+Images with nightly builds of GDAL master and tagged releases are available at
+`Docker Hub <https://hub.docker.com/r/osgeo/gdal/tags>`_
+
+Information on the content of the different configurations can be found at
+`https://github.com/OSGeo/gdal/tree/master/gdal/docker <https://github.com/OSGeo/gdal/tree/master/gdal/docker>`_
