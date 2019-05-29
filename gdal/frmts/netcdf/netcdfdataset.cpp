@@ -10932,7 +10932,7 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
             (EQUAL(osFeatureType, "profile") &&
              oMapDimIdToCount.size() == 2 && nProfileDimId >= 0)) )
         {
-	if(!bSGSupport)
+        if(!bSGSupport)
             CPLError(CE_Warning, CPLE_AppDefined,
                     "The dataset has several variables that could be "
                     "identified as vector fields, but not all share the same "
@@ -10971,7 +10971,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
                                              int nVarXId, int nVarYId, int nVarZId,
                                              int nProfileDimId,
                                              int nParentIndexVarID,
-					      bool bKeepRasters )
+                                             bool bKeepRasters )
 {
     char *pszGroupName = nullptr;
     NCDFGetGroupFullName(nCdfId, &pszGroupName);

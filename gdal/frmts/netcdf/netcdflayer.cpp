@@ -60,7 +60,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTMaxWidthDimId(-1),
         m_nWKTVarID(-1),
         m_nWKTNCDFType(NC_NAT),
-	m_sgItrInit(false),
+        m_sgItrInit(false),
 	m_HasCFSG1_8(false),
         m_nCurFeatureId(1),
         m_bWriteGDALTags(true),
@@ -2097,7 +2097,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
             osVarName = CPLSPrintf("%s%d", poFieldDefn->GetNameRef(), i);
             status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
             if( status != NC_NOERR )
-            break;
+                break;
         }
         CPLDebug("netCDF", "Field %s is written in variable %s",
                  poFieldDefn->GetNameRef(), osVarName.c_str());

@@ -84,6 +84,7 @@ namespace nccfdriver
 		int gc_varId;		// the id of the underlying geometry_container variable
 		int gm_varId;		// id used for grid mapping
 		int inst_dimId;		// dimension id for geometry instance dimension
+		size_t inst_dimLen;	// value of instance dimension
 		int touple_order;	// amount of "coordinates" in a point
 		std::vector<int> nodec_varIds;	// varIds for each node_coordinate entry
 		std::vector<int> node_counts;	// node counts of each geometry in a container
@@ -103,9 +104,14 @@ namespace nccfdriver
 		public:
 
 		/* int SGeometry::getInstDim()
-		 * Returns the geometry instance dimension of this geometry
+		 * Returns the geometry instance dimension ID of this geometry
 		 */
 		int getInstDim() { return this->inst_dimId; }
+
+		/* size_t SGeometry::getInstDimLen()
+		 * Returns the length of the instance dimension
+		 */
+		size_t getInstDimLen() { return this->inst_dimLen; }
 
 		/* Point& SGeometry::next_pt()
 		 * returns a pointer to the next pt in sequence, if any. If none, returns a nullptr
@@ -272,6 +278,17 @@ namespace nccfdriver
 			const char* get_err_msg() override { return err_msg.c_str(); }
 		
 		SG_Exception_Not1D() : err_msg("A node coordinates axis variable is not one dimensional.") {}
+	};
+
+	// Too many empty dimension
+	class SG_Exception_EmptyDim : public SG_Exception
+	{
+		std::string err_msg;
+
+		public:
+			const char* get_err_msg() override { return err_msg.c_str(); }
+		
+		SG_Exception_EmptyDim() : err_msg("A dimension has length <= 0, but it must have length > 0") {}
 	};
 
 	// Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h

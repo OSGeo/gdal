@@ -172,31 +172,8 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		OGRFeature * feat = new OGRFeature(defn);
 		feat -> SetGeometryDirectly(geometry);
 			
-		int dimId = sg -> getInstDim();	
-
-		// If instance dim is not specified, try to assume instance dimension is the first dimension
-		if(dimId == nccfdriver::INVALID_DIM_ID)
-		{	
-			if(props.size() > 0)
-			{
-				// All property values of a geometry container have the same inst. dim
-				// So just, use one of them
-				int dim_c;
-				nc_inq_varndims(ncid, props[0], &dim_c);
-				std::unique_ptr<int>dim_ids = std::unique_ptr<int>(new int[dim_c]);
-				nc_inq_vardimid(ncid, props[0], dim_ids.get());
-			
-				// Take the first throwaway the rest
-				dimId = *dim_ids;
-			}
-		}
-
-		size_t dim_len = 0;
-
-		if(nc_inq_dimlen(ncid, dimId, &dim_len) != NC_NOERR)
-		{
-			throw nccfdriver::SG_Exception_Existential(sg->getContainerName().c_str(), CF_SG_GEOMETRY_DIMENSION);
-		}
+		int dimId = sg->getInstDim();
+		size_t dim_len = sg->getInstDimLen();	
 		
 		// Fill fields
 		for(size_t itr = 0; itr < props.size() && itr < dim_len; itr++)

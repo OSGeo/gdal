@@ -116,16 +116,33 @@ namespace nccfdriver
 		}
 
 		int idi = INVALID_DIM_ID;
+		size_t dilen = 0;
 		this->inst_dimId = INVALID_DIM_ID;
 		std::string inst_dim_name_s;
 		
 		// Look for geometry_dimension instance attribute to figure out instance dimension.
 		if(attrf(ncId, geoVarId, CF_SG_GEOMETRY_DIMENSION, inst_dim_name_s) != "")
 		{
-			if(nc_inq_dimid(ncId, inst_dim_name_s.c_str(), &idi) == NC_NOERR)	
+			if(nc_inq_dimid(ncId, inst_dim_name_s.c_str(), &idi) != NC_NOERR)
 			{
-				this->inst_dimId = idi; 
+				throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_DIMENSION);
 			}
+			if(nc_inq_dimlen(ncId, idi, &dilen) != NC_NOERR)
+			{
+				throw SG_Exception_Existential(static_cast<const char*>(container_name), "instance dimension length");
+			}
+		}
+		else
+		{
+			throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_DIMENSION);
+		}
+					
+		this->inst_dimLen = dilen;	
+		this->inst_dimId = idi; 
+
+		if(this->inst_dimLen <= 0)
+		{
+			throw SG_Exception_EmptyDim();
 		}
 
 		// Get grid mapping variable, if it exists
@@ -148,8 +165,8 @@ namespace nccfdriver
 		int pnc_vid = INVALID_VAR_ID;
 		int nc_vid = INVALID_VAR_ID;
 		int ir_vid = INVALID_VAR_ID;
-		size_t bound = 0;
 		int buf;
+		size_t bound = 0;
 		size_t total_node_count = 0; // used in error checks later
 		if(attrf(ncId, geoVarId, CF_SG_NODE_COUNT, nc_name_s) != "")
 		{
@@ -261,7 +278,7 @@ namespace nccfdriver
 			{
 				if(prog == 0) pnc_bl.push_back(pcnt);
 
-				if(int_rings.size() > 0 && int_rings[pcnt])
+				if(int_rings.size() > 0 && !int_rings[pcnt])
 					c++;
 
 				prog = prog + pnode_counts[pcnt];
@@ -334,10 +351,19 @@ namespace nccfdriver
 		}
 
 		// Write axis in X, Y, Z order
+
 		if(X != INVALID_VAR_ID)
 			this->nodec_varIds.push_back(X);
+		else
+		{
+			throw SG_Exception_Existential(container_name, "node_coordinates: X-axis");	
+		}
 		if(Y != INVALID_VAR_ID)
 			this->nodec_varIds.push_back(Y);
+		else
+		{
+			throw SG_Exception_Existential(container_name, "node_coordinates: Y-axis");	
+		}
 		if(Z != INVALID_VAR_ID)
 			this->nodec_varIds.push_back(Z);
 
@@ -749,7 +775,7 @@ namespace nccfdriver
 	void SGeometry_PropertyScanner::open(int container_id)
 	{
 		// First check for container_id, if variable doesn't exist error out
-		if(nc_inq_var(this->nc, container_id, NULL, NULL, NULL, NULL, NULL) != NC_NOERR)
+		if(nc_inq_var(this->nc, container_id, nullptr, nullptr, nullptr, nullptr, nullptr) != NC_NOERR)
 		{
 			return;	// change to exception
 		}
@@ -902,7 +928,7 @@ namespace nccfdriver
 		if(!strcmp(gt_name, CF_SG_TYPE_POINT))
 		{
 			// Node Count not present? Assume that it is a multipoint.
-			if(nc_inq_att(ncid, varid, CF_SG_NODE_COUNT, NULL, NULL) == NC_ENOTATT)
+			if(nc_inq_att(ncid, varid, CF_SG_NODE_COUNT, nullptr, nullptr) == NC_ENOTATT)
 			{
 				ret = POINT;	
 			}
@@ -913,7 +939,7 @@ namespace nccfdriver
 		else if(!strcmp(gt_name, CF_SG_TYPE_LINE))
 		{
 			// Part Node Count present? Assume multiline
-			if(nc_inq_att(ncid, varid, CF_SG_PART_NODE_COUNT, NULL, NULL) == NC_ENOTATT)
+			if(nc_inq_att(ncid, varid, CF_SG_PART_NODE_COUNT, nullptr, nullptr) == NC_ENOTATT)
 			{
 				ret = LINE;
 			}
@@ -928,8 +954,8 @@ namespace nccfdriver
 			 * no Part Node Count & no Interior Ring - Polygon
 			 * Part Node Count & Interior Ring - assume that it is a MultiPolygon
 			 */
-			int pnc_present = nc_inq_att(ncid, varid, CF_SG_PART_NODE_COUNT, NULL, NULL);
-			int ir_present = nc_inq_att(ncid, varid, CF_SG_INTERIOR_RING, NULL, NULL);
+			int pnc_present = nc_inq_att(ncid, varid, CF_SG_PART_NODE_COUNT, nullptr, nullptr);
+			int ir_present = nc_inq_att(ncid, varid, CF_SG_INTERIOR_RING, nullptr, nullptr);
 
 			if(pnc_present == NC_ENOTATT && ir_present == NC_ENOTATT)
 			{

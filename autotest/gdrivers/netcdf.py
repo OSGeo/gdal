@@ -3336,7 +3336,6 @@ def test_yahara():
 
     # Check geometry
     geometry_first = first.GetGeometryRef()
-    ## to still implement, point checking
 
     # Check fields are set correctly
     assert(first.GetFieldAsInteger("ID") == 1)
@@ -3357,22 +3356,21 @@ def test_states_full_layer():
     assert(s_layer.GetFeatureCount() == 49)
     assert(s_layer.GetGeomType() == ogr.wkbMultiPolygon)
 
-    # Test getting a single feature through single iteration 
+    # Test getting two features
     first = s_layer.GetNextFeature()
-    # to implement: feature testing
-
+    fgeo = first.GetGeometryRef();
     second = s_layer.GetNextFeature()
-    # to implement: feature testing
-
 
     # try resetting and then trying again
     s_layer.ResetReading()
 	
     first_2 = s_layer.GetNextFeature()
-    # to implement: feature testing
 
     # Did reset work correctly?
     assert(first.Equal(first_2))
+
+    # Sanity check
+    assert(first.Equal(second) != True)
 
     # Check fields are set correctly
     assert(second.GetFieldAsString("STATE_NAME") == "Montana")
