@@ -325,7 +325,7 @@ class GTiffDataset final : public GDALPamDataset
     bool        bCrystalized;
 
     void        Crystalize();  // TODO: Spelling.
-    void        RestoreVolatileParameters();
+    void        RestoreVolatileParameters(TIFF* l_hTIFF);
 
     GDALColorTable *poColorTable;
 
@@ -8628,13 +8628,13 @@ void GTiffDataset::ThreadCompressionFunc( void* pData )
     if( psJob->nPredictor != PREDICTOR_NONE )
         TIFFSetField(hTIFFTmp, TIFFTAG_PREDICTOR, psJob->nPredictor);
 
-    poDS->RestoreVolatileParameters();
-
     TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->nPhotometric);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->nSampleFormat);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLESPERPIXEL, poDS->nSamplesPerPixel);
     TIFFSetField(hTIFFTmp, TIFFTAG_ROWSPERSTRIP, poDS->nBlockYSize);
     TIFFSetField(hTIFFTmp, TIFFTAG_PLANARCONFIG, poDS->nPlanarConfig);
+
+    poDS->RestoreVolatileParameters(hTIFFTmp);
 
     bool bOK =
         TIFFWriteEncodedStrip(hTIFFTmp, 0, psJob->pabyBuffer,
@@ -9266,7 +9266,7 @@ void GTiffDataset::Crystalize()
         TIFFSetDirectory( hTIFF, 0 );
     }
 
-    RestoreVolatileParameters();
+    RestoreVolatileParameters( hTIFF );
 
     nDirOffset = TIFFCurrentDirOffset( hTIFF );
 }
@@ -11982,7 +11982,7 @@ bool GTiffDataset::SetDirectory( toff_t nNewOffset )
     if( !nSetDirResult )
         return false;
 
-    RestoreVolatileParameters();
+    RestoreVolatileParameters( hTIFF );
 
     return true;
 }
@@ -11991,8 +11991,9 @@ bool GTiffDataset::SetDirectory( toff_t nNewOffset )
 /*                     RestoreVolatileParameters()                      */
 /************************************************************************/
 
-void GTiffDataset::RestoreVolatileParameters()
+void GTiffDataset::RestoreVolatileParameters(TIFF* l_hTIFF)
 {
+
 /* -------------------------------------------------------------------- */
 /*      YCbCr JPEG compressed images should be translated on the fly    */
 /*      to RGB by libtiff/libjpeg unless specifically requested         */
@@ -12005,9 +12006,11 @@ void GTiffDataset::RestoreVolatileParameters()
     {
         int nColorMode = JPEGCOLORMODE_RAW;  // Initialize to 0;
 
-        TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
+        TIFFGetField( l_hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
         if( nColorMode != JPEGCOLORMODE_RGB )
-            TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+        {
+            TIFFSetField(l_hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -12022,30 +12025,30 @@ void GTiffDataset::RestoreVolatileParameters()
             CPLDebug( "GTiff", "Propagate JPEG_QUALITY(%d) in SetDirectory()",
                       nJpegQuality );
 #endif
-            TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality);
+            TIFFSetField(l_hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality);
         }
         if(nJpegTablesMode >= 0 && nCompression == COMPRESSION_JPEG)
-            TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, nJpegTablesMode);
+            TIFFSetField(l_hTIFF, TIFFTAG_JPEGTABLESMODE, nJpegTablesMode);
         if(nZLevel > 0 && (nCompression == COMPRESSION_ADOBE_DEFLATE ||
                            nCompression == COMPRESSION_LERC) )
-            TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, nZLevel);
+            TIFFSetField(l_hTIFF, TIFFTAG_ZIPQUALITY, nZLevel);
         if(nLZMAPreset > 0 && nCompression == COMPRESSION_LZMA)
-            TIFFSetField(hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset);
+            TIFFSetField(l_hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset);
         if( nZSTDLevel > 0 && (nCompression == COMPRESSION_ZSTD ||
                                nCompression == COMPRESSION_LERC) )
-            TIFFSetField(hTIFF, TIFFTAG_ZSTD_LEVEL, nZSTDLevel);
+            TIFFSetField(l_hTIFF, TIFFTAG_ZSTD_LEVEL, nZSTDLevel);
 #if HAVE_LERC
         if( nCompression == COMPRESSION_LERC )
         {
-            TIFFSetField(hTIFF, TIFFTAG_LERC_MAXZERROR, dfMaxZError);
-            TIFFSetField(hTIFF, TIFFTAG_LERC_PARAMETERS, 2,
+            TIFFSetField(l_hTIFF, TIFFTAG_LERC_MAXZERROR, dfMaxZError);
+            TIFFSetField(l_hTIFF, TIFFTAG_LERC_PARAMETERS, 2,
                          anLercAddCompressionAndVersion);
         }
 #endif
         if( nWebPLevel > 0 && nCompression == COMPRESSION_WEBP)
-            TIFFSetField(hTIFF, TIFFTAG_WEBP_LEVEL, nWebPLevel);
+            TIFFSetField(l_hTIFF, TIFFTAG_WEBP_LEVEL, nWebPLevel);
         if( bWebPLossless && nCompression == COMPRESSION_WEBP)
-            TIFFSetField(hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
+            TIFFSetField(l_hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
     }
 }
 

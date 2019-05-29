@@ -7013,6 +7013,13 @@ def test_tiff_write_compression_create_and_createcopy():
     if 'WEBP' in md['DMD_CREATIONOPTIONLIST']:
         tests.append((['COMPRESS=WEBP', 'WEBP_LEVEL=95'],['COMPRESS=WEBP', 'WEBP_LEVEL=15']))
 
+    new_tests = []
+    for (before, after) in tests:
+        new_tests.append((before, after))
+        new_tests.append((before + ['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'NUM_THREADS=2'],
+                          after + ['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'NUM_THREADS=2']))
+    tests = new_tests
+
     tmpfile = '/vsimem/test_tiff_write_compression_create.tif'
 
     src_ds = gdal.Open('data/rgbsmall.tif')
