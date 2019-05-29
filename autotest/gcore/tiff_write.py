@@ -7031,6 +7031,58 @@ def test_tiff_write_setgeotransform_flush():
     gdaltest.tiff_drv.Delete(tmpfile)
 
 ###############################################################################
+# Test that compression parameters are taken into account in Create() mode
+
+def test_tiff_write_compression_create_and_createcopy():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    tests = []
+
+    if 'DEFLATE' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=DEFLATE', 'ZLEVEL=1'],['COMPRESS=DEFLATE', 'ZLEVEL=9']))
+
+    if 'LZMA' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=LZMA', 'LZMA_PRESET=1'],['COMPRESS=LZMA', 'LZMA_PRESET=9']))
+
+    if 'JPEG' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=JPEG', 'JPEG_QUALITY=95'],['COMPRESS=JPEG', 'JPEG_QUALITY=50']))
+
+    if 'ZSTD' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=ZSTD', 'ZSTD_LEVEL=1'],['COMPRESS=ZSTD', 'ZSTD_LEVEL=9']))
+
+    # FIXME: this test randomly fails, especially on Windows, but also on Linux,
+    # for a unknown reason. Nothing suspicious with Valgrind however
+    # if 'LERC_DEFLATE' in md['DMD_CREATIONOPTIONLIST']:
+    #   tests.append((['COMPRESS=LERC_DEFLATE', 'ZLEVEL=1'],['COMPRESS=LERC_DEFLATE', 'ZLEVEL=9']))
+
+    if 'WEBP' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=WEBP', 'WEBP_LEVEL=95'],['COMPRESS=WEBP', 'WEBP_LEVEL=15']))
+
+    tmpfile = '/vsimem/test_tiff_write_compression_create.tif'
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    data = src_ds.ReadRaster()
+    for (before, after) in tests:
+        ds = gdaltest.tiff_drv.Create(tmpfile, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, options = before)
+        ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+        ds = None
+        size_before = gdal.VSIStatL(tmpfile).size
+        ds = gdaltest.tiff_drv.Create(tmpfile, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, options = after)
+        ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+        ds = None
+        size_after = gdal.VSIStatL(tmpfile).size
+        assert size_after < size_before, (before, after, size_before, size_after)
+        print(before, after, size_before, size_after)
+
+        gdaltest.tiff_drv.CreateCopy(tmpfile, src_ds, options = before)
+        size_before = gdal.VSIStatL(tmpfile).size
+        gdaltest.tiff_drv.CreateCopy(tmpfile, src_ds, options = after)
+        size_after = gdal.VSIStatL(tmpfile).size
+        assert size_after < size_before, (before, after, size_before, size_after)
+
+    gdaltest.tiff_drv.Delete(tmpfile)
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 

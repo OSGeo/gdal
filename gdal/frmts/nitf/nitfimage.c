@@ -638,7 +638,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     else if( nOffset+10 <= (int)psSegInfo->nSegmentHeaderSize )
     {
-        int nUserTREBytes, nExtendedTREBytes;
+        int nUserTREBytes, nExtendedTREBytes, nFirstTagUsedLength = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Are there user TRE bytes to skip?                               */
@@ -646,7 +646,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         nUserTREBytes = atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
         nOffset += 5;
 
-        if( nUserTREBytes > 3 )
+        if( nUserTREBytes > 3 + 11 )  /* Must have at least one tag */
         {
             if( (int)psSegInfo->nSegmentHeaderSize < nOffset + nUserTREBytes )
                 GOTO_header_too_small();
@@ -657,6 +657,16 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     psImage->nTREBytes );
 
             nOffset += nUserTREBytes;
+
+            sscanf(psImage->pachTRE + 6, "%*5d%n", &nFirstTagUsedLength);
+            if (nFirstTagUsedLength != 5)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Cannot read User TRE. First tag's length is invalid");
+                CPLFree( psImage->pachTRE );
+                psImage->nTREBytes = 0;
+                psImage->pachTRE = NULL;
+            }
         }
         else
         {

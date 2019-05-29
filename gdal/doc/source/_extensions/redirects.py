@@ -34,6 +34,7 @@ def gather_redirects():
     output.update({ 'ogr_formats.html' : os.path.join('./drivers/vector', 'index') + '.html' })
     output.update({ 'formats_list.html' : os.path.join('./drivers/raster', 'index') + '.html' })
     output.update({ 'frmt_various.html' : os.path.join('./drivers/raster', 'index') + '.html' })
+    output.update({ 'gdal_vrttut.html' : os.path.join('./drivers/raster', 'vrt') + '.html' })
 
     raster_tools = [
         'gdal2tiles',

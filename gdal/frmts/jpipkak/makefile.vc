@@ -2,7 +2,8 @@ PLUGIN_DLL 	= gdal_JPIPKAK.dll
 GDAL_ROOT	=	..\..
 
 KAKINC = -I$(KAKSRC)/managed/all_includes \
-       -I$(KAKSRC)/apps/jp2 -I$(KAKSRC)/apps/caching_sources
+       -I$(KAKSRC)/apps/jp2 -I$(KAKSRC)/apps/caching_sources \
+       $(KAKEXTRAINCS)
 
 OBJ	=	jpipkakdataset.obj
 # Starting with Kakadu V7.9.1, one can use both Kakadu DLLs
