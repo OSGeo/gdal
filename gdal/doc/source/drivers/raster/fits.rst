@@ -29,7 +29,8 @@ keywords in a FITS file, is disabled in GDAL < v3.0. Those header keywords are
 accessible and updatable via dataset metadata, in the same was as any
 other header keywords, but they do not affect reading/writing of data
 values from/to the file. Starting from version 3.0 BZERO and BSCALE keywords
-are managed via standard Set/GetOffset() and Set/GetScale GDAL functions and no more
+are managed via standard :cpp:func:`GDALRasterBand::GetOffset` / :cpp:func:`GDALRasterBand::SetOffset`
+and :cpp:func:`GDALRasterBand::GetScale` / :cpp:func:`GDALRasterBand::SetScale` GDAL functions and no more
 referred as metadata.
 
 NOTE: Implemented as ``gdal/frmts/fits/fitsdataset.cpp``.
