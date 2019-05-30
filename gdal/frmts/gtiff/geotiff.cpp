@@ -418,7 +418,7 @@ private:
     bool        m_bHasGotSiblingFiles:1;
     bool        m_bHasIdentifiedAuthorizedGeoreferencingSources:1;
     bool        m_bLayoutIFDSBeforeData:1;
-    bool        m_bStrileOrderRowMajor:1;
+    bool        m_bBlockOrderRowMajor:1;
     bool        m_bLeaderSizeAsUInt4:1;
     bool        m_bTrailerRepeatedLast4BytesRepeated:1;
     bool        m_bMaskInterleavedWithImagery:1;
@@ -4109,7 +4109,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
                 if( (m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG || m_poGDS->nBands == 1) &&
                     !m_poGDS->m_bStreamingIn &&
-                    m_poGDS->m_bStrileOrderRowMajor && m_poGDS->m_bLeaderSizeAsUInt4 )
+                    m_poGDS->m_bBlockOrderRowMajor && m_poGDS->m_bLeaderSizeAsUInt4 )
                 {
                     bool bTryMask = m_poGDS->m_bMaskInterleavedWithImagery;
                     nOffset = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId);
@@ -4469,7 +4469,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
         if( !m_poGDS->m_bStreamingIn &&
-            m_poGDS->m_bStrileOrderRowMajor &&
+            m_poGDS->m_bBlockOrderRowMajor &&
             m_poGDS->m_bLeaderSizeAsUInt4 &&
             m_poGDS->m_bMaskInterleavedWithImagery &&
             m_poGDS->m_poImageryDS )
@@ -7679,7 +7679,7 @@ GTiffDataset::GTiffDataset():
     m_bHasGotSiblingFiles(false),
     m_bHasIdentifiedAuthorizedGeoreferencingSources(false),
     m_bLayoutIFDSBeforeData(false),
-    m_bStrileOrderRowMajor(false),
+    m_bBlockOrderRowMajor(false),
     m_bLeaderSizeAsUInt4(false),
     m_bTrailerRepeatedLast4BytesRepeated(false),
     m_bMaskInterleavedWithImagery(false),
@@ -9022,7 +9022,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
         // can be reused or if the strile should be written at end of file.
         TIFFSetWriteOffset(m_hTIFF, 0);
 
-        if( m_bStrileOrderRowMajor )
+        if( m_bBlockOrderRowMajor )
         {
             if( TIFFGetField(
                 m_hTIFF,
@@ -9039,7 +9039,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                             "A strile cannot be rewritten in place, which "
-                            "invalidates the STRILE_ORDER optimization.");
+                            "invalidates the BLOCK_ORDER optimization.");
                         poRootDS->m_bKnownIncompatibleEdition = true;
                         poRootDS->m_bWriteKnownIncompatibleEdition = true;
                     }
@@ -9245,7 +9245,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             m_nCompression == COMPRESSION_LERC ||
             m_nCompression == COMPRESSION_WEBP) ) )
     {
-        if( m_bStrileOrderRowMajor || m_bLeaderSizeAsUInt4 ||
+        if( m_bBlockOrderRowMajor || m_bLeaderSizeAsUInt4 ||
             m_bTrailerRepeatedLast4BytesRepeated )
         {
             GTiffCompressionJob sJob;
@@ -12499,12 +12499,12 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             poOpenInfo->pabyHeader + nOffsetOfStructuralMetadata);
         poDS->m_bLayoutIFDSBeforeData = strstr(pszStructuralMD,
                             "LAYOUT=IFDS_BEFORE_DATA") != nullptr;
-        poDS->m_bStrileOrderRowMajor = strstr(pszStructuralMD,
-                            "STRILE_ORDER=ROW_MAJOR") != nullptr;
+        poDS->m_bBlockOrderRowMajor = strstr(pszStructuralMD,
+                            "BLOCK_ORDER=ROW_MAJOR") != nullptr;
         poDS->m_bLeaderSizeAsUInt4 = strstr(pszStructuralMD,
-                            "STRILE_LEADER=SIZE_AS_UINT4") != nullptr;
+                            "BLOCK_LEADER=SIZE_AS_UINT4") != nullptr;
         poDS->m_bTrailerRepeatedLast4BytesRepeated = strstr(pszStructuralMD,
-                            "STRILE_TRAILER=LAST_4_BYTES_REPEATED") != nullptr;
+                            "BLOCK_TRAILER=LAST_4_BYTES_REPEATED") != nullptr;
         poDS->m_bMaskInterleavedWithImagery = strstr(pszStructuralMD,
                             "MASK_INTERLEAVED_WITH_IMAGERY=YES") != nullptr;
         poDS->m_bKnownIncompatibleEdition = strstr(pszStructuralMD,
@@ -14867,7 +14867,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 
 void GTiffDataset::SetStructuralMDFromParent(GTiffDataset* poParentDS)
 {
-    m_bStrileOrderRowMajor = poParentDS->m_bStrileOrderRowMajor;
+    m_bBlockOrderRowMajor = poParentDS->m_bBlockOrderRowMajor;
     m_bLeaderSizeAsUInt4 = poParentDS->m_bLeaderSizeAsUInt4;
     m_bTrailerRepeatedLast4BytesRepeated = poParentDS->m_bTrailerRepeatedLast4BytesRepeated;
     m_bMaskInterleavedWithImagery = poParentDS->m_bMaskInterleavedWithImagery;
@@ -17261,9 +17261,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         bCopySrcOverviews )
     {
         osHiddenStructuralMD += "LAYOUT=IFDS_BEFORE_DATA\n";
-        osHiddenStructuralMD += "STRILE_ORDER=ROW_MAJOR\n";
-        osHiddenStructuralMD += "STRILE_LEADER=SIZE_AS_UINT4\n";
-        osHiddenStructuralMD += "STRILE_TRAILER=LAST_4_BYTES_REPEATED\n";
+        osHiddenStructuralMD += "BLOCK_ORDER=ROW_MAJOR\n";
+        osHiddenStructuralMD += "BLOCK_LEADER=SIZE_AS_UINT4\n";
+        osHiddenStructuralMD += "BLOCK_TRAILER=LAST_4_BYTES_REPEATED\n";
         osHiddenStructuralMD += "KNOWN_INCOMPATIBLE_EDITION=NO\n "; // Final space intended, so this can be replaced by YES
     }
     if( !(nMaskFlags & (GMF_ALL_VALID|GMF_ALPHA|GMF_NODATA) )
@@ -17935,12 +17935,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     static_cast<double>(poOvrBand->GetXSize()) *
                     poOvrBand->GetYSize() * l_nBands;
 
-                poDstDS->m_bStrileOrderRowMajor = true;
+                poDstDS->m_bBlockOrderRowMajor = true;
                 poDstDS->m_bLeaderSizeAsUInt4 = true;
                 poDstDS->m_bTrailerRepeatedLast4BytesRepeated = true;
                 if( poDstDS->m_poMaskDS )
                 {
-                    poDstDS->m_poMaskDS->m_bStrileOrderRowMajor = true;
+                    poDstDS->m_poMaskDS->m_bBlockOrderRowMajor = true;
                     poDstDS->m_poMaskDS->m_bLeaderSizeAsUInt4 = true;
                     poDstDS->m_poMaskDS->m_bTrailerRepeatedLast4BytesRepeated = true;
                 }
@@ -18208,12 +18208,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( bCopySrcOverviews &&
             (l_nBands == 1 || poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG) )
         {
-            poDS->m_bStrileOrderRowMajor = true;
+            poDS->m_bBlockOrderRowMajor = true;
             poDS->m_bLeaderSizeAsUInt4 = true;
             poDS->m_bTrailerRepeatedLast4BytesRepeated = true;
             if( poDS->m_poMaskDS )
             {
-                poDS->m_poMaskDS->m_bStrileOrderRowMajor = true;
+                poDS->m_poMaskDS->m_bBlockOrderRowMajor = true;
                 poDS->m_poMaskDS->m_bLeaderSizeAsUInt4 = true;
                 poDS->m_poMaskDS->m_bTrailerRepeatedLast4BytesRepeated = true;
             }

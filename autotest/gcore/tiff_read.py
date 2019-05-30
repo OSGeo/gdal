@@ -3259,17 +3259,17 @@ def test_tiff_read_cog_vsicurl():
         handler.add('GET', '/cog.tif', custom_method=method)
         def method(request):
             #sys.stderr.write('%s\n' % request.headers['Range'])
-            if request.headers['Range'] == 'bytes=180224-193499':
+            if request.headers['Range'] == 'bytes=180224-193497':
                 request.protocol_version = 'HTTP/1.1'
                 request.send_response(200)
                 request.send_header('Content-type', 'text/plain')
-                request.send_header('Content-Range', 'bytes 180224-193499/%d' % filesize)
-                request.send_header('Content-Length', 13276)
+                request.send_header('Content-Range', 'bytes 180224-193497/%d' % filesize)
+                request.send_header('Content-Length', 13274)
                 request.send_header('Connection', 'close')
                 request.end_headers()
                 with open(cog_filename, 'rb') as f:
                     f.seek(180224, 0)
-                    request.wfile.write(f.read(13276))
+                    request.wfile.write(f.read(13274))
             else:
                 request.send_response(404)
                 request.send_header('Content-Length', 0)

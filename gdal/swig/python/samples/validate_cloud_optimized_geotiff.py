@@ -49,9 +49,9 @@ class ValidateCloudOptimizedGeoTIFFException(Exception):
 
 
 def full_check_band(f, band_name, band, errors,
-                    strile_order_row_major,
-                    strile_leader_size_as_uint4,
-                    strile_trailer_last_4_bytes_repeated,
+                    block_order_row_major,
+                    block_leader_size_as_uint4,
+                    block_trailer_last_4_bytes_repeated,
                     mask_interleaved_with_imagery):
 
     block_size = band.GetBlockSize()
@@ -72,16 +72,16 @@ def full_check_band(f, band_name, band, errors,
             offset = int(band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x,y), 'TIFF'))
             bytecount = int(band.GetMetadataItem('BLOCK_SIZE_%d_%d' % (x,y), 'TIFF'))
 
-            if strile_order_row_major and offset < last_offset:
+            if block_order_row_major and offset < last_offset:
                 errors += [ band_name + ': offset of block (%d, %d) is smaller than previous block' % (x,y) ]
 
-            if strile_leader_size_as_uint4:
+            if block_leader_size_as_uint4:
                 gdal.VSIFSeekL(f, offset - 4, 0)
                 leader_size = struct.unpack('<I', gdal.VSIFReadL(4, 1, f))[0]
                 if leader_size != bytecount:
                     errors += [ band_name + ': for block (%d, %d), size in leader bytes is %d instead of %d' % (x,y,leader_size,bytecount) ]
 
-            if strile_trailer_last_4_bytes_repeated:
+            if block_trailer_last_4_bytes_repeated:
                 if bytecount >= 4:
                     gdal.VSIFSeekL(f, offset + bytecount - 4, 0)
                     last_bytes = gdal.VSIFReadL(8, 1, f)
@@ -92,8 +92,8 @@ def full_check_band(f, band_name, band, errors,
                 offset_mask = int(mask_band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x,y), 'TIFF'))
                 #bytecount_mask = int(mask_band.GetMetadataItem('BLOCK_SIZE_%d_%d' % (x,y), 'TIFF'))
                 expected_offset_mask = offset + bytecount + \
-                    (4 if strile_leader_size_as_uint4 else 0) + \
-                    (4 if strile_trailer_last_4_bytes_repeated else 0)
+                    (4 if block_leader_size_as_uint4 else 0) + \
+                    (4 if block_trailer_last_4_bytes_repeated else 0)
                 if offset_mask != expected_offset_mask:
                     errors += [ 'Mask of ' + band_name + ': for block (%d, %d), offset is %d, whereas %d was expected' % (x,y,offset_mask,expected_offset_mask) ]
 
@@ -159,9 +159,9 @@ def validate(ds,check_tiled=True, full_check=False):
     ifd_offset = int(main_band.GetMetadataItem('IFD_OFFSET', 'TIFF'))
     ifd_offsets = [ifd_offset]
 
-    strile_order_row_major = False
-    strile_leader_size_as_uint4 = False
-    strile_trailer_last_4_bytes_repeated = False
+    block_order_row_major = False
+    block_leader_size_as_uint4 = False
+    block_trailer_last_4_bytes_repeated = False
     mask_interleaved_with_imagery = False
 
     if ifd_offset not in (8, 16):
@@ -182,9 +182,9 @@ def validate(ds,check_tiled=True, full_check=False):
         if len(got) == len(pattern) and got.startswith('GDAL_STRUCTURAL_METADATA_SIZE='):
             size = int(got[len('GDAL_STRUCTURAL_METADATA_SIZE='):][0:6])
             extra_md = gdal.VSIFReadL(size, 1, f).decode('LATIN1')
-            strile_order_row_major = 'STRILE_ORDER=ROW_MAJOR' in extra_md
-            strile_leader_size_as_uint4 = 'STRILE_LEADER=SIZE_AS_UINT4' in extra_md
-            strile_trailer_last_4_bytes_repeated = 'STRILE_TRAILER=LAST_4_BYTES_REPEATED' in extra_md
+            block_order_row_major = 'BLOCK_ORDER=ROW_MAJOR' in extra_md
+            block_leader_size_as_uint4 = 'BLOCK_LEADER=SIZE_AS_UINT4' in extra_md
+            block_trailer_last_4_bytes_repeated = 'BLOCK_TRAILER=LAST_4_BYTES_REPEATED' in extra_md
             mask_interleaved_with_imagery = 'MASK_INTERLEAVED_WITH_IMAGERY=YES' in extra_md
             expected_ifd_pos += len(pattern) + size
             expected_ifd_pos += expected_ifd_pos % 2 # IFD offset starts on a 2-byte boundary
@@ -274,39 +274,39 @@ def validate(ds,check_tiled=True, full_check=False):
             'should be after the one of the overview of index %d' %
             (ovr_count - 1)]
 
-    if full_check and (strile_order_row_major or strile_leader_size_as_uint4 or \
-                       strile_trailer_last_4_bytes_repeated or \
+    if full_check and (block_order_row_major or block_leader_size_as_uint4 or \
+                       block_trailer_last_4_bytes_repeated or \
                        mask_interleaved_with_imagery):
         f = gdal.VSIFOpenL(filename, 'rb')
         if not f:
             raise ValidateCloudOptimizedGeoTIFFException("Cannot open file")
 
         full_check_band(f, 'Main resolution image', main_band, errors,
-                        strile_order_row_major,
-                        strile_leader_size_as_uint4,
-                        strile_trailer_last_4_bytes_repeated,
+                        block_order_row_major,
+                        block_leader_size_as_uint4,
+                        block_trailer_last_4_bytes_repeated,
                         mask_interleaved_with_imagery)
         if main_band.GetMaskFlags() == gdal.GMF_PER_DATASET and \
             (filename + '.msk') not in ds.GetFileList():
             full_check_band(f, 'Mask band of main resolution image',
                             main_band.GetMaskBand(), errors,
-                            strile_order_row_major,
-                            strile_leader_size_as_uint4,
-                            strile_trailer_last_4_bytes_repeated, False)
+                            block_order_row_major,
+                            block_leader_size_as_uint4,
+                            block_trailer_last_4_bytes_repeated, False)
         for i in range(ovr_count):
             ovr_band = ds.GetRasterBand(1).GetOverview(i)
             full_check_band(f, 'Overview %d' % i, ovr_band, errors,
-                            strile_order_row_major,
-                            strile_leader_size_as_uint4,
-                            strile_trailer_last_4_bytes_repeated,
+                            block_order_row_major,
+                            block_leader_size_as_uint4,
+                            block_trailer_last_4_bytes_repeated,
                             mask_interleaved_with_imagery)
             if ovr_band.GetMaskFlags() == gdal.GMF_PER_DATASET and \
                 (filename + '.msk') not in ds.GetFileList():
                 full_check_band(f, 'Mask band of overview %d' % i,
                                 ovr_band.GetMaskBand(), errors,
-                                strile_order_row_major,
-                                strile_leader_size_as_uint4,
-                                strile_trailer_last_4_bytes_repeated, False)
+                                block_order_row_major,
+                                block_leader_size_as_uint4,
+                                block_trailer_last_4_bytes_repeated, False)
         gdal.VSIFCloseL(f)
 
     return warnings, errors, details
