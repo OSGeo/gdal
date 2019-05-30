@@ -4038,7 +4038,12 @@ static bool CheckTrailer(const GByte* strileData, vsi_l_offset nStrileSize)
     if( nStrileSize >= 4 )
         memcpy(abyLastBytes, strileData + nStrileSize - 4, 4);
     else
+    {
+        // The last bytes will be zero due to the above {} initialization,
+        // and that's what should be in abyTrailer too when the trailer is
+        // correct.
         memcpy(abyLastBytes, strileData, static_cast<size_t>(nStrileSize));
+    }
     return memcmp(abyTrailer, abyLastBytes, 4) == 0;
 }
 #endif
@@ -4079,6 +4084,228 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
         bool         bTryMask;
     };
     std::map<int, StrileData> oMapStrileToOffsetByteCount;
+
+    // Dedicated method to retrieved the offset and size in an efficient way
+    // when m_bBlockOrderRowMajor and m_bLeaderSizeAsUInt4 conditions are
+    // met.
+    // Except for the last block, we just read the offset from the TIFF offset
+    // array, and retrieve the size in the leader 4 bytes that come before the
+    // payload.
+    auto OptimizedRetrievalhOfOffsetSize = [&](int nBlockId,
+                                               vsi_l_offset& nOffset,
+                                               vsi_l_offset& nSize)
+    {
+        bool bTryMask = m_poGDS->m_bMaskInterleavedWithImagery;
+        nOffset = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId);
+        if( nOffset >= 4 )
+        {
+            if( nBlockId == nBlockCount - 1 )
+            {
+                // Special case for the last block. As there is no next block
+                // from which to retrieve an offset, use the good old method
+                // that consists in readign the ByteCount array.
+                if( bTryMask &&
+                    m_poGDS->GetRasterBand(1)->GetMaskBand() &&
+                    m_poGDS->m_poMaskDS )
+                {
+                    auto nMaskOffset = TIFFGetStrileOffset(m_poGDS->m_poMaskDS->m_hTIFF, nBlockId);
+                    if( nMaskOffset )
+                    {
+                        nSize = nMaskOffset + TIFFGetStrileByteCount(m_poGDS->m_poMaskDS->m_hTIFF, nBlockId) - nOffset;
+                    }
+                    else
+                    {
+                        bTryMask = false;
+                    }
+                }
+                if( nSize == 0 )
+                {
+                    nSize = TIFFGetStrileByteCount(m_poGDS->m_hTIFF, nBlockId);
+                }
+                if( nSize && m_poGDS->m_bTrailerRepeatedLast4BytesRepeated )
+                {
+                    nSize += 4;
+                }
+            }
+            else
+            {
+                auto nOffsetNext = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId + 1);
+                if( nOffsetNext > nOffset )
+                {
+                    nSize = nOffsetNext - nOffset;
+                }
+                else
+                {
+                    // Shouldn't happen for a compliant file
+                    if( nOffsetNext == 0 )
+                    {
+                        CPLDebug("GTiff",
+                                    "Tile %d missing", nBlockId + 1);
+                    }
+                    else
+                    {
+                        CPLDebug("GTiff",
+                                    "Tile %d is not located after %d", nBlockId + 1, nBlockId);
+                    }
+                    bTryMask = false;
+                    nSize = TIFFGetStrileByteCount(m_poGDS->m_hTIFF, nBlockId);
+                    if( m_poGDS->m_bTrailerRepeatedLast4BytesRepeated )
+                        nSize += 4;
+                }
+            }
+            if( nSize )
+            {
+                nOffset -= 4;
+                nSize += 4;
+                StrileData data;
+                data.nOffset = nOffset;
+                data.nByteCount = nSize;
+                data.bTryMask = bTryMask;
+                oMapStrileToOffsetByteCount[nBlockId] = data;
+            }
+        }
+        else
+        {
+            // Shouldn't happen for a compliant file
+            CPLDebug("GTiff", "Tile %d missing", nBlockId);
+        }
+    };
+
+    // This lambda fills m_poDS->m_oCacheStrileToOffsetByteCount (and
+    // m_poDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount, when there is a mask)
+    // from the temporary oMapStrileToOffsetByteCount.
+    auto FillCacheStrileToOffsetByteCount = [&](
+        const std::vector<vsi_l_offset>& anOffsets,
+        const std::vector<size_t>& anSizes,
+        const std::vector<void*> apData)
+    {
+        CPLAssert( m_poGDS->m_bLeaderSizeAsUInt4 );
+        size_t i = 0;
+        vsi_l_offset nLastOffset = 0;
+        for( const auto& entry: oMapStrileToOffsetByteCount )
+        {
+            const auto nBlockId = entry.first;
+            const auto nOffset = entry.second.nOffset;
+            const auto nSize = entry.second.nByteCount;
+            if( nOffset < nLastOffset )
+            {
+                // shouldn't happen normally if tiles are sorted
+                i = 0;
+            }
+            nLastOffset = nOffset;
+            while( i < anOffsets.size() && !(
+                    nOffset >= anOffsets[i] &&
+                    nOffset + nSize <= anOffsets[i] + anSizes[i]) )
+            {
+                i++;
+            }
+            CPLAssert( i < anOffsets.size() );
+            CPLAssert( nOffset >= anOffsets[i] );
+            CPLAssert( nOffset + nSize <= anOffsets[i] + anSizes[i] );
+            GUInt32 nSizeFromLeader;
+            memcpy(&nSizeFromLeader,
+                    static_cast<GByte*>(apData[i]) + nOffset - anOffsets[i],
+                    sizeof(nSizeFromLeader));
+            CPL_LSBPTR32(&nSizeFromLeader);
+            bool bOK = true;
+            constexpr int nLeaderSize = 4;
+            const int nTrailerSize =
+                (m_poGDS->m_bTrailerRepeatedLast4BytesRepeated ? 4 : 0);
+            if( nSizeFromLeader > nSize - nLeaderSize - nTrailerSize )
+            {
+                CPLDebug("GTiff",
+                            "Inconsistent block size from in leader of block %d", nBlockId);
+                bOK = false;
+            }
+            else if( m_poGDS->m_bTrailerRepeatedLast4BytesRepeated )
+            {
+                // Check trailer consistency
+                const GByte* strileData = static_cast<GByte*>(
+                    apData[i]) + nOffset - anOffsets[i] + nLeaderSize;
+                if( !CheckTrailer(strileData, nSizeFromLeader) )
+                {
+                    CPLDebug("GTiff",
+                            "Inconsistent trailer of block %d", nBlockId);
+                    bOK = false;
+                }
+            }
+            if( !bOK )
+            {
+                return false;
+            }
+
+            {
+                const vsi_l_offset nRealOffset = nOffset + nLeaderSize;
+                const vsi_l_offset nRealSize = nSizeFromLeader;
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GTiff", "Block %d found at offset "
+                            CPL_FRMT_GUIB " with size " CPL_FRMT_GUIB,
+                            nBlockId, nRealOffset, nRealSize);
+#endif
+                m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
+                    nBlockId,
+                    std::pair<vsi_l_offset, vsi_l_offset>(nRealOffset, nRealSize));
+            }
+
+            // Processing of mask
+            if( !(entry.second.bTryMask &&
+                  m_poGDS->m_bMaskInterleavedWithImagery &&
+                  m_poGDS->GetRasterBand(1)->GetMaskBand() &&
+                  m_poGDS->m_poMaskDS ) )
+            {
+                continue;
+            }
+
+            bOK = false;
+            const vsi_l_offset nMaskOffsetWithLeader =
+                nOffset + nLeaderSize + nSizeFromLeader + nTrailerSize;
+            if( nMaskOffsetWithLeader + nLeaderSize <= anOffsets[i] + anSizes[i] )
+            {
+                GUInt32 nMaskSizeFromLeader;
+                memcpy(&nMaskSizeFromLeader,
+                        static_cast<GByte*>(apData[i]) + nMaskOffsetWithLeader - anOffsets[i],
+                        sizeof(nMaskSizeFromLeader));
+                CPL_LSBPTR32(&nMaskSizeFromLeader);
+                if( nMaskOffsetWithLeader + nLeaderSize + nMaskSizeFromLeader + nTrailerSize <= anOffsets[i] + anSizes[i] )
+                {
+                    bOK = true;
+                    if( m_poGDS->m_bTrailerRepeatedLast4BytesRepeated )
+                    {
+                        // Check trailer consistency
+                        const GByte* strileMaskData = static_cast<GByte*>(
+                            apData[i]) + nOffset - anOffsets[i] + nLeaderSize + nSizeFromLeader + nTrailerSize + nLeaderSize;
+                        if( !CheckTrailer(strileMaskData, nMaskSizeFromLeader) )
+                        {
+                            CPLDebug("GTiff",
+                                "Inconsistent trailer of mask of block %d", nBlockId);
+                            bOK = false;
+                        }
+                    }
+                }
+                if( bOK )
+                {
+                    const vsi_l_offset nRealOffset = nOffset + nLeaderSize + nSizeFromLeader + nTrailerSize + nLeaderSize;
+                    const vsi_l_offset nRealSize = nMaskSizeFromLeader;
+#ifdef DEBUG_VERBOSE
+                    CPLDebug("GTiff", "Mask of block %d found at offset "
+                            CPL_FRMT_GUIB " with size " CPL_FRMT_GUIB,
+                            nBlockId, nRealOffset, nRealSize);
+#endif
+
+                    m_poGDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount.insert(
+                        nBlockId,
+                        std::pair<vsi_l_offset, vsi_l_offset>(nRealOffset, nRealSize));
+                }
+            }
+            if( !bOK )
+            {
+                CPLDebug("GTiff",
+                          "Mask for block %d is not properly interleaved with imagery block",
+                          nBlockId);
+            }
+        }
+        return true;
+    };
 #endif
 
     thandle_t th = TIFFClientdata( m_poGDS->m_hTIFF );
@@ -4111,77 +4338,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                     !m_poGDS->m_bStreamingIn &&
                     m_poGDS->m_bBlockOrderRowMajor && m_poGDS->m_bLeaderSizeAsUInt4 )
                 {
-                    bool bTryMask = m_poGDS->m_bMaskInterleavedWithImagery;
-                    nOffset = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId);
-                    if( nOffset >= 4 )
-                    {
-                        if( nBlockId == nBlockCount - 1 )
-                        {
-                            if( bTryMask &&
-                                m_poGDS->GetRasterBand(1)->GetMaskBand() &&
-                                m_poGDS->m_poMaskDS )
-                            {
-                                auto nMaskOffset = TIFFGetStrileOffset(m_poGDS->m_poMaskDS->m_hTIFF, nBlockId);
-                                if( nMaskOffset )
-                                {
-                                    nSize = nMaskOffset + TIFFGetStrileByteCount(m_poGDS->m_poMaskDS->m_hTIFF, nBlockId) - nOffset;
-                                }
-                                else
-                                {
-                                    bTryMask = false;
-                                }
-                            }
-                            if( nSize == 0 )
-                            {
-                                nSize = TIFFGetStrileByteCount(m_poGDS->m_hTIFF, nBlockId);
-                            }
-                            if( nSize && m_poGDS->m_bTrailerRepeatedLast4BytesRepeated )
-                            {
-                                nSize += 4;
-                            }
-                        }
-                        else
-                        {
-                            auto nOffsetNext = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId + 1);
-                            if( nOffsetNext > nOffset )
-                            {
-                                nSize = nOffsetNext - nOffset;
-                            }
-                            else
-                            {
-                                // Shouldn't happen for a compliant file
-                                if( nOffsetNext == 0 )
-                                {
-                                    CPLDebug("GTiff",
-                                             "Tile %d missing", nBlockId + 1);
-                                }
-                                else
-                                {
-                                    CPLDebug("GTiff",
-                                             "Tile %d is not located after %d", nBlockId + 1, nBlockId);
-                                }
-                                bTryMask = false;
-                                nSize = TIFFGetStrileByteCount(m_poGDS->m_hTIFF, nBlockId);
-                                if( m_poGDS->m_bTrailerRepeatedLast4BytesRepeated )
-                                    nSize += 4;
-                            }
-                        }
-                        if( nSize )
-                        {
-                            nOffset -= 4;
-                            nSize += 4;
-                            StrileData data;
-                            data.nOffset = nOffset;
-                            data.nByteCount = nSize;
-                            data.bTryMask = bTryMask;
-                            oMapStrileToOffsetByteCount[nBlockId] = data;
-                        }
-                    }
-                    else
-                    {
-                        // Shouldn't happen for a compliant file
-                        CPLDebug("GTiff", "Tile %d missing", nBlockId);
-                    }
+                    OptimizedRetrievalhOfOffsetSize(nBlockId, nOffset, nSize);
                 }
                 else
 #endif
@@ -4229,8 +4386,14 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                     if ( aOffsetSize[i].first < aOffsetSize[i+1].first &&
                          aOffsetSize[i].first + aOffsetSize[i].second >= aOffsetSize[i+1].first )
                     {
-                        nChunkSize += static_cast<size_t>(aOffsetSize[i+1].second -
-                            (aOffsetSize[i].first + aOffsetSize[i].second - aOffsetSize[i+1].first));
+                        const auto overlap = aOffsetSize[i].first + aOffsetSize[i].second - aOffsetSize[i+1].first;
+                        // That should always be the case for well behaved
+                        // TIFF files.
+                        if( aOffsetSize[i+1].second > overlap )
+                        {
+                            nChunkSize += static_cast<size_t>(
+                                aOffsetSize[i+1].second - overlap);
+                        }
                     }
                     else 
                     {
@@ -4265,136 +4428,20 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                                     fp ) == 0 )
                 {
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-                    if( !oMapStrileToOffsetByteCount.empty() )
+                    if( !oMapStrileToOffsetByteCount.empty() &&
+                        !FillCacheStrileToOffsetByteCount(
+                                                anOffsets, anSizes, apData) )
                     {
-                        CPLAssert( m_poGDS->m_bLeaderSizeAsUInt4 );
-                        size_t i = 0;
-                        vsi_l_offset nLastOffset = 0;
-                        for( const auto& entry: oMapStrileToOffsetByteCount )
-                        {
-                            const auto nBlockId = entry.first;
-                            const auto nOffset = entry.second.nOffset;
-                            const auto nSize = entry.second.nByteCount;
-                            if( nOffset < nLastOffset )
-                            {
-                                // shouldn't happen normally if tiles are sorted
-                                i = 0;
-                            }
-                            nLastOffset = nOffset;
-                            while( i < anOffsets.size() && !(
-                                    nOffset >= anOffsets[i] &&
-                                    nOffset + nSize <= anOffsets[i] + anSizes[i]) )
-                            {
-                                i++;
-                            }
-                            CPLAssert( i < anOffsets.size() );
-                            CPLAssert( nOffset >= anOffsets[i] );
-                            CPLAssert( nOffset + nSize <= anOffsets[i] + anSizes[i] );
-                            GUInt32 nSizeFromLeader;
-                            memcpy(&nSizeFromLeader,
-                                   static_cast<GByte*>(apData[i]) + nOffset - anOffsets[i], 4);
-                            CPL_LSBPTR32(&nSizeFromLeader);
-                            bool bOK = true;
-                            const int nTrailerSize =
-                                (m_poGDS->m_bTrailerRepeatedLast4BytesRepeated ? 4 : 0);
-                            if( nSizeFromLeader > nSize - 4 - nTrailerSize )
-                            {
-                                CPLDebug("GTiff",
-                                         "Inconsistent block size from in leader of block %d", nBlockId);
-                                bOK = false;
-                            }
-                            else if( m_poGDS->m_bTrailerRepeatedLast4BytesRepeated )
-                            {
-                                // Check trailer consistency
-                                const GByte* strileData = static_cast<GByte*>(
-                                    apData[i]) + nOffset - anOffsets[i] + 4;
-                                if( !CheckTrailer(strileData, nSizeFromLeader) )
-                                {
-                                    CPLDebug("GTiff",
-                                         "Inconsistent trailer of block %d", nBlockId);
-                                    bOK = false;
-                                }
-                            }
-                            if( !bOK )
-                            {
-                                // Retry without optimization
-                                CPLFree(pBufferedData);
-                                m_poGDS->m_bLeaderSizeAsUInt4 = false;
-                                void* pRet = CacheMultiRange(
-                                    nXOff, nYOff, nXSize, nYSize,
-                                    nBufXSize, nBufYSize, psExtraArg );
-                                m_poGDS->m_bLeaderSizeAsUInt4 = true;
-                                return pRet;
-                            }
-
-                            {
-                                const vsi_l_offset nRealOffset = nOffset + 4;
-                                const vsi_l_offset nRealSize = nSizeFromLeader;
-#ifdef DEBUG_VERBOSE
-                                CPLDebug("GTiff", "Block %d found at offset "
-                                         CPL_FRMT_GUIB " with size " CPL_FRMT_GUIB,
-                                         nBlockId, nRealOffset, nRealSize);
-#endif
-                                m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
-                                    nBlockId,
-                                    std::pair<vsi_l_offset, vsi_l_offset>(nRealOffset, nRealSize));
-                            }
-
-                            if( entry.second.bTryMask &&
-                                m_poGDS->m_bMaskInterleavedWithImagery &&
-                                m_poGDS->GetRasterBand(1)->GetMaskBand() &&
-                                m_poGDS->m_poMaskDS )
-                            {
-                                bOK = false;
-                                const vsi_l_offset nMaskOffsetWithLeader =
-                                    nOffset + 4 + nSizeFromLeader + nTrailerSize;
-                                if( nMaskOffsetWithLeader + 4 <= anOffsets[i] + anSizes[i] )
-                                {
-                                    GUInt32 nMaskSizeFromLeader;
-                                    memcpy(&nMaskSizeFromLeader,
-                                           static_cast<GByte*>(apData[i]) + nMaskOffsetWithLeader - anOffsets[i],
-                                           4);
-                                    CPL_LSBPTR32(&nMaskSizeFromLeader);
-                                    if( nMaskOffsetWithLeader + 4 + nMaskSizeFromLeader + nTrailerSize <= anOffsets[i] + anSizes[i] )
-                                    {
-                                        bOK = true;
-                                        if( m_poGDS->m_bTrailerRepeatedLast4BytesRepeated )
-                                        {
-                                            // Check trailer consistency
-                                            const GByte* strileMaskData = static_cast<GByte*>(
-                                                apData[i]) + nOffset - anOffsets[i] + 4 + nSizeFromLeader + 4 + 4;
-                                            if( !CheckTrailer(strileMaskData, nMaskSizeFromLeader) )
-                                            {
-                                                CPLDebug("GTiff",
-                                                    "Inconsistent trailer of mask of block %d", nBlockId);
-                                                bOK = false;
-                                            }
-                                        }
-                                    }
-                                    if( bOK )
-                                    {
-                                        const vsi_l_offset nRealOffset = nOffset + 4 + nSizeFromLeader + nTrailerSize + 4;
-                                        const vsi_l_offset nRealSize = nMaskSizeFromLeader;
-#ifdef DEBUG_VERBOSE
-                                        CPLDebug("GTiff", "Mask of block %d found at offset "
-                                                CPL_FRMT_GUIB " with size " CPL_FRMT_GUIB,
-                                                nBlockId, nRealOffset, nRealSize);
-#endif
-
-                                        m_poGDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount.insert(
-                                            nBlockId,
-                                            std::pair<vsi_l_offset, vsi_l_offset>(nRealOffset, nRealSize));
-                                    }
-                                }
-                                if( !bOK )
-                                {
-                                    CPLDebug("GTiff",
-                                             "Mask for block %d is not properly interleaved with imagery block",
-                                             nBlockId);
-                                }
-                            }
-                        }
+                        // Retry without optimization
+                        CPLFree(pBufferedData);
+                        m_poGDS->m_bLeaderSizeAsUInt4 = false;
+                        void* pRet = CacheMultiRange(
+                            nXOff, nYOff, nXSize, nYSize,
+                            nBufXSize, nBufYSize, psExtraArg );
+                        m_poGDS->m_bLeaderSizeAsUInt4 = true;
+                        return pRet;
                     }
+
 #endif
                     VSI_TIFFSetCachedRanges( th,
                                              static_cast<int>(anSizes.size()),
@@ -7870,6 +7917,7 @@ int GTiffDataset::Finalize()
                     if( memcmp(abyHeader + i, szKeyToLook, strlen(szKeyToLook)) == 0 )
                     {
                         const char* szNewKey = "KNOWN_INCOMPATIBLE_EDITION=YES\n";
+                        CPLAssert( strlen(szKeyToLook) == strlen(szNewKey) );
                         memcpy(abyHeader + i, szNewKey, strlen(szNewKey));
                         VSIFSeekL( m_fpL, 0, SEEK_SET );
                         VSIFWriteL( abyHeader, 1, sizeof(abyHeader), m_fpL );
@@ -18764,7 +18812,7 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
         }
         else if( EQUAL( pszName, "HAS_USED_READ_ENCODED_API") )
         {
-            return CPLSPrintf("%d", m_bHasUsedReadEncodedAPI ? 1 : 0);
+            return m_bHasUsedReadEncodedAPI ? "1" : "0";
         }
         return nullptr;
     }
