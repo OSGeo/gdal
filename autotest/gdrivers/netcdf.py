@@ -3070,12 +3070,14 @@ def test_netcdf_functions_2(filename, checksum, options, testfunction):
 
 #  basic tests
 def test_bad_cf1_8():
-    # basic resilience test, make sure it can exit "normally" 
+    # basic resilience test, make sure it can exit "gracefully" 
     # if not it will abort all tests
+    bad_geometry = ogr.Open("data/netcdf-sg/no_geometry_type.nc")
     bad_feature = ogr.Open("data/netcdf-sg/bad_feature_test.nc")
     missing_node_counts_test = ogr.Open("data/netcdf-sg/missing_node_counts_test.nc")
 
     # error is not fatal
+    assert(bad_geometry != None)
     assert(bad_feature != None)
     assert(missing_node_counts_test != None)
 

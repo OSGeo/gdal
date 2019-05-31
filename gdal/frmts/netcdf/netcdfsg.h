@@ -282,7 +282,7 @@ namespace nccfdriver
         public:
             const char* get_err_msg() override { return err_msg.c_str(); }
         
-        SG_Exception_Not1D() : err_msg("A node coordinates axis variable is not one dimensional.") {}
+        SG_Exception_Not1D() : err_msg("A node coordinates axis variable or node_counts is not one dimensional.") {}
     };
 
     // Too many empty dimension

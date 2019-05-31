@@ -114,7 +114,8 @@ namespace nccfdriver
         {
             throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_TYPE);
         }
-
+// This part of the CF-convention is still being revised... will decide to remove or not when PR is finalized
+/*
         int idi = INVALID_DIM_ID;
         size_t dilen = 0;
         this->inst_dimId = INVALID_DIM_ID;
@@ -136,7 +137,6 @@ namespace nccfdriver
         {
             throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_DIMENSION);
         }
-                    
         this->inst_dimLen = dilen;    
         this->inst_dimId = idi; 
 
@@ -144,6 +144,7 @@ namespace nccfdriver
         {
             throw SG_Exception_EmptyDim();
         }
+*/                    
 
         // Get grid mapping variable, if it exists
         std::string gm_name_s;
@@ -205,6 +206,8 @@ namespace nccfdriver
                 bound++;
             }
         }
+        
+
 
         /* Enforcement of well formed CF files
          * If these are not met then the dataset is malformed and will halt further processing of
@@ -388,7 +391,10 @@ namespace nccfdriver
 
             // check that all have same dimension
             int inter_dim[1];
-            nc_inq_vardimid(ncId, nodec_varIds[nvitr], inter_dim);
+            if(nc_inq_vardimid(ncId, nodec_varIds[nvitr], inter_dim) != NC_NOERR)
+            {
+                throw SG_Exception_Existential(container_name, "one or more node_coordinate dimensions");
+            }
             
             if(!dim_set)
             {
@@ -401,11 +407,11 @@ namespace nccfdriver
                     throw SG_Exception_Dim_MM(container_name, "X, Y", "in general all node coordinate axes");
             } 
         }
-
+        
         // (2) check equality one
         if(node_counts.size() > 0)
         {
-            size_t diml;
+            size_t diml = 0;
             nc_inq_dimlen(ncId, all_dim, &diml);
         
             if(diml != total_node_count)
@@ -419,12 +425,47 @@ namespace nccfdriver
             throw SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");    
         }
 
-        this -> pt_buffer = std::unique_ptr<Point>(new Point(this->touple_order));
-        
-        // Set other values accordingly
-        this -> gc_varId = geoVarId; 
-        this -> current_vert_ind = 0;    
-        this -> ncid = ncId;
+       /* Investigate for instance dimension 
+        * The procedure is as follows
+        *
+        * (1) if there's node_count, use the dimension used to index node count 
+        * (2) otherwise it's point (singleton) data, in this case use the node coordinate dimension
+        */
+        size_t instance_dim_len = 0;
+
+        if(node_counts.size() >= 1)
+        {
+            int nc_dims = 0;
+            nc_inq_varndims(ncId, nc_vid, &nc_dims); 
+
+            if(nc_dims != 1) throw SG_Exception_Not1D(); 
+
+            int nc_dim_id[1];
+
+            if(nc_inq_vardimid(ncId, nc_vid, nc_dim_id) != NC_NOERR)
+            {
+                throw SG_Exception_Existential(container_name, "node_count dimension");
+            }    
+
+            this->inst_dimId = nc_dim_id[0];
+        }
+
+        else
+        {
+            this->inst_dimId = all_dim;   
+        }
+
+        nc_inq_dimlen(ncId, this->inst_dimId, &instance_dim_len);
+
+        if(instance_dim_len == 0)
+            throw SG_Exception_EmptyDim();
+
+        // Set values accordingly
+        this->inst_dimLen = instance_dim_len;
+        this->pt_buffer = std::unique_ptr<Point>(new Point(this->touple_order));
+        this->gc_varId = geoVarId; 
+        this->current_vert_ind = 0;    
+        this->ncid = ncId;
     }
 
     Point& SGeometry::next_pt()
