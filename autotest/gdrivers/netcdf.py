@@ -3334,9 +3334,6 @@ def test_yahara():
     # Test getting a single feature through iteration
     first = y_layer.GetNextFeature()
 
-    # Check geometry
-    geometry_first = first.GetGeometryRef()
-
     # Check fields are set correctly
     assert(first.GetFieldAsInteger("ID") == 1)
     assert(first.GetFieldAsInteger("GRIDCODE") == 55)
@@ -3358,7 +3355,6 @@ def test_states_full_layer():
 
     # Test getting two features
     first = s_layer.GetNextFeature()
-    fgeo = first.GetGeometryRef();
     second = s_layer.GetNextFeature()
 
     # try resetting and then trying again
