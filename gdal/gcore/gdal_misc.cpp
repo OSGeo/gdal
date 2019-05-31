@@ -2749,6 +2749,8 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
 
 static void StripIrrelevantOptions(CPLXMLNode* psCOL, int nOptions)
 {
+    if( psCOL == nullptr )
+        return;
     if( nOptions == 0 )
         nOptions = GDAL_OF_RASTER;
     if( (nOptions & GDAL_OF_RASTER) != 0 && (nOptions & GDAL_OF_VECTOR) != 0 )
