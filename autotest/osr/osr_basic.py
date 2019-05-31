@@ -595,6 +595,21 @@ def test_osr_basic_20():
 
     assert sr.GetAngularUnitsName() == 'degree'
 
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:4326+5773')
+
+    assert sr.GetAxisName(None, 0) == 'Geodetic latitude'
+
+    assert sr.GetAxisOrientation(None, 0) == osr.OAO_North
+
+    assert sr.GetAxisName(None, 1) == 'Geodetic longitude'
+
+    assert sr.GetAxisOrientation(None, 1) == osr.OAO_East
+
+    assert sr.GetAxisName(None, 2) == 'Gravity-related height'
+
+    assert sr.GetAxisOrientation(None, 2) == osr.OAO_Up
+
 ###############################################################################
 # Test IsSame() with equivalent forms of Mercator_1SP and Mercator_2SP
 
