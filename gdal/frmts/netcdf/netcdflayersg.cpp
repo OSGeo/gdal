@@ -167,7 +167,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 		}
 
 		int r_size = 0;
-		std::unique_ptr<unsigned char> wkb_rep = std::unique_ptr<unsigned char>(sg->serializeToWKB(featCt, r_size));
+		std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep = std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>>(sg->serializeToWKB(featCt, r_size));
 		geometry->importFromWkb(static_cast<const unsigned char*>(wkb_rep.get()), r_size, wkbVariantIso);
 		OGRFeature * feat = new OGRFeature(defn);
 		feat -> SetGeometryDirectly(geometry);

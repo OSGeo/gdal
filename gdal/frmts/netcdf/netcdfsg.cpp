@@ -140,7 +140,7 @@ namespace nccfdriver
 		this->inst_dimLen = dilen;	
 		this->inst_dimId = idi; 
 
-		if(this->inst_dimLen <= 0)
+		if(this->inst_dimLen == 0)
 		{
 			throw SG_Exception_EmptyDim();
 		}

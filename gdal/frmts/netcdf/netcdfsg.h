@@ -66,8 +66,8 @@ namespace nccfdriver
 
 		public:
 		~Point();	
-		Point(int dim = 0) : size(dim)
-			{ this->values = new double[dim]; } // memset(this->values, 0, dim*sizeof(double)); }	
+		Point(int dim) : size(dim)
+			{ this->values = new double[dim]; }
 		double& operator[](size_t i) { return this->values[i]; }
 		int getOrder() { return this->size; }
 	};
