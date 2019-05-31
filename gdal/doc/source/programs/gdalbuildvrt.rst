@@ -168,7 +168,7 @@ changed in later versions.
     Override the projection for the output file.  The <srs_def> may be any of the usual GDAL/OGR forms,
     complete WKT, PROJ.4, EPSG:n or a file containing the WKT. No reprojection is done.
 
-.. option:: -rr {nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}
+.. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}
 
     Select a resampling algorithm.
 
