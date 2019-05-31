@@ -1766,13 +1766,6 @@ GTIFFBuildOverviews( const char * pszFilename,
                      const char * pszResampling,
                      GDALProgressFunc pfnProgress, void * pProgressData );
 
-CPLErr CPL_DLL
-GDALDefaultBuildOverviews( GDALDataset *hSrcDS, const char * pszBasename,
-                           const char * pszResampling,
-                           int nOverviews, int * panOverviewList,
-                           int nBands, int * panBandList,
-                           GDALProgressFunc pfnProgress, void * pProgressData);
-
 int CPL_DLL GDALBandGetBestOverviewLevel(GDALRasterBand* poBand,
                                          int &nXOff, int &nYOff,
                                          int &nXSize, int &nYSize,
