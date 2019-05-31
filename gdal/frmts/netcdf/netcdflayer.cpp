@@ -88,7 +88,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
 
 netCDFLayer::~netCDFLayer()
 { 
-	m_poFeatureDefn->Release();
+    m_poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -1205,9 +1205,9 @@ OGRFeature *netCDFLayer::GetNextFeature()
 
     if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
     {
-	OGRFeature * ret = (*(m_sgFeatItr))->Clone();
-	m_sgFeatItr++;
-	return ret;
+        OGRFeature * ret = (*(m_sgFeatItr))->Clone();
+        m_sgFeatItr++;
+        return ret;
     }
 
     while( true )
