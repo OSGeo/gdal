@@ -3116,6 +3116,41 @@ def test_point_read():
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POINT (5 -5)")
 
+def test_point3D_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    singleton_pt = ogr.Open("data/netcdf-sg/point3D_test.nc")
+
+    layer = singleton_pt.GetLayerByName("names_geometry")
+    assert(layer != None)
+
+    # Test each geometry directly
+
+    ft = layer.GetNextFeature()
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (1 -1 1)")
+    
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (2 -2 -2)")
+
+    ft = layer.GetNextFeature()
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (3 -3 3)")
+    
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (4 -4 -4)")
+    
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POINT (5 -5 5)")
+
 def test_multipoint_read():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			

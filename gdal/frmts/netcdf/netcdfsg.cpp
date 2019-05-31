@@ -605,13 +605,13 @@ namespace nccfdriver
         switch(this->getGeometryType())
         {
             case POINT:
-                wkbSize = 1 + 4 + 16;
+                wkbSize = 1 + 4 + this->touple_order * 8;
                 ret = new uint8_t[wkbSize];
                 inPlaceSerialize_Point(this, featureInd, ret);
                 break;
 
             case LINE:
-                wkbSize = 1 + 4 + 4 + 16 * nc;
+                wkbSize = 1 + 4 + 4 + this->touple_order * 8 * nc;
                 ret = new uint8_t[wkbSize];
                 inPlaceSerialize_LineString(this, nc, sb, ret);
                 break;
@@ -622,24 +622,27 @@ namespace nccfdriver
                 // 4 byte Type (=3 for polygon)
                 // 4 byte ring count (1 (exterior) or 2 (exterior and interior)
                 // For each ring:
-                // 4 byte point count, 8 byte double x point count x 2 dimension
+                // 4 byte point count, 8 byte double x point count x # dimension
                 // (This is equivalent to requesting enough for all points and a point count header for each point)
-                // (Or 8 byte double x node count x 2 dimension + 4 byte point count x part_count)
+                // (Or 8 byte double x node count x # dimension + 4 byte point count x part_count)
 
                 // if interior ring, then assume that it will be a multipolygon (maybe future work?)
-                wkbSize = 1 + 4 + 4 + 4 + 16 * nc;
+                wkbSize = 1 + 4 + 4 + 4 + this->touple_order * 8 * nc;
                 ret = new uint8_t[wkbSize];
                 inPlaceSerialize_PolygonExtOnly(this, nc, sb, ret);
                 break;
 
             case MULTIPOINT:
                 {
-                    wkbSize = 1 + 4 + 4 + nc * (1 + 4 + 16);
+                    wkbSize = 1 + 4 + 4 + nc * (1 + 4 + this->touple_order * 8);
                     ret = new uint8_t[wkbSize];
 
                     void * worker = ret;
                     int8_t header = PLATFORM_HEADER;
-                    int32_t t = wkbMultiPoint;
+                    uint32_t t = this->touple_order == 2 ? wkbMultiPoint :
+                                 this->touple_order == 3 ? wkbMultiPoint25D : wkbNone;
+
+                    if(t == wkbNone) throw SG_Exception_BadFeature();
 
                     // Add metadata
                     worker = memcpy_jump(worker, &header, 1);
@@ -657,8 +660,11 @@ namespace nccfdriver
 
             case MULTILINE:
                 {
-                    int32_t header = PLATFORM_HEADER;
-                    int32_t t = wkbMultiLineString;
+                    int8_t header = PLATFORM_HEADER;
+                    uint32_t t = this->touple_order == 2 ? wkbMultiLineString :
+                                this->touple_order == 3 ? wkbMultiLineString25D : wkbNone;
+
+                    if(t == wkbNone) throw SG_Exception_BadFeature();
                     int32_t lc = parts_count[featureInd];
                     size_t seek_begin = sb;
                     size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous    
@@ -670,7 +676,7 @@ namespace nccfdriver
                     for(int itr = 0; itr < lc; itr++)
                     {
                         pnc.push_back(pnode_counts[pc_begin + itr]);    
-                         wkbSize += 16 * pnc[itr] + 1 + 4 + 4;
+                         wkbSize += this->touple_order * 8 * pnc[itr] + 1 + 4 + 4;
                     }
 
                 
@@ -697,8 +703,11 @@ namespace nccfdriver
 
             case MULTIPOLYGON:
                 {
-                    int32_t header = PLATFORM_HEADER;
-                    int32_t t = wkbMultiPolygon;
+                    int8_t header = PLATFORM_HEADER;
+                    uint32_t t = this->touple_order == 2 ? wkbMultiPolygon:
+                                 this->touple_order == 3 ? wkbMultiPolygon25D: wkbNone;
+
+                    if(t == wkbNone) throw SG_Exception_BadFeature();
                     bool noInteriors = this->int_rings.size() == 0 ? true : false;
                     int32_t rc = parts_count[featureInd];
                     size_t seek_begin = sb;
@@ -717,7 +726,7 @@ namespace nccfdriver
                     {
                         for(int ss = 0; ss < rc; ss++)
                         {
-                             wkbSize += 16 * pnc[ss] + 1 + 4 + 4 + 4;
+                             wkbSize += 8 * this->touple_order * pnc[ss] + 1 + 4 + 4 + 4;
                         }
                     }
 
@@ -726,7 +735,7 @@ namespace nccfdriver
                         // Total space requirements for Polygons:
                         // (1 + 4 + 4) * number of Polygons
                         // 4 * number of Rings Total
-                        // 16 * number of Points
+                        // 8 * touple_order * number of Points
         
 
                         // Each ring collection corresponds to a polygon
@@ -736,7 +745,7 @@ namespace nccfdriver
                         wkbSize += 4 * parts_count[featureInd];
 
                         // Add requirements for number of points
-                        wkbSize += 16 * nc;
+                        wkbSize += 8 * this->touple_order * nc;
                     }
 
                     // Now allocate and serialize
@@ -1009,7 +1018,10 @@ namespace nccfdriver
     void* inPlaceSerialize_Point(SGeometry * ge, size_t seek_pos, void * serializeBegin)
     {
         uint8_t order = 1;
-        uint32_t t = wkbPoint;
+        uint32_t t = ge->get_axisCount() == 2 ? wkbPoint:
+                     ge->get_axisCount() == 3 ? wkbPoint25D: wkbNone;
+
+        if(t == wkbNone) throw SG_Exception_BadFeature();
 
         serializeBegin = memcpy_jump(serializeBegin, &order, 1);
         serializeBegin = memcpy_jump(serializeBegin, &t, 4);
@@ -1020,13 +1032,23 @@ namespace nccfdriver
         double y = p[1];
         serializeBegin = memcpy_jump(serializeBegin, &x, 8);
         serializeBegin = memcpy_jump(serializeBegin, &y, 8);
+
+        if(ge->get_axisCount() >= 3)
+        {
+            double z = p[2];
+            serializeBegin = memcpy_jump(serializeBegin, &z, 8);
+        }
+
         return serializeBegin;
     }
 
     void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, size_t seek_begin, void * serializeBegin)
     {
         uint8_t order = PLATFORM_HEADER;
-        uint32_t t = wkbLineString;
+        uint32_t t = ge->get_axisCount() == 2 ? wkbLineString:
+                     ge->get_axisCount() == 3 ? wkbLineString25D: wkbNone;
+
+        if(t == wkbNone) throw SG_Exception_BadFeature();
         uint32_t nc = (uint32_t) node_count;
         
         serializeBegin = memcpy_jump(serializeBegin, &order, 1);
@@ -1041,6 +1063,12 @@ namespace nccfdriver
             double y = p[1];
             serializeBegin = memcpy_jump(serializeBegin, &x, 8);
             serializeBegin = memcpy_jump(serializeBegin, &y, 8);    
+            
+            if(ge->get_axisCount() >= 3)
+            {
+                double z = p[2];
+                serializeBegin = memcpy_jump(serializeBegin, &z, 8);
+            }
         }
 
         return serializeBegin;
@@ -1049,7 +1077,10 @@ namespace nccfdriver
     void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, size_t seek_begin, void * serializeBegin)
     {    
         int8_t header = PLATFORM_HEADER;
-        int32_t t = wkbPolygon;
+        uint32_t t = ge->get_axisCount() == 2 ? wkbPolygon:
+                     ge->get_axisCount() == 3 ? wkbPolygon25D: wkbNone;
+
+        if(t == wkbNone) throw SG_Exception_BadFeature();
         int32_t rc = 1;
                 
         void * writer = serializeBegin;
@@ -1066,6 +1097,12 @@ namespace nccfdriver
             double x = pt[0]; double y = pt[1];
             writer = memcpy_jump(writer, &x, 8);
             writer = memcpy_jump(writer, &y, 8);
+            
+            if(ge->get_axisCount() >= 3)
+            {
+                double z = pt[2];
+                serializeBegin = memcpy_jump(serializeBegin, &z, 8);
+            }
         }
 
         return writer;
@@ -1075,7 +1112,10 @@ namespace nccfdriver
     {
             
         int8_t header = PLATFORM_HEADER;
-        int32_t t = wkbPolygon;
+        uint32_t t = ge->get_axisCount() == 2 ? wkbPolygon:
+                     ge->get_axisCount() == 3 ? wkbPolygon25D: wkbNone;
+
+        if(t == wkbNone) throw SG_Exception_BadFeature();
         int32_t rc = static_cast<int32_t>(ring_count);
                 
         void * writer = serializeBegin;
@@ -1084,7 +1124,6 @@ namespace nccfdriver
         writer = memcpy_jump(writer, &rc, 4);
         int cmoffset = 0;
                         
-        // Check for dimension error / touple order < 2 still to implement                    
         for(int ring_c = 0; ring_c < ring_count; ring_c++)
         {
             int32_t node_count = pnc[ring_c];
@@ -1097,6 +1136,12 @@ namespace nccfdriver
                 double x = pt[0]; double y = pt[1];
                 writer = memcpy_jump(writer, &x, 8);
                 writer = memcpy_jump(writer, &y, 8);
+            
+                if(ge->get_axisCount() >= 3)
+                {
+                     double z = pt[2];
+                     serializeBegin = memcpy_jump(serializeBegin, &z, 8);
+                }
             }
 
             cmoffset += pind;

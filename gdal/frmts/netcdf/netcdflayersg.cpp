@@ -31,7 +31,7 @@
 
 namespace nccfdriver
 {
-    static OGRwkbGeometryType RawToOGR(geom_t type)
+    static OGRwkbGeometryType RawToOGR(geom_t type, int axis_count)
     {
         OGRwkbGeometryType ret = wkbNone;
 
@@ -40,22 +40,28 @@ namespace nccfdriver
             case NONE:
                 break;
             case LINE:
-                ret = wkbLineString;
+                ret = axis_count == 2 ? wkbLineString :
+                      axis_count == 3 ? wkbLineString25D: wkbNone;
                 break;
             case MULTILINE:
-                ret = wkbMultiLineString;
+                ret = axis_count == 2 ? wkbMultiLineString :
+                      axis_count == 3 ? wkbMultiLineString25D : wkbNone;
                 break;
             case POLYGON:
-                ret = wkbPolygon;
+                ret = axis_count == 2 ? wkbPolygon :
+                      axis_count == 3 ? wkbPolygon25D : wkbNone;
                 break;
             case MULTIPOLYGON:
-                ret = wkbMultiPolygon;
+                ret = axis_count == 2 ? wkbMultiPolygon :
+                      axis_count == 3 ? wkbMultiPolygon25D : wkbNone;
                 break;
             case POINT:
-                ret = wkbPoint;
+                ret = axis_count == 2 ? wkbPoint :
+                      axis_count == 3 ? wkbPoint25D: wkbNone;
                 break;
             case MULTIPOINT:
-                ret = wkbMultiPoint;
+                ret = axis_count == 2 ? wkbMultiPoint :
+                      axis_count == 3 ? wkbMultiPoint25D : wkbNone;
                 break;
             case UNSUPPORTED:
                 break;
@@ -100,7 +106,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     std::unique_ptr<nccfdriver::SGeometry> sg (new nccfdriver::SGeometry(ncid, nc_basevarId));
     int cont_id = sg->getContainerId();
     nccfdriver::SGeometry_PropertyScanner pr(ncid, cont_id);
-    OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType());
+    OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType(), sg->get_axisCount());
 
     // Geometry Type invalid, avoid further processing
     if(owgt == wkbNone)
@@ -134,24 +140,24 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 
         try
         {
-            switch(owgt)
+            switch(sg->getGeometryType())
             {        
-                case wkbPoint:
+                case nccfdriver::POINT:
                     geometry = new OGRPoint;
                     break;
-                case wkbLineString:
+                case nccfdriver::LINE:
                     geometry = new OGRLineString;
                     break;
-                case wkbPolygon:
+                case nccfdriver::POLYGON:
                     geometry = new OGRPolygon;
                     break;
-                case wkbMultiPoint:
+                case nccfdriver::MULTIPOINT:
                     geometry = new OGRMultiPoint;
                     break;
-                case wkbMultiLineString:
+                case nccfdriver::MULTILINE:
                     geometry = new OGRMultiLineString;
                     break;
-                case wkbMultiPolygon:
+                case nccfdriver::MULTIPOLYGON:
                     geometry = new OGRMultiPolygon;
                     break;
                 default:
