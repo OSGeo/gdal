@@ -171,7 +171,7 @@ namespace nccfdriver
 		 * this point should NOT be explicitly freed.
 		 *
 		 */
-		Point& operator[](int ind);
+		Point& operator[](size_t ind);
 
 		/* ncID - as used in netcdf.h
 		 * baseVarId - the id of a variable with a geometry container attribute 

@@ -486,7 +486,7 @@ namespace nccfdriver
 		else return false;
 	}
 
-	Point& SGeometry::operator[](int index)
+	Point& SGeometry::operator[](size_t index)
 	{
 		for(int order = 0; order < touple_order; order++)
 		{
@@ -633,7 +633,7 @@ namespace nccfdriver
 					}
 
 				
-					int cur_point = seek_begin;
+					size_t cur_point = seek_begin;
 					size_t pcount = pnc.size();
 
 					// Allocate and set pointers
@@ -708,7 +708,7 @@ namespace nccfdriver
 
 					if(noInteriors)
 					{
-						int cur_point = seek_begin;
+						size_t cur_point = seek_begin;
 						size_t pcount = pnc.size();
 						worker = memcpy_jump(worker, &pcount, 4);
 
@@ -725,7 +725,7 @@ namespace nccfdriver
 						worker = memcpy_jump(worker, &polys, 4);
 	
 						size_t base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
-						int seek = seek_begin; // beginning of node range for this multigeometry
+						size_t seek = seek_begin; // beginning of node range for this multigeometry
 						size_t ir_base = base + 1;
 						int rc_m = 1; 
 
@@ -800,7 +800,6 @@ namespace nccfdriver
 		for(int curr = 0; curr < varCount; curr++)
 		{
 			size_t contname2_len = 0;
-			char * buf = nullptr;
 			
 			// First find container length, and make buf that size in chars
 			if(nc_inq_attlen(this->nc, curr, CF_SG_GEOMETRY, &contname2_len) != NC_NOERR)
@@ -813,10 +812,11 @@ namespace nccfdriver
 			if(contname2_len == 0) continue;
 
 			// Otherwise, geometry: see what container it has
-			buf = new char[contname2_len];
+			char buf[NC_MAX_CHAR + 1];
+			memset(buf, 0, NC_MAX_CHAR + 1);
+
 			if(nc_get_att_text(this->nc, curr, CF_SG_GEOMETRY, buf)!= NC_NOERR)
 			{
-				delete[] buf;
 				continue;
 			}
 
@@ -830,8 +830,6 @@ namespace nccfdriver
 				v_ids.push_back(curr);
 				v_headers.push_back(n);
 			}
-			
-			delete[] buf;
 		}
 	}
 
