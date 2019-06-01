@@ -52,8 +52,8 @@ html_theme = 'gdal_rtd'
 
 html_context = {
   'display_github': True,
-  'github_user': 'OSGEo',
-  'github_repo': 'GDAL',
+  'github_user': 'OSGeo',
+  'github_repo': 'gdal',
   'github_version': '/master/gdal/doc/source/'
 }
 
