@@ -619,8 +619,8 @@ namespace nccfdriver
             case POLYGON:
                 // A polygon has:
                 // 1 byte header
-                // 4 byte Type (=3 for polygon)
-                // 4 byte ring count (1 (exterior) or 2 (exterior and interior)
+                // 4 byte Type
+                // 4 byte ring count (1 (exterior)) [assume only exterior rings, otherwise multipolygon]
                 // For each ring:
                 // 4 byte point count, 8 byte double x point count x # dimension
                 // (This is equivalent to requesting enough for all points and a point count header for each point)
@@ -1101,7 +1101,7 @@ namespace nccfdriver
             if(ge->get_axisCount() >= 3)
             {
                 double z = pt[2];
-                serializeBegin = memcpy_jump(serializeBegin, &z, 8);
+                writer = memcpy_jump(writer, &z, 8);
             }
         }
 
@@ -1140,7 +1140,7 @@ namespace nccfdriver
                 if(ge->get_axisCount() >= 3)
                 {
                      double z = pt[2];
-                     serializeBegin = memcpy_jump(serializeBegin, &z, 8);
+                     writer = memcpy_jump(writer, &z, 8);
                 }
             }
 

@@ -3185,6 +3185,40 @@ def test_multipoint_read():
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (-7 7,-8 8,-9 9,-10 10)")
 
+def test_multipoint3D_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    multipoints = ogr.Open("data/netcdf-sg/multipoint3D_test.nc")
+    assert(multipoints != None) 
+
+    layer = multipoints.GetLayerByName("names_geometry")
+    assert(layer != None)
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (1 -1 1,2 -2 -2,3 -3 3,4 -4 -4)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (5 -5 5,6 -6 -6,7 -7 7,8 -8 -8)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (9 -9 9,10 -10 -10,-1 1 -1,-2 2 2)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (-3 3 -3,-4 4 4,-5 5 -5,-6 6 6)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (-7 7 -7,-8 8 8,-9 9 -9,-10 10 10)")
+
 def test_line_read():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
@@ -3219,6 +3253,39 @@ def test_line_read():
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "LINESTRING (-7 7,-8 8,-9 9,-10 10)")
      
+def test_line3D_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    line = ogr.Open("data/netcdf-sg/line3D_test.nc")
+    assert(line != None) 
+
+    layer = line.GetLayerByName("names_geometry")
+    assert(layer != None)
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (1 -1 1,2 -2 -2,3 -3 3,4 -4 -4)")
+     
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (5 -5 5,6 -6 -6,7 -7 7,8 -8 -8)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (9 -9 9,10 -10 -10,-1 1 1,-2 2 -2)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (-3 3 3,-4 4 -4,-5 5 5,-6 6 -6)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "LINESTRING (-7 7 7,-8 8 -8,-9 9 9,-10 10 -10)")
 
 def test_multiline_read():
     if gdaltest.netcdf_drv is None:
@@ -3254,6 +3321,40 @@ def test_multiline_read():
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTILINESTRING ((-7 7,-8 8,-9 9,-10 10))")
 
+def test_multiline3D_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    multiline = ogr.Open("data/netcdf-sg/multiline3D_test.nc")
+    assert(multiline != None) 
+
+    layer = multiline.GetLayerByName("names_geometry")
+    assert(layer != None)
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((1 -1 -1),(2 -2 2,3 -3 -3,4 -4 4))")
+    
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((5 -5 -5,6 -6 6,7 -7 -7,8 -8 8))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((9 -9 -9,10 -10 10,-1 1 -1),(-2 2 2))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((-3 3 -3,-4 4 4),(-5 5 -5,-6 6 6))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTILINESTRING ((-7 7 -7,-8 8 8,-9 9 -9,-10 10 10))")
+
 def test_polygon_read():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
@@ -3272,6 +3373,24 @@ def test_polygon_read():
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((3 0,4 0,4 1,3 1,3 0))")
 
+def test_polygon3D_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    polygon = ogr.Open("data/netcdf-sg/polygon3D_test.nc")
+    assert(polygon != None)
+    
+    layer = polygon.GetLayerByName("names_geometry")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POLYGON ((0 0 1,1 0 2,1 1 2,0 0 1))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POLYGON ((3 0 1,4 0 1,4 1 1,3 1 1,3 0 1))")
+
 def test_multipolygon_read():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
@@ -3289,6 +3408,24 @@ def test_multipolygon_read():
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 0)),((3 0,4 1,3 1,3 0)))")
+
+def test_multipolygon3D_read():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    multipolygon = ogr.Open("data/netcdf-sg/multipolygon3D_test.nc")
+    assert(multipolygon != None) 
+
+    layer = multipolygon.GetLayerByName("names_geometry")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOLYGON (((0 0 0,1 0 5,1 1 5,0 0 0)))")
+     
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOLYGON (((3 0 5,4 0 10,4 1 10,3 0 5)),((3 0 10,4 1 15,3 1 15,3 0 10)))")
 
 def test_serpenski_two_ring():
     if gdaltest.netcdf_drv is None:
@@ -3309,6 +3446,26 @@ def test_serpenski_two_ring():
 
     assert(st_wkt == \
 	"MULTIPOLYGON (((0 0,1 0,0.5 0.866025403784439,0 0),(0.5 0.0,0.75 0.433012701892219,0.25 0.433012701892219,0.5 0.0)))") 
+
+def test_serpenski3D_two_ring():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    s = ogr.Open("data/netcdf-sg/serpenski3D_2nd.nc")
+
+    assert(s != None)
+    
+    good_layer = s.GetLayerByName("serpenski")
+    assert(good_layer != None) # real layer
+
+    assert(good_layer.GetFeatureCount() == 1)
+    assert(good_layer.GetGeomType() == ogr.wkbMultiPolygon25D)
+
+    serpenski = good_layer.GetNextFeature()
+    triangle = serpenski.GetGeometryRef()
+    st_wkt = triangle.ExportToWkt()
+
+    assert(st_wkt == \
+	"MULTIPOLYGON (((0 0 1,1 0 1,0.5 0.866025403784439 1,0 0 1),(0.5 0.0 1,0.75 0.433012701892219 1,0.25 0.433012701892219 1,0.5 0.0 1)))") 
 
 def test_flipped_axis():
     if gdaltest.netcdf_drv is None:
