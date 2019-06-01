@@ -58,7 +58,7 @@ html_context = {
 }
 
 html_theme_options = {
-        'canonical_url': 'https://gdal.dev',
+    'canonical_url': 'https://gdal.org',
     'analytics_id': '',  #  Provided by Google in your dashboard
     'logo_only': True,
     'display_version': True,
