@@ -119,6 +119,8 @@ typedef struct {
 
 	int     td_customValueCount;
         TIFFTagValue *td_customValues;
+
+        unsigned char td_deferstrilearraywriting; /* see TIFFDeferStrileArrayWriting() */
 } TIFFDirectory;
 
 /*

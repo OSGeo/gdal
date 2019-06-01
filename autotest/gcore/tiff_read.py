@@ -33,6 +33,8 @@ import shutil
 
 import pytest
 
+import webserver
+
 import gdaltest
 from osgeo import gdal, osr
 
@@ -3161,3 +3163,233 @@ def test_tiff_read_deflate_4GB():
     ref_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     ref_ds.GetRasterBand(1).Fill(127)
     assert data == ref_ds.ReadRaster()
+
+###############################################################################
+# Check that our use of TileByteCounts is minimal for COG (only for last tile)
+# and for interleaved mask that we also hardly use TileOffsets.
+
+def test_tiff_read_cog_strile_arrays_zeroified_when_possible():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    # The file has been produced with:
+    # gdal_translate ../autotest/gcore/data/rgba.tif -b 1 -b 2 -b 3 -mask 4 in.tif
+    # gdal_translate in.tif cog.tif -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW -co TILED=YES -co BLOCKXSIZE=16 -co BLOCKYSIZE=16 --config GDAL_TIFF_INTERNAL_MASK YES
+    # and then with an hex editor, zeroify all entries of TileByteCounts except the last tile for both IFDs
+    # and zeroify all entries of TileOffsets for 2nd IFD (mask) except the last tile.
+
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open('data/cog_strile_arrays_zeroified_when_possible.tif')
+        cs = ds.GetRasterBand(1).Checksum()
+        cs_mask = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    assert cs == 4873
+    assert cs_mask == 1222
+
+###############################################################################
+# Check that our reading of a COG with /vsicurl is efficient
+
+def test_tiff_read_cog_vsicurl():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if webserver_port == 0:
+        pytest.skip()
+
+    in_filename = 'tmp/test_tiff_read_cog_vsicurl_in.tif'
+    cog_filename = 'tmp/test_tiff_read_cog_vsicurl_out.tif'
+
+    try:
+        src_ds = gdal.GetDriverByName('GTIFF').Create(in_filename, 1024, 1024, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'SPARSE_OK=YES'])
+        src_ds.BuildOverviews('NEAR', [256])
+        gdal.GetDriverByName('GTIFF').CreateCopy(cog_filename, src_ds, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'COPY_SRC_OVERVIEWS=YES', 'COMPRESS=LZW'])
+
+        filesize = gdal.VSIStatL(cog_filename).size
+
+        handler = webserver.SequentialHandler()
+        handler.add('HEAD', '/cog.tif', 200, {'Content-Length': '%d' % filesize})
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=0-16383':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 0-16383/%d' % filesize)
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                request.wfile.write(open(cog_filename, 'rb').read(16384))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open('/vsicurl/http://localhost:%d/cog.tif' % webserver_port)
+        assert(ds)
+
+        handler = webserver.SequentialHandler()
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=32768-49151':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 32768-49151/%d' % filesize)
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open(cog_filename, 'rb') as f:
+                    f.seek(32768, 0)
+                    request.wfile.write(f.read(16384))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=180224-193497':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 180224-193497/%d' % filesize)
+                request.send_header('Content-Length', 13274)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open(cog_filename, 'rb') as f:
+                    f.seek(180224, 0)
+                    request.wfile.write(f.read(13274))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        with webserver.install_http_handler(handler):
+            ret = ds.ReadRaster(1024 - 32,1024 - 32,16,16)
+        assert ret
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+        gdal.GetDriverByName('GTIFF').Delete(in_filename)
+        gdal.GetDriverByName('GTIFF').Delete(cog_filename)
+
+###############################################################################
+# Check that our reading of a COG with /vsicurl is efficient
+
+def test_tiff_read_cog_with_mask_vsicurl():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if webserver_port == 0:
+        pytest.skip()
+
+    in_filename = 'tmp/test_tiff_read_cog_with_mask_vsicurl_in.tif'
+    cog_filename = 'tmp/test_tiff_read_cog_with_mask_vsicurl_out.tif'
+
+    try:
+        src_ds = gdal.GetDriverByName('GTIFF').Create(in_filename, 1024, 1024, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'SPARSE_OK=YES'])
+        src_ds.BuildOverviews('NEAR', [256])
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            gdal.GetDriverByName('GTIFF').CreateCopy(cog_filename, src_ds, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'COPY_SRC_OVERVIEWS=YES', 'COMPRESS=LZW'])
+
+        filesize = gdal.VSIStatL(cog_filename).size
+
+        handler = webserver.SequentialHandler()
+        handler.add('HEAD', '/cog.tif', 200, {'Content-Length': '%d' % filesize})
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=0-16383':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 0-16383/%d' % filesize)
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                request.wfile.write(open(cog_filename, 'rb').read(16384))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open('/vsicurl/http://localhost:%d/cog.tif' % webserver_port)
+        assert(ds)
+
+        handler = webserver.SequentialHandler()
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=32768-49151':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 32768-49151/%d' % filesize)
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open(cog_filename, 'rb') as f:
+                    f.seek(32768, 0)
+                    request.wfile.write(f.read(16384))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=294912-311295':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 294912-311295/%d' % filesize)
+                request.send_header('Content-Length', 32768)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open(cog_filename, 'rb') as f:
+                    f.seek(294912, 0)
+                    request.wfile.write(f.read(32768))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        with webserver.install_http_handler(handler):
+            ret = ds.ReadRaster(1024 - 32,1024 - 32,16,16)
+        assert ret
+
+        ret = ds.GetRasterBand(1).GetMaskBand().ReadRaster(1024 - 32,1024 - 32,16,16)
+        assert ret
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+        gdal.GetDriverByName('GTIFF').Delete(in_filename)
+        gdal.GetDriverByName('GTIFF').Delete(cog_filename)

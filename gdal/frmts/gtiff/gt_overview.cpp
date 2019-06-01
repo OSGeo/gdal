@@ -55,6 +55,10 @@ CPL_CVSID("$Id$")
 // TODO(schwehr): Explain why 128 and not 127.
 constexpr int knMaxOverviews = 128;
 
+#if TIFFLIB_VERSION > 20181110 // > 4.0.10
+#define SUPPORTS_GET_OFFSET_BYTECOUNT
+#endif
+
 /************************************************************************/
 /*                         GTIFFWriteDirectory()                        */
 /*                                                                      */
@@ -81,8 +85,8 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             const char* pszJPEGQuality,
                             const char* pszJPEGTablesMode,
                             const char* pszNoData,
-                            CPL_UNUSED const uint32* panLercAddCompressionAndVersion
-                           )
+                            CPL_UNUSED const uint32* panLercAddCompressionAndVersion,
+                            bool bDeferStrileArrayWriting )
 
 {
     const toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
@@ -185,6 +189,13 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
     if( pszNoData != nullptr )
     {
         TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, pszNoData );
+    }
+
+    if( bDeferStrileArrayWriting )
+    {
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+        TIFFDeferStrileArrayWriting( hTIFF );
+#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -833,7 +844,8 @@ GTIFFBuildOverviews( const char * pszFilename,
                              CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ),
                              CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", nullptr ),
                              pszNoData,
-                             nullptr
+                             nullptr,
+                             false
                            );
     }
 

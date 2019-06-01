@@ -1600,10 +1600,9 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             // Ensure that we will request at least the number of blocks
             // to satisfy the remaining buffer size to read.
             const vsi_l_offset nEndOffsetToDownload =
-                ((iterOffset + nBufferRequestSize) / DOWNLOAD_CHUNK_SIZE) *
+                ((iterOffset + nBufferRequestSize + DOWNLOAD_CHUNK_SIZE - 1) / DOWNLOAD_CHUNK_SIZE) *
                 DOWNLOAD_CHUNK_SIZE;
             const int nMinBlocksToDownload =
-                1 +
                 static_cast<int>(
                     (nEndOffsetToDownload - nOffsetToDownload) /
                     DOWNLOAD_CHUNK_SIZE);
