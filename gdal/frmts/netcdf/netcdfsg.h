@@ -60,15 +60,13 @@ namespace nccfdriver
     class Point
     {
         int size;
-        double * values;    
+        std::unique_ptr<double, std::default_delete<double[]>> values;
         Point(Point&);
         Point operator=(const Point &);
 
         public:
-        ~Point();    
-        Point(int dim) : size(dim)
-            { this->values = new double[dim]; }
-        double& operator[](size_t i) { return this->values[i]; }
+        Point(int dim);
+        double& operator[](size_t i) { return this->values.get()[i]; }
         int getOrder() { return this->size; }
     };
 

@@ -265,7 +265,7 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 #define CF_SG_NODES                  "nodes"
 #define CF_SG_NODE_COORDINATES       "node_coordinates"
 #define CF_SG_NODE_COUNT             "node_count"
-#define CF_SG_PART_NODE_COUNT        "part_node_count"	
+#define CF_SG_PART_NODE_COUNT        "part_node_count"
 #define CF_SG_TYPE_LINE              "line"
 #define CF_SG_TYPE_POINT             "point"
 #define CF_SG_TYPE_POLY              "polygon"

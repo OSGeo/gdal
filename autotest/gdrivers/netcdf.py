@@ -3482,6 +3482,24 @@ def test_flipped_axis():
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "POLYGON ((0 0,1 0,1 1,0 0))")
 
+def test_arbitrary_3Daxis_order_():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()			
+    polygon = ogr.Open("data/netcdf-sg/arbitrary_axis_order_test.nc")
+    assert(polygon != None)
+    
+    layer = polygon.GetLayerByName("names_geometry")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POLYGON ((0 0 1,1 0 2,1 1 2,0 0 1))")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "POLYGON ((3 0 1,4 0 1,4 1 1,3 1 1,3 0 1))")
+
 def test_multiple_layers_one_nc():
     if gdaltest.netcdf_drv is None:
         pytest.skip()

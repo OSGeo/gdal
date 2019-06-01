@@ -82,9 +82,9 @@ namespace nccfdriver
      * (implementations)
      *
      */
-    Point::~Point()
+    Point::Point(int dim) : size(dim)
     {
-        delete[] this->values;
+        this->values = std::unique_ptr<double, std::default_delete<double[]>>(new double[dim]); 
     }
 
     /* SGeometry 
@@ -935,10 +935,7 @@ namespace nccfdriver
     }
 
     // to get past linker
-    SG_Exception::~SG_Exception()
-    {
-
-    }
+    SG_Exception::~SG_Exception() {}
 
     // Helpers
     // following is a short hand for a clean up and exit, since goto isn't allowed

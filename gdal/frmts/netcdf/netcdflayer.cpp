@@ -1206,7 +1206,7 @@ OGRFeature *netCDFLayer::GetNextFeature()
     if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
     {
         OGRFeature * ret = (*(m_sgFeatItr))->Clone();
-        m_sgFeatItr++;
+        ++m_sgFeatItr;
         return ret;
     }
 
