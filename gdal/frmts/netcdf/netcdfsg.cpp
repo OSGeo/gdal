@@ -78,15 +78,6 @@ namespace nccfdriver
     }
 
 
-    /* Point
-     * (implementations)
-     *
-     */
-    Point::Point(int dim) : size(dim)
-    {
-        this->values = std::unique_ptr<double, std::default_delete<double[]>>(new double[dim]); 
-    }
-
     /* SGeometry 
      * (implementations)
      *

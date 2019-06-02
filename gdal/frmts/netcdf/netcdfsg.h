@@ -65,7 +65,7 @@ namespace nccfdriver
         Point operator=(const Point &);
 
         public:
-        Point(int dim);
+        explicit Point(int dim) : values(std::unique_ptr<double, std::default_delete<double[]>>(new double[dim])) {}
         double& operator[](size_t i) { return this->values.get()[i]; }
         int getOrder() { return this->size; }
     };
