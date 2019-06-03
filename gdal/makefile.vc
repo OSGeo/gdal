@@ -204,7 +204,9 @@ dll:	$(GDAL_DLL)
 
 # build using cygwin
 docs:
+!IFDEF HTMLDIR
 	make PYTHONHOME= -C doc html
+!ENDIF
 
 bindings:
 	-for %d in ( $(BINDINGS) ) do \

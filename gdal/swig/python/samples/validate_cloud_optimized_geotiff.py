@@ -29,13 +29,18 @@
 #  DEALINGS IN THE SOFTWARE.
 # *****************************************************************************
 
+import os.path
+import struct
 import sys
 from osgeo import gdal
 
 
 def Usage():
-    print('Usage: validate_cloud_optimized_geotiff.py [-q] test.tif')
+    print('Usage: validate_cloud_optimized_geotiff.py [-q] [--full-check=yes/no/auto] test.tif')
     print('')
+    print('Options:')
+    print('-q: quiet mode')
+    print('--full-check=yes/no/auto: check tile/strip leader/trailer bytes. auto=yes for local files, and no for remote files')
     return 1
 
 
@@ -43,12 +48,64 @@ class ValidateCloudOptimizedGeoTIFFException(Exception):
     pass
 
 
-def validate(ds, check_tiled=True):
+def full_check_band(f, band_name, band, errors,
+                    block_order_row_major,
+                    block_leader_size_as_uint4,
+                    block_trailer_last_4_bytes_repeated,
+                    mask_interleaved_with_imagery):
+
+    block_size = band.GetBlockSize()
+    mask_band = None
+    if mask_interleaved_with_imagery:
+        mask_band = band.GetMaskBand()
+        mask_block_size = mask_band.GetBlockSize()
+        if block_size != mask_block_size:
+            errors += [ band_name + ': mask block size is different from its imagery band' ]
+            mask_band = None
+
+    yblocks = (band.YSize + block_size[1] - 1) // block_size[1]
+    xblocks = (band.XSize + block_size[0] - 1) // block_size[0]
+    last_offset = 0
+    for y in range(yblocks):
+        for x in range(xblocks):
+
+            offset = int(band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x,y), 'TIFF'))
+            bytecount = int(band.GetMetadataItem('BLOCK_SIZE_%d_%d' % (x,y), 'TIFF'))
+
+            if block_order_row_major and offset < last_offset:
+                errors += [ band_name + ': offset of block (%d, %d) is smaller than previous block' % (x,y) ]
+
+            if block_leader_size_as_uint4:
+                gdal.VSIFSeekL(f, offset - 4, 0)
+                leader_size = struct.unpack('<I', gdal.VSIFReadL(4, 1, f))[0]
+                if leader_size != bytecount:
+                    errors += [ band_name + ': for block (%d, %d), size in leader bytes is %d instead of %d' % (x,y,leader_size,bytecount) ]
+
+            if block_trailer_last_4_bytes_repeated:
+                if bytecount >= 4:
+                    gdal.VSIFSeekL(f, offset + bytecount - 4, 0)
+                    last_bytes = gdal.VSIFReadL(8, 1, f)
+                    if last_bytes[0:4] != last_bytes[4:8]:
+                        errors += [ band_name + ': for block (%d, %d), trailer bytes are invalid' % (x,y) ]
+
+            if mask_band:
+                offset_mask = int(mask_band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x,y), 'TIFF'))
+                #bytecount_mask = int(mask_band.GetMetadataItem('BLOCK_SIZE_%d_%d' % (x,y), 'TIFF'))
+                expected_offset_mask = offset + bytecount + \
+                    (4 if block_leader_size_as_uint4 else 0) + \
+                    (4 if block_trailer_last_4_bytes_repeated else 0)
+                if offset_mask != expected_offset_mask:
+                    errors += [ 'Mask of ' + band_name + ': for block (%d, %d), offset is %d, whereas %d was expected' % (x,y,offset_mask,expected_offset_mask) ]
+
+            last_offset = offset
+
+def validate(ds,check_tiled=True, full_check=False):
     """Check if a file is a (Geo)TIFF with cloud optimized compatible structure.
 
     Args:
       ds: GDAL Dataset for the file to inspect.
       check_tiled: Set to False to ignore missing tiling.
+      full_check: Set to TRUe to check tile/strip leader/trailer bytes. Might be slow on remote files
 
     Returns:
       A tuple, whose first element is an array of error messages
@@ -101,10 +158,42 @@ def validate(ds, check_tiled=True):
 
     ifd_offset = int(main_band.GetMetadataItem('IFD_OFFSET', 'TIFF'))
     ifd_offsets = [ifd_offset]
+
+    block_order_row_major = False
+    block_leader_size_as_uint4 = False
+    block_trailer_last_4_bytes_repeated = False
+    mask_interleaved_with_imagery = False
+
     if ifd_offset not in (8, 16):
-        errors += [
-            'The offset of the main IFD should be 8 for ClassicTIFF '
-            'or 16 for BigTIFF. It is %d instead' % ifd_offsets[0]]
+
+        # Check if there is GDAL hidden structural metadata
+        f = gdal.VSIFOpenL(filename, 'rb')
+        if not f:
+            raise ValidateCloudOptimizedGeoTIFFException("Cannot open file")
+        signature = struct.unpack('B' * 4, gdal.VSIFReadL(4, 1, f))
+        bigtiff = signature in ((0x49, 0x49, 0x2B, 0x00), (0x4D, 0x4D, 0x00, 0x2B))
+        if bigtiff:
+            expected_ifd_pos = 16
+        else:
+            expected_ifd_pos = 8
+        gdal.VSIFSeekL(f, expected_ifd_pos, 0)
+        pattern = "GDAL_STRUCTURAL_METADATA_SIZE=%06d bytes\n" % 0
+        got = gdal.VSIFReadL(len(pattern), 1, f).decode('LATIN1')
+        if len(got) == len(pattern) and got.startswith('GDAL_STRUCTURAL_METADATA_SIZE='):
+            size = int(got[len('GDAL_STRUCTURAL_METADATA_SIZE='):][0:6])
+            extra_md = gdal.VSIFReadL(size, 1, f).decode('LATIN1')
+            block_order_row_major = 'BLOCK_ORDER=ROW_MAJOR' in extra_md
+            block_leader_size_as_uint4 = 'BLOCK_LEADER=SIZE_AS_UINT4' in extra_md
+            block_trailer_last_4_bytes_repeated = 'BLOCK_TRAILER=LAST_4_BYTES_REPEATED' in extra_md
+            mask_interleaved_with_imagery = 'MASK_INTERLEAVED_WITH_IMAGERY=YES' in extra_md
+            expected_ifd_pos += len(pattern) + size
+            expected_ifd_pos += expected_ifd_pos % 2 # IFD offset starts on a 2-byte boundary
+        gdal.VSIFCloseL(f)
+
+        if expected_ifd_pos != ifd_offsets[0]:
+            errors += [
+                'The offset of the main IFD should be %d. It is %d instead' % (expected_ifd_pos, ifd_offsets[0])]
+
     details['ifd_offsets'] = {}
     details['ifd_offsets']['main'] = ifd_offset
 
@@ -185,6 +274,41 @@ def validate(ds, check_tiled=True):
             'should be after the one of the overview of index %d' %
             (ovr_count - 1)]
 
+    if full_check and (block_order_row_major or block_leader_size_as_uint4 or \
+                       block_trailer_last_4_bytes_repeated or \
+                       mask_interleaved_with_imagery):
+        f = gdal.VSIFOpenL(filename, 'rb')
+        if not f:
+            raise ValidateCloudOptimizedGeoTIFFException("Cannot open file")
+
+        full_check_band(f, 'Main resolution image', main_band, errors,
+                        block_order_row_major,
+                        block_leader_size_as_uint4,
+                        block_trailer_last_4_bytes_repeated,
+                        mask_interleaved_with_imagery)
+        if main_band.GetMaskFlags() == gdal.GMF_PER_DATASET and \
+            (filename + '.msk') not in ds.GetFileList():
+            full_check_band(f, 'Mask band of main resolution image',
+                            main_band.GetMaskBand(), errors,
+                            block_order_row_major,
+                            block_leader_size_as_uint4,
+                            block_trailer_last_4_bytes_repeated, False)
+        for i in range(ovr_count):
+            ovr_band = ds.GetRasterBand(1).GetOverview(i)
+            full_check_band(f, 'Overview %d' % i, ovr_band, errors,
+                            block_order_row_major,
+                            block_leader_size_as_uint4,
+                            block_trailer_last_4_bytes_repeated,
+                            mask_interleaved_with_imagery)
+            if ovr_band.GetMaskFlags() == gdal.GMF_PER_DATASET and \
+                (filename + '.msk') not in ds.GetFileList():
+                full_check_band(f, 'Mask band of overview %d' % i,
+                                ovr_band.GetMaskBand(), errors,
+                                block_order_row_major,
+                                block_leader_size_as_uint4,
+                                block_trailer_last_4_bytes_repeated, False)
+        gdal.VSIFCloseL(f)
+
     return warnings, errors, details
 
 
@@ -194,9 +318,16 @@ def main():
     i = 1
     filename = None
     quiet = False
+    full_check = None
     while i < len(sys.argv):
         if sys.argv[i] == '-q':
             quiet = True
+        elif sys.argv[i] == '--full-check=yes':
+            full_check = True
+        elif sys.argv[i] == '--full-check=no':
+            full_check = False
+        elif sys.argv[i] == '--full-check=auto':
+            full_check = None
         elif sys.argv[i][0] == '-':
             return Usage()
         elif filename is None:
@@ -209,9 +340,12 @@ def main():
     if filename is None:
         return Usage()
 
+    if full_check is None:
+        full_check = filename.startswith('/vsimem/') or os.path.exists(filename)
+
     try:
         ret = 0
-        warnings, errors, details = validate(filename)
+        warnings, errors, details = validate(filename, full_check = full_check)
         if warnings:
             if not quiet:
                 print('The following warnings were found:')

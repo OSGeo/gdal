@@ -72,7 +72,8 @@ INCDIR = "$(GDAL_HOME)\include"
 DATADIR = "$(GDAL_HOME)\data"
 !ENDIF
 !IFNDEF HTMLDIR
-HTMLDIR = "$(GDAL_HOME)\html"
+# If you want the documentation to be build define a directory
+# HTMLDIR = "$(GDAL_HOME)\html"
 !ENDIF
 
 # Set this to the installed directory containing python.  If you don't

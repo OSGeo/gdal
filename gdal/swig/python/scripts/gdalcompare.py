@@ -135,7 +135,19 @@ def compare_band(golden_band, new_band, ident, options=None):
                                        new_band.GetMetadata(),
                                        'Band ' + ident, options)
 
-    # TODO: Color Table, gain/bias, units, blocksize, mask, min/max
+    # Mask band
+    if golden_band.GetMaskFlags() != new_band.GetMaskFlags():
+        print('Band %s mask flags difference:' % ident)
+        print('  Golden: ' + str(golden_band.GetMaskFlags()))
+        print('  New:    ' + str(new_band.GetMaskFlags()))
+        found_diff += 1
+    elif golden_band.GetMaskFlags() in (gdal.GMF_PER_DATASET, 0):
+        found_diff += compare_band(golden_band.GetMaskBand(),
+                                   new_band.GetMaskBand(),
+                                   ident + ' mask band',
+                                   options)
+
+    # TODO: Color Table, gain/bias, units, blocksize, min/max
 
     return found_diff
 

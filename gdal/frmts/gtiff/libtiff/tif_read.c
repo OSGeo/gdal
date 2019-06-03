@@ -1506,6 +1506,93 @@ TIFFCheckRead(TIFF* tif, int tiles)
 	return (1);
 }
 
+/* Use the provided input buffer (inbuf, insize) and decompress it into
+ * (outbuf, outsize).
+ * This function replaces the use of TIFFReadEncodedStrip()/TIFFReadEncodedTile()
+ * when the user can provide the buffer for the input data, for example when
+ * he wants to avoid libtiff to read the strile offset/count values from the
+ * [Strip|Tile][Offsets/ByteCounts] array.
+ * inbuf content must be writable (if bit reversal is needed)
+ * Returns 1 in case of success, 0 otherwise.
+ */
+int      TIFFReadFromUserBuffer(TIFF* tif, uint32 strile,
+                                void* inbuf, tmsize_t insize,
+                                void* outbuf, tmsize_t outsize)
+{
+    static const char module[] = "TIFFReadFromUserBuffer";
+    TIFFDirectory *td = &tif->tif_dir;
+    int ret = 1;
+    uint32 old_tif_flags = tif->tif_flags;
+    tmsize_t old_rawdatasize = tif->tif_rawdatasize;
+    void* old_rawdata = tif->tif_rawdata;
+
+    if (tif->tif_mode == O_WRONLY) {
+        TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "File not open for reading");
+        return 0;
+    }
+    if (tif->tif_flags&TIFF_NOREADRAW)
+    {
+        TIFFErrorExt(tif->tif_clientdata, module,
+                "Compression scheme does not support access to raw uncompressed data");
+        return 0;
+    }
+
+    tif->tif_flags &= ~TIFF_MYBUFFER;
+    tif->tif_flags |= TIFF_BUFFERMMAP;
+    tif->tif_rawdatasize = insize;
+    tif->tif_rawdata = inbuf;
+    tif->tif_rawdataoff = 0;
+    tif->tif_rawdataloaded = insize;
+
+    if (!isFillOrder(tif, td->td_fillorder) &&
+        (tif->tif_flags & TIFF_NOBITREV) == 0)
+    {
+        TIFFReverseBits(inbuf, insize);
+    }
+
+    if( TIFFIsTiled(tif) )
+    {
+        if( !TIFFStartTile(tif, strile) ||
+            !(*tif->tif_decodetile)(tif, (uint8*) outbuf, outsize, 
+                                    (uint16)(strile/td->td_stripsperimage)) )
+        {
+            ret = 0;
+        }
+    }
+    else
+    {
+        uint32 rowsperstrip=td->td_rowsperstrip;
+        uint32 stripsperplane;
+        if (rowsperstrip>td->td_imagelength)
+            rowsperstrip=td->td_imagelength;
+        stripsperplane= TIFFhowmany_32_maxuint_compat(td->td_imagelength, rowsperstrip);
+        if( !TIFFStartStrip(tif, strile) ||
+            !(*tif->tif_decodestrip)(tif, (uint8*) outbuf, outsize, 
+                                     (uint16)(strile/stripsperplane)) )
+        {
+            ret = 0;
+        }
+    }
+    if( ret )
+    {
+        (*tif->tif_postdecode)(tif, (uint8*) outbuf, outsize);
+    }
+
+    if (!isFillOrder(tif, td->td_fillorder) &&
+        (tif->tif_flags & TIFF_NOBITREV) == 0)
+    {
+        TIFFReverseBits(inbuf, insize);
+    }
+
+    tif->tif_flags = old_tif_flags;
+    tif->tif_rawdatasize = old_rawdatasize;
+    tif->tif_rawdata = old_rawdata;
+    tif->tif_rawdataoff = 0;
+    tif->tif_rawdataloaded = 0;
+
+    return ret;
+}
+
 void
 _TIFFNoPostDecode(TIFF* tif, uint8* buf, tmsize_t cc)
 {

@@ -3909,37 +3909,11 @@ TIFFReadDirectory(TIFF* tif)
 			case TIFFTAG_TILEOFFSETS:
                                 _TIFFmemcpy( &(tif->tif_dir.td_stripoffset_entry),
                                              dp, sizeof(TIFFDirEntry) );
-                                if( !(tif->tif_flags&TIFF_DEFERSTRILELOAD) )
-                                {
-                                    if( tif->tif_dir.td_stripoffset_p != NULL )
-                                    {
-                                        TIFFErrorExt(tif->tif_clientdata, module,
-                                            "tif->tif_dir.td_stripoffset is "
-                                            "already allocated. Likely duplicated "
-                                            "StripOffsets/TileOffsets tag");
-                                        goto bad;
-                                    }
-                                    if (!TIFFFetchStripThing(tif,dp,tif->tif_dir.td_nstrips,&tif->tif_dir.td_stripoffset_p))  
-                                            goto bad;
-                                }
 				break;
 			case TIFFTAG_STRIPBYTECOUNTS:
 			case TIFFTAG_TILEBYTECOUNTS:
                                 _TIFFmemcpy( &(tif->tif_dir.td_stripbytecount_entry),
                                              dp, sizeof(TIFFDirEntry) );
-                                if( !(tif->tif_flags&TIFF_DEFERSTRILELOAD) )
-                                {
-                                    if( tif->tif_dir.td_stripbytecount_p != NULL )
-                                    {
-                                        TIFFErrorExt(tif->tif_clientdata, module,
-                                            "tif->tif_dir.td_stripbytecount is "
-                                            "already allocated. Likely duplicated "
-                                            "StripByteCounts/TileByteCounts tag");
-                                        goto bad;
-                                    }
-                                    if (!TIFFFetchStripThing(tif,dp,tif->tif_dir.td_nstrips,&tif->tif_dir.td_stripbytecount_p))  
-                                            goto bad;
-                                }
 				break;
 			case TIFFTAG_COLORMAP:
 			case TIFFTAG_TRANSFERFUNCTION:
@@ -4025,6 +3999,42 @@ TIFFReadDirectory(TIFF* tif)
 				break;
 		}
 	}
+
+        if( tif->tif_mode == O_RDWR &&
+            tif->tif_dir.td_stripoffset_entry.tdir_tag != 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_count == 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_type == 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8 == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_tag != 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_count == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_type == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8 == 0 )
+        {
+            /* Directory typically created with TIFFDeferStrileArrayWriting() */
+            TIFFSetupStrips(tif);
+        }
+        else if( !(tif->tif_flags&TIFF_DEFERSTRILELOAD) )
+        {
+            if( tif->tif_dir.td_stripoffset_entry.tdir_tag != 0 )
+            {
+                if (!TIFFFetchStripThing(tif,&(tif->tif_dir.td_stripoffset_entry),
+                                         tif->tif_dir.td_nstrips,
+                                         &tif->tif_dir.td_stripoffset_p))
+                {
+                    goto bad;
+                }
+            }
+            if( tif->tif_dir.td_stripbytecount_entry.tdir_tag != 0 )
+            {
+                if (!TIFFFetchStripThing(tif,&(tif->tif_dir.td_stripbytecount_entry),
+                                         tif->tif_dir.td_nstrips,
+                                         &tif->tif_dir.td_stripbytecount_p))
+                {
+                    goto bad;
+                }
+            }
+        }
+
 	/*
 	 * OJPEG hack:
 	 * - If a) compression is OJPEG, and b) photometric tag is missing,
@@ -4913,6 +4923,7 @@ TIFFFetchDirectory(TIFF* tif, uint64 diroff, TIFFDirEntry** pdir,
 				TIFFSwabLong((uint32*)ma);
 			mb->tdir_count=(uint64)(*(uint32*)ma);
 			ma+=sizeof(uint32);
+                        mb->tdir_offset.toff_long8=0;
 			*(uint32*)(&mb->tdir_offset)=*(uint32*)ma;
 			ma+=sizeof(uint32);
 		}
