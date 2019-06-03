@@ -3000,12 +3000,21 @@ def test_tiff_write_87():
     data_ovr_1 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
     data_ovr_0 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
     data_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+    size_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF'))
+    with open('tmp/tiff_write_87_dst.tif', 'rb') as f:
+        f.seek(data_main - 4)
+        size_from_header = struct.unpack('<I', f.read(4))[0]
+        assert size_main == size_from_header
+        f.seek(data_main + size_main - 4)
+        last_bytes = f.read(4)
+        last_bytes_repeated = f.read(4)
+        assert last_bytes == last_bytes_repeated
 
     ds = None
 
     import validate_cloud_optimized_geotiff
     try:
-        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
+        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False, full_check=True)
         assert not errors, 'validate_cloud_optimized_geotiff failed'
     except OSError:
         pytest.fail('validate_cloud_optimized_geotiff failed')
@@ -3368,11 +3377,11 @@ def test_tiff_write_95():
 # Test that COPY_SRC_OVERVIEWS combined with GDAL_TIFF_INTERNAL_MASK=YES work well
 
 
-def test_tiff_write_96():
+def test_tiff_write_96(other_options = [], nbands = 1, nbits = 8):
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100)
-    src_ds.GetRasterBand(1).Fill(255)
+    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100, nbands, options = ['NBITS=' + str(nbits)])
+    src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     from sys import version_info
     if version_info >= (3, 0, 0):
@@ -3387,8 +3396,9 @@ def test_tiff_write_96():
     expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
     expected_cs_ovr_mask_2 = src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'] + other_options + ['NBITS=' + str(nbits)])
     ds = None
+    src_ds = None
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
 
     ds = gdal.Open('tmp/tiff_write_96_dst.tif')
@@ -3398,16 +3408,115 @@ def test_tiff_write_96():
     cs_ovr_mask_1 = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
     cs_ovr_2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     cs_ovr_mask_2 = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
-
+    assert ds.GetMetadataItem('HAS_USED_READ_ENCODED_API', '_DEBUG_') == '1'
     ds = None
-    src_ds = None
-
-    gdaltest.tiff_drv.Delete('tmp/tiff_write_96_src.tif')
-    gdaltest.tiff_drv.Delete('tmp/tiff_write_96_dst.tif')
 
     assert [expected_cs, expected_cs_mask, expected_cs_ovr_1, expected_cs_ovr_mask_1, expected_cs_ovr_2, expected_cs_ovr_mask_2] == \
        [cs, cs_mask, cs_ovr_1, cs_ovr_mask_1, cs_ovr_2, cs_ovr_mask_2], \
         'did not get expected checksums'
+
+    if check_libtiff_internal_or_at_least(4, 0, 11):
+        with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+            ds = gdal.Open('tmp/tiff_write_96_dst.tif')
+            cs = ds.GetRasterBand(1).Checksum()
+            cs_mask = ds.GetRasterBand(1).GetMaskBand().Checksum()
+            cs_ovr_1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+            cs_ovr_mask_1 = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+            cs_ovr_2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+            cs_ovr_mask_2 = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
+
+        assert [expected_cs, expected_cs_mask, expected_cs_ovr_1, expected_cs_ovr_mask_1, expected_cs_ovr_2, expected_cs_ovr_mask_2] == \
+            [cs, cs_mask, cs_ovr_1, cs_ovr_mask_1, cs_ovr_2, cs_ovr_mask_2], \
+            'did not get expected checksums'
+        assert ds.GetMetadataItem('HAS_USED_READ_ENCODED_API', '_DEBUG_') == '0'
+
+    import validate_cloud_optimized_geotiff
+    try:
+        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_96_dst.tif', check_tiled=False, full_check=True)
+        assert not errors, 'validate_cloud_optimized_geotiff failed'
+    except OSError:
+        pytest.fail('validate_cloud_optimized_geotiff failed')
+
+    gdaltest.tiff_drv.Delete('tmp/tiff_write_96_src.tif')
+    gdaltest.tiff_drv.Delete('tmp/tiff_write_96_dst.tif')
+
+
+def test_tiff_write_96_tiled_threads_nbits7_nbands1():
+    return test_tiff_write_96(['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32', 'NUM_THREADS=ALL_CPUS'], nbands = 1, nbits = 7)
+
+def test_tiff_write_96_tiled_threads_nbits7_nbands2():
+    return test_tiff_write_96(['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32', 'NUM_THREADS=ALL_CPUS'], nbands = 2, nbits = 7)
+
+
+###############################################################################
+# Test that strile arrays are written after the IFD
+
+
+def test_tiff_write_ifd_offsets():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
+
+    filename = '/vsimem/test_tiff_write_ifd_offsets.tif'
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'COMPRESS=LZW'])
+    val0_ref = int(ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val1_ref = int(ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val2_ref = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val3_ref = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val4_ref = int(ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val5_ref = int(ds.GetRasterBand(1).GetOverview(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    ds = None
+
+    assert val0_ref < val1_ref
+    assert val1_ref < val2_ref
+    assert val2_ref < val3_ref
+    assert val3_ref < val4_ref
+    assert val4_ref < val5_ref
+    assert val5_ref < 1100
+
+    # Retry with larger file
+    src_ds = gdal.GetDriverByName('MEM').Create('', 4096, 4096)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
+
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'COMPRESS=LZW'])
+    val0 = int(ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val1 = int(ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val2 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val3 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val4 = int(ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val5 = int(ds.GetRasterBand(1).GetOverview(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    ds = None
+
+    # Test rewriting but without changing strile size
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+    assert gdal.GetLastErrorMsg() == ''
+    f = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 1000, f).decode('LATIN1')
+    gdal.VSIFCloseL(f)
+    assert 'KNOWN_INCOMPATIBLE_EDITION=NO\n ' in data
+
+    # Test rewriting with changing strile size
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).WriteRaster(0,0,1,1,'x')
+    ds = None
+    assert gdal.GetLastErrorMsg() != ''
+    f = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 1000, f).decode('LATIN1')
+    gdal.VSIFCloseL(f)
+    assert 'KNOWN_INCOMPATIBLE_EDITION=YES\n' in data
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+    assert (val0_ref, val1_ref, val2_ref, val3_ref, val4_ref, val5_ref) == (val0, val1, val2, val3, val4, val5)
 
 ###############################################################################
 # Create a simple file by copying from an existing one - PixelIsPoint
@@ -7027,6 +7136,65 @@ def test_tiff_write_setgeotransform_flush():
     ds = None
 
     assert gdal.VSIStatL(tmpfile).size < 1000
+
+    gdaltest.tiff_drv.Delete(tmpfile)
+
+###############################################################################
+# Test that compression parameters are taken into account in Create() mode
+
+def test_tiff_write_compression_create_and_createcopy():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    tests = []
+
+    if 'DEFLATE' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=DEFLATE', 'ZLEVEL=1'],['COMPRESS=DEFLATE', 'ZLEVEL=9']))
+
+    if 'LZMA' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=LZMA', 'LZMA_PRESET=1'],['COMPRESS=LZMA', 'LZMA_PRESET=9']))
+
+    if 'JPEG' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=JPEG', 'JPEG_QUALITY=95'],['COMPRESS=JPEG', 'JPEG_QUALITY=50']))
+
+    if 'ZSTD' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=ZSTD', 'ZSTD_LEVEL=1'],['COMPRESS=ZSTD', 'ZSTD_LEVEL=9']))
+
+    # FIXME: this test randomly fails, especially on Windows, but also on Linux,
+    # for a unknown reason. Nothing suspicious with Valgrind however
+    # if 'LERC_DEFLATE' in md['DMD_CREATIONOPTIONLIST']:
+    #   tests.append((['COMPRESS=LERC_DEFLATE', 'ZLEVEL=1'],['COMPRESS=LERC_DEFLATE', 'ZLEVEL=9']))
+
+    if 'WEBP' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=WEBP', 'WEBP_LEVEL=95'],['COMPRESS=WEBP', 'WEBP_LEVEL=15']))
+
+    new_tests = []
+    for (before, after) in tests:
+        new_tests.append((before, after))
+        new_tests.append((before + ['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'NUM_THREADS=2'],
+                          after + ['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'NUM_THREADS=2']))
+    tests = new_tests
+
+    tmpfile = '/vsimem/test_tiff_write_compression_create.tif'
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    data = src_ds.ReadRaster()
+    for (before, after) in tests:
+        ds = gdaltest.tiff_drv.Create(tmpfile, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, options = before)
+        ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+        ds = None
+        size_before = gdal.VSIStatL(tmpfile).size
+        ds = gdaltest.tiff_drv.Create(tmpfile, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, options = after)
+        ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+        ds = None
+        size_after = gdal.VSIStatL(tmpfile).size
+        assert size_after < size_before, (before, after, size_before, size_after)
+        print(before, after, size_before, size_after)
+
+        gdaltest.tiff_drv.CreateCopy(tmpfile, src_ds, options = before)
+        size_before = gdal.VSIStatL(tmpfile).size
+        gdaltest.tiff_drv.CreateCopy(tmpfile, src_ds, options = after)
+        size_after = gdal.VSIStatL(tmpfile).size
+        assert size_after < size_before, (before, after, size_before, size_after)
 
     gdaltest.tiff_drv.Delete(tmpfile)
 

@@ -8947,14 +8947,71 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
     pszTargetKey = d->nullifyTargetKeyIfPossible(pszTargetKey);
     if( pszTargetKey == nullptr && iAxis <= 2 )
     {
+        auto ctxt = d->getPROJContext();
+
+        int iAxisModified = iAxis;
+
         d->demoteFromBoundCRS();
-        auto cs = proj_crs_get_coordinate_system(d->getPROJContext(), d->m_pj_crs);
+
+        PJ* cs = nullptr;
+        if( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
+        {
+            auto horizCRS = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 0);
+            if( horizCRS )
+            {
+                if( proj_get_type(horizCRS) == PJ_TYPE_BOUND_CRS )
+                {
+                    auto baseCRS = proj_get_source_crs(ctxt, horizCRS);
+                    if( baseCRS )
+                    {
+                        proj_destroy(horizCRS);
+                        horizCRS = baseCRS;
+                    }
+                }
+                cs = proj_crs_get_coordinate_system(ctxt, horizCRS);
+                proj_destroy(horizCRS);
+                if( cs )
+                {
+                    if( iAxisModified >= proj_cs_get_axis_count(ctxt, cs) )
+                    {
+                        iAxisModified -= proj_cs_get_axis_count(ctxt, cs);
+                        proj_destroy(cs);
+                        cs = nullptr;
+                    }
+                }
+            }
+
+            if( cs == nullptr )
+            {
+                auto vertCRS = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 1);
+                if( vertCRS )
+                {
+                    if( proj_get_type(vertCRS) == PJ_TYPE_BOUND_CRS )
+                    {
+                        auto baseCRS = proj_get_source_crs(ctxt, vertCRS);
+                        if( baseCRS )
+                        {
+                            proj_destroy(vertCRS);
+                            vertCRS = baseCRS;
+                        }
+                    }
+
+                    cs = proj_crs_get_coordinate_system(ctxt, vertCRS);
+                    proj_destroy(vertCRS);
+                }
+            }
+        }
+        else
+        {
+            cs = proj_crs_get_coordinate_system(ctxt, d->m_pj_crs);
+        }
+
         if( cs )
         {
             const char* pszName = nullptr;
             const char* pszOrientation = nullptr;
             proj_cs_get_axis_info(
-                d->getPROJContext(), cs, iAxis, &pszName, nullptr, &pszOrientation,
+                ctxt, cs, iAxisModified, &pszName, nullptr, &pszOrientation,
                 nullptr, nullptr, nullptr, nullptr);
             if( pszName && pszOrientation )
             {

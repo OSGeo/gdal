@@ -2,12 +2,13 @@
 GDAL
 ================================================================================
 
+.. include:: ./about_no_title.rst
+
 This documentation is also available as a `PDF file <gdal.pdf>`_.
 
 .. toctree::
     :maxdepth: 2
 
-    about
     download
     programs/index
     drivers/raster/index
@@ -19,6 +20,7 @@ This documentation is also available as a `PDF file <gdal.pdf>`_.
     community
     contributing/index
     faq
+    license
 
 Index
 =====

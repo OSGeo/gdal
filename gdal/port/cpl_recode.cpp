@@ -370,3 +370,44 @@ int CPLStrlenUTF8( const char *pszUTF8Str )
     }
     return nCharacterCount;
 }
+
+/************************************************************************/
+/*                           CPLCanRecode()                             */
+/************************************************************************/
+
+/**
+ * Checks if it is possible to recode a string from one encoding to another.
+ *
+ * @param pszTestStr a NULL terminated string.
+ * @param pszSrcEncoding the source encoding.
+ * @param pszDstEncoding the destination encoding.
+ *
+ * @return a TRUE if recode is possible.
+ *
+ * @since GDAL 3.1.0
+ */
+int CPLCanRecode(const char *pszTestStr,
+                 const char *pszSrcEncoding,
+                 const char *pszDstEncoding)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    char* pszRec( CPLRecode( pszTestStr, pszSrcEncoding, pszDstEncoding ) );
+    CPLPopErrorHandler();
+
+    if( pszRec == nullptr )
+    {
+        return FALSE;
+    }
+
+    CPLFree( pszRec );
+
+    if( CPLGetLastErrorType() != 0 )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}

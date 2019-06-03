@@ -62,7 +62,7 @@ typedef struct {
         GCS_Voirol_1875_Paris.  Includes datum and prime meridian value. */
     short	GCS;
 
-    /** From ProjLinearUnitsGeoKey.  For example Linear_Meter. */
+    /** From ProjLinearUnitsGeoKey if found, or from GeogLinearUnitsGeoKey otherwise.  For example Linear_Meter. */
     short	UOMLength;
 
     /** One UOMLength = UOMLengthInMeters meters. */

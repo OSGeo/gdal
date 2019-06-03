@@ -52,13 +52,13 @@ html_theme = 'gdal_rtd'
 
 html_context = {
   'display_github': True,
-  'github_user': 'OSGEo',
-  'github_repo': 'GDAL',
+  'github_user': 'OSGeo',
+  'github_repo': 'gdal',
   'github_version': '/master/gdal/doc/source/'
 }
 
 html_theme_options = {
-        'canonical_url': 'https://gdal.dev',
+    'canonical_url': 'https://gdal.org',
     'analytics_id': '',  #  Provided by Google in your dashboard
     'logo_only': True,
     'display_version': True,

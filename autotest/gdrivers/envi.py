@@ -351,6 +351,32 @@ def test_envi_truncated():
 
     assert cs == 2315
 
+###############################################################################
+# Test writing & reading GCPs (#1528)
 
 
+def test_envi_gcp():
 
+    filename = '/vsimem/test_envi_gcp.dat'
+    ds = gdal.GetDriverByName('ENVI').Create(filename, 1, 1)
+    gcp = gdal.GCP()
+    gcp.GCPPixel = 1
+    gcp.GCPLine = 2
+    gcp.GCPX = 3
+    gcp.GCPY = 4
+    ds.SetGCPs([gcp], None)
+    ds = None
+    gdal.Unlink(filename + ".aux.xml")
+
+    ds = gdal.Open(filename)
+    assert ds.GetGCPCount() == 1
+    gcps = ds.GetGCPs()
+    assert len(gcps) == 1
+    gcp = gcps[0]
+    ds = None
+    assert gcp.GCPPixel == 1
+    assert gcp.GCPLine == 2
+    assert gcp.GCPX == 3
+    assert gcp.GCPY == 4
+
+    gdal.GetDriverByName('ENVI').Delete(filename)

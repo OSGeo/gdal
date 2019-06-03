@@ -12,9 +12,10 @@ images, and so has found its way into GDAL. FITS support is implemented
 in terms of the standard `CFITSIO
 library <http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html>`__,
 which you must have on your system in order for FITS support to be
-enabled. Both reading and writing of FITS files is supported. At the
-current time, no support for a georeferencing system is implemented, but
-WCS (World Coordinate System) support is possible in the future.
+enabled (see `compilation instructions on trac <https://trac.osgeo.org/gdal/wiki/FITS>`__).
+Both reading and writing of FITS files is supported. Starting from version 3.0
+georeferencing system support is implemented via the conversion of
+WCS (World Coordinate System) keywords.
 
 Non-standard header keywords that are present in the FITS file will be
 copied to the dataset's metadata when the file is opened, for access via
@@ -24,10 +25,13 @@ the GDAL handle is closed.
 
 Note to those familiar with the CFITSIO library: The automatic rescaling
 of data values, triggered by the presence of the BSCALE and BZERO header
-keywords in a FITS file, is disabled in GDAL. Those header keywords are
+keywords in a FITS file, is disabled in GDAL < v3.0. Those header keywords are
 accessible and updatable via dataset metadata, in the same was as any
 other header keywords, but they do not affect reading/writing of data
-values from/to the file.
+values from/to the file. Starting from version 3.0 BZERO and BSCALE keywords
+are managed via standard :cpp:func:`GDALRasterBand::GetOffset` / :cpp:func:`GDALRasterBand::SetOffset`
+and :cpp:func:`GDALRasterBand::GetScale` / :cpp:func:`GDALRasterBand::SetScale` GDAL functions and no more
+referred as metadata.
 
 NOTE: Implemented as ``gdal/frmts/fits/fitsdataset.cpp``.
 

@@ -156,7 +156,8 @@ OGRLayer *OGRSXFDataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRSXFDataSource::Open(const char * pszFilename, bool bUpdateIn,
+                           const char* const* papszOpenOpts)
 {
     if( bUpdateIn )
     {
@@ -229,7 +230,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     //read spatial data
-    if (ReadSXFMapDescription(fpSXF, oSXFPassport) != OGRERR_NONE)
+    if (ReadSXFMapDescription(fpSXF, oSXFPassport, papszOpenOpts) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "SXF. Wrong state of the data.");
         CloseFile();
@@ -245,8 +246,10 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*---------------- TRY READ THE RSC FILE HEADER  -----------------------*/
 
     CPLString soRSCRileName;
-    const char* pszRSCRileName = CPLGetConfigOption("SXF_RSC_FILENAME", "");
-    if (CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
+    const char* pszRSCRileName =
+        CSLFetchNameValueDef(papszOpenOpts, "SXF_RSC_FILENAME",
+                             CPLGetConfigOption("SXF_RSC_FILENAME", ""));
+    if (pszRSCRileName != nullptr && CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
     {
         soRSCRileName = pszRSCRileName;
     }
@@ -301,7 +304,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             CPLDebug( "OGRSXFDataSource", "RSC Filename: %s",
                       soRSCRileName.c_str() );
-            CreateLayers(fpRSC);
+            CreateLayers(fpRSC, papszOpenOpts);
             VSIFCloseL(fpRSC);
         }
     }
@@ -489,10 +492,16 @@ OGRErr OGRSXFDataSource::ReadSXFInformationFlags(VSILFILE* fpSXFIn, SXFPassport&
     return OGRERR_NONE;
 }
 
-void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
+void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport,
+                                 const char* const* papszOpenOpts)
 {
-    if (!CPLTestBool(CPLGetConfigOption("SXF_SET_VERTCS", "NO")))
+    const char* pszSetVertCS =
+        CSLFetchNameValueDef(papszOpenOpts,
+                             "SXF_SET_VERTCS",
+                              CPLGetConfigOption("SXF_SET_VERTCS", "NO"));
+    if (!CPLTestBool(pszSetVertCS))
         return;
+
 
     const int nEPSG = static_cast<int>(aoVCS[iVCS]);
 
@@ -525,7 +534,8 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport)
         return;
     }
 }
-OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& passport)
+OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& passport,
+                                               const char* const* papszOpenOpts)
 {
     // int nObjectsRead = 0;
     passport.stMapDescription.Env.MaxX = -100000000;
@@ -774,7 +784,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
             passport.stMapDescription.pSpatRef = new OGRSpatialReference();
             passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(nEPSG);
-            SetVertCS(iVCS, passport);
+            SetVertCS(iVCS, passport, papszOpenOpts);
             return eErr;
         }
         else
@@ -807,7 +817,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         passport.stMapDescription.pSpatRef = new OGRSpatialReference();
         passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(nEPSG);
-        SetVertCS(iVCS, passport);
+        SetVertCS(iVCS, passport, papszOpenOpts);
         return eErr;
     }
     else if (iEllips == 45 && iProjSys == 35) //Mercator 3857 on sphere wgs84
@@ -815,7 +825,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         passport.stMapDescription.pSpatRef = new OGRSpatialReference("PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]");
         passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = OGRERR_NONE; //passport.stMapDescription.pSpatRef->importFromEPSG(3857);
-        SetVertCS(iVCS, passport);
+        SetVertCS(iVCS, passport, papszOpenOpts);
         return eErr;
     }
     else if (iEllips == 9 && iProjSys == 35) //Mercator 3395 on ellips wgs84
@@ -823,7 +833,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         passport.stMapDescription.pSpatRef = new OGRSpatialReference();
         passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(3395);
-        SetVertCS(iVCS, passport);
+        SetVertCS(iVCS, passport, papszOpenOpts);
         return eErr;
     }
     else if (iEllips == 9 && iProjSys == 34) //Miller 54003 on sphere wgs84
@@ -833,7 +843,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         OGRErr eErr = OGRERR_NONE; //passport.stMapDescription.pSpatRef->importFromEPSG(3395);
         //OGRErr eErr = passport.stMapDescription.pSpatRef->importFromEPSG(54003);
 
-        SetVertCS(iVCS, passport);
+        SetVertCS(iVCS, passport, papszOpenOpts);
         return eErr;
     }
     else if (iEllips == 9 && iProjSys == 33 &&
@@ -842,7 +852,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         passport.stMapDescription.pSpatRef = new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
         passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         OGRErr eErr = OGRERR_NONE;
-        SetVertCS(iVCS, passport);
+        SetVertCS(iVCS, passport, papszOpenOpts);
         return eErr;
     }
 
@@ -866,7 +876,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     passport.stMapDescription.pSpatRef = new OGRSpatialReference();
     passport.stMapDescription.pSpatRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRErr eErr = passport.stMapDescription.pSpatRef->importFromPanorama(anData[2], anData[3], anData[0], adfPrjParams);
-    SetVertCS(iVCS, passport);
+    SetVertCS(iVCS, passport, papszOpenOpts);
     return eErr;
 }
 
@@ -993,7 +1003,7 @@ void OGRSXFDataSource::CreateLayers()
     nLayers++;
 }
 
-void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
+void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC, const char* const* papszOpenOpts)
 {
 
     RSCHeader stRSCFileHeader;
@@ -1028,10 +1038,11 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
     for( GUInt32 i = 0; i < stRSCFileHeader.Layers.nRecordCount; ++i )
     {
         VSIFReadL(&LAYER, nLayerStructSize, 1, fpRSC);
-
         papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-        bool bLayerFullName = CPLTestBool(CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO"));
-
+        bool bLayerFullName = CPLTestBool(
+                 CSLFetchNameValueDef(papszOpenOpts,
+                                      "SXF_LAYER_FULLNAME",
+                                       CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO")));
         char* pszRecoded = nullptr;
         if (bLayerFullName)
         {

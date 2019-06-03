@@ -630,24 +630,5 @@ int IMapInfoFile::TestUtf8Capability() const
         return FALSE;
     }
 
-    CPLClearRecodeWarningFlags();
-    CPLErrorReset();
-
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    char* pszTest( CPLRecode( "test", GetEncoding(), CPL_ENC_UTF8 ) );
-    CPLPopErrorHandler();
-
-    if( pszTest == nullptr )
-    {
-        return FALSE;
-    }
-
-    CPLFree( pszTest );
-
-    if( CPLGetLastErrorType() != 0 )
-    {
-        return FALSE;
-    }
-
-    return TRUE;
+    return CPLCanRecode("test", GetEncoding(), CPL_ENC_UTF8);
 }

@@ -53,7 +53,7 @@ file <raster.wld>` with the extension .tfw, .tifw/.tiffw or
 .wld, as well as a MapInfo .tab file.
 
 By default, information is fetched in following order (first listed is
-the most prioritary): PAM (Persitant Auxiliary metadata) .aux.xml
+the most prioritary): PAM (Persistent Auxiliary metadata) .aux.xml
 sidecar file, INTERNAL (GeoTIFF keys and tags), TABFILE (.tab),
 WORLDFILE (.tfw, .tifw/.tiffw or .wld).
 
@@ -114,8 +114,10 @@ method.
 
 The block size (tile width and height) used for overviews (internal or
 external) can be specified by setting the GDAL_TIFF_OVR_BLOCKSIZE
-environment variable to a power-of-two value between 64 and 4096. The
-default value is 128.
+environment variable to a power-of-two value between 64 and 4096. The 
+default is 128, or starting with GDAL 3.1 to use the same block size 
+as the full-resolution dataset if possible (i.e. block height and width
+are equal, a power-of-two, and between 64 and 4096).
 
 Overviews and nodata masks
 --------------------------
@@ -356,7 +358,7 @@ Creation Options
    purposes, but some applications only support pixel interleaved TIFF
    files.
 
--  **TILED=YES**: By default stripped TIFF files are created. This
+-  **TILED=YES**: By default striped TIFF files are created. This
    option can be used to force creation of tiled TIFF files.
 
 -  **BLOCKXSIZE=n**: Sets tile width, defaults to 256.

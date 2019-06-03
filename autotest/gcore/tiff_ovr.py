@@ -1884,4 +1884,39 @@ def test_tiff_ovr_average_multiband_vs_singleband():
     assert cs_band == cs_pixel
 
 
+###############################################################################
+# Cleanup
 
+def test_tiff_ovr_cleanup():
+    gdaltest.tiff_drv.Delete('tmp/mfloat32.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr4.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr5.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr6.tif')
+    gdaltest.tiff_drv.Delete('tmp/test_average_palette.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr9.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr10.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr11.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr12.tif')
+    gdaltest.tiff_drv.Delete('tmp/test_gauss_palette.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr15.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr16.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr17.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr18.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr19.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr20.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr21.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr22.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr23.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr24.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr25.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr26.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr27.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr30.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr31.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr37.dt0')
+    gdaltest.tiff_drv.Delete('tmp/ovr38.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr39.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr40.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr41.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr42.tif')
+    gdaltest.tiff_drv.Delete('tmp/rgba_with_alpha_0_and_255.tif')

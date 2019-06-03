@@ -23,7 +23,7 @@ RUN apt-get update -y \
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends \
        libcharls-dev libopenjp2-7-dev libcairo2-dev \
-       python-dev python-numpy \
+       python3-dev python3-numpy \
        libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
        curl libcurl4-gnutls-dev libxml2-dev libexpat-dev libxerces-c-dev \
        libnetcdf-dev libpoppler-dev libpoppler-private-dev \
@@ -232,13 +232,13 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python2.7          /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/python3            /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python2.7/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
@@ -253,8 +253,9 @@ RUN apt-get update; \
         curl unzip
 
 # GDAL dependencies
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libcharls1 libopenjp2-7 libcairo2 python-numpy \
+RUN apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        libcharls1 libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.6.2 libgeos-c1v5 \
         libcurl4 libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler73 libspatialite7 gpsbabel \

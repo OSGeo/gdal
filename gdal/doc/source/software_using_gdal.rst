@@ -76,6 +76,7 @@ Software using GDAL
 - `Opticks  <http://opticks.org>`_  an open source remote sensing application and development framework, with a GDAL plugin.
 - `Orfeo Toolbox (OTB)  <http://www.orfeo-toolbox.org>`_  a general remote sensing image processing library.
 - `OSSIM  <http://www.ossim.org>`_  Another geospatial viewing and analysis environment which uses GDAL as one of several plugins.
+- `PDAL  <https://pdal.io>`_  Point Cloud Data Abstraction Library
 - `pktools  <http://pktools.nongnu.org/html/index.html>`_  open source (GPLv3) tools written in C++ for remote sensing image processing
 - `PNMapcalc  <http://pawel.netzel.pl/index.php?id=software#a_mapcalc>`_  A raster map calculator with C-like scripting language.
 - `PostGIS  <http://www.postgis.net>`_ spatial database extender for PostgreSQL: The raster loader and many of the raster SQL functions rely on GDAL.

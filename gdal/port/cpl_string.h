@@ -292,6 +292,9 @@ char CPL_DLL *CPLForceToASCII(
     const char* pabyData, int nLen,
     char chReplacementChar ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLStrlenUTF8( const char *pszUTF8Str );
+int CPL_DLL CPLCanRecode(
+    const char *pszTestStr, const char *pszSrcEncoding,
+    const char *pszDstEncoding) CPL_WARN_UNUSED_RESULT;
 CPL_C_END
 
 /************************************************************************/

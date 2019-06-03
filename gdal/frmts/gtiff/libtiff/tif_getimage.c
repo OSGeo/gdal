@@ -2957,7 +2957,7 @@ TIFFReadRGBATileExt(TIFF* tif, uint32 col, uint32 row, uint32 * raster, int stop
     if( !TIFFIsTiled( tif ) )
     {
 		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif),
-				  "Can't use TIFFReadRGBATile() with stripped file.");
+				  "Can't use TIFFReadRGBATile() with striped file.");
 		return (0);
     }
     

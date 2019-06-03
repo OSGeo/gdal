@@ -400,7 +400,9 @@ OGRFeature *OGRSXFLayer::GetNextFeature()
 int OGRSXFLayer::TestCapability( const char * pszCap )
 
 {
-    if (EQUAL(pszCap, OLCStringsAsUTF8))
+    if (EQUAL(pszCap, OLCStringsAsUTF8) &&
+        CPLCanRecode("test", "CP1251", CPL_ENC_UTF8) &&
+        CPLCanRecode("test", "KOI8-R", CPL_ENC_UTF8))
         return TRUE;
     else if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;

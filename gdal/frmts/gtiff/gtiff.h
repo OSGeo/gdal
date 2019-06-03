@@ -43,7 +43,7 @@ void CPL_DLL LibgeotiffOneTimeInit();
 CPL_C_END
 
 void    GTIFFSetInExternalOvr( bool b );
-void    GTIFFGetOverviewBlockSize( int* pnBlockXSize, int* pnBlockYSize );
+void    GTIFFGetOverviewBlockSize( GDALRasterBandH hBand, int* pnBlockXSize, int* pnBlockYSize );
 void    GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
 void    GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
 int     GTIFFGetCompressionMethod( const char* pszValue,

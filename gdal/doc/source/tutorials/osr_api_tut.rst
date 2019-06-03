@@ -106,8 +106,7 @@ is still OGC WKT 1.
 
 .. code-block::
 
-    char	*pszWKT = NULL;
-
+    char *pszWKT = NULL;
     oSRS.SetWellKnownGeogCS( "WGS84" );
     oSRS.exportToWkt( &pszWKT );
     printf( "%s\n", pszWKT );
@@ -144,7 +143,7 @@ Starting with GDAL 3.0, the :cpp:func:`OGRSpatialReference::exportToWkt` method 
 
 .. code-block::
 
-        char	*pszWKT = nullptr;
+        char *pszWKT = nullptr;
         oSRS.SetWellKnownGeogCS( "WGS84" );
         const char* apszOptions[] = { "FORMAT=WKT2_2018", "MULTILINE=YES", nullptr };
         oSRS.exportToWkt( &pszWKT, apszOptions );
@@ -233,7 +232,7 @@ geographic CRS (datum) of WGS84.
 
 .. code-block::
 
-    OGRSpatialReference	oSRS;
+    OGRSpatialReference oSRS;
 
     oSRS.SetProjCS( "UTM 17 (WGS84) in northern hemisphere." );
     oSRS.SetWellKnownGeogCS( "WGS84" );

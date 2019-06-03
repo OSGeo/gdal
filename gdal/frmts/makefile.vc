@@ -253,8 +253,3 @@ plugins-install:
 		&& $(MAKE) /f makefile.vc plugin-install \
 		&& cd .. \
 		|| exit 1
-
-html-install:
-	copy *.html $(HTMLDIR)
-	-for %d in ( $(DIRLIST) ) do \
-		copy %d\frmt_*.html $(HTMLDIR)

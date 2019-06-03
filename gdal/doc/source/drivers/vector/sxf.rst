@@ -44,6 +44,8 @@ type).
 If config option **SXF_SET_VERTCS** set to ON, the layers spatial
 reference will include vertical coordinate system description if exist.
 
+Since GDAL 3.1 config options can be passed as driver open options.
+
 Driver capabilities
 -------------------
 

@@ -19,3 +19,4 @@ GDAL
     community
     contributing/index
     faq
+    license

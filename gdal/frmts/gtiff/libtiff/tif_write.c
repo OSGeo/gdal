@@ -570,7 +570,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 	}
 	if (tiles ^ isTiled(tif)) {
 		TIFFErrorExt(tif->tif_clientdata, module, tiles ?
-		    "Can not write tiles to a stripped image" :
+		    "Can not write tiles to a striped image" :
 		    "Can not write scanlines to a tiled image");
 		return (0);
 	}
@@ -626,6 +626,20 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 	if (tif->tif_scanlinesize == 0)
 		return (0);
 	tif->tif_flags |= TIFF_BEENWRITING;
+
+        if( tif->tif_dir.td_stripoffset_entry.tdir_tag != 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_count == 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_type == 0 &&
+            tif->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8 == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_tag != 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_count == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_type == 0 &&
+            tif->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8 == 0 &&
+            !(tif->tif_flags & TIFF_DIRTYDIRECT)  )
+        {
+            TIFFForceStrileArrayWriting(tif);
+        }
+
 	return (1);
 }
 
