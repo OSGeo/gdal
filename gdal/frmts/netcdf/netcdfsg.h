@@ -300,8 +300,8 @@ namespace nccfdriver
         SG_Exception_EmptyDim() : err_msg("A dimension has length <= 0, but it must have length > 0") {}
     };
 
-    // arg1 is corrupted general error
-    class SG_Exception_General_Malformed: public SG_Exception
+    // arg1 is general corruption or malformed error
+    explicit class SG_Exception_General_Malformed: public SG_Exception
     {
         std::string err_msg;
 
