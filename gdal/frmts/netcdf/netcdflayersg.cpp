@@ -121,8 +121,8 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     memset(baseName, 0, NC_MAX_CHAR + 1);
     nc_inq_varname(ncid, nc_basevarId, baseName);
 
-
     OGRSpatialReference * poSRS = nullptr;
+/*  // Disabled, until SRS function is refactored and fixed
     if(pszCFProjection != nullptr)
     {
         poSRS = new OGRSpatialReference();
@@ -131,8 +131,10 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
             delete poSRS;
             throw nccfdriver::SG_Exception_General_Malformed("SRS settings");
         }
+
+        poSRS -> Release();
     }
-    
+*/   
     netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS); 
 
     poL->EnableSGBypass();
