@@ -72,6 +72,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_gtiff
     GDALRegister_GTiff();
+    GDALRegister_COG();
 #endif
 
 #ifdef FRMT_nitf
