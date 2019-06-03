@@ -337,6 +337,9 @@ Only one grid mapping may be associated with an entire dataset of netCDFLayers.
 Attempting use more than one grid mapping, will result in the last set grid mapping
 overwriting all others.
 
+Furthermore, CF-1.8 grid mappings are currently not supported. Support for CF-1.8 grid
+mappings will be introduced in the near future.
+
 Further Reading
 ---------------
 
