@@ -301,14 +301,14 @@ namespace nccfdriver
     };
 
     // arg1 is general corruption or malformed error
-    explicit class SG_Exception_General_Malformed: public SG_Exception
+    class SG_Exception_General_Malformed: public SG_Exception
     {
         std::string err_msg;
 
         public:
             const char* get_err_msg() override { return err_msg.c_str(); }
         
-        SG_Exception_General_Malformed(const char*); 
+        explicit SG_Exception_General_Malformed(const char*); 
     };
     // Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h
     
