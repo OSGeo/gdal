@@ -202,7 +202,7 @@ def test_mask_5():
 
 def test_mask_6():
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
+  with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE'):
     ds = gdal.Open('data/test_with_mask_1bit.tif')
 
     assert ds is not None, 'Failed to open test dataset.'
@@ -214,15 +214,13 @@ def test_mask_6():
     cs = band.GetMaskBand().Checksum()
     assert cs == 100, 'Got wrong mask checksum'
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
-
 ###############################################################################
 # Test a TIFF file with 3 bands and an embedded mask of 1 band of 1 bit
 
 
 def test_mask_7():
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
+  with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE'):
     ds = gdal.Open('data/test3_with_1mask_1bit.tif')
 
     assert ds is not None, 'Failed to open test dataset.'
@@ -234,8 +232,6 @@ def test_mask_7():
 
         cs = band.GetMaskBand().Checksum()
         assert cs == 100, 'Got wrong mask checksum'
-
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
 ###############################################################################
 # Test a TIFF file with 1 band and an embedded mask of 8 bit.
@@ -302,7 +298,7 @@ def test_mask_10():
 
 def test_mask_11():
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
+  with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE'):
     ds = gdal.Open('data/test_with_mask_1bit_and_ovr.tif')
 
     assert ds is not None, 'Failed to open test dataset.'
@@ -331,8 +327,6 @@ def test_mask_11():
     cs = band.Checksum()
     assert cs == 25, 'Got wrong checksum for the overview of the mask'
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
-
 
 ###############################################################################
 # Test a TIFF file with 3 bands, an overview, an embedded mask of 1 bit, and an embedded
@@ -340,7 +334,7 @@ def test_mask_11():
 
 def test_mask_12():
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
+  with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE'):
     ds = gdal.Open('data/test3_with_mask_1bit_and_ovr.tif')
 
     assert ds is not None, 'Failed to open test dataset.'
@@ -370,15 +364,11 @@ def test_mask_12():
         cs = band.Checksum()
         assert cs == 25, 'Got wrong checksum for the overview of the mask'
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
-
 ###############################################################################
 # Test creation of external TIFF mask band
 
 
 def test_mask_13():
-
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -419,9 +409,7 @@ def test_mask_13():
 
     with pytest.raises(OSError, message='tmp/byte_with_mask.tif.msk is still there'):
         os.stat('tmp/byte_with_mask.tif.msk')
-    
 
-    
 ###############################################################################
 # Test creation of internal TIFF mask band
 
@@ -433,9 +421,8 @@ def test_mask_14():
     assert src_ds is not None, 'Failed to open test dataset.'
 
     drv = gdal.GetDriverByName('GTiff')
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
-    ds = drv.CreateCopy('tmp/byte_with_mask.tif', src_ds)
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE'):
+      ds = drv.CreateCopy('tmp/byte_with_mask.tif', src_ds)
     src_ds = None
 
     # The only flag value supported for internal mask is GMF_PER_DATASET
@@ -473,24 +460,20 @@ def test_mask_14():
     with pytest.raises(OSError, message='tmp/byte_with_mask.tif.msk should not exist'):
         os.stat('tmp/byte_with_mask.tif.msk')
     
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE'):
+      ds = gdal.Open('tmp/byte_with_mask.tif')
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
-    ds = gdal.Open('tmp/byte_with_mask.tif')
-
-    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+      assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
         'wrong mask flags'
-
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 400, 'Got wrong checksum for the mask (3)'
 
     # Test fix for #5884
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
     old_val = gdal.GetCacheMax()
     gdal.SetCacheMax(0)
-    out_ds = drv.CreateCopy('/vsimem/byte_with_mask.tif', ds, options=['COMPRESS=JPEG'])
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        out_ds = drv.CreateCopy('/vsimem/byte_with_mask.tif', ds, options=['COMPRESS=JPEG'])
     gdal.SetCacheMax(old_val)
     assert out_ds.GetRasterBand(1).Checksum() != 0
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
@@ -517,35 +500,30 @@ def mask_and_ovr(order, method):
     src_ds = None
 
     if order == 1:
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.BuildOverviews(method, overviewlist=[2, 4])
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-        ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
-        ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+            ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     elif order == 2:
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+      with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
         ds.BuildOverviews(method, overviewlist=[2, 4])
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     elif order == 3:
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+      with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
         ds.BuildOverviews(method, overviewlist=[2, 4])
         ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     elif order == 4:
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+      with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
         # The overview for the mask will be implicitly created and computed.
         ds.BuildOverviews(method, overviewlist=[2, 4])
-        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
 
     if order < 4:
         ds = None
@@ -560,13 +538,11 @@ def mask_and_ovr(order, method):
         os.stat('tmp/byte_with_ovr_and_mask.tif.msk')
     
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
-    ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif')
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE'):
+        ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif')
 
-    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
-        'wrong mask flags'
-
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
+        assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET, \
+            'wrong mask flags'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 400, 'Got wrong checksum for the mask'
@@ -756,12 +732,11 @@ def test_mask_23():
     src_ds = drv.Create('tmp/mask_23_src.tif', 3000, 2000, 3, options=['TILED=YES', 'SPARSE_OK=YES'])
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
     old_val = gdal.GetCacheMax()
     gdal.SetCacheMax(15000000)
     gdal.ErrorReset()
-    ds = drv.CreateCopy('tmp/mask_23_dst.tif', src_ds, options=['TILED=YES', 'COMPRESS=JPEG'])
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ds = drv.CreateCopy('tmp/mask_23_dst.tif', src_ds, options=['TILED=YES', 'COMPRESS=JPEG'])
     gdal.SetCacheMax(old_val)
 
     del ds
