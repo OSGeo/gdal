@@ -2416,7 +2416,7 @@ static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
 /*                      SetProjectionFromVar()                          */
 /************************************************************************/
 void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
-                                          bool bReadSRSOnly )
+                                          bool bReadSRSOnly, const char * pszGivenGM)
 {
     bool bGotGeogCS = false;
     bool bGotCfSRS = false;
@@ -2459,7 +2459,8 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     }
 
     // Look for grid_mapping metadata.
-    const char *pszValue = FetchAttr(nGroupId, nVarId, CF_GRD_MAPPING);
+    const char *pszValue = pszGivenGM != nullptr ? pszGivenGM
+                                                 : FetchAttr(nGroupId, nVarId, CF_GRD_MAPPING);
     char *pszGridMappingValue = CPLStrdup(pszValue ? pszValue : "");
 
     if( !EQUAL(pszGridMappingValue, "") )
@@ -3873,6 +3874,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         }
     }
 #endif
+}
+
+void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
+                                          bool bReadSRSOnly )
+{
+    SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr);
 }
 
 int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )

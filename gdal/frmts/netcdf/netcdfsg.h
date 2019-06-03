@@ -65,7 +65,7 @@ namespace nccfdriver
         Point operator=(const Point &);
 
         public:
-        explicit Point(int dim) : values(std::unique_ptr<double, std::default_delete<double[]>>(new double[dim])) {}
+        explicit Point(int dim) : size(dim), values(std::unique_ptr<double, std::default_delete<double[]>>(new double[dim])) {}
         double& operator[](size_t i) { return this->values.get()[i]; }
         int getOrder() { return this->size; }
     };
@@ -80,6 +80,7 @@ namespace nccfdriver
         geom_t type;         // internal geometry type structure
         int ncid;        // ncid - as used in netcdf.h
         int gc_varId;        // the id of the underlying geometry_container variable
+        std::string gm_name_s; // grid mapping variable name
         int gm_varId;        // id used for grid mapping
         int inst_dimId;        // dimension id for geometry instance dimension
         size_t inst_dimLen;    // value of instance dimension
@@ -132,6 +133,11 @@ namespace nccfdriver
          */
         void next_geometry(); // simply reuses the host structure
         bool has_next_geometry();
+
+        /* std::string& getGridMappingName()
+         * returns the variable name which holds grid mapping data
+         */
+        std::string& getGridMappingName() { return this->gm_name_s; }
 
         /* int SGeometry::getGridMappingVarID();
          * returns the varID of the associated grid mapping variable ID
@@ -294,6 +300,16 @@ namespace nccfdriver
         SG_Exception_EmptyDim() : err_msg("A dimension has length <= 0, but it must have length > 0") {}
     };
 
+    // arg1 is corrupted general error
+    class SG_Exception_General_Malformed: public SG_Exception
+    {
+        std::string err_msg;
+
+        public:
+            const char* get_err_msg() override { return err_msg.c_str(); }
+        
+        SG_Exception_General_Malformed(const char*); 
+    };
     // Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h
     
     /* Retrieves the minor version from the value Conventions global attr

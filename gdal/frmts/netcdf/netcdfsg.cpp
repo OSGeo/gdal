@@ -138,7 +138,6 @@ namespace nccfdriver
 */                    
 
         // Get grid mapping variable, if it exists
-        std::string gm_name_s;
         this->gm_varId = INVALID_VAR_ID;
         if(attrf(ncId, geoVarId, CF_GRD_MAPPING, gm_name_s) != "")
         {
@@ -923,6 +922,14 @@ namespace nccfdriver
                 + " and "
                 + arg2_s
                 + " do not match.";
+    }
+
+    SG_Exception_General_Malformed
+        ::SG_Exception_General_Malformed(const char * arg)
+    {
+        std::string arg1_s(arg);
+
+        this -> err_msg = "Corruption or malformed formatting has been detected in: " + arg1_s;
     }
 
     // to get past linker

@@ -107,19 +107,33 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     int cont_id = sg->getContainerId();
     nccfdriver::SGeometry_PropertyScanner pr(ncid, cont_id);
     OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType(), sg->get_axisCount());
+    
+    if(sg->getGridMappingVarID() != nccfdriver::INVALID_VAR_ID)
+        SetProjectionFromVar(ncid, nc_basevarId, true, sg->getGridMappingName().c_str());     
 
     // Geometry Type invalid, avoid further processing
     if(owgt == wkbNone)
     {
         throw nccfdriver::SG_Exception_BadFeature();
     }
-    
 
     char baseName[NC_MAX_CHAR + 1];
     memset(baseName, 0, NC_MAX_CHAR + 1);
     nc_inq_varname(ncid, nc_basevarId, baseName);
 
-    netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, nullptr); 
+
+    OGRSpatialReference * poSRS = nullptr;
+    if(pszCFProjection != nullptr)
+    {
+        poSRS = new OGRSpatialReference();
+        if(poSRS->importFromWkt(pszCFProjection) != OGRERR_NONE)
+        {
+            delete poSRS;
+            throw nccfdriver::SG_Exception_General_Malformed("SRS settings");
+        }
+    }
+    
+    netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS); 
 
     poL->EnableSGBypass();
     OGRFeatureDefn * defn = poL->GetLayerDefn();
