@@ -3140,7 +3140,7 @@ CPLConfigOptionSetter::CPLConfigOptionSetter(
     m_pszOldValue(nullptr),
     m_bRestoreOldValue(false)
 {
-    const char* pszOldValue = CPLGetConfigOption(pszKey, nullptr);
+    const char* pszOldValue = CPLGetThreadLocalConfigOption(pszKey, nullptr);
     if( (bSetOnlyIfUndefined && pszOldValue == nullptr) || !bSetOnlyIfUndefined )
     {
         m_bRestoreOldValue = true;
