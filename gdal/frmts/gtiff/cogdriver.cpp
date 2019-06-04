@@ -31,6 +31,7 @@
 #include "gt_overview.h"
 #include "gdal_utils.h"
 #include "gdalwarper.h"
+#include "cogdriver.h"
 
 #include <algorithm>
 #include <memory>
@@ -98,20 +99,26 @@ static const char* GetResampling(GDALDataset* poSrcDS)
 }
 
 /************************************************************************/
-/*                        CreateReprojectedDS()                         */
+/*                     COGGetWarpingCharacteristics()                   */
 /************************************************************************/
 
-static std::unique_ptr<GDALDataset> CreateReprojectedDS(
-                                GDALDataset *poSrcDS,
-                                const char * const* papszOptions,
-                                GDALProgressFunc pfnProgress,
-                                void * pProgressData,
-                                double& dfCurPixels,
-                                double& dfTotalPixelsToProcess)
+bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
+                                  const char * const* papszOptions,
+                                  CPLString& osResampling,
+                                  CPLString& osTargetSRS,
+                                  int& nXSize,
+                                  int& nYSize,
+                                  double& dfMinX,
+                                  double& dfMinY,
+                                  double& dfMaxX,
+                                  double& dfMaxY)
 {
-    CPLString osTargetSRS(CSLFetchNameValueDef(papszOptions, "TARGET_SRS", ""));
+    osTargetSRS = CSLFetchNameValueDef(papszOptions, "TARGET_SRS", "");
     CPLString osTilingScheme(CSLFetchNameValueDef(papszOptions,
                                                   "TILING_SCHEME", "CUSTOM"));
+    if( EQUAL(osTargetSRS, "") && EQUAL(osTilingScheme, "CUSTOM") )
+        return false;
+
     CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
     CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
     if( EQUAL(osTilingScheme, "GoogleMapsCompatible") )
@@ -123,13 +130,12 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
             GDALCreateGenImgProjTransformer2( poSrcDS, nullptr, aosTO.List() );
     if( hTransformArg == nullptr )
     {
-        return nullptr;
+        return false;
     }
 
     GDALTransformerInfo* psInfo = static_cast<GDALTransformerInfo*>(hTransformArg);
     double adfGeoTransform[6];
     double adfExtent[4];
-    int    nXSize, nYSize;
 
     if ( GDALSuggestedWarpOutput2( poSrcDS,
                                   psInfo->pfnTransform, hTransformArg,
@@ -138,7 +144,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                                   adfExtent, 0 ) != CE_None )
     {
         GDALDestroyGenImgProjTransformer( hTransformArg );
-        return nullptr;
+        return false;
     }
 
     GDALDestroyGenImgProjTransformer( hTransformArg );
@@ -199,10 +205,10 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
         }
     }
 
-    double dfMinX = adfExtent[0];
-    double dfMinY = adfExtent[1];
-    double dfMaxX = adfExtent[2];
-    double dfMaxY = adfExtent[3];
+    dfMinX = adfExtent[0];
+    dfMinY = adfExtent[1];
+    dfMaxX = adfExtent[2];
+    dfMaxY = adfExtent[3];
     double dfRes = adfGeoTransform[1];
 
     if( EQUAL(osTilingScheme, "GoogleMapsCompatible") )
@@ -227,7 +233,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Could not find an appropriate zoom level");
-            return nullptr;
+            return false;
         }
         if( nZoomLevel > 0 )
         {
@@ -274,7 +280,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid value for EXTENT");
-            return nullptr;
+            return false;
         }
         dfMinX = CPLAtof(aosTokens[0]);
         dfMinY = CPLAtof(aosTokens[1]);
@@ -286,6 +292,65 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
 
     nXSize = static_cast<int>(std::round((dfMaxX - dfMinX) / dfRes));
     nYSize = static_cast<int>(std::round((dfMaxY - dfMinY) / dfRes));
+
+    osResampling = CSLFetchNameValueDef(papszOptions,
+        "RESAMPLING", GetResampling(poSrcDS));
+
+    return true;
+}
+
+/************************************************************************/
+/*                        COGHasWarpingOptions()                        */
+/************************************************************************/
+
+bool COGHasWarpingOptions(CSLConstList papszOptions)
+{
+    return CSLFetchNameValue(papszOptions, "TARGET_SRS") != nullptr ||
+           !EQUAL(CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM"),
+                  "CUSTOM");
+}
+
+/************************************************************************/
+/*                      COGRemoveWarpingOptions()                       */
+/************************************************************************/
+
+void COGRemoveWarpingOptions(CPLStringList& aosOptions)
+{
+    aosOptions.SetNameValue("TARGET_SRS", nullptr);
+    aosOptions.SetNameValue("TILING_SCHEME", nullptr);
+    aosOptions.SetNameValue("EXTENT", nullptr);
+    aosOptions.SetNameValue("RES", nullptr);
+    aosOptions.SetNameValue("ALIGNED_LEVELS", nullptr);
+}
+
+/************************************************************************/
+/*                        CreateReprojectedDS()                         */
+/************************************************************************/
+
+static std::unique_ptr<GDALDataset> CreateReprojectedDS(
+                                GDALDataset *poSrcDS,
+                                const char * const* papszOptions,
+                                GDALProgressFunc pfnProgress,
+                                void * pProgressData,
+                                double& dfCurPixels,
+                                double& dfTotalPixelsToProcess)
+{
+    CPLString osResampling;
+    CPLString osTargetSRS;
+    int nXSize = 0;
+    int nYSize = 0;
+    double dfMinX = 0;
+    double dfMinY = 0;
+    double dfMaxX = 0;
+    double dfMaxY = 0;
+    if( !COGGetWarpingCharacteristics(poSrcDS, papszOptions,
+                                      osResampling,
+                                      osTargetSRS,
+                                      nXSize, nYSize,
+                                      dfMinX, dfMinY, dfMaxX, dfMaxY) )
+    {
+        return nullptr;
+    }
 
     char** papszArg = nullptr;
     // We could have done a warped VRT, but overview building on it might be
@@ -323,9 +388,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
         papszArg = CSLAddString(papszArg, "-dstalpha");
     }
     papszArg = CSLAddString(papszArg, "-r");
-    const char* pszResampling = CSLFetchNameValueDef(papszOptions,
-        "RESAMPLING", GetResampling(poSrcDS));
-    papszArg = CSLAddString(papszArg, pszResampling);
+    papszArg = CSLAddString(papszArg, osResampling);
     const char* pszNumThreads = CSLFetchNameValue(papszOptions, "NUM_THREADS");
     if( pszNumThreads )
     {
@@ -443,9 +506,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     double dfTotalPixelsToProcess = 0;
     GDALDataset* poCurDS = poSrcDS;
 
-    if( !EQUAL(CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM"),
-              "CUSTOM") ||
-        CSLFetchNameValue(papszOptions, "TARGET_SRS") != nullptr )
+    if( COGHasWarpingOptions(papszOptions) )
     {
         m_poReprojectedDS =
             CreateReprojectedDS(poCurDS, papszOptions, pfnProgress, pProgressData,

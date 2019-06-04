@@ -295,6 +295,10 @@ Examples
 
 ::
 
+    gdalwarp src1.tif src2.tif out.tif -of COG
+
+::
+
     gdal_translate world.tif world_webmerc_cog.tif -of COG -co TILING_SCHEME=GoogleMapsCompatible -co COMPRESS=JPEG
 
 See Also
