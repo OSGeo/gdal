@@ -98,8 +98,8 @@ Layers
 ~~~~~~
 In the CF-1.8 compliant driver, a single layer corresponds to a single
 **geometry container** within a CF-1.8 compliant netCDF file. A geometry container, per
-the CF-1.8 specification, is referred to by another variable that is referred to by another
-(presumably data variable) through the **geometry** attribute. When reading
+the CF-1.8 specification, is referred to by another variable
+(presumably a data variable) through the **geometry** attribute. When reading
 a CF-1.8 compliant netCDF file, all geometry containers within the netCDF file
 will be present in the opened dataset as separate layers.
 
@@ -134,10 +134,10 @@ Geometry
 Supported feature types when reading from a CF-1.8 convention compliant netCDF file
 include OGRPoint, OGRLineString, OGRPolygon, OGRMultiPoint, OGRMultiLineString, and
 OGRMultiPolygon. Due to slight ambiguities present in the CF-1.8 convention concerning
-Polygons versus MultiPolygons, the driver will always default to assuming a MultiPolygon
-is the geometry of a layer unless the attribute **part_node_count** is not present
-within that layers corresponding geometry container. Per convention requirements, the driver
-support reading from geometries with X, Y, and Z axes.
+Polygons versus MultiPolygons, the driver will in most cases default to assuming a MultiPolygon
+for the geometry of a layer with **geometry_type** polygon. The one exception where a Polygon type
+will be used is when the attribute **part_node_count** is not present within that layer's geometry container.
+Per convention requirements, the driver supports reading from geometries with X, Y, and Z axes.
 
 Layers with a geometry type of Point or Point25D will cause the implicit
 creation of x,y(,z) variables for projected coordinate system, or
