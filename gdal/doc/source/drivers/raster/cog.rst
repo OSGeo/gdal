@@ -12,7 +12,8 @@ This driver supports the creation of Cloud Optimized GeoTIFF (COG)
 
 It essentially relies upon the :ref:`raster.gtiff` driver with the
 ``COPY_SRC_OVERVIEWS=YES`` creation option, but automatically does the needed
-preprocessing stage (creation of overviews on imagery and/or mask) if not already
+preprocessing stages (reprojection if asked and creation of overviews on
+imagery and/or mask) if not already
 done, and also takes care of morphing the input dataset into the expected form
 when using some compression types (for example a RGBA dataset will be transparently
 converted to a RGB+mask dataset when selecting JPEG compression)
@@ -28,6 +29,9 @@ Driver capabilities
 
 Creation Options
 ----------------
+
+General creation options
+************************
 
 -  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512.
 
@@ -95,7 +99,8 @@ Creation Options
    "TIFFAppendToStrip:Maximum TIFF file size exceeded".
 
 -  **RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
-   Resampling method used for overview generation. For paletted images,
+   Resampling method used for overview generation or reprojection.
+   For paletted images,
    NEAREST is used by default, otherwise it is CUBIC.
 
 - **OVERVIEWS=[AUTO/IGNORE_EXISTING/FORCE_USE_EXISTING]**: Describe the behaviour
@@ -112,6 +117,37 @@ Creation Options
     be used (even if the dimension of the smallest level is not < 512 pixels), and
     if there is no source overview, none will be generated.
 
+Reprojection related creation options
+*************************************
+
+- **TILING_SCHEME=CUSTOM/GoogleMapsCompatible**: If set to ``GoogleMapsCompatible``,
+  reprojection to EPSG:3857 using a GoogleMapsCompatible tiling schme will be
+  automatically done. The default block size in that case will be 256. If
+  explicitly setting another block size, this one will be taken into account
+  (that is if setting a higher value than 256, the original GoogleMapsCompatible
+  tiling scheme is modified to take into account the size of the HiDiPi tiles).
+  In GoogleMapsCompatible mode, TARGET_SRS, RES and EXTENT options are ignored.
+
+- **TARGET_SRS=string**: to force reprojection of the input dataset to another
+  SRS. The string can be a WKT string, a EPSG:XXXX code or a PROJ string.
+
+- **RES=value**: Set the resolution of the target raster, in the units of
+  TARGET_SRS. Only taken into account if TARGET_SRS is specified.
+
+- **EXTENT=minx,miny,maxx,maxy**: Set the extent of the target raster, in the
+  units of TARGET_SRS. Only taken into account if TARGET_SRS is specified.
+
+- **ALIGNED_LEVELS=INT**: Number of overview levels for which GeoTIFF tile and
+  WebMercator tiles match. When specifying this option, padding tiles will be
+  added to the left and top sides of the target raster, when needed, so that
+  a GeoTIFF tile matches with a tile of the GoogleMapsCompatible tiling scheme.
+  Only taken into account if TILING_SCHEME=GoogleMapsCompatible. As up to
+  2^ALIGNED_LEVELS tiles can be added in each dimension, it is the responsibility
+  of the user to use this setting with care (a hard limit of 10 is enforced by
+  the driver).
+  
+- **ADD_ALPHA=YES/NO**: Whether an alpha band is added in case of reprojection.
+  Defaults to YES.
 
 File format details
 -------------------
@@ -253,6 +289,13 @@ readers to be able to check if TIFF writers, not aware of those optimizations,
 have modified the  TIFF file in a way that breaks the optimizations. If an optimized reader 
 detects an inconsistency, it can then fallbacks to the regular/slower method of using 
 TileOffset[i] + TileByteCount[i].
+
+Examples
+--------
+
+::
+
+    gdal_translate world.tif world_webmerc_cog.tif -of COG -co TILING_SCHEME=GoogleMapsCompatible -co COMPRESS=JPEG
 
 See Also
 --------

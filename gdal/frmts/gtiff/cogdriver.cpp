@@ -30,7 +30,9 @@
 #include "gtiff.h"
 #include "gt_overview.h"
 #include "gdal_utils.h"
+#include "gdalwarper.h"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
@@ -60,16 +62,16 @@ static bool HasZSTDCompression()
 /*                           GetTmpFilename()                           */
 /************************************************************************/
 
-static CPLString GetTmpFilename(GDALDataset *poSrcDS,
+static CPLString GetTmpFilename(const char* pszFilename,
                                 const char* pszExt)
 {
     CPLString osTmpOverviewFilename;
     // Check if we can create a temporary file close to the source
     // dataset
     VSIStatBufL sStatBuf;
-    if( VSIStatL(poSrcDS->GetDescription(), &sStatBuf) == 0 )
+    if( VSIStatL(pszFilename, &sStatBuf) == 0 )
     {
-        osTmpOverviewFilename.Printf("%s.%s", poSrcDS->GetDescription(), pszExt);
+        osTmpOverviewFilename.Printf("%s.%s", pszFilename, pszExt);
         VSILFILE* fp = VSIFOpenL(osTmpOverviewFilename, "wb");
         if( fp == nullptr )
             osTmpOverviewFilename.clear();
@@ -79,7 +81,7 @@ static CPLString GetTmpFilename(GDALDataset *poSrcDS,
     if( osTmpOverviewFilename.empty() )
     {
         osTmpOverviewFilename = CPLGenerateTempFilename(
-            CPLGetBasename(poSrcDS->GetDescription()));
+            CPLGetBasename(pszFilename));
         osTmpOverviewFilename += '.';
         osTmpOverviewFilename += pszExt;
     }
@@ -87,22 +89,375 @@ static CPLString GetTmpFilename(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                            COGCreateCopy()                           */
+/*                             GetResampling()                          */
 /************************************************************************/
 
-static GDALDataset* COGCreateCopy( const char * pszFilename,
-                                   GDALDataset *poSrcDS,
-                                   int /*bStrict*/, char ** papszOptions,
-                                   GDALProgressFunc pfnProgress,
-                                   void * pProgressData )
+static const char* GetResampling(GDALDataset* poSrcDS)
+{
+    return poSrcDS->GetRasterBand(1)->GetColorTable() ? "NEAREST" : "CUBIC";
+}
+
+/************************************************************************/
+/*                        CreateReprojectedDS()                         */
+/************************************************************************/
+
+static std::unique_ptr<GDALDataset> CreateReprojectedDS(
+                                GDALDataset *poSrcDS,
+                                const char * const* papszOptions,
+                                GDALProgressFunc pfnProgress,
+                                void * pProgressData,
+                                double& dfCurPixels,
+                                double& dfTotalPixelsToProcess)
+{
+    CPLString osTargetSRS(CSLFetchNameValueDef(papszOptions, "TARGET_SRS", ""));
+    CPLString osTilingScheme(CSLFetchNameValueDef(papszOptions,
+                                                  "TILING_SCHEME", "CUSTOM"));
+    CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
+    CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
+    if( EQUAL(osTilingScheme, "GoogleMapsCompatible") )
+        osTargetSRS = "EPSG:3857";
+
+    CPLStringList aosTO;
+    aosTO.SetNameValue( "DST_SRS", osTargetSRS );
+    void* hTransformArg =
+            GDALCreateGenImgProjTransformer2( poSrcDS, nullptr, aosTO.List() );
+    if( hTransformArg == nullptr )
+    {
+        return nullptr;
+    }
+
+    GDALTransformerInfo* psInfo = static_cast<GDALTransformerInfo*>(hTransformArg);
+    double adfGeoTransform[6];
+    double adfExtent[4];
+    int    nXSize, nYSize;
+
+    if ( GDALSuggestedWarpOutput2( poSrcDS,
+                                  psInfo->pfnTransform, hTransformArg,
+                                  adfGeoTransform,
+                                  &nXSize, &nYSize,
+                                  adfExtent, 0 ) != CE_None )
+    {
+        GDALDestroyGenImgProjTransformer( hTransformArg );
+        return nullptr;
+    }
+
+    GDALDestroyGenImgProjTransformer( hTransformArg );
+    hTransformArg = nullptr;
+
+
+    // Hack to compensate for GDALSuggestedWarpOutput2() failure when
+    // reprojection latitude = +/- 90 to EPSG:3857.
+    double adfSrcGeoTransform[6];
+    OGRSpatialReference oTargetSRS;
+    oTargetSRS.SetFromUserInput(osTargetSRS);
+    const char* pszAuthCode = oTargetSRS.GetAuthorityCode(nullptr);
+    const int nEPSGCode = pszAuthCode ? atoi(pszAuthCode) : 0;
+    if( nEPSGCode == 3857 && poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None )
+    {
+        const char* pszSrcWKT = poSrcDS->GetProjectionRef();
+        if( pszSrcWKT != nullptr && pszSrcWKT[0] != '\0' )
+        {
+            OGRSpatialReference oSrcSRS;
+            if( oSrcSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
+                oSrcSRS.IsGeographic() )
+            {
+                const double minLat =
+                    std::min(adfSrcGeoTransform[3],
+                             adfSrcGeoTransform[3] +
+                             poSrcDS->GetRasterYSize() *
+                             adfSrcGeoTransform[5]);
+                const double maxLat =
+                    std::max(adfSrcGeoTransform[3],
+                             adfSrcGeoTransform[3] +
+                             poSrcDS->GetRasterYSize() *
+                             adfSrcGeoTransform[5]);
+                double maxNorthing = adfGeoTransform[3];
+                double minNorthing =
+                    adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
+                bool bChanged = false;
+                const double SPHERICAL_RADIUS = 6378137.0;
+                const double MAX_GM =
+                    SPHERICAL_RADIUS * M_PI;  // 20037508.342789244
+                if( maxLat > 89.9999999 )
+                {
+                    bChanged = true;
+                    maxNorthing = MAX_GM;
+                }
+                if( minLat <= -89.9999999 )
+                {
+                    bChanged = true;
+                    minNorthing = -MAX_GM;
+                }
+                if( bChanged )
+                {
+                    adfGeoTransform[3] = maxNorthing;
+                    nYSize = int((maxNorthing - minNorthing) / (-adfGeoTransform[5]) + 0.5);
+                    adfExtent[1] = maxNorthing + nYSize * adfGeoTransform[5];
+                    adfExtent[3] = maxNorthing;
+                }
+            }
+        }
+    }
+
+    double dfMinX = adfExtent[0];
+    double dfMinY = adfExtent[1];
+    double dfMaxX = adfExtent[2];
+    double dfMaxY = adfExtent[3];
+    double dfRes = adfGeoTransform[1];
+
+    if( EQUAL(osTilingScheme, "GoogleMapsCompatible") )
+    {
+        const int nBlockSize = atoi(CSLFetchNameValueDef(
+            papszOptions, "BLOCKSIZE", "256"));
+        const double dfPixelXSizeZoomLevel0 = 156543.0339280410 * 256 / nBlockSize;
+        const double dfOriX = -(dfPixelXSizeZoomLevel0 * nBlockSize) / 2.0;
+        const double dfOriY = -dfOriX;
+        double dfComputedRes = adfGeoTransform[1];
+        double dfPrevRes = 0.0;
+        dfRes = 0.0;
+        int nZoomLevel = 0;  // Used after for.
+        for( ; nZoomLevel < 25; nZoomLevel++ )
+        {
+            dfRes = dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+            if( dfComputedRes > dfRes )
+                break;
+            dfPrevRes = dfRes;
+        }
+        if( nZoomLevel == 25 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Could not find an appropriate zoom level");
+            return nullptr;
+        }
+        if( nZoomLevel > 0 )
+        {
+            if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+            {
+                nZoomLevel --;
+                dfRes = dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+            }
+        }
+        CPLDebug("COG", "Using ZOOM_LEVEL %d", nZoomLevel);
+
+        const double dfTileExtent = dfRes * nBlockSize;
+        int nTLTileX = static_cast<int>(std::floor((dfMinX - dfOriX) / dfTileExtent));
+        int nTLTileY = static_cast<int>(std::floor((dfOriY - dfMaxY) / dfTileExtent));
+        int nBRTileX = static_cast<int>(std::ceil((dfMaxX - dfOriX) / dfTileExtent));
+        int nBRTileY = static_cast<int>(std::ceil((dfOriY - dfMinY) / dfTileExtent));
+
+        const int nAlignedLevels = std::min(10, atoi(
+        CSLFetchNameValueDef(papszOptions, "ALIGNED_LEVELS", "0")));
+        if( nAlignedLevels >= 1 )
+        {
+            const int nAlignment = ((1 << (nAlignedLevels-1))-1);
+            nTLTileX &= ~nAlignment;
+            nTLTileY &= ~nAlignment;
+            nBRTileY = (nBRTileY + nAlignment) & ~nAlignment;
+            nBRTileX = (nBRTileX + nAlignment) & ~nAlignment;
+        }
+        nTLTileX = std::max(0, nTLTileX);
+        nTLTileY = std::max(0, nTLTileY);
+        nBRTileX = std::min(1 << nZoomLevel, nBRTileX);
+        nBRTileY = std::min(1 << nZoomLevel, nBRTileY);
+
+        dfMinX = dfOriX + nTLTileX * dfTileExtent;
+        dfMinY = dfOriY - nBRTileY * dfTileExtent;
+        dfMaxX = dfOriX + nBRTileX * dfTileExtent;
+        dfMaxY = dfOriY - nTLTileY * dfTileExtent;
+        nXSize = static_cast<int>(std::round((dfMaxX - dfMinX) / dfRes));
+        nYSize = static_cast<int>(std::round((dfMaxY - dfMinY) / dfRes));
+    }
+    else if( !osExtent.empty() || !osRes.empty() )
+    {
+        CPLStringList aosTokens(CSLTokenizeString2(osExtent, ",", 0));
+        if( aosTokens.size() != 4 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for EXTENT");
+            return nullptr;
+        }
+        dfMinX = CPLAtof(aosTokens[0]);
+        dfMinY = CPLAtof(aosTokens[1]);
+        dfMaxX = CPLAtof(aosTokens[2]);
+        dfMaxY = CPLAtof(aosTokens[3]);
+        if( !osRes.empty() )
+            dfRes = CPLAtof(osRes);
+    }
+
+    nXSize = static_cast<int>(std::round((dfMaxX - dfMinX) / dfRes));
+    nYSize = static_cast<int>(std::round((dfMaxY - dfMinY) / dfRes));
+
+    char** papszArg = nullptr;
+    // We could have done a warped VRT, but overview building on it might be
+    // slow, so materialize as GTiff
+    papszArg = CSLAddString(papszArg, "-of");
+    papszArg = CSLAddString(papszArg, "GTiff");
+    papszArg = CSLAddString(papszArg, "-co");
+    papszArg = CSLAddString(papszArg, "TILED=YES");
+    papszArg = CSLAddString(papszArg, "-co");
+    papszArg = CSLAddString(papszArg, "SPARSE_OK=YES");
+    const char* pszBIGTIFF = CSLFetchNameValue(papszOptions, "BIGTIFF");
+    if( pszBIGTIFF )
+    {
+        papszArg = CSLAddString(papszArg, "-co");
+        papszArg = CSLAddString(papszArg, (CPLString("BIGTIFF=") + pszBIGTIFF).c_str());
+    }
+    papszArg = CSLAddString(papszArg, "-co");
+    papszArg = CSLAddString(papszArg,
+                    HasZSTDCompression() ? "COMPRESS=ZSTD" : "COMPRESS=LZW");
+    papszArg = CSLAddString(papszArg, "-t_srs");
+    papszArg = CSLAddString(papszArg, osTargetSRS);
+    papszArg = CSLAddString(papszArg, "-te");
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMinX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMinY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMaxX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMaxY));
+    papszArg = CSLAddString(papszArg, "-ts");
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nXSize));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nYSize));
+    int bHasNoData = FALSE;
+    poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+    if( !bHasNoData && CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "ADD_ALPHA", "YES")) )
+    {
+        papszArg = CSLAddString(papszArg, "-dstalpha");
+    }
+    papszArg = CSLAddString(papszArg, "-r");
+    const char* pszResampling = CSLFetchNameValueDef(papszOptions,
+        "RESAMPLING", GetResampling(poSrcDS));
+    papszArg = CSLAddString(papszArg, pszResampling);
+    const char* pszNumThreads = CSLFetchNameValue(papszOptions, "NUM_THREADS");
+    if( pszNumThreads )
+    {
+        papszArg = CSLAddString(papszArg, "-wo");
+        papszArg = CSLAddString(papszArg, (CPLString("NUM_THREADS=") + pszNumThreads).c_str());
+    }
+
+    const auto poFirstBand = poSrcDS->GetRasterBand(1);
+    const bool bHasMask = poFirstBand->GetMaskFlags() == GMF_PER_DATASET;
+
+    const int nBands = poSrcDS->GetRasterCount();
+    const char* pszOverviews = CSLFetchNameValueDef(
+        papszOptions, "OVERVIEWS", "AUTO");
+    dfTotalPixelsToProcess =
+        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) +
+        (bHasMask && !EQUAL(pszOverviews, "FORCE_USE_EXISTING") ? double(nXSize) * nYSize / 3 : 0) +
+        (!EQUAL(pszOverviews, "FORCE_USE_EXISTING") ? double(nXSize) * nYSize * nBands / 3: 0) +
+        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * 4. / 3;
+
+    auto psOptions = GDALWarpAppOptionsNew(papszArg, nullptr);
+    CSLDestroy(papszArg);
+    const double dfNextPixels =
+        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0));
+    void* pScaledProgress = GDALCreateScaledProgress(
+                dfCurPixels / dfTotalPixelsToProcess,
+                dfNextPixels / dfTotalPixelsToProcess,
+                pfnProgress, pProgressData );
+    dfCurPixels = dfNextPixels;
+
+    CPLDebug("COG", "Reprojecting source dataset");
+    GDALWarpAppOptionsSetProgress(psOptions, GDALScaledProgress, pScaledProgress );
+    CPLString osTmpFile(GetTmpFilename(poSrcDS->GetDescription(), "_warped.tif"));
+    auto hSrcDS = GDALDataset::ToHandle(poSrcDS);
+    auto hRet = GDALWarp( osTmpFile, nullptr,
+                          1, &hSrcDS,
+                          psOptions, nullptr);
+    GDALWarpAppOptionsFree(psOptions);
+
+    GDALDestroyScaledProgress(pScaledProgress);
+
+    return std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(hRet));
+}
+
+/************************************************************************/
+/*                            GDALCOGCreator                            */
+/************************************************************************/
+
+struct GDALCOGCreator final
+{
+    std::unique_ptr<GDALDataset> m_poReprojectedDS{};
+    std::unique_ptr<GDALDataset> m_poRGBMaskDS{};
+    CPLString                    m_osTmpOverviewFilename{};
+    CPLString                    m_osTmpMskOverviewFilename{};
+
+    ~GDALCOGCreator();
+
+    GDALDataset* Create(const char * pszFilename,
+                        GDALDataset * const poSrcDS,
+                        char ** papszOptions,
+                        GDALProgressFunc pfnProgress,
+                        void * pProgressData );
+};
+
+/************************************************************************/
+/*                    GDALCOGCreator::~GDALCOGCreator()                 */
+/************************************************************************/
+
+GDALCOGCreator::~GDALCOGCreator()
+{
+    if( m_poReprojectedDS )
+    {
+        CPLString osProjectedDSName(m_poReprojectedDS->GetDescription());
+        // Destroy m_poRGBMaskDS before m_poReprojectedDS since the former
+        // references the later
+        m_poRGBMaskDS.reset();
+        m_poReprojectedDS.reset();
+        VSIUnlink(osProjectedDSName);
+    }
+    if( !m_osTmpOverviewFilename.empty() )
+    {
+        VSIUnlink(m_osTmpOverviewFilename);
+    }
+    if( !m_osTmpMskOverviewFilename.empty() )
+    {
+        VSIUnlink(m_osTmpMskOverviewFilename);
+    }
+}
+
+/************************************************************************/
+/*                    GDALCOGCreator::Create()                          */
+/************************************************************************/
+
+GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
+                                    GDALDataset * const poSrcDS,
+                                    char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData )
 {
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
-    const char* pszCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
-    std::unique_ptr<GDALDataset> poTmpDS;
-    if( EQUAL(pszCompress, "JPEG") &&
-        poSrcDS->GetRasterCount() == 4 )
+    if( poSrcDS->GetRasterCount() == 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "COG driver does not support 0-band source raster");
+        return nullptr;
+    }
+
+    CPLConfigOptionSetter oSetterReportDirtyBlockFlushing(
+        "GDAL_REPORT_DIRTY_BLOCK_FLUSHING", "NO", true);
+
+    CPLString osSrcFilename(poSrcDS->GetDescription());
+
+    double dfCurPixels = 0;
+    double dfTotalPixelsToProcess = 0;
+    GDALDataset* poCurDS = poSrcDS;
+
+    if( !EQUAL(CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM"),
+              "CUSTOM") ||
+        CSLFetchNameValue(papszOptions, "TARGET_SRS") != nullptr )
+    {
+        m_poReprojectedDS =
+            CreateReprojectedDS(poCurDS, papszOptions, pfnProgress, pProgressData,
+                                dfCurPixels, dfTotalPixelsToProcess);
+        if( !m_poReprojectedDS )
+            return nullptr;
+        poCurDS = m_poReprojectedDS.get();
+    }
+
+    CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
+    if( EQUAL(osCompress, "JPEG") &&
+        poCurDS->GetRasterCount() == 4 )
     {
         char** papszArg = nullptr;
         papszArg = CSLAddString(papszArg, "-of");
@@ -118,30 +473,35 @@ static GDALDataset* COGCreateCopy( const char * pszFilename,
         GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(papszArg, nullptr);
         CSLDestroy(papszArg);
         GDALDatasetH hRGBMaskDS = GDALTranslate("",
-                                                GDALDataset::ToHandle(poSrcDS),
+                                                GDALDataset::ToHandle(poCurDS),
                                                 psOptions,
                                                 nullptr);
         GDALTranslateOptionsFree(psOptions);
         if( !hRGBMaskDS )
+        {
             return nullptr;
-        poTmpDS.reset( GDALDataset::FromHandle(hRGBMaskDS) );
-        poSrcDS = poTmpDS.get();
+        }
+        m_poRGBMaskDS.reset( GDALDataset::FromHandle(hRGBMaskDS) );
+        poCurDS = m_poRGBMaskDS.get();
     }
 
-    const int nBands = poSrcDS->GetRasterCount();
-    if( nBands == 0 )
+    const int nBands = poCurDS->GetRasterCount();
+    const int nXSize = poCurDS->GetRasterXSize();
+    const int nYSize = poCurDS->GetRasterYSize();
+
+    CPLString osBlockSize(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", ""));
+    if( osBlockSize.empty() )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "COG driver does not support 0-band source raster");
-        return nullptr;
+        if( EQUAL(CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM"),
+            "GoogleMapsCompatible") )
+            osBlockSize = "256";
+        else
+            osBlockSize = "512";
     }
-    const int nXSize = poSrcDS->GetRasterXSize();
-    const int nYSize = poSrcDS->GetRasterYSize();
-    CPLString osTmpOverviewFilename;
-    CPLString osTmpMskOverviewFilename;
-    const int nOvrThresholdSize = 512;
 
-    const auto poFirstBand = poSrcDS->GetRasterBand(1);
+    const int nOvrThresholdSize = atoi(osBlockSize);
+
+    const auto poFirstBand = poCurDS->GetRasterBand(1);
     const bool bHasMask = poFirstBand->GetMaskFlags() == GMF_PER_DATASET;
 
     const char* pszOverviews = CSLFetchNameValueDef(
@@ -170,11 +530,13 @@ static GDALDataset* COGCreateCopy( const char * pszFilename,
         nTmpYSize /= 2;
     }
 
-    double dfTotalPixelsProcessed = 
-        (bGenerateMskOvr ? double(nXSize) * nYSize / 3 : 0) +
-        (bGenerateOvr ? double(nXSize) * nYSize * nBands / 3: 0) +
-        double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * 4. / 3;
-    double dfCurPixels = 0;
+    if( dfTotalPixelsToProcess == 0.0 )
+    {
+        dfTotalPixelsToProcess =
+            (bGenerateMskOvr ? double(nXSize) * nYSize / 3 : 0) +
+            (bGenerateOvr ? double(nXSize) * nYSize * nBands / 3: 0) +
+            double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * 4. / 3;
+    }
 
     CPLStringList aosOverviewOptions;
     aosOverviewOptions.SetNameValue("COMPRESS",
@@ -185,18 +547,18 @@ static GDALDataset* COGCreateCopy( const char * pszFilename,
     if( bGenerateMskOvr )
     {
         CPLDebug("COG", "Generating overviews of the mask");
-        osTmpMskOverviewFilename = GetTmpFilename(poSrcDS, "msk.ovr.tmp");
+        m_osTmpMskOverviewFilename = GetTmpFilename(osSrcFilename, "msk.ovr.tmp");
         GDALRasterBand* poSrcMask = poFirstBand->GetMaskBand();
 
         double dfNextPixels = dfCurPixels + double(nXSize) * nYSize / 3;
         void* pScaledProgress = GDALCreateScaledProgress(
-                dfCurPixels / dfTotalPixelsProcessed,
-                dfNextPixels / dfTotalPixelsProcessed,
+                dfCurPixels / dfTotalPixelsToProcess,
+                dfNextPixels / dfTotalPixelsToProcess,
                 pfnProgress, pProgressData );
         dfCurPixels = dfNextPixels;
 
         CPLErr eErr = GTIFFBuildOverviewsEx(
-            osTmpMskOverviewFilename,
+            m_osTmpMskOverviewFilename,
             1, &poSrcMask,
             static_cast<int>(anOverviewLevels.size()),
             &anOverviewLevels[0],
@@ -207,10 +569,6 @@ static GDALDataset* COGCreateCopy( const char * pszFilename,
         GDALDestroyScaledProgress(pScaledProgress);
         if( eErr != CE_None )
         {
-            if( !osTmpMskOverviewFilename.empty() )
-            {
-                VSIUnlink(osTmpMskOverviewFilename);
-            }
             return nullptr;
         }
     }
@@ -218,28 +576,27 @@ static GDALDataset* COGCreateCopy( const char * pszFilename,
     if( bGenerateOvr )
     {
         CPLDebug("COG", "Generating overviews of the imagery");
-        osTmpOverviewFilename = GetTmpFilename(poSrcDS, "ovr.tmp");
+        m_osTmpOverviewFilename = GetTmpFilename(osSrcFilename, "ovr.tmp");
         std::vector<GDALRasterBand*> apoSrcBands;
         for( int i = 0; i < nBands; i++ )
-            apoSrcBands.push_back( poSrcDS->GetRasterBand(i+1) );
+            apoSrcBands.push_back( poCurDS->GetRasterBand(i+1) );
         const char* pszResampling = CSLFetchNameValueDef(papszOptions,
-            "RESAMPLING",
-            poFirstBand->GetColorTable() ? "NEAREST" : "CUBIC");
+            "RESAMPLING", GetResampling(poSrcDS));
 
         double dfNextPixels = dfCurPixels + double(nXSize) * nYSize * nBands / 3;
         void* pScaledProgress = GDALCreateScaledProgress(
-                dfCurPixels / dfTotalPixelsProcessed,
-                dfNextPixels / dfTotalPixelsProcessed,
+                dfCurPixels / dfTotalPixelsToProcess,
+                dfNextPixels / dfTotalPixelsToProcess,
                 pfnProgress, pProgressData );
         dfCurPixels = dfNextPixels;
 
-        if( !osTmpMskOverviewFilename.empty() )
+        if( !m_osTmpMskOverviewFilename.empty() )
         {
             aosOverviewOptions.SetNameValue("MASK_OVERVIEW_DATASET",
-                                            osTmpMskOverviewFilename);
+                                            m_osTmpMskOverviewFilename);
         }
         CPLErr eErr = GTIFFBuildOverviewsEx(
-            osTmpOverviewFilename,
+            m_osTmpOverviewFilename,
             nBands, &apoSrcBands[0],
             static_cast<int>(anOverviewLevels.size()),
             &anOverviewLevels[0],
@@ -250,46 +607,37 @@ static GDALDataset* COGCreateCopy( const char * pszFilename,
         GDALDestroyScaledProgress(pScaledProgress);
         if( eErr != CE_None )
         {
-            if( !osTmpOverviewFilename.empty() )
-            {
-                VSIUnlink(osTmpOverviewFilename);
-            }
-            if( !osTmpMskOverviewFilename.empty() )
-            {
-                VSIUnlink(osTmpMskOverviewFilename);
-            }
             return nullptr;
         }
     }
 
     CPLStringList aosOptions;
     aosOptions.SetNameValue("COPY_SRC_OVERVIEWS", "YES");
-    CPLString osBlockSize(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "512"));
-    aosOptions.SetNameValue("COMPRESS", pszCompress);
+    aosOptions.SetNameValue("COMPRESS", osCompress);
     aosOptions.SetNameValue("TILED", "YES");
     aosOptions.SetNameValue("BLOCKXSIZE", osBlockSize);
     aosOptions.SetNameValue("BLOCKYSIZE", osBlockSize);
     if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "PREDICTOR", "FALSE")) )
         aosOptions.SetNameValue("PREDICTOR", "2");
     const char* pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
-    if( EQUAL(pszCompress, "JPEG") )
+    if( EQUAL(osCompress, "JPEG") )
     {
         aosOptions.SetNameValue("JPEG_QUALITY", pszQuality);
         if( nBands == 3 )
             aosOptions.SetNameValue("PHOTOMETRIC", "YCBCR");
     }
-    else if( EQUAL(pszCompress, "WEBP") )
+    else if( EQUAL(osCompress, "WEBP") )
     {
         if( pszQuality && atoi(pszQuality) == 100 )
             aosOptions.SetNameValue("WEBP_LOSSLESS", "YES");
         aosOptions.SetNameValue("WEBP_LEVEL", pszQuality);
     }
-    else if( EQUAL(pszCompress, "DEFLATE") )
+    else if( EQUAL(osCompress, "DEFLATE") )
     {
         aosOptions.SetNameValue("ZLEVEL",
                                 CSLFetchNameValue(papszOptions, "LEVEL"));
     }
-    else if( EQUAL(pszCompress, "ZSTD") )
+    else if( EQUAL(osCompress, "ZSTD") )
     {
         aosOptions.SetNameValue("ZSTD_LEVEL",
                                 CSLFetchNameValue(papszOptions, "LEVEL"));
@@ -299,42 +647,47 @@ static GDALDataset* COGCreateCopy( const char * pszFilename,
     aosOptions.SetNameValue("NUM_THREADS",
                                 CSLFetchNameValue(papszOptions, "NUM_THREADS"));
 
-    if( !osTmpOverviewFilename.empty() )
+    if( !m_osTmpOverviewFilename.empty() )
     {
-        aosOptions.SetNameValue("@OVERVIEW_DATASET", osTmpOverviewFilename);
+        aosOptions.SetNameValue("@OVERVIEW_DATASET", m_osTmpOverviewFilename);
     }
-    if( !osTmpMskOverviewFilename.empty() )
+    if( !m_osTmpMskOverviewFilename.empty() )
     {
-        aosOptions.SetNameValue("@MASK_OVERVIEW_DATASET", osTmpMskOverviewFilename);
+        aosOptions.SetNameValue("@MASK_OVERVIEW_DATASET", m_osTmpMskOverviewFilename);
     }
 
     GDALDriver* poGTiffDrv = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
     if( !poGTiffDrv )
         return nullptr;
     void* pScaledProgress = GDALCreateScaledProgress(
-            dfCurPixels / dfTotalPixelsProcessed,
+            dfCurPixels / dfTotalPixelsToProcess,
             1.0,
             pfnProgress, pProgressData );
 
     CPLConfigOptionSetter oSetterInternalMask(
         "GDAL_TIFF_INTERNAL_MASK", "YES", false);
 
-    auto poRet = poGTiffDrv->CreateCopy(pszFilename, poSrcDS, false,
+    auto poRet = poGTiffDrv->CreateCopy(pszFilename, poCurDS, false,
                                         aosOptions.List(),
                                         GDALScaledProgress, pScaledProgress);
 
     GDALDestroyScaledProgress(pScaledProgress);
 
-    if( !osTmpOverviewFilename.empty() )
-    {
-        VSIUnlink(osTmpOverviewFilename);
-    }
-    if( !osTmpMskOverviewFilename.empty() )
-    {
-        VSIUnlink(osTmpMskOverviewFilename);
-    }
-
     return poRet;
+}
+
+/************************************************************************/
+/*                            COGCreateCopy()                           */
+/************************************************************************/
+
+static GDALDataset* COGCreateCopy( const char * pszFilename,
+                                   GDALDataset *poSrcDS,
+                                   int /*bStrict*/, char ** papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void * pProgressData )
+{
+    return GDALCOGCreator().Create(pszFilename, poSrcDS,
+                                   papszOptions, pfnProgress, pProgressData);
 }
 
 /************************************************************************/
@@ -379,19 +732,37 @@ void GDALRegister_COG()
         "Can be set to ALL_CPUS' default='1'/>"
 "   <Option name='BLOCKSIZE' type='int' "
         "description='Tile size in pixels' min='128' default='512'/>"
-"   <Option name='BIGTIFF' type='string-select' description='Force creation of BigTIFF file'>"
+"   <Option name='BIGTIFF' type='string-select' description='"
+        "Force creation of BigTIFF file'>"
 "     <Value>YES</Value>"
 "     <Value>NO</Value>"
 "     <Value>IF_NEEDED</Value>"
 "     <Value>IF_SAFER</Value>"
 "   </Option>"
 "   <Option name='RESAMPLING' type='string' "
-        "description='Resampling method for overviews'/>"
-"   <Option name='OVERVIEWS' type='string-select' description='Behaviour regarding overviews'>"
+        "description='Resampling method for overviews or warping'/>"
+"   <Option name='OVERVIEWS' type='string-select' description='"
+        "Behaviour regarding overviews'>"
 "     <Value>AUTO</Value>"
 "     <Value>IGNORE_EXISTING</Value>"
 "     <Value>FORCE_USE_EXISTING</Value>"
 "   </Option>"
+"  <Option name='TILING_SCHEME' type='string-select' description='"
+        "Which tiling scheme to use' default='CUSTOM'>"
+"    <Value>CUSTOM</Value>"
+"    <Value>GoogleMapsCompatible</Value>"
+"  </Option>"
+"   <Option name='TARGET_SRS' type='string' "
+        "description='Target SRS as EPSG:XXXX, WKT or PROJ string for reprojection'/>"
+"  <Option name='RES' type='double' description='"
+        "Target resolution for reprojection'/>"
+"  <Option name='EXTENT' type='string' description='"
+        "Target extent as minx,miny,maxx,maxy for reprojection'/>"
+"  <Option name='ALIGNED_LEVELS' type='int' description='"
+        "Number of overview levels for which GeoTIFF tile and WebMercator "
+        "tiles match'/>"
+"  <Option name='ADD_ALPHA' type='boolean' description='Can be set to NO to "
+        "disable the addition of an alpha band in case of reprojection' default='YES'/>"
 "</CreationOptionList>";
 
     auto poDriver = new GDALDriver();

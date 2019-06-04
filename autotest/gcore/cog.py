@@ -223,3 +223,152 @@ def test_cog_creation_of_overviews_with_mask():
     gdal.GetDriverByName('GTiff').Delete(filename)
     gdal.Unlink(directory)
 
+
+
+###############################################################################
+# Test full world reprojection to WebMercator
+
+
+def test_cog_small_world_to_web_mercator():
+
+    tab = [ 0 ]
+    def my_cbk(pct, _, arg):
+        assert pct >= tab[0]
+        tab[0] = pct
+        return 1
+
+    directory = '/vsimem/test_cog_small_world_to_web_mercator'
+    gdal.Mkdir(directory, 0o755)
+    filename = directory + '/cog.tif'
+    src_ds = gdal.Open('../gdrivers/data/small_world.tif')
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible', 'COMPRESS=JPEG'],
+        callback = my_cbk,
+        callback_data = tab)
+    assert tab[0] == 1.0
+    assert ds
+    assert len(gdal.ReadDir(directory)) == 1 # check that the temp file has gone away
+
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 256
+    assert ds.RasterYSize == 256
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+    assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
+    gt = ds.GetGeoTransform()
+    expected_gt = [-20037508.342789248, 156543.033928041, 0.0,
+                   20037508.342789248, 0.0, -156543.033928041]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-10 * abs(expected_gt[i]):
+            assert False, gt
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
+        assert got_cs != [0, 0, 0]
+    else:
+        assert got_cs == [26293, 23439, 14955]
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 17849
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    ds = None
+    _check_cog(filename)
+
+    src_ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.Unlink(directory)
+
+
+
+###############################################################################
+# Test reprojection of small extent to WebMercator
+
+
+def test_cog_byte_to_web_mercator():
+
+    tab = [ 0 ]
+    def my_cbk(pct, _, arg):
+        assert pct >= tab[0]
+        tab[0] = pct
+        return 1
+
+    directory = '/vsimem/test_cog_byte_to_web_mercator'
+    gdal.Mkdir(directory, 0o755)
+    filename = directory + '/cog.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible', 'ALIGNED_LEVELS=3'],
+        callback = my_cbk,
+        callback_data = tab)
+    assert tab[0] == 1.0
+    assert ds
+    assert len(gdal.ReadDir(directory)) == 1 # check that the temp file has gone away
+
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.RasterCount == 2
+    assert ds.RasterXSize == 1024
+    assert ds.RasterYSize == 1024
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALPHA + gdal.GMF_PER_DATASET
+    assert ds.GetRasterBand(1).GetBlockSize() == [256,256]
+    gt = ds.GetGeoTransform()
+    expected_gt = [-13149614.849955443, 76.43702828517598, 0.0,
+                   4070118.8821290657, 0.0, -76.43702828517598]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-10 * abs(expected_gt[i]):
+            assert False, gt
+    assert ds.GetRasterBand(1).Checksum() == 4363
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    ds = None
+    _check_cog(filename)
+
+    src_ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.Unlink(directory)
+
+
+
+
+###############################################################################
+# Same as previous test case but with other input options
+
+
+def test_cog_byte_to_web_mercator_manual():
+
+    directory = '/vsimem/test_cog_byte_to_web_mercator_manual'
+    gdal.Mkdir(directory, 0o755)
+    filename = directory + '/cog.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    res = 76.43702828517598
+    minx = -13149614.849955443
+    maxx = minx + 1024 * res
+    maxy = 4070118.8821290657
+    miny = maxy - 1024 * res
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['BLOCKSIZE=256',
+                   'TARGET_SRS=EPSG:3857',
+                   'RES=%.18g' % res,
+                   'EXTENT=%.18g,%.18g,%.18g,%.18g' % (minx,miny,maxx,maxy)])
+    assert ds
+
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.RasterCount == 2
+    assert ds.RasterXSize == 1024
+    assert ds.RasterYSize == 1024
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALPHA + gdal.GMF_PER_DATASET
+    assert ds.GetRasterBand(1).GetBlockSize() == [256,256]
+    gt = ds.GetGeoTransform()
+    expected_gt = [-13149614.849955443, 76.43702828517598, 0.0,
+                   4070118.8821290657, 0.0, -76.43702828517598]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-10 * abs(expected_gt[i]):
+            assert False, gt
+    assert ds.GetRasterBand(1).Checksum() == 4363
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    ds = None
+
+    src_ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.Unlink(directory)
+
