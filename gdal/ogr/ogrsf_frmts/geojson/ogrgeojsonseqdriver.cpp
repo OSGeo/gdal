@@ -723,7 +723,17 @@ bool OGRGeoJSONSeqDataSource::Open( GDALOpenInfo* poOpenInfo,
     }
     SetDescription( poOpenInfo->pszFilename );
     auto poLayer = new OGRGeoJSONSeqLayer(this, osLayerName.c_str(), fp);
-    if( !poLayer->Init() )
+    if( nSrcType == eGeoJSONSourceService )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+    }
+    auto ret = poLayer->Init();
+    if( nSrcType == eGeoJSONSourceService )
+    {
+        CPLPopErrorHandler();
+        CPLErrorReset();
+    }
+    if( !ret )
     {
         delete poLayer;
         return false;
