@@ -105,37 +105,6 @@ namespace nccfdriver
         {
             throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_TYPE);
         }
-// This part of the CF-convention is still being revised... will decide to remove or not when PR is finalized
-/*
-        int idi = INVALID_DIM_ID;
-        size_t dilen = 0;
-        this->inst_dimId = INVALID_DIM_ID;
-        std::string inst_dim_name_s;
-        
-        // Look for geometry_dimension instance attribute to figure out instance dimension.
-        if(attrf(ncId, geoVarId, CF_SG_GEOMETRY_DIMENSION, inst_dim_name_s) != "")
-        {
-            if(nc_inq_dimid(ncId, inst_dim_name_s.c_str(), &idi) != NC_NOERR)
-            {
-                throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_DIMENSION);
-            }
-            if(nc_inq_dimlen(ncId, idi, &dilen) != NC_NOERR)
-            {
-                throw SG_Exception_Existential(static_cast<const char*>(container_name), "instance dimension length");
-            }
-        }
-        else
-        {
-            throw SG_Exception_Existential(static_cast<const char*>(container_name), CF_SG_GEOMETRY_DIMENSION);
-        }
-        this->inst_dimLen = dilen;    
-        this->inst_dimId = idi; 
-
-        if(this->inst_dimLen == 0)
-        {
-            throw SG_Exception_EmptyDim();
-        }
-*/                    
 
         // Get grid mapping variable, if it exists
         this->gm_varId = INVALID_VAR_ID;
