@@ -81,8 +81,6 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 
     nccfdriver::scanForGeometryContainers(ncid, vidList);    
 
-    // To still do: support multiple geometry containers
-
     for(size_t itr = 0; itr < vidList.size(); itr++)
     {
         try

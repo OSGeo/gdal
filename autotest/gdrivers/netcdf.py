@@ -3075,17 +3075,21 @@ def test_bad_cf1_8():
     bad_geometry = ogr.Open("data/netcdf-sg/no_geometry_type.nc")
     bad_feature = ogr.Open("data/netcdf-sg/bad_feature_test.nc")
     missing_node_counts_test = ogr.Open("data/netcdf-sg/missing_node_counts_test.nc")
+    uneq_x_y = ogr.Open("data/netcdf-sg/unequal_xy.nc")
 
-    # error is not fatal
-    assert(bad_geometry != None)
-    assert(bad_feature != None)
-    assert(missing_node_counts_test != None)
+    # error IS fatal
+    assert(bad_geometry == None)
+    assert(bad_feature == None)
+    assert(missing_node_counts_test == None)
+    assert(uneq_x_y == None)
 
 def test_point_read():
     if gdaltest.netcdf_drv is None:
         pytest.skip()			
     singleton_pt = ogr.Open("data/netcdf-sg/point_test.nc")
 
+    lc = singleton_pt.GetLayerCount()
+    assert(lc == 1)
     layer = singleton_pt.GetLayerByName("names_geometry")
     assert(layer != None)
 
@@ -3121,6 +3125,8 @@ def test_point3D_read():
         pytest.skip()			
     singleton_pt = ogr.Open("data/netcdf-sg/point3D_test.nc")
 
+    lc = singleton_pt.GetLayerCount()
+    assert(lc == 1)
     layer = singleton_pt.GetLayerByName("names_geometry")
     assert(layer != None)
 
@@ -3157,6 +3163,8 @@ def test_multipoint_read():
     multipoints = ogr.Open("data/netcdf-sg/multipoint_test.nc")
     assert(multipoints != None) 
 
+    lc = multipoints.GetLayerCount()
+    assert(lc == 1)
     layer = multipoints.GetLayerByName("names_geometry")
     assert(layer != None)
 
@@ -3191,6 +3199,8 @@ def test_multipoint3D_read():
     multipoints = ogr.Open("data/netcdf-sg/multipoint3D_test.nc")
     assert(multipoints != None) 
 
+    lc = multipoints.GetLayerCount()
+    assert(lc == 1)
     layer = multipoints.GetLayerByName("names_geometry")
     assert(layer != None)
 
@@ -3225,6 +3235,8 @@ def test_line_read():
     line = ogr.Open("data/netcdf-sg/line_test.nc")
     assert(line != None) 
 
+    lc = line.GetLayerCount()
+    assert(lc == 1)
     layer = line.GetLayerByName("names_geometry")
     assert(layer != None)
 
@@ -3259,6 +3271,8 @@ def test_line3D_read():
     line = ogr.Open("data/netcdf-sg/line3D_test.nc")
     assert(line != None) 
 
+    lc = line.GetLayerCount()
+    assert(lc == 1)
     layer = line.GetLayerByName("names_geometry")
     assert(layer != None)
 
@@ -3293,6 +3307,8 @@ def test_multiline_read():
     multiline = ogr.Open("data/netcdf-sg/multiline_test.nc")
     assert(multiline != None) 
 
+    lc = multiline.GetLayerCount()
+    assert(lc == 1)
     layer = multiline.GetLayerByName("names_geometry")
     assert(layer != None)
 
@@ -3327,6 +3343,8 @@ def test_multiline3D_read():
     multiline = ogr.Open("data/netcdf-sg/multiline3D_test.nc")
     assert(multiline != None) 
 
+    lc = multiline.GetLayerCount()
+    assert(lc == 1)
     layer = multiline.GetLayerByName("names_geometry")
     assert(layer != None)
 
@@ -3361,6 +3379,8 @@ def test_polygon_read():
     polygon = ogr.Open("data/netcdf-sg/polygon_test.nc")
     assert(polygon != None)
     
+    lc = polygon.GetLayerCount()
+    assert(lc == 1)
     layer = polygon.GetLayerByName("names_geometry")
 
     ft = layer.GetNextFeature() 
@@ -3379,6 +3399,8 @@ def test_polygon3D_read():
     polygon = ogr.Open("data/netcdf-sg/polygon3D_test.nc")
     assert(polygon != None)
     
+    lc = polygon.GetLayerCount()
+    assert(lc == 1)
     layer = polygon.GetLayerByName("names_geometry")
 
     ft = layer.GetNextFeature() 
@@ -3397,6 +3419,8 @@ def test_multipolygon_read():
     multipolygon = ogr.Open("data/netcdf-sg/multipolygon_test.nc")
     assert(multipolygon != None) 
 
+    lc = multipolygon.GetLayerCount()
+    assert(lc == 1)
     layer = multipolygon.GetLayerByName("names_geometry")
 
     ft = layer.GetNextFeature() 
@@ -3415,6 +3439,8 @@ def test_multipolygon3D_read():
     multipolygon = ogr.Open("data/netcdf-sg/multipolygon3D_test.nc")
     assert(multipolygon != None) 
 
+    lc = multipolygon.GetLayerCount()
+    assert(lc == 1)
     layer = multipolygon.GetLayerByName("names_geometry")
 
     ft = layer.GetNextFeature() 
@@ -3434,6 +3460,8 @@ def test_serpenski_two_ring():
 
     assert(s != None)
     
+    lc = s.GetLayerCount()
+    assert(lc == 1)
     good_layer = s.GetLayerByName("serpenski")
     assert(good_layer != None) # real layer
 
@@ -3454,6 +3482,8 @@ def test_serpenski3D_two_ring():
 
     assert(s != None)
     
+    lc = s.GetLayerCount();
+    assert(lc == 1)
     good_layer = s.GetLayerByName("serpenski")
     assert(good_layer != None) # real layer
 
@@ -3508,6 +3538,8 @@ def test_multiple_layers_one_nc():
 
     s = ogr.Open("data/netcdf-sg/multiple_containers.nc")
      
+    lc = s.GetLayerCount()
+    assert(lc == 2)
     s_triangle = s.GetLayerByName("serpenski")
     s_outline = s.GetLayerByName("serpenski_outline")
 
