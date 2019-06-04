@@ -9211,8 +9211,6 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     auto& asJobs = m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
     auto mutex = m_poBaseDS ? m_poBaseDS->m_hCompressThreadPoolMutex : m_hCompressThreadPoolMutex;
 
-    CPL_IGNORE_RET_VAL(oQueue);
-
     CPLAssert( i >= 0 && static_cast<size_t>(i) < asJobs.size() );
     CPLAssert( asJobs[i].nStripOrTile >= 0 );
     CPLAssert( !oQueue.empty() );
@@ -9250,7 +9248,7 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     asJobs[i].nBufferSize = 0;
     asJobs[i].bReady = false;
     asJobs[i].nStripOrTile = -1;
-    m_asQueueJobIdx.pop();
+    oQueue.pop();
 }
 
 /************************************************************************/
