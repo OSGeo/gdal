@@ -754,6 +754,19 @@ double netCDFLayer::Get1DVarAsDouble( int nVarId, nc_type nVarType,
 
 OGRFeature *netCDFLayer::GetNextRawFeature()
 {
+    if( !m_sgItrInit && m_sgFeatureList.size() > 0 )
+    {
+        this->m_sgFeatItr = m_sgFeatureList.begin();
+        this->m_sgItrInit = true;
+    }
+
+    if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
+    {
+        OGRFeature * ret = (*(m_sgFeatItr))->Clone();
+        ++m_sgFeatItr;
+        return ret;
+    }
+
     m_poDS->SetDefineMode(false);
 
     // In update mode, nc_get_varXXX() doesn't return error if we are
@@ -1197,19 +1210,6 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
 OGRFeature *netCDFLayer::GetNextFeature()
 {
-    if( !m_sgItrInit && m_sgFeatureList.size() > 0 )
-    {
-        this->m_sgFeatItr = m_sgFeatureList.begin();
-        this->m_sgItrInit = true;
-    }
-
-    if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
-    {
-        OGRFeature * ret = (*(m_sgFeatItr))->Clone();
-        ++m_sgFeatItr;
-        return ret;
-    }
-
     while( true )
     {
 
@@ -2418,14 +2418,14 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
 GIntBig netCDFLayer::GetFeatureCount(int bForce)
 {
-    if( m_HasCFSG1_8 )
-    {
-        return m_sgFeatureList.size();
-    }
-
     if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
     {
+        if( m_HasCFSG1_8 )
+        {
+            return m_sgFeatureList.size();
+        }
         size_t nDimLen;
+
         nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nDimLen);
         return static_cast<GIntBig>(nDimLen);
     }
