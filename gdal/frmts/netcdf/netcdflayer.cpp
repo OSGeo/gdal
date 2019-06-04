@@ -2425,7 +2425,6 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
             return m_sgFeatureList.size();
         }
         size_t nDimLen;
-
         nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nDimLen);
         return static_cast<GIntBig>(nDimLen);
     }
