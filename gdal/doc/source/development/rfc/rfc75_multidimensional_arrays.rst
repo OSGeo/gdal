@@ -20,7 +20,7 @@ arrays, in particular of dimension 3 or above, in GDAL core and a few select dri
 Motivation
 ----------
 
-Multidimensional arrays (also known as hypercubes) are a way of medelling
+Multidimensional arrays (also known as hypercubes) are a way of mоdelling
 spatio-temporal (time series of
 2D raster) or spatio-vertical-temporal (2D + Z dimension + time dimension) data which
 are becoming increasingly more available. GDAL current raster model is however strongly
@@ -80,7 +80,7 @@ member being described by a name and a GDALExtendedDataType.
 .. note::
 
    The HDF5 modelisation allows for more complex datatypes, but for now, we
-   will stand with the aboe restrictions, which should be sufficient to cover
+   will stand with the above restrictions, which should be sufficient to cover
    most practical use cases.
 
 .. note::
@@ -210,7 +210,7 @@ Driver changes
   drivers to 2D/classic drivers, as well as multidimensional->multidimensional
   slicing/trimming
 - The netCDF driver will implement read and write support.
-- The HDF5 and HDF5 drivers will implement read support.
+- The HDF4 and HDF5 drivers will implement read support.
 - The GRIB driver will implement read support (exposing X,Y,Time arrays for GRIB
   messages only differing by timestamp)
 
