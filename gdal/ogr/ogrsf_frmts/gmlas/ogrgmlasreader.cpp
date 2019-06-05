@@ -2938,7 +2938,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
             if( !bReprojectionOK )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Reprojection fom %s to %s failed",
+                         "Reprojection from %s to %s failed",
                          pszSRSName,
                          m_oMapGeomFieldDefnToSRSName[poGeomFieldDefn].c_str());
                 delete poGeom;
