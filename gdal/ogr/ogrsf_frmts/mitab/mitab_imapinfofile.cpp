@@ -668,16 +668,16 @@ CPLString IMapInfoFile::NormalizeFieldName(const char *pszName) const
                   "for MapInfo format.", pszName );
     }
 
-    if( !EQUAL(osName.c_str(),szNewFieldName) )
-    {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "Normalized/laundered field name: '%s' to '%s'",
-                  pszName, szNewFieldName );
-    }
-
     CPLString   osNewFieldName(szNewFieldName);
     if( strlen( GetEncoding() ) > 0 )
         osNewFieldName.Recode( GetEncoding(), CPL_ENC_UTF8 );
+
+    if( !EQUAL( pszName, osNewFieldName.c_str() ) )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Normalized/laundered field name: '%s' to '%s'",
+                  pszName, osNewFieldName.c_str() );
+    }
 
     return osNewFieldName;
 }
