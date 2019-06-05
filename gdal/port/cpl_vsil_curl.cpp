@@ -2779,9 +2779,8 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
         char *pszFilenameWithoutQuery = nullptr;
         if (queryStart != nullptr)
         {
-            long offset = queryStart - pszFilename;
             pszFilenameWithoutQuery = CPLStrdup(pszFilename);
-            pszFilenameWithoutQuery[offset]='\0';
+            pszFilenameWithoutQuery[queryStart - pszFilename]='\0';
             pszFilename = pszFilenameWithoutQuery;
         }
         const size_t nURLLen = strlen(pszFilename);
