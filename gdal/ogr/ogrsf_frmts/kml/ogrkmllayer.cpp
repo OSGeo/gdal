@@ -79,6 +79,7 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     if( poSRSIn != nullptr )
     {
         poSRS_->SetWellKnownGeogCS( "WGS84" );
+        poSRS_->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( !poSRS_->IsSame(poSRSIn) )
         {
             poCT_ = OGRCreateCoordinateTransformation( poSRSIn, poSRS_ );
