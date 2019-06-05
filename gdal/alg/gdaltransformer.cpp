@@ -3794,8 +3794,11 @@ int CPL_STDCALL GDALInvGeoTransform( double *gt_in, double *gt_out )
     // Compute determinate.
 
     const double det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
+    const double magnitude = std::max(
+            std::max(fabs(gt_in[1]), fabs(gt_in[2])),
+            std::max(fabs(gt_in[4]), fabs(gt_in[5])));
 
-    if( fabs(det) < 0.000000000000001 )
+    if( fabs(det) <= 1e-10 * magnitude * magnitude )
         return 0;
 
     const double inv_det = 1.0 / det;
