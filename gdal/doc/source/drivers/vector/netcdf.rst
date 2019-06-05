@@ -16,8 +16,11 @@ representing scientific data.
 
 The driver handles the "point" and "profile" `feature
 types <http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_features_and_feature_types>`__
-of the CF 1.6 convention. It also supports a more custom approach for
+of the CF 1.6 convention. For CF-1.7 and below (as well as non-CF files), it also supports a more custom approach for
 non-point geometries.
+
+The driver also supports reading from CF-1.8 convention compliant files that
+have simple geometry information encoded within them.
 
 Driver capabilities
 -------------------
@@ -93,14 +96,19 @@ double (with units="seconds since 1970-1-1 0:0:0") DateTime
 
 Layers
 ~~~~~~
+In the CF-1.8 compliant driver, a single layer corresponds to a single
+**geometry container** within a CF-1.8 compliant netCDF file. A geometry container, per
+the CF-1.8 specification, is referred to by another variable
+(presumably a data variable) through the **geometry** attribute. When reading
+a CF-1.8 compliant netCDF file, all geometry containers within the netCDF file
+will be present in the opened dataset as separate layers.
 
-Generally a single netCDF file is viewed as a single OGR layer, provided
-that it contains only mono-dimensional variables, indexed by the same
-dimension (or bi-dimensional variables of type char). For netCDF v4
-files with multiple groups, each group may be seen as a separate OGR
-layer.
-
-On writing, the `MULTIPLE_LAYERS <#MULTIPLE_LAYERS>`__ dataset creation
+When working with files made with older versions of the driver (pre CF-1.8),
+a single netCDF file generally corresponds to a single OGR layer,
+provided that it contains only mono-dimensional variables,
+indexed by the same dimension (or bi-dimensional variables of type char).
+For netCDF v4 files with multiple groups, each group may be seen as a separate OGR
+layer. On writing, the `MULTIPLE_LAYERS <#MULTIPLE_LAYERS>`__ dataset creation
 option can be used to control whether multiple layers is disabled, or if
 multiple layers should go in separate files, or separate groups.
 
@@ -123,6 +131,13 @@ written as netCDF v4 variable length strings.
 
 Geometry
 ~~~~~~~~
+Supported feature types when reading from a CF-1.8 convention compliant netCDF file
+include OGRPoint, OGRLineString, OGRPolygon, OGRMultiPoint, OGRMultiLineString, and
+OGRMultiPolygon. Due to slight ambiguities present in the CF-1.8 convention concerning
+Polygons versus MultiPolygons, the driver will in most cases default to assuming a MultiPolygon
+for the geometry of a layer with **geometry_type** polygon. The one exception where a Polygon type
+will be used is when the attribute **part_node_count** is not present within that layer's geometry container.
+Per convention requirements, the driver supports reading from geometries with X, Y, and Z axes.
 
 Layers with a geometry type of Point or Point25D will cause the implicit
 creation of x,y(,z) variables for projected coordinate system, or
@@ -316,12 +331,23 @@ The following example shows all possibilities and precedence rules:
 The effect on the output can be checked by running the **ncdump**
 utility
 
-See Also:
----------
+Limitation(s)
+-------------
+Only one grid mapping may be associated with an entire dataset of netCDFLayers.
+Attempting use more than one grid mapping, will result in the last set grid mapping
+overwriting all others.
+
+Furthermore, CF-1.8 grid mappings are currently not supported. Support for CF-1.8 grid
+mappings will be introduced in the near future.
+
+Further Reading
+---------------
 
 -  :ref:`Raster side of the netCDF driver. <raster.netcdf>`
 -  `NetCDF CF-1.6
    convention <http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html>`__
+-  `NetCDF CF-1.8
+   convention draft <https://github.com/cf-convention/cf-conventions/blob/master/ch07.adoc>`__
 -  `NetCDF compiled
    libraries <http://www.unidata.ucar.edu/downloads/netcdf/index.jsp>`__
 -  `NetCDF

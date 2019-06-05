@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "netcdfdataset.h"
+#include "netcdfsg.h"
 #include "cpl_time.h"
 
 CPL_CVSID("$Id$")
@@ -59,6 +60,8 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTMaxWidthDimId(-1),
         m_nWKTVarID(-1),
         m_nWKTNCDFType(NC_NAT),
+        m_sgItrInit(false),
+        m_HasCFSG1_8(false),
         m_nCurFeatureId(1),
         m_bWriteGDALTags(true),
         m_bUseStringInNC4(true),
@@ -83,7 +86,10 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
 /*                           ~netCDFLayer()                             */
 /************************************************************************/
 
-netCDFLayer::~netCDFLayer() { m_poFeatureDefn->Release(); }
+netCDFLayer::~netCDFLayer()
+{ 
+    m_poFeatureDefn->Release();
+}
 
 /************************************************************************/
 /*                   netCDFWriteAttributesFromConf()                    */
@@ -163,6 +169,7 @@ bool netCDFLayer::Create(char **papszOptions,
                          "geometry type.");
             }
         }
+
         else if( EQUAL(pszFeatureType, "PROFILE") )
         {
             if( wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint )
@@ -698,7 +705,20 @@ void netCDFLayer::SetProfile(int nProfileDimID, int nParentIndexVarID)
 /*                            ResetReading()                            */
 /************************************************************************/
 
-void netCDFLayer::ResetReading() { m_nCurFeatureId = 1; }
+void netCDFLayer::ResetReading()
+{
+    if( m_HasCFSG1_8 )
+    {
+        if( m_sgItrInit )
+        {
+           this->m_sgFeatItr = m_sgFeatureList.begin(); 
+        }
+    }
+    else
+    {
+        m_nCurFeatureId = 1;
+    }
+}
 
 /************************************************************************/
 /*                           Get1DVarAsDouble()                         */
@@ -734,6 +754,19 @@ double netCDFLayer::Get1DVarAsDouble( int nVarId, nc_type nVarType,
 
 OGRFeature *netCDFLayer::GetNextRawFeature()
 {
+    if( !m_sgItrInit && m_sgFeatureList.size() > 0 )
+    {
+        this->m_sgFeatItr = m_sgFeatureList.begin();
+        this->m_sgItrInit = true;
+    }
+
+    if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
+    {
+        OGRFeature * ret = (*(m_sgFeatItr))->Clone();
+        ++m_sgFeatItr;
+        return ret;
+    }
+
     m_poDS->SetDefineMode(false);
 
     // In update mode, nc_get_varXXX() doesn't return error if we are
@@ -1062,6 +1095,10 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
         }
     }
 
+    // For CF-1.8 simple geometry specifically 
+    // Only need fields to be set here
+    if( m_HasCFSG1_8 ) return true;
+
     if( m_nXVarID >= 0 && m_nYVarID >= 0 &&
         (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID) )
     {
@@ -1175,6 +1212,7 @@ OGRFeature *netCDFLayer::GetNextFeature()
 {
     while( true )
     {
+
         OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == nullptr )
             return nullptr;
@@ -2382,6 +2420,10 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 {
     if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
     {
+        if( m_HasCFSG1_8 )
+        {
+            return m_sgFeatureList.size();
+        }
         size_t nDimLen;
         nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nDimLen);
         return static_cast<GIntBig>(nDimLen);

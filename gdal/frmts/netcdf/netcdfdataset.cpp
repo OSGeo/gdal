@@ -51,6 +51,7 @@
 // Must be included after standard includes, otherwise VS2015 fails when
 // including <ctime>
 #include "netcdfdataset.h"
+#include "netcdfsg.h"
 #include "netcdfuffd.h"
 
 #include "cpl_conv.h"
@@ -2103,9 +2104,10 @@ netCDFDataset::netCDFDataset() :
     eFormat(NCDF_FORMAT_NONE),
     bIsGdalFile(false),
     bIsGdalCfFile(false),
-
     pszCFProjection(nullptr),
     pszCFCoordinates(nullptr),
+    nCFVersion(1.6),
+    bSGSupport(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
 
     // projection/GT.
@@ -2134,6 +2136,7 @@ netCDFDataset::netCDFDataset() :
     bSignedData(true),
     nLayers(0),
     papoLayers(nullptr)
+
 {
     // Projection/GT.
     adfGeoTransform[0] = 0.0;
@@ -2413,7 +2416,7 @@ static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
 /*                      SetProjectionFromVar()                          */
 /************************************************************************/
 void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
-                                          bool bReadSRSOnly )
+                                          bool bReadSRSOnly, const char * pszGivenGM)
 {
     bool bGotGeogCS = false;
     bool bGotCfSRS = false;
@@ -2456,7 +2459,8 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     }
 
     // Look for grid_mapping metadata.
-    const char *pszValue = FetchAttr(nGroupId, nVarId, CF_GRD_MAPPING);
+    const char *pszValue = pszGivenGM != nullptr ? pszGivenGM
+                                                 : FetchAttr(nGroupId, nVarId, CF_GRD_MAPPING);
     char *pszGridMappingValue = CPLStrdup(pszValue ? pszValue : "");
 
     if( !EQUAL(pszGridMappingValue, "") )
@@ -3870,6 +3874,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         }
     }
 #endif
+}
+
+void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
+                                          bool bReadSRSOnly )
+{
+    SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr);
 }
 
 int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
@@ -7125,6 +7135,19 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
             CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
         }
+    }
+
+    // Figure out whether or not the listed dataset has support for simple geometries (CF-1.8)
+    poDS->nCFVersion = nccfdriver::getCFVersion(cdfid);
+    if(poDS->nCFVersion >= 1.8)
+    {
+        poDS->bSGSupport = true;
+    }
+    else poDS->bSGSupport = false;
+
+    if(poDS->bSGSupport)
+    {
+         poDS->DetectAndFillSGLayers(cdfid);
     }
 
     char szConventions[NC_MAX_NAME + 1];
@@ -10909,7 +10932,7 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
         *pnRasterVars += nRasterVars;
     }
 
-    if( !anPotentialVectorVarID.empty() && bKeepVectors )
+    if( !anPotentialVectorVarID.empty() && bKeepVectors && !bSGSupport)
     {
         // Take the dimension that is referenced the most times.
         if( !(oMapDimIdToCount.size() == 1 ||
