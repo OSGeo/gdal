@@ -2776,11 +2776,13 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
         char** papszExtensions =
             CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
         const char *queryStart = strchr(pszFilename, '?');
-        bool cleanup = false;
+        char *pszFilenameWithoutQuery = nullptr;
         if (queryStart != nullptr)
         {
-            pszFilename = strndup(pszFilename, queryStart - pszFilename);
-            cleanup = true;
+            int offset = queryStart - pszFilename;
+            pszFilenameWithoutQuery = CPLStrdup(pszFilename);
+            pszFilenameWithoutQuery[offset]='\0';
+            pszFilename = pszFilenameWithoutQuery;
         }
         const size_t nURLLen = strlen(pszFilename);
         bool bFound = false;
@@ -2806,8 +2808,8 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
         }
 
         CSLDestroy(papszExtensions);
-        if( cleanup ) {
-            free(const_cast<char*>(pszFilename));
+        if( pszFilenameWithoutQuery ) {
+            CPLFree(pszFilenameWithoutQuery);
         }
 
         return bFound;
