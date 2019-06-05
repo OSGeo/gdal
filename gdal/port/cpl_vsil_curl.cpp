@@ -2779,7 +2779,7 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
         char *pszFilenameWithoutQuery = nullptr;
         if (queryStart != nullptr)
         {
-            int offset = queryStart - pszFilename;
+            long offset = queryStart - pszFilename;
             pszFilenameWithoutQuery = CPLStrdup(pszFilename);
             pszFilenameWithoutQuery[offset]='\0';
             pszFilename = pszFilenameWithoutQuery;
