@@ -1535,6 +1535,10 @@ OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput )
         }
         for( auto iter = errors; iter && *iter; ++iter ) {
             d->m_wktImportErrors.push_back(*iter);
+            if( !d->m_pj_crs )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", *iter);
+            }
         }
         proj_string_list_destroy(warnings);
         proj_string_list_destroy(errors);
