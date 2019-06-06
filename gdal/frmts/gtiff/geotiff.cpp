@@ -177,28 +177,42 @@ void GTIFFSetInExternalOvr( bool b )
 /*                     GTIFFGetOverviewBlockSize()                      */
 /************************************************************************/
 
-void GTIFFGetOverviewBlockSize( int* pnBlockXSize, int* pnBlockYSize )
+void GTIFFGetOverviewBlockSize( GDALRasterBandH hBand, int* pnBlockXSize, int* pnBlockYSize )
 {
-    const char* pszVal = CPLGetConfigOption("GDAL_TIFF_OVR_BLOCKSIZE", "128");
-    int nOvrBlockSize = atoi(pszVal);
-    if( nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
-        !CPLIsPowerOfTwo(nOvrBlockSize) )
+    const char* pszVal = CPLGetConfigOption("GDAL_TIFF_OVR_BLOCKSIZE", nullptr);
+    if( ! pszVal )
     {
-        static bool bHasWarned = false;
-        if( !bHasWarned )
+        GDALRasterBand* const poBand = GDALRasterBand::FromHandle(hBand);
+        poBand->GetBlockSize(pnBlockXSize,pnBlockYSize);
+        if ( *pnBlockXSize != *pnBlockYSize ||
+             *pnBlockXSize < 64 || *pnBlockXSize > 4096 ||
+             !CPLIsPowerOfTwo(*pnBlockXSize) )
         {
-            CPLError( CE_Warning, CPLE_NotSupported,
-                      "Wrong value for GDAL_TIFF_OVR_BLOCKSIZE : %s. "
-                      "Should be a power of 2 between 64 and 4096. "
-                      "Defaulting to 128",
-                      pszVal );
-            bHasWarned = true;
+            *pnBlockXSize=*pnBlockYSize=128;
         }
-        nOvrBlockSize = 128;
     }
+    else
+    {
+        int nOvrBlockSize = atoi(pszVal);
+        if( nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
+            !CPLIsPowerOfTwo(nOvrBlockSize) )
+        {
+            static bool bHasWarned = false;
+            if( !bHasWarned )
+            {
+                CPLError( CE_Warning, CPLE_NotSupported,
+                          "Wrong value for GDAL_TIFF_OVR_BLOCKSIZE : %s. "
+                          "Should be a power of 2 between 64 and 4096. "
+                          "Defaulting to 128",
+                          pszVal );
+                bHasWarned = true;
+            }
+            nOvrBlockSize = 128;
+        }
 
-    *pnBlockXSize = nOvrBlockSize;
-    *pnBlockYSize = nOvrBlockSize;
+        *pnBlockXSize = nOvrBlockSize;
+        *pnBlockYSize = nOvrBlockSize;
+    }
 }
 
 enum
@@ -9197,8 +9211,6 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     auto& asJobs = m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
     auto mutex = m_poBaseDS ? m_poBaseDS->m_hCompressThreadPoolMutex : m_hCompressThreadPoolMutex;
 
-    CPL_IGNORE_RET_VAL(oQueue);
-
     CPLAssert( i >= 0 && static_cast<size_t>(i) < asJobs.size() );
     CPLAssert( asJobs[i].nStripOrTile >= 0 );
     CPLAssert( !oQueue.empty() );
@@ -9236,7 +9248,7 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     asJobs[i].nBufferSize = 0;
     asJobs[i].bReady = false;
     asJobs[i].nStripOrTile = -1;
-    m_asQueueJobIdx.pop();
+    oQueue.pop();
 }
 
 /************************************************************************/
@@ -10278,7 +10290,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
         TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
-    GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
+    GTIFFGetOverviewBlockSize(poSrcDS->GetRasterBand(1), &nOvrBlockXSize, &nOvrBlockYSize);
 
     int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
     CPLErr eErr = CE_None;
@@ -10638,7 +10650,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
-    GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
+    GTIFFGetOverviewBlockSize(GetRasterBand(1), &nOvrBlockXSize, &nOvrBlockYSize);
     std::vector<bool> abRequireNewOverview(nOverviews, true);
     for( int i = 0; i < nOverviews && eErr == CE_None; ++i )
     {

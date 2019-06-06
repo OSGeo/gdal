@@ -95,7 +95,6 @@ class OGRGeoJSONSeqLayer final: public OGRLayer
         GIntBig m_nTotalFeatures = 0;
         GIntBig m_nNextFID = 0;
 
-        void Init();
         json_object* GetNextObject();
 
     public:
@@ -103,6 +102,8 @@ class OGRGeoJSONSeqLayer final: public OGRLayer
                            const char* pszName,
                            VSILFILE* fp);
         ~OGRGeoJSONSeqLayer();
+
+        bool Init();
 
         void ResetReading() override;
         OGRFeature* GetNextFeature() override;
@@ -263,8 +264,6 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(OGRGeoJSONSeqDataSource* poDS,
     poSRSWGS84->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRSWGS84);
     poSRSWGS84->Release();
-
-    Init();
 }
 
 /************************************************************************/
@@ -281,7 +280,7 @@ OGRGeoJSONSeqLayer::~OGRGeoJSONSeqLayer()
 /*                               Init()                                 */
 /************************************************************************/
 
-void OGRGeoJSONSeqLayer::Init()
+bool OGRGeoJSONSeqLayer::Init()
 {
     if( STARTS_WITH(m_poDS->GetDescription(), "/vsimem/") ||
         !STARTS_WITH(m_poDS->GetDescription(), "/vsi") )
@@ -310,6 +309,8 @@ void OGRGeoJSONSeqLayer::Init()
     m_nFileSize = 0;
     m_nIter = 0;
     m_oReader.FinalizeLayerDefn( this, m_osFIDColumn );
+
+    return m_nTotalFeatures > 0;
 }
 
 /************************************************************************/
@@ -721,7 +722,23 @@ bool OGRGeoJSONSeqDataSource::Open( GDALOpenInfo* poOpenInfo,
         return false;
     }
     SetDescription( poOpenInfo->pszFilename );
-    m_poLayer.reset(new OGRGeoJSONSeqLayer(this, osLayerName.c_str(), fp));
+    auto poLayer = new OGRGeoJSONSeqLayer(this, osLayerName.c_str(), fp);
+    if( nSrcType == eGeoJSONSourceService )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+    }
+    auto ret = poLayer->Init();
+    if( nSrcType == eGeoJSONSourceService )
+    {
+        CPLPopErrorHandler();
+        CPLErrorReset();
+    }
+    if( !ret )
+    {
+        delete poLayer;
+        return false;
+    }
+    m_poLayer.reset(poLayer);
     return true;
 }
 

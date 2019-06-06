@@ -39,6 +39,7 @@
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "netcdf.h"
+#include "netcdfsg.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 #include "netcdfuffd.h"
@@ -49,6 +50,11 @@
 #define ENABLE_NCDUMP
 #endif
 
+#if CPL_IS_LSB
+#define PLATFORM_HEADER 1
+#else
+#define PLATFORM_HEADER 0
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -84,6 +90,7 @@
 
 /* NETCDF driver defs */
 static const size_t NCDF_MAX_STR_LEN = 8192;
+#define NCDF_CONVENTIONS     "Conventions"
 #define NCDF_CONVENTIONS_CF_V1_5  "CF-1.5"
 #define NCDF_CONVENTIONS_CF_V1_6  "CF-1.6"
 #define NCDF_SPATIAL_REF     "spatial_ref"
@@ -249,6 +256,19 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 #define CF_PP_GRID_NORTH_POLE_LONGITUDE "grid_north_pole_longitude"
 #define CF_PP_GRID_NORTH_POLE_LATITUDE  "grid_north_pole_latitude"
 #define CF_PP_NORTH_POLE_GRID_LONGITUDE "north_pole_grid_longitude"
+
+/* Simple Geometries Special Names from CF-1.8 Draft - Chapter 7 section Geometries */
+#define CF_SG_GEOMETRY               "geometry"
+#define CF_SG_GEOMETRY_DIMENSION     "geometry_dimension"
+#define CF_SG_GEOMETRY_TYPE          "geometry_type"
+#define CF_SG_INTERIOR_RING          "interior_ring"
+#define CF_SG_NODES                  "nodes"
+#define CF_SG_NODE_COORDINATES       "node_coordinates"
+#define CF_SG_NODE_COUNT             "node_count"
+#define CF_SG_PART_NODE_COUNT        "part_node_count"
+#define CF_SG_TYPE_LINE              "line"
+#define CF_SG_TYPE_POINT             "point"
+#define CF_SG_TYPE_POLY              "polygon"
 
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
@@ -808,6 +828,8 @@ class netCDFDataset final: public GDALPamDataset
     bool          bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
     char         *pszCFProjection;
     const char   *pszCFCoordinates;
+    double        nCFVersion;
+    bool          bSGSupport;
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
 
@@ -868,6 +890,7 @@ class netCDFDataset final: public GDALPamDataset
 
     void  CreateSubDatasetList( int nGroupId );
 
+    void  SetProjectionFromVar( int nGroupId, int nVarId, bool bReadSRSOnly, const char * pszGivenGM);
     void  SetProjectionFromVar( int nGroupId, int nVarId, bool bReadSRSOnly );
 
     int ProcessCFGeolocation( int nGroupId, int nVarId );
@@ -889,6 +912,10 @@ class netCDFDataset final: public GDALPamDataset
                                   int nVarXId, int nVarYId, int nVarZId,
                                   int nProfileDimId, int nParentIndexVarID,
                                   bool bKeepRasters );
+
+    CPLErr DetectAndFillSGLayers( int ncid );
+    CPLErr LoadSGVarIntoLayer( int ncid, int nc_basevarId );
+
   protected:
 
     CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
@@ -944,6 +971,7 @@ class netCDFDataset final: public GDALPamDataset
 
 class netCDFLayer final: public OGRLayer
 {
+        friend class netCDFDataset;
         typedef union
         {
             signed char chVal;
@@ -994,6 +1022,10 @@ class netCDFLayer final: public OGRLayer
         nc_type         m_nWKTNCDFType;
         CPLString       m_osCoordinatesValue;
         std::vector<FieldDesc> m_aoFieldDesc;
+        std::vector<std::unique_ptr<OGRFeature>> m_sgFeatureList;
+        std::vector<std::unique_ptr<OGRFeature>>::iterator m_sgFeatItr;
+        bool            m_sgItrInit;
+        bool            m_HasCFSG1_8;
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
         bool            m_bWriteGDALTags;
@@ -1019,9 +1051,10 @@ class netCDFLayer final: public OGRLayer
         void            GetNoDataValueForFloat( int nVarId, NCDFNoDataUnion* puNoData );
         void            GetNoDataValueForDouble( int nVarId, NCDFNoDataUnion* puNoData );
         void            GetNoDataValue( int nVarId, nc_type nVarType, NCDFNoDataUnion* puNoData );
-        bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
         bool            FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
 
+    protected:
+        bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
     public:
                 netCDFLayer(netCDFDataset* poDS,
                             int nLayerCDFId,
@@ -1036,6 +1069,8 @@ class netCDFLayer final: public OGRLayer
         void            SetWKTGeometryField(const char* pszWKTVarName);
         void            SetGridMapping(const char* pszGridMapping);
         void            SetProfile(int nProfileDimID, int nParentIndexVarID);
+        void            AddSimpleGeometryFeature(OGRFeature* sg) { this->m_sgFeatureList.push_back(std::unique_ptr<OGRFeature>(sg)); }
+        void            EnableSGBypass() { this-> m_HasCFSG1_8 = true; }
         bool            AddField(int nVarId);
 
         int             GetCDFID() const { return m_nLayerCDFId; }
