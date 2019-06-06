@@ -1964,34 +1964,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     else if (nWidth == 0)
         nWidth=254; /* char fields */
 
-    char szNewFieldName[31+1];  // 31 is the max characters for a field name.
-    strncpy(szNewFieldName, pszName, sizeof(szNewFieldName)-1);
-    szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
-
-    int nRenameNum = 1;
-
-    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
-           nRenameNum < 10)
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszName, nRenameNum++ );
-
-    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
-           nRenameNum < 100)
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2d", pszName, nRenameNum++ );
-
-    if (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end())
-    {
-      CPLError( CE_Failure, CPLE_NotSupported,
-                "Too many field names like '%s' when truncated to 31 letters "
-                "for MapInfo format.", pszName );
-    }
-
-    if( !EQUAL(pszName,szNewFieldName) )
-    {
-      CPLError( CE_Warning, CPLE_NotSupported,
-                "Normalized/laundered field name: '%s' to '%s'",
-                pszName,
-                szNewFieldName );
-    }
+    CPLString   osName(NormalizeFieldName(pszName));
 
     /*-----------------------------------------------------------------
      * Map MapInfo native types to OGR types
@@ -2004,14 +1977,14 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * CHAR type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTString);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
         poFieldDefn->SetWidth(nWidth);
         break;
       case TABFInteger:
         /*-------------------------------------------------
          * INTEGER type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTInteger);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
         if (nWidth <= 10)
             poFieldDefn->SetWidth(nWidth);
         break;
@@ -2019,7 +1992,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * SMALLINT type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTInteger);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
         if (nWidth <= 5)
             poFieldDefn->SetWidth(nWidth);
         break;
@@ -2027,7 +2000,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * DECIMAL type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTReal);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
         poFieldDefn->SetWidth(nWidth);
         poFieldDefn->SetPrecision(nPrecision);
         break;
@@ -2035,13 +2008,13 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * FLOAT type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTReal);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
         break;
       case TABFDate:
         /*-------------------------------------------------
          * DATE type (V450, returned as a string: "DD/MM/YYYY")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDate);
 #else
@@ -2054,7 +2027,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * TIME type (V900, returned as a string: "HH:MM:SS")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTTime);
 #else
@@ -2067,7 +2040,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * DATETIME type (V900, returned as a string: "DD/MM/YYYY HH:MM:SS")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDateTime);
 #else
@@ -2080,12 +2053,12 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * LOGICAL type (value "T" or "F")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTString);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
         poFieldDefn->SetWidth(1);
         break;
       default:
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupported type for field %s", szNewFieldName);
+                 "Unsupported type for field %s", osName.c_str());
         return -1;
     }
 
@@ -2099,7 +2072,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------
      * ... and pass field info to the .DAT file.
      *----------------------------------------------------*/
-    int nStatus = m_poDATFile->AddField(szNewFieldName, eMapInfoType,
+    int nStatus = m_poDATFile->AddField(osName.c_str(), eMapInfoType,
                                         nWidth, nPrecision);
 
     /*-----------------------------------------------------------------

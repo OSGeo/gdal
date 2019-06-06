@@ -1940,7 +1940,9 @@ def test_ogr_mitab_44():
 def test_ogr_mitab_45():
 
     lyrNames = ['lyr1', 'lyr2']
-    fldNames = ['field1', 'поле1']
+    #                     0         1         2         3
+    #                     012345678901234567890123456789012
+    fldNames = ['field1', 'абвгдежзийклмнопрстуфхцчшщьъэюя']
     featNames = ['аз',
                  'буки',
                  'веди']
