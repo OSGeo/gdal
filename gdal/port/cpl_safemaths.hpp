@@ -110,7 +110,10 @@ inline CPLSafeInt<GInt64> CPLSM(GInt64 x)
     return CPLSafeInt<GInt64>(x);
 }
 inline CPLSafeInt<unsigned> CPLSM_TO_UNSIGNED(GInt64 x);
-inline CPLSafeInt<int> CPLSM(GUInt64 x);
+inline CPLSafeInt<GUInt64> CPLSM(GUInt64 x)
+{
+    return CPLSafeInt<GUInt64>(x);
+}
 inline CPLSafeInt<unsigned> CPLSM_TO_UNSIGNED(GUInt64 x);
 #endif
 
@@ -207,6 +210,29 @@ inline CPLSafeInt<unsigned> operator+( const CPLSafeInt<unsigned>& A,
     return CPLSM(a+b);
 #endif
 }
+
+#if defined(GDAL_COMPILATION)
+inline CPLSafeInt<GUInt64> operator+( const CPLSafeInt<GUInt64>& A,
+                                      const CPLSafeInt<GUInt64>& B )
+{
+#ifdef BUILTIN_OVERFLOW_CHECK_AVAILABLE
+    GUInt64 res;
+    if( __builtin_uaddll_overflow(A.v(), B.v(), &res) )
+        throw CPLSafeIntOverflow();
+    return CPLSM(res);
+#elif defined(_MSC_VER)
+    msl::utilities::SafeInt<GUInt64, CPLMSVCSafeIntException> A2(A.v());
+    msl::utilities::SafeInt<GUInt64, CPLMSVCSafeIntException> B2(B.v());
+    return CPLSM(static_cast<GUInt64>(A2 + B2));
+#else
+    const GUInt64 a = A.v();
+    const GUInt64 b = B.v();
+    if( a > std::numeric_limits<GUInt64>::max() - b )
+        throw CPLSafeIntOverflow();
+    return CPLSM(a+b);
+#endif
+}
+#endif //GDAL_COMPILATION
 
 template<class T> inline CPLSafeInt<T> SafeSubSigned( const CPLSafeInt<T>& A,
                                                       const CPLSafeInt<T>& B )
@@ -390,6 +416,29 @@ inline CPLSafeInt<unsigned> operator*( const CPLSafeInt<unsigned>& A,
     return CPLSM(a*b);
 #endif
 }
+
+#if defined(GDAL_COMPILATION)
+inline CPLSafeInt<GUInt64> operator*( const CPLSafeInt<GUInt64>& A,
+                                      const CPLSafeInt<GUInt64>& B )
+{
+#ifdef BUILTIN_OVERFLOW_CHECK_AVAILABLE
+    GUInt64 res;
+    if( __builtin_umulll_overflow(A.v(), B.v(), &res) )
+        throw CPLSafeIntOverflow();
+    return CPLSM(res);
+#elif defined(_MSC_VER)
+    msl::utilities::SafeInt<GUInt64, CPLMSVCSafeIntException> A2(A.v());
+    msl::utilities::SafeInt<GUInt64, CPLMSVCSafeIntException> B2(B.v());
+    return CPLSM(static_cast<GUInt64>(A2 * B2));
+#else
+    const GUInt64 a = A.v();
+    const GUInt64 b = B.v();
+    if( b > 0 && a > std::numeric_limits<GUInt64>::max() / b )
+        throw CPLSafeIntOverflow();
+    return CPLSM(a*b);
+#endif
+}
+#endif //GDAL_COMPILATION
 
 template<class T> inline CPLSafeInt<T> SafeDivSigned( const CPLSafeInt<T>& A,
                                                       const CPLSafeInt<T>& B )

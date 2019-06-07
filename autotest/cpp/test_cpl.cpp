@@ -1243,6 +1243,24 @@ namespace tut
         ensure_equals( (CPLSM(4U) / CPLSM(2U)).v(), 2U );
         ensure_equals( (CPLSM(UINT_MAX) / CPLSM(1U)).v(), UINT_MAX );
         try { (CPLSM(1U) / CPLSM(0U)).v(); ensure(false); } catch (...) {}
+
+        ensure_equals( (CPLSM(static_cast<GUInt64>(2)*1000*1000*1000) +
+                        CPLSM(static_cast<GUInt64>(3)*1000*1000*1000)).v(),
+                       static_cast<GUInt64>(5)*1000*1000*1000 );
+        ensure_equals( (CPLSM(std::numeric_limits<GUInt64>::max() - 1) +
+                        CPLSM(static_cast<GUInt64>(1))).v(),
+                       std::numeric_limits<GUInt64>::max() );
+        try { (CPLSM(std::numeric_limits<GUInt64>::max()) +
+                        CPLSM(static_cast<GUInt64>(1))); } catch (...) {}
+
+        ensure_equals( (CPLSM(static_cast<GUInt64>(2)*1000*1000*1000) *
+                        CPLSM(static_cast<GUInt64>(3)*1000*1000*1000)).v(),
+                       static_cast<GUInt64>(6)*1000*1000*1000*1000*1000*1000 );
+        ensure_equals( (CPLSM(std::numeric_limits<GUInt64>::max()) *
+                        CPLSM(static_cast<GUInt64>(1))).v(),
+                       std::numeric_limits<GUInt64>::max() );
+        try { (CPLSM(std::numeric_limits<GUInt64>::max()) *
+                        CPLSM(static_cast<GUInt64>(2))); } catch (...) {}
     }
 
     // Test CPLParseRFC822DateTime()
