@@ -152,6 +152,7 @@ class OGRSXFDriver : public GDALDriver
                 ~OGRSXFDriver();
 
     static GDALDataset* Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
     static CPLErr       DeleteDataSource(const char* pszName);
 };
 

@@ -75,6 +75,31 @@ GDALDataset *OGRSXFDriver::Open(GDALOpenInfo* poOpenInfo)
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int OGRSXFDriver::Identify(GDALOpenInfo* poOpenInfo)
+{
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
+        !poOpenInfo->bStatOK || poOpenInfo->bIsDirectory)
+    {
+        return GDAL_IDENTIFY_FALSE;
+    }
+        
+    if(poOpenInfo->nHeaderBytes < 4)
+    {
+        return GDAL_IDENTIFY_UNKNOWN;
+    }
+    
+    if(0 != memcmp(poOpenInfo->pabyHeader, "SXF", 3))
+    {
+        return GDAL_IDENTIFY_FALSE;
+    }
+
+    return GDAL_IDENTIFY_TRUE;
+}
+
+/************************************************************************/
 /*                           DeleteDataSource()                         */
 /************************************************************************/
 
@@ -130,6 +155,7 @@ void RegisterOGRSXF()
 
     poDriver->pfnOpen = OGRSXFDriver::Open;
     poDriver->pfnDelete = OGRSXFDriver::DeleteDataSource;
+    poDriver->pfnIdentify = OGRSXFDriver::Identify;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
