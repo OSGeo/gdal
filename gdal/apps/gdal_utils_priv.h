@@ -138,6 +138,15 @@ struct GDALBuildVRTOptionsForBinary
     int bOverwrite;
 };
 
+struct GDALMultiDimInfoOptionsForBinary
+{
+    /* Filename to open. */
+    char* pszFilename;
+
+    /* Open options. */
+    char** papszOpenOptions;
+};
+
 CPL_C_END
 
 #endif /* #ifndef DOXYGEN_SKIP */

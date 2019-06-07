@@ -54,6 +54,7 @@
 
 %{
 #include <iostream>
+#include <vector>
 using namespace std;
 
 #define CPL_SUPRESS_CPLUSPLUS
@@ -76,6 +77,14 @@ typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
+
+typedef GDALExtendedDataTypeHS GDALExtendedDataTypeHS;
+typedef GDALEDTComponentHS GDALEDTComponentHS;
+typedef GDALGroupHS GDALGroupHS;
+typedef GDALMDArrayHS GDALMDArrayHS;
+typedef GDALAttributeHS GDALAttributeHS;
+typedef GDALDimensionHS GDALDimensionHS;
+
 %}
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
@@ -537,6 +546,8 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //
 //************************************************************************
 %include "Dataset.i"
+
+%include "MultiDimensional.i"
 
 //************************************************************************
 //
@@ -1082,6 +1093,34 @@ struct GDALInfoOptions {
 #endif
 retStringAndCPLFree *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
 
+//************************************************************************
+// gdal.MultiDimInfo()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (MultiDimInfoOptions) GDALMultiDimInfoOptions;
+#endif
+struct GDALMultiDimInfoOptions {
+%extend {
+    GDALMultiDimInfoOptions(char** options) {
+        return GDALMultiDimInfoOptionsNew(options, NULL);
+    }
+
+    ~GDALMultiDimInfoOptions() {
+        GDALMultiDimInfoOptionsFree( self );
+    }
+}
+};
+
+#ifdef SWIGPYTHON
+%rename (MultiDimInfoInternal) GDALMultiDimInfo;
+#endif
+retStringAndCPLFree *GDALMultiDimInfo( GDALDatasetShadow *hDataset, GDALMultiDimInfoOptions *infoOptions );
+
+//************************************************************************
+// gdal.Translate()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (TranslateOptions) GDALTranslateOptions;
 #endif
@@ -1096,10 +1135,6 @@ struct GDALTranslateOptions {
     }
 }
 };
-
-//************************************************************************
-// gdal.Translate()
-//************************************************************************
 
 #ifdef SWIGPYTHON
 %rename (TranslateInternal) wrapper_GDALTranslate;

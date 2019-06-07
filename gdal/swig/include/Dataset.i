@@ -341,6 +341,11 @@ public:
     return (GDALRasterBandShadow*) GDALGetRasterBand( self, nBand );
   }
 
+%newobject GetRootGroup;
+  GDALGroupHS* GetRootGroup() {
+    return GDALDatasetGetRootGroup(self);
+  }
+
   char const *GetProjection() {
     return GDALGetProjectionRef( self );
   }

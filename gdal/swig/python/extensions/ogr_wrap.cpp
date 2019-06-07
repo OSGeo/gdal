@@ -5274,7 +5274,7 @@ SWIGINTERN double OGRGeometryShadow_GetM(OGRGeometryShadow *self,int point=0){
   }
 
 static PyObject *
-CreateTupleFromDoubleArray( double *first, unsigned int size ) {
+CreateTupleFromDoubleArray( const double *first, size_t size ) {
   PyObject *out = PyTuple_New( size );
   for( unsigned int i=0; i<size; i++ ) {
     PyObject *val = PyFloat_FromDouble( *first );

@@ -3876,6 +3876,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OF_RASTER",SWIG_From_int((int)(GDAL_OF_RASTER)));
   SWIG_Python_SetConstant(d, "OF_VECTOR",SWIG_From_int((int)(GDAL_OF_VECTOR)));
   SWIG_Python_SetConstant(d, "OF_GNM",SWIG_From_int((int)(GDAL_OF_GNM)));
+  SWIG_Python_SetConstant(d, "OF_MULTIDIM_RASTER",SWIG_From_int((int)(GDAL_OF_MULTIDIM_RASTER)));
   SWIG_Python_SetConstant(d, "OF_READONLY",SWIG_From_int((int)(GDAL_OF_READONLY)));
   SWIG_Python_SetConstant(d, "OF_UPDATE",SWIG_From_int((int)(GDAL_OF_UPDATE)));
   SWIG_Python_SetConstant(d, "OF_SHARED",SWIG_From_int((int)(GDAL_OF_SHARED)));
@@ -3899,6 +3900,11 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DCAP_NOTNULL_FIELDS",SWIG_FromCharPtr(GDAL_DCAP_NOTNULL_FIELDS));
   SWIG_Python_SetConstant(d, "DCAP_DEFAULT_FIELDS",SWIG_FromCharPtr(GDAL_DCAP_DEFAULT_FIELDS));
   SWIG_Python_SetConstant(d, "DCAP_NOTNULL_GEOMFIELDS",SWIG_FromCharPtr(GDAL_DCAP_NOTNULL_GEOMFIELDS));
+  SWIG_Python_SetConstant(d, "DIM_TYPE_HORIZONTAL_X",SWIG_FromCharPtr(GDAL_DIM_TYPE_HORIZONTAL_X));
+  SWIG_Python_SetConstant(d, "DIM_TYPE_HORIZONTAL_Y",SWIG_FromCharPtr(GDAL_DIM_TYPE_HORIZONTAL_Y));
+  SWIG_Python_SetConstant(d, "DIM_TYPE_VERTICAL",SWIG_FromCharPtr(GDAL_DIM_TYPE_VERTICAL));
+  SWIG_Python_SetConstant(d, "DIM_TYPE_TEMPORAL",SWIG_FromCharPtr(GDAL_DIM_TYPE_TEMPORAL));
+  SWIG_Python_SetConstant(d, "DIM_TYPE_PARAMETRIC",SWIG_FromCharPtr(GDAL_DIM_TYPE_PARAMETRIC));
   SWIG_Python_SetConstant(d, "CPLES_BackslashQuotable",SWIG_From_int((int)(CPLES_BackslashQuotable)));
   SWIG_Python_SetConstant(d, "CPLES_XML",SWIG_From_int((int)(CPLES_XML)));
   SWIG_Python_SetConstant(d, "CPLES_URL",SWIG_From_int((int)(CPLES_URL)));

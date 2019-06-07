@@ -466,6 +466,9 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
     if( poDriver->pfnCreateCopy != nullptr )
         poDriver->SetMetadataItem( GDAL_DCAP_CREATECOPY, "YES" );
 
+    if( poDriver->pfnCreateMultiDimensional != nullptr )
+        poDriver->SetMetadataItem( GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES" );
+
     // Backward compatibility for GDAL raster out-of-tree drivers:
     // If a driver hasn't explicitly set a vector capability, assume it is
     // a raster-only driver (legacy OGR drivers will have DCAP_VECTOR set before

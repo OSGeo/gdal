@@ -10559,6 +10559,34 @@ OGRErr OGRSpatialReference::SetDataAxisToSRSAxisMapping(const std::vector<int>& 
 }
 
 /************************************************************************/
+/*                     OSRSetDataAxisToSRSAxisMapping()                 */
+/************************************************************************/
+
+/** \brief Set a custom data axis to CRS axis mapping.
+ *s
+ * Automatically implies SetAxisMappingStrategy(OAMS_CUSTOM)
+ *
+ * See OGRSpatialReference::SetDataAxisToSRSAxisMapping()
+ *
+ * @since GDAL 3.1
+ */
+OGRErr OSRSetDataAxisToSRSAxisMapping( OGRSpatialReferenceH hSRS,
+                                       int nMappingSize,
+                                       const int* panMapping )
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetDataAxisToSRSAxisMapping", OGRERR_FAILURE );
+    VALIDATE_POINTER1( panMapping, "OSRSetDataAxisToSRSAxisMapping", OGRERR_FAILURE );
+
+    if( nMappingSize < 0 )
+        return OGRERR_FAILURE;
+
+    std::vector<int> mapping(nMappingSize);
+    if( nMappingSize )
+        memcpy(&mapping[0], panMapping, nMappingSize * sizeof(int));
+    return OGRSpatialReference::FromHandle(hSRS)->SetDataAxisToSRSAxisMapping(mapping);
+}
+
+/************************************************************************/
 /*                               GetAreaOfUse()                         */
 /************************************************************************/
 

@@ -218,6 +218,19 @@ GDALDatasetH CPL_DLL GDALBuildVRT( const char *pszDest,
                                    int nSrcCount, GDALDatasetH *pahSrcDS, const char* const* papszSrcDSNames,
                                    const GDALBuildVRTOptions *psOptions, int *pbUsageError );
 
+
+/*! Options for GDALMultiDimInfo(). Opaque type */
+typedef struct GDALMultiDimInfoOptions GDALMultiDimInfoOptions;
+
+/** Opaque type */
+typedef struct GDALMultiDimInfoOptionsForBinary GDALMultiDimInfoOptionsForBinary;
+
+GDALMultiDimInfoOptions CPL_DLL *GDALMultiDimInfoOptionsNew(char** papszArgv, GDALMultiDimInfoOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALMultiDimInfoOptionsFree( GDALMultiDimInfoOptions *psOptions );
+
+char CPL_DLL *GDALMultiDimInfo( GDALDatasetH hDataset, const GDALMultiDimInfoOptions *psOptions );
+
 CPL_C_END
 
 #endif /* GDAL_UTILS_H_INCLUDED */

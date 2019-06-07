@@ -100,20 +100,6 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
 
 static double NCDFGetDefaultNoDataValue( int nVarType );
 
-// Dimension check functions.
-static bool NCDFIsVarLongitude( int nCdfId, int nVarId=-1,
-                                const char *nVarName=nullptr );
-static bool NCDFIsVarLatitude( int nCdfId, int nVarId=-1,
-                               const char *nVarName=nullptr );
-static bool NCDFIsVarProjectionX( int nCdfId, int nVarId=-1,
-                                  const char *pszVarName=nullptr );
-static bool NCDFIsVarProjectionY( int nCdfId, int nVarId=-1,
-                                  const char *pszVarName=nullptr );
-static bool NCDFIsVarVerticalCoord( int nCdfId, int nVarId=-1,
-                                    const char *nVarName=nullptr );
-static bool NCDFIsVarTimeCoord( int nCdfId, int nVarId=-1,
-                                const char *nVarName=nullptr );
-
 // Replace this where used.
 static char **NCDFTokenizeArray( const char *pszValue );
 static void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
@@ -145,7 +131,6 @@ static CPLErr NCDFResolveAttInt( int nStartGroupId, int nStartVarId,
 static CPLErr NCDFGetCoordAndBoundVarFullNames( int nCdfId,
                                                 char ***ppapszVars );
 
-static bool NCDFIsUserDefinedType(int ncid, int type);
 // Uncomment this for more debug output.
 // #define NCDF_DEBUG 1
 
@@ -4216,7 +4201,7 @@ CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
 /*                         NCDFWriteSRSVariable()                       */
 /************************************************************************/
 
-int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
+int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                                 char **ppszCFProjection, bool bWriteGDALTags)
 {
     int status;
@@ -4361,13 +4346,11 @@ void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID)
 }
 
 /************************************************************************/
-/*                     NCDFWriteXYVarsAttributes()                      */
+/*                        NCDFGetProjectedCFUnit()                      */
 /************************************************************************/
 
-void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
-                               OGRSpatialReference *poSRS)
+const char* NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS)
 {
-    int status;
     const char *pszUnits = nullptr;
     const char *pszUnitsToWrite = "";
 
@@ -4387,6 +4370,19 @@ void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
     {
         pszUnitsToWrite = "US_survey_foot";
     }
+
+    return pszUnitsToWrite;
+}
+
+/************************************************************************/
+/*                     NCDFWriteXYVarsAttributes()                      */
+/************************************************************************/
+
+void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
+                               OGRSpatialReference *poSRS)
+{
+    int status;
+    const char *pszUnitsToWrite = NCDFGetProjectedCFUnit(poSRS);
 
     status = nc_put_att_text(cdfid, nVarXID, CF_STD_NAME,
                              strlen(CF_PROJ_X_COORD), CF_PROJ_X_COORD);
@@ -6245,7 +6241,7 @@ int netCDFDataset::Identify( GDALOpenInfo *poOpenInfo )
 /* Mostly to easy fuzzing of the driver, while still generating valid */
 /* netCDF files. */
 /* Note: not all data types are supported ! */
-static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
+bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                                          const char* pszTmpFilename,
                                          VSILFILE* fpSrc )
 {
@@ -6931,6 +6927,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
 #ifdef NCDF_DEBUG
     CPLDebug("GDAL_netCDF", "\n=====\nOpen(), filename=[%s]",
              poOpenInfo->pszFilename);
+#endif
+
+#ifdef NETCDF_HAS_NC4
+    if( poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER )
+    {
+        return OpenMultiDim(poOpenInfo);
+    }
 #endif
 
     // Does this appear to be a netcdf file?
@@ -8161,6 +8164,16 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     CPLDebug("GDAL_netCDF", "\n=====\nnetCDFDataset::CreateCopy(%s, ...)",
              pszFilename);
 
+    if( poSrcDS->GetRootGroup() )
+    {
+        auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("netCDF"));
+        if( poDrv )
+        {
+            return poDrv->DefaultCreateCopy(pszFilename, poSrcDS, bStrict,
+                                     papszOptions, pfnProgress, pProgressData);
+        }
+    }
+
     const int nBands = poSrcDS->GetRasterCount();
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
@@ -8913,6 +8926,55 @@ void GDALRegister_netCDF()
     }
 #endif
 
+#ifdef NETCDF_HAS_NC4
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
+
+    poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
+"<MultiDimDatasetCreationOptionList>"
+"   <Option name='FORMAT' type='string-select' default='NC4'>"
+"     <Value>NC</Value>"
+#ifdef NETCDF_HAS_NC2
+"     <Value>NC2</Value>"
+#endif
+"     <Value>NC4</Value>"
+"     <Value>NC4C</Value>"
+"   </Option>"
+"   <Option name='CONVENTIONS' type='string' default='CF-1.6' description='Value of the Conventions attribute'/>"
+"</MultiDimDatasetCreationOptionList>" );
+
+    poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST,
+"<MultiDimDimensionCreationOptionList>"
+"   <Option name='UNLIMITED' type='boolean' description='Whether the dimension should be unlimited' default='false'/>"
+"</MultiDimDimensionCreationOptionList>" );
+
+    poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+"<MultiDimArrayCreationOptionList>"
+"   <Option name='BLOCKSIZE' type='int' description='Block size in pixels'/>"
+"   <Option name='COMPRESS' type='string-select' default='NONE'>"
+"     <Value>NONE</Value>"
+"     <Value>DEFLATE</Value>"
+"   </Option>"
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='1'/>"
+"   <Option name='NC_TYPE' type='string-select' default='netCDF data type'>"
+"     <Value>AUTO</Value>"
+"     <Value>NC_BYTE</Value>"
+"     <Value>NC_INT64</Value>"
+"     <Value>NC_UINT64</Value>"
+"   </Option>"
+"</MultiDimArrayCreationOptionList>" );
+
+    poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,
+"<MultiDimAttributeCreationOptionList>"
+"   <Option name='NC_TYPE' type='string-select' default='netCDF data type'>"
+"     <Value>AUTO</Value>"
+"     <Value>NC_BYTE</Value>"
+"     <Value>NC_CHAR</Value>"
+"     <Value>NC_INT64</Value>"
+"     <Value>NC_UINT64</Value>"
+"   </Option>"
+"</MultiDimAttributeCreationOptionList>" );
+#endif
+
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
                               "Integer Integer64 Real String Date DateTime");
 
@@ -8920,6 +8982,9 @@ void GDALRegister_netCDF()
     poDriver->pfnOpen = netCDFDataset::Open;
     poDriver->pfnCreateCopy = netCDFDataset::CreateCopy;
     poDriver->pfnCreate = netCDFDataset::Create;
+#ifdef NETCDF_HAS_NC4
+    poDriver->pfnCreateMultiDimensional = netCDFDataset::CreateMultiDimensional;
+#endif
     poDriver->pfnIdentify = netCDFDataset::Identify;
     poDriver->pfnUnloadDriver = NCDFUnloadDriver;
 
@@ -10374,7 +10439,7 @@ static bool NCDFEqual( const char *papszName, const char *const *papszValues )
 
 // Test that a variable is longitude/latitude coordinate,
 // following CF 4.1 and 4.2.
-static bool NCDFIsVarLongitude( int nCdfId, int nVarId,
+bool NCDFIsVarLongitude( int nCdfId, int nVarId,
                                 const char *pszVarName )
 {
     // Check for matching attributes.
@@ -10408,7 +10473,7 @@ static bool NCDFIsVarLongitude( int nCdfId, int nVarId,
     return CPL_TO_BOOL(bVal);
 }
 
-static bool NCDFIsVarLatitude( int nCdfId, int nVarId, const char *pszVarName )
+bool NCDFIsVarLatitude( int nCdfId, int nVarId, const char *pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal(nCdfId,
                                            papszCFLatitudeAttribNames,
@@ -10438,7 +10503,7 @@ static bool NCDFIsVarLatitude( int nCdfId, int nVarId, const char *pszVarName )
     return CPL_TO_BOOL(bVal);
 }
 
-static bool NCDFIsVarProjectionX( int nCdfId, int nVarId,
+bool NCDFIsVarProjectionX( int nCdfId, int nVarId,
                                   const char * pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal(nCdfId,
@@ -10456,7 +10521,7 @@ static bool NCDFIsVarProjectionX( int nCdfId, int nVarId,
     return CPL_TO_BOOL(bVal);
 }
 
-static bool NCDFIsVarProjectionY( int nCdfId, int nVarId,
+bool NCDFIsVarProjectionY( int nCdfId, int nVarId,
                                   const char *pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal(nCdfId,
@@ -10475,7 +10540,7 @@ static bool NCDFIsVarProjectionY( int nCdfId, int nVarId,
 }
 
 /* test that a variable is a vertical coordinate, following CF 4.3 */
-static bool NCDFIsVarVerticalCoord( int nCdfId, int nVarId,
+bool NCDFIsVarVerticalCoord( int nCdfId, int nVarId,
                                     const char *pszVarName )
 {
     /* check for matching attributes */
@@ -10501,7 +10566,7 @@ static bool NCDFIsVarVerticalCoord( int nCdfId, int nVarId,
 }
 
 /* test that a variable is a time coordinate, following CF 4.4 */
-static bool NCDFIsVarTimeCoord( int nCdfId, int nVarId,
+bool NCDFIsVarTimeCoord( int nCdfId, int nVarId,
                                 const char *pszVarName )
 {
     /* check for matching attributes */
@@ -10671,6 +10736,15 @@ static CPLErr NCDFGetGroupFullName( int nGroupId, char **ppszFullName,
         (*ppszFullName)[0] = '\0';
 
     return CE_None;
+}
+
+CPLString NCDFGetGroupFullName(int nGroupId)
+{
+    char* pszFullname = nullptr;
+    NCDFGetGroupFullName(nGroupId, &pszFullname, false);
+    CPLString osRet(pszFullname ? pszFullname : "");
+    CPLFree(pszFullname);
+    return osRet;
 }
 
 // Get the full name of a given NetCDF variable ID
@@ -11382,7 +11456,7 @@ static CPLErr NCDFGetCoordAndBoundVarFullNames( int nCdfId,
 }
 
 //Check if give type is user defined
-static bool NCDFIsUserDefinedType(int ncid, int type)
+bool NCDFIsUserDefinedType(int ncid, int type)
 {
     //Adapted from OPENDAP netcdf_handler
     //To circumvent use of NC_FIRSTUSERTYPEID

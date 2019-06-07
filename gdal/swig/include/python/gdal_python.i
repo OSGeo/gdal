@@ -984,6 +984,182 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 %}
 }
 
+%extend GDALExtendedDataTypeHS {
+%pythoncode %{
+
+  def __eq__(self, other):
+    return self.Equals(other)
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
+%}
+}
+
+%extend GDALMDArrayHS {
+%pythoncode %{
+  def Read(self,
+           array_start_idx = None,
+           count = None,
+           array_step = None,
+           buffer_stride = None,
+           buffer_datatype = None):
+      if not array_start_idx:
+        array_start_idx = [0] * self.GetDimensionCount()
+      if not count:
+        count = [ dim.GetSize() for dim in self.GetDimensions() ]
+      if not array_step:
+        array_step = [1] * self.GetDimensionCount()
+      if not buffer_stride:
+        stride = 1
+        buffer_stride = []
+        # To compute strides we must proceed from the fastest varying dimension
+        # (the last one), and then reverse the result
+        for cnt in reversed(count):
+            buffer_stride.append(stride)
+            stride *= cnt
+        buffer_stride.reverse()
+      if not buffer_datatype:
+        buffer_datatype = self.GetDataType()
+      return _gdal.MDArray_Read(self, array_start_idx, count, array_step, buffer_stride, buffer_datatype)
+
+  def ReadAsArray(self,
+                  array_start_idx = None,
+                  count = None,
+                  array_step = None,
+                  buffer_datatype = None,
+                  buf_obj = None):
+
+      from osgeo import gdalnumeric
+      return gdalnumeric.MDArrayReadAsArray(self, array_start_idx, count, array_step, buffer_datatype, buf_obj)
+
+  def __getitem__(self, item):
+
+        def stringify(v):
+            if v == Ellipsis:
+                return '...'
+            if isinstance(v, slice):
+                return ':'.join([str(x) if x is not None else '' for x in (v.start, v.stop, v.step)])
+            if isinstance(v, str):
+                return v
+            if isinstance(v, (int, type(12345678901234))):
+                return str(v)
+            try:
+                import numpy as np
+                if v == np.newaxis:
+                    return 'newaxis'
+            except:
+                pass
+
+            return str(v)
+
+        if isinstance(item, str):
+            return self.GetView('["' + item.replace('\\', '\\\\').replace('"', '\\"') + '"]')
+        elif isinstance(item, slice):
+            return self.GetView('[' + stringify(item) + ']')
+        elif isinstance(item, tuple):
+            return self.GetView('[' + ','.join([stringify(x) for x in item]) + ']')
+        else:
+            return self.GetView('[' + stringify(item) + ']')
+
+  def Write(self,
+           buffer,
+           array_start_idx = None,
+           count = None,
+           array_step = None,
+           buffer_stride = None,
+           buffer_datatype = None):
+
+      if not buffer_datatype:
+        buffer_datatype = self.GetDataType()
+
+      is_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and self.GetDimensionCount() == 1
+
+      if not array_start_idx:
+        array_start_idx = [0] * self.GetDimensionCount()
+
+      if not count:
+        if is_1d_string:
+            assert type(buffer) == type([])
+            count = [ len(buffer) ]
+        else:
+            count = [ dim.GetSize() for dim in self.GetDimensions() ]
+
+      if not array_step:
+        array_step = [1] * self.GetDimensionCount()
+
+      if not buffer_stride:
+        stride = 1
+        buffer_stride = []
+        # To compute strides we must proceed from the fastest varying dimension
+        # (the last one), and then reverse the result
+        for cnt in reversed(count):
+            buffer_stride.append(stride)
+            stride *= cnt
+        buffer_stride.reverse()
+
+      if is_1d_string:
+          return _gdal.MDArray_WriteStringArray(self, array_start_idx, count, array_step, buffer_datatype, buffer)
+
+      return _gdal.MDArray_Write(self, array_start_idx, count, array_step, buffer_stride, buffer_datatype, buffer)
+
+  def WriteArray(self, array,
+                  array_start_idx = None,
+                  array_step = None):
+
+      from osgeo import gdalnumeric
+      return gdalnumeric.MDArrayWriteArray(self, array, array_start_idx, array_step)
+
+%}
+}
+
+%extend GDALAttributeHS {
+%pythoncode %{
+
+  def Read(self):
+    """ Read an attribute and return it with the most appropriate type """
+    dt_class = self.GetDataType().GetClass()
+    if dt_class == GEDTC_STRING:
+        if self.GetTotalElementsCount() == 1:
+            return self.ReadAsString()
+        return self.ReadAsStringArray()
+    if dt_class == GEDTC_NUMERIC:
+        if self.GetDataType().GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
+            if self.GetTotalElementsCount() == 1:
+                return self.ReadAsInt()
+            else:
+                return self.ReadAsIntArray()
+        else:
+            if self.GetTotalElementsCount() == 1:
+                return self.ReadAsDouble()
+            else:
+                return self.ReadAsDoubleArray()
+    return self.ReadAsRaw()
+
+  def Write(self, val):
+    if isinstance(val, (int, type(12345678901234))):
+        if val >= -0x80000000 and val <= 0x7FFFFFFF:
+            return self.WriteInt(val)
+        else:
+            return self.WriteDouble(val)
+    if isinstance(val, float):
+      return self.WriteDouble(val)
+    if isinstance(val, (str, type(u''))) and self.GetDataType().GetClass() != GEDTC_COMPOUND:
+      return self.WriteString(val)
+    if isinstance(val, list):
+      if len(val) == 0:
+        if self.GetDataType().GetClass() == GEDTC_STRING:
+            return self.WriteStringArray(val)
+        else:
+            return self.WriteDoubleArray(val)
+      if isinstance(val[0], (int, type(12345678901234), float)):
+        return self.WriteDoubleArray(val)
+      if isinstance(val[0], (str, type(u''))):
+        return self.WriteStringArray(val)
+    return self.WriteRaw(val)
+
+%}
+}
+
 %include "callback.i"
 
 
@@ -1065,6 +1241,48 @@ def Info(ds, **kwargs):
         import json
         ret = json.loads(ret)
     return ret
+
+
+def MultiDimInfoOptions(options=None, detailed=False, array=None, limit=None, as_text=False):
+    """ Create a MultiDimInfoOptions() object that can be passed to gdal.MultiDimInfo()
+        options can be be an array of strings, a string or let empty and filled from other keywords."""
+
+    options = [] if options is None else options
+
+    if _is_str_or_unicode(options):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = options
+        if detailed:
+            new_options += ['-detailed']
+        if array:
+            new_options += ['-array', array]
+        if limit:
+            new_options += ['-limit', str(limit)]
+
+    return GDALMultiDimInfoOptions(new_options), as_text
+
+def MultiDimInfo(ds, **kwargs):
+    """ Return information on a dataset.
+        Arguments are :
+          ds --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.MultiDimInfoOptions(), string or array of strings
+          other keywords arguments of gdal.MultiDimInfoOptions()
+        If options is provided as a gdal.MultiDimInfoOptions() object, other keywords are ignored. """
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
+        opts, as_text = MultiDimInfoOptions(**kwargs)
+    else:
+        opts = kwargs['options']
+        as_text = True
+    if _is_str_or_unicode(ds):
+        ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_MULTIDIM_RASTER)
+    ret = MultiDimInfoInternal(ds, opts)
+    if not as_text:
+        import json
+        ret = json.loads(ret)
+    return ret
+
 
 def _strHighPrec(x):
     return x if _is_str_or_unicode(x) else '%.18g' % x

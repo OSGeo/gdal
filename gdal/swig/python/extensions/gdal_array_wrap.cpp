@@ -3010,18 +3010,22 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_CPLVirtualMemShadow swig_types[0]
 #define SWIGTYPE_p_GDALDataType swig_types[1]
 #define SWIGTYPE_p_GDALDatasetShadow swig_types[2]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[3]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[4]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[5]
-#define SWIGTYPE_p_PyArrayObject swig_types[6]
-#define SWIGTYPE_p_char swig_types[7]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[8]
-#define SWIGTYPE_p_int swig_types[9]
-#define SWIGTYPE_p_p_CPLVirtualMemShadow swig_types[10]
-#define SWIGTYPE_p_p_void swig_types[11]
-#define SWIGTYPE_p_size_t swig_types[12]
-static swig_type_info *swig_types[14];
-static swig_module_info swig_module = {swig_types, 13, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALExtendedDataTypeHS swig_types[3]
+#define SWIGTYPE_p_GDALMDArrayHS swig_types[4]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[5]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[6]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[7]
+#define SWIGTYPE_p_GIntBig swig_types[8]
+#define SWIGTYPE_p_GUIntBig swig_types[9]
+#define SWIGTYPE_p_PyArrayObject swig_types[10]
+#define SWIGTYPE_p_char swig_types[11]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[12]
+#define SWIGTYPE_p_int swig_types[13]
+#define SWIGTYPE_p_p_CPLVirtualMemShadow swig_types[14]
+#define SWIGTYPE_p_p_void swig_types[15]
+#define SWIGTYPE_p_size_t swig_types[16]
+static swig_type_info *swig_types[18];
+static swig_module_info swig_module = {swig_types, 17, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3531,6 +3535,7 @@ static void _StoreLastException()
 }
 
 
+#include <vector>
 #include "gdal_priv.h"
 #ifdef _DEBUG
 #undef _DEBUG
@@ -3828,6 +3833,48 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     return Open(psArray);
 }
 
+static GDALDataType NumpyTypeToGDALType(PyArrayObject *psArray)
+{
+    switch( PyArray_DESCR(psArray)->type_num )
+    {
+      case NPY_CDOUBLE:
+        return GDT_CFloat64;
+
+      case NPY_CFLOAT:
+        return GDT_CFloat32;
+
+      case NPY_DOUBLE:
+        return GDT_Float64;
+
+      case NPY_FLOAT:
+        return GDT_Float32;
+
+      case NPY_INT:
+      case NPY_LONG:
+        return GDT_Int32;
+
+      case NPY_UINT:
+      case NPY_ULONG:
+        return GDT_UInt32;
+
+      case NPY_SHORT:
+        return GDT_Int16;
+
+      case NPY_USHORT:
+        return GDT_UInt16;
+
+      case NPY_BYTE:
+      case NPY_UBYTE:
+        return GDT_Byte;
+
+      default:
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to access numpy arrays of typecode `%c'.",
+                  PyArray_DESCR(psArray)->type );
+        return GDT_Unknown;
+    }
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -3850,51 +3897,9 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray, bool binterleave )
         return NULL;
     }
 
-    switch( PyArray_DESCR(psArray)->type_num )
+    eType = NumpyTypeToGDALType(psArray);
+    if( eType == GDT_Unknown )
     {
-      case NPY_CDOUBLE:
-        eType = GDT_CFloat64;
-        break;
-
-      case NPY_CFLOAT:
-        eType = GDT_CFloat32;
-        break;
-
-      case NPY_DOUBLE:
-        eType = GDT_Float64;
-        break;
-
-      case NPY_FLOAT:
-        eType = GDT_Float32;
-        break;
-
-      case NPY_INT:
-      case NPY_LONG:
-        eType = GDT_Int32;
-        break;
-
-      case NPY_UINT:
-      case NPY_ULONG:
-        eType = GDT_UInt32;
-        break;
-
-      case NPY_SHORT:
-        eType = GDT_Int16;
-        break;
-
-      case NPY_USHORT:
-        eType = GDT_UInt16;
-        break;
-
-      case NPY_BYTE:
-      case NPY_UBYTE:
-        eType = GDT_Byte;
-        break;
-
-      default:
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to access numpy arrays of typecode `%c'.",
-                  PyArray_DESCR(psArray)->type );
         return NULL;
     }
 
@@ -3977,6 +3982,112 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray, bool binterleave )
 /* -------------------------------------------------------------------- */
 /*      Try to return a regular handle on the file.                     */
 /* -------------------------------------------------------------------- */
+    return poDS;
+}
+
+/************************************************************************/
+/*                       NUMPYMultiDimensionalDataset                   */
+/************************************************************************/
+
+class NUMPYMultiDimensionalDataset : public GDALDataset
+{
+    PyArrayObject *psArray = nullptr;
+    std::unique_ptr<GDALDataset> poMEMDS{};
+
+    NUMPYMultiDimensionalDataset();
+    ~NUMPYMultiDimensionalDataset();
+
+public:
+    static GDALDataset *Open( PyArrayObject *psArray );
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override { return poMEMDS->GetRootGroup(); }
+};
+
+/************************************************************************/
+/*                     NUMPYMultiDimensionalDataset()                   */
+/************************************************************************/
+
+NUMPYMultiDimensionalDataset::NUMPYMultiDimensionalDataset()
+{
+}
+
+/************************************************************************/
+/*                    ~NUMPYMultiDimensionalDataset()                   */
+/************************************************************************/
+
+NUMPYMultiDimensionalDataset::~NUMPYMultiDimensionalDataset()
+{
+    // Although the module has thread disabled, we go here from GDALClose()
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    Py_DECREF( psArray );
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset* NUMPYMultiDimensionalDataset::Open( PyArrayObject *psArray )
+{
+    const auto eType = NumpyTypeToGDALType(psArray);
+    if( eType == GDT_Unknown )
+    {
+        return nullptr;
+    }
+    auto poMemDriver = GDALDriver::FromHandle(GDALGetDriverByName("MEM"));
+    if( !poMemDriver )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MEM driver not available");
+        return nullptr;
+    }
+
+    auto poMEMDS = poMemDriver->CreateMultiDimensional("", nullptr, nullptr);
+    assert(poMEMDS);
+    auto poGroup = poMEMDS->GetRootGroup();
+    assert(poGroup);
+    std::vector<std::shared_ptr<GDALDimension>> apoDims;
+    const auto ndims = PyArray_NDIM(psArray);
+    CPLString strides;
+    for( int i = 0; i < ndims; i++ )
+    {
+        auto poDim = poGroup->CreateDimension(std::string(CPLSPrintf("dim%d", i)),
+                                              std::string(),
+                                              std::string(),
+                                              PyArray_DIMS(psArray)[i],
+                                              nullptr);
+        apoDims.push_back(poDim);
+        if( i > 0 )
+            strides += ',';
+        strides += CPLSPrintf(CPL_FRMT_GIB,
+                              static_cast<GIntBig>(PyArray_STRIDES(psArray)[i]));
+    }
+    CPLStringList aosOptions;
+    char szDataPointer[128] = { '\0' };
+    int nChars = CPLPrintPointer( szDataPointer,
+                                  PyArray_DATA(psArray),
+                                  sizeof(szDataPointer) );
+    szDataPointer[nChars] = 0;
+    aosOptions.SetNameValue("DATAPOINTER", szDataPointer);
+    aosOptions.SetNameValue("STRIDES", strides.c_str());
+    auto mdArray = poGroup->CreateMDArray("array",
+                                      apoDims,
+                                      GDALExtendedDataType::Create(eType),
+                                      aosOptions.List());
+    if( !mdArray )
+    {
+        delete poMEMDS;
+        return nullptr;
+    }
+
+    auto poDS = new NUMPYMultiDimensionalDataset();
+    poDS->poDriver = GDALDriver::FromHandle(GDALGetDriverByName("NUMPY"));
+    poDS->psArray = psArray;
+    Py_INCREF( psArray );
+    poDS->eAccess = GA_ReadOnly;
+    poDS->poMEMDS.reset(poMEMDS);
     return poDS;
 }
 
@@ -4224,6 +4335,12 @@ SWIG_AsVal_bool (PyObject *obj, bool *val)
 }
 
 
+GDALDatasetShadow* OpenMultiDimensionalNumPyArray(PyArrayObject *psArray)
+{
+    return NUMPYMultiDimensionalDataset::Open( psArray );
+}
+
+
 retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 {
     char      szString[128];
@@ -4350,6 +4467,97 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                                    ntype,
                                    bandsize, NULL,
                                    pixel_space, line_space, band_space, &sExtraArg );
+  }
+
+
+static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
+{
+    auto klass = GDALExtendedDataTypeGetClass(dt);
+    if( klass == GEDTC_NUMERIC )
+        return true;
+    if( klass == GEDTC_STRING )
+        return false;
+    CPLAssert( klass == GEDTC_COMPOUND );
+    size_t nCount = 0;
+    GDALEDTComponentH* comps = GDALExtendedDataTypeGetComponents(dt, &nCount);
+    bool ret = true;
+    for( size_t i = 0; i < nCount; i++ )
+    {
+        auto tmpType = GDALEDTComponentGetType(comps[i]);
+        ret = CheckNumericDataType(tmpType);
+        GDALExtendedDataTypeRelease(tmpType);
+        if( !ret )
+            break;
+    }
+    GDALExtendedDataTypeFreeComponents(comps, nCount);
+    return ret;
+}
+
+
+  CPLErr MDArrayIONumPy( bool bWrite,
+                          GDALMDArrayHS* mdarray,
+                          PyArrayObject *psArray,
+                          int nDims1, GUIntBig* array_start_idx,
+                          int nDims3, GIntBig* array_step,
+                          GDALExtendedDataTypeHS* buffer_datatype) {
+
+    if( !CheckNumericDataType(buffer_datatype) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+            "String buffer data type not supported in SWIG bindings");
+        return CE_Failure;
+    }
+    const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(mdarray);
+    if( PyArray_NDIM(psArray) != nExpectedDims )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal numpy array rank %d.",
+                  PyArray_NDIM(psArray) );
+        return CE_Failure;
+    }
+
+    std::vector<size_t> count_internal(nExpectedDims+1);
+    std::vector<GPtrDiff_t> buffer_stride_internal(nExpectedDims+1);
+    const size_t nDTSize = GDALExtendedDataTypeGetSize(buffer_datatype);
+    if( nDTSize == 0 )
+    {
+        return CE_Failure;
+    }
+    for( int i = 0; i < nExpectedDims; i++ )
+    {
+        count_internal[i] = PyArray_DIMS(psArray)[i];
+        if( (PyArray_STRIDES(psArray)[i] % nDTSize) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Stride[%d] not a multiple of data type size",
+                      i );
+            return CE_Failure;
+        }
+        buffer_stride_internal[i] = PyArray_STRIDES(psArray)[i] / nDTSize;
+    }
+
+    if( bWrite )
+    {
+        return GDALMDArrayWrite( mdarray,
+                                array_start_idx,
+                                &count_internal[0],
+                                array_step,
+                                &buffer_stride_internal[0],
+                                buffer_datatype,
+                                PyArray_DATA(psArray),
+                                NULL, 0) ? CE_None : CE_Failure;
+    }
+    else
+    {
+        return GDALMDArrayRead( mdarray,
+                                array_start_idx,
+                                &count_internal[0],
+                                array_step,
+                                &buffer_stride_internal[0],
+                                buffer_datatype,
+                                PyArray_DATA(psArray),
+                                NULL, 0) ? CE_None : CE_Failure;
+    }
   }
 
 
@@ -5017,6 +5225,33 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_OpenMultiDimensionalNumPyArray(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  PyArrayObject *arg1 = (PyArrayObject *) 0 ;
+  PyObject * obj0 = 0 ;
+  GDALDatasetShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:OpenMultiDimensionalNumPyArray",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in,numinputs=1) (PyArrayObject  *psArray) */
+    if (obj0 != NULL && PyArray_Check(obj0))
+    {
+      arg1 = (PyArrayObject*)(obj0);
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a numpy array");
+      SWIG_fail;
+    }
+  }
+  result = (GDALDatasetShadow *)OpenMultiDimensionalNumPyArray(arg1);
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GetArrayFilename(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   PyArrayObject *arg1 = (PyArrayObject *) 0 ;
@@ -5414,6 +5649,146 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_MDArrayIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  bool arg1 ;
+  GDALMDArrayHS *arg2 = (GDALMDArrayHS *) 0 ;
+  PyArrayObject *arg3 = (PyArrayObject *) 0 ;
+  int arg4 ;
+  GUIntBig *arg5 = (GUIntBig *) 0 ;
+  int arg6 ;
+  GIntBig *arg7 = (GIntBig *) 0 ;
+  GDALExtendedDataTypeHS *arg8 = (GDALExtendedDataTypeHS *) 0 ;
+  bool val1 ;
+  int ecode1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp8 = 0 ;
+  int res8 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  CPLErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:MDArrayIONumPy",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  ecode1 = SWIG_AsVal_bool(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "MDArrayIONumPy" "', argument " "1"" of type '" "bool""'");
+  } 
+  arg1 = static_cast< bool >(val1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MDArrayIONumPy" "', argument " "2"" of type '" "GDALMDArrayHS *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALMDArrayHS * >(argp2);
+  {
+    /* %typemap(in,numinputs=1) (PyArrayObject  *psArray) */
+    if (obj2 != NULL && PyArray_Check(obj2))
+    {
+      arg3 = (PyArrayObject*)(obj2);
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a numpy array");
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj3) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    Py_ssize_t size = PySequence_Size(obj3);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg4 = (int)size;
+    arg5 = (GUIntBig*) malloc(arg4*sizeof(GUIntBig));
+    for( int i = 0; i<arg4; i++ ) {
+      PyObject *o = PySequence_GetItem(obj3,i);
+      PY_LONG_LONG val;
+      if ( !PyArg_Parse(o,"K",&val) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      arg5[i] = (GUIntBig)val;
+      Py_DECREF(o);
+    }
+  }
+  {
+    /* %typemap(in,numinputs=1) (int nList, GIntBig* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj4) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    Py_ssize_t size = PySequence_Size(obj4);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg6 = (int)size;
+    arg7 = (GIntBig*) malloc(arg6*sizeof(GIntBig));
+    for( int i = 0; i<arg6; i++ ) {
+      PyObject *o = PySequence_GetItem(obj4,i);
+      PY_LONG_LONG val;
+      if ( !PyArg_Parse(o,"L",&val) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      arg7[i] = (GIntBig)val;
+      Py_DECREF(o);
+    }
+  }
+  res8 = SWIG_ConvertPtr(obj5, &argp8,SWIGTYPE_p_GDALExtendedDataTypeHS, 0 |  0 );
+  if (!SWIG_IsOK(res8)) {
+    SWIG_exception_fail(SWIG_ArgError(res8), "in method '" "MDArrayIONumPy" "', argument " "8"" of type '" "GDALExtendedDataTypeHS *""'"); 
+  }
+  arg8 = reinterpret_cast< GDALExtendedDataTypeHS * >(argp8);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (CPLErr)MDArrayIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (int nList, GUIntBig* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, GIntBig* pList) */
+    if (arg7) {
+      free((void*) arg7);
+    }
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (int nList, GUIntBig* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, GIntBig* pList) */
+    if (arg7) {
+      free((void*) arg7);
+    }
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_VirtualMemGetArray(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
@@ -5748,9 +6123,11 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"_StoreLastException", _wrap__StoreLastException, METH_VARARGS, (char *)"_StoreLastException()"},
 	 { (char *)"TermProgress_nocb", (PyCFunction) _wrap_TermProgress_nocb, METH_VARARGS | METH_KEYWORDS, (char *)"TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"},
 	 { (char *)"OpenNumPyArray", _wrap_OpenNumPyArray, METH_VARARGS, (char *)"OpenNumPyArray(PyArrayObject * psArray, bool binterleave) -> Dataset"},
+	 { (char *)"OpenMultiDimensionalNumPyArray", _wrap_OpenMultiDimensionalNumPyArray, METH_VARARGS, (char *)"OpenMultiDimensionalNumPyArray(PyArrayObject * psArray) -> Dataset"},
 	 { (char *)"GetArrayFilename", _wrap_GetArrayFilename, METH_VARARGS, (char *)"GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"},
 	 { (char *)"BandRasterIONumPy", (PyCFunction) _wrap_BandRasterIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
 	 { (char *)"DatasetIONumPy", (PyCFunction) _wrap_DatasetIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"DatasetIONumPy(Dataset ds, int bWrite, int xoff, int yoff, int xsize, int ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, bool binterleave=True) -> CPLErr"},
+	 { (char *)"MDArrayIONumPy", _wrap_MDArrayIONumPy, METH_VARARGS, (char *)"MDArrayIONumPy(bool bWrite, GDALMDArrayHS * mdarray, PyArrayObject * psArray, int nDims1, int nDims3, GDALExtendedDataTypeHS * buffer_datatype) -> CPLErr"},
 	 { (char *)"VirtualMemGetArray", _wrap_VirtualMemGetArray, METH_VARARGS, (char *)"VirtualMemGetArray(VirtualMem virtualmem)"},
 	 { (char *)"RATValuesIONumPyWrite", (PyCFunction) _wrap_RATValuesIONumPyWrite, METH_VARARGS | METH_KEYWORDS, (char *)"RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, PyArrayObject * psArray) -> CPLErr"},
 	 { (char *)"RATValuesIONumPyRead", (PyCFunction) _wrap_RATValuesIONumPyRead, METH_VARARGS | METH_KEYWORDS, (char *)"RATValuesIONumPyRead(RasterAttributeTable poRAT, int nField, int nStart, int nLength) -> PyObject *"},
@@ -5763,9 +6140,13 @@ static PyMethodDef SwigMethods[] = {
 static swig_type_info _swigt__p_CPLVirtualMemShadow = {"_p_CPLVirtualMemShadow", "CPLVirtualMemShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDataType = {"_p_GDALDataType", "GDALDataType *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALExtendedDataTypeHS = {"_p_GDALExtendedDataTypeHS", "GDALExtendedDataTypeHS *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALMDArrayHS = {"_p_GDALMDArrayHS", "GDALMDArrayHS *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDALProgressFunc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GUIntBig = {"_p_GUIntBig", "GUIntBig *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_PyArrayObject = {"_p_PyArrayObject", "PyArrayObject *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
@@ -5778,9 +6159,13 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLVirtualMemShadow,
   &_swigt__p_GDALDataType,
   &_swigt__p_GDALDatasetShadow,
+  &_swigt__p_GDALExtendedDataTypeHS,
+  &_swigt__p_GDALMDArrayHS,
   &_swigt__p_GDALProgressFunc,
   &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
+  &_swigt__p_GIntBig,
+  &_swigt__p_GUIntBig,
   &_swigt__p_PyArrayObject,
   &_swigt__p_char,
   &_swigt__p_f_double_p_q_const__char_p_void__int,
@@ -5793,9 +6178,13 @@ static swig_type_info *swig_type_initial[] = {
 static swig_cast_info _swigc__p_CPLVirtualMemShadow[] = {  {&_swigt__p_CPLVirtualMemShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDataType[] = {  {&_swigt__p_GDALDataType, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALExtendedDataTypeHS[] = {  {&_swigt__p_GDALExtendedDataTypeHS, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALMDArrayHS[] = {  {&_swigt__p_GDALMDArrayHS, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GIntBig[] = {  {&_swigt__p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GUIntBig[] = {  {&_swigt__p_GUIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_PyArrayObject[] = {  {&_swigt__p_PyArrayObject, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_f_double_p_q_const__char_p_void__int[] = {  {&_swigt__p_f_double_p_q_const__char_p_void__int, 0, 0, 0},{0, 0, 0, 0}};
@@ -5808,9 +6197,13 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLVirtualMemShadow,
   _swigc__p_GDALDataType,
   _swigc__p_GDALDatasetShadow,
+  _swigc__p_GDALExtendedDataTypeHS,
+  _swigc__p_GDALMDArrayHS,
   _swigc__p_GDALProgressFunc,
   _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
+  _swigc__p_GIntBig,
+  _swigc__p_GUIntBig,
   _swigc__p_PyArrayObject,
   _swigc__p_char,
   _swigc__p_f_double_p_q_const__char_p_void__int,
