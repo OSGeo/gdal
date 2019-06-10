@@ -1633,10 +1633,6 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
                             GBool bIndexed /*=FALSE*/, GBool bUnique/*=FALSE*/, int /*bApproxOK*/ )
 {
-    int nStatus = 0;
-    char szNewFieldName[31+1]; /* 31 is the max characters for a field name*/
-    unsigned int nRenameNum = 1;
-
     /*-----------------------------------------------------------------
      * Check that call happens at the right time in dataset's life.
      *----------------------------------------------------------------*/
@@ -1679,37 +1675,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         m_poDefn->Reference();
     }
 
-    strncpy(szNewFieldName, pszName, sizeof(szNewFieldName)-1);
-    szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
-
-    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
-           nRenameNum < 10)
-    {
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1u", pszName, nRenameNum );
-      nRenameNum ++;
-    }
-
-    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
-           nRenameNum < 100)
-    {
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2u", pszName, nRenameNum );
-      nRenameNum ++;
-    }
-
-    if (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end())
-    {
-      CPLError( CE_Failure, CPLE_NotSupported,
-                "Too many field names like '%s' when truncated to 31 letters "
-                "for MapInfo format.", pszName );
-    }
-
-    if( !EQUAL(pszName,szNewFieldName) )
-    {
-      CPLError( CE_Warning, CPLE_NotSupported,
-                "Normalized/laundered field name: '%s' to '%s'",
-                pszName,
-                szNewFieldName );
-    }
+    CPLString   osName(NormalizeFieldName(pszName));
 
     /*-----------------------------------------------------------------
      * Map MapInfo native types to OGR types
@@ -1722,28 +1688,28 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * CHAR type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTString);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
         poFieldDefn->SetWidth(nWidth);
         break;
       case TABFInteger:
         /*-------------------------------------------------
          * INTEGER type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTInteger);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
         poFieldDefn->SetWidth(nWidth);
         break;
       case TABFSmallInt:
         /*-------------------------------------------------
          * SMALLINT type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTInteger);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
         poFieldDefn->SetWidth(nWidth);
         break;
       case TABFDecimal:
         /*-------------------------------------------------
          * DECIMAL type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTReal);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
         poFieldDefn->SetWidth(nWidth);
         poFieldDefn->SetPrecision(nPrecision);
         break;
@@ -1751,13 +1717,13 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * FLOAT type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTReal);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
         break;
       case TABFDate:
         /*-------------------------------------------------
          * DATE type (V450, returned as a string: "DD/MM/YYYY" or "YYYYMMDD")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDate);
 #else
@@ -1770,7 +1736,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * TIME type (v900, returned as a string: "HH:MM:SS" or "HHMMSSmmm")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTTime);
 #else
@@ -1784,7 +1750,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
          * DATETIME type (v900, returned as a string: "DD/MM/YYYY HH:MM:SS",
          * "YYYY/MM/DD HH:MM:SS" or "YYYYMMDDHHMMSSmmm")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDateTime);
 #else
@@ -1797,7 +1763,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * LOGICAL type (value "T" or "F")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTString);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
         poFieldDefn->SetWidth(1);
         break;
       default:
@@ -1833,7 +1799,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     m_pabFieldIndexed[m_poDefn->GetFieldCount()-1] = bIndexed;
     m_pabFieldUnique[m_poDefn->GetFieldCount()-1] = bUnique;
 
-    return nStatus;
+    return 0;
 }
 
 /**********************************************************************

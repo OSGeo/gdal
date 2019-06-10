@@ -148,27 +148,21 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 #else
     GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpen(fname, GA_ReadOnly));
 #endif
-    if (poTiff == nullptr) {
+    if (poTiff == nullptr || !poTiff->GetRasterCount()) {
         CPLError(CE_Failure,CPLE_AppDefined,
-            "MRF: TIFF, can't open page as a Tiff");
+            "MRF: Can't open page as a raster Tiff");
+        if (poTiff)
+            GDALClose(poTiff);
         VSIUnlink(fname);
         return CE_Failure;
     }
 
     const GDALDataType eGTiffDT = poTiff->GetRasterBand(1)->GetRasterDataType();
     const int nDTSize = GDALGetDataTypeSizeBytes(eGTiffDT);
-    int nBlockXSize = 0;
-    int nBlockYSize = 0;
-    if( poTiff->GetRasterCount() )
-    {
-        poTiff->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    }
     if( poTiff->GetRasterXSize() != img.pagesize.x ||
         poTiff->GetRasterYSize() != img.pagesize.y ||
         poTiff->GetRasterCount() != img.pagesize.c ||
         img.dt != eGTiffDT ||
-        nBlockXSize != poTiff->GetRasterXSize() ||
-        nBlockYSize != poTiff->GetRasterYSize() ||
         static_cast<size_t>(img.pagesize.x) * img.pagesize.y * nDTSize * img.pagesize.c != dst.size )
     {
         CPLError(CE_Failure,CPLE_AppDefined,
@@ -179,18 +173,26 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     }
 
     CPLErr ret;
-    // Bypass the GDAL caching
-    if (img.pagesize.c == 1) {
-        ret = poTiff->GetRasterBand(1)->ReadBlock(0,0,dst.buffer);
-    } else {
-        int dtsize = GDALGetDataTypeSizeBytes(img.dt);
-        ret = poTiff->RasterIO(GF_Read,0,0,img.pagesize.x,img.pagesize.y,
-            dst.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
-            nullptr, dtsize * img.pagesize.c , dtsize * img.pagesize.c * img.pagesize.x, dtsize
+    // Bypass the GDAL caching if single band and block size is right
+    int nBlockXSize = 0, nBlockYSize = 0;
+    if (img.pagesize.c == 1)
+        poTiff->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    if (img.pagesize.c == 1 && nBlockXSize == img.pagesize.x && nBlockYSize == img.pagesize.y)
+    {
+        ret = poTiff->GetRasterBand(1)->ReadBlock(0, 0, dst.buffer);
+    }
+    else
+    {
+        ret = poTiff->RasterIO(GF_Read, 0, 0, img.pagesize.x, img.pagesize.y,
+                    dst.buffer, img.pagesize.x, img.pagesize.y,
+                    img.dt, img.pagesize.c, nullptr,
+                    nDTSize * img.pagesize.c,
+                    nDTSize * img.pagesize.c * img.pagesize.x,
+                    nDTSize
 #if GDAL_VERSION_MAJOR >= 2
-            ,nullptr
+                    , nullptr
 #endif
-            );
+        );
     }
     GDALClose(poTiff);
     VSIUnlink(fname);
