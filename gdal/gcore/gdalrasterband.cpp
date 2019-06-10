@@ -451,18 +451,6 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  * See the GetLockedBlockRef() method for a way of accessing internally cached
  * block oriented data without an extra copy into an application buffer.
  *
- * @param nXBlockOff the horizontal block offset, with zero indicating
- * the left most block, 1 the next block and so forth.
- *
- * @param nYBlockOff the vertical block offset, with zero indicating
- * the top most block, 1 the next block and so forth.
- *
- * @param pImage the buffer into which the data will be read.  The buffer
- * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
- * of type GetRasterDataType().
- *
- * @return CE_None on success or CE_Failure on an error.
- *
  * The following code would efficiently compute a histogram of eight bit
  * raster data.  Note that the final block may be partial ... data beyond
  * the edge of the underlying raster band in these edge blocks is of an
@@ -508,6 +496,18 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
      }
  }
 \endcode
+ *
+ * @param nXBlockOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth.
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the top most block, 1 the next block and so forth.
+ *
+ * @param pImage the buffer into which the data will be read.  The buffer
+ * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
+ * of type GetRasterDataType().
+ *
+ * @return CE_None on success or CE_Failure on an error.
  */
 
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
