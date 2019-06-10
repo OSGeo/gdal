@@ -185,7 +185,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  * @param iProjSys Input projection system code, used in GIS "Panorama".
  *
  *      <h4>Supported Projections</h4>
- * <pre>
+ * \code{.unparsed}
  *      1:  Gauss-Kruger (Transverse Mercator)
  *      2:  Lambert Conformal Conic 2SP
  *      5:  Stereographic
@@ -202,22 +202,22 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *      27: Equirectangular
  *      28: Cylindrical Equal Area (Lambert)
  *      29: International Map of the World Polyconic
- * </pre>
+ * \endcode
  *
  * @param iDatum Input coordinate system.
  *
  *      <h4>Supported Datums</h4>
- * <pre>
+ * \code{.unparsed}
  *       1: Pulkovo, 1942
  *       2: WGS, 1984
  *       3: OSGB 1936 (British National Grid)
  *       9: Pulkovo, 1995
- * </pre>
+ * \endcode
  *
  * @param iEllips Input spheroid.
  *
  *      <h4>Supported Spheroids</h4>
- * <pre>
+ * \code{.unparsed}
  *       1: Krassovsky, 1940
  *       2: WGS, 1972
  *       3: International, 1924 (Hayford, 1909)
@@ -227,11 +227,11 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *       7: Bessel, 1841
  *       8: Airy, 1830
  *       9: WGS, 1984 (GPS)
- * </pre>
+ * \endcode
  *
  * @param padfPrjParams Array of 8 coordinate system parameters:
  *
- * <pre>
+ * \code{.unparsed}
  *      [0]  Latitude of the first standard parallel (radians)
  *      [1]  Latitude of the second standard parallel (radians)
  *      [2]  Latitude of center of projection (radians)
@@ -240,7 +240,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *      [5]  False Easting
  *      [6]  False Northing
  *      [7]  Zone number
- * </pre>
+ * \endcode
  *
  * Particular projection uses different parameters, unused ones may be set to
  * zero. If NULL supplied instead of array pointer default values will be used

@@ -468,7 +468,7 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  * the edge of the underlying raster band in these edge blocks is of an
  * undermined value.
  *
-<pre>
+\code{.cpp}
  CPLErr GetHistogram( GDALRasterBand *poBand, GUIntBig *panHistogram )
 
  {
@@ -507,8 +507,7 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
          }
      }
  }
-
-</pre>
+\endcode
  */
 
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
@@ -2893,12 +2892,12 @@ static inline void ComputeFloatNoDataValue( GDALDataType eDataType,
  * the following would be suitable.  The unusual bounds are to ensure that
  * bucket boundaries don't fall right on integer values causing possible errors
  * due to rounding after scaling.
-<pre>
+\code{.cpp}
     GUIntBig anHistogram[256];
 
     poBand->GetHistogram( -0.5, 255.5, 256, anHistogram, FALSE, FALSE,
                           GDALDummyProgress, nullptr );
-</pre>
+\endcode
  *
  * Note that setting bApproxOK will generally result in a subsampling of the
  * file, and will utilize overviews if available.  It should generally
