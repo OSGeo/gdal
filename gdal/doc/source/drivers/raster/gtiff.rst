@@ -9,8 +9,7 @@ GTiff -- GeoTIFF File Format
 Most forms of TIFF and GeoTIFF files are supported by GDAL for reading,
 and somewhat less varieties can be written.
 
-When built with internal libtiff or with libtiff >= 4.0, GDAL also
-supports reading and writing BigTIFF files (evolution of the TIFF format
+GDAL also supports reading and writing BigTIFF files (evolution of the TIFF format
 to support files larger than 4 GB).
 
 Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32,
@@ -512,11 +511,12 @@ Creation Options
 -  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
    new Byte file can be forced to be written as signed byte.
 
--  **COPY_SRC_OVERVIEWS=[YES/NO]**: (GDAL >= 1.8.0, CreateCopy() only)
+-  **COPY_SRC_OVERVIEWS=[YES/NO]**: (CreateCopy() only)
    By setting this to YES (default is NO), the potential existing
    overviews of the source dataset will be copied to the target dataset
    without being recomputed. This option is typically used to generate
-   Cloud Optimized Geotiff. If overviews of mask band also exist,
+   Cloud Optimized Geotiff (starting with GDAL 3.1, the :ref:`raster.cog` driver
+   can be used as a convenient shortcut). If overviews of mask band also exist,
    provided that the GDAL_TIFF_INTERNAL_MASK configuration option is set
    to YES, they will also be copied. Note that this creation option will
    have `no effect <http://trac.osgeo.org/gdal/ticket/3917>`__ if
@@ -696,17 +696,14 @@ the default behaviour of the GTiff driver.
    thread. Note: this configuration option also apply to other parts to
    GDAL (warping, gridding, ...).
 
---------------
-
-See Also:
+See Also
+--------
 
 -  `GeoTIFF Information Page <https://trac.osgeo.org/geotiff>`__
 -  `libtiff Page <http://www.simplesystems.org/libtiff/>`__
 -  `Details on BigTIFF file
    format <http://www.awaresystems.be/imaging/tiff/bigtiff.html>`__
--  `How to generate and read cloud optimized GeoTIFF
-   files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__
-
+- :ref:`raster.cog` driver
 
 .. toctree::
    :maxdepth: 1

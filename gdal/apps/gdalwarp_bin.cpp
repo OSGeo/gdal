@@ -130,7 +130,11 @@ static int CPL_STDCALL WarpTermProgress( double dfProgress,
 {
     static CPLString osLastMsg;
     static int iSrc = -1;
-    if( pszMessage != osLastMsg )
+    if( pszMessage == nullptr )
+    {
+        iSrc = 0;
+    }
+    else if( pszMessage != osLastMsg )
     {
         printf("%s : ", pszMessage);
         osLastMsg = pszMessage;

@@ -1863,6 +1863,124 @@ def test_gdalwarp_lib_bug_4326_to_3857():
 
 
 ###############################################################################
+# Test warping of single source to COG
+
+
+def test_gdalwarp_lib_to_cog():
+
+    tmpfilename = '/vsimem/cog.tif'
+    ds = gdal.Warp(tmpfilename, '../gcore/data/byte.tif',
+              options = '-f COG -t_srs EPSG:3857 -ts 20 20')
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test warping of single source to COG with reprojection options
+
+
+def test_gdalwarp_lib_to_cog_reprojection_options():
+
+    tmpfilename = '/vsimem/cog.tif'
+    ds = gdal.Warp(tmpfilename, '../gcore/data/byte.tif',
+              options = '-f COG -co TILING_SCHEME=GoogleMapsCompatible')
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == 4187
+    assert ds.GetRasterBand(2).Checksum() == 4415
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test warping of multiple source, compatible of BuildVRT mosaicing, to COG
+
+
+def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog():
+
+    tmpfilename = '/vsimem/cog.tif'
+    left_ds = gdal.Translate('/vsimem/left.tif', '../gcore/data/byte.tif',
+                             options='-srcwin 0 0 10 20')
+    right_ds = gdal.Translate('/vsimem/right.tif', '../gcore/data/byte.tif',
+                              options='-srcwin 10 0 10 20')
+    ds = gdal.Warp(tmpfilename, [left_ds, right_ds], options = '-f COG')
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    gdal.Unlink(tmpfilename)
+    gdal.Unlink('/vsimem/left.tif')
+    gdal.Unlink('/vsimem/right.tif')
+
+
+###############################################################################
+# Test warping of multiple source, compatible of BuildVRT mosaicing, to COG,
+# with reprojection options
+
+
+def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog_reprojection_options():
+
+    tmpfilename = '/vsimem/cog.tif'
+    left_ds = gdal.Translate('/vsimem/left.tif', '../gcore/data/byte.tif',
+                             options='-srcwin 0 0 10 20')
+    right_ds = gdal.Translate('/vsimem/right.tif', '../gcore/data/byte.tif',
+                              options='-srcwin 10 0 10 20')
+    ds = gdal.Warp(tmpfilename, [left_ds, right_ds],
+                   options = '-f COG -co TILING_SCHEME=GoogleMapsCompatible')
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == 4187
+    assert ds.GetRasterBand(2).Checksum() == 4415
+    ds = None
+    gdal.Unlink(tmpfilename)
+    gdal.Unlink('/vsimem/left.tif')
+    gdal.Unlink('/vsimem/right.tif')
+
+
+###############################################################################
+# Test warping of multiple source, incompatible of BuildVRT mosaicing, to COG
+
+
+def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog():
+
+    tmpfilename = '/vsimem/cog.tif'
+    left_ds = gdal.Translate('/vsimem/left.tif', '../gcore/data/byte.tif',
+                             options='-srcwin 0 0 15 20 -b 1 -b 1 -colorinterp_2 alpha -scale_2 0 255 255 255')
+    right_ds = gdal.Translate('/vsimem/right.tif', '../gcore/data/byte.tif',
+                              options='-srcwin 5 0 15 20 -b 1 -b 1 -colorinterp_2 alpha -scale_2 0 255 255 255')
+    ds = gdal.Warp(tmpfilename, [left_ds, right_ds], options = '-f COG')
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(2).Checksum() == 4873
+    ds = None
+    gdal.Unlink(tmpfilename)
+    gdal.Unlink('/vsimem/left.tif')
+    gdal.Unlink('/vsimem/right.tif')
+
+
+###############################################################################
+# Test warping of multiple source, incompatible of BuildVRT mosaicing, to COG,
+# with reprojection options
+
+
+def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog_reprojection_options():
+
+    tmpfilename = '/vsimem/cog.tif'
+    left_ds = gdal.Translate('/vsimem/left.tif', '../gcore/data/byte.tif',
+                             options='-srcwin 0 0 15 20 -b 1 -b 1 -colorinterp_2 alpha -scale_2 0 255 255 255')
+    right_ds = gdal.Translate('/vsimem/right.tif', '../gcore/data/byte.tif',
+                              options='-srcwin 5 0 15 20 -b 1 -b 1 -colorinterp_2 alpha -scale_2 0 255 255 255')
+    ds = gdal.Warp(tmpfilename, [left_ds, right_ds],
+                   options = '-f COG -co TILING_SCHEME=GoogleMapsCompatible')
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == 4207
+    assert ds.GetRasterBand(2).Checksum() == 4415
+    ds = None
+    gdal.Unlink(tmpfilename)
+    gdal.Unlink('/vsimem/left.tif')
+    gdal.Unlink('/vsimem/right.tif')
+
+
+###############################################################################
 # Cleanup
 
 
