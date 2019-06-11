@@ -17079,24 +17079,25 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( bCopySrcOverviews )
     {
         const char* pszOvrDS = CSLFetchNameValue(papszCreateOptions, "@OVERVIEW_DATASET");
-        if( pszOvrDS && EQUAL(pszOvrDS, ""))
+        if( pszOvrDS )
         {
-            // do nothing
-        }
-        else if( pszOvrDS )
-        {
-            poOvrDS.reset(GDALDataset::Open(pszOvrDS));
-            if( !poOvrDS )
+            // Empty string is used by COG driver to indicate that we want
+            // to ignore source overviews.
+            if( !EQUAL(pszOvrDS, "") )
             {
-                CSLDestroy(papszCreateOptions);
-                return nullptr;
+                poOvrDS.reset(GDALDataset::Open(pszOvrDS));
+                if( !poOvrDS )
+                {
+                    CSLDestroy(papszCreateOptions);
+                    return nullptr;
+                }
+                if( poOvrDS->GetRasterCount() != l_nBands )
+                {
+                    CSLDestroy(papszCreateOptions);
+                    return nullptr;
+                }
+                nSrcOverviews = poOvrDS->GetRasterBand(1)->GetOverviewCount() + 1;
             }
-            if( poOvrDS->GetRasterCount() != l_nBands )
-            {
-                CSLDestroy(papszCreateOptions);
-                return nullptr;
-            }
-            nSrcOverviews = poOvrDS->GetRasterBand(1)->GetOverviewCount() + 1;
         }
         else
         {
