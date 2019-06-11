@@ -1674,7 +1674,8 @@ CPLString OGRElasticLayer::BuildMap() {
             if( bAddGeoJSONType )
             {
                 json_object *geometry = AppendGroup(poContainer, pszLastComponent);
-                json_object_object_add(geometry, "type", AddPropertyMap("string"));
+                json_object_object_add(geometry, "type", AddPropertyMap(
+                   m_poDS->m_nMajorVersion >= 5 ? "text" : "string"));
                 json_object_object_add(geometry, "coordinates", geo_point);
             }
             else
