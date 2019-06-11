@@ -439,7 +439,7 @@ The XML schema against which the composition file must validate is
 
 Example on how to use the API:
 
-::
+.. code-block:: c++
 
    char** papszOptions = CSLSetNameValue(nullptr, "COMPOSITION_FILE", "the.xml");
    GDALDataset* ds = GDALCreate("the.pdf", 0, 0, 0, GDT_Unknown, papszOptions);
@@ -453,7 +453,7 @@ is also available.
 
 Example of a composition XML file:
 
-::
+.. code-block:: xml
 
    <PDFComposition>
        <Metadata>
@@ -535,7 +535,7 @@ Example of a composition XML file:
            <OutlineItem name="Page 1" pageId="page_1">
                <OutlineItem name="Important feature !">
                    <Actions>
-                       <GotoPageAction pageId="page_1" x1="1" y1="2" x2="3" y2="4"</GotoPageAction>
+                       <GotoPageAction pageId="page_1" x1="1" y1="2" x2="3" y2="4"/>
                    </Actions>
                </OutlineItem>
            </OutlineItem>
