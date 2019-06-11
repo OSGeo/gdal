@@ -402,10 +402,12 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     const int nBands = poSrcDS->GetRasterCount();
     const char* pszOverviews = CSLFetchNameValueDef(
         papszOptions, "OVERVIEWS", "AUTO");
+    const bool bRecreateOvr = EQUAL(pszOverviews, "FORCE_USE_EXISTING") ||
+                              EQUAL(pszOverviews, "NONE");
     dfTotalPixelsToProcess =
         double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) +
-        (bHasMask && !EQUAL(pszOverviews, "FORCE_USE_EXISTING") ? double(nXSize) * nYSize / 3 : 0) +
-        (!EQUAL(pszOverviews, "FORCE_USE_EXISTING") ? double(nXSize) * nYSize * nBands / 3: 0) +
+        ((bHasMask && !bRecreateOvr) ? double(nXSize) * nYSize / 3 : 0) +
+        (!bRecreateOvr ? double(nXSize) * nYSize * nBands / 3: 0) +
         double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * 4. / 3;
 
     auto psOptions = GDALWarpAppOptionsNew(papszArg, nullptr);
@@ -565,18 +567,20 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     const auto poFirstBand = poCurDS->GetRasterBand(1);
     const bool bHasMask = poFirstBand->GetMaskFlags() == GMF_PER_DATASET;
 
-    const char* pszOverviews = CSLFetchNameValueDef(
+    CPLString osOverviews = CSLFetchNameValueDef(
         papszOptions, "OVERVIEWS", "AUTO");
+    const bool bRecreateOvr = EQUAL(osOverviews, "FORCE_USE_EXISTING") ||
+                              EQUAL(osOverviews, "NONE");
     const bool bGenerateMskOvr = 
-        !EQUAL(pszOverviews, "FORCE_USE_EXISTING") &&
+        !bRecreateOvr &&
         bHasMask &&
         (nXSize > nOvrThresholdSize || nYSize > nOvrThresholdSize) &&
-        (EQUAL(pszOverviews, "IGNORE_EXISTING") ||
+        (EQUAL(osOverviews, "IGNORE_EXISTING") ||
          poFirstBand->GetMaskBand()->GetOverviewCount() == 0);
     const bool bGenerateOvr =
-        !EQUAL(pszOverviews, "FORCE_USE_EXISTING") &&
+        !bRecreateOvr &&
         (nXSize > nOvrThresholdSize || nYSize > nOvrThresholdSize) &&
-        (EQUAL(pszOverviews, "IGNORE_EXISTING") ||
+        (EQUAL(osOverviews, "IGNORE_EXISTING") ||
          poFirstBand->GetOverviewCount() == 0);
 
     std::vector<int> anOverviewLevels;
@@ -708,13 +712,20 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     aosOptions.SetNameValue("NUM_THREADS",
                                 CSLFetchNameValue(papszOptions, "NUM_THREADS"));
 
-    if( !m_osTmpOverviewFilename.empty() )
+    if( EQUAL( osOverviews, "NONE") )
     {
-        aosOptions.SetNameValue("@OVERVIEW_DATASET", m_osTmpOverviewFilename);
+        aosOptions.SetNameValue("@OVERVIEW_DATASET", "");
     }
-    if( !m_osTmpMskOverviewFilename.empty() )
+    else
     {
-        aosOptions.SetNameValue("@MASK_OVERVIEW_DATASET", m_osTmpMskOverviewFilename);
+        if( !m_osTmpOverviewFilename.empty() )
+        {
+            aosOptions.SetNameValue("@OVERVIEW_DATASET", m_osTmpOverviewFilename);
+        }
+        if( !m_osTmpMskOverviewFilename.empty() )
+        {
+            aosOptions.SetNameValue("@MASK_OVERVIEW_DATASET", m_osTmpMskOverviewFilename);
+        }
     }
 
     GDALDriver* poGTiffDrv = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
@@ -807,6 +818,7 @@ void GDALRegister_COG()
 "     <Value>AUTO</Value>"
 "     <Value>IGNORE_EXISTING</Value>"
 "     <Value>FORCE_USE_EXISTING</Value>"
+"     <Value>NONE</Value>"
 "   </Option>"
 "  <Option name='TILING_SCHEME' type='string-select' description='"
         "Which tiling scheme to use' default='CUSTOM'>"

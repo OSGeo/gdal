@@ -372,3 +372,111 @@ def test_cog_byte_to_web_mercator_manual():
     gdal.GetDriverByName('GTiff').Delete(filename)
     gdal.Unlink(directory)
 
+
+
+###############################################################################
+# Test OVERVIEWS creation option
+
+
+def test_cog_overviews_co():
+
+    def my_cbk(pct, _, arg):
+        assert pct >= tab[0]
+        tab[0] = pct
+        return 1
+
+    directory = '/vsimem/test_cog_overviews_co'
+    filename = directory + '/cog.tif'
+    src_ds = gdal.Translate('', 'data/byte.tif',
+                            options='-of MEM -outsize 2048 300')
+
+    for val in ['NONE', 'FORCE_USE_EXISTING']:
+
+        tab = [ 0 ]
+        ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                    options = ['OVERVIEWS=' + val],
+                                                    callback = my_cbk,
+                                                    callback_data = tab)
+        assert tab[0] == 1.0
+        assert ds
+
+        ds = None
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+        assert ds.GetRasterBand(1).GetOverviewCount() == 0
+        ds = None
+        _check_cog(filename)
+
+    for val in ['AUTO', 'IGNORE_EXISTING']:
+
+        tab = [ 0 ]
+        ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                    options = ['OVERVIEWS=' + val],
+                                                    callback = my_cbk,
+                                                    callback_data = tab)
+        assert tab[0] == 1.0
+        assert ds
+
+        ds = None
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+        assert ds.GetRasterBand(1).GetOverviewCount() == 2
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
+        ds = None
+        _check_cog(filename)
+
+
+    # Add overviews to source
+    src_ds.BuildOverviews('NONE', [2])
+
+    tab = [ 0 ]
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                options = ['OVERVIEWS=NONE'],
+                                                callback = my_cbk,
+                                                callback_data = tab)
+    assert tab[0] == 1.0
+    assert ds
+
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    ds = None
+    _check_cog(filename)
+
+    tab = [ 0 ]
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                options = ['OVERVIEWS=FORCE_USE_EXISTING'],
+                                                callback = my_cbk,
+                                                callback_data = tab)
+    assert tab[0] == 1.0
+    assert ds
+
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 0
+    ds = None
+    _check_cog(filename)
+
+    tab = [ 0 ]
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                options = ['OVERVIEWS=IGNORE_EXISTING'],
+                                                callback = my_cbk,
+                                                callback_data = tab)
+    assert tab[0] == 1.0
+    assert ds
+
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
+    ds = None
+    _check_cog(filename)
+
+
+    src_ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.Unlink(directory)

@@ -17075,10 +17075,15 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     double dfExtraSpaceForOverviews = 0;
     const bool bCopySrcOverviews = CPLFetchBool(papszCreateOptions, "COPY_SRC_OVERVIEWS", false);
     std::unique_ptr<GDALDataset> poOvrDS;
+    int nSrcOverviews = 0;
     if( bCopySrcOverviews )
     {
         const char* pszOvrDS = CSLFetchNameValue(papszCreateOptions, "@OVERVIEW_DATASET");
-        if( pszOvrDS )
+        if( pszOvrDS && EQUAL(pszOvrDS, ""))
+        {
+            // do nothing
+        }
+        else if( pszOvrDS )
         {
             poOvrDS.reset(GDALDataset::Open(pszOvrDS));
             if( !poOvrDS )
@@ -17091,10 +17096,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CSLDestroy(papszCreateOptions);
                 return nullptr;
             }
+            nSrcOverviews = poOvrDS->GetRasterBand(1)->GetOverviewCount() + 1;
         }
-        const int nSrcOverviews = poOvrDS ?
-            poOvrDS->GetRasterBand(1)->GetOverviewCount() + 1:
-            poSrcDS->GetRasterBand(1)->GetOverviewCount();
+        else
+        {
+            nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+        }
         if( nSrcOverviews )
         {
             for( int j = 1; j <= l_nBands; ++j )
@@ -18024,9 +18031,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 return nullptr;
             }
         }
-        const int nSrcOverviews = poOvrDS ?
-            poOvrDS->GetRasterBand(1)->GetOverviewCount() + 1:
-            poSrcDS->GetRasterBand(1)->GetOverviewCount();
         if( nSrcOverviews )
         {
             eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS, poOvrDS.get());

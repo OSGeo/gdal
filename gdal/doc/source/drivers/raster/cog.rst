@@ -103,19 +103,29 @@ General creation options
    For paletted images,
    NEAREST is used by default, otherwise it is CUBIC.
 
-- **OVERVIEWS=[AUTO/IGNORE_EXISTING/FORCE_USE_EXISTING]**: Describe the behaviour
-  regarding source overviews.
+- **OVERVIEWS=[AUTO/IGNORE_EXISTING/FORCE_USE_EXISTING/NONE]**: Describe the behaviour
+  regarding overview generation and use of source overviews.
   
   - ``AUTO`` (default): source overviews will be
     used if present (even if the dimension of the smallest level is not < 512 pixels),
-    and if not present will be automatically generated.
+    and, if not present, overviews will be automatically generated in the
+    output file.
 
   - ``IGNORE_EXISTING``: potential existing overviews on the source dataset will
     be ignored and new overviews will be automatically generated.
 
   - ``FORCE_USE_EXISTING``: potential existing overviews on the source will
-    be used (even if the dimension of the smallest level is not < 512 pixels), and
-    if there is no source overview, none will be generated.
+    be used (even if the dimension of the smallest level is not < 512 pixels).
+    If there is no source overview, this is equivalent to specifying ``NONE``.
+
+  - ``NONE``: potential source overviews will be ignored, and no overview will be
+    generated.
+
+    .. note::
+
+        When using the gdal_translate utility, source overviews will not be
+        available if general options (i.e. options which are not creation options,
+        like subsetting, etc.) are used.
 
 Reprojection related creation options
 *************************************
