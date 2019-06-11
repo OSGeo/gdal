@@ -3784,20 +3784,6 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray, bool binterleave )
     int     nBands;
 
 /* -------------------------------------------------------------------- */
-/*      If we likely have corrupt definitions of the NUMPY stuff,       */
-/*      then warn now.                                                  */
-/* -------------------------------------------------------------------- */
-#ifdef NUMPY_DEFS_WRONG
-    CPLError( CE_Warning, CPLE_AppDefined,
-              "It would appear you have built GDAL without having it use\n"
-              "the Numeric python include files.  Old definitions have\n"
-              "been used instead at build time, and it is quite possible that\n"
-              "the things will shortly fail or crash if they are wrong.\n"
-              "Consider installing Numeric, and rebuilding with HAVE_NUMPY\n"
-              "enabled in gdal\nmake.opt." );
-#endif
-
-/* -------------------------------------------------------------------- */
 /*      Is this a directly mappable Python array?  Verify rank, and     */
 /*      data type.                                                      */
 /* -------------------------------------------------------------------- */
