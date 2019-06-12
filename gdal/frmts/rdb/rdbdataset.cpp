@@ -36,9 +36,27 @@
 
 namespace rdb
 {
+void RDBOverview::addRDBNode(RDBNode &oRDBNode, double dfXMin, double dfYMin,
+                             double dfXMax, double dfYMax)
+{
+
+    adfMinimum[0] = std::min(adfMinimum[0], dfXMin);
+    adfMaximum[0] = std::max(adfMaximum[0], dfXMax);
+
+    adfMinimum[1] = std::min(adfMinimum[1], dfYMin);
+    adfMaximum[1] = std::max(adfMaximum[1], dfYMax);
+
+    aoRDBNodes.push_back(oRDBNode);
+}
+void RDBOverview::setTileSize(double dfTileSizeIn)
+{
+    dfTileSize = dfTileSizeIn;
+    dfPixelSize = dfTileSize / 256.0;
+}
+
 template <typename T> struct CPLMallocGuard
 {
-    T *const pData;
+    T *const pData = nullptr;
     explicit CPLMallocGuard(std::size_t count)
         : pData(static_cast<T *>(CPLMalloc(sizeof(T) * count)))
     {
@@ -46,20 +64,110 @@ template <typename T> struct CPLMallocGuard
     ~CPLMallocGuard() { CPLFree(pData); }
 };
 
+template <typename T> class RDBRasterBandInternal;
+
 template <typename T> class RDBRasterBandInternal : public RDBRasterBand
 {
+    std::vector<std::unique_ptr<RDBRasterBandInternal<T>>> aoOverviewBands;
+    std::vector<VRTSourcedRasterBand *> aoVRTRasterBand;
+
   public:
     RDBRasterBandInternal(
         RDBDataset *poDSIn, const std::string &osAttributeNameIn,
         const riegl::rdb::pointcloud::PointAttribute &oPointAttributeIn,
-        int nBandIn, GDALDataType eDataTypeIn)
+        int nBandIn, GDALDataType eDataTypeIn, int nLevelIn)
         : RDBRasterBand(poDSIn, osAttributeNameIn, oPointAttributeIn, nBandIn,
-                        eDataTypeIn)
+                        eDataTypeIn, nLevelIn)
     {
+
+        poDS = poDSIn;
+        nBand = nBandIn;
+
+        eDataType = eDataTypeIn;
+        eAccess = poDSIn->eAccess;
+
+        auto &oRDBOverview = poDSIn->aoRDBOverviews[nLevelIn];
+
+        nRasterXSize = static_cast<int>(
+            (oRDBOverview.adfMaximum[0] - oRDBOverview.adfMinimum[0]) * 256);
+        nRasterYSize = static_cast<int>(
+            (oRDBOverview.adfMaximum[1] - oRDBOverview.adfMinimum[1]) * 256);
+
+        nBlockXSize = 256;
+        nBlockYSize = 256;
+    }
+
+    ~RDBRasterBandInternal() {}
+    RDBRasterBandInternal(
+        RDBDataset *poDSIn, const std::string &osAttributeNameIn,
+        const riegl::rdb::pointcloud::PointAttribute &oPointAttributeIn,
+        int nBandIn, GDALDataType eDataTypeIn, int nLevelIn, int nNumerOfLayers)
+        : RDBRasterBandInternal(poDSIn, osAttributeNameIn, oPointAttributeIn,
+                                nBandIn, eDataTypeIn, nLevelIn)
+    {
+        aoOverviewBands.resize(nNumerOfLayers);
+        poDSIn->apoVRTDataset.resize(nNumerOfLayers);
+
+        for(int i = nNumerOfLayers - 2; i >= 0; i--)
+        {
+
+            aoOverviewBands[i].reset(new RDBRasterBandInternal<T>(
+                poDSIn, osAttributeNameIn, oPointAttributeIn, nBandIn,
+                eDataTypeIn, i));
+            RDBOverview &oRDBOverview = poDSIn->aoRDBOverviews[i];
+
+            int nDatasetXSize = static_cast<int>(std::round(
+                (poDSIn->dfXMax - poDSIn->dfXMin) / oRDBOverview.dfPixelSize));
+
+            int nDatasetYSize = static_cast<int>(std::round(
+                (poDSIn->dfYMax - poDSIn->dfYMin) / oRDBOverview.dfPixelSize));
+
+            if(!poDSIn->apoVRTDataset[i])
+            {
+
+                poDSIn->apoVRTDataset[i].reset(
+                    new VRTDataset(nDatasetXSize, nDatasetYSize));
+            }
+
+            VRTAddBand(poDSIn->apoVRTDataset[i].get(), eDataType, nullptr);
+
+            VRTSourcedRasterBand *hVRTBand(dynamic_cast<VRTSourcedRasterBand *>(
+                poDSIn->apoVRTDataset[i]->GetRasterBand(nBandIn)));
+
+            int bSuccess = FALSE;
+            double dfNoDataValue = GetNoDataValue(&bSuccess);
+            if(bSuccess == FALSE)
+            {
+                dfNoDataValue = VRT_NODATA_UNSET;
+            }
+
+            hVRTBand->AddSimpleSource(
+                aoOverviewBands[i].get(),
+                (poDSIn->dfXMin -
+                 oRDBOverview.adfMinimum[0] * oRDBOverview.dfTileSize) /
+                    (oRDBOverview.dfPixelSize),
+                (poDSIn->dfYMin -
+                 oRDBOverview.adfMinimum[1] * oRDBOverview.dfTileSize) /
+                    (oRDBOverview.dfPixelSize),
+                nDatasetXSize, nDatasetYSize, 0, 0, nDatasetXSize,
+                nDatasetYSize, "average", dfNoDataValue);
+
+            aoVRTRasterBand.push_back(hVRTBand);
+        }
+        poDS = poDSIn;
+        nBand = nBandIn;
+
+        eDataType = eDataTypeIn;
+        eAccess = poDSIn->eAccess;
+        nRasterXSize = poDSIn->nRasterXSize;
+        nRasterYSize = poDSIn->nRasterYSize;
+        nBlockXSize = 256;
+        nBlockYSize = 256;
     }
 
     double GetNoDataValue(int *pbSuccess) override
     {
+
         double dfInvalidValue = RDBRasterBand::GetNoDataValue(pbSuccess);
         if(pbSuccess == nullptr)
         {
@@ -114,17 +222,20 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
         }
         try
         {
-            RDBDataset *poRdbDs = dynamic_cast<RDBDataset *>(poDS);
-            if(poRdbDs != nullptr)
+            RDBDataset *poRDBDs = dynamic_cast<RDBDataset *>(poDS);
+            if(poRDBDs != nullptr)
             {
+                auto &oRDBOverview = poRDBDs->aoRDBOverviews[nLevel];
+                auto &aoRDBNodes = oRDBOverview.aoRDBNodes;
+
                 auto pIt = std::find_if(
-                    poRdbDs->aoRDBNodes.begin(), poRdbDs->aoRDBNodes.end(),
-                    [&](const RDBNode &poRdbNode) {
-                        return poRdbNode.nXBlockCoordinates == nBlockXOff &&
-                               poRdbNode.nYBlockCoordinates == nBlockYOff;
+                    aoRDBNodes.begin(), aoRDBNodes.end(),
+                    [&](const RDBNode &poRDBNode) {
+                        return poRDBNode.nXBlockCoordinates == nBlockXOff &&
+                               poRDBNode.nYBlockCoordinates == nBlockYOff;
                     });
 
-                if(pIt != poRdbDs->aoRDBNodes.end())
+                if(pIt != aoRDBNodes.end())
                 {
 
                     using type = RDBCoordinatesPlusData<T>;
@@ -134,12 +245,12 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
                     {
                         // is locking needed?
                         // std::lock_guard<std::mutex>
-                        // oGuard(poRdbDs->oLock);
+                        // oGuard(poRDBDs->oLock);
 
                         auto oSelectQuery =
-                            poRdbDs->oPointcloud.select(pIt->iID);
+                            poRDBDs->oPointcloud.select(pIt->iID);
                         oSelectQuery.bindBuffer(
-                            poRdbDs->oPointcloud.pointAttribute()
+                            poRDBDs->oPointcloud.pointAttribute()
                                 .primaryAttributeName(),
                             oData.pData[0].adfCoordinates[0],
                             static_cast<int32_t>(sizeof(type)));
@@ -153,24 +264,31 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
 
                     if(nPointsReturned > 0)
                     {
-                        double dfTileMinX = poRdbDs->dfXMin +
-                                            nBlockXOff * poRdbDs->dfSizeOfTile;
-                        double dfTileMinY = poRdbDs->dfYMin +
-                                            nBlockYOff * poRdbDs->dfSizeOfTile;
 
-                        double dfHalveResolution = poRdbDs->dfResolution / 2;
+                        double dfHalveResolution = poRDBDs->dfResolution / 2;
+
+                        double dfTileMinX =
+                            (std::floor((poRDBDs->dfXMin + dfHalveResolution) /
+                                        oRDBOverview.dfTileSize) +
+                             nBlockXOff) *
+                            oRDBOverview.dfTileSize;
+                        double dfTileMinY =
+                            (std::floor((poRDBDs->dfYMin + dfHalveResolution) /
+                                        oRDBOverview.dfTileSize) +
+                             nBlockYOff) *
+                            oRDBOverview.dfTileSize;
 
                         for(uint32_t i = 0; i < nPointsReturned; i++)
                         {
                             int dfPixelX = static_cast<int>(
                                 std::floor((oData.pData[i].adfCoordinates[0] +
                                             dfHalveResolution - dfTileMinX) /
-                                           poRdbDs->dfSizeOfPixel));
+                                           oRDBOverview.dfPixelSize));
 
                             int dfPixelY = static_cast<int>(
                                 std::floor((oData.pData[i].adfCoordinates[1] +
                                             dfHalveResolution - dfTileMinY) /
-                                           poRdbDs->dfSizeOfPixel));
+                                           oRDBOverview.dfPixelSize));
 
                             pImage[dfPixelY * 256 + dfPixelX] =
                                 oData.pData[i].data;
@@ -199,6 +317,21 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
         }
         return CE_None;
     }
+
+    virtual int GetOverviewCount() override
+    {
+        RDBDataset *poRDBDs = dynamic_cast<RDBDataset *>(poDS);
+        if(poRDBDs == nullptr)
+        {
+            return 0;
+        }
+        return static_cast<int>(aoVRTRasterBand.size());
+    }
+    virtual GDALRasterBand *GetOverview(int i) override
+    {
+
+        return aoVRTRasterBand[i];
+    }
 };
 
 RDBDataset::~RDBDataset() {}
@@ -206,41 +339,49 @@ RDBDataset::~RDBDataset() {}
 void RDBDataset::SetBandInternal(
     RDBDataset *poDs, const std::string &osAttributeName,
     const riegl::rdb::pointcloud::PointAttribute &oPointAttribute,
-    riegl::rdb::pointcloud::DataType eRdbDataType, int &nBandIndex)
+    riegl::rdb::pointcloud::DataType eRDBDataType, int nLevel,
+    int nNumerOfLayers, int &nBandIndex)
 {
 
     RDBRasterBand *poBand = nullptr;
-    switch(eRdbDataType)
+    switch(eRDBDataType)
     {
     case riegl::rdb::pointcloud::DataType::UINT8:
     // Should I do ignore the other type?
     case riegl::rdb::pointcloud::DataType::INT8:
         poBand = new RDBRasterBandInternal<std::uint8_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Byte);
+            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Byte,
+            nLevel, nNumerOfLayers);
         break;
     case riegl::rdb::pointcloud::DataType::UINT16:
         poBand = new RDBRasterBandInternal<std::uint16_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_UInt16);
+            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_UInt16,
+            nLevel, nNumerOfLayers);
         break;
     case riegl::rdb::pointcloud::DataType::INT16:
         poBand = new RDBRasterBandInternal<std::int16_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Int16);
+            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Int16,
+            nLevel, nNumerOfLayers);
         break;
     case riegl::rdb::pointcloud::DataType::UINT32:
         poBand = new RDBRasterBandInternal<std::uint32_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_UInt32);
+            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_UInt32,
+            nLevel, nNumerOfLayers);
         break;
     case riegl::rdb::pointcloud::DataType::INT32:
         poBand = new RDBRasterBandInternal<std::int32_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Int32);
+            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Int32,
+            nLevel, nNumerOfLayers);
         break;
     case riegl::rdb::pointcloud::DataType::FLOAT32:
         poBand = new RDBRasterBandInternal<float>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float32);
+            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float32,
+            nLevel, nNumerOfLayers);
         break;
     case riegl::rdb::pointcloud::DataType::FLOAT64:
         poBand = new RDBRasterBandInternal<double>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float64);
+            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float64,
+            nLevel, nNumerOfLayers);
         break;
     default:
         // for all reamining use double. e.g. u/int64_t
@@ -248,7 +389,8 @@ void RDBDataset::SetBandInternal(
         // minimum required data type. could be a problem when working with
         // multiple files.
         poBand = new RDBRasterBandInternal<double>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float64);
+            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float64,
+            nLevel, nNumerOfLayers);
         break;
     }
 
@@ -256,38 +398,75 @@ void RDBDataset::SetBandInternal(
     nBandIndex++;
 }
 
-void RDBDataset::traverseRdbNodes(
-    const riegl::rdb::pointcloud::GraphNode &oNode)
+void RDBDataset::addRDBNode(const riegl::rdb::pointcloud::GraphNode &oNode,
+                            double dfTileSize, std::size_t nLevel)
+{
+    double adfNodeMinimum[2];
+    double adfNodeMaximum[2];
+
+    oStatQuery.minimum(oNode.id,
+                       oPointcloud.pointAttribute().primaryAttributeName(),
+                       adfNodeMinimum[0]);
+    oStatQuery.maximum(oNode.id,
+                       oPointcloud.pointAttribute().primaryAttributeName(),
+                       adfNodeMaximum[0]);
+
+    int dfXNodeMin = static_cast<int>(
+        std::floor((adfNodeMinimum[0] + dfSizeOfPixel * 0.5) / dfTileSize));
+    int dfYNodeMin = static_cast<int>(
+        std::floor((adfNodeMinimum[1] + dfSizeOfPixel * 0.5) / dfTileSize));
+
+    int dfXNodeMax = static_cast<int>(
+        std::ceil((adfNodeMaximum[0] + dfSizeOfPixel * 0.5) / dfTileSize));
+    int dfYNodeMax = static_cast<int>(
+        std::ceil((adfNodeMaximum[1] + dfSizeOfPixel * 0.5) / dfTileSize));
+
+    RDBNode oRDBNode;
+
+    oRDBNode.iID = oNode.id;
+    oRDBNode.nPointCount = oNode.pointCountNode;
+    oRDBNode.nXBlockCoordinates =
+        dfXNodeMin - static_cast<int>(std::floor(
+                         (dfXMin + dfSizeOfPixel * 0.5) / dfTileSize));
+    oRDBNode.nYBlockCoordinates =
+        dfYNodeMin - static_cast<int>(std::floor(
+                         (dfYMin + dfSizeOfPixel * 0.5) / dfTileSize));
+
+    if(aoRDBOverviews.size() <= nLevel)
+    {
+        aoRDBOverviews.resize(nLevel + 1);
+    }
+    aoRDBOverviews[nLevel].setTileSize(dfTileSize);
+
+    aoRDBOverviews[nLevel].addRDBNode(oRDBNode, dfXNodeMin, dfYNodeMin,
+                                      dfXNodeMax, dfYNodeMax);
+}
+
+double
+RDBDataset::traverseRDBNodes(const riegl::rdb::pointcloud::GraphNode &oNode,
+                             std::size_t nLevel)
 {
     if(oNode.children.size() == 0)
     {
-        double adfNodeMinimum[2];
-        oStatQuery.minimum(oNode.id,
-                           oPointcloud.pointAttribute().primaryAttributeName(),
-                           adfNodeMinimum[0]);
-
-        int dfXNodeMin = static_cast<int>(
-            std::floor((adfNodeMinimum[0] + dfSizeOfPixel / 2) / dfSizeOfTile));
-        int dfYNodeMin = static_cast<int>(
-            std::floor((adfNodeMinimum[1] + dfSizeOfPixel / 2) / dfSizeOfTile));
-
-        RDBNode oRdbNode;
-
-        oRdbNode.iID = oNode.id;
-        oRdbNode.nPointCount = oNode.pointCountNode;
-        oRdbNode.nXBlockCoordinates =
-            dfXNodeMin - static_cast<int>(std::floor(dfXMin / dfSizeOfTile));
-        oRdbNode.nYBlockCoordinates =
-            dfYNodeMin - static_cast<int>(std::floor(dfYMin / dfSizeOfTile));
-
-        aoRDBNodes.push_back(oRdbNode);
+        addRDBNode(oNode, dfSizeOfTile, nLevel);
+        return dfSizeOfTile;
     }
     else
     {
+        double dfSizeOfChildTile = 0.0;
         for(auto &&oChild : oNode.children)
         {
-            traverseRdbNodes(oChild);
+            dfSizeOfChildTile = traverseRDBNodes(oChild, nLevel + 1);
         }
+        if(dfSizeOfChildTile >= dfSizeOfTile && oNode.pointCountNode > 0)
+        {
+            double dfTileSizeCurrentLevel = dfSizeOfChildTile * 2.0;
+
+            addRDBNode(oNode, dfTileSizeCurrentLevel, nLevel);
+
+            return dfTileSizeCurrentLevel;
+        }
+        return 0.0;
     }
 }
 
@@ -303,8 +482,8 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
     std::string oPrimaryAttribute =
         oPointcloud.pointAttribute().primaryAttributeName();
 
-    oStatQuery.minimum(1, oPrimaryAttribute, adfMinimum[0]);
-    oStatQuery.maximum(1, oPrimaryAttribute, adfMaximum[0]);
+    oStatQuery.minimum(1, oPrimaryAttribute, adfMinimumDs[0]);
+    oStatQuery.maximum(1, oPrimaryAttribute, adfMaximumDs[0]);
 
     dfResolution =
         oPointcloud.pointAttribute().get(oPrimaryAttribute).resolution;
@@ -336,24 +515,46 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
 
     dfSizeOfTile = dfSizeOfPixel * 256;  // 2^8
 
-    dfXMin = std::floor((adfMinimum[0] + dfSizeOfPixel / 2) / dfSizeOfTile) *
-             dfSizeOfTile;
-    dfYMin = std::floor((adfMinimum[1] + dfSizeOfPixel / 2) / dfSizeOfTile) *
-             dfSizeOfTile;
+    double dfSizeOfTileX = dfSizeOfTile * std::pow(2, 0);
+    dfXMin =
+        std::floor((adfMinimumDs[0] + dfSizeOfPixel * 0.5) / dfSizeOfTileX) *
+        dfSizeOfTileX;
+    dfYMin =
+        std::floor((adfMinimumDs[1] + dfSizeOfPixel * 0.5) / dfSizeOfTileX) *
+        dfSizeOfTileX;
 
-    dfXMax = std::ceil((adfMaximum[0] - dfSizeOfPixel / 2) / dfSizeOfTile) *
-             dfSizeOfTile;
-    dfYMax = std::ceil((adfMaximum[1] - dfSizeOfPixel / 2) / dfSizeOfTile) *
-             dfSizeOfTile;
+    dfXMax =
+        std::ceil((adfMaximumDs[0] + dfSizeOfPixel * 0.5) / dfSizeOfTileX) *
+        dfSizeOfTileX;
+    dfYMax =
+        std::ceil((adfMaximumDs[1] + dfSizeOfPixel * 0.5) / dfSizeOfTileX) *
+        dfSizeOfTileX;
 
     nRasterXSize = static_cast<int>((dfXMax - dfXMin) / dfSizeOfPixel);
     nRasterYSize = static_cast<int>((dfYMax - dfYMin) / dfSizeOfPixel);
 
-    traverseRdbNodes(oStatQuery.index());
+    traverseRDBNodes(oStatQuery.index());
+
+    aoRDBOverviews.erase(
+        std::remove_if(aoRDBOverviews.begin(), aoRDBOverviews.end(),
+                       [](const RDBOverview &oRDBOverView) {
+                           return oRDBOverView.aoRDBNodes.empty();
+                       }),
+        aoRDBOverviews.end());
+
+    double dfLevelFactor = std::pow(2, aoRDBOverviews.size());
+    nRasterXSize = static_cast<int>(std::ceil(nRasterXSize / dfLevelFactor) *
+                                    dfLevelFactor);
+    nRasterYSize = static_cast<int>(std::ceil(nRasterYSize / dfLevelFactor) *
+                                    dfLevelFactor);
+
+    dfXMax = dfXMin + nRasterXSize * dfSizeOfPixel;
+    dfYMax = dfYMin + nRasterYSize * dfSizeOfPixel;
 
     riegl::rdb::pointcloud::PointAttributes &oPointAttribute =
         oPointcloud.pointAttribute();
 
+    int nNumberOfLevels = static_cast<int>(aoRDBOverviews.size());
     std::vector<std::string> aoExistingPointAttributes = oPointAttribute.list();
 
     for(auto &&osAttributeName : aoExistingPointAttributes)
@@ -368,7 +569,8 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
         if(oAttribute.length == 1)
         {
             SetBandInternal(this, osAttributeName, oAttribute,
-                            oAttribute.dataType(), nBandIndex);
+                            oAttribute.dataType(), nNumberOfLevels - 1,
+                            nNumberOfLevels, nBandIndex);
         }
         else
         {
@@ -377,7 +579,8 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
                 std::ostringstream oOss;
                 oOss << osAttributeName << '[' << i << ']';
                 SetBandInternal(this, oOss.str(), oAttribute,
-                                oAttribute.dataType(), nBandIndex);
+                                oAttribute.dataType(), nNumberOfLevels - 1,
+                                nNumberOfLevels, nBandIndex);
             }
         }
     }
@@ -406,7 +609,7 @@ GDALDataset *RDBDataset::Open(GDALOpenInfo *poOpenInfo)
     try
     {
         RDBDataset *poDS = new RDBDataset(poOpenInfo);
-        std::swap(poDS->fp, poOpenInfo->fpL);
+        // std::swap(poDS->fp, poOpenInfo->fpL);
         // Initialize any PAM information.
         poDS->SetDescription(poOpenInfo->pszFilename);
         poDS->TryLoadXML();
@@ -441,11 +644,11 @@ int RDBDataset::Identify(GDALOpenInfo *poOpenInfo)
         return FALSE;
     }
 
-    constexpr int kSizeOfRdbHeaderIdentifier = 32;
-    constexpr char szRdbHeaderIdentifier[kSizeOfRdbHeaderIdentifier] =
+    constexpr int kSizeOfRDBHeaderIdentifier = 32;
+    constexpr char szRDBHeaderIdentifier[kSizeOfRDBHeaderIdentifier] =
         "RIEGL LMS RDB 2 POINTCLOUD FILE";
 
-    if(strncmp(psHeader, szRdbHeaderIdentifier, kSizeOfRdbHeaderIdentifier))
+    if(strncmp(psHeader, szRDBHeaderIdentifier, kSizeOfRDBHeaderIdentifier))
     {
 
         // A more comprehensive test could be done by the library.
@@ -473,6 +676,11 @@ const char *RDBDataset::_GetProjectionRef()
 {
     ReadGeoreferencing();
     return osWktString.c_str();
+}
+
+const OGRSpatialReference *RDBDataset::GetSpatialRef() const
+{
+    return &oSpatialReference;
 }
 
 void RDBDataset::ReadGeoreferencing()
@@ -503,6 +711,7 @@ void RDBDataset::ReadGeoreferencing()
                 if(poWkt != nullptr)
                 {
                     osWktString = json_object_get_string(poWkt);
+                    oSpatialReference.importFromWkt(osWktString.c_str());
                 }
             }
         }
@@ -527,8 +736,9 @@ void RDBDataset::ReadGeoreferencing()
 RDBRasterBand::RDBRasterBand(
     RDBDataset *poDSIn, const std::string &osAttributeNameIn,
     const riegl::rdb::pointcloud::PointAttribute &oPointAttributeIn,
-    int nBandIn, GDALDataType eDataTypeIn)
-    : osAttributeName(osAttributeNameIn), oPointAttribute(oPointAttributeIn)
+    int nBandIn, GDALDataType eDataTypeIn, int nLevelIn)
+    : osAttributeName(osAttributeNameIn), oPointAttribute(oPointAttributeIn),
+      nLevel(nLevelIn)
 {
 
     osDescription.Printf("%s (%s)", oPointAttribute.title.c_str(),
@@ -577,10 +787,10 @@ void GDALRegister_RDB()
     GDALDriver *poDriver = new GDALDriver();
     poDriver->SetDescription("RDB");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "RIEGL RDB (.mpx)");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "RIEGL RDB Map Pixel (.mpx)");
     // TODO:
     // poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-    //                          "");P
+    //                          "");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mpx");
     poDriver->pfnOpen = rdb::RDBDataset::Open;
     poDriver->pfnIdentify = rdb::RDBDataset::Identify;

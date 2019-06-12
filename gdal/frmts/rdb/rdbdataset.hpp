@@ -1,6 +1,7 @@
 #ifndef RDB_DATASET_INCLUDED
 #define RDB_DATASET_INCLUDED
 
+#include "../frmts/vrt/vrtdataset.h"
 #include "gdal_pam.h"
 
 #include <riegl/rdb.hpp>
@@ -21,11 +22,26 @@ struct RDBNode
     uint64_t nPointCount = 0;
 };
 
+struct RDBOverview
+{
+    double dfTileSize = 0;
+    double dfPixelSize = 0;
+    double adfMinimum[2] = {std::numeric_limits<double>::max(),
+                            std::numeric_limits<double>::max()};
+    double adfMaximum[2] = {std::numeric_limits<double>::lowest(),
+                            std::numeric_limits<double>::lowest()};
+    std::vector<RDBNode> aoRDBNodes;
+    void addRDBNode(RDBNode &oRDBNode, double dfXMin, double dfYMin,
+                    double dfXMax, double dfYMax);
+    void setTileSize(double dfTileSizeIn);
+};
+
 template <typename T> struct RDBCoordinatesPlusData
 {
     double adfCoordinates[2];
     T data;
 };
+
 class RDBDataset : public GDALPamDataset
 {
     friend class RDBRasterBand;
@@ -38,13 +54,16 @@ class RDBDataset : public GDALPamDataset
     riegl::rdb::Pointcloud oPointcloud;
     riegl::rdb::pointcloud::QueryStat oStatQuery;
 
+    OGRSpatialReference oSpatialReference;
+
     double dfResolution = 0;
     int nChunkSize = 0;
     double dfSizeOfTile;
     double dfSizeOfPixel;
     CPLString osWktString;
 
-    std::vector<RDBNode> aoRDBNodes;
+    std::vector<RDBOverview> aoRDBOverviews;
+    std::vector<std::unique_ptr<VRTDataset>> apoVRTDataset;
 
     double dfXMin;
     double dfYMin;
@@ -52,8 +71,8 @@ class RDBDataset : public GDALPamDataset
     double dfXMax;
     double dfYMax;
 
-    double adfMinimum[2] = {};
-    double adfMaximum[2] = {};
+    double adfMinimumDs[2] = {};
+    double adfMaximumDs[2] = {};
 
   public:
     explicit RDBDataset(GDALOpenInfo *poOpenInfo);
@@ -64,13 +83,18 @@ class RDBDataset : public GDALPamDataset
 
     CPLErr GetGeoTransform(double *padfTransform) override;
     const char *_GetProjectionRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
   protected:
     static void SetBandInternal(
         RDBDataset *poDs, const std::string &osAttributeName,
         const riegl::rdb::pointcloud::PointAttribute &oPointAttribute,
-        riegl::rdb::pointcloud::DataType eRdbDataType, int &nBandIndex);
-    void traverseRdbNodes(const riegl::rdb::pointcloud::GraphNode &oNode);
+        riegl::rdb::pointcloud::DataType eRDBDataType, int nLevel,
+        int nNumberOfLevels, int &nBandIndex);
+    void addRDBNode(const riegl::rdb::pointcloud::GraphNode &oNode,
+                    double dfTileSize, std::size_t nLeve);
+    double traverseRDBNodes(const riegl::rdb::pointcloud::GraphNode &oNode,
+                            std::size_t nLevel = 0);
 
     void ReadGeoreferencing();
 };
@@ -81,12 +105,14 @@ class RDBRasterBand : public GDALPamRasterBand
     CPLString osAttributeName;
     CPLString osDescription;
     riegl::rdb::pointcloud::PointAttribute oPointAttribute;
+    int nLevel;
 
   public:
     RDBRasterBand(
         RDBDataset *poDSIn, const std::string &osAttributeName,
         const riegl::rdb::pointcloud::PointAttribute &oPointAttributeIn,
-        int nBandIn, GDALDataType eDataTypeIn);
+        int nBandIn, GDALDataType eDataTypeIn, int nLevelIn);
+
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual const char *GetDescription() const override;
 };
