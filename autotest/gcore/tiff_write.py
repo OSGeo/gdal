@@ -3749,10 +3749,8 @@ def test_tiff_write_102():
     wkt = sr.ExportToWkt()
     ds.SetProjection(wkt)
     ds = None
-
-    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
-        ds = gdal.Open('/vsimem/tiff_write_102.tif')
-        wkt1 = ds.GetProjectionRef()
+    ds = gdal.Open('/vsimem/tiff_write_102.tif')
+    wkt1 = ds.GetProjectionRef()
     ds = None
 
     with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'NO'):
@@ -3769,11 +3767,8 @@ def test_tiff_write_102():
     sr2 = osr.SpatialReference()
     sr2.SetFromUserInput(wkt1)
     got_name = sr2.GetAttrValue('COMPD_CS')
-    if got_name != name:
-        print(wkt2)
-        pytest.fail('dit not get expected COMPD_CS name')
+    assert got_name == name, wkt2
 
-    
 ###############################################################################
 # Test -co COPY_SRC_OVERVIEWS=YES on a multiband source with external overviews (#3938)
 
