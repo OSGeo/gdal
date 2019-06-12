@@ -17,7 +17,7 @@
 
 struct _KeyInfo {
 	int ki_key;
-	char *ki_name;
+	const char *ki_name;
 };
 typedef struct _KeyInfo KeyInfo;
 
@@ -36,7 +36,7 @@ typedef struct _KeyInfo KeyInfo;
 #define ValuePair(token,value)
 #endif
 
-#define END_LIST { -1, (char *)0}
+#define END_LIST { -1, 0 }
 
 /************************************************************
  *         6.2.x GeoTIFF Keys
@@ -44,6 +44,12 @@ typedef struct _KeyInfo KeyInfo;
 
 static const KeyInfo _keyInfo[] =  {
 #   include "geokeys.inc"   /* geokey database */
+    END_LIST
+};
+
+/* Keys used by GeoTIFF 1.1 (OGC 19-008) */
+static const KeyInfo _keyInfoV11[] =  {
+#   include "geokeys_v1_1.inc"   /* geokey database */
     END_LIST
 };
 

@@ -44,7 +44,7 @@ static const KeyInfo _tagInfo[] =  {
     END_LIST
 };
 
-static char *FindName(const KeyInfo *info,int key)
+static const char *FindName(const KeyInfo *info,int key)
 {
    static char errmsg[80];
 
@@ -60,17 +60,39 @@ static char *FindName(const KeyInfo *info,int key)
 
 char *GTIFKeyName(geokey_t key)
 {
-   return FindName( &_keyInfo[0],key);
+   return (char*) FindName( &_keyInfo[0],key);
+}
+
+const char* GTIFKeyNameEx(GTIF* gtif, geokey_t key)
+{
+    const KeyInfo *info;
+    if( gtif->gt_version == GEOTIFF_SPEC_1_0_VERSION &&
+        gtif->gt_rev_major == GEOTIFF_SPEC_1_0_KEY_REVISION &&
+        gtif->gt_rev_minor == GEOTIFF_SPEC_1_0_MINOR_REVISION )
+    {
+        info = &_keyInfo[0];
+    }
+    else
+    {
+        info = &_keyInfoV11[0];
+    }
+    while (info->ki_key>=0 && info->ki_key != (int)key) info++;
+    if (info->ki_key<0)
+    {
+        sprintf(gtif->szTmpBufferForGTIFValueNameEx,"Unknown-%d", key );
+        return gtif->szTmpBufferForGTIFValueNameEx;
+    }
+    return info->ki_name;
 }
 
 char *GTIFTypeName(tagtype_t type)
 {
-   return FindName( &_formatInfo[0],type);
+   return (char*) FindName( &_formatInfo[0],type);
 }
 
 char *GTIFTagName(int tag)
 {
-   return FindName( &_tagInfo[0],tag);
+   return (char*) FindName( &_tagInfo[0],tag);
 }
 
 static const KeyInfo* FindTable(geokey_t key)
@@ -110,7 +132,7 @@ static const KeyInfo* FindTable(geokey_t key)
 char *GTIFValueName(geokey_t key, int value)
 {
 
-   return FindName(FindTable(key), value);
+   return (char*) FindName(FindTable(key), value);
 }
 
 static void GetNameFromDatabase(GTIF* gtif,
@@ -142,10 +164,35 @@ static void GetNameFromDatabase(GTIF* gtif,
 const char *GTIFValueNameEx(GTIF* gtif, geokey_t key, int value)
 {
     const KeyInfo *info = FindTable(key);
+    int useHardcodedTables = 0;
 
-    while (info->ki_key>=0 && info->ki_key != value) info++;
+    if( value == KvUndefined || value == KvUserDefined )
+    {
+        useHardcodedTables = 1;
+    }
+    else if( gtif->gt_version == GEOTIFF_SPEC_1_0_VERSION &&
+             gtif->gt_rev_major == GEOTIFF_SPEC_1_0_KEY_REVISION &&
+             gtif->gt_rev_minor == GEOTIFF_SPEC_1_0_MINOR_REVISION )
+    {
+        useHardcodedTables = 1;
+    }
+    else if( key == GTModelTypeGeoKey ||
+             key == GTRasterTypeGeoKey ||
+             key == ProjCoordTransGeoKey )
+    {
+        useHardcodedTables = 1;
+    }
+    else if( key == VerticalCSTypeGeoKey &&
+             value >= 5001 && value <= 5033 )
+    {
+        useHardcodedTables = 1;
+    }
+    if( useHardcodedTables )
+    {
+        while (info->ki_key>=0 && info->ki_key != value) info++;
+    }
 
-    if (info->ki_key<0)
+    if ( !useHardcodedTables || info->ki_key<0 )
     {
         sprintf(gtif->szTmpBufferForGTIFValueNameEx,"Unknown-%d", value );
 
@@ -237,7 +284,7 @@ const char *GTIFValueNameEx(GTIF* gtif, geokey_t key, int value)
  */
 
 
-static int FindCode(const KeyInfo *info,char *key)
+static int FindCode(const KeyInfo *info,const char *key)
 {
    while (info->ki_key>=0 && strcmp(info->ki_name,key) ) info++;
 
@@ -260,17 +307,20 @@ static int FindCode(const KeyInfo *info,char *key)
    return info->ki_key;
 }
 
-int GTIFKeyCode(char *key)
+int GTIFKeyCode(const char *key)
 {
-   return FindCode( &_keyInfo[0],key);
+   int ret = FindCode( &_keyInfo[0],key);
+   if( ret < 0 )
+       ret = FindCode( &_keyInfoV11[0],key);
+   return ret;
 }
 
-int GTIFTypeCode(char *type)
+int GTIFTypeCode(const char *type)
 {
    return FindCode( &_formatInfo[0],type);
 }
 
-int GTIFTagCode(char *tag)
+int GTIFTagCode(const char *tag)
 {
    return FindCode( &_tagInfo[0],tag);
 }
@@ -280,7 +330,7 @@ int GTIFTagCode(char *tag)
  *  The key must be determined with GTIFKeyCode() before
  *  the name can be encoded.
  */
-int GTIFValueCode(geokey_t key, char *name)
+int GTIFValueCode(geokey_t key, const char *name)
 {
    return FindCode(FindTable(key),name);
 }
