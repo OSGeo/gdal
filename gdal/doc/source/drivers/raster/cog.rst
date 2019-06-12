@@ -68,6 +68,11 @@ General creation options
    the number of threads used when reprojection is done with the TILING_SCHEME
    or TARGET_SRS creation options.
 
+   .. note::
+
+        Overview generation by itself, which can take most of the
+        total processing time, is not multithreaded currently.
+
 -  **PREDICTOR=[YES/NO]**: Set the predictor for LZW, DEFLATE and ZSTD
    compression. The default is NO.
 
