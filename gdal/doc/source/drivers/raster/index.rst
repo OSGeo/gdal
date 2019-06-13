@@ -24,6 +24,7 @@ Raster drivers
    cals
    ceos
    coasp
+   cog
    cosar
    cpg
    ctable2

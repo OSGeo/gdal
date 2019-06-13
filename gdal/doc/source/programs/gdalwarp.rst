@@ -327,6 +327,10 @@ When doing vertical shift adjustments, the transformer option -to ERROR_ON_MISSI
 can be used to error out as soon as a vertical shift value is missing (instead of
 0 being used).
 
+Starting with GDAL 3.1, it is possible to use as output format a driver that
+only supports the CreateCopy operation. This may internally imply creation of
+a temporary file.
+
 Examples
 --------
 

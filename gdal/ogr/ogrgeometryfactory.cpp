@@ -306,7 +306,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
  *
  *  <b>Example:</b>
  *
- *  <pre>
+ * \code{.cpp}
  *    const char* wkt= "POINT(0 0)";
  *
  *    // cast because OGR_G_CreateFromWkt will move the pointer
@@ -315,7 +315,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
  *    OGRGeometryH new_geom;
  *    OSRSetAxisMappingStrategy(poSR, OAMS_TRADITIONAL_GIS_ORDER);
  *    OGRErr err = OGR_G_CreateFromWkt(&pszWkt, ref, &new_geom);
- *  </pre>
+ * \endcode
  *
  *
  *

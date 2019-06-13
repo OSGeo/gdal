@@ -451,24 +451,12 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  * See the GetLockedBlockRef() method for a way of accessing internally cached
  * block oriented data without an extra copy into an application buffer.
  *
- * @param nXBlockOff the horizontal block offset, with zero indicating
- * the left most block, 1 the next block and so forth.
- *
- * @param nYBlockOff the vertical block offset, with zero indicating
- * the top most block, 1 the next block and so forth.
- *
- * @param pImage the buffer into which the data will be read.  The buffer
- * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
- * of type GetRasterDataType().
- *
- * @return CE_None on success or CE_Failure on an error.
- *
  * The following code would efficiently compute a histogram of eight bit
  * raster data.  Note that the final block may be partial ... data beyond
  * the edge of the underlying raster band in these edge blocks is of an
  * undermined value.
  *
-<pre>
+\code{.cpp}
  CPLErr GetHistogram( GDALRasterBand *poBand, GUIntBig *panHistogram )
 
  {
@@ -507,8 +495,19 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
          }
      }
  }
-
-</pre>
+\endcode
+ *
+ * @param nXBlockOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth.
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the top most block, 1 the next block and so forth.
+ *
+ * @param pImage the buffer into which the data will be read.  The buffer
+ * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
+ * of type GetRasterDataType().
+ *
+ * @return CE_None on success or CE_Failure on an error.
  */
 
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
@@ -2893,12 +2892,12 @@ static inline void ComputeFloatNoDataValue( GDALDataType eDataType,
  * the following would be suitable.  The unusual bounds are to ensure that
  * bucket boundaries don't fall right on integer values causing possible errors
  * due to rounding after scaling.
-<pre>
+\code{.cpp}
     GUIntBig anHistogram[256];
 
     poBand->GetHistogram( -0.5, 255.5, 256, anHistogram, FALSE, FALSE,
                           GDALDummyProgress, nullptr );
-</pre>
+\endcode
  *
  * Note that setting bApproxOK will generally result in a subsampling of the
  * file, and will utilize overviews if available.  It should generally

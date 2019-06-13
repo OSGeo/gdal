@@ -210,7 +210,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
  * parameters differs for different projections.
  *
  * <h4>Projection Transformation Package Projection Parameters</h4>
- * <pre>
+ * \code{.unparsed}
  * ----------------------------------------------------------------------------
  *                         |                    Array Element
  *  Code & Projection Id   |---------------------------------------------------
@@ -348,7 +348,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
  *
  * Array elements 13 and 14 are set to zero. All array elements with blank
  * fields are set to zero too.
- * </pre>
+ * \endcode
  *
  * @param iDatum Input spheroid.<p>
  *
@@ -388,7 +388,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
  * defined by the datum code as found in the following table:
  *
  * <h4>Supported Datums</h4>
- * <pre>
+ * \code{.unparsed}
  *       0: Clarke 1866 (default)
  *       1: Clarke 1880
  *       2: Bessel
@@ -409,7 +409,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
  *      17: Mercury 1960
  *      18: Modified Mercury 1968
  *      19: Sphere of Radius 6370997 meters
- * </pre>
+ * \endcode
  *
  * @param nUSGSAngleFormat one of USGS_ANGLE_DECIMALDEGREES,
  *    USGS_ANGLE_PACKEDDMS, or USGS_ANGLE_RADIANS (default is

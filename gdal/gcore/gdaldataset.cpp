@@ -1912,12 +1912,12 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  *
  * For example, to build overview level 2, 4 and 8 on all bands the following
  * call could be made:
- * <pre>
+ * \code{.cpp}
  *   int       anOverviewList[3] = { 2, 4, 8 };
  *
  *   poDataset->BuildOverviews( "NEAREST", 3, anOverviewList, 0, nullptr,
  *                              GDALDummyProgress, nullptr );
- * </pre>
+ * \endcode
  *
  * @see GDALRegenerateOverviews()
  */
@@ -4250,23 +4250,9 @@ deprecated OGR_DS_CreateLayer().
 
 In GDAL 1.X, this method used to be in the OGRDataSource class.
 
-@param pszName the name for the new layer.  This should ideally not
-match any existing layer on the datasource.
-@param poSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.  The driver might only increase
-the reference counter of the object to take ownership, and not make a full copy,
-so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
-are done with the object.
-@param eGType the geometry type for the layer.  Use wkbUnknown if there
-are no constraints on the types geometry to be written.
-@param papszOptions a StringList of name=value options.  Options are driver
-specific.
+Example:
 
-@return NULL is returned on failure, or a new OGRLayer handle on success.
-
-<b>Example:</b>
-
-\code
+\code{.cpp}
 #include "gdal.h"
 #include "cpl_string.h"
 
@@ -4290,6 +4276,21 @@ specific.
             ...
         }
 \endcode
+
+@param pszName the name for the new layer.  This should ideally not
+match any existing layer on the datasource.
+@param poSpatialRef the coordinate system to use for the new layer, or NULL if
+no coordinate system is available.  The driver might only increase
+the reference counter of the object to take ownership, and not make a full copy,
+so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
+are done with the object.
+@param eGType the geometry type for the layer.  Use wkbUnknown if there
+are no constraints on the types geometry to be written.
+@param papszOptions a StringList of name=value options.  Options are driver
+specific.
+
+@return NULL is returned on failure, or a new OGRLayer handle on success.
+
 */
 
 OGRLayer *GDALDataset::CreateLayer( const char * pszName,
@@ -4334,6 +4335,33 @@ documentation.
 
 This method is the same as the C++ method GDALDataset::CreateLayer().
 
+Example:
+
+\code{.c}
+#include "gdal.h"
+#include "cpl_string.h"
+
+...
+
+        OGRLayerH  hLayer;
+        char     **papszOptions;
+
+        if( !GDALDatasetTestCapability( hDS, ODsCCreateLayer ) )
+        {
+        ...
+        }
+
+        papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
+        hLayer = GDALDatasetCreateLayer( hDS, "NewLayer", NULL, wkbUnknown,
+                                         papszOptions );
+        CSLDestroy( papszOptions );
+
+        if( hLayer == NULL )
+        {
+            ...
+        }
+\endcode
+
 @since GDAL 2.0
 
 @param hDS the dataset handle
@@ -4351,32 +4379,6 @@ specific.
 
 @return NULL is returned on failure, or a new OGRLayer handle on success.
 
-<b>Example:</b>
-
-\code
-#include "gdal.h"
-#include "cpl_string.h"
-
-...
-
-        OGRLayer *poLayer;
-        char     **papszOptions;
-
-        if( !poDS->TestCapability( ODsCCreateLayer ) )
-        {
-        ...
-        }
-
-        papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
-        poLayer = poDS->CreateLayer( "NewLayer", nullptr, wkbUnknown,
-                                     papszOptions );
-        CSLDestroy( papszOptions );
-
-        if( poLayer == NULL )
-        {
-            ...
-        }
-\endcode
 */
 
 OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
@@ -7470,14 +7472,14 @@ bool GDALDataset::Features::Iterator::operator!= (const Iterator& it) const
 * FeatureLayerPair reference which is returned is reused.
 *
 * Typical use is:
-* <pre>
+* \code{.cpp}
 * for( auto&& oFeatureLayerPair: poDS->GetFeatures() )
 * {
 *       std::cout << "Feature of layer " <<
 *               oFeatureLayerPair.layer->GetName() << std::endl;
 *       oFeatureLayerPair.feature->DumpReadable();
 * }
-* </pre>
+* \endcode
 *
 * @see GetNextFeature()
 *
@@ -7621,12 +7623,12 @@ bool GDALDataset::Layers::Iterator::operator!= (const Iterator& it) const
 * This is a C++ iterator friendly version of GetLayer().
 *
 * Typical use is:
-* <pre>
+* \code{.cpp}
 * for( auto&& poLayer: poDS->GetLayers() )
 * {
 *       std::cout << "Layer  << poLayer->GetName() << std::endl;
 * }
-* </pre>
+* \endcode
 *
 * @see GetLayer()
 *
@@ -7811,12 +7813,12 @@ bool GDALDataset::Bands::Iterator::operator!= (const Iterator& it) const
 * This is a C++ iterator friendly version of GetRasterBand().
 *
 * Typical use is:
-* <pre>
+* \code{.cpp}
 * for( auto&& poBand: poDS->GetBands() )
 * {
 *       std::cout << "Band  << poBand->GetDescription() << std::endl;
 * }
-* </pre>
+* \endcode
 *
 * @see GetRasterBand()
 *

@@ -393,11 +393,11 @@ Creation Options
    and run at document opening. See `Acrobat(R) JavaScript Scripting
    Reference <http://partners.adobe.com/public/developer/en/acrobat/sdk/AcroJS.pdf>`__.
 
--  **COMPOSITION_FILE=xml_filename**: (GDAL >= 2.5.0) See below
+-  **COMPOSITION_FILE=xml_filename**: (GDAL >= 3.0) See below
    paragraph "Creation of PDF file from a XML composition file"
 
-Update of existing files (GDAL >= 1.10.0)
------------------------------------------
+Update of existing files
+------------------------
 
 Existing PDF files (created or not with GDAL) can be opened in update
 mode in order to set or update the following elements :
@@ -419,8 +419,8 @@ configuration option to OGC_BP.
 Updated elements are written at the end of the file, following the
 incremental update method described in the PDF specification.
 
-Creation of PDF file from a XML composition file (GDAL >= 2.5.0)
-----------------------------------------------------------------
+Creation of PDF file from a XML composition file (GDAL >= 3.0)
+--------------------------------------------------------------
 
 A PDF file can be generate from a XML file that describes the
 composition of the PDF:
@@ -439,7 +439,7 @@ The XML schema against which the composition file must validate is
 
 Example on how to use the API:
 
-::
+.. code-block:: c++
 
    char** papszOptions = CSLSetNameValue(nullptr, "COMPOSITION_FILE", "the.xml");
    GDALDataset* ds = GDALCreate("the.pdf", 0, 0, 0, GDT_Unknown, papszOptions);
@@ -453,7 +453,7 @@ is also available.
 
 Example of a composition XML file:
 
-::
+.. code-block:: xml
 
    <PDFComposition>
        <Metadata>
@@ -535,7 +535,7 @@ Example of a composition XML file:
            <OutlineItem name="Page 1" pageId="page_1">
                <OutlineItem name="Important feature !">
                    <Actions>
-                       <GotoPageAction pageId="page_1" x1="1" y1="2" x2="3" y2="4"</GotoPageAction>
+                       <GotoPageAction pageId="page_1" x1="1" y1="2" x2="3" y2="4"/>
                    </Actions>
                </OutlineItem>
            </OutlineItem>
