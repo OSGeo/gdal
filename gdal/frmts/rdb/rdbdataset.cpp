@@ -39,7 +39,6 @@ namespace rdb
 void RDBOverview::addRDBNode(RDBNode &oRDBNode, double dfXMin, double dfYMin,
                              double dfXMax, double dfYMax)
 {
-
     adfMinimum[0] = std::min(adfMinimum[0], dfXMin);
     adfMaximum[0] = std::max(adfMaximum[0], dfXMax);
 
@@ -79,7 +78,6 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
         : RDBRasterBand(poDSIn, osAttributeNameIn, oPointAttributeIn, nBandIn,
                         eDataTypeIn, nLevelIn)
     {
-
         poDS = poDSIn;
         nBand = nBandIn;
 
@@ -110,7 +108,6 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
 
         for(int i = nNumerOfLayers - 2; i >= 0; i--)
         {
-
             aoOverviewBands[i].reset(new RDBRasterBandInternal<T>(
                 poDSIn, osAttributeNameIn, oPointAttributeIn, nBandIn,
                 eDataTypeIn, i));
@@ -124,7 +121,6 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
 
             if(!poDSIn->apoVRTDataset[i])
             {
-
                 poDSIn->apoVRTDataset[i].reset(
                     new VRTDataset(nDatasetXSize, nDatasetYSize));
             }
@@ -167,7 +163,6 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
 
     double GetNoDataValue(int *pbSuccess) override
     {
-
         double dfInvalidValue = RDBRasterBand::GetNoDataValue(pbSuccess);
         if(pbSuccess == nullptr)
         {
@@ -205,7 +200,6 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pImageIn) override
     {
-
         T *pImage = reinterpret_cast<T *>(pImageIn);
 
         constexpr std::size_t nTileSize = 256 * 256;
@@ -220,6 +214,7 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
                 pImage[i] = static_cast<T>(oPointAttribute.invalidValue);
             }
         }
+
         try
         {
             RDBDataset *poRDBDs = dynamic_cast<RDBDataset *>(poDS);
@@ -237,7 +232,6 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
 
                 if(pIt != aoRDBNodes.end())
                 {
-
                     using type = RDBCoordinatesPlusData<T>;
                     CPLMallocGuard<type> oData(pIt->nPointCount);
 
@@ -246,7 +240,6 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
                         // is locking needed?
                         // std::lock_guard<std::mutex>
                         // oGuard(poRDBDs->oLock);
-
                         auto oSelectQuery =
                             poRDBDs->oPointcloud.select(pIt->iID);
                         oSelectQuery.bindBuffer(
@@ -264,16 +257,15 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
 
                     if(nPointsReturned > 0)
                     {
-
-                        double dfHalveResolution = poRDBDs->dfResolution / 2;
+                        double dfHalvePixel = oRDBOverview.dfPixelSize * 0.5;
 
                         double dfTileMinX =
-                            (std::floor((poRDBDs->dfXMin + dfHalveResolution) /
+                            (std::floor((poRDBDs->dfXMin + dfHalvePixel) /
                                         oRDBOverview.dfTileSize) +
                              nBlockXOff) *
                             oRDBOverview.dfTileSize;
                         double dfTileMinY =
-                            (std::floor((poRDBDs->dfYMin + dfHalveResolution) /
+                            (std::floor((poRDBDs->dfYMin + dfHalvePixel) /
                                         oRDBOverview.dfTileSize) +
                              nBlockYOff) *
                             oRDBOverview.dfTileSize;
@@ -282,12 +274,12 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
                         {
                             int dfPixelX = static_cast<int>(
                                 std::floor((oData.pData[i].adfCoordinates[0] +
-                                            dfHalveResolution - dfTileMinX) /
+                                            dfHalvePixel - dfTileMinX) /
                                            oRDBOverview.dfPixelSize));
 
                             int dfPixelY = static_cast<int>(
                                 std::floor((oData.pData[i].adfCoordinates[1] +
-                                            dfHalveResolution - dfTileMinY) /
+                                            dfHalvePixel - dfTileMinY) /
                                            oRDBOverview.dfPixelSize));
 
                             pImage[dfPixelY * 256 + dfPixelX] =
@@ -329,7 +321,6 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
     }
     virtual GDALRasterBand *GetOverview(int i) override
     {
-
         return aoVRTRasterBand[i];
     }
 };
@@ -342,8 +333,8 @@ void RDBDataset::SetBandInternal(
     riegl::rdb::pointcloud::DataType eRDBDataType, int nLevel,
     int nNumerOfLayers, int &nBandIndex)
 {
-
     RDBRasterBand *poBand = nullptr;
+    // map riegl rdb datatype to gdal data type
     switch(eRDBDataType)
     {
     case riegl::rdb::pointcloud::DataType::UINT8:
@@ -515,20 +506,16 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
 
     dfSizeOfTile = dfSizeOfPixel * 256;  // 2^8
 
-    double dfSizeOfTileX = dfSizeOfTile * std::pow(2, 0);
-    dfXMin =
-        std::floor((adfMinimumDs[0] + dfSizeOfPixel * 0.5) / dfSizeOfTileX) *
-        dfSizeOfTileX;
-    dfYMin =
-        std::floor((adfMinimumDs[1] + dfSizeOfPixel * 0.5) / dfSizeOfTileX) *
-        dfSizeOfTileX;
+    double dfHalvePixel = dfSizeOfPixel * 0.5;
+    dfXMin = std::floor((adfMinimumDs[0] + dfHalvePixel) / dfSizeOfTile) *
+             dfSizeOfTile;
+    dfYMin = std::floor((adfMinimumDs[1] + dfHalvePixel) / dfSizeOfTile) *
+             dfSizeOfTile;
 
-    dfXMax =
-        std::ceil((adfMaximumDs[0] + dfSizeOfPixel * 0.5) / dfSizeOfTileX) *
-        dfSizeOfTileX;
-    dfYMax =
-        std::ceil((adfMaximumDs[1] + dfSizeOfPixel * 0.5) / dfSizeOfTileX) *
-        dfSizeOfTileX;
+    dfXMax = std::ceil((adfMaximumDs[0] + dfHalvePixel) / dfSizeOfTile) *
+             dfSizeOfTile;
+    dfYMax = std::ceil((adfMaximumDs[1] + dfHalvePixel) / dfSizeOfTile) *
+             dfSizeOfTile;
 
     nRasterXSize = static_cast<int>((dfXMax - dfXMin) / dfSizeOfPixel);
     nRasterYSize = static_cast<int>((dfYMax - dfYMin) / dfSizeOfPixel);
@@ -588,7 +575,6 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
 
 GDALDataset *RDBDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-
     if(!Identify(poOpenInfo))
     {
         return nullptr;
@@ -650,7 +636,6 @@ int RDBDataset::Identify(GDALOpenInfo *poOpenInfo)
 
     if(strncmp(psHeader, szRDBHeaderIdentifier, kSizeOfRDBHeaderIdentifier))
     {
-
         // A more comprehensive test could be done by the library.
         // Should file -> library incompatibilities handled in Identify or
         // in the Open function?
@@ -661,7 +646,6 @@ int RDBDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 CPLErr RDBDataset::GetGeoTransform(double *padfTransform)
 {
-
     padfTransform[0] = dfXMin;
     padfTransform[1] = dfSizeOfPixel;
     padfTransform[2] = 0;
@@ -705,7 +689,6 @@ void RDBDataset::ReadGeoreferencing()
 
             if(poCrs != nullptr)
             {
-
                 json_object *poWkt = CPL_json_object_object_get(poCrs, "wkt");
 
                 if(poWkt != nullptr)
