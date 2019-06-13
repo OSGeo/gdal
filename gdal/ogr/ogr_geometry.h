@@ -2876,7 +2876,7 @@ class CPL_DLL OGRGeometryFactory
     static bool haveGEOS();
 
     /** Opaque class used as argument to transformWithOptions() */
-    class TransformWithOptionsCache
+    class CPL_DLL TransformWithOptionsCache
     {
         friend class OGRGeometryFactory;
         struct Private;
