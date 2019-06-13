@@ -50,12 +50,13 @@ In this section we list a number of the binary distributions of GDAL.
 Windows
 ................................................................................
 
-Windows builds are available via `Conda Forge`_ (64-bit only). See the
-:ref:`conda` for more detailed information.
+- Windows builds are available via `Conda Forge`_ (64-bit only). See the
+  :ref:`conda` for more detailed information.
 
-
-
-
+- `MS4W <https://ms4w.com/>`__ (MapServer for Windows) also includes GDAL 
+  commandline utilities, as well as a full Web server environment (including 
+  Apache, PHP, MapServer, MapCache tile engine, and many other packages).  The 
+  installer can be used, or simply extract the zipfile to C:/& run setenv.bat.
 
 Debian
 ................................................................................
