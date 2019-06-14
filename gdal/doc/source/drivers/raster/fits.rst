@@ -12,7 +12,7 @@ images, and so has found its way into GDAL. FITS support is implemented
 in terms of the standard `CFITSIO
 library <http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html>`__,
 which you must have on your system in order for FITS support to be
-enabled (see :ref:`notes-on-cfitsio-linking`).
+enabled (see :ref:`notes on CFITSIO linking <notes-on-cfitsio-linking>`).
 Both reading and writing of FITS files is supported. Starting from version 3.0
 georeferencing system support is implemented via the conversion of
 WCS (World Coordinate System) keywords.
