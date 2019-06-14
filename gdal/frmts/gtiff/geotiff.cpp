@@ -341,6 +341,7 @@ private:
     int         m_nGCPCount = 0;
 
     GTIFFKeysFlavorEnum m_eGeoTIFFKeysFlavor = GEOTIFF_KEYS_STANDARD;
+    GeoTIFFVersionEnum m_eGeoTIFFVersion = GEOTIFF_VERSION_AUTO;
 
     uint16      m_nPlanarConfig = 0;
     uint16      m_nSamplesPerPixel = 0;
@@ -8969,6 +8970,21 @@ static GTIFFKeysFlavorEnum GetGTIFFKeysFlavor( char** papszOptions )
 }
 
 /************************************************************************/
+/*                       GetGeoTIFFVersion()                            */
+/************************************************************************/
+
+static GeoTIFFVersionEnum GetGeoTIFFVersion( char** papszOptions )
+{
+    const char* pszVersion =
+        CSLFetchNameValueDef( papszOptions, "GEOTIFF_VERSION", "AUTO" );
+    if( EQUAL(pszVersion, "1.0") )
+        return GEOTIFF_VERSION_1_0;
+    if( EQUAL(pszVersion, "1.1") )
+        return GEOTIFF_VERSION_1_1;
+    return GEOTIFF_VERSION_AUTO;
+}
+
+/************************************************************************/
 /*                      InitCreationOrOpenOptions()                     */
 /************************************************************************/
 
@@ -8977,6 +8993,7 @@ void GTiffDataset::InitCreationOrOpenOptions( char** papszOptions )
     InitCompressionThreads(papszOptions);
 
     m_eGeoTIFFKeysFlavor = GetGTIFFKeysFlavor(papszOptions);
+    m_eGeoTIFFVersion = GetGeoTIFFVersion(papszOptions);
 }
 
 /************************************************************************/
@@ -11222,7 +11239,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
             char* pszProjection = nullptr;
             m_oSRS.exportToWkt(&pszProjection);
             if( pszProjection && pszProjection[0] )
-                GTIFSetFromOGISDefnEx( psGTIF, pszProjection, m_eGeoTIFFKeysFlavor );
+                GTIFSetFromOGISDefnEx( psGTIF, pszProjection,
+                                       m_eGeoTIFFKeysFlavor,
+                                       m_eGeoTIFFVersion );
             CPLFree(pszProjection);
         }
 
@@ -11715,9 +11734,25 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
         const char* pszUnitType = poBand->GetUnitType();
         if( pszUnitType != nullptr && pszUnitType[0] != '\0' )
-            AppendMetadataItem( &psRoot, &psTail, "UNITTYPE",
-                                pszUnitType, nBand,
-                                "unittype", "" );
+        {
+            bool bWriteUnit = true;
+            auto poSRS = poSrcDS->GetSpatialRef();
+            if( poSRS && poSRS->IsCompound() )
+            {
+                const char* pszVertUnit = nullptr;
+                poSRS->GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);
+                if( pszVertUnit && EQUAL(pszVertUnit, pszUnitType) )
+                {
+                    bWriteUnit = false;
+                }
+            }
+            if( bWriteUnit )
+            {
+                AppendMetadataItem( &psRoot, &psTail, "UNITTYPE",
+                                    pszUnitType, nBand,
+                                    "unittype", "" );
+            }
+        }
 
         if( strlen(poBand->GetDescription()) > 0 )
         {
@@ -12824,9 +12859,16 @@ void GTiffDataset::LookForProjection()
                     m_pszVertUnit = CPLStrdup(pszVertUnit);
                 }
 
+                int versions[3];
+                GTIFDirectoryInfo(hGTIF, versions, nullptr);
+
+                // If GeoTIFF 1.0, strip vertical by default
+                const char* pszDefaultReportCompdCS =
+                    ( versions[0] == 1 && versions[1]== 1 && versions[2] == 0 ) ? "NO" : "YES";
+
                 // Should we simplify away vertical CS stuff?
-                if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
-                                                    "NO") ) )
+                if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS", 
+                                            pszDefaultReportCompdCS) ) )
                 {
                     CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
 
@@ -17639,7 +17681,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             char* pszWKT = nullptr;
             l_poSRS->exportToWkt(&pszWKT);
             GTIFSetFromOGISDefnEx( psGTIF, pszWKT,
-                                   GetGTIFFKeysFlavor(papszOptions) );
+                                   GetGTIFFKeysFlavor(papszOptions),
+                                   GetGeoTIFFVersion(papszOptions) );
             CPLFree(pszWKT);
         }
 
@@ -19810,6 +19853,13 @@ void GDALRegister_GTiff()
 "       <Value>STANDARD</Value>"
 "       <Value>ESRI_PE</Value>"
 "   </Option>"
+#if LIBGEOTIFF_VERSION >= 1600
+"   <Option name='GEOTIFF_VERSION' type='string-select' default='AUTO' description='Which version of GeoTIFF must be used'>"
+"       <Value>AUTO</Value>"
+"       <Value>1.0</Value>"
+"       <Value>1.1</Value>"
+"   </Option>"
+#endif
 "</CreationOptionList>";
 
 /* -------------------------------------------------------------------- */
@@ -19844,6 +19894,10 @@ void GDALRegister_GTiff()
 #else
     poDriver->SetMetadataItem( "LIBTIFF", TIFFLIB_VERSION_STR );
 #endif
+
+#define STRINGIFY(x) #x
+#define XSTRINGIFY(x) STRINGIFY(x)
+    poDriver->SetMetadataItem( "LIBGEOTIFF", XSTRINGIFY(LIBGEOTIFF_VERSION) );
 
     poDriver->pfnOpen = GTiffDataset::Open;
     poDriver->pfnCreate = GTiffDataset::Create;

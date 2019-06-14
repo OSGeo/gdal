@@ -200,3 +200,15 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     gtif->gt_flags |= FLAG_FILE_MODIFIED;
     return 1;
 }
+
+/* Set the version numbers of the GeoTIFF directory */
+int  GTIFSetVersionNumbers(GTIF* gtif,
+                           unsigned short version,
+                           unsigned short key_revision,
+                           unsigned short minor_revision)
+{
+    gtif->gt_version = version;
+    gtif->gt_rev_major = key_revision;
+    gtif->gt_rev_minor = minor_revision;
+    return 1;
+}

@@ -648,6 +648,10 @@ class CPL_DLL OGRSpatialReference
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin,
         const char* pszUnitsName, const char* pszCRSName = nullptr );
 
+/*! @cond Doxygen_Suppress */
+    void UpdateCoordinateSystemFromGeogCRS();
+/*! @endcond */
+
     static OGRSpatialReference* GetWGS84SRS();
 
     /** Convert a OGRSpatialReference* to a OGRSpatialReferenceH.
