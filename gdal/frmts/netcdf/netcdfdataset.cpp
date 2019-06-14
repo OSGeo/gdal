@@ -7964,7 +7964,7 @@ netCDFDataset::Create( const char *pszFilename,
     if( poDS->cdfid >= 0 )
     {
         NCDFAddGDALHistory(poDS->cdfid, pszFilename, "", "Create",
-                           (nBands == 0) ? NCDF_CONVENTIONS_CF_V1_6
+                           (nBands == 0) ? NCDF_CONVENTIONS_CF_V1_8
                                          : NCDF_CONVENTIONS_CF_V1_5);
     }
 

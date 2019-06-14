@@ -353,8 +353,21 @@ bool netCDFLayer::Create(char **papszOptions,
 
         const char *pszFeatureTypeVal =
             !m_osProfileDimName.empty() ? "profile" : "point";
-        status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
+        int geometry_container_id = NC_GLOBAL;
+        if(m_osProfileDimName.empty())
+        {
+            // Create simple geometry container
+
+            nc_def_var(m_nLayerCDFId, "geometry_container", NC_FLOAT, 0, nullptr, &geometry_container_id);
+            std::string node_coordinates = std::string(pszXVarName) + std::string(" ") + std::string(pszYVarName); // + std::string(" ") + std::string(pszZVarName);
+            nc_put_att_text(m_nLayerCDFId, geometry_container_id, CF_SG_NODE_COORDINATES, strlen(node_coordinates.c_str()), node_coordinates.c_str());
+        }
+
+        status = nc_put_att_text(m_nLayerCDFId, geometry_container_id, CF_SG_GEOMETRY_TYPE,
                                  strlen(pszFeatureTypeVal), pszFeatureTypeVal);
+
+//        status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
+//                                 strlen(pszFeatureTypeVal), pszFeatureTypeVal);
         NCDF_ERR(status);
     }
     else if( m_poFeatureDefn->GetGeomType() != wkbNone )
