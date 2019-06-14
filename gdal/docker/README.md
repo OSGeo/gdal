@@ -33,7 +33,7 @@ See [alpine-ultrasmall/Dockerfile](alpine-ultrasmall/Dockerfile)
 
 See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 
-## Nomal: `osgeo/gdal:alpine-normal-latest`
+## Normal: `osgeo/gdal:alpine-normal-latest`
 
 * Image size: ~ 175 MB
 * Raster drivers: small + netCDF, HDF5, BAG
