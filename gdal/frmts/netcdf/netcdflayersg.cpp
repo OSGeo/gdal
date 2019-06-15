@@ -31,7 +31,7 @@
 
 namespace nccfdriver
 {
-    static OGRwkbGeometryType RawToOGR(geom_t type, int axis_count)
+    OGRwkbGeometryType RawToOGR(geom_t type, int axis_count)
     {
         OGRwkbGeometryType ret = wkbNone;
 
@@ -70,6 +70,42 @@ namespace nccfdriver
         return ret;    
     }    
 
+	geom_t OGRtoRaw(OGRwkbGeometryType type)
+	{
+		geom_t ret = NONE;
+
+		if (type == wkbPoint || type == wkbPoint25D)
+		{
+			ret = POINT;
+		}
+
+		else if (type == wkbLineString || type == wkbLineString25D)
+		{
+			ret = LINE;
+		}
+
+		else if(type == wkbPolygon || type == wkbPolygon25D)
+		{
+			ret = POLYGON;
+		}
+
+		else if (type == wkbMultiPoint || type == wkbMultiPoint25D)
+		{
+			ret = MULTIPOINT;
+		}
+		
+		else if (type == wkbMultiLineString || type == wkbMultiLineString25D)
+		{
+			ret = MULTILINE;
+		}
+
+		else if (type == wkbMultiPolygon || type == wkbMultiPolygon25D)
+		{
+			ret = MULTIPOLYGON;
+		}
+
+		return ret;
+	}
 }
 
 CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)

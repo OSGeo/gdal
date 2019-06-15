@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "netcdfdataset.h"
+#include "netcdfsgwriterutil.h"
 #include "netcdfsg.h"
 #include "cpl_time.h"
 
@@ -264,111 +265,102 @@ bool netCDFLayer::Create(char **papszOptions,
     if( m_poFeatureDefn->GetGeomFieldCount() )
         poSRS = m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
 
-    if( wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint )
-    {
-        const int nPointDim =
-            !m_osProfileDimName.empty() ? m_nProfileDimID : m_nRecordDimID;
-        const bool bIsGeographic = (poSRS == nullptr || poSRS->IsGeographic());
+	if (wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint)
+	{
+		const int nPointDim =
+			!m_osProfileDimName.empty() ? m_nProfileDimID : m_nRecordDimID;
+		const bool bIsGeographic = (poSRS == nullptr || poSRS->IsGeographic());
 
-        const char *pszXVarName =
-            bIsGeographic ? CF_LONGITUDE_VAR_NAME : CF_PROJ_X_VAR_NAME;
-        status = nc_def_var(m_nLayerCDFId, pszXVarName, NC_DOUBLE, 1,
-                            &nPointDim, &m_nXVarID);
-        NCDF_ERR(status);
-        if( status != NC_NOERR )
-        {
-            return false;
-        }
+		const char *pszXVarName =
+			bIsGeographic ? CF_LONGITUDE_VAR_NAME : CF_PROJ_X_VAR_NAME;
+		status = nc_def_var(m_nLayerCDFId, pszXVarName, NC_DOUBLE, 1,
+			&nPointDim, &m_nXVarID);
+		NCDF_ERR(status);
+		if (status != NC_NOERR)
+		{
+			return false;
+		}
 
-        const char *pszYVarName =
-            bIsGeographic ? CF_LATITUDE_VAR_NAME : CF_PROJ_Y_VAR_NAME;
-        status = nc_def_var(m_nLayerCDFId, pszYVarName, NC_DOUBLE, 1,
-                            &nPointDim, &m_nYVarID);
-        NCDF_ERR(status);
-        if( status != NC_NOERR )
-        {
-            return false;
-        }
+		const char *pszYVarName =
+			bIsGeographic ? CF_LATITUDE_VAR_NAME : CF_PROJ_Y_VAR_NAME;
+		status = nc_def_var(m_nLayerCDFId, pszYVarName, NC_DOUBLE, 1,
+			&nPointDim, &m_nYVarID);
+		NCDF_ERR(status);
+		if (status != NC_NOERR)
+		{
+			return false;
+		}
 
-        aoAutoVariables.push_back(
-            std::pair<CPLString, int>(pszXVarName, m_nXVarID));
-        aoAutoVariables.push_back(
-            std::pair<CPLString, int>(pszYVarName, m_nYVarID));
+		aoAutoVariables.push_back(
+			std::pair<CPLString, int>(pszXVarName, m_nXVarID));
+		aoAutoVariables.push_back(
+			std::pair<CPLString, int>(pszYVarName, m_nYVarID));
 
-        m_nXVarNCDFType = NC_DOUBLE;
-        m_nYVarNCDFType = NC_DOUBLE;
-        m_uXVarNoData.dfVal = NC_FILL_DOUBLE;
-        m_uYVarNoData.dfVal = NC_FILL_DOUBLE;
+		m_nXVarNCDFType = NC_DOUBLE;
+		m_nYVarNCDFType = NC_DOUBLE;
+		m_uXVarNoData.dfVal = NC_FILL_DOUBLE;
+		m_uYVarNoData.dfVal = NC_FILL_DOUBLE;
 
-        m_osCoordinatesValue = pszXVarName;
-        m_osCoordinatesValue += " ";
-        m_osCoordinatesValue += pszYVarName;
+		m_osCoordinatesValue = pszXVarName;
+		m_osCoordinatesValue += " ";
+		m_osCoordinatesValue += pszYVarName;
 
-        if( poSRS == nullptr || poSRS->IsGeographic() )
-        {
-            NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID);
-        }
-        else if (poSRS != nullptr && poSRS->IsProjected() )
-        {
-            NCDFWriteXYVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID,
-                                      poSRS);
-        }
+		if (poSRS == nullptr || poSRS->IsGeographic())
+		{
+			NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID);
+		}
+		else if (poSRS != nullptr && poSRS->IsProjected())
+		{
+			NCDFWriteXYVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID,
+				poSRS);
+		}
 
-        if( m_poFeatureDefn->GetGeomType() == wkbPoint25D )
-        {
-            const char *pszZVarName = "z";
-            status = nc_def_var(m_nLayerCDFId, pszZVarName, NC_DOUBLE, 1,
-                                &m_nRecordDimID, &m_nZVarID);
-            NCDF_ERR(status);
-            if( status != NC_NOERR )
-            {
-                return false;
-            }
+		if (m_poFeatureDefn->GetGeomType() == wkbPoint25D)
+		{
+			const char *pszZVarName = "z";
+			status = nc_def_var(m_nLayerCDFId, pszZVarName, NC_DOUBLE, 1,
+				&m_nRecordDimID, &m_nZVarID);
+			NCDF_ERR(status);
+			if (status != NC_NOERR)
+			{
+				return false;
+			}
 
-            aoAutoVariables.push_back(
-                std::pair<CPLString, int>(pszZVarName, m_nZVarID));
+			aoAutoVariables.push_back(
+				std::pair<CPLString, int>(pszZVarName, m_nZVarID));
 
-            m_nZVarNCDFType = NC_DOUBLE;
-            m_uZVarNoData.dfVal = NC_FILL_DOUBLE;
+			m_nZVarNCDFType = NC_DOUBLE;
+			m_uZVarNoData.dfVal = NC_FILL_DOUBLE;
 
-            status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_LNG_NAME,
-                                     strlen("z coordinate"), "z coordinate");
-            NCDF_ERR(status);
+			status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_LNG_NAME,
+				strlen("z coordinate"), "z coordinate");
+			NCDF_ERR(status);
 
-            status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_STD_NAME,
-                                     strlen("height"), "height");
-            NCDF_ERR(status);
+			status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_STD_NAME,
+				strlen("height"), "height");
+			NCDF_ERR(status);
 
-            status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_AXIS,
-                                     strlen("Z"), "Z");
-            NCDF_ERR(status);
+			status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_AXIS,
+				strlen("Z"), "Z");
+			NCDF_ERR(status);
 
-            status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_UNITS,
-                                     strlen("m"), "m");
-            NCDF_ERR(status);
+			status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_UNITS,
+				strlen("m"), "m");
+			NCDF_ERR(status);
 
-            m_osCoordinatesValue += " ";
-            m_osCoordinatesValue += pszZVarName;
-        }
+			m_osCoordinatesValue += " ";
+			m_osCoordinatesValue += pszZVarName;
+		}
 
-        const char *pszFeatureTypeVal =
-            !m_osProfileDimName.empty() ? "profile" : "point";
-        int geometry_container_id = NC_GLOBAL;
-        if(m_osProfileDimName.empty())
-        {
-            // Create simple geometry container
+		const char *pszFeatureTypeVal =
+			!m_osProfileDimName.empty() ? "profile" : "point";
+		int geometry_container_id = NC_GLOBAL;
 
-            nc_def_var(m_nLayerCDFId, "geometry_container", NC_FLOAT, 0, nullptr, &geometry_container_id);
-            std::string node_coordinates = std::string(pszXVarName) + std::string(" ") + std::string(pszYVarName); // + std::string(" ") + std::string(pszZVarName);
-            nc_put_att_text(m_nLayerCDFId, geometry_container_id, CF_SG_NODE_COORDINATES, strlen(node_coordinates.c_str()), node_coordinates.c_str());
-        }
 
-        status = nc_put_att_text(m_nLayerCDFId, geometry_container_id, CF_SG_GEOMETRY_TYPE,
-                                 strlen(pszFeatureTypeVal), pszFeatureTypeVal);
+		status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
+		     strlen(pszFeatureTypeVal), pszFeatureTypeVal);
 
-//        status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
-//                                 strlen(pszFeatureTypeVal), pszFeatureTypeVal);
-        NCDF_ERR(status);
+		NCDF_ERR(status);
     }
     else if( m_poFeatureDefn->GetGeomType() != wkbNone )
     {
