@@ -608,6 +608,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                         HasZSTDCompression() ? "ZSTD" : "LZW");
     aosOverviewOptions.SetNameValue("NUM_THREADS",
                         CSLFetchNameValue(papszOptions, "NUM_THREADS"));
+    aosOverviewOptions.SetNameValue("BIGTIFF", "YES");
 
     if( bGenerateMskOvr )
     {
