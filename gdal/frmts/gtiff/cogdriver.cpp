@@ -640,6 +640,10 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                 pfnProgress, pProgressData );
         dfCurPixels = dfNextPixels;
 
+        if( nBands > 1 )
+        {
+            aosOverviewOptions.SetNameValue("INTERLEAVE", "PIXEL");
+        }
         if( !m_osTmpMskOverviewFilename.empty() )
         {
             aosOverviewOptions.SetNameValue("MASK_OVERVIEW_DATASET",
