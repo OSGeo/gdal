@@ -2422,8 +2422,10 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
             CPLCalloc(sizeof(GDALReprojectionTransformInfo), 1));
 
     psInfo->poForwardTransform = poForwardTransform;
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     psInfo->poReverseTransform =
         OGRCreateCoordinateTransformation(&oDstSRS, &oSrcSRS);
+    CPLPopErrorHandler();
 
     memcpy( psInfo->sTI.abySignature,
             GDAL_GTI2_SIGNATURE,
@@ -2489,8 +2491,24 @@ int GDALReprojectionTransform( void *pTransformArg, int bDstToSrc,
     int bSuccess;
 
     if( bDstToSrc )
-        bSuccess = psInfo->poReverseTransform->TransformEx(
-            nPointCount, padfX, padfY, padfZ, panSuccess );
+    {
+        if( psInfo->poReverseTransform == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Inverse coordinate transformation cannot be instantiated");
+            if( panSuccess )
+            {
+                for( int i = 0; i < nPointCount; i++ )
+                    panSuccess[i] = FALSE;
+            }
+            bSuccess = false;
+        }
+        else
+        {
+            bSuccess = psInfo->poReverseTransform->TransformEx(
+                nPointCount, padfX, padfY, padfZ, panSuccess );
+        }
+    }
     else
         bSuccess = psInfo->poForwardTransform->TransformEx(
             nPointCount, padfX, padfY, padfZ, panSuccess );

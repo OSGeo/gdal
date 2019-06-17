@@ -711,3 +711,25 @@ def test_transformer_17():
     with gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/i/donot/exist/dem.tif'])
     assert tr is None
+
+###############################################################################
+# Test reprojection transformer without reverse path
+# NOTE: in case the inverse airy method is implemented some day, this test
+# might fail
+
+def test_transformer_no_reverse_method():
+    sr1 = osr.SpatialReference()
+    sr1.SetFromUserInput('+proj=longlat +ellps=GRS80')
+    sr2 = osr.SpatialReference()
+    sr2.SetFromUserInput('+proj=airy +ellps=GRS80 +wktext')
+    tr = gdal.Transformer(None, None, ['SRC_SRS=' + sr1.ExportToWkt(), 'DST_SRS=' + sr2.ExportToWkt()])
+    assert tr
+
+    (success, pnt) = tr.TransformPoint(0, 2, 49)
+    assert success
+    assert abs(pnt[0] - 141270.54731856665) <= 1e-3, pnt
+    assert abs(pnt[1] - 4656605.104980032) <= 1e-3, pnt
+
+    with gdaltest.error_handler():
+        (success, pnt) = tr.TransformPoint(1, 2, 49)
+    assert not success
