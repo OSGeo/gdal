@@ -36,7 +36,7 @@
 import gdaltest
 from osgeo import osr
 import pytest
-
+from threading import Thread
 
 ###############################################################################
 # Create a UTM WGS84 coordinate system and check various items.
@@ -1533,3 +1533,39 @@ def test_osr_get_name():
     assert sr.GetName() is None
     sr.SetWellKnownGeogCS('WGS84')
     assert sr.GetName() == 'WGS 84'
+
+
+def test_SetPROJSearchPath():
+
+    # OSRSetPROJSearchPaths() is only taken into priority over other methods
+    # starting with PROJ >= 6.1
+    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 1):
+        pytest.skip()
+
+    # Do the test in a new thread, so that SetPROJSearchPath() is taken
+    # into account
+    def threaded_function(arg):
+        sr = osr.SpatialReference()
+        with gdaltest.error_handler():
+            arg[0] = sr.ImportFromEPSG(32631)
+
+    try:
+        arg = [ -1 ]
+
+        thread = Thread(target = threaded_function, args = (arg, ))
+        thread.start()
+        thread.join()
+        assert arg[0] == 0
+
+        osr.SetPROJSearchPath('/i_do/not/exist')
+
+        thread = Thread(target = threaded_function, args = (arg, ))
+        thread.start()
+        thread.join()
+        assert arg[0] > 0
+    finally:
+        # Cancel search path (we can't call SetPROJSearchPath(None))
+        osr.SetPROJSearchPaths([])
+
+    sr = osr.SpatialReference()
+    assert sr.ImportFromEPSG(32631) == 0
