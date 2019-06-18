@@ -41,6 +41,7 @@ from osgeo import osr
 
 import gdaltest
 import pytest
+import struct
 
 ###############################################################################
 # Verify that we always getting the same image when warping.
@@ -1679,3 +1680,19 @@ def test_warp_56():
         warped = pix_ds.GetRasterBand(1).ReadAsArray()[0, 0]
         assert abs(warped - exp) <= 0.6, \
             'offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped)
+
+
+###############################################################################
+# Test bugfix for #1656
+
+def test_warp_nearest_real_nodata_multiple_band():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 1, 2, gdal.GDT_Float64)
+    src_ds.GetRasterBand(1).SetNoDataValue(65535)
+    src_ds.GetRasterBand(1).WriteRaster(0,0,1,1,struct.pack('d', 65535))
+    src_ds.GetRasterBand(2).SetNoDataValue(65535)
+    src_ds.GetRasterBand(2).WriteRaster(0,0,1,1,struct.pack('d', 65535))
+    src_ds.SetGeoTransform([1, 1, 0,
+                            1, 0, 1])
+    out_ds = gdal.Warp('', src_ds, options = '-of MEM')
+    assert struct.unpack('d' * 4, out_ds.ReadRaster()) == struct.unpack('d' * 4, src_ds.ReadRaster())
