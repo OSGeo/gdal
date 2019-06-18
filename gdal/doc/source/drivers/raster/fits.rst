@@ -36,6 +36,7 @@ referred as metadata.
 NOTE: Implemented as ``gdal/frmts/fits/fitsdataset.cpp``.
 
 .. _notes-on-cfitsio-linking:
+
 Notes on CFITSIO linking in GDAL
 --------------------------------
 Linux
