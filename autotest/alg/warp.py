@@ -1570,7 +1570,6 @@ def test_warp_53():
                                 options='-of MEM -b 1 -b 1 -ot ' + typestr)
         src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
         src_ds.GetRasterBand(2).Fill(255)
-        import struct
         zero = struct.pack('B' * 1, 0)
         src_ds.GetRasterBand(2).WriteRaster(10, 10, 1, 1, zero,
                                             buf_type=gdal.GDT_Byte)
