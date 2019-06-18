@@ -26,10 +26,9 @@ namespace nccfdriver
 		return nc_err_code;
 	}
 
-	std::vector<std::pair<std::string, write_attr_role>> write_Geometry_Container
-		(int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names, bool polygon_has_holes = POLYGON_NO_HOLES)
+	int write_Geometry_Container
+		(int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names)
 	{
-		std::vector<std::pair<std::string, write_attr_role>> ret;
 
 		int write_var_id;
 		int err_code;
@@ -70,7 +69,6 @@ namespace nccfdriver
 		}
 
 		err_code = nc_put_att_text(ncID, write_var_id, CF_SG_NODE_COORDINATES, ncoords_atr_str.size(), ncoords_atr_str.c_str());
-		ret.push_back(std::pair<std::string, write_attr_role>(ncoords_atr_str, W_NODE_COORDINATES));
 
 		// The previous two attributes are all that are required from POINT
 
@@ -81,7 +79,6 @@ namespace nccfdriver
 		if (geometry_type != POINT)
 		{
 			std::string nodecount_atr_str = name + "_node_count";
-			ret.push_back(std::pair<std::string, write_attr_role>(nodecount_atr_str, W_NODE_COUNT));
 			
 			err_code = nc_put_att_text(ncID, write_var_id, CF_SG_NODE_COUNT, nodecount_atr_str.size(), nodecount_atr_str.c_str());
 		}
@@ -89,26 +86,22 @@ namespace nccfdriver
 		/* Part_Node_Count Attribute
 		 * (only needed for MULTILINE, MULTIPOLYGON, and (potentially) POLYGON)
 		 */
-		if (geometry_type == MULTILINE || geometry_type == MULTIPOLYGON || (geometry_type == POLYGON && polygon_has_holes == POLYGON_HAS_HOLES))
+		if (geometry_type == MULTILINE || geometry_type == MULTIPOLYGON)
 		{
 			std::string pnc_atr_str = name + "_part_node_count";
-			ret.push_back(std::pair<std::string, write_attr_role>(pnc_atr_str, W_PART_NODE_COUNT));
 
 			err_code = nc_put_att_text(ncID, write_var_id, CF_SG_PART_NODE_COUNT, pnc_atr_str.size(), pnc_atr_str.c_str());
 		}
 
-		/* Interior_Ring Attribute
-		 * (only needed for (certain instances of) MULTIPOLYGON, (certain instances of) POLYGON)
-		 *
-		 */
-		if ((geometry_type == MULTIPOLYGON || (geometry_type == POLYGON) && polygon_has_holes == POLYGON_HAS_HOLES))
-		{
-			std::string ir_atr_str = name + "_interior_ring";
-			ret.push_back(std::pair<std::string, write_attr_role>(ir_atr_str, W_INTERIOR_RING));
+		return write_var_id;
+	}
 
-			err_code = nc_put_att_text(ncID, write_var_id, CF_SG_INTERIOR_RING, ir_atr_str.size(), ir_atr_str.c_str());
-		}
+	void nc_write_x_y_CF_axis(int ncID, int Xaxis_ID, int Yaxis_ID)
+	{
+		int err;
+		err = nc_put_att_text(ncID, Xaxis_ID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
+		err = nc_put_att_text(ncID, Yaxis_ID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
 
-		return ret;
+		// to do: throw excepton
 	}
 }

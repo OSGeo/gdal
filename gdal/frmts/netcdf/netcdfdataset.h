@@ -270,6 +270,9 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 #define CF_SG_TYPE_LINE              "line"
 #define CF_SG_TYPE_POINT             "point"
 #define CF_SG_TYPE_POLY              "polygon"
+#define CF_SG_X_AXIS                 "X"
+#define CF_SG_Y_AXIS                 "Y"
+#define CF_SG_Z_AXIS                 "Z"
 
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
@@ -1026,6 +1029,7 @@ class netCDFLayer final: public OGRLayer
         std::vector<std::unique_ptr<OGRFeature>> m_sgFeatureList;
         std::vector<std::unique_ptr<OGRFeature>>::iterator m_sgFeatItr;
         bool            m_sgItrInit;
+		int             m_writableSGContVarID;
         bool            m_HasCFSG1_8;
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;

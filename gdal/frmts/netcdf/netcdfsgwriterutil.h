@@ -36,19 +36,19 @@ namespace nccfdriver
 	 * std::string name - what to name this container
 	 * geom_t geometry_type - the geometry type of the container
 	 * std::vector<..> node_coordinate_names - variable names corresponding to each axis
-	 * bool polygon_has_holes - only affects polygon/multipolygon types; if any polygon has more than one ring (an "interior" ring) then POLYGON_HAS_HOLES, otherwise POLYGON_NO_HOLES
+	 * Only writes attributes that are for sure required. i.e. does NOT required interior ring for anything or part node count for Polygons
 	 *
-	 * Returns: a vector of key -> variable id pairs where the "key" is the attribute name, the value is the variable ID that corresponds
+	 * Returns: geometry container variable ID
 	 */
-	std::vector<std::pair<std::string, write_attr_role>> write_Geometry_Container
-		(int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names, bool polygon_has_holes = POLYGON_NO_HOLES);
+	int write_Geometry_Container
+		(int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names);
 
-	/* OGR
-	 *
-	 *
-	 *
-	 *
+	/* Write X, Y axis information
+	 * ncID - as used in the netCDF Library
+	 * Xaxis_ID - the X axis variable
+	 * Yaxis_ID - the Y axis variable
 	 */
+	void nc_write_x_y_CF_axis(int ncID, int Xaxis_ID, int Yaxis_ID);
 }
 
 #endif
