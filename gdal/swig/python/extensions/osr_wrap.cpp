@@ -4495,6 +4495,34 @@ void GetCRSInfoListFromDatabase( const char *authName,
     *pList = OSRGetCRSInfoListFromDatabase(authName, NULL, pnListCount);
 }
 
+
+void SetPROJSearchPath( const char *utf8_path )
+{
+    const char* const apszPaths[2] = { utf8_path, NULL };
+    OSRSetPROJSearchPaths(apszPaths);
+}
+
+
+void SetPROJSearchPaths( char** paths )
+{
+    OSRSetPROJSearchPaths(paths);
+}
+
+
+int GetPROJVersionMajor()
+{
+    int num;
+    OSRGetPROJVersion(&num, NULL, NULL);
+    return num;
+}
+
+int GetPROJVersionMinor()
+{
+    int num;
+    OSRGetPROJVersion(NULL, &num, NULL);
+    return num;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18920,6 +18948,196 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SetPROJSearchPath(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  int bToFree1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SetPROJSearchPath",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    SetPROJSearchPath((char const *)arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SetPROJSearchPaths(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char **arg1 = (char **) 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SetPROJSearchPaths",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj0)
+  #endif
+      ) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    Py_ssize_t size = PySequence_Size(obj0);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
+      PyObject* pyObj = PySequence_GetItem(obj0,i);
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+        if( !pyUTF8Str )
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
+          SWIG_fail;
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg1 = CSLAddString( arg1, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
+#endif
+      else
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      Py_DECREF(pyObj);
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    SetPROJSearchPaths(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetPROJVersionMajor(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJVersionMajor")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (int)GetPROJVersionMajor();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetPROJVersionMinor(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJVersionMinor")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (int)GetPROJVersionMinor();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"SRS_WKT_WGS84_LAT_LONG_swigconstant", SRS_WKT_WGS84_LAT_LONG_swigconstant, METH_VARARGS, NULL},
@@ -19296,6 +19514,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"OSRCRSInfo_area_name_get", _wrap_OSRCRSInfo_area_name_get, METH_VARARGS, (char *)"OSRCRSInfo_area_name_get(CRSInfo crsInfo) -> char const *"},
 	 { (char *)"OSRCRSInfo_projection_method_get", _wrap_OSRCRSInfo_projection_method_get, METH_VARARGS, (char *)"OSRCRSInfo_projection_method_get(CRSInfo crsInfo) -> char const *"},
 	 { (char *)"GetCRSInfoListFromDatabase", _wrap_GetCRSInfoListFromDatabase, METH_VARARGS, (char *)"GetCRSInfoListFromDatabase(char const * authName)"},
+	 { (char *)"SetPROJSearchPath", _wrap_SetPROJSearchPath, METH_VARARGS, (char *)"SetPROJSearchPath(char const * utf8_path)"},
+	 { (char *)"SetPROJSearchPaths", _wrap_SetPROJSearchPaths, METH_VARARGS, (char *)"SetPROJSearchPaths(char ** paths)"},
+	 { (char *)"GetPROJVersionMajor", _wrap_GetPROJVersionMajor, METH_VARARGS, (char *)"GetPROJVersionMajor() -> int"},
+	 { (char *)"GetPROJVersionMinor", _wrap_GetPROJVersionMinor, METH_VARARGS, (char *)"GetPROJVersionMinor() -> int"},
 	 { NULL, NULL, 0, NULL }
 };
 
