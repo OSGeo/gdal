@@ -11739,6 +11739,9 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 void GTiffDataset::PushMetadataToPam()
 
 {
+    if( GetPamFlags() & GPF_DISABLED )
+        return;
+
     const bool bStardardColorInterp =
         IsStandardColorInterpretation(this, nPhotometric, papszCreationOptions);
 
