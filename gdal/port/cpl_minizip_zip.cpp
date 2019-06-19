@@ -35,7 +35,7 @@
    Oct-2009 - Mathias Svensson - Added support for BZIP2 as compression mode (bzip2 lib is required)
    Jan-2010 - back to unzip and minizip 1.0 name scheme, with compatibility layer
 
-   Copyright (c) 2010-2018, Even Rouault <even dot rouault at mines-paris dot org>
+   Copyright (c) 2010-2018, Even Rouault <even dot rouault at spatialys.com>
 
 */
 

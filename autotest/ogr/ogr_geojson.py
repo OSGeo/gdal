@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Mateusz Loskot <mateusz@loskot.net>
-# Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
 #
 # This library is free software; you can redistribute it and/or
