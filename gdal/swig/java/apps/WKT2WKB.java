@@ -4,7 +4,7 @@
  * Name:     WKT2WKB.java
  * Project:  GDAL Java Interface
  * Purpose:  A sample app for demonstrating the usage of ExportToWkb.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  * Port from WKT2WKB.cs by Tamas Szekeres
  *

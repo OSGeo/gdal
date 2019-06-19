@@ -2,7 +2,7 @@
  *
  * Project:  OGR
  * Purpose:  Convenience function for parsing with Expat library
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>

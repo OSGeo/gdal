@@ -2,7 +2,7 @@
  *
  * Component: ODS formula Engine
  * Purpose:
- * Author: Even Rouault <even dot rouault at mines dash paris dot org>
+ * Author: Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>

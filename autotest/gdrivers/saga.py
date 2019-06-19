@@ -5,7 +5,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test SAGA GIS Binary driver
-# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault, <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>

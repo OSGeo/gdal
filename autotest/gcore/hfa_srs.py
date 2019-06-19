@@ -4,7 +4,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write round-tripping of SRS for HFA/Imagine format.
-# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault, <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>

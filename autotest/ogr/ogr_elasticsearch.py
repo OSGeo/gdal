@@ -4,7 +4,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  ElasticSearch driver testing (with fake server)
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>

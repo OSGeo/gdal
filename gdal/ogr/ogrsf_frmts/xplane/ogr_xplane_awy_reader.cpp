@@ -2,7 +2,7 @@
  *
  * Project:  X-Plane awy.dat file reader
  * Purpose:  Implements OGRXPlaneAwyReader class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>

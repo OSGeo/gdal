@@ -2,7 +2,7 @@
 *
 * Project:  OpenGIS Simple Features Reference Implementation
 * Purpose:  Implements FileGDB OGR result layer.
-* Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+* Author:   Even Rouault, <even dot rouault at spatialys.com>
 *
 ******************************************************************************
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>

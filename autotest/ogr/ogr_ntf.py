@@ -4,7 +4,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR NTF driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>

@@ -6,7 +6,7 @@ RFC 35: Delete, reorder and alter field definitions of OGR layers
 
 Authors: Even Rouault
 
-Contact: even dot rouault at mines dash paris dot org
+Contact: even dot rouault at spatialys.com
 
 Status: Adopted
 

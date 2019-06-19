@@ -2,7 +2,7 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for HTTP/FTP files in streaming mode
- * Author:   Even Rouault <even dot rouault at mines dash paris.org>
+ * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 2012-2015, Even Rouault <even dot rouault at spatialys.com>

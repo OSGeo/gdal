@@ -2,7 +2,7 @@
  *
  * Project:  OpenAir Translator
  * Purpose:  Implements OGROpenAirDriver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>

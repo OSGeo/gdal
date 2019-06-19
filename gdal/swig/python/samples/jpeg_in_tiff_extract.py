@@ -5,7 +5,7 @@
 #
 # Project:  GDAL/OGR samples
 # Purpose:  Extract a JPEG file from a JPEG-in-TIFF tile/strip
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>

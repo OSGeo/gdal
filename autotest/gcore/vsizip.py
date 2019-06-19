@@ -5,7 +5,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test /vsizip/vsimem/
-# Author:   Even Rouault <even dot rouault at mines dash parid dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>

@@ -3,7 +3,7 @@
  *
  * Project:  X-Plane aeronautical data reader
  * Purpose:  Definition of geo-computation functions
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  * Copyright (c) 2008, Even Rouault <even dot rouault at spatialys.com>

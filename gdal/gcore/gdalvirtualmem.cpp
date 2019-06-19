@@ -3,7 +3,7 @@
  * Name:     gdalvirtualmem.cpp
  * Project:  GDAL
  * Purpose:  Dataset and rasterband exposed as a virtual memory mapping.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>

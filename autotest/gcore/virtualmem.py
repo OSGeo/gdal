@@ -5,7 +5,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GDALVirtualMem interface
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>

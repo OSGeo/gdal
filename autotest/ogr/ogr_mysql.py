@@ -5,7 +5,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test MySQL driver functionality.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot ogr>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>

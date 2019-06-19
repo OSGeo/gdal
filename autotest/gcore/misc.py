@@ -5,7 +5,7 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Various test of GDAL core.
-# Author:   Even Rouault <even dot rouault at mines dash parid dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>

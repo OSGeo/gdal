@@ -2,7 +2,7 @@
  *
  * Project:  BNA Translator
  * Purpose:  Implements OGRBNALayer class.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  * Copyright (c) 2007-2010, Even Rouault <even dot rouault at spatialys.com>

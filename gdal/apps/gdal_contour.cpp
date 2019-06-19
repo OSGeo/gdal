@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Applied Coherent Technology (www.actgate.com).
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2018, Oslandia <infos at oslandia dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

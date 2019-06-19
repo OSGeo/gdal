@@ -5,7 +5,7 @@
 #
 # Project:  GDAL/OGR samples
 # Purpose:  Update an existing datasource with features from another one
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>

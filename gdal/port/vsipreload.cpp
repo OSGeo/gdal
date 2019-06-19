@@ -4,7 +4,7 @@
  * Purpose:  Standalone shared library that can be LD_PRELOAD'ed as an overload of
  *           libc to enable VSI Virtual FILE API to be used with binaries using
  *           regular libc for I/O.
- * Author:   Even Rouault <even dot rouault at mines dash paris.org>
+ * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>

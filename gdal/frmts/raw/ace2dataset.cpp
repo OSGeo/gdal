@@ -3,7 +3,7 @@
  * Project:  ACE2 Driver
  * Purpose:  Implementation of ACE2 elevation format read support.
  *           http://tethys.eaprs.cse.dmu.ac.uk/ACE2/shared/documentation
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 2011-2012, Even Rouault <even dot rouault at spatialys.com>

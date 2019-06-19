@@ -3,7 +3,7 @@
  * Name:     cpl_hash_set.cpp
  * Project:  CPL - Common Portability Library
  * Purpose:  Hash set functions.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
  * Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>

@@ -7,7 +7,7 @@
 # Purpose:  Generate test files that can be used to exercise the points tested
 #           by the OGC KML 2.2 – Abstract Test Suite
 #           (http://portal.opengeospatial.org/files/?artifact_id=27811)
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>

@@ -3,7 +3,7 @@
  *
  * Project:  GeoRSS Translator
  * Purpose:  Definition of classes for OGR GeoRSS driver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  * Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>

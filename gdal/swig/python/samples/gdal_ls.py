@@ -5,7 +5,7 @@
 #
 #  Project:  GDAL samples
 #  Purpose:  Display the list of files in a virtual directory, like /vsicurl or /vsizip
-#  Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+#  Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
 #  Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>

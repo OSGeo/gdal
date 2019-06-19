@@ -2,7 +2,7 @@
  *
  * Project:  XLSX Translator
  * Purpose:  Implements OGRXLSXDataSource class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  * Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>

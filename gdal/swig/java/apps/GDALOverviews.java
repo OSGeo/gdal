@@ -4,7 +4,7 @@
  * Name:     GDALOverviews.java
  * Project:  GDAL Java Interface
  * Purpose:  A sample app to create GDAL raster overviews.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  * Port from GDALOverviews.cs by Tamas Szekeres
  *

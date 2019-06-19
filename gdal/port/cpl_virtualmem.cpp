@@ -3,7 +3,7 @@
  * Name:     cpl_virtualmem.cpp
  * Project:  CPL - Common Portability Library
  * Purpose:  Virtual memory
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>

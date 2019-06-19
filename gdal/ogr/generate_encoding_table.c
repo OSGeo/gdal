@@ -4,7 +4,7 @@
  * Project:  OGR
  * Purpose:  Generate a mapping table from a 1-byte encoding to unicode,
  *           for ogr_expat.cpp
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>

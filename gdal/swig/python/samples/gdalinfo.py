@@ -4,7 +4,7 @@
 #
 # Project:  GDAL Utilities
 # Purpose:  Python port of Commandline application to list info about a file.
-# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault, <even dot rouault at spatialys.com>
 #
 # Port from gdalinfo.c whose author is Frank Warmerdam
 #
