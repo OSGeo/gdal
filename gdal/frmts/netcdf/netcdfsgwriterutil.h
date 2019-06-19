@@ -1,34 +1,67 @@
 #ifndef __NETCDFSGWRITERUTIL_H__
 #define __NETCDFSGWRITERUTIL_H__
 #include <vector>
-#include "netcdfdataset.h"
+#include "ogr_core.h"
+#include "ogrsf_frmts.h"
 #include "netcdfsg.h"
+#include "netcdflayersg.h"
 
 namespace nccfdriver
 {
-	const bool POLYGON_HAS_HOLES = true;
-	const bool POLYGON_NO_HOLES = false;
 
-	enum write_attr_role
+	/* OGR_SGeometry_Feature
+	 * Constructs over a OGRFeature
+	 * gives some basic information about that SGeometry Feature such as
+	 * Hold references... limited to scope of its references
+	 * - what's its geometry type
+	 * - how much total points it has
+	 * - how many parts it has
+	 * - a vector of counts of points for each part
+	 */
+	class SGeometry_Feature
 	{
-		W_NODE_COORDINATES,
-		W_NODE_COUNT,
-		W_PART_NODE_COUNT,
-		W_INTERIOR_RING
+		std::vector<OGRSimpleCurve> curve_collection;
+		geom_t type;
+		size_t total_point_count;
+		size_t total_part_count;
+		std::vector<size_t> ppart_node_count;
+		OGRPoint pt_buffer;
+
+		public:
+			geom_t getType() { return this->type; }
+			size_t getTotalNodeCount() { return this->total_point_count; }
+			size_t getTotalPartCount() { return this->total_part_count;  }
+			std::vector<size_t> & getPerPartNodeCount() { return this->ppart_node_count; }
+			OGRPoint& getPoint(size_t part_no, int point_index) { this->curve_collection[part_no].getPoint(point_index, &pt_buffer); return pt_buffer; }
+			SGeometry_Feature(OGRFeature&);
 	};
 
-	// Functions that interface with netCDF, for writing
-
-	/* int nc_int_vector_to_var(...)
-	 * Writes a  std::vector<int> to a single dimensional variable
-	 * Given the following args:
-	 * int ncID - ncid as used in netcdf.h, group or file id
-	 * int dimID - id of single dimension- all the data must fit the dimension length!
-	 * std::string& name - what to name the variable
-	 * std::vector<int>& data - the data of the variable
+	/* OGR_SGeometry_Scribe
+	 * Takes a SGeometry_Feature and given a target geometry container ID it will write the feature 
+	 * to a given netCDF dataset in CF-1.8 compliant formatting.
+	 * Any needed variables will automatically be defined, and dimensions will be automatically grown corresponding with need
 	 *
 	 */
-	int nc_int_vector_to_var(int ncID, int dimID, std::string& name, std::vector<int>& data);
+	class OGR_SGeometry_Scribe
+	{
+		int ncID;
+		int containerVarID;
+		int node_coordinates_dimID; // dim of all node_coordinates
+		int node_count_dimID;	// node count dim
+		int pnc_dimID;			// part node count dim AND interior ring dim
+		size_t next_write_pos_node_coord;
+		size_t next_write_pos_node_count;
+		size_t next_write_pos_pnc;
+
+		public:
+			void writeSGeometryFeature(SGeometry_Feature& ft);
+			OGR_SGeometry_Scribe(int ncID, int containerVarID);
+			OGR_SGeometry_Scribe::OGR_SGeometry_Scribe();
+	};
+
+	extern OGR_SGeometry_Scribe GeometryScribe;
+
+	// Functions that interface with netCDF, for writing
 
 	/* std::vector<..> writeGeometryContainer(...)
 	 * Writes a geometry container of a given geometry type given the following arguments:

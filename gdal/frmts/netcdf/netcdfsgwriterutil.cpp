@@ -1,29 +1,112 @@
 #include "netcdfsgwriterutil.h"
+#include "netcdfdataset.h"
 
 namespace nccfdriver
 {
-	int nc_int_vector_to_var(int ncID, int dimID, std::string& name, std::vector<int>& data)
+	OGR_SGeometry_Scribe GeometryScribe;
+
+	SGeometry_Feature::SGeometry_Feature(OGRFeature& ft)
 	{
-		int nc_err_code = NC_NOERR;
-		int write_var_id;
-
-		// Define the variable / add it to the dataset
+		OGRGeometry * defnGeometry = ft.GetGeometryRef();
 		
-		nc_err_code = nc_def_var(ncID, name.c_str(), NC_INT, 1, &dimID, &write_var_id);
-
-		if (nc_err_code != NC_NOERR)
+		if (defnGeometry == nullptr)
 		{
-			return nc_err_code;
+			// throw exception
+		}
+		
+		OGRGeometry& r_defnGeometry = *defnGeometry;
+
+		OGRwkbGeometryType ogwkt = defnGeometry->getGeometryType();
+		this->type = OGRtoRaw(ogwkt);
+
+		if (this->type == LINE)
+		{		
+			//OGRLineString r_defnGeometryLine = dynamic_cast<OGRLineString&>(r_defnGeometry);
+			// to do: check for std::bad_cast somewhere?
+
+			// Get node count
+			//this->total_point_count = r_defnGeometryLine.getNumPoints();
+			
+			// Single line: 1 part count == node count
+			//this->ppart_node_count.push_back(r_defnGeometryLine.getNumPoints());
+
+			// One part
+			this->total_part_count = 1;
+
+			// One curve
+			//this->curve_collection.push_back(r_defnGeometryLine);
+		}
+	}
+
+	void OGR_SGeometry_Scribe::writeSGeometryFeature(SGeometry_Feature& ft)
+	{
+		if (ft.getType() == NONE)
+			return;	// change to exception
+
+		
+		// Prepare variable names
+		char node_coord_names[NC_MAX_CHAR + 1];
+		memset(node_coord_names, 0, NC_MAX_CHAR + 1);
+
+		char node_count_name[NC_MAX_CHAR + 1];
+		memset(node_count_name, 0, NC_MAX_CHAR + 1);
+
+		int err_code;
+		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
+		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
+
+		// Detect if variable already exists in dataset. If it doesn't, define it
+		int varId;
+		int ncount_err_code = nc_inq_varid(ncID, node_count_name, &varId);
+
+		if (ncount_err_code == NC_ENOTVAR)
+		{
+			int err_code_def;
+			err_code_def = nc_def_var(ncID, node_count_name, NC_INT, 1, &node_count_dimID, &varId);
 		}
 
-		// Write each item to the variable
-		for (size_t itr = 0; itr < data.size(); itr++)
+		else if (ncount_err_code != NC_NOERR)
 		{
-			nc_err_code = nc_put_var1_int(ncID, write_var_id, &itr, &data[itr]);
-			if (nc_err_code != NC_NOERR)
-				break;
+			// error
 		}
-		return nc_err_code;
+
+
+		// Append from the end
+		int ncount_add = static_cast<int>(ft.getTotalNodeCount());
+		err_code = nc_put_var1_int(ncID, varId, &next_write_pos_node_count, &ncount_add);
+
+	}
+
+	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe()
+		: ncID(0),
+		containerVarID(INVALID_VAR_ID),
+		next_write_pos_node_coord(0),
+		next_write_pos_node_count(0),
+		next_write_pos_pnc(0)
+	{
+
+	}
+
+	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in)
+		: ncID(ncID_in),
+		containerVarID(container_varID_in),
+		next_write_pos_node_coord(0),
+		next_write_pos_node_count(0),
+		next_write_pos_pnc(0)
+	{
+		// Prepare variable names
+		char node_coord_names[NC_MAX_CHAR + 1];
+		memset(node_coord_names, 0, NC_MAX_CHAR + 1);
+
+		char node_count_name[NC_MAX_CHAR + 1];
+		memset(node_count_name, 0, NC_MAX_CHAR + 1);
+
+		int err_code;
+		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
+		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
+
+		// Make dimensions for each of these
+		err_code = nc_def_dim(ncID_in, node_count_name, 0, &node_count_dimID);
 	}
 
 	int write_Geometry_Container

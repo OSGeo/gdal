@@ -396,7 +396,7 @@ bool netCDFLayer::Create(char **papszOptions,
 			NCDF_ERR(status);
 		}
     }
-    else if( m_poFeatureDefn->GetGeomType() != wkbNone )
+    else if( m_poFeatureDefn->GetGeomType() != wkbNone  && m_bLegacyCreateMode)
     {
 #ifdef NETCDF_HAS_NC4
         if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
@@ -443,22 +443,22 @@ bool netCDFLayer::Create(char **papszOptions,
         // nc_put_att_text(m_nLayerCDFId, m_nWKTVarID, CF_UNITS,
         //                 strlen("none"), "none");
 
-        if( m_bWriteGDALTags )
-        {
-            status =
-                nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_geometry_field",
-                                m_osWKTVarName.size(), m_osWKTVarName.c_str());
-            NCDF_ERR(status);
+		if (m_bWriteGDALTags)
+		{
+			status =
+				nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_geometry_field",
+					m_osWKTVarName.size(), m_osWKTVarName.c_str());
+			NCDF_ERR(status);
 
-            CPLString osGeometryType =
-                OGRToOGCGeomType(m_poFeatureDefn->GetGeomType());
-            if( wkbHasZ(m_poFeatureDefn->GetGeomType()) )
-                osGeometryType += " Z";
-            status =
-                nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_type",
-                                osGeometryType.size(), osGeometryType.c_str());
-            NCDF_ERR(status);
-        }
+			CPLString osGeometryType =
+				OGRToOGCGeomType(m_poFeatureDefn->GetGeomType());
+			if (wkbHasZ(m_poFeatureDefn->GetGeomType()))
+				osGeometryType += " Z";
+			status =
+				nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_type",
+					osGeometryType.size(), osGeometryType.c_str());
+			NCDF_ERR(status);
+		}
     }
 
     if( poSRS != nullptr )
@@ -536,6 +536,8 @@ bool netCDFLayer::Create(char **papszOptions,
 		if(strXVarName != "")
 			coordNames.push_back(strYVarName);
 		m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
+		nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID);
+
 
 		// Write the grid mapping, if it exists:
 		if (poSRS != nullptr)
@@ -1730,7 +1732,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         }
     }
     else if( m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
-             poGeom != nullptr )
+             poGeom != nullptr && m_bLegacyCreateMode )
     {
         char *pszWKT = nullptr;
         poGeom->exportToWkt(&pszWKT, wkbVariantIso);
@@ -1790,7 +1792,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     }
 #ifdef NETCDF_HAS_NC4
     else if( m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
-             poGeom == nullptr && m_nWKTNCDFType == NC_STRING && m_bNCDumpCompat )
+             poGeom == nullptr && m_nWKTNCDFType == NC_STRING && m_bNCDumpCompat && m_bLegacyCreateMode )
     {
         const char *pszWKTConst = "";
         int status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID,
@@ -1798,6 +1800,23 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         NCDF_ERR(status);
     }
 #endif
+
+	// CF 1.8 simple geometry, only
+	if (!m_bLegacyCreateMode && poGeom != nullptr)
+	{
+		nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
+
+		// Mulipoints
+
+		// LineString
+		nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);
+
+		// MultiLineString
+
+		// Polygons
+
+		// Multipolygons
+	}
 
     return true;
 }
