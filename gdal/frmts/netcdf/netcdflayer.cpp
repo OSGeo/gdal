@@ -64,6 +64,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTNCDFType(NC_NAT),
         m_sgItrInit(false),
         m_writableSGContVarID(nccfdriver::INVALID_VAR_ID),
+        m_bLegacyCreateMode(false),
         m_HasCFSG1_8(false),
         m_nCurFeatureId(1),
         m_bWriteGDALTags(true),
@@ -145,15 +146,14 @@ bool netCDFLayer::Create(char **papszOptions,
 {
 	const char * legacyCreationOp = CSLFetchNameValueDef(papszOptions, "legacy", "0");
 	std::string legacyCreationOp_s = std::string(legacyCreationOp);
-	bool legacyCreateMode;
 	if (legacyCreationOp_s == "1")
 	{
-		legacyCreateMode = true;
+		m_bLegacyCreateMode = true;
 	}
 
 	else
 	{
-		legacyCreateMode = false;
+		m_bLegacyCreateMode = false;
 	}
 
     m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
@@ -240,22 +240,19 @@ bool netCDFLayer::Create(char **papszOptions,
     }
 
     int status;
-	if (!legacyCreateMode)
+	if (m_bLegacyCreateMode && m_bWriteGDALTags)
 	{
-		if (m_bWriteGDALTags)
-		{
 			status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_name",
 				strlen(m_poFeatureDefn->GetName()),
 				m_poFeatureDefn->GetName());
 			NCDF_ERR(status);
-		}
-
-		status = nc_def_dim(m_nLayerCDFId, m_osRecordDimName,
-			NC_UNLIMITED, &m_nRecordDimID);
-		NCDF_ERR(status);
-		if (status != NC_NOERR)
-			return false;
 	}
+
+	status = nc_def_dim(m_nLayerCDFId, m_osRecordDimName,
+	NC_UNLIMITED, &m_nRecordDimID);
+	NCDF_ERR(status);
+	if (status != NC_NOERR)
+	return false;
 
     if( !m_osProfileDimName.empty() )
     {
@@ -334,7 +331,7 @@ bool netCDFLayer::Create(char **papszOptions,
 		{
 			NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID);
 			
-			if (!legacyCreateMode)
+			if (!m_bLegacyCreateMode)
 			{
 				nccfdriver::nc_write_x_y_CF_axis(m_nLayerCDFId, m_nXVarID, m_nYVarID);
 			}
@@ -345,7 +342,7 @@ bool netCDFLayer::Create(char **papszOptions,
 			NCDFWriteXYVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID,
 				poSRS);
 
-			if (!legacyCreateMode)
+			if (!m_bLegacyCreateMode)
 			{
 				nccfdriver::nc_write_x_y_CF_axis(m_nLayerCDFId, m_nXVarID, m_nYVarID);
 			}
@@ -388,13 +385,16 @@ bool netCDFLayer::Create(char **papszOptions,
 			m_osCoordinatesValue += pszZVarName;
 		}
 
-		const char *pszFeatureTypeVal =
-			!m_osProfileDimName.empty() ? "profile" : "point";
+		if (m_bLegacyCreateMode)
+		{
+			const char *pszFeatureTypeVal =
+				!m_osProfileDimName.empty() ? "profile" : "point";
 
-		status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
-		     strlen(pszFeatureTypeVal), pszFeatureTypeVal);
+			status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
+				strlen(pszFeatureTypeVal), pszFeatureTypeVal);
 
-		NCDF_ERR(status);
+			NCDF_ERR(status);
+		}
     }
     else if( m_poFeatureDefn->GetGeomType() != wkbNone )
     {
@@ -524,7 +524,7 @@ bool netCDFLayer::Create(char **papszOptions,
         }
     }
 
-	if (!legacyCreateMode)
+	if (!m_bLegacyCreateMode)
 	{
 		// Write a geometry container
 		OGRwkbGeometryType geometryContainerType = m_poFeatureDefn->GetGeomType();
@@ -2406,6 +2406,17 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
     status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_LNG_NAME,
                              strlen(pszLongName), pszLongName);
     NCDF_ERR(status);
+
+	if ( !m_bLegacyCreateMode )
+	{
+		char ct_name_carr[NC_MAX_NAME + 1];
+		memset(ct_name_carr, 0, NC_MAX_NAME + 1);
+		status = nc_inq_varname(m_nLayerCDFId, m_writableSGContVarID, ct_name_carr);
+		NCDF_ERR(status);
+
+		status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_SG_GEOMETRY, strlen(ct_name_carr), ct_name_carr);
+        NCDF_ERR(status);
+	}
 
     if( m_bWriteGDALTags )
     {

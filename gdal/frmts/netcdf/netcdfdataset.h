@@ -1029,7 +1029,8 @@ class netCDFLayer final: public OGRLayer
         std::vector<std::unique_ptr<OGRFeature>> m_sgFeatureList;
         std::vector<std::unique_ptr<OGRFeature>>::iterator m_sgFeatItr;
         bool            m_sgItrInit;
-		int             m_writableSGContVarID;
+        int             m_writableSGContVarID;
+		bool            m_bLegacyCreateMode;
         bool            m_HasCFSG1_8;
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
