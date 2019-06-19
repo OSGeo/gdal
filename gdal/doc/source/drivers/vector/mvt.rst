@@ -211,6 +211,7 @@ Dataset creation options
 -  **MAXZOOM**\ =integer: Maximum zoom level at which tiles are
    generated. Defaults to 5. Maximum supported value is 22
 -  **CONF**\ =string: Layer configuration as a JSon serialized string.
+   Or, starting with GDAL 3.0.1, filename containing the configuration as JSon.
 -  **SIMPLIFICATION**\ =float: Simplification factor for linear or
    polygonal geometries. The unit is the integer unit of tiles after
    quantification of geometry coordinates to tile coordinates. Applies
