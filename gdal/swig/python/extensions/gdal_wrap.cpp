@@ -4080,6 +4080,75 @@ VSIDIR* wrapper_VSIOpenDir( const char * utf8_path,
 }
 
 
+/************************************************************************/
+/*                         CSLFromPySequence()                          */
+/************************************************************************/
+static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
+
+{
+  *pbErr = FALSE;
+  /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq)
+#if PY_VERSION_HEX < 0x03000000
+    || PyString_Check(pySeq)
+#endif
+    ) {
+    PyErr_SetString(PyExc_TypeError,"not a sequence");
+    *pbErr = TRUE;
+    return NULL;
+  }
+
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    *pbErr = TRUE;
+    return NULL;
+  }
+  char** papszRet = NULL;
+  for (int i = 0; i < (int)size; i++) {
+    PyObject* pyObj = PySequence_GetItem(pySeq,i);
+    if (PyUnicode_Check(pyObj))
+    {
+      char *pszStr;
+      Py_ssize_t nLen;
+      PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+      if( !pyUTF8Str )
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
+        CSLDestroy(papszRet);
+        *pbErr = TRUE;
+        return NULL;
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+      papszRet = CSLAddString( papszRet, pszStr );
+      Py_XDECREF(pyUTF8Str);
+    }
+#if PY_VERSION_HEX >= 0x03000000
+    else if (PyBytes_Check(pyObj))
+      papszRet = CSLAddString( papszRet, PyBytes_AsString(pyObj) );
+#else
+    else if (PyString_Check(pyObj))
+      papszRet = CSLAddString( papszRet, PyString_AsString(pyObj) );
+#endif
+    else
+    {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        CSLDestroy(papszRet);
+        *pbErr = TRUE;
+        return NULL;
+    }
+    Py_DECREF(pyObj);
+  }
+  return papszRet;
+}
+
+
 typedef struct
 {
     char*        name;
@@ -4701,6 +4770,37 @@ SWIGINTERN void GDALDatasetShadow_GetGeoTransform(GDALDatasetShadow *self,double
 SWIGINTERN CPLErr GDALDatasetShadow_SetGeoTransform(GDALDatasetShadow *self,double argin[6]){
     return GDALSetGeoTransform( self, argin );
   }
+
+static int*
+CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
+  /* check if is List */
+  if ( !PySequence_Check(pySeq) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  *pnSize = (int)size;
+  int* ret = (int*) malloc(*pnSize*sizeof(int));
+  for( int i = 0; i<*pnSize; i++ ) {
+    PyObject *o = PySequence_GetItem(pySeq,i);
+    if ( !PyArg_Parse(o,"i",&ret[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        free(ret);
+        *pnSize = -1;
+        return NULL;
+    }
+    Py_DECREF(o);
+  }
+  return ret;
+}
+
 SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
 
     return GDALBuildOverviews(  self,
@@ -8507,56 +8607,11 @@ SWIGINTERN PyObject *_wrap_OpenDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
   if (obj2) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj2)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg3 = CSLAddString( arg3, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -10026,56 +10081,11 @@ SWIGINTERN PyObject *_wrap_Sync(PyObject *SWIGUNUSEDPARM(self), PyObject *args, 
   if (obj2) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj2)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg3 = CSLAddString( arg3, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -10273,56 +10283,11 @@ SWIGINTERN PyObject *_wrap_GetSignedURL(PyObject *SWIGUNUSEDPARM(self), PyObject
   if (obj1) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj1)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(obj1, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj1);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj1,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg2 = CSLAddString( arg2, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -12675,56 +12640,11 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
   if (obj6) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj6)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg7 = CSLFromPySequence(obj6, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj6);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj6,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg7 = CSLAddString( arg7, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg7 = CSLAddString( arg7, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg7 = CSLAddString( arg7, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -12840,56 +12760,11 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   if (obj4) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj4)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg5 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj4);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg5 = CSLAddString( arg5, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -16440,26 +16315,9 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   if (obj2) {
     {
       /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-      /* check if is List */
-      if ( !PySequence_Check(obj2) ) {
-        PyErr_SetString(PyExc_TypeError, "not a sequence");
+      arg4 = CreateCIntListFromSequence(obj2, &arg3);
+      if( arg3 < 0 ) {
         SWIG_fail;
-      }
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      arg3 = (int)size;
-      arg4 = (int*) malloc(arg3*sizeof(int));
-      for( int i = 0; i<arg3; i++ ) {
-        PyObject *o = PySequence_GetItem(obj2,i);
-        if ( !PyArg_Parse(o,"i",&arg4[i]) ) {
-          PyErr_SetString(PyExc_TypeError, "not an integer");
-          Py_DECREF(o);
-          SWIG_fail;
-        }
-        Py_DECREF(o);
       }
     }
   }
@@ -16529,9 +16387,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg4) {
-      free((void*) arg4);
-    }
+    free(arg4);
   }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -16545,9 +16401,7 @@ fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg4) {
-      free((void*) arg4);
-    }
+    free(arg4);
   }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -17006,56 +16860,11 @@ SWIGINTERN PyObject *_wrap_Dataset_AddBand(PyObject *SWIGUNUSEDPARM(self), PyObj
   if (obj2) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj2)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg3 = CSLAddString( arg3, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -17363,26 +17172,9 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   if (obj9) {
     {
       /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-      /* check if is List */
-      if ( !PySequence_Check(obj9) ) {
-        PyErr_SetString(PyExc_TypeError, "not a sequence");
+      arg12 = CreateCIntListFromSequence(obj9, &arg11);
+      if( arg11 < 0 ) {
         SWIG_fail;
-      }
-      Py_ssize_t size = PySequence_Size(obj9);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      arg11 = (int)size;
-      arg12 = (int*) malloc(arg11*sizeof(int));
-      for( int i = 0; i<arg11; i++ ) {
-        PyObject *o = PySequence_GetItem(obj9,i);
-        if ( !PyArg_Parse(o,"i",&arg12[i]) ) {
-          PyErr_SetString(PyExc_TypeError, "not an integer");
-          Py_DECREF(o);
-          SWIG_fail;
-        }
-        Py_DECREF(o);
       }
     }
   }
@@ -17458,9 +17250,7 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   }
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg12) {
-      free((void*) arg12);
-    }
+    free(arg12);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -17473,9 +17263,7 @@ fail:
   }
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg12) {
-      free((void*) arg12);
-    }
+    free(arg12);
   }
   return NULL;
 }
@@ -17579,82 +17367,20 @@ SWIGINTERN PyObject *_wrap_Dataset_AdviseRead(PyObject *SWIGUNUSEDPARM(self), Py
   if (obj8) {
     {
       /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-      /* check if is List */
-      if ( !PySequence_Check(obj8) ) {
-        PyErr_SetString(PyExc_TypeError, "not a sequence");
+      arg10 = CreateCIntListFromSequence(obj8, &arg9);
+      if( arg9 < 0 ) {
         SWIG_fail;
-      }
-      Py_ssize_t size = PySequence_Size(obj8);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      arg9 = (int)size;
-      arg10 = (int*) malloc(arg9*sizeof(int));
-      for( int i = 0; i<arg9; i++ ) {
-        PyObject *o = PySequence_GetItem(obj8,i);
-        if ( !PyArg_Parse(o,"i",&arg10[i]) ) {
-          PyErr_SetString(PyExc_TypeError, "not an integer");
-          Py_DECREF(o);
-          SWIG_fail;
-        }
-        Py_DECREF(o);
       }
     }
   }
   if (obj9) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj9) || PyUnicode_Check(obj9)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj9)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg11 = CSLFromPySequence(obj9, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj9);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj9,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg11 = CSLAddString( arg11, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg11 = CSLAddString( arg11, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg11 = CSLAddString( arg11, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -17679,9 +17405,7 @@ SWIGINTERN PyObject *_wrap_Dataset_AdviseRead(PyObject *SWIGUNUSEDPARM(self), Py
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg10) {
-      free((void*) arg10);
-    }
+    free(arg10);
   }
   {
     /* %typemap(freearg) char **options */
@@ -17692,9 +17416,7 @@ SWIGINTERN PyObject *_wrap_Dataset_AdviseRead(PyObject *SWIGUNUSEDPARM(self), Py
 fail:
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg10) {
-      free((void*) arg10);
-    }
+    free(arg10);
   }
   {
     /* %typemap(freearg) char **options */
@@ -17840,26 +17562,9 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   if (obj9) {
     {
       /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-      /* check if is List */
-      if ( !PySequence_Check(obj9) ) {
-        PyErr_SetString(PyExc_TypeError, "not a sequence");
+      arg13 = CreateCIntListFromSequence(obj9, &arg12);
+      if( arg12 < 0 ) {
         SWIG_fail;
-      }
-      Py_ssize_t size = PySequence_Size(obj9);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      arg12 = (int)size;
-      arg13 = (int*) malloc(arg12*sizeof(int));
-      for( int i = 0; i<arg12; i++ ) {
-        PyObject *o = PySequence_GetItem(obj9,i);
-        if ( !PyArg_Parse(o,"i",&arg13[i]) ) {
-          PyErr_SetString(PyExc_TypeError, "not an integer");
-          Py_DECREF(o);
-          SWIG_fail;
-        }
-        Py_DECREF(o);
       }
     }
   }
@@ -17887,56 +17592,11 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   if (obj13) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj13) || PyUnicode_Check(obj13)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj13)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg17 = CSLFromPySequence(obj13, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj13);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj13,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg17 = CSLAddString( arg17, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg17 = CSLAddString( arg17, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg17 = CSLAddString( arg17, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -17961,9 +17621,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALAsyncReaderShadow, SWIG_POINTER_OWN |  0 );
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg13) {
-      free((void*) arg13);
-    }
+    free(arg13);
   }
   {
     /* %typemap(freearg) char **options */
@@ -17974,9 +17632,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
 fail:
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg13) {
-      free((void*) arg13);
-    }
+    free(arg13);
   }
   {
     /* %typemap(freearg) char **options */
@@ -18142,26 +17798,9 @@ SWIGINTERN PyObject *_wrap_Dataset_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self),
   arg9 = static_cast< GDALDataType >(val9);
   {
     /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-    /* check if is List */
-    if ( !PySequence_Check(obj9) ) {
-      PyErr_SetString(PyExc_TypeError, "not a sequence");
+    arg11 = CreateCIntListFromSequence(obj9, &arg10);
+    if( arg10 < 0 ) {
       SWIG_fail;
-    }
-    Py_ssize_t size = PySequence_Size(obj9);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    arg10 = (int)size;
-    arg11 = (int*) malloc(arg10*sizeof(int));
-    for( int i = 0; i<arg10; i++ ) {
-      PyObject *o = PySequence_GetItem(obj9,i);
-      if ( !PyArg_Parse(o,"i",&arg11[i]) ) {
-        PyErr_SetString(PyExc_TypeError, "not an integer");
-        Py_DECREF(o);
-        SWIG_fail;
-      }
-      Py_DECREF(o);
     }
   }
   ecode12 = SWIG_AsVal_int(obj10, &val12);
@@ -18182,56 +17821,11 @@ SWIGINTERN PyObject *_wrap_Dataset_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self),
   if (obj13) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj13) || PyUnicode_Check(obj13)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj13)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg15 = CSLFromPySequence(obj13, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj13);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj13,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg15 = CSLAddString( arg15, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg15 = CSLAddString( arg15, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg15 = CSLAddString( arg15, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -18256,9 +17850,7 @@ SWIGINTERN PyObject *_wrap_Dataset_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self),
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_CPLVirtualMemShadow, SWIG_POINTER_OWN |  0 );
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg11) {
-      free((void*) arg11);
-    }
+    free(arg11);
   }
   {
     /* %typemap(freearg) char **options */
@@ -18269,9 +17861,7 @@ SWIGINTERN PyObject *_wrap_Dataset_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self),
 fail:
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg11) {
-      free((void*) arg11);
-    }
+    free(arg11);
   }
   {
     /* %typemap(freearg) char **options */
@@ -18385,26 +17975,9 @@ SWIGINTERN PyObject *_wrap_Dataset_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(s
   arg9 = static_cast< GDALDataType >(val9);
   {
     /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-    /* check if is List */
-    if ( !PySequence_Check(obj9) ) {
-      PyErr_SetString(PyExc_TypeError, "not a sequence");
+    arg11 = CreateCIntListFromSequence(obj9, &arg10);
+    if( arg10 < 0 ) {
       SWIG_fail;
-    }
-    Py_ssize_t size = PySequence_Size(obj9);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    arg10 = (int)size;
-    arg11 = (int*) malloc(arg10*sizeof(int));
-    for( int i = 0; i<arg10; i++ ) {
-      PyObject *o = PySequence_GetItem(obj9,i);
-      if ( !PyArg_Parse(o,"i",&arg11[i]) ) {
-        PyErr_SetString(PyExc_TypeError, "not an integer");
-        Py_DECREF(o);
-        SWIG_fail;
-      }
-      Py_DECREF(o);
     }
   }
   ecode12 = SWIG_AsVal_int(obj10, &val12);
@@ -18420,56 +17993,11 @@ SWIGINTERN PyObject *_wrap_Dataset_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(s
   if (obj12) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj12) || PyUnicode_Check(obj12)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj12)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg14 = CSLFromPySequence(obj12, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj12);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj12,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg14 = CSLAddString( arg14, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg14 = CSLAddString( arg14, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg14 = CSLAddString( arg14, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -18494,9 +18022,7 @@ SWIGINTERN PyObject *_wrap_Dataset_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(s
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_CPLVirtualMemShadow, SWIG_POINTER_OWN |  0 );
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg11) {
-      free((void*) arg11);
-    }
+    free(arg11);
   }
   {
     /* %typemap(freearg) char **options */
@@ -18507,9 +18033,7 @@ SWIGINTERN PyObject *_wrap_Dataset_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(s
 fail:
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg11) {
-      free((void*) arg11);
-    }
+    free(arg11);
   }
   {
     /* %typemap(freearg) char **options */
@@ -18573,56 +18097,11 @@ SWIGINTERN PyObject *_wrap_Dataset_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
   if (obj4) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj4)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg5 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj4);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg5 = CSLAddString( arg5, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -18708,56 +18187,11 @@ SWIGINTERN PyObject *_wrap_Dataset_CopyLayer(PyObject *SWIGUNUSEDPARM(self), PyO
   if (obj3) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj3) || PyUnicode_Check(obj3)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj3)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg4 = CSLFromPySequence(obj3, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj3);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj3,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg4 = CSLAddString( arg4, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg4 = CSLAddString( arg4, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg4 = CSLAddString( arg4, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -19823,26 +19257,9 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   if (obj8) {
     {
       /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-      /* check if is List */
-      if ( !PySequence_Check(obj8) ) {
-        PyErr_SetString(PyExc_TypeError, "not a sequence");
+      arg11 = CreateCIntListFromSequence(obj8, &arg10);
+      if( arg10 < 0 ) {
         SWIG_fail;
-      }
-      Py_ssize_t size = PySequence_Size(obj8);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      arg10 = (int)size;
-      arg11 = (int*) malloc(arg10*sizeof(int));
-      for( int i = 0; i<arg10; i++ ) {
-        PyObject *o = PySequence_GetItem(obj8,i);
-        if ( !PyArg_Parse(o,"i",&arg11[i]) ) {
-          PyErr_SetString(PyExc_TypeError, "not an integer");
-          Py_DECREF(o);
-          SWIG_fail;
-        }
-        Py_DECREF(o);
       }
     }
   }
@@ -19976,9 +19393,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   }
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg11) {
-      free((void*) arg11);
-    }
+    free(arg11);
   }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -19991,9 +19406,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
 fail:
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg11) {
-      free((void*) arg11);
-    }
+    free(arg11);
   }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -20847,56 +20260,11 @@ SWIGINTERN PyObject *_wrap_Band_SetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
   arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj1)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg2 = CSLFromPySequence(obj1, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj1);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj1,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg2 = CSLAddString( arg2, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -23267,56 +22635,11 @@ SWIGINTERN PyObject *_wrap_Band_SetCategoryNames(PyObject *SWIGUNUSEDPARM(self),
   arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj1)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg2 = CSLFromPySequence(obj1, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj1);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj1,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg2 = CSLAddString( arg2, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -23465,56 +22788,11 @@ SWIGINTERN PyObject *_wrap_Band_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self), Py
   if (obj11) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj11) || PyUnicode_Check(obj11)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj11)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg12 = CSLFromPySequence(obj11, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj11);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj11,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg12 = CSLAddString( arg12, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg12 = CSLAddString( arg12, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg12 = CSLAddString( arg12, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -23583,56 +22861,11 @@ SWIGINTERN PyObject *_wrap_Band_GetVirtualMemAuto(PyObject *SWIGUNUSEDPARM(self)
   if (obj2) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj2)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg3 = CSLAddString( arg3, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -23773,56 +23006,11 @@ SWIGINTERN PyObject *_wrap_Band_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(self
   if (obj10) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj10) || PyUnicode_Check(obj10)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj10)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg11 = CSLFromPySequence(obj10, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj10);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj10,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg11 = CSLAddString( arg11, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg11 = CSLAddString( arg11, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg11 = CSLAddString( arg11, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -24052,56 +23240,11 @@ SWIGINTERN PyObject *_wrap_Band_AdviseRead(PyObject *SWIGUNUSEDPARM(self), PyObj
   if (obj8) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj8) || PyUnicode_Check(obj8)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj8)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg9 = CSLFromPySequence(obj8, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj8);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj8,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg9 = CSLAddString( arg9, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg9 = CSLAddString( arg9, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg9 = CSLAddString( arg9, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -26807,56 +25950,11 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   if (obj9) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj9) || PyUnicode_Check(obj9)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj9)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg10 = CSLFromPySequence(obj9, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj9);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj9,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg10 = CSLAddString( arg10, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg10 = CSLAddString( arg10, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg10 = CSLAddString( arg10, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -26962,56 +26060,11 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
   if (obj2) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj2)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg3 = CSLAddString( arg3, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -27163,26 +26216,9 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
   arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
   {
     /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-    /* check if is List */
-    if ( !PySequence_Check(obj1) ) {
-      PyErr_SetString(PyExc_TypeError, "not a sequence");
+    arg3 = CreateCIntListFromSequence(obj1, &arg2);
+    if( arg2 < 0 ) {
       SWIG_fail;
-    }
-    Py_ssize_t size = PySequence_Size(obj1);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    arg2 = (int)size;
-    arg3 = (int*) malloc(arg2*sizeof(int));
-    for( int i = 0; i<arg2; i++ ) {
-      PyObject *o = PySequence_GetItem(obj1,i);
-      if ( !PyArg_Parse(o,"i",&arg3[i]) ) {
-        PyErr_SetString(PyExc_TypeError, "not an integer");
-        Py_DECREF(o);
-        SWIG_fail;
-      }
-      Py_DECREF(o);
     }
   }
   res4 = SWIG_ConvertPtr(obj2, &argp4,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
@@ -27231,56 +26267,11 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
   if (obj6) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj6)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg9 = CSLFromPySequence(obj6, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj6);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj6,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg9 = CSLAddString( arg9, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg9 = CSLAddString( arg9, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg9 = CSLAddString( arg9, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -27359,9 +26350,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg3) {
-      free((void*) arg3);
-    }
+    free(arg3);
   }
   {
     /* %typemap(freearg) (int nList, double* pList) */
@@ -27384,9 +26373,7 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
 fail:
   {
     /* %typemap(freearg) (int nList, int* pList) */
-    if (arg3) {
-      free((void*) arg3);
-    }
+    free(arg3);
   }
   {
     /* %typemap(freearg) (int nList, double* pList) */
@@ -27468,56 +26455,11 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
   if (obj4) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj4)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg5 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj4);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg5 = CSLAddString( arg5, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -27681,56 +26623,11 @@ SWIGINTERN PyObject *_wrap_FPolygonize(PyObject *SWIGUNUSEDPARM(self), PyObject 
   if (obj4) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj4)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg5 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj4);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg5 = CSLAddString( arg5, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -27894,56 +26791,11 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
   if (obj4) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj4)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg5 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj4);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg5 = CSLAddString( arg5, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -28113,56 +26965,11 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
   if (obj5) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj5) || PyUnicode_Check(obj5)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj5)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg6 = CSLFromPySequence(obj5, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj5);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj5,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg6 = CSLAddString( arg6, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg6 = CSLAddString( arg6, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg6 = CSLAddString( arg6, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -28845,56 +27652,11 @@ SWIGINTERN PyObject *_wrap_ContourGenerateEx(PyObject *SWIGUNUSEDPARM(self), PyO
   if (obj2) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj2)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg3 = CSLAddString( arg3, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -29699,56 +28461,11 @@ SWIGINTERN PyObject *_wrap_GDALTransformerInfoShadow_TransformGeolocations(PyObj
   if (obj6) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj6)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg7 = CSLFromPySequence(obj6, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj6);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj6,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg7 = CSLAddString( arg7, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg7 = CSLAddString( arg7, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg7 = CSLAddString( arg7, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -29847,56 +28564,11 @@ SWIGINTERN PyObject *_wrap_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObject 
   arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj2)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg3 = CSLFromPySequence(obj2, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj2);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj2,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg3 = CSLAddString( arg3, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -29997,56 +28669,11 @@ SWIGINTERN PyObject *_wrap_ApplyVerticalShiftGrid(PyObject *SWIGUNUSEDPARM(self)
   if (obj5) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj5) || PyUnicode_Check(obj5)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj5)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg6 = CSLFromPySequence(obj5, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj5);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj5,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg6 = CSLAddString( arg6, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg6 = CSLAddString( arg6, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg6 = CSLAddString( arg6, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -31029,56 +29656,11 @@ SWIGINTERN PyObject *_wrap_GetJPEG2000Structure(PyObject *SWIGUNUSEDPARM(self), 
   if (obj1) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj1)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(obj1, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj1);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj1,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg2 = CSLAddString( arg2, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -31170,56 +29752,11 @@ SWIGINTERN PyObject *_wrap_GetJPEG2000StructureAsString(PyObject *SWIGUNUSEDPARM
   if (obj1) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj1)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(obj1, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj1);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj1,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg2 = CSLAddString( arg2, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -31509,168 +30046,33 @@ SWIGINTERN PyObject *_wrap_OpenEx(PyObject *SWIGUNUSEDPARM(self), PyObject *args
   if (obj2) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj2)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg3 = CSLAddString( arg3, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
   if (obj3) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj3) || PyUnicode_Check(obj3)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj3)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg4 = CSLFromPySequence(obj3, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj3);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj3,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg4 = CSLAddString( arg4, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg4 = CSLAddString( arg4, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg4 = CSLAddString( arg4, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
   if (obj4) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj4)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg5 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj4);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj4,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg5 = CSLAddString( arg5, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -31838,56 +30240,11 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
   if (obj1) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj1)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(obj1, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj1);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj1,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg2 = CSLAddString( arg2, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -31976,112 +30333,22 @@ SWIGINTERN PyObject *_wrap_IdentifyDriverEx(PyObject *SWIGUNUSEDPARM(self), PyOb
   if (obj2) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj2)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj2);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj2,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg3 = CSLAddString( arg3, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
   if (obj3) {
     {
       /* %typemap(in) char **options */
-      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj3) || PyUnicode_Check(obj3)
-  #if PY_VERSION_HEX < 0x03000000
-        || PyString_Check(obj3)
-  #endif
-        ) {
-        PyErr_SetString(PyExc_TypeError,"not a sequence");
+      int bErr = FALSE;
+      arg4 = CSLFromPySequence(obj3, &bErr);
+      if( bErr )
+      {
         SWIG_fail;
-      }
-      
-      Py_ssize_t size = PySequence_Size(obj3);
-      if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-      }
-      for (int i = 0; i < (int)size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj3,i);
-        if (PyUnicode_Check(pyObj))
-        {
-          char *pszStr;
-          Py_ssize_t nLen;
-          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-          if( !pyUTF8Str )
-          {
-            Py_DECREF(pyObj);
-            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-            SWIG_fail;
-          }
-#if PY_VERSION_HEX >= 0x03000000
-          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-          arg4 = CSLAddString( arg4, pszStr );
-          Py_XDECREF(pyUTF8Str);
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        else if (PyBytes_Check(pyObj))
-        arg4 = CSLAddString( arg4, PyBytes_AsString(pyObj) );
-#else
-        else if (PyString_Check(pyObj))
-        arg4 = CSLAddString( arg4, PyString_AsString(pyObj) );
-#endif
-        else
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        Py_DECREF(pyObj);
       }
     }
   }
@@ -32153,56 +30420,11 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
   if (!PyArg_ParseTuple(args,(char *)"O|O:GeneralCmdLineProcessor",&obj0,&obj1)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   if (obj1) {
@@ -32271,56 +30493,11 @@ SWIGINTERN PyObject *_wrap_new_GDALInfoOptions(PyObject *SWIGUNUSEDPARM(self), P
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALInfoOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -32474,56 +30651,11 @@ SWIGINTERN PyObject *_wrap_new_GDALTranslateOptions(PyObject *SWIGUNUSEDPARM(sel
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALTranslateOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -32761,56 +30893,11 @@ SWIGINTERN PyObject *_wrap_new_GDALWarpAppOptions(PyObject *SWIGUNUSEDPARM(self)
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALWarpAppOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -33236,56 +31323,11 @@ SWIGINTERN PyObject *_wrap_new_GDALVectorTranslateOptions(PyObject *SWIGUNUSEDPA
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALVectorTranslateOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -33643,56 +31685,11 @@ SWIGINTERN PyObject *_wrap_new_GDALDEMProcessingOptions(PyObject *SWIGUNUSEDPARM
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALDEMProcessingOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -33959,56 +31956,11 @@ SWIGINTERN PyObject *_wrap_new_GDALNearblackOptions(PyObject *SWIGUNUSEDPARM(sel
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALNearblackOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -34366,56 +32318,11 @@ SWIGINTERN PyObject *_wrap_new_GDALGridOptions(PyObject *SWIGUNUSEDPARM(self), P
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALGridOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -34653,56 +32560,11 @@ SWIGINTERN PyObject *_wrap_new_GDALRasterizeOptions(PyObject *SWIGUNUSEDPARM(sel
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALRasterizeOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -35060,56 +32922,11 @@ SWIGINTERN PyObject *_wrap_new_GDALBuildVRTOptions(PyObject *SWIGUNUSEDPARM(self
   if (!PyArg_ParseTuple(args,(char *)"O:new_GDALBuildVRTOptions",&obj0)) SWIG_fail;
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj0)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj0);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj0,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg1 = CSLAddString( arg1, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg1 = CSLAddString( arg1, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   {
@@ -35403,56 +33220,11 @@ SWIGINTERN PyObject *_wrap_BuildVRTInternalNames(PyObject *SWIGUNUSEDPARM(self),
   }
   {
     /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj1)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
+    int bErr = FALSE;
+    arg2 = CSLFromPySequence(obj1, &bErr);
+    if( bErr )
+    {
       SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj1);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj1,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-        if( !pyUTF8Str )
-        {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-          SWIG_fail;
-        }
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg2 = CSLAddString( arg2, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
     }
   }
   res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALBuildVRTOptions, 0 |  0 );
