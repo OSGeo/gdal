@@ -464,6 +464,7 @@ typedef void *OGRCoordinateTransformationH;
 #endif
 
 void CPL_DLL OSRSetPROJSearchPaths( const char* const * papszPaths );
+void CPL_DLL OSRGetPROJVersion( int* pnMajor, int* pnMinor, int* pnPatch );
 
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL
       OSRNewSpatialReference( const char * /* = NULL */);
