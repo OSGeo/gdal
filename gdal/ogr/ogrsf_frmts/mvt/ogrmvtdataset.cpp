@@ -6071,7 +6071,17 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     const char* pszConf = CSLFetchNameValue(papszOptions, "CONF");
     if( pszConf )
     {
-        if( !poDS->m_oConf.LoadMemory(pszConf) )
+        VSIStatBufL sStat;
+        bool bSuccess;
+        if( VSIStatL(pszConf, &sStat) == 0 )
+        {
+            bSuccess = poDS->m_oConf.Load(pszConf);
+        }
+        else
+        {
+            bSuccess = poDS->m_oConf.LoadMemory(pszConf);
+        }
+        if( !bSuccess )
         {
             delete poDS;
             return nullptr;
