@@ -1805,17 +1805,9 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 	if (!m_bLegacyCreateMode && poGeom != nullptr)
 	{
 		nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
-
-		// Mulipoints
-
-		// LineString
+		int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
+		m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + 1);
 		nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);
-
-		// MultiLineString
-
-		// Polygons
-
-		// Multipolygons
 	}
 
     return true;

@@ -21,21 +21,32 @@ namespace nccfdriver
 
 		if (this->type == LINE)
 		{		
-			//OGRLineString r_defnGeometryLine = dynamic_cast<OGRLineString&>(r_defnGeometry);
+			OGRLineString& r_defnGeometryLine = dynamic_cast<OGRLineString&>(r_defnGeometry);
 			// to do: check for std::bad_cast somewhere?
 
 			// Get node count
-			//this->total_point_count = r_defnGeometryLine.getNumPoints();
+			this->total_point_count = r_defnGeometryLine.getNumPoints();
 			
 			// Single line: 1 part count == node count
-			//this->ppart_node_count.push_back(r_defnGeometryLine.getNumPoints());
+			this->ppart_node_count.push_back(r_defnGeometryLine.getNumPoints());
 
 			// One part
 			this->total_part_count = 1;
-
+			
 			// One curve
-			//this->curve_collection.push_back(r_defnGeometryLine);
+			this->geometry_ref = ft.GetGeometryRef();
 		}
+	}
+
+	OGRPoint& SGeometry_Feature::getPoint(size_t part_no, int point_index)
+	{
+		if (this->type == LINE)
+		{
+			OGRLineString* as_line_ref = dynamic_cast<OGRLineString*>(this->geometry_ref);
+			as_line_ref->getPoint(point_index, &pt_buffer);
+		}
+
+		return pt_buffer;
 	}
 
 	void OGR_SGeometry_Scribe::writeSGeometryFeature(SGeometry_Feature& ft)
@@ -59,13 +70,7 @@ namespace nccfdriver
 		int varId;
 		int ncount_err_code = nc_inq_varid(ncID, node_count_name, &varId);
 
-		if (ncount_err_code == NC_ENOTVAR)
-		{
-			int err_code_def;
-			err_code_def = nc_def_var(ncID, node_count_name, NC_INT, 1, &node_count_dimID, &varId);
-		}
-
-		else if (ncount_err_code != NC_NOERR)
+		if (ncount_err_code != NC_NOERR)
 		{
 			// error
 		}
@@ -73,8 +78,9 @@ namespace nccfdriver
 
 		// Append from the end
 		int ncount_add = static_cast<int>(ft.getTotalNodeCount());
-		err_code = nc_put_var1_int(ncID, varId, &next_write_pos_node_count, &ncount_add);
-
+		size_t ind[1] = { next_write_pos_node_count };
+		err_code = nc_put_var1_int(ncID, varId, ind, &ncount_add);
+		next_write_pos_node_count++;
 	}
 
 	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe()
@@ -94,6 +100,9 @@ namespace nccfdriver
 		next_write_pos_node_count(0),
 		next_write_pos_pnc(0)
 	{
+		char container_name[NC_MAX_CHAR + 1];
+		memset(container_name, 0, NC_MAX_CHAR + 1);
+
 		// Prepare variable names
 		char node_coord_names[NC_MAX_CHAR + 1];
 		memset(node_coord_names, 0, NC_MAX_CHAR + 1);
@@ -104,9 +113,31 @@ namespace nccfdriver
 		int err_code;
 		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
 		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
+		err_code = nc_inq_varname(ncID, containerVarID, container_name);
 
 		// Make dimensions for each of these
-		err_code = nc_def_dim(ncID_in, node_count_name, 0, &node_count_dimID);
+		err_code = nc_def_dim(ncID_in, node_count_name, 1, &node_count_dimID);
+		err_code = nc_def_dim(ncID_in, container_name, 1, &node_coordinates_dimID);
+
+		// Define variables for each of those
+		err_code = nc_def_var(ncID_in, node_count_name, NC_INT, 1, &node_count_dimID, &node_count_varID);
+
+		// Node coordinates
+		int new_varID;
+		char * pszNcoord = strtok(node_coord_names, " ");
+
+		while (pszNcoord != nullptr)
+		{
+			// Define a new variable with that name
+			err_code = nc_def_var(ncID, pszNcoord, NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
+
+			// to do: check for error
+
+			// Add it to the coordinate varID list
+			this->node_coordinates_varIDs.push_back(new_varID);
+
+			pszNcoord = strtok(nullptr, " ");
+		}
 	}
 
 	int write_Geometry_Container

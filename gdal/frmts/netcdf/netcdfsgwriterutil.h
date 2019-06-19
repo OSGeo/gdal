@@ -20,7 +20,7 @@ namespace nccfdriver
 	 */
 	class SGeometry_Feature
 	{
-		std::vector<OGRSimpleCurve> curve_collection;
+		OGRGeometry * geometry_ref;
 		geom_t type;
 		size_t total_point_count;
 		size_t total_part_count;
@@ -32,7 +32,7 @@ namespace nccfdriver
 			size_t getTotalNodeCount() { return this->total_point_count; }
 			size_t getTotalPartCount() { return this->total_part_count;  }
 			std::vector<size_t> & getPerPartNodeCount() { return this->ppart_node_count; }
-			OGRPoint& getPoint(size_t part_no, int point_index) { this->curve_collection[part_no].getPoint(point_index, &pt_buffer); return pt_buffer; }
+			OGRPoint& getPoint(size_t part_no, int point_index);
 			SGeometry_Feature(OGRFeature&);
 	};
 
@@ -45,9 +45,11 @@ namespace nccfdriver
 	class OGR_SGeometry_Scribe
 	{
 		int ncID;
+		std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
 		int containerVarID;
 		int node_coordinates_dimID; // dim of all node_coordinates
 		int node_count_dimID;	// node count dim
+		int node_count_varID;
 		int pnc_dimID;			// part node count dim AND interior ring dim
 		size_t next_write_pos_node_coord;
 		size_t next_write_pos_node_count;
@@ -57,6 +59,9 @@ namespace nccfdriver
 			void writeSGeometryFeature(SGeometry_Feature& ft);
 			OGR_SGeometry_Scribe(int ncID, int containerVarID);
 			OGR_SGeometry_Scribe::OGR_SGeometry_Scribe();
+			int get_node_count_dimID() { return this->node_count_dimID; }
+			size_t get_next_write_pos_node_coord() { return this->next_write_pos_node_coord; }
+			size_t get_next_write_pos_node_count() { return this->next_write_pos_node_count; }
 	};
 
 	extern OGR_SGeometry_Scribe GeometryScribe;
