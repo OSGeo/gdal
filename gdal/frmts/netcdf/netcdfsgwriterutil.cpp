@@ -81,6 +81,30 @@ namespace nccfdriver
 		size_t ind[1] = { next_write_pos_node_count };
 		err_code = nc_put_var1_int(ncID, varId, ind, &ncount_add);
 		next_write_pos_node_count++;
+
+		// Write each point from each part in node coordinates
+		for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
+		{
+			for(size_t pt_ind = 0; pt_ind < ft.getTotalNodeCount(); pt_ind++)
+			{
+				int pt_ind_int = static_cast<int>(pt_ind);
+				OGRPoint& write_pt = ft.getPoint(part_no, pt_ind_int);
+			
+				// Write each node coordinate
+				double x = write_pt.getX();
+				nc_put_var1_double(ncID, node_coordinates_varIDs[0], &next_write_pos_node_coord, &x);
+				double y = write_pt.getY();
+				nc_put_var1_double(ncID, node_coordinates_varIDs[1], &next_write_pos_node_coord, &y);
+				if(this->node_coordinates_varIDs.size() > 2)
+				{
+					double z = write_pt.getZ();
+					nc_put_var1_double(ncID, node_coordinates_varIDs[2], &next_write_pos_node_coord, &z);
+				}
+
+				// Step the position
+				this->next_write_pos_node_coord++;		
+			}
+		}
 	}
 
 	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe()
@@ -125,6 +149,7 @@ namespace nccfdriver
 		// Node coordinates
 		int new_varID;
 		char * pszNcoord = strtok(node_coord_names, " ");
+		int count = 0;
 
 		while (pszNcoord != nullptr)
 		{
@@ -136,7 +161,25 @@ namespace nccfdriver
 			// Add it to the coordinate varID list
 			this->node_coordinates_varIDs.push_back(new_varID);
 
+			// Add the mandatory "axis" attribute
+			switch(count)
+			{
+				case 0:
+					// first it's X
+					nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
+					break;
+				case 1:
+					// second it's Y
+					nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
+					break;
+				case 2: 
+					// third it's Z
+					nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Z_AXIS), CF_SG_Z_AXIS);
+					break;
+			}	
+
 			pszNcoord = strtok(nullptr, " ");
+			count++;
 		}
 	}
 

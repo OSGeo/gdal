@@ -1806,7 +1806,15 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 	{
 		nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
 		int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
+		int node_coord_dimID = nccfdriver::GeometryScribe.get_node_coord_dimID();
+
+		// Grow dimensions to fit the next feature
+
 		m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + 1);
+		m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
+			nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + featWithMetaData.getTotalNodeCount());
+
+		// Finally, write the actually feature
 		nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);
 	}
 

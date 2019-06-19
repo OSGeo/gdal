@@ -60,6 +60,7 @@ namespace nccfdriver
 			OGR_SGeometry_Scribe(int ncID, int containerVarID);
 			OGR_SGeometry_Scribe();
 			int get_node_count_dimID() { return this->node_count_dimID; }
+			int get_node_coord_dimID() { return this->node_coordinates_dimID; }
 			size_t get_next_write_pos_node_coord() { return this->next_write_pos_node_coord; }
 			size_t get_next_write_pos_node_count() { return this->next_write_pos_node_count; }
 	};
