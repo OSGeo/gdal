@@ -19,7 +19,28 @@ namespace nccfdriver
 		OGRwkbGeometryType ogwkt = defnGeometry->getGeometryType();
 		this->type = OGRtoRaw(ogwkt);
 
-		if (this->type == LINE)
+
+		if (this->type == MULTIPOINT)
+		{
+			OGRMultiPoint& r_defnGeometryMP = dynamic_cast<OGRMultiPoint&>(r_defnGeometry);
+
+			// Set total node count
+			this->total_point_count = r_defnGeometryMP.getNumGeometries();
+
+			// The amount of nodes is also the amount of parts
+			for(size_t pc = 0; pc < total_point_count; pc++)
+			{
+				ppart_node_count.push_back(1);
+			}
+
+			// total part count ==  total node count
+			this->total_part_count = this->total_point_count;	
+
+			// Place the geometry container
+			this->geometry_ref = ft.GetGeometryRef();
+		}
+
+		else if (this->type == LINE)
 		{		
 			OGRLineString& r_defnGeometryLine = dynamic_cast<OGRLineString&>(r_defnGeometry);
 			// to do: check for std::bad_cast somewhere?
@@ -40,6 +61,13 @@ namespace nccfdriver
 
 	OGRPoint& SGeometry_Feature::getPoint(size_t part_no, int point_index)
 	{
+		if (this->type == MULTIPOINT)
+		{
+			OGRMultiPoint* as_mp_ref = dynamic_cast<OGRMultiPoint*>(this->geometry_ref);
+			OGRPoint * pt = dynamic_cast<OGRPoint*>(as_mp_ref->getGeometryRef(part_no));
+			return *pt;
+		}
+
 		if (this->type == LINE)
 		{
 			OGRLineString* as_line_ref = dynamic_cast<OGRLineString*>(this->geometry_ref);
@@ -85,7 +113,7 @@ namespace nccfdriver
 		// Write each point from each part in node coordinates
 		for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
 		{
-			for(size_t pt_ind = 0; pt_ind < ft.getTotalNodeCount(); pt_ind++)
+			for(size_t pt_ind = 0; pt_ind < ft.getPerPartNodeCount()[part_no]; pt_ind++)
 			{
 				int pt_ind_int = static_cast<int>(pt_ind);
 				OGRPoint& write_pt = ft.getPoint(part_no, pt_ind_int);
