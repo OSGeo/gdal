@@ -1029,7 +1029,7 @@ retry:
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1384,7 +1384,7 @@ retry:
         // Look if we should attempt a retry
         const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
             static_cast<int>(response_code), dfRetryDelay,
-            sWriteFuncHeaderData.pBuffer);
+            sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
         if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {
