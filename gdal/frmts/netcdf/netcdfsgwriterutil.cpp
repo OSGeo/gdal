@@ -85,6 +85,24 @@ namespace nccfdriver
 				this->total_part_count++;
 			}
 		}
+
+		else if(this->type == MULTILINE)
+		{
+			OGRMultiLineString& r_defnMLS = dynamic_cast<OGRMultiLineString&>(r_defnGeometry);
+			this->total_point_count = 0;
+			this->total_part_count = r_defnMLS.getNumGeometries();
+
+			// Take each geometry, just add up the corresponding parts
+
+			for(int itrLScount = 0; itrLScount < r_defnMLS.getNumGeometries(); itrLScount++)
+			{
+				OGRLineString & r_LS = dynamic_cast<OGRLineString&>(*r_defnMLS.getGeometryRef(itrLScount));
+				int pt_count = r_LS.getNumPoints();
+				
+				this->ppart_node_count.push_back(pt_count);
+				this->total_point_count += pt_count;
+			}
+		}
 			
 		this->geometry_ref = ft.GetGeometryRef();
 	}
@@ -106,7 +124,10 @@ namespace nccfdriver
 
 		if (this->type == MULTILINE)
 		{
-	
+			OGRMultiLineString* as_mline_ref = dynamic_cast<OGRMultiLineString*>(this->geometry_ref);
+			int part_ind = static_cast<int>(part_no);	
+			OGRLineString* lstring = dynamic_cast<OGRLineString*>(as_mline_ref->getGeometryRef(part_ind));			
+			lstring->getPoint(point_index, &pt_buffer);
 		}
 
 		if (this->type == POLYGON)
@@ -163,14 +184,17 @@ namespace nccfdriver
 		// Write each point from each part in node coordinates
 		for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
 		{
-			if(ft.getType() == POLYGON && this->interiorRingDetected)
+			if(( ft.getType() == POLYGON && this->interiorRingDetected ) || ft.getType() == MULTILINE || ft.getType() == MULTIPOLYGON)
 			{
 				// if interior rings is present, go write part node counts and interior ring info
-				int interior_ring_fl = part_no == 0 ? 0 : 1;
-				int pnc_writable = ft.getPerPartNodeCount()[part_no];
+				if( (ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON) && this->interiorRingDetected )
+				{
+					int interior_ring_fl = part_no == 0 ? 0 : 1;
+					nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
+				}
 
-				nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
-				nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
+				int pnc_writable = ft.getPerPartNodeCount()[part_no];
+				int err_code = nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
 				next_write_pos_pnc++;
 			}
 
@@ -246,6 +270,16 @@ namespace nccfdriver
 
 		// Define variables for each of those
 		err_code = nc_def_var(ncID_in, node_count_name, NC_INT, 1, &node_count_dimID, &node_count_varID);
+
+		// Do the same for part node count, if it exists
+		char pnc_name[NC_MAX_CHAR + 1];
+		memset(pnc_name, 0, NC_MAX_CHAR + 1);
+		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, pnc_name);
+		if(err_code == NC_NOERR)
+		{
+			err_code = nc_def_dim(ncID_in, pnc_name, 1, &pnc_dimID);
+			err_code = nc_def_var(ncID_in, pnc_name, NC_INT, 1, &pnc_dimID, &pnc_varID);
+		}
 
 		// Node coordinates
 		int new_varID;

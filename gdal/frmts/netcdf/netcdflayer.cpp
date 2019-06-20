@@ -1825,7 +1825,8 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 		m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
 			nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + featWithMetaData.getTotalNodeCount());
 
-		if(featWithMetaData.getType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
+		if((featWithMetaData.getType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
+			|| featWithMetaData.getType() == nccfdriver::MULTILINE || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON )
 		{
 			int pnc_dimID = nccfdriver::GeometryScribe.get_pnc_dimID();
 			m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, nccfdriver::GeometryScribe.get_next_write_pos_pnc() + featWithMetaData.getTotalPartCount());
