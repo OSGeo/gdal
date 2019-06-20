@@ -277,7 +277,7 @@ namespace nccfdriver
 						interior_ring_fl = part_no == 0 ? 0 : 1;
 					if(ft.getType() == MULTIPOLYGON)
 					{
-						if(ft.IsPartAtIndInteriorRing(static_cast<int>(part_no)))
+						if(ft.IsPartAtIndInteriorRing(part_no))
 						{
 							interior_ring_fl = 1;
 						}
@@ -286,6 +286,7 @@ namespace nccfdriver
 							interior_ring_fl = 0;
 						}  
 					}
+
 					nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
 				}
 

@@ -37,7 +37,7 @@ namespace nccfdriver
 			OGRPoint& getPoint(size_t part_no, int point_index);
 			SGeometry_Feature(OGRFeature&);
 			bool getHasInteriorRing() { return this->hasInteriorRing; }
-			bool IsPartAtIndInteriorRing(int ind) { return this->part_at_ind_interior[ind]; } // ONLY used for Multipolygon
+			bool IsPartAtIndInteriorRing(size_t ind) { return this->part_at_ind_interior[ind]; } // ONLY used for Multipolygon
 	};
 
 	/* OGR_SGeometry_Scribe

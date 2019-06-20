@@ -1812,7 +1812,8 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 		bool hasIntRings = featWithMetaData.getHasInteriorRing();
 
 		// (If it has interior rings, create and catch up the neccessary variables)
-		if((featWithMetaData.getType() == nccfdriver::POLYGON || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON) && hasIntRings)
+		if((featWithMetaData.getType() == nccfdriver::POLYGON || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON) && hasIntRings
+			&& !nccfdriver::GeometryScribe.getInteriorRingDetected())
 		{
 			if(featWithMetaData.getType() == nccfdriver::POLYGON)
 			{
