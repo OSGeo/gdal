@@ -44,16 +44,21 @@ namespace nccfdriver
 	 */
 	class OGR_SGeometry_Scribe
 	{
+		bool interiorRingDetected; // flips on when an interior ring polygon has been detected
 		int ncID;
-		std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
 		int containerVarID;
+		std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
 		int node_coordinates_dimID; // dim of all node_coordinates
 		int node_count_dimID;	// node count dim
 		int node_count_varID;
 		int pnc_dimID;			// part node count dim AND interior ring dim
+		int pnc_varID;
+		int intring_varID;
 		size_t next_write_pos_node_coord;
 		size_t next_write_pos_node_count;
 		size_t next_write_pos_pnc;
+		void redef_interior_ring(); // adds an interior ring attribute and to the target geometry container and corresponding variable 
+		void redef_pnc() // adds a part node count attribute to the target geometry container and corresponding variable
 
 		public:
 			void writeSGeometryFeature(SGeometry_Feature& ft);

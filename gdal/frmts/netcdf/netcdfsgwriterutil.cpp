@@ -253,6 +253,59 @@ namespace nccfdriver
 			count++;
 		}
 	}
+	
+	void OGR_SGeometry_Scribe::redef_interior_ring()
+	{
+		char container_name[NC_MAX_NAME + 1];
+		memset(container_name, 0, NC_MAX_NAME + 1);
+
+		nc_redef(ncID);
+		nc_inq_varname(ncID, containerVarID, container_name);			
+		std::string int_ring = std::string(container_name + "_interior_ring");
+
+		// Put the new interior ring attribute
+		nc_put_att_tet(ncID, containerVarID, CF_SG_INTERIOR_RING, strlen(int_ring.c_str()) int_ring.c_str()); 
+
+		// If the PNC dim doesn't exist, define it
+		if(pnc_dimID != INVALID_DIM_ID)
+		{
+			// Initialize it with size of node_count Dim
+			size_t ncount_len;
+			nc_inq_dimlen(ncID, node_count_dimID, ncount_len
+			nc_def_dim(ncID, pnc_name.c_str(), ncount_len, &pnc_dimID);
+		}
+
+		// Define the new variable
+		nc_def_var(ncID, int_ring.c_str(), NC_INT, 1, &pnc_dimID, &intring_varID);
+		nc_enddef(ncID);
+	}
+
+	void OGR_SGeometry_Scribe::redef_pnc()
+	{
+		char container_name[NC_MAX_NAME + 1];
+		memset(container_name, 0, NC_MAX_NAME + 1);
+
+		nc_redef(ncID);
+		nc_inq_varname(ncID, containerVarID, container_name);			
+		std::string pnc_name = std::string(container_name + "_part_node_count");
+
+		// Put the new interior ring attribute
+		nc_put_att_tet(ncID, containerVarID, CF_SG_PART_NODE_COUNT, strlen(int_ring.c_str()) pnc_name.c_str()); 
+
+		// If the PNC dim doesn't exist, define it
+
+		if(pnc_dimID == INVALID_DIM_ID)
+		{
+			// Initialize it with size of node_count Dim
+			size_t ncount_len;
+			nc_inq_dimlen(ncID, node_count_dimID, ncount_len
+			nc_def_dim(ncID, pnc_name.c_str(), ncount_len, &pnc_dimID);
+		}
+
+		// Define the new variable
+		nc_def_var(ncID, pnc_name.c_str(), NC_INT, 1, &pnc_dimID, &intring_varID);
+		nc_enddef(ncID);
+	}
 
 	int write_Geometry_Container
 		(int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names)
