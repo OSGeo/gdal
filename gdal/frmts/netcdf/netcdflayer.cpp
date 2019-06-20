@@ -283,8 +283,8 @@ bool netCDFLayer::Create(char **papszOptions,
 	//std::string strXVarName = "";
 	//std::string strYVarName = "";
 
-	if (wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint)
-	{
+    if (wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint)
+    {
 		const int nPointDim =
 			!m_osProfileDimName.empty() ? m_nProfileDimID : m_nRecordDimID;
 		const bool bIsGeographic = (poSRS == nullptr || poSRS->IsGeographic());
@@ -1808,11 +1808,28 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 		int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
 		int node_coord_dimID = nccfdriver::GeometryScribe.get_node_coord_dimID();
 
+		// Check if this feature (Polygons and Multipolygons only) has interior rings
+		bool hasIntRings = featWithMetaData.getHasInteriorRing();
+
+		// (If it has interior rings, create and catch up the neccessary variables)
+		if(featWithMetaData.getType() == nccfdriver::POLYGON && hasIntRings)
+		{
+			nccfdriver::GeometryScribe.redef_pnc();
+			nccfdriver::GeometryScribe.redef_interior_ring();
+			nccfdriver::GeometryScribe.turnOnInteriorRingDetect();
+		}
+
 		// Grow dimensions to fit the next feature
 
 		m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + 1);
 		m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
 			nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + featWithMetaData.getTotalNodeCount());
+
+		if(featWithMetaData.getType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
+		{
+			int pnc_dimID = nccfdriver::GeometryScribe.get_pnc_dimID();
+			m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, nccfdriver::GeometryScribe.get_next_write_pos_pnc() + featWithMetaData.getTotalPartCount());
+		}
 
 		// Finally, write the actually feature
 		nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);

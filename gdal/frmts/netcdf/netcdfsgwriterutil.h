@@ -20,6 +20,7 @@ namespace nccfdriver
 	 */
 	class SGeometry_Feature
 	{
+		bool hasInteriorRing;
 		OGRGeometry * geometry_ref;
 		geom_t type;
 		size_t total_point_count;
@@ -34,6 +35,7 @@ namespace nccfdriver
 			std::vector<size_t> & getPerPartNodeCount() { return this->ppart_node_count; }
 			OGRPoint& getPoint(size_t part_no, int point_index);
 			SGeometry_Feature(OGRFeature&);
+			bool getHasInteriorRing() { return this->hasInteriorRing; }
 	};
 
 	/* OGR_SGeometry_Scribe
@@ -44,9 +46,9 @@ namespace nccfdriver
 	 */
 	class OGR_SGeometry_Scribe
 	{
-		bool interiorRingDetected; // flips on when an interior ring polygon has been detected
 		int ncID;
 		int containerVarID;
+		bool interiorRingDetected; // flips on when an interior ring polygon has been detected
 		std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
 		int node_coordinates_dimID; // dim of all node_coordinates
 		int node_count_dimID;	// node count dim
@@ -57,8 +59,6 @@ namespace nccfdriver
 		size_t next_write_pos_node_coord;
 		size_t next_write_pos_node_count;
 		size_t next_write_pos_pnc;
-		void redef_interior_ring(); // adds an interior ring attribute and to the target geometry container and corresponding variable 
-		void redef_pnc() // adds a part node count attribute to the target geometry container and corresponding variable
 
 		public:
 			void writeSGeometryFeature(SGeometry_Feature& ft);
@@ -66,8 +66,14 @@ namespace nccfdriver
 			OGR_SGeometry_Scribe();
 			int get_node_count_dimID() { return this->node_count_dimID; }
 			int get_node_coord_dimID() { return this->node_coordinates_dimID; }
+			int get_pnc_dimID() { return this->pnc_dimID; }
 			size_t get_next_write_pos_node_coord() { return this->next_write_pos_node_coord; }
 			size_t get_next_write_pos_node_count() { return this->next_write_pos_node_count; }
+			size_t get_next_write_pos_pnc() { return this->next_write_pos_pnc; }
+			void redef_interior_ring(); // adds an interior ring attribute and to the target geometry container and corresponding variable 
+			void redef_pnc(); // adds a part node count attribute to the target geometry container and corresponding variable
+			void turnOnInteriorRingDetect() { this->interiorRingDetected = true; }
+			bool getInteriorRingDetected() { return this->interiorRingDetected; }
 	};
 
 	extern OGR_SGeometry_Scribe GeometryScribe;

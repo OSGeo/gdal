@@ -7,6 +7,7 @@ namespace nccfdriver
 
 	SGeometry_Feature::SGeometry_Feature(OGRFeature& ft)
 	{
+		this->hasInteriorRing = false;
 		OGRGeometry * defnGeometry = ft.GetGeometryRef();
 		
 		if (defnGeometry == nullptr)
@@ -77,7 +78,8 @@ namespace nccfdriver
 
 			for(int iRingCt = 0; iRingCt < r_defnPolygon.getNumInteriorRings(); iRingCt++)
 			{
-				counting_ring = *r_defnPolygon.getInteriorRing(iRingCt);;
+				this->hasInteriorRing = true;
+				counting_ring = *r_defnPolygon.getInteriorRing(iRingCt);
 				this->total_point_count += counting_ring.getNumPoints();
 				this->ppart_node_count.push_back(counting_ring.getNumPoints());
 				this->total_part_count++;
@@ -100,6 +102,11 @@ namespace nccfdriver
 		{
 			OGRLineString* as_line_ref = dynamic_cast<OGRLineString*>(this->geometry_ref);
 			as_line_ref->getPoint(point_index, &pt_buffer);
+		}
+
+		if (this->type == MULTILINE)
+		{
+	
 		}
 
 		if (this->type == POLYGON)
@@ -156,6 +163,17 @@ namespace nccfdriver
 		// Write each point from each part in node coordinates
 		for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
 		{
+			if(ft.getType() == POLYGON && this->interiorRingDetected)
+			{
+				// if interior rings is present, go write part node counts and interior ring info
+				int interior_ring_fl = part_no == 0 ? 0 : 1;
+				int pnc_writable = ft.getPerPartNodeCount()[part_no];
+
+				nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
+				nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
+				next_write_pos_pnc++;
+			}
+
 			for(size_t pt_ind = 0; pt_ind < ft.getPerPartNodeCount()[part_no]; pt_ind++)
 			{
 				int pt_ind_int = static_cast<int>(pt_ind);
@@ -178,9 +196,15 @@ namespace nccfdriver
 		}
 	}
 
-	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe()
-		: ncID(0),
+	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe() :
+		ncID(0),
 		containerVarID(INVALID_VAR_ID),
+		interiorRingDetected(false),
+		node_coordinates_dimID(INVALID_DIM_ID),
+		node_count_dimID(INVALID_DIM_ID),
+		node_count_varID(INVALID_VAR_ID),
+		pnc_varID(INVALID_VAR_ID),
+		intring_varID(INVALID_VAR_ID),
 		next_write_pos_node_coord(0),
 		next_write_pos_node_count(0),
 		next_write_pos_pnc(0)
@@ -191,6 +215,7 @@ namespace nccfdriver
 	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in)
 		: ncID(ncID_in),
 		containerVarID(container_varID_in),
+		interiorRingDetected(false),
 		next_write_pos_node_coord(0),
 		next_write_pos_node_count(0),
 		next_write_pos_pnc(0)
@@ -204,6 +229,11 @@ namespace nccfdriver
 
 		char node_count_name[NC_MAX_CHAR + 1];
 		memset(node_count_name, 0, NC_MAX_CHAR + 1);
+
+		// Set default values
+		pnc_varID = INVALID_VAR_ID;
+		pnc_dimID = INVALID_DIM_ID;
+		intring_varID = INVALID_VAR_ID;
 
 		int err_code;
 		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
@@ -256,28 +286,32 @@ namespace nccfdriver
 	
 	void OGR_SGeometry_Scribe::redef_interior_ring()
 	{
+		
 		char container_name[NC_MAX_NAME + 1];
 		memset(container_name, 0, NC_MAX_NAME + 1);
 
 		nc_redef(ncID);
 		nc_inq_varname(ncID, containerVarID, container_name);			
-		std::string int_ring = std::string(container_name + "_interior_ring");
+		std::string int_ring = std::string(container_name) + std::string("_interior_ring");
+		std::string pnc_name = std::string(container_name) + std::string("_part_node_count");
 
 		// Put the new interior ring attribute
-		nc_put_att_tet(ncID, containerVarID, CF_SG_INTERIOR_RING, strlen(int_ring.c_str()) int_ring.c_str()); 
+		nc_put_att_text(ncID, containerVarID, CF_SG_INTERIOR_RING, strlen(int_ring.c_str()), int_ring.c_str()); 
+		size_t pnc_dim_len = 0;
 
-		// If the PNC dim doesn't exist, define it
-		if(pnc_dimID != INVALID_DIM_ID)
-		{
-			// Initialize it with size of node_count Dim
-			size_t ncount_len;
-			nc_inq_dimlen(ncID, node_count_dimID, ncount_len
-			nc_def_dim(ncID, pnc_name.c_str(), ncount_len, &pnc_dimID);
-		}
+		nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
 
 		// Define the new variable
 		nc_def_var(ncID, int_ring.c_str(), NC_INT, 1, &pnc_dimID, &intring_varID);
 		nc_enddef(ncID);
+
+		const int zero_fill = 0;
+
+		// Zero fill interior ring
+		for(size_t itr = 0; itr < pnc_dim_len; itr++)
+		{
+			nc_put_var1_int(ncID, intring_varID, &itr, &zero_fill);
+		}
 	}
 
 	void OGR_SGeometry_Scribe::redef_pnc()
@@ -287,24 +321,36 @@ namespace nccfdriver
 
 		nc_redef(ncID);
 		nc_inq_varname(ncID, containerVarID, container_name);			
-		std::string pnc_name = std::string(container_name + "_part_node_count");
+		std::string pnc_name = std::string(container_name) + std::string("_part_node_count");
 
 		// Put the new interior ring attribute
-		nc_put_att_tet(ncID, containerVarID, CF_SG_PART_NODE_COUNT, strlen(int_ring.c_str()) pnc_name.c_str()); 
+		nc_put_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, strlen(pnc_name.c_str()), pnc_name.c_str()); 
 
 		// If the PNC dim doesn't exist, define it
+
+		size_t pnc_dim_len = 0;
 
 		if(pnc_dimID == INVALID_DIM_ID)
 		{
 			// Initialize it with size of node_count Dim
 			size_t ncount_len;
-			nc_inq_dimlen(ncID, node_count_dimID, ncount_len
+			nc_inq_dimlen(ncID, node_count_dimID, &ncount_len);
 			nc_def_dim(ncID, pnc_name.c_str(), ncount_len, &pnc_dimID);
 		}
+		
+		nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
 
 		// Define the new variable
-		nc_def_var(ncID, pnc_name.c_str(), NC_INT, 1, &pnc_dimID, &intring_varID);
+		nc_def_var(ncID, pnc_name.c_str(), NC_INT, 1, &pnc_dimID, &pnc_varID);
 		nc_enddef(ncID);
+
+		// Fill pnc with the current values of node counts
+		for(size_t itr = 0; itr < pnc_dim_len; itr++)
+		{
+			int ncount_in;
+			nc_get_var1_int(ncID, node_count_varID, &itr, &ncount_in);
+			nc_put_var1_int(ncID, pnc_varID, &itr, &ncount_in);
+		}
 	}
 
 	int write_Geometry_Container
