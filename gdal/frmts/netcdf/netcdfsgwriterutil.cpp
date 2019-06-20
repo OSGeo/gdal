@@ -36,8 +36,6 @@ namespace nccfdriver
 			// total part count ==  total node count
 			this->total_part_count = this->total_point_count;	
 
-			// Place the geometry container
-			this->geometry_ref = ft.GetGeometryRef();
 		}
 
 		else if (this->type == LINE)
@@ -53,10 +51,40 @@ namespace nccfdriver
 
 			// One part
 			this->total_part_count = 1;
-			
-			// One curve
-			this->geometry_ref = ft.GetGeometryRef();
 		}
+
+		else if(this->type == POLYGON)
+		{
+			OGRPolygon& r_defnPolygon = dynamic_cast<OGRPolygon&>(r_defnGeometry);
+
+			this->total_point_count = 0;
+			this->total_part_count = 0;
+
+			// Get node count
+			// First count exterior ring
+			OGRLinearRing & counting_ring = *r_defnPolygon.getExteriorRing();
+
+			size_t outer_ring_ct = counting_ring.getNumPoints();
+		
+			this->total_point_count += outer_ring_ct;
+			this->ppart_node_count.push_back(outer_ring_ct);
+			this->total_part_count++;
+
+			// Then count all from the interior rings
+			// While doing the following
+			// Get per part node count (per part RING count)
+			// Get part count (in this case it's the amount of RINGS)
+
+			for(int iRingCt = 0; iRingCt < r_defnPolygon.getNumInteriorRings(); iRingCt++)
+			{
+				counting_ring = *r_defnPolygon.getInteriorRing(iRingCt);;
+				this->total_point_count += counting_ring.getNumPoints();
+				this->ppart_node_count.push_back(counting_ring.getNumPoints());
+				this->total_part_count++;
+			}
+		}
+			
+		this->geometry_ref = ft.GetGeometryRef();
 	}
 
 	OGRPoint& SGeometry_Feature::getPoint(size_t part_no, int point_index)
@@ -72,6 +100,21 @@ namespace nccfdriver
 		{
 			OGRLineString* as_line_ref = dynamic_cast<OGRLineString*>(this->geometry_ref);
 			as_line_ref->getPoint(point_index, &pt_buffer);
+		}
+
+		if (this->type == POLYGON)
+		{
+			OGRPolygon* as_polygon_ref = dynamic_cast<OGRPolygon*>(this->geometry_ref);
+
+			if(part_no == 0)
+			{
+				as_polygon_ref->getExteriorRing()->getPoint(point_index, &pt_buffer);
+			}
+
+			else
+			{
+				as_polygon_ref->getInteriorRing(part_no - 1)->getPoint(point_index, &pt_buffer);
+			}
 		}
 
 		return pt_buffer;
