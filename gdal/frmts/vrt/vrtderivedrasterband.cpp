@@ -301,15 +301,32 @@ static bool LoadPythonAPI()
     }
 #endif
 
+#if defined(__MACH__) && defined(__APPLE__)
+#define SO_EXT "dylib"
+#else
+#define IS_SO_EXT
+#define SO_EXT "so"
+#endif
+
+    const auto tryDlopen = [](CPLString osPythonSO)
+    {
+        CPLDebug("VRT", "Trying %s", osPythonSO.c_str());
+        auto l_libHandle = dlopen(osPythonSO.c_str(), RTLD_NOW | RTLD_GLOBAL);
+#ifdef IS_SO_EXT
+        if( l_libHandle == nullptr )
+        {
+            osPythonSO += ".1.0";
+            CPLDebug("VRT", "Trying %s", osPythonSO.c_str());
+            l_libHandle = dlopen(osPythonSO.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        }
+#endif
+        return l_libHandle;
+    };
+
     // Then try to find the libpython that corresponds to the python binary
     // in the PATH
     if( libHandle == nullptr )
     {
-#if defined(__MACH__) && defined(__APPLE__)
-#define SO_EXT "dylib"
-#else
-#define SO_EXT "so"
-#endif
         CPLString osVersion;
         char* pszPath = getenv("PATH");
         if( pszPath != nullptr
@@ -417,19 +434,14 @@ static bool LoadPythonAPI()
 
         if( !osVersion.empty() )
         {
-            CPLString osPythonSO("libpython");
-            osPythonSO += osVersion + "." SO_EXT;
-            CPLDebug("VRT", "Trying %s", osPythonSO.c_str());
-            libHandle = dlopen(osPythonSO, RTLD_NOW | RTLD_GLOBAL);
+            libHandle = tryDlopen("libpython" + osVersion + "." SO_EXT);
             if( libHandle != nullptr )
             {
                 CPLDebug("VRT", "... success");
             }
             else if( osVersion[0] == '3' )
             {
-                osPythonSO = "libpython" + osVersion + "m." SO_EXT;
-                CPLDebug("VRT", "Trying %s", osPythonSO.c_str());
-                libHandle = dlopen(osPythonSO, RTLD_NOW | RTLD_GLOBAL);
+                libHandle = tryDlopen("libpython" + osVersion + "m." SO_EXT);
                 if( libHandle != nullptr )
                 {
                     CPLDebug("VRT", "... success");
@@ -439,7 +451,7 @@ static bool LoadPythonAPI()
     }
 
     // Otherwise probe a few known objects.
-    // Note: update vrt_tutorial.dox if change
+    // Note: update doc/source/drivers/raster/vrt.rst if change
     if( libHandle == nullptr )
     {
         const char* const apszPythonSO[] = { "libpython2.7." SO_EXT,
@@ -452,8 +464,7 @@ static bool LoadPythonAPI()
         for( size_t i = 0; libHandle == nullptr &&
                             i < CPL_ARRAYSIZE(apszPythonSO); ++i )
         {
-            CPLDebug("VRT", "Trying %s", apszPythonSO[i]);
-            libHandle = dlopen(apszPythonSO[i], RTLD_NOW | RTLD_GLOBAL);
+            libHandle = tryDlopen(apszPythonSO[i]);
             if( libHandle != nullptr )
                 CPLDebug("VRT", "... success");
         }
