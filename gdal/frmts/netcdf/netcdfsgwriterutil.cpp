@@ -54,6 +54,24 @@ namespace nccfdriver
 			this->total_part_count = 1;
 		}
 
+		else if(this->type == MULTILINE)
+		{
+			OGRMultiLineString& r_defnMLS = dynamic_cast<OGRMultiLineString&>(r_defnGeometry);
+			this->total_point_count = 0;
+			this->total_part_count = r_defnMLS.getNumGeometries();
+
+			// Take each geometry, just add up the corresponding parts
+
+			for(int itrLScount = 0; itrLScount < r_defnMLS.getNumGeometries(); itrLScount++)
+			{
+				OGRLineString & r_LS = dynamic_cast<OGRLineString&>(*r_defnMLS.getGeometryRef(itrLScount));
+				int pt_count = r_LS.getNumPoints();
+				
+				this->ppart_node_count.push_back(pt_count);
+				this->total_point_count += pt_count;
+			}
+		}
+
 		else if(this->type == POLYGON)
 		{
 			OGRPolygon& r_defnPolygon = dynamic_cast<OGRPolygon&>(r_defnGeometry);
@@ -86,22 +104,49 @@ namespace nccfdriver
 			}
 		}
 
-		else if(this->type == MULTILINE)
+		else if(this->type == MULTIPOLYGON)
 		{
-			OGRMultiLineString& r_defnMLS = dynamic_cast<OGRMultiLineString&>(r_defnGeometry);
+
+			OGRMultiPolygon& r_defnMPolygon = dynamic_cast<OGRMultiPolygon&>(r_defnGeometry);
+
 			this->total_point_count = 0;
-			this->total_part_count = r_defnMLS.getNumGeometries();
+			this->total_part_count = 0;
 
-			// Take each geometry, just add up the corresponding parts
-
-			for(int itrLScount = 0; itrLScount < r_defnMLS.getNumGeometries(); itrLScount++)
+			for(int itr = 0; itr < r_defnMPolygon.getNumGeometries(); itr++)
 			{
-				OGRLineString & r_LS = dynamic_cast<OGRLineString&>(*r_defnMLS.getGeometryRef(itrLScount));
-				int pt_count = r_LS.getNumPoints();
+				OGRPolygon & r_Pgon = dynamic_cast<OGRPolygon&>(*r_defnMPolygon.getGeometryRef(itr));
 				
-				this->ppart_node_count.push_back(pt_count);
-				this->total_point_count += pt_count;
+				OGRLinearRing & counting_ring = *r_Pgon.getExteriorRing();
+
+				size_t outer_ring_ct = counting_ring.getNumPoints();
+		
+				this->total_point_count += outer_ring_ct;
+				this->ppart_node_count.push_back(outer_ring_ct);
+				this->total_part_count++;
+				this->part_at_ind_interior.push_back(false);
+
+				// Then count all from the interior rings
+				// While doing the following
+				// Get per part node count (per part RING count)
+				// Get part count (in this case it's the amount of RINGS)
+
+				for(int iRingCt = 0; iRingCt < r_Pgon.getNumInteriorRings(); iRingCt++)
+				{
+					this->hasInteriorRing = true;
+					counting_ring = *r_Pgon.getInteriorRing(iRingCt);
+					this->total_point_count += counting_ring.getNumPoints();
+					this->ppart_node_count.push_back(counting_ring.getNumPoints());
+					this->total_part_count++;
+					this->part_at_ind_interior.push_back(true);
+				}
+
 			}
+
+		}
+
+		else
+		{
+			// throw an exception!
 		}
 			
 		this->geometry_ref = ft.GetGeometryRef();
@@ -142,6 +187,42 @@ namespace nccfdriver
 			else
 			{
 				as_polygon_ref->getInteriorRing(part_no - 1)->getPoint(point_index, &pt_buffer);
+			}
+		}
+
+		if (this->type == MULTIPOLYGON)
+		{
+			OGRMultiPolygon* as_mpolygon_ref = dynamic_cast<OGRMultiPolygon*>(this->geometry_ref);
+
+			int polygon_num = 0;
+			int ring_number = 0;
+
+			// Find the right polygon, and the right ring number
+			for(int pind = 0; pind < as_mpolygon_ref->getNumGeometries(); pind++)
+			{
+				OGRPolygon * itr_poly = dynamic_cast<OGRPolygon*>(as_mpolygon_ref->getGeometryRef(pind));
+				if(part_no < (itr_poly->getNumInteriorRings() + 1)) // + 1 is counting the EXTERIOR ring
+				{
+					ring_number = static_cast<int>(part_no);	
+				}
+
+				else
+				{
+					part_no -= (itr_poly->getNumInteriorRings() + 1);
+					polygon_num++;
+				}
+			}
+
+			OGRPolygon* key_polygon = dynamic_cast<OGRPolygon*>(as_mpolygon_ref->getGeometryRef(polygon_num));
+	
+			if(ring_number == 0)
+			{
+				key_polygon->getExteriorRing()->getPoint(point_index, &pt_buffer);
+			}
+
+			else
+			{
+				key_polygon->getInteriorRing(ring_number - 1)->getPoint(point_index, &pt_buffer);
 			}
 		}
 
@@ -189,7 +270,12 @@ namespace nccfdriver
 				// if interior rings is present, go write part node counts and interior ring info
 				if( (ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON) && this->interiorRingDetected )
 				{
-					int interior_ring_fl = part_no == 0 ? 0 : 1;
+					int interior_ring_fl = 0;
+					
+					if(ft.getType() == POLYGON)
+						interior_ring_fl = part_no == 0 ? 0 : 1;
+					if(ft.getType() == MULTIPOLYGON)
+						ft.IsPartAtIndInteriorRing(static_cast<int>(part_no)) ? 1 : 0; 
 					nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
 				}
 

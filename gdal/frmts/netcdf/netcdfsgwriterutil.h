@@ -26,6 +26,7 @@ namespace nccfdriver
 		size_t total_point_count;
 		size_t total_part_count;
 		std::vector<size_t> ppart_node_count;
+		std::vector<bool> part_at_ind_interior; // for use with Multipolygons ONLY
 		OGRPoint pt_buffer;
 
 		public:
@@ -36,6 +37,7 @@ namespace nccfdriver
 			OGRPoint& getPoint(size_t part_no, int point_index);
 			SGeometry_Feature(OGRFeature&);
 			bool getHasInteriorRing() { return this->hasInteriorRing; }
+			bool IsPartAtIndInteriorRing(int ind) { return this->part_at_ind_interior[ind]; } // ONLY used for Multipolygon
 	};
 
 	/* OGR_SGeometry_Scribe
