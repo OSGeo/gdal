@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -464,6 +464,7 @@ typedef void *OGRCoordinateTransformationH;
 #endif
 
 void CPL_DLL OSRSetPROJSearchPaths( const char* const * papszPaths );
+void CPL_DLL OSRGetPROJVersion( int* pnMajor, int* pnMinor, int* pnPatch );
 
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL
       OSRNewSpatialReference( const char * /* = NULL */);

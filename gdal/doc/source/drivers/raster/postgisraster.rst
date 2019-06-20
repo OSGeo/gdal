@@ -122,7 +122,7 @@ The driver developers
 
 -  Jorge Arévalo (jorgearevalo at libregis.org)
 -  David Zwarg (dzwarg at azavea.com)
--  Even Rouault (even.rouault at mines-paris.org)
+-  Even Rouault (even.rouault at spatialys.com)
 
 See Also
 --------

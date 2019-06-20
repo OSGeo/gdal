@@ -4,7 +4,7 @@
  * Name:     GDALTestIO.java
  * Project:  GDAL Java Interface
  * Purpose:  A sample app to test ReadRaster_Direct / WriteRaster_Direct
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  * Adapted from a sample by Ivan Lucena
  *

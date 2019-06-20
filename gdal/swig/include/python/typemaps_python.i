@@ -265,41 +265,54 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   }
 }
 
+%fragment("CreateCIntListFromSequence","header") %{
+static int*
+CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
+  /* check if is List */
+  if ( !PySequence_Check(pySeq) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  *pnSize = (int)size;
+  int* ret = (int*) malloc(*pnSize*sizeof(int));
+  for( int i = 0; i<*pnSize; i++ ) {
+    PyObject *o = PySequence_GetItem(pySeq,i);
+    if ( !PyArg_Parse(o,"i",&ret[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        free(ret);
+        *pnSize = -1;
+        return NULL;
+    }
+    Py_DECREF(o);
+  }
+  return ret;
+}
+%}
+
 /*
  *  Typemap for counted arrays of ints <- PySequence
  */
-%typemap(in,numinputs=1) (int nList, int* pList)
+%typemap(in,numinputs=1,fragment="CreateCIntListFromSequence") (int nList, int* pList)
 {
   /* %typemap(in,numinputs=1) (int nList, int* pList)*/
-  /* check if is List */
-  if ( !PySequence_Check($input) ) {
-    PyErr_SetString(PyExc_TypeError, "not a sequence");
+  $2 = CreateCIntListFromSequence($input, &$1);
+  if( $1 < 0 ) {
     SWIG_fail;
-  }
-  Py_ssize_t size = PySequence_Size($input);
-  if( size != (int)size ) {
-    PyErr_SetString(PyExc_TypeError, "too big sequence");
-    SWIG_fail;
-  }
-  $1 = (int)size;
-  $2 = (int*) malloc($1*sizeof(int));
-  for( int i = 0; i<$1; i++ ) {
-    PyObject *o = PySequence_GetItem($input,i);
-    if ( !PyArg_Parse(o,"i",&$2[i]) ) {
-        PyErr_SetString(PyExc_TypeError, "not an integer");
-      Py_DECREF(o);
-      SWIG_fail;
-    }
-    Py_DECREF(o);
   }
 }
 
 %typemap(freearg) (int nList, int* pList)
 {
   /* %typemap(freearg) (int nList, int* pList) */
-  if ($2) {
-    free((void*) $2);
-  }
+  free($2);
 }
 
 /*
@@ -935,29 +948,34 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   CSLDestroy( $1 );
 }
 
-/*
- * Typemap maps char** arguments from Python Sequence Object
- */
-%typemap(in) char **options
+%fragment("CSLFromPySequence","header") %{
+/************************************************************************/
+/*                         CSLFromPySequence()                          */
+/************************************************************************/
+static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
+
 {
-  /* %typemap(in) char **options */
+  *pbErr = FALSE;
   /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-  if ( ! PySequence_Check($input) || PyUnicode_Check($input)
-%#if PY_VERSION_HEX < 0x03000000
-    || PyString_Check($input)
-%#endif
+  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq)
+#if PY_VERSION_HEX < 0x03000000
+    || PyString_Check(pySeq)
+#endif
     ) {
     PyErr_SetString(PyExc_TypeError,"not a sequence");
-    SWIG_fail;
+    *pbErr = TRUE;
+    return NULL;
   }
 
-  Py_ssize_t size = PySequence_Size($input);
+  Py_ssize_t size = PySequence_Size(pySeq);
   if( size != (int)size ) {
     PyErr_SetString(PyExc_TypeError, "too big sequence");
-    SWIG_fail;
+    *pbErr = TRUE;
+    return NULL;
   }
+  char** papszRet = NULL;
   for (int i = 0; i < (int)size; i++) {
-    PyObject* pyObj = PySequence_GetItem($input,i);
+    PyObject* pyObj = PySequence_GetItem(pySeq,i);
     if (PyUnicode_Check(pyObj))
     {
       char *pszStr;
@@ -967,30 +985,50 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
       {
         Py_DECREF(pyObj);
         PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
-        SWIG_fail;
+        CSLDestroy(papszRet);
+        *pbErr = TRUE;
+        return NULL;
       }
-%#if PY_VERSION_HEX >= 0x03000000
+#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-%#else
+#else
       PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-%#endif
-      $1 = CSLAddString( $1, pszStr );
+#endif
+      papszRet = CSLAddString( papszRet, pszStr );
       Py_XDECREF(pyUTF8Str);
     }
-%#if PY_VERSION_HEX >= 0x03000000
+#if PY_VERSION_HEX >= 0x03000000
     else if (PyBytes_Check(pyObj))
-      $1 = CSLAddString( $1, PyBytes_AsString(pyObj) );
-%#else
+      papszRet = CSLAddString( papszRet, PyBytes_AsString(pyObj) );
+#else
     else if (PyString_Check(pyObj))
-      $1 = CSLAddString( $1, PyString_AsString(pyObj) );
-%#endif
+      papszRet = CSLAddString( papszRet, PyString_AsString(pyObj) );
+#endif
     else
     {
         Py_DECREF(pyObj);
         PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
+        CSLDestroy(papszRet);
+        *pbErr = TRUE;
+        return NULL;
     }
     Py_DECREF(pyObj);
+  }
+  return papszRet;
+}
+%}
+
+/*
+ * Typemap maps char** arguments from Python Sequence Object
+ */
+%typemap(in,fragment="CSLFromPySequence") char **options
+{
+  /* %typemap(in) char **options */
+  int bErr = FALSE;
+  $1 = CSLFromPySequence($input, &bErr);
+  if( bErr )
+  {
+    SWIG_fail;
   }
 }
 %typemap(freearg) char **options

@@ -128,9 +128,9 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
         CPL_DISALLOW_COPY_ASSIGN(VSIS3HandleHelper)
 
         CPLString m_osURL{};
-        CPLString m_osSecretAccessKey{};
-        CPLString m_osAccessKeyId{};
-        CPLString m_osSessionToken{};
+        mutable CPLString m_osSecretAccessKey{};
+        mutable CPLString m_osAccessKeyId{};
+        mutable CPLString m_osSessionToken{};
         CPLString m_osEndpoint{};
         CPLString m_osRegion{};
         CPLString m_osRequestPayer{};
@@ -138,6 +138,7 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osObjectKey{};
         bool m_bUseHTTPS = false;
         bool m_bUseVirtualHosting = false;
+        bool m_bFromEC2 = false;
 
         void RebuildURL() override;
 
@@ -156,7 +157,8 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
                                      CPLString& osSecretAccessKey,
                                      CPLString& osAccessKeyId,
                                      CPLString& osSessionToken,
-                                     CPLString& osRegion);
+                                     CPLString& osRegion,
+                                     bool& bFromEC2);
   protected:
 
     public:
@@ -168,7 +170,7 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
                     const CPLString& osRequestPayer,
                     const CPLString& osBucket,
                     const CPLString& osObjectKey,
-                    bool bUseHTTPS, bool bUseVirtualHosting);
+                    bool bUseHTTPS, bool bUseVirtualHosting, bool bFromEC2);
        ~VSIS3HandleHelper();
 
         static VSIS3HandleHelper* BuildFromURI(const char* pszURI,

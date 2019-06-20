@@ -1385,7 +1385,8 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     }
     else if( pszFormat[0] == '\0' )
     {
-        if( IsGeographic() && !IsCompound() && GetAxesCount() == 3 )
+        if( (IsGeographic() || IsProjected()) &&
+            !IsCompound() && GetAxesCount() == 3 )
         {
             wktFormat = PJ_WKT2_2018;
         }
@@ -10722,3 +10723,98 @@ void OSRDestroyCRSInfoList(OSRCRSInfo** list)
         delete[] list;
     }
 }
+
+/************************************************************************/
+/*                    UpdateCoordinateSystemFromGeogCRS()               */
+/************************************************************************/
+
+/*! @cond Doxygen_Suppress */
+/** \brief Used by gt_wkt_srs.cpp to create projected 3D CRS. Internal use only
+ *
+ * @since GDAL 3.1
+ */
+void OGRSpatialReference::UpdateCoordinateSystemFromGeogCRS()
+{
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+        return;
+    if( d->m_pjType != PJ_TYPE_PROJECTED_CRS )
+        return;
+    if( GetAxesCount() == 3 )
+        return;
+    auto ctxt = d->getPROJContext();
+    auto baseCRS = proj_crs_get_geodetic_crs(ctxt, d->m_pj_crs);
+    if( !baseCRS )
+        return;
+    auto baseCRSCS = proj_crs_get_coordinate_system(ctxt, baseCRS);
+    if( !baseCRSCS )
+    {
+        proj_destroy(baseCRS);
+        return;
+    }
+    if( proj_cs_get_axis_count(ctxt, baseCRSCS) != 3 )
+    {
+        proj_destroy(baseCRSCS);
+        proj_destroy(baseCRS);
+        return;
+    }
+    auto projCS = proj_crs_get_coordinate_system(ctxt, d->m_pj_crs);
+    if( !projCS || proj_cs_get_axis_count(ctxt, projCS) != 2 )
+    {
+        proj_destroy(baseCRSCS);
+        proj_destroy(baseCRS);
+        proj_destroy(projCS);
+        return;
+    }
+
+    PJ_AXIS_DESCRIPTION axis[3];
+    for( int i = 0; i < 3; i++ )
+    {
+        const char* name = nullptr;
+        const char* abbreviation = nullptr;
+        const char* direction = nullptr;
+        double unit_conv_factor = 0;
+        const char* unit_name = nullptr;
+        proj_cs_get_axis_info(ctxt,
+                              i < 2 ? projCS : baseCRSCS,
+                              i,
+                              &name,
+                              &abbreviation,
+                              &direction,
+                              &unit_conv_factor,
+                              &unit_name, nullptr, nullptr);
+        axis[i].name = CPLStrdup(name);
+        axis[i].abbreviation = CPLStrdup(abbreviation);
+        axis[i].direction = CPLStrdup(direction);
+        axis[i].unit_name = CPLStrdup(unit_name);
+        axis[i].unit_conv_factor = unit_conv_factor;
+        axis[i].unit_type = PJ_UT_LINEAR;
+    }
+    proj_destroy(baseCRSCS);
+    proj_destroy(projCS);
+    auto cs = proj_create_cs(ctxt, PJ_CS_TYPE_CARTESIAN, 3, axis);
+    for( int i = 0; i < 3; i++ )
+    {
+        CPLFree(axis[i].name);
+        CPLFree(axis[i].abbreviation);
+        CPLFree(axis[i].direction);
+        CPLFree(axis[i].unit_name);
+    }
+    if( !cs )
+    {
+        proj_destroy(baseCRS);
+        return;
+    }
+    auto conversion = proj_crs_get_coordoperation(ctxt, d->m_pj_crs);
+    auto crs = proj_create_projected_crs(ctxt,
+                                         d->getProjCRSName(),
+                                         baseCRS,
+                                         conversion,
+                                         cs);
+    proj_destroy(baseCRS);
+    proj_destroy(conversion);
+    proj_destroy(cs);
+    d->setPjCRS(crs);
+}
+
+/*! @endcond */

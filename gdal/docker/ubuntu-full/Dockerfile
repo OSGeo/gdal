@@ -264,7 +264,7 @@ RUN apt-get update; \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient20 libogdi3.2 libcfitsio5 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
-        libarmadillo8
+        libarmadillo8 libpython3.6
 
 # Order layers starting with less frequently varying ones
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED

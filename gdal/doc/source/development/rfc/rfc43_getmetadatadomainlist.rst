@@ -6,7 +6,7 @@ RFC 43: GDALMajorObject::GetMetadataDomainList
 
 Author: Even Rouault
 
-Contact: even dot rouault at mines-paris dot org
+Contact: even dot rouault at spatialys.com
 
 Summary
 -------

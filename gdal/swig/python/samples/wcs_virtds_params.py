@@ -7,10 +7,10 @@
 #  Name:     wcs_virtds_params.py
 #  Project:  GDAL Python Interface
 #  Purpose:  Generates MapServer WCS layer definition from a tileindex with mixed SRS
-#  Author:   Even Rouault, <even dot rouault at mines-paris dot org>
+#  Author:   Even Rouault, <even dot rouault at spatialys.com>
 #
 # ******************************************************************************
-#  Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+#  Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),

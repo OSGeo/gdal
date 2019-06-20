@@ -8,7 +8,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2010, Chris Yesson <chris.yesson@ioz.ac.uk>
-#  Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
+#  Copyright (c) 2010-2011, Even Rouault <even dot rouault at spatialys.com>
 #  Copyright (c) 2016, Piers Titus van der Torren <pierstitus@gmail.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a

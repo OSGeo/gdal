@@ -66,27 +66,10 @@ static bool HasZSTDCompression()
 static CPLString GetTmpFilename(const char* pszFilename,
                                 const char* pszExt)
 {
-    CPLString osTmpOverviewFilename;
-    // Check if we can create a temporary file close to the source
-    // dataset
-    VSIStatBufL sStatBuf;
-    if( VSIStatL(pszFilename, &sStatBuf) == 0 )
-    {
-        osTmpOverviewFilename.Printf("%s.%s", pszFilename, pszExt);
-        VSILFILE* fp = VSIFOpenL(osTmpOverviewFilename, "wb");
-        if( fp == nullptr )
-            osTmpOverviewFilename.clear();
-        else
-            VSIFCloseL(fp);
-    }
-    if( osTmpOverviewFilename.empty() )
-    {
-        osTmpOverviewFilename = CPLGenerateTempFilename(
-            CPLGetBasename(pszFilename));
-        osTmpOverviewFilename += '.';
-        osTmpOverviewFilename += pszExt;
-    }
-    return osTmpOverviewFilename;
+    CPLString osTmpFilename;
+    osTmpFilename.Printf("%s.%s", pszFilename, pszExt);
+    VSIUnlink(osTmpFilename);
+    return osTmpFilename;
 }
 
 /************************************************************************/
@@ -328,6 +311,7 @@ void COGRemoveWarpingOptions(CPLStringList& aosOptions)
 /************************************************************************/
 
 static std::unique_ptr<GDALDataset> CreateReprojectedDS(
+                                const char* pszDstFilename,
                                 GDALDataset *poSrcDS,
                                 const char * const* papszOptions,
                                 GDALProgressFunc pfnProgress,
@@ -422,7 +406,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
 
     CPLDebug("COG", "Reprojecting source dataset");
     GDALWarpAppOptionsSetProgress(psOptions, GDALScaledProgress, pScaledProgress );
-    CPLString osTmpFile(GetTmpFilename(poSrcDS->GetDescription(), "_warped.tif"));
+    CPLString osTmpFile(GetTmpFilename(pszDstFilename, "warped.tif.tmp"));
     auto hSrcDS = GDALDataset::ToHandle(poSrcDS);
     auto hRet = GDALWarp( osTmpFile, nullptr,
                           1, &hSrcDS,
@@ -502,8 +486,6 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLConfigOptionSetter oSetterReportDirtyBlockFlushing(
         "GDAL_REPORT_DIRTY_BLOCK_FLUSHING", "NO", true);
 
-    CPLString osSrcFilename(poSrcDS->GetDescription());
-
     double dfCurPixels = 0;
     double dfTotalPixelsToProcess = 0;
     GDALDataset* poCurDS = poSrcDS;
@@ -511,7 +493,8 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     if( COGHasWarpingOptions(papszOptions) )
     {
         m_poReprojectedDS =
-            CreateReprojectedDS(poCurDS, papszOptions, pfnProgress, pProgressData,
+            CreateReprojectedDS(pszFilename, poCurDS,
+                                papszOptions, pfnProgress, pProgressData,
                                 dfCurPixels, dfTotalPixelsToProcess);
         if( !m_poReprojectedDS )
             return nullptr;
@@ -605,14 +588,16 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
 
     CPLStringList aosOverviewOptions;
     aosOverviewOptions.SetNameValue("COMPRESS",
-                        HasZSTDCompression() ? "ZSTD" : "LZW");
+        CPLGetConfigOption("COG_TMP_COMPRESSION", // only for debug purposes
+                        HasZSTDCompression() ? "ZSTD" : "LZW"));
     aosOverviewOptions.SetNameValue("NUM_THREADS",
                         CSLFetchNameValue(papszOptions, "NUM_THREADS"));
+    aosOverviewOptions.SetNameValue("BIGTIFF", "YES");
 
     if( bGenerateMskOvr )
     {
         CPLDebug("COG", "Generating overviews of the mask");
-        m_osTmpMskOverviewFilename = GetTmpFilename(osSrcFilename, "msk.ovr.tmp");
+        m_osTmpMskOverviewFilename = GetTmpFilename(pszFilename, "msk.ovr.tmp");
         GDALRasterBand* poSrcMask = poFirstBand->GetMaskBand();
 
         double dfNextPixels = dfCurPixels + double(nXSize) * nYSize / 3;
@@ -641,7 +626,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     if( bGenerateOvr )
     {
         CPLDebug("COG", "Generating overviews of the imagery");
-        m_osTmpOverviewFilename = GetTmpFilename(osSrcFilename, "ovr.tmp");
+        m_osTmpOverviewFilename = GetTmpFilename(pszFilename, "ovr.tmp");
         std::vector<GDALRasterBand*> apoSrcBands;
         for( int i = 0; i < nBands; i++ )
             apoSrcBands.push_back( poCurDS->GetRasterBand(i+1) );
@@ -655,6 +640,10 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                 pfnProgress, pProgressData );
         dfCurPixels = dfNextPixels;
 
+        if( nBands > 1 )
+        {
+            aosOverviewOptions.SetNameValue("INTERLEAVE", "PIXEL");
+        }
         if( !m_osTmpMskOverviewFilename.empty() )
         {
             aosOverviewOptions.SetNameValue("MASK_OVERVIEW_DATASET",

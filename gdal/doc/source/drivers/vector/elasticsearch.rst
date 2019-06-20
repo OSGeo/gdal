@@ -279,7 +279,8 @@ options:
    will be written as GeoJSON Feature objects. If another mapping name
    is chosen, a more "flat" structure will be used.
 -  **MAPPING**\ =filename or JSon. Filename from which to read a
-   user-defined mapping, or mapping as serialized JSon.
+   user-defined mapping, or mapping as serialized JSon. This option is
+   ignored when converting to Elasticsearch >=7 (see `Removal of mapping types <https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html>`__).
 -  **WRITE_MAPPING**\ =filename. Creates a mapping file that can be
    modified by the user prior to insert in to the index. No feature will
    be written. This option is exclusive with MAPPING.

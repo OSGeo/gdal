@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -716,3 +716,23 @@ def test_transformer_longlat_wrap_outside_180():
     assert success
     assert abs(pnt[0] - 359.5) <= 0.000001, pnt
     assert abs(pnt[1] - 0.5) <= 0.000001, pnt
+
+
+
+###############################################################################
+# Test reprojection transformer without reverse path
+# NOTE: in case the inverse airy method is implemented some day, this test
+# might fail
+
+def test_transformer_no_reverse_method():
+    tr = gdal.Transformer(None, None, ['SRC_SRS=+proj=longlat +ellps=GRS80', 'DST_SRS=+proj=airy +ellps=GRS80'])
+    assert tr
+
+    (success, pnt) = tr.TransformPoint(0, 2, 49)
+    assert success
+    assert abs(pnt[0] - 141270.54731856665) <= 1e-3, pnt
+    assert abs(pnt[1] - 4656605.104980032) <= 1e-3, pnt
+
+    with gdaltest.error_handler():
+        (success, pnt) = tr.TransformPoint(1, 2, 49)
+    assert not success

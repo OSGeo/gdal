@@ -6,7 +6,7 @@ RFC 45: GDAL datasets and raster bands as virtual memory mappings
 
 Authors: Even Rouault
 
-Contact: even dot rouault at mines dash paris dot org
+Contact: even dot rouault at spatialys.com
 
 Status: Adopted, implemented
 

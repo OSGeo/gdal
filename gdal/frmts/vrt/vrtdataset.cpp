@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1127,6 +1127,9 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 /**
  * @see VRTDataset::VRTAddBand().
+ *
+ * @note The return type of this function is int, but the actual values
+ * returned are of type CPLErr.
  */
 
 int CPL_STDCALL VRTAddBand( VRTDatasetH hDataset, GDALDataType eType,

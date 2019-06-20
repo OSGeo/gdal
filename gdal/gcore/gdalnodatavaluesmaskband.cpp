@@ -5,10 +5,10 @@
  *           a default band mask based on the NODATA_VALUES metadata item.
  *           A pixel is considered nodata in all bands if and only if all bands
  *           match the corresponding value in the NODATA_VALUES tuple
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot ogr>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

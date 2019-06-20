@@ -3,10 +3,10 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRESRIJSONReader class (OGR ESRIJSON Driver)
  *           to read ESRI Feature Service REST data
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2007, Mateusz Loskot
  * Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
  *

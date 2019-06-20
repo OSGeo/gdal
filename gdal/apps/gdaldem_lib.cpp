@@ -3,13 +3,13 @@
  * Project:  GDAL DEM Utilities
  * Purpose:
  * Authors:  Matthew Perry, perrygeo at gmail.com
- *           Even Rouault, even dot rouault at mines dash paris dot org
+ *           Even Rouault, even dot rouault at spatialys.com
  *           Howard Butler, hobu.inc at gmail.com
  *           Chris Yesson, chris dot yesson at ioz dot ac dot uk
  *
  ******************************************************************************
  * Copyright (c) 2006, 2009 Matthew Perry
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  * Portions derived from GRASS 4.1 (public domain) See
  * http://trac.osgeo.org/gdal/ticket/2975 for more information regarding
  * history of this code

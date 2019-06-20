@@ -64,7 +64,14 @@ General creation options
 
 -  **NUM_THREADS=number_of_threads/ALL_CPUS**: Enable
    multi-threaded compression by specifying the number of worker
-   threads. Default is compression in the main thread.
+   threads. Default is compression in the main thread. This also determines
+   the number of threads used when reprojection is done with the TILING_SCHEME
+   or TARGET_SRS creation options.
+
+   .. note::
+
+        Overview generation by itself, which can take most of the
+        total processing time, is not multithreaded currently.
 
 -  **PREDICTOR=[YES/NO]**: Set the predictor for LZW, DEFLATE and ZSTD
    compression. The default is NO.

@@ -1045,6 +1045,20 @@ def test_ogr_mvt_write_conf():
                         'description': 'the layer',
                         'minzoom': 1,
                         'maxzoom': 2}}
+    with gdaltest.tempfile('/vsimem/conf.json', json.dumps(conf)):
+        out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds,
+                                    format='MVT', datasetCreationOptions=["CONF=/vsimem/conf.json"])
+    assert out_ds is not None
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/outmvt/1')
+    assert out_ds is not None
+    out_lyr = out_ds.GetLayerByName('TheLayer')
+    assert out_lyr
+    out_ds = None
+
+    gdal.RmdirRecursive('/vsimem/outmvt')
+
     out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds,
                                   format='MVT', datasetCreationOptions=["CONF=%s" % json.dumps(conf)])
     assert out_ds is not None
@@ -1053,6 +1067,7 @@ def test_ogr_mvt_write_conf():
     out_ds = ogr.Open('/vsimem/outmvt/1')
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName('TheLayer')
+    assert out_lyr
     out_f = out_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(out_f, 'MULTIPOINT (498980.920645632 997961.84129126)') != 0:
         out_f.DumpReadable()

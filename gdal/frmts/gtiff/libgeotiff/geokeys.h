@@ -37,7 +37,9 @@ typedef enum {
    BaseGeoKey   =  1024,               /* First valid code */
 
 #  include "geokeys.inc"         /* geokey database */
-
+#define ONLY_GEOTIFF_V1_1_CHANGES
+#  include "geokeys_v1_1.inc"         /* geokey database */
+#undef ONLY_GEOTIFF_V1_1_CHANGES
    ReservedEndGeoKey  =  32767,
 
    /* Key space available for Private or internal use */
@@ -46,6 +48,5 @@ typedef enum {
 
    EndGeoKey = 65535             /* Largest Possible GeoKey ID */
 } geokey_t;
-
 
 #endif /* LIBGEOTIFF_GEOKEYS_H_ */

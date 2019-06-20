@@ -49,7 +49,7 @@
 "  <Option name='MAXZOOM' scope='vector' type='int' min='0' max='22' " \
         "description='Maximum zoom level' default='5'/>" \
 "  <Option name='CONF' scope='vector' type='string' " \
-        "description='Layer configuration as a JSon serialized string'/>" \
+        "description='Layer configuration as a JSon serialized string, or a filename pointing to a JSon file'/>" \
 "  <Option name='SIMPLIFICATION' scope='vector' type='float' " \
         "description='Simplification factor'/>" \
 "  <Option name='SIMPLIFICATION_MAX_ZOOM' scope='vector' type='float' " \

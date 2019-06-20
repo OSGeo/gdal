@@ -3,7 +3,7 @@
  * Name:     cpl_time.cpp
  * Project:  CPL - Common Portability Library
  * Purpose:  Time functions.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
  *

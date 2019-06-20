@@ -6,7 +6,7 @@ RFC 7: Use VSILFILE for VSI*L Functions
 
 Author: Even Rouault (Eric Doenges is original author)
 
-Contact: even dot rouault at mines dash paris dot org, Eric.Doenges@gmx.net
+Contact: even dot rouault at spatialys.com, Eric.Doenges@gmx.net
 
 Status: Adopted
 

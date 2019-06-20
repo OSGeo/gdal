@@ -26,7 +26,8 @@
 #include "tendian.h"
 #include "degrib2.h"
 #include "degrib1.h"
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
 #include "tdlpack.h"
 #endif
 #include "myerror.h"
@@ -1087,7 +1088,8 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
             //fclose (fp);
             return -12;
          }
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
       } else if (version == -1) {
          if (TDLP_Inventory (fp, gribLen, inv) != 0) {
             preErrSprintf ("Inside GRIB2Inventory \n");
@@ -1207,7 +1209,8 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
       {
       uInt4 increment;
       /* Continue on to the next GRIB2 message. */
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
       if (version == -1) {
          /* TDLPack uses 4 bytes for FORTRAN record size, then another 8
           * bytes for the size of the record (so FORTRAN can see it), then
@@ -1331,7 +1334,8 @@ int GRIB2RefTime (const char *filename, double *refTime)
             //fclose (fp);
             return -12;
          }
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
       } else if (version == -1) {
          if (TDLP_RefTime (fp, gribLen, &(refTime1)) != 0) {
             preErrSprintf ("Inside TDLP_RefTime\n");

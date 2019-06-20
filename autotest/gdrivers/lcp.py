@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for LCP driver.
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a

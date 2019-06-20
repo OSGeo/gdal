@@ -8,7 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2002, i3 - information integration and imaging
  *                          Fort Collin, CO
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2861,8 +2861,10 @@ void *GDALCreateReprojectionTransformerEx(
     psInfo->poForwardTransform = poForwardTransform;
     psInfo->dfTime = CPLAtof(CSLFetchNameValueDef(papszOptions,
                                                   "COORDINATE_EPOCH", "0"));
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     psInfo->poReverseTransform =
         OGRCreateCoordinateTransformation(poDstSRS, poSrcSRS, optionsInv);
+    CPLPopErrorHandler();
 
     memcpy( psInfo->sTI.abySignature,
             GDAL_GTI2_SIGNATURE,
@@ -2938,8 +2940,24 @@ int GDALReprojectionTransform( void *pTransformArg, int bDstToSrc,
     }
 
     if( bDstToSrc )
-        bSuccess = psInfo->poReverseTransform->Transform(
-            nPointCount, padfX, padfY, padfZ, padfT, panSuccess );
+    {
+        if( psInfo->poReverseTransform == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Inverse coordinate transformation cannot be instantiated");
+            if( panSuccess )
+            {
+                for( int i = 0; i < nPointCount; i++ )
+                    panSuccess[i] = FALSE;
+            }
+            bSuccess = false;
+        }
+        else
+        {
+            bSuccess = psInfo->poReverseTransform->Transform(
+                nPointCount, padfX, padfY, padfZ, padfT, panSuccess );
+        }
+    }
     else
         bSuccess = psInfo->poForwardTransform->Transform(
             nPointCount, padfX, padfY, padfZ, padfT, panSuccess );

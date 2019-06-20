@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2011, Adam Estrada
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -157,46 +157,59 @@ void OGRElasticDataSource::FetchMapping(const char* pszIndexName)
             poMappings = CPL_json_object_object_get(poLayerObj, "mappings");
         if( poMappings && json_object_get_type(poMappings) == json_type_object )
         {
-            json_object_iter it;
-            it.key = nullptr;
-            it.val = nullptr;
-            it.entry = nullptr;
             std::vector<CPLString> aosMappings;
-            json_object_object_foreachC( poMappings, it )
+            if (m_nMajorVersion < 7)
             {
-                aosMappings.push_back(it.key);
-            }
-            if( aosMappings.size() == 1 &&
-                (aosMappings[0] == "FeatureCollection" || aosMappings[0] == "default") )
-            {
-                m_oSetLayers.insert(pszIndexName);
-                OGRElasticLayer* poLayer = new OGRElasticLayer(
-                    pszIndexName, pszIndexName, aosMappings[0], this, papszOpenOptions);
-                poLayer->InitFeatureDefnFromMapping(
-                    CPL_json_object_object_get(poMappings, aosMappings[0]),
-                    "", std::vector<CPLString>());
-                m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
-            }
-            else
-            {
-                for(size_t i=0; i<aosMappings.size();i++)
+                json_object_iter it;
+                it.key = nullptr;
+                it.val = nullptr;
+                it.entry = nullptr;
+                json_object_object_foreachC( poMappings, it )
                 {
-                    CPLString osLayerName(pszIndexName + CPLString("_") + aosMappings[i]);
-                    if( m_oSetLayers.find(osLayerName) == m_oSetLayers.end() )
-                    {
-                        m_oSetLayers.insert(osLayerName);
-                        OGRElasticLayer* poLayer = new OGRElasticLayer(
-                            osLayerName,
-                            pszIndexName, aosMappings[i], this, papszOpenOptions);
-                        poLayer->InitFeatureDefnFromMapping(
-                            CPL_json_object_object_get(poMappings, aosMappings[i]),
-                            "", std::vector<CPLString>());
+                    aosMappings.push_back(it.key);
+                }
 
-                        m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+                if( aosMappings.size() == 1 &&
+                    (aosMappings[0] == "FeatureCollection" || aosMappings[0] == "default") )
+                {
+                    m_oSetLayers.insert(pszIndexName);
+                    OGRElasticLayer* poLayer = new OGRElasticLayer(
+                        pszIndexName, pszIndexName, aosMappings[0], this, papszOpenOptions);
+                    poLayer->InitFeatureDefnFromMapping(
+                        CPL_json_object_object_get(poMappings, aosMappings[0]),
+                        "", std::vector<CPLString>());
+                    m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+                }
+                else
+                {
+                    for(size_t i=0; i<aosMappings.size();i++)
+                    {
+                        CPLString osLayerName(pszIndexName + CPLString("_") + aosMappings[i]);
+                        if( m_oSetLayers.find(osLayerName) == m_oSetLayers.end() )
+                        {
+                            m_oSetLayers.insert(osLayerName);
+                            OGRElasticLayer* poLayer = new OGRElasticLayer(
+                                osLayerName,
+                                pszIndexName, aosMappings[i], this, papszOpenOptions);
+                            poLayer->InitFeatureDefnFromMapping(
+                                CPL_json_object_object_get(poMappings, aosMappings[i]),
+                                "", std::vector<CPLString>());
+
+                            m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+                        }
                     }
                 }
             }
+            else
+            {
+                m_oSetLayers.insert(pszIndexName);
+                OGRElasticLayer* poLayer = new OGRElasticLayer(
+                   pszIndexName, pszIndexName, "", this, papszOpenOptions);
+                poLayer->InitFeatureDefnFromMapping(poMappings, "", std::vector<CPLString>());
+                m_apoLayers.push_back(std::unique_ptr<OGRElasticLayer>(poLayer));
+            }
         }
+
 
         json_object_put(poRes);
     }
@@ -353,8 +366,9 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     CPLErrorNum nLastErrorNo = CPLGetLastErrorNo();
     CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
-    const char* pszMappingName = CSLFetchNameValueDef(papszOptions,
-                                        "MAPPING_NAME", "FeatureCollection");
+    const char* pszMappingName = m_nMajorVersion < 7
+        ? CSLFetchNameValueDef(papszOptions, "MAPPING_NAME", "FeatureCollection")
+        : nullptr;
 
     // Check if the index and mapping exists
     bool bIndexExists = false;
@@ -373,16 +387,25 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
         bIndexExists = true;
         json_object* poIndex = CPL_json_object_object_get(poIndexResponse,
                                                           osLaunderedName);
-        if( poIndex != nullptr )
+        if (m_nMajorVersion < 7)
         {
-            json_object* poMappings = CPL_json_object_object_get(poIndex,
-                                                                 "mappings");
-            if( poMappings != nullptr )
+            if( poIndex != nullptr )
             {
-                bMappingExists = CPL_json_object_object_get(
-                                    poMappings, pszMappingName) != nullptr;
-                bSeveralMappings = json_object_object_length(poMappings) > 1;
+                json_object* poMappings = CPL_json_object_object_get(poIndex,
+                                                                     "mappings");
+                if( poMappings != nullptr )
+                {
+                    bMappingExists = CPL_json_object_object_get(
+                                        poMappings, pszMappingName) != nullptr;
+                    bSeveralMappings = json_object_object_length(poMappings) > 1;
+                }
             }
+        }
+        else
+        {
+            // Indexes in Elasticsearch 7+ can not have multiple types,
+            // so essentially this will always be true.
+            bMappingExists = true;
         }
         json_object_put(poIndexResponse);
     }
@@ -397,7 +420,16 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
         {
             // Deletion of one mapping in an index was supported in ES 1.X, but
             // considered unsafe and removed in later versions
-            if( bSeveralMappings )
+            if (m_nMajorVersion >= 7)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "The index %s already exists. "
+                         "You have to delete the whole index. You can do that "
+                         "with OVERWITE_INDEX=YES",
+                         osLaunderedName.c_str());
+                return nullptr;
+            }
+            else if( bSeveralMappings )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "%s/%s already exists, but other mappings also exist "
@@ -411,8 +443,16 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
         }
         else
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "%s/%s already exists",
-                    osLaunderedName.c_str(), pszMappingName);
+            if (m_nMajorVersion < 7)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "%s/%s already exists",
+                         osLaunderedName.c_str(), pszMappingName);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "%s already exists",
+                         osLaunderedName.c_str());
+            }
             return nullptr;
         }
     }
@@ -468,8 +508,10 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
             }
         }
 
-        CPLString osMappingURL(CPLSPrintf("%s/%s/_mapping/%s",
-                            GetURL(), osLaunderedName.c_str(), pszMappingName));
+        CPLString osMappingURL = CPLSPrintf("%s/%s/_mapping",
+                            GetURL(), osLaunderedName.c_str());
+        if (m_nMajorVersion < 7)
+            osMappingURL += CPLSPrintf("/%s", pszMappingName);
         if( !UploadFile(osMappingURL, osLayerMapping.c_str()) )
         {
             return nullptr;
@@ -637,7 +679,7 @@ bool OGRElasticDataSource::CheckVersion()
         CPLError(CE_Failure, CPLE_AppDefined, "Server version not found");
         return false;
     }
-    if( m_nMajorVersion < 1 || m_nMajorVersion > 6 )
+    if( m_nMajorVersion < 1 || m_nMajorVersion > 7 )
     {
         CPLDebug("ES", "Server version untested with current driver");
     }

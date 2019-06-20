@@ -535,6 +535,18 @@ Creation Options
    the standard way will be used, with the addition of a ESRI_PE WKT
    string as the value of PCSCitationGeoKey.
 
+-  **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: (GDAL >= 3.1.0) Select the vesion of
+   the GeoTIFF standard used to encode georeferencing information. ``1.0``
+   corresponds to the original
+   `1995, GeoTIFF Revision 1.0, by Ritter & Ruth <http://geotiff.maptools.org/spec/geotiffhome.html>`_.
+   ``1.1`` corresponds to the OGC standard 19-008, which is an evolution of 1.0,
+   which clear ambiguities and fix inconsistencies mostly in the processing of
+   the vertical part of a CRS.
+   ``AUTO`` mode (default value) will generally select 1.0, unless the CRS to
+   encode has a vertical component or is a 3D CRS, in which case 1.1 is used.
+
+   .. note:: Write support for GeoTIFF 1.1 requires libgeotiff 1.6.0 or later.
+
 Subdatasets
 ~~~~~~~~~~~
 
@@ -654,8 +666,9 @@ the default behaviour of the GTiff driver.
    w.r.t geotransform. See :ref:`rfc-33`
    for more details. Default value : FALSE
 -  GTIFF_REPORT_COMPD_CS: (GDAL >= 1.9.0). Can be set to TRUE to avoid
-   stripping the vertical CS of compound CS when reading the SRS of a
-   file. Does not affect the writing side. Default value : FALSE
+   stripping the vertical CRS of compound CRS when reading the SRS of a
+   file. Does not affect the writing side. Default value : FALSE for GeoTIFF 1.0
+   files, or TRUE (starting with GDAL 3.1) for GeoTIFF 1.1 files.
 -  GDAL_ENABLE_TIFF_SPLIT : Can be set to FALSE to avoid
    all-in-one-strip files being presented as having. Default value :
    TRUE
