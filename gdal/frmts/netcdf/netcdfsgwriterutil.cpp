@@ -81,9 +81,9 @@ namespace nccfdriver
 
 			// Get node count
 			// First count exterior ring
-			OGRLinearRing & counting_ring = *r_defnPolygon.getExteriorRing();
+			OGRLinearRing & exterior_ring = *r_defnPolygon.getExteriorRing();
 
-			size_t outer_ring_ct = counting_ring.getNumPoints();
+			size_t outer_ring_ct = exterior_ring.getNumPoints();
 		
 			this->total_point_count += outer_ring_ct;
 			this->ppart_node_count.push_back(outer_ring_ct);
@@ -97,9 +97,9 @@ namespace nccfdriver
 			for(int iRingCt = 0; iRingCt < r_defnPolygon.getNumInteriorRings(); iRingCt++)
 			{
 				this->hasInteriorRing = true;
-				counting_ring = *r_defnPolygon.getInteriorRing(iRingCt);
-				this->total_point_count += counting_ring.getNumPoints();
-				this->ppart_node_count.push_back(counting_ring.getNumPoints());
+				OGRLinearRing & iring = *r_defnPolygon.getInteriorRing(iRingCt);
+				this->total_point_count += iring.getNumPoints();
+				this->ppart_node_count.push_back(iring.getNumPoints());
 				this->total_part_count++;
 			}
 		}
@@ -116,9 +116,9 @@ namespace nccfdriver
 			{
 				OGRPolygon & r_Pgon = dynamic_cast<OGRPolygon&>(*r_defnMPolygon.getGeometryRef(itr));
 				
-				OGRLinearRing & counting_ring = *r_Pgon.getExteriorRing();
+				OGRLinearRing & exterior_ring = *r_Pgon.getExteriorRing();
 
-				size_t outer_ring_ct = counting_ring.getNumPoints();
+				size_t outer_ring_ct = exterior_ring.getNumPoints();
 		
 				this->total_point_count += outer_ring_ct;
 				this->ppart_node_count.push_back(outer_ring_ct);
@@ -132,10 +132,10 @@ namespace nccfdriver
 
 				for(int iRingCt = 0; iRingCt < r_Pgon.getNumInteriorRings(); iRingCt++)
 				{
+					OGRLinearRing & iring = *r_Pgon.getInteriorRing(iRingCt);
 					this->hasInteriorRing = true;
-					counting_ring = *r_Pgon.getInteriorRing(iRingCt);
-					this->total_point_count += counting_ring.getNumPoints();
-					this->ppart_node_count.push_back(counting_ring.getNumPoints());
+					this->total_point_count += iring.getNumPoints();
+					this->ppart_node_count.push_back(iring.getNumPoints());
 					this->total_part_count++;
 					this->part_at_ind_interior.push_back(true);
 				}
@@ -196,19 +196,20 @@ namespace nccfdriver
 
 			int polygon_num = 0;
 			int ring_number = 0;
+			size_t pno_itr = part_no;
 
 			// Find the right polygon, and the right ring number
 			for(int pind = 0; pind < as_mpolygon_ref->getNumGeometries(); pind++)
 			{
 				OGRPolygon * itr_poly = dynamic_cast<OGRPolygon*>(as_mpolygon_ref->getGeometryRef(pind));
-				if(part_no < (itr_poly->getNumInteriorRings() + 1)) // + 1 is counting the EXTERIOR ring
+				if(pno_itr < (itr_poly->getNumInteriorRings() + 1)) // + 1 is counting the EXTERIOR ring
 				{
-					ring_number = static_cast<int>(part_no);	
+					ring_number = static_cast<int>(pno_itr);	
 				}
 
 				else
 				{
-					part_no -= (itr_poly->getNumInteriorRings() + 1);
+					pno_itr -= (itr_poly->getNumInteriorRings() + 1);
 					polygon_num++;
 				}
 			}
@@ -275,7 +276,16 @@ namespace nccfdriver
 					if(ft.getType() == POLYGON)
 						interior_ring_fl = part_no == 0 ? 0 : 1;
 					if(ft.getType() == MULTIPOLYGON)
-						ft.IsPartAtIndInteriorRing(static_cast<int>(part_no)) ? 1 : 0; 
+					{
+						if(ft.IsPartAtIndInteriorRing(static_cast<int>(part_no)))
+						{
+							interior_ring_fl = 1;
+						}
+						else
+						{
+							interior_ring_fl = 0;
+						}  
+					}
 					nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
 				}
 
