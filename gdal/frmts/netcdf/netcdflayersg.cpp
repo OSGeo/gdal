@@ -106,6 +106,12 @@ namespace nccfdriver
 
 		return ret;
 	}
+
+	bool OGRHasZandSupported(OGRwkbGeometryType type)
+	{
+		return type == wkbPoint25D || type == wkbLineString25D || type == wkbPolygon25D ||
+			type == wkbMultiPoint25D || type == wkbMultiLineString25D || type == wkbMultiPolygon25D;	
+	}
 }
 
 CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)

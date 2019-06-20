@@ -529,12 +529,17 @@ bool netCDFLayer::Create(char **papszOptions,
 		// Write a geometry container
 		OGRwkbGeometryType geometryContainerType = m_poFeatureDefn->GetGeomType();
 		std::vector<std::string> coordNames;
-		std::string strXVarName = "lon";
-		std::string strYVarName = "lat";
-		if(strXVarName != "")
-			coordNames.push_back(strXVarName);
-		if(strXVarName != "")
-			coordNames.push_back(strYVarName);
+		std::string strXVarName = std::string(this->GetName()) + std::string("_coordX");
+		std::string strYVarName = std::string(this->GetName()) + std::string("_coordY");
+		coordNames.push_back(strXVarName);
+		coordNames.push_back(strYVarName);
+
+		if(nccfdriver::OGRHasZandSupported(geometryContainerType))
+		{
+			std::string strZVarName = std::string(this->GetName()) + std::string("_coordZ");
+			coordNames.push_back(strZVarName);	
+		}
+
 		m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
 		nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID);
 
