@@ -500,12 +500,14 @@ char** CPLHTTPGetOptionsFromEnv()
 /************************************************************************/
 
 double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
-                               const char* pszErrBuf)
+                               const char* pszErrBuf,
+                               const char* pszCurlError)
 {
     if( response_code == 429 || response_code == 500 ||
         (response_code >= 502 && response_code <= 504) ||
         // S3 sends some client timeout errors as 400 Client Error
-        (response_code == 400 && pszErrBuf && strstr(pszErrBuf, "RequestTimeout")) )
+        (response_code == 400 && pszErrBuf && strstr(pszErrBuf, "RequestTimeout")) ||
+        (pszCurlError && strstr(pszCurlError, "Connection timed out")) )
     {
         // Use an exponential backoff factor of 2 plus some random jitter
         // We don't care about cryptographic quality randomness, hence:
@@ -904,12 +906,9 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
     double dfRetryDelaySecs = CPLAtof(pszRetryDelay);
     int nMaxRetries = atoi(pszMaxRetries);
     int nRetryCount = 0;
-    bool bRequestRetry;
 
-    do
+    while(true)
     {
-        bRequestRetry = false;
-
 /* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
 /* -------------------------------------------------------------------- */
@@ -925,6 +924,40 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
                            &(psResult->pszContentType) );
         if( psResult->pszContentType != nullptr )
             psResult->pszContentType = CPLStrdup(psResult->pszContentType);
+
+        long response_code = 0;
+        curl_easy_getinfo(http_handle, CURLINFO_RESPONSE_CODE,
+                            &response_code);
+        if( response_code != 200 )
+        {
+            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                    static_cast<int>(response_code),
+                    dfRetryDelaySecs,
+                    reinterpret_cast<const char*>(psResult->pabyData),
+                    szCurlErrBuf);
+            if( dfNewRetryDelay > 0 && nRetryCount < nMaxRetries )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "HTTP error code: %d - %s. "
+                            "Retrying again in %.1f secs",
+                            static_cast<int>(response_code), pszURL,
+                            dfRetryDelaySecs);
+                CPLSleep(dfRetryDelaySecs);
+                dfRetryDelaySecs = dfNewRetryDelay;
+                nRetryCount++;
+
+                CPLFree(psResult->pszContentType);
+                psResult->pszContentType = nullptr;
+                CSLDestroy(psResult->papszHeaders);
+                psResult->papszHeaders = nullptr;
+                CPLFree(psResult->pabyData);
+                psResult->pabyData = nullptr;
+                psResult->nDataLen = 0;
+                psResult->nDataAlloc = 0;
+
+                continue;
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Have we encountered some sort of error?                         */
@@ -971,52 +1004,17 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         }
         else
         {
-            // HTTP errors do not trigger curl errors. But we need to
-            // propagate them to the caller though.
-            long response_code = 0;
-            curl_easy_getinfo(http_handle, CURLINFO_RESPONSE_CODE,
-                              &response_code);
-
             if( response_code >= 400 && response_code < 600 )
             {
-                const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                    static_cast<int>(response_code),
-                    dfRetryDelaySecs,
-                    reinterpret_cast<const char*>(psResult->pabyData));
-                if( dfNewRetryDelay > 0 && nRetryCount < nMaxRetries )
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "HTTP error code: %d - %s. "
-                             "Retrying again in %.1f secs",
-                             static_cast<int>(response_code), pszURL,
-                             dfRetryDelaySecs);
-                    CPLSleep(dfRetryDelaySecs);
-                    dfRetryDelaySecs = dfNewRetryDelay;
-                    nRetryCount++;
-
-                    CPLFree(psResult->pszContentType);
-                    psResult->pszContentType = nullptr;
-                    CSLDestroy(psResult->papszHeaders);
-                    psResult->papszHeaders = nullptr;
-                    CPLFree(psResult->pabyData);
-                    psResult->pabyData = nullptr;
-                    psResult->nDataLen = 0;
-                    psResult->nDataAlloc = 0;
-
-                    bRequestRetry = true;
-                }
-                else
-                {
-                    psResult->pszErrBuf =
-                        CPLStrdup(CPLSPrintf("HTTP error code : %d",
-                                             static_cast<int>(response_code)));
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "%s", psResult->pszErrBuf);
-                }
+                psResult->pszErrBuf =
+                    CPLStrdup(CPLSPrintf("HTTP error code : %d",
+                                            static_cast<int>(response_code)));
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "%s", psResult->pszErrBuf);
             }
         }
+        break;
     }
-    while( bRequestRetry );
 
     if( !pszPersistent )
         curl_easy_cleanup( http_handle );
