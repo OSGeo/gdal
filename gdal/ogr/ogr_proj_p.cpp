@@ -149,3 +149,25 @@ void OSRSetPROJSearchPaths( const char* const * papszPaths )
     g_searchPathGenerationCounter ++;
     g_aosSearchpaths.Assign(CSLDuplicate(papszPaths), true);
 }
+
+/************************************************************************/
+/*                         OSRGetPROJVersion()                          */
+/************************************************************************/
+
+/** \brief Get the PROJ version
+ *
+ * @param pnMajor Pointer to major version number, or NULL
+ * @param pnMinor Pointer to minor version number, or NULL
+ * @param pnPatch Pointer to patch version number, or NULL
+ * @since GDAL 3.0.1
+ */
+void OSRGetPROJVersion( int* pnMajor, int* pnMinor, int* pnPatch )
+{
+    auto info = proj_info();
+    if (pnMajor)
+        *pnMajor = info.major;
+    if (pnMinor)
+        *pnMinor = info.minor;
+    if (pnPatch)
+        *pnPatch = info.patch;
+}

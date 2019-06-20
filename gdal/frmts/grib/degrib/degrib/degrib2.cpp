@@ -29,7 +29,8 @@
 //#include "write.h"
 #include "degrib2.h"
 #include "degrib1.h"
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
 #include "tdlpack.h"
 #endif
 #include "grib2api.h"
@@ -124,7 +125,8 @@ int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
    } wordType;
 
    uChar gribMatch = 0; /* Counts how many letters in GRIB we've matched. */
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
    uChar tdlpMatch = 0; /* Counts how many letters in TDLP we've matched. */
 #endif
    wordType word;       /* Used to check that the edition is correct. */
@@ -154,7 +156,8 @@ int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
    }
 */
    while (
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
           (tdlpMatch != 4) && 
 #endif
           (gribMatch != 4)) {
@@ -169,7 +172,8 @@ int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
                }
             }
          }
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
          else if ((*buff)[i] == 'T') {
             if (((*buff)[i + 1] == 'D') && ((*buff)[i + 2] == 'L') &&
                 ((*buff)[i + 3] == 'P')) {
@@ -223,7 +227,8 @@ int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
    *buffLen = curLen;
 
    word.li = sect0[1];
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
    if (tdlpMatch == 4) {
       if (word.buffer[3] != 0) {
          errSprintf ("ERROR: unexpected version of TDLP in SECT0\n");
@@ -936,7 +941,8 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
          free (buff);
          return 0;
       }
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
       else if (version == -1) {
          if (ReadTDLPRecord (fp, Grib_Data, grib_DataLen, meta, IS,
                              sect0, gribLen, majEarth, minEarth) != 0) {

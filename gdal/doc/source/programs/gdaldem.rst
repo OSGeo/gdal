@@ -356,7 +356,7 @@ This utility is also callable from C with :cpp:func:`GDALDEMProcessing`.
 Authors
 -------
 
-Matthew Perry perrygeo@gmail.com, Even Rouault even.rouault@mines-paris.org,
+Matthew Perry perrygeo@gmail.com, Even Rouault even.rouault@spatialys.com,
 Howard Butler hobu.inc@gmail.com, Chris Yesson chris.yesson@ioz.ac.uk
 
 Derived from code by Michael Shapiro, Olga Waupotitsch, Marjorie Larson, Jim Westervelt:

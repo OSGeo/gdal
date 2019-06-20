@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write round-tripping of SRS for GeoTIFF format.
-# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault, <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2011-2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -508,4 +508,87 @@ def test_tiff_srs_proj4(proj4):
     _test_tiff_srs(sr, False)
 
 
+def _create_geotiff1_1_from_copy_and_compare(srcfilename, options = []):
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
 
+    src_ds = gdal.Open(srcfilename)
+    tmpfile = '/vsimem/tmp.tif'
+    gdal.GetDriverByName('GTiff').CreateCopy(tmpfile, src_ds, options = options)
+    f = gdal.VSIFOpenL(tmpfile, 'rb')
+    data = gdal.VSIFReadL(1, 100000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink(tmpfile)
+    assert data == open(src_ds.GetDescription(), 'rb').read()
+
+
+def test_tiff_srs_read_epsg4326_geotiff1_1():
+    ds = gdal.Open('data/epsg4326_geotiff1_1.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityCode(None) == '4326'
+
+
+def test_tiff_srs_write_epsg4326_geotiff1_1():
+    _create_geotiff1_1_from_copy_and_compare('data/epsg4326_geotiff1_1.tif',
+                                             options = ['GEOTIFF_VERSION=1.1'])
+
+
+def test_tiff_srs_read_epsg26711_geotiff1_1():
+    ds = gdal.Open('data/epsg26711_geotiff1_1.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityCode(None) == '26711'
+
+
+def test_tiff_srs_write_epsg26711_geotiff1_1():
+    _create_geotiff1_1_from_copy_and_compare('data/epsg26711_geotiff1_1.tif',
+                                             options = ['GEOTIFF_VERSION=1.1'])
+
+
+def test_tiff_srs_read_epsg4326_3855_geotiff1_1():
+    ds = gdal.Open('data/epsg4326_3855_geotiff1_1.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetName() == 'WGS 84 + EGM2008 height'
+    assert sr.GetAuthorityCode('COMPD_CS|GEOGCS') == '4326'
+    assert sr.GetAuthorityCode('COMPD_CS|VERT_CS') == '3855'
+
+
+def test_tiff_srs_write_epsg4326_3855_geotiff1_1():
+    _create_geotiff1_1_from_copy_and_compare('data/epsg4326_3855_geotiff1_1.tif')
+
+
+def test_tiff_srs_read_epsg4979_geotiff1_1():
+    ds = gdal.Open('data/epsg4979_geotiff1_1.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityCode(None) == '4979'
+
+
+def test_tiff_srs_write_epsg4979_geotiff1_1():
+    _create_geotiff1_1_from_copy_and_compare('data/epsg4979_geotiff1_1.tif')
+
+
+# Deprecated way of conveying GeographicCRS 3D
+def test_tiff_srs_read_epsg4326_5030_geotiff1_1():
+    ds = gdal.Open('data/epsg4326_5030_geotiff1_1.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityCode(None) == '4979'
+
+
+def test_tiff_srs_read_epsg26711_3855_geotiff1_1():
+    ds = gdal.Open('data/epsg26711_3855_geotiff1_1.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetName() == 'NAD27 / UTM zone 11N + EGM2008 height'
+    assert sr.GetAuthorityCode('COMPD_CS|PROJCS') == '26711'
+    assert sr.GetAuthorityCode('COMPD_CS|VERT_CS') == '3855'
+
+
+def test_tiff_srs_write_epsg26711_3855_geotiff1_1():
+    _create_geotiff1_1_from_copy_and_compare('data/epsg26711_3855_geotiff1_1.tif')
+
+
+# ProjectedCRS 3D not really defined yet in GeoTIFF 1.1, but this is
+# a natural extension
+def test_tiff_srs_read_epsg32631_4979_geotiff1_1():
+    ds = gdal.Open('data/epsg32631_4979_geotiff1_1.tif')
+    sr = ds.GetSpatialRef()
+    # PROJ 6.0 didn't include the ID of the base CRS
+    assert sr.ExportToWkt().replace(',ID["EPSG",4979]','') == 'PROJCRS["WGS 84 / UTM zone 31N",BASEGEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4979]],CONVERSION["UTM zone 31N",METHOD["Transverse Mercator",ID["EPSG",9807]],PARAMETER["Latitude of natural origin",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",3,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9996,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",500000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",0,LENGTHUNIT["metre",1],ID["EPSG",8807]],ID["EPSG",16031]],CS[Cartesian,3],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1]],AXIS["ellipsoidal height (h)",up,ORDER[3],LENGTHUNIT["metre",1]]]'.replace(',ID["EPSG",4979]','')

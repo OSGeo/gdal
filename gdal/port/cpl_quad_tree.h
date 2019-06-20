@@ -5,11 +5,11 @@
  * Purpose:  Implementation of quadtree building and searching functions.
  *           Derived from shapelib and mapserver implementations
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- *           Even Rouault, <even dot rouault at mines dash paris dot org>
+ *           Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 1999-2008, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

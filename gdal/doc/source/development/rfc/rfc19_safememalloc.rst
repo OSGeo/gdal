@@ -6,7 +6,7 @@ RFC 19: Safer memory allocation in GDAL
 
 Author: Even Rouault
 
-Contact: even.rouault@mines-paris.org
+Contact: even.rouault@spatialys.com
 
 Status: Development
 

@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1930,7 +1930,7 @@ static bool GWKGetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 
     if( poWK->papanBandSrcValid != nullptr
         && poWK->papanBandSrcValid[iBand] != nullptr
-        && ((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
+        && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
               & (0x01 << (iSrcOffset & 0x1f)))) )
     {
         *pdfDensity = 0.0;

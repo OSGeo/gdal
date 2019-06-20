@@ -8,7 +8,7 @@
 # Author:   Etienne Tourigny <etourigny dot dev @ gmail dot com>
 #
 ###############################################################################
-# Copyright (c) 2013, Even Rouault <even dot rouault @ mines-paris dot org>
+# Copyright (c) 2013, Even Rouault <even dot rouault @ spatialys.com>
 # Copyright (c) 2014, Etienne Tourigny <etourigny dot dev @ gmail dot com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a

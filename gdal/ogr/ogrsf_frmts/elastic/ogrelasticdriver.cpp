@@ -105,7 +105,7 @@ void RegisterOGRElastic() {
     "<LayerCreationOptionList>"
     "  <Option name='INDEX_NAME' type='string' description='Name of the index to create (or reuse). By default the index name is the layer name.'/>"
     "  <Option name='INDEX_DEFINITION' type='string' description='Filename from which to read a user-defined index definition, or index definition as serialized JSon.'/>"
-    "  <Option name='MAPPING_NAME' type='string' description='Name of the mapping type within the index.' default='FeatureCollection'/>"
+    "  <Option name='MAPPING_NAME' type='string' description='(ES &lt; 7) Name of the mapping type within the index.' default='FeatureCollection'/>."
     "  <Option name='MAPPING' type='string' description='Filename from which to read a user-defined mapping, or mapping as serialized JSon.'/>"
     "  <Option name='WRITE_MAPPING' type='string' description='Filename where to write the OGR generated mapping.'/>"
     "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing type mapping with the layer name to be created' default='NO'/>"

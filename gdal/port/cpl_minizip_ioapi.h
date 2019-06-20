@@ -4,7 +4,7 @@
       - change fill_fopen_filefunc to cpl_fill_fopen_filefunc
       - Add support for ZIP64
 
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 
    Original licence available in port/LICENCE_minizip
 */

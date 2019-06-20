@@ -10,7 +10,7 @@
  * Copyright (c) 2008 Paul Ramsey
  * Copyright (c) 2002 Refractions Research
  * Copyright (C) 2004-2008 René Nyffenegger
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * (see also part way down the file for license terms for René's code)
  *

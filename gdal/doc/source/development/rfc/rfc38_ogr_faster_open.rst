@@ -6,7 +6,7 @@ RFC 38: OGR Faster Open
 
 Author: Even Rouault
 
-Contact: even dot rouault at mines dash paris dot org
+Contact: even dot rouault at spatialys.com
 
 Status: Withdrawn.
 

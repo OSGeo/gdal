@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Simon Perkins
- * Copyright (c) 2008-2018, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2018, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2018, Chiara Marmo <chiara dot marmo at u-psud dot fr>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -647,6 +647,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      ImportFromESRIWisconsinWKT(
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin,
         const char* pszUnitsName, const char* pszCRSName = nullptr );
+
+/*! @cond Doxygen_Suppress */
+    void UpdateCoordinateSystemFromGeogCRS();
+/*! @endcond */
 
     static OGRSpatialReference* GetWGS84SRS();
 

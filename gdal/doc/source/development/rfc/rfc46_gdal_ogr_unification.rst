@@ -6,7 +6,7 @@ RFC 46: GDAL/OGR unification
 
 Author: Even Rouault
 
-Contact: even dot rouault at mines dash paris dot org
+Contact: even dot rouault at spatialys.com
 
 Status: Adopted, implemented in GDAL 2.0
 

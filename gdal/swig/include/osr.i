@@ -1373,6 +1373,38 @@ void GetCRSInfoListFromDatabase( const char *authName,
 
 #endif // SWIGPYTHON
 
+%inline %{
+void SetPROJSearchPath( const char *utf8_path )
+{
+    const char* const apszPaths[2] = { utf8_path, NULL };
+    OSRSetPROJSearchPaths(apszPaths);
+}
+%}
+
+%apply (char **options) { (char **) };
+%inline %{
+void SetPROJSearchPaths( char** paths )
+{
+    OSRSetPROJSearchPaths(paths);
+}
+%}
+%clear (char **);
+
+%inline %{
+int GetPROJVersionMajor()
+{
+    int num;
+    OSRGetPROJVersion(&num, NULL, NULL);
+    return num;
+}
+
+int GetPROJVersionMinor()
+{
+    int num;
+    OSRGetPROJVersion(NULL, &num, NULL);
+    return num;
+}
+%}
 
 #ifdef SWIGPYTHON
 %thread;

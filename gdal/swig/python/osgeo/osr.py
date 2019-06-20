@@ -1534,6 +1534,22 @@ def OSRCRSInfo_projection_method_get(*args):
 def GetCRSInfoListFromDatabase(*args):
     """GetCRSInfoListFromDatabase(char const * authName)"""
     return _osr.GetCRSInfoListFromDatabase(*args)
+
+def SetPROJSearchPath(*args):
+    """SetPROJSearchPath(char const * utf8_path)"""
+    return _osr.SetPROJSearchPath(*args)
+
+def SetPROJSearchPaths(*args):
+    """SetPROJSearchPaths(char ** paths)"""
+    return _osr.SetPROJSearchPaths(*args)
+
+def GetPROJVersionMajor(*args):
+    """GetPROJVersionMajor() -> int"""
+    return _osr.GetPROJVersionMajor(*args)
+
+def GetPROJVersionMinor(*args):
+    """GetPROJVersionMinor() -> int"""
+    return _osr.GetPROJVersionMinor(*args)
 # This file is compatible with both classic and new-style classes.
 
 

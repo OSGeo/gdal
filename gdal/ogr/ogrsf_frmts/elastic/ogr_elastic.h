@@ -140,6 +140,8 @@ class OGRElasticLayer final: public OGRLayer {
                                                 char chNestedAttributeSeparator,
                                                 std::vector<CPLString>& aosPath);
 
+    CPLString                             BuildMappingURL(bool bMappingApi);
+
     CPLString                             BuildJSonFromFeature(OGRFeature *poFeature);
 
     static CPLString                      BuildPathFromArray(const std::vector<CPLString>& aosPath);

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2011, Adam Estrada
- * Copyright (c) 2012-2016, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2016, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,7 +57,10 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
 
     m_poDS(poDS),
     m_osIndexName(pszIndexName ? pszIndexName : ""),
-    m_osMappingName(pszMappingName ? pszMappingName : ""),
+    // Types are no longer supported in Elasticsearch 7+.
+    m_osMappingName(poDS->m_nMajorVersion < 7
+                    ? pszMappingName ? pszMappingName : ""
+                    : ""),
     m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
     m_bFeatureDefnFinalized(false),
     m_bManualMapping(false),
@@ -529,9 +532,10 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
                     osPostData = m_osESSearch;
                 }
                 else
-                    osRequest = CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
-                           m_poDS->GetURL(), m_osIndexName.c_str(),
-                           m_osMappingName.c_str(), m_poDS->m_nBatchSize);
+                {
+                    osRequest = BuildMappingURL(false);
+                    osRequest += CPLSPrintf("/_search?scroll=1m&size=%d", m_poDS->m_nBatchSize);
+                }
             }
             else
             {
@@ -587,18 +591,25 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
                     json_object* poIndex = CPL_json_object_object_get(poHit, "_index");
                     if( poIndex == nullptr || json_object_get_type(poIndex) != json_type_string )
                         break;
-                    json_object* poType = CPL_json_object_object_get(poHit, "_type");
-                    if( poType == nullptr || json_object_get_type(poType) != json_type_string )
-                        break;
+                    if (m_poDS->m_nMajorVersion < 7)
+                    {
+                        json_object* poType = CPL_json_object_object_get(poHit, "_type");
+                        if( poType == nullptr || json_object_get_type(poType) != json_type_string )
+                            break;
+                        m_osMappingName = json_object_get_string(poType);
+                    }
                     CPLString osIndex(json_object_get_string(poIndex));
-                    m_osMappingName = json_object_get_string(poType);
 
                     if( oVisited.find( std::pair<CPLString,CPLString>(osIndex, m_osMappingName) ) == oVisited.end() )
                     {
                         oVisited.insert( std::pair<CPLString,CPLString>(osIndex, m_osMappingName) );
 
-                        json_object* poMappingRes = m_poDS->RunRequest(
-                            (m_poDS->GetURL() + CPLString("/") + osIndex + CPLString("/_mapping/") + m_osMappingName + CPLString("?pretty")).c_str());
+                        CPLString osURL = CPLSPrintf("%s/%s/_mapping", m_poDS->GetURL(), osIndex.c_str());
+                        if (m_poDS->m_nMajorVersion < 7)
+                            osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+                        osURL += "?pretty";
+
+                        json_object* poMappingRes = m_poDS->RunRequest(osURL);
                         if( poMappingRes )
                         {
                             json_object* poLayerObj = CPL_json_object_object_get(poMappingRes, osIndex);
@@ -607,7 +618,9 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
                                 poMappings = CPL_json_object_object_get(poLayerObj, "mappings");
                             if( poMappings && json_object_get_type(poMappings) == json_type_object )
                             {
-                                json_object* poMapping = CPL_json_object_object_get(poMappings, m_osMappingName);
+                                json_object* poMapping = m_poDS->m_nMajorVersion < 7
+                                    ? CPL_json_object_object_get(poMappings, m_osMappingName)
+                                    : poMappings;
                                 if( poMapping)
                                 {
                                     InitFeatureDefnFromMapping(poMapping, "", std::vector<CPLString>());
@@ -1021,15 +1034,13 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         else if( (m_poSpatialFilter && m_osJSONFilter.empty()) || m_poJSONFilter )
         {
             osPostData = BuildQuery(false);
-            osRequest = CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
-                        m_poDS->GetURL(), m_osIndexName.c_str(),
-                        m_osMappingName.c_str(), m_poDS->m_nBatchSize);
+            osRequest = BuildMappingURL(false);
+            osRequest += CPLSPrintf("/_search?scroll=1m&size=%d", m_poDS->m_nBatchSize);
         }
         else if( !m_aoSortColumns.empty() && m_osJSONFilter.empty() )
         {
-            osRequest = CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
-                        m_poDS->GetURL(), m_osIndexName.c_str(),
-                        m_osMappingName.c_str(), m_poDS->m_nBatchSize);
+            osRequest = BuildMappingURL(false);
+            osRequest += CPLSPrintf("/_search?scroll=1m&size=%d", m_poDS->m_nBatchSize);
             json_object* poSort = BuildSort();
             osPostData = CPLSPrintf(
                 "{ \"sort\": %s }",
@@ -1038,10 +1049,8 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         }
         else
         {
-            osRequest =
-                CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
-                           m_poDS->GetURL(), m_osIndexName.c_str(),
-                           m_osMappingName.c_str(), m_poDS->m_nBatchSize);
+            osRequest = BuildMappingURL(false);
+            osRequest += CPLSPrintf("/_search?scroll=1m&size=%d", m_poDS->m_nBatchSize);
             osPostData = m_osJSONFilter;
         }
     }
@@ -1529,12 +1538,20 @@ CPLString OGRElasticLayer::BuildMap() {
 
     std::map< std::vector<CPLString>, json_object* > oMap;
 
-    json_object *poMapping = json_object_new_object();
+    json_object *poMapping;
     json_object *poMappingProperties = json_object_new_object();
-    json_object_object_add(map, m_osMappingName, poMapping);
+    if (m_poDS->m_nMajorVersion < 7)
+    {
+        poMapping = json_object_new_object();
+        json_object_object_add(map, m_osMappingName, poMapping);
+    }
+    else
+    {
+        poMapping = map;
+    }
     json_object_object_add(poMapping, "properties", poMappingProperties);
 
-    if( m_osMappingName == "FeatureCollection" )
+    if( m_poDS->m_nMajorVersion < 7 && m_osMappingName == "FeatureCollection" )
     {
         json_object_object_add(poMappingProperties, "type", AddPropertyMap(
             m_poDS->m_nMajorVersion >= 5 ? "text" : "string"));
@@ -1952,7 +1969,8 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
     if( m_osWriteMapFilename.empty() && m_bSerializeMapping )
     {
         m_bSerializeMapping = false;
-        if( !m_poDS->UploadFile(CPLSPrintf("%s/%s/_mapping/%s", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()), BuildMap()) )
+        CPLString osURL = BuildMappingURL(true);
+        if( !m_poDS->UploadFile(osURL.c_str(), BuildMap()) )
         {
             return OGRERR_FAILURE;
         }
@@ -1987,6 +2005,19 @@ static json_object* GetContainerForFeature( json_object* poContainer,
          }
     }
     return poContainer;
+}
+
+/************************************************************************/
+/*                        BuildMappingURL()                             */
+/************************************************************************/
+CPLString OGRElasticLayer::BuildMappingURL(bool bMappingApi)
+{
+    CPLString osURL = CPLSPrintf("%s/%s", m_poDS->GetURL(), m_osIndexName.c_str());
+    if (bMappingApi)
+        osURL += "/_mapping";
+    if (m_poDS->m_nMajorVersion < 7)
+        osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+    return osURL;
 }
 
 /************************************************************************/
@@ -2272,7 +2303,9 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
 
     // Check to see if we're using bulk uploading
     if (m_nBulkUpload > 0) {
-        m_osBulkContent += CPLSPrintf("{\"index\" :{\"_index\":\"%s\", \"_type\":\"%s\"", m_osIndexName.c_str(), m_osMappingName.c_str());
+        m_osBulkContent += CPLSPrintf("{\"index\" :{\"_index\":\"%s\"", m_osIndexName.c_str());
+        if(m_poDS->m_nMajorVersion < 7)
+            m_osBulkContent += CPLSPrintf(", \"_type\":\"%s\"", m_osMappingName.c_str());
         if( pszId )
             m_osBulkContent += CPLSPrintf(",\"_id\":\"%s\"", pszId);
         m_osBulkContent += "}}\n" + osFields + "\n\n";
@@ -2288,9 +2321,9 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
     else
     {
         // Fall back to using single item upload for every feature.
-        CPLString osURL(CPLSPrintf("%s/%s/%s/", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()));
-        if( pszId )
-            osURL += pszId;
+        CPLString osURL(BuildMappingURL(false));
+        if ( pszId )
+            osURL += CPLSPrintf("/%s", pszId);
         json_object* poRes = m_poDS->RunRequest(osURL, osFields);
         if( poRes == nullptr )
         {
@@ -2343,9 +2376,11 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
     CPLString osFields(BuildJSonFromFeature(poFeature));
 
     // TODO? we should theoretically detect if the provided _id doesn't exist
-    CPLString osURL(CPLSPrintf("%s/%s/%s/%s",
-                               m_poDS->GetURL(), m_osIndexName.c_str(),
-                               m_osMappingName.c_str(),poFeature->GetFieldAsString(0)));
+    CPLString osURL(CPLSPrintf("%s/%s",
+                               m_poDS->GetURL(), m_osIndexName.c_str()));
+    if(m_poDS->m_nMajorVersion < 7)
+        osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+    osURL += CPLSPrintf("/%s", poFeature->GetFieldAsString(0));
     json_object* poRes = m_poDS->RunRequest(osURL, osFields);
     if( poRes == nullptr )
     {
@@ -2553,45 +2588,45 @@ GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
         return OGRLayer::GetFeatureCount(bForce);
 
     json_object* poResponse = nullptr;
+    CPLString osURL(CPLSPrintf("%s", m_poDS->GetURL()));
+    CPLString osFilter = "";
     if( !m_osESSearch.empty() )
     {
         if( m_osESSearch[0] != '{' )
             return OGRLayer::GetFeatureCount(bForce);
-        poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/_search?pretty", m_poDS->GetURL()),
-            ("{ \"size\": 0, " + m_osESSearch.substr(1)).c_str());
+        osURL += "/_search?pretty";
+        osFilter = ("{ \"size\": 0, " + m_osESSearch.substr(1)).c_str();
     }
     else if( (m_poSpatialFilter && m_osJSONFilter.empty()) || m_poJSONFilter )
     {
-        CPLString osFilter = BuildQuery(true);
-        if( m_poDS->m_nMajorVersion >= 5 )
+        osFilter = BuildQuery(true);
+        osURL += CPLSPrintf("/%s", m_osIndexName.c_str());
+        if( m_poDS->m_nMajorVersion >= 5)
         {
-            poResponse = m_poDS->RunRequest(
-                CPLSPrintf("%s/%s/%s/_count?pretty", m_poDS->GetURL(),
-                           m_osIndexName.c_str(), m_osMappingName.c_str()),
-                osFilter.c_str());
+            if (m_poDS->m_nMajorVersion < 7)
+                osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+            osURL += "/_count?pretty";
         }
         else
         {
-            poResponse = m_poDS->RunRequest(
-                CPLSPrintf("%s/%s/%s/_search?pretty", m_poDS->GetURL(),
-                           m_osIndexName.c_str(), m_osMappingName.c_str()),
-                osFilter.c_str());
+            osURL += CPLSPrintf("/%s/_search?pretty", m_osMappingName.c_str());
         }
     }
     else if( !m_osJSONFilter.empty() )
     {
-        poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_search?&pretty", m_poDS->GetURL(),
-                       m_osIndexName.c_str(), m_osMappingName.c_str()),
-            ("{ \"size\": 0, " + m_osJSONFilter.substr(1)).c_str());
+        osURL += CPLSPrintf("/%s", m_osIndexName.c_str());
+        if (m_poDS->m_nMajorVersion < 7)
+            osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+        osFilter = ("{ \"size\": 0, " + m_osJSONFilter.substr(1));
     }
     else
     {
-        poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_count?pretty", m_poDS->GetURL(),
-                       m_osIndexName.c_str(), m_osMappingName.c_str()));
+        osURL += CPLSPrintf("/%s", m_osIndexName.c_str());
+        if (m_poDS->m_nMajorVersion < 7)
+            osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+        osURL += "/_count?pretty";
     }
+    poResponse = m_poDS->RunRequest(osURL.c_str(), osFilter.c_str());
 
     json_object* poCount = json_ex_get_object_by_path(poResponse, "hits.count");
     if( poCount == nullptr )
@@ -3308,11 +3343,11 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
 
     CPLString osFilter = CPLSPrintf("{ \"size\": 0, \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
                                     BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]).c_str() );
-    json_object* poResponse = m_poDS->RunRequest(
-        CPLSPrintf("%s/%s/%s/_search?pretty",
-                   m_poDS->GetURL(), m_osIndexName.c_str(),
-                   m_osMappingName.c_str()),
-        osFilter.c_str());
+    CPLString osURL = CPLSPrintf("%s/%s", m_poDS->GetURL(), m_osIndexName.c_str());
+    if (m_poDS->m_nMajorVersion < 7)
+        osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+    osURL += "/_search?pretty";
+    json_object* poResponse = m_poDS->RunRequest(osURL.c_str(), osFilter.c_str());
 
     json_object* poBounds = json_ex_get_object_by_path(poResponse, "aggregations.bbox.bounds");
     json_object* poTopLeft = json_ex_get_object_by_path(poBounds, "top_left");

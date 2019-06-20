@@ -1,3 +1,5 @@
+#if 0
+/* tdlpack is no longer supported by GDAL */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -4503,3 +4505,5 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
 }
 
 #endif // unused_by_GDAL
+#endif
+/* tdlpack is no longer supported by GDAL */
