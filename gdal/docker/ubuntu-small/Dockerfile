@@ -175,7 +175,7 @@ RUN apt-get update; \
 # GDAL dependencies
 RUN apt-get update -y; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
-        python3-numpy \
+        python3-numpy libpython3.6 \
         libjpeg-turbo8 libgeos-3.6.2 libgeos-c1v5 \
         libcurl4 libexpat1 \
         libxerces-c3.2 \
