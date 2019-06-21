@@ -4162,13 +4162,13 @@ static void GDALCopyWholeRasterGetSwathSize(
     const char* pszSwathSize = CPLGetConfigOption("GDAL_SWATH_SIZE", nullptr);
     int nTargetSwathSize;
     if( pszSwathSize != nullptr )
-        nTargetSwathSize = atoi(pszSwathSize);
+        nTargetSwathSize = static_cast<int>(
+            std::min(GIntBig(INT_MAX), CPLAtoGIntBig(pszSwathSize)));
     else
     {
       // As a default, take one 1/4 of the cache size.
-        nTargetSwathSize =
-            std::min(INT_MAX,
-                     static_cast<int>(GDALGetCacheMax64() / 4));
+        nTargetSwathSize = static_cast<int>(
+            std::min(GIntBig(INT_MAX), GDALGetCacheMax64() / 4));
 
         // but if the minimum idal swath buf size is less, then go for it to
         // avoid unnecessarily abusing RAM usage.
@@ -4190,7 +4190,8 @@ static void GDALCopyWholeRasterGetSwathSize(
                           nSrcBlockYSize * nPixelSize) ;
         }
         if( nTargetSwathSize > nIdealSwathBufSize )
-            nTargetSwathSize = static_cast<int>(nIdealSwathBufSize);
+            nTargetSwathSize = static_cast<int>(
+                std::min(GIntBig(INT_MAX), nIdealSwathBufSize));
     }
 
     if (nTargetSwathSize < 1000000)
