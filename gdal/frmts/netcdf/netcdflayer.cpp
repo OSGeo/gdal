@@ -280,29 +280,44 @@ bool netCDFLayer::Create(char **papszOptions,
     if( m_poFeatureDefn->GetGeomFieldCount() )
         poSRS = m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
 
-	//std::string strXVarName = "";
-	//std::string strYVarName = "";
-
     if (wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint)
     {
 		const int nPointDim =
 			!m_osProfileDimName.empty() ? m_nProfileDimID : m_nRecordDimID;
 		const bool bIsGeographic = (poSRS == nullptr || poSRS->IsGeographic());
 
+		std::string strPtXVarName = std::string(this->GetName()) + std::string("_coordX");
 		const char *pszXVarName =
 			bIsGeographic ? CF_LONGITUDE_VAR_NAME : CF_PROJ_X_VAR_NAME;
+		if(!m_bLegacyCreateMode)
+		{
+			pszXVarName = strPtXVarName.c_str();
+		}
+
 		status = nc_def_var(m_nLayerCDFId, pszXVarName, NC_DOUBLE, 1,
 			&nPointDim, &m_nXVarID);
+
 		NCDF_ERR(status);
 		if (status != NC_NOERR)
 		{
 			return false;
 		}
 
-		//strXVarName = std::string(pszXVarName);
+		if(!m_bLegacyCreateMode)
+		{
+			status = nc_put_att_text(m_nLayerCDFId, m_nXVarID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
+			if(status != NC_NOERR)
+				return false;
+		}
 
+		std::string strPtYVarName = std::string(this->GetName()) + std::string("_coordY");
 		const char *pszYVarName =
 			bIsGeographic ? CF_LATITUDE_VAR_NAME : CF_PROJ_Y_VAR_NAME;
+		if(!m_bLegacyCreateMode)
+		{
+			pszYVarName = strPtYVarName.c_str();
+		}
+		
 		status = nc_def_var(m_nLayerCDFId, pszYVarName, NC_DOUBLE, 1,
 			&nPointDim, &m_nYVarID);
 		NCDF_ERR(status);
@@ -311,7 +326,12 @@ bool netCDFLayer::Create(char **papszOptions,
 			return false;
 		}
 
-		//strYVarName = std::string(pszYVarName);
+		if(!m_bLegacyCreateMode)
+		{
+			status = nc_put_att_text(m_nLayerCDFId, m_nYVarID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
+			if(status != NC_NOERR)
+				return false;
+		}
 
 		aoAutoVariables.push_back(
 			std::pair<CPLString, int>(pszXVarName, m_nXVarID));
@@ -331,10 +351,6 @@ bool netCDFLayer::Create(char **papszOptions,
 		{
 			NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID);
 			
-			if (!m_bLegacyCreateMode)
-			{
-				nccfdriver::nc_write_x_y_CF_axis(m_nLayerCDFId, m_nXVarID, m_nYVarID);
-			}
 		}
 
 		else if (poSRS != nullptr && poSRS->IsProjected())
@@ -342,15 +358,17 @@ bool netCDFLayer::Create(char **papszOptions,
 			NCDFWriteXYVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID,
 				poSRS);
 
-			if (!m_bLegacyCreateMode)
-			{
-				nccfdriver::nc_write_x_y_CF_axis(m_nLayerCDFId, m_nXVarID, m_nYVarID);
-			}
 		}
 
 		if (m_poFeatureDefn->GetGeomType() == wkbPoint25D)
 		{
+			std::string strPtZVarName = std::string(this->GetName()) + std::string("_coordZ");
 			const char *pszZVarName = "z";
+			if(!m_bLegacyCreateMode)
+			{
+				pszZVarName = strPtZVarName.c_str();
+			}
+
 			status = nc_def_var(m_nLayerCDFId, pszZVarName, NC_DOUBLE, 1,
 				&m_nRecordDimID, &m_nZVarID);
 			NCDF_ERR(status);
@@ -540,8 +558,17 @@ bool netCDFLayer::Create(char **papszOptions,
 			coordNames.push_back(strZVarName);	
 		}
 
+		nccfdriver::geom_t basic_type = nccfdriver::OGRtoRaw(geometryContainerType);
+
+		if(basic_type == nccfdriver::NONE)
+		{
+			return false;
+		}
+
 		m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
-		nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID);
+
+		if(basic_type != nccfdriver::POINT)
+			nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID);
 
 
 		// Write the grid mapping, if it exists:
@@ -1807,7 +1834,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 #endif
 
 	// CF 1.8 simple geometry, only
-	if (!m_bLegacyCreateMode && poGeom != nullptr)
+	if (!m_bLegacyCreateMode && poGeom != nullptr && wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint)
 	{
 		nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
 		int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
