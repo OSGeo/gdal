@@ -542,40 +542,48 @@ bool netCDFLayer::Create(char **papszOptions,
         }
     }
 
-	if (!m_bLegacyCreateMode)
+	try
 	{
-		// Write a geometry container
-		OGRwkbGeometryType geometryContainerType = m_poFeatureDefn->GetGeomType();
-		std::vector<std::string> coordNames;
-		std::string strXVarName = std::string(this->GetName()) + std::string("_coordX");
-		std::string strYVarName = std::string(this->GetName()) + std::string("_coordY");
-		coordNames.push_back(strXVarName);
-		coordNames.push_back(strYVarName);
-
-		if(nccfdriver::OGRHasZandSupported(geometryContainerType))
+		if (!m_bLegacyCreateMode)
 		{
-			std::string strZVarName = std::string(this->GetName()) + std::string("_coordZ");
-			coordNames.push_back(strZVarName);	
+			// Write a geometry container
+			OGRwkbGeometryType geometryContainerType = m_poFeatureDefn->GetGeomType();
+			std::vector<std::string> coordNames;
+			std::string strXVarName = std::string(this->GetName()) + std::string("_coordX");
+			std::string strYVarName = std::string(this->GetName()) + std::string("_coordY");
+			coordNames.push_back(strXVarName);
+			coordNames.push_back(strYVarName);
+
+			if(nccfdriver::OGRHasZandSupported(geometryContainerType))
+			{
+				std::string strZVarName = std::string(this->GetName()) + std::string("_coordZ");
+				coordNames.push_back(strZVarName);	
+			}
+
+			nccfdriver::geom_t basic_type = nccfdriver::OGRtoRaw(geometryContainerType);
+
+			if(basic_type == nccfdriver::NONE)
+			{
+				throw nccfdriver::SG_Exception_BadFeature();
+			}
+
+			m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
+
+			if(basic_type != nccfdriver::POINT)
+				nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID);
+
+
+			// Write the grid mapping, if it exists:
+			if (poSRS != nullptr)
+			{
+				status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_osGridMapping), m_osGridMapping);
+			}
 		}
-
-		nccfdriver::geom_t basic_type = nccfdriver::OGRtoRaw(geometryContainerType);
-
-		if(basic_type == nccfdriver::NONE)
-		{
-			return false;
-		}
-
-		m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
-
-		if(basic_type != nccfdriver::POINT)
-			nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID);
-
-
-		// Write the grid mapping, if it exists:
-		if (poSRS != nullptr)
-		{
-			status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_osGridMapping), m_osGridMapping);
-		}
+	}
+	catch(nccfdriver::SG_Exception& sge)
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "An error occurred while writing metadata to the netCDF file.\n%s", sge.get_err_msg());
+		return false;
 	}
 
     return true;
@@ -1833,43 +1841,52 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     }
 #endif
 
-	// CF 1.8 simple geometry, only
-	if (!m_bLegacyCreateMode && poGeom != nullptr && wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint)
+	try
 	{
-		nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
-		int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
-		int node_coord_dimID = nccfdriver::GeometryScribe.get_node_coord_dimID();
-
-		// Check if this feature (Polygons and Multipolygons only) has interior rings
-		bool hasIntRings = featWithMetaData.getHasInteriorRing();
-
-		// (If it has interior rings, create and catch up the neccessary variables)
-		if((featWithMetaData.getType() == nccfdriver::POLYGON || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON) && hasIntRings
-			&& !nccfdriver::GeometryScribe.getInteriorRingDetected())
+		// CF 1.8 simple geometry, only
+		if (!m_bLegacyCreateMode && poGeom != nullptr && wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint)
 		{
-			if(featWithMetaData.getType() == nccfdriver::POLYGON)
+			nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
+			int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
+			int node_coord_dimID = nccfdriver::GeometryScribe.get_node_coord_dimID();
+
+			// Check if this feature (Polygons and Multipolygons only) has interior rings
+			bool hasIntRings = featWithMetaData.getHasInteriorRing();
+
+			// (If it has interior rings, create and catch up the neccessary variables)
+			if((featWithMetaData.getType() == nccfdriver::POLYGON || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON) && hasIntRings
+				&& !nccfdriver::GeometryScribe.getInteriorRingDetected())
 			{
-				nccfdriver::GeometryScribe.redef_pnc();
+				if(featWithMetaData.getType() == nccfdriver::POLYGON)
+				{
+					nccfdriver::GeometryScribe.redef_pnc();
+				}
+				nccfdriver::GeometryScribe.redef_interior_ring();
+				nccfdriver::GeometryScribe.turnOnInteriorRingDetect();
 			}
-			nccfdriver::GeometryScribe.redef_interior_ring();
-			nccfdriver::GeometryScribe.turnOnInteriorRingDetect();
+
+			// Grow dimensions to fit the next feature
+
+			m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + 1);
+			m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
+				nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + featWithMetaData.getTotalNodeCount());
+
+			if((featWithMetaData.getType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
+				|| featWithMetaData.getType() == nccfdriver::MULTILINE || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON )
+			{
+				int pnc_dimID = nccfdriver::GeometryScribe.get_pnc_dimID();
+				m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, nccfdriver::GeometryScribe.get_next_write_pos_pnc() + featWithMetaData.getTotalPartCount());
+			}
+
+			// Finally, write the actually feature
+			nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);
 		}
+	}
 
-		// Grow dimensions to fit the next feature
-
-		m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + 1);
-		m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
-			nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + featWithMetaData.getTotalNodeCount());
-
-		if((featWithMetaData.getType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
-			|| featWithMetaData.getType() == nccfdriver::MULTILINE || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON )
-		{
-			int pnc_dimID = nccfdriver::GeometryScribe.get_pnc_dimID();
-			m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, nccfdriver::GeometryScribe.get_next_write_pos_pnc() + featWithMetaData.getTotalPartCount());
-		}
-
-		// Finally, write the actually feature
-		nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);
+	catch(nccfdriver::SG_Exception& sge)
+	{
+		CPLError(CE_Failure, CPLE_AppDefined, "An error occurred while attempting to write a feature to the target netCDF file.\n%s", sge.get_err_msg());
+		return false;
 	}
 
     return true;

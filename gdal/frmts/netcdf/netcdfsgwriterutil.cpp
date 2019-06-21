@@ -1,3 +1,30 @@
+/******************************************************************************
+ *
+ * Project:  netCDF read/write Driver
+ * Purpose:  GDAL bindings over netCDF library.
+ * Author:   Winor Chen <wchen329 at wisc.edu>
+ *
+ ******************************************************************************
+ * Copyright (c) 2019, Winor Chen <wchen329 at wisc.edu>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 #include "netcdfsgwriterutil.h"
 #include "netcdfdataset.h"
 
@@ -12,7 +39,7 @@ namespace nccfdriver
 		
 		if (defnGeometry == nullptr)
 		{
-			// throw exception
+			throw SGWriter_Exception_EmptyGeometry();
 		}
 		
 		OGRGeometry& r_defnGeometry = *defnGeometry;
@@ -146,7 +173,7 @@ namespace nccfdriver
 
 		else
 		{
-			// throw an exception!
+			throw SG_Exception_BadFeature();
 		}
 			
 		this->geometry_ref = ft.GetGeometryRef();
@@ -196,7 +223,7 @@ namespace nccfdriver
 
 			int polygon_num = 0;
 			int ring_number = 0;
-			size_t pno_itr = part_no;
+			int pno_itr = static_cast<int>(part_no);
 
 			// Find the right polygon, and the right ring number
 			for(int pind = 0; pind < as_mpolygon_ref->getNumGeometries(); pind++)
@@ -233,8 +260,9 @@ namespace nccfdriver
 	void OGR_SGeometry_Scribe::writeSGeometryFeature(SGeometry_Feature& ft)
 	{
 		if (ft.getType() == NONE)
-			return;	// change to exception
-
+		{
+			throw SG_Exception_BadFeature(); 
+		}
 		
 		// Prepare variable names
 		char node_coord_names[NC_MAX_CHAR + 1];
@@ -245,15 +273,30 @@ namespace nccfdriver
 
 		int err_code;
 		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
+
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "node coord var names");
+		}
+
+
 		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "node count var name");
+		}
+
+
 
 		// Detect if variable already exists in dataset. If it doesn't, define it
 		int varId;
 		int ncount_err_code = nc_inq_varid(ncID, node_count_name, &varId);
-
+		NCDF_ERR(ncount_err_code);
 		if (ncount_err_code != NC_NOERR)
 		{
-			// error
+			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varID");
 		}
 
 
@@ -261,6 +304,13 @@ namespace nccfdriver
 		int ncount_add = static_cast<int>(ft.getTotalNodeCount());
 		size_t ind[1] = { next_write_pos_node_count };
 		err_code = nc_put_var1_int(ncID, varId, ind, &ncount_add);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "integer datum");
+		}
+
+
 		next_write_pos_node_count++;
 
 		// Write each point from each part in node coordinates
@@ -287,11 +337,21 @@ namespace nccfdriver
 						}  
 					}
 
-					nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
+					err_code = nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
+					NCDF_ERR(err_code);
+					if (err_code != NC_NOERR)
+					{
+						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "integer datum");
+					}
 				}
 
 				int pnc_writable = ft.getPerPartNodeCount()[part_no];
-				int err_code = nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
+				err_code = nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
+				NCDF_ERR(err_code);
+				if (err_code != NC_NOERR)
+				{
+					throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "integer datum");
+				}
 				next_write_pos_pnc++;
 			}
 
@@ -303,13 +363,29 @@ namespace nccfdriver
 
 				// Write each node coordinate
 				double x = write_pt.getX();
-				nc_put_var1_double(ncID, node_coordinates_varIDs[0], &next_write_pos_node_coord, &x);
+				err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[0], &next_write_pos_node_coord, &x);
+				NCDF_ERR(err_code);
+				if (err_code != NC_NOERR)
+				{
+					throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "x double-precision datum");
+				}
+
 				double y = write_pt.getY();
-				nc_put_var1_double(ncID, node_coordinates_varIDs[1], &next_write_pos_node_coord, &y);
+				err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[1], &next_write_pos_node_coord, &y);
+				NCDF_ERR(err_code);
+				if (err_code != NC_NOERR)
+				{
+					throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "y double-precision datum");
+				}
+
 				if(this->node_coordinates_varIDs.size() > 2)
 				{
 					double z = write_pt.getZ();
-					nc_put_var1_double(ncID, node_coordinates_varIDs[2], &next_write_pos_node_coord, &z);
+					err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[2], &next_write_pos_node_coord, &z);
+					if (err_code != NC_NOERR)
+					{
+						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "z double-precision datum");
+					}
 				}
 
 				// Step the position
@@ -358,16 +434,52 @@ namespace nccfdriver
 		intring_varID = INVALID_VAR_ID;
 
 		int err_code;
-		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
-		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
 		err_code = nc_inq_varname(ncID, containerVarID, container_name);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCInqFailure("new layer", "geometry container", "varName");
+		}
+
+		this->containerVarName = std::string(container_name);
+
+		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "varName");
+		}
+
+		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varName");
+		}
+
+
 
 		// Make dimensions for each of these
 		err_code = nc_def_dim(ncID_in, node_count_name, 1, &node_count_dimID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension for");
+		}
 		err_code = nc_def_dim(ncID_in, container_name, 1, &node_coordinates_dimID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "dimension for");
+		}
 
 		// Define variables for each of those
 		err_code = nc_def_var(ncID_in, node_count_name, NC_INT, 1, &node_count_dimID, &node_count_varID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "variable");
+		}
 
 		// Do the same for part node count, if it exists
 		char pnc_name[NC_MAX_CHAR + 1];
@@ -376,7 +488,18 @@ namespace nccfdriver
 		if(err_code == NC_NOERR)
 		{
 			err_code = nc_def_dim(ncID_in, pnc_name, 1, &pnc_dimID);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dimension for");
+			}
+
 			err_code = nc_def_var(ncID_in, pnc_name, NC_INT, 1, &pnc_dimID, &pnc_varID);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "variable");
+			}
 		}
 
 		// Node coordinates
@@ -389,7 +512,11 @@ namespace nccfdriver
 			// Define a new variable with that name
 			err_code = nc_def_var(ncID, pszNcoord, NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
 
-			// to do: check for error
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "variable(s)");
+			}
 
 			// Add it to the coordinate varID list
 			this->node_coordinates_varIDs.push_back(new_varID);
@@ -399,15 +526,27 @@ namespace nccfdriver
 			{
 				case 0:
 					// first it's X
-					nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
+					err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
+					if (err_code != NC_NOERR)
+					{
+						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "X axis attribute");
+					}
 					break;
 				case 1:
 					// second it's Y
-					nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
+					err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
+					if (err_code != NC_NOERR)
+					{
+						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Y axis attribute");
+					}
 					break;
 				case 2: 
 					// third it's Z
-					nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Z_AXIS), CF_SG_Z_AXIS);
+					err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Z_AXIS), CF_SG_Z_AXIS);
+					if (err_code != NC_NOERR)
+					{
+						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Z axis attribute");
+					}
 					break;
 			}	
 
@@ -418,45 +557,86 @@ namespace nccfdriver
 	
 	void OGR_SGeometry_Scribe::redef_interior_ring()
 	{
-		
-		char container_name[NC_MAX_NAME + 1];
-		memset(container_name, 0, NC_MAX_NAME + 1);
+		int err_code;	
+		const char * container_name = containerVarName.c_str();
 
-		nc_redef(ncID);
-		nc_inq_varname(ncID, containerVarID, container_name);			
+		err_code = nc_redef(ncID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to define mode", "file");
+		}
+
 		std::string int_ring = std::string(container_name) + std::string("_interior_ring");
 		std::string pnc_name = std::string(container_name) + std::string("_part_node_count");
 
 		// Put the new interior ring attribute
-		nc_put_att_text(ncID, containerVarID, CF_SG_INTERIOR_RING, strlen(int_ring.c_str()), int_ring.c_str()); 
+		err_code = nc_put_att_text(ncID, containerVarID, CF_SG_INTERIOR_RING, strlen(int_ring.c_str()), int_ring.c_str()); 
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "attibute");
+		}
+
 		size_t pnc_dim_len = 0;
 
-		nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
+		err_code = nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dim (part node count must be defined/redefined first)");
+		}
 
 		// Define the new variable
-		nc_def_var(ncID, int_ring.c_str(), NC_INT, 1, &pnc_dimID, &intring_varID);
-		nc_enddef(ncID);
+		err_code = nc_def_var(ncID, int_ring.c_str(), NC_INT, 1, &pnc_dimID, &intring_varID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "variable");
+		}
+
+		err_code = nc_enddef(ncID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to data mode", "file");
+		}
 
 		const int zero_fill = 0;
 
 		// Zero fill interior ring
 		for(size_t itr = 0; itr < pnc_dim_len; itr++)
 		{
-			nc_put_var1_int(ncID, intring_varID, &itr, &zero_fill);
+			err_code = nc_put_var1_int(ncID, intring_varID, &itr, &zero_fill);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "integer datum");
+			}
 		}
 	}
 
 	void OGR_SGeometry_Scribe::redef_pnc()
 	{
-		char container_name[NC_MAX_NAME + 1];
-		memset(container_name, 0, NC_MAX_NAME + 1);
+		int err_code;
+		const char* container_name = containerVarName.c_str();
 
-		nc_redef(ncID);
-		nc_inq_varname(ncID, containerVarID, container_name);			
+		err_code = nc_redef(ncID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to define mode", "file");
+		}
+
 		std::string pnc_name = std::string(container_name) + std::string("_part_node_count");
 
-		// Put the new interior ring attribute
-		nc_put_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, strlen(pnc_name.c_str()), pnc_name.c_str()); 
+		// Put the new part node count attribute
+		err_code = nc_put_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, strlen(pnc_name.c_str()), pnc_name.c_str()); 
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "attibute");
+		}
 
 		// If the PNC dim doesn't exist, define it
 
@@ -466,22 +646,59 @@ namespace nccfdriver
 		{
 			// Initialize it with size of node_count Dim
 			size_t ncount_len;
-			nc_inq_dimlen(ncID, node_count_dimID, &ncount_len);
-			nc_def_dim(ncID, pnc_name.c_str(), ncount_len, &pnc_dimID);
+			err_code = nc_inq_dimlen(ncID, node_count_dimID, &ncount_len);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension");
+			}
+			err_code = nc_def_dim(ncID, pnc_name.c_str(), ncount_len, &pnc_dimID);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dimension");
+			}
 		}
 		
-		nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
+		err_code = nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dim");
+		}
 
 		// Define the new variable
-		nc_def_var(ncID, pnc_name.c_str(), NC_INT, 1, &pnc_dimID, &pnc_varID);
-		nc_enddef(ncID);
+		err_code = nc_def_var(ncID, pnc_name.c_str(), NC_INT, 1, &pnc_dimID, &pnc_varID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "variable");
+		}
+
+		err_code = nc_enddef(ncID);
+		NCDF_ERR(err_code);
+		if (err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to data mode", "file");
+		}
 
 		// Fill pnc with the current values of node counts
 		for(size_t itr = 0; itr < pnc_dim_len; itr++)
 		{
 			int ncount_in;
-			nc_get_var1_int(ncID, node_count_varID, &itr, &ncount_in);
-			nc_put_var1_int(ncID, pnc_varID, &itr, &ncount_in);
+			err_code = nc_get_var1_int(ncID, node_count_varID, &itr, &ncount_in);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "integer datum");
+			}
+
+			err_code = nc_put_var1_int(ncID, pnc_varID, &itr, &ncount_in);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "integer datum");
+			}
 		}
 	}
 
@@ -501,7 +718,7 @@ namespace nccfdriver
 	SGWriter_Exception_NCWriteFailure::SGWriter_Exception_NCWriteFailure(const char * layer_name, const char * failure_name, const char * failure_type)
 	{
 		this->msg = sgwe_msg_builder(layer_name, failure_name, failure_type,
-			"could not be written to (datum write failure).");
+			"could not be written to (write failure).");
 	}
 
 	SGWriter_Exception_NCInqFailure::SGWriter_Exception_NCInqFailure (const char * layer_name, const char * failure_name, const char * failure_type)
@@ -534,7 +751,12 @@ namespace nccfdriver
 		// Define geometry container variable
 		err_code = nc_def_var(ncID, name.c_str(), NC_FLOAT, 0, nullptr, &write_var_id);
 		// todo: exception handling of err_code
-
+		NCDF_ERR(err_code);
+		if(err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCDefFailure(name.c_str(), "geometry_container", "variable");
+		}
+		
 		
 		/* Geometry Type Attribute
 		 * -
@@ -554,6 +776,11 @@ namespace nccfdriver
 
 		// Add the geometry type attribute
 		err_code = nc_put_att_text(ncID, write_var_id, CF_SG_GEOMETRY_TYPE, geometry_str.size(), geometry_str.c_str());
+		NCDF_ERR(err_code);
+		if(err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCWriteFailure(name.c_str(), CF_SG_GEOMETRY_TYPE, "attribute in geometry_container");
+		}
 
 		/* Node Coordinates Attribute
 		 * -
@@ -570,7 +797,12 @@ namespace nccfdriver
 		}
 
 		err_code = nc_put_att_text(ncID, write_var_id, CF_SG_NODE_COORDINATES, ncoords_atr_str.size(), ncoords_atr_str.c_str());
-
+		
+		NCDF_ERR(err_code);
+		if(err_code != NC_NOERR)
+		{
+			throw SGWriter_Exception_NCWriteFailure(name.c_str(), CF_SG_NODE_COORDINATES, "attribute in geometry_container");
+		}
 		// The previous two attributes are all that are required from POINT
 
 
@@ -582,6 +814,11 @@ namespace nccfdriver
 			std::string nodecount_atr_str = name + "_node_count";
 			
 			err_code = nc_put_att_text(ncID, write_var_id, CF_SG_NODE_COUNT, nodecount_atr_str.size(), nodecount_atr_str.c_str());
+			NCDF_ERR(err_code);
+			if(err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCWriteFailure(name.c_str(), CF_SG_NODE_COUNT, "attribute in geometry_container");
+			}
 		}
 
 		/* Part_Node_Count Attribute
@@ -592,17 +829,14 @@ namespace nccfdriver
 			std::string pnc_atr_str = name + "_part_node_count";
 
 			err_code = nc_put_att_text(ncID, write_var_id, CF_SG_PART_NODE_COUNT, pnc_atr_str.size(), pnc_atr_str.c_str());
+
+			NCDF_ERR(err_code);
+			if(err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCWriteFailure(name.c_str(), CF_SG_PART_NODE_COUNT, "attribute in geometry_container");
+			}
 		}
 
 		return write_var_id;
-	}
-
-	void nc_write_x_y_CF_axis(int ncID, int Xaxis_ID, int Yaxis_ID)
-	{
-		int err;
-		err = nc_put_att_text(ncID, Xaxis_ID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
-		err = nc_put_att_text(ncID, Yaxis_ID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
-
-		// to do: throw excepton
 	}
 }

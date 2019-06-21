@@ -1,3 +1,30 @@
+/******************************************************************************
+ *
+ * Project:  netCDF read/write Driver
+ * Purpose:  GDAL bindings over netCDF library.
+ * Author:   Winor Chen <wchen329 at wisc.edu>
+ *
+ ******************************************************************************
+ * Copyright (c) 2019, Winor Chen <wchen329 at wisc.edu>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 #ifndef __NETCDFSGWRITERUTIL_H__
 #define __NETCDFSGWRITERUTIL_H__
 #include <vector>
@@ -49,6 +76,7 @@ namespace nccfdriver
 	class OGR_SGeometry_Scribe
 	{
 		int ncID;
+		std::string containerVarName;
 		int containerVarID;
 		bool interiorRingDetected; // flips on when an interior ring polygon has been detected
 		std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
@@ -155,13 +183,6 @@ namespace nccfdriver
 	 */
 	int write_Geometry_Container
 		(int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names);
-
-	/* Write X, Y axis information
-	 * ncID - as used in the netCDF Library
-	 * Xaxis_ID - the X axis variable
-	 * Yaxis_ID - the Y axis variable
-	 */
-	void nc_write_x_y_CF_axis(int ncID, int Xaxis_ID, int Yaxis_ID);
 }
 
 #endif
