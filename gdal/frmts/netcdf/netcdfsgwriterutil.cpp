@@ -300,6 +300,7 @@ namespace nccfdriver
 				int pt_ind_int = static_cast<int>(pt_ind);
 				OGRPoint& write_pt = ft.getPoint(part_no, pt_ind_int);
 			
+
 				// Write each node coordinate
 				double x = write_pt.getX();
 				nc_put_var1_double(ncID, node_coordinates_varIDs[0], &next_write_pos_node_coord, &x);
@@ -484,6 +485,45 @@ namespace nccfdriver
 		}
 	}
 
+	static std::string sgwe_msg_builder
+		(	const char * layer_name,
+			const char * failure_name,
+			const char * failure_type,
+			const char * special_msg
+		)
+	{
+		return
+			std::string("[") + std::string(layer_name) + std::string("] ") +
+			std::string(failure_type) + std::string(failure_name) + std::string(special_msg);
+	}
+
+	// Exception related definitions
+	SGWriter_Exception_NCWriteFailure::SGWriter_Exception_NCWriteFailure(const char * layer_name, const char * failure_name, const char * failure_type)
+	{
+		this->msg = sgwe_msg_builder(layer_name, failure_name, failure_type,
+			"could not be written to (datum write failure).");
+	}
+
+	SGWriter_Exception_NCInqFailure::SGWriter_Exception_NCInqFailure (const char * layer_name, const char * failure_name, const char * failure_type)
+	{
+		this->msg = sgwe_msg_builder(layer_name, failure_name, failure_type,
+			"could not be read from (property inquiry failure).");
+	}
+
+	SGWriter_Exception_NCDefFailure::SGWriter_Exception_NCDefFailure(const char * layer_name, const char * failure_name, const char * failure_type)
+	{
+		this->msg = sgwe_msg_builder(layer_name, failure_name, failure_type,
+			"could not be defined in the dataset (definition failure).");
+	}
+
+	SGWriter_Exception_GeometryTMismatch::SGWriter_Exception_GeometryTMismatch(const char * layer_type, const char * wrong_type)
+	{
+		this->msg = std::string("Layer has geometry type ") + std::string(layer_type)
+			+ std::string(" but attempt was made to write feature of type ")
+			+ std::string(wrong_type);
+	}
+
+	// Helper function definitions
 	int write_Geometry_Container
 		(int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names)
 	{
@@ -507,7 +547,10 @@ namespace nccfdriver
 			(geometry_type == POLYGON || geometry_type == MULTIPOLYGON) ? CF_SG_TYPE_POLY :
 			""; // obviously an error condition...
 
-		// todo: error on "none"
+		if(geometry_str == "")
+		{
+			throw SG_Exception_BadFeature();
+		}
 
 		// Add the geometry type attribute
 		err_code = nc_put_att_text(ncID, write_var_id, CF_SG_GEOMETRY_TYPE, geometry_str.size(), geometry_str.c_str());

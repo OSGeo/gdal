@@ -78,7 +78,68 @@ namespace nccfdriver
 			bool getInteriorRingDetected() { return this->interiorRingDetected; }
 	};
 
+	// Namespace global, since strange VS2015 (specific!) heap corruption issue when declaring in netCDFLayer
+	// will look at later
 	extern OGR_SGeometry_Scribe GeometryScribe;
+
+	// Exception Classes
+	class SGWriter_Exception : public SG_Exception
+	{
+		public:
+			const char * get_err_msg() override { return "A general error occurred when writing a netCDF dataset"; }
+	};
+
+	class SGWriter_Exception_NCWriteFailure : public SGWriter_Exception
+	{
+		std::string msg;
+
+		public:
+			const char * get_err_msg() override { return this->msg.c_str(); }
+			SGWriter_Exception_NCWriteFailure(const char * layer_name, const char * failure_name,
+				const char * failure_type);
+	};
+
+	class SGWriter_Exception_NCInqFailure : public SGWriter_Exception
+	{
+		std::string msg;
+
+		public:
+			const char * get_err_msg() override { return this->msg.c_str(); }
+			SGWriter_Exception_NCInqFailure(const char * layer_name, const char * failure_name,
+				const char * failure_type);
+	};
+
+	class SGWriter_Exception_NCDefFailure : public SGWriter_Exception
+	{
+		std::string msg;
+
+		public:
+			const char * get_err_msg() override { return this->msg.c_str(); }
+			SGWriter_Exception_NCDefFailure(const char * layer_name, const char * failure_name,
+				const char * failure_type);
+	};
+
+	class SGWriter_Exception_EmptyGeometry : public SGWriter_Exception
+	{
+		std::string msg;
+
+		public:
+			const char * get_err_msg() override { return this->msg.c_str(); } 
+			SGWriter_Exception_EmptyGeometry()
+			{
+				msg = std::string("An empty geometry was detected when writing a netCDF file. ") +
+					std::string("Empty geometries are not allowed.");
+			}
+	};
+
+	class SGWriter_Exception_GeometryTMismatch : public SGWriter_Exception
+	{
+		std::string msg;
+
+		public:
+			const char * get_err_msg() override { return this->msg.c_str(); }
+			SGWriter_Exception_GeometryTMismatch(const char * layer_type, const char * wrong_type);
+	};
 
 	// Functions that interface with netCDF, for writing
 
