@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogrshape.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -41,6 +42,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "ogr_core.h"
@@ -54,6 +56,8 @@
 // #define IMMEDIATE_OPENING 1
 
 CPL_CVSID("$Id$")
+
+constexpr int knREFRESH_LOCK_FILE_DELAY_SEC = 10;
 
 /************************************************************************/
 /*                          DS_SHPOpen()                                */
@@ -108,25 +112,112 @@ OGRShapeDataSource::OGRShapeDataSource() :
 {}
 
 /************************************************************************/
+/*                             GetLayerNames()                          */
+/************************************************************************/
+
+std::vector<CPLString> OGRShapeDataSource::GetLayerNames() const
+{
+    std::vector<CPLString> res;
+    const_cast<OGRShapeDataSource*>(this)->GetLayerCount();
+    for( int i = 0; i < nLayers; i++ )
+    {
+        res.emplace_back(papoLayers[i]->GetName());
+    }
+    return res;
+}
+
+/************************************************************************/
 /*                        ~OGRShapeDataSource()                         */
 /************************************************************************/
 
 OGRShapeDataSource::~OGRShapeDataSource()
 
 {
-    CPLFree( pszName );
-
+    std::vector<CPLString> layerNames;
+    if( !m_osTemporaryUnzipDir.empty() )
+    {
+        layerNames = GetLayerNames();
+    }
     for( int i = 0; i < nLayers; i++ )
     {
         CPLAssert( nullptr != papoLayers[i] );
 
         delete papoLayers[i];
     }
+    CPLFree( papoLayers );
+    nLayers = 0;
+    papoLayers = nullptr;
 
     delete poPool;
 
-    CPLFree( papoLayers );
     CSLDestroy( papszOpenOptions );
+
+    RecompressIfNeeded(layerNames);
+    RemoveLockFile();
+
+    // Free mutex & cond
+    if( m_poRefreshLockFileMutex )
+    {
+        CPLDestroyMutex(m_poRefreshLockFileMutex);
+        m_poRefreshLockFileMutex = nullptr;
+    }
+    if( m_poRefreshLockFileCond )
+    {
+        CPLDestroyCond(m_poRefreshLockFileCond);
+        m_poRefreshLockFileCond = nullptr;
+    }
+
+    CPLFree( pszName );
+}
+
+/************************************************************************/
+/*                              OpenZip()                               */
+/************************************************************************/
+
+bool OGRShapeDataSource::OpenZip( GDALOpenInfo* poOpenInfo,
+                                  const char* pszOriFilename )
+{
+    if( !Open(poOpenInfo, true) )
+        return false;
+    CPLFree(pszName);
+    pszName = CPLStrdup(pszOriFilename);
+    m_bIsZip = true;
+    m_bSingleLayerZip = EQUAL(CPLGetExtension(pszOriFilename), "shz");
+
+    if( !m_bSingleLayerZip )
+    {
+        CPLString osLockFile(pszName);
+        osLockFile += ".gdal.lock";
+        VSIStatBufL sStat;
+        if( VSIStatL(osLockFile, &sStat) == 0 &&
+            sStat.st_mtime < time(nullptr) - 2 * knREFRESH_LOCK_FILE_DELAY_SEC )
+        {
+            CPLDebug("Shape", "Deleting stalled %s", osLockFile.c_str());
+            VSIUnlink(osLockFile);
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                            CreateZip()                               */
+/************************************************************************/
+
+bool OGRShapeDataSource::CreateZip( const char* pszOriFilename )
+{
+    CPLAssert( nLayers == 0 );
+    pszName = CPLStrdup( pszOriFilename );
+
+    void* hZIP = CPLCreateZip(pszName, nullptr);
+    if( !hZIP )
+        return false;
+    if( CPLCloseZip(hZIP) != CE_None )
+        return false;
+    bDSUpdate = true;
+    m_bIsZip = true;
+    m_bSingleLayerZip = EQUAL(CPLGetExtension(pszOriFilename), "shz");
+    return true;
 }
 
 /************************************************************************/
@@ -345,9 +436,11 @@ bool OGRShapeDataSource::OpenFile( const char *pszNewName, bool bUpdate )
 /*      Care is taken to suppress the error and only reissue it if      */
 /*      we think it is appropriate.                                     */
 /* -------------------------------------------------------------------- */
+    const bool bRealUpdateAccess = bUpdate &&
+        (!IsZip() || !GetTemporaryUnzipDir().empty());
     CPLErrorReset();
     CPLPushErrorHandler( CPLQuietErrorHandler );
-    SHPHandle hSHP = bUpdate ?
+    SHPHandle hSHP = bRealUpdateAccess ?
         DS_SHPOpen( pszNewName, "r+" ) :
         DS_SHPOpen( pszNewName, "r" );
     CPLPopErrorHandler();
@@ -384,7 +477,7 @@ bool OGRShapeDataSource::OpenFile( const char *pszNewName, bool bUpdate )
     DBFHandle hDBF = nullptr;
     if( hSHP != nullptr || EQUAL(CPLGetExtension(pszNewName), "dbf") )
     {
-        if( bUpdate )
+        if( bRealUpdateAccess )
         {
             hDBF = DS_DBFOpen( pszNewName, "r+" );
             if( hSHP != nullptr && hDBF == nullptr )
@@ -509,6 +602,16 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
 
         return nullptr;
     }
+
+    if( m_bIsZip && m_bSingleLayerZip && nLayers == 1 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  ".shz only supports one single layer");
+        return nullptr;
+    }
+
+    if( !UncompressIfNeeded() )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Figure out what type of layer we need.                          */
@@ -721,8 +824,9 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
     }
     else
     {
+        CPLString osDir( m_osTemporaryUnzipDir.empty() ? pszName : m_osTemporaryUnzipDir );
         pszFilenameWithoutExt =
-            CPLStrdup(CPLFormFilename(pszName, pszLayerName, nullptr));
+            CPLStrdup(CPLFormFilename(osDir, pszLayerName, nullptr));
     }
 
 /* -------------------------------------------------------------------- */
@@ -854,9 +958,9 @@ int OGRShapeDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return bDSUpdate;
+        return bDSUpdate && !(m_bIsZip && m_bSingleLayerZip && nLayers == 1);
     if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return bDSUpdate;
+        return bDSUpdate && !(m_bIsZip && m_bSingleLayerZip);
     if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
     if( EQUAL(pszCap,ODsCRandomLayerWrite) )
@@ -994,6 +1098,17 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
                                            const char *pszDialect )
 
 {
+    if( EQUAL(pszStatement, "UNCOMPRESS") )
+    {
+        UncompressIfNeeded();
+        return nullptr;
+    }
+
+    if( EQUAL(pszStatement, "RECOMPRESS") )
+    {
+        RecompressIfNeeded(GetLayerNames());
+        return nullptr;
+    }
 /* ==================================================================== */
 /*      Handle command to drop a spatial index.                         */
 /* ==================================================================== */
@@ -1200,6 +1315,16 @@ OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
     }
 
+    if( m_bIsZip && m_bSingleLayerZip )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  ".shz does not support layer deletion");
+        return OGRERR_FAILURE;
+    }
+
+    if( !UncompressIfNeeded() )
+        return OGRERR_FAILURE;
+
     OGRShapeLayer* poLayerToDelete = papoLayers[iLayer];
 
     char * const pszFilename = CPLStrdup(poLayerToDelete->GetFullName());
@@ -1262,6 +1387,10 @@ void OGRShapeDataSource::SetLastUsedLayer( OGRShapeLayer* poLayer )
 
 char** OGRShapeDataSource::GetFileList()
 {
+    if( m_bIsZip )
+    {
+        return CSLAddString(nullptr, pszName);
+    }
     CPLStringList oFileList;
     GetLayerCount();
     for( int i = 0; i < nLayers; i++ )
@@ -1270,4 +1399,398 @@ char** OGRShapeDataSource::GetFileList()
         poLayer->AddToFileList(oFileList);
     }
     return oFileList.StealList();
+}
+
+/************************************************************************/
+//                          RefeshLockFile()                            */
+/************************************************************************/
+
+void OGRShapeDataSource::RefeshLockFile(void* _self)
+{
+    OGRShapeDataSource* self = static_cast<OGRShapeDataSource*>(_self);
+    CPLAssert(self->m_psLockFile);
+    CPLAcquireMutex(self->m_poRefreshLockFileMutex, 1000);
+    CPLCondSignal(self->m_poRefreshLockFileCond);
+    unsigned int nInc = 0;
+    while(true)
+    {
+        auto ret = CPLCondTimedWait(self->m_poRefreshLockFileCond,
+                                    self->m_poRefreshLockFileMutex,
+                                    self->m_dfRefreshLockDelay);
+        if( ret == COND_TIMED_WAIT_COND )
+        {
+            if( self->m_bExitRefreshLockFileThread )
+                break;
+        }
+        else if( ret == COND_TIMED_WAIT_TIME_OUT )
+        {
+            CPLAssert(self->m_psLockFile);
+            VSIFSeekL(self->m_psLockFile, 0, SEEK_SET);
+            CPLString osTime;
+            nInc++;
+            osTime.Printf(CPL_FRMT_GUIB ", %u\n", 
+                          static_cast<GUIntBig>(time(nullptr)),
+                          nInc);
+            VSIFWriteL(osTime.data(), 1, osTime.size(), self->m_psLockFile);
+            VSIFFlushL(self->m_psLockFile);
+        }
+    }
+    CPLReleaseMutex(self->m_poRefreshLockFileMutex);
+}
+
+/************************************************************************/
+//                            RemoveLockFile()                          */
+/************************************************************************/
+
+void OGRShapeDataSource::RemoveLockFile()
+{
+    if( !m_psLockFile )
+        return;
+
+    // Ask the thread to terminate
+    CPLAcquireMutex(m_poRefreshLockFileMutex, 1000);
+    m_bExitRefreshLockFileThread = true;
+    CPLCondSignal(m_poRefreshLockFileCond);
+    CPLReleaseMutex(m_poRefreshLockFileMutex);
+    CPLJoinThread(m_hRefreshLockFileThread);
+    m_hRefreshLockFileThread = nullptr;
+
+    // Close and remove lock file
+    VSIFCloseL(m_psLockFile);
+    m_psLockFile = nullptr;
+    CPLString osLockFile(pszName);
+    osLockFile += ".gdal.lock";
+    VSIUnlink(osLockFile);
+}
+
+/************************************************************************/
+//                         UncompressIfNeeded()                         */
+/************************************************************************/
+
+bool OGRShapeDataSource::UncompressIfNeeded()
+{
+    if( !bDSUpdate || !m_bIsZip || !m_osTemporaryUnzipDir.empty() )
+        return true;
+
+    GetLayerCount();
+
+    auto returnError = [this]()
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot uncompress %s", pszName);
+        return false;
+    };
+
+    if( nLayers > 1 )
+    {
+        CPLString osLockFile(pszName);
+        osLockFile += ".gdal.lock";
+        VSIStatBufL sStat;
+        if( VSIStatL(osLockFile, &sStat) == 0 &&
+            sStat.st_mtime > time(nullptr) - 2 * knREFRESH_LOCK_FILE_DELAY_SEC )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot edit %s. Another task is editing it", pszName);
+            return false;
+        }
+        if( !m_poRefreshLockFileMutex )
+        {
+            m_poRefreshLockFileMutex = CPLCreateMutex();
+            if( !m_poRefreshLockFileMutex )
+                return false;
+            CPLReleaseMutex(m_poRefreshLockFileMutex);
+        }
+        if( !m_poRefreshLockFileCond )
+        {
+            m_poRefreshLockFileCond = CPLCreateCond();
+            if( !m_poRefreshLockFileCond )
+                return false;
+        }
+        auto f = VSIFOpenL(osLockFile, "wb");
+        if( !f )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create lock file");
+            return false;
+        }
+        m_psLockFile = f;
+        m_bExitRefreshLockFileThread = false;
+        // Config option mostly for testing purposes
+        m_dfRefreshLockDelay = CPLAtof(
+            CPLGetConfigOption("OGR_SHAPE_LOCK_DELAY",
+                            CPLSPrintf("%d", knREFRESH_LOCK_FILE_DELAY_SEC)));
+        m_hRefreshLockFileThread = CPLCreateJoinableThread(
+            OGRShapeDataSource::RefeshLockFile, this);
+        if( !m_hRefreshLockFileThread )
+        {
+            VSIFCloseL(m_psLockFile);
+            m_psLockFile = nullptr;
+            VSIUnlink(osLockFile);
+        }
+        else
+        {
+            CPLAcquireMutex(m_poRefreshLockFileMutex, 1000);
+            CPLCondWait(m_poRefreshLockFileCond, m_poRefreshLockFileMutex);
+            CPLReleaseMutex(m_poRefreshLockFileMutex);
+        }
+    }
+
+    CPLString osVSIZipDirname(GetVSIZipPrefixeDir());
+    vsi_l_offset nTotalUncompressedSize = 0;
+    CPLStringList aosFiles( VSIReadDir( osVSIZipDirname ));
+    for( int i = 0; i < aosFiles.size(); i++ )
+    {
+        const char* pszFilename = aosFiles[i];
+        if( !EQUAL(pszFilename, ".") && !EQUAL(pszFilename, "..") )
+        {
+            CPLString osSrcFile( CPLFormFilename(
+                osVSIZipDirname, pszFilename, nullptr) );
+            VSIStatBufL sStat;
+            if( VSIStatL(osSrcFile, &sStat) == 0 )
+            {
+                nTotalUncompressedSize += sStat.st_size;
+            }
+        }
+    }
+
+    CPLString osTemporaryDir(pszName);
+    osTemporaryDir += "_tmp_uncompressed";
+
+    const char* pszUseVsimem = CPLGetConfigOption("OGR_SHAPE_USE_VSIMEM_FOR_TEMP", "AUTO");
+    if( EQUAL(pszUseVsimem, "YES") ||
+        (EQUAL(pszUseVsimem, "AUTO") &&
+         nTotalUncompressedSize > 0 &&
+         nTotalUncompressedSize < static_cast<GUIntBig>(CPLGetUsablePhysicalRAM() / 10)) )
+    {
+        osTemporaryDir = CPLSPrintf("/vsimem/_shapedriver/%p", this);
+    }
+    CPLDebug("Shape", "Uncompressing to %s", osTemporaryDir.c_str());
+
+    VSIRmdirRecursive(osTemporaryDir);
+    if( VSIMkdir(osTemporaryDir, 0755) != 0 )
+        return returnError();
+    for( int i = 0; i < aosFiles.size(); i++ )
+    {
+        const char* pszFilename = aosFiles[i];
+        if( !EQUAL(pszFilename, ".") && !EQUAL(pszFilename, "..") )
+        {
+            CPLString osSrcFile( CPLFormFilename(
+                osVSIZipDirname, pszFilename, nullptr) );
+            CPLString osDestFile( CPLFormFilename(
+                osTemporaryDir, pszFilename, nullptr) );
+            if( CPLCopyFile(osDestFile, osSrcFile) != 0 )
+            {
+                VSIRmdirRecursive(osTemporaryDir);
+                return returnError();
+            }
+        }
+    }
+
+    m_osTemporaryUnzipDir = osTemporaryDir;
+
+    for( int i = 0; i < nLayers; i++ )
+    {
+        OGRShapeLayer* poLayer = papoLayers[i];
+        poLayer->UpdateFollowingDeOrRecompression();
+    }
+
+    return true;
+}
+
+/************************************************************************/
+//                         RecompressIfNeeded()                         */
+/************************************************************************/
+
+bool OGRShapeDataSource::RecompressIfNeeded(const std::vector<CPLString>& layerNames)
+{
+    if( !bDSUpdate || !m_bIsZip || m_osTemporaryUnzipDir.empty() )
+        return true;
+
+    auto returnError = [this]()
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot recompress %s", pszName);
+        RemoveLockFile();
+        return false;
+    };
+
+    CPLStringList aosFiles( VSIReadDir( m_osTemporaryUnzipDir ));
+    CPLString osTmpZip(m_osTemporaryUnzipDir + ".zip");
+    VSIUnlink(osTmpZip);
+    CPLString osTmpZipWithVSIZip( "/vsizip/{" + osTmpZip + '}' );
+
+    std::map<CPLString, int> oMapLayerOrder;
+    for( size_t i = 0; i < layerNames.size(); i++ )
+        oMapLayerOrder[layerNames[i]] = static_cast<int>(i);
+
+    std::vector<CPLString> sortedFiles;
+    vsi_l_offset nTotalUncompressedSize = 0;
+    for(int i = 0; i < aosFiles.size(); i++ )
+    {
+        sortedFiles.emplace_back(aosFiles[i]);
+        CPLString osSrcFile( CPLFormFilename(
+                m_osTemporaryUnzipDir, aosFiles[i], nullptr) );
+        VSIStatBufL sStat;
+        if( VSIStatL(osSrcFile, &sStat) == 0 )
+        {
+            nTotalUncompressedSize += sStat.st_size;
+        }
+    }
+
+    // Sort files by their layer orders, and then for files of the same layer,
+    // make shp appear first, and then by filename order
+    std::sort(sortedFiles.begin(), sortedFiles.end(),
+        [&oMapLayerOrder](const CPLString& a, const CPLString& b)
+        {
+            int iA = INT_MAX;
+            auto oIterA = oMapLayerOrder.find(CPLGetBasename(a));
+            if( oIterA != oMapLayerOrder.end() )
+                iA = oIterA->second;
+            int iB = INT_MAX;
+            auto oIterB = oMapLayerOrder.find(CPLGetBasename(b));
+            if( oIterB != oMapLayerOrder.end() )
+                iB = oIterB->second;
+            if( iA < iB )
+                return true;
+            if( iA > iB )
+                return false;
+            if( iA != INT_MAX )
+            {
+                const char* pszExtA = CPLGetExtension(a);
+                const char* pszExtB = CPLGetExtension(b);
+                if( EQUAL(pszExtA, "shp") )
+                    return true;
+                if( EQUAL(pszExtB, "shp") )
+                    return false;
+            }
+            return a < b;
+        }
+    );
+
+    CPLConfigOptionSetter oZIP64Setter(
+        "CPL_CREATE_ZIP64",
+        nTotalUncompressedSize < 4000U * 1000 * 1000 ? "NO" : "YES", true);
+
+    /* Maintain a handle on the ZIP opened */
+    VSILFILE* fpZIP = VSIFOpenExL(osTmpZipWithVSIZip, "wb", true);
+    if (fpZIP == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                "Cannot create %s: %s", osTmpZipWithVSIZip.c_str(),
+                 VSIGetLastErrorMsg());
+        return returnError();
+    }
+
+    for( const auto& osFilename: sortedFiles )
+    {
+        const char* pszFilename = osFilename.c_str();
+        if( !EQUAL(pszFilename, ".") && !EQUAL(pszFilename, "..") )
+        {
+            CPLString osSrcFile( CPLFormFilename(
+                m_osTemporaryUnzipDir, pszFilename, nullptr) );
+            CPLString osDestFile( CPLFormFilename(
+                osTmpZipWithVSIZip, pszFilename, nullptr) );
+            if( CPLCopyFile(osDestFile, osSrcFile) != 0 )
+            {
+                VSIFCloseL(fpZIP);
+                return returnError();
+            }
+        }
+    }
+
+    VSIFCloseL(fpZIP);
+
+    const bool bOverwrite =
+        CPLTestBool(CPLGetConfigOption("OGR_SHAPE_PACK_IN_PLACE",
+#ifdef WIN32
+                                        "YES"
+#else
+                                        "NO"
+#endif
+                                        ));
+    if( bOverwrite )
+    {
+        VSILFILE* fpTarget = nullptr;
+        for( int i = 0; i < 10; i++ )
+        {
+            fpTarget = VSIFOpenL(pszName, "rb+");
+            if( fpTarget )
+                break;
+            CPLSleep(0.1);
+        }
+        if( !fpTarget )
+            return returnError();
+        bool bCopyOK = CopyInPlace(fpTarget, osTmpZip);
+        VSIFCloseL(fpTarget);
+        VSIUnlink(osTmpZip);
+        if( !bCopyOK )
+        {
+            return returnError();
+        }
+    }
+    else
+    {
+        if( VSIUnlink(pszName) != 0 ||
+            CPLMoveFile(pszName, osTmpZip) != 0 )
+        {
+            return returnError();
+        }
+    }
+
+    VSIRmdirRecursive(m_osTemporaryUnzipDir);
+    m_osTemporaryUnzipDir.clear();
+
+    for( int i = 0; i < nLayers; i++ )
+    {
+        OGRShapeLayer* poLayer = papoLayers[i];
+        poLayer->UpdateFollowingDeOrRecompression();
+    }
+
+    RemoveLockFile();
+
+    return true;
+}
+
+/************************************************************************/
+/*                            CopyInPlace()                             */
+/************************************************************************/
+
+bool OGRShapeDataSource::CopyInPlace( VSILFILE* fpTarget,
+                                      const CPLString& osSourceFilename )
+{
+    VSILFILE* fpSource = VSIFOpenL(osSourceFilename, "rb");
+    if( fpSource == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Cannot open %s", osSourceFilename.c_str());
+        return false;
+    }
+
+    const size_t nBufferSize = 4096;
+    void* pBuffer = CPLMalloc(nBufferSize);
+    VSIFSeekL( fpTarget, 0, SEEK_SET );
+    bool bRet = true;
+    while( true )
+    {
+        size_t nRead = VSIFReadL( pBuffer, 1, nBufferSize, fpSource );
+        size_t nWritten = VSIFWriteL( pBuffer, 1, nRead, fpTarget );
+        if( nWritten != nRead )
+        {
+            bRet = false;
+            break;
+        }
+        if( nRead < nBufferSize )
+            break;
+    }
+
+    if( bRet )
+    {
+        bRet = VSIFTruncateL( fpTarget, VSIFTellL(fpTarget) ) == 0;
+        if( !bRet )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Truncation failed");
+        }
+    }
+
+    CPLFree(pBuffer);
+    VSIFCloseL(fpSource);
+    return bRet;
 }
