@@ -2082,7 +2082,7 @@ def test_netcdf_58():
     ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_58.nc', options=['FORMAT=NC4', 'MULTIPLE_LAYERS=SEPARATE_GROUPS'])
     for ilayer in range(2):
         # Make sure auto-grow will happen to test this works well with multiple groups
-        lyr = ds.CreateLayer('lyr%d' % ilayer, geom_type=ogr.wkbNone, options=['USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1', 'LEGACY=WKT'])
+        lyr = ds.CreateLayer('lyr%d' % ilayer, geom_type=ogr.wkbNone, options=['USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1'])
         lyr.CreateField(ogr.FieldDefn('lyr_id', ogr.OFTString))
         f = ogr.Feature(lyr.GetLayerDefn())
         f['lyr_id'] = 'lyr_%d' % ilayer
@@ -3669,9 +3669,9 @@ def test_point3D_write():
         pytest.skip()
     src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/test_point_write.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/test_point3D_write.nc", src, format="netCDF");
 
-    nc_tsrc = ogr.Open("tmp/test_point_write.nc")
+    nc_tsrc = ogr.Open("tmp/test_point3D_write.nc")
     assert(src is not None)
 
     # Test layer properties
