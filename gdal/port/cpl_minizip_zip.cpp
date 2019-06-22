@@ -1484,7 +1484,8 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
 #endif
 
     // update Current Item crc and sizes,
-    if(compressed_size >= 0xffffffff || uncompressed_size >= 0xffffffff || zi->ci.pos_local_header >= 0xffffffff)
+    if( zi->ci.pos_zip64extrainfo ||
+        compressed_size >= 0xffffffff || uncompressed_size >= 0xffffffff || zi->ci.pos_local_header >= 0xffffffff)
     {
       /*version Made by*/
       zip64local_putValue_inmemory(zi->ci.central_header+4,45,2);
