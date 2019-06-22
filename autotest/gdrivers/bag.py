@@ -677,3 +677,38 @@ def test_bag_read_invalid_bag_vlen_bag_version():
 
     ds = gdal.Open('data/invalid_bag_vlen_bag_version.bag')
     assert not ds
+
+###############################################################################
+# See https://github.com/OSGeo/gdal/issues/1643
+
+
+def test_bag_non_standard_georeferencing_convention():
+
+    if gdaltest.bag_drv is None:
+        pytest.skip()
+
+    gdal.Translate('/vsimem/out.bag', 'data/byte.tif',
+                   creationOptions = ['VAR_DATE=2019-06-21'])
+    gdal.Translate('/vsimem/out_non_standard.bag', 'data/byte.tif',
+                   creationOptions = ['VAR_DATE=2019-06-21',
+                                      'CORNER_POINTS_EXTEND_HALF_PIXEL=YES'])
+
+    f = gdal.VSIFOpenL('/vsimem/out.bag', 'rb')
+    assert f
+    data = gdal.VSIFReadL(1, 1000000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/out.bag')
+
+    f = gdal.VSIFOpenL('/vsimem/out_non_standard.bag', 'rb')
+    assert f
+    data_non_standard = gdal.VSIFReadL(1, 1000000, f)
+    gdal.VSIFCloseL(f)
+
+    assert data != data_non_standard
+
+    ds = gdal.Open('/vsimem/out_non_standard.bag')
+    gt = ds.GetGeoTransform()
+    assert gt == (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+    ds = None
+
+    gdal.Unlink('/vsimem/out_non_standard.bag')
