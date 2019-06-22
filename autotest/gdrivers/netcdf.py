@@ -3619,4 +3619,50 @@ def test_states_full_layer():
     assert(second.GetFieldAsString("STATE_ABBR") == "MT")
 
 ###############################################################################
-#  other tests
+#  simple geometry writing tests
+
+def test_point_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_point3D_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_line_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_line3D_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_polygon_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_polygon3D_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_multipoint_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_multipoint3D_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_multiline_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_multiline3D_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_multipolygon_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_multipolygon3D_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_polygon_with_ir_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_multipolygon_with_ir_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+def test_write_multiplelayer_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
