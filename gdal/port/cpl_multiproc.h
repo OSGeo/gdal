@@ -85,6 +85,13 @@ void  CPL_DLL CPLCleanupMasterMutex( void );
 
 CPLCond  CPL_DLL *CPLCreateCond( void );
 void  CPL_DLL  CPLCondWait( CPLCond *hCond, CPLMutex* hMutex );
+typedef enum
+{
+    COND_TIMED_WAIT_COND,
+    COND_TIMED_WAIT_TIME_OUT,
+    COND_TIMED_WAIT_OTHER
+} CPLCondTimedWaitReason;
+CPLCondTimedWaitReason CPL_DLL CPLCondTimedWait( CPLCond *hCond, CPLMutex* hMutex, double dfWaitInSeconds );
 void  CPL_DLL  CPLCondSignal( CPLCond *hCond );
 void  CPL_DLL  CPLCondBroadcast( CPLCond *hCond );
 void  CPL_DLL  CPLDestroyCond( CPLCond *hCond );
