@@ -835,6 +835,7 @@ class netCDFDataset final: public GDALPamDataset
     const char   *pszCFCoordinates;
     double        nCFVersion;
     bool          bSGSupport;
+    bool          CF1_6_Rewrite_Occurred;
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
 
@@ -929,6 +930,7 @@ class netCDFDataset final: public GDALPamDataset
                                      OGRSpatialReference *poSpatialRef,
                                      OGRwkbGeometryType eGType,
                                      char ** papszOptions ) override;
+    void SetCF1_6_Rewrite_Occurred() { this->CF1_6_Rewrite_Occurred = true; }
 
   public:
 
