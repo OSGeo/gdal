@@ -758,6 +758,8 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 
     const CPLString osOldPath = NormalizePath(pszOldPath);
     const CPLString osNewPath = NormalizePath(pszNewPath);
+    if( !STARTS_WITH(pszNewPath, "/vsimem/") )
+        return -1;
 
     if( osOldPath.compare(osNewPath) == 0 )
         return 0;
