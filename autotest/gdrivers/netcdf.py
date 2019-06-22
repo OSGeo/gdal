@@ -3624,9 +3624,89 @@ def test_states_full_layer():
 def test_point_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/point_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    gdal.VectorTranslate("tmp/test_point_write.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/test_point_write.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("point_collection")
+    assert(layer is not None)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (0.5 -0.5)")
+    assert(fnam == "FishingSpot1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1 -1)")
+    assert(fnam == "FishingSpot2")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1.5 -1.5)")
+    assert(fnam == "FishingSpot3")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (2 -2)")
+    assert(fnam == "FishingSpot4")
+
 def test_point3D_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    gdal.VectorTranslate("tmp/test_point_write.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/test_point_write.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("point_collection")
+    assert(layer is not None)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (0.5 -0.5 -1.5)")
+    assert(fnam == "FishingSpot1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1 -1 -0.5)")
+    assert(fnam == "FishingSpot2")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1.5 -1.5 0.5)")
+    assert(fnam == "FishingSpot3")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (2 -2 1.5)")
+    assert(fnam == "FishingSpot4")
+
 def test_line_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
