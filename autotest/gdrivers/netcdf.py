@@ -3630,10 +3630,12 @@ def test_point_write():
 
     nc_tsrc = ogr.Open("tmp/test_point_write.nc")
     assert(src is not None)
+    assert(src.GetLayerCount() == 1)
 
     # Test layer properties
     layer = nc_tsrc.GetLayerByName("point_collection")
     assert(layer is not None)
+    assert(layer.GetFeatureCount() == 4)
 
     # Test each feature manually
     feat = layer.GetNextFeature();
@@ -3673,10 +3675,12 @@ def test_point3D_write():
 
     nc_tsrc = ogr.Open("tmp/test_point3D_write.nc")
     assert(src is not None)
+    assert(src.GetLayerCount() == 1)
 
     # Test layer properties
     layer = nc_tsrc.GetLayerByName("point_collection")
     assert(layer is not None)
+    assert(layer.GetFeatureCount() == 4)
 
     # Test each feature manually
     feat = layer.GetNextFeature();
@@ -3722,9 +3726,74 @@ def test_polygon3D_write():
 def test_multipoint_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipoint_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/multipoint_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/multipoint_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("peak_list")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 3)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOINT (1 -1,2 -2,4 -4)")
+    assert(fnam == "Peaks1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOINT (5 -5,6 -6,8 -8)")
+    assert(fnam == "Peaks2")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOINT (9 -9,10 -10,-2 2)")
+    assert(fnam == "Peaks3")
+
 def test_multipoint3D_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipoint3D_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/multipoint3D_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/multipoint3D_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("drilling_sites")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOINT (0 -1 -5,2 -2 2)")
+    assert(fnam == "site1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOINT (7 -2 1,4 3 2,8 -8 3)")
+    assert(fnam == "site2")
+
 def test_multiline_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
