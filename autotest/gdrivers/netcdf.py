@@ -3831,15 +3831,53 @@ def test_polygon_write():
     assert(fWkt == "MULTIPOLYGON (((0 0,-1 0,-1 -1,0 0)))")
     assert(fnam == "Triangle_Flipped")
 
-def test_polygon_no_interior_rings_write():
+def test_polygon_no_ir_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
 def test_polygon3D_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon3D_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
 
-def test_polygon3D_no_interior_rings_write():
+    gdal.VectorTranslate("tmp/polygon3D_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/polygon3D_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("shapes")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 3)
+
+    # Test each feature manually
+    # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
+    # But when being written out, they are OGRFeature POLYGON
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0 0,1 0 -1,1 1 -2,0 0 -3)))")
+    assert(fnam == "Trianglything")
+
+    # This second feature has an interior ring in it
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((3 0 0,4 0 0,4 1 1,3 1 1,3 0 0),(3.5 0.25 1,3.75 0.25 1,3.75 0.5 1,3.5 0.5 1,3.5 0.25 1)))")
+    assert(fnam == "Prismthing")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0 0,-1 0 1,-1 -1 2,0 0 3)))")
+    assert(fnam == "Trianglyflipped")
+
+def test_polygon3D_no_ir_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
@@ -3917,21 +3955,62 @@ def test_multipoint3D_write():
 def test_multiline_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multiline_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/multiline_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/multiline_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("streams")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 3)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTILINESTRING ((1 -5),(2 -4,3 -3,4 -2,5 -1))")
+    assert(fnam == "fresh_river")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTILINESTRING ((-2 5,-3 4,-4 3,-5 2))")
+    assert(fnam == "not_so_fresh_river")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTILINESTRING ((0 1,1 0),(2 0,-2 0))")
+    assert(fnam == "not_fresh_river")
+
 def test_multiline3D_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+
 def test_multipolygon_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+
 def test_multipolygon3D_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
-def test_polygon_with_ir_write():
+
+def test_multipolygon_with_no_ir_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
-def test_multipolygon_with_ir_write():
+
+def test_multipolygon3D_with_no_ir_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+
 def test_write_multiplelayer_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
