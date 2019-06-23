@@ -3714,15 +3714,135 @@ def test_point3D_write():
 def test_line_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/line_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/line_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/line_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("segv")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 3)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "LINESTRING (1.5 -1.5)")
+    assert(fnam == "seg1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "LINESTRING (30.5 30.5,5 5)")
+    assert(fnam == "seg2")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "LINESTRING (9 -9,10 -10,-1 1)")
+    assert(fnam == "seg3")
+
 def test_line3D_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/line3D_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/line3D_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/line3D_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("path")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 3)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "LINESTRING (0.1 0.2 0.3,99 -99 0)")
+    assert(fnam == "path1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "LINESTRING (100 101 102,25 27 29)")
+    assert(fnam == "path2")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "LINESTRING (7 -11 -7,-11 7 11,-6 1945 1918)")
+    assert(fnam == "path3")
+
 def test_polygon_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/polygon_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/polygon_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("shapes")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 3)
+
+    # Test each feature manually
+    # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
+    # But when being written out, they are OGRFeature POLYGON
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
+    assert(fnam == "Triangle")
+
+    # This second feature has an interior ring in it
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 1,3 0),(3.5 0.25,3.75 0.25,3.75 0.5,3.5 0.5,3.5 0.25)))")
+    assert(fnam == "Square_in_Square")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0,-1 0,-1 -1,0 0)))")
+    assert(fnam == "Triangle_Flipped")
+
+def test_polygon_no_interior_rings_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
 def test_polygon3D_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+
+def test_polygon3D_no_interior_rings_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
 def test_multipoint_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()

@@ -658,6 +658,8 @@ namespace nccfdriver
 			{
 				throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dimension");
 			}
+
+			this->next_write_pos_pnc = this->next_write_pos_node_count;	
 		}
 		
 		err_code = nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
