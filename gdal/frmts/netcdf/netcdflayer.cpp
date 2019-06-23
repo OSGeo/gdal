@@ -932,7 +932,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( m_aoFieldDesc[i].nMainDimId != nMainDimId )
+        if( m_aoFieldDesc[i].nMainDimId != nMainDimId && !m_HasCFSG1_8 )
             continue;
 
         switch( m_aoFieldDesc[i].nType )
@@ -1211,7 +1211,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
     // For CF-1.8 simple geometry specifically 
     // Only need fields to be set here
-    if( m_HasCFSG1_8 ) return true;
+    if( m_HasCFSG1_8 ) return true; // todo: remove this, refactor to allow for CF-1.6 CF-1.8 mixed datasets (multi group)
 
     if( m_nXVarID >= 0 && m_nYVarID >= 0 &&
         (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID) )
