@@ -1108,20 +1108,26 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 psPos, "upperRightCorner.mapCoordinate.easting", "0.0" ), nullptr);
             const double tr_y = CPLStrtod(CPLGetXMLValue(
                 psPos, "upperRightCorner.mapCoordinate.northing", "0.0" ), nullptr);
-            poDS->adfGeoTransform[1] = (tr_x - tl_x)/(poDS->nRasterXSize);
-            poDS->adfGeoTransform[4] = (tr_y - tl_y)/(poDS->nRasterXSize);
-            poDS->adfGeoTransform[2] = (bl_x - tl_x)/(poDS->nRasterYSize);
-            poDS->adfGeoTransform[5] = (bl_y - tl_y)/(poDS->nRasterYSize);
-            poDS->adfGeoTransform[0] = (tl_x);
-            poDS->adfGeoTransform[3] = (tl_y);
+            poDS->adfGeoTransform[1] = (tr_x - tl_x)/(poDS->nRasterXSize - 1);
+            poDS->adfGeoTransform[4] = (tr_y - tl_y)/(poDS->nRasterXSize - 1);
+            poDS->adfGeoTransform[2] = (bl_x - tl_x)/(poDS->nRasterYSize - 1);
+            poDS->adfGeoTransform[5] = (bl_y - tl_y)/(poDS->nRasterYSize - 1);
+            poDS->adfGeoTransform[0] = (tl_x - 0.5*poDS->adfGeoTransform[1]
+                                        - 0.5*poDS->adfGeoTransform[2]);
+            poDS->adfGeoTransform[3] = (tl_y - 0.5*poDS->adfGeoTransform[4]
+                                        - 0.5*poDS->adfGeoTransform[5]);
 
             /* Use bottom right pixel to test geotransform */
             const double br_x = CPLStrtod(CPLGetXMLValue(
                 psPos, "lowerRightCorner.mapCoordinate.easting", "0.0"  ), nullptr);
             const double br_y = CPLStrtod(CPLGetXMLValue(
                 psPos, "lowerRightCorner.mapCoordinate.northing", "0.0"  ), nullptr);
-            const double testx = poDS->adfGeoTransform[0];
-            const double testy = poDS->adfGeoTransform[3];
+            const double testx = poDS->adfGeoTransform[0] + poDS->adfGeoTransform[1] *
+                (poDS->nRasterXSize - 0.5) + poDS->adfGeoTransform[2] *
+                (poDS->nRasterYSize - 0.5);
+            const double testy = poDS->adfGeoTransform[3] + poDS->adfGeoTransform[4] *
+                (poDS->nRasterXSize - 0.5) + poDS->adfGeoTransform[5] *
+                (poDS->nRasterYSize - 0.5);
 
             /* Give 1/4 pixel numerical error leeway in calculating location
                based on affine transform */
