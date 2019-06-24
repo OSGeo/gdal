@@ -1307,9 +1307,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
             psGCP->dfGCPPixel =
-                CPLAtof(CPLGetXMLValue(psNode,"imageCoordinate.pixel","0"));
+                CPLAtof(CPLGetXMLValue(psNode,"imageCoordinate.pixel","0")) + 0.5;
             psGCP->dfGCPLine =
-                CPLAtof(CPLGetXMLValue(psNode,"imageCoordinate.line","0"));
+                CPLAtof(CPLGetXMLValue(psNode,"imageCoordinate.line","0")) + 0.5;
             psGCP->dfGCPX =
                 CPLAtof(CPLGetXMLValue(psNode,"geodeticCoordinate.longitude",""));
             psGCP->dfGCPY =
