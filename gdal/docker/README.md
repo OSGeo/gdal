@@ -7,7 +7,7 @@ Each directory contains a `./build.sh` for convenient building of the image.
 Note: the mention of the overall licensing terms of the GDAL build is to the
 best of our knowledge and not guaranteed. Users should check by themselves.
 
-# Alpine based
+# Alpine based (3.10)
 
 ## Ultra small: `osgeo/gdal:alpine-ultrasmall-latest`
 
@@ -40,7 +40,7 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 * Vector drivers: small + Spatialite, XLS
 * External libraries enabled: small + libgeos, libhdf5, libhdf5, libkea, libnetcdf, libfreexl,
   libspatialite, libxml2, libpoppler
-* GDAL Python (Python 3.6)
+* GDAL Python (Python 3.7)
 * Base PROJ grid package
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
