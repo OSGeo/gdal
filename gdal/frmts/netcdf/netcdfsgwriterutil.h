@@ -27,6 +27,7 @@
  ****************************************************************************/
 #ifndef __NETCDFSGWRITERUTIL_H__
 #define __NETCDFSGWRITERUTIL_H__
+#include <queue>
 #include <vector>
 #include "ogr_core.h"
 #include "ogrsf_frmts.h"
@@ -67,6 +68,50 @@ namespace nccfdriver
 			bool IsPartAtIndInteriorRing(size_t ind) { return this->part_at_ind_interior[ind]; } // ONLY used for Multipolygon
 	};
 
+	/* A buffer with **approximate** maximum size of 1 / 10th the size of available memory
+	 * performs memory blocking to prevent unneccessary I/O from continuous dimension deformation
+	 */
+	class SGeometry_Layer_WBuffer
+	{
+		unsigned long long used_mem;
+		unsigned long long mem_limit;
+		std::queue<int> pnc; // part node counts
+		std::queue<int> ncounts; // node counts
+		std::queue<bool> interior_rings; // interior rings
+		std::queue<double> x; // x coords
+		std::queue<double> y; // y coords
+		std::queue<double> z; // z coords
+
+		public:
+			void flush();	// empties the buffer
+			bool isOverQuota() { return used_mem > mem_limit; }
+			void addXCoord(double xp) { this->x.push(xp); used_mem += sizeof(xp); }
+			void addYCoord(double yp) { this->y.push(yp); used_mem += sizeof(yp); }
+			void addZCoord(double zp) { this->z.push(zp); used_mem += sizeof(zp); }
+			void addPNC(int pncp) { this->pnc.push(pncp); used_mem += sizeof(pncp); }
+			void addNCOUNT(int ncount) { this->ncounts.push(ncount); used_mem += sizeof(ncount); }
+			void addIRing(bool iring) { this->interior_rings.push(iring); used_mem += sizeof(iring); }
+			SGeometry_Layer_WBuffer() : used_mem(0), mem_limit(CPLGetUsablePhysicalRAM() / 10) {}
+			bool XCoordEmpty() { return x.empty(); }
+			bool YCoordEmpty() { return y.empty(); }
+			bool ZCoordEmpty() { return z.empty(); }
+			bool PNCEmpty() { return pnc.empty(); }
+			bool NCOUNTEmpty() { return ncounts.empty(); }
+			bool IRingEmpty() { return interior_rings.empty(); }
+			double XCoordDequeue() { double ret = x.front(); x.pop(); used_mem -= sizeof(ret); return(ret); }
+			double YCoordDequeue() { double ret = y.front(); y.pop(); used_mem -= sizeof(ret); return(ret); }
+			double ZCoordDequeue() { double ret = z.front(); z.pop(); used_mem -= sizeof(ret); return(ret); }
+			int PNCDequeue() { int ret = pnc.front(); pnc.pop(); used_mem -= sizeof(ret); return(ret); }
+			int NCOUNTDequeue() { int ret = ncounts.front(); ncounts.pop(); used_mem -= sizeof(ret); return(ret); }
+			bool IRingDequeue() { bool ret = interior_rings.front(); interior_rings.pop(); used_mem -= sizeof(ret); return(ret); }
+			size_t getXCoordCount() { return this->x.size(); }
+			size_t getYCoordCount() { return this->y.size(); }
+			size_t getZCoordCount() { return this->z.size(); }
+			size_t getNCOUNTCount() { return this->ncounts.size(); }
+			size_t getPNCCount() { return this->pnc.size(); }
+			size_t getIRingCount() { return this-> interior_rings.size(); }	 // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
+	};
+
 	/* OGR_SGeometry_Scribe
 	 * Takes a SGeometry_Feature and given a target geometry container ID it will write the feature 
 	 * to a given netCDF dataset in CF-1.8 compliant formatting.
@@ -76,6 +121,8 @@ namespace nccfdriver
 	class OGR_SGeometry_Scribe
 	{
 		int ncID;
+		SGeometry_Layer_WBuffer wbuf;
+		geom_t writableType;
 		std::string containerVarName;
 		int containerVarID;
 		bool interiorRingDetected; // flips on when an interior ring polygon has been detected
@@ -92,7 +139,7 @@ namespace nccfdriver
 
 		public:
 			void writeSGeometryFeature(SGeometry_Feature& ft);
-			OGR_SGeometry_Scribe(int ncID, int containerVarID);
+			OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t);
 			OGR_SGeometry_Scribe();
 			int get_node_count_dimID() { return this->node_count_dimID; }
 			int get_node_coord_dimID() { return this->node_coordinates_dimID; }
@@ -104,9 +151,17 @@ namespace nccfdriver
 			void redef_pnc(); // adds a part node count attribute to the target geometry container and corresponding variable
 			void turnOnInteriorRingDetect() { this->interiorRingDetected = true; }
 			bool getInteriorRingDetected() { return this->interiorRingDetected; }
+			void commit_transaction(); // commit all writes to the netCDF (subject to fs stipulations)
+			bool bufferQuotaReached() { return wbuf.isOverQuota(); } // is the wbuf over the quota and ready to write?
+			size_t getXCBufLength() { return wbuf.getXCoordCount(); }
+			size_t getYCBufLength() { return wbuf.getYCoordCount(); }
+			size_t getZCBufLength() { return wbuf.getZCoordCount(); }
+			size_t getNCOUNTBufLength() { return wbuf.getNCOUNTCount(); }
+			size_t getPNCBufLength() { return wbuf.getPNCCount(); }
+			size_t getIRingBufLength() { return wbuf.getIRingCount(); }
 	};
 
-	// Namespace global, since strange VS2015 (specific!) heap corruption issue when declaring in netCDFLayer
+	// Namespace global, since strange VS2015 (specifically!) heap corruption issue when declaring in netCDFLayer
 	// will look at later
 	extern OGR_SGeometry_Scribe GeometryScribe;
 

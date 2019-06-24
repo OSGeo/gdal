@@ -583,7 +583,7 @@ bool netCDFLayer::Create(char **papszOptions,
 			m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
 
 			if(basic_type != nccfdriver::POINT)
-				nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID);
+				nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type);
 
 
 			// Write the grid mapping, if it exists:
@@ -1860,39 +1860,15 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 		if (!m_bLegacyCreateMode && poGeom != nullptr && wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint)
 		{
 			nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
-			int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
-			int node_coord_dimID = nccfdriver::GeometryScribe.get_node_coord_dimID();
 
-			// Check if this feature (Polygons and Multipolygons only) has interior rings
-			bool hasIntRings = featWithMetaData.getHasInteriorRing();
+			// Check if ready to dump buffer
+			//if(nccfdriver::GeometryScribe.bufferQuotaReached())
+			//{
+			//}
 
-			// (If it has interior rings, create and catch up the neccessary variables)
-			if((featWithMetaData.getType() == nccfdriver::POLYGON || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON) && hasIntRings
-				&& !nccfdriver::GeometryScribe.getInteriorRingDetected())
-			{
-				if(featWithMetaData.getType() == nccfdriver::POLYGON)
-				{
-					nccfdriver::GeometryScribe.redef_pnc();
-				}
-				nccfdriver::GeometryScribe.redef_interior_ring();
-				nccfdriver::GeometryScribe.turnOnInteriorRingDetect();
-			}
-
-			// Grow dimensions to fit the next feature
-
-			m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + 1);
-			m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
-				nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + featWithMetaData.getTotalNodeCount());
-
-			if((featWithMetaData.getType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
-				|| featWithMetaData.getType() == nccfdriver::MULTILINE || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON )
-			{
-				int pnc_dimID = nccfdriver::GeometryScribe.get_pnc_dimID();
-				m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, nccfdriver::GeometryScribe.get_next_write_pos_pnc() + featWithMetaData.getTotalPartCount());
-			}
-
-			// Finally, write the actually feature
+			// Finally, "write" the feature
 			nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);
+			this->SGCommitPendingTransaction();	
 		}
 	}
 

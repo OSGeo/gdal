@@ -253,3 +253,45 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 
     return CE_None;
 }
+/* Really just wraps around OGR_SGeometry_Scribe but does additional work:
+ * Re-sizes dimensions accordingly
+ * Creates and fills any needed variables that haven't already been created
+ */
+void netCDFLayer::SGCommitPendingTransaction()
+{
+	int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
+	int node_coord_dimID = nccfdriver::GeometryScribe.get_node_coord_dimID();
+
+	// Check if this feature (Polygons and Multipolygons only) has interior rings
+//	bool hasIntRings = featWithMetaData.getHasInteriorRing();
+
+	// (If it has interior rings, create and catch up the neccessary variables)
+/*			if((featWithMetaData.getType() == nccfdriver::POLYGON || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON) && hasIntRings
+				&& !nccfdriver::GeometryScribe.getInteriorRingDetected())
+			{
+				if(featWithMetaData.getType() == nccfdriver::POLYGON)
+				{
+					nccfdriver::GeometryScribe.redef_pnc();
+				}
+				nccfdriver::GeometryScribe.redef_interior_ring();
+				nccfdriver::GeometryScribe.turnOnInteriorRingDetect();
+			}
+*/
+			// Grow dimensions to fit the next feature
+
+	m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + nccfdriver::GeometryScribe.getNCOUNTBufLength());
+
+	// To do: check X, Y, (and Z if 3D) buffers are the same length
+
+	m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
+		nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + nccfdriver::GeometryScribe.getXCBufLength());
+
+/*	if((featWithMetaData.getType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
+		|| featWithMetaData.getType() == nccfdriver::MULTILINE || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON )
+	{
+		int pnc_dimID = nccfdriver::GeometryScribe.get_pnc_dimID();
+		m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, nccfdriver::GeometryScribe.get_next_write_pos_pnc() + nccfdriver::GeometryScribe.getPNCBufLength());
+	}*/
+
+	nccfdriver::GeometryScribe.commit_transaction();
+}

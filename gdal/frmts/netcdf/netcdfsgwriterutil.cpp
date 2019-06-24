@@ -259,10 +259,16 @@ namespace nccfdriver
 
 	void OGR_SGeometry_Scribe::writeSGeometryFeature(SGeometry_Feature& ft)
 	{
+		if(wbuf.isOverQuota())
+		{
+			this->commit_transaction();
+		}
+
 		if (ft.getType() == NONE)
 		{
 			throw SG_Exception_BadFeature(); 
 		}
+
 		
 		// Prepare variable names
 		char node_coord_names[NC_MAX_CHAR + 1];
@@ -290,7 +296,7 @@ namespace nccfdriver
 
 
 
-		// Detect if variable already exists in dataset. If it doesn't, define it
+		// Detect if variable already exists in dataset.
 		int varId;
 		int ncount_err_code = nc_inq_varid(ncID, node_count_name, &varId);
 		NCDF_ERR(ncount_err_code);
@@ -302,16 +308,7 @@ namespace nccfdriver
 
 		// Append from the end
 		int ncount_add = static_cast<int>(ft.getTotalNodeCount());
-		size_t ind[1] = { next_write_pos_node_count };
-		err_code = nc_put_var1_int(ncID, varId, ind, &ncount_add);
-		NCDF_ERR(err_code);
-		if (err_code != NC_NOERR)
-		{
-			throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "integer datum");
-		}
-
-
-		next_write_pos_node_count++;
+		this->wbuf.addNCOUNT(ncount_add);
 
 		// Write each point from each part in node coordinates
 		for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
@@ -337,22 +334,18 @@ namespace nccfdriver
 						}  
 					}
 
-					err_code = nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
-					NCDF_ERR(err_code);
-					if (err_code != NC_NOERR)
+					if(interior_ring_fl == 0)
 					{
-						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "integer datum");
+						wbuf.addIRing(false);
+					}
+					else
+					{
+						wbuf.addIRing(true);
 					}
 				}
 
 				int pnc_writable = ft.getPerPartNodeCount()[part_no];
-				err_code = nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
-				NCDF_ERR(err_code);
-				if (err_code != NC_NOERR)
-				{
-					throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "integer datum");
-				}
-				next_write_pos_pnc++;
+				wbuf.addPNC(pnc_writable);	
 			}
 
 			for(size_t pt_ind = 0; pt_ind < ft.getPerPartNodeCount()[part_no]; pt_ind++)
@@ -363,39 +356,123 @@ namespace nccfdriver
 
 				// Write each node coordinate
 				double x = write_pt.getX();
-				err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[0], &next_write_pos_node_coord, &x);
-				NCDF_ERR(err_code);
-				if (err_code != NC_NOERR)
-				{
-					throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "x double-precision datum");
-				}
+				wbuf.addXCoord(x);
 
 				double y = write_pt.getY();
-				err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[1], &next_write_pos_node_coord, &y);
-				NCDF_ERR(err_code);
-				if (err_code != NC_NOERR)
-				{
-					throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "y double-precision datum");
-				}
+				wbuf.addYCoord(y);
 
 				if(this->node_coordinates_varIDs.size() > 2)
 				{
 					double z = write_pt.getZ();
-					err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[2], &next_write_pos_node_coord, &z);
+					wbuf.addZCoord(z);
+				}
+			}
+		}
+	}
+
+	/* Writes buffer contents to the netCDF File
+	 * Flushes buffer,
+	 * And sets new iterators accordingly
+	 */
+	void OGR_SGeometry_Scribe::commit_transaction()
+	{
+		int err_code;
+
+		// Append from the end
+		while(!wbuf.NCOUNTEmpty())
+		{
+			int ncount = wbuf.NCOUNTDequeue();
+			err_code = nc_put_var1_int(ncID, this->node_count_dimID, &next_write_pos_node_count, &ncount);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "integer datum");
+			}
+
+			next_write_pos_node_count++;
+		}
+
+		while(!wbuf.PNCEmpty())
+		{
+			// Write each point from each part in node coordinates
+			if(( this->writableType == POLYGON && this->interiorRingDetected ) || this->writableType == MULTILINE || this->writableType == MULTIPOLYGON)
+			{
+				// if interior rings is present, go write part node counts and interior ring info
+/*				if( ( this->writableType == POLYGON || this->writableType == MULTIPOLYGON) && this->interiorRingDetected )
+				{
+					int interior_ring_fl = 0;
+	
+					if(this->writableType == POLYGON)
+						interior_ring_fl = part_no == 0 ? 0 : 1;
+					if(this->writableType == MULTIPOLYGON)
+					{
+						if(ft.IsPartAtIndInteriorRing(part_no))
+						{
+							interior_ring_fl = 1;
+						}
+						else
+						{
+							interior_ring_fl = 0;
+						}  
+					}
+
+					err_code = nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
+					NCDF_ERR(err_code);
 					if (err_code != NC_NOERR)
 					{
-						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "z double-precision datum");
+						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "integer datum");
 					}
 				}
+*/
+				int pnc_writable = wbuf.PNCDequeue();
+				err_code = nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
+				NCDF_ERR(err_code);
+				if (err_code != NC_NOERR)
+				{
+					throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "integer datum");
+				}
 
-				// Step the position
-				this->next_write_pos_node_coord++;		
+				next_write_pos_pnc++;
 			}
+		}
+
+		while(!wbuf.XCoordEmpty() && !wbuf.YCoordEmpty() && !wbuf.ZCoordEmpty())
+		{
+			// Write each node coordinate
+			double x = wbuf.XCoordDequeue();
+			err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[0], &next_write_pos_node_coord, &x);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "x double-precision datum");
+			}
+
+			double y = wbuf.YCoordDequeue();
+			err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[1], &next_write_pos_node_coord, &y);
+			NCDF_ERR(err_code);
+			if (err_code != NC_NOERR)
+			{
+				throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "y double-precision datum");
+			}
+
+			if(this->node_coordinates_varIDs.size() > 2)
+			{
+				double z = wbuf.ZCoordDequeue();
+				err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[2], &next_write_pos_node_coord, &z);
+				if (err_code != NC_NOERR)
+				{
+					throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "z double-precision datum");
+				}
+			}
+
+			// Step the position
+			this->next_write_pos_node_coord++;		
 		}
 	}
 
 	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe() :
 		ncID(0),
+		writableType(NONE),
 		containerVarID(INVALID_VAR_ID),
 		interiorRingDetected(false),
 		node_coordinates_dimID(INVALID_DIM_ID),
@@ -410,8 +487,9 @@ namespace nccfdriver
 
 	}
 
-	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in)
+	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot)
 		: ncID(ncID_in),
+		writableType(geot),
 		containerVarID(container_varID_in),
 		interiorRingDetected(false),
 		next_write_pos_node_coord(0),
@@ -456,7 +534,6 @@ namespace nccfdriver
 		{
 			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varName");
 		}
-
 
 
 		// Make dimensions for each of these
@@ -554,7 +631,7 @@ namespace nccfdriver
 			count++;
 		}
 	}
-	
+
 	void OGR_SGeometry_Scribe::redef_interior_ring()
 	{
 		int err_code;	
@@ -703,6 +780,7 @@ namespace nccfdriver
 			}
 		}
 	}
+
 
 	static std::string sgwe_msg_builder
 		(	const char * layer_name,
