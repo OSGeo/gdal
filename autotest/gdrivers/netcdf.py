@@ -3789,6 +3789,42 @@ def test_line3D_write():
     assert(fWkt == "LINESTRING (7 -11 -7,-11 7 11,-6 1945 1918)")
     assert(fnam == "path3")
 
+def test_polygon_no_ir_write():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon_no_ir_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/polygon_no_ir_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/polygon_no_ir_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("noir_write")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
+    # But when being written out, they are OGRFeature POLYGON
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POLYGON ((0 0,1 0,1 1,0 0))")
+    assert(fnam == "Triangle")
+
+    # This second feature has an interior ring in it
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POLYGON ((3 0,4 0,4 1,3 1,3 0))")
+    assert(fnam == "Square")
+
+
 def test_polygon_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
@@ -3831,9 +3867,40 @@ def test_polygon_write():
     assert(fWkt == "MULTIPOLYGON (((0 0,-1 0,-1 -1,0 0)))")
     assert(fnam == "Triangle_Flipped")
 
-def test_polygon_no_ir_write():
+def test_polygon3D_no_ir_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/polygon3D_no_ir_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/polygon3D_no_ir_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/polygon3D_no_ir_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("noir_write")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
+    # But when being written out, they are OGRFeature POLYGON
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fid = feat.GetFieldAsInteger("ID")
+    assert(fWkt == "POLYGON ((0 0 0,1 0 2,1 1 0,0 0 2))")
+    assert(fid == 0)
+
+    # This second feature has an interior ring in it
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fid = feat.GetFieldAsInteger("ID")
+    assert(fWkt == "POLYGON ((3 0 -1,4 0 -2,4 1 0,3 1 -2,3 0 -1))")
+    assert(fid == 1)
 
 def test_polygon3D_write():
     if gdaltest.netcdf_drv is None:
@@ -3876,10 +3943,6 @@ def test_polygon3D_write():
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((0 0 0,-1 0 1,-1 -1 2,0 0 3)))")
     assert(fnam == "Trianglyflipped")
-
-def test_polygon3D_no_ir_write():
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
 
 def test_multipoint_write():
     if gdaltest.netcdf_drv is None:

@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "noir_write",
+"features": [
+{ "type": "Feature", "properties": { "NAMES": "Triangle" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 0.0, 0.0 ], [ 1.0, 0.0 ], [ 1.0, 1.0 ], [ 0.0, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "Square" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 3.0, 0.0 ], [ 4.0, 0.0 ], [ 4.0, 1.0 ], [ 3.0, 1.0 ], [ 3.0, 0.0 ] ] ] } }
+]
+}
