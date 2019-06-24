@@ -4057,6 +4057,34 @@ def test_multiline_write():
 def test_multiline3D_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multiline3D_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/multiline3D_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/multiline3D_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("streams")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTILINESTRING ((1 -5 10),(2 -4 9,3 -3 8,4 -2 7,5 -1 8))")
+    assert(fnam == "fresh_river")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTILINESTRING ((0 1 1,1 0 2),(2 0 1,-2 0 1))")
+    assert(fnam == "not_fresh_river")
 
 def test_multipolygon_write():
     if gdaltest.netcdf_drv is None:
