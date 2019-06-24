@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "mpoly_shape",
+"features": [
+{ "type": "Feature", "properties": { "NAMES": "Triangle" }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 0.0, 0.0, 0.0 ], [ 1.0, 0.0, 1.0 ], [ 1.0, 1.0, 2.0 ], [ 0.0, 0.0, 3.0 ] ] ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "DoubleTriangle" }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 3.0, 0.0, 0.0 ], [ 4.0, 0.0, 1.0 ], [ 4.0, 1.0, 2.0 ], [ 3.0, 0.0, 3.0 ] ] ], [ [ [ 3.0, 0.0, -1.0 ], [ 4.0, 1.0, -2.0 ], [ 3.0, 1.0, -3.0 ], [ 3.0, 0.0, -4.0 ] ] ] ] } }
+]
+}

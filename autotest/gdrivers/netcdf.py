@@ -4097,10 +4097,66 @@ def test_multipolygon3D_write():
 def test_multipolygon_with_no_ir_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/multipolygon_no_ir_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/multipolygon_no_ir_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("mpoly_shape")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
+    assert(fnam == "Triangle")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 0)),((3 0,4 1,3 1,3 0)))")
+    assert(fnam == "DoubleTriangle")
 
 def test_multipolygon3D_with_no_ir_write():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon3D_no_ir_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/multipolygon3D_no_ir_write_test.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/multipolygon3D_no_ir_write_test.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("mpoly_shape")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0 0,1 0 1,1 1 2,0 0 3)))")
+    assert(fnam == "Triangle")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((3 0 0,4 0 1,4 1 2,3 0 3)),((3 0 -1,4 1 -2,3 1 -3,3 0 -4)))")
+    assert(fnam == "DoubleTriangle")
 
 def test_write_multiplelayer_write():
     if gdaltest.netcdf_drv is None:
