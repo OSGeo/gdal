@@ -111,7 +111,8 @@ namespace nccfdriver
 			size_t getNCOUNTCount() { return this->ncounts.size(); }
 			size_t getPNCCount() { return this->pnc.size(); }
 			size_t getIRingCount() { return this-> interior_rings.size(); }	 // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
-			void cpyNCOUNT_into_PNC() { this->pnc = std::queue<int>(ncounts); }
+			void cpyNCOUNT_into_PNC();
+			void flushPNCBuffer() { this->pnc = std::queue<int>(); }
 	};
 
 	/* OGR_SGeometry_Scribe

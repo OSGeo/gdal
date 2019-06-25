@@ -232,6 +232,7 @@ namespace nccfdriver
 				if(pno_itr < (itr_poly->getNumInteriorRings() + 1)) // + 1 is counting the EXTERIOR ring
 				{
 					ring_number = static_cast<int>(pno_itr);	
+					break;
 				}
 
 				else
@@ -259,54 +260,10 @@ namespace nccfdriver
 
 	void OGR_SGeometry_Scribe::writeSGeometryFeature(SGeometry_Feature& ft)
 	{
-		if(wbuf.isOverQuota())
-		{
-			this->commit_transaction();
-		}
-
 		if (ft.getType() == NONE)
 		{
 			throw SG_Exception_BadFeature(); 
 		}
-
-		
-		// Prepare variable names
-		char node_coord_names[NC_MAX_CHAR + 1];
-		memset(node_coord_names, 0, NC_MAX_CHAR + 1);
-
-		char node_count_name[NC_MAX_CHAR + 1];
-		memset(node_count_name, 0, NC_MAX_CHAR + 1);
-
-		int err_code;
-		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
-
-		NCDF_ERR(err_code);
-		if (err_code != NC_NOERR)
-		{
-			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "node coord var names");
-		}
-
-
-		err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
-		NCDF_ERR(err_code);
-		if (err_code != NC_NOERR)
-		{
-			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "node count var name");
-		}
-
-		// Detect if variable already exists in dataset.
-		int varId;
-		int ncount_err_code = nc_inq_varid(ncID, node_count_name, &varId);
-		NCDF_ERR(ncount_err_code);
-		if (ncount_err_code != NC_NOERR)
-		{
-			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varID");
-		}
-
-
-		// Append from the end
-		int ncount_add = static_cast<int>(ft.getTotalNodeCount());
-		this->wbuf.addNCOUNT(ncount_add);
 
 		// Write each point from each part in node coordinates
 		for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
@@ -352,7 +309,7 @@ namespace nccfdriver
 						redef_interior_ring();
 						while(wbuf.getPNCCount() != wbuf.getIRingCount())
 						{
-								wbuf.addIRing(false);
+							wbuf.addIRing(false);
 						}	
 					}
 
@@ -360,7 +317,7 @@ namespace nccfdriver
 				}
 			}
 
-			if((ft.getType() == POLYGON && (this->interiorRingDetected)) || ft.getType() == MULTILINE || ft.getType() == MULTIPOLYGON)
+			if(ft.getType() == POLYGON || ft.getType() == MULTILINE || ft.getType() == MULTIPOLYGON)
 			{
 				int pnc_writable = ft.getPerPartNodeCount()[part_no];
 				wbuf.addPNC(pnc_writable);	
@@ -386,6 +343,17 @@ namespace nccfdriver
 				}
 			}
 		}
+
+		// Polygons use a "predictive approach", i.e. predict that there will be interior rings
+		// If there are after all, no interior rings then flush out the PNC buffer
+		if(!this->interiorRingDetected)
+		{
+			wbuf.flushPNCBuffer();
+		}
+
+		// Append node counts from the end
+		int ncount_add = static_cast<int>(ft.getTotalNodeCount());
+		this->wbuf.addNCOUNT(ncount_add);
 	}
 
 	/* Writes buffer contents to the netCDF File
@@ -823,6 +791,18 @@ namespace nccfdriver
 		this->msg = std::string("Layer has geometry type ") + std::string(layer_type)
 			+ std::string(" but attempt was made to write feature of type ")
 			+ std::string(wrong_type);
+	}
+
+	// SGeometry_Layer_WBuffer
+	void SGeometry_Layer_WBuffer::cpyNCOUNT_into_PNC()
+	{		
+		std::queue<int> refill = std::queue<int>(ncounts);
+		while(!pnc.empty())
+		{
+			refill.push(pnc.front());
+			pnc.pop();
+		}
+		this->pnc = refill;
 	}
 
 	// Helper function definitions
