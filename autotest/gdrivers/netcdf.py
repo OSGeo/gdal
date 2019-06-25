@@ -4118,8 +4118,8 @@ def test_multipolygon_write():
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
-    assert(fWkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 1,3 0),(3.5 0.25,3.75 0.25,3.75 0.5,3.5 0.5,3.5 0.25)))")
-    assert(fnam == "Square_in_Square")
+    assert(fWkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 1,3 0),(3.5 0.25,3.75 0.25,3.75 0.5,3.5 0.5,3.5 0.25)),((4 4,4 5,5 4,4 4)))")
+    assert(fnam == "Square_in_Square_and_Triangle")
 
 def test_multipolygon3D_write():
     if gdaltest.netcdf_drv is None:

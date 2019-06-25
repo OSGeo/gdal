@@ -745,7 +745,8 @@ namespace nccfdriver
                                 ir_base++;    
                             }
 
-                            if(rc_m == 1) ir_base++;    // single polygon case
+                            if(rc_m == 1)
+                                ir_base++;    // single ring case
 
                             std::vector<int> poly_parts;
 
@@ -762,6 +763,9 @@ namespace nccfdriver
                             {
                                 seek += poly_parts[itr_3];
                             }
+
+                            base += poly_parts.size();;
+                            ir_base = base + 1;
                         }
                     }
                 }    
