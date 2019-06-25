@@ -6,7 +6,7 @@
  * Author:   RIEGL Laser Measurement Systems GmbH (support@riegl.com)
  *
  ******************************************************************************
- * Copyright (c) 2018, RIEGL Laser Measurement Systems GmbH (support@riegl.com)
+ * Copyright (c) 2019, RIEGL Laser Measurement Systems GmbH (support@riegl.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -164,12 +164,8 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
     double GetNoDataValue(int *pbSuccess) override
     {
         double dfInvalidValue = RDBRasterBand::GetNoDataValue(pbSuccess);
-        if(pbSuccess == nullptr)
-        {
-            return dfInvalidValue;
-        }
 
-        if(*pbSuccess == TRUE)
+        if(pbSuccess != nullptr && *pbSuccess == TRUE)
         {
             return dfInvalidValue;
         }
@@ -177,13 +173,19 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
         {
             if(oPointAttribute.maximumValue < std::numeric_limits<T>::max())
             {
-                *pbSuccess = TRUE;
+                if(pbSuccess != nullptr)
+                {
+                    *pbSuccess = TRUE;
+                }
                 return std::numeric_limits<T>::max();
             }
             else if(oPointAttribute.minimumValue >
                     std::numeric_limits<T>::lowest())
             {
-                *pbSuccess = TRUE;
+                if(pbSuccess != nullptr)
+                {
+                    *pbSuccess = TRUE;
+                }
                 return std::numeric_limits<T>::lowest();
             }
             // Another no data value could be any value that is actually not in
@@ -192,8 +194,10 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
 
             // Using always the maximum or minimum value in such cases might be
             // at least consistend across multiple files.
-
-            *pbSuccess = FALSE;
+            if(pbSuccess != nullptr)
+            {
+                *pbSuccess = FALSE;
+            }
             return 0.0;
         }
     }
@@ -594,13 +598,13 @@ GDALDataset *RDBDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     try
     {
-        RDBDataset *poDS = new RDBDataset(poOpenInfo);
+        std::unique_ptr<RDBDataset> poDS(new RDBDataset(poOpenInfo));
         // std::swap(poDS->fp, poOpenInfo->fpL);
         // Initialize any PAM information.
         poDS->SetDescription(poOpenInfo->pszFilename);
         poDS->TryLoadXML();
 
-        return poDS;
+        return poDS.release();
     }
     catch(const riegl::rdb::Error &oException)
     {
@@ -656,11 +660,6 @@ CPLErr RDBDataset::GetGeoTransform(double *padfTransform)
 
     return CE_None;
 }
-const char *RDBDataset::_GetProjectionRef()
-{
-    ReadGeoreferencing();
-    return osWktString.c_str();
-}
 
 const OGRSpatialReference *RDBDataset::GetSpatialRef() const
 {
@@ -695,6 +694,8 @@ void RDBDataset::ReadGeoreferencing()
                 {
                     osWktString = json_object_get_string(poWkt);
                     oSpatialReference.importFromWkt(osWktString.c_str());
+                    oSpatialReference.SetAxisMappingStrategy(
+                        OAMS_TRADITIONAL_GIS_ORDER);
                 }
             }
         }
@@ -740,21 +741,24 @@ RDBRasterBand::RDBRasterBand(
 
 double RDBRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    if(pbSuccess == nullptr)
-    {
-        return 0.0;
-    }
     if(!std::isnan(oPointAttribute.invalidValue))
     {
-        *pbSuccess = TRUE;
+        if(pbSuccess != nullptr)
+        {
+            *pbSuccess = TRUE;
+        }
         return oPointAttribute.invalidValue;
     }
     else
     {
-        *pbSuccess = FALSE;
-        return 0;
+        if(pbSuccess != nullptr)
+        {
+            *pbSuccess = FALSE;
+        }
+        return 0.0;
     }
 }
+
 const char *RDBRasterBand::GetDescription() const
 {
     return osDescription.c_str();

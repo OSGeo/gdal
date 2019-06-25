@@ -6,7 +6,7 @@ RDB - *RIEGL* Database
 
 .. shortname:: RDB
 
-.. versionadded:: 3.x
+.. versionadded:: 3.1
 
 GDAL can read \*.mpx files in the RDB format, the in-house format used by `RIEGL Laser Measurement Systems GmbH <http://www.riegl.com>`__ through the RDB library.
 
