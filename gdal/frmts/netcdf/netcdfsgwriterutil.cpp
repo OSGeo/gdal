@@ -294,8 +294,6 @@ namespace nccfdriver
 			throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "node count var name");
 		}
 
-
-
 		// Detect if variable already exists in dataset.
 		int varId;
 		int ncount_err_code = nc_inq_varid(ncID, node_count_name, &varId);
@@ -313,37 +311,57 @@ namespace nccfdriver
 		// Write each point from each part in node coordinates
 		for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
 		{
-			if(( ft.getType() == POLYGON && this->interiorRingDetected ) || ft.getType() == MULTILINE || ft.getType() == MULTIPOLYGON)
+			if(ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON)
 			{
-				// if interior rings is present, go write part node counts and interior ring info
-				if( (ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON) && this->interiorRingDetected )
-				{
-					int interior_ring_fl = 0;
+				int interior_ring_fl = 0;
 					
-					if(ft.getType() == POLYGON)
-						interior_ring_fl = part_no == 0 ? 0 : 1;
-					if(ft.getType() == MULTIPOLYGON)
+				if(ft.getType() == POLYGON)
+					interior_ring_fl = part_no == 0 ? 0 : 1;
+				if(ft.getType() == MULTIPOLYGON)
+				{
+					if(ft.IsPartAtIndInteriorRing(part_no))
 					{
-						if(ft.IsPartAtIndInteriorRing(part_no))
-						{
-							interior_ring_fl = 1;
-						}
-						else
-						{
-							interior_ring_fl = 0;
-						}  
-					}
-
-					if(interior_ring_fl == 0)
-					{
-						wbuf.addIRing(false);
+						interior_ring_fl = 1;
 					}
 					else
 					{
-						wbuf.addIRing(true);
-					}
+						interior_ring_fl = 0;
+					}  
 				}
 
+				if(interior_ring_fl == 0)
+				{
+					if(this->interiorRingDetected)
+						wbuf.addIRing(false);
+				}
+				else
+				{
+					/* Take corrective measures if Interior Ring hasn't yet been detected.
+					 * If Polygon: define interior_ring and part_node_count variables in in file
+					 * If Multipolygon: define interior_ring variable, zero fill in file
+					 */
+					if(!this->interiorRingDetected)
+					{
+						this->interiorRingDetected = true;
+						if(this->writableType == POLYGON)
+						{
+							redef_pnc();
+							wbuf.cpyNCOUNT_into_PNC();
+						}
+
+						redef_interior_ring();
+						while(wbuf.getPNCCount() != wbuf.getIRingCount())
+						{
+								wbuf.addIRing(false);
+						}	
+					}
+
+					wbuf.addIRing(true);
+				}
+			}
+
+			if((ft.getType() == POLYGON && (this->interiorRingDetected)) || ft.getType() == MULTILINE || ft.getType() == MULTIPOLYGON)
+			{
 				int pnc_writable = ft.getPerPartNodeCount()[part_no];
 				wbuf.addPNC(pnc_writable);	
 			}
@@ -373,6 +391,7 @@ namespace nccfdriver
 	/* Writes buffer contents to the netCDF File
 	 * Flushes buffer,
 	 * And sets new iterators accordingly
+	 * If the transaction is empty, then this function does nothing
 	 */
 	void OGR_SGeometry_Scribe::commit_transaction()
 	{
@@ -382,7 +401,7 @@ namespace nccfdriver
 		while(!wbuf.NCOUNTEmpty())
 		{
 			int ncount = wbuf.NCOUNTDequeue();
-			err_code = nc_put_var1_int(ncID, this->node_count_dimID, &next_write_pos_node_count, &ncount);
+			err_code = nc_put_var1_int(ncID, node_count_varID, &next_write_pos_node_count, &ncount);
 			NCDF_ERR(err_code);
 			if (err_code != NC_NOERR)
 			{
@@ -398,32 +417,18 @@ namespace nccfdriver
 			if(( this->writableType == POLYGON && this->interiorRingDetected ) || this->writableType == MULTILINE || this->writableType == MULTIPOLYGON)
 			{
 				// if interior rings is present, go write part node counts and interior ring info
-/*				if( ( this->writableType == POLYGON || this->writableType == MULTIPOLYGON) && this->interiorRingDetected )
+				if( (this->writableType == POLYGON || this->writableType == MULTIPOLYGON) && this->interiorRingDetected )
 				{
-					int interior_ring_fl = 0;
+					int interior_ring_w = wbuf.IRingDequeue() ? 1 : 0;
 	
-					if(this->writableType == POLYGON)
-						interior_ring_fl = part_no == 0 ? 0 : 1;
-					if(this->writableType == MULTIPOLYGON)
-					{
-						if(ft.IsPartAtIndInteriorRing(part_no))
-						{
-							interior_ring_fl = 1;
-						}
-						else
-						{
-							interior_ring_fl = 0;
-						}  
-					}
-
-					err_code = nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_fl);
+					err_code = nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_w);
 					NCDF_ERR(err_code);
 					if (err_code != NC_NOERR)
 					{
 						throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "integer datum");
 					}
 				}
-*/
+
 				int pnc_writable = wbuf.PNCDequeue();
 				err_code = nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
 				NCDF_ERR(err_code);
@@ -436,7 +441,7 @@ namespace nccfdriver
 			}
 		}
 
-		while(!wbuf.XCoordEmpty() && !wbuf.YCoordEmpty() && !wbuf.ZCoordEmpty())
+		while(!wbuf.XCoordEmpty() && !wbuf.YCoordEmpty())
 		{
 			// Write each node coordinate
 			double x = wbuf.XCoordDequeue();

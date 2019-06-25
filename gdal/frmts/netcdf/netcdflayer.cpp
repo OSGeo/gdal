@@ -92,6 +92,8 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
 
 netCDFLayer::~netCDFLayer()
 { 
+    // Finish writing buffered features
+    this->SGCommitPendingTransaction();
     m_poFeatureDefn->Release();
 }
 
@@ -1862,13 +1864,13 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 			nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
 
 			// Check if ready to dump buffer
-			//if(nccfdriver::GeometryScribe.bufferQuotaReached())
-			//{
-			//}
+			if(nccfdriver::GeometryScribe.bufferQuotaReached())
+			{
+				this->SGCommitPendingTransaction();	
+			}
 
 			// Finally, "write" the feature
 			nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);
-			this->SGCommitPendingTransaction();	
 		}
 	}
 

@@ -69,7 +69,8 @@ namespace nccfdriver
 	};
 
 	/* A buffer with **approximate** maximum size of 1 / 10th the size of available memory
-	 * performs memory blocking to prevent unneccessary I/O from continuous dimension deformation
+	 * Assumes small features. A single feature would not be subject to this limitation.
+	 * Attempts to perform memory blocking to prevent unneccessary I/O from continuous dimension deformation
 	 */
 	class SGeometry_Layer_WBuffer
 	{
@@ -110,6 +111,7 @@ namespace nccfdriver
 			size_t getNCOUNTCount() { return this->ncounts.size(); }
 			size_t getPNCCount() { return this->pnc.size(); }
 			size_t getIRingCount() { return this-> interior_rings.size(); }	 // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
+			void cpyNCOUNT_into_PNC() { this->pnc = std::queue<int>(ncounts); }
 	};
 
 	/* OGR_SGeometry_Scribe
@@ -138,6 +140,7 @@ namespace nccfdriver
 		size_t next_write_pos_pnc;
 
 		public:
+			geom_t getWritableType() { return this->writableType; }
 			void writeSGeometryFeature(SGeometry_Feature& ft);
 			OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t);
 			OGR_SGeometry_Scribe();
@@ -149,7 +152,6 @@ namespace nccfdriver
 			size_t get_next_write_pos_pnc() { return this->next_write_pos_pnc; }
 			void redef_interior_ring(); // adds an interior ring attribute and to the target geometry container and corresponding variable 
 			void redef_pnc(); // adds a part node count attribute to the target geometry container and corresponding variable
-			void turnOnInteriorRingDetect() { this->interiorRingDetected = true; }
 			bool getInteriorRingDetected() { return this->interiorRingDetected; }
 			void commit_transaction(); // commit all writes to the netCDF (subject to fs stipulations)
 			bool bufferQuotaReached() { return wbuf.isOverQuota(); } // is the wbuf over the quota and ready to write?
@@ -159,6 +161,7 @@ namespace nccfdriver
 			size_t getNCOUNTBufLength() { return wbuf.getNCOUNTCount(); }
 			size_t getPNCBufLength() { return wbuf.getPNCCount(); }
 			size_t getIRingBufLength() { return wbuf.getIRingCount(); }
+			~OGR_SGeometry_Scribe() { this->commit_transaction(); }
 	};
 
 	// Namespace global, since strange VS2015 (specifically!) heap corruption issue when declaring in netCDFLayer

@@ -262,22 +262,7 @@ void netCDFLayer::SGCommitPendingTransaction()
 	int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
 	int node_coord_dimID = nccfdriver::GeometryScribe.get_node_coord_dimID();
 
-	// Check if this feature (Polygons and Multipolygons only) has interior rings
-//	bool hasIntRings = featWithMetaData.getHasInteriorRing();
-
-	// (If it has interior rings, create and catch up the neccessary variables)
-/*			if((featWithMetaData.getType() == nccfdriver::POLYGON || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON) && hasIntRings
-				&& !nccfdriver::GeometryScribe.getInteriorRingDetected())
-			{
-				if(featWithMetaData.getType() == nccfdriver::POLYGON)
-				{
-					nccfdriver::GeometryScribe.redef_pnc();
-				}
-				nccfdriver::GeometryScribe.redef_interior_ring();
-				nccfdriver::GeometryScribe.turnOnInteriorRingDetect();
-			}
-*/
-			// Grow dimensions to fit the next feature
+	// Grow dimensions to fit the next feature
 
 	m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + nccfdriver::GeometryScribe.getNCOUNTBufLength());
 
@@ -286,12 +271,13 @@ void netCDFLayer::SGCommitPendingTransaction()
 	m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
 		nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + nccfdriver::GeometryScribe.getXCBufLength());
 
-/*	if((featWithMetaData.getType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
-		|| featWithMetaData.getType() == nccfdriver::MULTILINE || featWithMetaData.getType() == nccfdriver::MULTIPOLYGON )
+
+	if((nccfdriver::GeometryScribe.getWritableType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
+		|| nccfdriver::GeometryScribe.getWritableType() == nccfdriver::MULTILINE || nccfdriver::GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
 	{
 		int pnc_dimID = nccfdriver::GeometryScribe.get_pnc_dimID();
 		m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, nccfdriver::GeometryScribe.get_next_write_pos_pnc() + nccfdriver::GeometryScribe.getPNCBufLength());
-	}*/
+	}
 
 	nccfdriver::GeometryScribe.commit_transaction();
 }
