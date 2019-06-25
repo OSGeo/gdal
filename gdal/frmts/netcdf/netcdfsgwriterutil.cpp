@@ -346,7 +346,7 @@ namespace nccfdriver
 
 		// Polygons use a "predictive approach", i.e. predict that there will be interior rings
 		// If there are after all, no interior rings then flush out the PNC buffer
-		if(!this->interiorRingDetected)
+		if(!this->interiorRingDetected && ft.getType() == POLYGON)
 		{
 			wbuf.flushPNCBuffer();
 		}
