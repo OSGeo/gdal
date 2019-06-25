@@ -152,6 +152,9 @@ bool OGRMSSQLGeometryValidator::IsValidPolygonRingClosed(OGRCurve* poGeom)
 
 bool OGRMSSQLGeometryValidator::IsValid(OGRPoint* poGeom)
 {
+    if (poGeom->IsEmpty())
+        return true;
+
     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
         return IsValidLatLon(poGeom->getX(), poGeom->getY());
 
@@ -160,6 +163,9 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRPoint* poGeom)
 
 void OGRMSSQLGeometryValidator::MakeValid(OGRPoint* poGeom)
 {
+    if (poGeom->IsEmpty())
+        return;
+
     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
     {
         poGeom->setX(MakeValidLongitude(poGeom->getX()));
@@ -370,6 +376,9 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRMultiLineString* poGeom)
 
 bool OGRMSSQLGeometryValidator::IsValid(OGRPolygon* poGeom)
 {
+    if (poGeom->IsEmpty())
+        return true;
+
     if (!IsValid(poGeom->getExteriorRing()))
         return false;
 
@@ -396,6 +405,9 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRPolygon* poGeom)
 
 void OGRMSSQLGeometryValidator::MakeValid(OGRPolygon* poGeom)
 {
+    if (poGeom->IsEmpty())
+        return;
+
     MakeValid(poGeom->getExteriorRing());
 
     for (int i = 0; i < poGeom->getNumInteriorRings(); i++)
@@ -412,6 +424,9 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRPolygon* poGeom)
 
 bool OGRMSSQLGeometryValidator::IsValid(OGRCurvePolygon* poGeom)
 {
+    if (poGeom->IsEmpty())
+        return true;
+
     if (!IsValid(poGeom->getExteriorRingCurve()))
         return false;
 
@@ -438,6 +453,9 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRCurvePolygon* poGeom)
 
 void OGRMSSQLGeometryValidator::MakeValid(OGRCurvePolygon* poGeom)
 {
+    if (poGeom->IsEmpty())
+        return;
+
     MakeValid(poGeom->getExteriorRingCurve());
     for (int i = 0; i < poGeom->getNumInteriorRings(); i++)
     {
