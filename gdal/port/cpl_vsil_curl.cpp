@@ -862,6 +862,14 @@ retry:
         }
     }
 
+    if( ENABLE_DEBUG && szCurlErrBuf[0] != '\0' &&
+        sWriteFuncHeaderData.bDownloadHeaderOnly &&
+        EQUAL(szCurlErrBuf, "Failed writing header") )
+    {
+        // Not really an error since we voluntarily interrupted the download !
+        szCurlErrBuf[0] = 0;
+    }
+
     double dfSize = 0;
     if( oFileProp.eExists != EXIST_YES )
     {
@@ -945,7 +953,18 @@ retry:
         {
             oFileProp.eExists = EXIST_YES;
             if( dfSize < 0 )
+            {
+                if( osVerb == "HEAD" && !bRetryWithGet )
+                {
+                    CPLDebug("VSICURL", "HEAD did not provide file size. Retrying with GET");
+                    bRetryWithGet = true;
+                    CPLFree(sWriteFuncData.pBuffer);
+                    CPLFree(sWriteFuncHeaderData.pBuffer);
+                    curl_easy_cleanup(hCurlHandle);
+                    goto retry;
+                }
                 oFileProp.fileSize = 0;
+            }
             else
                 oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
         }
