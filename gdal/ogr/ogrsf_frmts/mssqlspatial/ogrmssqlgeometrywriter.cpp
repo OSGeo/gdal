@@ -375,7 +375,11 @@ void OGRMSSQLGeometryWriter::WritePolygon(OGRPolygon* poGeom)
     if (poRing == nullptr)
         return;
 
-    WriteByte(FigureAttribute(iFigure), FA_EXTERIORRING);
+    if (chVersion == VA_KATMAI)
+        WriteByte(FigureAttribute(iFigure), FA_EXTERIORRING);
+    else
+        WriteByte(FigureAttribute(iFigure), FA_LINE);
+
     WriteInt32(PointOffset(iFigure), iPoint);
     WriteSimpleCurve(poRing);
     ++iFigure;
@@ -383,7 +387,11 @@ void OGRMSSQLGeometryWriter::WritePolygon(OGRPolygon* poGeom)
     {
         /* write interior rings */
         poRing = poGeom->getInteriorRing(r);
-        WriteByte(FigureAttribute(iFigure), FA_INTERIORRING);
+        if (chVersion == VA_KATMAI)
+            WriteByte(FigureAttribute(iFigure), FA_INTERIORRING);
+        else
+            WriteByte(FigureAttribute(iFigure), FA_LINE);
+
         WriteInt32(PointOffset(iFigure), iPoint);
         WriteSimpleCurve(poRing);
         ++iFigure;
@@ -439,7 +447,7 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
             if (chVersion == VA_KATMAI)
                 WriteByte(FigureAttribute(iFigure), FA_STROKE);
             else
-                WriteByte(FigureAttribute(iFigure), FA_NONE);  // ???
+                WriteByte(FigureAttribute(iFigure), FA_LINE);
             WriteInt32(PointOffset(iFigure), iPoint);
             WritePoint(poGeom->toPoint());
             ++iFigure;
