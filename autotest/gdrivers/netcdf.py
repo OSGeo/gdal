@@ -3081,7 +3081,9 @@ def test_bad_cf1_8():
     assert(bad_geometry == None)
     assert(bad_feature == None)
     assert(missing_node_counts_test == None)
-    assert(uneq_x_y == None)
+
+    # this error is no longer fatal
+    assert(uneq_x_y != None)
 
 def test_point_read():
     if gdaltest.netcdf_drv is None:
@@ -3583,6 +3585,11 @@ def test_yahara():
     assert(first.GetFieldAsInteger("GRIDCODE") == 55)
     assert(first.GetFieldAsDouble("X_COORD") == 577251.43302)
     assert(first.GetFieldAsDouble("Y_COORD") == 319799.04918)
+
+    # Check spatial ref is set correctly
+    fSRS = y_layer.GetSpatialRef()
+    assert(fSRS is not None)
+    assert(fSRS.ExportToWkt() == "PROJCS[\"unnamed\",GEOGCS[\"unknown\",DATUM[\"unnamed\",SPHEROID[\"Spheroid\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Albers_Conic_Equal_Area\"],PARAMETER[\"latitude_of_center\",23],PARAMETER[\"longitude_of_center\",-96],PARAMETER[\"standard_parallel_1\",29.5],PARAMETER[\"standard_parallel_2\",45.5],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]") 
 
 def test_states_full_layer():
     if gdaltest.netcdf_drv is None:
