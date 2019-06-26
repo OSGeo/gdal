@@ -12548,12 +12548,12 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if (STARTS_WITH_CI(pszFilename, "GTIFF_PAGE:"))
     {
         pszFilename += strlen("GTIFF_PAGE:");
-        nPage = atol(pszFilename);
+        nPage = atoi(pszFilename);
         pszFilename += 1;
         while (*pszFilename != '\0' && pszFilename[-1] != ':')
             ++pszFilename;
 
-        if (*pszFilename == '\0' || nPage == -1)
+        if (*pszFilename == '\0' || nPage<0)
             return nullptr;
     }
 
@@ -15172,7 +15172,7 @@ void GTiffDataset::ScanDirectories()
             }
         }
         // Embedded mask of the main image.
-        else if ((nSubType & FILETYPE_MASK) != 0 &&
+        else if( (nSubType & FILETYPE_MASK) != 0 &&
                  (nSubType & FILETYPE_REDUCEDIMAGE) == 0 &&
                  iDirIndex != 1 &&
                  nPageNumber == m_nPage &&
