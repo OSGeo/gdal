@@ -4227,3 +4227,29 @@ def test_multipolygon3D_with_no_ir_write():
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((3 0 0,4 0 1,4 1 2,3 0 3)),((3 0 -1,4 1 -2,3 1 -3,3 0 -4)))")
     assert(fnam == "DoubleTriangle")
+def test_write_buffer_restrict_correctness():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+    # Tests whether or not having the write buffer restriction
+    # Writes correct data.
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/Yahara_alb.json")
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/Yahara_alb_4K_restrict.nc", src, format="netCDF", layerCreationOptions = ['BUFFER_SIZE=4096'])
+    gdal.VectorTranslate("tmp/Yahara_alb_default_buf.nc", src, format="netCDF")
+
+    fk_ds = ogr.Open("tmp/Yahara_alb_4K_restrict.nc")
+    db_ds = ogr.Open("tmp/Yahara_alb_default_buf.nc")
+
+    fk_ds_layer = fk_ds.GetLayerByName("geometry_container")
+    db_ds_layer = db_ds.GetLayerByName("geometry_container")
+    assert(fk_ds_layer is not None)
+    assert(db_ds_layer is not None)
+
+    for feat in range(71):
+        lft = fk_ds_layer.GetNextFeature()
+        dft = db_ds_layer.GetNextFeature()
+        lftgeo = lft.GetGeometryRef()
+        dftgeo = dft.GetGeometryRef()
+        assert(lftgeo.Equal(dftgeo))
