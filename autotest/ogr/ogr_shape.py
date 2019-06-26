@@ -4556,6 +4556,23 @@ def test_ogr_shape_113_restore_shx_empty_shp_shx():
 
     shape_drv.DeleteDataSource(dbfname)
 
+###############################################################################
+
+
+def test_ogr_shape_layer_no_geom_but_srs():
+
+    filename = '/vsimem/test_ogr_shape_layer_no_geom_but_srs'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(filename)
+    sr = osr.SpatialReference()
+    ds.CreateLayer("test", sr, ogr.wkbNone)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.CreateLayer("test2", sr, ogr.wkbNone)
+    ds = None
+
+    shape_drv.DeleteDataSource(filename)
+
 
 ###############################################################################
 

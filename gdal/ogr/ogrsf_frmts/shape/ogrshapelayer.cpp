@@ -69,7 +69,7 @@ static const char UNSUPPORTED_OP_READ_ONLY[] =
 OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                               const char * pszFullNameIn,
                               SHPHandle hSHPIn, DBFHandle hDBFIn,
-                              OGRSpatialReference *poSRSIn, bool bSRSSetIn,
+                              const OGRSpatialReference *poSRSIn, bool bSRSSetIn,
                               bool bUpdate,
                               OGRwkbGeometryType eReqType,
                               char ** papszCreateOptions ) :
@@ -240,10 +240,9 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
             eType = eRequestedGeomType;
         }
 
-        OGRSpatialReference* poSRSClone = poSRSIn;
+        OGRSpatialReference* poSRSClone = poSRSIn ? poSRSIn->Clone() : nullptr;
         if( poSRSClone )
         {
-            poSRSClone = poSRSClone->Clone();
             poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
         OGRShapeGeomFieldDefn* poGeomFieldDefn =
@@ -253,10 +252,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         poFeatureDefn->SetGeomType(wkbNone);
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
     }
-    else if( bSRSSetIn && poSRSIn != nullptr )
-    {
-        poSRSIn->Release();
-    }
+
     SetDescription( poFeatureDefn->GetName() );
     bRewindOnWrite =
         CPLTestBool(CPLGetConfigOption( "SHAPE_REWIND_ON_WRITE", "YES" ));
