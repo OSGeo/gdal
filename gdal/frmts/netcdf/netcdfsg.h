@@ -181,6 +181,24 @@ namespace nccfdriver
          * baseVarId - the id of a variable with a geometry container attribute 
          */
         SGeometry(int ncId, int baseVarId); 
+
+        /* Default constructor
+         * Constructs an unusable ("null") SGeometry
+         * Only serves to be construct object when no other constructor is given
+         */
+        SGeometry() :
+            ncid(INVALID_VAR_ID),
+            gc_varId(INVALID_VAR_ID),
+            gm_varId(INVALID_VAR_ID),
+            inst_dimId(INVALID_DIM_ID),
+            inst_dimLen(0),
+            touple_order(0),
+            current_vert_ind(0),
+            cur_geometry_ind(0),
+            cur_part_ind(0),
+            pt_buffer(nullptr)
+            {}
+
     };
 
     /* SGeometry_PropertyScanner
@@ -312,8 +330,8 @@ namespace nccfdriver
     };
     // Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h
     
-    /* Retrieves the minor version from the value Conventions global attr
-     * Returns: a positive integer corresponding to the conventions value
+    /* Retrieves the version from the value Conventions global attr
+     * Returns: a double precision decimal corresponding to the conventions value
      *    if not CF-x.y then return negative value, -1
      */
     double getCFVersion(int ncid);

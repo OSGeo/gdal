@@ -10,6 +10,7 @@ namespace nccfdriver
 	geom_t OGRtoRaw(OGRwkbGeometryType type);
 
 	bool OGRHasZandSupported(OGRwkbGeometryType type);
+
 }
 
 #endif

@@ -1164,5 +1164,4 @@ namespace nccfdriver
         nc_inq_varid(ncid, varName, &varId);
         return new SGeometry(ncid, varId);
     }
-
 }

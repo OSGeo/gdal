@@ -978,7 +978,6 @@ class netCDFDataset final: public GDALPamDataset
 
 class netCDFLayer final: public OGRLayer
 {
-        friend class netCDFDataset;
         typedef union
         {
             signed char chVal;
@@ -1029,11 +1028,8 @@ class netCDFLayer final: public OGRLayer
         nc_type         m_nWKTNCDFType;
         CPLString       m_osCoordinatesValue;
         std::vector<FieldDesc> m_aoFieldDesc;
-        std::vector<std::unique_ptr<OGRFeature>> m_sgFeatureList;
-        std::vector<std::unique_ptr<OGRFeature>>::iterator m_sgFeatItr;
-        bool            m_sgItrInit;
         int             m_writableSGContVarID;
-		bool            m_bLegacyCreateMode;
+        bool            m_bLegacyCreateMode;
         bool            m_HasCFSG1_8;
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
@@ -1047,6 +1043,8 @@ class netCDFLayer final: public OGRLayer
         int             m_nProfileVarID;
         bool            m_bProfileVarUnlimited;
         int             m_nParentIndexVarID;
+        std::shared_ptr<nccfdriver::SGeometry>       m_simpleGeometry;
+        size_t          m_SGeometryFeatInd;
 
         const netCDFWriterConfigLayer* m_poLayerConfig;
 
@@ -1062,6 +1060,7 @@ class netCDFLayer final: public OGRLayer
         void            GetNoDataValue( int nVarId, nc_type nVarType, NCDFNoDataUnion* puNoData );
         bool            FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
         void            SGCommitPendingTransaction();
+        OGRFeature*     buildSGeometryFeature(size_t featureInd);
 
     protected:
         bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
@@ -1079,12 +1078,12 @@ class netCDFLayer final: public OGRLayer
         void            SetWKTGeometryField(const char* pszWKTVarName);
         void            SetGridMapping(const char* pszGridMapping);
         void            SetProfile(int nProfileDimID, int nParentIndexVarID);
-        void            AddSimpleGeometryFeature(OGRFeature* sg) { this->m_sgFeatureList.push_back(std::unique_ptr<OGRFeature>(sg)); }
         void            EnableSGBypass() { this-> m_HasCFSG1_8 = true; }
         bool            AddField(int nVarId);
 
         int             GetCDFID() const { return m_nLayerCDFId; }
         void            SetCDFID(int nId) { m_nLayerCDFId = nId; }
+        void            SetSGeometryRepresentation(std::shared_ptr<nccfdriver::SGeometry> sg) { m_simpleGeometry = sg; }
 
         virtual void ResetReading() override;
         virtual OGRFeature* GetNextFeature() override;

@@ -62,7 +62,6 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTMaxWidthDimId(-1),
         m_nWKTVarID(-1),
         m_nWKTNCDFType(NC_NAT),
-        m_sgItrInit(false),
         m_writableSGContVarID(nccfdriver::INVALID_VAR_ID),
         m_bLegacyCreateMode(false),
         m_HasCFSG1_8(false),
@@ -74,6 +73,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nProfileVarID(-1),
         m_bProfileVarUnlimited(false),
         m_nParentIndexVarID(-1),
+        m_SGeometryFeatInd(0),
         m_poLayerConfig(nullptr)
 {
     m_uXVarNoData.nVal64 = 0;
@@ -833,10 +833,7 @@ void netCDFLayer::ResetReading()
 {
     if( m_HasCFSG1_8 )
     {
-        if( m_sgItrInit )
-        {
-           this->m_sgFeatItr = m_sgFeatureList.begin(); 
-        }
+        m_SGeometryFeatInd = 0;
     }
     else
     {
@@ -878,19 +875,29 @@ double netCDFLayer::Get1DVarAsDouble( int nVarId, nc_type nVarType,
 
 OGRFeature *netCDFLayer::GetNextRawFeature()
 {
-    if( !m_sgItrInit && m_sgFeatureList.size() > 0 )
-    {
-        this->m_sgFeatItr = m_sgFeatureList.begin();
-        this->m_sgItrInit = true;
-    }
 
-    if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
+    if(m_simpleGeometry.get() != nullptr)
     {
-        OGRFeature * ret = (*(m_sgFeatItr))->Clone();
-        ++m_sgFeatItr;
-        return ret;
-    }
+        if(m_SGeometryFeatInd >= m_simpleGeometry->get_geometry_count())
+        {
+            return nullptr;
+        } 
 
+        OGRFeature* ft = nullptr;
+
+        try
+        { 
+            ft = buildSGeometryFeature(m_SGeometryFeatInd);
+            m_SGeometryFeatInd++;
+        }
+        catch(nccfdriver::SG_Exception& sge)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "An error occurred while retrieving a feature. That feature will be ignored.\n%s", sge.get_err_msg());
+        }
+
+        return ft;
+    }
+    
     m_poDS->SetDefineMode(false);
 
     // In update mode, nc_get_varXXX() doesn't return error if we are
@@ -2581,8 +2588,9 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
     {
         if( m_HasCFSG1_8 )
         {
-            return m_sgFeatureList.size();
+            return m_simpleGeometry->get_geometry_count();
         }
+
         size_t nDimLen;
         nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nDimLen);
         return static_cast<GIntBig>(nDimLen);
