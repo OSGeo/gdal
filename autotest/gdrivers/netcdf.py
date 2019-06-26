@@ -4227,7 +4227,3 @@ def test_multipolygon3D_with_no_ir_write():
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((3 0 0,4 0 1,4 1 2,3 0 3)),((3 0 -1,4 1 -2,3 1 -3,3 0 -4)))")
     assert(fnam == "DoubleTriangle")
-
-def test_write_multiplelayer_write():
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
