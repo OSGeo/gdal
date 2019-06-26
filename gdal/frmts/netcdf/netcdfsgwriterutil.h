@@ -113,6 +113,7 @@ namespace nccfdriver
 			size_t getIRingCount() { return this-> interior_rings.size(); }	 // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
 			void cpyNCOUNT_into_PNC();
 			void flushPNCBuffer() { this->pnc = std::queue<int>(); }
+			void setBufSize(unsigned long long new_limit) { this->mem_limit = new_limit; }
 	};
 
 	/* OGR_SGeometry_Scribe
@@ -143,7 +144,7 @@ namespace nccfdriver
 		public:
 			geom_t getWritableType() { return this->writableType; }
 			void writeSGeometryFeature(SGeometry_Feature& ft);
-			OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t);
+			OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, unsigned long long bufsize);
 			OGR_SGeometry_Scribe();
 			int get_node_count_dimID() { return this->node_count_dimID; }
 			int get_node_coord_dimID() { return this->node_coordinates_dimID; }

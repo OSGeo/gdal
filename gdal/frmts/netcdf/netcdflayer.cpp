@@ -171,6 +171,14 @@ bool netCDFLayer::Create(char **papszOptions,
 		m_bLegacyCreateMode = false;
 	}
 
+	long long newbufsize = 0;
+	const char * memorySizeLimitation = CSLFetchNameValueDef(papszOptions, "BUFFER_SIZE", "");
+	std::string memorySizeLimitation_s = std::string(memorySizeLimitation);
+	if(memorySizeLimitation_s != "")
+	{
+		newbufsize = strtoll(memorySizeLimitation, nullptr, 10);
+	}
+
     m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
                                              m_osRecordDimName.c_str());
     m_bAutoGrowStrings =
@@ -585,7 +593,7 @@ bool netCDFLayer::Create(char **papszOptions,
 			m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
 
 			if(basic_type != nccfdriver::POINT)
-				nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type);
+				nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize);
 
 
 			// Write the grid mapping, if it exists:

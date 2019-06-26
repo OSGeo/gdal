@@ -460,7 +460,7 @@ namespace nccfdriver
 
 	}
 
-	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot)
+	OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot, unsigned long long bufsize)
 		: ncID(ncID_in),
 		writableType(geot),
 		containerVarID(container_varID_in),
@@ -471,6 +471,13 @@ namespace nccfdriver
 	{
 		char container_name[NC_MAX_CHAR + 1];
 		memset(container_name, 0, NC_MAX_CHAR + 1);
+
+		// Set buffer size
+		// Allow 4KB (standard page size) to be smallest buffer heuristic
+		if(bufsize >= 4096)
+		{
+			wbuf.setBufSize(bufsize);
+		}
 
 		// Prepare variable names
 		char node_coord_names[NC_MAX_CHAR + 1];
