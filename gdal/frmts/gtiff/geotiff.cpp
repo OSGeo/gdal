@@ -329,6 +329,7 @@ private:
     double      m_dfNoDataValue = -9999.0;
 
     toff_t      m_nDirOffset = 0;
+    int         m_nPage = -1;
 
     int         m_nBlocksPerBand = 0;
     int         m_nBlockXSize = 0;
@@ -12207,6 +12208,8 @@ int GTiffDataset::Identify( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszFilename, "GTIFF_DIR:") )
         return TRUE;
+    if( STARTS_WITH_CI(pszFilename, "GTIFF_PAGE:") )
+        return TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      First we check to see if the file has the expected header       */
@@ -12541,6 +12544,19 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( STARTS_WITH_CI(pszFilename, "GTIFF_DIR:") )
         return OpenDir( poOpenInfo );
 
+    int nPage = -1;
+    if (STARTS_WITH_CI(pszFilename, "GTIFF_PAGE:"))
+    {
+        pszFilename += strlen("GTIFF_PAGE:");
+        nPage = atol(pszFilename);
+        pszFilename += 1;
+        while (*pszFilename != '\0' && pszFilename[-1] != ':')
+            ++pszFilename;
+
+        if (*pszFilename == '\0' || nPage == -1)
+            return nullptr;
+    }
+
     if( !GTiffOneTimeInit() )
         return nullptr;
 
@@ -12604,6 +12620,27 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( l_hTIFF == nullptr )
         return nullptr;
 
+    if (nPage >= 0)
+    {
+        bool bFound = false;
+        do {
+            uint32 nSubType = 0;
+            if (!TIFFGetField(l_hTIFF, TIFFTAG_SUBFILETYPE, &nSubType))
+                nSubType = 0;
+            if (nSubType == 0 || nSubType == FILETYPE_PAGE)
+            {
+                uint16 nPageNumber, nNumberOfPages;
+                if (TIFFGetField(l_hTIFF, TIFFTAG_PAGENUMBER, &nPageNumber, &nNumberOfPages) && nPageNumber == nPage)
+                {
+                    bFound = true;
+                    break;
+                }
+            }
+        } while (!TIFFLastDirectory(l_hTIFF) && TIFFReadDirectory(l_hTIFF) != 0);
+        if (!bFound)
+            return nullptr;
+    }
+
     uint32 nXSize = 0;
     TIFFGetField( l_hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
     uint32 nYSize = 0;
@@ -12634,6 +12671,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poOpenInfo->fpL = nullptr;
     poDS->m_bStreamingIn = bStreaming;
     poDS->m_nCompression = l_nCompression;
+    poDS->m_nPage = nPage;
 
     // Check structural metadata (for COG)
     const int nOffsetOfStructuralMetadata =
@@ -15075,6 +15113,7 @@ void GTiffDataset::ScanDirectories()
 /* ==================================================================== */
     CPLStringList aosSubdatasets;
     int iDirIndex = 0;
+    int iSubDatasetIndex = 0;
 
     FlushDirectory();
     while( !TIFFLastDirectory( m_hTIFF )
@@ -15095,10 +15134,18 @@ void GTiffDataset::ScanDirectories()
         if( !TIFFGetField(m_hTIFF, TIFFTAG_SUBFILETYPE, &nSubType) )
             nSubType = 0;
 
+        int nPageNumber = -1;
+        {
+            uint16 pageNumber = 0, numberOfPages;
+            if (TIFFGetField(m_hTIFF, TIFFTAG_PAGENUMBER, &pageNumber, &numberOfPages))
+                nPageNumber = pageNumber;
+        }
+
         /* Embedded overview of the main image */
         if( (nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
             (nSubType & FILETYPE_MASK) == 0 &&
             iDirIndex != 1 &&
+            nPageNumber == m_nPage &&
             m_nOverviewCount < 30 /* to avoid DoS */ )
         {
             GTiffDataset *poODS = new GTiffDataset();
@@ -15125,10 +15172,11 @@ void GTiffDataset::ScanDirectories()
             }
         }
         // Embedded mask of the main image.
-        else if( (nSubType & FILETYPE_MASK) != 0 &&
+        else if ((nSubType & FILETYPE_MASK) != 0 &&
                  (nSubType & FILETYPE_REDUCEDIMAGE) == 0 &&
                  iDirIndex != 1 &&
-                 m_poMaskDS == nullptr )
+                 nPageNumber == m_nPage &&
+                 m_poMaskDS == nullptr)
         {
             m_poMaskDS = new GTiffDataset();
             m_poMaskDS->ShareLockWithParentDataset(this);
@@ -15174,6 +15222,7 @@ void GTiffDataset::ScanDirectories()
         // combination of the FILETYPE_xxxx masks.
         else if( (nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
                  (nSubType & FILETYPE_MASK) != 0 &&
+                 nPageNumber == m_nPage &&
                  iDirIndex != 1 )
         {
             GTiffDataset* poDS = new GTiffDataset();
@@ -15222,7 +15271,7 @@ void GTiffDataset::ScanDirectories()
                 }
             }
         }
-        else if( nSubType == 0 || nSubType == FILETYPE_PAGE )
+        else if( m_nPage==-1 && (nSubType == 0 || nSubType == FILETYPE_PAGE ))
         {
             uint32 nXSize = 0;
             uint32 nYSize = 0;
@@ -15243,13 +15292,27 @@ void GTiffDataset::ScanDirectories()
                     nSPP = 1;
 
                 CPLString osName, osDesc;
-                osName.Printf( "SUBDATASET_%d_NAME=GTIFF_DIR:%d:%s",
-                            iDirIndex, iDirIndex, m_pszFilename );
-                osDesc.Printf( "SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)",
-                            iDirIndex, iDirIndex,
-                            static_cast<int>(nXSize),
-                            static_cast<int>(nYSize),
-                            nSPP );
+                if (nPageNumber >= 0)
+                {
+                    osName.Printf("SUBDATASET_%d_NAME=GTIFF_PAGE:%d:%s",
+                                  iSubDatasetIndex, nPageNumber, m_pszFilename);
+                    osDesc.Printf("SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)",
+                                  iSubDatasetIndex, nPageNumber,
+                                  static_cast<int>(nXSize),
+                                  static_cast<int>(nYSize),
+                                  nSPP);
+                }
+                else
+                {
+                    osName.Printf("SUBDATASET_%d_NAME=GTIFF_DIR:%d:%s",
+                                  iSubDatasetIndex, iDirIndex, m_pszFilename);
+                    osDesc.Printf("SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)",
+                                  iSubDatasetIndex, iDirIndex,
+                                  static_cast<int>(nXSize),
+                                  static_cast<int>(nYSize),
+                                  nSPP);
+                }
+                iSubDatasetIndex++;
 
                 aosSubdatasets.AddString(osName);
                 aosSubdatasets.AddString(osDesc);
