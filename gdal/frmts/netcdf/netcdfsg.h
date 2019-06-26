@@ -102,6 +102,11 @@ namespace nccfdriver
 
         public:
 
+        /* int SGeometry::get_ncID()
+         * return the group/file ID that the SGeometry object is operating over
+         */
+        int get_ncID() { return ncid; }
+
         /* int SGeometry::get_axisCount()
          * Returns the count of axis (i.e. X, Y, Z)
          */
@@ -177,27 +182,15 @@ namespace nccfdriver
          */
         Point& operator[](size_t ind);
 
+        /* std::vector<int>& getNodeCoordVars
+         * Returns a vector with the node coord vars in X, Y, Z (if present) order
+         */
+        std::vector<int>& getNodeCoordVars() { return this->nodec_varIds; }
+
         /* ncID - as used in netcdf.h
          * baseVarId - the id of a variable with a geometry container attribute 
          */
         SGeometry(int ncId, int baseVarId); 
-
-        /* Default constructor
-         * Constructs an unusable ("null") SGeometry
-         * Only serves to be construct object when no other constructor is given
-         */
-        SGeometry() :
-            ncid(INVALID_VAR_ID),
-            gc_varId(INVALID_VAR_ID),
-            gm_varId(INVALID_VAR_ID),
-            inst_dimId(INVALID_DIM_ID),
-            inst_dimLen(0),
-            touple_order(0),
-            current_vert_ind(0),
-            cur_geometry_ind(0),
-            cur_part_ind(0),
-            pt_buffer(nullptr)
-            {}
 
     };
 

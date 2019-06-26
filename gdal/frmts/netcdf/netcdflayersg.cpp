@@ -149,8 +149,10 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     nccfdriver::SGeometry_PropertyScanner pr(ncid, cont_id);
     OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType(), sg->get_axisCount());
 
+    std::string return_gm = "";
+
     if(sg->getGridMappingVarID() != nccfdriver::INVALID_VAR_ID)
-        SetProjectionFromVar(ncid, nc_basevarId, true, sg->getGridMappingName().c_str());
+        SetProjectionFromVar(ncid, nc_basevarId, true, sg->getGridMappingName().c_str(), &return_gm, sg.get());
 
     // Geometry Type invalid, avoid further processing
     if(owgt == wkbNone)
@@ -163,20 +165,25 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     nc_inq_varname(ncid, nc_basevarId, baseName);
 
     OGRSpatialReference * poSRS = nullptr;
-/*  // Disabled, until SRS function is refactored and fixed
-    if(pszCFProjection != nullptr)
+    if(return_gm != "")
     {
         poSRS = new OGRSpatialReference();
-        if(poSRS->importFromWkt(pszCFProjection) != OGRERR_NONE)
+        if(poSRS->importFromWkt(return_gm.c_str()) != OGRERR_NONE)
         {
             delete poSRS;
             throw nccfdriver::SG_Exception_General_Malformed("SRS settings");
         }
 
+        // Set as dataset default...
+        this->SetSpatialRef(poSRS);
+    }
+
+    netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS);
+
+    if(poSRS != nullptr)
+    {
         poSRS -> Release();
     }
-*/
-    netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS);
 
     poL->EnableSGBypass();
     OGRFeatureDefn * defn = poL->GetLayerDefn();

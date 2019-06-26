@@ -2417,7 +2417,8 @@ static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
 /*                      SetProjectionFromVar()                          */
 /************************************************************************/
 void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
-                                          bool bReadSRSOnly, const char * pszGivenGM)
+                                          bool bReadSRSOnly, const char * pszGivenGM, std::string* returnProjStr,
+                                          nccfdriver::SGeometry* sg)
 {
     bool bGotGeogCS = false;
     bool bGotCfSRS = false;
@@ -3220,6 +3221,14 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     int nVarDimXID = -1;
     int nGroupDimYID = -1;
     int nVarDimYID = -1;
+    if(sg != nullptr)
+    {
+       nGroupDimXID = sg->get_ncID();
+       nGroupDimYID = sg->get_ncID();
+       nVarDimXID = sg->getNodeCoordVars()[0];
+       nVarDimYID = sg->getNodeCoordVars()[1];
+    }
+
     if( !bReadSRSOnly )
     {
         NCDFResolveVar(nGroupId, poDS->papszDimName[nXDimID],
@@ -3229,6 +3238,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         // TODO: if above resolving fails we should also search for coordinate
         // variables without same name than dimension using the same resolving
         // logic. This should handle for example NASA Ocean Color L2 products.
+
 
         // Check that they are 1D or 2D variables
         if( nVarDimXID >= 0 )
@@ -3248,9 +3258,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         }
     }
 
-    if( !bReadSRSOnly && (nVarDimXID != -1) && (nVarDimYID != -1) &&
-        xdim > 0 && ydim > 0 )
+    if( (nVarDimXID != -1) && (nVarDimYID != -1) &&
+        ((!bReadSRSOnly && xdim > 0 && ydim > 0) || sg != nullptr) )
     {
+        if(sg == nullptr)
+        {
+        // Raster stuff, not usable for simple geometries...
         pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
         pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
 
@@ -3292,6 +3305,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                             pdfXCoord[i] -= 360;
                 }
             }
+        }
         }
 
         // Set Projection from CF.
@@ -3348,9 +3362,17 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
             // Set projection.
             oSRS.exportToWkt(&pszTempProjection);
+            if(returnProjStr != nullptr)
+            {
+                (*returnProjStr) = std::string(pszTempProjection);
+            }
             CPLDebug("GDAL_netCDF", "setting WKT from CF");
             SetProjection(pszTempProjection);
             CPLFree(pszTempProjection);
+            if(sg != nullptr)
+            {
+                return; // got the projection, now go!
+            }
         }
 
         // Is pixel spacing uniform across the map?
@@ -3880,7 +3902,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                                           bool bReadSRSOnly )
 {
-    SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr);
+    SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr, nullptr, nullptr);
 }
 
 int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
@@ -7494,7 +7516,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     CPLFree(panDimIds);
 
     // Set projection info.
-    if( nd > 1 )
+    if( nd > 1)
     {
         poDS->SetProjectionFromVar(cdfid, var, false);
     }
@@ -11120,7 +11142,8 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
     // Read projection info
     char **papszMetadataBackup = CSLDuplicate(papszMetadata);
     ReadAttributes(nCdfId, nFirstVarId);
-    SetProjectionFromVar(nCdfId, nFirstVarId, true);
+    if(!this->bSGSupport)
+        SetProjectionFromVar(nCdfId, nFirstVarId, true);
     const char *pszValue = FetchAttr(nCdfId, nFirstVarId, CF_GRD_MAPPING);
     char *pszGridMapping = (pszValue ? CPLStrdup(pszValue) : nullptr);
     CSLDestroy(papszMetadata);

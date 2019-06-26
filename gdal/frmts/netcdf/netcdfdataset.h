@@ -896,7 +896,7 @@ class netCDFDataset final: public GDALPamDataset
 
     void  CreateSubDatasetList( int nGroupId );
 
-    void  SetProjectionFromVar( int nGroupId, int nVarId, bool bReadSRSOnly, const char * pszGivenGM);
+    void  SetProjectionFromVar( int nGroupId, int nVarId, bool bReadSRSOnly, const char * pszGivenGM, std::string*, nccfdriver::SGeometry*);
     void  SetProjectionFromVar( int nGroupId, int nVarId, bool bReadSRSOnly );
 
     int ProcessCFGeolocation( int nGroupId, int nVarId );
