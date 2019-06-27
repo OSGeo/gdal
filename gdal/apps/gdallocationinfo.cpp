@@ -179,7 +179,8 @@ MAIN_START(argc, argv)
 /*      Open source file.                                               */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hSrcDS
-        = GDALOpenEx( pszSrcFilename, GDAL_OF_RASTER, nullptr,
+        = GDALOpenEx( pszSrcFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                      nullptr,
                       papszOpenOptions, nullptr );
     if( hSrcDS == nullptr )
         exit( 1 );
