@@ -63,7 +63,7 @@ namespace nccfdriver
 			size_t getTotalPartCount() { return this->total_part_count;  }
 			std::vector<size_t> & getPerPartNodeCount() { return this->ppart_node_count; }
 			OGRPoint& getPoint(size_t part_no, int point_index);
-			SGeometry_Feature(OGRFeature&);
+			explicit SGeometry_Feature(OGRFeature&);
 			bool getHasInteriorRing() { return this->hasInteriorRing; }
 			bool IsPartAtIndInteriorRing(size_t ind) { return this->part_at_ind_interior[ind]; } // ONLY used for Multipolygon
 	};
@@ -166,10 +166,6 @@ namespace nccfdriver
 			~OGR_SGeometry_Scribe() { this->commit_transaction(); }
 	};
 
-	// Namespace global, since strange VS2015 (specifically!) heap corruption issue when declaring in netCDFLayer
-	// will look at later
-	extern OGR_SGeometry_Scribe GeometryScribe;
-
 	// Exception Classes
 	class SGWriter_Exception : public SG_Exception
 	{
@@ -213,11 +209,7 @@ namespace nccfdriver
 
 		public:
 			const char * get_err_msg() override { return this->msg.c_str(); } 
-			SGWriter_Exception_EmptyGeometry()
-			{
-				msg = std::string("An empty geometry was detected when writing a netCDF file. ") +
-					std::string("Empty geometries are not allowed.");
-			}
+			SGWriter_Exception_EmptyGeometry() : msg("An empty geometry was detected when writing a netCDF file. Empty geometries are not allowed.") {}
 	};
 
 	class SGWriter_Exception_GeometryTMismatch : public SGWriter_Exception

@@ -214,27 +214,27 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
  */
 void netCDFLayer::SGCommitPendingTransaction()
 {
-    int node_count_dimID = nccfdriver::GeometryScribe.get_node_count_dimID();
-    int node_coord_dimID = nccfdriver::GeometryScribe.get_node_coord_dimID();
+    int node_count_dimID = m_poDS->GeometryScribe.get_node_count_dimID();
+    int node_coord_dimID = m_poDS->GeometryScribe.get_node_coord_dimID();
 
     // Grow dimensions to fit the next feature
 
-    m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, nccfdriver::GeometryScribe.get_next_write_pos_node_count() + nccfdriver::GeometryScribe.getNCOUNTBufLength());
+    m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, m_poDS->GeometryScribe.get_next_write_pos_node_count() + m_poDS->GeometryScribe.getNCOUNTBufLength());
 
     // To do: check X, Y, (and Z if 3D) buffers are the same length
 
     m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
-        nccfdriver::GeometryScribe.get_next_write_pos_node_coord() + nccfdriver::GeometryScribe.getXCBufLength());
+        m_poDS->GeometryScribe.get_next_write_pos_node_coord() + m_poDS->GeometryScribe.getXCBufLength());
 
 
-    if((nccfdriver::GeometryScribe.getWritableType() == nccfdriver::POLYGON && nccfdriver::GeometryScribe.getInteriorRingDetected())
-        || nccfdriver::GeometryScribe.getWritableType() == nccfdriver::MULTILINE || nccfdriver::GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
+    if((m_poDS->GeometryScribe.getWritableType() == nccfdriver::POLYGON && m_poDS->GeometryScribe.getInteriorRingDetected())
+        || m_poDS->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || m_poDS->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
     {
-        int pnc_dimID = nccfdriver::GeometryScribe.get_pnc_dimID();
-        m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, nccfdriver::GeometryScribe.get_next_write_pos_pnc() + nccfdriver::GeometryScribe.getPNCBufLength());
+        int pnc_dimID = m_poDS->GeometryScribe.get_pnc_dimID();
+        m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, m_poDS->GeometryScribe.get_next_write_pos_pnc() + m_poDS->GeometryScribe.getPNCBufLength());
     }
 
-    nccfdriver::GeometryScribe.commit_transaction();
+    m_poDS->GeometryScribe.commit_transaction();
 }
 
 /* Takes an index and using the layer geometry builds the equivalent
@@ -279,7 +279,7 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
 
             int dimId = m_simpleGeometry->getInstDim();
             size_t dim_len = m_simpleGeometry->getInstDimLen();
-            int dim_len_trunc = static_cast<size_t>(dim_len);
+            int dim_len_trunc = static_cast<int>(dim_len);
 
             // Fill fields
             for(int itr = 0; itr < defn->GetFieldCount() && itr < dim_len_trunc; itr++)

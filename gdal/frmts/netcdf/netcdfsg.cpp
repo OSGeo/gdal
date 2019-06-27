@@ -78,7 +78,7 @@ namespace nccfdriver
      *
      */
     SGeometry::SGeometry(int ncId, int geoVarId)
-        : gc_varId(geoVarId), touple_order(0), current_vert_ind(0), cur_geometry_ind(0), cur_part_ind(0)
+        : gc_varId(geoVarId), touple_order(0) 
     {
 
         char container_name[NC_MAX_NAME + 1];
@@ -418,67 +418,7 @@ namespace nccfdriver
         this->inst_dimLen = instance_dim_len;
         this->pt_buffer = std::unique_ptr<Point>(new Point(this->touple_order));
         this->gc_varId = geoVarId; 
-        this->current_vert_ind = 0;    
         this->ncid = ncId;
-    }
-
-    Point& SGeometry::next_pt()
-    {
-        if(!this->has_next_pt())
-        {
-            throw SG_Exception_BadPoint();
-        }
-
-        // Fill pt
-        // New pt now
-        for(int order = 0; order < touple_order; order++)
-        {
-            Point& pt = *(this->pt_buffer);
-            double data;
-            size_t full_ind = bound_list[cur_geometry_ind] + current_vert_ind;
-
-            // Read a single coord
-            int err = nc_get_var1_double(ncid, nodec_varIds[order], &full_ind, &data);
-            // To do: optimize through multiple reads at once, instead of one datum
-
-            if(err != NC_NOERR)
-            {
-                throw SG_Exception_BadPoint();
-            }
-
-            pt[order] = data;
-        }    
-        
-        this->current_vert_ind++;
-        return *(this->pt_buffer);    
-    }
-
-    bool SGeometry::has_next_pt()
-    {
-        if(this->current_vert_ind < node_counts[cur_geometry_ind])
-        {
-            return true;
-        }
-    
-        else return false;
-    }
-
-    void SGeometry::next_geometry()
-    {
-        // to do: maybe implement except. and such on error conds.
-
-        this->cur_geometry_ind++;
-        this->cur_part_ind = 0;
-        this->current_vert_ind = 0;    
-    }
-
-    bool SGeometry::has_next_geometry()
-    {
-        if(this->cur_geometry_ind < node_counts.size())
-        {
-            return true;
-        }
-        else return false;
     }
 
     Point& SGeometry::operator[](size_t index)

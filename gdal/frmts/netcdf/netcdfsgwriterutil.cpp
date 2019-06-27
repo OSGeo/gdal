@@ -30,8 +30,6 @@
 
 namespace nccfdriver
 {
-	OGR_SGeometry_Scribe GeometryScribe;
-
 	SGeometry_Feature::SGeometry_Feature(OGRFeature& ft)
 	{
 		this->hasInteriorRing = false;
@@ -184,7 +182,8 @@ namespace nccfdriver
 		if (this->type == MULTIPOINT)
 		{
 			OGRMultiPoint* as_mp_ref = dynamic_cast<OGRMultiPoint*>(this->geometry_ref);
-			OGRPoint * pt = dynamic_cast<OGRPoint*>(as_mp_ref->getGeometryRef(part_no));
+                        int part_ind = static_cast<int>(part_no);
+			OGRPoint * pt = dynamic_cast<OGRPoint*>(as_mp_ref->getGeometryRef(part_ind));
 			return *pt;
 		}
 
@@ -205,6 +204,7 @@ namespace nccfdriver
 		if (this->type == POLYGON)
 		{
 			OGRPolygon* as_polygon_ref = dynamic_cast<OGRPolygon*>(this->geometry_ref);
+                        int ring_ind = static_cast<int>(part_no);
 
 			if(part_no == 0)
 			{
@@ -213,7 +213,7 @@ namespace nccfdriver
 
 			else
 			{
-				as_polygon_ref->getInteriorRing(part_no - 1)->getPoint(point_index, &pt_buffer);
+				as_polygon_ref->getInteriorRing(ring_ind - 1)->getPoint(point_index, &pt_buffer);
 			}
 		}
 
@@ -319,7 +319,7 @@ namespace nccfdriver
 
 			if(ft.getType() == POLYGON || ft.getType() == MULTILINE || ft.getType() == MULTIPOLYGON)
 			{
-				int pnc_writable = ft.getPerPartNodeCount()[part_no];
+				int pnc_writable = static_cast<int>(ft.getPerPartNodeCount()[part_no]);
 				wbuf.addPNC(pnc_writable);	
 			}
 
@@ -451,6 +451,7 @@ namespace nccfdriver
 		node_coordinates_dimID(INVALID_DIM_ID),
 		node_count_dimID(INVALID_DIM_ID),
 		node_count_varID(INVALID_VAR_ID),
+                pnc_dimID(INVALID_DIM_ID),
 		pnc_varID(INVALID_VAR_ID),
 		intring_varID(INVALID_VAR_ID),
 		next_write_pos_node_coord(0),
@@ -625,7 +626,6 @@ namespace nccfdriver
 		}
 
 		std::string int_ring = std::string(container_name) + std::string("_interior_ring");
-		std::string pnc_name = std::string(container_name) + std::string("_part_node_count");
 
 		// Put the new interior ring attribute
 		err_code = nc_put_att_text(ncID, containerVarID, CF_SG_INTERIOR_RING, strlen(int_ring.c_str()), int_ring.c_str()); 
@@ -776,29 +776,25 @@ namespace nccfdriver
 
 	// Exception related definitions
 	SGWriter_Exception_NCWriteFailure::SGWriter_Exception_NCWriteFailure(const char * layer_name, const char * failure_name, const char * failure_type)
-	{
-		this->msg = sgwe_msg_builder(layer_name, failure_name, failure_type,
-			"could not be written to (write failure).");
-	}
+        : msg(sgwe_msg_builder(layer_name, failure_name, failure_type,
+			"could not be written to (write failure)."))
+	{}
 
 	SGWriter_Exception_NCInqFailure::SGWriter_Exception_NCInqFailure (const char * layer_name, const char * failure_name, const char * failure_type)
-	{
-		this->msg = sgwe_msg_builder(layer_name, failure_name, failure_type,
-			"could not be read from (property inquiry failure).");
-	}
+	: msg(sgwe_msg_builder(layer_name, failure_name, failure_type,
+			"could not be read from (property inquiry failure)."))
+	{}
 
 	SGWriter_Exception_NCDefFailure::SGWriter_Exception_NCDefFailure(const char * layer_name, const char * failure_name, const char * failure_type)
-	{
-		this->msg = sgwe_msg_builder(layer_name, failure_name, failure_type,
-			"could not be defined in the dataset (definition failure).");
-	}
+	: msg(sgwe_msg_builder(layer_name, failure_name, failure_type,
+			"could not be defined in the dataset (definition failure)."))
+	{}
 
 	SGWriter_Exception_GeometryTMismatch::SGWriter_Exception_GeometryTMismatch(const char * layer_type, const char * wrong_type)
-	{
-		this->msg = std::string("Layer has geometry type ") + std::string(layer_type)
+	: msg(std::string("Layer has geometry type ") + std::string(layer_type)
 			+ std::string(" but attempt was made to write feature of type ")
-			+ std::string(wrong_type);
-	}
+			+ std::string(wrong_type))
+	{}
 
 	// SGeometry_Layer_WBuffer
 	void SGeometry_Layer_WBuffer::cpyNCOUNT_into_PNC()

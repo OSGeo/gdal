@@ -593,13 +593,16 @@ bool netCDFLayer::Create(char **papszOptions,
 			m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
 
 			if(basic_type != nccfdriver::POINT)
-				nccfdriver::GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize);
+				m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize);
 
 
 			// Write the grid mapping, if it exists:
 			if (poSRS != nullptr)
 			{
 				status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_osGridMapping), m_osGridMapping);
+                                NCDF_ERR(status);
+                                if(status != NC_NOERR)
+				throw nccfdriver::SGWriter_Exception_NCWriteFailure(this->GetName(), CF_GRD_MAPPING, "attribute");                       
 			}
 		}
 	}
@@ -1879,13 +1882,13 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 			nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
 
 			// Check if ready to dump buffer
-			if(nccfdriver::GeometryScribe.bufferQuotaReached())
+			if(m_poDS->GeometryScribe.bufferQuotaReached())
 			{
 				this->SGCommitPendingTransaction();	
 			}
 
 			// Finally, "write" the feature
-			nccfdriver::GeometryScribe.writeSGeometryFeature(featWithMetaData);
+			m_poDS->GeometryScribe.writeSGeometryFeature(featWithMetaData);
 		}
 	}
 

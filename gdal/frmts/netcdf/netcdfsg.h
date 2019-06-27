@@ -93,9 +93,6 @@ namespace nccfdriver
         std::vector<size_t> pnc_bl;    // a quick list of indicies for part counts corresponding to a geometry
         std::vector<int> parts_count;    // a count of total parts in a single geometry instance
         std::vector<int> poly_count;    // count of polygons, for use only when interior rings are present
-        int current_vert_ind;    // used to keep track of current point being used
-        size_t cur_geometry_ind;    // used to keep track of current geometry index
-        size_t cur_part_ind;        // used to keep track of current part index
         std::unique_ptr<Point> pt_buffer;    // holds the current point
         SGeometry(SGeometry&);
         SGeometry operator=(const SGeometry&);
@@ -121,23 +118,6 @@ namespace nccfdriver
          * Returns the length of the instance dimension
          */
         size_t getInstDimLen() { return this->inst_dimLen; }
-
-        /* Point& SGeometry::next_pt()
-         * returns a pointer to the next pt in sequence, if any. If none, returns a nullptr
-         * calling next_pt does not have additional space requirements
-         * The point iterator is suitable for mostly only the point feature type.
-         */
-        Point& next_pt(); 
-        bool has_next_pt(); // returns whether or not the geometry has another point
-            
-        /* void SGeometry::next_geometry()
-         * does not return anything. Rather, the SGeometry for which next_geometry() was called
-         * essentially gets replaced by the new geometry. So to access the next geometry,
-         * no additional space is required, just use the reference to the previous geometry, now
-         * pointing to the new geometry.
-         */
-        void next_geometry(); // simply reuses the host structure
-        bool has_next_geometry();
 
         /* std::string& getGridMappingName()
          * returns the variable name which holds grid mapping data
