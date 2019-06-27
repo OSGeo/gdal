@@ -214,32 +214,38 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
  */
 void netCDFLayer::SGCommitPendingTransaction()
 {
-    if(m_poDS->GeometryScribe.get_containerID() == nccfdriver::INVALID_VAR_ID)
+    try
     {
-        return; // do nothing if invalid scribe
-    } 
+        if(m_poDS->GeometryScribe.get_containerID() == nccfdriver::INVALID_VAR_ID)
+        {
+            return; // do nothing if invalid scribe
+        } 
 
-    int node_count_dimID = m_poDS->GeometryScribe.get_node_count_dimID();
-    int node_coord_dimID = m_poDS->GeometryScribe.get_node_coord_dimID();
+        int node_count_dimID = m_poDS->GeometryScribe.get_node_count_dimID();
+        int node_coord_dimID = m_poDS->GeometryScribe.get_node_coord_dimID();
 
-    // Grow dimensions to fit the next feature
+        // Grow dimensions to fit the next feature
 
-    m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, m_poDS->GeometryScribe.get_next_write_pos_node_count() + m_poDS->GeometryScribe.getNCOUNTBufLength());
+        m_poDS->GrowDim(m_nLayerCDFId, node_count_dimID, m_poDS->GeometryScribe.get_next_write_pos_node_count() + m_poDS->GeometryScribe.getNCOUNTBufLength());
 
-    // To do: check X, Y, (and Z if 3D) buffers are the same length
-
-    m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
-        m_poDS->GeometryScribe.get_next_write_pos_node_coord() + m_poDS->GeometryScribe.getXCBufLength());
+        m_poDS->GrowDim(m_nLayerCDFId, node_coord_dimID,
+            m_poDS->GeometryScribe.get_next_write_pos_node_coord() + m_poDS->GeometryScribe.getXCBufLength());
 
 
-    if((m_poDS->GeometryScribe.getWritableType() == nccfdriver::POLYGON && m_poDS->GeometryScribe.getInteriorRingDetected())
-        || m_poDS->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || m_poDS->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
-    {
-        int pnc_dimID = m_poDS->GeometryScribe.get_pnc_dimID();
-        m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, m_poDS->GeometryScribe.get_next_write_pos_pnc() + m_poDS->GeometryScribe.getPNCBufLength());
+        if((m_poDS->GeometryScribe.getWritableType() == nccfdriver::POLYGON && m_poDS->GeometryScribe.getInteriorRingDetected())
+            || m_poDS->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || m_poDS->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
+        {
+            int pnc_dimID = m_poDS->GeometryScribe.get_pnc_dimID();
+            m_poDS->GrowDim(m_nLayerCDFId, pnc_dimID, m_poDS->GeometryScribe.get_next_write_pos_pnc() + m_poDS->GeometryScribe.getPNCBufLength());
+        }
+
+        m_poDS->GeometryScribe.commit_transaction();
     }
 
-    m_poDS->GeometryScribe.commit_transaction();
+    catch(nccfdriver::SG_Exception& sge)
+    {
+        CPLError(CE_Fatal, CPLE_FileIO, "An error occurred while writing the target netCDF File. Translation will be terminated.\n%s", sge.get_err_msg());
+    }
 }
 
 /* Takes an index and using the layer geometry builds the equivalent
