@@ -2352,6 +2352,35 @@ def test_ogr_mitab_delete_feature_no_geometry():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
+
+###############################################################################
+# Check fix for https://github.com/OSGeo/gdal/issues/1636
+
+def test_ogr_mitab_too_large_value_for_decimal_field():
+
+    filename = '/vsimem/test.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    fld = ogr.FieldDefn('f', ogr.OFTReal)
+    fld.SetWidth(20)
+    fld.SetPrecision(12)
+    lyr.CreateField(fld)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['f'] = 1234567.012
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['f'] = 123456789.012
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    f = None
+
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
 ###############################################################################
 #
 
