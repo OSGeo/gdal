@@ -4569,6 +4569,24 @@ def test_ogr_shape_113_restore_shx_empty_shp_shx():
 ###############################################################################
 
 
+def test_ogr_shape_116_invalid_layer_name():
+
+    dirname = 'tmp/test_ogr_shape_116_invalid_layer_name'
+    gdal.RmdirRecursive(dirname)
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(dirname)
+    with gdaltest.error_handler():
+        assert ds.CreateLayer('test<>:"/\\?*', None, ogr.wkbNone)
+    ds = None
+    ds = ogr.Open(dirname)
+    assert ds.GetLayerCount() == 1
+    ds = None
+    gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+
+
 def test_ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
