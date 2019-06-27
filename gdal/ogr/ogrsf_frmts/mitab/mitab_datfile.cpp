@@ -2532,7 +2532,12 @@ int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
     snprintf(szFormat, sizeof(szFormat), "%%%d.%df", nWidth, nPrec);
     const char *pszVal = CPLSPrintf(szFormat, dValue);
     if (static_cast<int>(strlen(pszVal)) > nWidth)
-        pszVal += strlen(pszVal) - nWidth;
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot format %g as a %d.%d field",
+                 dValue, nWidth, nPrec);
+        return -1;
+    }
 
     // Update Index
     if (poINDFile && nIndexNo > 0)
