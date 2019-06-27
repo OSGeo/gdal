@@ -474,6 +474,31 @@ void OGRShapeDataSource::AddLayer( OGRShapeLayer* poLayer )
 }
 
 /************************************************************************/
+/*                        LaunderLayerName()                            */
+/************************************************************************/
+
+static CPLString LaunderLayerName(const char* pszLayerName)
+{
+    std::string osRet(pszLayerName);
+    for( char& ch: osRet )
+    {
+        // https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
+        if( ch == '<' || ch == '>' || ch == ':' || ch == '"' ||
+            ch == '/' || ch == '\\' || ch== '?' || ch == '*' )
+        {
+            ch = '_';
+        }
+    }
+    if( osRet != pszLayerName )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Invalid layer name for a shapefile: %s. Laundered to %s.",
+                 pszLayerName, osRet.c_str());
+    }
+    return osRet;
+}
+
+/************************************************************************/
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
@@ -716,13 +741,13 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         // datasource ... Ahem ahem.
         char *pszPath = CPLStrdup(CPLGetPath(pszName));
         pszFilenameWithoutExt =
-            CPLStrdup(CPLFormFilename(pszPath, pszLayerName, nullptr));
+            CPLStrdup(CPLFormFilename(pszPath, LaunderLayerName(pszLayerName).c_str(), nullptr));
         CPLFree( pszPath );
     }
     else
     {
         pszFilenameWithoutExt =
-            CPLStrdup(CPLFormFilename(pszName, pszLayerName, nullptr));
+            CPLStrdup(CPLFormFilename(pszName, LaunderLayerName(pszLayerName).c_str(), nullptr));
     }
 
 /* -------------------------------------------------------------------- */
