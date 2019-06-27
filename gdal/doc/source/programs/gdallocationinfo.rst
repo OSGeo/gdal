@@ -143,12 +143,12 @@ Reading location from stdin.
 
 ::
 
-    $ cat coordinates.tsv 
-    443020	3748359
-    441197	3749005
-    443852	3747743
+    $ cat coordinates.txt
+    443020 3748359
+    441197 3749005
+    443852 3747743
     
-    $ cat coordinates.tsv | gdallocationinfo -geoloc utmsmall.tif 
+    $ cat coordinates.tsv | gdallocationinfo -geoloc utmsmall.tif
     Report:
       Location: (38P,49L)
       Band 1:
