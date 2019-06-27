@@ -214,6 +214,11 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
  */
 void netCDFLayer::SGCommitPendingTransaction()
 {
+    if(m_poDS->GeometryScribe.get_containerID() == nccfdriver::INVALID_VAR_ID)
+    {
+        return; // do nothing if invalid scribe
+    } 
+
     int node_count_dimID = m_poDS->GeometryScribe.get_node_count_dimID();
     int node_coord_dimID = m_poDS->GeometryScribe.get_node_coord_dimID();
 
