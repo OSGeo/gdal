@@ -3712,8 +3712,8 @@ def test_ogr_geojson_update_in_loop():
 
     # No explicit id
     gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "geometry": null }]}')
-    vector = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
-    layer = vector.GetLayer()
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
     fids = []
     for feature in layer:
         fids.append(feature.GetFID())
@@ -3724,8 +3724,8 @@ def test_ogr_geojson_update_in_loop():
     # Explicit id no holes
     gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "id": 0, "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "id": 1, "geometry": null }]}')
 
-    vector = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
-    layer = vector.GetLayer()
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
     fids = []
     for feature in layer:
         fids.append(feature.GetFID())
@@ -3735,8 +3735,8 @@ def test_ogr_geojson_update_in_loop():
 
     # Explicit id with holes
     gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "id": 1, "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "id": 3, "geometry": null }]}')
-    vector = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
-    layer = vector.GetLayer()
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
     fids = []
     for feature in layer:
         fids.append(feature.GetFID())
