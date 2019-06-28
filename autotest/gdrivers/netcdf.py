@@ -4260,3 +4260,43 @@ def test_write_buffer_restrict_correctness():
         lftgeo = lft.GetGeometryRef()
         dftgeo = dft.GetGeometryRef()
         assert(lftgeo.Equal(dftgeo))
+
+def test_write_nc_from_nc():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+    # Tests writing a netCDF file (of different name than source) out from another netCDF source file
+    src = gdal.OpenEx("data/netcdf-sg/multipoint_test.nc", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/multipoint_test_replica.nc", src, format="netCDF");
+
+    ncds = ogr.Open("tmp/multipoint_test_replica.nc")
+    assert(src is not None)
+
+    layer = ncds.GetLayerByName("names_geometry")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (1 -1,2 -2,3 -3,4 -4)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (5 -5,6 -6,7 -7,8 -8)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (9 -9,10 -10,-1 1,-2 2)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (-3 3,-4 4,-5 5,-6 6)")
+
+    ft = layer.GetNextFeature() 
+    ft_geo = ft.GetGeometryRef()
+    ft_wkt = ft_geo.ExportToWkt()
+    assert(ft_wkt == "MULTIPOINT (-7 7,-8 8,-9 9,-10 10)")
