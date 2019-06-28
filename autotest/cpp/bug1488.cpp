@@ -55,7 +55,7 @@ static void CPL_STDCALL myErrorHandler(CPLErr eErrClass, CPLErrorNum, const char
 {
     if( eErrClass != CPLE_UserInterrupt && strstr(msg, "User terminated") == nullptr )
     {
-        fprintf(stderr, "An error occured: %s\n", msg);
+        fprintf(stderr, "An error occurred: %s\n", msg);
         fprintf(stderr, "Likely a threading issue !\n");
         exit(1);
     }

@@ -1,3 +1,132 @@
+= GDAL/OGR 3.0.1 Release Notes =
+
+The 3.0.1 release is a bug fix release.
+
+== Build ==
+
+ * configure: fix detection of libpq in a non-standard place (3.0 regression) (#1542)
+ * Fix MSVC linking issue related to TransformWithOptionsCache class (#1639)
+
+== Port ==
+
+ * /vsitar/: support >100 character file names (#1559)
+ * /vsicurl/: fix CPL_VSIL_CURL_ALLOWED_EXTENSIONS with query string (#1614)
+ * /vsicurl/: allow 'Connection timed out' CURL errors as candidate for HTTP retry
+ * /vsicurl/: GetFileSize(): when HEAD request does not return Content-Length header, retry with GET
+ * /vsis3/: for a long living file handle, refresh credentials coming from EC2/AIM (#1593)
+
+== GDAL algorithms ==
+
+ * GDALReprojectImage(): properly take into account source/target alpha bands
+ * GDALCreateReprojectionTransformerEx(): do not emit error if reverse transformation fails, and fix crash when trying to use null reverse transformation
+ * Warper: fix GDAL 2.3 regression in a situation with source nodata value, multiple bands and nearest resampling where the logic to detect which source pixels are nodata was inverted (#1656)
+ * Contour generator: fix SegmentMerger list iterator skipping and out of bounds error. (#1670)
+
+== GDAL core ==
+
+ * GDALInvGeoTransform(): make it work with scale and rotation/skew coefficients of small absolute value (#1615)
+ * GDALCopyWholeRasterGetSwathSize(): fix potential int overflows for big values of GDAL_SWATH_SIZE or GDAL_CACHEMAX
+
+== GDAL utliities ==
+
+ * gdal_translate: Make 'gdal_translate foo.tif foo.tif.ovr -outsize 50% 50% -of GTiff' work
+ * gdalwarp: fix wrong axis order when using source/target CRS being a geographic3D CRS such as EPSG:4979, and with vertical shift grid application (#1561, 3.0 regression)
+ * gdal_calc.py: Fixed NaN-streaking in output images when the --allBands option is given to tiled images, and removed redundant calculation of nXValid.
+ * gdal_polygonize.py: fix outputing to geojson without explicit -f switch (#1533)
+ * gdallocationinfo: emit verbose error when dataset canot be opened (#1684)
+
+== GDAL drivers ==
+
+ENVI driver:
+ * fix potential use of invalid pointer on some unusual std::string implementations (#1527)
+ * add read support for reading GCPs (#1528), and fix off-by-one offset on line,pixel on reading GCP
+
+GTiff driver:
+ * make WEBP_LEVEL to be honored in Create() mode (#1594)
+ * reset m_bGeoTIFFInfoChanged flag in FlushDirectory()
+ * PushMetadataToPam(): early exit when PAM is disabled, to avoid error messages
+
+GXF driver:
+ * avoid closing the file pointer before being sure this is a GXF driver, otherwise this can prevent the opening of some raw format files (#1521)
+
+HDF5 driver:
+ * Make GH5_FetchAttribute(CPLString) more robust and able to cope with variable-length string
+
+ISIS3 driver:
+ * fix parsing of lists in JSon metadata, and quote string items when writing lists when needed (#1510)
+
+KEA driver:
+ * return error when deleting metadata item rather than crashing (#1681)
+
+NITF driver:
+ * fix parsing of SENSRB TRE (#1520)
+
+RS2 driver:
+ * add half-pixel shift to reported GCP line and column numbers (#1666)
+
+TileDB driver:
+ * removed ambiguous use of size_t
+ * TILEDB_LIBS added for windows build
+
+VRT driver:
+ * Python pixel functions: also probe libpython3.Xm.so.1.0 (#1660)
+
+== OGRSpatialReference ==
+
+ * EPSG:4326 to EPSG:3857: fix invalid output with some input coordinates (3.0 regression)
+ * GetAxis(): make it work with a compound CRS (#1604)
+ * importFromWkt(): emit a CPLError() in case of import failure (refs #1623)
+
+== OGR drivers ==
+
+EEDA driver:
+ * fix startTime / endTime comparisons that were incomplete in #1506
+
+GeoJSON driver:
+ * fix recognizing some documents with members sorted alphabetically (#1537)
+ * avoid SetFeature() to repeat first feature when looping over features (#1687)
+
+ElasticSearch driver:
+ * set 'application/json' in RunRequest() with POST (#1628)
+ * GeoJSON type field should be mapped as text in ES>=5
+
+GPKG driver:
+ * change default value of OGR_GPKG_FOREIGN_KEY_CHECK to NO, so as to avoid issues in downstream software
+ * insert more accurate spatial extent in gpkg_contents
+ * fix memory leak in case of corrupted database. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=14683.
+
+KML driver:
+ * set OAMS_TRADITIONAL_GIS_ORDER for SRS returned on returned layers
+
+MapInfo driver:
+ * TAB: don't left truncate numeric values in the .dat when the field formatting is incompatible, but error out (#1636)
+
+MSSQLSpatial driver:
+ * Fix handling empty geometries (#1674)
+ * Fix handling mixed geometries (#1678)
+
+MVT driver:
+ * make CONF option accept a filename as well
+
+PostgreSQL driver:
+ * do not attempt to create VARCHAR(n) columns with n >= 10485760 (#1508)
+
+Shapefile driver:
+ * better deal with empty .shp+.shx and SHAPE_RESTORE_SHX (#1525)
+ * fix crash when creating a layer with a wkbNone geometry type but a SRS (3.0 regression)
+ * launder layer name to get Windows compatible filename
+
+WaSP driver:
+ * on creation, make sure the layer geometry type set on the feature definition is wkbLineString25D
+
+== SWIG bindings ==
+
+ * add osr.SetPROJSearchPath(path) that can be used since setting PROJ_LIB from C# does no work (#1647)
+
+== Python bindings ==
+
+ * honour gdal.UseExceptions() in numpy related methods (gdalnumeric module) (#1515)
+
 = GDAL/OGR 3.0.0 Release Notes =
 
 == In a nutshell... ==

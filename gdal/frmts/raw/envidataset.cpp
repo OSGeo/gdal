@@ -1811,7 +1811,7 @@ void ENVIDataset::ProcessGeoPoints( const char *pszGeoPoints )
     }
     for( int i = 0; i < static_cast<int>(m_asGCPs.size()); i++ )
     {
-        // Substract 1 to pixel and line for ENVI convention
+        // Subtract 1 to pixel and line for ENVI convention
         m_asGCPs[i].dfGCPPixel = CPLAtof( papszFields[i * 4 + 0] ) - 1;
         m_asGCPs[i].dfGCPLine = CPLAtof( papszFields[i * 4 + 1] ) - 1;
         m_asGCPs[i].dfGCPY = CPLAtof( papszFields[i * 4 + 2] );
