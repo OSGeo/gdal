@@ -47,7 +47,8 @@ CPL_CVSID("$Id$")
 
 static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    // Files not ending with .shp, .shx or .dbf are not handled by this driver.
+    // Files not ending with .shp, .shx, .dbf, .shz or .shp.zip are not
+    // handled by this driver.
     if( !poOpenInfo->bStatOK )
         return FALSE;
     if( poOpenInfo->bIsDirectory )
@@ -59,8 +60,9 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
     CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
     if (EQUAL(osExt, "SHP") ||  EQUAL(osExt, "SHX") )
     {
-        return memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0A", 4) == 0 ||
-               memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0D", 4) == 0;
+        return poOpenInfo->nHeaderBytes >= 4 &&
+                (memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0A", 4) == 0 ||
+                 memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0D", 4) == 0);
     }
     if( EQUAL(osExt, "DBF") )
     {
@@ -81,6 +83,14 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
         if( nRecordLength < nFields )
             return FALSE;
         return TRUE;
+    }
+    if( EQUAL(osExt, "shz") ||
+        (EQUAL(osExt, "zip") && (
+            CPLString(poOpenInfo->pszFilename).endsWith(".shp.zip") ||
+            CPLString(poOpenInfo->pszFilename).endsWith(".SHP.ZIP"))) )
+    {
+        return poOpenInfo->nHeaderBytes >= 4 &&
+               memcmp(poOpenInfo->pabyHeader, "\x50\x4B\x03\x04", 4) == 0;
     }
 #ifdef DEBUG
     // For AFL, so that .cur_input is detected as the archive filename.
@@ -117,6 +127,30 @@ static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
     }
 #endif
 
+    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    if( !STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
+        (EQUAL(osExt, "shz") ||
+         (EQUAL(osExt, "zip") && (
+             CPLString(poOpenInfo->pszFilename).endsWith(".shp.zip") ||
+            CPLString(poOpenInfo->pszFilename).endsWith(".SHP.ZIP")))) )
+    {
+        GDALOpenInfo oOpenInfo(
+            (CPLString("/vsizip/{") + poOpenInfo->pszFilename + '}').c_str(),
+            GA_ReadOnly);
+        if( OGRShapeDriverIdentify(&oOpenInfo) == FALSE )
+            return nullptr;
+        oOpenInfo.eAccess = poOpenInfo->eAccess;
+        OGRShapeDataSource *poDS = new OGRShapeDataSource();
+
+        if( !poDS->OpenZip( &oOpenInfo, poOpenInfo->pszFilename ) )
+        {
+            delete poDS;
+            return nullptr;
+        }
+
+        return poDS;
+    }
+
     OGRShapeDataSource *poDS = new OGRShapeDataSource();
 
     if( !poDS->Open( poOpenInfo, true ) )
@@ -140,6 +174,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
                                            char ** /* papszOptions */ )
 {
     bool bSingleNewFile = false;
+    CPLString osExt(CPLGetExtension(pszName));
 
 /* -------------------------------------------------------------------- */
 /*      Is the target a valid existing directory?                       */
@@ -161,10 +196,24 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
 /*      Does it end in the extension .shp indicating the user likely    */
 /*      wants to create a single file set?                              */
 /* -------------------------------------------------------------------- */
-    else if( EQUAL(CPLGetExtension(pszName), "shp")
-             || EQUAL(CPLGetExtension(pszName), "dbf") )
+    else if( EQUAL(osExt, "shp") || EQUAL(osExt, "dbf") )
     {
         bSingleNewFile = true;
+    }
+
+    else if( EQUAL(osExt, "shz") ||
+             (EQUAL(osExt, "zip") && (CPLString(pszName).endsWith(".shp.zip") ||
+                                      CPLString(pszName).endsWith(".SHP.ZIP"))) )
+    {
+        OGRShapeDataSource *poDS = new OGRShapeDataSource();
+
+        if( !poDS->CreateZip( pszName ) )
+        {
+            delete poDS;
+            return nullptr;
+        }
+
+        return poDS;
     }
 
 /* -------------------------------------------------------------------- */
@@ -216,13 +265,23 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
         return CE_Failure;
     }
 
+    CPLString osExt(CPLGetExtension(pszDataSource));
+    if( VSI_ISREG(sStatBuf.st_mode) &&
+        (EQUAL(osExt, "shz") ||
+         (EQUAL(osExt, "zip") && (CPLString(pszDataSource).endsWith(".shp.zip") ||
+                                  CPLString(pszDataSource).endsWith(".SHP.ZIP")))) )
+    {
+        VSIUnlink( pszDataSource );
+        return CE_None;
+    }
+
     const char * const* papszExtensions =
         OGRShapeDataSource::GetExtensionsForDeletion();
 
     if( VSI_ISREG(sStatBuf.st_mode)
-        && (EQUAL(CPLGetExtension(pszDataSource), "shp")
-            || EQUAL(CPLGetExtension(pszDataSource), "shx")
-            || EQUAL(CPLGetExtension(pszDataSource), "dbf")) )
+        && (EQUAL(osExt, "shp")
+            || EQUAL(osExt, "shx")
+            || EQUAL(osExt, "dbf")) )
     {
         for( int iExt = 0; papszExtensions[iExt] != nullptr; iExt++ )
         {
@@ -273,7 +332,7 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Shapefile" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "shp" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "shp dbf" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "shp dbf shz shp.zip" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_shape.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

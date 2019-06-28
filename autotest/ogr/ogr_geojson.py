@@ -3703,6 +3703,53 @@ def test_ogr_geojson_3D_geom_type():
 
 ###############################################################################
 
+def test_ogr_geojson_update_in_loop():
+
+    if gdaltest.geojson_drv is None:
+        pytest.skip()
+
+    tmpfilename = '/vsimem/temp.json'
+
+    # No explicit id
+    gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "geometry": null }]}')
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
+    fids = []
+    for feature in layer:
+        fids.append(feature.GetFID())
+        layer.SetFeature(feature)
+    assert fids == [0, 1]
+    ds = None
+
+    # Explicit id no holes
+    gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "id": 0, "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "id": 1, "geometry": null }]}')
+
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
+    fids = []
+    for feature in layer:
+        fids.append(feature.GetFID())
+        layer.SetFeature(feature)
+    assert fids == [0, 1]
+    ds = None
+
+    # Explicit id with holes
+    gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "id": 1, "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "id": 3, "geometry": null }]}')
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
+    fids = []
+    for feature in layer:
+        fids.append(feature.GetFID())
+        layer.SetFeature(feature)
+    assert fids == [1, 3]
+    ds = None
+
+
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+
 
 def test_ogr_geojson_cleanup():
 

@@ -46,6 +46,12 @@
 #include "ogr_srs_api.h"
 #include "commonutils.h"
 
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -324,6 +330,22 @@ MAIN_START(argc, argv)
 /*      Read points from stdin, transform and write to stdout.          */
 /* -------------------------------------------------------------------- */
     double dfLastT = 0.0;
+    
+    if( !bCoordOnCommandLine )
+    {
+        // Is it an interactive terminal ?
+        if( isatty(static_cast<int>(fileno(stdin))) )
+        {
+            if( pszSrcFilename != nullptr )
+            {
+                fprintf(stderr, "Enter column line values separated by space, and press Return.\n");
+            }
+            else
+            {
+                fprintf(stderr, "Enter X Y [Z [T]] values separated by space, and press Return.\n");
+            }
+        }
+    }
 
     while( bCoordOnCommandLine || !feof(stdin) )
     {

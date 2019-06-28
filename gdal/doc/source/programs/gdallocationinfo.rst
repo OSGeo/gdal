@@ -138,3 +138,26 @@ Query a VRT file providing the location in WGS84, and getting the result in xml.
             <Value>16</Value>
         </BandReport>
     </Report>
+
+Reading location from stdin.
+
+::
+
+    $ cat coordinates.txt
+    443020 3748359
+    441197 3749005
+    443852 3747743
+    
+    $ cat coordinates.tsv | gdallocationinfo -geoloc utmsmall.tif
+    Report:
+      Location: (38P,49L)
+      Band 1:
+        Value: 214
+    Report:
+      Location: (7P,38L)
+      Band 1:
+        Value: 107
+    Report:
+      Location: (52P,59L)
+      Band 1:
+        Value: 148

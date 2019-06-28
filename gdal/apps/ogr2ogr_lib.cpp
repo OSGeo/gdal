@@ -2624,7 +2624,10 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             VSIStatBufL sStat;
             if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
                 psOptions->pszNewLayerName == nullptr &&
-                VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+                VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
+                (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
+                 EQUAL(CPLGetExtension(osDestFilename), "shz") ||
+                 EQUAL(CPLGetExtension(osDestFilename), "dbf")) )
             {
                 psOptions->pszNewLayerName = CPLStrdup(CPLGetBasename(osDestFilename));
             }
@@ -2705,8 +2708,12 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
         VSIStatBufL  sStat;
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
-            (CSLCount(psOptions->papszLayers) == 1 || nSrcLayerCount == 1) && psOptions->pszNewLayerName == nullptr &&
-            VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+            (CSLCount(psOptions->papszLayers) == 1 || nSrcLayerCount == 1) &&
+            psOptions->pszNewLayerName == nullptr &&
+            VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
+            (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
+             EQUAL(CPLGetExtension(osDestFilename), "shz") ||
+             EQUAL(CPLGetExtension(osDestFilename), "dbf")) )
         {
             psOptions->pszNewLayerName = CPLStrdup(CPLGetBasename(osDestFilename));
         }
@@ -3001,7 +3008,10 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         VSIStatBufL  sStat;
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             nLayerCount == 1 && psOptions->pszNewLayerName == nullptr &&
-            VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+            VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
+            (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
+             EQUAL(CPLGetExtension(osDestFilename), "shz") ||
+             EQUAL(CPLGetExtension(osDestFilename), "dbf")) )
         {
             psOptions->pszNewLayerName = CPLStrdup(CPLGetBasename(osDestFilename));
         }
