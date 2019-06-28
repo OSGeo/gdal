@@ -1,3 +1,167 @@
+= GDAL/OGR 2.4.2 Release Notes =
+
+The 2.4.2 release is a bug fix release.
+
+== Build ==
+
+ * Fix build --with-curl --without-threads (#1386)
+ * Fix build on netBSD 8
+ * Fix warnings with GCC 9
+ * Add support for Poppler 0.75.0 (#1388), 0.76.0
+
+== Port ==
+
+ * /vsitar/: handle .tar file header with space padding instead of 0 for file size (#1396)
+ * /vsicurl/: allow 'Connection timed out' CURL errors as candidate for HTTP retry
+ * /vsicurl/: GetFileSize(): when HEAD request does not return Content-Length header, retry with GET
+ * /vsicurl/: automatically detect signed URLs where host ends with a port number; also detect signed URLs as created with the AWS4-HMAC-SHA256 method (#1456)
+ * /vsis3/: for a long living file handle, refresh credentials coming from EC2/AIM (#1593)
+
+== GDAL algorithms ==
+
+ * GDALCreateReprojectionTransformerEx(): do not emit error if reverse transformation fails, and fix crash when trying to use null reverse transformation
+ * Warper: fix GDAL 2.3 regression in a situation with source nodata value, multiple bands and nearest resampling where the logic to detect which source pixels are nodata was inverted (#1656)
+ * Contour generator: fix SegmentMerger list iterator skipping and out of bounds error. (#1670)
+ * Rasterize: fix crash when working buffer is larger than 2GB (fix also gvBurnPoint) (#1338)
+
+== GDAL core ==
+
+ * GDALInvGeoTransform(): make it work with scale and rotation/skew coefficients of small absolute value (#1615)
+ * GDALCopyWholeRasterGetSwathSize(): fix potential int overflows for big values of GDAL_SWATH_SIZE or GDAL_CACHEMAX
+ * PAM: preserve existing metadata when setting new one (#1430)
+
+== GDAL utliities ==
+
+ * gdal_calc.py: Fixed NaN-streaking in output images when the --allBands option is given to tiled images, and removed redundant calculation of nXValid.
+ * gdal_polygonize.py: fix outputing to geojson without explicit -f switch (#1533)
+ * gdal_contour: remove explicit width/precision=12/3 of the elev field (#1487)
+
+== GDAL drivers ==
+
+AIGRID / AVCBin driver:
+ * fix filename case adjustment that failed on /vsi filesystems (#1385)
+
+BAG driver:
+ * fix potential nullptr deref on corrupted file
+
+ENVI driver:
+ * add read support for reading GCPs (#1528), and fix off-by-one offset on line,pixel on reading GCP
+
+GTiff driver:
+ * make WEBP_LEVEL to be honored in Create() mode (#1594)
+ * PushMetadataToPam(): early exit when PAM is disabled, to avoid error messages
+ * do not generate a TIFFTAG_GDAL_METADATA with color interpretation information for JPEG YCbCr compression
+ * Internal libtiff: TIFFWriteEncodedStrip/TIFFWriteEncodedTile: fix rewriting of LZW-compressed data (#1439)
+
+GXF driver:
+ * avoid closing the file pointer before being sure this is a GXF driver, otherwise this can prevent the opening of some raw format files (#1521)
+
+HDF5 driver:
+ * fix handling of attributes of type SCHAR, UCHAR, USHORT and UINT (https://github.com/mapbox/rasterio/issues/1663)
+ * detect nodata from netCDF _FillValue; add more strict checks for accepting datasets for GCP, and handle nodata in GCP too (#1451)
+
+ISIS3 driver:
+ * fix parsing of lists in JSon metadata, and quote string items when writing lists when needed (#1510)
+
+KEA driver:
+ * return error when deleting metadata item rather than crashing (#1681)
+
+MRF driver:
+ * prevent integer overflow
+
+MrSID driver:
+ * fix potential crash when a zoom level cannot be opened
+
+netCDF driver:
+ * avoid inappropriate shift by -360 when attribute axis=X is set (#1440)
+
+NITF driver:
+ * fix parsing of SENSRB TRE (#1520)
+
+PDF driver:
+ * avoid possible assertion in PDFium backend on corrupted files
+
+PDS3 driver:
+ * add support for ENCODING_TYPE=DCT_DECOMPRESSED (#1457)
+
+RS2 driver:
+ * add half-pixel shift to reported GCP line and column numbers (#1666)
+
+VRT driver:
+ * Python pixel functions: also probe libpython3.Xm.so.1.0 (#1660)
+
+WMS driver:
+ * use proper JSon parsing for ESRI MapServer document (#1416)
+
+XYZ driver:
+ * fix regression regarding header lines that are not X,Y,Z (#1472)
+
+== OGR core ==
+
+ * segmentize(): fix 2.4.1 regression when 2 points are really close compared to the segmentizatin distance (#1414). Also handle the M dimension
+ * RawDataset: use generic RasterIO() implementation when non-nearest resampling is asked (#1301)
+
+== OGR utilities ==
+
+ * ogrmerge.py: add shared='1' to speed-up -single mode with many layers
+
+== OGR drivers ==
+
+EEDA driver:
+ * Switch to v1alpha API
+
+ElasticSearch driver:
+ * set 'application/json' in RunRequest() with POST (#1628)
+ * GeoJSON type field should be mapped as text in ES>=5
+ * Fix _mapping url
+
+FileGDB/OpenFileGDB:
+ * be robust when winding order of outer ring is incorrect (#1369)
+
+GeoJSON driver:
+ * fix recognizing some documents with members sorted alphabetically (#1537)
+ * avoid SetFeature() to repeat first feature when looping over features (#1687)
+
+GeoJSONSeq driver:
+ * be more robust to invalid objects, and fixes performance issue on corrupted files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13770.
+
+GML driver:
+ * GML/WFS: add minimum support for 'hexBinary' type (as string) (#1375)
+
+GMLAS driver:
+ * avoid null pointer dereference on some schemas
+ * do not use space as separator for schema filename in XSD open option (#1452)
+
+GMT:
+ * use file extension based detection to accept files without header (#1461)
+
+GPKG driver:
+ * change default value of OGR_GPKG_FOREIGN_KEY_CHECK to NO, so as to avoid issues in downstream software
+ * insert more accurate spatial extent in gpkg_contents
+ * fix memory leak in case of corrupted database. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=14683.
+ * set sqlite3_busy_timeout, handle SQLITE_BUSY during tile read (#1370)
+
+PDS driver:
+ * fix heap-buffer-overflow in error code path. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=14512.
+
+PLScenes driver:
+ * plscenesconf.json: add missing fields for PSOrthoTile
+
+PostgreSQL driver:
+ * do not attempt to create VARCHAR(n) columns with n >= 10485760 (#1508)
+
+Shapefile driver:
+ * better deal with empty .shp+.shx and SHAPE_RESTORE_SHX (#1525)
+ * launder layer name to get Windows compatible filename
+ * DeleteLayer(): make it delete .cpg, .sbn, .sbx, .qpj and other sidecar files (#1405)
+
+WaSP driver:
+ * on creation, make sure the layer geometry type set on the feature definition is wkbLineString25D
+
+WFS3 driver:
+ * handle paging wth missing type for rel:next, and better deal with user:pwd in URL
+ * use 'id' attribute of collection items, if 'name' not available
+
 = GDAL/OGR 2.4.1 Release Notes =
 
 The 2.4.1 release is a bug fix release.
