@@ -92,8 +92,6 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
 
 netCDFLayer::~netCDFLayer()
 {
-    // Finish writing buffered features
-    this->SGCommitPendingTransaction();
     m_poFeatureDefn->Release();
 }
 
@@ -590,7 +588,7 @@ bool netCDFLayer::Create(char **papszOptions,
                 throw nccfdriver::SG_Exception_BadFeature();
             }
 
-            m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_nLayerCDFId, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
+            m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_poDS->cdfid, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
 
             if(basic_type != nccfdriver::POINT)
                 m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize);
@@ -1358,6 +1356,8 @@ OGRFeature *netCDFLayer::GetNextFeature()
             return poFeature;
 
         delete poFeature;
+    
+            return poFeature;
     }
 }
 
@@ -1884,7 +1884,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             // Check if ready to dump buffer
             if(m_poDS->GeometryScribe.bufferQuotaReached())
             {
-                this->SGCommitPendingTransaction();
+                m_poDS->SGCommitPendingTransaction();
             }
 
             // Finally, "write" the feature

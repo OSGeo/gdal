@@ -147,6 +147,7 @@ namespace nccfdriver
             OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, unsigned long long bufsize);
             OGR_SGeometry_Scribe();
                         int get_containerID() { return this->containerVarID; }
+            void update_ncID(int newID) { this->ncID = newID; }
             int get_node_count_dimID() { return this->node_count_dimID; }
             int get_node_coord_dimID() { return this->node_coordinates_dimID; }
             int get_pnc_dimID() { return this->pnc_dimID; }

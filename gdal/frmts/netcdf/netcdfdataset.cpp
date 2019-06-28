@@ -2175,6 +2175,7 @@ netCDFDataset::~netCDFDataset()
     }
 
     FlushCache();
+    SGCommitPendingTransaction();
 
     for(int i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -7916,6 +7917,7 @@ netCDFDataset::CreateLL( const char *pszFilename,
         CPLFree(pszTemp);
     }
 #endif
+
     int status = nc_create(osFilenameForNCCreate, poDS->nCreateMode, &(poDS->cdfid));
 
     // Put into define mode.

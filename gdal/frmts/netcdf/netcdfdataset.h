@@ -937,6 +937,7 @@ class netCDFDataset final: public GDALPamDataset
 
     netCDFDataset();
     virtual ~netCDFDataset();
+    void SGCommitPendingTransaction();
 
     /* Projection/GT */
     CPLErr      GetGeoTransform( double * ) override;
@@ -1060,7 +1061,6 @@ class netCDFLayer final: public OGRLayer
         void            GetNoDataValueForDouble( int nVarId, NCDFNoDataUnion* puNoData );
         void            GetNoDataValue( int nVarId, nc_type nVarType, NCDFNoDataUnion* puNoData );
         bool            FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
-        void            SGCommitPendingTransaction();
         OGRFeature*     buildSGeometryFeature(size_t featureInd);
 
     protected:
