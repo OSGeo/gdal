@@ -591,16 +591,39 @@ bool netCDFLayer::Create(char **papszOptions,
             m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_poDS->cdfid, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
 
             if(basic_type != nccfdriver::POINT)
+            {
                 m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize);
+            }
 
 
             // Write the grid mapping, if it exists:
             if (poSRS != nullptr)
             {
                 status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_osGridMapping), m_osGridMapping);
-                                NCDF_ERR(status);
-                                if(status != NC_NOERR)
-                throw nccfdriver::SGWriter_Exception_NCWriteFailure(this->GetName(), CF_GRD_MAPPING, "attribute");
+                NCDF_ERR(status);
+                if(status != NC_NOERR)
+                {
+                    throw nccfdriver::SGWriter_Exception_NCWriteFailure(this->GetName(), CF_GRD_MAPPING, "attribute");
+                }
+
+                // Future work: simplify this by bringing the point implementation of things into OGR_SGeometry_Scribe
+                if(basic_type != nccfdriver::POINT)
+                {
+                    std::vector<int>& ncv = m_poDS->GeometryScribe.get_nodeCoordVarIDs();
+                    int xVar = ncv[0];
+                    int yVar = ncv[1];
+
+                    if (poSRS->IsGeographic())
+                    {
+                        NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, xVar, yVar);
+                    }
+
+                    else if (poSRS->IsProjected())
+                    {
+                        NCDFWriteXYVarsAttributes(m_nLayerCDFId, xVar, yVar,
+                            poSRS);
+                    }
+                }
             }
         }
     }

@@ -173,9 +173,6 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
             delete poSRS;
             throw nccfdriver::SG_Exception_General_Malformed("SRS settings");
         }
-
-        // Set as dataset default...
-        this->SetSpatialRef(poSRS);
     }
 
     netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS);
@@ -197,7 +194,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     }
 
     // Set simple geometry object
-    poL->SetSGeometryRepresentation(sg); 
+    poL->SetSGeometryRepresentation(sg);
 
     // Create layer
     papoLayers = (netCDFLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *));
@@ -219,7 +216,7 @@ void netCDFDataset::SGCommitPendingTransaction()
         if(this->GeometryScribe.get_containerID() == nccfdriver::INVALID_VAR_ID)
         {
             return; // do nothing if invalid scribe
-        } 
+        }
 
         int node_count_dimID = this->GeometryScribe.get_node_count_dimID();
         int node_coord_dimID = this->GeometryScribe.get_node_coord_dimID();
@@ -254,51 +251,51 @@ void netCDFDataset::SGCommitPendingTransaction()
  */
 OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
 {
-            OGRGeometry * geometry;
+    OGRGeometry * geometry;
 
-            switch(m_simpleGeometry->getGeometryType())
-            {
-                case nccfdriver::POINT:
-                    geometry = new OGRPoint;
-                    break;
-                case nccfdriver::LINE:
-                    geometry = new OGRLineString;
-                    break;
-                case nccfdriver::POLYGON:
-                    geometry = new OGRPolygon;
-                    break;
-                case nccfdriver::MULTIPOINT:
-                    geometry = new OGRMultiPoint;
-                    break;
-                case nccfdriver::MULTILINE:
-                    geometry = new OGRMultiLineString;
-                    break;
-                case nccfdriver::MULTIPOLYGON:
-                    geometry = new OGRMultiPolygon;
-                    break;
-                default:
-                    throw nccfdriver::SG_Exception_BadFeature();
-                    break;
-            }
+    switch(m_simpleGeometry->getGeometryType())
+    {
+        case nccfdriver::POINT:
+            geometry = new OGRPoint;
+            break;
+        case nccfdriver::LINE:
+            geometry = new OGRLineString;
+            break;
+        case nccfdriver::POLYGON:
+            geometry = new OGRPolygon;
+            break;
+        case nccfdriver::MULTIPOINT:
+            geometry = new OGRMultiPoint;
+            break;
+        case nccfdriver::MULTILINE:
+            geometry = new OGRMultiLineString;
+            break;
+        case nccfdriver::MULTIPOLYGON:
+            geometry = new OGRMultiPolygon;
+            break;
+        default:
+            throw nccfdriver::SG_Exception_BadFeature();
+            break;
+    }
 
-            int r_size = 0;
-            std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep(m_simpleGeometry->serializeToWKB(featureInd, r_size));
-            geometry->importFromWkb(static_cast<const unsigned char*>(wkb_rep.get()), r_size, wkbVariantIso);
+    int r_size = 0;
+    std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep(m_simpleGeometry->serializeToWKB(featureInd, r_size));
+    geometry->importFromWkb(static_cast<const unsigned char*>(wkb_rep.get()), r_size, wkbVariantIso);
 
-            OGRFeatureDefn* defn = this->GetLayerDefn();
-            OGRFeature * feat = new OGRFeature(defn);
-            feat -> SetGeometryDirectly(geometry);
+    OGRFeatureDefn* defn = this->GetLayerDefn();
+    OGRFeature * feat = new OGRFeature(defn);
+    feat -> SetGeometryDirectly(geometry);
 
-            int dimId = m_simpleGeometry->getInstDim();
-            size_t dim_len = m_simpleGeometry->getInstDimLen();
-            int dim_len_trunc = static_cast<int>(dim_len);
+    int dimId = m_simpleGeometry->getInstDim();
+    size_t dim_len = m_simpleGeometry->getInstDimLen();
+    int dim_len_trunc = static_cast<int>(dim_len);
 
-            // Fill fields
-            for(int itr = 0; itr < defn->GetFieldCount() && itr < dim_len_trunc; itr++)
-            {
-                this->FillFeatureFromVar(feat, dimId, featureInd);
-            }
+    // Fill fields
+    for(int itr = 0; itr < defn->GetFieldCount() && itr < dim_len_trunc; itr++)
+    {
+        this->FillFeatureFromVar(feat, dimId, featureInd);
+    }
 
-            feat -> SetFID(featureInd);
-            return feat;
+    feat -> SetFID(featureInd);
+    return feat;
 }

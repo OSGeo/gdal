@@ -3264,49 +3264,49 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     {
         if(sg == nullptr)
         {
-        // Raster stuff, not usable for simple geometries...
-        pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
-        pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
+            // Raster stuff, not usable for simple geometries...
+            pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
+            pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
 
-        size_t start[2] = { 0, 0 };
-        size_t edge[2] = { xdim, 0 };
-        int status = nc_get_vara_double(nGroupDimXID, nVarDimXID,
-                                        start, edge, pdfXCoord);
-        NCDF_ERR(status);
+            size_t start[2] = { 0, 0 };
+            size_t edge[2] = { xdim, 0 };
+            int status = nc_get_vara_double(nGroupDimXID, nVarDimXID,
+                                            start, edge, pdfXCoord);
+            NCDF_ERR(status);
 
-        edge[0] = ydim;
-        status = nc_get_vara_double(nGroupDimYID, nVarDimYID,
-                                    start, edge, pdfYCoord);
-        NCDF_ERR(status);
+            edge[0] = ydim;
+            status = nc_get_vara_double(nGroupDimYID, nVarDimYID,
+                                        start, edge, pdfYCoord);
+            NCDF_ERR(status);
 
-        if( !poDS->bSwitchedXY )
-        {
-            // Check for bottom-up from the Y-axis order.
-            // See bugs #4284 and #4251.
-            poDS->bBottomUp = (pdfYCoord[0] <= pdfYCoord[1]);
-
-            CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
-                    static_cast<int>(poDS->bBottomUp));
-
-            // Convert ]180,540] longitude values to ]-180,0].
-            if( NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
-                CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180",
-                                            "YES")) )
+            if( !poDS->bSwitchedXY )
             {
-                // If minimum longitude is > 180, subtract 360 from all.
-                // Add a check on the maximum X value too, since NCDFIsVarLongitude()
-                // is not very specific by default (see https://github.com/OSGeo/gdal/issues/1440)
-                if( std::min(pdfXCoord[0], pdfXCoord[xdim - 1]) > 180.0 &&
-                    std::max(pdfXCoord[0], pdfXCoord[xdim - 1]) <= 540 )
+                // Check for bottom-up from the Y-axis order.
+                // See bugs #4284 and #4251.
+                poDS->bBottomUp = (pdfYCoord[0] <= pdfYCoord[1]);
+
+                CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
+                        static_cast<int>(poDS->bBottomUp));
+
+                // Convert ]180,540] longitude values to ]-180,0].
+                if( NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
+                    CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180",
+                                                "YES")) )
                 {
-                    CPLDebug("GDAL_netCDF",
-                             "Offseting longitudes from ]180,540] to ]-180,180]. "
-                             "Can be disabled with GDAL_NETCDF_CENTERLONG_180=NO");
-                    for( size_t i = 0; i < xdim; i++ )
-                            pdfXCoord[i] -= 360;
+                    // If minimum longitude is > 180, subtract 360 from all.
+                    // Add a check on the maximum X value too, since NCDFIsVarLongitude()
+                    // is not very specific by default (see https://github.com/OSGeo/gdal/issues/1440)
+                    if( std::min(pdfXCoord[0], pdfXCoord[xdim - 1]) > 180.0 &&
+                        std::max(pdfXCoord[0], pdfXCoord[xdim - 1]) <= 540 )
+                    {
+                        CPLDebug("GDAL_netCDF",
+                                "Offseting longitudes from ]180,540] to ]-180,180]. "
+                                "Can be disabled with GDAL_NETCDF_CENTERLONG_180=NO");
+                        for( size_t i = 0; i < xdim; i++ )
+                                pdfXCoord[i] -= 360;
+                    }
                 }
             }
-        }
         }
 
         // Set Projection from CF.
@@ -3393,15 +3393,15 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         {
             bool bWestIsLeft = (pdfXCoord[0] < pdfXCoord[xdim - 1]);
 
-            // fix longitudes if longitudes should increase from 
+            // fix longitudes if longitudes should increase from
             // west to east, but west > east
             if (NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
                 !bWestIsLeft)
             {
                 size_t ndecreases = 0;
 
-                // there is lon wrap if longitudes increase 
-                // with one single decrease 
+                // there is lon wrap if longitudes increase
+                // with one single decrease
                 for( size_t i = 1; i < xdim; i++ )
                 {
                     if (pdfXCoord[i] < pdfXCoord[i - 1])
@@ -4145,7 +4145,7 @@ CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
               "SetGeoTransform(%f,%f,%f,%f,%f,%f)",
               padfTransform[0], padfTransform[1], padfTransform[2],
               padfTransform[3], padfTransform[4], padfTransform[5]);
- 
+
     if( GetAccess() == GA_Update )
     {
         if( bSetProjection && !bSetGeoTransform )
@@ -6237,7 +6237,7 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
         {
             nActiveSection = SECTION_DATA;
             status = nc_enddef(nCdfId);
-            if(status != NC_NOERR ) 
+            if(status != NC_NOERR )
             {
                 CPLDebug("netCDF", "nc_enddef() failed: %s",
                          nc_strerror(status));
@@ -11086,7 +11086,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
                     NCDFIsVarProjectionY(nCdfId, -1, papszTokens[i]) )
             {
                 nVarYId = -1;
-                CPL_IGNORE_RET_VAL(nc_inq_varid(nCdfId, papszTokens[i], 
+                CPL_IGNORE_RET_VAL(nc_inq_varid(nCdfId, papszTokens[i],
                                                 &nVarYId));
             }
             else if( NCDFIsVarVerticalCoord(nCdfId, -1, papszTokens[i]))
