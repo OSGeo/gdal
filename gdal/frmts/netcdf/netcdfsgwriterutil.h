@@ -214,6 +214,15 @@ namespace nccfdriver
             SGWriter_Exception_EmptyGeometry() : msg("An empty geometry was detected when writing a netCDF file. Empty geometries are not allowed.") {}
     };
 
+    class SGWriter_Exception_RingOOB: public SGWriter_Exception
+    {
+        std::string msg;
+
+        public:
+            const char * get_err_msg() override { return this->msg.c_str(); }
+            SGWriter_Exception_RingOOB() : msg("An attempt was made to read a polygon ring that does not exist.") {}
+    };
+
     class SGWriter_Exception_GeometryTMismatch : public SGWriter_Exception
     {
         std::string msg;

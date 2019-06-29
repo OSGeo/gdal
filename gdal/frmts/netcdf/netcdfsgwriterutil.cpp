@@ -106,6 +106,11 @@ namespace nccfdriver
 
             // Get node count
             // First count exterior ring
+            if(r_defnPolygon.getExteriorRing() == nullptr)
+            {
+                throw SGWriter_Exception_EmptyGeometry();
+            }
+
             OGRLinearRing & exterior_ring = *r_defnPolygon.getExteriorRing();
 
             size_t outer_ring_ct = exterior_ring.getNumPoints();
@@ -122,6 +127,11 @@ namespace nccfdriver
             for(int iRingCt = 0; iRingCt < r_defnPolygon.getNumInteriorRings(); iRingCt++)
             {
                 this->hasInteriorRing = true;
+                if(r_defnPolygon.getInteriorRing(iRingCt) == nullptr)
+                {
+                    throw SGWriter_Exception_RingOOB();
+                }
+
                 OGRLinearRing & iring = *r_defnPolygon.getInteriorRing(iRingCt);
                 this->total_point_count += iring.getNumPoints();
                 this->ppart_node_count.push_back(iring.getNumPoints());
@@ -131,7 +141,6 @@ namespace nccfdriver
 
         else if(this->type == MULTIPOLYGON)
         {
-
             OGRMultiPolygon& r_defnMPolygon = dynamic_cast<OGRMultiPolygon&>(r_defnGeometry);
 
             this->total_point_count = 0;
@@ -140,6 +149,11 @@ namespace nccfdriver
             for(int itr = 0; itr < r_defnMPolygon.getNumGeometries(); itr++)
             {
                 OGRPolygon & r_Pgon = dynamic_cast<OGRPolygon&>(*r_defnMPolygon.getGeometryRef(itr));
+
+                if(r_Pgon.getExteriorRing() == nullptr)
+                {
+                    throw SGWriter_Exception_EmptyGeometry();
+                }
 
                 OGRLinearRing & exterior_ring = *r_Pgon.getExteriorRing();
 
@@ -157,6 +171,11 @@ namespace nccfdriver
 
                 for(int iRingCt = 0; iRingCt < r_Pgon.getNumInteriorRings(); iRingCt++)
                 {
+                    if(r_Pgon.getInteriorRing(iRingCt) == nullptr)
+                    {
+                        throw SGWriter_Exception_RingOOB();
+                    }
+
                     OGRLinearRing & iring = *r_Pgon.getInteriorRing(iRingCt);
                     this->hasInteriorRing = true;
                     this->total_point_count += iring.getNumPoints();
@@ -631,7 +650,7 @@ namespace nccfdriver
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
         {
-            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "attibute");
+            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "attribute");
         }
 
         size_t pnc_dim_len = 0;
@@ -691,7 +710,7 @@ namespace nccfdriver
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
         {
-            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "attibute");
+            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "attribute");
         }
 
         // If the PNC dim doesn't exist, define it
