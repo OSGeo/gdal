@@ -558,13 +558,49 @@ namespace nccfdriver
 
         // Node coordinates
         int new_varID;
-        char * pszNcoord = strtok(node_coord_names, " ");
-        int count = 0;
+        CPLStringList aosNcoord(CSLTokenizeString2(node_coord_names, " ", 0));
 
-        while (pszNcoord != nullptr)
+        if(aosNcoord.size() < 2)
+            throw SGWriter_Exception();
+
+        // first it's X
+        err_code = nc_def_var(ncID, aosNcoord[0], NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
+
+        NCDF_ERR(err_code);
+        if (err_code != NC_NOERR)
         {
-            // Define a new variable with that name
-            err_code = nc_def_var(ncID, pszNcoord, NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
+            throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "variable(s)");
+        }
+
+        err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
+        if (err_code != NC_NOERR)
+        {
+            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "X axis attribute");
+        }
+
+        this->node_coordinates_varIDs.push_back(new_varID);
+
+        // second it's Y
+        err_code = nc_def_var(ncID, aosNcoord[1], NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
+
+        NCDF_ERR(err_code);
+        if (err_code != NC_NOERR)
+        {
+            throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "variable(s)");
+        }
+
+        err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
+        if (err_code != NC_NOERR)
+        {
+            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Y axis attribute");
+        }
+
+        this->node_coordinates_varIDs.push_back(new_varID);
+
+        // (and perhaps) third it's Z
+        if(aosNcoord.size() > 2)
+        {
+            err_code = nc_def_var(ncID, aosNcoord[2], NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
 
             NCDF_ERR(err_code);
             if (err_code != NC_NOERR)
@@ -572,40 +608,13 @@ namespace nccfdriver
                 throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "variable(s)");
             }
 
-            // Add it to the coordinate varID list
-            this->node_coordinates_varIDs.push_back(new_varID);
-
-            // Add the mandatory "axis" attribute
-            switch(count)
+            err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Z_AXIS), CF_SG_Z_AXIS);
+            if (err_code != NC_NOERR)
             {
-                case 0:
-                    // first it's X
-                    err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
-                    if (err_code != NC_NOERR)
-                    {
-                        throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "X axis attribute");
-                    }
-                    break;
-                case 1:
-                    // second it's Y
-                    err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
-                    if (err_code != NC_NOERR)
-                    {
-                        throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Y axis attribute");
-                    }
-                    break;
-                case 2:
-                    // third it's Z
-                    err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Z_AXIS), CF_SG_Z_AXIS);
-                    if (err_code != NC_NOERR)
-                    {
-                        throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Z axis attribute");
-                    }
-                    break;
+                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Z axis attribute");
             }
-
-            pszNcoord = strtok(nullptr, " ");
-            count++;
+        
+            this->node_coordinates_varIDs.push_back(new_varID);
         }
     }
 
