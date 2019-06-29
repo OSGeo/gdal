@@ -256,8 +256,9 @@ def test_vrtmask_7():
     ds = None
 
     os.remove('tmp/vrtmask_7_rgba.tif')
-    with pytest.raises(OSError, message='did not expect tmp/vrtmask_7_rgba.tif.msk'):
+    with pytest.raises(OSError):
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
+        pytest.fail('did not expect tmp/vrtmask_7_rgba.tif.msk')
     
     os.remove('tmp/vrtmask_7_rgbmask.vrt')
 
