@@ -499,11 +499,8 @@ namespace nccfdriver
         }
 
         // Prepare variable names
-        char node_coord_names[NC_MAX_CHAR + 1];
-        memset(node_coord_names, 0, NC_MAX_CHAR + 1);
-
-        char node_count_name[NC_MAX_CHAR + 1];
-        memset(node_count_name, 0, NC_MAX_CHAR + 1);
+        char node_coord_names[NC_MAX_CHAR + 1] = {0};
+        char node_count_name[NC_MAX_CHAR + 1] = {0};
 
         // Set default values
         pnc_varID = INVALID_VAR_ID;
@@ -558,8 +555,7 @@ namespace nccfdriver
         }
 
         // Do the same for part node count, if it exists
-        char pnc_name[NC_MAX_CHAR + 1];
-        memset(pnc_name, 0, NC_MAX_CHAR + 1);
+        char pnc_name[NC_MAX_CHAR + 1] = {0};
         err_code = nc_get_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, pnc_name);
         if(err_code == NC_NOERR)
         {
