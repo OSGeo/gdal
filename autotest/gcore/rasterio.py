@@ -247,9 +247,8 @@ def test_rasterio_6():
     ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
 
     for obj in [ds, ds.GetRasterBand(1)]:
-        with pytest.raises(Exception, message='expected exception'):
+        with pytest.raises(Exception):
             obj.WriteRaster(0, 0, 2, 2, None)
-        
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')

@@ -33,7 +33,6 @@ import os
 
 import gdaltest
 from osgeo import gdal
-import pytest
 
 ###############################################################################
 # Test a fake TIL dataset
@@ -68,10 +67,7 @@ def test_til_2():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/testtil.til.aux.xml'):
-        os.stat('data/testtil.til.aux.xml')
-    
-
+    assert not os.path.exists('data/testtil.til.aux.xml')
     
 ###############################################################################
 # Check GetFileList() & XML
@@ -97,10 +93,6 @@ def test_til_3():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/testtil.til.aux.xml'):
-        os.stat('data/testtil.til.aux.xml')
-    
-
-    
+    assert not os.path.exists('data/testtil.til.aux.xml')
 
 

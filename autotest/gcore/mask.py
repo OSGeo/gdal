@@ -417,9 +417,7 @@ def test_mask_13():
 
     drv.Delete('tmp/byte_with_mask.tif')
 
-    with pytest.raises(OSError, message='tmp/byte_with_mask.tif.msk is still there'):
-        os.stat('tmp/byte_with_mask.tif.msk')
-    
+    assert not os.path.exists('tmp/byte_with_mask.tif.msk')
 
     
 ###############################################################################
@@ -470,9 +468,7 @@ def test_mask_14():
 
     ds = None
 
-    with pytest.raises(OSError, message='tmp/byte_with_mask.tif.msk should not exist'):
-        os.stat('tmp/byte_with_mask.tif.msk')
-    
+    assert not os.path.exists('tmp/byte_with_mask.tif.msk')
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('tmp/byte_with_mask.tif')
@@ -556,9 +552,7 @@ def mask_and_ovr(order, method):
 
     ds = None
 
-    with pytest.raises(OSError, message='tmp/byte_with_mask.tif.msk should not exist'):
-        os.stat('tmp/byte_with_ovr_and_mask.tif.msk')
-    
+    assert not os.path.exists('tmp/byte_with_ovr_and_mask.tif.msk')
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif')
@@ -736,9 +730,7 @@ def test_mask_22():
 
     drv.Delete('tmp/mask_22.tif')
 
-    with pytest.raises(OSError, message='tmp/mask_22.tif.msk is still there'):
-        os.stat('tmp/mask_22.tif.msk')
-    
+    assert not os.path.exists('tmp/mask_22.tif.msk')
 
     
 ###############################################################################

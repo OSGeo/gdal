@@ -400,9 +400,7 @@ def test_ogr_fgdb_5():
     assert ogrtest.fgdb_drv.DeleteDataSource("tmp/test.gdb") == 0, \
         'DeleteDataSource() failed'
 
-    with pytest.raises(OSError, message="tmp/test.gdb still existing"):
-        os.stat("tmp/test.gdb")
-    
+    assert not os.path.exists("tmp/test.gdb")
 
     
 ###############################################################################
@@ -1097,12 +1095,8 @@ def test_ogr_fgdb_19():
 
     assert ds.StartTransaction(force=True) == 0
 
-    try:
-        os.stat('tmp/test.gdb.ogredited')
-    except OSError:
-        pytest.fail()
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
+    assert os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
     
 
     ret = lyr.CreateField(ogr.FieldDefn('foobar', ogr.OFTString))
@@ -1167,13 +1161,8 @@ def test_ogr_fgdb_19():
     # Test that CommitTransaction() works
     assert ds.CommitTransaction() == 0
 
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogredited')
-    
-
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
-    
+    assert not os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
 
     lst = gdal.ReadDir('tmp/test.gdb')
     for filename in lst:
@@ -1216,13 +1205,8 @@ def test_ogr_fgdb_19():
 
     assert ds.RollbackTransaction() == 0
 
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogredited')
-    
-
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
-    
+    assert not os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
 
     assert lyr.GetFeatureCount() == old_count
 
@@ -1421,9 +1405,7 @@ def test_ogr_fgdb_19():
             ds = None
 
             if case == 'CASE4':
-                with pytest.raises(OSError, message=case):
-                    os.stat('tmp/test.gdb.ogredited')
-                
+                assert not os.path.exists('tmp/test.gdb.ogredited'), case
             else:
                 shutil.rmtree('tmp/test.gdb.ogredited')
 

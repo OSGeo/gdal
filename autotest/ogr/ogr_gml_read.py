@@ -1206,9 +1206,7 @@ def test_ogr_gml_35():
     ds = ogr.Open('tmp/GmlTopo-sample.xml')
     gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
 
-    with pytest.raises(OSError, message='did not expect tmp/GmlTopo-sample.sqlite'):
-        os.stat('tmp/GmlTopo-sample.sqlite')
-    
+    assert not os.path.exists('tmp/GmlTopo-sample.sqlite')
 
     assert gdal.GetLastErrorMsg() == '', 'did not expect error'
     assert ds.GetLayerCount() == 3, ('expected 3 layers, got %d' % ds.GetLayerCount())
@@ -1321,9 +1319,7 @@ def test_ogr_gml_38(resolver='HUGE'):
     gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', None)
 
     if resolver == 'HUGE':
-        with pytest.raises(OSError, message='did not expect tmp/sample_gml_face_hole_negative_no.sqlite'):
-            os.stat('tmp/sample_gml_face_hole_negative_no.sqlite')
-        
+        assert not os.path.exists('tmp/sample_gml_face_hole_negative_no.sqlite')
 
     assert gdal.GetLastErrorMsg() == '', 'did not expect error'
 

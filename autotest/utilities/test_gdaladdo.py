@@ -126,9 +126,7 @@ def test_gdaladdo_4():
 
     assert cnt == 0, 'did not clean overviews.'
 
-    with pytest.raises(OSError, message='.ovr file still exists'):
-        os.stat('tmp/test_gdaladdo_3.tif.ovr')
-    
+    assert not os.path.exists('tmp/test_gdaladdo_3.tif.ovr')
 
     os.remove('tmp/test_gdaladdo_3.tif')
 

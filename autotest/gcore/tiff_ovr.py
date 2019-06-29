@@ -944,9 +944,7 @@ def test_tiff_ovr_29(both_endian):
 
     png_ds = None
 
-    with pytest.raises(OSError, message='.ovr file still present'):
-        os.stat('tmp/ovr29.png.ovr')
-    
+    assert not os.path.exists('tmp/ovr29.png.ovr')
 
     gdal.GetDriverByName('PNG').Delete('tmp/ovr29.png')
 
