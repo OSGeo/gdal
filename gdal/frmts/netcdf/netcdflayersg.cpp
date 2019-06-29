@@ -287,14 +287,8 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
     feat -> SetGeometryDirectly(geometry);
 
     int dimId = m_simpleGeometry->getInstDim();
-    size_t dim_len = m_simpleGeometry->getInstDimLen();
-    int dim_len_trunc = static_cast<int>(dim_len);
 
-    // Fill fields
-    for(int itr = 0; itr < defn->GetFieldCount() && itr < dim_len_trunc; itr++)
-    {
-        this->FillFeatureFromVar(feat, dimId, featureInd);
-    }
+    this->FillFeatureFromVar(feat, dimId, featureInd);
 
     feat -> SetFID(featureInd);
     return feat;

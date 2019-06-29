@@ -916,7 +916,7 @@ OGRFeature *netCDFLayer::GetNextRawFeature()
         }
         catch(nccfdriver::SG_Exception& sge)
         {
-            CPLError(CE_Warning, CPLE_AppDefined, "An error occurred while retrieving a feature. That feature will be ignored.\n%s", sge.get_err_msg());
+            CPLError(CE_Warning, CPLE_AppDefined, "An error occurred while retrieving a feature.\n%s", sge.get_err_msg());
         }
 
         return ft;
@@ -1367,7 +1367,6 @@ OGRFeature *netCDFLayer::GetNextFeature()
 {
     while( true )
     {
-
         OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == nullptr )
             return nullptr;
@@ -1376,10 +1375,6 @@ OGRFeature *netCDFLayer::GetNextFeature()
             || FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter) ))
             && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate(poFeature)) )
-            return poFeature;
-
-        delete poFeature;
-    
             return poFeature;
     }
 }
@@ -2531,8 +2526,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
     if ( !m_bLegacyCreateMode )
     {
-        char ct_name_carr[NC_MAX_NAME + 1];
-        memset(ct_name_carr, 0, NC_MAX_NAME + 1);
+        char ct_name_carr[NC_MAX_NAME + 1] = {0};
         status = nc_inq_varname(m_nLayerCDFId, m_writableSGContVarID, ct_name_carr);
         NCDF_ERR(status);
 

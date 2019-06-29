@@ -704,7 +704,7 @@ namespace nccfdriver
                                 seek += poly_parts[itr_3];
                             }
 
-                            base += poly_parts.size();;
+                            base += poly_parts.size();
                             ir_base = base + 1;
                         }
                     }

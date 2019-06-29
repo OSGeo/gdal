@@ -110,7 +110,7 @@ namespace nccfdriver
             size_t getZCoordCount() { return this->z.size(); }
             size_t getNCOUNTCount() { return this->ncounts.size(); }
             size_t getPNCCount() { return this->pnc.size(); }
-            size_t getIRingCount() { return this-> interior_rings.size(); } // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
+            size_t getIRingVarEntryCount() { return this-> interior_rings.size(); } // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
             void cpyNCOUNT_into_PNC();
             void flushPNCBuffer() { this->pnc = std::queue<int>(); }
             void setBufSize(unsigned long long new_limit) { this->mem_limit = new_limit; }
@@ -165,7 +165,6 @@ namespace nccfdriver
             size_t getZCBufLength() { return wbuf.getZCoordCount(); }
             size_t getNCOUNTBufLength() { return wbuf.getNCOUNTCount(); }
             size_t getPNCBufLength() { return wbuf.getPNCCount(); }
-            size_t getIRingBufLength() { return wbuf.getIRingCount(); }
             ~OGR_SGeometry_Scribe() { this->commit_transaction(); }
     };
 
@@ -237,7 +236,7 @@ namespace nccfdriver
      * Returns: geometry container variable ID
      */
     int write_Geometry_Container
-        (int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names);
+        (int ncID, const std::string name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names);
 }
 
 #endif

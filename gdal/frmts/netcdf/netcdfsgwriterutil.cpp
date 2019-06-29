@@ -182,7 +182,7 @@ namespace nccfdriver
         if (this->type == MULTIPOINT)
         {
             OGRMultiPoint* as_mp_ref = dynamic_cast<OGRMultiPoint*>(this->geometry_ref);
-                        int part_ind = static_cast<int>(part_no);
+            int part_ind = static_cast<int>(part_no);
             OGRPoint * pt = dynamic_cast<OGRPoint*>(as_mp_ref->getGeometryRef(part_ind));
             return *pt;
         }
@@ -204,7 +204,7 @@ namespace nccfdriver
         if (this->type == POLYGON)
         {
             OGRPolygon* as_polygon_ref = dynamic_cast<OGRPolygon*>(this->geometry_ref);
-                        int ring_ind = static_cast<int>(part_no);
+            int ring_ind = static_cast<int>(part_no);
 
             if(part_no == 0)
             {
@@ -307,7 +307,7 @@ namespace nccfdriver
                         }
 
                         redef_interior_ring();
-                        while(wbuf.getPNCCount() != wbuf.getIRingCount())
+                        while(wbuf.getPNCCount() != wbuf.getIRingVarEntryCount())
                         {
                             wbuf.addIRing(false);
                         }
@@ -470,8 +470,7 @@ namespace nccfdriver
         next_write_pos_node_count(0),
         next_write_pos_pnc(0)
     {
-        char container_name[NC_MAX_CHAR + 1];
-        memset(container_name, 0, NC_MAX_CHAR + 1);
+        char container_name[NC_MAX_CHAR + 1] = {0};
 
         // Set buffer size
         // Allow 4KB (standard page size) to be smallest buffer heuristic
@@ -810,7 +809,7 @@ namespace nccfdriver
 
     // Helper function definitions
     int write_Geometry_Container
-        (int ncID, std::string name, geom_t geometry_type, std::vector<std::string> & node_coordinate_names)
+        (int ncID, const std::string name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names)
     {
 
         int write_var_id;
