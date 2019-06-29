@@ -2419,7 +2419,7 @@ static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
 /************************************************************************/
 void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                                           bool bReadSRSOnly, const char * pszGivenGM, std::string* returnProjStr,
-                                          nccfdriver::SGeometry* sg)
+                                          nccfdriver::SGeometry_Reader* sg)
 {
     bool bGotGeogCS = false;
     bool bGotCfSRS = false;

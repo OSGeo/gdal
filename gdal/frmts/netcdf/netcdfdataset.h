@@ -897,7 +897,7 @@ class netCDFDataset final: public GDALPamDataset
 
     void  CreateSubDatasetList( int nGroupId );
 
-    void  SetProjectionFromVar( int nGroupId, int nVarId, bool bReadSRSOnly, const char * pszGivenGM, std::string*, nccfdriver::SGeometry*);
+    void  SetProjectionFromVar( int nGroupId, int nVarId, bool bReadSRSOnly, const char * pszGivenGM, std::string*, nccfdriver::SGeometry_Reader*);
     void  SetProjectionFromVar( int nGroupId, int nVarId, bool bReadSRSOnly );
 
     int ProcessCFGeolocation( int nGroupId, int nVarId );
@@ -1045,7 +1045,7 @@ class netCDFLayer final: public OGRLayer
         int             m_nProfileVarID;
         bool            m_bProfileVarUnlimited;
         int             m_nParentIndexVarID;
-        std::shared_ptr<nccfdriver::SGeometry>       m_simpleGeometry;
+        std::shared_ptr<nccfdriver::SGeometry_Reader>       m_simpleGeometryReader;
         size_t          m_SGeometryFeatInd;
 
         const netCDFWriterConfigLayer* m_poLayerConfig;
@@ -1084,7 +1084,7 @@ class netCDFLayer final: public OGRLayer
 
         int             GetCDFID() const { return m_nLayerCDFId; }
         void            SetCDFID(int nId) { m_nLayerCDFId = nId; }
-        void            SetSGeometryRepresentation(std::shared_ptr<nccfdriver::SGeometry> sg) { m_simpleGeometry = sg; }
+        void            SetSGeometryRepresentation(std::shared_ptr<nccfdriver::SGeometry_Reader> sg) { m_simpleGeometryReader = sg; }
 
         virtual void ResetReading() override;
         virtual OGRFeature* GetNextFeature() override;

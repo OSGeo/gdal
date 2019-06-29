@@ -84,7 +84,6 @@ namespace nccfdriver
         std::queue<double> z; // z coords
 
         public:
-            void flush(); // empties the buffer
             bool isOverQuota() { return used_mem > mem_limit; }
             void addXCoord(double xp) { this->x.push(xp); used_mem += sizeof(xp); }
             void addYCoord(double yp) { this->y.push(yp); used_mem += sizeof(yp); }
@@ -124,29 +123,29 @@ namespace nccfdriver
      */
     class OGR_SGeometry_Scribe
     {
-        int ncID;
+        int ncID = 0;
         SGeometry_Layer_WBuffer wbuf;
-        geom_t writableType;
+        geom_t writableType = NONE;
         std::string containerVarName;
-        int containerVarID;
-        bool interiorRingDetected; // flips on when an interior ring polygon has been detected
+        int containerVarID = INVALID_VAR_ID;
+        bool interiorRingDetected = false; // flips on when an interior ring polygon has been detected
         std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
-        int node_coordinates_dimID; // dim of all node_coordinates
-        int node_count_dimID; // node count dim
-        int node_count_varID;
-        int pnc_dimID; // part node count dim AND interior ring dim
-        int pnc_varID;
-        int intring_varID;
-        size_t next_write_pos_node_coord;
-        size_t next_write_pos_node_count;
-        size_t next_write_pos_pnc;
+        int node_coordinates_dimID = INVALID_DIM_ID; // dim of all node_coordinates
+        int node_count_dimID = INVALID_DIM_ID; // node count dim
+        int node_count_varID = INVALID_DIM_ID;
+        int pnc_dimID = INVALID_DIM_ID; // part node count dim AND interior ring dim
+        int pnc_varID = INVALID_VAR_ID;
+        int intring_varID = INVALID_VAR_ID;
+        size_t next_write_pos_node_coord = 0;
+        size_t next_write_pos_node_count = 0;
+        size_t next_write_pos_pnc = 0;
 
         public:
             geom_t getWritableType() { return this->writableType; }
             void writeSGeometryFeature(SGeometry_Feature& ft);
+            OGR_SGeometry_Scribe() {}
             OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, unsigned long long bufsize);
-            OGR_SGeometry_Scribe();
-                        int get_containerID() { return this->containerVarID; }
+            int get_containerID() { return this->containerVarID; }
             void update_ncID(int newID) { this->ncID = newID; }
             int get_node_count_dimID() { return this->node_count_dimID; }
             int get_node_coord_dimID() { return this->node_coordinates_dimID; }

@@ -289,23 +289,23 @@ namespace nccfdriver
         {
             if(ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON)
             {
-                int interior_ring_fl = 0;
+                bool interior_ring_fl = false;
 
                 if(ft.getType() == POLYGON)
-                    interior_ring_fl = part_no == 0 ? 0 : 1;
+                    interior_ring_fl = part_no == false ? false : true;
                 if(ft.getType() == MULTIPOLYGON)
                 {
                     if(ft.IsPartAtIndInteriorRing(part_no))
                     {
-                        interior_ring_fl = 1;
+                        interior_ring_fl = true;
                     }
                     else
                     {
-                        interior_ring_fl = 0;
+                        interior_ring_fl = false;
                     }
                 }
 
-                if(interior_ring_fl == 0)
+                if(interior_ring_fl == false)
                 {
                     if(this->interiorRingDetected)
                         wbuf.addIRing(false);
@@ -460,24 +460,6 @@ namespace nccfdriver
             // Step the position
             this->next_write_pos_node_coord++;
         }
-    }
-
-    OGR_SGeometry_Scribe::OGR_SGeometry_Scribe() :
-        ncID(0),
-        writableType(NONE),
-        containerVarID(INVALID_VAR_ID),
-        interiorRingDetected(false),
-        node_coordinates_dimID(INVALID_DIM_ID),
-        node_count_dimID(INVALID_DIM_ID),
-        node_count_varID(INVALID_VAR_ID),
-                pnc_dimID(INVALID_DIM_ID),
-        pnc_varID(INVALID_VAR_ID),
-        intring_varID(INVALID_VAR_ID),
-        next_write_pos_node_coord(0),
-        next_write_pos_node_count(0),
-        next_write_pos_pnc(0)
-    {
-
     }
 
     OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot, unsigned long long bufsize)

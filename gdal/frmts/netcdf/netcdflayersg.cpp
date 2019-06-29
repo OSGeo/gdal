@@ -144,7 +144,7 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 
 CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 {
-    std::shared_ptr<nccfdriver::SGeometry> sg (new nccfdriver::SGeometry(ncid, nc_basevarId));
+    std::shared_ptr<nccfdriver::SGeometry_Reader> sg (new nccfdriver::SGeometry_Reader(ncid, nc_basevarId));
     int cont_id = sg->getContainerId();
     nccfdriver::SGeometry_PropertyScanner pr(ncid, cont_id);
     OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType(), sg->get_axisCount());
@@ -253,7 +253,7 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
 {
     OGRGeometry * geometry;
 
-    switch(m_simpleGeometry->getGeometryType())
+    switch(m_simpleGeometryReader->getGeometryType())
     {
         case nccfdriver::POINT:
             geometry = new OGRPoint;
@@ -279,14 +279,14 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
     }
 
     int r_size = 0;
-    std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep(m_simpleGeometry->serializeToWKB(featureInd, r_size));
+    std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep(m_simpleGeometryReader->serializeToWKB(featureInd, r_size));
     geometry->importFromWkb(static_cast<const unsigned char*>(wkb_rep.get()), r_size, wkbVariantIso);
 
     OGRFeatureDefn* defn = this->GetLayerDefn();
     OGRFeature * feat = new OGRFeature(defn);
     feat -> SetGeometryDirectly(geometry);
 
-    int dimId = m_simpleGeometry->getInstDim();
+    int dimId = m_simpleGeometryReader->getInstDim();
 
     this->FillFeatureFromVar(feat, dimId, featureInd);
 

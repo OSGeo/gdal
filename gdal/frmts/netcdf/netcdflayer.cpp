@@ -900,9 +900,9 @@ double netCDFLayer::Get1DVarAsDouble( int nVarId, nc_type nVarType,
 OGRFeature *netCDFLayer::GetNextRawFeature()
 {
 
-    if(m_simpleGeometry.get() != nullptr)
+    if(m_simpleGeometryReader.get() != nullptr)
     {
-        if(m_SGeometryFeatInd >= m_simpleGeometry->get_geometry_count())
+        if(m_SGeometryFeatInd >= m_simpleGeometryReader->get_geometry_count())
         {
             return nullptr;
         }
@@ -2608,7 +2608,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
     {
         if( m_HasCFSG1_8 )
         {
-            return m_simpleGeometry->get_geometry_count();
+            return m_simpleGeometryReader->get_geometry_count();
         }
 
         size_t nDimLen;
