@@ -173,6 +173,8 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
             delete poSRS;
             throw nccfdriver::SG_Exception_General_Malformed("SRS settings");
         }
+
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
     netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS);
