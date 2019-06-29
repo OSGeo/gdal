@@ -627,9 +627,9 @@ def test_ogr_sql_28():
     field_defn = ogr.FieldDefn("strfield2", ogr.OFTString)
     lyr.CreateField(field_defn)
 
-    with pytest.raises(Exception, message='expected error on NULL query'):
+    with pytest.raises(Exception):
         sql_lyr = ds.ExecuteSQL(None)
-    
+        pytest.fail('expected exception on NULL query')
 
     queries = [
         '',

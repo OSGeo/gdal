@@ -84,9 +84,7 @@ def test_jp2metadata_2():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/IMG_md_ple_R1C1.jp2.aux.xml'):
-        os.stat('data/IMG_md_ple_R1C1.jp2.aux.xml')
-    
+    assert not os.path.exists('data/IMG_md_ple_R1C1.jp2.aux.xml')
 
     
 ###############################################################################
