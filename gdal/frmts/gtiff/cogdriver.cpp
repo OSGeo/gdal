@@ -599,6 +599,8 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         CPLDebug("COG", "Generating overviews of the mask");
         m_osTmpMskOverviewFilename = GetTmpFilename(pszFilename, "msk.ovr.tmp");
         GDALRasterBand* poSrcMask = poFirstBand->GetMaskBand();
+        const char* pszResampling = CSLFetchNameValueDef(papszOptions,
+            "RESAMPLING", GetResampling(poSrcDS));
 
         double dfNextPixels = dfCurPixels + double(nXSize) * nYSize / 3;
         void* pScaledProgress = GDALCreateScaledProgress(
@@ -612,7 +614,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
             1, &poSrcMask,
             static_cast<int>(anOverviewLevels.size()),
             &anOverviewLevels[0],
-            "NEAREST",
+            pszResampling,
             aosOverviewOptions.List(),
             GDALScaledProgress, pScaledProgress );
 
