@@ -1376,6 +1376,8 @@ OGRFeature *netCDFLayer::GetNextFeature()
             && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate(poFeature)) )
             return poFeature;
+    
+        delete poFeature;
     }
 }
 

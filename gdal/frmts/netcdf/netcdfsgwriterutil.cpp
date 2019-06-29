@@ -292,7 +292,7 @@ namespace nccfdriver
                 bool interior_ring_fl = false;
 
                 if(ft.getType() == POLYGON)
-                    interior_ring_fl = part_no == false ? false : true;
+                    interior_ring_fl = part_no == 0 ? false : true;
                 if(ft.getType() == MULTIPOLYGON)
                 {
                     if(ft.IsPartAtIndInteriorRing(part_no))
@@ -815,7 +815,7 @@ namespace nccfdriver
 
     // Helper function definitions
     int write_Geometry_Container
-        (int ncID, const std::string name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names)
+        (int ncID, const std::string& name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names)
     {
 
         int write_var_id;

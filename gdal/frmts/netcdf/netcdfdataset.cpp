@@ -3370,10 +3370,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             CPLDebug("GDAL_netCDF", "setting WKT from CF");
             SetProjection(pszTempProjection);
             CPLFree(pszTempProjection);
-            if(sg != nullptr)
-            {
-                return; // got the projection, now go!
-            }
+        }
+
+        if(sg != nullptr)
+        {
+            CPLFree(pszGridMappingValue);
+            return; // The rest is raster related stuff
         }
 
         // Is pixel spacing uniform across the map?

@@ -244,7 +244,7 @@ namespace nccfdriver
      * Returns: geometry container variable ID
      */
     int write_Geometry_Container
-        (int ncID, const std::string name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names);
+        (int ncID, const std::string& name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names);
 }
 
 #endif
