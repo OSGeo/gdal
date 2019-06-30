@@ -4380,6 +4380,9 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
 {
     CPLErr eErr = CE_None;
 
+    if(nCFVersion >= 1.8)
+        return CE_None; // do nothing
+
     bool bWriteGridMapping = false;
     bool bWriteLonLat = false;
     bool bHasGeoloc = false;
