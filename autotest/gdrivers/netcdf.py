@@ -3009,6 +3009,21 @@ def test_netcdf_swapped_x_y_dimension():
     # not exactly the transposed aray, but not so far
     assert data == (4, 8, 8, 12, 16, 20, 20, 24, 5, 9, 9, 13, 17, 21, 21, 25, 6, 10, 10, 14, 18, 22, 22, 26, 7, 11, 11, 15, 19, 23, 23, 27)
 
+
+###############################################################################
+# Test reading a netCDF file whose grid_mapping attribute uses an
+# expanded form
+
+def test_netcdf_expanded_form_of_grid_mapping():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/expanded_form_of_grid_mapping.nc')
+    wkt = ds.GetProjectionRef()
+    assert 'Transverse_Mercator' in wkt
+
+
 ###############################################################################
 
 ###############################################################################

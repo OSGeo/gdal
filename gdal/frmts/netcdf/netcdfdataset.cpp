@@ -2459,8 +2459,37 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     }
 
     // Look for grid_mapping metadata.
-    const char *pszValue = pszGivenGM != nullptr ? pszGivenGM
-                                                 : FetchAttr(nGroupId, nVarId, CF_GRD_MAPPING);
+    const char *pszValue = pszGivenGM;
+    CPLString osTmpGridMapping; // let is in this outer scope as pszValue may point to it
+    if( pszValue == nullptr )
+    {
+        pszValue = FetchAttr(nGroupId, nVarId, CF_GRD_MAPPING);
+        if( pszValue && strchr(pszValue, ':') && strchr(pszValue, ' ') )
+        {
+            // Expanded form of grid_mapping
+            // e.g. "crsOSGB: x y crsWGS84: lat lon"
+            // Pickup the grid_mapping whose coordinates are dimensions of the
+            // variable
+            CPLStringList aosTokens(CSLTokenizeString2(pszValue, " ", 0));
+            if( (aosTokens.size() % 3) == 0 )
+            {
+                for( int i = 0; i < aosTokens.size() / 3; i++ )
+                {
+                    if( CSLFindString(poDS->papszDimName, aosTokens[3*i+1]) >= 0 &&
+                        CSLFindString(poDS->papszDimName, aosTokens[3*i+2]) >= 0 )
+                    {
+                        osTmpGridMapping = aosTokens[3*i];
+                        if( !osTmpGridMapping.empty() && osTmpGridMapping.back() == ':' )
+                        {
+                            osTmpGridMapping.resize(osTmpGridMapping.size()-1);
+                        }
+                        pszValue = osTmpGridMapping.c_str();
+                        break;
+                    }
+                }
+            }
+        }
+    }
     char *pszGridMappingValue = CPLStrdup(pszValue ? pszValue : "");
 
     if( !EQUAL(pszGridMappingValue, "") )
