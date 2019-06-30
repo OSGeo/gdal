@@ -283,6 +283,7 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
     int r_size = 0;
     std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep(m_simpleGeometryReader->serializeToWKB(featureInd, r_size));
     geometry->importFromWkb(static_cast<const unsigned char*>(wkb_rep.get()), r_size, wkbVariantIso);
+    geometry->assignSpatialReference(this->GetSpatialRef());
 
     OGRFeatureDefn* defn = this->GetLayerDefn();
     OGRFeature * feat = new OGRFeature(defn);
