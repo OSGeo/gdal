@@ -55,7 +55,7 @@ Finally, writing a very large CF-1.8 dataset may incur a lot of unneccessary I/O
 This is largely part in due to dimension resizing for netCDF-3 files. In the future,
 this will be amelioriated by providing an option to take advantage of multiple infinite dimension support within NC4
 (though writing such a file in NC4, may reduce read performance). Generally, the performance penalty from dimension resizing
-is greatly reduced by `specifying a larger- but still reasonable- buffer size`<#layer-creation-options>__`.
+is greatly reduced by `specifying a larger- but still reasonable- buffer size <#layer-creation-options>`__.
 
 CF-1.6/WKT datasets, however, are not limited to these restrictions.
 
@@ -168,10 +168,11 @@ for the geometry of a layer with **geometry_type** polygon. The one exception wh
 will be used is when the attribute **part_node_count** is not present within that layer's geometry container.
 Per convention requirements, the driver supports reading from geometries with X, Y, and Z axes.
 
-Layers with a geometry type of Point or Point25D will cause the implicit
-creation of x,y(,z) variables for projected coordinate system, or
-lon,lat(,z) variables for geographic coordinate systems. For other
-geometry type, a variable "ogc_wkt" ( bi-dimensional char for NC3
+When create or editing a CF-1.6/WKT dataset, layers with a geometry type
+of Point or Point25D will cause the implicit creation of x,y(,z)
+variables for a projected coordinate system, or lon,lat(,z) variables
+for geographic coordinate systems. For other
+geometry types, a variable "ogc_wkt" ( bi-dimensional char for NC3
 output, or string for NC4 output) is created and used to store the
 geometry as a ISO WKT string.
 
