@@ -609,6 +609,10 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                 pfnProgress, pProgressData );
         dfCurPixels = dfNextPixels;
 
+        // Used by GDALRegenerateOverviews() and GDALRegenerateOverviewsMultiBand()
+        CPLConfigOptionSetter oSetterRegeneratedBandIsMask(
+            "GDAL_REGENERATED_BAND_IS_MASK", "YES", true);
+
         CPLErr eErr = GTIFFBuildOverviewsEx(
             m_osTmpMskOverviewFilename,
             1, &poSrcMask,
