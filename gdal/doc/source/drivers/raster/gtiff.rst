@@ -559,6 +559,10 @@ APPEND_SUBDATASET=YES creation option. The filename passed to Create() /
 CreateCopy() should be the regular filename (not with GTIFF_DIR: syntax.
 Creating overviews on a multi-page TIFF is not supported.
 
+Starting with GDAL 3.2, read-only access to subdataset overviews and masks
+is possible provided that they are referenced by their parent IFD through
+the `TIFFTAG_SUBIFD <https://www.awaresystems.be/imaging/tiff/tifftags/subifds.html>`__ tag.
+
 About JPEG compression of RGB images
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
