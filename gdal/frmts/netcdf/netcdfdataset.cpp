@@ -5469,7 +5469,7 @@ int netCDFDataset::TestCapability(const char *pszCap)
 {
     if( EQUAL(pszCap, ODsCCreateLayer) )
     {
-        return eAccess == GA_Update && nBands == 0 &&
+        return eAccess == GA_Update && nBands == 0 && !bSGSupport &&
                (eMultipleLayerBehaviour != SINGLE_LAYER || nLayers == 0);
     }
     return FALSE;
