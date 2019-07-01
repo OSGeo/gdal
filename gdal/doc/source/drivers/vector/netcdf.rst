@@ -168,7 +168,7 @@ for the geometry of a layer with **geometry_type** polygon. The one exception wh
 will be used is when the attribute **part_node_count** is not present within that layer's geometry container.
 Per convention requirements, the driver supports reading from geometries with X, Y, and Z axes.
 
-When create or editing a CF-1.6/WKT dataset, layers with a geometry type
+When working with a CF-1.6/WKT dataset, layers with a geometry type
 of Point or Point25D will cause the implicit creation of x,y(,z)
 variables for a projected coordinate system, or lon,lat(,z) variables
 for geographic coordinate systems. For other
