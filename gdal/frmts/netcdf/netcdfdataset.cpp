@@ -2108,7 +2108,6 @@ netCDFDataset::netCDFDataset() :
     pszCFCoordinates(nullptr),
     nCFVersion(1.6),
     bSGSupport(false),
-    CF1_6_Rewrite_Occurred(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
 
     // projection/GT.
@@ -7975,13 +7974,47 @@ netCDFDataset::Create( const char *pszFilename,
               "\n=====\nnetCDFDataset::Create(%s, ...)",
               pszFilename);
 
+    const char * legacyCreationOp = CSLFetchNameValueDef(papszOptions, "GEOMETRY_ENCODING", "CF_1.8");
+    std::string legacyCreationOp_s = std::string(legacyCreationOp);
+
+    // Check legacy creation op FIRST
+
+    bool legacyCreateMode = false;
+
+    if (legacyCreationOp_s == "CF_1.8")
+    {
+        legacyCreateMode = false;
+    }
+
+    else if(legacyCreationOp_s == "WKT")
+    {
+        legacyCreateMode = true;
+    }
+
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Dataset creation option GEOMETRY_ENCODING=%s is not supported.", legacyCreationOp_s.c_str());
+        return nullptr;
+    }
+
     CPLMutexHolderD(&hNCMutex);
 
     netCDFDataset *poDS = netCDFDataset::CreateLL(pszFilename,
                                                   nXSize, nYSize, nBands,
                                                   papszOptions);
+
     if( !poDS )
         return nullptr;
+
+    if (!legacyCreateMode)
+    {
+        poDS->bSGSupport = true;
+    }
+
+    else
+    {
+        poDS->bSGSupport = false;
+    }
 
     // Should we write signed or unsigned byte?
     // TODO should this only be done in Create()
@@ -7993,8 +8026,10 @@ netCDFDataset::Create( const char *pszFilename,
     // Add Conventions, GDAL info and history.
     if( poDS->cdfid >= 0 )
     {
+        const char * CF_Vector_Conv = poDS->bSGSupport ? NCDF_CONVENTIONS_CF_V1_8 : NCDF_CONVENTIONS_CF_V1_6;
+
         NCDFAddGDALHistory(poDS->cdfid, pszFilename, "", "Create",
-                           (nBands == 0) ? NCDF_CONVENTIONS_CF_V1_8
+                           (nBands == 0) ? CF_Vector_Conv
                                          : NCDF_CONVENTIONS_CF_V1_5);
     }
 
@@ -8744,6 +8779,10 @@ void GDALRegister_netCDF()
 "       <Value>SEPARATE_GROUPS</Value>"
 #endif
 "   </Option>"
+"   <Option name='GEOMETRY_ENCODING' type='string' default='CF_1.8' description='Specifies the type of geometry encoding when creating a netCDF dataset'>"
+"       <Value>WKT</Value>"
+"       <Value>CF_1.8</Value>"
+"   </Option>"
 "   <Option name='CONFIG_FILE' type='string' description='Path to a XML configuration file (or content inlined)'/>"
 "</CreationOptionList>"
                               );
@@ -8774,8 +8813,7 @@ void GDALRegister_netCDF()
 "       <Value>POINT</Value>"
 "       <Value>PROFILE</Value>"
 "   </Option>"
-"   <Option name='LEGACY' type='string' default='NONE'/>"
-"   <Option name='BUFFER_SIZE' type='string' default=''/>"
+"   <Option name='BUFFER_SIZE' type='int' default='' description='Specifies the soft limit of buffer translation in bytes. Minimum size is 4096. Does not apply to datasets with CF version less than 1.8.'/>"
 "   <Option name='PROFILE_DIM_NAME' type='string' description='Name of the profile dimension and variable' default='profile'/>"
 "   <Option name='PROFILE_DIM_INIT_SIZE' type='string' description='Initial size of profile dimension (default 100), or UNLIMITED for NC4 files'/>"
 "   <Option name='PROFILE_VARIABLES' type='string' description='Comma separated list of field names that must be indexed by the profile dimension'/>"

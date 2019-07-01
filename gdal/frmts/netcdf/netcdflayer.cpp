@@ -144,29 +144,14 @@ static void netCDFWriteAttributesFromConf(
 bool netCDFLayer::Create(char **papszOptions,
                          const netCDFWriterConfigLayer *poLayerConfig)
 {
-    const char * legacyCreationOp = CSLFetchNameValueDef(papszOptions, "LEGACY", "");
-    std::string legacyCreationOp_s = std::string(legacyCreationOp);
-    if (legacyCreationOp_s == "WKT")
+    if(m_poDS->bSGSupport)
     {
-        m_bLegacyCreateMode = true;
-        // Rewrite conventions attribute to CF-1.6 if wrote to CF-1.8
-
-        if(!m_poDS -> CF1_6_Rewrite_Occurred)
-        {
-            int err_code = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, NCDF_CONVENTIONS, strlen(NCDF_CONVENTIONS_CF_V1_6), NCDF_CONVENTIONS_CF_V1_6);
-            NCDF_ERR(err_code);
-            if(err_code != NC_NOERR)
-            {
-                return false;
-            }
-
-            m_poDS -> SetCF1_6_Rewrite_Occurred();
-        }
+        m_bLegacyCreateMode = false;
     }
 
     else
     {
-        m_bLegacyCreateMode = false;
+        m_bLegacyCreateMode = true;
     }
 
     long long newbufsize = 0;

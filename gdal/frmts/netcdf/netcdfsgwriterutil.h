@@ -222,15 +222,6 @@ namespace nccfdriver
             SGWriter_Exception_RingOOB() : msg("An attempt was made to read a polygon ring that does not exist.") {}
     };
 
-    class SGWriter_Exception_GeometryTMismatch : public SGWriter_Exception
-    {
-        std::string msg;
-
-        public:
-            const char * get_err_msg() override { return this->msg.c_str(); }
-            SGWriter_Exception_GeometryTMismatch(const char * layer_type, const char * wrong_type);
-    };
-
     // Functions that interface with netCDF, for writing
 
     /* std::vector<..> writeGeometryContainer(...)

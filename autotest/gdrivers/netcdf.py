@@ -1676,7 +1676,7 @@ def test_netcdf_50():
         pytest.skip()
 
     ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_VECTOR)
-    out_ds = gdal.VectorTranslate('tmp/netcdf_50.nc', ds, format='netCDF', layerCreationOptions=['WKT_DEFAULT_WIDTH=1', 'LEGACY=WKT'])
+    out_ds = gdal.VectorTranslate('tmp/netcdf_50.nc', ds, format='netCDF', layerCreationOptions=['WKT_DEFAULT_WIDTH=1'], datasetCreationOptions=['GEOMETRY_ENCODING=WKT'])
     src_lyr = ds.GetLayer(0)
     src_lyr.ResetReading()
     out_lyr = out_ds.GetLayer(0)
@@ -1713,11 +1713,11 @@ def test_netcdf_51():
 
     ds = gdal.OpenEx('data/test_ogr_nc3.nc', gdal.OF_VECTOR)
     # Test autogrow of string fields
-    gdal.VectorTranslate('tmp/netcdf_51.nc', ds, format='netCDF', layerCreationOptions=['STRING_DEFAULT_WIDTH=1', 'LEGACY=WKT'])
+    gdal.VectorTranslate('tmp/netcdf_51.nc', ds, format='netCDF', layerCreationOptions=['STRING_DEFAULT_WIDTH=1'], datasetCreationOptions=['GEOMETRY_ENCODING=WKT'])
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('tmp/netcdf_51.nc', gdal.OF_VECTOR)
-        gdal.VectorTranslate('/vsimem/netcdf_51.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED', 'LEGACY=WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_51.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'], datasetCreationOptions=['GEOMETRY_ENCODING=WKT'])
         ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_51.csv', 'rb')
@@ -1779,11 +1779,11 @@ def test_netcdf_51_no_gdal_tags():
         pytest.skip()
 
     ds = gdal.OpenEx('data/test_ogr_nc3.nc', gdal.OF_VECTOR)
-    gdal.VectorTranslate('tmp/netcdf_51_no_gdal_tags.nc', ds, format='netCDF', datasetCreationOptions=['WRITE_GDAL_TAGS=NO'], layerCreationOptions=['LEGACY=WKT'])
+    gdal.VectorTranslate('tmp/netcdf_51_no_gdal_tags.nc', ds, format='netCDF', datasetCreationOptions=['WRITE_GDAL_TAGS=NO', 'GEOMETRY_ENCODING=WKT'])
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('tmp/netcdf_51_no_gdal_tags.nc', gdal.OF_VECTOR)
-        gdal.VectorTranslate('/vsimem/netcdf_51_no_gdal_tags.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED', 'LEGACY=WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_51_no_gdal_tags.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
         ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_51_no_gdal_tags.csv', 'rb')
@@ -1825,11 +1825,11 @@ def test_netcdf_52():
         pytest.skip()
 
     ds = gdal.OpenEx('data/test_ogr_nc4.nc', gdal.OF_VECTOR)
-    gdal.VectorTranslate('tmp/netcdf_52.nc', ds, format='netCDF', datasetCreationOptions=['FORMAT=NC4'], layerCreationOptions=['LEGACY=WKT'])
+    gdal.VectorTranslate('tmp/netcdf_52.nc', ds, format='netCDF', datasetCreationOptions=['FORMAT=NC4', 'GEOMETRY_ENCODING=WKT'])
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('tmp/netcdf_52.nc', gdal.OF_VECTOR)
-        gdal.VectorTranslate('/vsimem/netcdf_52.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED', 'LEGACY=WKT'])
+        gdal.VectorTranslate('/vsimem/netcdf_52.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'CREATE_CSVT=YES', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
         ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_52.csv', 'rb')
@@ -1892,7 +1892,7 @@ def test_netcdf_53():
         pytest.skip()
 
     ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_VECTOR)
-    out_ds = gdal.VectorTranslate('tmp/netcdf_53.nc', ds, format='netCDF', datasetCreationOptions=['FORMAT=NC4'], layerCreationOptions=['LEGACY=WKT'])
+    out_ds = gdal.VectorTranslate('tmp/netcdf_53.nc', ds, format='netCDF', datasetCreationOptions=['FORMAT=NC4', 'GEOMETRY_ENCODING=WKT'])
     src_lyr = ds.GetLayer(0)
     src_lyr.ResetReading()
     out_lyr = out_ds.GetLayer(0)
@@ -2001,9 +2001,9 @@ def test_netcdf_56():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_56.nc')
+    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_56.nc', options=['GEOMETRY_ENCODING=WKT'])
     # Test auto-grow of WKT field
-    lyr = ds.CreateLayer('netcdf_56', options=['AUTOGROW_STRINGS=NO', 'STRING_DEFAULT_WIDTH=5', 'WKT_DEFAULT_WIDTH=5', 'LEGACY=WKT'])
+    lyr = ds.CreateLayer('netcdf_56', options=['AUTOGROW_STRINGS=NO', 'STRING_DEFAULT_WIDTH=5', 'WKT_DEFAULT_WIDTH=5'])
     lyr.CreateField(ogr.FieldDefn('txt'))
     f = ogr.Feature(lyr.GetLayerDefn())
     f['txt'] = '0123456789'
@@ -2051,7 +2051,7 @@ def test_netcdf_57():
 
     ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_57', options=['MULTIPLE_LAYERS=SEPARATE_FILES'])
     for ilayer in range(2):
-        lyr = ds.CreateLayer('lyr%d' % ilayer, options=['LEGACY=WKT'])
+        lyr = ds.CreateLayer('lyr%d' % ilayer)
         lyr.CreateField(ogr.FieldDefn('lyr_id', ogr.OFTInteger))
         f = ogr.Feature(lyr.GetLayerDefn())
         f['lyr_id'] = ilayer
@@ -2079,10 +2079,10 @@ def test_netcdf_58():
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
 
-    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_58.nc', options=['FORMAT=NC4', 'MULTIPLE_LAYERS=SEPARATE_GROUPS'])
+    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_58.nc', options=['FORMAT=NC4', 'MULTIPLE_LAYERS=SEPARATE_GROUPS', 'GEOMETRY_ENCODING=WKT'])
     for ilayer in range(2):
         # Make sure auto-grow will happen to test this works well with multiple groups
-        lyr = ds.CreateLayer('lyr%d' % ilayer, geom_type=ogr.wkbNone, options=['USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1', 'LEGACY=WKT'])
+        lyr = ds.CreateLayer('lyr%d' % ilayer, geom_type=ogr.wkbNone, options=['USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1'])
         lyr.CreateField(ogr.FieldDefn('lyr_id', ogr.OFTString))
         f = ogr.Feature(lyr.GetLayerDefn())
         f['lyr_id'] = 'lyr_%d' % ilayer
@@ -2196,8 +2196,9 @@ def test_netcdf_62():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    ds = gdal.VectorTranslate('tmp/netcdf_62.nc', 'data/profile.nc', format='netCDF', layerCreationOptions=['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1', 'PROFILE_VARIABLES=station', 'LEGACY=WKT'])
-    gdal.VectorTranslate('/vsimem/netcdf_62.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED', 'LEGACY=WKT'])
+    ds = gdal.VectorTranslate('tmp/netcdf_62.nc', 'data/profile.nc', format='netCDF', layerCreationOptions=['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_INIT_SIZE=1',
+        'PROFILE_VARIABLES=station'], datasetCreationOptions=['GEOMETRY_ENCODING=WKT'])
+    gdal.VectorTranslate('/vsimem/netcdf_62.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_62.csv', 'rb')
     if fp is not None:
@@ -2264,8 +2265,10 @@ def test_netcdf_63():
         pytest.skip()
 
     shutil.copy('data/profile.nc', 'tmp/netcdf_63.nc')
-    ds = gdal.VectorTranslate('tmp/netcdf_63.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['FORMAT=NC4'], layerCreationOptions=['FEATURE_TYPE=PROFILE', 'USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1', 'LEGACY=WKT'])
-    gdal.VectorTranslate('/vsimem/netcdf_63.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED', 'LEGACY=WKT'])
+    ds = gdal.VectorTranslate('tmp/netcdf_63.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['FORMAT=NC4', 'GEOMETRY_ENCODING=WKT'],
+        layerCreationOptions=['FEATURE_TYPE=PROFILE', \
+        'USE_STRING_IN_NC4=NO', 'STRING_DEFAULT_WIDTH=1']) 
+    gdal.VectorTranslate('/vsimem/netcdf_63.csv', ds, format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_63.csv', 'rb')
     if fp is not None:
@@ -2320,8 +2323,9 @@ def test_netcdf_64():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    gdal.VectorTranslate('tmp/netcdf_64.nc', 'data/profile.nc', format='netCDF', selectFields=['id,station,foo'], layerCreationOptions=['FEATURE_TYPE=PROFILE', 'PROFILE_DIM_NAME=profile_dim', 'PROFILE_DIM_INIT_SIZE=1', 'LEGACY=WKT'])
-    gdal.VectorTranslate('/vsimem/netcdf_64.csv', 'tmp/netcdf_64.nc', format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED', 'LEGACY=WKT'])
+    gdal.VectorTranslate('tmp/netcdf_64.nc', 'data/profile.nc', format='netCDF', selectFields=['id,station,foo'], layerCreationOptions=['FEATURE_TYPE=PROFILE',
+        'PROFILE_DIM_NAME=profile_dim', 'PROFILE_DIM_INIT_SIZE=1', 'LEGACY=WKT'], datasetCreationOptions=['GEOMETRY_ENCODING=WKT'])
+    gdal.VectorTranslate('/vsimem/netcdf_64.csv', 'tmp/netcdf_64.nc', format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_64.csv', 'rb')
     if fp is not None:
@@ -2352,8 +2356,8 @@ def test_netcdf_65():
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
 
-    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_65.nc', options=['FORMAT=NC4'])
-    lyr = ds.CreateLayer('test', options=['LEGACY=WKT'])
+    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_65.nc', options=['FORMAT=NC4', 'GEOMETRY_ENCODING=WKT'])
+    lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -2424,7 +2428,7 @@ def test_netcdf_66():
 """
 
     with gdaltest.error_handler():
-        gdal.VectorTranslate('tmp/netcdf_66.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['CONFIG_FILE=' + myconfig], layerCreationOptions=['LEGACY=WKT'])
+        gdal.VectorTranslate('tmp/netcdf_66.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['CONFIG_FILE=' + myconfig, 'GEOMETRY_ENCODING=WKT'])
 
     # Now with a correct configuration
     myconfig = \
@@ -2453,7 +2457,7 @@ def test_netcdf_66():
 </Configuration>
 """
 
-    gdal.VectorTranslate('tmp/netcdf_66.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['CONFIG_FILE=' + myconfig], layerCreationOptions=['LEGACY=WKT'])
+    gdal.VectorTranslate('tmp/netcdf_66.nc', 'data/profile.nc', format='netCDF', datasetCreationOptions=['CONFIG_FILE=' + myconfig, 'GEOMETRY_ENCODING=WKT'])
     gdal.VectorTranslate('/vsimem/netcdf_66.csv', 'tmp/netcdf_66.nc', format='CSV', layerCreationOptions=['LINEFORMAT=LF', 'GEOMETRY=AS_WKT', 'STRING_QUOTING=IF_NEEDED'])
 
     fp = gdal.VSIFOpenL('/vsimem/netcdf_66.csv', 'rb')
@@ -4300,3 +4304,10 @@ def test_write_nc_from_nc():
     ft_geo = ft.GetGeometryRef()
     ft_wkt = ft_geo.ExportToWkt()
     assert(ft_wkt == "MULTIPOINT (-7 7,-8 8,-9 9,-10 10)")
+
+def test_clean_tmp():
+    # [KEEP THIS AS THE LAST TEST]
+    # i.e. please do not add any tests after this one. Put new ones above.
+    # Not actually a test, just cleans up tmp...
+    gdaltest.clean_tmp()
+    pytest.skip()

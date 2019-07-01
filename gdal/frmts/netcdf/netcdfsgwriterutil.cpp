@@ -284,16 +284,22 @@ namespace nccfdriver
             throw SG_Exception_BadFeature();
         }
 
+        if(ft.getType() != this->writableType)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported, "An attempt was made to write a feature to a layer whose geometry types do not match. This is not supported and so the feature has been skipped.");
+            return;
+        }
+
         // Write each point from each part in node coordinates
         for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
         {
-            if(ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON)
+            if(this->writableType == POLYGON || this->writableType == MULTIPOLYGON)
             {
                 bool interior_ring_fl = false;
 
-                if(ft.getType() == POLYGON)
+                if(this->writableType == POLYGON)
                     interior_ring_fl = part_no == 0 ? false : true;
-                if(ft.getType() == MULTIPOLYGON)
+                if(this->writableType == MULTIPOLYGON)
                 {
                     if(ft.IsPartAtIndInteriorRing(part_no))
                     {
@@ -336,7 +342,7 @@ namespace nccfdriver
                 }
             }
 
-            if(ft.getType() == POLYGON || ft.getType() == MULTILINE || ft.getType() == MULTIPOLYGON)
+            if(this->writableType == POLYGON || this->writableType == MULTILINE || this->writableType == MULTIPOLYGON)
             {
                 int pnc_writable = static_cast<int>(ft.getPerPartNodeCount()[part_no]);
                 wbuf.addPNC(pnc_writable);
@@ -365,7 +371,7 @@ namespace nccfdriver
 
         // Polygons use a "predictive approach", i.e. predict that there will be interior rings
         // If there are after all, no interior rings then flush out the PNC buffer
-        if(!this->interiorRingDetected && ft.getType() == POLYGON)
+        if(!this->interiorRingDetected && this->writableType == POLYGON)
         {
             wbuf.flushPNCBuffer();
         }
@@ -793,12 +799,6 @@ namespace nccfdriver
     SGWriter_Exception_NCDefFailure::SGWriter_Exception_NCDefFailure(const char * layer_name, const char * failure_name, const char * failure_type)
     : msg(sgwe_msg_builder(layer_name, failure_name, failure_type,
             "could not be defined in the dataset (definition failure)."))
-    {}
-
-    SGWriter_Exception_GeometryTMismatch::SGWriter_Exception_GeometryTMismatch(const char * layer_type, const char * wrong_type)
-    : msg(std::string("Layer has geometry type ") + std::string(layer_type)
-            + std::string(" but attempt was made to write feature of type ")
-            + std::string(wrong_type))
     {}
 
     // SGeometry_Layer_WBuffer
