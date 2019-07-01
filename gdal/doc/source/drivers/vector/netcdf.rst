@@ -248,8 +248,11 @@ Dataset creation options
    classic netCDF format. Default is NC.
 -  **WRITE_GDAL_TAGS**\ =YES/NO: Whether to write GDAL specific
    information as netCDF attributes. Default is YES.
+-  **CONFIG_FILE**\ =string. Path to a `XML configuration
+   file <#xml-configuration-file>`__ (or its content inlined) for precise control of
+   the output.
 
-The following options will only have effect when simultaneously specifying GEOMETRY_ENCODING=WKT:
+The following option will only have effect when simultaneously specifying GEOMETRY_ENCODING=WKT:
 
 -  **MULTIPLE_LAYERS**\ =NO/SEPARATE_FILES/SEPARATE_GROUPS. Default is
    NO, i.e a dataset can contain only a single OGR layer. SEPARATE_FILES
@@ -258,9 +261,6 @@ The following options will only have effect when simultaneously specifying GEOME
    the directory, and the layer name is used as the basename of the
    netCDF file. SEPARATE_GROUPS may be used when FORMAT=NC4 to put each
    OGR layer in a separate netCDF group, inside the same file.
--  **CONFIG_FILE**\ =string. Path to a `XML configuration
-   file <#xml-configuration-file>`__ (or its content inlined) for precise control of
-   the output.
 
 Layer creation options
 ----------------------
@@ -314,8 +314,6 @@ The following option requires a dataset with GEOMETRY_ENCODING=CF_1.8:
 
 XML configuration file
 ----------------------
-
-*Applicable to CF-1.6/WKT datasets only.*
 
 A XML configuration file conforming to the following
 `schema <https://github.com/OSGeo/gdal/blob/master/gdal/data/netcdf_config.xsd>`__
