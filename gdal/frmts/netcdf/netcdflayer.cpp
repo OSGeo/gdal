@@ -27,7 +27,9 @@
  ****************************************************************************/
 
 #include "netcdfdataset.h"
+#include "netcdfsgwriterutil.h"
 #include "netcdfsg.h"
+#include "netcdflayersg.h"
 #include "cpl_time.h"
 
 CPL_CVSID("$Id$")
@@ -60,7 +62,8 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTMaxWidthDimId(-1),
         m_nWKTVarID(-1),
         m_nWKTNCDFType(NC_NAT),
-        m_sgItrInit(false),
+        m_writableSGContVarID(nccfdriver::INVALID_VAR_ID),
+        m_bLegacyCreateMode(false),
         m_HasCFSG1_8(false),
         m_nCurFeatureId(1),
         m_bWriteGDALTags(true),
@@ -70,6 +73,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nProfileVarID(-1),
         m_bProfileVarUnlimited(false),
         m_nParentIndexVarID(-1),
+        m_SGeometryFeatInd(0),
         m_poLayerConfig(nullptr)
 {
     m_uXVarNoData.nVal64 = 0;
@@ -87,7 +91,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
 /************************************************************************/
 
 netCDFLayer::~netCDFLayer()
-{ 
+{
     m_poFeatureDefn->Release();
 }
 
@@ -140,6 +144,24 @@ static void netCDFWriteAttributesFromConf(
 bool netCDFLayer::Create(char **papszOptions,
                          const netCDFWriterConfigLayer *poLayerConfig)
 {
+    if(m_poDS->bSGSupport)
+    {
+        m_bLegacyCreateMode = false;
+    }
+
+    else
+    {
+        m_bLegacyCreateMode = true;
+    }
+
+    long long newbufsize = 0;
+    const char * memorySizeLimitation = CSLFetchNameValueDef(papszOptions, "BUFFER_SIZE", "");
+    std::string memorySizeLimitation_s = std::string(memorySizeLimitation);
+    if(memorySizeLimitation_s != "")
+    {
+        newbufsize = strtoll(memorySizeLimitation, nullptr, 10);
+    }
+
     m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
                                              m_osRecordDimName.c_str());
     m_bAutoGrowStrings =
@@ -224,19 +246,19 @@ bool netCDFLayer::Create(char **papszOptions,
     }
 
     int status;
-    if( m_bWriteGDALTags )
+    if (m_bLegacyCreateMode && m_bWriteGDALTags)
     {
-        status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_name",
-                                 strlen(m_poFeatureDefn->GetName()),
-                                 m_poFeatureDefn->GetName());
-        NCDF_ERR(status);
+            status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_name",
+                strlen(m_poFeatureDefn->GetName()),
+                m_poFeatureDefn->GetName());
+            NCDF_ERR(status);
     }
 
     status = nc_def_dim(m_nLayerCDFId, m_osRecordDimName,
-                        NC_UNLIMITED, &m_nRecordDimID);
+    NC_UNLIMITED, &m_nRecordDimID);
     NCDF_ERR(status);
-    if( status != NC_NOERR )
-        return false;
+    if (status != NC_NOERR)
+    return false;
 
     if( !m_osProfileDimName.empty() )
     {
@@ -264,30 +286,57 @@ bool netCDFLayer::Create(char **papszOptions,
     if( m_poFeatureDefn->GetGeomFieldCount() )
         poSRS = m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
 
-    if( wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint )
+    if (wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint)
     {
         const int nPointDim =
             !m_osProfileDimName.empty() ? m_nProfileDimID : m_nRecordDimID;
         const bool bIsGeographic = (poSRS == nullptr || poSRS->IsGeographic());
 
+        std::string strPtXVarName = std::string(this->GetName()) + std::string("_coordX");
         const char *pszXVarName =
             bIsGeographic ? CF_LONGITUDE_VAR_NAME : CF_PROJ_X_VAR_NAME;
+        if(!m_bLegacyCreateMode)
+        {
+            pszXVarName = strPtXVarName.c_str();
+        }
+
         status = nc_def_var(m_nLayerCDFId, pszXVarName, NC_DOUBLE, 1,
-                            &nPointDim, &m_nXVarID);
+            &nPointDim, &m_nXVarID);
+
         NCDF_ERR(status);
-        if( status != NC_NOERR )
+        if (status != NC_NOERR)
         {
             return false;
         }
 
+        if(!m_bLegacyCreateMode)
+        {
+            status = nc_put_att_text(m_nLayerCDFId, m_nXVarID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
+            if(status != NC_NOERR)
+                return false;
+        }
+
+        std::string strPtYVarName = std::string(this->GetName()) + std::string("_coordY");
         const char *pszYVarName =
             bIsGeographic ? CF_LATITUDE_VAR_NAME : CF_PROJ_Y_VAR_NAME;
+        if(!m_bLegacyCreateMode)
+        {
+            pszYVarName = strPtYVarName.c_str();
+        }
+
         status = nc_def_var(m_nLayerCDFId, pszYVarName, NC_DOUBLE, 1,
-                            &nPointDim, &m_nYVarID);
+            &nPointDim, &m_nYVarID);
         NCDF_ERR(status);
-        if( status != NC_NOERR )
+        if (status != NC_NOERR)
         {
             return false;
+        }
+
+        if(!m_bLegacyCreateMode)
+        {
+            status = nc_put_att_text(m_nLayerCDFId, m_nYVarID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
+            if(status != NC_NOERR)
+                return false;
         }
 
         aoAutoVariables.push_back(
@@ -304,23 +353,32 @@ bool netCDFLayer::Create(char **papszOptions,
         m_osCoordinatesValue += " ";
         m_osCoordinatesValue += pszYVarName;
 
-        if( poSRS == nullptr || poSRS->IsGeographic() )
+        if (poSRS == nullptr || poSRS->IsGeographic())
         {
             NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID);
-        }
-        else if (poSRS != nullptr && poSRS->IsProjected() )
-        {
-            NCDFWriteXYVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID,
-                                      poSRS);
+
         }
 
-        if( m_poFeatureDefn->GetGeomType() == wkbPoint25D )
+        else if (poSRS != nullptr && poSRS->IsProjected())
         {
+            NCDFWriteXYVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID,
+                poSRS);
+
+        }
+
+        if (m_poFeatureDefn->GetGeomType() == wkbPoint25D)
+        {
+            std::string strPtZVarName = std::string(this->GetName()) + std::string("_coordZ");
             const char *pszZVarName = "z";
+            if(!m_bLegacyCreateMode)
+            {
+                pszZVarName = strPtZVarName.c_str();
+            }
+
             status = nc_def_var(m_nLayerCDFId, pszZVarName, NC_DOUBLE, 1,
-                                &m_nRecordDimID, &m_nZVarID);
+                &m_nRecordDimID, &m_nZVarID);
             NCDF_ERR(status);
-            if( status != NC_NOERR )
+            if (status != NC_NOERR)
             {
                 return false;
             }
@@ -332,32 +390,37 @@ bool netCDFLayer::Create(char **papszOptions,
             m_uZVarNoData.dfVal = NC_FILL_DOUBLE;
 
             status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_LNG_NAME,
-                                     strlen("z coordinate"), "z coordinate");
+                strlen("z coordinate"), "z coordinate");
             NCDF_ERR(status);
 
             status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_STD_NAME,
-                                     strlen("height"), "height");
+                strlen("height"), "height");
             NCDF_ERR(status);
 
             status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_AXIS,
-                                     strlen("Z"), "Z");
+                strlen("Z"), "Z");
             NCDF_ERR(status);
 
             status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_UNITS,
-                                     strlen("m"), "m");
+                strlen("m"), "m");
             NCDF_ERR(status);
 
             m_osCoordinatesValue += " ";
             m_osCoordinatesValue += pszZVarName;
         }
 
-        const char *pszFeatureTypeVal =
-            !m_osProfileDimName.empty() ? "profile" : "point";
-        status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
-                                 strlen(pszFeatureTypeVal), pszFeatureTypeVal);
-        NCDF_ERR(status);
+        if (m_bLegacyCreateMode)
+        {
+            const char *pszFeatureTypeVal =
+                !m_osProfileDimName.empty() ? "profile" : "point";
+
+            status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
+                strlen(pszFeatureTypeVal), pszFeatureTypeVal);
+
+            NCDF_ERR(status);
+        }
     }
-    else if( m_poFeatureDefn->GetGeomType() != wkbNone )
+    else if( m_poFeatureDefn->GetGeomType() != wkbNone  && m_bLegacyCreateMode)
     {
 #ifdef NETCDF_HAS_NC4
         if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
@@ -404,20 +467,20 @@ bool netCDFLayer::Create(char **papszOptions,
         // nc_put_att_text(m_nLayerCDFId, m_nWKTVarID, CF_UNITS,
         //                 strlen("none"), "none");
 
-        if( m_bWriteGDALTags )
+        if (m_bWriteGDALTags)
         {
             status =
                 nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_geometry_field",
-                                m_osWKTVarName.size(), m_osWKTVarName.c_str());
+                    m_osWKTVarName.size(), m_osWKTVarName.c_str());
             NCDF_ERR(status);
 
             CPLString osGeometryType =
                 OGRToOGCGeomType(m_poFeatureDefn->GetGeomType());
-            if( wkbHasZ(m_poFeatureDefn->GetGeomType()) )
+            if (wkbHasZ(m_poFeatureDefn->GetGeomType()))
                 osGeometryType += " Z";
             status =
                 nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_type",
-                                osGeometryType.size(), osGeometryType.c_str());
+                    osGeometryType.size(), osGeometryType.c_str());
             NCDF_ERR(status);
         }
     }
@@ -483,6 +546,76 @@ bool netCDFLayer::Create(char **papszOptions,
                                               poConfig->m_aoAttributes);
             }
         }
+    }
+
+    try
+    {
+        if (!m_bLegacyCreateMode)
+        {
+            // Write a geometry container
+            OGRwkbGeometryType geometryContainerType = m_poFeatureDefn->GetGeomType();
+            std::vector<std::string> coordNames;
+            std::string strXVarName = std::string(this->GetName()) + std::string("_coordX");
+            std::string strYVarName = std::string(this->GetName()) + std::string("_coordY");
+            coordNames.push_back(strXVarName);
+            coordNames.push_back(strYVarName);
+
+            if(nccfdriver::OGRHasZandSupported(geometryContainerType))
+            {
+                std::string strZVarName = std::string(this->GetName()) + std::string("_coordZ");
+                coordNames.push_back(strZVarName);
+            }
+
+            nccfdriver::geom_t basic_type = nccfdriver::OGRtoRaw(geometryContainerType);
+
+            if(basic_type == nccfdriver::NONE)
+            {
+                throw nccfdriver::SG_Exception_BadFeature();
+            }
+
+            m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_poDS->cdfid, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
+
+            if(basic_type != nccfdriver::POINT)
+            {
+                m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize);
+            }
+
+
+            // Write the grid mapping, if it exists:
+            if (poSRS != nullptr)
+            {
+                status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_osGridMapping), m_osGridMapping);
+                NCDF_ERR(status);
+                if(status != NC_NOERR)
+                {
+                    throw nccfdriver::SGWriter_Exception_NCWriteFailure(this->GetName(), CF_GRD_MAPPING, "attribute");
+                }
+
+                // Future work: simplify this by bringing the point implementation of things into OGR_SGeometry_Scribe
+                if(basic_type != nccfdriver::POINT)
+                {
+                    std::vector<int>& ncv = m_poDS->GeometryScribe.get_nodeCoordVarIDs();
+                    int xVar = ncv[0];
+                    int yVar = ncv[1];
+
+                    if (poSRS->IsGeographic())
+                    {
+                        NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, xVar, yVar);
+                    }
+
+                    else if (poSRS->IsProjected())
+                    {
+                        NCDFWriteXYVarsAttributes(m_nLayerCDFId, xVar, yVar,
+                            poSRS);
+                    }
+                }
+            }
+        }
+    }
+    catch(nccfdriver::SG_Exception& sge)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "An error occurred while writing metadata to the netCDF file.\n%s", sge.get_err_msg());
+        return false;
     }
 
     return true;
@@ -709,10 +842,7 @@ void netCDFLayer::ResetReading()
 {
     if( m_HasCFSG1_8 )
     {
-        if( m_sgItrInit )
-        {
-           this->m_sgFeatItr = m_sgFeatureList.begin(); 
-        }
+        m_SGeometryFeatInd = 0;
     }
     else
     {
@@ -754,17 +884,27 @@ double netCDFLayer::Get1DVarAsDouble( int nVarId, nc_type nVarType,
 
 OGRFeature *netCDFLayer::GetNextRawFeature()
 {
-    if( !m_sgItrInit && m_sgFeatureList.size() > 0 )
-    {
-        this->m_sgFeatItr = m_sgFeatureList.begin();
-        this->m_sgItrInit = true;
-    }
 
-    if( m_sgItrInit && m_sgFeatItr != m_sgFeatureList.end() )
+    if(m_simpleGeometryReader.get() != nullptr)
     {
-        OGRFeature * ret = (*(m_sgFeatItr))->Clone();
-        ++m_sgFeatItr;
-        return ret;
+        if(m_SGeometryFeatInd >= m_simpleGeometryReader->get_geometry_count())
+        {
+            return nullptr;
+        }
+
+        OGRFeature* ft = nullptr;
+
+        try
+        {
+            ft = buildSGeometryFeature(m_SGeometryFeatInd);
+            m_SGeometryFeatInd++;
+        }
+        catch(nccfdriver::SG_Exception& sge)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "An error occurred while retrieving a feature.\n%s", sge.get_err_msg());
+        }
+
+        return ft;
     }
 
     m_poDS->SetDefineMode(false);
@@ -818,7 +958,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( m_aoFieldDesc[i].nMainDimId != nMainDimId )
+        if( m_aoFieldDesc[i].nMainDimId != nMainDimId && !m_HasCFSG1_8 )
             continue;
 
         switch( m_aoFieldDesc[i].nType )
@@ -1095,9 +1235,9 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
         }
     }
 
-    // For CF-1.8 simple geometry specifically 
+    // For CF-1.8 simple geometry specifically
     // Only need fields to be set here
-    if( m_HasCFSG1_8 ) return true;
+    if( m_HasCFSG1_8 ) return true; // todo: remove this, refactor to allow for CF-1.6 CF-1.8 mixed datasets (multi group)
 
     if( m_nXVarID >= 0 && m_nYVarID >= 0 &&
         (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID) )
@@ -1212,7 +1352,6 @@ OGRFeature *netCDFLayer::GetNextFeature()
 {
     while( true )
     {
-
         OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == nullptr )
             return nullptr;
@@ -1222,7 +1361,7 @@ OGRFeature *netCDFLayer::GetNextFeature()
             && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate(poFeature)) )
             return poFeature;
-
+    
         delete poFeature;
     }
 }
@@ -1671,7 +1810,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         }
     }
     else if( m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
-             poGeom != nullptr )
+             poGeom != nullptr && m_bLegacyCreateMode )
     {
         char *pszWKT = nullptr;
         poGeom->exportToWkt(&pszWKT, wkbVariantIso);
@@ -1731,7 +1870,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     }
 #ifdef NETCDF_HAS_NC4
     else if( m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
-             poGeom == nullptr && m_nWKTNCDFType == NC_STRING && m_bNCDumpCompat )
+             poGeom == nullptr && m_nWKTNCDFType == NC_STRING && m_bNCDumpCompat && m_bLegacyCreateMode )
     {
         const char *pszWKTConst = "";
         int status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID,
@@ -1739,6 +1878,30 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         NCDF_ERR(status);
     }
 #endif
+
+    try
+    {
+        // CF 1.8 simple geometry, only
+        if (!m_bLegacyCreateMode && poGeom != nullptr && wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint)
+        {
+            nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
+
+            // Check if ready to dump buffer
+            if(m_poDS->GeometryScribe.bufferQuotaReached())
+            {
+                m_poDS->SGCommitPendingTransaction();
+            }
+
+            // Finally, "write" the feature
+            m_poDS->GeometryScribe.writeSGeometryFeature(featWithMetaData);
+        }
+    }
+
+    catch(nccfdriver::SG_Exception& sge)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "An error occurred while attempting to write a feature to the target netCDF file.\n%s", sge.get_err_msg());
+        return false;
+    }
 
     return true;
 }
@@ -2348,6 +2511,16 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
                              strlen(pszLongName), pszLongName);
     NCDF_ERR(status);
 
+    if ( !m_bLegacyCreateMode )
+    {
+        char ct_name_carr[NC_MAX_NAME + 1] = {0};
+        status = nc_inq_varname(m_nLayerCDFId, m_writableSGContVarID, ct_name_carr);
+        NCDF_ERR(status);
+
+        status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_SG_GEOMETRY, strlen(ct_name_carr), ct_name_carr);
+        NCDF_ERR(status);
+    }
+
     if( m_bWriteGDALTags )
     {
         status = nc_put_att_text(m_nLayerCDFId, nVarID, "ogr_field_name",
@@ -2422,8 +2595,9 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
     {
         if( m_HasCFSG1_8 )
         {
-            return m_sgFeatureList.size();
+            return m_simpleGeometryReader->get_geometry_count();
         }
+
         size_t nDimLen;
         nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nDimLen);
         return static_cast<GIntBig>(nDimLen);

@@ -2174,6 +2174,7 @@ netCDFDataset::~netCDFDataset()
     }
 
     FlushCache();
+    SGCommitPendingTransaction();
 
     for(int i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -2416,7 +2417,8 @@ static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
 /*                      SetProjectionFromVar()                          */
 /************************************************************************/
 void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
-                                          bool bReadSRSOnly, const char * pszGivenGM)
+                                          bool bReadSRSOnly, const char * pszGivenGM, std::string* returnProjStr,
+                                          nccfdriver::SGeometry_Reader* sg)
 {
     bool bGotGeogCS = false;
     bool bGotCfSRS = false;
@@ -3248,6 +3250,14 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     int nVarDimXID = -1;
     int nGroupDimYID = -1;
     int nVarDimYID = -1;
+    if(sg != nullptr)
+    {
+       nGroupDimXID = sg->get_ncID();
+       nGroupDimYID = sg->get_ncID();
+       nVarDimXID = sg->getNodeCoordVars()[0];
+       nVarDimYID = sg->getNodeCoordVars()[1];
+    }
+
     if( !bReadSRSOnly )
     {
         NCDFResolveVar(nGroupId, poDS->papszDimName[nXDimID],
@@ -3257,6 +3267,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         // TODO: if above resolving fails we should also search for coordinate
         // variables without same name than dimension using the same resolving
         // logic. This should handle for example NASA Ocean Color L2 products.
+
 
         // Check that they are 1D or 2D variables
         if( nVarDimXID >= 0 )
@@ -3276,48 +3287,52 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         }
     }
 
-    if( !bReadSRSOnly && (nVarDimXID != -1) && (nVarDimYID != -1) &&
-        xdim > 0 && ydim > 0 )
+    if( (nVarDimXID != -1) && (nVarDimYID != -1) &&
+        ((!bReadSRSOnly && xdim > 0 && ydim > 0) || sg != nullptr) )
     {
-        pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
-        pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
-
-        size_t start[2] = { 0, 0 };
-        size_t edge[2] = { xdim, 0 };
-        int status = nc_get_vara_double(nGroupDimXID, nVarDimXID,
-                                        start, edge, pdfXCoord);
-        NCDF_ERR(status);
-
-        edge[0] = ydim;
-        status = nc_get_vara_double(nGroupDimYID, nVarDimYID,
-                                    start, edge, pdfYCoord);
-        NCDF_ERR(status);
-
-        if( !poDS->bSwitchedXY )
+        if(sg == nullptr)
         {
-            // Check for bottom-up from the Y-axis order.
-            // See bugs #4284 and #4251.
-            poDS->bBottomUp = (pdfYCoord[0] <= pdfYCoord[1]);
+            // Raster stuff, not usable for simple geometries...
+            pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
+            pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
 
-            CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
-                    static_cast<int>(poDS->bBottomUp));
+            size_t start[2] = { 0, 0 };
+            size_t edge[2] = { xdim, 0 };
+            int status = nc_get_vara_double(nGroupDimXID, nVarDimXID,
+                                            start, edge, pdfXCoord);
+            NCDF_ERR(status);
 
-            // Convert ]180,540] longitude values to ]-180,0].
-            if( NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
-                CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180",
-                                            "YES")) )
+            edge[0] = ydim;
+            status = nc_get_vara_double(nGroupDimYID, nVarDimYID,
+                                        start, edge, pdfYCoord);
+            NCDF_ERR(status);
+
+            if( !poDS->bSwitchedXY )
             {
-                // If minimum longitude is > 180, subtract 360 from all.
-                // Add a check on the maximum X value too, since NCDFIsVarLongitude()
-                // is not very specific by default (see https://github.com/OSGeo/gdal/issues/1440)
-                if( std::min(pdfXCoord[0], pdfXCoord[xdim - 1]) > 180.0 &&
-                    std::max(pdfXCoord[0], pdfXCoord[xdim - 1]) <= 540 )
+                // Check for bottom-up from the Y-axis order.
+                // See bugs #4284 and #4251.
+                poDS->bBottomUp = (pdfYCoord[0] <= pdfYCoord[1]);
+
+                CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
+                        static_cast<int>(poDS->bBottomUp));
+
+                // Convert ]180,540] longitude values to ]-180,0].
+                if( NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
+                    CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180",
+                                                "YES")) )
                 {
-                    CPLDebug("GDAL_netCDF",
-                             "Offseting longitudes from ]180,540] to ]-180,180]. "
-                             "Can be disabled with GDAL_NETCDF_CENTERLONG_180=NO");
-                    for( size_t i = 0; i < xdim; i++ )
-                            pdfXCoord[i] -= 360;
+                    // If minimum longitude is > 180, subtract 360 from all.
+                    // Add a check on the maximum X value too, since NCDFIsVarLongitude()
+                    // is not very specific by default (see https://github.com/OSGeo/gdal/issues/1440)
+                    if( std::min(pdfXCoord[0], pdfXCoord[xdim - 1]) > 180.0 &&
+                        std::max(pdfXCoord[0], pdfXCoord[xdim - 1]) <= 540 )
+                    {
+                        CPLDebug("GDAL_netCDF",
+                                "Offseting longitudes from ]180,540] to ]-180,180]. "
+                                "Can be disabled with GDAL_NETCDF_CENTERLONG_180=NO");
+                        for( size_t i = 0; i < xdim; i++ )
+                                pdfXCoord[i] -= 360;
+                    }
                 }
             }
         }
@@ -3376,9 +3391,19 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
             // Set projection.
             oSRS.exportToWkt(&pszTempProjection);
+            if(returnProjStr != nullptr)
+            {
+                (*returnProjStr) = std::string(pszTempProjection);
+            }
             CPLDebug("GDAL_netCDF", "setting WKT from CF");
             SetProjection(pszTempProjection);
             CPLFree(pszTempProjection);
+        }
+
+        if(sg != nullptr)
+        {
+            CPLFree(pszGridMappingValue);
+            return; // The rest is raster related stuff
         }
 
         // Is pixel spacing uniform across the map?
@@ -3398,15 +3423,15 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         {
             bool bWestIsLeft = (pdfXCoord[0] < pdfXCoord[xdim - 1]);
 
-            // fix longitudes if longitudes should increase from 
+            // fix longitudes if longitudes should increase from
             // west to east, but west > east
             if (NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
                 !bWestIsLeft)
             {
                 size_t ndecreases = 0;
 
-                // there is lon wrap if longitudes increase 
-                // with one single decrease 
+                // there is lon wrap if longitudes increase
+                // with one single decrease
                 for( size_t i = 1; i < xdim; i++ )
                 {
                     if (pdfXCoord[i] < pdfXCoord[i - 1])
@@ -3908,7 +3933,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                                           bool bReadSRSOnly )
 {
-    SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr);
+    SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr, nullptr, nullptr);
 }
 
 int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
@@ -4150,7 +4175,7 @@ CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
               "SetGeoTransform(%f,%f,%f,%f,%f,%f)",
               padfTransform[0], padfTransform[1], padfTransform[2],
               padfTransform[3], padfTransform[4], padfTransform[5]);
- 
+
     if( GetAccess() == GA_Update )
     {
         if( bSetProjection && !bSetGeoTransform )
@@ -4382,6 +4407,9 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
                                          void *pProgressData )
 {
     CPLErr eErr = CE_None;
+
+    if(nCFVersion >= 1.8)
+        return CE_None; // do nothing
 
     bool bWriteGridMapping = false;
     bool bWriteLonLat = false;
@@ -6242,7 +6270,7 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
         {
             nActiveSection = SECTION_DATA;
             status = nc_enddef(nCdfId);
-            if(status != NC_NOERR ) 
+            if(status != NC_NOERR )
             {
                 CPLDebug("netCDF", "nc_enddef() failed: %s",
                          nc_strerror(status));
@@ -7522,7 +7550,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     CPLFree(panDimIds);
 
     // Set projection info.
-    if( nd > 1 )
+    if( nd > 1)
     {
         poDS->SetProjectionFromVar(cdfid, var, false);
     }
@@ -7922,6 +7950,7 @@ netCDFDataset::CreateLL( const char *pszFilename,
         CPLFree(pszTemp);
     }
 #endif
+
     int status = nc_create(osFilenameForNCCreate, poDS->nCreateMode, &(poDS->cdfid));
 
     // Put into define mode.
@@ -7974,13 +8003,47 @@ netCDFDataset::Create( const char *pszFilename,
               "\n=====\nnetCDFDataset::Create(%s, ...)",
               pszFilename);
 
+    const char * legacyCreationOp = CSLFetchNameValueDef(papszOptions, "GEOMETRY_ENCODING", "CF_1.8");
+    std::string legacyCreationOp_s = std::string(legacyCreationOp);
+
+    // Check legacy creation op FIRST
+
+    bool legacyCreateMode = false;
+
+    if (legacyCreationOp_s == "CF_1.8")
+    {
+        legacyCreateMode = false;
+    }
+
+    else if(legacyCreationOp_s == "WKT")
+    {
+        legacyCreateMode = true;
+    }
+
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Dataset creation option GEOMETRY_ENCODING=%s is not supported.", legacyCreationOp_s.c_str());
+        return nullptr;
+    }
+
     CPLMutexHolderD(&hNCMutex);
 
     netCDFDataset *poDS = netCDFDataset::CreateLL(pszFilename,
                                                   nXSize, nYSize, nBands,
                                                   papszOptions);
+
     if( !poDS )
         return nullptr;
+
+    if (!legacyCreateMode)
+    {
+        poDS->bSGSupport = true;
+    }
+
+    else
+    {
+        poDS->bSGSupport = false;
+    }
 
     // Should we write signed or unsigned byte?
     // TODO should this only be done in Create()
@@ -7992,8 +8055,10 @@ netCDFDataset::Create( const char *pszFilename,
     // Add Conventions, GDAL info and history.
     if( poDS->cdfid >= 0 )
     {
+        const char * CF_Vector_Conv = poDS->bSGSupport ? NCDF_CONVENTIONS_CF_V1_8 : NCDF_CONVENTIONS_CF_V1_6;
+
         NCDFAddGDALHistory(poDS->cdfid, pszFilename, "", "Create",
-                           (nBands == 0) ? NCDF_CONVENTIONS_CF_V1_6
+                           (nBands == 0) ? CF_Vector_Conv
                                          : NCDF_CONVENTIONS_CF_V1_5);
     }
 
@@ -8544,7 +8609,9 @@ void netCDFDataset::ProcessCreationOptions()
     // MULTIPLE_LAYERS option.
     const char *pszMultipleLayerBehaviour =
         CSLFetchNameValueDef(papszCreationOptions, "MULTIPLE_LAYERS", "NO");
-    if( EQUAL(pszMultipleLayerBehaviour, "NO") )
+    const char *pszGeometryEnc =
+        CSLFetchNameValueDef(papszCreationOptions, "GEOMETRY_ENCODING", "CF_1.8");
+    if( EQUAL(pszMultipleLayerBehaviour, "NO") || EQUAL(pszGeometryEnc, "CF_1.8")) 
     {
         eMultipleLayerBehaviour = SINGLE_LAYER;
     }
@@ -8743,6 +8810,10 @@ void GDALRegister_netCDF()
 "       <Value>SEPARATE_GROUPS</Value>"
 #endif
 "   </Option>"
+"   <Option name='GEOMETRY_ENCODING' type='string' default='CF_1.8' description='Specifies the type of geometry encoding when creating a netCDF dataset'>"
+"       <Value>WKT</Value>"
+"       <Value>CF_1.8</Value>"
+"   </Option>"
 "   <Option name='CONFIG_FILE' type='string' description='Path to a XML configuration file (or content inlined)'/>"
 "</CreationOptionList>"
                               );
@@ -8773,6 +8844,7 @@ void GDALRegister_netCDF()
 "       <Value>POINT</Value>"
 "       <Value>PROFILE</Value>"
 "   </Option>"
+"   <Option name='BUFFER_SIZE' type='int' default='' description='Specifies the soft limit of buffer translation in bytes. Minimum size is 4096. Does not apply to datasets with CF version less than 1.8.'/>"
 "   <Option name='PROFILE_DIM_NAME' type='string' description='Name of the profile dimension and variable' default='profile'/>"
 "   <Option name='PROFILE_DIM_INIT_SIZE' type='string' description='Initial size of profile dimension (default 100), or UNLIMITED for NC4 files'/>"
 "   <Option name='PROFILE_VARIABLES' type='string' description='Comma separated list of field names that must be indexed by the profile dimension'/>"
@@ -10961,7 +11033,7 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
         *pnRasterVars += nRasterVars;
     }
 
-    if( !anPotentialVectorVarID.empty() && bKeepVectors && !bSGSupport)
+    if( !anPotentialVectorVarID.empty() && bKeepVectors && nccfdriver::getCFVersion(nCdfId) <= 1.6)
     {
         // Take the dimension that is referenced the most times.
         if( !(oMapDimIdToCount.size() == 1 ||
@@ -11088,7 +11160,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
                     NCDFIsVarProjectionY(nCdfId, -1, papszTokens[i]) )
             {
                 nVarYId = -1;
-                CPL_IGNORE_RET_VAL(nc_inq_varid(nCdfId, papszTokens[i], 
+                CPL_IGNORE_RET_VAL(nc_inq_varid(nCdfId, papszTokens[i],
                                                 &nVarYId));
             }
             else if( NCDFIsVarVerticalCoord(nCdfId, -1, papszTokens[i]))
@@ -11146,7 +11218,8 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
     // Read projection info
     char **papszMetadataBackup = CSLDuplicate(papszMetadata);
     ReadAttributes(nCdfId, nFirstVarId);
-    SetProjectionFromVar(nCdfId, nFirstVarId, true);
+    if(!this->bSGSupport)
+        SetProjectionFromVar(nCdfId, nFirstVarId, true);
     const char *pszValue = FetchAttr(nCdfId, nFirstVarId, CF_GRD_MAPPING);
     char *pszGridMapping = (pszValue ? CPLStrdup(pszValue) : nullptr);
     CSLDestroy(papszMetadata);

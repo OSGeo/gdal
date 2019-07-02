@@ -31,7 +31,7 @@
 
 namespace nccfdriver
 {
-    static OGRwkbGeometryType RawToOGR(geom_t type, int axis_count)
+    OGRwkbGeometryType RawToOGR(geom_t type, int axis_count)
     {
         OGRwkbGeometryType ret = wkbNone;
 
@@ -67,8 +67,51 @@ namespace nccfdriver
                 break;
         }
 
-        return ret;    
-    }    
+        return ret;
+    }
+
+    geom_t OGRtoRaw(OGRwkbGeometryType type)
+    {
+        geom_t ret = NONE;
+
+        if (type == wkbPoint || type == wkbPoint25D)
+        {
+            ret = POINT;
+        }
+
+        else if (type == wkbLineString || type == wkbLineString25D)
+        {
+            ret = LINE;
+        }
+
+        else if(type == wkbPolygon || type == wkbPolygon25D)
+        {
+            ret = POLYGON;
+        }
+
+        else if (type == wkbMultiPoint || type == wkbMultiPoint25D)
+        {
+            ret = MULTIPOINT;
+        }
+
+        else if (type == wkbMultiLineString || type == wkbMultiLineString25D)
+        {
+            ret = MULTILINE;
+        }
+
+        else if (type == wkbMultiPolygon || type == wkbMultiPolygon25D)
+        {
+            ret = MULTIPOLYGON;
+        }
+
+        return ret;
+    }
+
+    bool OGRHasZandSupported(OGRwkbGeometryType type)
+    {
+        return type == wkbPoint25D || type == wkbLineString25D || type == wkbPolygon25D ||
+            type == wkbMultiPoint25D || type == wkbMultiLineString25D || type == wkbMultiPolygon25D;
+    }
 
 }
 
@@ -76,10 +119,10 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 {
     // Discover simple geometry variables
     int var_count;
-    nc_inq_nvars(ncid, &var_count);    
+    nc_inq_nvars(ncid, &var_count);
     std::vector<int> vidList;
 
-    nccfdriver::scanForGeometryContainers(ncid, vidList);    
+    nccfdriver::scanForGeometryContainers(ncid, vidList);
 
     for(size_t itr = 0; itr < vidList.size(); itr++)
     {
@@ -88,7 +131,7 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
             LoadSGVarIntoLayer(ncid, vidList[itr]);
 
         }
-        
+
         catch(nccfdriver::SG_Exception& e)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -101,13 +144,15 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 
 CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 {
-    std::unique_ptr<nccfdriver::SGeometry> sg (new nccfdriver::SGeometry(ncid, nc_basevarId));
+    std::shared_ptr<nccfdriver::SGeometry_Reader> sg (new nccfdriver::SGeometry_Reader(ncid, nc_basevarId));
     int cont_id = sg->getContainerId();
     nccfdriver::SGeometry_PropertyScanner pr(ncid, cont_id);
     OGRwkbGeometryType owgt = nccfdriver::RawToOGR(sg->getGeometryType(), sg->get_axisCount());
-    
+
+    std::string return_gm = "";
+
     if(sg->getGridMappingVarID() != nccfdriver::INVALID_VAR_ID)
-        SetProjectionFromVar(ncid, nc_basevarId, true, sg->getGridMappingName().c_str());     
+        SetProjectionFromVar(ncid, nc_basevarId, true, sg->getGridMappingName().c_str(), &return_gm, sg.get());
 
     // Geometry Type invalid, avoid further processing
     if(owgt == wkbNone)
@@ -120,94 +165,134 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     nc_inq_varname(ncid, nc_basevarId, baseName);
 
     OGRSpatialReference * poSRS = nullptr;
-/*  // Disabled, until SRS function is refactored and fixed
-    if(pszCFProjection != nullptr)
+    if(return_gm != "")
     {
         poSRS = new OGRSpatialReference();
-        if(poSRS->importFromWkt(pszCFProjection) != OGRERR_NONE)
+        if(poSRS->importFromWkt(return_gm.c_str()) != OGRERR_NONE)
         {
             delete poSRS;
             throw nccfdriver::SG_Exception_General_Malformed("SRS settings");
         }
 
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+
+    netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS);
+
+    if(poSRS != nullptr)
+    {
         poSRS -> Release();
     }
-*/   
-    netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS); 
 
     poL->EnableSGBypass();
     OGRFeatureDefn * defn = poL->GetLayerDefn();
     defn->SetGeomType(owgt);
 
-    size_t shape_count = sg->get_geometry_count();
-
     // Add properties
     std::vector<int> props = pr.ids();
     for(size_t itr = 0; itr < props.size(); itr++)
     {
-        poL->AddField(props[itr]);    
+        poL->AddField(props[itr]);
     }
 
-    for(size_t featCt = 0; featCt < shape_count; featCt++)
-    {
-        OGRGeometry * geometry;
+    // Set simple geometry object
+    poL->SetSGeometryRepresentation(sg);
 
-        try
-        {
-            switch(sg->getGeometryType())
-            {        
-                case nccfdriver::POINT:
-                    geometry = new OGRPoint;
-                    break;
-                case nccfdriver::LINE:
-                    geometry = new OGRLineString;
-                    break;
-                case nccfdriver::POLYGON:
-                    geometry = new OGRPolygon;
-                    break;
-                case nccfdriver::MULTIPOINT:
-                    geometry = new OGRMultiPoint;
-                    break;
-                case nccfdriver::MULTILINE:
-                    geometry = new OGRMultiLineString;
-                    break;
-                case nccfdriver::MULTIPOLYGON:
-                    geometry = new OGRMultiPolygon;
-                    break;
-                default:
-                    throw nccfdriver::SG_Exception_BadFeature();
-                    break;
-            }
-        }
-        // This may be unncessary, given the check previously...
-        catch(nccfdriver::SG_Exception&)
-        {
-            delete poL;
-            throw;
-        }
-
-        int r_size = 0;
-        std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep(sg->serializeToWKB(featCt, r_size));
-        geometry->importFromWkb(static_cast<const unsigned char*>(wkb_rep.get()), r_size, wkbVariantIso);
-        OGRFeature * feat = new OGRFeature(defn);
-        feat -> SetGeometryDirectly(geometry);
-            
-        int dimId = sg->getInstDim();
-        size_t dim_len = sg->getInstDimLen();    
-        
-        // Fill fields
-        for(size_t itr = 0; itr < props.size() && itr < dim_len; itr++)
-        {
-            poL->FillFeatureFromVar(feat, dimId, featCt);
-        }
-
-        feat -> SetFID(featCt);
-        poL->AddSimpleGeometryFeature(feat);
-    }
-
-    papoLayers = (netCDFLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *)); 
+    // Create layer
+    papoLayers = (netCDFLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *));
     papoLayers[nLayers] = poL;
     nLayers++;
 
     return CE_None;
+}
+
+
+/* Really just wraps around OGR_SGeometry_Scribe but does additional work:
+ * Re-sizes dimensions accordingly
+ * Creates and fills any needed variables that haven't already been created
+ */
+void netCDFDataset::SGCommitPendingTransaction()
+{
+    try
+    {
+        if(this->GeometryScribe.get_containerID() == nccfdriver::INVALID_VAR_ID)
+        {
+            return; // do nothing if invalid scribe
+        }
+
+        int node_count_dimID = this->GeometryScribe.get_node_count_dimID();
+        int node_coord_dimID = this->GeometryScribe.get_node_coord_dimID();
+
+        // Grow dimensions to fit the next feature
+
+        this->GrowDim(cdfid, node_count_dimID, this->GeometryScribe.get_next_write_pos_node_count() + this->GeometryScribe.getNCOUNTBufLength());
+
+        this->GrowDim(cdfid, node_coord_dimID,
+            this->GeometryScribe.get_next_write_pos_node_coord() + this->GeometryScribe.getXCBufLength());
+
+
+        if((this->GeometryScribe.getWritableType() == nccfdriver::POLYGON && this->GeometryScribe.getInteriorRingDetected())
+            || this->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || this->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
+        {
+            int pnc_dimID = this->GeometryScribe.get_pnc_dimID();
+            this->GrowDim(cdfid, pnc_dimID, this->GeometryScribe.get_next_write_pos_pnc() + this->GeometryScribe.getPNCBufLength());
+        }
+
+        this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates
+        this->GeometryScribe.commit_transaction();
+    }
+
+    catch(nccfdriver::SG_Exception& sge)
+    {
+        CPLError(CE_Fatal, CPLE_FileIO, "An error occurred while writing the target netCDF File. Translation will be terminated.\n%s", sge.get_err_msg());
+    }
+}
+
+/* Takes an index and using the layer geometry builds the equivalent
+ * OGRFeature.
+ */
+OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
+{
+    OGRGeometry * geometry;
+
+    switch(m_simpleGeometryReader->getGeometryType())
+    {
+        case nccfdriver::POINT:
+            geometry = new OGRPoint;
+            break;
+        case nccfdriver::LINE:
+            geometry = new OGRLineString;
+            break;
+        case nccfdriver::POLYGON:
+            geometry = new OGRPolygon;
+            break;
+        case nccfdriver::MULTIPOINT:
+            geometry = new OGRMultiPoint;
+            break;
+        case nccfdriver::MULTILINE:
+            geometry = new OGRMultiLineString;
+            break;
+        case nccfdriver::MULTIPOLYGON:
+            geometry = new OGRMultiPolygon;
+            break;
+        default:
+            throw nccfdriver::SG_Exception_BadFeature();
+            break;
+    }
+
+    int r_size = 0;
+    std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep(m_simpleGeometryReader->serializeToWKB(featureInd, r_size));
+    geometry->importFromWkb(static_cast<const unsigned char*>(wkb_rep.get()), r_size, wkbVariantIso);
+    geometry->assignSpatialReference(this->GetSpatialRef());
+
+    OGRFeatureDefn* defn = this->GetLayerDefn();
+    OGRFeature * feat = new OGRFeature(defn);
+    feat -> SetGeometryDirectly(geometry);
+
+    int dimId = m_simpleGeometryReader->getInstDim();
+
+    this->FillFeatureFromVar(feat, dimId, featureInd);
+
+    feat -> SetFID(featureInd);
+    return feat;
 }

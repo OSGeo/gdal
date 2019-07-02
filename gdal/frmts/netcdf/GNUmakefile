@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	netcdfdataset.o netcdflayer.o netcdfwriterconfig.o gmtdataset.o netcdfsg.o netcdflayersg.o
+OBJ	=	netcdfdataset.o netcdflayer.o netcdfwriterconfig.o gmtdataset.o netcdfsg.o netcdflayersg.o netcdfsgwriterutil.o
 
 XTRA_OPT =
 ifeq ($(NETCDF_HAS_NC4),yes)
