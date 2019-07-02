@@ -8580,7 +8580,9 @@ void netCDFDataset::ProcessCreationOptions()
     // MULTIPLE_LAYERS option.
     const char *pszMultipleLayerBehaviour =
         CSLFetchNameValueDef(papszCreationOptions, "MULTIPLE_LAYERS", "NO");
-    if( EQUAL(pszMultipleLayerBehaviour, "NO") || bSGSupport )
+    const char *pszGeometryEnc =
+        CSLFetchNameValueDef(papszCreationOptions, "GEOMETRY_ENCODING", "CF_1.8");
+    if( EQUAL(pszMultipleLayerBehaviour, "NO") || EQUAL(pszGeometryEnc, "CF_1.8")) 
     {
         eMultipleLayerBehaviour = SINGLE_LAYER;
     }
