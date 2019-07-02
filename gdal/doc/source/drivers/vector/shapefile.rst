@@ -5,8 +5,8 @@ ESRI Shapefile / DBF
 
 .. shortname:: ``ESRI Shapefile``
 
-All varieties of ESRI Shapefiles should be available for reading, and
-simple 3D files can be created. The driver can also handle standalone
+All varieties of ESRI Shapefiles should be available for reading, creation and
+editing. The driver can also handle standalone
 DBF files without associated .shp files.
 
 Normally the OGR Shapefile driver treats a whole directory of shapefiles
@@ -325,6 +325,14 @@ VSI Virtual File System API support
 The driver supports reading from files managed by VSI Virtual File
 System API, which include "regular" files, as well as files in the
 /vsizip/, /vsigzip/ , /vsicurl/ domains.
+
+Compressed files
+~~~~~~~~~~~~~~~~
+
+Starting with GDAL 3.1, the driver can also support reading, creating and
+editing .shz files (ZIP files containing the .shp, .shx, .dbf and other side-car
+files of a single layer) and .shp.zip files (ZIP files contains one or several
+layers). Creation and editing involves the creation of temporary files.
 
 Examples
 ~~~~~~~~
