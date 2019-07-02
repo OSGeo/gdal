@@ -2428,8 +2428,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
     // These values from CF metadata.
     OGRSpatialReference oSRS;
-    double *pdfXCoord = nullptr;
-    double *pdfYCoord = nullptr;
     char szDimNameX[NC_MAX_NAME + 1];
     // char szDimNameY[NC_MAX_NAME + 1];
     size_t xdim = nRasterXSize;
@@ -2448,8 +2446,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
     // Temp variables to use in SetGeoTransform() and SetProjection().
     double adfTempGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
-
-    char *pszTempProjection = nullptr;
 
     if( !bReadSRSOnly && (xdim == 1 || ydim == 1) )
     {
@@ -3287,58 +3283,11 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         }
     }
 
-    if( (nVarDimXID != -1) && (nVarDimYID != -1) &&
-        ((!bReadSRSOnly && xdim > 0 && ydim > 0) || sg != nullptr) )
+    // Set Projection from CF.
+    if( ( bGotGeogCS || bGotCfSRS ) )
     {
-        if(sg == nullptr)
-        {
-            // Raster stuff, not usable for simple geometries...
-            pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
-            pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
-
-            size_t start[2] = { 0, 0 };
-            size_t edge[2] = { xdim, 0 };
-            int status = nc_get_vara_double(nGroupDimXID, nVarDimXID,
-                                            start, edge, pdfXCoord);
-            NCDF_ERR(status);
-
-            edge[0] = ydim;
-            status = nc_get_vara_double(nGroupDimYID, nVarDimYID,
-                                        start, edge, pdfYCoord);
-            NCDF_ERR(status);
-
-            if( !poDS->bSwitchedXY )
-            {
-                // Check for bottom-up from the Y-axis order.
-                // See bugs #4284 and #4251.
-                poDS->bBottomUp = (pdfYCoord[0] <= pdfYCoord[1]);
-
-                CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
-                        static_cast<int>(poDS->bBottomUp));
-
-                // Convert ]180,540] longitude values to ]-180,0].
-                if( NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
-                    CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180",
-                                                "YES")) )
-                {
-                    // If minimum longitude is > 180, subtract 360 from all.
-                    // Add a check on the maximum X value too, since NCDFIsVarLongitude()
-                    // is not very specific by default (see https://github.com/OSGeo/gdal/issues/1440)
-                    if( std::min(pdfXCoord[0], pdfXCoord[xdim - 1]) > 180.0 &&
-                        std::max(pdfXCoord[0], pdfXCoord[xdim - 1]) <= 540 )
-                    {
-                        CPLDebug("GDAL_netCDF",
-                                "Offseting longitudes from ]180,540] to ]-180,180]. "
-                                "Can be disabled with GDAL_NETCDF_CENTERLONG_180=NO");
-                        for( size_t i = 0; i < xdim; i++ )
-                                pdfXCoord[i] -= 360;
-                    }
-                }
-            }
-        }
-
-        // Set Projection from CF.
-        if( bGotGeogCS || bGotCfSRS )
+        if( (nVarDimXID != -1) && (nVarDimYID != -1) &&
+            xdim > 0 && ydim > 0 )
         {
             // Set SRS Units.
 
@@ -3388,22 +3337,73 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 oSRS.SetAngularUnits(CF_UNITS_D, CPLAtof(SRS_UA_DEGREE_CONV));
                 oSRS.SetAuthority("GEOGCS|UNIT", "EPSG", 9122);
             }
+        }
 
-            // Set projection.
-            oSRS.exportToWkt(&pszTempProjection);
+        // Set projection.
+        char *pszTempProjection = nullptr;
+        oSRS.exportToWkt(&pszTempProjection);
+        if( pszTempProjection )
+        {
+            CPLDebug("GDAL_netCDF", "setting WKT from CF");
             if(returnProjStr != nullptr)
             {
                 (*returnProjStr) = std::string(pszTempProjection);
             }
-            CPLDebug("GDAL_netCDF", "setting WKT from CF");
-            SetProjection(pszTempProjection);
-            CPLFree(pszTempProjection);
+            else
+            {
+                SetProjection(pszTempProjection);
+            }
         }
+        CPLFree(pszTempProjection);
+    }
 
-        if(sg != nullptr)
+    if( !bReadSRSOnly && (nVarDimXID != -1) && (nVarDimYID != -1) &&
+        xdim > 0 && ydim > 0 )
+    {
+        double *pdfXCoord = nullptr;
+        double *pdfYCoord = nullptr;
+
+        pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
+        pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
+
+        size_t start[2] = { 0, 0 };
+        size_t edge[2] = { xdim, 0 };
+        int status = nc_get_vara_double(nGroupDimXID, nVarDimXID,
+                                        start, edge, pdfXCoord);
+        NCDF_ERR(status);
+
+        edge[0] = ydim;
+        status = nc_get_vara_double(nGroupDimYID, nVarDimYID,
+                                    start, edge, pdfYCoord);
+        NCDF_ERR(status);
+
+        if( !poDS->bSwitchedXY )
         {
-            CPLFree(pszGridMappingValue);
-            return; // The rest is raster related stuff
+            // Check for bottom-up from the Y-axis order.
+            // See bugs #4284 and #4251.
+            poDS->bBottomUp = (pdfYCoord[0] <= pdfYCoord[1]);
+
+            CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
+                    static_cast<int>(poDS->bBottomUp));
+
+            // Convert ]180,540] longitude values to ]-180,0].
+            if( NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
+                CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180",
+                                            "YES")) )
+            {
+                // If minimum longitude is > 180, subtract 360 from all.
+                // Add a check on the maximum X value too, since NCDFIsVarLongitude()
+                // is not very specific by default (see https://github.com/OSGeo/gdal/issues/1440)
+                if( std::min(pdfXCoord[0], pdfXCoord[xdim - 1]) > 180.0 &&
+                    std::max(pdfXCoord[0], pdfXCoord[xdim - 1]) <= 540 )
+                {
+                    CPLDebug("GDAL_netCDF",
+                             "Offseting longitudes from ]180,540] to ]-180,180]. "
+                             "Can be disabled with GDAL_NETCDF_CENTERLONG_180=NO");
+                    for( size_t i = 0; i < xdim; i++ )
+                            pdfXCoord[i] -= 360;
+                }
+            }
         }
 
         // Is pixel spacing uniform across the map?
@@ -3721,11 +3721,18 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             // If possible use the more complete GDAL WKT.
 
             // Set the SRS to the one written by GDAL.
-            if( !bGotCfSRS || poDS->pszProjection == nullptr || ! bIsGdalCfFile )
+            if( !bGotCfSRS || ! bIsGdalCfFile )
             {
                 bGotGdalSRS = true;
                 CPLDebug("GDAL_netCDF", "setting WKT from GDAL");
-                SetProjection(pszWKT);
+                if(returnProjStr != nullptr)
+                {
+                    (*returnProjStr) = std::string(pszWKT);
+                }
+                else
+                {
+                    SetProjection(pszWKT);
+                }
             }
             else
             {
@@ -3850,12 +3857,22 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             char *pszWKTExport = nullptr;
             CPLDebug("GDAL_netCDF", "Got SRS from %s", pszSRID);
             oSRS.exportToWkt(&pszWKTExport);
-            SetProjection(pszWKTExport);
+            if(returnProjStr != nullptr)
+            {
+                (*returnProjStr) = std::string(pszWKTExport);
+            }
+            else
+            {
+                SetProjection(pszWKTExport);
+            }
             CPLFree(pszWKTExport);
         }
     }
 
     CPLFree(pszGridMappingValue);
+
+    if( bReadSRSOnly )
+        return;
 
     // Set GeoTransform if we got a complete one - after projection has been set
     if( bGotCfGT || bGotGdalGT )
