@@ -5469,7 +5469,7 @@ int netCDFDataset::TestCapability(const char *pszCap)
 {
     if( EQUAL(pszCap, ODsCCreateLayer) )
     {
-        return eAccess == GA_Update && nBands == 0 && !bSGSupport &&
+        return eAccess == GA_Update && nBands == 0 &&
                (eMultipleLayerBehaviour != SINGLE_LAYER || nLayers == 0);
     }
     return FALSE;
@@ -8580,7 +8580,7 @@ void netCDFDataset::ProcessCreationOptions()
     // MULTIPLE_LAYERS option.
     const char *pszMultipleLayerBehaviour =
         CSLFetchNameValueDef(papszCreationOptions, "MULTIPLE_LAYERS", "NO");
-    if( EQUAL(pszMultipleLayerBehaviour, "NO") )
+    if( EQUAL(pszMultipleLayerBehaviour, "NO") || bSGSupport )
     {
         eMultipleLayerBehaviour = SINGLE_LAYER;
     }
