@@ -186,6 +186,8 @@ def validate(ds,check_tiled=True, full_check=False):
             block_leader_size_as_uint4 = 'BLOCK_LEADER=SIZE_AS_UINT4' in extra_md
             block_trailer_last_4_bytes_repeated = 'BLOCK_TRAILER=LAST_4_BYTES_REPEATED' in extra_md
             mask_interleaved_with_imagery = 'MASK_INTERLEAVED_WITH_IMAGERY=YES' in extra_md
+            if 'KNOWN_INCOMPATIBLE_EDITION=YES' in extra_md:
+                errors += [ "KNOWN_INCOMPATIBLE_EDITION=YES is declared in the file" ]
             expected_ifd_pos += len(pattern) + size
             expected_ifd_pos += expected_ifd_pos % 2 # IFD offset starts on a 2-byte boundary
         gdal.VSIFCloseL(f)

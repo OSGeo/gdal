@@ -12575,6 +12575,13 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                      "but those have been, at least partly, invalidated by "
                      "later changes");
         }
+        else if( poDS->m_bLayoutIFDSBeforeData &&
+                 poDS->m_bBlockOrderRowMajor &&
+                 poDS->m_bLeaderSizeAsUInt4 &&
+                 poDS->m_bTrailerRepeatedLast4BytesRepeated )
+        {
+            poDS->m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG", "IMAGE_STRUCTURE");
+        }
     }
 
     // In the case of GDAL_DISABLE_READDIR_ON_OPEN = NO / EMPTY_DIR
