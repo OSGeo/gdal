@@ -225,17 +225,20 @@ void netCDFDataset::SGCommitPendingTransaction()
 
         // Grow dimensions to fit the next feature
 
-        this->GrowDim(cdfid, node_count_dimID, this->GeometryScribe.get_next_write_pos_node_count() + this->GeometryScribe.getNCOUNTBufLength());
-
-        this->GrowDim(cdfid, node_coord_dimID,
-            this->GeometryScribe.get_next_write_pos_node_coord() + this->GeometryScribe.getXCBufLength());
-
-
-        if((this->GeometryScribe.getWritableType() == nccfdriver::POLYGON && this->GeometryScribe.getInteriorRingDetected())
-            || this->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || this->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
+        if(this->eFormat != NCDF_FORMAT_NC4) // do NOT grow dimensions in NC4 (all infinite)
         {
-            int pnc_dimID = this->GeometryScribe.get_pnc_dimID();
-            this->GrowDim(cdfid, pnc_dimID, this->GeometryScribe.get_next_write_pos_pnc() + this->GeometryScribe.getPNCBufLength());
+            this->GrowDim(cdfid, node_count_dimID, this->GeometryScribe.get_next_write_pos_node_count() + this->GeometryScribe.getNCOUNTBufLength());
+
+            this->GrowDim(cdfid, node_coord_dimID,
+                this->GeometryScribe.get_next_write_pos_node_coord() + this->GeometryScribe.getXCBufLength());
+
+
+            if((this->GeometryScribe.getWritableType() == nccfdriver::POLYGON && this->GeometryScribe.getInteriorRingDetected())
+                || this->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || this->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
+            {
+                int pnc_dimID = this->GeometryScribe.get_pnc_dimID();
+                this->GrowDim(cdfid, pnc_dimID, this->GeometryScribe.get_next_write_pos_pnc() + this->GeometryScribe.getPNCBufLength());
+            }
         }
 
         this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates
