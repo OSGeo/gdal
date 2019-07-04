@@ -39,6 +39,7 @@
 #include "cpl_time.h"
 #include "cpl_json.h"
 #include "cpl_json_streaming_parser.h"
+#include "cpl_json_streaming_writer.h"
 #include "cpl_mem_cache.h"
 #include "cpl_http.h"
 #include "cpl_auto_close.h"
@@ -2622,5 +2623,193 @@ namespace tut
         ensure( x.get() == nullptr );
         x.reset(CPLStrdup("foo"));
         ensure_equals( std::string(x.get()), "foo");
+    }
+
+    // Test CPLJSonStreamingWriter
+    template<>
+    template<>
+    void object::test<39>()
+    {
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            ensure_equals( x.GetString(), std::string() );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(true);
+            ensure_equals( x.GetString(), std::string("true") );
+        }
+        {
+            std::string res;
+            struct MyCallback
+            {
+                static void f(const char* pszText, void* user_data)
+                {
+                    *static_cast<std::string*>(user_data) += pszText;
+                }
+            };
+            CPLJSonStreamingWriter x(&MyCallback::f, &res);
+            x.Add(true);
+            ensure_equals( x.GetString(), std::string() );
+            ensure_equals( res, std::string("true") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(false);
+            ensure_equals( x.GetString(), std::string("false") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.AddNull();
+            ensure_equals( x.GetString(), std::string("null") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(1);
+            ensure_equals( x.GetString(), std::string("1") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(4200000000U);
+            ensure_equals( x.GetString(), std::string("4200000000") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(static_cast<GIntBig>(-10000) * 1000000);
+            ensure_equals( x.GetString(), std::string("-10000000000") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(static_cast<GUInt64>(10000) * 1000000);
+            ensure_equals( x.GetString(), std::string("10000000000") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(1.5f);
+            ensure_equals( x.GetString(), std::string("1.5") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(std::numeric_limits<float>::quiet_NaN());
+            ensure_equals( x.GetString(), std::string("\"NaN\"") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(std::numeric_limits<float>::infinity());
+            ensure_equals( x.GetString(), std::string("\"Infinity\"") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(-std::numeric_limits<float>::infinity());
+            ensure_equals( x.GetString(), std::string("\"-Infinity\"") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(1.25);
+            ensure_equals( x.GetString(), std::string("1.25") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(std::numeric_limits<double>::quiet_NaN());
+            ensure_equals( x.GetString(), std::string("\"NaN\"") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(std::numeric_limits<double>::infinity());
+            ensure_equals( x.GetString(), std::string("\"Infinity\"") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(-std::numeric_limits<double>::infinity());
+            ensure_equals( x.GetString(), std::string("\"-Infinity\"") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add(std::string("foo\\bar\"baz\b\f\n\r\t" "\x01" "boo"));
+            ensure_equals( x.GetString(), std::string("\"foo\\\\bar\\\"baz\\b\\f\\n\\r\\t\\u0001boo\"") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.Add("foo\\bar\"baz\b\f\n\r\t" "\x01" "boo");
+            ensure_equals( x.GetString(), std::string("\"foo\\\\bar\\\"baz\\b\\f\\n\\r\\t\\u0001boo\"") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.SetPrettyFormatting(false);
+            {
+                auto ctxt(x.MakeObjectContext());
+            }
+            ensure_equals( x.GetString(), std::string("{}") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            {
+                auto ctxt(x.MakeObjectContext());
+            }
+            ensure_equals( x.GetString(), std::string("{}") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            x.SetPrettyFormatting(false);
+            {
+                auto ctxt(x.MakeObjectContext());
+                x.AddObjKey("key");
+                x.Add("value");
+            }
+            ensure_equals( x.GetString(), std::string("{\"key\":\"value\"}") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            {
+                auto ctxt(x.MakeObjectContext());
+                x.AddObjKey("key");
+                x.Add("value");
+            }
+            ensure_equals( x.GetString(), std::string("{\n  \"key\": \"value\"\n}") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            {
+                auto ctxt(x.MakeObjectContext());
+                x.AddObjKey("key");
+                x.Add("value");
+                x.AddObjKey("key2");
+                x.Add("value2");
+            }
+            ensure_equals( x.GetString(), std::string("{\n  \"key\": \"value\",\n  \"key2\": \"value2\"\n}") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            {
+                auto ctxt(x.MakeArrayContext());
+            }
+            ensure_equals( x.GetString(), std::string("[]") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            {
+                auto ctxt(x.MakeArrayContext());
+                x.Add(1);
+            }
+            ensure_equals( x.GetString(), std::string("[\n  1\n]") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            {
+                auto ctxt(x.MakeArrayContext());
+                x.Add(1);
+                x.Add(2);
+            }
+            ensure_equals( x.GetString(), std::string("[\n  1,\n  2\n]") );
+        }
+        {
+            CPLJSonStreamingWriter x(nullptr, nullptr);
+            {
+                auto ctxt(x.MakeArrayContext(true));
+                x.Add(1);
+                x.Add(2);
+            }
+            ensure_equals( x.GetString(), std::string("[1, 2]") );
+        }
     }
 } // namespace tut
