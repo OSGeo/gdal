@@ -9308,7 +9308,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             CPLFree(sJob.pabyBuffer);
             VSIUnlink(sJob.pszTmpFilename);
             CPLFree(sJob.pszTmpFilename);
-            return true;
+            return sJob.nCompressedBufferSize > 0 && !m_bWriteError;
         }
 
         return false;

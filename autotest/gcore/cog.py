@@ -120,6 +120,21 @@ def test_cog_creation_options():
                                                            'LEVEL=9'])
     assert gdal.VSIStatL(filename).size < filesize
 
+    colist = gdal.GetDriverByName('COG').GetMetadataItem('DMD_CREATIONOPTIONLIST')
+    if 'ZSTD' in colist:
+
+        gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                    options = ['COMPRESS=ZSTD'])
+        ds = gdal.Open(filename)
+        assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'ZSTD'
+        ds = None
+
+    if 'WEBP' in colist:
+
+        with gdaltest.error_handler():
+            assert not gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                    options = ['COMPRESS=WEBP'])
+
     src_ds = None
     gdal.GetDriverByName('GTiff').Delete(filename)
 
