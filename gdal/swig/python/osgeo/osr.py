@@ -511,6 +511,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_GetAxisName(self, *args)
 
 
+    def GetAxesCount(self, *args):
+        """GetAxesCount(SpatialReference self) -> int"""
+        return _osr.SpatialReference_GetAxesCount(self, *args)
+
+
     def GetAxisOrientation(self, *args):
         """GetAxisOrientation(SpatialReference self, char const * target_key, int iAxis) -> OGRAxisOrientation"""
         return _osr.SpatialReference_GetAxisOrientation(self, *args)

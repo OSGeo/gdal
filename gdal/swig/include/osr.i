@@ -480,6 +480,11 @@ public:
     return OSRGetAxis( self, target_key, iAxis, NULL );
   }
 
+  /* Added in GDAL 3.1 */
+  int GetAxesCount() {
+    return OSRGetAxesCount(self);
+  }
+
   /* Added in GDAL 2.1 */
   OGRAxisOrientation GetAxisOrientation( const char *target_key, int iAxis ) {
     OGRAxisOrientation orientation = OAO_Other;
