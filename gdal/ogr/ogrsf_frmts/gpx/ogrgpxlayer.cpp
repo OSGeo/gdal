@@ -357,7 +357,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     else
         fpGPX = nullptr;
 
-    ResetReading();
+    OGRGPXLayer::ResetReading();
 }
 
 /************************************************************************/

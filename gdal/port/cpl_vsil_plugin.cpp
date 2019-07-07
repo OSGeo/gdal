@@ -46,7 +46,7 @@ VSIPluginHandle::VSIPluginHandle( VSIPluginFilesystemHandler* poFSIn,
 VSIPluginHandle::~VSIPluginHandle()
 {
     if (cbData) {
-        Close();
+        VSIPluginHandle::Close();
     }
 }
 

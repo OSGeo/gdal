@@ -1295,7 +1295,7 @@ VSIGZipWriteHandleMT::VSIGZipWriteHandleMT(  VSIVirtualHandle* poBaseHandle,
 VSIGZipWriteHandleMT::~VSIGZipWriteHandleMT()
 
 {
-    Close();
+    VSIGZipWriteHandleMT::Close();
     for( auto& psJob: apoFinishedJobs_ )
     {
         delete psJob->pBuffer_;
@@ -1893,7 +1893,7 @@ VSIGZipWriteHandle::~VSIGZipWriteHandle()
 
 {
     if( bCompressActive )
-        Close();
+        VSIGZipWriteHandle::Close();
 
     CPLFree( pabyInBuf );
     CPLFree( pabyOutBuf );
@@ -3121,7 +3121,7 @@ VSIZipWriteHandle::VSIZipWriteHandle( VSIZipFilesystemHandler* poFS,
 
 VSIZipWriteHandle::~VSIZipWriteHandle()
 {
-    Close();
+    VSIZipWriteHandle::Close();
 }
 
 /************************************************************************/

@@ -46,7 +46,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class DIMAPDataset : public GDALPamDataset
+class DIMAPDataset final: public GDALPamDataset
 {
     CPLXMLNode *psProduct;
 
@@ -143,7 +143,7 @@ DIMAPDataset::DIMAPDataset() :
 DIMAPDataset::~DIMAPDataset()
 
 {
-    FlushCache();
+    DIMAPDataset::FlushCache();
 
     CPLDestroyXMLNode( psProduct );
 
@@ -160,7 +160,7 @@ DIMAPDataset::~DIMAPDataset()
 
     CSLDestroy(papszXMLDimapMetadata);
 
-    CloseDependentDatasets();
+    DIMAPDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

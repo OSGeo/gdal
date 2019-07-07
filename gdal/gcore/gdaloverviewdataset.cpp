@@ -219,9 +219,9 @@ GDALOverviewDataset::GDALOverviewDataset( GDALDataset* poMainDSIn,
 
 GDALOverviewDataset::~GDALOverviewDataset()
 {
-    FlushCache();
+    GDALOverviewDataset::FlushCache();
 
-    CloseDependentDatasets();
+    GDALOverviewDataset::CloseDependentDatasets();
 
     if( nGCPCount > 0 )
     {
@@ -547,7 +547,7 @@ GDALOverviewBand::GDALOverviewBand( GDALOverviewDataset* poDSIn, int nBandIn ) :
 
 GDALOverviewBand::~GDALOverviewBand()
 {
-    FlushCache();
+    GDALOverviewBand::FlushCache();
 }
 
 /************************************************************************/
