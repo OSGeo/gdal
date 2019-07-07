@@ -4960,10 +4960,6 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    CPLAssert( m_poGDS != nullptr
-               && nBlockXOff >= 0
-               && nBlockYOff >= 0
-               && pImage != nullptr );
     CPLAssert(nBlocksPerRow != 0);
 
 /* -------------------------------------------------------------------- */
@@ -6546,11 +6542,6 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         // correctly.
         return CE_Failure;
     }
-
-    CPLAssert( m_poGDS != nullptr
-               && nBlockXOff >= 0
-               && nBlockYOff >= 0
-               && pImage != nullptr );
 
     if( eDataType == GDT_Float32 && m_poGDS->m_nBitsPerSample != 16 )
     {
