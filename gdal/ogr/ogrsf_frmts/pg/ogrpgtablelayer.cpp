@@ -54,7 +54,7 @@ class OGRPGTableFeatureDefn final: public OGRPGFeatureDefn
         void SolveFields() const;
 
     public:
-        OGRPGTableFeatureDefn( OGRPGTableLayer* poLayerIn,
+        explicit OGRPGTableFeatureDefn( OGRPGTableLayer* poLayerIn,
                                const char * pszName = nullptr ) :
             OGRPGFeatureDefn(pszName), poLayer(poLayerIn)
         {
