@@ -913,12 +913,18 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
 
     /* Keep a reference to the VirtualMem object */
+%#if SWIGVERSION >= 0x040000
+%#define obj0 swig_obj[0]
+%#endif
 %#if NPY_API_VERSION >= 0x00000007
     PyArray_SetBaseObject(ar, obj0);
 %#else
     PyArray_BASE(ar) = obj0;
 %#endif
     Py_INCREF(obj0);
+%#if SWIGVERSION >= 0x040000
+%#undef obj0
+%#endif
     Py_DECREF($result);
     $result = (PyObject*) ar;
 }

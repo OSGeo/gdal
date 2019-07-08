@@ -15357,7 +15357,14 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
 #if PY_VERSION_HEX >= 0x02070000
     /* %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)*/
     Py_buffer *buf=(Py_buffer*)malloc(sizeof(Py_buffer));
-    if (PyBuffer_FillInfo(buf,  obj0,  *(arg2), *(arg3), *(arg5), PyBUF_ND)) {
+    
+    if (PyBuffer_FillInfo(buf,
+    #if SWIGVERSION >= 0x040000
+        swig_obj[0],
+    #else
+        obj0,
+    #endif
+        *(arg2), *(arg3), *(arg5), PyBUF_ND)) {
       // error, handle
     }
     if( *(arg4) == GDT_Byte )
