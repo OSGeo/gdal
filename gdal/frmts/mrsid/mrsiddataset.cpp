@@ -87,11 +87,11 @@ template <class T>
 class LTIDLLReader : public T
 {
 public:
-   LTIDLLReader(const LTFileSpec& fileSpec,
+   explicit LTIDLLReader(const LTFileSpec& fileSpec,
                 bool useWorldFile = false) : T(fileSpec, useWorldFile) {}
-   LTIDLLReader(LTIOStreamInf &oStream,
+   explicit LTIDLLReader(LTIOStreamInf &oStream,
                 bool useWorldFile = false) : T(oStream, useWorldFile) {}
-   LTIDLLReader(LTIOStreamInf *poStream,
+   explicit LTIDLLReader(LTIOStreamInf *poStream,
                 LTIOStreamInf *poWorldFile = nullptr) : T(poStream, poWorldFile) {}
    virtual ~LTIDLLReader() {}
 };

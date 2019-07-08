@@ -2068,7 +2068,8 @@ void OGRGMLDataSource::InsertHeader()
     // Detect if there are fields of List types.
     bool bHasListFields = false;
 
-    for( int iLayer = 0; !bHasListFields && iLayer < GetLayerCount(); iLayer++ )
+    const int nLayerCount = OGRGMLDataSource::GetLayerCount();
+    for( int iLayer = 0; !bHasListFields && iLayer < nLayerCount; iLayer++ )
     {
         OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
         for( int iField = 0;
@@ -2264,7 +2265,7 @@ void OGRGMLDataSource::InsertHeader()
     }
 
     // Define the schema for each layer.
-    for( int iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
+    for( int iLayer = 0; iLayer < nLayerCount; iLayer++ )
     {
         OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
 

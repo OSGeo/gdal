@@ -97,7 +97,7 @@ class VSICachedFile final : public VSIVirtualHandle
     VSICachedFile( VSIVirtualHandle *poBaseHandle,
                    size_t nChunkSize,
                    size_t nCacheSize );
-    ~VSICachedFile() override { Close(); }
+    ~VSICachedFile() override { VSICachedFile::Close(); }
 
     void          FlushLRU();
     int           LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,

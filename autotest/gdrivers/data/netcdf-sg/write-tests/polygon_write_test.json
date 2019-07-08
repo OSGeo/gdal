@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "shapes",
+"features": [
+{ "type": "Feature", "properties": { "NAMES": "Triangle" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 0.0, 0.0 ], [ 1.0, 0.0 ], [ 1.0, 1.0 ], [ 0.0, 0.0 ] ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "Square_in_Square" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 3.0, 0.0 ], [ 4.0, 0.0 ], [ 4.0, 1.0 ], [ 3.0, 1.0 ], [ 3.0, 0.0 ] ], [ [3.5, 0.25], [3.75, 0.25], [3.75, 0.5], [3.5, 0.5], [3.5, 0.25] ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "Triangle_Flipped" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 0.0, 0.0 ], [ -1.0, 0.0 ], [ -1.0, -1.0 ], [ 0.0, 0.0 ] ] ] } }
+]
+}

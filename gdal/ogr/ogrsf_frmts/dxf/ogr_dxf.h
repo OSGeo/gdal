@@ -266,7 +266,7 @@ private:
     double aadfInverse[4][4];
 
 public:
-    OGRDXFOCSTransformer( double adfNIn[3], bool bInverse = false );
+    explicit OGRDXFOCSTransformer( double adfNIn[3], bool bInverse = false );
 
     OGRSpatialReference *GetSourceCS() override { return nullptr; }
     OGRSpatialReference *GetTargetCS() override { return nullptr; }

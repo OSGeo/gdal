@@ -45,7 +45,7 @@ typedef size_t(*pread_t)(void *user_data, void *buff, size_t count, off_t offset
 //
 class SectorCache {
 public:
-    SectorCache(void *user_data,
+    explicit SectorCache(void *user_data,
                 pread_t fn = nullptr,
                 unsigned int size = 1024,
                 unsigned int count = 2);

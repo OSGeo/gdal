@@ -85,7 +85,7 @@ NASReader::NASReader() :
 NASReader::~NASReader()
 
 {
-    ClearClasses();
+    NASReader::ClearClasses();
 
     CPLFree(m_pszFilename);
 

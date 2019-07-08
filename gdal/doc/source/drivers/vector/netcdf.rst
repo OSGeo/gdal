@@ -31,6 +31,34 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Conventions and Data Formats
+----------------------------
+The netCDF vector driver supports reading and writing netCDF files following the Climate and Forecast (CF) Metadata Conventions.
+Vector datasets can be written using the simple geometry specifcation of the CF-1.8 convention, or by using the CF-1.6 convention
+and by writing non-point geometry items as WKT.
+
+Distinguishing the Two Formats
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is CF-1.8 (in this exact
+format, as specified in the CF convention) then the driver will treat the netCDF file as one that has CF-1.8 geometries contained within
+it. If the *Conventions* attribute is not CF-1.8 (or just not present at all), then the file will be treated as following the CF-1.6 convention
+with geometries stored in WKT.
+
+CF-1.8 Writing Limitations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Writing to a CF-1.8 netCDF dataset poses some limitations. Only writing the feature types specified by the CF-1.8 standard (see
+section `Geometry <#geometry>`__ for more details) are supported. Other geometries, such as non-simple curve geometries, are not supported.
+
+Furthermore, multiple layer writing is not yet supported. This functionality will be added in a future update.
+
+Finally, writing a very large CF-1.8 dataset may incur a lot of unneccessary I/O, slowing down the creation process.
+This is largely part in due to dimension resizing for netCDF-3 files. In the future,
+this will be amelioriated by providing an option to take advantage of multiple infinite dimension support within NC4
+(though writing such a file in NC4, may reduce read performance). Generally, the performance penalty from dimension resizing
+is greatly reduced by `specifying a larger- but still reasonable- buffer size <#layer-creation-options>`__.
+
+CF-1.6/WKT datasets, however, are not limited to these restrictions.
+
 Mapping of concepts
 -------------------
 
@@ -131,6 +159,7 @@ written as netCDF v4 variable length strings.
 
 Geometry
 ~~~~~~~~
+
 Supported feature types when reading from a CF-1.8 convention compliant netCDF file
 include OGRPoint, OGRLineString, OGRPolygon, OGRMultiPoint, OGRMultiLineString, and
 OGRMultiPolygon. Due to slight ambiguities present in the CF-1.8 convention concerning
@@ -139,10 +168,11 @@ for the geometry of a layer with **geometry_type** polygon. The one exception wh
 will be used is when the attribute **part_node_count** is not present within that layer's geometry container.
 Per convention requirements, the driver supports reading from geometries with X, Y, and Z axes.
 
-Layers with a geometry type of Point or Point25D will cause the implicit
-creation of x,y(,z) variables for projected coordinate system, or
-lon,lat(,z) variables for geographic coordinate systems. For other
-geometry type, a variable "ogc_wkt" ( bi-dimensional char for NC3
+When working with a CF-1.6/WKT dataset, layers with a geometry type
+of Point or Point25D will cause the implicit creation of x,y(,z)
+variables for a projected coordinate system, or lon,lat(,z) variables
+for geographic coordinate systems. For other
+geometry types, a variable "ogc_wkt" ( bi-dimensional char for NC3
 output, or string for NC4 output) is created and used to store the
 geometry as a ISO WKT string.
 
@@ -207,6 +237,8 @@ format, the profile dimension is of unlimited size by default.
 Dataset creation options
 ------------------------
 
+-  **GEOMETRY_ENCODING**\ =CF_1.8/WKT: Chooses which geometry encoding to use
+   when creating new layers within the dataset. Default is CF_1.8.
 -  **FORMAT**\ =NC/NC2/NC4/NC4C: netCDF format. NC is the classic netCDF
    format (compatible of netCDF v3.X and 4.X libraries). NC2 is the
    extension of NC for files larger than 4 GB. NC4 is the netCDF v4
@@ -216,6 +248,12 @@ Dataset creation options
    classic netCDF format. Default is NC.
 -  **WRITE_GDAL_TAGS**\ =YES/NO: Whether to write GDAL specific
    information as netCDF attributes. Default is YES.
+-  **CONFIG_FILE**\ =string. Path to a `XML configuration
+   file <#xml-configuration-file>`__ (or its content inlined) for precise control of
+   the output.
+
+The following option will only have effect when simultaneously specifying GEOMETRY_ENCODING=WKT:
+
 -  **MULTIPLE_LAYERS**\ =NO/SEPARATE_FILES/SEPARATE_GROUPS. Default is
    NO, i.e a dataset can contain only a single OGR layer. SEPARATE_FILES
    can be used to put the content of each OGR layer in a single netCDF
@@ -223,12 +261,11 @@ Dataset creation options
    the directory, and the layer name is used as the basename of the
    netCDF file. SEPARATE_GROUPS may be used when FORMAT=NC4 to put each
    OGR layer in a separate netCDF group, inside the same file.
--  **CONFIG_FILE**\ =string. Path to a `XML configuration
-   file <#XML_config>`__ (or its content inlined) for precise control of
-   the output.
 
 Layer creation options
 ----------------------
+
+The following options require a dataset with GEOMETRY_ENCODING=WKT:
 
 -  **RECORD_DIM_NAME**\ =string. Name of the unlimited dimension that
    index features. Defaults to "record".
@@ -262,6 +299,18 @@ Layer creation options
 -  **PROFILE_VARIABLES**\ =string. Comma separated list of field names
    that must be indexed by the profile dimension. Only used when
    FEATURE_TYPE=PROFILE.
+
+The following option requires a dataset with GEOMETRY_ENCODING=CF_1.8:
+
+-  **BUFFER_SIZE**\ =int. The soft limit of the write buffer in bytes. Larger
+   values generally imply better performance, but values should be comfortably
+   less than that of available physical memory or else thrashing can occur.
+   By default, this value is set at 10% of usable physical memory (usable meaning
+   total physical RAM considering limitations of virtual address space size).
+   Buffer contents are committed between translating features, but not *during*
+   translating a feature, so this limit does not apply to a single feature. Minimum
+   acceptable size is 4096. If a value lower than this is specified the default will
+   be used.
 
 XML configuration file
 ----------------------
@@ -331,15 +380,6 @@ The following example shows all possibilities and precedence rules:
 The effect on the output can be checked by running the **ncdump**
 utility
 
-Limitation(s)
--------------
-Only one grid mapping may be associated with an entire dataset of netCDFLayers.
-Attempting use more than one grid mapping, will result in the last set grid mapping
-overwriting all others.
-
-Furthermore, CF-1.8 grid mappings are currently not supported. Support for CF-1.8 grid
-mappings will be introduced in the near future.
-
 Further Reading
 ---------------
 
@@ -358,5 +398,5 @@ Credits
 
 Development of the read/write vector capabilities for netCDF was funded
 by `Meteorological Service of
-Canada <https://www.ec.gc.ca/meteo-weather/>`__ and `World Ozone and
-Ultraviolet Radiation Data Centre <http://woudc.org>`__.
+Canada <https://www.ec.gc.ca/meteo-weather/>`__ , `World Ozone and
+Ultraviolet Radiation Data Centre <http://woudc.org>`__, and the `US Geological Survey <https://www.usgs.gov>`__.

@@ -146,7 +146,7 @@ public:
                     XLSXFieldTypeExtended() :
                         eType(OFTMaxType),
                         bHasMS(false) {}
-                    XLSXFieldTypeExtended(OGRFieldType eTypeIn,
+                    explicit XLSXFieldTypeExtended(OGRFieldType eTypeIn,
                                           bool bHasMSIn = false) :
                                     eType(eTypeIn), bHasMS(bHasMSIn) {}
 };

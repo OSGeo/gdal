@@ -73,12 +73,12 @@ namespace nccfdriver
     }
 
 
-    /* SGeometry 
+    /* SGeometry_Reader 
      * (implementations)
      *
      */
-    SGeometry::SGeometry(int ncId, int geoVarId)
-        : gc_varId(geoVarId), touple_order(0), current_vert_ind(0), cur_geometry_ind(0), cur_part_ind(0)
+    SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
+        : gc_varId(geoVarId), touple_order(0) 
     {
 
         char container_name[NC_MAX_NAME + 1];
@@ -418,70 +418,10 @@ namespace nccfdriver
         this->inst_dimLen = instance_dim_len;
         this->pt_buffer = std::unique_ptr<Point>(new Point(this->touple_order));
         this->gc_varId = geoVarId; 
-        this->current_vert_ind = 0;    
         this->ncid = ncId;
     }
 
-    Point& SGeometry::next_pt()
-    {
-        if(!this->has_next_pt())
-        {
-            throw SG_Exception_BadPoint();
-        }
-
-        // Fill pt
-        // New pt now
-        for(int order = 0; order < touple_order; order++)
-        {
-            Point& pt = *(this->pt_buffer);
-            double data;
-            size_t full_ind = bound_list[cur_geometry_ind] + current_vert_ind;
-
-            // Read a single coord
-            int err = nc_get_var1_double(ncid, nodec_varIds[order], &full_ind, &data);
-            // To do: optimize through multiple reads at once, instead of one datum
-
-            if(err != NC_NOERR)
-            {
-                throw SG_Exception_BadPoint();
-            }
-
-            pt[order] = data;
-        }    
-        
-        this->current_vert_ind++;
-        return *(this->pt_buffer);    
-    }
-
-    bool SGeometry::has_next_pt()
-    {
-        if(this->current_vert_ind < node_counts[cur_geometry_ind])
-        {
-            return true;
-        }
-    
-        else return false;
-    }
-
-    void SGeometry::next_geometry()
-    {
-        // to do: maybe implement except. and such on error conds.
-
-        this->cur_geometry_ind++;
-        this->cur_part_ind = 0;
-        this->current_vert_ind = 0;    
-    }
-
-    bool SGeometry::has_next_geometry()
-    {
-        if(this->cur_geometry_ind < node_counts.size())
-        {
-            return true;
-        }
-        else return false;
-    }
-
-    Point& SGeometry::operator[](size_t index)
+    Point& SGeometry_Reader::operator[](size_t index)
     {
         for(int order = 0; order < touple_order; order++)
         {
@@ -503,7 +443,7 @@ namespace nccfdriver
         return *(this->pt_buffer);
     }
 
-    size_t SGeometry::get_geometry_count()
+    size_t SGeometry_Reader::get_geometry_count()
     {
         if(type == POINT)
         {
@@ -537,12 +477,12 @@ namespace nccfdriver
         else return this->node_counts.size();
     }
 
-    /* serializeToWKB(SGeometry * sg)
+    /* serializeToWKB
      * Takes the geometry in SGeometry at a given index and converts it into WKB format.
      * Converting SGeometry into WKB automatically allocates the required buffer space
      * and returns a buffer that MUST be free'd
      */
-    unsigned char * SGeometry::serializeToWKB(size_t featureInd, int& wkbSize)
+    unsigned char * SGeometry_Reader::serializeToWKB(size_t featureInd, int& wkbSize)
     {        
         unsigned char * ret = nullptr;
         int nc = 0; size_t sb = 0;
@@ -745,7 +685,8 @@ namespace nccfdriver
                                 ir_base++;    
                             }
 
-                            if(rc_m == 1) ir_base++;    // single polygon case
+                            if(rc_m == 1)
+                                ir_base++;    // single ring case
 
                             std::vector<int> poly_parts;
 
@@ -762,6 +703,9 @@ namespace nccfdriver
                             {
                                 seek += poly_parts[itr_3];
                             }
+
+                            base += poly_parts.size();
+                            ir_base = base + 1;
                         }
                     }
                 }    
@@ -974,7 +918,7 @@ namespace nccfdriver
         return ret;
     }
 
-    void* inPlaceSerialize_Point(SGeometry * ge, size_t seek_pos, void * serializeBegin)
+    void* inPlaceSerialize_Point(SGeometry_Reader * ge, size_t seek_pos, void * serializeBegin)
     {
         uint8_t order = 1;
         uint32_t t = ge->get_axisCount() == 2 ? wkbPoint:
@@ -1001,7 +945,7 @@ namespace nccfdriver
         return serializeBegin;
     }
 
-    void* inPlaceSerialize_LineString(SGeometry * ge, int node_count, size_t seek_begin, void * serializeBegin)
+    void* inPlaceSerialize_LineString(SGeometry_Reader * ge, int node_count, size_t seek_begin, void * serializeBegin)
     {
         uint8_t order = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbLineString:
@@ -1033,7 +977,7 @@ namespace nccfdriver
         return serializeBegin;
     }
 
-    void* inPlaceSerialize_PolygonExtOnly(SGeometry * ge, int node_count, size_t seek_begin, void * serializeBegin)
+    void* inPlaceSerialize_PolygonExtOnly(SGeometry_Reader * ge, int node_count, size_t seek_begin, void * serializeBegin)
     {    
         int8_t header = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbPolygon:
@@ -1067,7 +1011,7 @@ namespace nccfdriver
         return writer;
     }
 
-    void* inPlaceSerialize_Polygon(SGeometry * ge, std::vector<int>& pnc, int ring_count, size_t seek_begin, void * serializeBegin)
+    void* inPlaceSerialize_Polygon(SGeometry_Reader * ge, std::vector<int>& pnc, int ring_count, size_t seek_begin, void * serializeBegin)
     {
             
         int8_t header = PLATFORM_HEADER;
@@ -1153,12 +1097,4 @@ namespace nccfdriver
 
         return 0 ;
     }
-
-    SGeometry* getGeometryRef(int ncid, const char * varName )
-    {
-        int varId = 0;
-        nc_inq_varid(ncid, varName, &varId);
-        return new SGeometry(ncid, varId);
-    }
-
 }

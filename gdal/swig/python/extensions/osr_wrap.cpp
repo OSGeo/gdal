@@ -3972,6 +3972,9 @@ SWIGINTERN OSRAreaOfUse *OSRSpatialReferenceShadow_GetAreaOfUse(OSRSpatialRefere
 SWIGINTERN char const *OSRSpatialReferenceShadow_GetAxisName(OSRSpatialReferenceShadow *self,char const *target_key,int iAxis){
     return OSRGetAxis( self, target_key, iAxis, NULL );
   }
+SWIGINTERN int OSRSpatialReferenceShadow_GetAxesCount(OSRSpatialReferenceShadow *self){
+    return OSRGetAxesCount(self);
+  }
 SWIGINTERN OGRAxisOrientation OSRSpatialReferenceShadow_GetAxisOrientation(OSRSpatialReferenceShadow *self,char const *target_key,int iAxis){
     OGRAxisOrientation orientation = OAO_Other;
     OSRGetAxis( self, target_key, iAxis, &orientation );
@@ -6885,6 +6888,42 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetAxisName(PyObject *SWIGUNUSEDPARM
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_GetAxesCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_GetAxesCount",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_GetAxesCount" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (int)OSRSpatialReferenceShadow_GetAxesCount(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -16945,6 +16984,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_GetAuthorityName", _wrap_SpatialReference_GetAuthorityName, METH_VARARGS, (char *)"SpatialReference_GetAuthorityName(SpatialReference self, char const * target_key) -> char const *"},
 	 { (char *)"SpatialReference_GetAreaOfUse", _wrap_SpatialReference_GetAreaOfUse, METH_VARARGS, (char *)"SpatialReference_GetAreaOfUse(SpatialReference self) -> AreaOfUse"},
 	 { (char *)"SpatialReference_GetAxisName", _wrap_SpatialReference_GetAxisName, METH_VARARGS, (char *)"SpatialReference_GetAxisName(SpatialReference self, char const * target_key, int iAxis) -> char const *"},
+	 { (char *)"SpatialReference_GetAxesCount", _wrap_SpatialReference_GetAxesCount, METH_VARARGS, (char *)"SpatialReference_GetAxesCount(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_GetAxisOrientation", _wrap_SpatialReference_GetAxisOrientation, METH_VARARGS, (char *)"SpatialReference_GetAxisOrientation(SpatialReference self, char const * target_key, int iAxis) -> OGRAxisOrientation"},
 	 { (char *)"SpatialReference_GetAxisMappingStrategy", _wrap_SpatialReference_GetAxisMappingStrategy, METH_VARARGS, (char *)"SpatialReference_GetAxisMappingStrategy(SpatialReference self) -> OSRAxisMappingStrategy"},
 	 { (char *)"SpatialReference_SetAxisMappingStrategy", _wrap_SpatialReference_SetAxisMappingStrategy, METH_VARARGS, (char *)"SpatialReference_SetAxisMappingStrategy(SpatialReference self, OSRAxisMappingStrategy strategy)"},

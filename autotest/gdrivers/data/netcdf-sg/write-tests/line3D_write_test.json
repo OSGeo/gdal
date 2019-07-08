@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "path",
+"features": [
+{ "type": "Feature", "properties": { "NAMES": "path1" }, "geometry": { "type": "LineString", "coordinates": [ [ 0.1, 0.2, 0.3 ], [99.0, -99.0, 0.0 ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "path2" }, "geometry": { "type": "LineString", "coordinates": [ [ 100.0, 101.0, 102.0 ], [ 25.0, 27.0, 29.0 ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "path3" }, "geometry": { "type": "LineString", "coordinates": [ [ 7.0, -11.0, -7.0 ], [ -11.0, 7, 11.0 ], [ -6.0, 1945.0, 1918.0] ] } }
+]
+}

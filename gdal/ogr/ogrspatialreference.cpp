@@ -8914,6 +8914,25 @@ int OGRSpatialReference::GetAxesCount() const
 }
 
 /************************************************************************/
+/*                           OSRGetAxesCount()                          */
+/************************************************************************/
+
+/**
+ * \brief Return the number of axis of the coordinate system of the CRS.
+ *
+ * This method is the equivalent of the C++ method OGRSpatialReference::GetAxesCount()
+ *
+ * @since GDAL 3.1
+ */
+int OSRGetAxesCount( OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRGetAxesCount", 0 );
+
+    return ToPointer(hSRS)->GetAxesCount();
+}
+
+/************************************************************************/
 /*                              GetAxis()                               */
 /************************************************************************/
 

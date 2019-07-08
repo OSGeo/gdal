@@ -85,7 +85,7 @@ class CPL_DLL GMLPropertyDefn
 
 public:
 
-        GMLPropertyDefn( const char *pszName, const char *pszSrcElement=nullptr );
+        explicit GMLPropertyDefn( const char *pszName, const char *pszSrcElement=nullptr );
        ~GMLPropertyDefn();
 
     const char *GetName() const { return m_pszName; }

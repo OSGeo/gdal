@@ -822,7 +822,7 @@ void GDALRegister_COG()
 "  </Option>"
 "   <Option name='TARGET_SRS' type='string' "
         "description='Target SRS as EPSG:XXXX, WKT or PROJ string for reprojection'/>"
-"  <Option name='RES' type='double' description='"
+"  <Option name='RES' type='float' description='"
         "Target resolution for reprojection'/>"
 "  <Option name='EXTENT' type='string' description='"
         "Target extent as minx,miny,maxx,maxy for reprojection'/>"

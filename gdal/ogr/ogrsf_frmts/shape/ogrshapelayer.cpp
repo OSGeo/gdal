@@ -2393,7 +2393,7 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 /* -------------------------------------------------------------------- */
 /*      Build a quadtree structure for this file.                       */
 /* -------------------------------------------------------------------- */
-    SyncToDisk();
+    OGRShapeLayer::SyncToDisk();
     SHPTree *psTree = SHPCreateTree( hSHP, 2, nMaxDepth, nullptr, nullptr );
 
     if( nullptr == psTree )

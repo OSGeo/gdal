@@ -651,7 +651,7 @@ void OGRLIBKMLDataSource::FlushCache()
 OGRLIBKMLDataSource::~OGRLIBKMLDataSource()
 {
     /***** sync the DS to disk *****/
-    FlushCache();
+    OGRLIBKMLDataSource::FlushCache();
 
     CPLFree( m_pszName );
 

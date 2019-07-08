@@ -49,7 +49,7 @@ OGRSOSILayer::OGRSOSILayer( OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn
     if( poFeatureDefn->GetGeomFieldCount() > 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poParent->poSRS);
 
-    ResetReading();
+    OGRSOSILayer::ResetReading();
 }
 
 /************************************************************************/

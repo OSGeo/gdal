@@ -55,7 +55,7 @@ OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS,
 {
 
     // Select layer and feature family.
-    ResetReading();
+    OGROGDILayer::ResetReading();
 
     BuildFeatureDefn();
 }

@@ -10,20 +10,24 @@ Download
        :depth: 3
        :backlinks: none
 
-Current Release(s)
+Current Releases
 ------------------------------------------------------------------------------
 
-* **2019-05-05** `gdal-3.0.0.tar.gz`_ `Release Notes`_ (`md5`_)
+* **2019-06-28** `gdal-3.0.1.tar.gz`_ `3.0.1 Release Notes`_ (`3.0.1 md5`_)
 
-.. _`Release Notes`: https://github.com/OSGeo/gdal/blob/v3.0.0/gdal/NEWS
-.. _`gdal-3.0.0.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.0.0/gdal-3.0.0.tar.gz
-.. _`md5`: https://github.com/OSGeo/gdal/releases/download/v3.0.0/gdal-3.0.0.tar.gz.md5
+.. _`3.0.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.0.1/gdal/NEWS
+.. _`gdal-3.0.1.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.0.1/gdal-3.0.1.tar.gz
+.. _`3.0.1 md5`: https://github.com/OSGeo/gdal/releases/download/v3.0.1/gdal-3.0.1.tar.gz.md5
 
 
 Past Releases
 ------------------------------------------------------------------------------
 
-TODO
+* **2019-06-28** `gdal-2.4.2.tar.gz`_ `2.4.2 Release Notes`_ (`2.4.2 md5`_)
+
+.. _`2.4.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.4.2/gdal/NEWS
+.. _`gdal-2.4.2.tar.gz`: https://download.osgeo.org/gdal/2.4.2/gdal-2.4.2.tar.gz
+.. _`2.4.2 md5`: https://download.osgeo.org/gdal/2.4.2/gdal-2.4.2.tar.gz.md5
 
 .. _source:
 
@@ -51,10 +55,9 @@ Windows
 ................................................................................
 
 Windows builds are available via `Conda Forge`_ (64-bit only). See the
-:ref:`conda` for more detailed information.
+:ref:`conda` section for more detailed information.
 
-
-
+.. _`Conda Forge`: https://anaconda.org/conda-forge/gdal
 
 
 Debian
@@ -64,18 +67,19 @@ Debian packages are now available on `Debian Unstable`_.
 
 .. _`Debian Unstable`: https://tracker.debian.org/pkg/gdal
 
-
-.. _`Conda Forge`: https://anaconda.org/conda-forge/gdal
-
 .. _conda:
 
 Conda
 ................................................................................
 
-`Conda`_ can be used on multiple platforms (Windows, macOS, and Linux) to
+`Conda <https://anaconda.org>`__ can be used on multiple platforms (Windows, macOS, and Linux) to
 install software packages and manage environments. Conda packages for GDAL are
 available at https://anaconda.org/conda-forge/gdal.
 
+Latest version: |Conda badge|
+
+.. |Conda badge| image:: https://anaconda.org/conda-forge/gdal/badges/version.svg
+    :target: https://anaconda.org/conda-forge/gdal
 
 ::
 

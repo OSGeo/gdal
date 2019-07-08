@@ -180,7 +180,7 @@ OGRGeoRSSLayer::OGRGeoRSSLayer( const char* pszFilename,
         }
     }
 
-    ResetReading();
+    OGRGeoRSSLayer::ResetReading();
 }
 
 /************************************************************************/
