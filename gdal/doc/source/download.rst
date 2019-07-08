@@ -76,10 +76,12 @@ Conda
 install software packages and manage environments. Conda packages for GDAL are
 available at https://anaconda.org/conda-forge/gdal.
 
-Latest version: |Conda badge|
+.. only:: html
 
-.. |Conda badge| image:: https://anaconda.org/conda-forge/gdal/badges/version.svg
-    :target: https://anaconda.org/conda-forge/gdal
+    Latest version: |Conda badge|
+
+    .. |Conda badge| image:: https://anaconda.org/conda-forge/gdal/badges/version.svg
+        :target: https://anaconda.org/conda-forge/gdal
 
 ::
 
