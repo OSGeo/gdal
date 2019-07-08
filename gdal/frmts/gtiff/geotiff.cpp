@@ -15588,6 +15588,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     if( bAppend )
     {
+        // This is a bit of a hack to cause (*tif->tif_cleanup)(tif); to be called.
+        // See https://trac.osgeo.org/gdal/ticket/2055
+        TIFFSetField( l_hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE );
+#if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20051201  // 3.8.0
+        TIFFFreeDirectory( l_hTIFF );
+#endif
         TIFFCreateDirectory( l_hTIFF );
     }
 
