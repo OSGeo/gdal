@@ -483,6 +483,7 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName
     if MemDriver is not None:
         tt_fh = Driver.CreateCopy(temp_tilename, t_fh, 0, CreateOptions)
         tt_fh.FlushCache()
+        tt_fh = None
 
     os.rename(temp_tilename, tileName)
 
@@ -556,6 +557,7 @@ def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_
     if MemDriver is not None:
         tt_fh = Driver.CreateCopy(temp_tilename, t_fh, 0, CreateOptions)
         tt_fh.FlushCache()
+        tt_fh = None
 
     os.rename(temp_tilename, tilename)
 
