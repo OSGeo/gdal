@@ -191,3 +191,9 @@ Create an Erdas Imagine format overviews for the indicated JPEG file:
 ::
 
     gdaladdo --config USE_RRD YES airphoto.jpg 3 9 27 81
+
+Create overviews for a specific subdataset, like for example one of potentially many raster layers in a GeoPackage (the "filename" parameter must be driver prefix, filename and subdataset name, like e.g. shown by gdalinfo):
+
+::
+
+    gdaladdo GPKG:file.gpkg:layer
