@@ -454,7 +454,7 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName
     if MemDriver is None:
         t_fh = Driver.Create(temp_tilename, width, height, bands, bt, CreateOptions)
     else:
-        t_fh = MemDriver.Create(temp_tilename, width, height, bands, bt)
+        t_fh = MemDriver.Create('', width, height, bands, bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
@@ -481,10 +481,14 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName
 
     levelMosaicInfo.closeDataSet(s_fh)
 
-    if MemDriver is not None:
+    if MemDriver is None:
+        t_fh.FlushCache()
+    else:
         tt_fh = Driver.CreateCopy(temp_tilename, t_fh, 0, CreateOptions)
         tt_fh.FlushCache()
         tt_fh = None
+
+    t_fh = None
 
     if os.path.exists(tileName):
         os.remove(tileName)
@@ -531,7 +535,7 @@ def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_
     if MemDriver is None:
         t_fh = Driver.Create(temp_tilename, width, height, bands, bt, CreateOptions)
     else:
-        t_fh = MemDriver.Create(temp_tilename, width, height, bands, bt)
+        t_fh = MemDriver.Create('', width, height, bands, bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
@@ -557,10 +561,14 @@ def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_
 
     minfo.closeDataSet(s_fh)
 
-    if MemDriver is not None:
+    if MemDriver is None:
+        t_fh.FlushCache()
+    else:
         tt_fh = Driver.CreateCopy(temp_tilename, t_fh, 0, CreateOptions)
         tt_fh.FlushCache()
         tt_fh = None
+
+    t_fh = None
 
     if os.path.exists(tilename):
         os.remove(tilename)
