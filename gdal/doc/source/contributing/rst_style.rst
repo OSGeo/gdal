@@ -188,11 +188,34 @@ In this example, the image file exists in the same directory as the source page.
 External files
 --------------
 
-Text snippets, large blocks of downloadable code, and even zip files or other binary sources can all be included as part of the documentation.  To include files as part of the build process, use the following syntax::
+Text snippets, large blocks of downloadable code, and even zip files or other binary sources can all be included as part of the documentation.
 
-   :download:`An external file <readme.txt>`
+To include link to sample file, use the ``download`` directive::
 
-The result of this code will generate a standard link to an :download:`external file <readme.txt>`
+   :download:`An external file <example.txt>`
+
+The result of this code will generate a standard link to an :download:`external file <example.txt>`
+
+To include a the contents of a file, use ``literalinclude`` directive::
+
+   Example of :command:`gdalinfo` use:
+   
+   .. literalinclude:: example.txt
+
+Example of :command:`gdalinfo` use:
+   
+.. literalinclude:: example.txt
+
+The ``literalinclude`` directive has options for syntax highlighting, line numbers and extracting just a snippet::
+
+   Example of :command:`gdalinfo` use:
+   
+   .. literalinclude:: example.txt
+      :language: txt
+      :linenos:
+      :emphasize-lines: 2-6
+      :start-after: Coordinate System is:
+      :end-before: Origin =
 
 Reference files and paths
 -------------------------
