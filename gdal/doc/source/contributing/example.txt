@@ -1,0 +1,25 @@
+Driver: GTiff/GeoTIFF
+Size is 512, 512
+Coordinate System is:
+PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.978698213901]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]
+Origin = (440720.000000,3751320.000000)
+Pixel Size = (60.000000,-60.000000)
+Corner Coordinates:
+Upper Left  (  440720.000, 3751320.000) (117d38'28.21"W, 33d54'8.47"N)
+Lower Left  (  440720.000, 3720600.000) (117d38'20.79"W, 33d37'31.04"N)
+Upper Right (  471440.000, 3751320.000) (117d18'32.07"W, 33d54'13.08"N)
+Lower Right (  471440.000, 3720600.000) (117d18'28.50"W, 33d37'35.61"N)
+Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
+Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
