@@ -31,6 +31,7 @@
 
 import os
 import sys
+import shutil
 
 from osgeo import gdal
 from osgeo import ogr
@@ -485,7 +486,9 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName
         tt_fh.FlushCache()
         tt_fh = None
 
-    os.rename(temp_tilename, tileName)
+    if os.path.exists(tileName):
+        os.remove(tileName)
+    shutil.move(temp_tilename, tileName)
 
     if Verbose:
         print(tileName + " : " + str(offsetX) + "|" + str(offsetY) + "-->" + str(width) + "-" + str(height))
@@ -559,7 +562,9 @@ def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_
         tt_fh.FlushCache()
         tt_fh = None
 
-    os.rename(temp_tilename, tilename)
+    if os.path.exists(tilename):
+        os.remove(tilename)
+    shutil.move(temp_tilename, tilename)
 
     if Verbose:
         print(tilename + " : " + str(offsetX) + "|" + str(offsetY) + "-->" + str(width) + "-" + str(height))
