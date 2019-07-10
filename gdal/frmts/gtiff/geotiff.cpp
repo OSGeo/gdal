@@ -4960,10 +4960,6 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    CPLAssert( m_poGDS != nullptr
-               && nBlockXOff >= 0
-               && nBlockYOff >= 0
-               && pImage != nullptr );
     CPLAssert(nBlocksPerRow != 0);
 
 /* -------------------------------------------------------------------- */
@@ -6546,11 +6542,6 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         // correctly.
         return CE_Failure;
     }
-
-    CPLAssert( m_poGDS != nullptr
-               && nBlockXOff >= 0
-               && nBlockYOff >= 0
-               && pImage != nullptr );
 
     if( eDataType == GDT_Float32 && m_poGDS->m_nBitsPerSample != 16 )
     {
@@ -9308,7 +9299,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             CPLFree(sJob.pabyBuffer);
             VSIUnlink(sJob.pszTmpFilename);
             CPLFree(sJob.pszTmpFilename);
-            return true;
+            return sJob.nCompressedBufferSize > 0 && !m_bWriteError;
         }
 
         return false;
@@ -12575,6 +12566,13 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                      "but those have been, at least partly, invalidated by "
                      "later changes");
         }
+        else if( poDS->m_bLayoutIFDSBeforeData &&
+                 poDS->m_bBlockOrderRowMajor &&
+                 poDS->m_bLeaderSizeAsUInt4 &&
+                 poDS->m_bTrailerRepeatedLast4BytesRepeated )
+        {
+            poDS->m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG", "IMAGE_STRUCTURE");
+        }
     }
 
     // In the case of GDAL_DISABLE_READDIR_ON_OPEN = NO / EMPTY_DIR
@@ -15666,6 +15664,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     if( bAppend )
     {
+        // This is a bit of a hack to cause (*tif->tif_cleanup)(tif); to be called.
+        // See https://trac.osgeo.org/gdal/ticket/2055
+        TIFFSetField( l_hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE );
+        TIFFFreeDirectory( l_hTIFF );
         TIFFCreateDirectory( l_hTIFF );
     }
 

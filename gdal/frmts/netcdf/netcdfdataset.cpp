@@ -2173,7 +2173,7 @@ netCDFDataset::~netCDFDataset()
         AddProjectionVars( false, nullptr, nullptr );
     }
 
-    FlushCache();
+    netCDFDataset::FlushCache();
     SGCommitPendingTransaction();
 
     for(int i = 0; i < nLayers; i++)
@@ -4466,7 +4466,7 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
     }
 
     // Check GEOLOCATION information.
-    char **papszGeolocationInfo = GetMetadata("GEOLOCATION");
+    char **papszGeolocationInfo = netCDFDataset::GetMetadata("GEOLOCATION");
     if( papszGeolocationInfo != nullptr )
     {
         // Look for geolocation datasets.
@@ -5035,7 +5035,7 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             dfDY = adfGeoTransform[5];
 
             // Override lat values with the ones in GEOLOCATION/Y_VALUES.
-            if( GetMetadataItem("Y_VALUES", "GEOLOCATION") != nullptr )
+            if( netCDFDataset::GetMetadataItem("Y_VALUES", "GEOLOCATION") != nullptr )
             {
                 int nTemp = 0;
                 padLatVal = Get1DGeolocation("Y_VALUES", nTemp);

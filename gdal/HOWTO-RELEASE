@@ -124,7 +124,7 @@ or your message manually approved, with an administrator of the list.
 
 15) Update the freegis.org entry for GDAL.
 
-16) Update doc/index.dox to advertize the new release and link to the release notes
+16) Update doc/source/about_no_title.rst and doc/source/download.rst to advertize the new release and link to the release notes
 
 17) Create a News page in Trac for the release (like
 http://trac.osgeo.org/gdal/wiki/Release/1.7.0-News) and reference it from

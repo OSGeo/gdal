@@ -288,7 +288,7 @@ public:
 class TigerPoint : public TigerFileBase
 {
  protected:
-                      TigerPoint(int bRequireGeom,
+                      explicit TigerPoint(int bRequireGeom,
                                  const TigerRecordInfo *psRTInfoIn = nullptr,
                                  const char            *m_pszFileCodeIn = nullptr);
 

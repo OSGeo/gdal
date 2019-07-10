@@ -73,6 +73,7 @@ def test_cog_basic():
     ds = None
     ds = gdal.Open(filename)
     assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetMetadataItem('LAYOUT', 'IMAGE_STRUCTURE') == 'COG'
     assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') is None
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetRasterBand(1).GetBlockSize() == [512, 512]
@@ -118,6 +119,21 @@ def test_cog_creation_options():
                                                 options = ['COMPRESS=DEFLATE',
                                                            'LEVEL=9'])
     assert gdal.VSIStatL(filename).size < filesize
+
+    colist = gdal.GetDriverByName('COG').GetMetadataItem('DMD_CREATIONOPTIONLIST')
+    if '<Value>ZSTD' in colist:
+
+        gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                    options = ['COMPRESS=ZSTD'])
+        ds = gdal.Open(filename)
+        assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'ZSTD'
+        ds = None
+
+    if '<Value>WEBP' in colist:
+
+        with gdaltest.error_handler():
+            assert not gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                    options = ['COMPRESS=WEBP'])
 
     src_ds = None
     gdal.GetDriverByName('GTiff').Delete(filename)
@@ -480,3 +496,35 @@ def test_cog_overviews_co():
     src_ds = None
     gdal.GetDriverByName('GTiff').Delete(filename)
     gdal.Unlink(directory)
+
+###############################################################################
+# Test editing and invalidating a COG file
+
+
+def test_cog_invalidation():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100)
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                options = ['COMPRESS=DEFLATE'])
+    ds = None
+
+    ds = gdal.Open(filename, gdal.GA_Update)
+    assert ds.GetMetadataItem('LAYOUT', 'IMAGE_STRUCTURE') == 'COG'
+    src_ds = gdal.Open('data/byte.tif')
+    data = src_ds.ReadRaster()
+    ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, data)
+    with gdaltest.error_handler():
+        ds.FlushCache()
+    ds = None
+
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('LAYOUT', 'IMAGE_STRUCTURE') is None
+    ds = None
+
+    with pytest.raises(AssertionError, match='KNOWN_INCOMPATIBLE_EDITION=YES is declared in the file'):
+        _check_cog(filename)
+
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('GTiff').Delete(filename)

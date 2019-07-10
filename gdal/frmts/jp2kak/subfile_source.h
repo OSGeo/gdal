@@ -58,7 +58,7 @@ class subfile_source : public kdu_compressed_source {
         file(nullptr)
     {}
 
-    ~subfile_source() override { close(); }
+    ~subfile_source() override { subfile_source::close(); }
 
     bool exists() const { return (file != nullptr); }
 

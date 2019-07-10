@@ -76,7 +76,7 @@ OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDSIn )
             m_poBlock = nullptr;
     }
 
-    ResetReading();
+    OGRDWGLayer::ResetReading();
 }
 
 /************************************************************************/

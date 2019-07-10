@@ -192,7 +192,7 @@ CPL_UNUSED
 GMLReader::~GMLReader()
 
 {
-    ClearClasses();
+    GMLReader::ClearClasses();
 
     CPLFree(m_pszFilename);
 

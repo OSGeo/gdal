@@ -585,6 +585,8 @@ def test_osr_basic_20():
     sr = osr.SpatialReference()
     sr.ImportFromEPSGA(4326)
 
+    assert sr.GetAxesCount() == 2
+
     assert sr.GetAxisName(None, 0) == 'Geodetic latitude'
 
     assert sr.GetAxisOrientation(None, 0) == osr.OAO_North

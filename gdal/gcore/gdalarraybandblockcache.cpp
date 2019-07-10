@@ -106,7 +106,7 @@ GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand* poBandIn) :
 
 GDALArrayBandBlockCache::~GDALArrayBandBlockCache()
 {
-    FlushCache();
+    GDALArrayBandBlockCache::FlushCache();
 
     if( !bSubBlockingActive )
         CPLFree( u.papoBlocks );

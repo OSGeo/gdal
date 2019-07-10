@@ -1112,11 +1112,11 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
 
 OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 {
-    SyncToDisk();
+    OGRGeoPackageTableLayer::SyncToDisk();
 
     if( m_bDropRTreeTable )
     {
-        ResetReading();
+        OGRGeoPackageTableLayer::ResetReading();
 
         char* pszSQL =
             sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());

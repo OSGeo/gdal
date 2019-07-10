@@ -3691,7 +3691,7 @@ GDALClientDataset::GDALClientDataset(GDALPipe* pIn)
 
 GDALClientDataset::~GDALClientDataset()
 {
-    FlushCache();
+    GDALClientDataset::FlushCache();
 
     ProcessAsyncProgress();
 

@@ -39,7 +39,7 @@ OGRDWGBlocksLayer::OGRDWGBlocksLayer( OGRDWGDataSource *poDSIn ) :
     poDS(poDSIn),
     poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
-    ResetReading();
+    OGRDWGBlocksLayer::ResetReading();
 
     poFeatureDefn->Reference();
 

@@ -72,7 +72,7 @@ GeoRasterDataset::GeoRasterDataset()
 
 GeoRasterDataset::~GeoRasterDataset()
 {
-    FlushCache();
+    GeoRasterDataset::FlushCache();
 
     poGeoRaster->FlushMetadata();
 

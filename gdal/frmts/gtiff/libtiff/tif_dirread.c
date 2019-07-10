@@ -5717,7 +5717,7 @@ TIFFFetchSubjectDistance(TIFF* tif, TIFFDirEntry* dir)
 			TIFFSwabArrayOfLong(m.i,2);
 		if (m.i[0]==0)
 			n=0.0;
-		else if (m.i[0]==0xFFFFFFFF)
+		else if (m.i[0]==0xFFFFFFFF || m.i[1]==0)
 			/*
 			 * XXX: Numerator 0xFFFFFFFF means that we have infinite
 			 * distance. Indicate that with a negative floating point

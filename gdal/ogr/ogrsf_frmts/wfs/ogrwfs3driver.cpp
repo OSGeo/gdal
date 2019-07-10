@@ -533,7 +533,7 @@ OGRWFS3Layer::OGRWFS3Layer(OGRWFS3Dataset* poDS,
     if( nPos != std::string::npos )
         m_osPath = osURL.substr(nPos);
 
-    ResetReading();
+    OGRWFS3Layer::ResetReading();
 }
 
 /************************************************************************/

@@ -638,6 +638,7 @@ int    CPL_DLL OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS );
 const char CPL_DLL *OSRGetAxis( OGRSpatialReferenceH hSRS,
                                 const char *pszTargetKey, int iAxis,
                                 OGRAxisOrientation *peOrientation );
+int    CPL_DLL OSRGetAxesCount( OGRSpatialReferenceH hSRS );
 OGRErr CPL_DLL OSRSetAxes( OGRSpatialReferenceH hSRS,
                            const char *pszTargetKey,
                            const char *pszXAxisName,

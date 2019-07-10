@@ -44,14 +44,14 @@ using namespace PCIDSK;
 /* ==================================================================== */
 /************************************************************************/
 
-class PCIDSK_EDBFile : public EDBFile
+class PCIDSK_EDBFile final : public EDBFile
 {
     mutable PCIDSKFile *file;
     
 public:
 
     explicit PCIDSK_EDBFile( PCIDSKFile *file_in ) { file = file_in; }
-    ~PCIDSK_EDBFile() { Close(); }
+    ~PCIDSK_EDBFile() { PCIDSK_EDBFile::Close(); }
 
     int Close() const override;
     int GetWidth() const override;
