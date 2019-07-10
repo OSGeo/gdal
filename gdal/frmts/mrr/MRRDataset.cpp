@@ -296,10 +296,10 @@ GDALDataset *MRRDataset::OpenMRR(GDALOpenInfo * poOpenInfo)
 	//      Create a corresponding GDALDataset.                             //
 	// -------------------------------------------------------------------- //
 
-	uint32_t nDSHandle, nInfoHandle;
+	uint32_t nDSHandle = MIRInvalidHandle, nInfoHandle = MIRInvalidHandle;
 	{
 		wchar_t *pwszFilename = CPLRecodeToWChar(poOpenInfo->pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2);
-		if (SDKDynamicImpl::Get().OpenRaster_ReadOnly()(pwszFilename, nDSHandle, MIR_RasterSupportMode::MIR_Support_Full, InvalidTracker) != MIRSuccess)
+		if (SDKDynamicImpl::Get().OpenRaster_ReadOnly()(pwszFilename, nDSHandle, MIR_RasterSupportMode::MIR_Support_Full,MIR_FieldType::MIR_FIELD_Default,InvalidTracker) != MIRSuccess)
 		{
 			CPLError(CE_Failure, CPLE_OpenFailed, "MapInfo MRR driver is unable to open the file.\n");
 			CPLFree(pwszFilename);
