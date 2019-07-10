@@ -831,6 +831,32 @@ OJPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc)
 	{
 		if (sp->subsampling_convert_state==0)
 		{
+			const jpeg_decompress_struct* cinfo = &sp->libjpeg_jpeg_decompress_struct;
+			int width = 0;
+			int last_col_width = 0;
+			int jpeg_bytes;
+			int expected_bytes;
+			int i;
+			if (cinfo->MCUs_per_row == 0)
+				return 0;
+			for (i = 0; i < cinfo->comps_in_scan; ++i)
+			{
+				const jpeg_component_info* info = cinfo->cur_comp_info[i];
+#if JPEG_LIB_VERSION >= 70
+				width += info->MCU_width * info->DCT_h_scaled_size;
+				last_col_width += info->last_col_width * info->DCT_h_scaled_size;
+#else
+				width += info->MCU_width * info->DCT_scaled_size;
+				last_col_width += info->last_col_width * info->DCT_scaled_size;
+#endif
+			}
+			jpeg_bytes = (cinfo->MCUs_per_row - 1) * width + last_col_width;
+			expected_bytes = sp->subsampling_convert_clinelenout * sp->subsampling_ver * sp->subsampling_hor;
+			if (jpeg_bytes != expected_bytes)
+			{
+				TIFFErrorExt(tif->tif_clientdata,module,"Inconsistent number of MCU in codestream");
+				return(0);
+			}
 			if (jpeg_read_raw_data_encap(sp,&(sp->libjpeg_jpeg_decompress_struct),sp->subsampling_convert_ycbcrimage,sp->subsampling_ver*8)==0)
 				return(0);
 		}

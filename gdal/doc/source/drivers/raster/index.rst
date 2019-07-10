@@ -137,6 +137,7 @@ Raster drivers
    rasterlite2
    r
    rda
+   rdb
    rik
    rmf
    roi_pac
