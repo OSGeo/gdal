@@ -1,7 +1,7 @@
 /******************************************************************************************************************************
 	MapInfo Professional MRR Raster API
 
-	Copyright © 1985-2016,Pitney Bowes Software Inc.
+	Copyright ï¿½ 1985-2016,Pitney Bowes Software Inc.
 	All rights reserved.
 	Confidential Property of Pitney Bowes Software
 	
@@ -210,7 +210,7 @@ CPLErr MIRReadBlock(const uint32_t& nItHandle, const uint32_t& nBand, const int6
 	uint8_t *pszRecord = nullptr;
 	uint8_t *pszValid = nullptr;
 
-	if (SDKDynamicImpl::Get().RBIGetBlock()(nItHandle, nBand, nCellX, nCellY, nBlockXSize, nBlockYSize, &pszRecord, &pszValid, nDataType) == MIRSuccess)
+	if (SDKDynamicImpl::Get().RBIGetBlock()(nItHandle, nBand, nCellX, nCellY, nBlockXSize, nBlockYSize, &pszRecord, &pszValid, nDataType, true) == MIRSuccess)
 	{
 		FilterDataArray(nBlockXSize, nBlockYSize, pszRecord, pszValid, nDataType, dNoDataValue);
 
