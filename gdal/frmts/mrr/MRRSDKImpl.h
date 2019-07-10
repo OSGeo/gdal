@@ -29,42 +29,40 @@ private:
 	//If any change happens in the signature of these API's we need to reflect that here
 	//Resource management
 	typedef MIRResult(*pReleaseStatistics)			(SMIR_Statistics** ppStats);
-	typedef MIRResult(*pReleaseData)				(unsigned char** ppData);
-	typedef MIRResult(*pReleaseRasterInfo)			(unsigned int nInfoHandle);
+	typedef MIRResult(*pReleaseData)				(uint8_t** ppData);
+	typedef MIRResult(*pReleaseRasterInfo)			(uint32_t nInfoHandle);
 
 	//	Dataset access
-	typedef MIRResult(*pVerifyRaster)				(const wchar_t* pwsFileURL);
-	typedef MIRResult(*pOpenRaster_ReadOnly)		(const wchar_t* pwsFileURL, unsigned int& nDatasetHandle, MIR_RasterSupportMode eRasterSupportMode, unsigned int nProgressTrackerHandle);
-	typedef MIRResult(*pGetStatistics)				(unsigned int nDatasetHandle, unsigned int nField, unsigned int nBand, int nResolution, SMIR_Statistics** ppStats,
-		MIR_StatisticsMode nMode, bool bRecalculate_if_invalid, uint32_t nBinCount, uint32_t nProgressTrackerHandle);
-	typedef MIRResult(*pComputeStatistics)			(unsigned int nDatasetHandle, unsigned int nField, unsigned int nBand, int nResolution, time_t nFirstTime,
-		time_t nLastTime, SMIR_Statistics** ppStats, MIR_StatisticsMode nMode, uint32_t nBinCount, uint32_t nProgressTrackerHandle);
-	typedef MIRResult(*pCloseRaster)				(unsigned int nDatasetHandle, SMIR_FinalisationOptions* cFinalise, unsigned int nProgressTrackerHandle);
-
+	typedef MIRResult(*pVerifyRaster)				(const wchar_t* pwsFilePath);
+	typedef MIRResult(*pOpenRaster_ReadOnly)		(const wchar_t* pwsFilePath, uint32_t& nRasterHandle, MIR_RasterSupportMode eRasterSupportMode,	MIR_FieldType eMountAsFieldType, uint32_t nProgressTrackerHandle);				
+	typedef MIRResult(*pGetStatistics)				(uint32_t nRasterHandle,uint32_t nField,uint32_t nBand,int32_t nResolution,SMIR_Statistics** ppStats,
+													MIR_StatisticsMode nMode, bool bRecalculate_if_invalid, uint32_t nBinCount, uint32_t nProgressTrackerHandle);
+	typedef MIRResult(*pComputeStatistics)			(uint32_t nRasterHandle,uint32_t nField,uint32_t nBand,int32_t nResolution,time_t nFirstTime,time_t nLastTime,
+													 SMIR_Statistics** ppStats,MIR_StatisticsMode nMode,uint32_t nBinCount, uint32_t nProgressTrackerHandle);
+	typedef MIRResult(*pCloseRaster)				(uint32_t nRasterHandle,SMIR_FinalisationOptions* pFinalise, uint32_t nProgressTrackerHandle);
 	//Iterator
-	typedef MIRResult(*pRBIBeginRead)				(uint32_t nRasterHandle, uint32_t& nItHandle, uint32_t nField, time_t nStartTime, time_t nEndTime, int32_t nResolution, bool bGridCellCoords);
+	typedef MIRResult(*pRBIBeginRead)				(uint32_t nRasterHandle,uint32_t& nItHandle,uint32_t nField,time_t nStartTime,time_t nEndTime,int32_t nResolution,bool bGridCellCoords);
 	typedef MIRResult(*pRBIEnd)						(uint32_t nItHandle);
-	typedef MIRResult(*pRBIGetBlock)				(uint32_t nItHandle, uint32_t nBand, int64_t nCellX, int64_t nCellY, uint32_t nWidth, uint32_t nHeight, uint8_t** ppDataArray, uint8_t** ppValidArray, MIR_DataType nDataType);
+	typedef MIRResult(*pRBIGetBlock)				(uint32_t nItHandle,uint32_t nBand,int64_t nCellX,int64_t nCellY,uint32_t nWidth,uint32_t nHeight, uint8_t** ppDataArray, uint8_t** ppValidArray, MIR_DataType nDataType, bool bUnloadTiles);
 
 	//Dataset field information
-	typedef MIRResult(*pGetCellSize)				(unsigned int nDatasetHandle, unsigned int nField, int nResolution, double& dXCell, double& dYCell);
-	typedef MIRResult(*pGetOpenInfo)				(unsigned int nDatasetHandle, unsigned int& nInfoHandle, unsigned int nProgressTrackerHandle);
+	typedef MIRResult(*pGetCellSize)				(uint32_t nRasterHandle, uint32_t nField, int32_t nResolution, double& dCellX, double& dCellY);
+	typedef MIRResult(*pGetOpenInfo)				(uint32_t nRasterHandle, uint32_t& nInfoHandle, uint32_t nProgressTrackerHandle);
 
 	//	Acquire raster info data for get/set
-	typedef MIRResult(*pRasterInfo)					(unsigned int nInfoHandle, SMIR_RasterInfo** ppRasterInfo);
-	typedef MIRResult(*pFieldInfo)					(unsigned int nInfoHandle, unsigned int nField, SMIR_FieldInfo** ppFieldInfo);
-	typedef unsigned int(*pInfoBandCount)			(unsigned int nInfoHandle, unsigned int nField);
-	typedef MIRResult(*pBandInfo)					(unsigned int nInfoHandle, unsigned int nField, unsigned int nBand, SMIR_BandInfo** ppBandInfo);
-	typedef unsigned int(*pInfoLevelCount)			(unsigned int nInfoHandle, unsigned int nField, unsigned int nEvent);
-	typedef MIRResult(*pLevelInfo)					(unsigned int nInfoHandle, unsigned int nField, unsigned int nEvent, unsigned int nLevel, SMIR_LevelInfo** ppLevelInfo);
+	typedef MIRResult(*pRasterInfo)					(uint32_t nInfoHandle, SMIR_RasterInfo** ppRasterInfo);
+	typedef MIRResult(*pFieldInfo)					(uint32_t nInfoHandle, uint32_t nField, SMIR_FieldInfo** ppFieldInfo);
+	typedef unsigned int(*pInfoBandCount)			(uint32_t nInfoHandle, uint32_t nField);
+	typedef MIRResult(*pBandInfo)					(uint32_t nInfoHandle, uint32_t nField, uint32_t nBand, SMIR_BandInfo** ppBandInfo);
+	typedef unsigned int(*pInfoLevelCount)			(uint32_t nInfoHandle,uint32_t nField, uint32_t nEvent);
+	typedef MIRResult(*pLevelInfo)					(uint32_t nInfoHandle,uint32_t nField, uint32_t nEvent, uint32_t nLevel, SMIR_LevelInfo** ppLevelInfo);
 
-	typedef MIRResult(*pSetCacheSize)				(uint64_t nMegabytes);
+	typedef MIRResult(*pSetCacheSize)				(uint64_t nCacheSizeMB);
 	typedef int(*pDataTypeSize_InBytes)				(MIR_DataType nDataType);
-	typedef MIRResult(*pPopulateCellBlock)			(unsigned int nDatasetHandle, unsigned char** ppData, unsigned char** ppValid,
-		int nDestDataType, int64_t nCol, int64_t nRow, uint64_t nCols,
-		uint64_t nRows, uint64_t nDestCols, uint64_t nDestRows,
-		unsigned int nField, unsigned int nBand, MIR_InterpolationMethod nInterpolationMethod,
-		time_t nFirstTime, time_t nLastTime);
+	typedef MIRResult(*pPopulateCellBlock)			(uint32_t nRasterHandle,uint8_t** ppData,uint8_t** ppValid,MIR_DataType nDestDataType,
+													 int64_t nCol,int64_t nRow,uint64_t nCols,uint64_t nRows,uint64_t nDestCols,uint64_t nDestRows,
+													 uint32_t nField, uint32_t nBand, MIR_InterpolationMethod nInterpolationMethod,
+													 time_t nFirstTime, time_t nLastTime);
 	typedef int32_t(*pDataTypeSizeInBytes)			(MIR_DataType nDataType);
 
 	typedef MIRResult(*pClassTableGetRecordCount)	(uint32_t nRasterHandle, uint32_t nField, uint32_t& nRecordCount);
