@@ -15701,8 +15701,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             if( l_nBitsPerSample != 16 && l_nBitsPerSample != 32 )
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
-                     "NBITS is not supported for data type %s",
-                     GDALGetDataTypeName(eType));
+                     "Only NBITS=16 is supported for data type Float32");
                 l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
             }
         }
