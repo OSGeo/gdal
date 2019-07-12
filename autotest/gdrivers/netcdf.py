@@ -4407,5 +4407,5 @@ def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
     # Not actually a test, just cleans up tmp...
-    # gdaltest.clean_tmp()
+    gdaltest.clean_tmp()
     pytest.skip()
