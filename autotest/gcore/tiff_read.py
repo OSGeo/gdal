@@ -3094,8 +3094,8 @@ def test_tiff_read_overview_of_external_mask():
 def test_tiff_read_ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero():
 
     ds = gdal.Open('data/ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero.tif')
-    assert ds.GetRasterBand(1).GetScale() == 1
-    assert ds.GetRasterBand(1).GetOffset() == 0
+    assert not ds.GetRasterBand(1).GetScale()
+    assert not ds.GetRasterBand(1).GetOffset()
 
 
 ###############################################################################

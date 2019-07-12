@@ -2615,8 +2615,8 @@ def test_tiff_write_80():
     ds = gdal.Open('tmp/tiff_write_80.tif')
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
-    assert scale == 1 and offset == 0, \
-        'did not get expected values in internal case (2)'
+    assert not scale
+    assert not offset
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_80.tif')
@@ -2656,7 +2656,8 @@ def test_tiff_write_80():
     ds = gdal.Open('tmp/tiff_write_80_bis.tif')
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
-    assert scale == 1 and offset == 0, 'did not get expected values in PAM case (2)'
+    assert not scale
+    assert not offset
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_80_bis.tif')
