@@ -32,6 +32,7 @@
 
 #include <cfloat>
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "cpl_string.h"
@@ -838,6 +839,7 @@ class netCDFDataset final: public GDALPamDataset
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
     nccfdriver::OGR_SGeometry_Scribe GeometryScribe;
+    std::map<OGRSpatialReference, std::string> m_srsMap;
 
     /* projection/GT */
     double       adfGeoTransform[6];
@@ -1044,6 +1046,7 @@ class netCDFLayer final: public OGRLayer
         bool            m_bProfileVarUnlimited;
         int             m_nParentIndexVarID;
         std::shared_ptr<nccfdriver::SGeometry_Reader>       m_simpleGeometryReader;
+        std::string     m_sgCRSname;
         size_t          m_SGeometryFeatInd;
 
         const netCDFWriterConfigLayer* m_poLayerConfig;
@@ -1102,6 +1105,8 @@ void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
                                       OGRSpatialReference* poSRS);
 int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
                                 char** ppszCFProjection, bool bWriteGDALTags);
+int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
+                                char **ppszCFProjection, bool bWriteGDALTags, std::string& srsVarName);
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
                     double *pdfValue );
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,

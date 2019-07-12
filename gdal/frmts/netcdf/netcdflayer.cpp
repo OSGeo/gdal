@@ -496,8 +496,9 @@ bool netCDFLayer::Create(char **papszOptions,
     if( poSRS != nullptr )
     {
         char *pszCFProjection = nullptr;
+        m_sgCRSname = std::string(this->GetName()) + std::string("_crs");
         int nSRSVarId = NCDFWriteSRSVariable(
-            m_nLayerCDFId, poSRS, &pszCFProjection, m_bWriteGDALTags);
+            m_nLayerCDFId, poSRS, &pszCFProjection, m_bWriteGDALTags, m_sgCRSname);
         if( nSRSVarId < 0 )
             return false;
         if( pszCFProjection != nullptr )
@@ -593,7 +594,7 @@ bool netCDFLayer::Create(char **papszOptions,
             // Write the grid mapping, if it exists:
             if (poSRS != nullptr)
             {
-                status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_osGridMapping), m_osGridMapping);
+                status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_sgCRSname.c_str()), m_sgCRSname.c_str());
                 NCDF_ERR(status);
                 if(status != NC_NOERR)
                 {
