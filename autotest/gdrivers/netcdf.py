@@ -4154,9 +4154,9 @@ def test_multipolygon3D_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipolygon3D_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multipolygon3D_write_test.nc4", src, format="netCDF");
 
-    nc_tsrc = ogr.Open("tmp/multipolygon3D_write_test.nc")
+    nc_tsrc = ogr.Open("tmp/multipolygon3D_write_test.nc4")
     assert(src is not None)
 
     # Test layer properties
