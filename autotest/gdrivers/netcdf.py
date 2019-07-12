@@ -4331,9 +4331,9 @@ def test_multipolygon_with_no_ir_NC4_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipolygon_no_ir_write_test.nc", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4']);
+    gdal.VectorTranslate("tmp/multipolygon_no_ir_write_test.nc4", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4']);
 
-    nc_tsrc = ogr.Open("tmp/multipolygon_no_ir_write_test.nc")
+    nc_tsrc = ogr.Open("tmp/multipolygon_no_ir_write_test.nc4")
     assert(src is not None)
 
     # Test layer properties
@@ -4360,5 +4360,5 @@ def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
     # Not actually a test, just cleans up tmp...
-    gdaltest.clean_tmp()
+    # gdaltest.clean_tmp()
     pytest.skip()

@@ -509,6 +509,7 @@ namespace nccfdriver
 
         this->containerVarName = std::string(container_name);
 
+
         err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
@@ -523,7 +524,6 @@ namespace nccfdriver
             throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varName");
         }
 
-
         // Make dimensions for each of these
         err_code = nc_def_dim(ncID_in, node_count_name, initDimLen, &node_count_dimID);
         NCDF_ERR(err_code);
@@ -531,7 +531,10 @@ namespace nccfdriver
         {
             throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension for");
         }
-        err_code = nc_def_dim(ncID_in, container_name, initDimLen, &node_coordinates_dimID);
+
+        std::string nodecoord_dname = containerVarName + "_" + std::string(CF_SG_NODE_COORDINATES);
+
+        err_code = nc_def_dim(ncID_in, nodecoord_dname.c_str(), initDimLen, &node_coordinates_dimID);
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
         {
