@@ -4165,7 +4165,7 @@ def test_multipolygon3D_write():
     assert(layer.GetFeatureCount() == 3)
 
     # Test each feature manually
-    # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
+    # Due to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
     feat = layer.GetNextFeature();
     fgeo = feat.GetGeometryRef()
@@ -4378,7 +4378,7 @@ def test_multipolygon3D_NC4C_write():
     assert(layer.GetFeatureCount() == 3)
 
     # Test each feature manually
-    # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
+    # Due to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
     feat = layer.GetNextFeature();
     fgeo = feat.GetGeometryRef()
