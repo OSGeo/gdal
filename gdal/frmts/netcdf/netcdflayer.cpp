@@ -162,8 +162,16 @@ bool netCDFLayer::Create(char **papszOptions,
         newbufsize = strtoll(memorySizeLimitation, nullptr, 10);
     }
 
-    m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
+    if(m_bLegacyCreateMode)
+    {
+        m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
                                              m_osRecordDimName.c_str());
+    }
+    else
+    {
+        m_osRecordDimName = std::string("record_") + std::string(this->GetName());
+    }
+
     m_bAutoGrowStrings =
         CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "AUTOGROW_STRINGS", TRUE));
     m_nDefaultWidth = atoi(
