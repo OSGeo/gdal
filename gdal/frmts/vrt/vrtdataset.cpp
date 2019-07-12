@@ -126,7 +126,10 @@ VRTDataset::~VRTDataset()
 void VRTDataset::FlushCache()
 
 {
-    VRTFlushCacheStruct<VRTDataset>::FlushCache(*this);
+    if( m_poRootGroup )
+        m_poRootGroup->Serialize();
+    else
+        VRTFlushCacheStruct<VRTDataset>::FlushCache(*this);
 }
 
 /************************************************************************/
@@ -271,6 +274,9 @@ void CPL_STDCALL VRTFlushCache( VRTDatasetH hDataset )
 CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
 
 {
+    if( m_poRootGroup )
+        return m_poRootGroup->SerializeToXML(pszVRTPathIn);
+
     /* -------------------------------------------------------------------- */
     /*      Setup root node and attributes.                                 */
     /* -------------------------------------------------------------------- */
@@ -574,6 +580,26 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         }
     }
 
+    CPLXMLNode* psGroup = CPLGetXMLNode(psTree, "Group");
+    if( psGroup )
+    {
+        const char* pszName = CPLGetXMLValue(psGroup, "name", nullptr);
+        if( pszName == nullptr || !EQUAL(pszName, "/") )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Missing name or not equal to '/'");
+            return CE_Failure;
+        }
+
+        m_poRootGroup = std::make_shared<VRTGroup>(std::string(), "/");
+        m_poRootGroup->SetIsRootGroup();
+        if( !m_poRootGroup->XMLInit( m_poRootGroup, m_poRootGroup,
+                                     psGroup, pszVRTPathIn ) )
+        {
+            return CE_Failure;
+        }
+    }
+
     return CE_None;
 }
 
@@ -839,6 +865,24 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS != nullptr )
         poDS->m_bNeedsFlush = FALSE;
 
+    if( poDS != nullptr )
+    {
+        if( poDS->GetRasterCount() == 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) == 0 &&
+            strstr(pszXML, "VRTPansharpenedDataset") == nullptr )
+        {
+            delete poDS;
+            poDS = nullptr;
+        }
+        else if( poDS->GetRootGroup() == nullptr &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0 )
+        {
+            delete poDS;
+            poDS = nullptr;
+        }
+    }
+
     CPLFree( pszXML );
     CPLFree( pszVRTPath );
 
@@ -851,6 +895,12 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poOpenInfo->AreSiblingFilesLoaded() )
             poDS->oOvManager.TransferSiblingFiles(
                 poOpenInfo->StealSiblingFiles() );
+    }
+
+    if( poDS && poDS->eAccess == GA_Update &&
+        poDS->m_poRootGroup && !STARTS_WITH_CI(poOpenInfo->pszFilename, "<VRT") )
+    {
+        poDS->m_poRootGroup->SetFilename(poOpenInfo->pszFilename);
     }
 
     return poDS;
@@ -888,6 +938,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
         strcmp(pszSubClass, "VRTPansharpenedDataset" ) == 0;
 
     if( !bIsPansharpened &&
+        CPLGetXMLNode( psRoot, "Group" ) == nullptr &&
         (CPLGetXMLNode( psRoot, "rasterXSize" ) == nullptr
         || CPLGetXMLNode( psRoot, "rasterYSize" ) == nullptr
         || CPLGetXMLNode( psRoot, "VRTRasterBand" ) == nullptr) )
@@ -905,6 +956,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
     const int nYSize = atoi(CPLGetXMLValue(psRoot, "rasterYSize","0"));
 
     if( !bIsPansharpened &&
+        CPLGetXMLNode( psRoot, "VRTRasterBand" ) != nullptr &&
         !GDALCheckDatasetDimensions( nXSize, nYSize ) )
     {
         return nullptr;
@@ -1191,6 +1243,27 @@ VRTDataset::Create( const char * pszName,
 
     return poDS;
 }
+
+
+/************************************************************************/
+/*                     CreateMultiDimensional()                         */
+/************************************************************************/
+
+GDALDataset * VRTDataset::CreateMultiDimensional( const char * pszFilename,
+                                                  CSLConstList /*papszRootGroupOptions*/,
+                                                  CSLConstList /*papszOptions*/ )
+{
+    VRTDataset *poDS = new VRTDataset( 0, 0 );
+    poDS->eAccess = GA_Update;
+    poDS->SetDescription(pszFilename);
+    poDS->m_poRootGroup = std::make_shared<VRTGroup>(std::string(), "/");
+    poDS->m_poRootGroup->SetIsRootGroup();
+    poDS->m_poRootGroup->SetFilename(pszFilename);
+    poDS->m_poRootGroup->SetDirty();
+
+    return poDS;
+}
+
 
 /************************************************************************/
 /*                            GetFileList()                             */
