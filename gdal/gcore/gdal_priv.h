@@ -2324,6 +2324,7 @@ public:
     };
 
     virtual std::shared_ptr<GDALMDArray> GetView(const std::string& viewExpr,
+                                                 bool bRenameDimensions,
                                                  std::vector<ViewSpec>& viewSpecs) const;
 //! @endcond
 };

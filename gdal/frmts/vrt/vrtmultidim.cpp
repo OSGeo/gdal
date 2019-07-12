@@ -1286,6 +1286,25 @@ std::unique_ptr<VRTMDArraySourceInlinedValues> VRTMDArraySourceInlinedValues::Cr
 }
 
 /************************************************************************/
+/*                  ~VRTMDArraySourceInlinedValues()                    */
+/************************************************************************/
+
+VRTMDArraySourceInlinedValues::~VRTMDArraySourceInlinedValues()
+{
+    if( m_dt.NeedsFreeDynamicMemory() )
+    {
+        const size_t nDTSize = m_dt.GetSize();
+        const size_t nValueCount = m_abyValues.size() / nDTSize;
+        GByte* pabyPtr = &m_abyValues[0];
+        for( size_t i = 0; i < nValueCount; ++i )
+        {
+            m_dt.FreeDynamicMemory(pabyPtr);
+            pabyPtr += nDTSize;
+        }
+    }
+}
+
+/************************************************************************/
 /*                                   Read()                             */
 /************************************************************************/
 

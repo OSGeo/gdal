@@ -2969,6 +2969,7 @@ bool GDALSlicedMDArray::IWrite(const GUInt64* arrayStartIdx,
 static std::shared_ptr<GDALMDArray> CreateSlicedArray(
                                 const std::shared_ptr<GDALMDArray>& self,
                                 const std::string& activeSlice,
+                                bool bRenameDimensions,
                                 std::vector<GDALMDArray::ViewSpec>& viewSpecs)
 {
     const auto& srcDims(self->GetDimensions());
@@ -3129,13 +3130,19 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
             }
             else
             {
+                std::string osNewDimName(srcDims[nCurSrcDim]->GetName());
+                if( bRenameDimensions )
+                {
+                    osNewDimName =
+                        "subset_" + srcDims[nCurSrcDim]->GetName() +
+                            CPLSPrintf("_" CPL_FRMT_GUIB "_" CPL_FRMT_GIB "_" CPL_FRMT_GUIB,
+                                    static_cast<GUIntBig>(range.m_nStartIdx),
+                                    static_cast<GIntBig>(range.m_nIncr),
+                                    static_cast<GUIntBig>(newSize));
+                }
                 newDims.push_back(std::make_shared<GDALDimension>(
                     std::string(),
-                    "subset_" + srcDims[nCurSrcDim]->GetName() +
-                    CPLSPrintf("_" CPL_FRMT_GUIB "_" CPL_FRMT_GIB "_" CPL_FRMT_GUIB,
-                               static_cast<GUIntBig>(range.m_nStartIdx),
-                               static_cast<GIntBig>(range.m_nIncr),
-                               static_cast<GUIntBig>(newSize)),
+                    osNewDimName,
                     srcDims[nCurSrcDim]->GetType(),
                     range.m_nIncr > 0 ?
                         srcDims[nCurSrcDim]->GetDirection():
@@ -3382,11 +3389,12 @@ static std::shared_ptr<GDALMDArray> CreateFieldNameExtractArray(
 std::shared_ptr<GDALMDArray> GDALMDArray::GetView(const std::string& viewExpr) const
 {
     std::vector<ViewSpec> viewSpecs;
-    return GetView(viewExpr, viewSpecs);
+    return GetView(viewExpr, true, viewSpecs);
 }
 
 //! @cond Doxygen_Suppress
 std::shared_ptr<GDALMDArray> GDALMDArray::GetView(const std::string& viewExpr,
+                                                  bool bRenameDimensions,
                                                   std::vector<ViewSpec>& viewSpecs) const
 {
     auto self = std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
@@ -3468,7 +3476,7 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetView(const std::string& viewExpr,
 
         auto newArray = !fieldName.empty() ?
             CreateFieldNameExtractArray(self, fieldName):
-            CreateSlicedArray(self, activeSlice, viewSpecs);
+            CreateSlicedArray(self, activeSlice, bRenameDimensions, viewSpecs);
 
         if( endExpr == curExpr.size() - 1 )
         {

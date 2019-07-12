@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  gdalmdiminfo testing
+# Purpose:  test command line gdalmdimtranslate
 # Author:   Even Rouault <even.rouault at spatialys.com>
 #
 ###############################################################################
@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
+from osgeo import gdal
 import gdaltest
 import test_cli_utilities
 import pytest
@@ -37,11 +39,11 @@ import pytest
 # Simple test
 
 
-def test_gdalmdiminfo_1():
-
-    if test_cli_utilities.get_gdalmdiminfo_path() is None:
+def test_gdalmdimtranslate_1():
+    if test_cli_utilities.get_gdalmdimtranslate_path() is None:
         pytest.skip()
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalmdiminfo_path() + ' data/mdim.vrt')
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalmdimtranslate_path() + ' data/mdim.vrt tmp/out.vrt')
     assert (err is None or err == ''), 'got error/warning'
-    assert '"type": "group"' in ret
+    assert os.path.exists('tmp/out.vrt')
+    gdal.Unlink('tmp/out.vrt')

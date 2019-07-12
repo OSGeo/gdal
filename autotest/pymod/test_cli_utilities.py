@@ -119,6 +119,13 @@ def get_gdal_translate_path():
 #
 
 
+def get_gdalmdimtranslate_path():
+    return get_cli_utility_path('gdalmdimtranslate')
+
+###############################################################################
+#
+
+
 def get_gdalwarp_path():
     return get_cli_utility_path('gdalwarp')
 

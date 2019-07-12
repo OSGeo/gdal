@@ -402,6 +402,13 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 
+/** Capability set by a driver that implements the CreateCopy() API, but with
+ * multidimensional raster as input and output.
+ *
+ * @since GDAL 3.1
+ */
+#define GDAL_DCAP_CREATECOPY_MULTIDIMENSIONAL     "DCAP_CREATECOPY_MULTIDIMENSIONAL"
+
 /** Capability set by a driver that supports multidimensionnal data.
  * @since GDAL 3.1
  */

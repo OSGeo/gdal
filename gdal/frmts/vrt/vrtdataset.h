@@ -1599,6 +1599,7 @@ class VRTMDArraySourceInlinedValues: public VRTMDArraySource
     std::vector<size_t> m_anCount{};
     std::vector<GByte> m_abyValues{};
     std::vector<size_t> m_anInlinedArrayStrideInBytes{};
+    GDALExtendedDataType m_dt;
 
     VRTMDArraySourceInlinedValues(const VRTMDArraySourceInlinedValues&) = delete;
     VRTMDArraySourceInlinedValues& operator=(const VRTMDArraySourceInlinedValues&) = delete;
@@ -1613,7 +1614,8 @@ public:
         m_bIsConstantValue(bIsConstantValue),
         m_anOffset(std::move(anOffset)),
         m_anCount(std::move(anCount)),
-        m_abyValues(std::move(abyValues))
+        m_abyValues(std::move(abyValues)),
+        m_dt(poDstArray->GetDataType())
     {
         const auto nDims(poDstArray->GetDimensionCount());
         m_anInlinedArrayStrideInBytes.resize(nDims);
@@ -1628,6 +1630,8 @@ public:
             }
         }
     }
+
+    ~VRTMDArraySourceInlinedValues();
 
     static std::unique_ptr<VRTMDArraySourceInlinedValues> Create(
                                                 const VRTMDArray* poDstArray,
@@ -1647,7 +1651,7 @@ public:
 /*                     VRTMDArraySourceRegularlySpaced                  */
 /************************************************************************/
 
-class VRTMDArraySourceRegularlySpaced: public VRTMDArraySource
+class TMP_CPL_DLL VRTMDArraySourceRegularlySpaced: public VRTMDArraySource
 {
     double m_dfStart;
     double m_dfIncrement;

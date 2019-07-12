@@ -147,6 +147,15 @@ struct GDALMultiDimInfoOptionsForBinary
     char** papszOpenOptions;
 };
 
+struct GDALMultiDimTranslateOptionsForBinary
+{
+    char* pszSource;
+    char* pszDest;
+    char* pszFormat;
+    int   bQuiet;
+    int   bUpdate;
+};
+
 CPL_C_END
 
 #endif /* #ifndef DOXYGEN_SKIP */

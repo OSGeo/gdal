@@ -231,6 +231,27 @@ void CPL_DLL GDALMultiDimInfoOptionsFree( GDALMultiDimInfoOptions *psOptions );
 
 char CPL_DLL *GDALMultiDimInfo( GDALDatasetH hDataset, const GDALMultiDimInfoOptions *psOptions );
 
+
+/*! Options for GDALMultiDimTranslate(). Opaque type */
+typedef struct GDALMultiDimTranslateOptions GDALMultiDimTranslateOptions;
+
+/** Opaque type */
+typedef struct GDALMultiDimTranslateOptionsForBinary GDALMultiDimTranslateOptionsForBinary;
+
+GDALMultiDimTranslateOptions CPL_DLL *GDALMultiDimTranslateOptionsNew(char** papszArgv, GDALMultiDimTranslateOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALMultiDimTranslateOptionsFree( GDALMultiDimTranslateOptions *psOptions );
+
+void CPL_DLL GDALMultiDimTranslateOptionsSetProgress( GDALMultiDimTranslateOptions *psOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData );
+
+GDALDatasetH CPL_DLL GDALMultiDimTranslate( const char* pszDest,
+                                            GDALDatasetH hDstDataset,
+                                            int nSrcCount, GDALDatasetH *pahSrcDS,
+                                            const GDALMultiDimTranslateOptions *psOptions,
+                                            int *pbUsageError );
+
 CPL_C_END
 
 #endif /* GDAL_UTILS_H_INCLUDED */

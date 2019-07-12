@@ -1342,6 +1342,75 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
         return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
 
 
+def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
+         arraySpecs=None, groupSpecs=None, subsetSpecs=None, scaleAxesSpecs=None,
+         callback=None, callback_data=None):
+    """ Create a MultiDimTranslateOptions() object that can be passed to gdal.MultiDimTranslate()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          creationOptions --- list of creation options
+          arraySpecs -- list of array specifications, each of them being an array name or "name={src_array_name},dstname={dst_name},transpose=[1,0],view=[:,::-1]"
+          groupSpecs -- list of group specifications, each of them being a group name or "name={src_array_name},dstname={dst_name},recursive=no"
+          subsetSpecs -- list of subset specifications, each of them being like "{dim_name}({min_val},{max_val})" or "{dim_name}({slice_va})"
+          scaleAxesSpecs -- list of dimension scaling specifications, each of them being like "{dim_name}({scale_factor})"
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    options = [] if options is None else options
+
+    if _is_str_or_unicode(options):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = options
+        if format is not None:
+            new_options += ['-of', format]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt]
+        if arraySpecs is not None:
+            for s in arraySpecs:
+                new_options += ['-array', s]
+        if groupSpecs is not None:
+            for s in groupSpecs:
+                new_options += ['-group', s]
+        if subsetSpecs is not None:
+            for s in subsetSpecs:
+                new_options += ['-subset', s]
+        if scaleAxesSpecs is not None:
+            for s in scaleAxesSpecs:
+                new_options += ['-scaleaxes', s]
+
+    return (GDALMultiDimTranslateOptions(new_options), callback, callback_data)
+
+def MultiDimTranslate(destName, srcDSOrSrcDSTab, **kwargs):
+    """ MultiDimTranslate one or several datasets.
+        Arguments are :
+          destName --- Output dataset name
+          srcDSOrSrcDSTab --- an array of Dataset objects or filenames, or a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.MultiDimTranslateOptions(), string or array of strings
+          other keywords arguments of gdal.MultiDimTranslateOptions()
+        If options is provided as a gdal.MultiDimTranslateOptions() object, other keywords are ignored. """
+
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
+        (opts, callback, callback_data) = MultiDimTranslateOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if _is_str_or_unicode(srcDSOrSrcDSTab):
+        srcDSTab = [OpenEx(srcDSOrSrcDSTab, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER)]
+    elif isinstance(srcDSOrSrcDSTab, list):
+        srcDSTab = []
+        for elt in srcDSOrSrcDSTab:
+            if _is_str_or_unicode(elt):
+                srcDSTab.append(OpenEx(elt, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER))
+            else:
+                srcDSTab.append(elt)
+    else:
+        srcDSTab = [srcDSOrSrcDSTab]
+
+    return wrapper_GDALMultiDimTranslateDestName(destName, srcDSTab, opts, callback, callback_data)
+
 # Logging Helpers
 def _pylog_handler(err_level, err_no, err_msg):
     if err_no != gdalconst.CPLE_None:
@@ -4363,6 +4432,31 @@ def BuildVRTInternalObjects(*args):
 def BuildVRTInternalNames(*args):
     """BuildVRTInternalNames(char const * dest, char ** source_filenames, GDALBuildVRTOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.BuildVRTInternalNames(*args)
+class GDALMultiDimTranslateOptions(_object):
+    """Proxy of C++ GDALMultiDimTranslateOptions class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALMultiDimTranslateOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALMultiDimTranslateOptions, name)
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        """__init__(GDALMultiDimTranslateOptions self, char ** options) -> GDALMultiDimTranslateOptions"""
+        this = _gdal.new_GDALMultiDimTranslateOptions(*args)
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+    __swig_destroy__ = _gdal.delete_GDALMultiDimTranslateOptions
+    __del__ = lambda self: None
+GDALMultiDimTranslateOptions_swigregister = _gdal.GDALMultiDimTranslateOptions_swigregister
+GDALMultiDimTranslateOptions_swigregister(GDALMultiDimTranslateOptions)
+
+
+def wrapper_GDALMultiDimTranslateDestName(*args):
+    """wrapper_GDALMultiDimTranslateDestName(char const * dest, int object_list_count, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
+    return _gdal.wrapper_GDALMultiDimTranslateDestName(*args)
 # This file is compatible with both classic and new-style classes.
 
 

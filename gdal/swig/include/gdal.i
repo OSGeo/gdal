@@ -1849,5 +1849,68 @@ GDALDatasetShadow* wrapper_GDALBuildVRT_names( const char* dest,
 %}
 %clear char** source_filenames;
 
+//************************************************************************
+// gdal.MultiDimTranslate()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (MultiDimTranslateOptions) GDALMultiDimTranslateOptions;
+#endif
+struct GDALMultiDimTranslateOptions {
+%extend {
+    GDALMultiDimTranslateOptions(char** options) {
+        return GDALMultiDimTranslateOptionsNew(options, NULL);
+    }
+
+    ~GDALMultiDimTranslateOptions() {
+        GDALMultiDimTranslateOptionsFree( self );
+    }
+}
+};
+
+#ifdef SWIGJAVA
+%rename (MultiDimTranslate) wrapper_GDALMultiDimTranslateDestName;
+#endif
+
+%newobject wrapper_GDALMultiDimTranslateDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
+                                             int object_list_count, GDALDatasetShadow** poObjects,
+                                             GDALMultiDimTranslateOptions* multiDimTranslateOptions,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( multiDimTranslateOptions == NULL )
+        {
+            bFreeOptions = true;
+            multiDimTranslateOptions = GDALMultiDimTranslateOptionsNew(NULL, NULL);
+        }
+        GDALMultiDimTranslateOptionsSetProgress(multiDimTranslateOptions, callback, callback_data);
+    }
+#ifdef SWIGPYTHON
+    std::vector<ErrorStruct> aoErrors;
+    if( bUseExceptions )
+    {
+        PushStackingErrorHandler(&aoErrors);
+    }
+#endif
+    GDALDatasetH hDSRet = GDALMultiDimTranslate(dest, NULL, object_list_count, poObjects, multiDimTranslateOptions, &usageError);
+    if( bFreeOptions )
+        GDALMultiDimTranslateOptionsFree(multiDimTranslateOptions);
+#ifdef SWIGPYTHON
+    if( bUseExceptions )
+    {
+        PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
+    }
+#endif
+    return hDSRet;
+}
+%}
+
 
 %clear (const char* dest);
