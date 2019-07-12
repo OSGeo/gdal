@@ -468,7 +468,7 @@ namespace nccfdriver
         }
     }
 
-    OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot, unsigned long long bufsize)
+    OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot, unsigned long long bufsize, bool isTrueNC4)
         : ncID(ncID_in),
         writableType(geot),
         containerVarID(container_varID_in),
@@ -479,12 +479,16 @@ namespace nccfdriver
     {
         char container_name[NC_MAX_CHAR + 1] = {0};
 
+        this->writing_to_NC4 = isTrueNC4;
+
         // Set buffer size
         // Allow 4KB (standard page size) to be smallest buffer heuristic
         if(bufsize >= 4096)
         {
             wbuf.setBufSize(bufsize);
         }
+
+        size_t initDimLen = isTrueNC4 ? NC_UNLIMITED : 1;
 
         // Prepare variable names
         char node_coord_names[NC_MAX_CHAR + 1] = {0};
@@ -505,6 +509,7 @@ namespace nccfdriver
 
         this->containerVarName = std::string(container_name);
 
+
         err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
@@ -519,15 +524,17 @@ namespace nccfdriver
             throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varName");
         }
 
-
         // Make dimensions for each of these
-        err_code = nc_def_dim(ncID_in, node_count_name, 1, &node_count_dimID);
+        err_code = nc_def_dim(ncID_in, node_count_name, initDimLen, &node_count_dimID);
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
         {
             throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension for");
         }
-        err_code = nc_def_dim(ncID_in, container_name, 1, &node_coordinates_dimID);
+
+        std::string nodecoord_dname = containerVarName + "_" + std::string(CF_SG_NODE_COORDINATES);
+
+        err_code = nc_def_dim(ncID_in, nodecoord_dname.c_str(), initDimLen, &node_coordinates_dimID);
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
         {
@@ -547,7 +554,7 @@ namespace nccfdriver
         err_code = nc_get_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, pnc_name);
         if(err_code == NC_NOERR)
         {
-            err_code = nc_def_dim(ncID_in, pnc_name, 1, &pnc_dimID);
+            err_code = nc_def_dim(ncID_in, pnc_name, initDimLen, &pnc_dimID);
             NCDF_ERR(err_code);
             if (err_code != NC_NOERR)
             {

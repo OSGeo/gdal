@@ -447,10 +447,6 @@ namespace nccfdriver
     {
         if(type == POINT)
         {
-            // If nodes global attribute is available, use that
-
-            // Otherwise, don't fail- use dimension length of one of x
-
             if(this->nodec_varIds.size() < 1) return 0;
 
             // If more than one dim, then error. Otherwise inquire its length and return that
