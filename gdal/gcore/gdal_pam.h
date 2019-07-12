@@ -237,6 +237,8 @@ typedef struct {
 
     GDALRasterAttributeTable *poDefaultRAT;
 
+    bool           bOffsetSet;
+    bool           bScaleSet;
 } GDALRasterBandPamInfo;
 //! @endcond
 /* ******************************************************************** */

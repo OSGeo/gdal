@@ -777,7 +777,7 @@ double GDALPamRasterBand::GetOffset( int *pbSuccess )
         return GDALRasterBand::GetOffset( pbSuccess );
 
     if( pbSuccess != nullptr )
-        *pbSuccess = TRUE;
+        *pbSuccess = psPam->bOffsetSet;
 
     return psPam->dfOffset;
 }
@@ -797,6 +797,7 @@ CPLErr GDALPamRasterBand::SetOffset( double dfNewOffset )
     if( psPam->dfOffset != dfNewOffset )
     {
         psPam->dfOffset = dfNewOffset;
+        psPam->bOffsetSet = true;
         psPam->poParentDS->MarkPamDirty();
     }
 
@@ -814,7 +815,7 @@ double GDALPamRasterBand::GetScale( int *pbSuccess )
         return GDALRasterBand::GetScale( pbSuccess );
 
     if( pbSuccess != nullptr )
-        *pbSuccess = TRUE;
+        *pbSuccess = psPam->bScaleSet;
 
     return psPam->dfScale;
 }
@@ -834,6 +835,7 @@ CPLErr GDALPamRasterBand::SetScale( double dfNewScale )
     if( dfNewScale != psPam->dfScale )
     {
         psPam->dfScale = dfNewScale;
+        psPam->bScaleSet = true;
         psPam->poParentDS->MarkPamDirty();
     }
     return CE_None;

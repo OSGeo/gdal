@@ -316,9 +316,9 @@ def _gdal_api_proxy_sub():
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
     assert minmax == (74.0, 255.0)
 
-    assert ds.GetRasterBand(1).GetOffset() == 0.0
+    assert ds.GetRasterBand(1).GetOffset() is None
 
-    assert ds.GetRasterBand(1).GetScale() == 1.0
+    assert ds.GetRasterBand(1).GetScale() is None
 
     ds.GetRasterBand(1).SetOffset(10.0)
     assert ds.GetRasterBand(1).GetOffset() == 10.0
