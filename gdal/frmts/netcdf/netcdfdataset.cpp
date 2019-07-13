@@ -2134,9 +2134,7 @@ netCDFDataset::netCDFDataset() :
 #endif
     nCreateMode(NC_CLOBBER),
     bSignedData(true),
-    nLayers(0),
-    papoLayers(nullptr)
-
+    nLayers(0)
 {
     // Projection/GT.
     adfGeoTransform[0] = 0.0;
@@ -2175,10 +2173,6 @@ netCDFDataset::~netCDFDataset()
 
     netCDFDataset::FlushCache();
     SGCommitPendingTransaction();
-
-    for(int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
-    CPLFree(papoLayers);
 
     for(size_t i = 0; i < apoVectorDatasets.size(); i++)
         delete apoVectorDatasets[i];
@@ -5560,7 +5554,7 @@ OGRLayer *netCDFDataset::GetLayer(int nIdx)
 {
     if( nIdx < 0 || nIdx >= nLayers )
         return nullptr;
-    return papoLayers[nIdx];
+    return papoLayers[nIdx].get();
 }
 
 /************************************************************************/
@@ -5640,9 +5634,8 @@ OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
         poSRS = poSRS->Clone();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
-    netCDFLayer *poLayer =
-        new netCDFLayer(poLayerDataset ? poLayerDataset : this, nLayerCDFId,
-                        osNetCDFLayerName, eGType, poSRS);
+    std::shared_ptr<netCDFLayer> poLayer(new netCDFLayer(poLayerDataset ? poLayerDataset : this, nLayerCDFId,
+                        osNetCDFLayerName, eGType, poSRS));
     if( poSRS != nullptr )
         poSRS->Release();
 
@@ -5673,17 +5666,14 @@ OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
 
     if( !bRet )
     {
-        delete poLayer;
         return nullptr;
     }
 
     if( poLayerDataset != nullptr )
         apoVectorDatasets.push_back(poLayerDataset);
 
-    papoLayers = static_cast<netCDFLayer **>(
-        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *)));
-    papoLayers[nLayers++] = poLayer;
-    return poLayer;
+    papoLayers.push_back(poLayer);
+    return poLayer.get();
 }
 
 /************************************************************************/
@@ -11301,8 +11291,8 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
                                         nullptr);
     }
 
-    netCDFLayer *poLayer = new netCDFLayer(this, nCdfId, osLayerName,
-                                           eGType, poSRS);
+    std::shared_ptr<netCDFLayer> poLayer(new netCDFLayer(this, nCdfId, osLayerName,
+                                           eGType, poSRS));
     if( poSRS != nullptr )
         poSRS->Release();
     poLayer->SetRecordDimID(nVectorDim);
@@ -11341,13 +11331,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
     if( poLayer->GetLayerDefn()->GetFieldCount() != 0 ||
         poLayer->GetGeomType() != wkbNone )
     {
-        papoLayers = static_cast<netCDFLayer **>(
-            CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *)));
-        papoLayers[nLayers++] = poLayer;
-    }
-    else
-    {
-        delete poLayer;
+        papoLayers.push_back(poLayer);
     }
 
     return CE_None;

@@ -32,7 +32,7 @@
 
 #include <cfloat>
 #include <map>
-#include <unordered_map>
+#include <memory>
 #include <vector>
 
 #include "cpl_string.h"
@@ -869,7 +869,7 @@ class netCDFDataset final: public GDALPamDataset
     bool         bSignedData;
 
     int          nLayers;
-    netCDFLayer   **papoLayers;
+    std::vector<std::shared_ptr<netCDFLayer>> papoLayers;
 
     netCDFWriterConfiguration oWriterConfig;
 

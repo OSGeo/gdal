@@ -177,7 +177,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS);
+    std::shared_ptr<netCDFLayer> poL(new netCDFLayer(this, ncid, baseName, owgt, poSRS));
 
     if(poSRS != nullptr)
     {
@@ -199,8 +199,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     poL->SetSGeometryRepresentation(sg);
 
     // Create layer
-    papoLayers = (netCDFLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *));
-    papoLayers[nLayers] = poL;
+    papoLayers.push_back(poL);
     nLayers++;
 
     return CE_None;
