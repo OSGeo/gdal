@@ -2210,8 +2210,8 @@ netCDFDataset::~netCDFDataset()
 bool netCDFDataset::SetDefineMode( bool bNewDefineMode )
 {
     // Do nothing if already in new define mode
-    // or if dataset is in read-only mode.
-    if( bDefineMode == bNewDefineMode || GetAccess() == GA_ReadOnly )
+    // or if dataset is in read-only mode or if dataset is true NC4 dataset.
+    if( bDefineMode == bNewDefineMode || GetAccess() == GA_ReadOnly || eFormat == NCDF_FORMAT_NC4 )
         return true;
 
     CPLDebug("GDAL_netCDF", "SetDefineMode(%d) old=%d",

@@ -636,11 +636,14 @@ namespace nccfdriver
         int err_code;
         const char * container_name = containerVarName.c_str();
 
-        err_code = nc_redef(ncID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
+        if(!this->writing_to_NC4)
         {
-            throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to define mode", "file");
+            err_code = nc_redef(ncID);
+            NCDF_ERR(err_code);
+            if (err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to define mode", "file");
+            }
         }
 
         std::string int_ring = std::string(container_name) + std::string("_interior_ring");
@@ -670,11 +673,14 @@ namespace nccfdriver
             throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "variable");
         }
 
-        err_code = nc_enddef(ncID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
+        if(!this->writing_to_NC4)
         {
-            throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to data mode", "file");
+            err_code = nc_enddef(ncID);
+            NCDF_ERR(err_code);
+            if (err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to data mode", "file");
+            }
         }
 
         const int zero_fill = 0;
@@ -696,11 +702,14 @@ namespace nccfdriver
         int err_code;
         const char* container_name = containerVarName.c_str();
 
-        err_code = nc_redef(ncID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
+        if(!this->writing_to_NC4)
         {
-            throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to define mode", "file");
+            err_code = nc_redef(ncID);
+            NCDF_ERR(err_code);
+            if (err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to define mode", "file");
+            }
         }
 
         std::string pnc_name = std::string(container_name) + std::string("_part_node_count");
@@ -727,7 +736,7 @@ namespace nccfdriver
             {
                 throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension");
             }
-            err_code = nc_def_dim(ncID, pnc_name.c_str(), ncount_len, &pnc_dimID);
+            err_code = nc_def_dim(ncID, pnc_name.c_str(), this->writing_to_NC4 ? NC_UNLIMITED : ncount_len, &pnc_dimID);
             NCDF_ERR(err_code);
             if (err_code != NC_NOERR)
             {
@@ -752,11 +761,14 @@ namespace nccfdriver
             throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "variable");
         }
 
-        err_code = nc_enddef(ncID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
+        if(!this->writing_to_NC4)
         {
-            throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to data mode", "file");
+            err_code = nc_enddef(ncID);
+            NCDF_ERR(err_code);
+            if (err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to data mode", "file");
+            }
         }
 
         // Fill pnc with the current values of node counts
