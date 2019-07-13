@@ -496,7 +496,8 @@ bool netCDFLayer::Create(char **papszOptions,
     if( poSRS != nullptr )
     {
         char *pszCFProjection = nullptr;
-        m_sgCRSname = std::string(this->GetName()) + std::string("_crs");
+        m_sgCRSname = m_bLegacyCreateMode ? "" : std::string(this->GetName()) + std::string("_crs");
+
         int nSRSVarId = NCDFWriteSRSVariable(
             m_nLayerCDFId, poSRS, &pszCFProjection, m_bWriteGDALTags, m_sgCRSname);
         if( nSRSVarId < 0 )

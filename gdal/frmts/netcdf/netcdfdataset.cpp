@@ -2133,8 +2133,7 @@ netCDFDataset::netCDFDataset() :
     bChunking(false),
 #endif
     nCreateMode(NC_CLOBBER),
-    bSignedData(true),
-    nLayers(0)
+    bSignedData(true)
 {
     // Projection/GT.
     adfGeoTransform[0] = 0.0;
@@ -5541,7 +5540,7 @@ int netCDFDataset::TestCapability(const char *pszCap)
     if( EQUAL(pszCap, ODsCCreateLayer) )
     {
         return eAccess == GA_Update && nBands == 0 &&
-               (eMultipleLayerBehaviour != SINGLE_LAYER || nLayers == 0 || bSGSupport);
+               (eMultipleLayerBehaviour != SINGLE_LAYER || this->GetLayerCount() == 0 || bSGSupport);
     }
     return FALSE;
 }
@@ -5552,7 +5551,7 @@ int netCDFDataset::TestCapability(const char *pszCap)
 
 OGRLayer *netCDFDataset::GetLayer(int nIdx)
 {
-    if( nIdx < 0 || nIdx >= nLayers )
+    if( nIdx < 0 || nIdx >= this->GetLayerCount() )
         return nullptr;
     return papoLayers[nIdx].get();
 }
@@ -6164,7 +6163,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
         }
         CPLFree(panGroupIds);
 
-        for(int i = 0; i < nLayers; i++)
+        for(int i = 0; i < this->GetLayerCount(); i++)
         {
             char szGroupName[NC_MAX_NAME + 1];
             szGroupName[0] = 0;
@@ -6206,7 +6205,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 #ifdef NETCDF_HAS_NC4
     if( !oListGrpName.empty() )
     {
-        for(int i = 0; i < nLayers; i++)
+        for(int i = 0; i < this->GetLayerCount(); i++)
         {
             int nNewLayerCDFID = -1;
             status =
@@ -6218,7 +6217,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     else
 #endif
     {
-        for(int i = 0; i < nLayers; i++)
+        for(int i = 0; i < this->GetLayerCount(); i++)
         {
             papoLayers[i]->SetCDFID(cdfid);
         }
@@ -7308,7 +7307,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         }
         // Otherwise if the dataset is opened in vector mode, that there is
         // no vector layer and we are in read-only, exit too.
-        else if( poDS->nLayers == 0 &&
+        else if( poDS->GetLayerCount() == 0 &&
                  (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
                  poOpenInfo->eAccess == GA_ReadOnly )
         {
@@ -7711,7 +7710,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         poDS->nRasterXSize = 0;
         poDS->nRasterYSize = 0;
         nTotLevCount = 0;
-        if( poDS->nLayers == 0 )
+        if( poDS->GetLayerCount() == 0 )
         {
             CPLFree(paDimIds);
             CPLFree(panBandDimPos);

@@ -868,7 +868,6 @@ class netCDFDataset final: public GDALPamDataset
     int          nCreateMode;
     bool         bSignedData;
 
-    int          nLayers;
     std::vector<std::shared_ptr<netCDFLayer>> papoLayers;
 
     netCDFWriterConfiguration oWriterConfig;
@@ -956,7 +955,7 @@ class netCDFDataset final: public GDALPamDataset
 
     virtual int  TestCapability(const char* pszCap) override;
 
-    virtual int  GetLayerCount() override { return nLayers; }
+    virtual int  GetLayerCount() override { return static_cast<int>(this->papoLayers.size()); }
     virtual OGRLayer* GetLayer(int nIdx) override;
 
     int GetCDFID() const { return cdfid; }

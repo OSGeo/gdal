@@ -200,7 +200,6 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 
     // Create layer
     papoLayers.push_back(poL);
-    nLayers++;
 
     return CE_None;
 }
