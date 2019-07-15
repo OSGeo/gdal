@@ -112,7 +112,8 @@
         "full_name": { "type": "string" },
         "size": {"type": "integer"},
         "type": {"type": "string"},
-        "direction": {"type": "string"}
+        "direction": {"type": "string"},
+        "indexing_variable": {"type": "string"}
       },
       "additionalProperties": false
     },
@@ -120,7 +121,15 @@
     "dimensions": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/dimension"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/dimension"
+          },
+          {
+            "description": "Full qualified name of a dimension",
+            "type": "string"
+          }
+        ]
       }
     },
 

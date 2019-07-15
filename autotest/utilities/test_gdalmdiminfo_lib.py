@@ -149,18 +149,8 @@ def test_gdalmdiminfo_lib_mem_dataset():
     "ar_2d": {
       "datatype": "Byte",
       "dimensions": [
-        {
-          "name": "dim0",
-          "full_name": "/dim0",
-          "size": 2,
-          "type": "my_type",
-          "direction": "my_direction"
-        },
-        {
-          "name": "dim1",
-          "full_name": "/dim1",
-          "size": 3
-        }
+        "/dim0",
+        "/dim1"
       ],
       "attributes": {
         "myattr": {
@@ -198,13 +188,7 @@ def test_gdalmdiminfo_lib_mem_dataset():
         ]
       },
       "dimensions": [
-        {
-          "name": "dim0",
-          "full_name": "/dim0",
-          "size": 2,
-          "type": "my_type",
-          "direction": "my_direction"
-        }
+        "/dim0"
       ],
       "nodata_value": {
         "x": 32767,
