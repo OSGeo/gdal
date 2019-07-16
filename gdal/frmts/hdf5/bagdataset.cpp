@@ -3373,7 +3373,7 @@ void BAGDataset::LoadMetadata()
             }
 
             adfGeoTransform[0] = dfLLX;
-			adfGeoTransform[1] = dfResWidth;
+            adfGeoTransform[1] = dfResWidth;
             adfGeoTransform[3] = dfLLY + dfResHeight * (m_nLowResHeight - 1);
             adfGeoTransform[5] = dfResHeight * (-1);
 
@@ -3917,12 +3917,12 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
     }
     osOptions.SetNameValue("VAR_RES_UNIT", pszUnits);
 
-	// get bounds as pixel center
+    // get bounds as pixel center
     double dfMinX = adfGeoTransform[0] + adfGeoTransform[1] / 2;
     double dfMaxX = dfMinX + (poSrcDS->GetRasterXSize() - 1) * adfGeoTransform[1];
     double dfMaxY = adfGeoTransform[3] + adfGeoTransform[5] / 2;
     double dfMinY = dfMaxY + (poSrcDS->GetRasterYSize() - 1) * adfGeoTransform[5];
-	
+    
     if( adfGeoTransform[5] > 0 )
     {
         std::swap(dfMinY, dfMaxY);
