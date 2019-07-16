@@ -8,6 +8,7 @@ RFC 75: Multidimensional arrays
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2019-May-24
+Last updated:  2019-Jul-16
 Status:        Work in progress
 ============== ============================
 
@@ -48,56 +49,14 @@ Therefore the proposed API will be strongly inspired by the API of the HDF5 libr
 
 Data model
 ~~~~~~~~~~
-
-A GDALDataset with mulidimensional content will contain a root GDALGroup.
-
-A GDALGroup (modelling a `HDF5 Group <https://portal.opengeospatial.org/files/81716#_hdf5_group>`_)
-is a named container of GDALAttribute, GDALMDArray or
-other GDALGroup. Hence GDALGroup can describe a hierarchy of objects.
-
-A GDALAttribute (modelling a `HDF5 Attribute <https://portal.opengeospatial.org/files/81716#_hdf5_attribute>`_)
-has a name and a value, and is typically used to describe a metadata item.
-The value can be (for the HDF5 format) in the general case a multidimensional array
-of "any" type (in most cases, this will be a single value of string or numeric type)
-
-A GDALMDArray (modelling a `HDF5 Dataset <https://portal.opengeospatial.org/files/81716#_hdf5_dataset>`_)
-has a name, a multidimensional array and a list of GDALAttribute.
-
-A GDALDimension describes a dimension / axis used to index multidimensional arrays.
-It has a name, a size (that is the number of values that can be indexed along
-the dimension), and can optionaly point to a GDALMDArray variable, typically
-one-dimensional, describing the values taken by the dimension.
-For a georeferenced GDALMDArray and its X dimension, this will be typically
-the values of the easting/longitude for each grid point.
-
-A GDALExtendedDataType (modelling a `HDF5 datatype <https://portal.opengeospatial.org/files/81716#_hdf5_datatype>`_)
-describes the type taken by an individual value of
-a GDALAttribute or GDALMDArray. Its class can be NUMERIC,
-STRING or COMPOUND. For NUMERIC, the existing :cpp:enum:`GDALDataType` enumerated
-values are supported. For COMPOUND, the data type is a list of members, each
-member being described by a name and a GDALExtendedDataType.
-
-.. note::
-
-   The HDF5 modelisation allows for more complex datatypes, but for now, we
-   will stand with the above restrictions, which should be sufficient to cover
-   most practical use cases.
-
-.. note::
-
-    HDF5 does not have native data types for complex values whereas
-    GDALDataType does. So the driver may decide to expose a GDT\_Cxxxx datatype
-    from a HDF5 Compound data type representing a complex value.
-
-Differences with the GDAL 2D raster data model:
-
-- the concept of GDALRasterBand is no longer used for multidimensional.
-  This can be modelled as either different GDALMDArray, or using a compound
-  data type.
-
+The data model is described in:
+https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/user/multidim_raster_data_model.rst
 
 C++ API
 ~~~~~~~
+
+New classes and methods will be added.
+See https://github.com/rouault/gdal/blob/rfc75/gdal/gcore/gdal_priv.h#L1715
 
 A new driver capability will be added for drivers supporting multidimensional
 rasters:
@@ -112,100 +71,93 @@ will be added. When this is specified, drivers supporting multidimensional
 raster will return a root GDALGroup. Otherwise their current traditionnal 2D
 mode will still be used.
 
-The following new classes and methods will be added:
+New creation options metadata items are added to documents multidimensional dataset,
+group, dimension, array and attribute creation options.
 
 .. code-block:: c++
 
-    class GDALDriver (class already exists)
-    - CreateMultiDimensional(name: string, options: const char* const *) -> GDALDataset with an empty root GDALGroup
-    - CreateCopy() implementations of compatible drivers should be able to process source datasets with multidimensional arrays
+    /** XML snippet with multidimensional dataset creation options.
+    * @since GDAL 3.1
+    */
+    #define GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST "DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST"
 
-    class GDALDataset (class already exists)
-     - virtual GetRootGroup() --> GDALGroup when opened in mulidimensional mode, nullptr otherwise
+    /** XML snippet with multidimensional group creation options.
+    * @since GDAL 3.1
+    */
+    #define GDAL_DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST "DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST"
 
-    // models a HDF5 Group
-    class GDALGroup
-    - GetName()
-    - virtual GetMDArrayNames() -> list of string
-    - virtual OpenMDArray(string) -> unique_ptr<GDALMDArray>
-    - virtual GetGroupNames() -> list of string
-    - virtual OpenGroup(string) -> unique_ptr<GDALGroup>
-    - virtual GetAttributes() -> array of GDALAttribute*
-    // Write support
-    - virtual CreateGroup(name, options: const char* const *) -> GDALGroup
-    - virtual CreateMDArray(name: string,
-                    dimensions: vector<shared_ptr<GDALDimension>>,
-                    data_type GDALExtendedDataType,
-                    options: const char* const *) -> GDALMDArray
-    - virtual CreateAttribute(name: string,
-                      dimensions: vector<uint64_t>,
-                      data_type GDALExtendedDataType,
-                      options: const char* const *) -> GDALAttribute
+    /** XML snippet with multidimensional dimension creation options.
+    * @since GDAL 3.1
+    */
+    #define GDAL_DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST "DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST"
 
-    // base class for GDALAttribute and GDALMDArray
-    abstract class GDALAbstractMDArray:
-    - GetName()
-    - GetDimensionCount() -> size_t
-    - GetDimensions() -> array of shared_ptr<GDALDimension>
-    - GetDataType() -> GDALExtendedDataType
-    - virtual Read(const uint64_t* array_start_idx,     // array of size GetDimensionCount()
-           const size_t* count,                 // array of size GetDimensionCount()
-           const uint64_t* array_stride,        // stride in elements
-           const std::ptrdiff_t* buffer_stride, // stride in elements
-           GDALExtendedDataType buffer_datatype,
-           void* dst_buffer)
-    - virtual Write(const uint64_t* array_start_idx,    // array of size GetDimensionCount()
-           const size_t* count,                 // array of size GetDimensionCount()
-           const uint64_t* array_stride,        // stride in elements
-           const std::ptrdiff_t* buffer_stride, // stride in elements
-           GDALExtendedDataType buffer_datatype,
-           const void* src_buffer)
+    /** XML snippet with multidimensional array creation options.
+    * @since GDAL 3.1
+    */
+    #define GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST "DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST"
 
-    // models a HDF5 Attribute
-    class GDALAttribute: GDALAbstractMDArray
-    - virtual ReadAsString()
-    - virtual ReadAsDouble()
-    - virtual ReadAsStringArray()
-    - virtual ReadAsDoubleArray()
-    - virtual Write(string)
-    - virtual Write(int)
-    - virtual Write(double)
+    /** XML snippet with multidimensional attribute creation options.
+    * @since GDAL 3.1
+    */
+    #define GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST "DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST"
 
-    // models a HDF5 Dataset
-    class GDALMDArray: GDALAbstractMDArray
-    - virtual GetAttributes() --> array of GDALAttribute*
-    - nodata, scale, offset, unit, ...
-    - virtual GetSpatialRef()
-    // Write support
-    - virtual CreateAttribute(name: string,
-                      dim_count: uint32_t,
-                      dim_sizes: uint64_t[],
-                      data_type GDALExtendedDataType,
-                      options: const char* const *) -> GDALAttribute
+Examples with the netCDF driver:
 
-    // models a HDF5 Datatype, simplified
-    class GDALExtendedDataType:
-    - GetClass() -> COMPOUND, NUMERIC, STRING
-    - GetNumericDataType() -> GDALDataType for NUMERIC
-    - GetComponents() -> for COMPOUND, array of [ name, offset, 
-    GDALExtendedDataType ]
+.. code-block:: xml
 
-    // models a netCDF dimension. Generic HDF5 may not have all attributes populated
-    class GDALDimension:
-    - string name. e.g "X", "Y", "Z", "T"
-    - uint64_t size
-    - GDALMDArray indexing_variable: optional. Variable with the values 
-        taken by the dimension
-    - static Create(name, size, indexing_variable, option) -> shared_ptr<GDALDimension>
+    <MultiDimDatasetCreationOptionList>
+    <Option name="FORMAT" type="string-select" default="NC4">
+        <Value>NC</Value>
+        <Value>NC2</Value>
+        <Value>NC4</Value>
+        <Value>NC4C</Value>
+    </Option>
+    <Option name="CONVENTIONS" type="string" default="CF-1.6" description="Value of the Conventions attribute" />
+    </MultiDimDatasetCreationOptionList>
+
+
+    <MultiDimDimensionCreationOptionList>
+    <Option name="UNLIMITED" type="boolean" description="Whether the dimension should be unlimited" default="false" />
+    </MultiDimDimensionCreationOptionList>
+
+
+    <MultiDimArrayCreationOptionList>
+    <Option name="BLOCKSIZE" type="int" description="Block size in pixels" />
+    <Option name="COMPRESS" type="string-select" default="NONE">
+        <Value>NONE</Value>
+        <Value>DEFLATE</Value>
+    </Option>
+    <Option name="ZLEVEL" type="int" description="DEFLATE compression level 1-9" default="1" />
+    <Option name="NC_TYPE" type="string-select" default="netCDF data type">
+        <Value>AUTO</Value>
+        <Value>NC_BYTE</Value>
+        <Value>NC_INT64</Value>
+        <Value>NC_UINT64</Value>
+    </Option>
+    </MultiDimArrayCreationOptionList>
+
+
+    <MultiDimAttributeCreationOptionList>
+    <Option name="NC_TYPE" type="string-select" default="netCDF data type">
+        <Value>AUTO</Value>
+        <Value>NC_BYTE</Value>
+        <Value>NC_CHAR</Value>
+        <Value>NC_INT64</Value>
+        <Value>NC_UINT64</Value>
+    </Option>
+    </MultiDimAttributeCreationOptionList>
+
 
 C API
 ~~~~~
 
-TODO
+All C++ methods are mapped to the C API.
+See https://github.com/rouault/gdal/blob/rfc75/gdal/gcore/gdal.h#L1397
 
 Driver changes
 ~~~~~~~~~~~~~~
 
+- The MEM driver will implement read and write support.
 - The VRT driver will allow extraction of 2D slices from multidimensional
   drivers to 2D/classic drivers, as well as multidimensional->multidimensional
   slicing/trimming
@@ -214,59 +166,67 @@ Driver changes
 - The GRIB driver will implement read support (exposing X,Y,Time arrays for GRIB
   messages only differing by timestamp)
 
-Utility changes
-~~~~~~~~~~~~~~~
+New Utilities
+~~~~~~~~~~~~~
 
-- gdalinfo will report the hierachical structure
-- gdal_translate will extraction of 2D slices from multidimensional drivers
-  to 2D/classic drivers, or multidimensional->multidimensional slicing/trimming
-  
-At that point, I'm not sure if it is better to extend existing utilities
-(possibly with a switch to enable multidimensional mode) or have new dedicated
-utilities: gdalmdinfo / gdalmdtranslate. Especially for gdal_translate where a
-big number of options will not apply for the multidimensional case.
+- A new gdalmdiminfo utility is added to report the hierachical structure and content.
+  Its output format is JSON. See https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/programs/gdalmdiminfo.rst
+  for its documentation.
+
+- A new gdalmdimtranslate utility is added to convert multidimensional raster between
+  different formats, and/or can perform selective conversion of specific arrays
+  and groups, and/or subsetting operations. It can also do extraction of 2D slices
+  from multidimensional drivers to 2D/classic drivers.
+  See https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/programs/gdalmdimtranslate.rst
+  for its documentation.
 
 SWIG binding changes
 ~~~~~~~~~~~~~~~~~~~~
 
-TODO.
-Mapping of C API.
-For Python bindings, NumPy integration with ndarray.
+The C API is mapped to the SWIG bindings. The scope is complete for the
+Python bindings. Other languages would need to add missing typemaps, but this
+is not in the scope of the work of this RFC.
+For Python bindings, NumPy integration is done.
 
 Limitations
 -----------
 
 This is intended to be a preliminary work on that topic. While the aim is for it
-to be be usable for the defined scop, it will probably require future
+to be be usable for the defined scope, it will probably require future
 enhancements to fill functional and/or performance gaps.
-
-Limitations I can think of currently are:
 
 - No block cache mechanism (not sure this is needed)
 - No sub-pixel requests, or non-nearest subsampling
 - Upgrade of WCS driver or other drivers with potential multidimensional
   capabilities are not part of this RFC.
-- SWIG bindings: if new typemaps needed, only be implemented for Python bindings
+- SWIG bindings: full scope only for Python bindings.
 
 Backward compatibility
 ----------------------
 
-At that point, no backward incompatibility anticipated.
+No backward incompatibility. Only API and utility additions.
 
 Documentation
 -------------
 
-TODO, including a new document describing the multidimensional data model.
+- Data model: https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/user/multidim_raster_data_model.rst
+- API tutorial: https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/tutorials/multidimensional_api_tut.rst
+- gdalmdiminfo: https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/programs/gdalmdiminfo.rst
+- gdalmdimtranslate: https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/programs/gdalmdimtranslate.rst
+- VRT driver: https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/drivers/raster/vrt_multidimensional.rst
 
 Testing
 -------
 
-TODO
+The gdalautotest suite is extended to test the modified drivers and the new
+utilities.
 
 Implementation
 --------------
 
-The implementation will be done by Even Rouault. TODO
+The implementation will be done by Even Rouault.
+A preliminary implementation is available at
+https://github.com/OSGeo/gdal/pull/1704
 
 Voting history
 --------------
