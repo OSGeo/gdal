@@ -71,7 +71,8 @@ install:
       Install-Module Pscx -AllowClobber
       Install-Module VSSetup -Scope CurrentUser
       # Install SWIG and VC for Python2.7 by Choco
-      cinst -y --no-progress swig vcpython27
+      cinst -y --no-progress --version 3.0.12 --force swig
+      cinst -y --no-progress vcpython27
       Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
       exec { pip install numpy }
       $env:SDK_ZIP="$env:SDK"+"-dev.zip"
