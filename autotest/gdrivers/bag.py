@@ -682,7 +682,7 @@ def test_bag_read_incorrect_northeast_corner():
     if gdaltest.bag_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/true_n_nominal.bag')
+    ds = gdal.Open('data/test_offset_ne_corner.bag')
 
     geotransform = ds.GetGeoTransform()
     assert geotransform == (12344.908093267779, 0.43072702444442257, 0.0, 22127.215363512223, 0.0, -0.4307270244446247)
