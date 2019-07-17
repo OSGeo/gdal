@@ -4403,6 +4403,17 @@ def test_multipolygon3D_NC4C_write():
     assert(fWkt == "MULTIPOLYGON (((-2 0 -5,-2 1 -6,-1 1 -6,-2 0 -5)))")
     assert(fnam == "Single_Triangly")
 
+def test_netcdf_dimension_labels_with_null():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    with gdaltest.error_handler():
+        assert gdal.Open('data/dimension_labels_with_null.nc')
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
