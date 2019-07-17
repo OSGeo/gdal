@@ -32,8 +32,34 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+#include "cpl_multiproc.h"
 
 #include "proj.h"
+
+static void func1(void*)
+{
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    auto ret = OSRImportFromEPSG(hSRS, 32631);
+    CPLPopErrorHandler();
+    if( ret == OGRERR_NONE )
+    {
+        fprintf(stderr, "failure expected (1)\n");
+        exit(1);
+    }
+    OSRDestroySpatialReference(hSRS);
+}
+
+static void func2(void*)
+{
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
+    if( OSRImportFromEPSG(hSRS, 32631) != OGRERR_NONE )
+    {
+        fprintf(stderr, "failure not expected (2)\n");
+        exit(1);
+    }
+    OSRDestroySpatialReference(hSRS);
+}
 
 int main()
 {
@@ -44,32 +70,21 @@ int main()
     setenv("PROJ_LIB", "/i_do/not_exist", true);
 
     // Test we can no longer find the database
-    {
-        OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        auto ret = OSRImportFromEPSG(hSRS, 32631);
-        CPLPopErrorHandler();
-        if( ret == OGRERR_NONE )
-        {
-            fprintf(stderr, "failure expected (1)\n");
-            return 1;
-        }
-        OSRDestroySpatialReference(hSRS);
-    }
+    func1(nullptr);
+
+    // In a thread as well
+    auto t1 = CPLCreateJoinableThread(func1, nullptr);
+    CPLJoinThread(t1);
 
     // Use OSRSetPROJSearchPaths to restore search paths
     OSRSetPROJSearchPaths(tokens);
 
     // This time this should work
-    {
-        OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-        if( OSRImportFromEPSG(hSRS, 32631) != OGRERR_NONE )
-        {
-            fprintf(stderr, "failure not expected (2)\n");
-            return 1;
-        }
-        OSRDestroySpatialReference(hSRS);
-    }
+    func2(nullptr);
+
+    // In a thread as well
+    auto t2 = CPLCreateJoinableThread(func2, nullptr);
+    CPLJoinThread(t2);
 
     CSLDestroy(tokens);
     OSRCleanup();
