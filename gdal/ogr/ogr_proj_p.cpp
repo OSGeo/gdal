@@ -106,7 +106,7 @@ PJ_CONTEXT* OSRGetProjTLSContext()
     auto& l_projContext = g_tls_projContext;
     l_projContext.init();
     {
-        // If OSRSetPROJSearchPaths() has been called since we created the mutex,
+        // If OSRSetPROJSearchPaths() has been called since we created the context,
         // set the new search paths on the context.
         std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
         if( l_projContext.searchPathGenerationCounter !=
