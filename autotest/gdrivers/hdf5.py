@@ -450,6 +450,5 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
 
     assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
-
-
-
+def test_hdf5_dimension_labels_with_null():
+    assert gdal.Open('data/dimension_labels_with_null.h5')
