@@ -394,7 +394,10 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   mem_offset, nullptr,
                                   count, nullptr);
     if( status < 0 )
+    {
+        H5Sclose(memspace);
         return CE_Failure;
+    }
 
     status = H5Dread(poGDS->dataset_id, poGDS->native, memspace,
                      poGDS->dataspace_id, H5P_DEFAULT, pImage);
