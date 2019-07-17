@@ -685,9 +685,9 @@ def test_bag_read_incorrect_northeast_corner():
     ds = gdal.Open('data/test_offset_ne_corner.bag')
 
     geotransform = ds.GetGeoTransform()
-    assert geotransform == (605257.999475891, 4.00104821802935, 0.0, 4494890.000729927, 0.0, -4.001459854014598)
+    assert geotransform == (85.0, 30.0, 0.0, 500112.0, 0.0, -32.0)
 
-    corner_points = ElementTree.fromstring(ds.GetMetadata('xml:BAG')[0])[9][0][6][0][0].text
-    assert corner_points == '605260.000000000000,4483924.000000000000 620528.000000000000,4494888.000000000000'
+    corner_points = ElementTree.fromstring(ds.GetMetadata('xml:BAG')[0])[8][0][6][0][0].text
+    assert corner_points == '100.000000000000,500000.000000000000 250.000000000000,500096.000000000000'
 
     del ds
