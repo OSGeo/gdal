@@ -369,6 +369,7 @@ public:
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
     std::vector<size_t> count_internal(nExpectedDims + 1);
     std::vector<GPtrDiff_t> buffer_stride_internal(nExpectedDims + 1);
+    size_t nProductCount = 1;
     for( int i = 0; i < nExpectedDims; i++ )
     {
         count_internal[i] = (size_t)count[i];
@@ -377,6 +378,7 @@ public:
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
             return CE_Failure;
         }
+        nProductCount *= count_internal[i];
         buffer_stride_internal[i] = (GPtrDiff_t)buffer_stride[i];
         if( buffer_stride_internal[i] != buffer_stride[i] )
         {
@@ -390,28 +392,20 @@ public:
     GDALExtendedDataTypeRelease(selfType);
 
     if( GDALExtendedDataTypeGetClass(buffer_datatype) == GEDTC_STRING &&
-        isSelfString &&
-        GDALMDArrayGetDimensionCount(self) == 1 )
+        isSelfString )
     {
-        if( nDims1 != 1 )
+        size_t nExpectedStride = 1;
+        for( int i = nExpectedDims; i > 0; )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "Wrong number of values in array_start_idx");
-            return CE_Failure;
+            --i;
+            if( (size_t)buffer_stride_internal[i] != nExpectedStride )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Unhandled stride");
+                return CE_Failure;
+            }
+            nExpectedStride *= count_internal[i];
         }
-        if( nDims2 != 1 )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "Wrong number of values in count");
-            return CE_Failure;
-        }
-        if( nDims3 != 1 )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "Wrong number of values in array_step");
-            return CE_Failure;
-        }
-        char** ppszBuffer = (char**)VSI_CALLOC_VERBOSE(count[0], sizeof(char*));
+        char** ppszBuffer = (char**)VSI_CALLOC_VERBOSE(nProductCount, sizeof(char*));
         if( !ppszBuffer )
             return CE_Failure;
         GByte* pabyBuffer = (GByte*)ppszBuffer;
@@ -423,17 +417,17 @@ public:
                             buffer_datatype,
                             pabyBuffer,
                             pabyBuffer,
-                            count_internal[0] * sizeof(char*) )) )
+                            nProductCount * sizeof(char*) )) )
         {
-            for( size_t i = 0; i < count_internal[0]; i++ )
+            for( size_t i = 0; i < nProductCount; i++ )
                 VSIFree(ppszBuffer[i]);
             VSIFree(pabyBuffer);
             return CE_Failure;
         }
 
         SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        PyObject* obj = PyList_New( count_internal[0] );
-        for( size_t i = 0; i < count_internal[0]; i++ )
+        PyObject* obj = PyList_New( nProductCount );
+        for( size_t i = 0; i < nProductCount; i++ )
         {
             PyObject *o = GDALPythonObjectFromCStr( ppszBuffer[i] );
             PyList_SetItem(obj, i, o );

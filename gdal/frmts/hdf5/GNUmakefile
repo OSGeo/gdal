@@ -2,7 +2,8 @@
 include ../../GDALmake.opt
 
 OBJ	=	hdf5dataset.o hdf5imagedataset.o \
-		bagdataset.o gh5_convenience.o iso19115_srs.o
+		bagdataset.o gh5_convenience.o iso19115_srs.o \
+		hdf5multidim.o
 
 HDFEOS_OPTS	=
 SUBLIBS 	=

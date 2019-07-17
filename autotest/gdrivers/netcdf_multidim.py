@@ -276,8 +276,7 @@ def test_netcdf_multidim_var_alldatatypes(netcdf_setup):  # noqa
     var = rg.OpenMDArray('string_var')
     dt = var.GetDataType()
     assert dt.GetClass() == gdal.GEDTC_STRING
-    with gdaltest.error_handler():
-        assert not var.Read() # not supported yet
+    assert var.Read() == ['abcd', 'ef']
 
     group = rg.OpenGroup('group')
     var = group.OpenMDArray('char_var')

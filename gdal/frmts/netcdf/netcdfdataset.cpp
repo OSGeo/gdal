@@ -7089,13 +7089,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
              poOpenInfo->pszFilename);
 #endif
 
-#ifdef NETCDF_HAS_NC4
-    if( poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER )
-    {
-        return OpenMultiDim(poOpenInfo);
-    }
-#endif
-
     // Does this appear to be a netcdf file?
     NetCDFFormatEnum eTmpFormat = NCDF_FORMAT_NONE;
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
@@ -7122,6 +7115,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         }
 #endif
     }
+
+#ifdef NETCDF_HAS_NC4
+    if( poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER )
+    {
+        return OpenMultiDim(poOpenInfo);
+    }
+#endif
 
     CPLMutexHolderD(&hNCMutex);
 

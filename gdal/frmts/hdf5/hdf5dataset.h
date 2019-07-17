@@ -60,6 +60,23 @@ herr_t HDF5CreateGroupObjs(hid_t, const char *, void *);
 hid_t HDF5GetFileDriver();
 void HDF5UnloadFileDriver();
 
+#if defined(H5_VERSION_GE) // added in 1.8.7
+# if !H5_VERSION_GE(1,8,13)
+#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
+# endif
+#else
+#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
+#endif
+
+// Release 1.6.3 or 1.6.4 changed the type of count in some API functions.
+
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 \
+       && (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
+#  define H5OFFSET_TYPE hssize_t
+#else
+#  define H5OFFSET_TYPE  hsize_t
+#endif
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              HDF5Dataset                             */
@@ -76,6 +93,7 @@ protected:
     int              nSubDataCount;
 
     HDF5GroupObjects *poH5RootGroup; /* Contain hdf5 Groups information */
+    std::shared_ptr<GDALGroup> m_poRootGroup{};
 
     CPLErr ReadGlobalAttributes(int);
     CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int );
@@ -86,7 +104,6 @@ protected:
     char *CreatePath(HDF5GroupObjects *);
     void DestroyH5Objects(HDF5GroupObjects *);
 
-    static GDALDataType GetDataType(hid_t);
     static const char *GetDataTypeName(hid_t);
 
   /**
@@ -116,8 +133,13 @@ protected:
     HDF5Dataset();
     ~HDF5Dataset();
 
+    std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
+
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALDataset *OpenMultiDim(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
+
+    static GDALDataType GetDataType(hid_t);
 };
 
 #endif /* HDF5DATASET_H_INCLUDED_ */

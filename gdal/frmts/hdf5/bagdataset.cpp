@@ -48,14 +48,6 @@
 
 CPL_CVSID("$Id$")
 
-#if defined(H5_VERSION_GE) // added in 1.8.7
-# if !H5_VERSION_GE(1,8,13)
-#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
-# endif
-#else
-#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
-#endif
-
 struct BAGRefinementGrid
 {
     unsigned nIndex = 0;

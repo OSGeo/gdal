@@ -41,15 +41,6 @@
 
 CPL_CVSID("$Id$")
 
-// Release 1.6.3 or 1.6.4 changed the type of count in some API functions.
-
-#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 \
-       && (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
-#  define H5OFFSET_TYPE hssize_t
-#else
-#  define H5OFFSET_TYPE  hsize_t
-#endif
-
 class HDF5ImageDataset : public HDF5Dataset
 {
     typedef enum { UNKNOWN_PRODUCT = 0, CSK_PRODUCT } Hdf5ProductType;

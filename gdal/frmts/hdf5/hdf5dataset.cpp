@@ -103,6 +103,8 @@ void GDALRegister_HDF5()
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
+
     poDriver->pfnOpen = HDF5Dataset::Open;
     poDriver->pfnIdentify = HDF5Dataset::Identify;
     poDriver->pfnUnloadDriver = HDF5DatasetDriverUnload;
@@ -200,8 +202,6 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
         else if( H5Tequal(H5T_NATIVE_LLONG,  TypeID) )
             return GDT_Unknown;
         else if( H5Tequal(H5T_NATIVE_ULLONG, TypeID) )
-            return GDT_Unknown;
-        else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
             return GDT_Unknown;
     }
     else  //Parse compound type to determine if data is complex
@@ -359,6 +359,12 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
 int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
+    if( (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) &&
+        STARTS_WITH(poOpenInfo->pszFilename, "HDF5:") )
+    {
+        return TRUE;
+    }
+
     // Is it an HDF5 file?
     constexpr char achSignature[] = "\211HDF\r\n\032\n";
 
@@ -425,6 +431,11 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
 {
     if( !Identify(poOpenInfo) )
         return nullptr;
+
+    if( poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER )
+    {
+        return OpenMultiDim(poOpenInfo);
+    }
 
     // Create datasource.
     HDF5Dataset *const poDS = new HDF5Dataset();
