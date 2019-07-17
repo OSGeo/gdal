@@ -143,27 +143,61 @@ typedef struct {
 
 } GTIFDefn;
 
+int GTIF_DLL GTIFGetPCSInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                      int nPCSCode, char **ppszEPSGName,
+                      short *pnProjOp, short *pnUOMLengthCode,
+                      short *pnGeogCS );
 int GTIF_DLL GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                             short *pnProjOp,
                             short *pnUOMLengthCode, short *pnGeogCS );
+
+int GTIF_DLL GTIFGetProjTRFInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                          int nProjTRFCode,
+                          char **ppszProjTRFName,
+                          short * pnProjMethod,
+                          double * padfProjParms );
 int GTIF_DLL GTIFGetProjTRFInfo( int nProjTRFCode,
                                 char ** ppszProjTRFName,
                                 short * pnProjMethod,
                                 double * padfProjParms );
+
+int GTIF_DLL GTIFGetGCSInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                      int nGCSCode, char ** ppszName,
+                      short * pnDatum, short * pnPM, short *pnUOMAngle );
 int GTIF_DLL GTIFGetGCSInfo( int nGCSCode, char **ppszName,
                             short *pnDatum, short *pnPM, short *pnUOMAngle );
+
+int GTIF_DLL GTIFGetDatumInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                        int nDatumCode, char ** ppszName, short * pnEllipsoid );
 int GTIF_DLL GTIFGetDatumInfo( int nDatumCode, char **ppszName,
                               short * pnEllipsoid );
+
+int GTIF_DLL GTIFGetEllipsoidInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                            int nEllipseCode, char ** ppszName,
+                            double * pdfSemiMajor, double * pdfSemiMinor );
 int GTIF_DLL GTIFGetEllipsoidInfo( int nEllipsoid, char ** ppszName,
                                   double * pdfSemiMajor,
                                   double * pdfSemiMinor );
+
+int GTIF_DLL GTIFGetPMInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                     int nPMCode, char ** ppszName, double *pdfOffset );
 int GTIF_DLL GTIFGetPMInfo( int nPM, char **ppszName,
                            double * pdfLongToGreenwich );
 
 double GTIF_DLL GTIFAngleStringToDD( const char *pszAngle, int nUOMAngle );
+
+int GTIF_DLL GTIFGetUOMLengthInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                            int nUOMLengthCode,
+                            char **ppszUOMName,
+                            double * pdfInMeters );
 int GTIF_DLL GTIFGetUOMLengthInfo( int nUOMLengthCode,
                                   char **ppszUOMName,
                                   double * pdfInMeters );
+
+int GTIF_DLL GTIFGetUOMAngleInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                           int nUOMAngleCode,
+                           char **ppszUOMName,
+                           double * pdfInDegrees );
 int GTIF_DLL GTIFGetUOMAngleInfo( int nUOMAngleCode,
                                  char **ppszUOMName,
                                  double * pdfInDegrees );
