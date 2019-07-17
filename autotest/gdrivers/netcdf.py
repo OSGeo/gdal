@@ -2882,6 +2882,20 @@ def test_netcdf_functions_2(filename, checksum, options, testfunction):
     ut = gdaltest.GDALTest('netcdf', filename, 1, checksum, options=options)
     getattr(ut, testfunction)()
 
-###############################################################################
-#  other tests
+def test_netcdf_dimension_labels_with_null():
 
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    with gdaltest.error_handler():
+        assert gdal.Open('data/dimension_labels_with_null.nc')
+
+def test_clean_tmp():
+    # [KEEP THIS AS THE LAST TEST]
+    # i.e. please do not add any tests after this one. Put new ones above.
+    # Not actually a test, just cleans up tmp...
+    gdaltest.clean_tmp()
+    pytest.skip()
