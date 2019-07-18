@@ -1389,11 +1389,11 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * OGRSpatialReference::SetFromUserInput(), to be used as an override for hSrcDS.
  * <li> DST_SRS: WKT SRS, or any string recognized by
  * OGRSpatialReference::SetFromUserInput(),  to be used as an override for hDstDS.
- * <li> COORDINATE_OPERATION: (GDAL &gt;= 2.5) Coordinate operation, as a
+ * <li> COORDINATE_OPERATION: (GDAL &gt;= 3.0) Coordinate operation, as a
  * PROJ or WKT string, used as an override over the normally computed pipeline.
  * The pipeline must take into account the axis order of the source and target
  * SRS.
- * <li> COORDINATE_EPOCH: (GDAL &gt;= 2.5) Coordinate epoch, expressed as a
+ * <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch, expressed as a
  * decimal year. Useful for time-dependant coordinate operations.
  * <li> GCPS_OK: If false, GCPs will not be used, default is TRUE.
  * <li> REFINE_MINIMUM_GCPS: The minimum amount of GCPs that should be available
@@ -1440,7 +1440,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * Must be used together with REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT to be taken
  * into account.
  * <li> AREA_OF_INTEREST=west_lon_deg,south_lat_deg,east_lon_deg,north_lat_deg.
- * (GDAL &gt;= 2.5) Area of interest, used to compute the best coordinate operation
+ * (GDAL &gt;= 3.0) Area of interest, used to compute the best coordinate operation
  * between the source and target SRS. If not specified, the bounding box of the
  * source raster will be used.
  * </ul>
@@ -2113,7 +2113,7 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
  * OGRSpatialReferenceH objects and options.
  * The options are the ones supported by GDALCreateReprojectionTransformerEx()
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 void *
 GDALCreateGenImgProjTransformer4( OGRSpatialReferenceH hSrcSRS,
@@ -2783,7 +2783,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
  * @return Handle for use with GDALReprojectionTransform(), or NULL if the
  * system fails to initialize the reprojection.
  *
- * @since GDAL 2.5
+ * @since GDAL 3.0
  **/
 
 void *GDALCreateReprojectionTransformerEx(
