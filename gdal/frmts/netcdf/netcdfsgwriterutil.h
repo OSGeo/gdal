@@ -27,6 +27,7 @@
  ****************************************************************************/
 #ifndef __NETCDFSGWRITERUTIL_H__
 #define __NETCDFSGWRITERUTIL_H__
+#include <cmath>
 #include <queue>
 #include <vector>
 #include "ogr_core.h"
@@ -168,6 +169,173 @@ namespace nccfdriver
             ~OGR_SGeometry_Scribe() { this->commit_transaction(); }
     };
 
+    /* OGR_SGFS_Transaction
+     * Abstract class for a commitable transaction
+     *
+     */
+    class OGR_SGFS_Transaction
+    {
+        int ncId;
+        int varId;
+
+        protected:
+            /* void getVarId(...);
+             * Gets the var in which to commit the transaction to.
+             */
+            int getVarId() { return this->varId; }
+
+            /* void setVarId(...);
+             * Sets the var in which to commit the transaction to.
+             */
+            void setVarId(int vId) { this->varId = vId; }
+
+        public:
+            /* int commit(...);
+             * Arguments: int ncid, the dataset to write to
+             *            int write_loc, the index in which to write to
+             * Implementation: should write the transaction to netCDF file
+             *
+             * Returns: error code from transaction
+             */
+            virtual int commit(int ncid, size_t write_loc) = 0;
+
+            /* ~OGR_SGFS_Transaction()
+             * Empty. Simple here to stop the compiler from complaining...
+             */
+            virtual ~OGR_SGFS_Transaction() {}
+    };
+
+    /* OGR_SGFS_NC_Char_Transaction 
+     * Writes to an NC_CHAR variable
+     */
+    class OGR_SGFS_NC_Char_Transaction : public OGR_SGFS_Transaction
+    {
+        std::string char_rep;
+
+        public:
+            int commit(int ncid, size_t write_loc) override { return nc_put_var1_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
+            OGR_SGFS_NC_Char_Transaction(int i_varId, char* pszVal) : 
+               char_rep(pszVal)
+            {
+                OGR_SGFS_Transaction::setVarId(i_varId);
+            }
+    };
+
+    /* OGR_SGFS_NC_CharA_Transaction
+     * Writes to an NC_CHAR variable, using vara instead of var1
+     */
+    class OGR_SGFS_NC_CharA_Transaction : public OGR_SGFS_Transaction
+    {
+        std::string char_rep;
+        std::unique_ptr<size_t, std::default_delete<size_t[]>> counts;
+
+        public:
+            int commit(int ncid, size_t write_loc) override { return nc_put_vara_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, counts.get(), char_rep.c_str()); }
+            OGR_SGFS_NC_CharA_Transaction(int i_varId, char* pszVal, std::vector<size_t>& count_init) : 
+               char_rep(pszVal),
+               counts(new size_t[count_init.size()])
+            { 
+                OGR_SGFS_Transaction::setVarId(i_varId);
+                for(size_t citr = 0; citr < count_init.size(); citr++)
+                {
+                    counts.get()[citr] = count_init[citr];
+                }
+            }
+    };
+
+    /* OGR_SGFS_NC_Short_Transaction 
+     * Writes to an NC_SHORT variable
+     */
+    class OGR_SGFS_NC_Short_Transaction: public OGR_SGFS_Transaction
+    {
+        short rep;
+
+        public:
+            int commit(int ncid, size_t write_loc) override { return nc_put_var1_short(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            OGR_SGFS_NC_Short_Transaction(int i_varId, short shin) : 
+               rep(shin)
+            {
+                OGR_SGFS_Transaction::setVarId(i_varId);
+            }
+    };
+
+    /* OGR_SGFS_NC_Int_Transaction
+     * Writes to an NC_INT variable
+     */
+    class OGR_SGFS_NC_Int_Transaction: public OGR_SGFS_Transaction
+    {
+        int rep;
+
+        public:
+            int commit(int ncid, size_t write_loc) override { return nc_put_var1_int(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            OGR_SGFS_NC_Int_Transaction(int i_varId, int iin) : 
+               rep(iin)
+            {
+                OGR_SGFS_Transaction::setVarId(i_varId);
+            }
+    };
+
+    
+    /* OGR_SGFS_NC_Float_Transaction
+     * Writes to an NC_FLOAT variable
+     */
+    class OGR_SGFS_NC_Float_Transaction: public OGR_SGFS_Transaction
+    {
+        float rep;
+
+        public:
+            int commit(int ncid, size_t write_loc) override { return nc_put_var1_float(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            OGR_SGFS_NC_Float_Transaction(int i_varId, int fin) : 
+               rep(fin)
+            {
+                OGR_SGFS_Transaction::setVarId(i_varId);
+            }
+    };
+
+    /* OGR_SGFS_NC_Double_Transaction
+     * Writes to an NC_DOUBLE variable
+     */
+    class OGR_SGFS_NC_Double_Transaction: public OGR_SGFS_Transaction
+    {
+        double rep;
+
+        public:
+            int commit(int ncid, size_t write_loc) override { return nc_put_var1_double(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            OGR_SGFS_NC_Double_Transaction(int i_varId, int fin) : 
+               rep(fin)
+            {
+                OGR_SGFS_Transaction::setVarId(i_varId);
+            }
+    };
+
+    /* OGR_SGeometry_Field_Scribe
+     * Buffers several netCDF transactions in memory to reduce the need of dimension resizing
+     *
+     */
+    class OGR_SGeometry_Field_Scribe
+    {
+        std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
+        std::map<int, size_t> varWriteInds;
+        size_t recordLength;
+
+        public:
+            /* size_t get_Record_Length()
+             * Return the current length of the record dimension
+             */
+            size_t get_Record_Length() { return this->recordLength; }
+
+            /* void commit_transaction()
+             * Replays all transactions to disk (according to fs stipulations)
+             */
+           void commit_transaction() { /*todo*/ }
+
+           /* void enqueue_transaction()
+            * Add a transaction to perform
+            * Once a transaction is enqueued, it will only be dequeued on flush
+            */
+           void enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd) { this->transactionQueue.push(transactionAdd); }
+    };
+
     // Exception Classes
     class SGWriter_Exception : public SG_Exception
     {
@@ -222,6 +390,8 @@ namespace nccfdriver
             const char * get_err_msg() override { return this->msg.c_str(); }
             SGWriter_Exception_RingOOB() : msg("An attempt was made to read a polygon ring that does not exist.") {}
     };
+
+
 
     // Functions that interface with netCDF, for writing
 

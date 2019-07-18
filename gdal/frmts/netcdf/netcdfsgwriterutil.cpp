@@ -111,6 +111,7 @@ namespace nccfdriver
                 throw SGWriter_Exception_EmptyGeometry();
             }
 
+
             OGRLinearRing & exterior_ring = *r_defnPolygon.getExteriorRing();
 
             size_t outer_ring_ct = exterior_ring.getNumPoints();
@@ -352,7 +353,6 @@ namespace nccfdriver
             {
                 int pt_ind_int = static_cast<int>(pt_ind);
                 OGRPoint& write_pt = ft.getPoint(part_no, pt_ind_int);
-
 
                 // Write each node coordinate
                 double x = write_pt.getX();

@@ -262,8 +262,11 @@ bool netCDFLayer::Create(char **papszOptions,
             NCDF_ERR(status);
     }
 
+    size_t recordDimLen = m_bLegacyCreateMode || m_poDS->eFormat == NCDF_FORMAT_NC4 ?
+        NC_UNLIMITED : 1;
+
     status = nc_def_dim(m_nLayerCDFId, m_osRecordDimName,
-    NC_UNLIMITED, &m_nRecordDimID);
+    recordDimLen, &m_nRecordDimID);
     NCDF_ERR(status);
     if (status != NC_NOERR)
     return false;
@@ -1537,8 +1540,15 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                              m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
                     m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
                 }
-                status = nc_put_var1_text(
-                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, pszVal);
+                if(m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_text(
+                        m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, pszVal);
+                }
+                else
+                {
+                     
+                }
             }
             else
             {
