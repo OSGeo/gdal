@@ -842,11 +842,11 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
             H5Aread(hAttrID, hAttrNativeType, papszStrings);
 
             // Concatenate all values as one string separated by a space.
-            CPLString osVal = papszStrings[0];
+            CPLString osVal = papszStrings[0] ? papszStrings[0] : "{NULL}";
             for( hsize_t i = 1; i < nAttrElmts; i++ )
             {
                 osVal += " ";
-                osVal += papszStrings[i];
+                osVal += papszStrings[i] ? papszStrings[i] : "{NULL}";
             }
 
             szValue = static_cast<char *>(CPLMalloc(osVal.length() + 1));

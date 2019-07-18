@@ -5766,6 +5766,14 @@ bool netCDFDataset::CloneVariableContent(int old_cdfid, int new_cdfid,
         }
     }
 
+    /* Workaround in some cases a netCDF bug: https://github.com/Unidata/netcdf-c/pull/1442 */
+    if( nRecords > 0 && nRecords < 10*1000*1000 / (nElems * nTypeSize) )
+    {
+        nElems *= nRecords;
+        anCount[0] = nRecords;
+        nRecords = 1;
+    }
+
     void *pBuffer = VSI_MALLOC2_VERBOSE(nElems, nTypeSize);
     if( pBuffer == nullptr )
         return false;
@@ -9468,10 +9476,10 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         dfValue = 0.0;
         for( m = 0; m < nAttrLen - 1; m++ )
         {
-            NCDFSafeStrcat(&pszAttrValue, ppszTemp[m], &nAttrValueSize);
+            NCDFSafeStrcat(&pszAttrValue, ppszTemp[m] ? ppszTemp[m] : "{NULL}", &nAttrValueSize);
             NCDFSafeStrcat(&pszAttrValue, ",", &nAttrValueSize);
         }
-        NCDFSafeStrcat(&pszAttrValue, ppszTemp[m], &nAttrValueSize);
+        NCDFSafeStrcat(&pszAttrValue, ppszTemp[m] ? ppszTemp[m] : "{NULL}", &nAttrValueSize);
         nc_free_string(nAttrLen, ppszTemp);
         CPLFree(ppszTemp);
         break;

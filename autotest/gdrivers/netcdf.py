@@ -1824,6 +1824,9 @@ def test_netcdf_52():
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
 
+    if gdaltest.netcdf_drv_version in ('4.6.3', '4.7.0'):
+        pytest.skip('buggy netCDF version: https://github.com/Unidata/netcdf-c/pull/1442')
+
     ds = gdal.OpenEx('data/test_ogr_nc4.nc', gdal.OF_VECTOR)
     gdal.VectorTranslate('tmp/netcdf_52.nc', ds, format='netCDF', datasetCreationOptions=['FORMAT=NC4', 'GEOMETRY_ENCODING=WKT'])
 
@@ -1929,6 +1932,9 @@ def test_netcdf_54():
 
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
+
+    if gdaltest.netcdf_drv_version in ('4.6.3', '4.7.0'):
+        pytest.skip('buggy netCDF version: https://github.com/Unidata/netcdf-c/pull/1442')
 
     shutil.copy('data/test_ogr_nc4.nc', 'tmp/netcdf_54.nc')
 
@@ -4402,6 +4408,21 @@ def test_multipolygon3D_NC4C_write():
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((-2 0 -5,-2 1 -6,-1 1 -6,-2 0 -5)))")
     assert(fnam == "Single_Triangly")
+
+def test_netcdf_dimension_labels_with_null():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    # Crashes with 4.1.3 of Ubuntu Precise
+    if gdaltest.netcdf_drv_version.startswith('4.0.') or gdaltest.netcdf_drv_version.startswith('4.1.'):
+        pytest.skip('Test crashes with this libnetcdf version')
+
+    with gdaltest.error_handler():
+        assert gdal.Open('data/dimension_labels_with_null.nc')
 
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
