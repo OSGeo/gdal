@@ -3344,8 +3344,8 @@ void BAGDataset::LoadMetadata()
                     fabs((dfURY - dfLLY) / dfResHeight - m_nLowResHeight) < 1e-2 )
                 {
                     // Found with https://data.ngdc.noaa.gov/platforms/ocean/nos/coast/H12001-H14000/H12525/BAG/H12525_MB_4m_MLLW_1of2.bag
-                    // https://github.com/OSGeo/gdal/issues/1643
-                    CPLError(CE_Failure, CPLE_AppDefined,"Ignoring BAG Upper Right Corner.");
+                    // to address issue https://github.com/OSGeo/gdal/issues/1643
+                    CPLError(CE_Warning, CPLE_AppDefined, "cornerPoints not consistent with resolution given in metadata");
                 }
                 else if( fabs((dfURX - dfLLX) / dfResWidth - (m_nLowResWidth - 1)) < 1e-2 &&
                          fabs((dfURY - dfLLY) / dfResHeight - (m_nLowResHeight - 1)) < 1e-2 )
@@ -3369,6 +3369,7 @@ void BAGDataset::LoadMetadata()
                                     (dfURY - dfLLY) / (m_nLowResHeight - 1),
                                     (dfURY - dfLLY) / dfResHeight,
                                     m_nLowResHeight);
+                    CPLError(CE_Warning, CPLE_AppDefined, "cornerPoints not consistent with resolution given in metadata");
                 }
             }
 

@@ -231,9 +231,6 @@ The other following creation options are available:
 -  ZLEVEL=[1-9]: Deflate compression level. Defaults to 6.
 -  BLOCK_SIZE=value_in_pixel: Chunking size of the HDF5 arrays. Default
    to 100, or the maximum dimension of the raster if smaller than 100.
--  CORNER_POINTS_EXTEND_HALF_PIXEL=YES/NO: (GDAL >= 3.1) Whether to use non-standard
-   convention for *cornerPoints* metadata, in which *cornerPoints* encodes
-   the extent of pixels considered as an area. Defaults to NO.
 
 Usage examples
 --------------
