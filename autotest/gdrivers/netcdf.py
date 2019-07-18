@@ -4411,6 +4411,10 @@ def test_netcdf_dimension_labels_with_null():
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
 
+    # Crashes with 4.1.3 of Ubuntu Precise
+    if gdaltest.netcdf_drv_version.startswith('4.0.') or gdaltest.netcdf_drv_version.startswith('4.1.'):
+        pytest.skip('Test crashes with this libnetcdf version')
+
     with gdaltest.error_handler():
         assert gdal.Open('data/dimension_labels_with_null.nc')
 
