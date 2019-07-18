@@ -21,10 +21,10 @@ arrays, in particular of dimension 3 or above, in GDAL core and a few select dri
 Motivation
 ----------
 
-Multidimensional arrays (also known as hypercubes) are a way of mоdelling
+Multidimensional arrays (also known as hypercubes) are a way of modelling
 spatio-temporal (time series of
-2D raster) or spatio-vertical-temporal (2D + Z dimension + time dimension) data which
-are becoming increasingly more available. GDAL current raster model is however strongly
+2D raster), spatio-vertical-temporal (2D + Z dimension + time dimension) or spatio-spectral-temporal (2D + spectral + time dimension) data which
+are becoming increasingly more available. The current GDAL raster model is however strongly
 2D oriented. A number of drivers, such as netCDF, HDF4, HDF5, work around that
 limitation by using raster bands or subdatasets to expose muliple 2D slices of what
 is intrinsically a N>2 Multidimensional dataset. It is desirable to have a
