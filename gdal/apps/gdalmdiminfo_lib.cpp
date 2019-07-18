@@ -277,24 +277,29 @@ static void DumpAttrValue(std::shared_ptr<GDALAttribute> attr,
         {
             auto eDT = dt.GetNumericDataType();
             const auto rawValues(attr->ReadAsRaw());
-            const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
-            if( nEltCount == 1 )
+            const GByte* bytePtr = rawValues.data();
+            if( bytePtr )
             {
-                serializer.SetNewline(false);
-                DumpValue(serializer, rawValues.data(), eDT);
-                serializer.SetNewline(true);
-            }
-            else
-            {
+                const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+                if( nEltCount == 1 )
+                {
+                    serializer.SetNewline(false);
+                    DumpValue(serializer, rawValues.data(), eDT);
+                    serializer.SetNewline(true);
+                }
+                else
                 {
                     auto arrayContextValues(serializer.MakeArrayContext(nEltCount < 10));
-                    const GByte* bytePtr = rawValues.data();
                     for( size_t i = 0; i < nEltCount; i++ )
                     {
                         DumpValue(serializer, bytePtr, eDT);
                         bytePtr += nDTSize;
                     }
                 }
+            }
+            else
+            {
+                serializer.AddNull();
             }
             break;
         }
@@ -303,21 +308,29 @@ static void DumpAttrValue(std::shared_ptr<GDALAttribute> attr,
         {
             auto rawValues(attr->ReadAsRaw());
             const GByte* bytePtr = rawValues.data();
-            if( nEltCount == 1 )
+            if( bytePtr )
             {
-                serializer.SetNewline(false);
-                DumpCompound(serializer, bytePtr, dt);
-                serializer.SetNewline(true);
+                if( nEltCount == 1 )
+                {
+                    serializer.SetNewline(false);
+                    DumpCompound(serializer, bytePtr, dt);
+                    serializer.SetNewline(true);
+                }
+                else
+                {
+                    auto arrayContextValues(serializer.MakeArrayContext());
+                    for( size_t i = 0; i < nEltCount; i++ )
+                    {
+                        DumpCompound(serializer, bytePtr, dt);
+                        bytePtr += dt.GetSize();
+                    }
+                }
             }
             else
             {
-                auto arrayContextValues(serializer.MakeArrayContext());
-                for( size_t i = 0; i < nEltCount; i++ )
-                {
-                    DumpCompound(serializer, bytePtr, dt);
-                    bytePtr += dt.GetSize();
-                }
+                serializer.AddNull();
             }
+            break;
         }
     }
 }
