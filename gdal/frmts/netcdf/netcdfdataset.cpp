@@ -5766,6 +5766,14 @@ bool netCDFDataset::CloneVariableContent(int old_cdfid, int new_cdfid,
         }
     }
 
+    /* Workaround in some cases a netCDF bug: https://github.com/Unidata/netcdf-c/pull/1442 */
+    if( nRecords > 0 && nRecords < 10*1000*1000 / (nElems * nTypeSize) )
+    {
+        nElems *= nRecords;
+        anCount[0] = nRecords;
+        nRecords = 1;
+    }
+
     void *pBuffer = VSI_MALLOC2_VERBOSE(nElems, nTypeSize);
     if( pBuffer == nullptr )
         return false;

@@ -1824,6 +1824,9 @@ def test_netcdf_52():
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
 
+    if gdaltest.netcdf_drv_version in ('4.6.3', '4.7.0'):
+        pytest.skip('buggy netCDF version: https://github.com/Unidata/netcdf-c/pull/1442')
+
     ds = gdal.OpenEx('data/test_ogr_nc4.nc', gdal.OF_VECTOR)
     gdal.VectorTranslate('tmp/netcdf_52.nc', ds, format='netCDF', datasetCreationOptions=['FORMAT=NC4', 'GEOMETRY_ENCODING=WKT'])
 
@@ -1929,6 +1932,9 @@ def test_netcdf_54():
 
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
+
+    if gdaltest.netcdf_drv_version in ('4.6.3', '4.7.0'):
+        pytest.skip('buggy netCDF version: https://github.com/Unidata/netcdf-c/pull/1442')
 
     shutil.copy('data/test_ogr_nc4.nc', 'tmp/netcdf_54.nc')
 
