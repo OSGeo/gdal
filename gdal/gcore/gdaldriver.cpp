@@ -372,9 +372,21 @@ GDALDataset * GDALDriver::CreateMultiDimensional( const char * pszFilename,
                             "creation option", osDriver );
     }
 
-    return pfnCreateMultiDimensional(pszFilename,
+    auto poDstDS = pfnCreateMultiDimensional(pszFilename,
                                      papszRootGroupOptions,
                                      papszOptions);
+
+    if( poDstDS != nullptr )
+    {
+        if( poDstDS->GetDescription() == nullptr
+            || strlen(poDstDS->GetDescription()) == 0 )
+            poDstDS->SetDescription( pszFilename );
+
+        if( poDstDS->poDriver == nullptr )
+            poDstDS->poDriver = this;
+    }
+
+    return poDstDS;
 }
 
 /************************************************************************/
