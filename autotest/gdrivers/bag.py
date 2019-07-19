@@ -31,12 +31,11 @@
 ###############################################################################
 
 
-import pytest
-
-from osgeo import gdal
+from xml.etree import ElementTree
 
 import gdaltest
-
+import pytest
+from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver('BAG')
 
@@ -56,7 +55,6 @@ def check_no_file_leaks():
 
 
 def test_bag_2():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -95,12 +93,12 @@ def test_bag_2():
 
     assert not gdaltest.is_file_open('data/true_n_nominal.bag'), 'file still opened.'
 
+
 ###############################################################################
 # Test a southern hemisphere falseNorthing sample file.
 
 
 def test_bag_3():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -120,12 +118,12 @@ def test_bag_3():
     assert 'PARAMETER["false_northing",10000000]' in pj, \
         'Did not find false_northing of 10000000'
 
+
 ###############################################################################
 #
 
 
 def test_bag_vr_normal():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -155,7 +153,8 @@ def test_bag_vr_normal():
              'min': 0.0,
              'noDataValue': 1000000.0,
              'type': 'Float32'}],
-        'coordinateSystem': { 'dataAxisToSRSAxisMapping': [1, 2], 'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
+        'coordinateSystem': {'dataAxisToSRSAxisMapping': [1, 2],
+                             'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
         'geoTransform': [85.0, 30.0, 0.0, 500112.0, 0.0, -32.0],
         'metadata': {'': {'AREA_OR_POINT': 'Point',
                           'BAG_DATETIME': '2018-08-08T12:34:56',
@@ -183,12 +182,12 @@ def test_bag_vr_normal():
     got_md2 = gdal.Info(ds, computeChecksum=True, format='json', wktFormat='WKT1')
     assert got_md2 == got_md
 
+
 ###############################################################################
 #
 
 
 def test_bag_vr_list_supergrids():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -208,27 +207,27 @@ def test_bag_vr_list_supergrids():
     assert len(sub_ds) == 24
 
     ds = gdal.OpenEx('data/test_vr.bag', open_options=[
-                     'MODE=LIST_SUPERGRIDS', 'MINX=100', 'MAXX=220', 'MINY=500000', 'MAXY=500100'])
+        'MODE=LIST_SUPERGRIDS', 'MINX=100', 'MAXX=220', 'MINY=500000', 'MAXY=500100'])
     sub_ds = ds.GetSubDatasets()
     assert len(sub_ds) == 6
     assert sub_ds[0][0] == 'BAG:"data/test_vr.bag":supergrid:1:1'
 
     ds = gdal.OpenEx('data/test_vr.bag', open_options=[
-                     'MODE=LIST_SUPERGRIDS', 'RES_FILTER_MIN=5', 'RES_FILTER_MAX=10'])
+        'MODE=LIST_SUPERGRIDS', 'RES_FILTER_MIN=5', 'RES_FILTER_MAX=10'])
     sub_ds = ds.GetSubDatasets()
     assert len(sub_ds) == 12
     assert sub_ds[0][0] == 'BAG:"data/test_vr.bag":supergrid:0:3'
 
     ds = gdal.OpenEx('data/test_vr.bag', open_options=[
-                     'SUPERGRIDS_INDICES=(2,1),(3,4)'])
+        'SUPERGRIDS_INDICES=(2,1),(3,4)'])
     sub_ds = ds.GetSubDatasets()
     assert len(sub_ds) == 2
     assert (sub_ds[0][0] == 'BAG:"data/test_vr.bag":supergrid:2:1' and \
-       sub_ds[1][0] == 'BAG:"data/test_vr.bag":supergrid:3:4')
+            sub_ds[1][0] == 'BAG:"data/test_vr.bag":supergrid:3:4')
 
     # One single tuple: open the subdataset directly
     ds = gdal.OpenEx('data/test_vr.bag', open_options=[
-                     'SUPERGRIDS_INDICES=(2,1)'])
+        'SUPERGRIDS_INDICES=(2,1)'])
     ds2 = gdal.Open('BAG:"data/test_vr.bag":supergrid:2:1')
     assert gdal.Info(ds) == gdal.Info(ds2), sub_ds
 
@@ -240,13 +239,12 @@ def test_bag_vr_list_supergrids():
                 'SUPERGRIDS_INDICES=' + invalid_val])
         assert gdal.GetLastErrorMsg() != '', invalid_val
 
-    
+
 ###############################################################################
 #
 
 
 def test_bag_vr_open_supergrids():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -272,7 +270,8 @@ def test_bag_vr_open_supergrids():
              'metadata': {},
              'noDataValue': 1000000.0,
              'type': 'Float32'}],
-        'coordinateSystem': {'dataAxisToSRSAxisMapping': [1, 2], 'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
+        'coordinateSystem': {'dataAxisToSRSAxisMapping': [1, 2],
+                             'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
         'geoTransform': [70.10000038146973,
                          29.899999618530273,
                          0.0,
@@ -310,12 +309,12 @@ def test_bag_vr_open_supergrids():
                          open_options=['MINX=0'])
     assert gdal.GetLastErrorMsg() != '', 'warning expected'
 
+
 ###############################################################################
 #
 
 
 def test_bag_vr_resampled():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -345,7 +344,8 @@ def test_bag_vr_resampled():
              'min': 0.0,
              'noDataValue': 1000000.0,
              'type': 'Float32'}],
-        'coordinateSystem': {'dataAxisToSRSAxisMapping': [1, 2], 'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
+        'coordinateSystem': {'dataAxisToSRSAxisMapping': [1, 2],
+                             'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
         'geoTransform': [85.0,
                          4.983333110809326,
                          0.0,
@@ -545,19 +545,18 @@ def test_bag_vr_resampled():
         pytest.fail(m2_min, M2_min, mean2_min)
 
     if m2_min >= m2_max or \
-       (m2_mean, M2_mean, mean2_mean) != (m2_max, M2_max, mean2_max):
+        (m2_mean, M2_mean, mean2_mean) != (m2_max, M2_max, mean2_max):
         print(m1_max, M1_max, mean1_max)
         print(m1_mean, M1_mean, mean1_mean)
         print(m1_min, M1_min, mean1_min)
         pytest.fail(m2_min, M2_min, mean2_min)
 
-    
+
 ###############################################################################
 #
 
 
 def test_bag_vr_resampled_mask():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -571,12 +570,12 @@ def test_bag_vr_resampled_mask():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4507
 
+
 ###############################################################################
 #
 
 
 def test_bag_vr_resampled_interpolated():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -600,12 +599,12 @@ def test_bag_vr_resampled_interpolated():
                                        'INTERPOLATION=INVDIST'])
     assert ds is None
 
+
 ###############################################################################
 #
 
 
 def test_bag_write_single_band():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -614,12 +613,12 @@ def test_bag_write_single_band():
                              new_filename='/vsimem/out.bag')
     return ret
 
+
 ###############################################################################
 #
 
 
 def test_bag_write_two_bands():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -628,8 +627,8 @@ def test_bag_write_two_bands():
                                      'VAR_ABSTRACT=foo',
                                      'VAR_XML_IDENTIFICATION_CITATION=<bar/>'])
     tst.testCreateCopy(quiet_error_handler=False,
-                             delete_copy=False,
-                             new_filename='/vsimem/out.bag')
+                       delete_copy=False,
+                       new_filename='/vsimem/out.bag')
 
     ds = gdal.Open('/vsimem/out.bag')
     xml = ds.GetMetadata_List('xml:BAG')[0]
@@ -638,12 +637,12 @@ def test_bag_write_two_bands():
 
     gdal.Unlink('/vsimem/out.bag')
 
+
 ###############################################################################
 #
 
 
 def test_bag_write_south_up():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
@@ -666,49 +665,29 @@ def test_bag_write_south_up():
 
     gdal.Unlink('/vsimem/out.bag')
 
+
 ###############################################################################
 #
 
 
 def test_bag_read_invalid_bag_vlen_bag_version():
-
     if gdaltest.bag_drv is None:
         pytest.skip()
 
     ds = gdal.Open('data/invalid_bag_vlen_bag_version.bag')
     assert not ds
 
-###############################################################################
-# See https://github.com/OSGeo/gdal/issues/1643
 
-
-def test_bag_non_standard_georeferencing_convention():
-
+def test_bag_read_incorrect_northeast_corner():
     if gdaltest.bag_drv is None:
         pytest.skip()
 
-    gdal.Translate('/vsimem/out.bag', 'data/byte.tif',
-                   creationOptions = ['VAR_DATE=2019-06-21'])
-    gdal.Translate('/vsimem/out_non_standard.bag', 'data/byte.tif',
-                   creationOptions = ['VAR_DATE=2019-06-21',
-                                      'CORNER_POINTS_EXTEND_HALF_PIXEL=YES'])
+    ds = gdal.Open('data/test_offset_ne_corner.bag')
 
-    f = gdal.VSIFOpenL('/vsimem/out.bag', 'rb')
-    assert f
-    data = gdal.VSIFReadL(1, 1000000, f)
-    gdal.VSIFCloseL(f)
-    gdal.Unlink('/vsimem/out.bag')
+    geotransform = ds.GetGeoTransform()
+    assert geotransform == (85.0, 30.0, 0.0, 500112.0, 0.0, -32.0)
 
-    f = gdal.VSIFOpenL('/vsimem/out_non_standard.bag', 'rb')
-    assert f
-    data_non_standard = gdal.VSIFReadL(1, 1000000, f)
-    gdal.VSIFCloseL(f)
+    corner_points = ElementTree.fromstring(ds.GetMetadata('xml:BAG')[0])[8][0][6][0][0].text
+    assert corner_points == '100.000000000000,500000.000000000000 250.000000000000,500096.000000000000'
 
-    assert data != data_non_standard
-
-    ds = gdal.Open('/vsimem/out_non_standard.bag')
-    gt = ds.GetGeoTransform()
-    assert gt == (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
-    ds = None
-
-    gdal.Unlink('/vsimem/out_non_standard.bag')
+    del ds
