@@ -13,3 +13,9 @@
 .cproject
 .idea
 .vscode
+.vs
+
+# Python
+__pycache__/
+.env*/
+.venv*/
