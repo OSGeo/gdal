@@ -1566,10 +1566,39 @@ bool HDF5Array::IRead(const GUInt64* arrayStartIdx,
              !GDALDataTypeIsComplex(m_dt.GetNumericDataType()) &&
              !GDALDataTypeIsComplex(bufferDataType.GetNumericDataType()) )
     {
-        hBufferType = GetHDF5DataTypeFromGDALDataType(
-            m_dt, m_hNativeDT, bufferDataType);
+        // Compatibility with older libhdf5 that doesn't like requesting
+        // an enum to an integer
+        if (H5Tget_class(m_hNativeDT) == H5T_ENUM )
+        {
+            auto hParent = H5Tget_super(m_hNativeDT);
+            if( H5Tequal(hParent, H5T_NATIVE_UCHAR) ||
+                H5Tequal(hParent, H5T_NATIVE_USHORT) ||
+                H5Tequal(hParent, H5T_NATIVE_SHORT) ||
+                H5Tequal(hParent, H5T_NATIVE_UINT) ||
+                H5Tequal(hParent, H5T_NATIVE_INT) )
+            {
+                hBufferType = H5Tcopy(m_hNativeDT);
+                if( m_dt != bufferDataType )
+                {
+                    const size_t nDataTypeSize = H5Tget_size(m_hNativeDT);
+                    pabyTemp = static_cast<GByte*>(
+                        VSI_MALLOC2_VERBOSE(nDataTypeSize, nEltCount));
+                    if( pabyTemp == nullptr )
+                    {
+                        H5Tclose(hBufferType);
+                        return false;
+                    }
+                }
+            }
+            H5Tclose(hParent);
+        }
         if( hBufferType == H5I_INVALID_HID )
-            return false;
+        {
+            hBufferType = GetHDF5DataTypeFromGDALDataType(
+                m_dt, m_hNativeDT, bufferDataType);
+            if( hBufferType == H5I_INVALID_HID )
+                return false;
+        }
     }
     else
     {
@@ -1580,7 +1609,10 @@ bool HDF5Array::IRead(const GUInt64* arrayStartIdx,
             pabyTemp = static_cast<GByte*>(
                 VSI_MALLOC2_VERBOSE(nDataTypeSize, nEltCount));
             if( pabyTemp == nullptr )
+            {
+                H5Tclose(hBufferType);
                 return false;
+            }
         }
     }
 
@@ -1828,9 +1860,27 @@ bool HDF5Attribute::IRead(const GUInt64* arrayStartIdx,
         !GDALDataTypeIsComplex(m_dt.GetNumericDataType()) &&
         !GDALDataTypeIsComplex(bufferDataType.GetNumericDataType()) )
     {
-        bUseBufferDataTypeForH5Aread = true;
-        hBufferType = GetHDF5DataTypeFromGDALDataType(
-            m_dt, m_hNativeDT, bufferDataType);
+        // Compatibility with older libhdf5 that doesn't like requesting
+        // an enum to an integer
+        if (H5Tget_class(m_hNativeDT) == H5T_ENUM )
+        {
+            auto hParent = H5Tget_super(m_hNativeDT);
+            if( H5Tequal(hParent, H5T_NATIVE_UCHAR) ||
+                H5Tequal(hParent, H5T_NATIVE_USHORT) ||
+                H5Tequal(hParent, H5T_NATIVE_SHORT) ||
+                H5Tequal(hParent, H5T_NATIVE_UINT) ||
+                H5Tequal(hParent, H5T_NATIVE_INT) )
+            {
+                hBufferType = H5Tcopy(m_hNativeDT);
+            }
+            H5Tclose(hParent);
+        }
+        if( hBufferType == H5I_INVALID_HID )
+        {
+            bUseBufferDataTypeForH5Aread = true;
+            hBufferType = GetHDF5DataTypeFromGDALDataType(
+                m_dt, m_hNativeDT, bufferDataType);
+        }
     }
     else
     {
