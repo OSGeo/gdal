@@ -2067,10 +2067,6 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
 
     std::vector<size_t> startp;
     startp.reserve(m_nDims);
-    std::vector<ptrdiff_t> stridep;
-    stridep.reserve(m_nDims);
-    std::vector<ptrdiff_t> imapp;
-    imapp.reserve(m_nDims);
     bool bUseSlowPath = !m_bPerfectDataTypeMatch;
     for( int i = 0; i < m_nDims; i++ )
     {
@@ -2083,17 +2079,11 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
         {
             return false;
         }
-        stridep.push_back(static_cast<ptrdiff_t>(arrayStep[i]));
-        if( stridep[i] <= 0 )
+
+        if( arrayStep[i] <= 0 )
             bUseSlowPath = true; // netCDF rejects negative or NULL strides
 
-        imapp.push_back(static_cast<ptrdiff_t>(bufferStride[i]));
-        if( !m_poShared->GetImappIsInElements() )
-        {
-            imapp.back() *= GetNCTypeSize(GetDataType(),
-                                          m_bPerfectDataTypeMatch, m_nVarType);
-        }
-        if( imapp[i] < 0 )
+        if( bufferStride[i] < 0 )
             bUseSlowPath = true; // and it seems to silently cast to size_t imapp
     }
 
@@ -2134,7 +2124,7 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
         for( int i = m_nDims; i != 0; )
         {
             --i;
-            if( stridep[i] != 1 || imapp[i] != nExpectedBufferStride )
+            if( arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride )
             {
                 bUseSlowPath = true;
                 break;
@@ -2160,11 +2150,53 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
                             NCGetPutVar1Func, ReadOrWriteOneElement);
     }
 
-    int ret = NCGetPutVarmFunc(m_gid, m_varid, startp.data(), count,
-                          stridep.data(), imapp.data(),
-                          buffer);
-    NCDF_ERR(ret);
-    return ret == NC_NOERR;
+    bUseSlowPath = false;
+    ptrdiff_t nExpectedBufferStride = 1;
+    for( int i = m_nDims; i != 0; )
+    {
+        --i;
+        if( arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride )
+        {
+            bUseSlowPath = true;
+            break;
+        }
+        nExpectedBufferStride *= count[i];
+    }
+    if( !bUseSlowPath )
+    {
+        // nc_get_varm() is terribly inefficient, so use nc_get_vara()
+        // when possible.
+        int ret = NCGetPutVaraFunc(m_gid, m_varid, startp.data(), count, buffer);
+        NCDF_ERR(ret);
+        return ret == NC_NOERR;
+    }
+    else
+    {
+        std::vector<ptrdiff_t> stridep;
+        stridep.reserve(m_nDims);
+        std::vector<ptrdiff_t> imapp;
+        imapp.reserve(m_nDims);
+        for( int i = 0; i < m_nDims; i++ )
+        {
+            stridep.push_back(static_cast<ptrdiff_t>(arrayStep[i]));
+            imapp.push_back(static_cast<ptrdiff_t>(bufferStride[i]));
+        }
+
+        if( !m_poShared->GetImappIsInElements() )
+        {
+            const size_t nMul = GetNCTypeSize(GetDataType(),
+                                            m_bPerfectDataTypeMatch, m_nVarType);
+            for( int i = 0; i < m_nDims; ++i )
+            {
+                imapp[i] = static_cast<ptrdiff_t>(imapp[i] * nMul);
+            }
+        }
+        int ret = NCGetPutVarmFunc(m_gid, m_varid, startp.data(), count,
+                            stridep.data(), imapp.data(),
+                            buffer);
+        NCDF_ERR(ret);
+        return ret == NC_NOERR;
+    }
 }
 
 /************************************************************************/
