@@ -1083,3 +1083,84 @@ def test_netcdf_multidim_create_nc4(netcdf_setup):  # noqa
         create_georeferenced_geographic('georeferenced_geographic_without_dim_type', False)
 
     gdal.Unlink('tmp/multidim_nc4.nc')
+
+
+def test_netcdf_multidim_create_several_arrays_with_srs(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    tmpfilename = 'tmp/several_arrays_with_srs.nc'
+
+    def create():
+        drv = gdal.GetDriverByName('netCDF')
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+
+        lat = rg.CreateDimension('latitude', gdal.DIM_TYPE_HORIZONTAL_X, None, 2)
+        rg.CreateMDArray('latitude', [lat], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        lon = rg.CreateDimension('longitude', gdal.DIM_TYPE_HORIZONTAL_Y, None, 2)
+        rg.CreateMDArray('longitude', [lon], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+
+        x = rg.CreateDimension('x', gdal.DIM_TYPE_HORIZONTAL_X, None, 2)
+        rg.CreateMDArray('x', [x], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        y = rg.CreateDimension('y', gdal.DIM_TYPE_HORIZONTAL_Y, None, 2)
+        rg.CreateMDArray('y', [y], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+
+        ar = rg.CreateMDArray('ar_longlat_4326_1', [lat, lon], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        ar.SetSpatialRef(srs)
+
+        ar = rg.CreateMDArray('ar_longlat_4326_2', [lat, lon], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        ar.SetSpatialRef(srs)
+
+        ar = rg.CreateMDArray('ar_longlat_4258', [lat, lon], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4258)
+        ar.SetSpatialRef(srs)
+
+        ar = rg.CreateMDArray('ar_longlat_32631_1', [y, x], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32631)
+        ar.SetSpatialRef(srs)
+
+        ar = rg.CreateMDArray('ar_longlat_32631_2', [y, x], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32631)
+        ar.SetSpatialRef(srs)
+
+        ar = rg.CreateMDArray('ar_longlat_32632', [y, x], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32632)
+        ar.SetSpatialRef(srs)
+
+    create()
+
+    def read():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        ar = rg.OpenMDArray('ar_longlat_4326_1')
+        assert ar.GetSpatialRef().GetAuthorityCode(None) == '4326'
+
+        ar = rg.OpenMDArray('ar_longlat_4326_2')
+        assert ar.GetSpatialRef().GetAuthorityCode(None) == '4326'
+
+        ar = rg.OpenMDArray('ar_longlat_4258')
+        assert ar.GetSpatialRef().GetAuthorityCode(None) == '4258'
+
+        ar = rg.OpenMDArray('ar_longlat_32631_1')
+        assert ar.GetSpatialRef().GetAuthorityCode(None) == '32631'
+
+        ar = rg.OpenMDArray('ar_longlat_32631_2')
+        assert ar.GetSpatialRef().GetAuthorityCode(None) == '32631'
+
+        ar = rg.OpenMDArray('ar_longlat_32632')
+        assert ar.GetSpatialRef().GetAuthorityCode(None) == '32632'
+
+    read()
+
+    gdal.Unlink(tmpfilename)
