@@ -221,6 +221,20 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
             return GDT_Unknown;
         }
 
+        char* pszName1 = H5Tget_member_name(TypeID, 0);
+        const bool bIsReal = pszName1 && (pszName1[0] == 'r' ||pszName1[0] == 'R');
+        H5free_memory(pszName1);
+
+        char* pszName2 = H5Tget_member_name(TypeID, 1);
+        const bool bIsImaginary = pszName2 && (pszName2[0] == 'i' ||pszName2[0] == 'I');
+        H5free_memory(pszName2);
+
+        if( !bIsReal || !bIsImaginary)
+        {
+            H5Tclose(ElemTypeID);
+            return GDT_Unknown;
+        }
+
         //Check the native types to determine CInt16, CFloat32 or CFloat64
         GDALDataType eDataType = GDT_Unknown;
 
