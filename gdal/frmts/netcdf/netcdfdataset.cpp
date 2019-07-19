@@ -11415,7 +11415,6 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
 static CPLErr NCDFGetCoordAndBoundVarFullNames( int nCdfId,
                                                 char ***ppapszVars )
 {
-    *ppapszVars = nullptr;
     int nVars = 0;
     NCDF_ERR(nc_inq( nCdfId, nullptr, &nVars, nullptr, nullptr));
 
