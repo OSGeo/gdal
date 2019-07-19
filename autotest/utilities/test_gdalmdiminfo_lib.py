@@ -83,7 +83,7 @@ def test_gdalmdiminfo_lib_empty_mem_dataset():
     ret = gdal.MultiDimInfo(ds)
     _validate(ret)
 
-    assert ret == {'type': 'group', 'name': '/'}
+    assert ret == {'type': 'group', "driver": "MEM", 'name': '/'}
 
 
 ###############################################################################
@@ -123,6 +123,7 @@ def test_gdalmdiminfo_lib_mem_dataset():
 
     expected = """{
   "type": "group",
+  "driver": "MEM",
   "name": "/",
   "dimensions": [
     {

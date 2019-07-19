@@ -14,7 +14,7 @@
       "type": "object",
       "properties": {
         "name": { "type": "string" },
-        "type": { "type": "string" },
+        "type": { "type": "string", "enum": ["array"] },
         "datatype": { "$ref": "#/definitions/datatype" },
         "dimensions": { "$ref": "#/definitions/dimensions" },
         "attributes": { "$ref": "#/definitions/attributes" },
@@ -43,7 +43,7 @@
                 "type": "object",
                 "properties": {
                     "name": { "type": "string" },
-                    "type": { "type": "string" },
+                    "type": { "type": "string", "enum": ["attribute"] },
                     "datatype": { "$ref": "#/definitions/datatype" },
                     "value": { "$ref": "#/definitions/value" }
                 },
@@ -136,8 +136,9 @@
     "group": {
         "type": "object",
         "properties": {
+            "driver": { "type": "string" },
             "name": { "type": "string" },
-            "type": { "type": "string" },
+            "type": { "type": "string", "enum": ["group"] },
             "dimensions": { "$ref": "#/definitions/dimensions" },
             "arrays": { "$ref": "#/definitions/arrays" },
             "attributes": { "$ref": "#/definitions/attributes" },

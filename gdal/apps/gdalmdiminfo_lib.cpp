@@ -746,6 +746,7 @@ static void DumpArrays(std::shared_ptr<GDALGroup> group,
 /************************************************************************/
 
 static void DumpGroup(std::shared_ptr<GDALGroup> group,
+                      const char* pszDriverName,
                       CPLJSonStreamingWriter& serializer,
                       const GDALMultiDimInfoOptions *psOptions,
                       std::set<std::string>& alreadyDumpedDimensions,
@@ -756,6 +757,11 @@ static void DumpGroup(std::shared_ptr<GDALGroup> group,
     {
         serializer.AddObjKey("type");
         serializer.Add("group");
+    }
+    if( pszDriverName )
+    {
+        serializer.AddObjKey("driver");
+        serializer.Add(pszDriverName);
     }
     if( bOutputName )
     {
@@ -811,7 +817,7 @@ static void DumpGroup(std::shared_ptr<GDALGroup> group,
                 if( subgroup )
                 {
                     serializer.AddObjKey(subgroupName);
-                    DumpGroup( subgroup, serializer, psOptions,
+                    DumpGroup( subgroup, nullptr, serializer, psOptions,
                                alreadyDumpedDimensions, false, false );
                 }
             }
@@ -824,7 +830,7 @@ static void DumpGroup(std::shared_ptr<GDALGroup> group,
                 auto subgroup = group->OpenGroup(subgroupName);
                 if( subgroup )
                 {
-                    DumpGroup( subgroup, serializer, psOptions,
+                    DumpGroup( subgroup, nullptr, serializer, psOptions,
                                alreadyDumpedDimensions, false, true );
                 }
             }
@@ -881,7 +887,11 @@ char *GDALMultiDimInfo( GDALDatasetH hDataset,
     {
         if( psOptions->osArrayName.empty() )
         {
-            DumpGroup(group, serializer, psOptions,
+            const char* pszDriverName = nullptr;
+            auto poDriver = GDALDataset::FromHandle(hDataset)->GetDriver();
+            if( poDriver )
+                pszDriverName = poDriver->GetDescription();
+            DumpGroup(group, pszDriverName, serializer, psOptions,
                       alreadyDumpedDimensions, true, true);
         }
         else
