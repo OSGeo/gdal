@@ -124,13 +124,6 @@ def test_gdalmdiminfo_lib_mem_dataset():
     expected = """{
   "type": "group",
   "name": "/",
-  "groups": {
-    "subgroup": {
-      "groups": {
-        "subsubgroup": {}
-      }
-    }
-  },
   "dimensions": [
     {
       "name": "dim0",
@@ -195,6 +188,13 @@ def test_gdalmdiminfo_lib_mem_dataset():
         "y": 1000000
       },
       "values": [{"x": 32767, "y": 1000000}, {"x": -32768, "y": -1000000}]
+    }
+  },
+  "groups": {
+    "subgroup": {
+      "groups": {
+        "subsubgroup": {}
+      }
     }
   }
 }"""

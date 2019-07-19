@@ -773,6 +773,31 @@ static void DumpGroup(std::shared_ptr<GDALGroup> group,
         DumpAttrs(attrs, serializer, psOptions);
     }
 
+    auto dims = group->GetDimensions();
+    if( !dims.empty() )
+    {
+        serializer.AddObjKey("dimensions");
+        DumpDimensions(dims, serializer, psOptions, alreadyDumpedDimensions);
+    }
+
+    CPLStringList aosOptionsGetArray;
+    if( psOptions->bDetailed )
+        aosOptionsGetArray.SetNameValue("SHOW_ALL", "YES");
+    auto arrayNames = group->GetMDArrayNames(aosOptionsGetArray.List());
+    if( !arrayNames.empty() )
+    {
+        serializer.AddObjKey("arrays");
+        DumpArrays(group, arrayNames, serializer, psOptions,
+                   alreadyDumpedDimensions);
+    }
+
+    auto papszStructuralInfo = group->GetStructuralInfo();
+    if( papszStructuralInfo )
+    {
+        serializer.AddObjKey("structural_info");
+        DumpStructuralInfo(papszStructuralInfo, serializer);
+    }
+
     auto subgroupNames = group->GetGroupNames();
     if( !subgroupNames.empty() )
     {
@@ -804,31 +829,6 @@ static void DumpGroup(std::shared_ptr<GDALGroup> group,
                 }
             }
         }
-    }
-
-    auto dims = group->GetDimensions();
-    if( !dims.empty() )
-    {
-        serializer.AddObjKey("dimensions");
-        DumpDimensions(dims, serializer, psOptions, alreadyDumpedDimensions);
-    }
-
-    CPLStringList aosOptionsGetArray;
-    if( psOptions->bDetailed )
-        aosOptionsGetArray.SetNameValue("SHOW_ALL", "YES");
-    auto arrayNames = group->GetMDArrayNames(aosOptionsGetArray.List());
-    if( !arrayNames.empty() )
-    {
-        serializer.AddObjKey("arrays");
-        DumpArrays(group, arrayNames, serializer, psOptions,
-                   alreadyDumpedDimensions);
-    }
-
-    auto papszStructuralInfo = group->GetStructuralInfo();
-    if( papszStructuralInfo )
-    {
-        serializer.AddObjKey("structural_info");
-        DumpStructuralInfo(papszStructuralInfo, serializer);
     }
 }
 
