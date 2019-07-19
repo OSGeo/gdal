@@ -62,10 +62,18 @@ void HDF5UnloadFileDriver();
 
 #if defined(H5_VERSION_GE) // added in 1.8.7
 # if !H5_VERSION_GE(1,8,13)
-#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
-# endif
+#ifndef _WIN32
+#  define H5free_memory(x) free(x)
 #else
 #  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
+#endif
+# endif
+#else
+#ifndef _WIN32
+#  define H5free_memory(x) free(x)
+#else
+#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
+#endif
 #endif
 
 // Release 1.6.3 or 1.6.4 changed the type of count in some API functions.
