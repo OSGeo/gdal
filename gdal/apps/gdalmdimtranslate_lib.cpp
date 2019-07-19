@@ -622,6 +622,9 @@ static bool ParseArraySpec(const std::string& arraySpec,
     {
         srcName = arraySpec;
         dstName = arraySpec;
+        auto pos = dstName.rfind('/');
+        if( pos != std::string::npos )
+            dstName = dstName.substr(pos+1);
         return true;
     }
 
@@ -868,8 +871,13 @@ static bool TranslateArray(DimensionRemapper& oDimRemapper,
     {
         const auto& srcDim(tmpArrayDims[i]);
 
-        auto dstDim = poDstRootGroup->OpenDimensionFromFullname(
+        std::shared_ptr<GDALDimension> dstDim;
+        {
+            CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper;
+            dstDim = poDstRootGroup->OpenDimensionFromFullname(
                                                         srcDim->GetFullName());
+        }
         if( dstDim )
         {
             dstArrayDims.emplace_back(dstDim);

@@ -148,10 +148,10 @@ def test_gdalmdimtranslate_array():
 
     assert got_data == """<VRTDataset>
   <Group name="/">
-    <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" />
-    <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" />
-    <Dimension name="time_increasing" type="TEMPORAL" size="4" />
-    <Array name="/latitude">
+    <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
+    <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
+    <Dimension name="time_increasing" type="TEMPORAL" size="4" indexingVariable="time_increasing" />
+    <Array name="latitude">
       <DataType>Float32</DataType>
       <DimensionRef ref="latitude" />
       <Source>
@@ -161,23 +161,13 @@ def test_gdalmdimtranslate_array():
         <DestSlab offset="0" />
       </Source>
     </Array>
-    <Array name="/longitude">
+    <Array name="longitude">
       <DataType>Float32</DataType>
       <DimensionRef ref="longitude" />
       <Source>
         <SourceFilename>data/mdim.vrt</SourceFilename>
         <SourceArray>/longitude</SourceArray>
         <SourceSlab offset="0" count="10" step="1" />
-        <DestSlab offset="0" />
-      </Source>
-    </Array>
-    <Array name="/time_increasing">
-      <DataType>String</DataType>
-      <DimensionRef ref="time_increasing" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/time_increasing</SourceArray>
-        <SourceSlab offset="0" count="4" step="1" />
         <DestSlab offset="0" />
       </Source>
     </Array>
@@ -191,6 +181,16 @@ def test_gdalmdimtranslate_array():
         <SourceArray>/my_variable_with_time_increasing</SourceArray>
         <SourceSlab offset="0,0,0" count="4,10,10" step="1,1,1" />
         <DestSlab offset="0,0,0" />
+      </Source>
+    </Array>
+    <Array name="time_increasing">
+      <DataType>String</DataType>
+      <DimensionRef ref="time_increasing" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/time_increasing</SourceArray>
+        <SourceSlab offset="0" count="4" step="1" />
+        <DestSlab offset="0" />
       </Source>
     </Array>
   </Group>
@@ -288,28 +288,8 @@ def test_gdalmdimtranslate_group():
 
     assert got_data == """<VRTDataset>
   <Group name="/">
-    <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" />
-    <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" />
-    <Array name="/latitude">
-      <DataType>Float32</DataType>
-      <DimensionRef ref="latitude" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/latitude</SourceArray>
-        <SourceSlab offset="0" count="10" step="1" />
-        <DestSlab offset="0" />
-      </Source>
-    </Array>
-    <Array name="/longitude">
-      <DataType>Float32</DataType>
-      <DimensionRef ref="longitude" />
-      <Source>
-        <SourceFilename>data/mdim.vrt</SourceFilename>
-        <SourceArray>/longitude</SourceArray>
-        <SourceSlab offset="0" count="10" step="1" />
-        <DestSlab offset="0" />
-      </Source>
-    </Array>
+    <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
+    <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
     <Array name="array_in_subgroup">
       <DataType>Int32</DataType>
       <DimensionRef ref="latitude" />
@@ -319,6 +299,26 @@ def test_gdalmdimtranslate_group():
         <SourceArray>/my_subgroup/array_in_subgroup</SourceArray>
         <SourceSlab offset="0,0" count="10,10" step="1,1" />
         <DestSlab offset="0,0" />
+      </Source>
+    </Array>
+    <Array name="latitude">
+      <DataType>Float32</DataType>
+      <DimensionRef ref="latitude" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/latitude</SourceArray>
+        <SourceSlab offset="0" count="10" step="1" />
+        <DestSlab offset="0" />
+      </Source>
+    </Array>
+    <Array name="longitude">
+      <DataType>Float32</DataType>
+      <DimensionRef ref="longitude" />
+      <Source>
+        <SourceFilename>data/mdim.vrt</SourceFilename>
+        <SourceArray>/longitude</SourceArray>
+        <SourceSlab offset="0" count="10" step="1" />
+        <DestSlab offset="0" />
       </Source>
     </Array>
   </Group>
@@ -345,28 +345,8 @@ def test_gdalmdimtranslate_two_groups():
     assert got_data == """<VRTDataset>
   <Group name="/">
     <Group name="my_subgroup">
-      <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" />
-      <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" />
-      <Array name="/latitude">
-        <DataType>Float32</DataType>
-        <DimensionRef ref="latitude" />
-        <Source>
-          <SourceFilename>data/mdim.vrt</SourceFilename>
-          <SourceArray>/latitude</SourceArray>
-          <SourceSlab offset="0" count="10" step="1" />
-          <DestSlab offset="0" />
-        </Source>
-      </Array>
-      <Array name="/longitude">
-        <DataType>Float32</DataType>
-        <DimensionRef ref="longitude" />
-        <Source>
-          <SourceFilename>data/mdim.vrt</SourceFilename>
-          <SourceArray>/longitude</SourceArray>
-          <SourceSlab offset="0" count="10" step="1" />
-          <DestSlab offset="0" />
-        </Source>
-      </Array>
+      <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
+      <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
       <Array name="array_in_subgroup">
         <DataType>Int32</DataType>
         <DimensionRef ref="latitude" />
@@ -376,6 +356,26 @@ def test_gdalmdimtranslate_two_groups():
           <SourceArray>/my_subgroup/array_in_subgroup</SourceArray>
           <SourceSlab offset="0,0" count="10,10" step="1,1" />
           <DestSlab offset="0,0" />
+        </Source>
+      </Array>
+      <Array name="latitude">
+        <DataType>Float32</DataType>
+        <DimensionRef ref="latitude" />
+        <Source>
+          <SourceFilename>data/mdim.vrt</SourceFilename>
+          <SourceArray>/latitude</SourceArray>
+          <SourceSlab offset="0" count="10" step="1" />
+          <DestSlab offset="0" />
+        </Source>
+      </Array>
+      <Array name="longitude">
+        <DataType>Float32</DataType>
+        <DimensionRef ref="longitude" />
+        <Source>
+          <SourceFilename>data/mdim.vrt</SourceFilename>
+          <SourceArray>/longitude</SourceArray>
+          <SourceSlab offset="0" count="10" step="1" />
+          <DestSlab offset="0" />
         </Source>
       </Array>
     </Group>
