@@ -2650,18 +2650,40 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset* poSrcDS,
                           GUInt64 nChunkCount,
                           void* pUserData)
             {
+                const auto dt(l_poSrcArray->GetDataType());
                 auto data = static_cast<CopyFunc*>(pUserData);
                 auto poDstArray = data->poDstArray;
                 if( !l_poSrcArray->Read(chunkArrayStartIdx,
                                       chunkCount,
                                       nullptr, nullptr,
-                                      l_poSrcArray->GetDataType(),
-                                      &data->abyTmp[0]) ||
-                    !poDstArray->Write(chunkArrayStartIdx,
+                                      dt,
+                                      &data->abyTmp[0]) )
+                {
+                    return false;
+                }
+                bool bRet = 
+                    poDstArray->Write(chunkArrayStartIdx,
                                        chunkCount,
                                        nullptr, nullptr,
-                                       l_poSrcArray->GetDataType(),
-                                       &data->abyTmp[0]) )
+                                       dt,
+                                       &data->abyTmp[0]);
+                if( dt.NeedsFreeDynamicMemory() )
+                {
+                    const auto l_nDTSize = dt.GetSize();
+                    GByte* ptr = &data->abyTmp[0];
+                    const size_t l_nDims(l_poSrcArray->GetDimensionCount());
+                    size_t nEltCount = 1;
+                    for( size_t i = 0; i < l_nDims; ++i )
+                    {
+                        nEltCount *= chunkCount[i];
+                    }
+                    for( size_t i = 0; i < nEltCount; i++ )
+                    {
+                        dt.FreeDynamicMemory(ptr);
+                        ptr += l_nDTSize;
+                    }
+                }
+                if( !bRet )
                 {
                     return false;
                 }

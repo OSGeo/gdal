@@ -47,6 +47,19 @@ def test_gdalmdimtranslate_no_arg():
 ###############################################################################
 
 
+def test_gdalmdimtranslate_multidim_to_mem():
+
+    out_ds = gdal.MultiDimTranslate('', 'data/mdim.vrt', format = 'MEM')
+    assert out_ds
+    rg = out_ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray('time_increasing')
+    assert ar
+    assert ar.Read() == ['2010-01-01', '2011-01-01', '2012-01-01', '2013-01-01']
+
+###############################################################################
+
+
 def test_gdalmdimtranslate_multidim_to_classic():
 
     tmpfile = '/vsimem/out.tif'
