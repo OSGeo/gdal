@@ -3295,6 +3295,26 @@ void BAGDataset::LoadMetadata()
 
     if( psGeo != nullptr )
     {
+        CPLString osResHeight, osResWidth;
+        for (const auto* psIter = psGeo->psChild; psIter; psIter = psIter->psNext)
+        {
+            if (strcmp(psIter->pszValue, "axisDimensionProperties") == 0)
+            {
+                const char* pszDim = CPLGetXMLValue(
+                    psIter, "MD_Dimension.dimensionName.MD_DimensionNameTypeCode", nullptr);
+                const char* pszRes = CPLGetXMLValue(
+                    psIter, "MD_Dimension.resolution.Measure", nullptr);
+                if (pszDim && EQUAL(pszDim, "row") && pszRes)
+                {
+                    osResHeight = pszRes;
+                }
+                else if (pszDim && EQUAL(pszDim, "column") && pszRes)
+                {
+                    osResWidth = pszRes;
+                }
+            }
+        }
+
         char **papszCornerTokens = CSLTokenizeStringComplex(
             CPLGetXMLValue(psGeo, "cornerPoints.Point.coordinates", ""), " ,",
             FALSE, FALSE);
