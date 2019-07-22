@@ -237,10 +237,15 @@ void netCDFDataset::SGCommitPendingTransaction()
                 int pnc_dimID = this->GeometryScribe.get_pnc_dimID();
                 this->GrowDim(cdfid, pnc_dimID, this->GeometryScribe.get_next_write_pos_pnc() + this->GeometryScribe.getPNCBufLength());
             }
+
+            // Also commit field transactions (if any) (and stretch record dim)
+            //this->GrowDim(cdfid, this->FieldScribe.RecordDimID(), this->FieldScribe.getRecordLength()); 
+            //this->FieldScribe.commit_transaction();
         }
 
         this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates
         this->GeometryScribe.commit_transaction();
+
     }
 
     catch(nccfdriver::SG_Exception& sge)

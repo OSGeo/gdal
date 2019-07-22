@@ -247,24 +247,24 @@ namespace nccfdriver
 
     /* OGR_SGFS_NC_CharA_Transaction
      * Writes to an NC_CHAR variable, using vara instead of var1
+     * Used to store 2D character array values, specifically
+     */
     class OGR_SGFS_NC_CharA_Transaction : public OGR_SGFS_Transaction
     {
         std::string char_rep;
-        std::unique_ptr<size_t, std::default_delete<size_t[]>> counts;
+        size_t counts[2];
 
         public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_vara_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, counts.get(), char_rep.c_str()); }
-            OGR_SGFS_NC_CharA_Transaction(int i_varId, char* pszVal, std::vector<size_t>& count_init) : 
-               char_rep(pszVal),
-               counts(new size_t[count_init.size()])
+            int commit(int ncid, size_t write_loc) override { return nc_put_vara_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, counts, char_rep.c_str()); }
+            OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal) : 
+               char_rep(pszVal)//,
+             //  counts{1, strlen(pszVal)}
             { 
                 OGR_SGFS_Transaction::setVarId(i_varId);
-                for(size_t citr = 0; citr < count_init.size(); citr++)
-                {
-                    counts.get()[citr] = count_init[citr];
-                }
+                counts[0] = 1;
+                counts[1] = strlen(pszVal);
             }
-    };*/
+    };
 
     /* OGR_SGFS_NC_Short_Transaction 
      * Writes to an NC_SHORT variable
@@ -339,6 +339,7 @@ namespace nccfdriver
     {
         const int & ncid;
         int ncID() { return this->ncid; } // creates copy of const reference ncid
+        int recordDimID;
         WBuffer buf;
 
         std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
@@ -347,10 +348,10 @@ namespace nccfdriver
         size_t recordLength = 1;
 
         public:
-            /* size_t get_Record_Length()
-             * Return the current length of the record dimension
-             */
-            size_t get_Record_Length() { return this->recordLength; }
+           /* size_t get_Record_Length()
+            * Return the current length of the record dimension
+            */
+           size_t getRecordLength() { return this->recordLength; }
 
             /* void commit_transaction()
              * Replays all transactions to disk (according to fs stipulations)
@@ -364,6 +365,17 @@ namespace nccfdriver
            void enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd);
 
            WBuffer& getMemBuffer() { return buf; }
+
+           /* int RecordDimID()
+            * Return record dimension ID that this variable writes over
+            */
+           int RecordDimID() { return this->recordDimID; }
+
+           /* void setLayerRecord()
+            * Sets the record of a new layer. If there are pending writes for a previous layer, they will be commited before the new record is set
+            * The new record passed in is simply the record dim ID.
+            */ 
+           void setLayerRecord(int dimid) { this->commit_transaction(); this->recordDimID = dimid; }
 
            /* OGR_SGeometry_Field_Scribe()
             * Constructs a Field Scribe over a dataset
