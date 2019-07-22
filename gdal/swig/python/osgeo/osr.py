@@ -536,6 +536,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_GetDataAxisToSRSAxisMapping(self, *args)
 
 
+    def SetDataAxisToSRSAxisMapping(self, *args):
+        """SetDataAxisToSRSAxisMapping(SpatialReference self, int nList) -> OGRErr"""
+        return _osr.SpatialReference_SetDataAxisToSRSAxisMapping(self, *args)
+
+
     def SetUTM(self, *args):
         """SetUTM(SpatialReference self, int zone, int north=1) -> OGRErr"""
         return _osr.SpatialReference_SetUTM(self, *args)

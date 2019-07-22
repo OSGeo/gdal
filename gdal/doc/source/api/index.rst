@@ -25,6 +25,9 @@ API
    C++ API
    -------
 
+   Raster API
+   +++++++++++++++++++++++++++
+
    .. toctree::
        :maxdepth: 1
 
@@ -33,10 +36,44 @@ API
        gdalrasterband_cpp
        gdalwarp_cpp
        ogrlayer_cpp
+
+   Vector API
+   +++++++++++++++++++++++++++
+
+   .. toctree::
+       :maxdepth: 1
+
        ogrfeature_cpp
        ogrfeaturestyle_cpp
        ogrgeometry_cpp
+
+   Spatial reference system API
+   ++++++++++++++++++++++++++++
+
+   .. toctree::
+       :maxdepth: 1
+
        ogrspatialref
+
+   Multi-dimensional array API
+   +++++++++++++++++++++++++++
+
+   .. toctree::
+       :maxdepth: 1
+
+       gdalgroup_cpp
+       gdaldimension_cpp
+       gdalabstractmdarray_cpp
+       gdalmdarray_cpp
+       gdalattribute_cpp
+       gdalextendeddatatype_cpp
+
+   Geographic networks API
+   ++++++++++++++++++++++++++++
+
+   .. toctree::
+       :maxdepth: 1
+
        gnm_cpp
 
    `Python API <../python/index.html>`_

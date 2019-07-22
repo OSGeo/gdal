@@ -198,7 +198,7 @@
 
 %fragment("CreateTupleFromDoubleArray","header") %{
 static PyObject *
-CreateTupleFromDoubleArray( double *first, unsigned int size ) {
+CreateTupleFromDoubleArray( const double *first, size_t size ) {
   PyObject *out = PyTuple_New( size );
   for( unsigned int i=0; i<size; i++ ) {
     PyObject *val = PyFloat_FromDouble( *first );
@@ -1506,17 +1506,13 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
   for( int i = 0; i<$1; i++ ) {
 
       PyObject *o = PySequence_GetItem($input,i);
-%#if SWIG_VERSION <= 0x010337
-      PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
-%#else
-      SwigPyObject *sobj = SWIG_Python_GetSwigThis(o);
-%#endif
       type* rawobjectpointer = NULL;
-      if (!sobj) {
+      CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( o, (void**)&rawobjectpointer, SWIGTYPE_p_##type, SWIG_POINTER_EXCEPTION | 0 ));
+      if (!rawobjectpointer) {
           Py_DECREF(o);
+          PyErr_SetString(PyExc_TypeError, "object of wrong type");
           SWIG_fail;
       }
-      rawobjectpointer = (type*) sobj->ptr;
       $2[i] = rawobjectpointer;
       Py_DECREF(o);
 
@@ -2303,3 +2299,173 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
   /* %typemap(freearg) (OSRCRSInfo*** pList, int* pnListCount) */
   OSRDestroyCRSInfoList( *($1) );
 }
+
+
+/*
+ * Typemap argout for GDALGroupGetAttributes()
+ */
+%typemap(in,numinputs=0) (GDALAttributeHS*** pattrs, size_t* pnCount) ( GDALAttributeHS** attrs=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (GDALAttributeHS*** pattrs, size_t* pnCount) */
+  $1 = &attrs;
+  $2 = &nCount;
+}
+%typemap(argout) (GDALAttributeHS*** pattrs, size_t* pnCount)
+{
+  /* %typemap(argout) (GDALAttributeHS*** pattrs, size_t* pnCount) */
+  PyObject *list = PyList_New( *$2 );
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem(list, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALAttributeHS,SWIG_POINTER_OWN) );
+  }
+  Py_DECREF($result);
+  $result = list;
+}
+
+%typemap(freearg) (GDALAttributeHS*** pattrs, size_t* pnCount)
+{
+  /* %typemap(freearg) (GDALAttributeHS*** pattrs, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
+OBJECT_LIST_INPUT(GDALDimensionHS);
+
+
+/*
+ * Typemap argout for GDALMDArrayGetDimensions()
+ */
+%typemap(in,numinputs=0) (GDALDimensionHS*** pdims, size_t* pnCount) ( GDALDimensionHS** dims=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (GDALDimensionHS*** pdims, size_t* pnCount) */
+  $1 = &dims;
+  $2 = &nCount;
+}
+%typemap(argout) (GDALDimensionHS*** pdims, size_t* pnCount)
+{
+  /* %typemap(argout) (GDALDimensionHS*** pdims, size_t* pnCount) */
+  PyObject *list = PyList_New( *$2 );
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem(list, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALDimensionHS,SWIG_POINTER_OWN) );
+  }
+  Py_DECREF($result);
+  $result = list;
+}
+
+%typemap(freearg) (GDALDimensionHS*** pdims, size_t* pnCount)
+{
+  /* %typemap(freearg) (GDALDimensionHS*** pdims, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
+/*
+ * Typemap argout for GDALAttributeGetDimensionsSize()
+ */
+%typemap(in,numinputs=0) (GUIntBig** pvals, size_t* pnCount) ( GUIntBig* vals=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (GUIntBig** pvals, size_t* pnCount) */
+  $1 = &vals;
+  $2 = &nCount;
+}
+%typemap(argout) (GUIntBig** pvals, size_t* pnCount)
+{
+  /* %typemap(argout) (GUIntBig** pvals, size_t* pnCount) */
+  PyObject *list = PyList_New( *$2 );
+  for( size_t i = 0; i < *$2; i++ ) {
+      char szTmp[32];
+      sprintf(szTmp, CPL_FRMT_GUIB, (*$1)[i]);
+%#if PY_VERSION_HEX>=0x03000000
+      PyObject *o = PyLong_FromString(szTmp, NULL, 10);
+%#else
+      PyObject *o =  PyInt_FromString(szTmp, NULL, 10);
+%#endif
+      PyList_SetItem(list, i, o );
+  }
+  Py_DECREF($result);
+  $result = list;
+}
+
+%typemap(freearg) (GUIntBig** pvals, size_t* pnCount)
+{
+  /* %typemap(freearg) (GUIntBig** pvals, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
+/*
+ * Typemap argout for GDALAttributeReadAsIntArray()
+ */
+%typemap(in,numinputs=0) (int** pvals, size_t* pnCount) ( int* vals=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (int** pvals, size_t* pnCount) */
+  $1 = &vals;
+  $2 = &nCount;
+}
+%typemap(argout) (int** pvals, size_t* pnCount)
+{
+  /* %typemap(argout) (int** pvals, size_t* pnCount) */
+  PyObject *out = PyTuple_New( *$2 );
+  for( unsigned int i=0; i<*$2; i++ ) {
+    PyObject *val = PyInt_FromLong( (*$1)[i] );
+    PyTuple_SetItem( out, i, val );
+  }
+  Py_DECREF($result);
+  $result = out;
+}
+
+%typemap(freearg) (int** pvals, size_t* pnCount)
+{
+  /* %typemap(freearg) (int** pvals, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
+/*
+ * Typemap argout for GDALAttributeReadAsDoubleArray()
+ */
+%typemap(in,numinputs=0) (double** pvals, size_t* pnCount) ( double* vals=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (double** pvals, size_t* pnCount) */
+  $1 = &vals;
+  $2 = &nCount;
+}
+%typemap(argout) (double** pvals, size_t* pnCount)
+{
+  /* %typemap(argout) (double** pvals, size_t* pnCount) */
+  PyObject *list = CreateTupleFromDoubleArray(*$1, *$2);
+  Py_DECREF($result);
+  $result = list;
+}
+
+%typemap(freearg) (double** pvals, size_t* pnCount)
+{
+  /* %typemap(freearg) (double** pvals, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
+/*
+ * Typemap argout for GDALExtendedDataTypeGetComponents()
+ */
+%typemap(in,numinputs=0) (GDALEDTComponentHS*** pcomps, size_t* pnCount) ( GDALEDTComponentHS** comps=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (GDALEDTComponentHS*** pcomps, size_t* pnCount) */
+  $1 = &comps;
+  $2 = &nCount;
+}
+%typemap(argout) (GDALEDTComponentHS*** pcomps, size_t* pnCount)
+{
+  /* %typemap(argout) (GDALEDTComponentHS*** pcomps, size_t* pnCount) */
+  PyObject *list = PyList_New( *$2 );
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem(list, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALEDTComponentHS,SWIG_POINTER_OWN) );
+  }
+  Py_DECREF($result);
+  $result = list;
+}
+
+%typemap(freearg) (GDALEDTComponentHS*** pcomps, size_t* pnCount)
+{
+  /* %typemap(freearg) (GDALEDTComponentHS*** pcomps, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
+OBJECT_LIST_INPUT(GDALEDTComponentHS)

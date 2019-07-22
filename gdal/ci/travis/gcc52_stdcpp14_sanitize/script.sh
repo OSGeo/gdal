@@ -44,6 +44,8 @@ rm ogr/ogr_sqlite.py gdrivers/rasterlite.py
 # so we install a newer pip first.
 sudo -H pip install -U pip
 sudo -H pip install -U -r ./requirements.txt
+sudo apt-get remove python-numpy
+sudo -H pip install -U numpy
 
 
 # Run each module in its own pytest process.

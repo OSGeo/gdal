@@ -1,0 +1,66 @@
+<VRTDataset>
+  <Group name="/">
+    <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
+    <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
+    <Dimension name="time_increasing" type="TEMPORAL" size="4" indexingVariable="time_increasing" />
+    <Dimension name="time_decreasing" type="TEMPORAL" size="4" indexingVariable="time_decreasing" />
+    <Array name="latitude">
+      <DataType>Float32</DataType>
+      <DimensionRef ref="latitude" />
+      <RegularlySpacedValues start="90" increment="-2.5" />
+   </Array>
+    <Array name="longitude">
+      <DataType>Float32</DataType>
+      <DimensionRef ref="longitude" />
+      <RegularlySpacedValues start="0" increment="2.5" />
+    </Array>
+    <Array name="my_variable_with_time_increasing">
+      <DataType>Int32</DataType>
+      <DimensionRef ref="time_increasing" />
+      <DimensionRef ref="latitude" />
+      <DimensionRef ref="longitude" />
+      <ConstantValue>1</ConstantValue>
+    </Array>
+    <Array name="time_increasing">
+      <DataType>String</DataType>
+      <DimensionRef ref="time_increasing" />
+      <InlineValuesWithValueElement>
+        <Value>2010-01-01</Value>
+        <Value>2011-01-01</Value>
+        <Value>2012-01-01</Value>
+        <Value>2013-01-01</Value>
+      </InlineValuesWithValueElement>
+    </Array>
+    <Array name="my_variable_with_time_decreasing">
+      <DataType>Int32</DataType>
+      <DimensionRef ref="time_decreasing" />
+      <DimensionRef ref="latitude" />
+      <DimensionRef ref="longitude" />
+      <ConstantValue>1</ConstantValue>
+    </Array>
+    <Array name="time_decreasing">
+      <DataType>String</DataType>
+      <DimensionRef ref="time_decreasing" />
+      <InlineValuesWithValueElement>
+        <Value>2013-01-01</Value>
+        <Value>2012-01-01</Value>
+        <Value>2011-01-01</Value>
+        <Value>2010-01-01</Value>
+      </InlineValuesWithValueElement>
+    </Array>
+    <Group name="my_subgroup">
+        <Array name="array_in_subgroup">
+            <DataType>Int32</DataType>
+            <DimensionRef ref="/latitude" />
+            <DimensionRef ref="/longitude" />
+            <ConstantValue>1</ConstantValue>
+        </Array>
+    </Group>
+    <Group name="other_subgroup">
+        <Attribute name="foo">
+            <DataType>String</DataType>
+            <Value>bar</Value>
+        </Attribute>
+    </Group>
+  </Group>
+</VRTDataset>

@@ -68,6 +68,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_azure.obj \
 		cpl_alibaba_oss.obj \
 		cpl_json_streaming_parser.obj \
+		cpl_json_streaming_writer.obj \
 		cpl_json.obj \
 		cpl_md5.obj \
 		cpl_swift.obj \

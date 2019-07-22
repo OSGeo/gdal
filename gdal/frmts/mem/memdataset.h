@@ -70,6 +70,9 @@ class CPL_DLL MEMDataset : public GDALDataset
     int          m_nOverviewDSCount;
     GDALDataset  **m_papoOverviewDS;
 
+    struct Private;
+    std::unique_ptr<Private> m_poPrivate;
+
 #if 0
   protected:
     virtual int                 EnterReadWrite(GDALRWFlag eRWFlag);
@@ -126,10 +129,15 @@ class CPL_DLL MEMDataset : public GDALDataset
 
     virtual CPLErr          CreateMaskBand( int nFlagsIn ) override;
 
+    std::shared_ptr<GDALGroup> GetRootGroup() const override;
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
+    static GDALDataset *CreateMultiDimensional( const char * pszFilename,
+                                                CSLConstList papszRootGroupOptions,
+                                                CSLConstList papszOptions );
 };
 
 /************************************************************************/
