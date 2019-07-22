@@ -889,8 +889,9 @@ namespace nccfdriver
 
             // Then write
 
+
             // todo: check return value
-            t->commit(this->ncid, writeInd);
+            t->commit(this->ncID(), writeInd);
 
             this->transactionQueue.pop();
         }

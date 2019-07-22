@@ -839,8 +839,7 @@ class netCDFDataset final: public GDALPamDataset
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
     nccfdriver::OGR_SGeometry_Scribe GeometryScribe;
-    //nccfdriver::OGR_SGeometry_Field_Scribe FieldScribe;
-    std::map<OGRSpatialReference, std::string> m_srsMap;
+    nccfdriver::OGR_SGeometry_Field_Scribe FieldScribe;
 
     /* projection/GT */
     double       adfGeoTransform[6];

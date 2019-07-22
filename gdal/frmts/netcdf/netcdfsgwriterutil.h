@@ -75,7 +75,7 @@ namespace nccfdriver
     class WBuffer
     {
         unsigned long long used_mem = 0;
-        unsigned long long mem_limit = CPLGetUsablePhysicalRAM() / 10;
+        unsigned long long mem_limit = CPLGetUsablePhysicalRAM() / 20;
 
         public: 
             /* addCount(...)
@@ -93,6 +93,7 @@ namespace nccfdriver
              void reset() { this->used_mem = 0; }
 
              explicit WBuffer(unsigned long long lim) : mem_limit(lim) {}
+             WBuffer() {}
     };
 
     /* A buffer with **approximate** maximum size of 1 / 10th the size of available memory
@@ -136,7 +137,7 @@ namespace nccfdriver
             void cpyNCOUNT_into_PNC();
             void flushPNCBuffer() { this->pnc = std::queue<int>(); }
 
-            SGeometry_Layer_WBuffer() : WBuffer(CPLGetUsablePhysicalRAM() / 10) {}
+            SGeometry_Layer_WBuffer() : WBuffer() { }
     };
 
     /* OGR_SGeometry_Scribe
@@ -168,8 +169,6 @@ namespace nccfdriver
         public:
             geom_t getWritableType() { return this->writableType; }
             void writeSGeometryFeature(SGeometry_Feature& ft);
-            OGR_SGeometry_Scribe() {}
-            OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, unsigned long long bufsize, bool isTrueNC4);
             int get_containerID() { return this->containerVarID; }
             void update_ncID(int newID) { this->ncID = newID; }
             int get_node_count_dimID() { return this->node_count_dimID; }
@@ -189,6 +188,9 @@ namespace nccfdriver
             size_t getZCBufLength() { return wbuf.getZCoordCount(); }
             size_t getNCOUNTBufLength() { return wbuf.getNCOUNTCount(); }
             size_t getPNCBufLength() { return wbuf.getPNCCount(); }
+
+            OGR_SGeometry_Scribe() {}
+            OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, unsigned long long bufsize, bool isTrueNC4);
             ~OGR_SGeometry_Scribe() { this->commit_transaction(); }
     };
 
@@ -336,8 +338,10 @@ namespace nccfdriver
      */
     class OGR_SGeometry_Field_Scribe
     {
-        int ncid = 0;
-        unsigned long buf = 0;
+        const int & ncid;
+        int ncID() { return this->ncid; } // creates copy of const reference ncid
+        WBuffer buf;
+
         std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
         std::map<int, size_t> varWriteInds;
         std::map<int, size_t> varMaxInds;
@@ -360,16 +364,20 @@ namespace nccfdriver
             */
            void enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd);
 
-           /* void update_ncid(...)
-            * Sets a new ncID to write to in case of the id changing
-            * Behavior may not be well defined if new id points to different dataset then previously
-            */
-           void update_ncid(int ncid);
+           const WBuffer& getMemBuffer() { return buf; }
 
            /* OGR_SGeometry_Field_Scribe()
             * Constructs a Field Scribe over a dataset
             */
-           OGR_SGeometry_Field_Scribe(int in_ncid, unsigned long long bufsize) :
+           OGR_SGeometry_Field_Scribe(const int& in_ncid) :
+               ncid(in_ncid),
+               buf()
+           {}
+
+           /* OGR_SGeometry_Field_Scribe()
+            * Constructs a Field Scribe over a dataset
+            */
+           OGR_SGeometry_Field_Scribe(const int& in_ncid, unsigned long long bufsize) :
                ncid(in_ncid),
                buf(bufsize)
            {}

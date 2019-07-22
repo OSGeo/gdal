@@ -2109,6 +2109,7 @@ netCDFDataset::netCDFDataset() :
     nCFVersion(1.6),
     bSGSupport(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
+    FieldScribe(cdfid),
 
     // projection/GT.
     pszProjection(nullptr),
