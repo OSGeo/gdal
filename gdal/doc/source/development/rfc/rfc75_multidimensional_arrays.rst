@@ -8,8 +8,8 @@ RFC 75: Multidimensional arrays
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2019-May-24
-Last updated:  2019-Jul-16
-Status:        Work in progress
+Last updated:  2019-Jul-22
+Status:        Implemented in GDAL 3.1
 ============== ============================
 
 Summary
@@ -231,4 +231,4 @@ https://github.com/OSGeo/gdal/pull/1704
 Voting history
 --------------
 
-TBD
++1 from HowardB, NormanB and EvenR
