@@ -832,6 +832,70 @@ namespace nccfdriver
         this->pnc = refill;
     }
 
+    // OGR_SGeometry_Field_Scribe
+    void OGR_SGeometry_Field_Scribe::enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd)
+    {
+        if(transactionAdd.get() == nullptr)
+        {
+            return;
+        }
+
+        // See if in the variable name is already being written to 
+        if(this->varMaxInds.count(transactionAdd->getVarId()) > 0)
+        {
+            // See if this variable is pushing the record limit if is, set a new record limit
+            size_t varWriteLength = this->varMaxInds[transactionAdd->getVarId()];
+            varWriteLength++;
+            this->varMaxInds[transactionAdd->getVarId()] = varWriteLength;
+
+            if(varWriteLength > this->recordLength)
+            {
+                this->recordLength = varWriteLength;
+            }
+        }
+
+        else
+        {
+            // Otherwise, just add it to the list of variable names being written to
+            std::pair<int, size_t> entry(transactionAdd->getVarId(), 1);
+            this->varMaxInds.insert(entry);
+        }
+
+        // Finally push the transaction in
+        this->transactionQueue.push(transactionAdd);
+    }
+
+    void OGR_SGeometry_Field_Scribe::commit_transaction()
+    {
+        while(!transactionQueue.empty())
+        {
+            std::shared_ptr<OGR_SGFS_Transaction> t = this->transactionQueue.front();
+
+            int varId = t->getVarId();
+            size_t writeInd; 
+
+            // First, find where to write. If doesn't exist, write to index 0
+            if(this->varWriteInds.count(varId) > 0)
+            {
+                writeInd = this->varWriteInds[varId];
+            }
+
+            else
+            {
+                std::pair<int, size_t> insertable(varId, 0);
+                this->varWriteInds.insert(insertable);
+                writeInd = 0;
+            }
+
+            // Then write
+
+            // todo: check return value
+            t->commit(this->ncid, writeInd);
+
+            this->transactionQueue.pop();
+        }
+    }
+
     // Helper function definitions
     int write_Geometry_Container
         (int ncID, const std::string& name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names)

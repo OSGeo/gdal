@@ -69,14 +69,38 @@ namespace nccfdriver
             bool IsPartAtIndInteriorRing(size_t ind) { return this->part_at_ind_interior[ind]; } // ONLY used for Multipolygon
     };
 
+    /* A memory buffer with a soft limit
+     * Has basic capability of over quota checking, and memory counting
+     */
+    class WBuffer
+    {
+        unsigned long long used_mem = 0;
+        unsigned long long mem_limit = CPLGetUsablePhysicalRAM() / 10;
+
+        public: 
+            /* addCount(...)
+             * Takes in a size, and directly adds that size to memory count
+             */
+             void addCount(size_t memuse) { this->used_mem += memuse; }
+
+            /* subCount(...)
+             * Directly subtracts the specified size from used_mem
+             */
+             void subCount(size_t memfree) { this->used_mem -= memfree; }
+             bool isOverQuota() { return used_mem > mem_limit; }
+             void setBufSize(unsigned long long new_limit) { this->mem_limit = new_limit; }
+
+             void reset() { this->used_mem = 0; }
+
+             explicit WBuffer(unsigned long long lim) : mem_limit(lim) {}
+    };
+
     /* A buffer with **approximate** maximum size of 1 / 10th the size of available memory
      * Assumes small features. A single feature would not be subject to this limitation.
      * Attempts to perform memory blocking to prevent unneccessary I/O from continuous dimension deformation
      */
-    class SGeometry_Layer_WBuffer
+    class SGeometry_Layer_WBuffer : public WBuffer
     {
-        unsigned long long used_mem;
-        unsigned long long mem_limit;
         std::queue<int> pnc; // part node counts
         std::queue<int> ncounts; // node counts
         std::queue<bool> interior_rings; // interior rings
@@ -85,26 +109,24 @@ namespace nccfdriver
         std::queue<double> z; // z coords
 
         public:
-            bool isOverQuota() { return used_mem > mem_limit; }
-            void addXCoord(double xp) { this->x.push(xp); used_mem += sizeof(xp); }
-            void addYCoord(double yp) { this->y.push(yp); used_mem += sizeof(yp); }
-            void addZCoord(double zp) { this->z.push(zp); used_mem += sizeof(zp); }
-            void addPNC(int pncp) { this->pnc.push(pncp); used_mem += sizeof(pncp); }
-            void addNCOUNT(int ncount) { this->ncounts.push(ncount); used_mem += sizeof(ncount); }
-            void addIRing(bool iring) { this->interior_rings.push(iring); used_mem += sizeof(iring); }
-            SGeometry_Layer_WBuffer() : used_mem(0), mem_limit(CPLGetUsablePhysicalRAM() / 10) {}
+            void addXCoord(double xp) { this->x.push(xp); WBuffer::addCount(sizeof(xp)); }
+            void addYCoord(double yp) { this->y.push(yp); WBuffer::addCount(sizeof(yp)); }
+            void addZCoord(double zp) { this->z.push(zp); WBuffer::addCount(sizeof(zp)); }
+            void addPNC(int pncp) { this->pnc.push(pncp); WBuffer::addCount(sizeof(pncp)); }
+            void addNCOUNT(int ncount) { this->ncounts.push(ncount); WBuffer::addCount(sizeof(ncount)); }
+            void addIRing(bool iring) { this->interior_rings.push(iring); WBuffer::addCount(sizeof(iring)); }
             bool XCoordEmpty() { return x.empty(); }
             bool YCoordEmpty() { return y.empty(); }
             bool ZCoordEmpty() { return z.empty(); }
             bool PNCEmpty() { return pnc.empty(); }
             bool NCOUNTEmpty() { return ncounts.empty(); }
             bool IRingEmpty() { return interior_rings.empty(); }
-            double XCoordDequeue() { double ret = x.front(); x.pop(); used_mem -= sizeof(ret); return(ret); }
-            double YCoordDequeue() { double ret = y.front(); y.pop(); used_mem -= sizeof(ret); return(ret); }
-            double ZCoordDequeue() { double ret = z.front(); z.pop(); used_mem -= sizeof(ret); return(ret); }
-            int PNCDequeue() { int ret = pnc.front(); pnc.pop(); used_mem -= sizeof(ret); return(ret); }
-            int NCOUNTDequeue() { int ret = ncounts.front(); ncounts.pop(); used_mem -= sizeof(ret); return(ret); }
-            bool IRingDequeue() { bool ret = interior_rings.front(); interior_rings.pop(); used_mem -= sizeof(ret); return(ret); }
+            double XCoordDequeue() { double ret = x.front(); x.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+            double YCoordDequeue() { double ret = y.front(); y.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+            double ZCoordDequeue() { double ret = z.front(); z.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+            int PNCDequeue() { int ret = pnc.front(); pnc.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+            int NCOUNTDequeue() { int ret = ncounts.front(); ncounts.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+            bool IRingDequeue() { bool ret = interior_rings.front(); interior_rings.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
             size_t getXCoordCount() { return this->x.size(); }
             size_t getYCoordCount() { return this->y.size(); }
             size_t getZCoordCount() { return this->z.size(); }
@@ -113,7 +135,8 @@ namespace nccfdriver
             size_t getIRingVarEntryCount() { return this-> interior_rings.size(); } // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
             void cpyNCOUNT_into_PNC();
             void flushPNCBuffer() { this->pnc = std::queue<int>(); }
-            void setBufSize(unsigned long long new_limit) { this->mem_limit = new_limit; }
+
+            SGeometry_Layer_WBuffer() : WBuffer(CPLGetUsablePhysicalRAM() / 10) {}
     };
 
     /* OGR_SGeometry_Scribe
@@ -175,19 +198,7 @@ namespace nccfdriver
      */
     class OGR_SGFS_Transaction
     {
-        int ncId;
         int varId;
-
-        protected:
-            /* void getVarId(...);
-             * Gets the var in which to commit the transaction to.
-             */
-            int getVarId() { return this->varId; }
-
-            /* void setVarId(...);
-             * Sets the var in which to commit the transaction to.
-             */
-            void setVarId(int vId) { this->varId = vId; }
 
         public:
             /* int commit(...);
@@ -200,9 +211,20 @@ namespace nccfdriver
             virtual int commit(int ncid, size_t write_loc) = 0;
 
             /* ~OGR_SGFS_Transaction()
-             * Empty. Simple here to stop the compiler from complaining...
+             * Empty. Simply here to stop the compiler from complaining...
              */
             virtual ~OGR_SGFS_Transaction() {}
+
+            /* void getVarId(...);
+             * Gets the var in which to commit the transaction to.
+             */
+            int getVarId() { return this->varId; }
+
+            /* void setVarId(...);
+             * Sets the var in which to commit the transaction to.
+             */
+            void setVarId(int vId) { this->varId = vId; }
+
     };
 
     /* OGR_SGFS_NC_Char_Transaction 
@@ -314,9 +336,12 @@ namespace nccfdriver
      */
     class OGR_SGeometry_Field_Scribe
     {
+        int ncid = 0;
+        unsigned long buf = 0;
         std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
         std::map<int, size_t> varWriteInds;
-        size_t recordLength;
+        std::map<int, size_t> varMaxInds;
+        size_t recordLength = 1;
 
         public:
             /* size_t get_Record_Length()
@@ -327,13 +352,27 @@ namespace nccfdriver
             /* void commit_transaction()
              * Replays all transactions to disk (according to fs stipulations)
              */
-           void commit_transaction() { /*todo*/ }
+           void commit_transaction();
 
            /* void enqueue_transaction()
             * Add a transaction to perform
             * Once a transaction is enqueued, it will only be dequeued on flush
             */
-           void enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd) { this->transactionQueue.push(transactionAdd); }
+           void enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd);
+
+           /* void update_ncid(...)
+            * Sets a new ncID to write to in case of the id changing
+            * Behavior may not be well defined if new id points to different dataset then previously
+            */
+           void update_ncid(int ncid);
+
+           /* OGR_SGeometry_Field_Scribe()
+            * Constructs a Field Scribe over a dataset
+            */
+           OGR_SGeometry_Field_Scribe(int in_ncid, unsigned long long bufsize) :
+               ncid(in_ncid),
+               buf(bufsize)
+           {}
     };
 
     // Exception Classes
@@ -390,7 +429,6 @@ namespace nccfdriver
             const char * get_err_msg() override { return this->msg.c_str(); }
             SGWriter_Exception_RingOOB() : msg("An attempt was made to read a polygon ring that does not exist.") {}
     };
-
 
 
     // Functions that interface with netCDF, for writing
