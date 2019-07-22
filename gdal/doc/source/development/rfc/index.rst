@@ -82,3 +82,4 @@ RFC list
     rfc72_pytest
     rfc73_proj6_wkt2_srsbarn
     rfc74_sphinx
+    rfc75_multidimensional_arrays
