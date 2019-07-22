@@ -238,7 +238,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
-            OGR_SGFS_NC_Char_Transaction(int i_varId, char* pszVal) : 
+            OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) : 
                char_rep(pszVal)
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
@@ -247,7 +247,6 @@ namespace nccfdriver
 
     /* OGR_SGFS_NC_CharA_Transaction
      * Writes to an NC_CHAR variable, using vara instead of var1
-     */
     class OGR_SGFS_NC_CharA_Transaction : public OGR_SGFS_Transaction
     {
         std::string char_rep;
@@ -265,7 +264,7 @@ namespace nccfdriver
                     counts.get()[citr] = count_init[citr];
                 }
             }
-    };
+    };*/
 
     /* OGR_SGFS_NC_Short_Transaction 
      * Writes to an NC_SHORT variable
@@ -309,7 +308,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_float(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
-            OGR_SGFS_NC_Float_Transaction(int i_varId, int fin) : 
+            OGR_SGFS_NC_Float_Transaction(int i_varId, float fin) : 
                rep(fin)
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
@@ -325,7 +324,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_double(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
-            OGR_SGFS_NC_Double_Transaction(int i_varId, int fin) : 
+            OGR_SGFS_NC_Double_Transaction(int i_varId, double fin) : 
                rep(fin)
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
@@ -364,7 +363,7 @@ namespace nccfdriver
             */
            void enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd);
 
-           const WBuffer& getMemBuffer() { return buf; }
+           WBuffer& getMemBuffer() { return buf; }
 
            /* OGR_SGeometry_Field_Scribe()
             * Constructs a Field Scribe over a dataset

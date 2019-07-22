@@ -861,6 +861,10 @@ namespace nccfdriver
             this->varMaxInds.insert(entry);
         }
 
+		// Add sizes to memory count
+		this->buf.addCount(sizeof(transactionAdd)); // size of pointer
+		this->buf.addCount(sizeof(*transactionAdd)); // size of pointee TODO: instead implement a size function that will be able to detect pointer sizes!!
+
         // Finally push the transaction in
         this->transactionQueue.push(transactionAdd);
     }
@@ -888,7 +892,9 @@ namespace nccfdriver
             }
 
             // Then write
-
+			// Subtract sizes from memory count
+			this->buf.addCount(sizeof(t)); // size of pointer
+			this->buf.addCount(sizeof(*t)); // size of pointee TODO: instead implement a size function that will be able to detect pointer sizes!!
 
             // todo: check return value
             t->commit(this->ncID(), writeInd);
