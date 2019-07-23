@@ -48,10 +48,10 @@ namespace nccfdriver
         if (this->type == POINT)
         {
             // Set total node count (1)
-            this->total_point_count++;
+            this->total_point_count = 1;
 
             // Also single part geometry (1)
-            this->total_part_count++;
+            this->total_part_count = 1;
 
             // One part per part
             ppart_node_count.push_back(1);
@@ -531,33 +531,13 @@ namespace nccfdriver
 
         this->containerVarName = std::string(container_name);
 
-
-        // Point case: Don't do anything else!
-        if(geot == POINT)
-        {
-            return;
-        }
+        // Node Coordinates - Dim and Attribute
 
         err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
         {
             throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "varName");
-        }
-
-        err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varName");
-        }
-
-        // Make dimensions for each of these
-        err_code = nc_def_dim(ncID_in, node_count_name, initDimLen, &node_count_dimID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension for");
         }
 
         std::string nodecoord_dname = containerVarName + "_" + std::string(CF_SG_NODE_COORDINATES);
@@ -569,13 +549,32 @@ namespace nccfdriver
             throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "dimension for");
         }
 
-        // Define variables for each of those
-        err_code = nc_def_var(ncID_in, node_count_name, NC_INT, 1, &node_count_dimID, &node_count_varID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
+        // Node Count
+        if(geot != POINT)
         {
-            throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "variable");
+            err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
+            NCDF_ERR(err_code);
+            if (err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varName");
+            }
+
+            err_code = nc_def_dim(ncID_in, node_count_name, initDimLen, &node_count_dimID);
+            NCDF_ERR(err_code);
+            if (err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension for");
+            }
+
+            err_code = nc_def_var(ncID_in, node_count_name, NC_INT, 1, &node_count_dimID, &node_count_varID);
+            NCDF_ERR(err_code);
+            if (err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "variable");
+            }
+
         }
+
 
         // Do the same for part node count, if it exists
         char pnc_name[NC_MAX_CHAR + 1] = {0};
@@ -597,7 +596,7 @@ namespace nccfdriver
             }
         }
 
-        // Node coordinates
+        // Node coordinates Var Definitions
         int new_varID;
         CPLStringList aosNcoord(CSLTokenizeString2(node_coord_names, " ", 0));
 

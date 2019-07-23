@@ -4326,21 +4326,16 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         // Write CF-1.5 compliant Geographics attributes.
         // Note: WKT information will not be preserved (e.g. WGS84).
 
-        const char * customCRSVarName = srsVarName.c_str(); 
-        const char * writableCRSVarName;
-
         if(srsVarName == "")
         {
-            writableCRSVarName = CPLStrdup("crs");
+            pszCFProjection = CPLStrdup("crs");
         } // WKT case
 
         else
         {
-            writableCRSVarName = customCRSVarName;
+            pszCFProjection = CPLStrdup(srsVarName.c_str());
         } // CF-1.8 case
 
-        CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                 cdfid, writableCRSVarName, NC_CHAR);
         addParamString(CF_GRD_MAPPING_NAME, CF_PT_LATITUDE_LONGITUDE);
     }
 
