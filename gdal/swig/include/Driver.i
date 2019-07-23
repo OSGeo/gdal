@@ -74,6 +74,23 @@ public:
     return ds;
   }
 
+%newobject CreateMultiDimensional;
+#ifndef SWIGJAVA
+%feature( "kwargs" ) CreateMultiDimensional;
+#endif
+%apply (char **options ) { (char **root_group_options) };
+  GDALDatasetShadow *CreateMultiDimensional(    const char *utf8_path,
+                                char **root_group_options = 0,
+                                char **options = 0 ) {
+
+    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreateMultiDimensional(    self,
+                                                                utf8_path,
+                                                                root_group_options,
+                                                                options );
+    return ds;
+  }
+%clear (char **root_group_options);
+
 %newobject CreateCopy;
 #ifndef SWIGJAVA
 #ifndef SWIGJAVA

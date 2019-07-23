@@ -450,5 +450,26 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
 
     assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
+
 def test_hdf5_dimension_labels_with_null():
     assert gdal.Open('data/dimension_labels_with_null.h5')
+
+
+def test_hdf5_recursive_groups():
+
+    # File generated with
+    # import h5py
+    # f = h5py.File('recursive_groups.h5','w')
+    # group = f.create_group("subgroup")
+    # group['link_to_root'] = f
+    # group['link_to_self'] = group
+    # group['soft_link_to_root'] = h5py.SoftLink('/')
+    # group['soft_link_to_self'] = h5py.SoftLink('/subgroup')
+    # group['soft_link_to_not_existing'] = h5py.SoftLink('/not_existing')
+    # group['hard_link_to_root'] = h5py.HardLink('/')
+    # group['ext_link_to_self_root'] = h5py.ExternalLink("recursive_groups.h5", "/")
+    # f.close()
+
+    ds = gdal.Open('data/recursive_groups.h5')
+    assert ds is not None
+    ds.GetSubDatasets()

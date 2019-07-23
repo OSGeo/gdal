@@ -519,6 +519,10 @@ public:
   }
 #endif
 
+  OGRErr SetDataAxisToSRSAxisMapping(int nList, int* pList) {
+    return OSRSetDataAxisToSRSAxisMapping(self, nList, pList);
+  }
+
   OGRErr SetUTM( int zone, int north =1 ) {
     return OSRSetUTM( self, zone, north );
   }

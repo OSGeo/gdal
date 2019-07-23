@@ -277,6 +277,48 @@ def Info(ds, **kwargs):
         ret = json.loads(ret)
     return ret
 
+
+def MultiDimInfoOptions(options=None, detailed=False, array=None, limit=None, as_text=False):
+    """ Create a MultiDimInfoOptions() object that can be passed to gdal.MultiDimInfo()
+        options can be be an array of strings, a string or let empty and filled from other keywords."""
+
+    options = [] if options is None else options
+
+    if _is_str_or_unicode(options):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = options
+        if detailed:
+            new_options += ['-detailed']
+        if array:
+            new_options += ['-array', array]
+        if limit:
+            new_options += ['-limit', str(limit)]
+
+    return GDALMultiDimInfoOptions(new_options), as_text
+
+def MultiDimInfo(ds, **kwargs):
+    """ Return information on a dataset.
+        Arguments are :
+          ds --- a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.MultiDimInfoOptions(), string or array of strings
+          other keywords arguments of gdal.MultiDimInfoOptions()
+        If options is provided as a gdal.MultiDimInfoOptions() object, other keywords are ignored. """
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
+        opts, as_text = MultiDimInfoOptions(**kwargs)
+    else:
+        opts = kwargs['options']
+        as_text = True
+    if _is_str_or_unicode(ds):
+        ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_MULTIDIM_RASTER)
+    ret = MultiDimInfoInternal(ds, opts)
+    if not as_text:
+        import json
+        ret = json.loads(ret)
+    return ret
+
+
 def _strHighPrec(x):
     return x if _is_str_or_unicode(x) else '%.18g' % x
 
@@ -1300,6 +1342,75 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
         return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
 
 
+def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
+         arraySpecs=None, groupSpecs=None, subsetSpecs=None, scaleAxesSpecs=None,
+         callback=None, callback_data=None):
+    """ Create a MultiDimTranslateOptions() object that can be passed to gdal.MultiDimTranslate()
+        Keyword arguments are :
+          options --- can be be an array of strings, a string or let empty and filled from other keywords.
+          format --- output format ("GTiff", etc...)
+          creationOptions --- list of creation options
+          arraySpecs -- list of array specifications, each of them being an array name or "name={src_array_name},dstname={dst_name},transpose=[1,0],view=[:,::-1]"
+          groupSpecs -- list of group specifications, each of them being a group name or "name={src_array_name},dstname={dst_name},recursive=no"
+          subsetSpecs -- list of subset specifications, each of them being like "{dim_name}({min_val},{max_val})" or "{dim_name}({slice_va})"
+          scaleAxesSpecs -- list of dimension scaling specifications, each of them being like "{dim_name}({scale_factor})"
+          callback --- callback method
+          callback_data --- user data for callback
+    """
+    options = [] if options is None else options
+
+    if _is_str_or_unicode(options):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = options
+        if format is not None:
+            new_options += ['-of', format]
+        if creationOptions is not None:
+            for opt in creationOptions:
+                new_options += ['-co', opt]
+        if arraySpecs is not None:
+            for s in arraySpecs:
+                new_options += ['-array', s]
+        if groupSpecs is not None:
+            for s in groupSpecs:
+                new_options += ['-group', s]
+        if subsetSpecs is not None:
+            for s in subsetSpecs:
+                new_options += ['-subset', s]
+        if scaleAxesSpecs is not None:
+            for s in scaleAxesSpecs:
+                new_options += ['-scaleaxes', s]
+
+    return (GDALMultiDimTranslateOptions(new_options), callback, callback_data)
+
+def MultiDimTranslate(destName, srcDSOrSrcDSTab, **kwargs):
+    """ MultiDimTranslate one or several datasets.
+        Arguments are :
+          destName --- Output dataset name
+          srcDSOrSrcDSTab --- an array of Dataset objects or filenames, or a Dataset object or a filename
+        Keyword arguments are :
+          options --- return of gdal.MultiDimTranslateOptions(), string or array of strings
+          other keywords arguments of gdal.MultiDimTranslateOptions()
+        If options is provided as a gdal.MultiDimTranslateOptions() object, other keywords are ignored. """
+
+    if 'options' not in kwargs or isinstance(kwargs['options'], list) or _is_str_or_unicode(kwargs['options']):
+        (opts, callback, callback_data) = MultiDimTranslateOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if _is_str_or_unicode(srcDSOrSrcDSTab):
+        srcDSTab = [OpenEx(srcDSOrSrcDSTab, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER)]
+    elif isinstance(srcDSOrSrcDSTab, list):
+        srcDSTab = []
+        for elt in srcDSOrSrcDSTab:
+            if _is_str_or_unicode(elt):
+                srcDSTab.append(OpenEx(elt, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER))
+            else:
+                srcDSTab.append(elt)
+    else:
+        srcDSTab = [srcDSOrSrcDSTab]
+
+    return wrapper_GDALMultiDimTranslateDestName(destName, srcDSTab, opts, callback, callback_data)
+
 # Logging Helpers
 def _pylog_handler(err_level, err_no, err_msg):
     if err_no != gdalconst.CPLE_None:
@@ -1767,6 +1878,11 @@ class Driver(MajorObject):
         return _gdal.Driver_Create(self, *args, **kwargs)
 
 
+    def CreateMultiDimensional(self, *args, **kwargs):
+        """CreateMultiDimensional(Driver self, char const * utf8_path, char ** root_group_options=None, char ** options=None) -> Dataset"""
+        return _gdal.Driver_CreateMultiDimensional(self, *args, **kwargs)
+
+
     def CreateCopy(self, *args, **kwargs):
         """CreateCopy(Driver self, char const * utf8_path, Dataset src, int strict=1, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
         return _gdal.Driver_CreateCopy(self, *args, **kwargs)
@@ -2060,6 +2176,11 @@ class Dataset(MajorObject):
     def GetRasterBand(self, *args):
         """GetRasterBand(Dataset self, int nBand) -> Band"""
         return _gdal.Dataset_GetRasterBand(self, *args)
+
+
+    def GetRootGroup(self, *args):
+        """GetRootGroup(Dataset self) -> Group"""
+        return _gdal.Dataset_GetRootGroup(self, *args)
 
 
     def GetProjection(self, *args):
@@ -2468,6 +2589,722 @@ class Dataset(MajorObject):
 Dataset_swigregister = _gdal.Dataset_swigregister
 Dataset_swigregister(Dataset)
 
+class Group(_object):
+    """Proxy of C++ GDALGroupHS class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Group, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Group, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _gdal.delete_Group
+    __del__ = lambda self: None
+
+    def GetName(self, *args):
+        """GetName(Group self) -> char const *"""
+        return _gdal.Group_GetName(self, *args)
+
+
+    def GetFullName(self, *args):
+        """GetFullName(Group self) -> char const *"""
+        return _gdal.Group_GetFullName(self, *args)
+
+
+    def GetMDArrayNames(self, *args):
+        """GetMDArrayNames(Group self, char ** options=None) -> char **"""
+        return _gdal.Group_GetMDArrayNames(self, *args)
+
+
+    def OpenMDArray(self, *args):
+        """OpenMDArray(Group self, char const * name, char ** options=None) -> MDArray"""
+        return _gdal.Group_OpenMDArray(self, *args)
+
+
+    def GetGroupNames(self, *args):
+        """GetGroupNames(Group self, char ** options=None) -> char **"""
+        return _gdal.Group_GetGroupNames(self, *args)
+
+
+    def OpenGroup(self, *args):
+        """OpenGroup(Group self, char const * name, char ** options=None) -> Group"""
+        return _gdal.Group_OpenGroup(self, *args)
+
+
+    def GetDimensions(self, *args):
+        """GetDimensions(Group self, char ** options=None)"""
+        return _gdal.Group_GetDimensions(self, *args)
+
+
+    def GetAttribute(self, *args):
+        """GetAttribute(Group self, char const * name) -> Attribute"""
+        return _gdal.Group_GetAttribute(self, *args)
+
+
+    def GetAttributes(self, *args):
+        """GetAttributes(Group self, char ** options=None)"""
+        return _gdal.Group_GetAttributes(self, *args)
+
+
+    def GetStructuralInfo(self, *args):
+        """GetStructuralInfo(Group self) -> char **"""
+        return _gdal.Group_GetStructuralInfo(self, *args)
+
+
+    def CreateGroup(self, *args):
+        """CreateGroup(Group self, char const * name, char ** options=None) -> Group"""
+        return _gdal.Group_CreateGroup(self, *args)
+
+
+    def CreateDimension(self, *args):
+        """CreateDimension(Group self, char const * name, char const * type, char const * direction, unsigned long long size, char ** options=None) -> Dimension"""
+        return _gdal.Group_CreateDimension(self, *args)
+
+
+    def CreateMDArray(self, *args):
+        """CreateMDArray(Group self, char const * name, int nDimensions, ExtendedDataType data_type, char ** options=None) -> MDArray"""
+        return _gdal.Group_CreateMDArray(self, *args)
+
+
+    def CreateAttribute(self, *args):
+        """CreateAttribute(Group self, char const * name, int nDimensions, ExtendedDataType data_type, char ** options=None) -> Attribute"""
+        return _gdal.Group_CreateAttribute(self, *args)
+
+Group_swigregister = _gdal.Group_swigregister
+Group_swigregister(Group)
+
+class MDArray(_object):
+    """Proxy of C++ GDALMDArrayHS class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, MDArray, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, MDArray, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _gdal.delete_MDArray
+    __del__ = lambda self: None
+
+    def GetName(self, *args):
+        """GetName(MDArray self) -> char const *"""
+        return _gdal.MDArray_GetName(self, *args)
+
+
+    def GetFullName(self, *args):
+        """GetFullName(MDArray self) -> char const *"""
+        return _gdal.MDArray_GetFullName(self, *args)
+
+
+    def GetTotalElementsCount(self, *args):
+        """GetTotalElementsCount(MDArray self) -> unsigned long long"""
+        return _gdal.MDArray_GetTotalElementsCount(self, *args)
+
+
+    def GetDimensionCount(self, *args):
+        """GetDimensionCount(MDArray self) -> size_t"""
+        return _gdal.MDArray_GetDimensionCount(self, *args)
+
+
+    def GetDimensions(self, *args):
+        """GetDimensions(MDArray self)"""
+        return _gdal.MDArray_GetDimensions(self, *args)
+
+
+    def GetBlockSize(self, *args):
+        """GetBlockSize(MDArray self)"""
+        return _gdal.MDArray_GetBlockSize(self, *args)
+
+
+    def GetProcessingChunkSize(self, *args):
+        """GetProcessingChunkSize(MDArray self, size_t nMaxChunkMemory)"""
+        return _gdal.MDArray_GetProcessingChunkSize(self, *args)
+
+
+    def GetDataType(self, *args):
+        """GetDataType(MDArray self) -> ExtendedDataType"""
+        return _gdal.MDArray_GetDataType(self, *args)
+
+
+    def GetStructuralInfo(self, *args):
+        """GetStructuralInfo(MDArray self) -> char **"""
+        return _gdal.MDArray_GetStructuralInfo(self, *args)
+
+
+    def Read(self, *args):
+        """Read(MDArray self, int nDims1, int nDims2, int nDims3, int nDims4, ExtendedDataType buffer_datatype) -> CPLErr"""
+        return _gdal.MDArray_Read(self, *args)
+
+
+    def WriteStringArray(self, *args):
+        """WriteStringArray(MDArray self, int nDims1, int nDims2, int nDims3, ExtendedDataType buffer_datatype, char ** options) -> CPLErr"""
+        return _gdal.MDArray_WriteStringArray(self, *args)
+
+
+    def Write(self, *args):
+        """Write(MDArray self, int nDims1, int nDims2, int nDims3, int nDims4, ExtendedDataType buffer_datatype, GIntBig buf_len) -> CPLErr"""
+        return _gdal.MDArray_Write(self, *args)
+
+
+    def GetAttribute(self, *args):
+        """GetAttribute(MDArray self, char const * name) -> Attribute"""
+        return _gdal.MDArray_GetAttribute(self, *args)
+
+
+    def GetAttributes(self, *args):
+        """GetAttributes(MDArray self, char ** options=None)"""
+        return _gdal.MDArray_GetAttributes(self, *args)
+
+
+    def CreateAttribute(self, *args):
+        """CreateAttribute(MDArray self, char const * name, int nDimensions, ExtendedDataType data_type, char ** options=None) -> Attribute"""
+        return _gdal.MDArray_CreateAttribute(self, *args)
+
+
+    def GetNoDataValueAsRaw(self, *args):
+        """GetNoDataValueAsRaw(MDArray self) -> CPLErr"""
+        return _gdal.MDArray_GetNoDataValueAsRaw(self, *args)
+
+
+    def GetNoDataValueAsDouble(self, *args):
+        """GetNoDataValueAsDouble(MDArray self)"""
+        return _gdal.MDArray_GetNoDataValueAsDouble(self, *args)
+
+
+    def SetNoDataValueDouble(self, *args):
+        """SetNoDataValueDouble(MDArray self, double d) -> CPLErr"""
+        return _gdal.MDArray_SetNoDataValueDouble(self, *args)
+
+
+    def SetNoDataValueRaw(self, *args):
+        """SetNoDataValueRaw(MDArray self, GIntBig nLen) -> CPLErr"""
+        return _gdal.MDArray_SetNoDataValueRaw(self, *args)
+
+
+    def DeleteNoDataValue(self, *args):
+        """DeleteNoDataValue(MDArray self) -> CPLErr"""
+        return _gdal.MDArray_DeleteNoDataValue(self, *args)
+
+
+    def GetOffset(self, *args):
+        """GetOffset(MDArray self)"""
+        return _gdal.MDArray_GetOffset(self, *args)
+
+
+    def GetScale(self, *args):
+        """GetScale(MDArray self)"""
+        return _gdal.MDArray_GetScale(self, *args)
+
+
+    def SetOffset(self, *args):
+        """SetOffset(MDArray self, double val) -> CPLErr"""
+        return _gdal.MDArray_SetOffset(self, *args)
+
+
+    def SetScale(self, *args):
+        """SetScale(MDArray self, double val) -> CPLErr"""
+        return _gdal.MDArray_SetScale(self, *args)
+
+
+    def SetUnit(self, *args):
+        """SetUnit(MDArray self, char const * unit) -> CPLErr"""
+        return _gdal.MDArray_SetUnit(self, *args)
+
+
+    def GetUnit(self, *args):
+        """GetUnit(MDArray self) -> char const *"""
+        return _gdal.MDArray_GetUnit(self, *args)
+
+
+    def SetSpatialRef(self, *args):
+        """SetSpatialRef(MDArray self, SpatialReference srs) -> OGRErr"""
+        return _gdal.MDArray_SetSpatialRef(self, *args)
+
+
+    def GetSpatialRef(self, *args):
+        """GetSpatialRef(MDArray self) -> SpatialReference"""
+        return _gdal.MDArray_GetSpatialRef(self, *args)
+
+
+    def GetView(self, *args):
+        """GetView(MDArray self, char const * viewExpr) -> MDArray"""
+        return _gdal.MDArray_GetView(self, *args)
+
+
+    def Transpose(self, *args):
+        """Transpose(MDArray self, int nList) -> MDArray"""
+        return _gdal.MDArray_Transpose(self, *args)
+
+
+    def AsClassicDataset(self, *args):
+        """AsClassicDataset(MDArray self, size_t iXDim, size_t iYDim) -> Dataset"""
+        return _gdal.MDArray_AsClassicDataset(self, *args)
+
+
+    def Read(self,
+             array_start_idx = None,
+             count = None,
+             array_step = None,
+             buffer_stride = None,
+             buffer_datatype = None):
+        if not array_start_idx:
+          array_start_idx = [0] * self.GetDimensionCount()
+        if not count:
+          count = [ dim.GetSize() for dim in self.GetDimensions() ]
+        if not array_step:
+          array_step = [1] * self.GetDimensionCount()
+        if not buffer_stride:
+          stride = 1
+          buffer_stride = []
+    # To compute strides we must proceed from the fastest varying dimension
+    # (the last one), and then reverse the result
+          for cnt in reversed(count):
+              buffer_stride.append(stride)
+              stride *= cnt
+          buffer_stride.reverse()
+        if not buffer_datatype:
+          buffer_datatype = self.GetDataType()
+        return _gdal.MDArray_Read(self, array_start_idx, count, array_step, buffer_stride, buffer_datatype)
+
+    def ReadAsArray(self,
+                    array_start_idx = None,
+                    count = None,
+                    array_step = None,
+                    buffer_datatype = None,
+                    buf_obj = None):
+
+        from osgeo import gdalnumeric
+        return gdalnumeric.MDArrayReadAsArray(self, array_start_idx, count, array_step, buffer_datatype, buf_obj)
+
+    def __getitem__(self, item):
+
+          def stringify(v):
+              if v == Ellipsis:
+                  return '...'
+              if isinstance(v, slice):
+                  return ':'.join([str(x) if x is not None else '' for x in (v.start, v.stop, v.step)])
+              if isinstance(v, str):
+                  return v
+              if isinstance(v, (int, type(12345678901234))):
+                  return str(v)
+              try:
+                  import numpy as np
+                  if v == np.newaxis:
+                      return 'newaxis'
+              except:
+                  pass
+
+              return str(v)
+
+          if isinstance(item, str):
+              return self.GetView('["' + item.replace('\\', '\\\\').replace('"', '\\"') + '"]')
+          elif isinstance(item, slice):
+              return self.GetView('[' + stringify(item) + ']')
+          elif isinstance(item, tuple):
+              return self.GetView('[' + ','.join([stringify(x) for x in item]) + ']')
+          else:
+              return self.GetView('[' + stringify(item) + ']')
+
+    def Write(self,
+             buffer,
+             array_start_idx = None,
+             count = None,
+             array_step = None,
+             buffer_stride = None,
+             buffer_datatype = None):
+
+        if not buffer_datatype:
+          buffer_datatype = self.GetDataType()
+
+        is_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and self.GetDimensionCount() == 1
+
+        if not array_start_idx:
+          array_start_idx = [0] * self.GetDimensionCount()
+
+        if not count:
+          if is_1d_string:
+              assert type(buffer) == type([])
+              count = [ len(buffer) ]
+          else:
+              count = [ dim.GetSize() for dim in self.GetDimensions() ]
+
+        if not array_step:
+          array_step = [1] * self.GetDimensionCount()
+
+        if not buffer_stride:
+          stride = 1
+          buffer_stride = []
+    # To compute strides we must proceed from the fastest varying dimension
+    # (the last one), and then reverse the result
+          for cnt in reversed(count):
+              buffer_stride.append(stride)
+              stride *= cnt
+          buffer_stride.reverse()
+
+        if is_1d_string:
+            return _gdal.MDArray_WriteStringArray(self, array_start_idx, count, array_step, buffer_datatype, buffer)
+
+        return _gdal.MDArray_Write(self, array_start_idx, count, array_step, buffer_stride, buffer_datatype, buffer)
+
+    def WriteArray(self, array,
+                    array_start_idx = None,
+                    array_step = None):
+
+        from osgeo import gdalnumeric
+        return gdalnumeric.MDArrayWriteArray(self, array, array_start_idx, array_step)
+
+
+MDArray_swigregister = _gdal.MDArray_swigregister
+MDArray_swigregister(MDArray)
+
+class Attribute(_object):
+    """Proxy of C++ GDALAttributeHS class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Attribute, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Attribute, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _gdal.delete_Attribute
+    __del__ = lambda self: None
+
+    def GetName(self, *args):
+        """GetName(Attribute self) -> char const *"""
+        return _gdal.Attribute_GetName(self, *args)
+
+
+    def GetFullName(self, *args):
+        """GetFullName(Attribute self) -> char const *"""
+        return _gdal.Attribute_GetFullName(self, *args)
+
+
+    def GetTotalElementsCount(self, *args):
+        """GetTotalElementsCount(Attribute self) -> unsigned long long"""
+        return _gdal.Attribute_GetTotalElementsCount(self, *args)
+
+
+    def GetDimensionCount(self, *args):
+        """GetDimensionCount(Attribute self) -> size_t"""
+        return _gdal.Attribute_GetDimensionCount(self, *args)
+
+
+    def GetDimensionsSize(self, *args):
+        """GetDimensionsSize(Attribute self)"""
+        return _gdal.Attribute_GetDimensionsSize(self, *args)
+
+
+    def GetDataType(self, *args):
+        """GetDataType(Attribute self) -> ExtendedDataType"""
+        return _gdal.Attribute_GetDataType(self, *args)
+
+
+    def ReadAsRaw(self, *args):
+        """ReadAsRaw(Attribute self) -> CPLErr"""
+        return _gdal.Attribute_ReadAsRaw(self, *args)
+
+
+    def ReadAsString(self, *args):
+        """ReadAsString(Attribute self) -> char const *"""
+        return _gdal.Attribute_ReadAsString(self, *args)
+
+
+    def ReadAsInt(self, *args):
+        """ReadAsInt(Attribute self) -> int"""
+        return _gdal.Attribute_ReadAsInt(self, *args)
+
+
+    def ReadAsDouble(self, *args):
+        """ReadAsDouble(Attribute self) -> double"""
+        return _gdal.Attribute_ReadAsDouble(self, *args)
+
+
+    def ReadAsStringArray(self, *args):
+        """ReadAsStringArray(Attribute self) -> char **"""
+        return _gdal.Attribute_ReadAsStringArray(self, *args)
+
+
+    def ReadAsIntArray(self, *args):
+        """ReadAsIntArray(Attribute self)"""
+        return _gdal.Attribute_ReadAsIntArray(self, *args)
+
+
+    def ReadAsDoubleArray(self, *args):
+        """ReadAsDoubleArray(Attribute self)"""
+        return _gdal.Attribute_ReadAsDoubleArray(self, *args)
+
+
+    def WriteRaw(self, *args):
+        """WriteRaw(Attribute self, GIntBig nLen) -> CPLErr"""
+        return _gdal.Attribute_WriteRaw(self, *args)
+
+
+    def WriteString(self, *args):
+        """WriteString(Attribute self, char const * val) -> CPLErr"""
+        return _gdal.Attribute_WriteString(self, *args)
+
+
+    def WriteStringArray(self, *args):
+        """WriteStringArray(Attribute self, char ** vals) -> CPLErr"""
+        return _gdal.Attribute_WriteStringArray(self, *args)
+
+
+    def WriteInt(self, *args):
+        """WriteInt(Attribute self, int val) -> CPLErr"""
+        return _gdal.Attribute_WriteInt(self, *args)
+
+
+    def WriteDouble(self, *args):
+        """WriteDouble(Attribute self, double val) -> CPLErr"""
+        return _gdal.Attribute_WriteDouble(self, *args)
+
+
+    def WriteDoubleArray(self, *args):
+        """WriteDoubleArray(Attribute self, int nList) -> CPLErr"""
+        return _gdal.Attribute_WriteDoubleArray(self, *args)
+
+
+
+    def Read(self):
+      """ Read an attribute and return it with the most appropriate type """
+      dt_class = self.GetDataType().GetClass()
+      if dt_class == GEDTC_STRING:
+          if self.GetTotalElementsCount() == 1:
+              return self.ReadAsString()
+          return self.ReadAsStringArray()
+      if dt_class == GEDTC_NUMERIC:
+          if self.GetDataType().GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
+              if self.GetTotalElementsCount() == 1:
+                  return self.ReadAsInt()
+              else:
+                  return self.ReadAsIntArray()
+          else:
+              if self.GetTotalElementsCount() == 1:
+                  return self.ReadAsDouble()
+              else:
+                  return self.ReadAsDoubleArray()
+      return self.ReadAsRaw()
+
+    def Write(self, val):
+      if isinstance(val, (int, type(12345678901234))):
+          if val >= -0x80000000 and val <= 0x7FFFFFFF:
+              return self.WriteInt(val)
+          else:
+              return self.WriteDouble(val)
+      if isinstance(val, float):
+        return self.WriteDouble(val)
+      if isinstance(val, (str, type(u''))) and self.GetDataType().GetClass() != GEDTC_COMPOUND:
+        return self.WriteString(val)
+      if isinstance(val, list):
+        if len(val) == 0:
+          if self.GetDataType().GetClass() == GEDTC_STRING:
+              return self.WriteStringArray(val)
+          else:
+              return self.WriteDoubleArray(val)
+        if isinstance(val[0], (int, type(12345678901234), float)):
+          return self.WriteDoubleArray(val)
+        if isinstance(val[0], (str, type(u''))):
+          return self.WriteStringArray(val)
+      return self.WriteRaw(val)
+
+
+Attribute_swigregister = _gdal.Attribute_swigregister
+Attribute_swigregister(Attribute)
+
+class Dimension(_object):
+    """Proxy of C++ GDALDimensionHS class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Dimension, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Dimension, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _gdal.delete_Dimension
+    __del__ = lambda self: None
+
+    def GetName(self, *args):
+        """GetName(Dimension self) -> char const *"""
+        return _gdal.Dimension_GetName(self, *args)
+
+
+    def GetFullName(self, *args):
+        """GetFullName(Dimension self) -> char const *"""
+        return _gdal.Dimension_GetFullName(self, *args)
+
+
+    def GetType(self, *args):
+        """GetType(Dimension self) -> char const *"""
+        return _gdal.Dimension_GetType(self, *args)
+
+
+    def GetDirection(self, *args):
+        """GetDirection(Dimension self) -> char const *"""
+        return _gdal.Dimension_GetDirection(self, *args)
+
+
+    def GetSize(self, *args):
+        """GetSize(Dimension self) -> unsigned long long"""
+        return _gdal.Dimension_GetSize(self, *args)
+
+
+    def GetIndexingVariable(self, *args):
+        """GetIndexingVariable(Dimension self) -> MDArray"""
+        return _gdal.Dimension_GetIndexingVariable(self, *args)
+
+
+    def SetIndexingVariable(self, *args):
+        """SetIndexingVariable(Dimension self, MDArray array) -> bool"""
+        return _gdal.Dimension_SetIndexingVariable(self, *args)
+
+Dimension_swigregister = _gdal.Dimension_swigregister
+Dimension_swigregister(Dimension)
+
+GEDTC_NUMERIC = _gdal.GEDTC_NUMERIC
+GEDTC_STRING = _gdal.GEDTC_STRING
+GEDTC_COMPOUND = _gdal.GEDTC_COMPOUND
+class ExtendedDataType(_object):
+    """Proxy of C++ GDALExtendedDataTypeHS class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, ExtendedDataType, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, ExtendedDataType, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _gdal.delete_ExtendedDataType
+    __del__ = lambda self: None
+
+    def Create(*args):
+        """Create(GDALDataType dt) -> ExtendedDataType"""
+        return _gdal.ExtendedDataType_Create(*args)
+
+    Create = staticmethod(Create)
+
+    def CreateString(*args):
+        """CreateString(size_t nMaxStringLength=0) -> ExtendedDataType"""
+        return _gdal.ExtendedDataType_CreateString(*args)
+
+    CreateString = staticmethod(CreateString)
+
+    def CreateCompound(*args):
+        """CreateCompound(char const * name, size_t nTotalSize, int nComps) -> ExtendedDataType"""
+        return _gdal.ExtendedDataType_CreateCompound(*args)
+
+    CreateCompound = staticmethod(CreateCompound)
+
+    def GetName(self, *args):
+        """GetName(ExtendedDataType self) -> char const *"""
+        return _gdal.ExtendedDataType_GetName(self, *args)
+
+
+    def GetClass(self, *args):
+        """GetClass(ExtendedDataType self) -> GDALExtendedDataTypeClass"""
+        return _gdal.ExtendedDataType_GetClass(self, *args)
+
+
+    def GetNumericDataType(self, *args):
+        """GetNumericDataType(ExtendedDataType self) -> GDALDataType"""
+        return _gdal.ExtendedDataType_GetNumericDataType(self, *args)
+
+
+    def GetSize(self, *args):
+        """GetSize(ExtendedDataType self) -> size_t"""
+        return _gdal.ExtendedDataType_GetSize(self, *args)
+
+
+    def GetMaxStringLength(self, *args):
+        """GetMaxStringLength(ExtendedDataType self) -> size_t"""
+        return _gdal.ExtendedDataType_GetMaxStringLength(self, *args)
+
+
+    def GetComponents(self, *args):
+        """GetComponents(ExtendedDataType self)"""
+        return _gdal.ExtendedDataType_GetComponents(self, *args)
+
+
+    def CanConvertTo(self, *args):
+        """CanConvertTo(ExtendedDataType self, ExtendedDataType other) -> bool"""
+        return _gdal.ExtendedDataType_CanConvertTo(self, *args)
+
+
+    def Equals(self, *args):
+        """Equals(ExtendedDataType self, ExtendedDataType other) -> bool"""
+        return _gdal.ExtendedDataType_Equals(self, *args)
+
+
+
+    def __eq__(self, other):
+      return self.Equals(other)
+
+    def __ne__(self, other):
+      return not self.__eq__(other)
+
+ExtendedDataType_swigregister = _gdal.ExtendedDataType_swigregister
+ExtendedDataType_swigregister(ExtendedDataType)
+
+def ExtendedDataType_Create(*args):
+    """ExtendedDataType_Create(GDALDataType dt) -> ExtendedDataType"""
+    return _gdal.ExtendedDataType_Create(*args)
+
+def ExtendedDataType_CreateString(*args):
+    """ExtendedDataType_CreateString(size_t nMaxStringLength=0) -> ExtendedDataType"""
+    return _gdal.ExtendedDataType_CreateString(*args)
+
+def ExtendedDataType_CreateCompound(*args):
+    """ExtendedDataType_CreateCompound(char const * name, size_t nTotalSize, int nComps) -> ExtendedDataType"""
+    return _gdal.ExtendedDataType_CreateCompound(*args)
+
+class EDTComponent(_object):
+    """Proxy of C++ GDALEDTComponentHS class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, EDTComponent, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, EDTComponent, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _gdal.delete_EDTComponent
+    __del__ = lambda self: None
+
+    def Create(*args):
+        """Create(char const * name, size_t offset, ExtendedDataType type) -> EDTComponent"""
+        return _gdal.EDTComponent_Create(*args)
+
+    Create = staticmethod(Create)
+
+    def GetName(self, *args):
+        """GetName(EDTComponent self) -> char const *"""
+        return _gdal.EDTComponent_GetName(self, *args)
+
+
+    def GetOffset(self, *args):
+        """GetOffset(EDTComponent self) -> size_t"""
+        return _gdal.EDTComponent_GetOffset(self, *args)
+
+
+    def GetType(self, *args):
+        """GetType(EDTComponent self) -> ExtendedDataType"""
+        return _gdal.EDTComponent_GetType(self, *args)
+
+EDTComponent_swigregister = _gdal.EDTComponent_swigregister
+EDTComponent_swigregister(EDTComponent)
+
+def EDTComponent_Create(*args):
+    """EDTComponent_Create(char const * name, size_t offset, ExtendedDataType type) -> EDTComponent"""
+    return _gdal.EDTComponent_Create(*args)
+
 class Band(MajorObject):
     """Proxy of C++ GDALRasterBandShadow class."""
 
@@ -2751,6 +3588,11 @@ class Band(MajorObject):
     def AdviseRead(self, *args):
         """AdviseRead(Band self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, char ** options=None) -> CPLErr"""
         return _gdal.Band_AdviseRead(self, *args)
+
+
+    def AsMDArray(self, *args):
+        """AsMDArray(Band self) -> MDArray"""
+        return _gdal.Band_AsMDArray(self, *args)
 
 
     def ReadRaster1(self, *args, **kwargs):
@@ -3345,6 +4187,31 @@ GDALInfoOptions_swigregister(GDALInfoOptions)
 def InfoInternal(*args):
     """InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> retStringAndCPLFree *"""
     return _gdal.InfoInternal(*args)
+class GDALMultiDimInfoOptions(_object):
+    """Proxy of C++ GDALMultiDimInfoOptions class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALMultiDimInfoOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALMultiDimInfoOptions, name)
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        """__init__(GDALMultiDimInfoOptions self, char ** options) -> GDALMultiDimInfoOptions"""
+        this = _gdal.new_GDALMultiDimInfoOptions(*args)
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+    __swig_destroy__ = _gdal.delete_GDALMultiDimInfoOptions
+    __del__ = lambda self: None
+GDALMultiDimInfoOptions_swigregister = _gdal.GDALMultiDimInfoOptions_swigregister
+GDALMultiDimInfoOptions_swigregister(GDALMultiDimInfoOptions)
+
+
+def MultiDimInfoInternal(*args):
+    """MultiDimInfoInternal(Dataset hDataset, GDALMultiDimInfoOptions infoOptions) -> retStringAndCPLFree *"""
+    return _gdal.MultiDimInfoInternal(*args)
 class GDALTranslateOptions(_object):
     """Proxy of C++ GDALTranslateOptions class."""
 
@@ -3565,6 +4432,31 @@ def BuildVRTInternalObjects(*args):
 def BuildVRTInternalNames(*args):
     """BuildVRTInternalNames(char const * dest, char ** source_filenames, GDALBuildVRTOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.BuildVRTInternalNames(*args)
+class GDALMultiDimTranslateOptions(_object):
+    """Proxy of C++ GDALMultiDimTranslateOptions class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALMultiDimTranslateOptions, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALMultiDimTranslateOptions, name)
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        """__init__(GDALMultiDimTranslateOptions self, char ** options) -> GDALMultiDimTranslateOptions"""
+        this = _gdal.new_GDALMultiDimTranslateOptions(*args)
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+    __swig_destroy__ = _gdal.delete_GDALMultiDimTranslateOptions
+    __del__ = lambda self: None
+GDALMultiDimTranslateOptions_swigregister = _gdal.GDALMultiDimTranslateOptions_swigregister
+GDALMultiDimTranslateOptions_swigregister(GDALMultiDimTranslateOptions)
+
+
+def wrapper_GDALMultiDimTranslateDestName(*args):
+    """wrapper_GDALMultiDimTranslateDestName(char const * dest, int object_list_count, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
+    return _gdal.wrapper_GDALMultiDimTranslateDestName(*args)
 # This file is compatible with both classic and new-style classes.
 
 

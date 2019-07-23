@@ -141,6 +141,10 @@ def OpenNumPyArray(psArray, binterleave):
     """OpenNumPyArray(PyArrayObject * psArray, bool binterleave) -> Dataset"""
     return _gdal_array.OpenNumPyArray(psArray, binterleave)
 
+def OpenMultiDimensionalNumPyArray(psArray):
+    """OpenMultiDimensionalNumPyArray(PyArrayObject * psArray) -> Dataset"""
+    return _gdal_array.OpenMultiDimensionalNumPyArray(psArray)
+
 def GetArrayFilename(psArray):
     """GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"""
     return _gdal_array.GetArrayFilename(psArray)
@@ -152,6 +156,10 @@ def BandRasterIONumPy(band, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type,
 def DatasetIONumPy(ds, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback=0, callback_data=None, binterleave=True):
     """DatasetIONumPy(Dataset ds, int bWrite, int xoff, int yoff, int xsize, int ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, bool binterleave=True) -> CPLErr"""
     return _gdal_array.DatasetIONumPy(ds, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback, callback_data, binterleave)
+
+def MDArrayIONumPy(bWrite, mdarray, psArray, nDims1, nDims3, buffer_datatype):
+    """MDArrayIONumPy(bool bWrite, GDALMDArrayHS * mdarray, PyArrayObject * psArray, int nDims1, int nDims3, GDALExtendedDataTypeHS * buffer_datatype) -> CPLErr"""
+    return _gdal_array.MDArrayIONumPy(bWrite, mdarray, psArray, nDims1, nDims3, buffer_datatype)
 
 def VirtualMemGetArray(virtualmem):
     """VirtualMemGetArray(VirtualMem virtualmem)"""
@@ -429,6 +437,86 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
 
     ret = BandRasterIONumPy(band, 1, xoff, yoff, xsize, ysize,
                              array, datatype, resample_alg, callback, callback_data)
+    if ret != 0:
+        _RaiseException()
+    return ret
+
+def ExtendedDataTypeToNumPyDataType(dt):
+    klass = dt.GetClass()
+
+    if klass == gdal.GEDTC_STRING:
+        return numpy.bytes_
+
+    if klass == gdal.GEDTC_NUMERIC:
+        buf_type = dt.GetNumericDataType()
+        typecode = GDALTypeCodeToNumericTypeCode(buf_type)
+        if typecode is None:
+            typecode = numpy.float32
+        return typecode
+
+    assert klass == gdal.GEDTC_COMPOUND
+    names = []
+    formats = []
+    offsets = []
+    for comp in dt.GetComponents():
+        names.append(comp.GetName())
+        formats.append(ExtendedDataTypeToNumPyDataType(comp.GetType()))
+        offsets.append(comp.GetOffset())
+
+    return numpy.dtype({'names': names,
+                        'formats': formats,
+                        'offsets': offsets,
+                        'itemsize': dt.GetSize()})
+
+def MDArrayReadAsArray(mdarray,
+                        array_start_idx = None,
+                        count = None,
+                        array_step = None,
+                        buffer_datatype = None,
+                        buf_obj = None):
+    if not array_start_idx:
+        array_start_idx = [0] * mdarray.GetDimensionCount()
+    if not count:
+        count = [ dim.GetSize() for dim in mdarray.GetDimensions() ]
+    if not array_step:
+        array_step = [1] * mdarray.GetDimensionCount()
+    if not buffer_datatype:
+        buffer_datatype = mdarray.GetDataType()
+
+    if buf_obj is None:
+        typecode = ExtendedDataTypeToNumPyDataType(buffer_datatype)
+        buf_obj = numpy.empty(count, dtype=typecode)
+
+    ret = MDArrayIONumPy(False, mdarray, buf_obj, array_start_idx, array_step, buffer_datatype)
+    if ret != 0:
+        _RaiseException()
+    return buf_obj
+
+def MDArrayWriteArray(mdarray, array,
+                        array_start_idx = None,
+                        array_step = None):
+    if not array_start_idx:
+        array_start_idx = [0] * mdarray.GetDimensionCount()
+    if not array_step:
+        array_step = [1] * mdarray.GetDimensionCount()
+
+    buffer_datatype = mdarray.GetDataType()
+    if array.dtype != ExtendedDataTypeToNumPyDataType(buffer_datatype):
+        datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
+
+# if we receive some odd type, like int64, try casting to a very
+# generic type we do support (#2285)
+        if not datatype:
+            gdal.Debug('gdal_array', 'force array to float64')
+            array = array.astype(numpy.float64)
+            datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
+
+        if not datatype:
+            raise ValueError("array does not have corresponding GDAL data type")
+
+        buffer_datatype = gdal.ExtendedDataType.Create(datatype)
+
+    ret = MDArrayIONumPy(True, mdarray, array, array_start_idx, array_step, buffer_datatype)
     if ret != 0:
         _RaiseException()
     return ret

@@ -30,10 +30,11 @@
 #include "cpl_port.h"
 #include "memdataset.h"
 
+#include <algorithm>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
-
+#include <limits>
 #include <vector>
 
 #include "cpl_config.h"
@@ -47,6 +48,11 @@
 #include "gdal_frmts.h"
 
 CPL_CVSID("$Id$")
+
+struct MEMDataset::Private
+{
+    std::shared_ptr<GDALGroup> m_poRootGroup{};
+};
 
 /************************************************************************/
 /*                        MEMCreateRasterBand()                         */
@@ -802,7 +808,8 @@ MEMDataset::MEMDataset() :
     m_nGCPCount(0),
     m_pasGCPs(nullptr),
     m_nOverviewDSCount(0),
-    m_papoOverviewDS(nullptr)
+    m_papoOverviewDS(nullptr),
+    m_poPrivate(new Private())
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -1600,6 +1607,1055 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
 }
 
 /************************************************************************/
+/*                               MEMGroup                               */
+/************************************************************************/
+
+class MEMGroup: public GDALGroup
+{
+    std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
+    std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
+    std::map<CPLString, std::shared_ptr<GDALAttribute>> m_oMapAttributes{};
+    std::map<CPLString, std::shared_ptr<GDALDimension>> m_oMapDimensions{};
+
+public:
+    MEMGroup(const std::string& osParentName, const char* pszName): GDALGroup(osParentName, pszName ? pszName : "") {}
+
+    std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions) const override;
+    std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
+                                             CSLConstList papszOptions) const override;
+
+    std::vector<std::string> GetGroupNames(CSLConstList papszOptions) const override;
+    std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
+                                         CSLConstList papszOptions) const override;
+
+    std::shared_ptr<GDALGroup> CreateGroup(const std::string& osName,
+                                           CSLConstList papszOptions) override;
+
+    std::shared_ptr<GDALDimension> CreateDimension(const std::string&,
+                                                   const std::string&,
+                                                   const std::string&,
+                                                   GUInt64,
+                                                   CSLConstList papszOptions) override;
+
+    std::shared_ptr<GDALMDArray> CreateMDArray(const std::string& osName,
+                                                       const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                                       const GDALExtendedDataType& oDataType,
+                                                       CSLConstList papszOptions) override;
+
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override;
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const override;
+
+    std::vector<std::shared_ptr<GDALDimension>> GetDimensions(CSLConstList papszOptions) const override;
+
+    std::shared_ptr<GDALAttribute> CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList papszOptions) override;
+};
+
+/************************************************************************/
+/*                            MEMAbstractMDArray                        */
+/************************************************************************/
+
+class MEMAbstractMDArray: virtual public GDALAbstractMDArray
+{
+    std::vector<std::shared_ptr<GDALDimension>> m_aoDims;
+    size_t m_nTotalSize = 0;
+    GByte* m_pabyArray{};
+    bool m_bOwnArray = false;
+    std::vector<GPtrDiff_t> m_anStrides{};
+
+    struct StackReadWrite
+    {
+        size_t       nIters = 0;
+        const GByte* src_ptr = nullptr;
+        GByte*       dst_ptr = nullptr;
+        GPtrDiff_t   src_inc_offset = 0;
+        GPtrDiff_t   dst_inc_offset = 0;
+    };
+
+    void ReadWrite(bool bIsWrite,
+                   const size_t* count,
+                    std::vector<StackReadWrite>& stack,
+                    const GDALExtendedDataType& srcType,
+                    const GDALExtendedDataType& dstType) const;
+
+protected:
+    GDALExtendedDataType m_oType;
+
+    bool IRead(const GUInt64* arrayStartIdx,     // array of size GetDimensionCount()
+                      const size_t* count,                 // array of size GetDimensionCount()
+                      const GInt64* arrayStep,        // step in elements
+                      const GPtrDiff_t* bufferStride, // stride in elements
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer) const override;
+
+    bool IWrite(const GUInt64* arrayStartIdx,     // array of size GetDimensionCount()
+                      const size_t* count,                 // array of size GetDimensionCount()
+                      const GInt64* arrayStep,        // step in elements
+                      const GPtrDiff_t* bufferStride, // stride in elements
+                      const GDALExtendedDataType& bufferDataType,
+                      const void* pSrcBuffer) override;
+
+public:
+    MEMAbstractMDArray(const std::string& osParentName,
+                       const std::string& osName,
+                       const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                       const GDALExtendedDataType& oType);
+    ~MEMAbstractMDArray();
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_aoDims; }
+
+    const GDALExtendedDataType& GetDataType() const override { return m_oType; }
+
+    bool Init(GByte* pData = nullptr,
+              const std::vector<GPtrDiff_t>& anStrides = std::vector<GPtrDiff_t>());
+};
+
+/************************************************************************/
+/*                                MEMMDArray                            */
+/************************************************************************/
+
+#ifdef _MSC_VER
+#pragma warning (push)
+#pragma warning (disable:4250) // warning C4250: 'MEMMDArray': inherits 'MEMAbstractMDArray::MEMAbstractMDArray::IRead' via dominance
+#endif //_MSC_VER
+
+class MEMMDArray: public MEMAbstractMDArray, public GDALMDArray
+{
+    std::map<CPLString, std::shared_ptr<GDALAttribute>> m_oMapAttributes{};
+    std::string m_osUnit{};
+    std::shared_ptr<OGRSpatialReference> m_poSRS{};
+    GByte* m_pabyNoData = nullptr;
+    double m_dfScale = 1.0;
+    double m_dfOffset = 0.0;
+    bool m_bHasScale = false;
+    bool m_bHasOffset = false;
+
+protected:
+    MEMMDArray(const std::string& osParentName,
+               const std::string& osName,
+               const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+               const GDALExtendedDataType& oType);
+
+public:
+    static std::shared_ptr<MEMMDArray> Create(const std::string& osParentName,
+               const std::string& osName,
+               const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+               const GDALExtendedDataType& oType)
+    {
+        auto array(std::shared_ptr<MEMMDArray>(
+            new MEMMDArray(osParentName, osName, aoDimensions, oType)));
+        array->SetSelf(array);
+        return array;
+    }
+    ~MEMMDArray();
+
+    bool IsWritable() const override { return true; }
+
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override;
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const override;
+
+    std::shared_ptr<GDALAttribute> CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList papszOptions) override;
+
+    const std::string& GetUnit() const override { return m_osUnit; }
+
+    bool SetUnit(const std::string& osUnit) override {
+        m_osUnit = osUnit; return true; }
+
+    bool SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        m_poSRS.reset(poSRS ? poSRS->Clone() : nullptr); return true; }
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override { return m_poSRS; }
+
+    const void* GetRawNoDataValue() const override;
+
+    bool SetRawNoDataValue(const void*) override;
+
+    double GetOffset(bool* pbHasOffset) const override
+    {
+        if( pbHasOffset) *pbHasOffset = m_bHasOffset;
+        return m_dfOffset;
+    }
+
+    double GetScale(bool* pbHasScale) const override
+    {
+        if( pbHasScale) *pbHasScale = m_bHasScale;
+        return m_dfScale;
+    }
+
+    bool SetOffset(double dfOffset) override
+    { m_bHasOffset = true; m_dfOffset = dfOffset; return true; }
+
+    bool SetScale(double dfScale) override
+    { m_bHasScale = true; m_dfScale = dfScale; return true; }
+};
+
+/************************************************************************/
+/*                               MEMAttribute                           */
+/************************************************************************/
+
+class MEMAttribute: public MEMAbstractMDArray, public GDALAttribute
+{
+protected:
+    MEMAttribute(const std::string& osParentName,
+                 const std::string& osName,
+                 const std::vector<GUInt64>& anDimensions,
+                 const GDALExtendedDataType& oType);
+public:
+    static std::shared_ptr<MEMAttribute> Create(const std::string& osParentName,
+                                                const std::string& osName,
+                                                const std::vector<GUInt64>& anDimensions,
+                                                const GDALExtendedDataType& oType)
+    {
+        auto attr(std::shared_ptr<MEMAttribute>(
+            new MEMAttribute(osParentName, osName, anDimensions, oType)));
+        attr->SetSelf(attr);
+        return attr;
+    }
+};
+
+#ifdef _MSC_VER
+#pragma warning (pop)
+#endif //_MSC_VER
+
+/************************************************************************/
+/*                               MEMDimension                           */
+/************************************************************************/
+
+class MEMDimension: public GDALDimension
+{
+    std::weak_ptr<GDALMDArray> m_poIndexingVariable{};
+
+public:
+    MEMDimension(const std::string& osParentName,
+                 const std::string& osName,
+                 const std::string& osType,
+                 const std::string& osDirection,
+                 GUInt64 nSize);
+
+    std::shared_ptr<GDALMDArray> GetIndexingVariable() const override { return m_poIndexingVariable.lock(); }
+
+    bool SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable) override;
+};
+
+/************************************************************************/
+/*                           GetMDArrayNames()                          */
+/************************************************************************/
+
+std::vector<std::string> MEMGroup::GetMDArrayNames(CSLConstList) const
+{
+    std::vector<std::string> names;
+    for( const auto& iter: m_oMapMDArrays )
+        names.push_back(iter.first);
+    return names;
+}
+
+/************************************************************************/
+/*                             OpenMDArray()                            */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> MEMGroup::OpenMDArray(const std::string& osName,
+                                                   CSLConstList) const
+{
+    auto oIter = m_oMapMDArrays.find(osName);
+    if( oIter != m_oMapMDArrays.end() )
+        return oIter->second;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                            GetGroupNames()                           */
+/************************************************************************/
+
+std::vector<std::string> MEMGroup::GetGroupNames(CSLConstList) const
+{
+    std::vector<std::string> names;
+    for( const auto& iter: m_oMapGroups )
+        names.push_back(iter.first);
+    return names;
+}
+
+/************************************************************************/
+/*                              OpenGroup()                             */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> MEMGroup::OpenGroup(const std::string& osName,
+                                               CSLConstList) const
+{
+    auto oIter = m_oMapGroups.find(osName);
+    if( oIter != m_oMapGroups.end() )
+        return oIter->second;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                             CreateGroup()                            */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> MEMGroup::CreateGroup(const std::string& osName,
+                                                 CSLConstList /*papszOptions*/)
+{
+    if( osName.empty() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Empty group name not supported");
+        return nullptr;
+    }
+    if( m_oMapGroups.find(osName) != m_oMapGroups.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A group with same name already exists");
+        return nullptr;
+    }
+    auto newGroup(std::make_shared<MEMGroup>(GetFullName(), osName.c_str()));
+    m_oMapGroups[osName] = newGroup;
+    return newGroup;
+}
+
+/************************************************************************/
+/*                            CreateMDArray()                           */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(const std::string& osName,
+                                                     const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                                     const GDALExtendedDataType& oType,
+                                                     CSLConstList papszOptions)
+{
+    if( osName.empty() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Empty array name not supported");
+        return nullptr;
+    }
+    if( m_oMapMDArrays.find(osName) != m_oMapMDArrays.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An array with same name already exists");
+        return nullptr;
+    }
+    auto newArray(MEMMDArray::Create(GetFullName(), osName, aoDimensions, oType));
+
+    // Used by NUMPYMultiDimensionalDataset
+    const char *pszDataPointer = CSLFetchNameValue(papszOptions, "DATAPOINTER");
+    GByte* pData = nullptr;
+    std::vector<GPtrDiff_t> anStrides;
+    if( pszDataPointer )
+    {
+        pData = reinterpret_cast<GByte *>(
+            CPLScanPointer( pszDataPointer,
+                            static_cast<int>(strlen(pszDataPointer)) ) );
+        const char* pszStrides = CSLFetchNameValue(papszOptions, "STRIDES");
+        if( pszStrides )
+        {
+            CPLStringList aosStrides(CSLTokenizeString2(pszStrides, ",", 0));
+            if( static_cast<size_t>(aosStrides.size()) != aoDimensions.size() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid number of strides");
+                return nullptr;
+            }
+            for( int i = 0; i < aosStrides.size(); i++ )
+            {
+                const auto nStride = CPLAtoGIntBig(aosStrides[i]);
+                anStrides.push_back(static_cast<GPtrDiff_t>(nStride));
+            }
+        }
+    }
+    if( !newArray->Init(pData, anStrides) )
+        return nullptr;
+    m_oMapMDArrays[osName] = newArray;
+    return newArray;
+}
+
+/************************************************************************/
+/*                            GetAttribute()                            */
+/************************************************************************/
+
+std::shared_ptr<GDALAttribute> MEMGroup::GetAttribute(const std::string& osName) const
+{
+    auto oIter = m_oMapAttributes.find(osName);
+    if( oIter != m_oMapAttributes.end() )
+        return oIter->second;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                            GetAttributes()                           */
+/************************************************************************/
+
+std::vector<std::shared_ptr<GDALAttribute>> MEMGroup::GetAttributes(CSLConstList) const
+{
+    std::vector<std::shared_ptr<GDALAttribute>> oRes;
+    for( const auto& oIter: m_oMapAttributes )
+    {
+        oRes.push_back(oIter.second);
+    }
+    return oRes;
+}
+
+/************************************************************************/
+/*                            GetDimensions()                           */
+/************************************************************************/
+
+std::vector<std::shared_ptr<GDALDimension>> MEMGroup::GetDimensions(CSLConstList) const
+{
+    std::vector<std::shared_ptr<GDALDimension>> oRes;
+    for( const auto& oIter: m_oMapDimensions )
+    {
+        oRes.push_back(oIter.second);
+    }
+    return oRes;
+}
+
+/************************************************************************/
+/*                           CreateAttribute()                          */
+/************************************************************************/
+
+std::shared_ptr<GDALAttribute> MEMGroup::CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList)
+{
+    if( osName.empty() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Empty attribute name not supported");
+        return nullptr;
+    }
+    if( m_oMapAttributes.find(osName) != m_oMapAttributes.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An attribute with same name already exists");
+        return nullptr;
+    }
+    auto newAttr(MEMAttribute::Create(
+        (GetFullName() == "/" ? "/" : GetFullName() + "/") + "_GLOBAL_",
+        osName, anDimensions, oDataType));
+    if( !newAttr->Init() )
+        return nullptr;
+    m_oMapAttributes[osName] = newAttr;
+    return newAttr;
+}
+
+/************************************************************************/
+/*                          MEMAbstractMDArray()                        */
+/************************************************************************/
+
+MEMAbstractMDArray::MEMAbstractMDArray(const std::string& osParentName,
+                                       const std::string& osName,
+                       const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                       const GDALExtendedDataType& oType):
+    GDALAbstractMDArray(osParentName, osName),
+    m_aoDims(aoDimensions),
+    m_oType(oType)
+{
+}
+
+/************************************************************************/
+/*                         ~MEMAbstractMDArray()                        */
+/************************************************************************/
+
+MEMAbstractMDArray::~MEMAbstractMDArray()
+{
+    if( m_bOwnArray )
+    {
+        if( m_oType.NeedsFreeDynamicMemory() )
+        {
+            GByte* pabyPtr = m_pabyArray;
+            GByte* pabyEnd = m_pabyArray + m_nTotalSize;
+            const auto nDTSize(m_oType.GetSize());
+            while(pabyPtr < pabyEnd)
+            {
+                m_oType.FreeDynamicMemory(pabyPtr);
+                pabyPtr += nDTSize;
+            }
+        }
+        VSIFree(m_pabyArray);
+    }
+}
+
+/************************************************************************/
+/*                                  Init()                              */
+/************************************************************************/
+
+bool MEMAbstractMDArray::Init(GByte* pData,
+                              const std::vector<GPtrDiff_t>& anStrides)
+{
+    GUInt64 nTotalSize = m_oType.GetSize();
+    if( !m_aoDims.empty() )
+    {
+        if( anStrides.empty() )
+        {
+            m_anStrides.resize(m_aoDims.size());
+        }
+        else
+        {
+            CPLAssert( anStrides.size() == m_aoDims.size() );
+            m_anStrides = anStrides;
+        }
+
+        // To compute strides we must proceed from the fastest varying dimension
+        // (the last one), and then reverse the result
+        for( size_t i = m_aoDims.size(); i != 0; )
+        {
+            --i;
+            const auto& poDim = m_aoDims[i];
+            auto nDimSize = poDim->GetSize();
+            auto nNewSize = nTotalSize * nDimSize;
+            if( nNewSize / nDimSize != nTotalSize )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
+                return false;
+            }
+            if( anStrides.empty() )
+                m_anStrides[i] = static_cast<size_t>(nTotalSize);
+            nTotalSize = nNewSize;
+        }
+    }
+
+    // We restrict the size of the allocation so that all elements can be
+    // indexed by GPtrDiff_t
+    if( nTotalSize > static_cast<size_t>(
+            std::numeric_limits<GPtrDiff_t>::max()) )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
+        return false;
+    }
+    m_nTotalSize = static_cast<size_t>(nTotalSize);
+    if( pData )
+    {
+        m_pabyArray = pData;
+    }
+    else
+    {
+        m_pabyArray = static_cast<GByte*>(VSI_CALLOC_VERBOSE(1, m_nTotalSize));
+        m_bOwnArray = true;
+    }
+    return m_pabyArray != nullptr;
+}
+
+/************************************************************************/
+/*                             FastCopy()                               */
+/************************************************************************/
+
+template<int N> inline static void FastCopy(size_t nIters,
+                                            GByte* dstPtr,
+                                            const GByte* srcPtr,
+                                            GPtrDiff_t dst_inc_offset,
+                                            GPtrDiff_t src_inc_offset)
+{
+    if( nIters >= 8 )
+    {
+#define COPY_ELT(i) memcpy(dstPtr + (i) * dst_inc_offset, srcPtr + (i) * src_inc_offset, N)
+        while(true)
+        {
+            COPY_ELT(0);
+            COPY_ELT(1);
+            COPY_ELT(2);
+            COPY_ELT(3);
+            COPY_ELT(4);
+            COPY_ELT(5);
+            COPY_ELT(6);
+            COPY_ELT(7);
+            nIters -= 8;
+            srcPtr += 8 * src_inc_offset;
+            dstPtr += 8 * dst_inc_offset;
+            if( nIters < 8 )
+                break;
+        }
+        if( nIters == 0 )
+            return;
+    }
+    while(true)
+    {
+        memcpy(dstPtr, srcPtr, N);
+        if( (--nIters) == 0 )
+            break;
+        srcPtr += src_inc_offset;
+        dstPtr += dst_inc_offset;
+    }
+}
+
+/************************************************************************/
+/*                             ReadWrite()                              */
+/************************************************************************/
+
+void MEMAbstractMDArray::ReadWrite(bool bIsWrite,
+                                   const size_t* count,
+                                   std::vector<StackReadWrite>& stack,
+                                   const GDALExtendedDataType& srcType,
+                                   const GDALExtendedDataType& dstType) const
+{
+    const auto nDims = m_aoDims.size();
+    const auto nDimsMinus1 = nDims - 1;
+    const bool bSameNumericDT =
+        srcType.GetClass() == GEDTC_NUMERIC &&
+        dstType.GetClass() == GEDTC_NUMERIC &&
+        srcType.GetNumericDataType() == dstType.GetNumericDataType();
+    const auto nSameDTSize = bSameNumericDT ? srcType.GetSize() : 0;
+    const bool bCanUseMemcpyLastDim =
+        bSameNumericDT &&
+            stack[nDimsMinus1].src_inc_offset == static_cast<GPtrDiff_t>(nSameDTSize) &&
+            stack[nDimsMinus1].dst_inc_offset == static_cast<GPtrDiff_t>(nSameDTSize);
+    const size_t nCopySizeLastDim =
+        bCanUseMemcpyLastDim ? nSameDTSize * count[nDimsMinus1] : 0;
+    const bool bNeedsFreeDynamicMemory = bIsWrite && dstType.NeedsFreeDynamicMemory();
+
+    auto lambdaLastDim = [&](size_t idxPtr)
+    {
+        auto srcPtr = stack[idxPtr].src_ptr;
+        auto dstPtr = stack[idxPtr].dst_ptr;
+        if( nCopySizeLastDim )
+        {
+            memcpy(dstPtr, srcPtr, nCopySizeLastDim);
+        }
+        else
+        {
+            size_t nIters = count[nDimsMinus1];
+            const auto dst_inc_offset = stack[nDimsMinus1].dst_inc_offset;
+            const auto src_inc_offset = stack[nDimsMinus1].src_inc_offset;
+            if( bSameNumericDT )
+            {
+                if( nSameDTSize == 1 )
+                {
+                    FastCopy<1>(nIters, dstPtr, srcPtr,
+                                dst_inc_offset, src_inc_offset);
+                    return;
+                }
+                if( nSameDTSize == 2 )
+                {
+                    FastCopy<2>(nIters, dstPtr, srcPtr,
+                                dst_inc_offset, src_inc_offset);
+                    return;
+                }
+                if( nSameDTSize == 4 )
+                {
+                    FastCopy<4>(nIters, dstPtr, srcPtr,
+                                dst_inc_offset, src_inc_offset);
+                    return;
+                }
+                if( nSameDTSize == 8 )
+                {
+                    FastCopy<8>(nIters, dstPtr, srcPtr,
+                                dst_inc_offset, src_inc_offset);
+                    return;
+                }
+                if( nSameDTSize == 16 )
+                {
+                    FastCopy<16>(nIters, dstPtr, srcPtr,
+                                 dst_inc_offset, src_inc_offset);
+                    return;
+                }
+                CPLAssert(false);
+            }
+
+            while(true)
+            {
+                if( bNeedsFreeDynamicMemory )
+                {
+                    dstType.FreeDynamicMemory(dstPtr);
+                }
+                GDALExtendedDataType::CopyValue(srcPtr, srcType, dstPtr, dstType);
+                if( (--nIters) == 0 )
+                    break;
+                srcPtr += src_inc_offset;
+                dstPtr += dst_inc_offset;
+            }
+        }
+    };
+
+    if( nDims == 1 )
+    {
+        lambdaLastDim(0);
+    }
+    else if( nDims == 2 )
+    {
+        auto nIters = count[0];
+        while(true)
+        {
+            lambdaLastDim(0);
+            if( (--nIters) == 0 )
+                break;
+            stack[0].src_ptr += stack[0].src_inc_offset;
+            stack[0].dst_ptr += stack[0].dst_inc_offset;
+        }
+    }
+    else if( nDims == 3 )
+    {
+        stack[0].nIters = count[0];
+        while(true)
+        {
+            stack[1].src_ptr = stack[0].src_ptr;
+            stack[1].dst_ptr = stack[0].dst_ptr;
+            auto nIters = count[1];
+            while(true)
+            {
+                lambdaLastDim(1);
+                if( (--nIters) == 0 )
+                    break;
+                stack[1].src_ptr += stack[1].src_inc_offset;
+                stack[1].dst_ptr += stack[1].dst_inc_offset;
+            }
+            if( (--stack[0].nIters) == 0 )
+                break;
+            stack[0].src_ptr += stack[0].src_inc_offset;
+            stack[0].dst_ptr += stack[0].dst_inc_offset;
+        }
+    }
+    else
+    {
+        // Implementation valid for nDims >= 3
+
+        size_t dimIdx = 0;
+        // Non-recursive implementation. Hence the gotos
+        // It might be possible to rewrite this without gotos, but I find they
+        // make it clearer to understand the recursive nature of the code
+lbl_next_depth:
+        if( dimIdx == nDimsMinus1 - 1 )
+        {
+            auto nIters = count[dimIdx];
+            while(true)
+            {
+                lambdaLastDim(dimIdx);
+                if( (--nIters) == 0 )
+                    break;
+                stack[dimIdx].src_ptr += stack[dimIdx].src_inc_offset;
+                stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+            }
+            // If there was a test if( dimIdx > 0 ), that would be valid for nDims == 2
+            goto lbl_return_to_caller;
+        }
+        else
+        {
+            stack[dimIdx].nIters = count[dimIdx];
+            while(true)
+            {
+                dimIdx ++;
+                stack[dimIdx].src_ptr = stack[dimIdx-1].src_ptr;
+                stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+                goto lbl_next_depth;
+lbl_return_to_caller:
+                dimIdx --;
+                if( (--stack[dimIdx].nIters) == 0 )
+                    break;
+                stack[dimIdx].src_ptr += stack[dimIdx].src_inc_offset;
+                stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+            }
+            if( dimIdx > 0 )
+                goto lbl_return_to_caller;
+        }
+    }
+}
+
+/************************************************************************/
+/*                                   IRead()                            */
+/************************************************************************/
+
+bool MEMAbstractMDArray::IRead(const GUInt64* arrayStartIdx,
+                               const size_t* count,
+                               const GInt64* arrayStep,
+                               const GPtrDiff_t* bufferStride,
+                               const GDALExtendedDataType& bufferDataType,
+                               void* pDstBuffer) const
+{
+    const auto nDims = m_aoDims.size();
+    if( nDims == 0 )
+    {
+        GDALExtendedDataType::CopyValue(m_pabyArray, m_oType, pDstBuffer, bufferDataType);
+        return true;
+    }
+    std::vector<StackReadWrite> stack(nDims);
+    const auto nBufferDTSize = bufferDataType.GetSize();
+    GPtrDiff_t startSrcOffset = 0;
+    for( size_t i = 0; i < nDims; i++ )
+    {
+        startSrcOffset += static_cast<GPtrDiff_t>(arrayStartIdx[i] * m_anStrides[i]);
+        stack[i].src_inc_offset = static_cast<GPtrDiff_t>(arrayStep[i] * m_anStrides[i]);
+        stack[i].dst_inc_offset = static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+    }
+    stack[0].src_ptr = m_pabyArray + startSrcOffset;
+    stack[0].dst_ptr = static_cast<GByte*>(pDstBuffer);
+
+    ReadWrite(false, count, stack, m_oType, bufferDataType);
+    return true;
+}
+
+/************************************************************************/
+/*                                IWrite()                              */
+/************************************************************************/
+
+bool MEMAbstractMDArray::IWrite(const GUInt64* arrayStartIdx,
+                               const size_t* count,
+                               const GInt64* arrayStep,
+                               const GPtrDiff_t* bufferStride,
+                               const GDALExtendedDataType& bufferDataType,
+                               const void* pSrcBuffer)
+{
+    const auto nDims = m_aoDims.size();
+    if( nDims == 0 )
+    {
+        m_oType.FreeDynamicMemory(m_pabyArray);
+        GDALExtendedDataType::CopyValue(pSrcBuffer, bufferDataType, m_pabyArray, m_oType);
+        return true;
+    }
+    std::vector<StackReadWrite> stack(nDims);
+    const auto nBufferDTSize = bufferDataType.GetSize();
+    GPtrDiff_t startDstOffset = 0;
+    for( size_t i = 0; i < nDims; i++ )
+    {
+        startDstOffset += static_cast<GPtrDiff_t>(arrayStartIdx[i] * m_anStrides[i]);
+        stack[i].dst_inc_offset = static_cast<GPtrDiff_t>(arrayStep[i] * m_anStrides[i]);
+        stack[i].src_inc_offset = static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+    }
+
+    stack[0].dst_ptr = m_pabyArray + startDstOffset;
+    stack[0].src_ptr = static_cast<const GByte*>(pSrcBuffer);
+
+    ReadWrite(true, count, stack, bufferDataType, m_oType);
+    return true;
+}
+
+/************************************************************************/
+/*                               MEMMDArray()                           */
+/************************************************************************/
+
+MEMMDArray::MEMMDArray(const std::string& osParentName,
+                       const std::string& osName,
+               const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+               const GDALExtendedDataType& oType):
+    GDALAbstractMDArray(osParentName, osName),
+    MEMAbstractMDArray(osParentName, osName, aoDimensions, oType),
+    GDALMDArray(osParentName, osName)
+{
+}
+
+/************************************************************************/
+/*                              ~MEMMDArray()                           */
+/************************************************************************/
+
+MEMMDArray::~MEMMDArray()
+{
+    if( m_pabyNoData )
+    {
+        m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
+        CPLFree(m_pabyNoData);
+    }
+}
+
+/************************************************************************/
+/*                          GetRawNoDataValue()                         */
+/************************************************************************/
+
+const void* MEMMDArray::GetRawNoDataValue() const
+{
+    return m_pabyNoData;
+}
+
+/************************************************************************/
+/*                          SetRawNoDataValue()                         */
+/************************************************************************/
+
+bool MEMMDArray::SetRawNoDataValue(const void* pNoData)
+{
+    if( m_pabyNoData )
+    {
+        m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
+    }
+
+    if( pNoData == nullptr )
+    {
+        CPLFree(m_pabyNoData);
+        m_pabyNoData = nullptr;
+    }
+    else
+    {
+        const auto nSize = m_oType.GetSize();
+        if( m_pabyNoData == nullptr )
+        {
+            m_pabyNoData = static_cast<GByte*>(CPLMalloc(nSize));
+        }
+        memset(m_pabyNoData, 0, nSize);
+        GDALExtendedDataType::CopyValue( pNoData, m_oType, m_pabyNoData, m_oType );
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                            GetAttribute()                            */
+/************************************************************************/
+
+std::shared_ptr<GDALAttribute> MEMMDArray::GetAttribute(const std::string& osName) const
+{
+    auto oIter = m_oMapAttributes.find(osName);
+    if( oIter != m_oMapAttributes.end() )
+        return oIter->second;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                             GetAttributes()                          */
+/************************************************************************/
+
+std::vector<std::shared_ptr<GDALAttribute>> MEMMDArray::GetAttributes(CSLConstList) const
+{
+    std::vector<std::shared_ptr<GDALAttribute>> oRes;
+    for( const auto& oIter: m_oMapAttributes )
+    {
+        oRes.push_back(oIter.second);
+    }
+    return oRes;
+}
+
+/************************************************************************/
+/*                            CreateAttribute()                         */
+/************************************************************************/
+
+std::shared_ptr<GDALAttribute> MEMMDArray::CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList)
+{
+    if( osName.empty() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Empty attribute name not supported");
+        return nullptr;
+    }
+    if( m_oMapAttributes.find(osName) != m_oMapAttributes.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An attribute with same name already exists");
+        return nullptr;
+    }
+    auto newAttr(MEMAttribute::Create(GetFullName(), osName, anDimensions, oDataType));
+    if( !newAttr->Init() )
+        return nullptr;
+    m_oMapAttributes[osName] = newAttr;
+    return newAttr;
+}
+
+/************************************************************************/
+/*                            BuildDimensions()                         */
+/************************************************************************/
+
+static std::vector<std::shared_ptr<GDALDimension>> BuildDimensions(
+    const std::vector<GUInt64>& anDimensions)
+{
+    std::vector<std::shared_ptr<GDALDimension>> res;
+    for( size_t i = 0; i < anDimensions.size(); i++ )
+    {
+        res.emplace_back(std::make_shared<MEMDimension>(
+            std::string(), CPLSPrintf("dim%u", static_cast<unsigned>(i)),
+            std::string(), std::string(), anDimensions[i]));
+    }
+    return res;
+}
+
+/************************************************************************/
+/*                             MEMAttribute()                           */
+/************************************************************************/
+
+MEMAttribute::MEMAttribute(const std::string& osParentName,
+                           const std::string& osName,
+                           const std::vector<GUInt64>& anDimensions,
+                           const GDALExtendedDataType& oType):
+    GDALAbstractMDArray(osParentName, osName),
+    MEMAbstractMDArray(osParentName, osName, BuildDimensions(anDimensions), oType),
+    GDALAttribute(osParentName, osName)
+{
+}
+
+/************************************************************************/
+/*                             MEMDimension()                           */
+/************************************************************************/
+
+MEMDimension::MEMDimension(const std::string& osParentName,
+                           const std::string& osName,
+                           const std::string& osType,
+                           const std::string& osDirection,
+                           GUInt64 nSize):
+    GDALDimension(osParentName, osName, osType, osDirection, nSize)
+{
+}
+
+/************************************************************************/
+/*                           SetIndexingVariable()                      */
+/************************************************************************/
+
+bool MEMDimension::SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable)
+{
+    m_poIndexingVariable = poIndexingVariable;
+    return true;
+}
+
+/************************************************************************/
+/*                             CreateDimension()                        */
+/************************************************************************/
+
+std::shared_ptr<GDALDimension> MEMGroup::CreateDimension(const std::string& osName,
+                                                         const std::string& osType,
+                                                         const std::string& osDirection,
+                                                         GUInt64 nSize,
+                                                         CSLConstList)
+{
+    if( nSize == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid size");
+        return nullptr;
+    }
+    if( osName.empty() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Empty dimension name not supported");
+        return nullptr;
+    }
+    if( m_oMapDimensions.find(osName) != m_oMapDimensions.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A dimension with same name already exists");
+        return nullptr;
+    }
+    auto newDim(std::make_shared<MEMDimension>(GetFullName(), osName, osType, osDirection, nSize));
+    m_oMapDimensions[osName] = newDim;
+    return newDim;
+}
+
+/************************************************************************/
+/*                     CreateMultiDimensional()                         */
+/************************************************************************/
+
+GDALDataset * MEMDataset::CreateMultiDimensional( const char * pszFilename,
+                                                  CSLConstList /*papszRootGroupOptions*/,
+                                                  CSLConstList /*papszOptions*/ )
+{
+    auto poDS = new MEMDataset();
+
+    poDS->SetDescription(pszFilename);
+    poDS->m_poPrivate->m_poRootGroup.reset(new MEMGroup(std::string(), nullptr));
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                          GetRootGroup()                              */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> MEMDataset::GetRootGroup() const
+{
+    return m_poPrivate->m_poRootGroup;
+}
+
+/************************************************************************/
 /*                     MEMDatasetIdentify()                             */
 /************************************************************************/
 
@@ -1633,6 +2689,7 @@ void GDALRegister_MEM()
 
     poDriver->SetDescription( "MEM" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "In Memory Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
@@ -1656,6 +2713,7 @@ void GDALRegister_MEM()
     poDriver->pfnIdentify = MEMDatasetIdentify;
 #endif
     poDriver->pfnCreate = MEMDataset::Create;
+    poDriver->pfnCreateMultiDimensional = MEMDataset::CreateMultiDimensional;
     poDriver->pfnDelete = MEMDatasetDelete;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );

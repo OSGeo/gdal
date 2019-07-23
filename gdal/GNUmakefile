@@ -6,7 +6,9 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/alg/*.o \
 			$(GDAL_ROOT)/apps/commonutils.o \
 			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
+			$(GDAL_ROOT)/apps/gdalmdiminfo_lib.o \
 			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
+			$(GDAL_ROOT)/apps/gdalmdimtranslate_lib.o \
 			$(GDAL_ROOT)/apps/gdalwarp_lib.o \
 			$(GDAL_ROOT)/apps/ogr2ogr_lib.o \
 			$(GDAL_ROOT)/apps/gdaldem_lib.o \

@@ -1399,6 +1399,19 @@ pseudo panchromatic intensity, but not bound to an output band.
         </PansharpeningOptions>
     </VRTDataset>
 
+Multidimensionnal VRT
+---------------------
+
+.. versionadded:: 3.1
+
+See the dedicated :ref:`vrt_multidimensional` page.
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   vrt_multidimensional
+
 Multi-threading issues
 ----------------------
 

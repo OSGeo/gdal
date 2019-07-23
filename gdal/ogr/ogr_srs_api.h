@@ -661,6 +661,10 @@ void CPL_DLL OSRSetAxisMappingStrategy( OGRSpatialReferenceH hSRS,
 
 const int CPL_DLL *OSRGetDataAxisToSRSAxisMapping( OGRSpatialReferenceH hSRS, int* pnCount );
 
+OGRErr CPL_DLL OSRSetDataAxisToSRSAxisMapping( OGRSpatialReferenceH hSRS,
+                                               int nMappingSize,
+                                               const int* panMapping );
+
 /** Albers Conic Equal Area */
 OGRErr CPL_DLL OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,

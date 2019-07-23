@@ -75,6 +75,19 @@ Raster programs
 - :ref:`gdalmanage`: Identify, delete, rename and copy raster data files.
 - :ref:`gdalcompare`: Compare two images.
 
+Multidimensional Raster programs
+--------------------------------
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gdalmdiminfo
+   gdalmdimtranslate
+
+- :ref:`gdalmdiminfo`: Reports structure and content of a multidimensional dataset.
+- :ref:`gdalmdimtranslate`: Converts multidimensional data between different formats, and perform subsetting.
+
 Vector programs
 ---------------
 
