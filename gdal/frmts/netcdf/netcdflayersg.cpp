@@ -239,8 +239,8 @@ void netCDFDataset::SGCommitPendingTransaction()
             }
 
             // Also commit field transactions (if any) (and stretch record dim)
-            //this->GrowDim(cdfid, this->FieldScribe.RecordDimID(), this->FieldScribe.getRecordLength()); 
-            //this->FieldScribe.commit_transaction();
+            this->GrowDim(cdfid, this->FieldScribe.RecordDimID(), this->FieldScribe.getRecordLength()); 
+            this->FieldScribe.commit_transaction();
         }
 
         this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates
