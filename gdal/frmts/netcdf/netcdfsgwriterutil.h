@@ -255,14 +255,12 @@ namespace nccfdriver
         size_t counts[2];
 
         public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_vara_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, counts, char_rep.c_str()); }
-            OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal) : 
-               char_rep(pszVal)//,
-             //  counts{1, strlen(pszVal)}
+            int commit(int ncid, size_t write_loc) override { size_t ind[2] = {write_loc, 0}; return nc_put_vara_text(ncid, OGR_SGFS_Transaction::getVarId(), ind, counts, char_rep.c_str()); }
+            OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) : 
+               char_rep(pszVal),
+               counts{1, str_width}
             { 
                 OGR_SGFS_Transaction::setVarId(i_varId);
-                counts[0] = 1;
-                counts[1] = strlen(pszVal);
             }
     };
 
