@@ -123,6 +123,7 @@ namespace nccfdriver
      */
     class OGR_SGeometry_Scribe
     {
+        bool writing_to_NC4 = false;
         int ncID = 0;
         SGeometry_Layer_WBuffer wbuf;
         geom_t writableType = NONE;
@@ -144,7 +145,7 @@ namespace nccfdriver
             geom_t getWritableType() { return this->writableType; }
             void writeSGeometryFeature(SGeometry_Feature& ft);
             OGR_SGeometry_Scribe() {}
-            OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, unsigned long long bufsize);
+            OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, unsigned long long bufsize, bool isTrueNC4);
             int get_containerID() { return this->containerVarID; }
             void update_ncID(int newID) { this->ncID = newID; }
             int get_node_count_dimID() { return this->node_count_dimID; }

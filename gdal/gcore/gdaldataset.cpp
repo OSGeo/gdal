@@ -3177,7 +3177,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
 
     // If no driver kind is specified, assume all are to be probed.
     if( (nOpenFlags & GDAL_OF_KIND_MASK) == 0 )
-        nOpenFlags |= GDAL_OF_KIND_MASK;
+        nOpenFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
 
     GDALDriverManager *poDM = GetGDALDriverManager();
     // CPLLocaleC  oLocaleForcer;
@@ -3277,6 +3277,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         if( (nOpenFlags & GDAL_OF_VECTOR) != 0 &&
             (nOpenFlags & GDAL_OF_RASTER) == 0 &&
             poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr )
+            continue;
+        if( (nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0 &&
+            (nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) == nullptr )
             continue;
         if( poDriver->pfnOpen == nullptr &&
             poDriver->pfnOpenWithDriverArg == nullptr )
@@ -7924,4 +7928,23 @@ GDALRasterBand* GDALDataset::Bands::operator[](int iBand)
 GDALRasterBand* GDALDataset::Bands::operator[](size_t iBand)
 {
     return m_poSelf->GetRasterBand(1+static_cast<int>(iBand));
+}
+
+/************************************************************************/
+/*                           GetRootGroup()                             */
+/************************************************************************/
+
+/**
+ \brief Return the root GDALGroup of this dataset.
+
+ Only valid for multidimensional datasets.
+ 
+ This is the same as the C function GDALDatasetGetRootGroup().
+
+ @since GDAL 3.1
+*/
+
+std::shared_ptr<GDALGroup> GDALDataset::GetRootGroup() const
+{
+    return nullptr;
 }

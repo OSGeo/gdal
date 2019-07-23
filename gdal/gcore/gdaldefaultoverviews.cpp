@@ -660,7 +660,7 @@ GDALDefaultOverviews::BuildOverviews(
         if( bFoundSinglePixelOverview &&
             (poBand->GetXSize() + panOverviewList[i] - 1)
                 / panOverviewList[i] == 1 &&
-            (poBand->GetXSize() + panOverviewList[i] - 1)
+            (poBand->GetYSize() + panOverviewList[i] - 1)
                 / panOverviewList[i] == 1 )
         {
             abValidLevel[i] = false;
@@ -701,7 +701,7 @@ GDALDefaultOverviews::BuildOverviews(
 
             if( (poBand->GetXSize() + panOverviewList[i] - 1)
                     / panOverviewList[i] == 1 &&
-                (poBand->GetXSize() + panOverviewList[i] - 1)
+                (poBand->GetYSize() + panOverviewList[i] - 1)
                     / panOverviewList[i] == 1 )
             {
                 bFoundSinglePixelOverview = true;

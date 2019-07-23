@@ -8,6 +8,7 @@ User oriented documentation
    :maxdepth: 1
 
    raster_data_model
+   multidim_raster_data_model
    vector_data_model
    gnm_data_model
    ogr_sql_sqlite_dialect

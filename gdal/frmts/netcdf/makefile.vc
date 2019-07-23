@@ -3,7 +3,14 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-OBJ		=	netcdfdataset.obj netcdflayer.obj netcdfwriterconfig.obj gmtdataset.obj netcdfsg.obj netcdflayersg.obj netcdfsgwriterutil.obj
+OBJ		=	netcdfdataset.obj \
+			netcdflayer.obj \
+			netcdfwriterconfig.obj \
+			gmtdataset.obj \
+			netcdfsg.obj \
+			netcdflayersg.obj \
+			netcdfsgwriterutil.obj \
+			netcdfmultidim.obj
 
 PLUGIN_DLL 	=	gdal_netCDF.dll
 

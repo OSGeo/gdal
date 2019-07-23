@@ -318,8 +318,8 @@ static const char* const papszCFVerticalStandardNameValues[] = {
     "ocean_s_coordinate", "ocean_sigma_z_coordinate",
     "ocean_double_sigma_coordinate", nullptr };
 
-static const char* const papszCFTimeAttribNames[] = { CF_AXIS, nullptr };
-static const char* const papszCFTimeAttribValues[] = { "T", nullptr };
+static const char* const papszCFTimeAttribNames[] = { CF_AXIS, CF_STD_NAME, nullptr };
+static const char* const papszCFTimeAttribValues[] = { "T", "time", nullptr };
 static const char* const papszCFTimeUnitsValues[] = {
     "days since", "day since", "d since",
     "hours since", "hour since", "h since", "hr since",
@@ -806,6 +806,7 @@ class netCDFDataset final: public GDALPamDataset
 {
     friend class netCDFRasterBand; //TMP
     friend class netCDFLayer;
+    friend class netCDFVariable;
 
     typedef enum
     {
@@ -922,6 +923,11 @@ class netCDFDataset final: public GDALPamDataset
     CPLErr DetectAndFillSGLayers( int ncid );
     CPLErr LoadSGVarIntoLayer( int ncid, int nc_basevarId );
 
+#ifdef NETCDF_HAS_NC4
+    static GDALDataset *OpenMultiDim( GDALOpenInfo * );
+    std::shared_ptr<GDALGroup> m_poRootGroup{};
+#endif
+
   protected:
 
     CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
@@ -957,6 +963,10 @@ class netCDFDataset final: public GDALPamDataset
     virtual int  GetLayerCount() override { return nLayers; }
     virtual OGRLayer* GetLayer(int nIdx) override;
 
+#ifdef NETCDF_HAS_NC4
+    std::shared_ptr<GDALGroup> GetRootGroup() const override;
+#endif
+
     int GetCDFID() const { return cdfid; }
 
     /* static functions */
@@ -974,6 +984,12 @@ class netCDFDataset final: public GDALPamDataset
     static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress, void * pProgressData );
+
+#ifdef NETCDF_HAS_NC4
+    static GDALDataset *CreateMultiDimensional( const char * pszFilename,
+                                                CSLConstList papszRootGroupOptions,
+                                                CSLConstList papzOptions );
+#endif
 };
 
 class netCDFLayer final: public OGRLayer
@@ -1097,15 +1113,41 @@ class netCDFLayer final: public OGRLayer
         virtual OGRErr CreateField(OGRFieldDefn* poFieldDefn, int bApproxOK) override;
 };
 
+const char* NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS);
 void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID);
 void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
                                       OGRSpatialReference* poSRS);
-int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
+int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                                 char** ppszCFProjection, bool bWriteGDALTags);
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
                     double *pdfValue );
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
                     char **pszValue );
 bool NCDFIsUnlimitedDim(bool bIsNC4, int cdfid, int nDimId);
+bool NCDFIsUserDefinedType(int ncid, int type);
+
+CPLString NCDFGetGroupFullName(int nGroupId);
+
+// Dimension check functions.
+bool NCDFIsVarLongitude( int nCdfId, int nVarId,
+                                const char *pszVarName );
+bool NCDFIsVarLatitude( int nCdfId, int nVarId,
+                                const char *pszVarName );
+bool NCDFIsVarProjectionX( int nCdfId, int nVarId,
+                                  const char * pszVarName );
+bool NCDFIsVarProjectionY( int nCdfId, int nVarId,
+                                  const char *pszVarName );
+bool NCDFIsVarVerticalCoord( int nCdfId, int nVarId,
+                                    const char *pszVarName );
+bool NCDFIsVarTimeCoord( int nCdfId, int nVarId,
+                                const char *pszVarName );
+
+extern CPLMutex *hNCMutex;
+
+#ifdef ENABLE_NCDUMP
+bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
+                                         const char* pszTmpFilename,
+                                         VSILFILE* fpSrc );
+#endif
 
 #endif

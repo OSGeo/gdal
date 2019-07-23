@@ -87,6 +87,7 @@ static void _StoreLastException()
 %}
 
 %{
+#include <vector>
 #include "gdal_priv.h"
 #ifdef _DEBUG
 #undef _DEBUG
@@ -384,6 +385,48 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     return Open(psArray);
 }
 
+static GDALDataType NumpyTypeToGDALType(PyArrayObject *psArray)
+{
+    switch( PyArray_DESCR(psArray)->type_num )
+    {
+      case NPY_CDOUBLE:
+        return GDT_CFloat64;
+
+      case NPY_CFLOAT:
+        return GDT_CFloat32;
+
+      case NPY_DOUBLE:
+        return GDT_Float64;
+
+      case NPY_FLOAT:
+        return GDT_Float32;
+
+      case NPY_INT:
+      case NPY_LONG:
+        return GDT_Int32;
+
+      case NPY_UINT:
+      case NPY_ULONG:
+        return GDT_UInt32;
+
+      case NPY_SHORT:
+        return GDT_Int16;
+
+      case NPY_USHORT:
+        return GDT_UInt16;
+
+      case NPY_BYTE:
+      case NPY_UBYTE:
+        return GDT_Byte;
+
+      default:
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to access numpy arrays of typecode `%c'.",
+                  PyArray_DESCR(psArray)->type );
+        return GDT_Unknown;
+    }
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -406,51 +449,9 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray, bool binterleave )
         return NULL;
     }
 
-    switch( PyArray_DESCR(psArray)->type_num )
+    eType = NumpyTypeToGDALType(psArray);
+    if( eType == GDT_Unknown )
     {
-      case NPY_CDOUBLE:
-        eType = GDT_CFloat64;
-        break;
-
-      case NPY_CFLOAT:
-        eType = GDT_CFloat32;
-        break;
-
-      case NPY_DOUBLE:
-        eType = GDT_Float64;
-        break;
-
-      case NPY_FLOAT:
-        eType = GDT_Float32;
-        break;
-
-      case NPY_INT:
-      case NPY_LONG:
-        eType = GDT_Int32;
-        break;
-
-      case NPY_UINT:
-      case NPY_ULONG:
-        eType = GDT_UInt32;
-        break;
-
-      case NPY_SHORT:
-        eType = GDT_Int16;
-        break;
-
-      case NPY_USHORT:
-        eType = GDT_UInt16;
-        break;
-
-      case NPY_BYTE:
-      case NPY_UBYTE:
-        eType = GDT_Byte;
-        break;
-
-      default:
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to access numpy arrays of typecode `%c'.",
-                  PyArray_DESCR(psArray)->type );
         return NULL;
     }
 
@@ -536,6 +537,112 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray, bool binterleave )
     return poDS;
 }
 
+/************************************************************************/
+/*                       NUMPYMultiDimensionalDataset                   */
+/************************************************************************/
+
+class NUMPYMultiDimensionalDataset : public GDALDataset
+{
+    PyArrayObject *psArray = nullptr;
+    std::unique_ptr<GDALDataset> poMEMDS{};
+
+    NUMPYMultiDimensionalDataset();
+    ~NUMPYMultiDimensionalDataset();
+
+public:
+    static GDALDataset *Open( PyArrayObject *psArray );
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override { return poMEMDS->GetRootGroup(); }
+};
+
+/************************************************************************/
+/*                     NUMPYMultiDimensionalDataset()                   */
+/************************************************************************/
+
+NUMPYMultiDimensionalDataset::NUMPYMultiDimensionalDataset()
+{
+}
+
+/************************************************************************/
+/*                    ~NUMPYMultiDimensionalDataset()                   */
+/************************************************************************/
+
+NUMPYMultiDimensionalDataset::~NUMPYMultiDimensionalDataset()
+{
+    // Although the module has thread disabled, we go here from GDALClose()
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    Py_DECREF( psArray );
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset* NUMPYMultiDimensionalDataset::Open( PyArrayObject *psArray )
+{
+    const auto eType = NumpyTypeToGDALType(psArray);
+    if( eType == GDT_Unknown )
+    {
+        return nullptr;
+    }
+    auto poMemDriver = GDALDriver::FromHandle(GDALGetDriverByName("MEM"));
+    if( !poMemDriver )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MEM driver not available");
+        return nullptr;
+    }
+
+    auto poMEMDS = poMemDriver->CreateMultiDimensional("", nullptr, nullptr);
+    assert(poMEMDS);
+    auto poGroup = poMEMDS->GetRootGroup();
+    assert(poGroup);
+    std::vector<std::shared_ptr<GDALDimension>> apoDims;
+    const auto ndims = PyArray_NDIM(psArray);
+    CPLString strides;
+    for( int i = 0; i < ndims; i++ )
+    {
+        auto poDim = poGroup->CreateDimension(std::string(CPLSPrintf("dim%d", i)),
+                                              std::string(),
+                                              std::string(),
+                                              PyArray_DIMS(psArray)[i],
+                                              nullptr);
+        apoDims.push_back(poDim);
+        if( i > 0 )
+            strides += ',';
+        strides += CPLSPrintf(CPL_FRMT_GIB,
+                              static_cast<GIntBig>(PyArray_STRIDES(psArray)[i]));
+    }
+    CPLStringList aosOptions;
+    char szDataPointer[128] = { '\0' };
+    int nChars = CPLPrintPointer( szDataPointer,
+                                  PyArray_DATA(psArray),
+                                  sizeof(szDataPointer) );
+    szDataPointer[nChars] = 0;
+    aosOptions.SetNameValue("DATAPOINTER", szDataPointer);
+    aosOptions.SetNameValue("STRIDES", strides.c_str());
+    auto mdArray = poGroup->CreateMDArray("array",
+                                      apoDims,
+                                      GDALExtendedDataType::Create(eType),
+                                      aosOptions.List());
+    if( !mdArray )
+    {
+        delete poMEMDS;
+        return nullptr;
+    }
+
+    auto poDS = new NUMPYMultiDimensionalDataset();
+    poDS->poDriver = GDALDriver::FromHandle(GDALGetDriverByName("NUMPY"));
+    poDS->psArray = psArray;
+    Py_INCREF( psArray );
+    poDS->eAccess = GA_ReadOnly;
+    poDS->poMEMDS.reset(poMEMDS);
+    return poDS;
+}
+
 %}
 
 
@@ -583,6 +690,14 @@ int GDALTermProgress( double, const char *, void * );
 GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray, bool binterleave)
 {
     return NUMPYDataset::Open( psArray, binterleave );
+}
+%}
+
+%newobject OpenMultiDimensionalNumPyArray;
+%inline %{
+GDALDatasetShadow* OpenMultiDimensionalNumPyArray(PyArrayObject *psArray)
+{
+    return NUMPYMultiDimensionalDataset::Open( psArray );
 }
 %}
 
@@ -724,6 +839,102 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                                    pixel_space, line_space, band_space, &sExtraArg );
   }
 %}
+
+%{
+static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
+{
+    auto klass = GDALExtendedDataTypeGetClass(dt);
+    if( klass == GEDTC_NUMERIC )
+        return true;
+    if( klass == GEDTC_STRING )
+        return false;
+    CPLAssert( klass == GEDTC_COMPOUND );
+    size_t nCount = 0;
+    GDALEDTComponentH* comps = GDALExtendedDataTypeGetComponents(dt, &nCount);
+    bool ret = true;
+    for( size_t i = 0; i < nCount; i++ )
+    {
+        auto tmpType = GDALEDTComponentGetType(comps[i]);
+        ret = CheckNumericDataType(tmpType);
+        GDALExtendedDataTypeRelease(tmpType);
+        if( !ret )
+            break;
+    }
+    GDALExtendedDataTypeFreeComponents(comps, nCount);
+    return ret;
+}
+%}
+
+%apply (int nList, GUIntBig* pList) {(int nDims1, GUIntBig *array_start_idx)};
+%apply (int nList, GIntBig* pList) {(int nDims3, GIntBig *array_step)};
+%inline %{
+  CPLErr MDArrayIONumPy( bool bWrite,
+                          GDALMDArrayHS* mdarray,
+                          PyArrayObject *psArray,
+                          int nDims1, GUIntBig* array_start_idx,
+                          int nDims3, GIntBig* array_step,
+                          GDALExtendedDataTypeHS* buffer_datatype) {
+
+    if( !CheckNumericDataType(buffer_datatype) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+            "String buffer data type not supported in SWIG bindings");
+        return CE_Failure;
+    }
+    const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(mdarray);
+    if( PyArray_NDIM(psArray) != nExpectedDims )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Illegal numpy array rank %d.",
+                  PyArray_NDIM(psArray) );
+        return CE_Failure;
+    }
+
+    std::vector<size_t> count_internal(nExpectedDims+1);
+    std::vector<GPtrDiff_t> buffer_stride_internal(nExpectedDims+1);
+    const size_t nDTSize = GDALExtendedDataTypeGetSize(buffer_datatype);
+    if( nDTSize == 0 )
+    {
+        return CE_Failure;
+    }
+    for( int i = 0; i < nExpectedDims; i++ )
+    {
+        count_internal[i] = PyArray_DIMS(psArray)[i];
+        if( (PyArray_STRIDES(psArray)[i] % nDTSize) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Stride[%d] not a multiple of data type size",
+                      i );
+            return CE_Failure;
+        }
+        buffer_stride_internal[i] = PyArray_STRIDES(psArray)[i] / nDTSize;
+    }
+
+    if( bWrite )
+    {
+        return GDALMDArrayWrite( mdarray,
+                                array_start_idx,
+                                &count_internal[0],
+                                array_step,
+                                &buffer_stride_internal[0],
+                                buffer_datatype,
+                                PyArray_DATA(psArray),
+                                NULL, 0) ? CE_None : CE_Failure;
+    }
+    else
+    {
+        return GDALMDArrayRead( mdarray,
+                                array_start_idx,
+                                &count_internal[0],
+                                array_step,
+                                &buffer_stride_internal[0],
+                                buffer_datatype,
+                                PyArray_DATA(psArray),
+                                NULL, 0) ? CE_None : CE_Failure;
+    }
+  }
+%}
+
 
 #ifdef SWIGPYTHON
 %nothread;
@@ -1367,6 +1578,86 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
 
     ret = BandRasterIONumPy(band, 1, xoff, yoff, xsize, ysize,
                              array, datatype, resample_alg, callback, callback_data)
+    if ret != 0:
+        _RaiseException()
+    return ret
+
+def ExtendedDataTypeToNumPyDataType(dt):
+    klass = dt.GetClass()
+
+    if klass == gdal.GEDTC_STRING:
+        return numpy.bytes_
+
+    if klass == gdal.GEDTC_NUMERIC:
+        buf_type = dt.GetNumericDataType()
+        typecode = GDALTypeCodeToNumericTypeCode(buf_type)
+        if typecode is None:
+            typecode = numpy.float32
+        return typecode
+
+    assert klass == gdal.GEDTC_COMPOUND
+    names = []
+    formats = []
+    offsets = []
+    for comp in dt.GetComponents():
+        names.append(comp.GetName())
+        formats.append(ExtendedDataTypeToNumPyDataType(comp.GetType()))
+        offsets.append(comp.GetOffset())
+
+    return numpy.dtype({'names': names,
+                        'formats': formats,
+                        'offsets': offsets,
+                        'itemsize': dt.GetSize()})
+
+def MDArrayReadAsArray(mdarray,
+                        array_start_idx = None,
+                        count = None,
+                        array_step = None,
+                        buffer_datatype = None,
+                        buf_obj = None):
+    if not array_start_idx:
+        array_start_idx = [0] * mdarray.GetDimensionCount()
+    if not count:
+        count = [ dim.GetSize() for dim in mdarray.GetDimensions() ]
+    if not array_step:
+        array_step = [1] * mdarray.GetDimensionCount()
+    if not buffer_datatype:
+        buffer_datatype = mdarray.GetDataType()
+
+    if buf_obj is None:
+        typecode = ExtendedDataTypeToNumPyDataType(buffer_datatype)
+        buf_obj = numpy.empty(count, dtype=typecode)
+
+    ret = MDArrayIONumPy(False, mdarray, buf_obj, array_start_idx, array_step, buffer_datatype)
+    if ret != 0:
+        _RaiseException()
+    return buf_obj
+
+def MDArrayWriteArray(mdarray, array,
+                        array_start_idx = None,
+                        array_step = None):
+    if not array_start_idx:
+        array_start_idx = [0] * mdarray.GetDimensionCount()
+    if not array_step:
+        array_step = [1] * mdarray.GetDimensionCount()
+
+    buffer_datatype = mdarray.GetDataType()
+    if array.dtype != ExtendedDataTypeToNumPyDataType(buffer_datatype):
+        datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
+
+        # if we receive some odd type, like int64, try casting to a very
+        # generic type we do support (#2285)
+        if not datatype:
+            gdal.Debug('gdal_array', 'force array to float64')
+            array = array.astype(numpy.float64)
+            datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
+
+        if not datatype:
+            raise ValueError("array does not have corresponding GDAL data type")
+
+        buffer_datatype = gdal.ExtendedDataType.Create(datatype)
+
+    ret = MDArrayIONumPy(True, mdarray, array, array_start_idx, array_step, buffer_datatype)
     if ret != 0:
         _RaiseException()
     return ret

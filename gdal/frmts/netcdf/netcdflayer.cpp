@@ -577,7 +577,8 @@ bool netCDFLayer::Create(char **papszOptions,
 
             if(basic_type != nccfdriver::POINT)
             {
-                m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize);
+                bool writing_to_real_NC4 = m_poDS->eFormat == NCDF_FORMAT_NC4 ? true : false;
+                m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize, writing_to_real_NC4);
             }
 
 

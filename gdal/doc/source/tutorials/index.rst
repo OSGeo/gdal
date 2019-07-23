@@ -15,6 +15,14 @@ Raster
    warp_tut
    gdal_grid_tut
 
+Multidimensional raster
+-----------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   multidimensional_api_tut
+
 Vector
 ------
 

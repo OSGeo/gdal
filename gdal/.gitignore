@@ -58,6 +58,7 @@ apps/gdalbuildvrt
 apps/gdaldem
 apps/gdalenhance
 apps/gdalinfo
+apps/gdalmdiminfo
 apps/gdallocationinfo
 apps/gdalmanage
 apps/gdalsrsinfo

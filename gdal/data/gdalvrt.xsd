@@ -44,11 +44,12 @@
                     <xs:element name="MaskBand" type="MaskBandType"/>
                     <xs:element name="GDALWarpOptions" type="GDALWarpOptionsType"/> <!-- only if subClass="VRTWarpedDataset" -->
                     <xs:element name="PansharpeningOptions" type="PansharpeningOptionsType"/> <!-- only if subClass="VRTPansharpenedDataset" -->
+                    <xs:element name="Group" type="GroupType"/> <!-- only for multidimensionnal dataset -->
                 </xs:choice>
             </xs:sequence>
             <xs:attribute name="subClass" type="xs:string"/>
-            <xs:attribute name="rasterXSize" type="nonNegativeInteger32" use="required"/>
-            <xs:attribute name="rasterYSize" type="nonNegativeInteger32" use="required"/>
+            <xs:attribute name="rasterXSize" type="nonNegativeInteger32"/>
+            <xs:attribute name="rasterYSize" type="nonNegativeInteger32"/>
         </xs:complexType>
     </xs:element>
 
@@ -467,5 +468,124 @@
             <xs:minExclusive value="0.0"/>
         </xs:restriction>
     </xs:simpleType>
+
+    <xs:complexType name="GroupType">
+        <xs:sequence>
+            <xs:element name="Dimension" type="DimensionType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Array" type="ArrayType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Group" type="GroupType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="ArrayType">
+        <xs:sequence>
+            <xs:element name="DataType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:sequence>
+                    <xs:choice minOccurs="0" maxOccurs="unbounded">
+                        <xs:element name="Dimension" type="DimensionType"/>
+                        <xs:element name="DimensionRef" type="DimensionRefType"/>
+                    </xs:choice>
+                </xs:sequence>
+            <xs:element name="SRS" type="SRSType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="Unit" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="NoDataValue" type="DoubleOrNanType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="Offset" type="xs:double" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="Scale" type="xs:double" minOccurs="0" maxOccurs="1"/>
+            <xs:choice>
+                <xs:element name="RegularlySpacedValues" type="RegularlySpacedValuesType" minOccurs="0" maxOccurs="1"/>
+                <xs:sequence>
+                    <xs:choice minOccurs="0" maxOccurs="unbounded">
+                        <xs:element name="ConstantValue" type="ConstantValueType"/>
+                        <xs:element name="InlineValues" type="InlineValuesType"/>
+                        <xs:element name="InlineValuesWithValueElement" type="InlineValuesWithValueElementType"/>
+                        <xs:element name="Source" type="SourceType"/>
+                    </xs:choice>
+                </xs:sequence>
+            </xs:choice>
+            <xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="RegularlySpacedValuesType">
+        <xs:attribute name="start" type="xs:double" use="required"/>
+        <xs:attribute name="increment" type="xs:double" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="ConstantValueType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="offset" type="xs:string"/>
+                <xs:attribute name="count" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="InlineValuesType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="offset" type="xs:string"/>
+                <xs:attribute name="count" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="InlineValuesWithValueElementType">
+        <xs:sequence>
+            <xs:element name="Value" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="offset" type="xs:string"/>
+        <xs:attribute name="count" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="SourceType">
+        <xs:sequence>
+            <xs:element name="SourceFilename" type="SourceFilenameType"/>
+            <xs:choice>
+                <xs:element name="SourceArray" type="xs:string"/>
+                <xs:element name="SourceBand" type="xs:string"/>
+            </xs:choice>
+            <xs:element name="SourceTranspose" type="xs:string" minOccurs="0"/>
+            <xs:element name="SourceView" type="xs:string" minOccurs="0"/>
+            <xs:element name="SourceSlab" type="SourceSlabType" minOccurs="0"/>
+            <xs:element name="DestSlab" type="DestSlabType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="SourceSlabType">
+        <xs:sequence/>
+        <xs:attribute name="offset" type="xs:string"/>
+        <xs:attribute name="count" type="xs:string"/>
+        <xs:attribute name="step" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="DestSlabType">
+        <xs:sequence/>
+        <xs:attribute name="offset" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="AttributeType">
+        <xs:sequence>
+            <xs:element name="DataType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="Value" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="DimensionType">
+        <xs:sequence/>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="type" type="xs:string"/>
+        <xs:attribute name="direction" type="xs:string"/>
+        <xs:attribute name="size" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="indexingVariable" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="DimensionRefType">
+        <xs:sequence/>
+        <xs:attribute name="ref" type="xs:string" use="required"/>
+    </xs:complexType>
 
 </xs:schema>

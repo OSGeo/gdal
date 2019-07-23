@@ -2386,6 +2386,26 @@ def test_ogr_mitab_too_large_value_for_decimal_field():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
+
+###############################################################################
+# Check custom datum/spheroid parameters export
+
+def test_ogr_mitab_custom_datum_export():
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS('Custom', 'Custom', 'Sphere', 6370997.0, 0.0)
+    sr.SetTOWGS84(1, 2, 3, 4, 5, 6, 7)
+    proj =  sr.ExportToMICoordSys()
+    assert proj == 'Earth Projection 1, 9999, 12, 1, 2, 3, -4, -5, -6, -7, 0'
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS('Custom', 'Custom', 'NWL-9D or WGS-66', 6378145.0, 298.25)
+    sr.SetTOWGS84(1, 2, 3, 4, 5, 6, 7)
+    sr.SetUTM(33)
+    proj =  sr.ExportToMICoordSys()
+    assert proj == 'Earth Projection 8, 9999, 42, 1, 2, 3, -4, -5, -6, -7, 0, "m", 15, 0, 0.9996, 500000, 0'
+
+
 ###############################################################################
 #
 

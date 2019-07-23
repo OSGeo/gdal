@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 OBJ := vrtdataset.o vrtrasterband.o vrtdriver.o vrtsources.o
 OBJ += vrtfilters.o vrtsourcedrasterband.o vrtrawrasterband.o
 OBJ += vrtwarped.o vrtderivedrasterband.o vrtpansharpened.o
-OBJ += pixelfunctions.o
+OBJ += pixelfunctions.o vrtmultidim.o
 
 CPPFLAGS := $(CPPFLAGS)
 
