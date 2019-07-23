@@ -86,7 +86,13 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
         }
     }
 
-    if( !osRequest.empty() )
+    CPLString osQuery(pszRawQueryIn);
+    // Only a INNER JOIN can guarantee that the non-nullability of source columns
+    // will be valid for the result of the join.
+    if( !osRequest.empty() &&
+        osQuery.ifind("LEFT JOIN") == std::string::npos &&
+        osQuery.ifind("RIGHT JOIN") == std::string::npos &&
+        osQuery.ifind("OUTER JOIN") == std::string::npos )
     {
         osRequest = "SELECT attnum, attrelid FROM pg_attribute WHERE attnotnull = 't' AND (" + osRequest + ")";
         PGresult* hResult = OGRPG_PQexec(poDS->GetPGConn(), osRequest );
