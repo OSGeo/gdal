@@ -1123,8 +1123,7 @@ void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
                                       OGRSpatialReference* poSRS);
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                                 char** ppszCFProjection, bool bWriteGDALTags, std::string&);
-int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
-                                char** ppszCFProjection, bool bWriteGDALTags);
+int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS, char** ppszCFProjection, bool bWriteGDALTags);
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
                     double *pdfValue );
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,

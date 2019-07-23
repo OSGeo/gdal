@@ -4476,10 +4476,12 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
     return NCDFVarID;
 }
 
-int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
+// Use a default name (variable name: crs)
+int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                                 char **ppszCFProjection, bool bWriteGDALTags)
 {
     std::string srsVarName = ""; // for versions NOT CF-1.8
+
     return NCDFWriteSRSVariable(cdfid, poSRS, ppszCFProjection,
                                 bWriteGDALTags, srsVarName);
 }
