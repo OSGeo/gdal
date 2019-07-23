@@ -297,19 +297,14 @@ bool netCDFLayer::Create(char **papszOptions,
     if( m_poFeatureDefn->GetGeomFieldCount() )
         poSRS = m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
 
-    if (wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint)
+    if (wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint && m_bLegacyCreateMode )
     {
         const int nPointDim =
             !m_osProfileDimName.empty() ? m_nProfileDimID : m_nRecordDimID;
         const bool bIsGeographic = (poSRS == nullptr || poSRS->IsGeographic());
 
-        std::string strPtXVarName = std::string(this->GetName()) + std::string("_coordX");
         const char *pszXVarName =
             bIsGeographic ? CF_LONGITUDE_VAR_NAME : CF_PROJ_X_VAR_NAME;
-        if(!m_bLegacyCreateMode)
-        {
-            pszXVarName = strPtXVarName.c_str();
-        }
 
         status = nc_def_var(m_nLayerCDFId, pszXVarName, NC_DOUBLE, 1,
             &nPointDim, &m_nXVarID);
@@ -320,20 +315,8 @@ bool netCDFLayer::Create(char **papszOptions,
             return false;
         }
 
-        if(!m_bLegacyCreateMode)
-        {
-            status = nc_put_att_text(m_nLayerCDFId, m_nXVarID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
-            if(status != NC_NOERR)
-                return false;
-        }
-
-        std::string strPtYVarName = std::string(this->GetName()) + std::string("_coordY");
         const char *pszYVarName =
             bIsGeographic ? CF_LATITUDE_VAR_NAME : CF_PROJ_Y_VAR_NAME;
-        if(!m_bLegacyCreateMode)
-        {
-            pszYVarName = strPtYVarName.c_str();
-        }
 
         status = nc_def_var(m_nLayerCDFId, pszYVarName, NC_DOUBLE, 1,
             &nPointDim, &m_nYVarID);
@@ -341,13 +324,6 @@ bool netCDFLayer::Create(char **papszOptions,
         if (status != NC_NOERR)
         {
             return false;
-        }
-
-        if(!m_bLegacyCreateMode)
-        {
-            status = nc_put_att_text(m_nLayerCDFId, m_nYVarID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
-            if(status != NC_NOERR)
-                return false;
         }
 
         aoAutoVariables.push_back(
@@ -420,16 +396,13 @@ bool netCDFLayer::Create(char **papszOptions,
             m_osCoordinatesValue += pszZVarName;
         }
 
-        if (m_bLegacyCreateMode)
-        {
-            const char *pszFeatureTypeVal =
-                !m_osProfileDimName.empty() ? "profile" : "point";
+        const char *pszFeatureTypeVal =
+            !m_osProfileDimName.empty() ? "profile" : "point";
 
-            status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
-                strlen(pszFeatureTypeVal), pszFeatureTypeVal);
+        status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
+            strlen(pszFeatureTypeVal), pszFeatureTypeVal);
 
-            NCDF_ERR(status);
-        }
+        NCDF_ERR(status);
     }
     else if( m_poFeatureDefn->GetGeomType() != wkbNone  && m_bLegacyCreateMode)
     {
@@ -1816,7 +1789,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     if( wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint &&
-        poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+        poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint && m_bLegacyCreateMode )
     {
         if( m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID )
         {
@@ -1951,7 +1924,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     try
     {
         // CF 1.8 simple geometry, only
-        if (!m_bLegacyCreateMode && poGeom != nullptr && wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint)
+        if (!m_bLegacyCreateMode && poGeom != nullptr)
         {
             nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
 

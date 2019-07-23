@@ -45,6 +45,17 @@ namespace nccfdriver
         OGRwkbGeometryType ogwkt = defnGeometry->getGeometryType();
         this->type = OGRtoRaw(ogwkt);
 
+        if (this->type == POINT)
+        {
+            // Set total node count (1)
+            this->total_point_count++;
+
+            // Also single part geometry (1)
+            this->total_part_count++;
+
+            // One part per part
+            ppart_node_count.push_back(1);
+        }
 
         if (this->type == MULTIPOINT)
         {
@@ -59,7 +70,7 @@ namespace nccfdriver
                 ppart_node_count.push_back(1);
             }
 
-            // total part count ==  total node count
+            // total part count == total node count
             this->total_part_count = this->total_point_count;
 
         }
@@ -199,6 +210,14 @@ namespace nccfdriver
 
     OGRPoint& SGeometry_Feature::getPoint(size_t part_no, int point_index)
     {
+        if (this->type == POINT)
+        {
+            // Point case: always return the single point regardless of any thing
+
+            OGRPoint* as_p_ref = dynamic_cast<OGRPoint*>(this->geometry_ref);
+            return  *as_p_ref;
+        }
+
         if (this->type == MULTIPOINT)
         {
             OGRMultiPoint* as_mp_ref = dynamic_cast<OGRMultiPoint*>(this->geometry_ref);
@@ -376,9 +395,12 @@ namespace nccfdriver
             wbuf.flushPNCBuffer();
         }
 
-        // Append node counts from the end
-        int ncount_add = static_cast<int>(ft.getTotalNodeCount());
-        this->wbuf.addNCOUNT(ncount_add);
+        // Append node counts from the end, if not a POINT
+        if(this->writableType != POINT)
+        {
+            int ncount_add = static_cast<int>(ft.getTotalNodeCount());
+            this->wbuf.addNCOUNT(ncount_add);
+        }
     }
 
     /* Writes buffer contents to the netCDF File
