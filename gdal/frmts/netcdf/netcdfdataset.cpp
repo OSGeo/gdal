@@ -4196,7 +4196,7 @@ CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
 /************************************************************************/
 
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
-                                char **ppszCFProjection, bool bWriteGDALTags)
+                                char **ppszCFProjection, bool bWriteGDALTags, std::string& srsVarName)
 {
     char *pszCFProjection = nullptr;
 
@@ -4238,13 +4238,6 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
     };
 
     *ppszCFProjection = nullptr;
-
-    // lookup if the CRS is already existent in file, if it is, just use that one (don't duplicate)
-    /*if(srsMap != nullptr && srsMap->count(*poSRS) > 0)
-    {
-        srsVarName = srsMap[*poSRS];
-        return 0;
-    }*/
 
     if( poSRS->IsProjected() )
     {
@@ -4333,9 +4326,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         // Write CF-1.5 compliant Geographics attributes.
         // Note: WKT information will not be preserved (e.g. WGS84).
 
-        const char * customCRSVarName = srsVarName.c_str();
-        pszCFProjection = CPLStrdup("crs");
-
+        const char * customCRSVarName = srsVarName.c_str(); 
         const char * writableCRSVarName;
 
         if(srsVarName == "")
@@ -4346,12 +4337,10 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
         else
         {
             writableCRSVarName = customCRSVarName;
-            /*if(srsMap != nullptr)
-                m_srsMap.insert(std::pair<*poSRS, customCRSVarName>);*/
         } // CF-1.8 case
 
         CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                 cdfid, pszCFProjection, NC_CHAR);
+                 cdfid, writableCRSVarName, NC_CHAR);
         addParamString(CF_GRD_MAPPING_NAME, CF_PT_LATITUDE_LONGITUDE);
     }
 

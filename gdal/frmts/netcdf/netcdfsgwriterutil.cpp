@@ -57,7 +57,7 @@ namespace nccfdriver
             ppart_node_count.push_back(1);
         }
 
-        if (this->type == MULTIPOINT)
+        else if (this->type == MULTIPOINT)
         {
             OGRMultiPoint& r_defnGeometryMP = dynamic_cast<OGRMultiPoint&>(r_defnGeometry);
 
@@ -531,6 +531,12 @@ namespace nccfdriver
 
         this->containerVarName = std::string(container_name);
 
+
+        // Point case: Don't do anything else!
+        if(geot == POINT)
+        {
+            return;
+        }
 
         err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
         NCDF_ERR(err_code);
