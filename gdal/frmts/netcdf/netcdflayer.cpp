@@ -309,6 +309,9 @@ bool netCDFLayer::Create(char **papszOptions,
             return false;
         }
 
+        status = m_poDS->DefVarDeflate(m_nXVarID, false);
+        NCDF_ERR(status);
+
         if(!m_bLegacyCreateMode)
         {
             status = nc_put_att_text(m_nLayerCDFId, m_nXVarID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
@@ -331,6 +334,9 @@ bool netCDFLayer::Create(char **papszOptions,
         {
             return false;
         }
+
+        status = m_poDS->DefVarDeflate(m_nYVarID, false);
+        NCDF_ERR(status);
 
         if(!m_bLegacyCreateMode)
         {
@@ -382,6 +388,9 @@ bool netCDFLayer::Create(char **papszOptions,
             {
                 return false;
             }
+
+            status = m_poDS->DefVarDeflate(m_nZVarID, false);
+            NCDF_ERR(status);
 
             aoAutoVariables.push_back(
                 std::pair<CPLString, int>(pszZVarName, m_nZVarID));
@@ -455,6 +464,9 @@ bool netCDFLayer::Create(char **papszOptions,
         {
             return false;
         }
+
+        status = m_poDS->DefVarDeflate(m_nWKTVarID, false);
+        NCDF_ERR(status);
 
         aoAutoVariables.push_back(
             std::pair<CPLString, int>(m_osWKTVarName, m_nWKTVarID));
@@ -2370,6 +2382,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
             nDimCount = 2;
             int anDims[2] = {nMainDimId, nSecDimId};
             nType = NC_CHAR;
+
             status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 2, anDims,
                                 &nVarID);
         }
@@ -2581,6 +2594,8 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         netCDFWriteAttributesFromConf(m_nLayerCDFId, nVarID,
                                       poConfig->m_aoAttributes);
     }
+
+    m_poDS->DefVarDeflate(nVarID, false);
 
     m_poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;

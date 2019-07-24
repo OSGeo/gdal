@@ -6192,7 +6192,27 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId,
         {
             return false;
         }
+#ifdef NETCDF_HAS_NC4
+        if( bIsNC4 )
+        {
+            int nVarShuffle = -1;
+            int nVarDeflate = -1;
+            int nVarDeflateLevel = -1;
+            status = nc_inq_var_deflate(nOldGrpId, i, &nVarShuffle, &nVarDeflate, &nVarDeflateLevel);
+            NCDF_ERR(status);
 
+            status = nc_def_var_deflate(nNewGrpId, nNewVarId, nVarShuffle, nVarDeflate, nVarDeflateLevel);
+            NCDF_ERR(status);
+
+            int nVarStorage = -1;
+            size_t szVarChunkSize = 0;
+            status = nc_inq_var_chunking(nOldGrpId, i, &nVarStorage, &szVarChunkSize);
+            NCDF_ERR(status);
+
+            status = nc_def_var_chunking(nNewGrpId, nNewVarId, nVarStorage, &szVarChunkSize);
+            NCDF_ERR(status);
+        }
+#endif
         if( !CloneAttributes(nOldGrpId, nNewGrpId, i, i) )
         {
             return false;
@@ -6264,7 +6284,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
         return false;
 
     if( !CloneGrp(cdfid, new_cdfid,
-                  eFormat == NCDF_FORMAT_NC4,
+                  eFormat == NCDF_FORMAT_NC4 || eFormat == NCDF_FORMAT_NC4C,
                   nLayerId, nDimIdToGrow, nNewSize) )
     {
         nc_close(new_cdfid);
@@ -6297,7 +6317,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
                 return false;
             }
             if( !CloneGrp(panGroupIds[i], nNewGrpId,
-                          eFormat == NCDF_FORMAT_NC4,
+                          eFormat == NCDF_FORMAT_NC4 || eFormat == NCDF_FORMAT_NC4C,
                           nLayerId, nDimIdToGrow, nNewSize) )
             {
                 CPLFree(panGroupIds);

@@ -51,10 +51,10 @@ section `Geometry <#geometry>`__ for more details) are supported. Other geometri
 
 Furthermore, multiple layer writing is not yet supported. This functionality will be added in a future update.
 
-Finally, writing a very large CF-1.8 dataset may incur a lot of unneccessary I/O, slowing down the creation process.
+Finally, writing a very large CF-1.8 dataset may incur a lot of unnecessary I/O, slowing down the creation process.
 This is largely part in due to dimension resizing for netCDF-3 files. In the future,
-this will be amelioriated by providing an option to take advantage of multiple infinite dimension support within NC4
-(though writing such a file in NC4, may reduce read performance). Generally, the performance penalty from dimension resizing
+this will be ameliorated by providing an option to take advantage of multiple infinite dimension support within NC4
+(though writing such a file in NC4 may reduce read performance). Generally, the performance penalty from dimension resizing
 is greatly reduced by `specifying a larger- but still reasonable- buffer size <#layer-creation-options>`__.
 
 CF-1.6/WKT datasets, however, are not limited to these restrictions.
@@ -212,7 +212,7 @@ In the below example, the station_name and time variables may be indexed
 by the profile dimension (the geometry is assumed to be also indexed by
 the profile dimension), since all records that have the same value for
 one of those variables have same values for the other ones, whereas
-temparature and Z should be indexed by the default dimension.
+temperature and Z should be indexed by the default dimension.
 
 ============ ==================== ================== =========== ===
 station_name time                 geometry           temperature Z
@@ -246,6 +246,12 @@ Dataset creation options
    concept of groups, etc...) only available in netCDF v4 library. NC4C
    is a restriction of the NC4 format to the concepts supported by the
    classic netCDF format. Default is NC.
+-  **COMPRESS=[NONE/DEFLATE]**: Set the compression to use. DEFLATE is
+   only available if netCDF has been compiled with netCDF-4 support.
+   NC4C format is the default if DEFLATE compression is used.
+-  **ZLEVEL=[1-9]**: Set the level of compression when using DEFLATE
+   compression. A value of 9 is best, and 1 is least compression. The
+   default is 1, which offers the best time/compression ratio.
 -  **WRITE_GDAL_TAGS**\ =YES/NO: Whether to write GDAL specific
    information as netCDF attributes. Default is YES.
 -  **CONFIG_FILE**\ =string. Path to a `XML configuration
