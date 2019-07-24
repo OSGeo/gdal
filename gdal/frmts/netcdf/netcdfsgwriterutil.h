@@ -75,7 +75,6 @@ namespace nccfdriver
     class WBuffer
     {
         unsigned long long used_mem = 0;
-        unsigned long long mem_limit = CPLGetUsablePhysicalRAM() / 20;
 
         public: 
             /* addCount(...)
@@ -87,58 +86,13 @@ namespace nccfdriver
              * Directly subtracts the specified size from used_mem
              */
              void subCount(size_t memfree) { this->used_mem -= memfree; }
-             bool isOverQuota() { return used_mem > mem_limit; }
-             void setBufSize(unsigned long long new_limit) { this->mem_limit = new_limit; }
+             unsigned long long& getUsage() { return used_mem; }
 
              void reset() { this->used_mem = 0; }
 
-             explicit WBuffer(unsigned long long lim) : mem_limit(lim) {}
              WBuffer() {}
     };
 
-    /* A buffer with **approximate** maximum size of 1 / 10th the size of available memory
-     * Assumes small features. A single feature would not be subject to this limitation.
-     * Attempts to perform memory blocking to prevent unneccessary I/O from continuous dimension deformation
-     */
-    class SGeometry_Layer_WBuffer : public WBuffer
-    {
-        std::queue<int> pnc; // part node counts
-        std::queue<int> ncounts; // node counts
-        std::queue<bool> interior_rings; // interior rings
-        std::queue<double> x; // x coords
-        std::queue<double> y; // y coords
-        std::queue<double> z; // z coords
-
-        public:
-            void addXCoord(double xp) { this->x.push(xp); WBuffer::addCount(sizeof(xp)); }
-            void addYCoord(double yp) { this->y.push(yp); WBuffer::addCount(sizeof(yp)); }
-            void addZCoord(double zp) { this->z.push(zp); WBuffer::addCount(sizeof(zp)); }
-            void addPNC(int pncp) { this->pnc.push(pncp); WBuffer::addCount(sizeof(pncp)); }
-            void addNCOUNT(int ncount) { this->ncounts.push(ncount); WBuffer::addCount(sizeof(ncount)); }
-            void addIRing(bool iring) { this->interior_rings.push(iring); WBuffer::addCount(sizeof(iring)); }
-            bool XCoordEmpty() { return x.empty(); }
-            bool YCoordEmpty() { return y.empty(); }
-            bool ZCoordEmpty() { return z.empty(); }
-            bool PNCEmpty() { return pnc.empty(); }
-            bool NCOUNTEmpty() { return ncounts.empty(); }
-            bool IRingEmpty() { return interior_rings.empty(); }
-            double XCoordDequeue() { double ret = x.front(); x.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-            double YCoordDequeue() { double ret = y.front(); y.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-            double ZCoordDequeue() { double ret = z.front(); z.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-            int PNCDequeue() { int ret = pnc.front(); pnc.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-            int NCOUNTDequeue() { int ret = ncounts.front(); ncounts.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-            bool IRingDequeue() { bool ret = interior_rings.front(); interior_rings.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-            size_t getXCoordCount() { return this->x.size(); }
-            size_t getYCoordCount() { return this->y.size(); }
-            size_t getZCoordCount() { return this->z.size(); }
-            size_t getNCOUNTCount() { return this->ncounts.size(); }
-            size_t getPNCCount() { return this->pnc.size(); }
-            size_t getIRingVarEntryCount() { return this-> interior_rings.size(); } // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
-            void cpyNCOUNT_into_PNC();
-            void flushPNCBuffer() { this->pnc = std::queue<int>(); }
-
-            SGeometry_Layer_WBuffer() : WBuffer() { }
-    };
 
     /* OGR_SGeometry_Scribe
      * Takes a SGeometry_Feature and given a target geometry container ID it will write the feature
@@ -146,11 +100,10 @@ namespace nccfdriver
      * Any needed variables will automatically be defined, and dimensions will be automatically grown corresponding with need
      *
      */
-    class OGR_SGeometry_Scribe
+    class OGR_SGeometry_Scribe : public WBuffer
     {
         bool writing_to_NC4 = false;
         int ncID = 0;
-        SGeometry_Layer_WBuffer wbuf;
         geom_t writableType = NONE;
         std::string containerVarName;
         int containerVarID = INVALID_VAR_ID;
@@ -165,6 +118,29 @@ namespace nccfdriver
         size_t next_write_pos_node_coord = 0;
         size_t next_write_pos_node_count = 0;
         size_t next_write_pos_pnc = 0;
+
+        std::queue<int> pnc; // part node counts
+        std::queue<int> ncounts; // node counts
+        std::queue<bool> interior_rings; // interior rings
+        std::queue<double> xC; // x coords
+        std::queue<double> yC; // y coords
+        std::queue<double> zC; // z coords
+
+        void addXCoord(double xp) { this->xC.push(xp); WBuffer::addCount(sizeof(xp)); }
+        void addYCoord(double yp) { this->yC.push(yp); WBuffer::addCount(sizeof(yp)); }
+        void addZCoord(double zp) { this->zC.push(zp); WBuffer::addCount(sizeof(zp)); }
+        void addPNC(int pncp) { this->pnc.push(pncp); WBuffer::addCount(sizeof(pncp)); }
+        void addNCOUNT(int ncount) { this->ncounts.push(ncount); WBuffer::addCount(sizeof(ncount)); }
+        void addIRing(bool iring) { this->interior_rings.push(iring); WBuffer::addCount(sizeof(iring)); }
+        double XCoordDequeue() { double ret = xC.front(); xC.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+        double YCoordDequeue() { double ret = yC.front(); yC.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+        double ZCoordDequeue() { double ret = zC.front(); zC.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+        int PNCDequeue() { int ret = pnc.front(); pnc.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+        int NCOUNTDequeue() { int ret = ncounts.front(); ncounts.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+        bool IRingDequeue() { bool ret = interior_rings.front(); interior_rings.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
+        void cpyNCOUNT_into_PNC();
+        void flushPNCBuffer() { this->pnc = std::queue<int>(); }
+        size_t getIRingVarEntryCount() { return this-> interior_rings.size(); } // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
 
         public:
             geom_t getWritableType() { return this->writableType; }
@@ -182,15 +158,15 @@ namespace nccfdriver
             void redef_pnc(); // adds a part node count attribute to the target geometry container and corresponding variable
             bool getInteriorRingDetected() { return this->interiorRingDetected; }
             void commit_transaction(); // commit all writes to the netCDF (subject to fs stipulations)
-            bool bufferQuotaReached() { return wbuf.isOverQuota(); } // is the wbuf over the quota and ready to write?
-            size_t getXCBufLength() { return wbuf.getXCoordCount(); }
-            size_t getYCBufLength() { return wbuf.getYCoordCount(); }
-            size_t getZCBufLength() { return wbuf.getZCoordCount(); }
-            size_t getNCOUNTBufLength() { return wbuf.getNCOUNTCount(); }
-            size_t getPNCBufLength() { return wbuf.getPNCCount(); }
+
+            size_t getXCBufLength() { return this->xC.size(); }
+            size_t getYCBufLength() { return this->yC.size(); }
+            size_t getZCBufLength() { return this->zC.size(); }
+            size_t getNCOUNTBufLength() { return this->ncounts.size(); }
+            size_t getPNCBufLength() { return this->pnc.size(); }
 
             OGR_SGeometry_Scribe() {}
-            OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, unsigned long long bufsize, bool isTrueNC4);
+            OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, bool isTrueNC4);
             ~OGR_SGeometry_Scribe() { this->commit_transaction(); }
     };
 
@@ -383,13 +359,25 @@ namespace nccfdriver
                buf()
            {}
 
-           /* OGR_SGeometry_Field_Scribe()
-            * Constructs a Field Scribe over a dataset
-            */
-           OGR_SGeometry_Field_Scribe(const int& in_ncid, unsigned long long bufsize) :
-               ncid(in_ncid),
-               buf(bufsize)
-           {}
+    };
+
+    /* WBufferManager
+     * -
+     * Simply takes a collection of buffers in and a quota limit and sums all the usages up
+     * to establish if buffers are over the soft limit (collectively)
+     *
+     * The buffers added, however, are not memory managed by WBufferManager
+     */
+    class WBufferManager
+    {
+        unsigned long long buffer_soft_limit = 0;
+        std::vector<WBuffer*> bufs;
+
+        public:
+            bool isOverQuota();
+            void adjustLimit(unsigned long long lim) { this->buffer_soft_limit = lim; }
+            void addBuffer(WBuffer* b) { this->bufs.push_back(b); }
+            explicit WBufferManager(unsigned long long lim) : buffer_soft_limit(lim){ }
     };
 
     // Exception Classes

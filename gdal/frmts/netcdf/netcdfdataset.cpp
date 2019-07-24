@@ -2095,6 +2095,7 @@ netCDFDataset::netCDFDataset() :
     bSGSupport(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
     FieldScribe(cdfid),
+    bufManager(CPLGetUsablePhysicalRAM() / 10),
 
     // projection/GT.
     pszProjection(nullptr),
@@ -2128,6 +2129,10 @@ netCDFDataset::netCDFDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    // Set buffers
+    bufManager.addBuffer(&GeometryScribe);
+    bufManager.addBuffer(&(FieldScribe.getMemBuffer()));
 }
 
 /************************************************************************/

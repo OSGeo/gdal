@@ -334,7 +334,7 @@ namespace nccfdriver
                 if(interior_ring_fl == false)
                 {
                     if(this->interiorRingDetected)
-                        wbuf.addIRing(false);
+                        addIRing(false);
                 }
                 else
                 {
@@ -348,24 +348,24 @@ namespace nccfdriver
                         if(this->writableType == POLYGON)
                         {
                             redef_pnc();
-                            wbuf.cpyNCOUNT_into_PNC();
+                            cpyNCOUNT_into_PNC();
                         }
 
                         redef_interior_ring();
-                        while(wbuf.getPNCCount() != wbuf.getIRingVarEntryCount())
+                        while(getPNCBufLength() != getIRingVarEntryCount())
                         {
-                            wbuf.addIRing(false);
+                            addIRing(false);
                         }
                     }
 
-                    wbuf.addIRing(true);
+                    addIRing(true);
                 }
             }
 
             if(this->writableType == POLYGON || this->writableType == MULTILINE || this->writableType == MULTIPOLYGON)
             {
                 int pnc_writable = static_cast<int>(ft.getPerPartNodeCount()[part_no]);
-                wbuf.addPNC(pnc_writable);
+                addPNC(pnc_writable);
             }
 
             for(size_t pt_ind = 0; pt_ind < ft.getPerPartNodeCount()[part_no]; pt_ind++)
@@ -375,15 +375,15 @@ namespace nccfdriver
 
                 // Write each node coordinate
                 double x = write_pt.getX();
-                wbuf.addXCoord(x);
+                addXCoord(x);
 
                 double y = write_pt.getY();
-                wbuf.addYCoord(y);
+                addYCoord(y);
 
                 if(this->node_coordinates_varIDs.size() > 2)
                 {
                     double z = write_pt.getZ();
-                    wbuf.addZCoord(z);
+                    addZCoord(z);
                 }
             }
         }
@@ -392,14 +392,14 @@ namespace nccfdriver
         // If there are after all, no interior rings then flush out the PNC buffer
         if(!this->interiorRingDetected && this->writableType == POLYGON)
         {
-            wbuf.flushPNCBuffer();
+            flushPNCBuffer();
         }
 
         // Append node counts from the end, if not a POINT
         if(this->writableType != POINT)
         {
             int ncount_add = static_cast<int>(ft.getTotalNodeCount());
-            this->wbuf.addNCOUNT(ncount_add);
+            addNCOUNT(ncount_add);
         }
     }
 
@@ -413,9 +413,9 @@ namespace nccfdriver
         int err_code;
 
         // Append from the end
-        while(!wbuf.NCOUNTEmpty())
+        while(!ncounts.empty())
         {
-            int ncount = wbuf.NCOUNTDequeue();
+            int ncount = NCOUNTDequeue();
             err_code = nc_put_var1_int(ncID, node_count_varID, &next_write_pos_node_count, &ncount);
             NCDF_ERR(err_code);
             if (err_code != NC_NOERR)
@@ -426,7 +426,7 @@ namespace nccfdriver
             next_write_pos_node_count++;
         }
 
-        while(!wbuf.PNCEmpty())
+        while(!pnc.empty())
         {
             // Write each point from each part in node coordinates
             if(( this->writableType == POLYGON && this->interiorRingDetected ) || this->writableType == MULTILINE || this->writableType == MULTIPOLYGON)
@@ -434,7 +434,7 @@ namespace nccfdriver
                 // if interior rings is present, go write part node counts and interior ring info
                 if( (this->writableType == POLYGON || this->writableType == MULTIPOLYGON) && this->interiorRingDetected )
                 {
-                    int interior_ring_w = wbuf.IRingDequeue() ? 1 : 0;
+                    int interior_ring_w = IRingDequeue() ? 1 : 0;
 
                     err_code = nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_w);
                     NCDF_ERR(err_code);
@@ -444,7 +444,7 @@ namespace nccfdriver
                     }
                 }
 
-                int pnc_writable = wbuf.PNCDequeue();
+                int pnc_writable = PNCDequeue();
                 err_code = nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
                 NCDF_ERR(err_code);
                 if (err_code != NC_NOERR)
@@ -456,10 +456,10 @@ namespace nccfdriver
             }
         }
 
-        while(!wbuf.XCoordEmpty() && !wbuf.YCoordEmpty())
+        while(!xC.empty() && !yC.empty())
         {
             // Write each node coordinate
-            double x = wbuf.XCoordDequeue();
+            double x = XCoordDequeue();
             err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[0], &next_write_pos_node_coord, &x);
             NCDF_ERR(err_code);
             if (err_code != NC_NOERR)
@@ -467,7 +467,7 @@ namespace nccfdriver
                 throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "x double-precision datum");
             }
 
-            double y = wbuf.YCoordDequeue();
+            double y = YCoordDequeue();
             err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[1], &next_write_pos_node_coord, &y);
             NCDF_ERR(err_code);
             if (err_code != NC_NOERR)
@@ -477,7 +477,7 @@ namespace nccfdriver
 
             if(this->node_coordinates_varIDs.size() > 2)
             {
-                double z = wbuf.ZCoordDequeue();
+                double z = ZCoordDequeue();
                 err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[2], &next_write_pos_node_coord, &z);
                 if (err_code != NC_NOERR)
                 {
@@ -490,7 +490,7 @@ namespace nccfdriver
         }
     }
 
-    OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot, unsigned long long bufsize, bool isTrueNC4)
+    OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot, bool isTrueNC4)
         : ncID(ncID_in),
         writableType(geot),
         containerVarID(container_varID_in),
@@ -502,13 +502,6 @@ namespace nccfdriver
         char container_name[NC_MAX_CHAR + 1] = {0};
 
         this->writing_to_NC4 = isTrueNC4;
-
-        // Set buffer size
-        // Allow 4KB (standard page size) to be smallest buffer heuristic
-        if(bufsize >= 4096)
-        {
-            wbuf.setBufSize(bufsize);
-        }
 
         size_t initDimLen = isTrueNC4 ? NC_UNLIMITED : 1;
 
@@ -653,7 +646,7 @@ namespace nccfdriver
             {
                 throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Z axis attribute");
             }
-        
+
             this->node_coordinates_varIDs.push_back(new_varID);
         }
     }
@@ -847,8 +840,7 @@ namespace nccfdriver
             "could not be defined in the dataset (definition failure)."))
     {}
 
-    // SGeometry_Layer_WBuffer
-    void SGeometry_Layer_WBuffer::cpyNCOUNT_into_PNC()
+    void OGR_SGeometry_Scribe::cpyNCOUNT_into_PNC()
     {
         std::queue<int> refill = std::queue<int>(ncounts);
         while(!pnc.empty())
@@ -867,7 +859,7 @@ namespace nccfdriver
             return;
         }
 
-        // See if in the variable name is already being written to 
+        // See if in the variable name is already being written to
         if(this->varMaxInds.count(transactionAdd->getVarId()) > 0)
         {
             // See if this variable is pushing the record limit if is, set a new record limit
@@ -890,7 +882,7 @@ namespace nccfdriver
 
 		// Add sizes to memory count
 		this->buf.addCount(sizeof(transactionAdd)); // size of pointer
-		this->buf.addCount(sizeof(*transactionAdd)); // size of pointee TODO: instead implement a size function that will be able to detect pointer sizes!!
+		this->buf.addCount(sizeof(*transactionAdd)); // size of pointee TODO: add size() to transaction interface instead, doesn't track string size correctly
 
         // Finally push the transaction in
         this->transactionQueue.push(transactionAdd);
@@ -903,7 +895,7 @@ namespace nccfdriver
             std::shared_ptr<OGR_SGFS_Transaction> t = this->transactionQueue.front();
 
             int varId = t->getVarId();
-            size_t writeInd; 
+            size_t writeInd;
 
             // First, find where to write. If doesn't exist, write to index 0
             if(this->varWriteInds.count(varId) > 0)
@@ -921,7 +913,7 @@ namespace nccfdriver
             // Then write
 			// Subtract sizes from memory count
 			this->buf.addCount(sizeof(t)); // size of pointer
-			this->buf.addCount(sizeof(*t)); // size of pointee TODO: instead implement a size function that will be able to detect pointee sizes!!
+			this->buf.addCount(sizeof(*t)); // TODO: see above
 
             // todo: check return value
             t->commit(this->ncID(), writeInd);
@@ -932,6 +924,19 @@ namespace nccfdriver
             this->transactionQueue.pop();
         }
     }
+
+    // WBufferManager
+    bool WBufferManager::isOverQuota()
+    {
+        unsigned long long sum = 0;
+        for(size_t s = 0; s < bufs.size(); s++)
+        {
+           WBuffer& b = *(bufs[s]);
+           sum += b.getUsage();
+        }
+
+        return sum > this->buffer_soft_limit;
+    };
 
     // Helper function definitions
     int write_Geometry_Container

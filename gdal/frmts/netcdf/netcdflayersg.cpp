@@ -74,34 +74,40 @@ namespace nccfdriver
     {
         geom_t ret = NONE;
 
-        if (type == wkbPoint || type == wkbPoint25D)
+        if (type == wkbPoint || type == wkbPoint25D || type == wkbPointM || type == wkbPointZM)
         {
             ret = POINT;
         }
 
-        else if (type == wkbLineString || type == wkbLineString25D)
+        else if (type == wkbLineString || type == wkbLineString25D || type == wkbLineStringM || type == wkbLineStringZM)
         {
             ret = LINE;
         }
 
-        else if(type == wkbPolygon || type == wkbPolygon25D)
+        else if(type == wkbPolygon || type == wkbPolygon25D || type == wkbPolygonM || type == wkbPolygonZM)
         {
             ret = POLYGON;
         }
 
-        else if (type == wkbMultiPoint || type == wkbMultiPoint25D)
+        else if (type == wkbMultiPoint || type == wkbMultiPoint25D || type == wkbMultiPointM || type == wkbMultiPointZM)
         {
             ret = MULTIPOINT;
         }
 
-        else if (type == wkbMultiLineString || type == wkbMultiLineString25D)
+        else if (type == wkbMultiLineString || type == wkbMultiLineString25D || type == wkbMultiLineStringM || type == wkbMultiLineStringZM)
         {
             ret = MULTILINE;
         }
 
-        else if (type == wkbMultiPolygon || type == wkbMultiPolygon25D)
+        else if (type == wkbMultiPolygon || type == wkbMultiPolygon25D || type == wkbMultiPolygonM || type == wkbMultiPolygonZM)
         {
             ret = MULTIPOLYGON;
+        }
+
+        // if the feature type isn't NONE potentially give a warning about measures
+        if(ret != NONE && wkbHasM(type))
+        {
+            CPLError(CE_Warning, CPLE_NotSupported, "A partially supported measured feature type was detected. X, Y, Z Geometry will be preserved but the measure axis and related information will be removed.");
         }
 
         return ret;
@@ -225,22 +231,31 @@ void netCDFDataset::SGCommitPendingTransaction()
 
         if(this->eFormat != NCDF_FORMAT_NC4) // do NOT grow dimensions in NC4 (all infinite)
         {
-            this->GrowDim(cdfid, node_count_dimID, this->GeometryScribe.get_next_write_pos_node_count() + this->GeometryScribe.getNCOUNTBufLength());
+            if(this->GeometryScribe.getXCBufLength() > 0)
+            {
+                this->GrowDim(cdfid, node_coord_dimID,
+                    this->GeometryScribe.get_next_write_pos_node_coord() + this->GeometryScribe.getXCBufLength());
+            }
 
-            this->GrowDim(cdfid, node_coord_dimID,
-                this->GeometryScribe.get_next_write_pos_node_coord() + this->GeometryScribe.getXCBufLength());
+            if(this->GeometryScribe.getWritableType() != nccfdriver::POINT && this->GeometryScribe.getNCOUNTBufLength() > 0)
+            {
+                this->GrowDim(cdfid, node_count_dimID, this->GeometryScribe.get_next_write_pos_node_count() + this->GeometryScribe.getNCOUNTBufLength());
+            }
 
-
-            if((this->GeometryScribe.getWritableType() == nccfdriver::POLYGON && this->GeometryScribe.getInteriorRingDetected())
+            if(((this->GeometryScribe.getWritableType() == nccfdriver::POLYGON && this->GeometryScribe.getInteriorRingDetected())
                 || this->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || this->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
+                && this->GeometryScribe.getPNCBufLength() > 0)
             {
                 int pnc_dimID = this->GeometryScribe.get_pnc_dimID();
                 this->GrowDim(cdfid, pnc_dimID, this->GeometryScribe.get_next_write_pos_pnc() + this->GeometryScribe.getPNCBufLength());
             }
 
             // Also commit field transactions (if any) (and stretch record dim)
-            this->GrowDim(cdfid, this->FieldScribe.RecordDimID(), this->FieldScribe.getRecordLength()); 
-            this->FieldScribe.commit_transaction();
+            if(this->FieldScribe.getRecordLength() > 0)
+            {
+                this->GrowDim(cdfid, this->FieldScribe.RecordDimID(), this->FieldScribe.getRecordLength()); 
+                this->FieldScribe.commit_transaction();
+            }
         }
 
         this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates

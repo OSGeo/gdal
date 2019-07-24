@@ -841,6 +841,7 @@ class netCDFDataset final: public GDALPamDataset
     std::vector<netCDFDataset*> apoVectorDatasets;
     nccfdriver::OGR_SGeometry_Scribe GeometryScribe;
     nccfdriver::OGR_SGeometry_Field_Scribe FieldScribe;
+    nccfdriver::WBufferManager bufManager;
 
     /* projection/GT */
     double       adfGeoTransform[6];

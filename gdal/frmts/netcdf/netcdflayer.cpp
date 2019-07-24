@@ -562,8 +562,13 @@ bool netCDFLayer::Create(char **papszOptions,
             m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_poDS->cdfid, this->GetName(), nccfdriver::OGRtoRaw(geometryContainerType), coordNames);
 
             bool writing_to_real_NC4 = m_poDS->eFormat == NCDF_FORMAT_NC4 ? true : false;
-            m_poDS->GeometryScribe.commit_transaction();
-            m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, newbufsize, writing_to_real_NC4);
+            m_poDS->SGCommitPendingTransaction();
+            m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, writing_to_real_NC4);
+
+            if(newbufsize > 4096)
+            {
+                m_poDS->bufManager.adjustLimit(newbufsize);
+            }
 
             // If not NC4, also use Field Scribe
             m_poDS->FieldScribe.setLayerRecord(m_nRecordDimID);
@@ -1929,7 +1934,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
 
             // Check if ready to dump buffer
-            if(m_poDS->GeometryScribe.bufferQuotaReached())
+            if(m_poDS->bufManager.isOverQuota())
             {
                 m_poDS->SGCommitPendingTransaction();
             }
