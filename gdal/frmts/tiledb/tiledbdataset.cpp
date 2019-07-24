@@ -58,6 +58,8 @@ class TileDBDataset : public GDALPamDataset
         int           nBlockYSize = -1;
         int           nBlocksX = 0;
         int           nBlocksY = 0;
+        int           nBandStart = 1;
+        bool          bGlobalOrder = false;
         bool          bHasSubDatasets = false;
         int           nSubDataCount = 0;
         char          **papszSubDatasets = nullptr;
@@ -211,31 +213,32 @@ TileDBRasterBand::TileDBRasterBand(
 
     m_query.reset(new tiledb::Query( *poGDS->m_ctx, *poGDS->m_array ) );
     
-    if ( eAccess == GA_Update)
+    if ( poGDS->bGlobalOrder ) 
+    {
         m_query->set_layout( TILEDB_GLOBAL_ORDER );
+        int nBandIdx = poGDS->nBandStart + nBand - 1;
+        // initialize to complete image block layout
+        std::vector<uint64_t> oaSubarray = { uint64_t( nBandIdx ),
+                                        uint64_t( nBandIdx ),
+                                        0,
+                                        uint64_t( poDSIn->nBlocksY * nBlockYSize ) - 1,
+                                        0,
+                                        uint64_t( poDSIn->nBlocksX * nBlockXSize ) - 1,
+                                        };
+
+        if ( poGDS->m_array->schema().domain().ndim() == 3 )
+        {
+            m_query->set_subarray( oaSubarray );
+        }
+        else
+        {
+            m_query->set_subarray( std::vector<uint64_t> (
+                                        oaSubarray.cbegin() + 2,
+                                        oaSubarray.cend() ) );
+        }
+    }
     else
         m_query->set_layout( TILEDB_ROW_MAJOR );
-
-     // initialize to complete image block layout
-    std::vector<uint64_t> oaSubarray = { uint64_t( nBand ),
-                                    uint64_t( nBand ),
-                                    0,
-                                    uint64_t( poDSIn->nBlocksY * nBlockYSize ) - 1,
-                                    0,
-                                    uint64_t( poDSIn->nBlocksX * nBlockXSize ) - 1, 
-                                    };
-
-    if ( poGDS->m_array->schema().domain().ndim() == 3 )
-    {
-        m_query->set_subarray( oaSubarray );
-    }
-    else
-    {
-
-        m_query->set_subarray( std::vector<uint64_t> (
-                                    oaSubarray.cbegin() + 2,
-                                    oaSubarray.cend() ) );
-    }
 }
 
 /************************************************************************/
@@ -245,7 +248,7 @@ TileDBRasterBand::TileDBRasterBand(
 void TileDBRasterBand::Finalize()
 
 {
-    if ( eAccess == GA_Update )
+    if ( poGDS->bGlobalOrder )
     {
         m_query->finalize();
     }
@@ -263,10 +266,11 @@ CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff,
     int nStartY = nBlockYSize * nBlockYOff;
     uint64_t nEndX =  nStartX + nBlockXSize;
     uint64_t nEndY =  nStartY + nBlockYSize;
+    int nBandIdx = poGDS->nBandStart + nBand - 1;
 
     std::vector<uint64_t> oaSubarray = {
-                                    uint64_t( nBand ),
-                                    uint64_t( nBand ),
+                                    uint64_t( nBandIdx ),
+                                    uint64_t( nBandIdx ),
                                     (uint64_t) nStartY,
                                     (uint64_t) nEndY - 1,
                                     (uint64_t) nStartX,
@@ -322,13 +326,32 @@ CPLErr TileDBRasterBand::IWriteBlock( int nBlockXOff,
                && nBlockYOff >= 0
                && pImage != nullptr );
 
+    int nBandIdx = poGDS->nBandStart + nBand - 1;
+    if ( !poGDS->bGlobalOrder )
+    {
+        int nStartX = nBlockXSize * nBlockXOff;
+        int nStartY = nBlockYSize * nBlockYOff;
+        uint64_t nEndX =  nStartX + nBlockXSize;
+        uint64_t nEndY =  nStartY + nBlockYSize;
+
+        std::vector<uint64_t> oaSubarray = {
+                                        uint64_t( nBandIdx ),
+                                        uint64_t( nBandIdx ),
+                                        (uint64_t) nStartY,
+                                        (uint64_t) nEndY - 1,
+                                        (uint64_t) nStartX,
+                                        (uint64_t) nEndX - 1 };
+
+        m_query->set_subarray( oaSubarray );
+    }
+
     std::vector<std::unique_ptr<void, decltype(&VSIFree)>> aBlocks;
 
     if ( poGDS->lpoAttributeDS.size() > 0 )
     {
         for ( auto const& poAttrDS: poGDS->lpoAttributeDS )
         {
-            GDALRasterBand* poAttrBand = poAttrDS->GetRasterBand( nBand );
+            GDALRasterBand* poAttrBand = poAttrDS->GetRasterBand( nBandIdx );
             GDALDataType eAttrType = poAttrBand->GetRasterDataType();
             int nBytes = GDALGetDataTypeSizeBytes( eAttrType );
             int nValues = nBlockXSize * nBlockYSize;
@@ -432,8 +455,9 @@ TileDBDataset::~TileDBDataset()
 
 {
     FlushCache();
+
     // important to finalize arrays before closing array when updating
-    if ( eAccess == GA_Update )
+    if ( bGlobalOrder )
     {
         for( auto&& poBand: GetBands() )
         {
@@ -929,6 +953,10 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
 
         std::unique_ptr<TileDBDataset> poDS(new TileDBDataset());
 
+        tiledb_query_type_t eMode = TILEDB_READ;
+        if ( poOpenInfo->eAccess == GA_Update )
+            eMode = TILEDB_WRITE;
+
         const char* pszConfig = CSLFetchNameValue(
                                     poOpenInfo->papszOpenOptions,
                                     "TILEDB_CONFIG" );
@@ -988,7 +1016,7 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->TryLoadXML();
 
         poDS->m_array.reset(
-            new tiledb::Array( *poDS->m_ctx, osArrayPath, TILEDB_READ ) );
+            new tiledb::Array( *poDS->m_ctx, osArrayPath, eMode ) );
 
         tiledb::ArraySchema schema = poDS->m_array->schema();
 
@@ -1005,7 +1033,7 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
                         pszAttr );
                     return nullptr;
                 }
-
+                poDS->nBandStart = dims[0].domain<uint64_t>().first;
                 poDS->nBands = dims[0].domain<uint64_t>().second
                                 - dims[0].domain<uint64_t>().first + 1;
                 poDS->nBlockYSize = dims[1].tile_extent<uint64_t>();
@@ -1422,6 +1450,7 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
         poDS->nRasterYSize = nYSize;
         poDS->nBands = nBands;
         poDS->eAccess = GA_Update;
+        poDS->bGlobalOrder = true;
 
         const char* pszConfig = CSLFetchNameValue( papszOptions, "TILEDB_CONFIG" );
         if( pszConfig != nullptr )
@@ -1679,7 +1708,6 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
         }
 
         poDstDS->SetMetadata( poDstDS->papszSubDatasets, "SUBDATASETS" );
-
         tiledb::Array::create( poDstDS->GetDescription(), *poDstDS->m_schema );
         poDstDS->m_array.reset( new tiledb::Array(
             *poDstDS->m_ctx, poDstDS->GetDescription(), TILEDB_WRITE ) );
@@ -1789,7 +1817,6 @@ TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBa
         poDS->eDataType = eType;
 
         poDS->CreateAttribute( eType, TILEDB_VALUES );
-
         tiledb::Array::create( pszFilename, *poDS->m_schema );
 
         poDS->m_array.reset( new tiledb::Array( *poDS->m_ctx, pszFilename, TILEDB_WRITE ) );
@@ -1884,6 +1911,7 @@ TileDBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                             poSrcDS->GetRasterXSize(),
                             poSrcDS->GetRasterYSize(), 
                             nBands, eType, papszOptions )));
+
                 if( !poDstDS )
                 {
                     CSLDestroy( papszCopyOptions );
