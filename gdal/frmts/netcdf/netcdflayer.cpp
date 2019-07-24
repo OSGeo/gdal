@@ -565,7 +565,7 @@ bool netCDFLayer::Create(char **papszOptions,
             m_poDS->SGCommitPendingTransaction();
             m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, writing_to_real_NC4);
 
-            if(newbufsize > 4096)
+            if(newbufsize >= 4096)
             {
                 m_poDS->bufManager.adjustLimit(newbufsize);
             }
