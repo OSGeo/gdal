@@ -304,12 +304,6 @@ namespace nccfdriver
             throw SG_Exception_BadFeature();
         }
 
-        if(ft.getType() != this->writableType)
-        {
-            CPLError(CE_Warning, CPLE_NotSupported, "An attempt was made to write a feature to a layer whose geometry types do not match. This is not supported and so the feature has been skipped.");
-            return;
-        }
-
         // Write each point from each part in node coordinates
         for(size_t part_no = 0; part_no < ft.getTotalPartCount(); part_no++)
         {
@@ -880,9 +874,9 @@ namespace nccfdriver
             this->varMaxInds.insert(entry);
         }
 
-		// Add sizes to memory count
-		this->buf.addCount(sizeof(transactionAdd)); // size of pointer
-		this->buf.addCount(sizeof(*transactionAdd)); // size of pointee TODO: add size() to transaction interface instead, doesn't track string size correctly
+        // Add sizes to memory count
+        this->buf.addCount(sizeof(transactionAdd)); // size of pointer
+        this->buf.addCount(sizeof(*transactionAdd)); // size of pointee TODO: add size() to transaction interface instead, doesn't track string size correctly
 
         // Finally push the transaction in
         this->transactionQueue.push(transactionAdd);
@@ -911,9 +905,9 @@ namespace nccfdriver
             }
 
             // Then write
-			// Subtract sizes from memory count
-			this->buf.addCount(sizeof(t)); // size of pointer
-			this->buf.addCount(sizeof(*t)); // TODO: see above
+            // Subtract sizes from memory count
+            this->buf.addCount(sizeof(t)); // size of pointer
+            this->buf.addCount(sizeof(*t)); // TODO: see above
 
             // todo: check return value
             t->commit(this->ncID(), writeInd);

@@ -570,7 +570,6 @@ bool netCDFLayer::Create(char **papszOptions,
                 m_poDS->bufManager.adjustLimit(newbufsize);
             }
 
-            // If not NC4, also use Field Scribe
             m_poDS->FieldScribe.setLayerRecord(m_nRecordDimID);
 
             // Write the grid mapping, if it exists:
