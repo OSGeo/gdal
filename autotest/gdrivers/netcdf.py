@@ -4424,6 +4424,219 @@ def test_netcdf_dimension_labels_with_null():
     with gdaltest.error_handler():
         assert gdal.Open('data/dimension_labels_with_null.nc')
 
+def test_write_multiple_layers_one_nc():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    # tests writing multiple layers in NC3
+    # each geometry container a layer
+    # this also tests "update mode" for CF-1.8
+
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    gdal.VectorTranslate("tmp/mlnc4.nc", src, format="netCDF");
+
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR) 
+    assert(src is not None)
+    gdal.VectorTranslate("tmp/mlnc4.nc", src, format="netCDF", accessMode='update');
+
+    nc_tsrc = ogr.Open("tmp/mlnc4.nc")
+    assert(nc_tsrc.GetLayerCount() == 2)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("mpoly_shape")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
+    assert(fnam == "Triangle")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 0)),((3 0,4 1,3 1,3 0)))")
+    assert(fnam == "DoubleTriangle")
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("point_collection")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 4)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (0.5 -0.5 -1.5)")
+    assert(fnam == "FishingSpot1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1 -1 -0.5)")
+    assert(fnam == "FishingSpot2")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1.5 -1.5 0.5)")
+    assert(fnam == "FishingSpot3")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (2 -2 1.5)")
+    assert(fnam == "FishingSpot4")
+
+
+def test_write_multiple_layers_one_nc_NC4():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    # nearly identical to previous test except that
+    # it writes to NC4, not NC3 (changing a file from NC3 to NC4)
+    # and it writes them all at once (non update)
+
+    src = gdal.OpenEx("tmp/mlnc4.nc", gdal.OF_VECTOR) 
+    assert(src is not None)
+    gdal.VectorTranslate("tmp/mlnc4.nc4", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4']);
+
+    nc_tsrc = ogr.Open("tmp/mlnc4.nc4")
+    assert(nc_tsrc.GetLayerCount() == 2)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("mpoly_shape")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
+    assert(fnam == "Triangle")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 0)),((3 0,4 1,3 1,3 0)))")
+    assert(fnam == "DoubleTriangle")
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("point_collection")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 4)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (0.5 -0.5 -1.5)")
+    assert(fnam == "FishingSpot1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1 -1 -0.5)")
+    assert(fnam == "FishingSpot2")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1.5 -1.5 0.5)")
+    assert(fnam == "FishingSpot3")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (2 -2 1.5)")
+    assert(fnam == "FishingSpot4")
+
+def test_write_multiple_layers_one_nc_back_to_NC3():
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    # nearly identical to previous test except that
+    # it writes to from NC4 to NC3
+    # and it writes them all at once (non update)
+    # test_write_multiple_layers_one_nc writes one and then another in update mode
+
+    src = gdal.OpenEx("tmp/mlnc4.nc4", gdal.OF_VECTOR) 
+    assert(src is not None)
+    gdal.VectorTranslate("tmp/mlnc_noupdate3.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/mlnc_noupdate3.nc")
+    assert(nc_tsrc.GetLayerCount() == 2)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("mpoly_shape")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 2)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
+    assert(fnam == "Triangle")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 0)),((3 0,4 1,3 1,3 0)))")
+    assert(fnam == "DoubleTriangle")
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("point_collection")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 4)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (0.5 -0.5 -1.5)")
+    assert(fnam == "FishingSpot1")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1 -1 -0.5)")
+    assert(fnam == "FishingSpot2")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (1.5 -1.5 0.5)")
+    assert(fnam == "FishingSpot3")
+
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    assert(fWkt == "POINT (2 -2 1.5)")
+    assert(fnam == "FishingSpot4")
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
