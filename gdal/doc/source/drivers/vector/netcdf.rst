@@ -39,22 +39,19 @@ and by writing non-point geometry items as WKT.
 
 Distinguishing the Two Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is CF-1.8 (in this exact
-format, as specified in the CF convention) then the driver will treat the netCDF file as one that has CF-1.8 geometries contained within
-it. If the *Conventions* attribute is not CF-1.8 (or just not present at all), then the file will be treated as following the CF-1.6 convention
-with geometries stored in WKT.
+Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is *CF-1.8* or higher (in this exact
+format, as specified in the CF convention) then the driver will treat the netCDF file as one that has *CF-1.8* geometries contained within
+it. If the *Conventions* attribute is not greater than or equal to CF-1.8 (or just not present at all),
+then the file will be treated as following the CF-1.6 convention with geometries stored in WKT.
 
 CF-1.8 Writing Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Writing to a CF-1.8 netCDF dataset poses some limitations. Only writing the feature types specified by the CF-1.8 standard (see
-section `Geometry <#geometry>`__ for more details) are supported. Other geometries, such as non-simple curve geometries, are not supported.
-
-Furthermore, multiple layer writing is not yet supported. This functionality will be added in a future update.
+section `Geometry <#geometry>`__ for more details) are supported, and measured features are only partially supported.
+Other geometries, such as non-simple curve geometries, are not supported in any way.
 
 Finally, writing a very large CF-1.8 dataset may incur a lot of unneccessary I/O, slowing down the creation process.
-This is largely part in due to dimension resizing for netCDF-3 files. In the future,
-this will be amelioriated by providing an option to take advantage of multiple infinite dimension support within NC4
-(though writing such a file in NC4, may reduce read performance). Generally, the performance penalty from dimension resizing
+This is largely part in due to dimension resizing for netCDF-3 files. Generally, the performance penalty from dimension resizing
 is greatly reduced by `specifying a larger- but still reasonable- buffer size <#layer-creation-options>`__.
 
 CF-1.6/WKT datasets, however, are not limited to these restrictions.
@@ -129,7 +126,10 @@ In the CF-1.8 compliant driver, a single layer corresponds to a single
 the CF-1.8 specification, is referred to by another variable
 (presumably a data variable) through the **geometry** attribute. When reading
 a CF-1.8 compliant netCDF file, all geometry containers within the netCDF file
-will be present in the opened dataset as separate layers.
+will be present in the opened dataset as separate layers. Similarily, when writing to
+a CF-1.8 dataset, each layer will be written to a geometry container whose variable
+name is that of the source layer. When writing to a CF-1.8 dataset specifically, multiple layers are always
+enabled and are always in a single netCDF file, regardless of the `MULTIPLE_LAYERS <#MULTIPLE_LAYERS>`__ option.
 
 When working with files made with older versions of the driver (pre CF-1.8),
 a single netCDF file generally corresponds to a single OGR layer,
@@ -166,7 +166,10 @@ OGRMultiPolygon. Due to slight ambiguities present in the CF-1.8 convention conc
 Polygons versus MultiPolygons, the driver will in most cases default to assuming a MultiPolygon
 for the geometry of a layer with **geometry_type** polygon. The one exception where a Polygon type
 will be used is when the attribute **part_node_count** is not present within that layer's geometry container.
-Per convention requirements, the driver supports reading from geometries with X, Y, and Z axes.
+Per convention requirements, the driver supports reading and writing from geometries with X, Y, and Z axes.
+Writing from source layers with features containing an M axis is also partially supported. The X, Y, and Z
+information of a measured feature will be able to be captured in a CF-1.8 netCDF file, but the measure information
+will be lost completely.
 
 When working with a CF-1.6/WKT dataset, layers with a geometry type
 of Point or Point25D will cause the implicit creation of x,y(,z)
