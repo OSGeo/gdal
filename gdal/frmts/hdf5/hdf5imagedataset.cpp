@@ -76,12 +76,12 @@ class HDF5ImageDataset : public HDF5Dataset
     hsize_t      *maxdims;
     HDF5GroupObjects *poH5Objects;
     int          ndims;
-	int          dimensions;
+    int          dimensions;
     int          iXDim;
     int          iYDim;
     int          iBandDim;
     int          i4Dim;
-    int          i5Dim;    
+    int          i5Dim;
     hid_t        dataset_id;
     hid_t        dataspace_id;
     hsize_t      size;
@@ -178,7 +178,7 @@ HDF5ImageDataset::HDF5ImageDataset() :
     maxdims(nullptr),
     poH5Objects(nullptr),
     ndims(0),
-	dimensions(0),
+    dimensions(0),
 
     iXDim(-1),
     iYDim(-1),
@@ -371,7 +371,7 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if (poGDS->iBandDim > 0) {
             offset[poGDS->iBandDim]   = nBand-1;
             count[poGDS->iBandDim]    = 1;
-            col_dims[poGDS->iBandDim] = 1;            
+            col_dims[poGDS->iBandDim] = 1;
         }
         else {
             offset[0]   = nBand-1;
@@ -562,7 +562,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->IdentifyProductType();
 
     char** papszOpenOptions = poOpenInfo->papszOpenOptions;
-    
+
     if (papszOpenOptions != NULL) {
         poDS->GetOpenOptions(papszOpenOptions, poDS);
     }
@@ -1280,7 +1280,7 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
 }
 
 /**
- *                            GetOpenOptions()                          
+ *                            GetOpenOptions()
  */
 void HDF5ImageDataset::GetOpenOptions(char **papszOpenOptions,
                                       HDF5ImageDataset *poDS)
@@ -1305,13 +1305,13 @@ void HDF5ImageDataset::GetOpenOptions(char **papszOpenOptions,
     pszShapeEncoding = CSLFetchNameValue(papszOpenOptions, "RASTER5DIM");
     if(pszShapeEncoding != NULL ) {
       poDS->i5Dim = atoi(pszShapeEncoding);
-    }    
-    
+    }
+
     if( poDS->ndims == 3 && poDS->iBandDim != -1 )
     {
-        poDS->nBands = (int) poDS->dims[poDS->iBandDim];        
+        poDS->nBands = (int) poDS->dims[poDS->iBandDim];
     }
-    
+
     if( poDS->ndims == 4 && poDS->iBandDim != -1 )
     {
         poDS->nBands = (int) (poDS->dims[poDS->iBandDim] *
@@ -1323,7 +1323,7 @@ void HDF5ImageDataset::GetOpenOptions(char **papszOpenOptions,
         poDS->nBands = (int) (poDS->dims[poDS->iBandDim] *
                               poDS->dims[poDS->i4Dim] *
                               poDS->dims[poDS->i5Dim]);
-    }        
+    }
 }
 
 int HDF5ImageDataset::GetYIndex() const
