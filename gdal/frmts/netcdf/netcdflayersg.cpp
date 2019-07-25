@@ -312,20 +312,7 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
 
     int dimId = m_simpleGeometryReader->getInstDim();
 
-    /* If amount of features exceed record dimension size
-     * then don't set any fields...
-     */
-    size_t rec;
-    int rstatus = nc_inq_dimlen(m_simpleGeometryReader->get_ncID(), dimId, &rec);
-    if(rstatus != NC_NOERR)
-    {
-        CPLError(CE_Fatal, CPLE_FileIO, "Critical error: record dimension corrupted or invalid.\n");
-    }
-
-    if(rec > featureInd)
-    {
-        this->FillFeatureFromVar(feat, dimId, featureInd);
-    }
+    this->FillFeatureFromVar(feat, dimId, featureInd);
 
     feat -> SetFID(featureInd);
     return feat;

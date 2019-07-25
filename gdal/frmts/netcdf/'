@@ -158,6 +158,7 @@ namespace nccfdriver
             void redef_pnc(); // adds a part node count attribute to the target geometry container and corresponding variable
             bool getInteriorRingDetected() { return this->interiorRingDetected; }
             void commit_transaction(); // commit all writes to the netCDF (subject to fs stipulations)
+            void setPointRecordDim(int record) { if(this->writableType == POINT) this->node_coordinates_dimID = record; }
 
             size_t getXCBufLength() { return this->xC.size(); }
             size_t getYCBufLength() { return this->yC.size(); }
@@ -236,19 +237,6 @@ namespace nccfdriver
                char_rep(pszVal),
                counts{1, str_width}
             { 
-                OGR_SGFS_Transaction::setVarId(i_varId);
-            }
-    };
-
-    class OGR_SGFS_NC_Byte_Transaction: public OGR_SGFS_Transaction
-    {
-        signed char schar_rep;
-
-        public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_var1_schar(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &schar_rep); }
-            OGR_SGFS_NC_Byte_Transaction(int i_varId, signed char scin) : 
-               schar_rep(scin)
-            {
                 OGR_SGFS_Transaction::setVarId(i_varId);
             }
     };
