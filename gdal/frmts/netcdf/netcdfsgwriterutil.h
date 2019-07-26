@@ -188,10 +188,21 @@ namespace nccfdriver
              */
             virtual int commit(int ncid, size_t write_loc) = 0;
 
+            /* unsigned long long count(...)
+             * Implementation: supposed to return an approximate count of memory usage
+             * Most classes will implement with sizeof(*this), except if otherwise uncounted for dynamic allocation is involved.
+             */
+            virtual unsigned long long count() = 0;
+
             /* ~OGR_SGFS_Transaction()
              * Empty. Simply here to stop the compiler from complaining...
              */
             virtual ~OGR_SGFS_Transaction() {}
+
+            /* OGR_SGFS_Transaction()
+             * Empty. Simply here to stop one of the CI machines from complaining...
+             */
+            OGR_SGFS_Transaction() {}
 
             /* void getVarId(...);
              * Gets the var in which to commit the transaction to.
@@ -214,6 +225,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
+            unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) : 
                char_rep(pszVal)
             {
@@ -232,6 +244,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { size_t ind[2] = {write_loc, 0}; return nc_put_vara_text(ncid, OGR_SGFS_Transaction::getVarId(), ind, counts, char_rep.c_str()); }
+            unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) : 
                char_rep(pszVal),
                counts{1, str_width}
@@ -246,6 +259,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_schar(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &schar_rep); }
+            unsigned long long count() override { return sizeof(*this); }
             OGR_SGFS_NC_Byte_Transaction(int i_varId, signed char scin) : 
                schar_rep(scin)
             {
@@ -262,6 +276,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_short(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            unsigned long long count() override { return sizeof(*this); }
             OGR_SGFS_NC_Short_Transaction(int i_varId, short shin) : 
                rep(shin)
             {
@@ -278,6 +293,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_int(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            unsigned long long count() override { return sizeof(*this); }
             OGR_SGFS_NC_Int_Transaction(int i_varId, int iin) : 
                rep(iin)
             {
@@ -295,6 +311,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_float(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            unsigned long long count() override { return sizeof(*this); }
             OGR_SGFS_NC_Float_Transaction(int i_varId, float fin) : 
                rep(fin)
             {
@@ -311,6 +328,7 @@ namespace nccfdriver
 
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_double(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            unsigned long long count() override { return sizeof(*this); }
             OGR_SGFS_NC_Double_Transaction(int i_varId, double fin) : 
                rep(fin)
             {
@@ -326,7 +344,7 @@ namespace nccfdriver
     {
         const int & ncid;
         int ncID() { return this->ncid; } // creates copy of const reference ncid
-        int recordDimID;
+        int recordDimID = INVALID_DIM_ID;
         WBuffer buf;
 
         std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
@@ -367,7 +385,7 @@ namespace nccfdriver
            /* OGR_SGeometry_Field_Scribe()
             * Constructs a Field Scribe over a dataset
             */
-           OGR_SGeometry_Field_Scribe(const int& in_ncid) :
+           explicit OGR_SGeometry_Field_Scribe(const int& in_ncid) :
                ncid(in_ncid),
                buf()
            {}

@@ -875,8 +875,8 @@ namespace nccfdriver
         }
 
         // Add sizes to memory count
-        this->buf.addCount(sizeof(transactionAdd)); // size of pointer
-        this->buf.addCount(sizeof(*transactionAdd)); // size of pointee TODO: add size() to transaction interface instead, doesn't track string size correctly
+        this->buf.addCount(sizeof(transactionAdd)); // account for pointer
+        this->buf.addCount(transactionAdd->count()); // account for pointee
 
         // Finally push the transaction in
         this->transactionQueue.push(transactionAdd);
@@ -906,8 +906,8 @@ namespace nccfdriver
 
             // Then write
             // Subtract sizes from memory count
-            this->buf.addCount(sizeof(t)); // size of pointer
-            this->buf.addCount(sizeof(*t)); // TODO: see above
+            this->buf.subCount(sizeof(t)); // account for pointer
+            this->buf.subCount(t->count()); // account for pointee
 
             // todo: check return value
             t->commit(this->ncID(), writeInd);

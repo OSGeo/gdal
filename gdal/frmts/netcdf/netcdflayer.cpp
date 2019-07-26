@@ -353,7 +353,6 @@ bool netCDFLayer::Create(char **papszOptions,
 
             if (m_poFeatureDefn->GetGeomType() == wkbPoint25D)
             {
-                std::string strPtZVarName = std::string(this->GetName()) + std::string("_coordZ");
                 const char *pszZVarName = "z";
 
                 status = nc_def_var(m_nLayerCDFId, pszZVarName, NC_DOUBLE, 1,
