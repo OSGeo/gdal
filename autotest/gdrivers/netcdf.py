@@ -4637,6 +4637,41 @@ def test_write_multiple_layers_one_nc_back_to_NC3():
     assert(fWkt == "POINT (2 -2 1.5)")
     assert(fnam == "FishingSpot4")
 
+def test_SG_NC3_field_write():
+    # Tests all the NC3 field writing capabilities with
+    # buffering.
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/field_test_nc3.nc", gdal.OF_VECTOR) 
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/bufft.nc", src, format="netCDF");
+
+    nc_tsrc = ogr.Open("tmp/bufft.nc")
+    assert(src is not None)
+
+    # Test layer properties
+    layer = nc_tsrc.GetLayerByName("names_geometry")
+    assert(layer is not None)
+    assert(layer.GetFeatureCount() == 1)
+
+    # Test each feature manually
+    feat = layer.GetNextFeature();
+    fgeo = feat.GetGeometryRef()
+    fWkt = fgeo.ExportToWkt()
+    fnam = feat.GetFieldAsString("NAMES")
+    fid = feat.GetFieldAsInteger("IDS")
+    fnum1 = feat.GetFieldAsInteger("NUM_1")
+    fnum2 = feat.GetFieldAsInteger("NUM_2")
+    fflt = feat.GetFieldAsDouble("FL")
+    fdbl = feat.GetFieldAsDouble("DBL")
+    assert(fWkt == "POINT (1 -1)")
+    assert(fnam == "Guage_1")
+    assert(fid == 0)
+    assert(fnum1 == 1)
+    assert(fnum2 == 2)
+    assert(fflt == 1.5)
+    assert(fdbl == 99.5) 
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
