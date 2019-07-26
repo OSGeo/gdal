@@ -64,7 +64,6 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTNCDFType(NC_NAT),
         m_writableSGContVarID(nccfdriver::INVALID_VAR_ID),
         m_bLegacyCreateMode(true),
-        m_HasCFSG1_8(false),
         m_nCurFeatureId(1),
         m_bWriteGDALTags(true),
         m_bUseStringInNC4(true),
@@ -843,7 +842,7 @@ void netCDFLayer::SetProfile(int nProfileDimID, int nParentIndexVarID)
 
 void netCDFLayer::ResetReading()
 {
-    if( m_HasCFSG1_8 )
+    if( !m_bLegacyCreateMode )
     {
         m_SGeometryFeatInd = 0;
     }
@@ -961,7 +960,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( m_aoFieldDesc[i].nMainDimId != nMainDimId && !m_HasCFSG1_8 )
+        if( m_aoFieldDesc[i].nMainDimId != nMainDimId && m_bLegacyCreateMode)
             continue;
 
         switch( m_aoFieldDesc[i].nType )
@@ -1240,7 +1239,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
     // For CF-1.8 simple geometry specifically
     // Only need fields to be set here
-    if( m_HasCFSG1_8 ) return true; // todo: remove this, refactor to allow for CF-1.6 CF-1.8 mixed datasets (multi group)
+    if( !m_bLegacyCreateMode) return true; // todo: remove this, refactor to allow for CF-1.6 CF-1.8 mixed datasets (multi group)
 
     if( m_nXVarID >= 0 && m_nYVarID >= 0 &&
         (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID) )
@@ -2661,7 +2660,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 {
     if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
     {
-        if( m_HasCFSG1_8 )
+        if( !m_bLegacyCreateMode )
         {
             return m_simpleGeometryReader->get_geometry_count();
         }

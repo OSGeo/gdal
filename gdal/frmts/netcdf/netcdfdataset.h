@@ -1050,7 +1050,6 @@ class netCDFLayer final: public OGRLayer
         std::vector<FieldDesc> m_aoFieldDesc;
         int             m_writableSGContVarID;
         bool            m_bLegacyCreateMode;
-        bool            m_HasCFSG1_8;
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
         bool            m_bWriteGDALTags;
@@ -1098,7 +1097,7 @@ class netCDFLayer final: public OGRLayer
         void            SetWKTGeometryField(const char* pszWKTVarName);
         void            SetGridMapping(const char* pszGridMapping);
         void            SetProfile(int nProfileDimID, int nParentIndexVarID);
-        void            EnableSGBypass() { this-> m_HasCFSG1_8 = true; }
+        void            EnableSGBypass() { this-> m_bLegacyCreateMode = false; }
         bool            AddField(int nVarId);
 
         int             GetCDFID() const { return m_nLayerCDFId; }
