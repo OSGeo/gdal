@@ -250,13 +250,8 @@ void netCDFDataset::SGCommitPendingTransaction()
                 this->GrowDim(cdfid, pnc_dimID, this->GeometryScribe.get_next_write_pos_pnc() + this->GeometryScribe.getPNCBufLength());
             }
 
-            // Also commit field transactions (if any) (and stretch record dim)
-            if(this->FieldScribe.getRecordLength() > 0)
-            {
-                this->GrowDim(cdfid, this->FieldScribe.RecordDimID(), this->FieldScribe.getRecordLength()); 
-                this->FieldScribe.commit_transaction();
-            }
-        }
+            this->FieldScribe.commit_transaction(); // NC4 currently does not use the "Field Scribe", uses the direct writing used in CF-1.6
+       }
 
         this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates
         this->GeometryScribe.commit_transaction();
