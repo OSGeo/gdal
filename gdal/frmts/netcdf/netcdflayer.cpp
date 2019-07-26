@@ -592,23 +592,19 @@ bool netCDFLayer::Create(char **papszOptions,
                     throw nccfdriver::SGWriter_Exception_NCWriteFailure(this->GetName(), CF_GRD_MAPPING, "attribute");
                 }
 
-                // Future work: simplify this by bringing the point implementation of things into OGR_SGeometry_Scribe
-                if(basic_type != nccfdriver::POINT)
+                std::vector<int>& ncv = m_poDS->GeometryScribe.get_nodeCoordVarIDs();
+                int xVar = ncv[0];
+                int yVar = ncv[1];
+
+                if (poSRS->IsGeographic())
                 {
-                    std::vector<int>& ncv = m_poDS->GeometryScribe.get_nodeCoordVarIDs();
-                    int xVar = ncv[0];
-                    int yVar = ncv[1];
+                    NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, xVar, yVar);
+                }
 
-                    if (poSRS->IsGeographic())
-                    {
-                        NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, xVar, yVar);
-                    }
-
-                    else if (poSRS->IsProjected())
-                    {
-                        NCDFWriteXYVarsAttributes(m_nLayerCDFId, xVar, yVar,
-                            poSRS);
-                    }
+                else if (poSRS->IsProjected())
+                {
+                    NCDFWriteXYVarsAttributes(m_nLayerCDFId, xVar, yVar,
+                        poSRS);
                 }
             }
         }
