@@ -27,7 +27,6 @@
  ****************************************************************************/
 #ifndef __NETCDFSGWRITERUTIL_H__
 #define __NETCDFSGWRITERUTIL_H__
-#include <cmath>
 #include <queue>
 #include <vector>
 #include "ogr_core.h"

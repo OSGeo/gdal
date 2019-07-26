@@ -949,7 +949,6 @@ namespace nccfdriver
             throw SGWriter_Exception_NCDefFailure(name.c_str(), "geometry_container", "variable");
         }
 
-
         /* Geometry Type Attribute
          * -
          */
