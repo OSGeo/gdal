@@ -41,14 +41,15 @@ Distinguishing the Two Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is *CF-1.8* or higher (in this exact
 format, as specified in the CF convention) then the driver will treat the netCDF file as one that has *CF-1.8* geometries contained within
-it. If the *Conventions* attribute is not greater than or equal to CF-1.8 (or just not present at all),
-then the file will be treated as following the CF-1.6 convention with geometries stored in WKT.
+it. If the *Conventions* attribute has a value of CF-1.6, the the file will be treated as following the CF-1.6 convention. 
 
 CF-1.8 Writing Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Writing to a CF-1.8 netCDF dataset poses some limitations. Only writing the feature types specified by the CF-1.8 standard (see
 section `Geometry <#geometry>`__ for more details) are supported, and measured features are only partially supported.
 Other geometries, such as non-simple curve geometries, are not supported in any way.
+
+CF-1.8 datasets also do not support the *append* access mode.
 
 Finally, writing a very large CF-1.8 dataset may incur a lot of unneccessary I/O, slowing down the creation process.
 This is largely part in due to dimension resizing for netCDF-3 files. Generally, the performance penalty from dimension resizing

@@ -1381,6 +1381,16 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
     size_t nFeatureIdx = 0;
     nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nFeatureIdx);
 
+    if( !m_bLegacyCreateMode )
+    {
+        // Detects: append mode
+        if(m_writableSGContVarID == nccfdriver::INVALID_VAR_ID)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Append mode is not supported for CF-1.8 datasets.");
+            return OGRERR_UNSUPPORTED_OPERATION;        
+        }
+    }
+
     if( m_nProfileDimID >= 0 )
     {
         size_t nProfileCount = 0;
