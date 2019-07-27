@@ -32,8 +32,9 @@
 #include <vector>
 #include "ogr_core.h"
 #include "ogrsf_frmts.h"
-#include "netcdfsg.h"
 #include "netcdflayersg.h"
+#include "netcdfsg.h"
+#include "netcdfvirtual.h"
 
 namespace nccfdriver
 {
@@ -93,6 +94,39 @@ namespace nccfdriver
              WBuffer() {}
     };
 
+    class ncLayer_SG_Metadata
+    {
+        int & ncID;
+        geom_t writableType = NONE;
+        std::string containerVarName;
+        int containerVarID = INVALID_VAR_ID;
+        bool interiorRingDetected = false; // flips on when an interior ring polygon has been detected
+        std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
+        int node_coordinates_dimID = INVALID_DIM_ID; // dim of all node_coordinates
+        int node_count_dimID = INVALID_DIM_ID; // node count dim
+        int node_count_varID = INVALID_DIM_ID;
+        int pnc_dimID = INVALID_DIM_ID; // part node count dim AND interior ring dim
+        int pnc_varID = INVALID_VAR_ID;
+        int intring_varID = INVALID_VAR_ID;
+        size_t next_write_pos_node_coord = 0;
+        size_t next_write_pos_node_count = 0;
+        size_t next_write_pos_pnc = 0;
+
+        public:
+            geom_t getWritableType() { return this->writableType; }
+            void writeSGeometryFeature(SGeometry_Feature& ft);
+            int get_containerID() { return this->containerVarID; }
+            int get_node_count_dimID() { return this->node_count_dimID; }
+            int get_node_coord_dimID() { return this->node_coordinates_dimID; }
+            int get_pnc_dimID() { return this->pnc_dimID; }
+            std::vector<int>& get_nodeCoordVarIDs() { return this->node_coordinates_varIDs; }
+            size_t get_next_write_pos_node_coord() { return this->next_write_pos_node_coord; }
+            size_t get_next_write_pos_node_count() { return this->next_write_pos_node_count; }
+            size_t get_next_write_pos_pnc() { return this->next_write_pos_pnc; }
+            bool getInteriorRingDetected() { return this->interiorRingDetected; }
+
+            ncLayer_SG_Metadata(int & i_ncID, int containerVID, geom_t geo, netCDFVID& ncdf);
+    };
 
     /* OGR_SGeometry_Scribe
      * Takes a SGeometry_Feature and given a target geometry container ID it will write the feature
@@ -463,6 +497,9 @@ namespace nccfdriver
         bool readMode;
         std::string wlogName; // name of the temporary file, should be unique
         FILE* log;
+
+        WTransactionLog(WTransactionLog&); // avoid possible undefined behavior
+        WTransactionLog operator=(const WTransactionLog&);
 
         public:
             // write mode

@@ -208,6 +208,105 @@ namespace nccfdriver
         this->geometry_ref = ft.GetGeometryRef();
     }
 
+    ncLayer_SG_Metadata::ncLayer_SG_Metadata(int & i_ncID, int containerVID, geom_t geo, netCDFVID& ncdf) :
+        ncID(i_ncID),
+        writableType(geo),
+        containerVarID(containerVID)
+    {
+         // Define some virtual dimensions, and some virtual variables
+        char container_name[NC_MAX_CHAR + 1] = {0};
+        char node_coord_names[NC_MAX_CHAR + 1] = {0};
+
+        // Set default values
+        pnc_varID = INVALID_VAR_ID;
+        pnc_dimID = INVALID_DIM_ID;
+        intring_varID = INVALID_VAR_ID;
+
+        int err_code;
+        err_code = nc_inq_varname(ncID, containerVarID, container_name);
+        NCDF_ERR(err_code);
+        if (err_code != NC_NOERR)
+        {
+            throw SGWriter_Exception_NCInqFailure("new layer", "geometry container", "var name of");
+        }
+
+        this->containerVarName = std::string(container_name);
+
+        // Node Coordinates - Dim
+        std::string nodecoord_name = containerVarName + "_" + std::string(CF_SG_NODE_COORDINATES);
+
+        node_coordinates_dimID = ncdf.nc_def_vdim(nodecoord_name.c_str(), 1);
+
+        // Node Coordinates - Variable Names
+        err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
+        NCDF_ERR(err_code);
+        if (err_code != NC_NOERR)
+        {
+            throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "varName");
+        }
+
+        // Node Count
+        if(geo != POINT)
+        {
+            std::string nodecount_name = containerVarName + "_" + std::string(CF_SG_NODE_COUNT);
+            node_count_dimID = ncdf.nc_def_vdim(nodecount_name.c_str(), 1);
+            node_count_varID = ncdf.nc_def_vvar(nodecount_name.c_str(), NC_INT, 1, &node_count_dimID);
+        }
+
+        // Do the same for part node count, if it exists
+        char pnc_name[NC_MAX_CHAR + 1] = {0};
+        err_code = nc_get_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, pnc_name);
+        if(err_code == NC_NOERR)
+        {
+            pnc_dimID = ncdf.nc_def_vdim(pnc_name, 1);
+            pnc_varID = ncdf.nc_def_vvar(pnc_name, NC_INT, 1, &pnc_dimID);
+        }
+
+        // Node coordinates Var Definitions
+        int new_varID;
+        CPLStringList aosNcoord(CSLTokenizeString2(node_coord_names, " ", 0));
+
+        if(aosNcoord.size() < 2)
+            throw SGWriter_Exception();
+
+        // first it's X
+        new_varID = ncdf.nc_def_vvar(aosNcoord[0], NC_DOUBLE, 1, &node_coordinates_dimID);
+/*
+        err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
+        if (err_code != NC_NOERR)
+        {
+            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "X axis attribute");
+        }
+*/
+        this->node_coordinates_varIDs.push_back(new_varID);
+
+        // second it's Y
+        new_varID = ncdf.nc_def_vvar(aosNcoord[1], NC_DOUBLE, 1, &node_coordinates_dimID);
+/*
+        err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
+        if (err_code != NC_NOERR)
+        {
+            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Y axis attribute");
+        }
+*/
+        this->node_coordinates_varIDs.push_back(new_varID);
+
+        // (and perhaps) third it's Z
+        if(aosNcoord.size() > 2)
+        {
+            new_varID = ncdf.nc_def_vvar(aosNcoord[2], NC_DOUBLE, 1, &node_coordinates_dimID);
+/*
+            err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Z_AXIS), CF_SG_Z_AXIS);
+            if (err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Z axis attribute");
+            }
+*/
+            this->node_coordinates_varIDs.push_back(new_varID);
+        }
+         
+    }
+
     OGRPoint& SGeometry_Feature::getPoint(size_t part_no, int point_index)
     {
         if (this->type == POINT)
@@ -1051,6 +1150,11 @@ namespace nccfdriver
                  // Unsupported type
                  return MTPtr(); 
          } 
+    }
+
+    WTransactionLog::~WTransactionLog()
+    {
+        fclose(log);
     }
 
     // Helper function definitions

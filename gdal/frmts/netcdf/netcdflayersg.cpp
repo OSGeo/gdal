@@ -210,10 +210,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     return CE_None;
 }
 
-
-/* Really just wraps around OGR_SGeometry_Scribe but does additional work:
- * Re-sizes dimensions accordingly
- * Creates and fills any needed variables that haven't already been created
+/* Creates and fills any needed variables that haven't already been created
  */
 void netCDFDataset::SGCommitPendingTransaction()
 {
@@ -224,38 +221,13 @@ void netCDFDataset::SGCommitPendingTransaction()
             return; // do nothing if invalid scribe
         }
 
-        int node_count_dimID = this->GeometryScribe.get_node_count_dimID();
-        int node_coord_dimID = this->GeometryScribe.get_node_coord_dimID();
-
-        // Grow dimensions to fit the next feature
-
         if(this->eFormat != NCDF_FORMAT_NC4) // do NOT grow dimensions in NC4 (all infinite)
         {
-            if(this->GeometryScribe.getXCBufLength() > 0)
-            {
-                this->GrowDim(cdfid, node_coord_dimID,
-                    this->GeometryScribe.get_next_write_pos_node_coord() + this->GeometryScribe.getXCBufLength());
-            }
-
-            if(this->GeometryScribe.getWritableType() != nccfdriver::POINT && this->GeometryScribe.getNCOUNTBufLength() > 0)
-            {
-                this->GrowDim(cdfid, node_count_dimID, this->GeometryScribe.get_next_write_pos_node_count() + this->GeometryScribe.getNCOUNTBufLength());
-            }
-
-            if(((this->GeometryScribe.getWritableType() == nccfdriver::POLYGON && this->GeometryScribe.getInteriorRingDetected())
-                || this->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || this->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
-                && this->GeometryScribe.getPNCBufLength() > 0)
-            {
-                int pnc_dimID = this->GeometryScribe.get_pnc_dimID();
-                this->GrowDim(cdfid, pnc_dimID, this->GeometryScribe.get_next_write_pos_pnc() + this->GeometryScribe.getPNCBufLength());
-            }
-
             this->FieldScribe.commit_transaction(); // NC4 currently does not use the "Field Scribe", uses the direct writing used in CF-1.6
-       }
+        }
 
         this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates
         this->GeometryScribe.commit_transaction();
-
     }
 
     catch(nccfdriver::SG_Exception& sge)
