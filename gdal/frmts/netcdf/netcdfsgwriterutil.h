@@ -229,6 +229,8 @@ namespace nccfdriver
 
     };
 
+    typedef std::shared_ptr<OGR_SGFS_Transaction> MTPtr; // a.k.a Managed Transaction Ptr
+
     template<class T_c_type, nc_type T_nc_type> void genericLogAppend(T_c_type r, int vId, FILE * f)
     {
         T_c_type rep = r;
@@ -237,6 +239,16 @@ namespace nccfdriver
         fwrite(&varId, sizeof(int), 1, f); // write varID data
         fwrite(&type, sizeof(int), 1, f); // write NC type
         fwrite(&rep, sizeof(T_c_type), 1, f); // write data
+    }
+
+    template<class T_c_type, class T_r_type> std::shared_ptr<OGR_SGFS_Transaction> genericLogDataRead(int varId, FILE* f)
+    {
+        T_r_type data;
+        if(!fread(&data, sizeof(data), 1, f))
+        {
+             return std::shared_ptr<OGR_SGFS_Transaction>(nullptr); // invalid read case
+        }
+        return std::shared_ptr<OGR_SGFS_Transaction>(new T_c_type(varId, data));
     }
 
     /* OGR_SGFS_NC_Char_Transaction 

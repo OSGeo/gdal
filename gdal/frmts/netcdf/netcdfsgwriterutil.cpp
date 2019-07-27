@@ -983,7 +983,74 @@ namespace nccfdriver
 
     std::shared_ptr<OGR_SGFS_Transaction> WTransactionLog::pop()
     {
-    
+         int varId;
+         nc_type ntype;
+         int itemsread; 
+         itemsread = fread(&varId, sizeof(int), 1, log);
+         itemsread &= fread(&ntype, sizeof(nc_type), 1, log);
+
+         // If one of the two reads failed, then return nullptr
+         if(!itemsread) return std::shared_ptr<OGR_SGFS_Transaction>(nullptr);
+
+         // If not, continue on and parse additional fields
+         switch(ntype)
+         {
+             // NC-3 Primitives
+             case NC_BYTE:
+                 return genericLogDataRead<OGR_SGFS_NC_Byte_Transaction, signed char>(varId, log);
+             case NC_SHORT:
+                 return genericLogDataRead<OGR_SGFS_NC_Short_Transaction, short>(varId, log);
+             case NC_INT:
+                 return genericLogDataRead<OGR_SGFS_NC_Int_Transaction, int>(varId, log);
+             case NC_FLOAT:
+                 return genericLogDataRead<OGR_SGFS_NC_Float_Transaction, float>(varId, log);
+             case NC_DOUBLE:
+                 return genericLogDataRead<OGR_SGFS_NC_Double_Transaction, double>(varId, log);
+             case NC_CHAR:
+             {
+                 int readcheck; // 0 means at least one read 0 bytes
+
+                 // Check what type of OP is requested 
+                 int8_t op = 0;
+                 readcheck = fread(&op, sizeof(int8_t), 1, log);
+
+                 size_t strsize;
+
+                 // get how much data to read
+                 readcheck &= fread(&strsize, sizeof(size_t), 1, log);
+
+                 std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
+
+                 // read that data and return it
+                 readcheck &= fread(data.get(), sizeof(char), strsize, log);
+
+                 if(!readcheck) return MTPtr(); // read failure
+
+                 // case: its a standard CHAR op
+                 if(!op)
+                 {
+                     return MTPtr(new OGR_SGFS_NC_Char_Transaction(varId, data.get()));  // data is copied so okay!
+                 }
+
+                 // case: its a CHARA op, additional processing
+                 else
+                 {
+                     size_t fullSizeCount;
+                     if(!fread(&fullSizeCount, sizeof(size_t), 1, log))
+                     {
+                         return MTPtr();
+                     }
+
+                     return MTPtr(new OGR_SGFS_NC_CharA_Transaction(varId, data.get(), fullSizeCount));
+                 } 
+
+             }
+             break;
+
+             default:
+                 // Unsupported type
+                 return MTPtr(); 
+         } 
     }
 
     // Helper function definitions
