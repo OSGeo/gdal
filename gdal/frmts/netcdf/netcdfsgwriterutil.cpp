@@ -932,6 +932,60 @@ namespace nccfdriver
         return sum > this->buffer_soft_limit;
     };
 
+    // Transactions
+    void OGR_SGFS_NC_Char_Transaction::appendToLog(FILE * f)
+    {
+        int vid = OGR_SGFS_Transaction::getVarId();
+        int type = NC_CHAR;
+        int8_t OP = 0;
+        size_t DATA_SIZE = char_rep.length(); 
+
+        fwrite(&vid, sizeof(int), 1, f); // write varID data
+        fwrite(&type, sizeof(int), 1, f); // write NC type
+        fwrite(&OP, sizeof(int8_t), 1, f); // write "OP" flag
+        fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
+        fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
+    }
+
+    void OGR_SGFS_NC_CharA_Transaction::appendToLog(FILE * f)
+    {
+        int vid = OGR_SGFS_Transaction::getVarId();
+        int type = NC_CHAR;
+        int8_t OP = 1;
+        size_t DATA_SIZE = char_rep.length(); 
+
+        fwrite(&vid, sizeof(int), 1, f); // write varID data
+        fwrite(&type, sizeof(int), 1, f); // write NC type
+        fwrite(&OP, sizeof(int8_t), 1, f); // write "OP" flag
+        fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
+        fwrite((this->counts) + 1, sizeof(size_t), 1, f);
+        fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
+    }
+
+    // WTransactionLog
+    WTransactionLog::WTransactionLog(std::string& logName) :
+        wlogName(logName),
+        log(fopen(logName.c_str(), "w"))
+    {
+        this->wlogName = logName;
+    }
+
+    void WTransactionLog::startRead()
+    {
+        fclose(this->log);
+        this->log = fopen(wlogName.c_str(), "r");
+    }
+
+    void WTransactionLog::push(std::shared_ptr<OGR_SGFS_Transaction> t)
+    {
+        t->appendToLog(this->log); 
+    }
+
+    std::shared_ptr<OGR_SGFS_Transaction> WTransactionLog::pop()
+    {
+    
+    }
+
     // Helper function definitions
     int write_Geometry_Container
         (int ncID, const std::string& name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names)

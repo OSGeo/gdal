@@ -27,6 +27,7 @@
  ****************************************************************************/
 #ifndef __NETCDFSGWRITERUTIL_H__
 #define __NETCDFSGWRITERUTIL_H__
+#include <cstdio>
 #include <queue>
 #include <vector>
 #include "ogr_core.h"
@@ -193,10 +194,23 @@ namespace nccfdriver
              */
             virtual unsigned long long count() = 0;
 
+            /* appendToLog
+             * Implementation - given a file pointer, a transaction will be written to that log file in the format:
+             * -
+             * transactionVarId - sizeof(int) bytes
+             * NC_TYPE - sizeof(int) bytes
+             * (nc_char only) OP - 1 byte (0 if does not require COUNT or non-zero i.e. 1 if does)
+             * (nc_char only): SIZE of data - sizeof(size_t) bytes
+             * (nc_char && OP != 0 only) COUNT - sizeof(size_t) bytes the second dimension of the "count" arg
+             * DATA - size depends on NC_TYPE
+             */
+            virtual void appendToLog(FILE*) = 0;
+
             /* ~OGR_SGFS_Transaction()
              * Empty. Simply here to stop the compiler from complaining...
              */
             virtual ~OGR_SGFS_Transaction() {}
+
 
             /* OGR_SGFS_Transaction()
              * Empty. Simply here to stop one of the CI machines from complaining...
@@ -215,6 +229,16 @@ namespace nccfdriver
 
     };
 
+    template<class T_c_type, nc_type T_nc_type> void genericLogAppend(T_c_type r, int vId, FILE * f)
+    {
+        T_c_type rep = r;
+        int varId = vId;
+        int type = T_nc_type;
+        fwrite(&varId, sizeof(int), 1, f); // write varID data
+        fwrite(&type, sizeof(int), 1, f); // write NC type
+        fwrite(&rep, sizeof(T_c_type), 1, f); // write data
+    }
+
     /* OGR_SGFS_NC_Char_Transaction 
      * Writes to an NC_CHAR variable
      */
@@ -225,6 +249,7 @@ namespace nccfdriver
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
+            void appendToLog(FILE* f) override;
             OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) : 
                char_rep(pszVal)
             {
@@ -244,6 +269,7 @@ namespace nccfdriver
         public:
             int commit(int ncid, size_t write_loc) override { size_t ind[2] = {write_loc, 0}; return nc_put_vara_text(ncid, OGR_SGFS_Transaction::getVarId(), ind, counts, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
+            void appendToLog(FILE* f) override;
             OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) : 
                char_rep(pszVal),
                counts{1, str_width}
@@ -259,6 +285,7 @@ namespace nccfdriver
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_schar(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &schar_rep); }
             unsigned long long count() override { return sizeof(*this); }
+            void appendToLog(FILE* f) override { genericLogAppend<signed char, NC_BYTE>(schar_rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Byte_Transaction(int i_varId, signed char scin) : 
                schar_rep(scin)
             {
@@ -276,6 +303,7 @@ namespace nccfdriver
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_short(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
             unsigned long long count() override { return sizeof(*this); }
+            void appendToLog(FILE* f) override { genericLogAppend<short, NC_SHORT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Short_Transaction(int i_varId, short shin) : 
                rep(shin)
             {
@@ -293,6 +321,7 @@ namespace nccfdriver
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_int(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
             unsigned long long count() override { return sizeof(*this); }
+            void appendToLog(FILE* f) override { genericLogAppend<int, NC_INT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Int_Transaction(int i_varId, int iin) : 
                rep(iin)
             {
@@ -311,6 +340,7 @@ namespace nccfdriver
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_float(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
             unsigned long long count() override { return sizeof(*this); }
+            void appendToLog(FILE* f) override { genericLogAppend<float, NC_FLOAT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Float_Transaction(int i_varId, float fin) : 
                rep(fin)
             {
@@ -328,6 +358,7 @@ namespace nccfdriver
         public:
             int commit(int ncid, size_t write_loc) override { return nc_put_var1_double(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
             unsigned long long count() override { return sizeof(*this); }
+            void appendToLog(FILE* f) override { genericLogAppend<double, NC_DOUBLE>(rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Double_Transaction(int i_varId, double fin) : 
                rep(fin)
             {
@@ -408,6 +439,30 @@ namespace nccfdriver
             void adjustLimit(unsigned long long lim) { this->buffer_soft_limit = lim; }
             void addBuffer(WBuffer* b) { this->bufs.push_back(b); }
             explicit WBufferManager(unsigned long long lim) : buffer_soft_limit(lim){ }
+    };
+
+    /* WTransactionLog
+     * -
+     * A temporary file which contains transactions to be written to a netCDF file.
+     * Once the transaction log is created it is set on write mode, it can only be read to after startRead() is called
+     */
+    class WTransactionLog
+    {
+        bool readMode;
+        std::string wlogName; // name of the temporary file, should be unique
+        FILE* log;
+
+        public:
+            // write mode
+            void startRead();
+            void push(std::shared_ptr<OGR_SGFS_Transaction>);
+
+            // read mode
+            std::shared_ptr<OGR_SGFS_Transaction> pop();  // to test for EOF, test to see if pointer returned is null ptr
+
+            // construction, destruction
+            WTransactionLog(std::string& logName);
+            ~WTransactionLog();
     };
 
     // Exception Classes
