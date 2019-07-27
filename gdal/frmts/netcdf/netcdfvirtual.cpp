@@ -25,22 +25,21 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+#include "netcdfvirtual.h"
+
 // netCDF Virtual
 // Provides a layer of "virtual ncID"
 // that can be mapped to a real netCDF ID
 namespace nccfdriver
 {
-	int netCDFVID::nc_def_vdim(std::string& name)
+	int netCDFVID::nc_def_vdim(const char * name, size_t len)
 	{
-		vToReal_dims.insert(std::pair<int, int>(dimTicket, INVALID_VAR_ID)); // will be invalid at first
-		dimTicket++;
-		return dimTicket;
+		int dimID = dimTicket;
+		vToReal_dims.insert(std::pair<int, netCDFVDimension>(dimTicket, netCDFVDimension(name, len, dimTicket++))); // will be invalid at first
+		return dimID;
 	}
 
-	int netCDFVID::nc_def_vvar(std::string& name, nc_type xtype, int ndims, const int* dimidsp)
+	int netCDFVID::nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp)
 	{
-
 	}
-
-	int netCDFVDataset::nc_def_vvar(std::string& name, nc_type xtype, int ndims, const int
 }

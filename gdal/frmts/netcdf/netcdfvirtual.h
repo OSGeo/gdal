@@ -25,6 +25,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+#include <map>
+#include <memory>
+#include <string>
+#include "netcdf.h"
+
 // netCDF Virtual
 // Provides a layer of "virtual ncID"
 // that can be mapped to a real netCDF ID
@@ -39,6 +44,13 @@ namespace nccfdriver
 		std::string real_dim_name;
 		int real_dim_id;
 		size_t real_dim_len;
+
+		public:
+                    netCDFVDimension(const char * name, size_t len, int dimid) :
+                        real_dim_name(name),
+                        real_dim_id(dimid),
+                        real_dim_len(len)
+                    {} 
 	};
 
 	/* netCDFVVariable
@@ -48,7 +60,8 @@ namespace nccfdriver
 	class netCDFVVariable
 	{
 		std::string real_var_name;
-		nc_type TYPE;
+		nc_type ntype;
+                int id;
 		int ndims;
 		std::unique_ptr<int, std::default_delete<int[]>> dimid;
 
@@ -68,14 +81,17 @@ namespace nccfdriver
         {
 		int dimTicket = 0;
 		int varTicket = 0;
-		std::map<int, int> vToReal_dims; // maps from virtual dim ID to real dim ID
-		std::map<int, int> vToReal_vars; // maps from virtual var ID to real var ID
+		std::map<int, netCDFVDimension> vToReal_dims; // maps from virtual dim ID to real dim ID
+		std::map<int, netCDFVVariable> vToReal_vars; // maps from virtual var ID to real var ID
 
                 public:
-		    // Each of these returns an ID, NOT an error code
-		    int nc_def_vdim(const char * name, size_t dimlen); // for dims that don't already exist in netCDF file
-		    int nc_register_vdim(int realID); // for dims that DO already exist in netCDF file
-		    int nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp);
-		    int nc_register_vvar(int realID); // for vars that DO already exist in netCDF file
+			// Each of these returns an ID, NOT an error code
+			int nc_def_vdim(const char * name, size_t dimlen); // for dims that don't already exist in netCDF file
+			int nc_register_vdim(int realID); // for dims that DO already exist in netCDF file
+			int nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp);
+			int nc_register_vvar(int realID); // for vars that DO already exist in netCDF file
+
+                        // Attribute function(s)
+			void nc_put_vatt_text(int varid, const char * name, const char * out);
         };
 }

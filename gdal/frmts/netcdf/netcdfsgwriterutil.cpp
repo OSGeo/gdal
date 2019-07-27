@@ -271,37 +271,22 @@ namespace nccfdriver
 
         // first it's X
         new_varID = ncdf.nc_def_vvar(aosNcoord[0], NC_DOUBLE, 1, &node_coordinates_dimID);
-/*
-        err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "X axis attribute");
-        }
-*/
+        ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_X_AXIS);
+
         this->node_coordinates_varIDs.push_back(new_varID);
 
         // second it's Y
         new_varID = ncdf.nc_def_vvar(aosNcoord[1], NC_DOUBLE, 1, &node_coordinates_dimID);
-/*
-        err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Y axis attribute");
-        }
-*/
+        ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Y_AXIS);
+
         this->node_coordinates_varIDs.push_back(new_varID);
 
         // (and perhaps) third it's Z
         if(aosNcoord.size() > 2)
         {
             new_varID = ncdf.nc_def_vvar(aosNcoord[2], NC_DOUBLE, 1, &node_coordinates_dimID);
-/*
-            err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Z_AXIS), CF_SG_Z_AXIS);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Z axis attribute");
-            }
-*/
+            ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Z_AXIS);
+
             this->node_coordinates_varIDs.push_back(new_varID);
         }
          
