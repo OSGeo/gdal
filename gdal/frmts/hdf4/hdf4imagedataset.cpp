@@ -1776,14 +1776,12 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
             if( SWattrinfo( hSW, papszAttributes[i],
                             &l_iNumType, &nValues ) < 0 )
                 continue;
+            const int nDataTypeSize = GetDataTypeSize(l_iNumType);
+            if( nDataTypeSize == 0 )
+                continue;
+            CPLAssert( (nValues % nDataTypeSize) == 0);
 
-            void *pData = nullptr;
-            if( l_iNumType == DFNT_CHAR8 || l_iNumType == DFNT_UCHAR8 )
-                pData =
-                    CPLMalloc( (nValues + 1) * GetDataTypeSize(l_iNumType) );
-            else
-                pData = CPLMalloc( nValues * GetDataTypeSize(l_iNumType) );
-
+            void *pData = CPLMalloc( nValues + 1);
             SWreadattr( hSW, papszAttributes[i], pData );
 
             if( l_iNumType == DFNT_CHAR8 || l_iNumType == DFNT_UCHAR8 )
@@ -1798,7 +1796,7 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
             else
             {
                 char *pszTemp = SPrintArray( GetDataType(l_iNumType), pData,
-                                             nValues, ", " );
+                                             nValues / nDataTypeSize, ", " );
                 papszLocalMetadata = CSLAddNameValue( papszLocalMetadata,
                                                       papszAttributes[i],
                                                       pszTemp );
@@ -1888,14 +1886,12 @@ void HDF4ImageDataset::GetGridAttrs( int32 hGD )
             int32 nValues = 0;
 
             GDattrinfo( hGD, papszAttributes[i], &l_iNumType, &nValues );
+            const int nDataTypeSize = GetDataTypeSize(l_iNumType);
+            if( nDataTypeSize == 0 )
+                continue;
+            CPLAssert( (nValues % nDataTypeSize) == 0);
 
-            void *pData = nullptr;
-            if( l_iNumType == DFNT_CHAR8 || l_iNumType == DFNT_UCHAR8 )
-                pData =
-                    CPLMalloc( (nValues + 1) * GetDataTypeSize(l_iNumType) );
-            else
-                pData = CPLMalloc( nValues * GetDataTypeSize(l_iNumType) );
-
+            void *pData = CPLMalloc( nValues + 1);
             GDreadattr( hGD, papszAttributes[i], pData );
 
             if( l_iNumType == DFNT_CHAR8 || l_iNumType == DFNT_UCHAR8 )
@@ -1908,7 +1904,7 @@ void HDF4ImageDataset::GetGridAttrs( int32 hGD )
             else
             {
                 char *pszTemp = SPrintArray( GetDataType(l_iNumType), pData,
-                                             nValues, ", " );
+                                             nValues / nDataTypeSize, ", " );
                 papszLocalMetadata = CSLAddNameValue( papszLocalMetadata,
                                                       papszAttributes[i],
                                                       pszTemp );
