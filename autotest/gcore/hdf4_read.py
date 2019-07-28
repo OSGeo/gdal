@@ -237,17 +237,17 @@ def test_hdf4_read_online_8():
         pytest.skip()
 
     # 5 MB
-    if not gdaltest.download_file('ftp://e4ftl01u.ecs.nasa.gov/MODIS_Composites/MOLT/MOD13Q1.005/2006.06.10/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf', 'MOD13Q1.A2006161.h21v13.005.2008234103220.hdf'):
+    if not gdaltest.download_file('https://e4ftl01.cr.usgs.gov/MOLT/MOD13Q1.006/2006.06.10/MOD13Q1.A2006161.h34v09.006.2015161173716.hdf', 'MOD13Q1.A2006161.h34v09.006.2015161173716.hdf'):
         pytest.skip()
 
-    tst = gdaltest.GDALTest('HDF4Image', 'HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI', 1, 53837, filename_absolute=1)
+    tst = gdaltest.GDALTest('HDF4Image', 'HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h34v09.006.2015161173716.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI', 1, 44174, filename_absolute=1)
 
     tst.testOpen()
 
-    ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI')
+    ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h34v09.006.2015161173716.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI')
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 53837, 'did not get expected checksum'
+    assert cs == 44174, 'did not get expected checksum'
 
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
@@ -306,3 +306,19 @@ def test_hdf4_read_online_10():
 
 
 
+###############################################################################
+# Test reading HDFEOS SWATH projducts
+
+
+def test_hdf4_read_online_11():
+
+    if gdaltest.hdf4_drv is None:
+        pytest.skip()
+
+    if not gdaltest.download_file('https://gamma.hdfgroup.org/ftp/pub/outgoing/NASAHDFfiles2/eosweb/hdf4/hdfeos2-swath-wo-dimmaps/AMSR_E_L2_Ocean_B01_200206182340_A.hdf', 'AMSR_E_L2_Ocean_B01_200206182340_A.hdf'):
+        pytest.skip()
+
+    ds = gdal.Open('HDF4_EOS:EOS_SWATH:"tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Ocean_products_quality_flag')
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 7809, 'did not get expected checksum'
