@@ -28,6 +28,8 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
+#include "netcdfsg.h"
 #include "netcdf.h"
 
 // netCDF Virtual
@@ -42,15 +44,22 @@ namespace nccfdriver
 	class netCDFVDimension
 	{
 		std::string real_dim_name;
-		int real_dim_id;
-		size_t real_dim_len;
+		int r_did = INVALID_DIM_ID;
+		int v_did;
+		size_t dim_len;
 
 		public:
                     netCDFVDimension(const char * name, size_t len, int dimid) :
                         real_dim_name(name),
-                        real_dim_id(dimid),
-                        real_dim_len(len)
+                        v_did(dimid),
+                        dim_len(len)
                     {} 
+
+		std::string& getName() { return this->real_dim_name; }
+		size_t getLen() { return this->dim_len; }
+		int getRealID() { return this->r_did; }
+		void setRealID(int realID) { this->r_did = realID; }
+		int getVirtualID() { return this->v_did; }
 	};
 
 	/* netCDFVVariable
@@ -61,12 +70,19 @@ namespace nccfdriver
 	{
 		std::string real_var_name;
 		nc_type ntype;
-                int id;
-		int ndims;
+                int r_vid = INVALID_VAR_ID;
+		int v_vid;
+		int ndimc;
 		std::unique_ptr<int, std::default_delete<int[]>> dimid;
 
 		public:
-
+			netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp, int varid);
+			std::string& getName() { return real_var_name; }
+			int getRealID() { return r_vid; }
+			void setRealID(int realID) { this->r_vid = realID; }
+			nc_type getType() { return ntype; }
+			int getDimCount() { return this->ndimc; }	
+			const int* getDimIds() { return this->dimid.get(); }
 	};
 
 	/* netCDFVID
@@ -74,15 +90,17 @@ namespace nccfdriver
 	 * A netCDF ID that sits on top of an actual netCDF ID
 	 * And manages actual interaction with the real netCDF file
 	 * Some differences is that netCDFVDataset:
-	 * - doesn't have fixed dim sizes
-	 * - doesn't manage data- intended to use 
+	 * - doesn't have fixed dim sizes, until defines are committed
 	 */
 	class netCDFVID
         {
+		int & ncid;
 		int dimTicket = 0;
 		int varTicket = 0;
-		std::map<int, netCDFVDimension> vToReal_dims; // maps from virtual dim ID to real dim ID
-		std::map<int, netCDFVVariable> vToReal_vars; // maps from virtual var ID to real var ID
+		std::vector<netCDFVVariable> varList; // for now: direct mapping into var and dim list, might use a more flexible mapping system later
+		std::vector<netCDFVDimension> dimList;
+		std::map<std::string, int> nameDimTable;
+		std::map<std::string, int> nameVarTable;
 
                 public:
 			// Each of these returns an ID, NOT an error code
@@ -90,8 +108,32 @@ namespace nccfdriver
 			int nc_register_vdim(int realID); // for dims that DO already exist in netCDF file
 			int nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp);
 			int nc_register_vvar(int realID); // for vars that DO already exist in netCDF file
+			void nc_resize_vdim(int dimid, size_t dimlen); // for dims that haven't been mapped to physical yet
+
+			/* nc_vmap()
+			 * Maps virtual IDs to real physical ID if that mapping doesn't already exist
+			 * This is required before writing data to virtual IDs that do not exist yet in the netCDF file
+			 */
+			void nc_vmap();
 
                         // Attribute function(s)
 			void nc_put_vatt_text(int varid, const char * name, const char * out);
+
+                        // Writing Functions
+                        void nc_put_vvar1_text(int varid, const size_t* index, char* out);
+                        void nc_put_vvar1_short(int varid, const size_t* index, short* out);
+                        void nc_put_vvar1_int(int varid, const size_t* index, int* out);
+                        void nc_put_vvar1_schar(int varid, const size_t* index, signed char* out);
+                        void nc_put_vvar1_float(int varid, const size_t* index, float* out);
+                        void nc_put_vvar1_double(int varid, const size_t* index, double* out);
+
+			// Equivalent "enquiry" functions
+			netCDFVVariable& virtualVIDToVar(int virtualID); // converts a virtual var ID to a real ID
+			netCDFVDimension& virtualDIDToDim(int virtualID); // converts a virtual dim ID to a real ID
+			int nameToVirtualVID(std::string& name);
+			int nameToVirtualDID(std::string& name);
+
+			// Constructor
+			netCDFVID(int & ncid_in) : ncid(ncid_in) {}
         };
 }

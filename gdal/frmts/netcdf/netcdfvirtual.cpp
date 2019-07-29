@@ -32,15 +32,149 @@
 // that can be mapped to a real netCDF ID
 namespace nccfdriver
 {
+	netCDFVVariable::netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp, int varid) :
+		real_var_name(name),
+		ntype(xtype),
+		v_vid(varid),
+		ndimc(ndims),
+		dimid(new int[ndims])
+	{
+		for(int c = 0; c < ndims; c++)
+		{
+			dimid.get()[c] = dimidsp[c];
+		}
+	}
+
 	int netCDFVID::nc_def_vdim(const char * name, size_t len)
 	{
 		int dimID = dimTicket;
-		vToReal_dims.insert(std::pair<int, netCDFVDimension>(dimTicket, netCDFVDimension(name, len, dimTicket++))); // will be invalid at first
+
+		// Check if name is already defined
+		if(nameDimTable.at(std::string(name)))
+		{
+			// TODO: throw exception
+		}
+
+		// Add to lookup tables
+                dimList.push_back(netCDFVDimension(name, len, dimTicket++));
+		nameDimTable.insert(std::pair<std::string, int>(std::string(name), dimID));
+
+		// Return virtual dimID
 		return dimID;
 	}
 
 	int netCDFVID::nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp)
 	{
+		int varID = varTicket;
+
+		// Check if name is already defined
+		if(nameVarTable.at(std::string(name)))
+		{
+			// TODO: throw exception
+		}
+
+		// Add to lookup tables
+		varList.push_back(netCDFVVariable(name, xtype, ndims, dimidsp, varTicket++));
+		nameVarTable.insert(std::pair<std::string, int>(std::string(name), varID));
+
+		// Return virtual dimID
+		return varID;
+	}
+
+        void netCDFVID::nc_vmap()
+	{
+		for(size_t itr_d = 0; itr_d < dimList.size(); itr_d++)
+		{
+			int realDimID;
+			netCDFVDimension& dim = dimList[itr_d];
+
+			nc_def_dim(ncid, dim.getName().c_str(), dim.getLen(), &realDimID);
+			dimList[itr_d].setRealID(realDimID);
+		}
+
+		for(size_t itr_v = 0; itr_v < varList.size(); itr_v++)
+		{
+			int realVarID;
+			netCDFVVariable& var = varList[itr_v];
+
+			// Convert each virtual dimID to a physical dimID:
+			std::unique_ptr<int, std::default_delete<int[]>> newdims(new int[var.getDimCount()]);
+			for(int dimct = 0; dimct < var.getDimCount(); dimct++)
+			{
+				newdims.get()[dimct] = virtualDIDToDim(var.getDimIds()[dimct]).getRealID();
+			}
+			
+			nc_def_var(ncid, var.getName().c_str(), var.getType(), var.getDimCount(), newdims.get(), &realVarID);
+			var.setRealID(realVarID);
+		}
 
 	}
+
+	/* Enquiry Functions
+	 * (For use with enquiry information about virtual entities)
+	 */
+	netCDFVVariable& netCDFVID::virtualVIDToVar(int virtualID)
+	{
+		if(virtualID >= static_cast<int>(varList.size()) || virtualID < 0)
+		{
+			// TODO: throw exception
+		}
+
+		return varList[virtualID];
+	}
+
+	netCDFVDimension& netCDFVID::virtualDIDToDim(int virtualID)
+	{
+
+		if(virtualID >= static_cast<int>(dimList.size()) || virtualID < 0)
+		{
+			// TODO: throw exception
+		}
+
+		return dimList[virtualID];
+	}
+
+	int netCDFVID::nameToVirtualVID(std::string& name)
+	{
+		return nameVarTable.at(name); // todo exception handling
+	}
+
+	int netCDFVID::nameToVirtualDID(std::string& name)
+	{
+		return nameDimTable.at(name); // todo exception handling
+	}
+
+	/* Single Datum Writing
+	 * (mostly just convenience functions)
+	 */        
+	void netCDFVID::nc_put_vvar1_text(int varid, const size_t* index, char* out)
+	{
+		nc_put_var1_text(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+	}
+
+	void netCDFVID::nc_put_vvar1_short(int varid, const size_t* index, short* out)
+	{
+		nc_put_var1_short(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+	}
+
+	void netCDFVID::nc_put_vvar1_int(int varid, const size_t* index, int* out)
+	{
+		nc_put_var1_int(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+	}
+
+	void netCDFVID::nc_put_vvar1_schar(int varid, const size_t* index, signed char* out)
+	{
+		nc_put_var1_schar(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+	}
+
+	void netCDFVID::nc_put_vvar1_float(int varid, const size_t* index, float* out)
+	{
+		nc_put_var1_float(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+	}
+
+	void netCDFVID::nc_put_vvar1_double(int varid, const size_t* index, double* out)
+	{
+		nc_put_var1_double(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+	}
+
 }
