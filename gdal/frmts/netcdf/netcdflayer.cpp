@@ -62,7 +62,6 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nWKTMaxWidthDimId(-1),
         m_nWKTVarID(-1),
         m_nWKTNCDFType(NC_NAT),
-        m_writableSGContVarID(nccfdriver::INVALID_VAR_ID),
         m_bLegacyCreateMode(true),
         m_nCurFeatureId(1),
         m_bWriteGDALTags(true),
@@ -73,7 +72,9 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_bProfileVarUnlimited(false),
         m_nParentIndexVarID(-1),
         m_SGeometryFeatInd(0),
-        m_poLayerConfig(nullptr)
+        m_poLayerConfig(nullptr),
+        m_layerSGDefn(poDS->cdfid, nccfdriver::OGRtoRaw(eGeomType),
+                      poDS->vcdf, poDS->GeometryScribe)
 {
     m_uXVarNoData.nVal64 = 0;
     m_uYVarNoData.nVal64 = 0;
@@ -545,23 +546,13 @@ bool netCDFLayer::Create(char **papszOptions,
                 coordNames.push_back(strZVarName);
             }
 
-            nccfdriver::geom_t basic_type = nccfdriver::OGRtoRaw(geometryContainerType);
-
-            if(basic_type == nccfdriver::NONE)
+            if(m_layerSGDefn.getWritableType() == nccfdriver::NONE)
             {
                 throw nccfdriver::SG_Exception_BadFeature();
             }
 
-            m_writableSGContVarID = nccfdriver::write_Geometry_Container(m_poDS->cdfid, this->GetName(), basic_type, coordNames);
-
-
-            bool writing_to_real_NC4 = m_poDS->eFormat == NCDF_FORMAT_NC4 ? true : false;
-
-            m_poDS->SetDefineMode(false);
-            m_poDS->SGCommitPendingTransaction();
-            m_poDS->SetDefineMode(true);
-
-            m_poDS->GeometryScribe = nccfdriver::OGR_SGeometry_Scribe(m_nLayerCDFId, m_writableSGContVarID, basic_type, writing_to_real_NC4);
+            int writableSGContVarID = nccfdriver::write_Geometry_Container(m_poDS->cdfid, this->GetName(), m_layerSGDefn.getWritableType(), coordNames);
+            m_layerSGDefn.initializeNewContainer(writableSGContVarID);
 
             if(newbufsize >= 4096)
             {
@@ -569,22 +560,21 @@ bool netCDFLayer::Create(char **papszOptions,
             }
 
             // Set record dim ID; POINT it's the node coordinate dim ID and everything else it's node count:
-            if(basic_type == nccfdriver::POINT)
+            if(m_layerSGDefn.getWritableType() == nccfdriver::POINT)
             {
-                m_nRecordDimID = m_poDS->GeometryScribe.get_node_coord_dimID();
+                m_nRecordDimID = m_layerSGDefn.get_node_coord_dimID();
                 m_osRecordDimName =  std::string(this->GetName()) + std::string("_") + std::string(CF_SG_NODE_COORDINATES);
             }
             else
             {
-                m_nRecordDimID = m_poDS->GeometryScribe.get_node_count_dimID();
+                m_nRecordDimID = m_layerSGDefn.get_node_count_dimID();
                 m_osRecordDimName = std::string(this->GetName()) + std::string("_") + std::string(CF_SG_NODE_COUNT);
             }
-
-            m_poDS->FieldScribe.setLayerRecord(m_nRecordDimID);
 
             // Write the grid mapping, if it exists:
             if (poSRS != nullptr)
             {
+                /* TODO: rewrite using virtual NCID
                 status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_sgCRSname.c_str()), m_sgCRSname.c_str());
                 NCDF_ERR(status);
                 if(status != NC_NOERR)
@@ -592,7 +582,7 @@ bool netCDFLayer::Create(char **papszOptions,
                     throw nccfdriver::SGWriter_Exception_NCWriteFailure(this->GetName(), CF_GRD_MAPPING, "attribute");
                 }
 
-                std::vector<int>& ncv = m_poDS->GeometryScribe.get_nodeCoordVarIDs();
+                std::vector<int>& ncv = m_layerSGDefn.get_nodeCoordVarIDs();
                 int xVar = ncv[0];
                 int yVar = ncv[1];
 
@@ -605,7 +595,7 @@ bool netCDFLayer::Create(char **papszOptions,
                 {
                     NCDFWriteXYVarsAttributes(m_nLayerCDFId, xVar, yVar,
                         poSRS);
-                }
+                }*/
             }
         }
     }
@@ -1384,7 +1374,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
     if( !m_bLegacyCreateMode )
     {
         // Detects: append mode
-        if(m_writableSGContVarID == nccfdriver::INVALID_VAR_ID)
+        if(m_layerSGDefn.get_containerID() == nccfdriver::INVALID_VAR_ID)
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Append mode is not supported for CF-1.8 datasets.");
             return OGRERR_UNSUPPORTED_OPERATION;        
@@ -1959,14 +1949,14 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         {
             nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
 
-            // Check if ready to dump buffer
+            // Check if ready to dump buffer to LOG
             if(m_poDS->bufManager.isOverQuota())
             {
-                m_poDS->SGCommitPendingTransaction();
+                //m_poDS->SGLogPendingTransaction();
             }
 
             // Finally, "write" the feature
-            m_poDS->GeometryScribe.writeSGeometryFeature(featWithMetaData);
+            m_layerSGDefn.writeSGeometryFeature(featWithMetaData);
         }
     }
 
@@ -2587,7 +2577,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
     if ( !m_bLegacyCreateMode )
     {
         char ct_name_carr[NC_MAX_NAME + 1] = {0};
-        status = nc_inq_varname(m_nLayerCDFId, m_writableSGContVarID, ct_name_carr);
+        status = nc_inq_varname(m_nLayerCDFId, this->m_layerSGDefn.get_containerID(), ct_name_carr);
         NCDF_ERR(status);
 
         status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_SG_GEOMETRY, strlen(ct_name_carr), ct_name_carr);

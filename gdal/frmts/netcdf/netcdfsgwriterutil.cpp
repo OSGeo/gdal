@@ -208,11 +208,13 @@ namespace nccfdriver
         this->geometry_ref = ft.GetGeometryRef();
     }
 
-    ncLayer_SG_Metadata::ncLayer_SG_Metadata(int & i_ncID, int containerVID, geom_t geo, netCDFVID& ncdf) :
-        ncID(i_ncID),
-        writableType(geo),
-        containerVarID(containerVID)
+    void ncLayer_SG_Metadata::initializeNewContainer(int containerVID)
     {
+        this->containerVarID = containerVID;
+
+        netCDFVID& ncdf = this->vDataset;
+        geom_t geo = this->writableType;
+
          // Define some virtual dimensions, and some virtual variables
         char container_name[NC_MAX_CHAR + 1] = {0};
         char node_coord_names[NC_MAX_CHAR + 1] = {0};
@@ -289,7 +291,19 @@ namespace nccfdriver
 
             this->node_coordinates_varIDs.push_back(new_varID);
         }
-         
+    }
+
+    void ncLayer_SG_Metadata::scanExistingContainer(int containerVID)
+    {
+        // todo:
+    }
+
+    ncLayer_SG_Metadata::ncLayer_SG_Metadata(int & i_ncID, geom_t geo, netCDFVID& ncdf, OGR_NCScribe& ncs) :
+        ncID(i_ncID),
+        vDataset(ncdf),
+        ncb(ncs),
+        writableType(geo)
+    {
     }
 
     OGRPoint& SGeometry_Feature::getPoint(size_t part_no, int point_index)
@@ -381,7 +395,7 @@ namespace nccfdriver
         return pt_buffer;
     }
 
-    void OGR_SGeometry_Scribe::writeSGeometryFeature(SGeometry_Feature& ft)
+    void ncLayer_SG_Metadata::writeSGeometryFeature(SGeometry_Feature& ft)
     {
         if (ft.getType() == NONE)
         {
@@ -393,57 +407,38 @@ namespace nccfdriver
         {
             if(this->writableType == POLYGON || this->writableType == MULTIPOLYGON)
             {
-                bool interior_ring_fl = false;
+                int interior_ring_fl = 1;
 
                 if(this->writableType == POLYGON)
-                    interior_ring_fl = part_no == 0 ? false : true;
-                if(this->writableType == MULTIPOLYGON)
+                {
+                    interior_ring_fl = part_no == 0 ? 0 : 1;
+                }
+
+                else if(this->writableType == MULTIPOLYGON)
                 {
                     if(ft.IsPartAtIndInteriorRing(part_no))
                     {
-                        interior_ring_fl = true;
+                        interior_ring_fl = 1;
                     }
+
                     else
                     {
-                        interior_ring_fl = false;
+                        interior_ring_fl = 0;
                     }
                 }
 
-                if(interior_ring_fl == false)
+                if(interior_ring_fl)
                 {
-                    if(this->interiorRingDetected)
-                        addIRing(false);
+                    this->interiorRingDetected = true;
                 }
-                else
-                {
-                    /* Take corrective measures if Interior Ring hasn't yet been detected.
-                     * If Polygon: define interior_ring and part_node_count variables in in file
-                     * If Multipolygon: define interior_ring variable, zero fill in file
-                     */
-                    if(!this->interiorRingDetected)
-                    {
-                        this->interiorRingDetected = true;
-                        if(this->writableType == POLYGON)
-                        {
-                            redef_pnc();
-                            cpyNCOUNT_into_PNC();
-                        }
 
-                        redef_interior_ring();
-                        while(getPNCBufLength() != getIRingVarEntryCount())
-                        {
-                            addIRing(false);
-                        }
-                    }
-
-                    addIRing(true);
-                }
+                ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(intring_varID, interior_ring_fl)));
             }
 
             if(this->writableType == POLYGON || this->writableType == MULTILINE || this->writableType == MULTIPOLYGON)
             {
                 int pnc_writable = static_cast<int>(ft.getPerPartNodeCount()[part_no]);
-                addPNC(pnc_writable);
+                ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(pnc_varID, pnc_writable)));
             }
 
             for(size_t pt_ind = 0; pt_ind < ft.getPerPartNodeCount()[part_no]; pt_ind++)
@@ -453,31 +448,24 @@ namespace nccfdriver
 
                 // Write each node coordinate
                 double x = write_pt.getX();
-                addXCoord(x);
+                ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Double_Transaction(node_coordinates_varIDs[0], x)));
 
                 double y = write_pt.getY();
-                addYCoord(y);
+                ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Double_Transaction(node_coordinates_varIDs[1], y)));
 
                 if(this->node_coordinates_varIDs.size() > 2)
                 {
                     double z = write_pt.getZ();
-                    addZCoord(z);
+                    ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Double_Transaction(node_coordinates_varIDs[2], z)));
                 }
             }
-        }
-
-        // Polygons use a "predictive approach", i.e. predict that there will be interior rings
-        // If there are after all, no interior rings then flush out the PNC buffer
-        if(!this->interiorRingDetected && this->writableType == POLYGON)
-        {
-            flushPNCBuffer();
         }
 
         // Append node counts from the end, if not a POINT
         if(this->writableType != POINT)
         {
             int ncount_add = static_cast<int>(ft.getTotalNodeCount());
-            addNCOUNT(ncount_add);
+            ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(node_count_varID, ncount_add)));
         }
     }
 
@@ -485,7 +473,6 @@ namespace nccfdriver
      * Flushes buffer,
      * And sets new iterators accordingly
      * If the transaction is empty, then this function does nothing
-     */
     void OGR_SGeometry_Scribe::commit_transaction()
     {
         int err_code;
@@ -567,328 +554,7 @@ namespace nccfdriver
             this->next_write_pos_node_coord++;
         }
     }
-
-    OGR_SGeometry_Scribe::OGR_SGeometry_Scribe(int ncID_in, int container_varID_in, geom_t geot, bool isTrueNC4)
-        : ncID(ncID_in),
-        writableType(geot),
-        containerVarID(container_varID_in),
-        interiorRingDetected(false),
-        next_write_pos_node_coord(0),
-        next_write_pos_node_count(0),
-        next_write_pos_pnc(0)
-    {
-        char container_name[NC_MAX_CHAR + 1] = {0};
-
-        this->writing_to_NC4 = isTrueNC4;
-
-        size_t initDimLen = isTrueNC4 ? NC_UNLIMITED : 1;
-
-        // Prepare variable names
-        char node_coord_names[NC_MAX_CHAR + 1] = {0};
-        char node_count_name[NC_MAX_CHAR + 1] = {0};
-
-        // Set default values
-        pnc_varID = INVALID_VAR_ID;
-        pnc_dimID = INVALID_DIM_ID;
-        intring_varID = INVALID_VAR_ID;
-
-        int err_code;
-        err_code = nc_inq_varname(ncID, containerVarID, container_name);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCInqFailure("new layer", "geometry container", "varName");
-        }
-
-        this->containerVarName = std::string(container_name);
-
-        // Node Coordinates - Dim and Attribute
-
-        err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "varName");
-        }
-
-        std::string nodecoord_dname = containerVarName + "_" + std::string(CF_SG_NODE_COORDINATES);
-
-        err_code = nc_def_dim(ncID_in, nodecoord_dname.c_str(), initDimLen, &node_coordinates_dimID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "dimension for");
-        }
-
-        // Node Count
-        if(geot != POINT)
-        {
-            err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COUNT, node_count_name);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "varName");
-            }
-
-            err_code = nc_def_dim(ncID_in, node_count_name, initDimLen, &node_count_dimID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension for");
-            }
-
-            err_code = nc_def_var(ncID_in, node_count_name, NC_INT, 1, &node_count_dimID, &node_count_varID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "variable");
-            }
-
-        }
-
-
-        // Do the same for part node count, if it exists
-        char pnc_name[NC_MAX_CHAR + 1] = {0};
-        err_code = nc_get_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, pnc_name);
-        if(err_code == NC_NOERR)
-        {
-            err_code = nc_def_dim(ncID_in, pnc_name, initDimLen, &pnc_dimID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dimension for");
-            }
-
-            err_code = nc_def_var(ncID_in, pnc_name, NC_INT, 1, &pnc_dimID, &pnc_varID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "variable");
-            }
-        }
-
-        // Node coordinates Var Definitions
-        int new_varID;
-        CPLStringList aosNcoord(CSLTokenizeString2(node_coord_names, " ", 0));
-
-        if(aosNcoord.size() < 2)
-            throw SGWriter_Exception();
-
-        // first it's X
-        err_code = nc_def_var(ncID, aosNcoord[0], NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
-
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "variable(s)");
-        }
-
-        err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_X_AXIS), CF_SG_X_AXIS);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "X axis attribute");
-        }
-
-        this->node_coordinates_varIDs.push_back(new_varID);
-
-        // second it's Y
-        err_code = nc_def_var(ncID, aosNcoord[1], NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
-
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "variable(s)");
-        }
-
-        err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Y_AXIS), CF_SG_Y_AXIS);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Y axis attribute");
-        }
-
-        this->node_coordinates_varIDs.push_back(new_varID);
-
-        // (and perhaps) third it's Z
-        if(aosNcoord.size() > 2)
-        {
-            err_code = nc_def_var(ncID, aosNcoord[2], NC_DOUBLE, 1, &node_coordinates_dimID, &new_varID);
-
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "variable(s)");
-            }
-
-            err_code = nc_put_att_text(ncID, new_varID, CF_AXIS, strlen(CF_SG_Z_AXIS), CF_SG_Z_AXIS);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "Z axis attribute");
-            }
-
-            this->node_coordinates_varIDs.push_back(new_varID);
-        }
-    }
-
-    void OGR_SGeometry_Scribe::redef_interior_ring()
-    {
-        int err_code;
-        const char * container_name = containerVarName.c_str();
-
-        if(!this->writing_to_NC4)
-        {
-            err_code = nc_redef(ncID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to define mode", "file");
-            }
-        }
-
-        std::string int_ring = std::string(container_name) + std::string("_interior_ring");
-
-        // Put the new interior ring attribute
-        err_code = nc_put_att_text(ncID, containerVarID, CF_SG_INTERIOR_RING, strlen(int_ring.c_str()), int_ring.c_str());
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "attribute");
-        }
-
-        size_t pnc_dim_len = 0;
-
-        err_code = nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dim (part node count must be defined/redefined first)");
-        }
-
-        // Define the new variable
-        err_code = nc_def_var(ncID, int_ring.c_str(), NC_INT, 1, &pnc_dimID, &intring_varID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "variable");
-        }
-
-        if(!this->writing_to_NC4)
-        {
-            err_code = nc_enddef(ncID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to data mode", "file");
-            }
-        }
-
-        const int zero_fill = 0;
-
-        // Zero fill interior ring
-        for(size_t itr = 0; itr < pnc_dim_len; itr++)
-        {
-            err_code = nc_put_var1_int(ncID, intring_varID, &itr, &zero_fill);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "integer datum");
-            }
-        }
-    }
-
-    void OGR_SGeometry_Scribe::redef_pnc()
-    {
-        int err_code;
-        const char* container_name = containerVarName.c_str();
-
-        if(!this->writing_to_NC4)
-        {
-            err_code = nc_redef(ncID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to define mode", "file");
-            }
-        }
-
-        std::string pnc_name = std::string(container_name) + std::string("_part_node_count");
-
-        // Put the new part node count attribute
-        err_code = nc_put_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, strlen(pnc_name.c_str()), pnc_name.c_str());
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "attribute");
-        }
-
-        // If the PNC dim doesn't exist, define it
-
-        size_t pnc_dim_len = 0;
-
-        if(pnc_dimID == INVALID_DIM_ID)
-        {
-            // Initialize it with size of node_count Dim
-            size_t ncount_len;
-            err_code = nc_inq_dimlen(ncID, node_count_dimID, &ncount_len);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "dimension");
-            }
-            err_code = nc_def_dim(ncID, pnc_name.c_str(), this->writing_to_NC4 ? NC_UNLIMITED : ncount_len, &pnc_dimID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dimension");
-            }
-
-            this->next_write_pos_pnc = this->next_write_pos_node_count;
-        }
-
-        err_code = nc_inq_dimlen(ncID, pnc_dimID, &pnc_dim_len);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "dim");
-        }
-
-        // Define the new variable
-        err_code = nc_def_var(ncID, pnc_name.c_str(), NC_INT, 1, &pnc_dimID, &pnc_varID);
-        NCDF_ERR(err_code);
-        if (err_code != NC_NOERR)
-        {
-            throw SGWriter_Exception_NCDefFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "variable");
-        }
-
-        if(!this->writing_to_NC4)
-        {
-            err_code = nc_enddef(ncID);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCDefFailure("netCDF file", "switch to data mode", "file");
-            }
-        }
-
-        // Fill pnc with the current values of node counts
-        for(size_t itr = 0; itr < pnc_dim_len; itr++)
-        {
-            int ncount_in;
-            err_code = nc_get_var1_int(ncID, node_count_varID, &itr, &ncount_in);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCInqFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "integer datum");
-            }
-
-            err_code = nc_put_var1_int(ncID, pnc_varID, &itr, &ncount_in);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "integer datum");
-            }
-        }
-    }
-
+*/
 
     static std::string sgwe_msg_builder
         (    const char * layer_name,
@@ -918,19 +584,8 @@ namespace nccfdriver
             "could not be defined in the dataset (definition failure)."))
     {}
 
-    void OGR_SGeometry_Scribe::cpyNCOUNT_into_PNC()
-    {
-        std::queue<int> refill = std::queue<int>(ncounts);
-        while(!pnc.empty())
-        {
-            refill.push(pnc.front());
-            pnc.pop();
-        }
-        this->pnc = refill;
-    }
-
-    // OGR_SGeometry_Field_Scribe
-    void OGR_SGeometry_Field_Scribe::enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd)
+    // OGR_NCScribe
+    void OGR_NCScribe::enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd)
     {
         if(transactionAdd.get() == nullptr)
         {
@@ -940,15 +595,9 @@ namespace nccfdriver
         // See if in the variable name is already being written to
         if(this->varMaxInds.count(transactionAdd->getVarId()) > 0)
         {
-            // See if this variable is pushing the record limit if is, set a new record limit
             size_t varWriteLength = this->varMaxInds[transactionAdd->getVarId()];
             varWriteLength++;
             this->varMaxInds[transactionAdd->getVarId()] = varWriteLength;
-
-            if(varWriteLength > this->recordLength)
-            {
-                this->recordLength = varWriteLength;
-            }
         }
 
         else
@@ -966,7 +615,7 @@ namespace nccfdriver
         this->transactionQueue.push(transactionAdd);
     }
 
-    void OGR_SGeometry_Field_Scribe::commit_transaction()
+    void OGR_NCScribe::commit_transaction()
     {
         while(!transactionQueue.empty())
         {

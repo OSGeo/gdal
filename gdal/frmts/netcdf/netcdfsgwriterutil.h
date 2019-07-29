@@ -94,115 +94,7 @@ namespace nccfdriver
              WBuffer() {}
     };
 
-    class ncLayer_SG_Metadata
-    {
-        int & ncID;
-        geom_t writableType = NONE;
-        std::string containerVarName;
-        int containerVarID = INVALID_VAR_ID;
-        bool interiorRingDetected = false; // flips on when an interior ring polygon has been detected
-        std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
-        int node_coordinates_dimID = INVALID_DIM_ID; // dim of all node_coordinates
-        int node_count_dimID = INVALID_DIM_ID; // node count dim
-        int node_count_varID = INVALID_DIM_ID;
-        int pnc_dimID = INVALID_DIM_ID; // part node count dim AND interior ring dim
-        int pnc_varID = INVALID_VAR_ID;
-        int intring_varID = INVALID_VAR_ID;
-        size_t next_write_pos_node_coord = 0;
-        size_t next_write_pos_node_count = 0;
-        size_t next_write_pos_pnc = 0;
 
-        public:
-            geom_t getWritableType() { return this->writableType; }
-            void writeSGeometryFeature(SGeometry_Feature& ft);
-            int get_containerID() { return this->containerVarID; }
-            int get_node_count_dimID() { return this->node_count_dimID; }
-            int get_node_coord_dimID() { return this->node_coordinates_dimID; }
-            int get_pnc_dimID() { return this->pnc_dimID; }
-            std::vector<int>& get_nodeCoordVarIDs() { return this->node_coordinates_varIDs; }
-            size_t get_next_write_pos_node_coord() { return this->next_write_pos_node_coord; }
-            size_t get_next_write_pos_node_count() { return this->next_write_pos_node_count; }
-            size_t get_next_write_pos_pnc() { return this->next_write_pos_pnc; }
-            bool getInteriorRingDetected() { return this->interiorRingDetected; }
-
-            ncLayer_SG_Metadata(int & i_ncID, int containerVID, geom_t geo, netCDFVID& ncdf);
-    };
-
-    /* OGR_SGeometry_Scribe
-     * Takes a SGeometry_Feature and given a target geometry container ID it will write the feature
-     * to a given netCDF dataset in CF-1.8 compliant formatting.
-     * Any needed variables will automatically be defined, and dimensions will be automatically grown corresponding with need
-     *
-     */
-    class OGR_SGeometry_Scribe : public WBuffer
-    {
-        bool writing_to_NC4 = false;
-        int ncID = 0;
-        geom_t writableType = NONE;
-        std::string containerVarName;
-        int containerVarID = INVALID_VAR_ID;
-        bool interiorRingDetected = false; // flips on when an interior ring polygon has been detected
-        std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
-        int node_coordinates_dimID = INVALID_DIM_ID; // dim of all node_coordinates
-        int node_count_dimID = INVALID_DIM_ID; // node count dim
-        int node_count_varID = INVALID_DIM_ID;
-        int pnc_dimID = INVALID_DIM_ID; // part node count dim AND interior ring dim
-        int pnc_varID = INVALID_VAR_ID;
-        int intring_varID = INVALID_VAR_ID;
-        size_t next_write_pos_node_coord = 0;
-        size_t next_write_pos_node_count = 0;
-        size_t next_write_pos_pnc = 0;
-
-        std::queue<int> pnc; // part node counts
-        std::queue<int> ncounts; // node counts
-        std::queue<bool> interior_rings; // interior rings
-        std::queue<double> xC; // x coords
-        std::queue<double> yC; // y coords
-        std::queue<double> zC; // z coords
-
-        void addXCoord(double xp) { this->xC.push(xp); WBuffer::addCount(sizeof(xp)); }
-        void addYCoord(double yp) { this->yC.push(yp); WBuffer::addCount(sizeof(yp)); }
-        void addZCoord(double zp) { this->zC.push(zp); WBuffer::addCount(sizeof(zp)); }
-        void addPNC(int pncp) { this->pnc.push(pncp); WBuffer::addCount(sizeof(pncp)); }
-        void addNCOUNT(int ncount) { this->ncounts.push(ncount); WBuffer::addCount(sizeof(ncount)); }
-        void addIRing(bool iring) { this->interior_rings.push(iring); WBuffer::addCount(sizeof(iring)); }
-        double XCoordDequeue() { double ret = xC.front(); xC.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-        double YCoordDequeue() { double ret = yC.front(); yC.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-        double ZCoordDequeue() { double ret = zC.front(); zC.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-        int PNCDequeue() { int ret = pnc.front(); pnc.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-        int NCOUNTDequeue() { int ret = ncounts.front(); ncounts.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-        bool IRingDequeue() { bool ret = interior_rings.front(); interior_rings.pop(); WBuffer::subCount(sizeof(ret)); return(ret); }
-        void cpyNCOUNT_into_PNC();
-        void flushPNCBuffer() { this->pnc = std::queue<int>(); }
-        size_t getIRingVarEntryCount() { return this-> interior_rings.size(); } // DOESN'T get the amount of "interior_rings" gets the amount of true / false interior ring entries
-
-        public:
-            geom_t getWritableType() { return this->writableType; }
-            void writeSGeometryFeature(SGeometry_Feature& ft);
-            int get_containerID() { return this->containerVarID; }
-            void update_ncID(int newID) { this->ncID = newID; }
-            int get_node_count_dimID() { return this->node_count_dimID; }
-            int get_node_coord_dimID() { return this->node_coordinates_dimID; }
-            int get_pnc_dimID() { return this->pnc_dimID; }
-            std::vector<int>& get_nodeCoordVarIDs() { return this->node_coordinates_varIDs; }
-            size_t get_next_write_pos_node_coord() { return this->next_write_pos_node_coord; }
-            size_t get_next_write_pos_node_count() { return this->next_write_pos_node_count; }
-            size_t get_next_write_pos_pnc() { return this->next_write_pos_pnc; }
-            void redef_interior_ring(); // adds an interior ring attribute and to the target geometry container and corresponding variable
-            void redef_pnc(); // adds a part node count attribute to the target geometry container and corresponding variable
-            bool getInteriorRingDetected() { return this->interiorRingDetected; }
-            void commit_transaction(); // commit all writes to the netCDF (subject to fs stipulations)
-
-            size_t getXCBufLength() { return this->xC.size(); }
-            size_t getYCBufLength() { return this->yC.size(); }
-            size_t getZCBufLength() { return this->zC.size(); }
-            size_t getNCOUNTBufLength() { return this->ncounts.size(); }
-            size_t getPNCBufLength() { return this->pnc.size(); }
-
-            OGR_SGeometry_Scribe() {}
-            OGR_SGeometry_Scribe(int ncID, int containerVarID, geom_t geo_t, bool isTrueNC4);
-            ~OGR_SGeometry_Scribe() { this->commit_transaction(); }
-    };
 
     /* OGR_SGFS_Transaction
      * Abstract class for a commitable transaction
@@ -412,11 +304,11 @@ namespace nccfdriver
             }
     };
 
-    /* OGR_SGeometry_Field_Scribe
-     * Buffers several netCDF transactions in memory to reduce the need of dimension resizing
-     *
+    /* OGR_NCScribe
+     * Buffers several netCDF transactions in memory or in a log.
+     * General scribe class
      */
-    class OGR_SGeometry_Field_Scribe
+    class OGR_NCScribe
     {
         const int & ncid;
         int ncID() { return this->ncid; } // creates copy of const reference ncid
@@ -426,13 +318,12 @@ namespace nccfdriver
         std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
         std::map<int, size_t> varWriteInds;
         std::map<int, size_t> varMaxInds;
-        size_t recordLength = 1;
 
         public:
-           /* size_t get_Record_Length()
-            * Return the current length of the record dimension
+           /* size_t getWriteCount()
+            * Return the total write count (happened + pending) of certain variable
             */
-           size_t getRecordLength() { return this->recordLength; }
+           size_t getWriteCount(int varId) { return this->varMaxInds.at(varId); }
 
             /* void commit_transaction()
              * Replays all transactions to disk (according to fs stipulations)
@@ -441,31 +332,57 @@ namespace nccfdriver
 
            /* void enqueue_transaction()
             * Add a transaction to perform
-            * Once a transaction is enqueued, it will only be dequeued on flush
+            * Once a transaction is enqueued, it will only be dequeued on commit
             */
            void enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd);
 
            WBuffer& getMemBuffer() { return buf; }
 
-           /* int RecordDimID()
-            * Return record dimension ID that this variable writes over
-            */
-           int RecordDimID() { return this->recordDimID; }
-
-           /* void setLayerRecord()
-            * Sets the record of a new layer. If there are pending writes for a previous layer, they will be commited before the new record is set
-            * The new record passed in is simply the record dim ID.
-            */ 
-           void setLayerRecord(int dimid) { this->commit_transaction(); this->recordDimID = dimid; }
-
            /* OGR_SGeometry_Field_Scribe()
             * Constructs a Field Scribe over a dataset
             */
-           explicit OGR_SGeometry_Field_Scribe(const int& in_ncid) :
+           explicit OGR_NCScribe(const int& in_ncid) :
                ncid(in_ncid),
                buf()
            {}
 
+    };
+
+    class ncLayer_SG_Metadata
+    {
+        int & ncID;
+        netCDFVID& vDataset;
+        OGR_NCScribe & ncb;
+        geom_t writableType = NONE;
+        std::string containerVarName;
+        int containerVarID = INVALID_VAR_ID;
+        bool interiorRingDetected = false; // flips on when an interior ring polygon has been detected
+        std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
+        int node_coordinates_dimID = INVALID_DIM_ID; // dim of all node_coordinates
+        int node_count_dimID = INVALID_DIM_ID; // node count dim
+        int node_count_varID = INVALID_DIM_ID;
+        int pnc_dimID = INVALID_DIM_ID; // part node count dim AND interior ring dim
+        int pnc_varID = INVALID_VAR_ID;
+        int intring_varID = INVALID_VAR_ID;
+        size_t next_write_pos_node_coord = 0;
+        size_t next_write_pos_node_count = 0;
+        size_t next_write_pos_pnc = 0;
+
+        public:
+            geom_t getWritableType() { return this->writableType; }
+            void writeSGeometryFeature(SGeometry_Feature& ft);
+            int get_containerID() { return this->containerVarID; }
+            int get_node_count_dimID() { return this->node_count_dimID; }
+            int get_node_coord_dimID() { return this->node_coordinates_dimID; }
+            int get_pnc_dimID() { return this->pnc_dimID; }
+            std::vector<int>& get_nodeCoordVarIDs() { return this->node_coordinates_varIDs; }
+            size_t get_next_write_pos_node_coord() { return this->next_write_pos_node_coord; }
+            size_t get_next_write_pos_node_count() { return this->next_write_pos_node_count; }
+            size_t get_next_write_pos_pnc() { return this->next_write_pos_pnc; }
+            bool getInteriorRingDetected() { return this->interiorRingDetected; }
+            void initializeNewContainer(int containerVID);
+            void scanExistingContainer(int containerVID);
+            ncLayer_SG_Metadata(int & i_ncID, geom_t geo, netCDFVID& ncdf, OGR_NCScribe& scribe);
     };
 
     /* WBufferManager

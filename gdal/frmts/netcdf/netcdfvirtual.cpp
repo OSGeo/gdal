@@ -41,5 +41,6 @@ namespace nccfdriver
 
 	int netCDFVID::nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp)
 	{
+
 	}
 }

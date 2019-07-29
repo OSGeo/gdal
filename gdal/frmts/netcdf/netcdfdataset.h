@@ -839,9 +839,10 @@ class netCDFDataset final: public GDALPamDataset
     bool          bSGSupport;
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
-    nccfdriver::OGR_SGeometry_Scribe GeometryScribe;
-    nccfdriver::OGR_SGeometry_Field_Scribe FieldScribe;
+    nccfdriver::OGR_NCScribe GeometryScribe;
+    nccfdriver::OGR_NCScribe FieldScribe;
     nccfdriver::WBufferManager bufManager;
+    nccfdriver::netCDFVID vcdf;
 
     /* projection/GT */
     double       adfGeoTransform[6];
@@ -1048,7 +1049,6 @@ class netCDFLayer final: public OGRLayer
         nc_type         m_nWKTNCDFType;
         CPLString       m_osCoordinatesValue;
         std::vector<FieldDesc> m_aoFieldDesc;
-        int             m_writableSGContVarID;
         bool            m_bLegacyCreateMode;
         int             m_nCurFeatureId;
         CPLString       m_osGridMapping;
@@ -1067,6 +1067,8 @@ class netCDFLayer final: public OGRLayer
         size_t          m_SGeometryFeatInd;
 
         const netCDFWriterConfigLayer* m_poLayerConfig;
+
+        nccfdriver::ncLayer_SG_Metadata m_layerSGDefn;
 
         OGRFeature     *GetNextRawFeature();
         double          Get1DVarAsDouble( int nVarId, nc_type nVarType,

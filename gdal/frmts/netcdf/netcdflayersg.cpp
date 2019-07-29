@@ -216,17 +216,7 @@ void netCDFDataset::SGCommitPendingTransaction()
 {
     try
     {
-        if(this->GeometryScribe.get_containerID() == nccfdriver::INVALID_VAR_ID)
-        {
-            return; // do nothing if invalid scribe
-        }
-
-        if(this->eFormat != NCDF_FORMAT_NC4) // do NOT grow dimensions in NC4 (all infinite)
-        {
-            this->FieldScribe.commit_transaction(); // NC4 currently does not use the "Field Scribe", uses the direct writing used in CF-1.6
-        }
-
-        this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates
+        this->FieldScribe.commit_transaction();
         this->GeometryScribe.commit_transaction();
     }
 
