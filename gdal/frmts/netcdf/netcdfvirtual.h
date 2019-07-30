@@ -57,6 +57,23 @@ namespace nccfdriver
 			virtual ~netCDFVAttribute() { }
 	};
 
+	template <class VClass, nc_type ntype> class netCDFVGeneralAttribute : public netCDFVAttribute
+	{
+		std::string name;
+		VClass value;
+
+		public:
+			netCDFVGeneralAttribute<VClass, ntype>(const char* a_name, const VClass* a_value) :
+				name(a_name),
+				value(*a_value)
+			{}
+
+			void vsync(int realncid, int realvarid) override
+			{
+				nc_put_att(realncid, realvarid, name.c_str(), ntype, 1, &value);
+			}
+	};
+
 	/* netCDFVTextAttribute
 	 * -
 	 * Attribute that has a text string value
@@ -75,23 +92,10 @@ namespace nccfdriver
 			void vsync(int realncid, int realvarid) override;
 	};
 
-	/* netCDFVIntAttribute
-	 * -
-	 * Attribute that has an int value
-	 */
-	class netCDFVIntAttribute : public netCDFVAttribute
-	{
-		std::string name;
-		int value;
-
-		public:
-			netCDFVIntAttribute(const char* a_name, int a_value) :
-				name(a_name),
-				value(a_value)		
-			{}
-
-			void vsync(int realncid, int realvarid) override;
-	};
+	typedef netCDFVGeneralAttribute<signed char, NC_BYTE> netCDFVByteAttribute;
+	typedef netCDFVGeneralAttribute<int, NC_INT> netCDFVIntAttribute;
+	typedef netCDFVGeneralAttribute<double, NC_DOUBLE> netCDFVDoubleAttribute;
+	typedef netCDFVGeneralAttribute<float, NC_FLOAT> netCDFVFloatAttribute;
 
 	/* netCDFVDimension
 	 * -
@@ -158,7 +162,7 @@ namespace nccfdriver
 	 * for a variable after its been commited.
 	 *
 	 * ** Do not mix netCDF virtual dim and variable IDs with regular netCDF dim (a.k.a. "real") 
-	 * ids and variable ids. They are NOT compatible, and must be translated first, to be
+	 * ids and variable ids. They are NOT necessarily compatible, and must be translated first, to be
 	 * used in this manner **
 	 */
 	class netCDFVID
@@ -188,8 +192,23 @@ namespace nccfdriver
 			void nc_vmap();
 
                         // Attribute function(s)
+			template<class attrC, class attrT> void nc_put_vatt_generic(int varid, const char* name, const attrT* out)
+			{
+				
+				if(varid >= static_cast<int>(dimList.size()) || varid < 0)
+				{
+					// TODO: throw exception
+				}
+
+				netCDFVVariable& v = virtualVIDToVar(varid);
+                		v.getAttributes().push_back(std::shared_ptr<netCDFVAttribute>(new attrC(name, out)));
+			}
+
 			void nc_put_vatt_text(int varid, const char * name, const char * out);
 			void nc_put_vatt_int(int varid, const char* name, const int* out);
+			void nc_put_vatt_double(int varid, const char* name, const double* out);
+			void nc_put_vatt_float(int varid, const char* name, const float* out);
+			void nc_put_vatt_byte(int varid, const char* name, const signed char* out);
 
                         // Writing Functions
 			void nc_put_vvar1_text(int varid, const size_t* index, const char* out);

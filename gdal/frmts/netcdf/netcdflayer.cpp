@@ -99,7 +99,7 @@ netCDFLayer::~netCDFLayer()
 /*                   netCDFWriteAttributesFromConf()                    */
 /************************************************************************/
 
-static void netCDFWriteAttributesFromConf(
+void netCDFLayer::netCDFWriteAttributesFromConf(
     int cdfid, int varid,
     const std::vector<netCDFWriterConfigAttribute> &aoAttributes)
 {
@@ -118,20 +118,41 @@ static void netCDFWriteAttributesFromConf(
         }
         else if( EQUAL(oAtt.m_osType, "string") )
         {
-            status = nc_put_att_text(cdfid, varid, oAtt.m_osName,
-                                     oAtt.m_osValue.size(), oAtt.m_osValue);
+            if(m_bLegacyCreateMode)
+            {
+                status = nc_put_att_text(cdfid, varid, oAtt.m_osName,
+                                         oAtt.m_osValue.size(), oAtt.m_osValue);
+            }
+            else
+            {
+                m_poDS->vcdf.nc_put_vatt_text(varid, oAtt.m_osName, oAtt.m_osValue);
+            }
         }
         else if( EQUAL(oAtt.m_osType, "integer") )
         {
             int nVal = atoi(oAtt.m_osValue);
-            status =
-                nc_put_att_int(cdfid, varid, oAtt.m_osName, NC_INT, 1, &nVal);
+            if(m_bLegacyCreateMode)
+            {
+                status =
+                    nc_put_att_int(cdfid, varid, oAtt.m_osName, NC_INT, 1, &nVal);
+            }
+            else
+            {
+                m_poDS->vcdf.nc_put_vatt_int(varid, oAtt.m_osName, &nVal);
+            }
         }
         else if( EQUAL(oAtt.m_osType, "double") )
         {
             double dfVal = CPLAtof(oAtt.m_osValue);
-            status = nc_put_att_double(cdfid, varid, oAtt.m_osName,
+            if(m_bLegacyCreateMode)
+            {
+                 status = nc_put_att_double(cdfid, varid, oAtt.m_osName,
                                        NC_DOUBLE, 1, &dfVal);
+            }
+            else
+            {
+                 m_poDS->vcdf.nc_put_vatt_double(varid, oAtt.m_osName, &dfVal);
+            }
         }
         NCDF_ERR(status);
     }
@@ -574,8 +595,7 @@ bool netCDFLayer::Create(char **papszOptions,
             // Write the grid mapping, if it exists:
             if (poSRS != nullptr)
             {
-                /* TODO: rewrite using virtual NCID
-                status = nc_put_att_text(m_nLayerCDFId, m_writableSGContVarID, CF_GRD_MAPPING, strlen(m_sgCRSname.c_str()), m_sgCRSname.c_str());
+                m_poDS->vcdf.nc_put_vatt_text(m_layerSGDefn.get_containerID(), CF_GRD_MAPPING, m_sgCRSname.c_str());
                 NCDF_ERR(status);
                 if(status != NC_NOERR)
                 {
@@ -595,7 +615,7 @@ bool netCDFLayer::Create(char **papszOptions,
                 {
                     NCDFWriteXYVarsAttributes(m_nLayerCDFId, xVar, yVar,
                         poSRS);
-                }*/
+                }
             }
         }
     }
@@ -2534,9 +2554,12 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
         if( eSubType == OFSTBoolean )
         {
-            signed char anRange[2] = { 0, 1 };
-            nc_put_att_schar(m_nLayerCDFId, nVarID, "valid_range", NC_BYTE, 2,
+            if(m_bLegacyCreateMode)
+            {
+                signed char anRange[2] = { 0, 1 };
+                nc_put_att_schar(m_nLayerCDFId, nVarID, "valid_range", NC_BYTE, 2,
                              anRange);
+            }
         }
 
         break;
@@ -2623,10 +2646,19 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         }
         nodata.nVal = NC_FILL_INT;
 
-        status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
+        if(!m_bLegacyCreateMode)
+        {
+            m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_UNITS,
+                                 "days since 1970-1-1");
+        }
+
+        else
+        {
+            status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
                                  strlen("days since 1970-1-1"),
                                  "days since 1970-1-1");
-        NCDF_ERR(status);
+            NCDF_ERR(status);
+        }
 
         break;
     }
@@ -2653,10 +2685,19 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         }
         nodata.dfVal = NC_FILL_DOUBLE;
 
-        status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
+        if(!m_bLegacyCreateMode)
+        {
+            m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_UNITS,
+                                                   "seconds since 1970-1-1 0:0:0");
+        }
+
+        else
+        {
+            status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
                                  strlen("seconds since 1970-1-1 0:0:0"),
                                  "seconds since 1970-1-1 0:0:0");
-        NCDF_ERR(status);
+            NCDF_ERR(status);
+        }
 
         break;
     }
@@ -2783,15 +2824,17 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
     if( !m_osCoordinatesValue.empty() && nMainDimId == m_nRecordDimID )
     {
-    if ( !m_bLegacyCreateMode )
-    {
-        std::string ct_name(m_layerSGDefn.get_containerName());
-        m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_SG_GEOMETRY, ct_name.c_str());
-    }
-        status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_COORDINATES,
-                                 m_osCoordinatesValue.size(),
-                                 m_osCoordinatesValue.c_str());
-        NCDF_ERR(status);
+        if ( !m_bLegacyCreateMode )
+        {
+            m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_COORDINATES, m_osCoordinatesValue.c_str());
+        }
+        else
+        {
+            status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_COORDINATES,
+                                     m_osCoordinatesValue.size(),
+                                     m_osCoordinatesValue.c_str());
+            NCDF_ERR(status);
+        }
     }
 
     if( poConfig != nullptr )

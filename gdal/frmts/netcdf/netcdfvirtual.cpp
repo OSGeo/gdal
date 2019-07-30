@@ -177,36 +177,35 @@ namespace nccfdriver
 	/* Attribute writing
 	 * 
 	 */
+	
 	void netCDFVID::nc_put_vatt_text(int varid, const char* name, const char* out)
 	{
-		if(varid >= static_cast<int>(dimList.size()) || varid < 0)
-		{
-			// TODO: throw exception
-		}
-
-		netCDFVVariable& v = virtualVIDToVar(varid);
-                v.getAttributes().push_back(std::shared_ptr<netCDFVAttribute>(new netCDFVTextAttribute(name, out)));
+		nc_put_vatt_generic<netCDFVTextAttribute, char>(varid, name, out);
 	}
 
 	void netCDFVID::nc_put_vatt_int(int varid, const char* name, const int* out)
 	{
-		if(varid >= static_cast<int>(dimList.size()) || varid < 0)
-		{
-			// TODO: throw exception
-		}
-
-		netCDFVVariable& v = virtualVIDToVar(varid);
-                v.getAttributes().push_back(std::shared_ptr<netCDFVAttribute>(new netCDFVIntAttribute(name, *out)));
+		nc_put_vatt_generic<netCDFVIntAttribute, int>(varid, name, out);
 	}
+
+	void netCDFVID::nc_put_vatt_double(int varid, const char* name, const double* out)
+	{
+		nc_put_vatt_generic<netCDFVDoubleAttribute, double>(varid, name, out);
+	}
+
+	void netCDFVID::nc_put_vatt_float(int varid, const char* name, const float* out)
+	{
+		nc_put_vatt_generic<netCDFVFloatAttribute, float>(varid, name, out);
+        }
+
+	void netCDFVID::nc_put_vatt_byte(int varid, const char* name, const signed char* out)
+	{
+		nc_put_vatt_generic<netCDFVByteAttribute, signed char>(varid, name, out);
+        }
 
 	void netCDFVTextAttribute::vsync(int realncid, int realvarid)
 	{
 		nc_put_att_text(realncid, realvarid, name.c_str(), value.size(), value.c_str()); //TODO exception
-	}
-
-	void netCDFVIntAttribute::vsync(int realncid, int realvarid)
-	{
-		nc_put_att_int(realncid, realvarid, name.c_str(), NC_INT, sizeof(int), &value); //TODO exception
 	}
 
 	/* Single Datum Writing

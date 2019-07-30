@@ -1082,6 +1082,8 @@ class netCDFLayer final: public OGRLayer
         void            GetNoDataValue( int nVarId, nc_type nVarType, NCDFNoDataUnion* puNoData );
         bool            FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
         OGRFeature*     buildSGeometryFeature(size_t featureInd);
+        void            netCDFWriteAttributesFromConf(int cdfid, int varid,
+                             const std::vector<netCDFWriterConfigAttribute> &aoAttributes);
 
     protected:
         bool            FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size_t nIndex);
