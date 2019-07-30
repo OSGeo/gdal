@@ -4,12 +4,12 @@
 #
 # Project:  OpenGIS Simple Features Reference Implementation
 # Purpose:  Python port of a simple client for viewing OGR driver data.
-# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault, <even dot rouault at spatialys.com>
 #
 # Port from ogrinfo.cpp whose author is Frank Warmerdam
 #
 # *****************************************************************************
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 1999, Frank Warmerdam
 #
 # Permission is hereby granted, free of charge, to any person obtaining a

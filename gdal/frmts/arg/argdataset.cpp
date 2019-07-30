@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2012, David Zwarg <dzwarg@azavea.com>
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -465,7 +465,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 
         json_object_put(pJSONObject);
         pJSONObject = nullptr;
-
+        CPLFree(pszWKT);
         return nullptr;
     }
 
@@ -727,6 +727,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
                                                   bNative,
                                                   nXSize, nYSize,
                                                   RawRasterBand::OwnFP::NO);
+    poDstBand->SetAccess(GA_Update);
 
     int nXBlockSize, nYBlockSize;
     poSrcBand->GetBlockSize(&nXBlockSize, &nYBlockSize);

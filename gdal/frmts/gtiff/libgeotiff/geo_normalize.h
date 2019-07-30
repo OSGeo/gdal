@@ -62,7 +62,7 @@ typedef struct {
         GCS_Voirol_1875_Paris.  Includes datum and prime meridian value. */
     short	GCS;
 
-    /** From ProjLinearUnitsGeoKey.  For example Linear_Meter. */
+    /** From ProjLinearUnitsGeoKey if found, or from GeogLinearUnitsGeoKey otherwise.  For example Linear_Meter. */
     short	UOMLength;
 
     /** One UOMLength = UOMLengthInMeters meters. */
@@ -143,27 +143,61 @@ typedef struct {
 
 } GTIFDefn;
 
+int GTIF_DLL GTIFGetPCSInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                      int nPCSCode, char **ppszEPSGName,
+                      short *pnProjOp, short *pnUOMLengthCode,
+                      short *pnGeogCS );
 int GTIF_DLL GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                             short *pnProjOp,
                             short *pnUOMLengthCode, short *pnGeogCS );
+
+int GTIF_DLL GTIFGetProjTRFInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                          int nProjTRFCode,
+                          char **ppszProjTRFName,
+                          short * pnProjMethod,
+                          double * padfProjParms );
 int GTIF_DLL GTIFGetProjTRFInfo( int nProjTRFCode,
                                 char ** ppszProjTRFName,
                                 short * pnProjMethod,
                                 double * padfProjParms );
+
+int GTIF_DLL GTIFGetGCSInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                      int nGCSCode, char ** ppszName,
+                      short * pnDatum, short * pnPM, short *pnUOMAngle );
 int GTIF_DLL GTIFGetGCSInfo( int nGCSCode, char **ppszName,
                             short *pnDatum, short *pnPM, short *pnUOMAngle );
+
+int GTIF_DLL GTIFGetDatumInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                        int nDatumCode, char ** ppszName, short * pnEllipsoid );
 int GTIF_DLL GTIFGetDatumInfo( int nDatumCode, char **ppszName,
                               short * pnEllipsoid );
+
+int GTIF_DLL GTIFGetEllipsoidInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                            int nEllipseCode, char ** ppszName,
+                            double * pdfSemiMajor, double * pdfSemiMinor );
 int GTIF_DLL GTIFGetEllipsoidInfo( int nEllipsoid, char ** ppszName,
                                   double * pdfSemiMajor,
                                   double * pdfSemiMinor );
+
+int GTIF_DLL GTIFGetPMInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                     int nPMCode, char ** ppszName, double *pdfOffset );
 int GTIF_DLL GTIFGetPMInfo( int nPM, char **ppszName,
                            double * pdfLongToGreenwich );
 
 double GTIF_DLL GTIFAngleStringToDD( const char *pszAngle, int nUOMAngle );
+
+int GTIF_DLL GTIFGetUOMLengthInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                            int nUOMLengthCode,
+                            char **ppszUOMName,
+                            double * pdfInMeters );
 int GTIF_DLL GTIFGetUOMLengthInfo( int nUOMLengthCode,
                                   char **ppszUOMName,
                                   double * pdfInMeters );
+
+int GTIF_DLL GTIFGetUOMAngleInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
+                           int nUOMAngleCode,
+                           char **ppszUOMName,
+                           double * pdfInDegrees );
 int GTIF_DLL GTIFGetUOMAngleInfo( int nUOMAngleCode,
                                  char **ppszUOMName,
                                  double * pdfInDegrees );
@@ -175,7 +209,7 @@ void GTIF_DLL GTIFFreeMemory( char * );
 
 /* The void* should be a PJ_CONTEXT* */
 void GTIF_DLL GTIFAttachPROJContext( GTIF *psGTIF, void* pjContext );
-void GTIF_DLL *GTIFGetPROJContext( GTIF *psGTIF, int instanciateIfNeeded,
+void GTIF_DLL *GTIFGetPROJContext( GTIF *psGTIF, int instantiateIfNeeded,
                                    int* out_gtif_own_pj_context );
 
 int GTIF_DLL GTIFGetDefn( GTIF *psGTIF, GTIFDefn * psDefn );
@@ -210,9 +244,13 @@ int  GTIF_DLL  GTIFProj4FromLatLong( GTIFDefn *, int, double *, double * );
 
 int  GTIF_DLL  GTIFSetFromProj4( GTIF *gtif, const char *proj4 );
 
-#if defined(HAVE_LIBPROJ) && defined(HAVE_PROJECTS_H)
-#  define HAVE_GTIFPROJ4
-#endif
+
+/*
+ * The following functions were used up to libgeotiff 1.4.X series, but
+ * are now no-operation, since there is no longer any CSV use in libgeotiff.
+ */
+void GTIF_DLL GTIFDeaccessCSV( void );
+
 
 #ifdef __cplusplus
 }

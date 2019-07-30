@@ -2,10 +2,10 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for gz/zip files (.gz and .zip).
- * Author:   Even Rouault, even.rouault at mines-paris.org
+ * Author:   Even Rouault, even.rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1207,6 +1207,7 @@ class VSIGZipWriteHandleMT final : public VSIVirtualHandle
     int                nSeqNumberExpected_ = 0;
     int                nSeqNumberExpectedCRC_ = 0;
     size_t             nChunkSize_ = 0;
+    bool               bHasErrored_ = false;
 
     struct Job
     {
@@ -1294,7 +1295,7 @@ VSIGZipWriteHandleMT::VSIGZipWriteHandleMT(  VSIVirtualHandle* poBaseHandle,
 VSIGZipWriteHandleMT::~VSIGZipWriteHandleMT()
 
 {
-    Close();
+    VSIGZipWriteHandleMT::Close();
     for( auto& psJob: apoFinishedJobs_ )
     {
         delete psJob->pBuffer_;
@@ -1578,10 +1579,6 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                                           nToWrite) < nToWrite;
                 sMutex_.lock();
                 nSeqNumberExpected_ ++;
-                if( bError )
-                {
-                    return false;
-                }
 
                 if( nDeflateType_ != CPL_DEFLATE_TYPE_GZIP )
                 {
@@ -1589,6 +1586,11 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                     psJob->pBuffer_ = nullptr;
 
                     apoFreeJobs_.push_back(psJob);
+                }
+
+                if( bError )
+                {
+                    return false;
                 }
 
                 do_it_again = true;
@@ -1652,6 +1654,9 @@ size_t VSIGZipWriteHandleMT::Write( const void * const pBuffer,
                                     size_t const nSize, size_t const nMemb )
 
 {
+    if( bHasErrored_ )
+        return 0;
+
     const char* pszBuffer = static_cast<const char*>(pBuffer);
     size_t nBytesToWrite = nSize * nMemb;
     while( nBytesToWrite > 0 )
@@ -1675,6 +1680,7 @@ size_t VSIGZipWriteHandleMT::Write( const void * const pBuffer,
                 }
                 if( !ProcessCompletedJobs() )
                 {
+                    bHasErrored_ = true;
                     return 0;
                 }
             }
@@ -1693,6 +1699,7 @@ size_t VSIGZipWriteHandleMT::Write( const void * const pBuffer,
                 poPool_.reset(new CPLWorkerThreadPool());
                 if( !poPool_->Setup(nThreads_, nullptr, nullptr, false) )
                 {
+                    bHasErrored_ = true;
                     poPool_.reset();
                     return 0;
                 }
@@ -1886,7 +1893,7 @@ VSIGZipWriteHandle::~VSIGZipWriteHandle()
 
 {
     if( bCompressActive )
-        Close();
+        VSIGZipWriteHandle::Close();
 
     CPLFree( pabyInBuf );
     CPLFree( pabyOutBuf );
@@ -2715,6 +2722,7 @@ std::vector<CPLString> VSIZipFilesystemHandler::GetExtensions()
     oList.push_back(".dwf");
     oList.push_back(".ods");
     oList.push_back(".xlsx");
+    oList.push_back(".xlsm");
 
     // Add to zip FS handler extensions array additional extensions
     // listed in CPL_VSIL_ZIP_ALLOWED_EXTENSIONS config option.
@@ -3113,7 +3121,7 @@ VSIZipWriteHandle::VSIZipWriteHandle( VSIZipFilesystemHandler* poFS,
 
 VSIZipWriteHandle::~VSIZipWriteHandle()
 {
-    Close();
+    VSIZipWriteHandle::Close();
 }
 
 /************************************************************************/

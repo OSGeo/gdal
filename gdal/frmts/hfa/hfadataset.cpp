@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1895,6 +1895,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
         poDS = nullptr;
 
     nBand = nBandIn;
+    eAccess = poDSIn->GetAccess();
 
     int nCompression = 0;
     HFAGetBandInfo(hHFA, nBand, &eHFADataType,
@@ -4442,18 +4443,18 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         }
     }
 
-    char *pszNewProj = nullptr;
     if( psPro == nullptr )
     {
         if( oSRS.IsLocal() )
         {
+            char *pszNewProj = nullptr;
             if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
             {
                 return pszNewProj;
             }
             else
             {
-                pszNewProj = nullptr;
+                CPLFree(pszNewProj);
                 return nullptr;
             }
         }
@@ -4543,10 +4544,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
               oSRS.morphFromESRI();
               oSRS.AutoIdentifyEPSG();
 
+              char *pszNewProj = nullptr;
               if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
                   return pszNewProj;
               else
+              {
+                  CPLFree(pszNewProj);
                   return nullptr;
+              }
           }
 
           // Set state plane zone.  Set NAD83/27 on basis of spheroid.
@@ -4580,8 +4585,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
                     psPro->proParams[5] * R2D,
                     psMapInfo->units) == OGRERR_NONE )
             {
+                char *pszNewProj = nullptr;
                 if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
                     return pszNewProj;
+                else
+                {
+                    CPLFree(pszNewProj);
+                    return nullptr;
+                }
             }
         }
         oSRS.SetLCC(psPro->proParams[2] * R2D, psPro->proParams[3] * R2D,
@@ -4628,8 +4639,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
                     psPro->proParams[5] * R2D,
                     psMapInfo->units) == OGRERR_NONE )
             {
+                char *pszNewProj = nullptr;
                 if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
                     return pszNewProj;
+                else
+                {
+                    CPLFree(pszNewProj);
+                    return nullptr;
+                }
             }
         }
         oSRS.SetTM(psPro->proParams[5] * R2D, psPro->proParams[4] * R2D,
@@ -5041,10 +5058,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     oSRS.AutoIdentifyEPSG();
 
     // Get the WKT representation of the coordinate system.
+    char *pszNewProj = nullptr;
     if( oSRS.exportToWkt(&pszNewProj) == OGRERR_NONE )
         return pszNewProj;
-
-    return nullptr;
+    else
+    {
+        CPLFree(pszNewProj);
+        return nullptr;
+    }
 }
 
 /************************************************************************/

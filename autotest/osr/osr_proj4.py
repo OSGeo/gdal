@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2014, Kyle Shannon <kyle at pobox dot com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -333,9 +333,6 @@ def test_osr_proj4_11():
 
 def test_osr_proj4_12():
 
-    print('FIXME !!')
-    return
-
     expect_wkt = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
@@ -415,8 +412,7 @@ def test_osr_proj4_14():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH],
-    EXTENSION["PROJ4","+proj=etmerc +lat_0=1 +lon_0=2 +k=0.9996 +x_0=3 +y_0=4 +datum=WGS84 +units=m +no_defs"]]"""
+    AXIS["Northing",NORTH]]"""
     if wkt != expect_wkt:
         print('Got:%s' % wkt)
         print('Expected:%s' % expect_wkt)
@@ -428,31 +424,25 @@ def test_osr_proj4_14():
     # Test exporting standard Transverse_Mercator, without any particular option
     proj4str = srs.ExportToProj4()
     expect_proj4str = '+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs'
-    if proj4str != expect_proj4str:
-        print('Got:%s' % proj4str)
-        print('Expected:%s' % expect_proj4str)
-        pytest.fail('Did not get expected result.')
+    assert proj4str == expect_proj4str
 
     srs = osr.SpatialReference()
     proj4str = '+proj=etmerc +lat_0=1 +lon_0=2 +k=0.9996 +x_0=3 +y_0=4 +datum=WGS84 +units=m +no_defs'
     srs.ImportFromProj4(proj4str)
 
-    # Test exporting standard Transverse_Mercator, with OSR_USE_ETMERC=YES
-    gdal.SetConfigOption('OSR_USE_ETMERC', 'YES')
-    got_proj4str = srs.ExportToProj4()
-    gdal.SetConfigOption('OSR_USE_ETMERC', None)
-    assert proj4str == got_proj4str
+    # Test exporting standard Transverse_Mercator, with OSR_USE_APPROX_TMERC=YES
+    with gdaltest.config_option('OSR_USE_APPROX_TMERC', 'YES'):
+        got_proj4str = srs.ExportToProj4()
+    gdal.SetConfigOption('OSR_USE_APPROX_TMERC', None)
+    assert got_proj4str == '+proj=tmerc +approx +lat_0=1 +lon_0=2 +k=0.9996 +x_0=3 +y_0=4 +datum=WGS84 +units=m +no_defs'
 
-    # Test exporting standard Transverse_Mercator, with OSR_USE_ETMERC=NO
-
+    # Test exporting standard Transverse_Mercator, with OSR_USE_APPROX_TMERC=YES
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32600 + 32)
 
-    gdal.SetConfigOption('OSR_USE_ETMERC', 'NO')
-    got_proj4str = srs.ExportToProj4()
-    gdal.SetConfigOption('OSR_USE_ETMERC', None)
-    expect_proj4str = '+proj=tmerc +lat_0=0 +lon_0=9 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs'
-    assert got_proj4str == expect_proj4str
+    with gdaltest.config_option('OSR_USE_APPROX_TMERC', 'YES'):
+        got_proj4str = srs.ExportToProj4()
+    assert got_proj4str == '+proj=utm +approx +zone=32 +datum=WGS84 +units=m +no_defs'
 
 ###############################################################################
 # Test unit parsing
@@ -741,6 +731,8 @@ def test_osr_proj4_28():
     got = srs.ExportToWkt()
 
     assert '32631' not in got
+    assert 'Transverse_Mercator' in got
+    assert 'UNIT["centimetre",0.01' in got
 
 
 def test_osr_proj4_error_cases_export_mercator():

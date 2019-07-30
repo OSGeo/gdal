@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR PGDump driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -298,7 +298,7 @@ def test_ogr_pgdump_4():
        sql.find("""SELECT AddGeometryColumn('public','test','poly',4326,'POLYGON',3)""") == -1 or \
        sql.find("""CREATE INDEX "test_poly_geom_idx" ON "public"."test" USING GIST ("poly")""") == -1 or \
        sql.find("""INSERT INTO "public"."test" DEFAULT VALUES""") == -1 or \
-       sql.find("""INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=-1;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )""") == -1))
+       sql.find("""INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=-1;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON Z ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )""") == -1))
 
 ###############################################################################
 # Test non nullable field support

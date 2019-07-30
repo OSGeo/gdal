@@ -6,7 +6,7 @@
  * Author:   Alexander Lisovenko
  *
  ******************************************************************************
- * Copyright (c) 2014-2015, NextGIS <info@nextgis.ru>
+ * Copyright (c) 2014-2015,2019, NextGIS <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,7 +56,7 @@ char **WMSMiniDriver_AGS::GetMetadataDomainList(void) {
 
 CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
 {
-    // Bounding box, if specified, has to be xyXY
+    // Bounding box, if specified, has to be xyXY.
     m_bbox_order = CPLGetXMLValue(config, "BBoxOrder", "xyXY");
     if (m_bbox_order.size() < 4 || m_bbox_order.find("xyXY") != 0) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ArcGIS BBoxOrder value has to be xyXY");
@@ -77,19 +77,19 @@ CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
 
     const char* irs = CPLGetXMLValue(config, "SRS", "102100");
 
-    if (irs != nullptr)
+    if( irs != nullptr )
     {
-        if (STARTS_WITH_CI(irs, "EPSG:")) //if we have EPSG code just convert it to WKT
+        if( STARTS_WITH_CI(irs, "EPSG:") ) // If we have EPSG code just convert it to WKT.
         {
             m_projection_wkt = ProjToWKT(irs);
             m_irs = irs + 5;
         }
-        else //if we have AGS code - try if it is EPSG
+        else // If we have AGS code - try if it's EPSG.
         {
             m_irs = irs;
             m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
         }
-        // TODO: if we have AGS JSON
+        // TODO: If we have AGS JSON.
     }
     m_identification_tolerance = CPLGetXMLValue(config, "IdentificationTolerance", "2");
 
@@ -102,53 +102,70 @@ void WMSMiniDriver_AGS::GetCapabilities(WMSMiniDriverCapabilities *caps)
 }
 
 CPLErr WMSMiniDriver_AGS::TiledImageRequest(WMSHTTPRequest &request,
-                                                const GDALWMSImageRequestInfo &iri,
-                                                CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
+                                            const GDALWMSImageRequestInfo &iri,
+                                            CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
 {
     CPLString &url = request.URL;
     url = m_base_url;
 
-    // Assume map service if exportImage is not explicitly requested
-    if ((url.ifind("/export?") == std::string::npos) && (url.ifind("/exportImage?") == std::string::npos))
+    // Assume map service if exportImage is not explicitly requested.
+    if( (url.ifind("/export?") == std::string::npos) &&
+        (url.ifind("/exportImage?") == std::string::npos) )
+    {
         url += "/export?";
+    }
 
     URLPrepare(url);
     url += "f=image&dpi=&layerdefs=&layerTimeOptions=&dynamicLayers=";
-    url += CPLOPrintf("&bbox=%.8f,%.8f,%.8f,%.8f",
+    char *pszEscapedValue = CPLEscapeString(m_layers, -1, CPLES_URL);
+    url += CPLOPrintf("&bbox=%.8f%%2C%.8f%%2C%.8f%%2C%.8f",
                 GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]),
                 GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]))
-        + CPLOPrintf("&size=%d,%d", iri.m_sx, iri.m_sy)
+        + CPLOPrintf("&size=%d%%2C%d", iri.m_sx, iri.m_sy)
         + CPLOPrintf("&imageSR=%s", m_irs.c_str())
         + CPLOPrintf("&bboxSR=%s", m_irs.c_str())
         + CPLOPrintf("&format=%s", m_image_format.c_str())
-        + CPLOPrintf("&layers=%s", m_layers.c_str());
+        + CPLOPrintf("&layers=%s", pszEscapedValue);
+    CPLFree(pszEscapedValue);
 
-    if (!m_transparent.empty() )
-        url +=  CPLOPrintf("&transparent=%s", m_transparent.c_str());
+    if( !m_transparent.empty() )
+    {
+        url +=  "&transparent=" + m_transparent;
+    }
     else
+    {
         url += "&transparent=false";
+    }
 
-    if (!m_time_range.empty() )
-        url += CPLOPrintf("&time=%s", m_time_range.c_str());
+    if( !m_time_range.empty() )
+    {
+        pszEscapedValue = CPLEscapeString(m_time_range, -1, CPLES_URL);
+        url += CPLOPrintf("&time=%s", pszEscapedValue);
+        CPLFree(pszEscapedValue);
+    }
     else
+    {
         url += "&time=";
+    }
 
     return CE_None;
 }
 
 void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString &url,
-                                              const GDALWMSImageRequestInfo &iri,
-                                              CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
-                                              int nXInBlock,
-                                              int nYInBlock)
+                                          const GDALWMSImageRequestInfo &iri,
+                                          CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
+                                          int nXInBlock,
+                                          int nYInBlock)
 {
     url = m_base_url;
 
-    if (m_base_url.ifind("/identify?") == std::string::npos)
+    if( m_base_url.ifind("/identify?") == std::string::npos )
+    {
         url += "/identify?";
+    }
 
     URLPrepare(url);
-    // Constant part
+    // Constant part.
     url += "f=json&geometryType=esriGeometryPoint&returnGeometry=false"
            "&layerdefs=&time=&layerTimeOptions=&maxAllowableOffset=";
 
@@ -157,28 +174,26 @@ void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString &url,
     double fY = GetBBoxCoord(iri, 'y') + (iri.m_sy - nYInBlock) * (GetBBoxCoord(iri, 'Y') -
                 GetBBoxCoord(iri, 'y')) / iri.m_sy;
 
-    url += CPLOPrintf("&geometry=%8f,%8f", fX, fY)
-        +  CPLOPrintf("&sr=%s", m_irs.c_str());
+    url += "&geometry=" + std::to_string(fX) + "%2C" + std::to_string(fY) + "&sr=" + m_irs;
 
     CPLString layers("visible");
-
-    if (m_layers.find("show") != std::string::npos)
+    if( m_layers.find("show") != std::string::npos )
     {
         layers = m_layers;
         layers.replace(layers.find("show"), 4, "all");
     }
 
-    if (m_layers.find("hide") != std::string::npos
-            || m_layers.find("include") != std::string::npos
-            || m_layers.find("exclude") != std::string::npos)
+    if( m_layers.find("hide") != std::string::npos
+        || m_layers.find("include") != std::string::npos
+        || m_layers.find("exclude") != std::string::npos )
+    {
         layers = "top";
+    }
 
-    url += "&layers=";
-    url += layers;
-    url += "&tolerance=";
-    url += m_identification_tolerance;
-    url += CPLOPrintf("&mapExtent=%.8f,%.8f,%.8f,%.8f",
+    url += "&layers=" + layers;
+    url += "&tolerance=" + m_identification_tolerance;
+    url += CPLOPrintf("&mapExtent=%.8f%%2C%.8f%%2C%.8f%%2C%.8f",
         GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]),
         GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]))
-        + CPLOPrintf("&imageDisplay=%d,%d,96", iri.m_sx, iri.m_sy);
+        + CPLOPrintf("&imageDisplay=%d%%2C%d%%2C96", iri.m_sx, iri.m_sy);
 }

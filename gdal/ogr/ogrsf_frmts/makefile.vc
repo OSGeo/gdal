@@ -15,7 +15,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
 			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
-			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
+			$(INGRESDIR) $(ELASTICDIR) $(GPKGDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
 			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR) $(MONGODBV3DIR) $(GMLAS_DIR) $(CAD_DIR) $(NGW_DIR)
 
 PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
@@ -47,8 +47,8 @@ PLUGIN_MSSPATIALDIR = mssqlspatial
 !ENDIF
 
 !IFDEF SQLITE_LIB
-SQLITE_DIR	= sqlite gpkg
-SQLITE_OBJ	= sqlite\*.obj gpkg\*.obj
+SQLITE_DIR	= sqlite
+SQLITE_OBJ	= sqlite\*.obj
 !ENDIF
 
 !IFDEF OCI_LIB
@@ -208,6 +208,8 @@ ELASTIC_OBJ = elastic\*.obj
 !ENDIF
 
 !IFDEF SQLITE_LIB
+GPKGDIR	=	gpkg
+GPKG_OBJ =	gpkg\*.obj
 OSMDIR	=	osm
 OSM_OBJ =	osm\*.obj
 VFKDIR	=	vfk
@@ -290,7 +292,7 @@ default:
 				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(GFT_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ)  \
-				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
+				$(INGRESOBJ) $(ELASTIC_OBJ) $(GPKG_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
 				$(CSW_OBJ) $(MONGODBOBJ) $(MONGODBV3OBJ) $(GMLAS_OBJ) $(CAD_OBJ) $(NGW_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
@@ -329,8 +331,3 @@ plugins-install:
                 && $(MAKE) /f makefile.vc plugin-install \
                 && cd .. \
                 || exit 1
-
-html-install:
-	copy *.html $(HTMLDIR)
-	-for %d in ( $(DIRLIST) ) do \
-		copy %d\drv_*.html $(HTMLDIR)

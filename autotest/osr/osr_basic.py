@@ -10,7 +10,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@
 import gdaltest
 from osgeo import osr
 import pytest
-
+from threading import Thread
 
 ###############################################################################
 # Create a UTM WGS84 coordinate system and check various items.
@@ -585,6 +585,8 @@ def test_osr_basic_20():
     sr = osr.SpatialReference()
     sr.ImportFromEPSGA(4326)
 
+    assert sr.GetAxesCount() == 2
+
     assert sr.GetAxisName(None, 0) == 'Geodetic latitude'
 
     assert sr.GetAxisOrientation(None, 0) == osr.OAO_North
@@ -594,6 +596,21 @@ def test_osr_basic_20():
     assert sr.GetAxisOrientation('GEOGCS', 1) == osr.OAO_East
 
     assert sr.GetAngularUnitsName() == 'degree'
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:4326+5773')
+
+    assert sr.GetAxisName(None, 0) == 'Geodetic latitude'
+
+    assert sr.GetAxisOrientation(None, 0) == osr.OAO_North
+
+    assert sr.GetAxisName(None, 1) == 'Geodetic longitude'
+
+    assert sr.GetAxisOrientation(None, 1) == osr.OAO_East
+
+    assert sr.GetAxisName(None, 2) == 'Gravity-related height'
+
+    assert sr.GetAxisOrientation(None, 2) == osr.OAO_Up
 
 ###############################################################################
 # Test IsSame() with equivalent forms of Mercator_1SP and Mercator_2SP
@@ -1518,3 +1535,39 @@ def test_osr_get_name():
     assert sr.GetName() is None
     sr.SetWellKnownGeogCS('WGS84')
     assert sr.GetName() == 'WGS 84'
+
+
+def test_SetPROJSearchPath():
+
+    # OSRSetPROJSearchPaths() is only taken into priority over other methods
+    # starting with PROJ >= 6.1
+    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 1):
+        pytest.skip()
+
+    # Do the test in a new thread, so that SetPROJSearchPath() is taken
+    # into account
+    def threaded_function(arg):
+        sr = osr.SpatialReference()
+        with gdaltest.error_handler():
+            arg[0] = sr.ImportFromEPSG(32631)
+
+    try:
+        arg = [ -1 ]
+
+        thread = Thread(target = threaded_function, args = (arg, ))
+        thread.start()
+        thread.join()
+        assert arg[0] == 0
+
+        osr.SetPROJSearchPath('/i_do/not/exist')
+
+        thread = Thread(target = threaded_function, args = (arg, ))
+        thread.start()
+        thread.join()
+        assert arg[0] > 0
+    finally:
+        # Cancel search path (we can't call SetPROJSearchPath(None))
+        osr.SetPROJSearchPaths([])
+
+    sr = osr.SpatialReference()
+    assert sr.ImportFromEPSG(32631) == 0

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -451,7 +451,10 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
 /* -------------------------------------------------------------------- */
 /*      Apply any dataset level metadata.                               */
 /* -------------------------------------------------------------------- */
-    oMDMD.XMLInit( psTree, TRUE );
+    if( oMDMD.XMLInit( psTree, TRUE ) )
+    {
+        psPam->bHasMetadata = TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try loading ESRI xml encoded GeodataXform.                      */

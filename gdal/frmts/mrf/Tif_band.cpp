@@ -82,7 +82,7 @@ static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char *
     GDALDataset *poTiff = poTiffDriver->Create(fname, img.pagesize.x, img.pagesize.y,
                                                img.pagesize.c, img.dt, papszOptions );
 
-    // Read directly to avoid double caching in GDAL
+    // Write directly to avoid double caching in GDAL
     // Unfortunately not possible for multiple bands
     if (img.pagesize.c == 1) {
         ret = poTiff->GetRasterBand(1)->WriteBlock(0,0,src.buffer);
@@ -148,9 +148,11 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 #else
     GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpen(fname, GA_ReadOnly));
 #endif
-    if (poTiff == nullptr) {
+    if (poTiff == nullptr || !poTiff->GetRasterCount()) {
         CPLError(CE_Failure,CPLE_AppDefined,
-            "MRF: TIFF, can't open page as a Tiff");
+            "MRF: Can't open page as a raster Tiff");
+        if (poTiff)
+            GDALClose(poTiff);
         VSIUnlink(fname);
         return CE_Failure;
     }

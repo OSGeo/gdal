@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Philippe Vachon <philippe@cowpig.ca>
- * Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -262,9 +262,10 @@ int TSXDataset::Identify( GDALOpenInfo *poOpenInfo )
             const CPLString osFilename =
                 CPLFormCIFilename( poOpenInfo->pszFilename, CPLGetFilename( poOpenInfo->pszFilename ), "xml" );
 
-            /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) */
+            /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) or PAZ1_SAR (PAZ) */
             if (!(STARTS_WITH_CI(CPLGetBasename( osFilename ), "TSX1_SAR") ||
-                  STARTS_WITH_CI(CPLGetBasename( osFilename ), "TDX1_SAR")))
+                  STARTS_WITH_CI(CPLGetBasename( osFilename ), "TDX1_SAR") ||
+                  STARTS_WITH_CI(CPLGetBasename( osFilename ), "PAZ1_SAR")))
                 return 0;
 
             VSIStatBufL sStat;
@@ -275,9 +276,10 @@ int TSXDataset::Identify( GDALOpenInfo *poOpenInfo )
         return 0;
     }
 
-    /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) */
+    /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) or PAZ1_SAR (PAZ) */
     if (!(STARTS_WITH_CI(CPLGetBasename( poOpenInfo->pszFilename ), "TSX1_SAR") ||
-          STARTS_WITH_CI(CPLGetBasename( poOpenInfo->pszFilename ), "TDX1_SAR")))
+          STARTS_WITH_CI(CPLGetBasename( poOpenInfo->pszFilename ), "TDX1_SAR") ||
+          STARTS_WITH_CI(CPLGetBasename( poOpenInfo->pszFilename ), "PAZ1_SAR")))
         return 0;
 
     /* finally look for the <level1Product tag */

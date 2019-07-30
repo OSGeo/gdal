@@ -8,7 +8,7 @@
  *
  **********************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -638,7 +638,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     else if( nOffset+10 <= (int)psSegInfo->nSegmentHeaderSize )
     {
-        int nUserTREBytes, nExtendedTREBytes;
+        int nUserTREBytes, nExtendedTREBytes, nFirstTagUsedLength = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Are there user TRE bytes to skip?                               */
@@ -646,7 +646,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         nUserTREBytes = atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
         nOffset += 5;
 
-        if( nUserTREBytes > 3 )
+        if( nUserTREBytes > 3 + 11 )  /* Must have at least one tag */
         {
             if( (int)psSegInfo->nSegmentHeaderSize < nOffset + nUserTREBytes )
                 GOTO_header_too_small();
@@ -657,6 +657,16 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     psImage->nTREBytes );
 
             nOffset += nUserTREBytes;
+
+            sscanf(psImage->pachTRE + 6, "%*5d%n", &nFirstTagUsedLength);
+            if (nFirstTagUsedLength != 5)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Cannot read User TRE. First tag's length is invalid");
+                CPLFree( psImage->pachTRE );
+                psImage->nTREBytes = 0;
+                psImage->pachTRE = NULL;
+            }
         }
         else
         {

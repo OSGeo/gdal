@@ -1435,6 +1435,60 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
     return 0;
 }
 
+static int MITABGetCustomDatum(const OGRSpatialReference* poSpatialRef,
+                               TABProjInfo& sTABProj)
+{
+    double  adfTOWGS[7] = {0};
+    if(OGRERR_NONE != poSpatialRef->GetTOWGS84(adfTOWGS, sizeof(adfTOWGS)/sizeof(adfTOWGS[0])))
+    {
+        return FALSE;
+    }
+    sTABProj.nDatumId = 9999;
+    sTABProj.dDatumShiftX = adfTOWGS[0];
+    sTABProj.dDatumShiftY = adfTOWGS[1];
+    sTABProj.dDatumShiftZ = adfTOWGS[2];
+    sTABProj.adDatumParams[0] = -adfTOWGS[3];
+    sTABProj.adDatumParams[1] = -adfTOWGS[4];
+    sTABProj.adDatumParams[2] = -adfTOWGS[5];
+    sTABProj.adDatumParams[3] = -adfTOWGS[6];
+
+    int nSpheroidId = -1;
+
+    const char *pszWKTSpheroid = poSpatialRef->GetAttrValue("SPHEROID");
+    for( int i = 0; asSpheroidInfoList[i].nMapInfoId != -1; i++ )
+    {
+        if(EQUAL(pszWKTSpheroid, asSpheroidInfoList[i].pszMapinfoName))
+        {
+            nSpheroidId = asSpheroidInfoList[i].nMapInfoId;
+            break;
+        }
+    }
+
+    if(nSpheroidId == -1)
+    {
+        double adSemiMajor = poSpatialRef->GetSemiMajor();
+        double adInvFlattening = poSpatialRef->GetInvFlattening();
+
+        for( int i = 0; asSpheroidInfoList[i].nMapInfoId != -1; i++ )
+        {
+            if(CPLIsEqual(adSemiMajor, asSpheroidInfoList[i].dfA) &&
+               CPLIsEqual(adInvFlattening, asSpheroidInfoList[i].dfInvFlattening))
+            {
+                nSpheroidId = asSpheroidInfoList[i].nMapInfoId;
+                break;
+            }
+        }
+    }
+    if(nSpheroidId == -1)
+    {
+        CPLDebug("MITAB", "Cannot find MapInfo spheroid matching %s. Defaulting to WGS 84",
+                 pszWKTSpheroid);
+        nSpheroidId = 28; /* WGS 84 */
+    }
+    sTABProj.nEllipsoidId = static_cast<GByte>(nSpheroidId);
+    return TRUE;        
+}
+
 int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
                                       TABProjInfo& sTABProj, int& nParmCount)
 {
@@ -1941,8 +1995,9 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
                 break;
             }
         }
-
-        if( psDatumInfo == nullptr )
+        
+        if( psDatumInfo == nullptr &&
+            !MITABGetCustomDatum(poSpatialRef, sTABProj))
         {
             CPLDebug("MITAB", "Cannot find MapInfo datum matching %s,%d. Defaulting to WGS 84",
                      pszWKTDatum, nDatumEPSGCode);

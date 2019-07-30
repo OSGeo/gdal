@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -646,15 +646,33 @@ def test_ogr_geom_closerings():
 
 def test_ogr_geom_segmentize():
 
+    # 2D
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 10)')
     geom.Segmentize(1.00001)
 
     assert geom.ExportToWkt() == 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)'
 
+    # 2D + Z
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0 1,0 10 1)')
     geom.Segmentize(1.00001)
 
     assert geom.ExportToWkt() == 'LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)'
+
+    # 2D + M
+    geom = ogr.CreateGeometryFromWkt('LINESTRING M(0 0 1,0 10 1)')
+    geom.Segmentize(5)
+    assert geom.ExportToIsoWkt() == 'LINESTRING M (0 0 1,0 5 1,0 10 1)'
+
+    # 2D + ZM
+    geom = ogr.CreateGeometryFromWkt('LINESTRING ZM(0 0 1 2,0 10 1 2)')
+    geom.Segmentize(5)
+    assert geom.ExportToIsoWkt() == 'LINESTRING ZM (0 0 1 2,0 5 1 2,0 10 1 2)'
+
+    # Test distance between points <<<< segmentization threshold
+    # https://github.com/OSGeo/gdal/issues/1414
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 1)')
+    geom.Segmentize(10000)
+    assert geom.ExportToWkt() == 'LINESTRING (0 0,0 1)'
 
     # Check segmentize symmetry : do exact binary comparison.
     in_wkt = 'LINESTRING (0 0,1.2 1,2 0)'
@@ -668,7 +686,29 @@ def test_ogr_geom_segmentize():
             print('%.18g' % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0]))
             pytest.fail('%.18g' % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1]))
 
-    
+
+def test_ogr_geom_segmentize_issue_1341():
+
+    expected_geom = 'LINESTRING (0 0,0.4 0.0,0.8 0.0,1.2 0.0,1.6 0.0,2 0,2.4 0.0,2.8 0.0,3.2 0.0,3.6 0.0,4 0,4.4 0.0,4.8 0.0,5.2 0.0,5.6 0.0,6 0,6.4 0.0,6.8 0.0,7.2 0.0,7.6 0.0,8 0,8.4 0.0,8.8 0.0,9.2 0.0,9.6 0.0,10 0)'
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,10 0)')
+    geom.Segmentize(0.399999999999)
+    assert geom.ExportToWkt() == expected_geom
+    geom.Segmentize(0.399999999999)
+    assert geom.ExportToWkt() == expected_geom
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,10 0)')
+    geom.Segmentize(0.4)
+    assert geom.ExportToWkt() == expected_geom
+    geom.Segmentize(0.4)
+    assert geom.ExportToWkt() == expected_geom
+
+    geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,10 0)')
+    geom.Segmentize(0.400000000001)
+    assert geom.ExportToWkt() == expected_geom
+    geom.Segmentize(0.400000000001)
+    assert geom.ExportToWkt() == expected_geom
+
 ###############################################################################
 # Test Value()
 
@@ -3231,8 +3271,38 @@ def test_ogr_geom_create_from_wkt_polyhedrasurface():
     assert g.ExportToWkt() == 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))'
 
 ###############################################################################
-# cleanup
 
 
-def test_ogr_geom_cleanup():
-    pass
+def test_ogr_geom_makevalid():
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    g = ogr.CreateGeometryFromWkt('POINT (0 0)')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'POINT (0 0)'
+
+    g = ogr.CreateGeometryFromWkt('POINT EMPTY')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'POINT EMPTY'
+
+    g = ogr.CreateGeometryFromWkt('LINESTRING (0 0)')
+    with gdaltest.error_handler():
+        g = g.MakeValid()
+    assert not g
+
+    g = ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,0 1,1 0,0 0))')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'CURVEPOLYGON ((0 0,0 1,1 0,0 0))'
+
+    # Invalid
+    g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,10 10,0 10,10 0,0 0))')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))'
+
+    # Invalid
+    g = ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,10 10,0 10,10 0,0 0))')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))'
+
+    return 'success'

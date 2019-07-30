@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2000, Atlantis Scientific Inc. (www.atlsci.com)
-# Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -82,14 +82,14 @@ def GetOutputDriversFor(filename):
 
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
+    ext = GetExtension(filename)
     if not drv_list:
-        ext = GetExtension(filename)
         if not ext:
             return 'GTiff'
         else:
             raise Exception("Cannot guess driver for %s" % filename)
     elif len(drv_list) > 1:
-        print("Several drivers matching %s extension. Using %s" % (ext, drv_list[0]))
+        print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
 
 

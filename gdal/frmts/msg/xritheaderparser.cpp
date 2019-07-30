@@ -85,7 +85,10 @@ int XRITHeaderParser::parseInt16(unsigned char * num)
 
 long XRITHeaderParser::parseInt32(unsigned char * num)
 {
-  return (num[0]<<24) | (num[1]<<16) | (num[2]<<8) | num[3];
+    int i;
+    memcpy(&i, num, 4);
+    CPL_MSBPTR32(&i);
+    return i;
 }
 
 void XRITHeaderParser::parseHeader(unsigned char * buf, long totalHeaderLength)
@@ -119,10 +122,14 @@ void XRITHeaderParser::parseHeader(unsigned char * buf, long totalHeaderLength)
         break;
       case 2: // image navigation
         {
+#if 0
           /*long cfac =*/ parseInt32(&buf[35]); // column scaling factor
+#endif
           long lfac = parseInt32(&buf[39]); // line scaling factor
+#if 0
           /*long coff =*/ parseInt32(&buf[43]); // column offset
           /*long loff =*/ parseInt32(&buf[47]); // line offset
+#endif
           if (lfac >= 0)
             m_scanNorth = true;
           else

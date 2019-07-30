@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -357,6 +357,7 @@ class CPL_DLL OGRGeometry
     int CoordinateDimension() const;
     virtual OGRBoolean  IsEmpty() const = 0;
     virtual OGRBoolean  IsValid() const;
+    virtual OGRGeometry* MakeValid() const;
     virtual OGRBoolean  IsSimple() const;
     /*! Returns whether the geometry has a Z component. */
     OGRBoolean  Is3D() const { return flags & OGR_G_3D; }
@@ -2875,7 +2876,7 @@ class CPL_DLL OGRGeometryFactory
     static bool haveGEOS();
 
     /** Opaque class used as argument to transformWithOptions() */
-    class TransformWithOptionsCache
+    class CPL_DLL TransformWithOptionsCache
     {
         friend class OGRGeometryFactory;
         struct Private;

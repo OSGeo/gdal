@@ -637,7 +637,6 @@ typedef enum
  * @since GDAL 2.1
  */
 
-// cppcheck-suppress copyCtorAndEqOperator
 class CPL_DLL GNMRule
 {
 public:
@@ -649,6 +648,10 @@ public:
     explicit GNMRule(const char* pszRule);
     /** Constructor */
     GNMRule(const GNMRule &oRule);
+
+    /** Assignment operator */
+    GNMRule& operator=(const GNMRule&) = default;
+
     virtual ~GNMRule();
     /**
      * @brief  This function indicate if rule string was parsed successfully

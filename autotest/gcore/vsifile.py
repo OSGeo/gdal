@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test VSI file primitives
-# Author:   Even Rouault <even dot rouault at mines dash parid dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -835,3 +835,14 @@ def test_vsifile_opendir():
 
 
 
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/1559
+
+
+def test_vsitar_verylongfilename():
+
+    f = gdal.VSIFOpenL('/vsitar/data/verylongfilename.tar/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ccccccccccccccccccccccccccccccccccc/ddddddddddddddddddddddddddddddddddddddd/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/fffffffffffffffffffffffffffffffffffffffffffffff/foo', 'rb')
+    assert f
+    data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+    assert data == 'bar'

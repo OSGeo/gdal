@@ -50,6 +50,10 @@ typedef enum
     /*! Node is a special literal */    CXT_Literal = 4
 } CPLXMLNodeType;
 
+/*! @cond Doxygen_Suppress */
+typedef struct CPLXMLNode CPLXMLNode;
+/*! @endcond */
+
 /**
  * Document node structure.
  *
@@ -62,8 +66,7 @@ typedef enum
  * Using the psChild and psNext pointers, a hierarchical tree structure
  * for a document can be represented as a tree of CPLXMLNode structures.
  */
-
-typedef struct CPLXMLNode
+struct CPLXMLNode
 {
     /**
      * \brief Node type
@@ -116,7 +119,7 @@ typedef struct CPLXMLNode
      */
 
     struct CPLXMLNode  *psChild;
-} CPLXMLNode;
+};
 
 CPLXMLNode CPL_DLL *CPLParseXMLString( const char * );
 void       CPL_DLL  CPLDestroyXMLNode( CPLXMLNode * );

@@ -112,7 +112,7 @@ GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(
 
 GDALHashSetBandBlockCache::~GDALHashSetBandBlockCache()
 {
-    FlushCache();
+    GDALHashSetBandBlockCache::FlushCache();
     CPLDestroyLock(hLock);
 }
 
@@ -165,6 +165,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
         oOldSet = std::move(m_oSet);
     }
 
+    StartDirtyBlockFlushingLog();
     for( auto& poBlock: oOldSet )
     {
         if( poBlock->DropLockForRemovalFromStorage() )
@@ -172,7 +173,10 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
             CPLErr eErr = CE_None;
 
             if( eGlobalErr == CE_None && poBlock->GetDirty() )
+            {
+                UpdateDirtyBlockFlushingLog();
                 eErr = poBlock->Write();
+            }
 
             delete poBlock;
 
@@ -180,6 +184,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
                 eGlobalErr = eErr;
         }
     }
+    EndDirtyBlockFlushingLog();
 
     WaitKeepAliveCounter();
 

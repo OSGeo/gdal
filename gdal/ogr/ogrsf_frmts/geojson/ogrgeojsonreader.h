@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,6 +37,7 @@
 
 #include "ogrgeojsonutils.h"
 
+#include <utility>
 #include <set>
 
 /************************************************************************/
@@ -160,6 +161,7 @@ class OGRGeoJSONReader: public OGRGeoJSONBaseReader
 
     void ResetReading();
     OGRFeature* GetNextFeature(OGRGeoJSONLayer* poLayer);
+    OGRFeature* GetFeature(OGRGeoJSONLayer* poLayer, GIntBig nFID);
     bool IngestAll(OGRGeoJSONLayer* poLayer);
 
     VSILFILE* GetFP() { return fp_; }
@@ -182,6 +184,8 @@ class OGRGeoJSONReader: public OGRGeoJSONBaseReader
 
     GIntBig nTotalFeatureCount_;
     GUIntBig nTotalOGRFeatureMemEstimate_;
+
+    std::map<GIntBig, std::pair<vsi_l_offset, vsi_l_offset>> oMapFIDToOffsetSize_;
     //
     // Copy operations not supported.
     //
@@ -233,6 +237,11 @@ json_object CPL_DLL*  CPL_json_object_object_get( struct json_object* obj,
 
 bool CPL_DLL OGRJSonParse( const char* pszText, json_object** ppoObj,
                            bool bVerboseError = true );
+
+bool OGRGeoJSONUpdateLayerGeomType( OGRLayer* poLayer,
+                                    bool& bFirstGeom,
+                                    OGRwkbGeometryType eGeomType,
+                                    OGRwkbGeometryType& eLayerGeomType );
 
 /************************************************************************/
 /*                 GeoJSON Geometry Translators                         */

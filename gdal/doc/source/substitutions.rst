@@ -1,0 +1,13 @@
+.. |PDAL| replace:: `PDAL <https://pdal.io/>`__
+.. |Proj.4| replace:: `Proj.4 <http://proj4.org>`__
+.. |GeoTIFF| replace:: `GeoTIFF <https://trac.osgeo.org/geotiff/>`__
+.. |QGIS| replace:: `QGIS <http://qgis.org>`__
+.. |GDAL| replace:: `GDAL <https://gdal.org/>`__
+.. |JSON| replace:: `JSON <https://en.wikipedia.org/wiki/JSON>`__
+.. |XML| replace:: `XML <https://en.wikipedia.org/wiki/XML>`__
+.. |jq| replace:: `jq <https://stedolan.github.io/jq/>`__
+.. |CSV| replace:: `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`__
+.. |NumPy| replace:: `NumPy <http://www.numpy.org/>`__
+.. |Bash| replace:: `Bash <https://en.wikipedia.org/wiki/Bash_(Unix_shell)>`__
+.. |Python| replace:: `Python <https://python.org/>`__
+.. |Docker| replace:: `Docker <https://www.docker.com/>`__

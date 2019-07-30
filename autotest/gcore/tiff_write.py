@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -32,6 +32,7 @@ import os
 import sys
 import array
 import shutil
+import struct
 from osgeo import gdal
 from osgeo import osr
 import pytest
@@ -216,15 +217,8 @@ def test_tiff_write_5():
 
 ###############################################################################
 # Test a mixture of reading and writing on a DEFLATE compressed file.
-# May crash with libtiff <= 3.8.2, so skip it if BigTIFF is not supported
-# (this is a sign of an older libtiff...)
-
 
 def test_tiff_write_6():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32',
                'COMPRESS=DEFLATE', 'PREDICTOR=2']
@@ -251,15 +245,8 @@ def test_tiff_write_6():
 
 ###############################################################################
 # Test a mixture of reading and writing on a LZW compressed file.
-# Will cause older libtiff versions (<=3.8.2 for sure) to crash, so skip it
-# if BigTIFF is not supported (this is a sign of an older libtiff...)
-
 
 def test_tiff_write_7():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     options = ['TILED=YES', 'COMPRESS=LZW', 'PREDICTOR=2']
     ds = gdaltest.tiff_drv.Create('tmp/test_7.tif', 200, 200, 1,
@@ -671,14 +658,8 @@ def test_tiff_write_rpc_txt():
         pass
 
     # confirm there is no .RPB file created by default.
-    with pytest.raises(IOError, message='unexpectedly found .RPB file'):
-        open('tmp/tiff_write_rpc_txt.RPB').read()
-    
-
-    try:
-        open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
-    except IOError:
-        pytest.fail('missing _RPC.TXT file.')
+    assert not os.path.exists('tmp/tiff_write_rpc_txt.RPB')
+    assert os.path.exists('tmp/tiff_write_rpc_txt_RPC.TXT')
 
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open('tmp/tiff_write_rpc_txt.tif')
@@ -691,9 +672,7 @@ def test_tiff_write_rpc_txt():
 
     # Confirm _RPC.TXT file is cleaned up.  If not likely the
     # file list functionality is not working properly.
-    with pytest.raises(IOError, message='_RPC.TXT did not get cleaned up.'):
-        open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
-    
+    assert not os.path.exists('tmp/tiff_write_rpc_txt_RPC.TXT')
 
     
 ###############################################################################
@@ -718,9 +697,7 @@ def test_tiff_write_rpc_in_pam():
         pytest.fail('missing .aux.xml file.')
 
     # confirm there is no .RPB file created.
-    with pytest.raises(IOError, message='unexpectedly found .RPB file'):
-        open('tmp/tiff_write_rpc_txt.RPB').read()
-    
+    assert not os.path.exists('tmp/tiff_write_rpc_txt.RPB')
 
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open('tmp/tiff_write_rpc_in_pam.tif')
@@ -758,9 +735,7 @@ def test_tiff_write_19():
 
 ###############################################################################
 # Test write and read of some TIFF tags
-# Expected to fail (properly) with older libtiff versions (<=3.8.2 for sure)
 # Also test unsetting those tags (#5619)
-
 
 def test_tiff_write_20():
 
@@ -787,9 +762,7 @@ def test_tiff_write_20():
 
     # hopefully it's closed now!
 
-    with pytest.raises(OSError, message='did not expected .aux.xml file'):
-        os.stat('tmp/tags.tif.aux.xml')
-    
+    assert not os.path.exists('tmp/tags.tif.aux.xml')
 
     new_ds = gdal.Open('tmp/tags.tif')
     md = new_ds.GetMetadata()
@@ -806,9 +779,7 @@ def test_tiff_write_20():
     ds.SetMetadataItem('TIFFTAG_SOFTWARE', None)
     ds = None
 
-    with pytest.raises(OSError, message='did not expected .aux.xml file'):
-        os.stat('tmp/tags.tif.aux.xml')
-    
+    assert not os.path.exists('tmp/tags.tif.aux.xml')
 
     ds = gdal.Open('tmp/tags.tif')
     assert ds.GetMetadataItem('TIFFTAG_SOFTWARE') is None, \
@@ -1091,10 +1062,6 @@ def test_tiff_write_29():
 
 def test_tiff_write_30():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 1, 1, 1, options=['BigTIFF=YES'])
     ds = None
 
@@ -1118,10 +1085,6 @@ def test_tiff_write_30():
 
 
 def test_tiff_write_31():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 100000, 100000, 1,
                                   options=['SPARSE_OK=TRUE'])
@@ -1475,7 +1438,6 @@ def test_tiff_write_45():
 # Test correct round-tripping of ReadBlock/WriteBlock
 
 def test_tiff_write_46():
-    import struct
 
     with gdaltest.SetCacheMax(0):
 
@@ -1790,11 +1752,6 @@ def test_tiff_write_55():
 
 def test_tiff_write_56():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
     test_ct = gdal.ColorTable()
@@ -1828,11 +1785,6 @@ def test_tiff_write_56():
 
 
 def test_tiff_write_57():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    # Expected to fail with libtiff < 4.0 as it needs TIFFUnsetField, so skip it
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     # copy a file to tmp dir to modify.
     open('tmp/tiff57.tif', 'wb').write(open('data/byte.tif', 'rb').read())
@@ -1881,7 +1833,6 @@ def test_tiff_write_58():
 
 
 def test_tiff_write_59():
-    import struct
 
     ret = 'success'
 
@@ -1950,9 +1901,7 @@ def test_tiff_write_60():
         ds = None
         gdaltest.tiff_drv.Delete('tmp/tiff_write_60.tif')
 
-        with pytest.raises(OSError, message='%s should have been deleted' % options_tuple[1]):
-            os.stat(options_tuple[1])
-        
+        assert not os.path.exists(options_tuple[1])
 
         # CreateCopy case
         src_ds = gdal.Open('data/byte.tif')
@@ -1970,9 +1919,7 @@ def test_tiff_write_60():
         ds = None
         gdaltest.tiff_drv.Delete('tmp/tiff_write_60.tif')
 
-        with pytest.raises(OSError, message='%s should have been deleted' % options_tuple[1]):
-            os.stat(options_tuple[1])
-        
+        assert not os.path.exists(options_tuple[1])
 
     
 ###############################################################################
@@ -1980,10 +1927,6 @@ def test_tiff_write_60():
 
 
 def test_tiff_write_61():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 50000, 50000, 1,
                                   options=['BIGTIFF=IF_NEEDED', 'SPARSE_OK=TRUE'])
@@ -2010,10 +1953,6 @@ def test_tiff_write_61():
 
 def test_tiff_write_62():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 50000, 50000, 1,
                                   options=['BIGTIFF=IF_SAFER', 'SPARSE_OK=TRUE'])
     ds = None
@@ -2038,12 +1977,6 @@ def test_tiff_write_62():
 
 
 def test_tiff_write_63():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-    if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
-        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.Create('tmp/bigtiff.tif', 150000, 150000, 1,
@@ -2230,12 +2163,6 @@ def test_tiff_write_70():
 # Test reading in a real BigTIFF file (on filesystems supporting sparse files)
 
 def test_tiff_write_71():
-
-    import struct
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
@@ -2591,10 +2518,7 @@ def test_tiff_write_79():
                 ds.GetProjectionRef()
             ds.SetMetadataItem('AREA_OR_POINT', 'Point')
             ds = None
-            with pytest.raises(OSError, message='got to PAM'):
-                # check that it doesn't go to PAM
-                os.stat('tmp/tiff_write_79.tif.aux.xml')
-            
+            assert not os.path.exists('tmp/tiff_write_79.tif.aux.xml')
 
             # So should get 'Area'
             ds = gdal.Open('tmp/tiff_write_79.tif')
@@ -2615,10 +2539,7 @@ def test_tiff_write_79():
                 assert mdi == 'Point', \
                     ('(3) did not get expected value. do_projection_ref = %d, check_just_after = %d' % (do_projection_ref, check_just_after))
             ds = None
-            with pytest.raises(OSError, message='got to PAM'):
-                # check that it doesn't go to PAM
-                os.stat('tmp/tiff_write_79.tif.aux.xml')
-            
+            assert not os.path.exists('tmp/tiff_write_79.tif.aux.xml')
 
             # Now should get 'Point'
             ds = gdal.Open('tmp/tiff_write_79.tif')
@@ -2664,10 +2585,7 @@ def test_tiff_write_80():
     ds.GetRasterBand(1).SetOffset(1000)
     ds = None
 
-    with pytest.raises(OSError, message='got to PAM, but not expected...'):
-        # check that it doesn't go to PAM
-        os.stat('tmp/tiff_write_80.tif.aux.xml')
-    
+    assert not os.path.exists('tmp/tiff_write_80.tif.aux.xml')
 
     ds = gdal.Open('tmp/tiff_write_80.tif')
     scale = ds.GetRasterBand(1).GetScale()
@@ -2697,8 +2615,8 @@ def test_tiff_write_80():
     ds = gdal.Open('tmp/tiff_write_80.tif')
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
-    assert scale == 1 and offset == 0, \
-        'did not get expected values in internal case (2)'
+    assert not scale
+    assert not offset
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_80.tif')
@@ -2733,15 +2651,13 @@ def test_tiff_write_80():
     ds.GetRasterBand(1).SetOffset(0)
     ds = None
 
-    with pytest.raises(OSError, message='PAM file should be deleted'):
-        # check that there is no more any PAM file
-        os.stat('tmp/tiff_write_80_bis.tif.aux.xml')
-    
+    assert not os.path.exists('tmp/tiff_write_80_bis.tif.aux.xml')
 
     ds = gdal.Open('tmp/tiff_write_80_bis.tif')
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
-    assert scale == 1 and offset == 0, 'did not get expected values in PAM case (2)'
+    assert not scale
+    assert not offset
     ds = None
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_80_bis.tif')
@@ -2839,10 +2755,6 @@ def test_tiff_write_84():
 
     md = gdaltest.tiff_drv.GetMetadata()
 
-    # Crashes with libtiff < 4.0
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -2879,10 +2791,7 @@ def test_tiff_write_85():
     ds.GetRasterBand(1).SetUnitType('ft')
     ds = None
 
-    with pytest.raises(OSError, message='got to PAM, but not expected...'):
-        # check that it doesn't go to PAM
-        os.stat('tmp/tiff_write_85.tif.aux.xml')
-    
+    assert not os.path.exists('tmp/tiff_write_85.tif.aux.xml')
 
     ds = gdal.Open('tmp/tiff_write_85.tif')
     unittype = ds.GetRasterBand(1).GetUnitType()
@@ -2937,10 +2846,7 @@ def test_tiff_write_85():
     ds.GetRasterBand(1).SetUnitType(None)
     ds = None
 
-    with pytest.raises(OSError, message='PAM file should be deleted'):
-        # check that there is no more any PAM file
-        os.stat('tmp/tiff_write_85_bis.tif.aux.xml')
-    
+    assert not os.path.exists('tmp/tiff_write_85_bis.tif.aux.xml')
 
     ds = gdal.Open('tmp/tiff_write_85_bis.tif')
     unittype = ds.GetRasterBand(1).GetUnitType()
@@ -3059,12 +2965,21 @@ def test_tiff_write_87():
     data_ovr_1 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
     data_ovr_0 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
     data_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+    size_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF'))
+    with open('tmp/tiff_write_87_dst.tif', 'rb') as f:
+        f.seek(data_main - 4)
+        size_from_header = struct.unpack('<I', f.read(4))[0]
+        assert size_main == size_from_header
+        f.seek(data_main + size_main - 4)
+        last_bytes = f.read(4)
+        last_bytes_repeated = f.read(4)
+        assert last_bytes == last_bytes_repeated
 
     ds = None
 
     import validate_cloud_optimized_geotiff
     try:
-        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False)
+        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False, full_check=True)
         assert not errors, 'validate_cloud_optimized_geotiff failed'
     except OSError:
         pytest.fail('validate_cloud_optimized_geotiff failed')
@@ -3085,9 +3000,6 @@ def test_tiff_write_87():
 
 
 def test_tiff_write_88():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     # The file would be > 4.2 GB without SPARSE_OK
     src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_88_src.tif', 60000, 60000, 1,
@@ -3130,7 +3042,6 @@ def test_tiff_write_88():
     os.remove('tmp/tiff_write_88_src.tif')
     os.remove('tmp/tiff_write_88_dst.tif')
 
-    import struct
     ar = struct.unpack('B' * 8, data)
     assert ar[2] == 43, 'not a BIGTIFF file'
     assert ar[4] == 8 and ar[5] == 0 and ar[6] == 0 and ar[7] == 0, \
@@ -3142,9 +3053,6 @@ def test_tiff_write_88():
 
 def test_tiff_write_89():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3194,9 +3102,6 @@ def test_tiff_write_89():
 
 def test_tiff_write_90():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3236,9 +3141,6 @@ def test_tiff_write_90():
 
 def test_tiff_write_91():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3284,9 +3186,6 @@ def test_tiff_write_91():
 
 def test_tiff_write_92():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3335,9 +3234,6 @@ def test_tiff_write_92():
 
 def test_tiff_write_93():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3395,9 +3291,6 @@ def test_tiff_write_93():
 
 def test_tiff_write_94():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -3449,11 +3342,11 @@ def test_tiff_write_95():
 # Test that COPY_SRC_OVERVIEWS combined with GDAL_TIFF_INTERNAL_MASK=YES work well
 
 
-def test_tiff_write_96():
+def test_tiff_write_96(other_options = [], nbands = 1, nbits = 8):
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100)
-    src_ds.GetRasterBand(1).Fill(255)
+    src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100, nbands, options = ['NBITS=' + str(nbits)])
+    src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     from sys import version_info
     if version_info >= (3, 0, 0):
@@ -3468,8 +3361,9 @@ def test_tiff_write_96():
     expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
     expected_cs_ovr_mask_2 = src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
 
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_96_dst.tif', src_ds, options=['COPY_SRC_OVERVIEWS=YES'] + other_options + ['NBITS=' + str(nbits)])
     ds = None
+    src_ds = None
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
 
     ds = gdal.Open('tmp/tiff_write_96_dst.tif')
@@ -3479,16 +3373,115 @@ def test_tiff_write_96():
     cs_ovr_mask_1 = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
     cs_ovr_2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     cs_ovr_mask_2 = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
-
+    assert ds.GetMetadataItem('HAS_USED_READ_ENCODED_API', '_DEBUG_') == '1'
     ds = None
-    src_ds = None
-
-    gdaltest.tiff_drv.Delete('tmp/tiff_write_96_src.tif')
-    gdaltest.tiff_drv.Delete('tmp/tiff_write_96_dst.tif')
 
     assert [expected_cs, expected_cs_mask, expected_cs_ovr_1, expected_cs_ovr_mask_1, expected_cs_ovr_2, expected_cs_ovr_mask_2] == \
        [cs, cs_mask, cs_ovr_1, cs_ovr_mask_1, cs_ovr_2, cs_ovr_mask_2], \
         'did not get expected checksums'
+
+    if check_libtiff_internal_or_at_least(4, 0, 11):
+        with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+            ds = gdal.Open('tmp/tiff_write_96_dst.tif')
+            cs = ds.GetRasterBand(1).Checksum()
+            cs_mask = ds.GetRasterBand(1).GetMaskBand().Checksum()
+            cs_ovr_1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+            cs_ovr_mask_1 = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+            cs_ovr_2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+            cs_ovr_mask_2 = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
+
+        assert [expected_cs, expected_cs_mask, expected_cs_ovr_1, expected_cs_ovr_mask_1, expected_cs_ovr_2, expected_cs_ovr_mask_2] == \
+            [cs, cs_mask, cs_ovr_1, cs_ovr_mask_1, cs_ovr_2, cs_ovr_mask_2], \
+            'did not get expected checksums'
+        assert ds.GetMetadataItem('HAS_USED_READ_ENCODED_API', '_DEBUG_') == '0'
+
+    import validate_cloud_optimized_geotiff
+    try:
+        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_96_dst.tif', check_tiled=False, full_check=True)
+        assert not errors, 'validate_cloud_optimized_geotiff failed'
+    except OSError:
+        pytest.fail('validate_cloud_optimized_geotiff failed')
+
+    gdaltest.tiff_drv.Delete('tmp/tiff_write_96_src.tif')
+    gdaltest.tiff_drv.Delete('tmp/tiff_write_96_dst.tif')
+
+
+def test_tiff_write_96_tiled_threads_nbits7_nbands1():
+    return test_tiff_write_96(['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32', 'NUM_THREADS=ALL_CPUS'], nbands = 1, nbits = 7)
+
+def test_tiff_write_96_tiled_threads_nbits7_nbands2():
+    return test_tiff_write_96(['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=32', 'NUM_THREADS=ALL_CPUS'], nbands = 2, nbits = 7)
+
+
+###############################################################################
+# Test that strile arrays are written after the IFD
+
+
+def test_tiff_write_ifd_offsets():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
+
+    filename = '/vsimem/test_tiff_write_ifd_offsets.tif'
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'COMPRESS=LZW'])
+    val0_ref = int(ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val1_ref = int(ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val2_ref = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val3_ref = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val4_ref = int(ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val5_ref = int(ds.GetRasterBand(1).GetOverview(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    ds = None
+
+    assert val0_ref < val1_ref
+    assert val1_ref < val2_ref
+    assert val2_ref < val3_ref
+    assert val3_ref < val4_ref
+    assert val4_ref < val5_ref
+    assert val5_ref < 1100
+
+    # Retry with larger file
+    src_ds = gdal.GetDriverByName('MEM').Create('', 4096, 4096)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
+
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options=['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'COMPRESS=LZW'])
+    val0 = int(ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val1 = int(ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val2 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val3 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val4 = int(ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    val5 = int(ds.GetRasterBand(1).GetOverview(1).GetMaskBand().GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    ds = None
+
+    # Test rewriting but without changing strile size
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+    assert gdal.GetLastErrorMsg() == ''
+    f = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 1000, f).decode('LATIN1')
+    gdal.VSIFCloseL(f)
+    assert 'KNOWN_INCOMPATIBLE_EDITION=NO\n ' in data
+
+    # Test rewriting with changing strile size
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).WriteRaster(0,0,1,1,'x')
+    ds = None
+    assert gdal.GetLastErrorMsg() != ''
+    f = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 1000, f).decode('LATIN1')
+    gdal.VSIFCloseL(f)
+    assert 'KNOWN_INCOMPATIBLE_EDITION=YES\n' in data
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+    assert (val0_ref, val1_ref, val2_ref, val3_ref, val4_ref, val5_ref) == (val0, val1, val2, val3, val4, val5)
 
 ###############################################################################
 # Create a simple file by copying from an existing one - PixelIsPoint
@@ -3642,11 +3635,8 @@ def test_tiff_write_100():
 
 def test_tiff_write_101():
 
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
-
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+    if not gdaltest.run_slow_tests():
         pytest.skip()
 
     if sys.platform.startswith('linux'):
@@ -3724,10 +3714,8 @@ def test_tiff_write_102():
     wkt = sr.ExportToWkt()
     ds.SetProjection(wkt)
     ds = None
-
-    with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'YES'):
-        ds = gdal.Open('/vsimem/tiff_write_102.tif')
-        wkt1 = ds.GetProjectionRef()
+    ds = gdal.Open('/vsimem/tiff_write_102.tif')
+    wkt1 = ds.GetProjectionRef()
     ds = None
 
     with gdaltest.config_option('GTIFF_REPORT_COMPD_CS', 'NO'):
@@ -3744,11 +3732,8 @@ def test_tiff_write_102():
     sr2 = osr.SpatialReference()
     sr2.SetFromUserInput(wkt1)
     got_name = sr2.GetAttrValue('COMPD_CS')
-    if got_name != name:
-        print(wkt2)
-        pytest.fail('dit not get expected COMPD_CS name')
+    assert got_name == name, wkt2
 
-    
 ###############################################################################
 # Test -co COPY_SRC_OVERVIEWS=YES on a multiband source with external overviews (#3938)
 
@@ -3803,11 +3788,6 @@ def test_tiff_write_104():
 
 
 def test_tiff_write_105():
-
-    # This hangs forever with libtiff 3.8.2, so skip it
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     shutil.copyfile('data/bug4468.tif', 'tmp/bug4468.tif')
 
@@ -4016,10 +3996,9 @@ def test_tiff_write_116():
 
 
 def test_tiff_write_117():
-    # This will also fail with a libtiff 4.x older than 2012-08-13
-    # Might be good to be able to test internal libtiff presence
+    # This fail with a libtiff 4.x older than 2012-08-13
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+    if md['LIBTIFF'] != 'INTERNAL':
         pytest.skip()
 
     import random
@@ -4718,9 +4697,6 @@ def test_tiff_write_128():
 
 def test_tiff_write_129():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -4761,9 +4737,6 @@ def test_tiff_write_129():
 
 def test_tiff_write_130():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
@@ -5089,46 +5062,70 @@ def test_tiff_write_133():
 
 def test_tiff_write_134():
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options=['DISCARD_LSB=0,1,3'])
-    ds.GetRasterBand(1).Fill(127)
-    ds.GetRasterBand(2).Fill(127)
-    ds.GetRasterBand(3).Fill(127)
-    ds = None
-    ds = gdal.Open('/vsimem/tiff_write_134.tif')
-    cs1 = ds.GetRasterBand(1).Checksum()
-    cs2 = ds.GetRasterBand(2).Checksum()
-    cs3 = ds.GetRasterBand(3).Checksum()
-    assert cs1 == 1 and cs2 == 0 and cs3 == 5
-    ds = None
-    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+    for interleave in ['BAND', 'PIXEL']:
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options=['DISCARD_LSB=0,1,3', 'INTERLEAVE='+interleave])
+        ds.GetRasterBand(1).Fill(127)
+        ds.GetRasterBand(2).Fill(127)
+        ds.GetRasterBand(3).Fill(127)
+        ds = None
+        ds = gdal.Open('/vsimem/tiff_write_134.tif')
+        val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster())[0]
+        val2 = struct.unpack('B', ds.GetRasterBand(2).ReadRaster())[0]
+        val3 = struct.unpack('B', ds.GetRasterBand(3).ReadRaster())[0]
+        assert val1 == 127 and val2 == 126 and val3 == 124
+        ds = None
+        gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
     src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134_src.tif', 1, 1, 3)
     src_ds.GetRasterBand(1).Fill(127)
     src_ds.GetRasterBand(2).Fill(127)
-    src_ds.GetRasterBand(3).Fill(127)
+    src_ds.GetRasterBand(3).Fill(255)
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_134.tif', src_ds, options=['DISCARD_LSB=0,1,3'])
     ds = None
     ds = gdal.Open('/vsimem/tiff_write_134.tif')
-    cs1 = ds.GetRasterBand(1).Checksum()
-    cs2 = ds.GetRasterBand(2).Checksum()
-    cs3 = ds.GetRasterBand(3).Checksum()
-    assert cs1 == 1 and cs2 == 0 and cs3 == 5
+    val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster())[0]
+    val2 = struct.unpack('B', ds.GetRasterBand(2).ReadRaster())[0]
+    val3 = struct.unpack('B', ds.GetRasterBand(3).ReadRaster())[0]
+    assert val1 == 127 and val2 == 126 and val3 == 255
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options=['DISCARD_LSB=3'])
-    ds.GetRasterBand(1).Fill(127)
-    ds.GetRasterBand(2).Fill(127)
-    ds.GetRasterBand(3).Fill(127)
-    ds = None
-    ds = gdal.Open('/vsimem/tiff_write_134.tif')
-    cs1 = ds.GetRasterBand(1).Checksum()
-    cs2 = ds.GetRasterBand(2).Checksum()
-    cs3 = ds.GetRasterBand(3).Checksum()
-    assert cs1 == 5 and cs2 == 5 and cs3 == 5
-    ds = None
-    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+    for interleave in ['BAND', 'PIXEL']:
+        for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, dt, options=['DISCARD_LSB=3', 'INTERLEAVE='+interleave])
+            ds.GetRasterBand(1).Fill(127)
+            ds.GetRasterBand(2).Fill(127)
+            ds.GetRasterBand(3).Fill(127)
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_write_134.tif')
+            val1 = struct.unpack('B', ds.GetRasterBand(1).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
+            val2 = struct.unpack('B', ds.GetRasterBand(2).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
+            val3 = struct.unpack('B', ds.GetRasterBand(3).ReadRaster(0,0,1,1,1,1,gdal.GDT_Byte))[0]
+            assert val1 == 124 and val2 == 124 and val3 == 124
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    # Error cases
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1', 'PHOTOMETRIC=PALETTE'])
+    assert gdal.GetLastErrorMsg() != ''
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        # Too many elements
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1,2'])
+    assert gdal.GetLastErrorMsg() != ''
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        # Too many elements
+        gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1,
+                                 options=['DISCARD_LSB=1', 'NBITS=7'])
+    assert gdal.GetLastErrorMsg() != ''
 
 ###############################################################################
 # Test clearing GCPs (#5945)
@@ -5323,7 +5320,6 @@ def test_tiff_write_138():
 
 
 def test_tiff_write_139():
-    import struct
 
     drv = gdal.GetDriverByName('GTiff')
     # Only post 4.0.5 has the fix for non-byte swabing case
@@ -5536,10 +5532,6 @@ def test_tiff_write_143():
 
 
 def test_tiff_write_144():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
@@ -5833,8 +5825,6 @@ def test_tiff_write_153():
 
 def test_tiff_write_154():
 
-    import struct
-
     src_ds = gdal.GetDriverByName('MEM').Create('', 500, 500)
 
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['BLOCKYSIZE=256'])
@@ -5999,8 +5989,6 @@ def test_tiff_write_156():
 
 def test_tiff_write_157():
 
-    import struct
-
     # Write controlled values of Float16
     vals = struct.pack('H' * 14,
                        0x0000,  # Positive zero
@@ -6149,8 +6137,6 @@ def test_tiff_write_159():
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
-        pytest.skip()
-    if md['DMD_CREATIONOPTIONLIST'].find('BIGTIFF') == -1:
         pytest.skip()
 
     prev_table = ''
@@ -6920,6 +6906,257 @@ def test_tiff_write_184_create_append_subdataset():
 
     ds = None
     gdal.Unlink(tmpfilename)
+
+###############################################################################
+# Test LERC compression with Create() and BuildOverviews()
+# Fixes https://github.com/OSGeo/gdal/issues/1257
+
+
+def test_tiff_write_185_lerc_create_and_overview():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        pytest.skip()
+
+    filename = '/vsimem/test_tiff_write_185_lerc_create_and_overview.tif'
+    ds = gdaltest.tiff_drv.Create(filename, 20, 20, options=['COMPRESS=LERC_DEFLATE'])
+    src_ds = gdal.Open('data/byte.tif')
+    ds.WriteRaster(0,0,20,20,src_ds.ReadRaster())
+    gdal.ErrorReset()
+    ds.BuildOverviews('NEAR', [2])
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+    ds = gdal.Open(filename)
+    cs = ds.GetRasterBand(1).Checksum()
+    cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    gdal.Unlink(filename)
+    assert (cs, cs_ovr) == (4672, 1087)
+
+
+###############################################################################
+
+def check_libtiff_internal_or_at_least(expected_maj, expected_min, expected_micro):
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] == 'INTERNAL':
+        return True
+    if md['LIBTIFF'].startswith('LIBTIFF, Version '):
+        version = md['LIBTIFF'][len('LIBTIFF, Version '):]
+        version = version[0:version.find('\n')]
+        got_maj, got_min, got_micro = version.split('.')
+        got_maj = int(got_maj)
+        got_min = int(got_min)
+        got_micro = int(got_micro)
+        if got_maj > expected_maj:
+            return True
+        if got_maj < expected_maj:
+            return False
+        if got_min > expected_min:
+            return True
+        if got_min < expected_min:
+            return False
+        return got_micro >= expected_micro
+    return False
+
+###############################################################################
+# Test writing a deflate compressed file with a uncompressed strip larger than 4 GB
+#
+
+def test_tiff_write_deflate_4GB():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+
+    ref_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    ref_ds.GetRasterBand(1).Fill(127)
+
+    gdal.Translate('/vsimem/out.tif', ref_ds,
+                   options = '-co TILED=YES -co COMPRESS=DEFLATE -co BLOCKXSIZE=50000 -co BLOCKYSIZE=86000 -outsize 50000 86000')
+
+    ds = gdal.Open('/vsimem/out.tif')
+    data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
+    assert data == ref_ds.ReadRaster()
+    ds = None
+
+    gdal.Unlink('/vsimem/out.tif')
+
+
+###############################################################################
+# Test rewriting a LZW strip/tile that is very close to 8 KB with larger data
+
+def test_tiff_write_rewrite_lzw_strip():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    src_data = open('data/bug_gh_1439_to_be_updated_lzw.tif', 'rb').read()
+    tmpfilename = '/vsimem/out.tif'
+    gdal.FileFromMemBuffer(tmpfilename, src_data)
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    src_ds = gdal.Open('data/bug_gh_1439_update_lzw.tif')
+    ds.WriteRaster(0,0,4096,1,src_ds.ReadRaster())
+    ds = None
+    ds = gdal.Open(tmpfilename)
+    gdal.ErrorReset()
+    assert ds.GetRasterBand(1).ReadRaster(0,1,4096,1)
+    assert gdal.GetLastErrorMsg() == ''
+
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test COPY_SRC_OVERVIEWS on a configuration with overviews, mask, but no
+# overview on the mask
+
+def test_tiff_write_overviews_mask_no_ovr_on_mask():
+
+    tmpfile = '/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask.tif'
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ds = gdaltest.tiff_drv.Create(tmpfile, 100, 100)
+        ds.GetRasterBand(1).Fill(255)
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+
+    ds = gdal.Open(tmpfile)
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds.BuildOverviews('NEAR', overviewlist=[2])
+    assert gdal.GetLastErrorMsg() == 'Building external overviews whereas there is an internal mask is not fully supported. The overviews of the non-mask bands will be created, but not the overviews of the mask band.'
+    # No overview on the mask
+    assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
+    ds = None
+
+    tmpfile2 = '/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask_copy.tif'
+    src_ds = gdal.Open(tmpfile)
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.CreateCopy(tmpfile2, src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
+    assert gdal.GetLastErrorMsg() == 'Source dataset has a mask band on full resolution, overviews on the regular bands, but lacks overviews on the mask band.'
+    assert ds
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+    # No overview on the mask
+    assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
+    ds = None
+
+    gdaltest.tiff_drv.Delete(tmpfile)
+    gdaltest.tiff_drv.Delete(tmpfile2)
+
+
+###############################################################################
+# Test that -co PHOTOMETRIC=YCBCR -co COMPRESS=JPEG does not create a TIFFTAG_GDAL_METADATA
+
+def test_tiff_write_no_gdal_metadata_tag_for_ycbcr_jpeg():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        pytest.skip()
+
+    tmpfile = '/vsimem/test_tiff_write_no_gdal_metadata_tag_for_ycbcr_jpeg.tif'
+    assert gdaltest.tiff_drv.Create(tmpfile, 16, 16, 3, gdal.GDT_Byte, options=['PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG'])
+    statBuf = gdal.VSIStatL(tmpfile + '.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    assert statBuf is None, 'did not expect PAM file'
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_') is None, \
+        'did not expect TIFFTAG_GDAL_METADATA tag'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+
+    tmpfile2 = tmpfile + "2"
+    assert gdaltest.tiff_drv.CreateCopy(tmpfile2, ds, options=['PHOTOMETRIC=YCBCR', 'COMPRESS=JPEG'])
+    ds = None
+
+    ds = gdal.Open(tmpfile2)
+    assert ds.GetMetadataItem('TIFFTAG_GDAL_METADATA', '_DEBUG_') is None, \
+        'did not expect TIFFTAG_GDAL_METADATA tag'
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    ds = None
+
+    gdaltest.tiff_drv.Delete(tmpfile)
+    gdaltest.tiff_drv.Delete(tmpfile2)
+
+
+###############################################################################
+# Test that repated flushing after SetGeoTransform() does not grow file size
+# indefinitely
+
+def test_tiff_write_setgeotransform_flush():
+
+    tmpfile = '/vsimem/test_tiff_write_setgeotransform_flush.tif'
+    gdal.GetDriverByName('GTiff').Create(tmpfile,1,1)
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    ds.SetGeoTransform([2,0,1,49,0,-1])
+    for i in range(10):
+        ds.FlushCache()
+    ds = None
+
+    assert gdal.VSIStatL(tmpfile).size < 1000
+
+    gdaltest.tiff_drv.Delete(tmpfile)
+
+###############################################################################
+# Test that compression parameters are taken into account in Create() mode
+
+def test_tiff_write_compression_create_and_createcopy():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    tests = []
+
+    if 'DEFLATE' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=DEFLATE', 'ZLEVEL=1'],['COMPRESS=DEFLATE', 'ZLEVEL=9']))
+
+    if 'LZMA' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=LZMA', 'LZMA_PRESET=1'],['COMPRESS=LZMA', 'LZMA_PRESET=9']))
+
+    if 'JPEG' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=JPEG', 'JPEG_QUALITY=95'],['COMPRESS=JPEG', 'JPEG_QUALITY=50']))
+
+    if 'ZSTD' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=ZSTD', 'ZSTD_LEVEL=1'],['COMPRESS=ZSTD', 'ZSTD_LEVEL=9']))
+
+    # FIXME: this test randomly fails, especially on Windows, but also on Linux,
+    # for a unknown reason. Nothing suspicious with Valgrind however
+    # if 'LERC_DEFLATE' in md['DMD_CREATIONOPTIONLIST']:
+    #   tests.append((['COMPRESS=LERC_DEFLATE', 'ZLEVEL=1'],['COMPRESS=LERC_DEFLATE', 'ZLEVEL=9']))
+
+    if 'WEBP' in md['DMD_CREATIONOPTIONLIST']:
+        tests.append((['COMPRESS=WEBP', 'WEBP_LEVEL=95'],['COMPRESS=WEBP', 'WEBP_LEVEL=15']))
+
+    new_tests = []
+    for (before, after) in tests:
+        new_tests.append((before, after))
+        new_tests.append((before + ['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'NUM_THREADS=2'],
+                          after + ['COPY_SRC_OVERVIEWS=YES', 'TILED=YES', 'NUM_THREADS=2']))
+    tests = new_tests
+
+    tmpfile = '/vsimem/test_tiff_write_compression_create.tif'
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    data = src_ds.ReadRaster()
+    for (before, after) in tests:
+        ds = gdaltest.tiff_drv.Create(tmpfile, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, options = before)
+        ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+        ds = None
+        size_before = gdal.VSIStatL(tmpfile).size
+        ds = gdaltest.tiff_drv.Create(tmpfile, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, options = after)
+        ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data)
+        ds = None
+        size_after = gdal.VSIStatL(tmpfile).size
+        assert size_after < size_before, (before, after, size_before, size_after)
+        print(before, after, size_before, size_after)
+
+        gdaltest.tiff_drv.CreateCopy(tmpfile, src_ds, options = before)
+        size_before = gdal.VSIStatL(tmpfile).size
+        gdaltest.tiff_drv.CreateCopy(tmpfile, src_ds, options = after)
+        size_after = gdal.VSIStatL(tmpfile).size
+        assert size_after < size_before, (before, after, size_before, size_after)
+
+    gdaltest.tiff_drv.Delete(tmpfile)
 
 ###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES

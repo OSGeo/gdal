@@ -645,9 +645,13 @@ static bool VSICurlIsS3LikeSignedURL( const char* pszURL )
 {
     return
         (strstr(pszURL, ".s3.amazonaws.com/") != nullptr ||
-         strstr(pszURL, ".storage.googleapis.com/") != nullptr) &&
+         strstr(pszURL, ".s3.amazonaws.com:") != nullptr ||
+         strstr(pszURL, ".storage.googleapis.com/") != nullptr ||
+         strstr(pszURL, ".storage.googleapis.com:") != nullptr) &&
         (strstr(pszURL, "&Signature=") != nullptr ||
-         strstr(pszURL, "?Signature=") != nullptr);
+         strstr(pszURL, "?Signature=") != nullptr ||
+         strstr(pszURL, "&X-Amz-Signature=") != nullptr ||
+         strstr(pszURL, "?X-Amz-Signature=") != nullptr);
 }
 
 /************************************************************************/
@@ -659,9 +663,16 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL( const char* pszURL )
     const char* pszExpires = strstr(pszURL, "&Expires=");
     if( pszExpires == nullptr )
         pszExpires = strstr(pszURL, "?Expires=");
+    if( pszExpires != nullptr )
+        return CPLAtoGIntBig(pszExpires + strlen("&Expires="));
+
+    pszExpires = strstr(pszURL, "?X-Amz-Expires=");
     if( pszExpires == nullptr )
-        return 0;
-    return CPLAtoGIntBig(pszExpires + strlen("&Expires="));
+        pszExpires = strstr(pszURL, "?X-Amz-Expires=");
+    if( pszExpires != nullptr )
+        return CPLAtoGIntBig(pszExpires + strlen("&X-Amz-Expires="));
+
+    return 0;
 }
 
 /************************************************************************/
@@ -851,6 +862,14 @@ retry:
         }
     }
 
+    if( ENABLE_DEBUG && szCurlErrBuf[0] != '\0' &&
+        sWriteFuncHeaderData.bDownloadHeaderOnly &&
+        EQUAL(szCurlErrBuf, "Failed writing header") )
+    {
+        // Not really an error since we voluntarily interrupted the download !
+        szCurlErrBuf[0] = 0;
+    }
+
     double dfSize = 0;
     if( oFileProp.eExists != EXIST_YES )
     {
@@ -934,7 +953,18 @@ retry:
         {
             oFileProp.eExists = EXIST_YES;
             if( dfSize < 0 )
+            {
+                if( osVerb == "HEAD" && !bRetryWithGet )
+                {
+                    CPLDebug("VSICURL", "HEAD did not provide file size. Retrying with GET");
+                    bRetryWithGet = true;
+                    CPLFree(sWriteFuncData.pBuffer);
+                    CPLFree(sWriteFuncHeaderData.pBuffer);
+                    curl_easy_cleanup(hCurlHandle);
+                    goto retry;
+                }
                 oFileProp.fileSize = 0;
+            }
             else
                 oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
         }
@@ -1015,11 +1045,10 @@ retry:
         }
         else if( response_code != 200 )
         {
-            // If HTTP 429, 500, 502, 503, 504 error retry after a
-            // pause.
+            // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1371,11 +1400,10 @@ retry:
             return DownloadRegion(startOffset, nBlocks);
         }
 
-        // If HTTP 429, 500, 502, 503, 504 error retry after a
-        // pause.
+        // Look if we should attempt a retry
         const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
             static_cast<int>(response_code), dfRetryDelay,
-            sWriteFuncHeaderData.pBuffer);
+            sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
         if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {
@@ -1591,10 +1619,9 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             // Ensure that we will request at least the number of blocks
             // to satisfy the remaining buffer size to read.
             const vsi_l_offset nEndOffsetToDownload =
-                ((iterOffset + nBufferRequestSize) / DOWNLOAD_CHUNK_SIZE) *
+                ((iterOffset + nBufferRequestSize + DOWNLOAD_CHUNK_SIZE - 1) / DOWNLOAD_CHUNK_SIZE) *
                 DOWNLOAD_CHUNK_SIZE;
             const int nMinBlocksToDownload =
-                1 +
                 static_cast<int>(
                     (nEndOffsetToDownload - nOffsetToDownload) /
                     DOWNLOAD_CHUNK_SIZE);
@@ -2766,6 +2793,14 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
     {
         char** papszExtensions =
             CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
+        const char *queryStart = strchr(pszFilename, '?');
+        char *pszFilenameWithoutQuery = nullptr;
+        if (queryStart != nullptr)
+        {
+            pszFilenameWithoutQuery = CPLStrdup(pszFilename);
+            pszFilenameWithoutQuery[queryStart - pszFilename]='\0';
+            pszFilename = pszFilenameWithoutQuery;
+        }
         const size_t nURLLen = strlen(pszFilename);
         bool bFound = false;
         for( int i = 0; papszExtensions[i] != nullptr; i++ )
@@ -2790,6 +2825,9 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
         }
 
         CSLDestroy(papszExtensions);
+        if( pszFilenameWithoutQuery ) {
+            CPLFree(pszFilenameWithoutQuery);
+        }
 
         return bFound;
     }

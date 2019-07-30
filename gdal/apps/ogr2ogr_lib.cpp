@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2015, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2015, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2015, Faza Mahamood
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -446,7 +446,8 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  bool bOverwrite,
                                                  bool* pbErrorOccurred,
-                                                 bool* pbOverwriteActuallyDone);
+                                                 bool* pbOverwriteActuallyDone,
+                                                 bool* pbAddOverwriteLCO);
 
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo);
 
@@ -2187,8 +2188,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 }
                 else
                 {
-                    if( poODS != nullptr )
-                        poDriver = poODS->GetDriver();
+                    poDriver = poODS->GetDriver();
                     GDALClose(poODS);
                     poODS = nullptr;
                 }
@@ -2251,14 +2251,20 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                      psOptions->pszFormat);
         }
 
-        const char* pszOGRCompatFormat = psOptions->pszFormat;
+        CPLString osOGRCompatFormat(psOptions->pszFormat);
         // Special processing for non-unified drivers that have the same name
-        // as GDAL and OGR drivers
-        // Other candidates could be VRT, SDTS, OGDI and PDS, but they don't
-        // have write capabilities.
-        if( EQUAL(pszOGRCompatFormat, "GMT") )
-            pszOGRCompatFormat = "OGR_GMT";
-        poDriver = poDM->GetDriverByName(pszOGRCompatFormat);
+        // as GDAL and OGR drivers. GMT should become OGR_GMT.
+        // Other candidates could be VRT, SDTS and PDS, but they don't
+        // have write capabilities. But do the substitution to get a sensible
+        // error message
+        if( EQUAL(osOGRCompatFormat, "GMT") ||
+            EQUAL(osOGRCompatFormat, "VRT") |
+            EQUAL(osOGRCompatFormat, "SDTS") ||
+            EQUAL(osOGRCompatFormat, "PDS") )
+        {
+            osOGRCompatFormat = "OGR_" + osOGRCompatFormat;
+        }
+        poDriver = poDM->GetDriverByName(osOGRCompatFormat);
         if( poDriver == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -2549,7 +2555,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         /* Special case: if output=input, then we must likely destroy the */
         /* old table before to avoid transaction issues. */
         if( poDS == poODS && psOptions->pszNewLayerName != nullptr && bOverwrite )
-            GetLayerAndOverwriteIfNecessary(poODS, psOptions->pszNewLayerName, bOverwrite, nullptr, nullptr);
+            GetLayerAndOverwriteIfNecessary(poODS, psOptions->pszNewLayerName, bOverwrite, nullptr, nullptr, nullptr);
 
         if( psOptions->pszWHERE != nullptr )
             CPLError( CE_Warning, CPLE_AppDefined, "-where clause ignored in combination with -sql." );
@@ -2618,7 +2624,10 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             VSIStatBufL sStat;
             if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
                 psOptions->pszNewLayerName == nullptr &&
-                VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+                VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
+                (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
+                 EQUAL(CPLGetExtension(osDestFilename), "shz") ||
+                 EQUAL(CPLGetExtension(osDestFilename), "dbf")) )
             {
                 psOptions->pszNewLayerName = CPLStrdup(CPLGetBasename(osDestFilename));
             }
@@ -2699,8 +2708,12 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
         VSIStatBufL  sStat;
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
-            (CSLCount(psOptions->papszLayers) == 1 || nSrcLayerCount == 1) && psOptions->pszNewLayerName == nullptr &&
-            VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+            (CSLCount(psOptions->papszLayers) == 1 || nSrcLayerCount == 1) &&
+            psOptions->pszNewLayerName == nullptr &&
+            VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
+            (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
+             EQUAL(CPLGetExtension(osDestFilename), "shz") ||
+             EQUAL(CPLGetExtension(osDestFilename), "dbf")) )
         {
             psOptions->pszNewLayerName = CPLStrdup(CPLGetBasename(osDestFilename));
         }
@@ -2995,7 +3008,10 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         VSIStatBufL  sStat;
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             nLayerCount == 1 && psOptions->pszNewLayerName == nullptr &&
-            VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+            VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
+            (EQUAL(CPLGetExtension(osDestFilename), "shp") ||
+             EQUAL(CPLGetExtension(osDestFilename), "shz") ||
+             EQUAL(CPLGetExtension(osDestFilename), "dbf")) )
         {
             psOptions->pszNewLayerName = CPLStrdup(CPLGetBasename(osDestFilename));
         }
@@ -3222,12 +3238,15 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  bool bOverwrite,
                                                  bool* pbErrorOccurred,
-                                                 bool* pbOverwriteActuallyDone)
+                                                 bool* pbOverwriteActuallyDone,
+                                                 bool* pbAddOverwriteLCO)
 {
     if( pbErrorOccurred )
         *pbErrorOccurred = false;
     if( pbOverwriteActuallyDone )
         *pbOverwriteActuallyDone = false;
+    if( pbAddOverwriteLCO )
+        *pbAddOverwriteLCO = false;
 
     /* GetLayerByName() can instantiate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
@@ -3261,7 +3280,20 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 /* -------------------------------------------------------------------- */
     if( poDstLayer != nullptr && bOverwrite )
     {
-        if( poDstDS->DeleteLayer( iLayer ) != OGRERR_NONE )
+        /* When using the CARTO driver we don't want to delete the layer if */
+        /* it's going to be recreated. Instead we mark it to be overwritten */
+        /* when the new creation is requested */
+        if ( poDstDS->GetDriver()->GetMetadataItem(
+                GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
+             strstr(poDstDS->GetDriver()->GetMetadataItem(
+                GDAL_DS_LAYER_CREATIONOPTIONLIST), "CARTODBFY") != nullptr )
+        {
+            if ( pbAddOverwriteLCO )
+                *pbAddOverwriteLCO = true;
+            if( pbOverwriteActuallyDone )
+                *pbOverwriteActuallyDone = true;
+
+        } else if( poDstDS->DeleteLayer( iLayer ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                      "DeleteLayer() failed when overwrite requested." );
@@ -3519,12 +3551,14 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 
     bool bErrorOccurred;
     bool bOverwriteActuallyDone;
+    bool bAddOverwriteLCO;
     OGRLayer *poDstLayer =
         GetLayerAndOverwriteIfNecessary(m_poDstDS,
                                         pszNewLayerName,
                                         m_bOverwrite,
                                         &bErrorOccurred,
-                                        &bOverwriteActuallyDone);
+                                        &bOverwriteActuallyDone,
+                                        &bAddOverwriteLCO);
     if( bErrorOccurred )
         return nullptr;
 
@@ -3705,6 +3739,14 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID", poSrcLayer->GetFIDColumn());
             CPLDebug("GDALVectorTranslate", "Using FID=%s and -preserve_fid", poSrcLayer->GetFIDColumn());
             bPreserveFID = true;
+        }
+
+        // If bAddOverwriteLCO is ON (set up when overwritting a CARTO layer),
+        // set OVERWRITE to YES so the new layer overwrites the old one
+        if (bAddOverwriteLCO)
+        {
+            papszLCOTemp = CSLSetNameValue(papszLCOTemp, "OVERWRITE", "ON");
+            CPLDebug("GDALVectorTranslate", "Using OVERWRITE=ON");
         }
 
         if( m_bNativeData &&
@@ -4164,7 +4206,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         }
     }
 
-    if( bOverwriteActuallyDone &&
+    if( bOverwriteActuallyDone && !bAddOverwriteLCO &&
         EQUAL(m_poDstDS->GetDriver()->GetDescription(), "PostgreSQL") &&
         !psOptions->nLayerTransaction &&
         psOptions->nGroupTransactions >= 0 &&

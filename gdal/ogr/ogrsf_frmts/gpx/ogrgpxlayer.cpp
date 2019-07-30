@@ -2,10 +2,10 @@
  *
  * Project:  GPX Translator
  * Purpose:  Implements OGRGPXLayer class.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -357,7 +357,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     else
         fpGPX = nullptr;
 
-    ResetReading();
+    OGRGPXLayer::ResetReading();
 }
 
 /************************************************************************/

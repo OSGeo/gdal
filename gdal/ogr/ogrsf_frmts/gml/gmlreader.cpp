@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -192,7 +192,7 @@ CPL_UNUSED
 GMLReader::~GMLReader()
 
 {
-    ClearClasses();
+    GMLReader::ClearClasses();
 
     CPLFree(m_pszFilename);
 

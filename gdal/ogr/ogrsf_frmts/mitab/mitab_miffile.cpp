@@ -10,7 +10,7 @@
  *
  **********************************************************************
  * Copyright (c) 1999-2003, Stephane Villeneuve
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -391,11 +391,22 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
     GBool bAllColumnsRead =  FALSE;
     int nColumns = 0;
     GBool bCoordSys = FALSE;
+    CPLString osCoordSys;
+    int nLineCount = 0;
 
     const char *pszLine = nullptr;
     while (((pszLine = m_poMIFFile->GetLine()) != nullptr) &&
            ((bAllColumnsRead == FALSE) || !STARTS_WITH_CI(pszLine, "Data")))
     {
+        nLineCount ++;
+        if( nLineCount == 100000 )
+        {
+            // Arbitrary threshold. The number of lines must be at least as big
+            // as the number of fields we want to support.
+            CPLError(CE_Failure, CPLE_NotSupported, "Too many lines in MIF header");
+            return -1;
+        }
+
         if (bColumns == TRUE && nColumns >0)
         {
             if (AddFields(pszLine) == 0)
@@ -458,26 +469,12 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
 
             m_pszIndex = CPLStrdup(pszLine + 5);
         }
-        else if (m_pszCoordSys == nullptr &&
+        else if (osCoordSys.empty() &&
                  STARTS_WITH_CI(pszLine, "COORDSYS") &&
                  CPLStrnlen(pszLine, 9) >= 9)
         {
             bCoordSys = TRUE;
-            m_pszCoordSys = CPLStrdup(pszLine + 9);
-
-            // Extract bounds if present
-            char  **papszFields =
-                CSLTokenizeStringComplex(m_pszCoordSys, " ,()\t", TRUE, FALSE );
-            int iBounds = CSLFindString( papszFields, "Bounds" );
-            if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
-            {
-                m_dXMin = CPLAtof(papszFields[++iBounds]);
-                m_dYMin = CPLAtof(papszFields[++iBounds]);
-                m_dXMax = CPLAtof(papszFields[++iBounds]);
-                m_dYMax = CPLAtof(papszFields[++iBounds]);
-                m_bBoundsSet = TRUE;
-            }
-            CSLDestroy( papszFields );
+            osCoordSys = pszLine + 9;
         }
         else if (STARTS_WITH_CI(pszLine, "TRANSFORM"))
         {
@@ -523,13 +520,34 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
         }
         else if (bCoordSys == TRUE)
         {
-            char *pszTmp = m_pszCoordSys;
-            m_pszCoordSys = CPLStrdup(CPLSPrintf("%s %s",m_pszCoordSys,
-                                                 pszLine));
-            CPLFree(pszTmp);
-            //printf("Reading CoordSys\n");
-            // Reading CoordSys
+            if( osCoordSys.size() > 10000 ) // Arbitrary threshold
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "COORDSYS value too long");
+                return -1;
+            }
+            osCoordSys += ' ';
+            osCoordSys += pszLine;
         }
+    }
+
+    if( !osCoordSys.empty() )
+    {
+        m_pszCoordSys = CPLStrdup(osCoordSys);
+
+        // Extract bounds if present
+        char  **papszFields =
+            CSLTokenizeStringComplex(osCoordSys, " ,()\t", TRUE, FALSE );
+        int iBounds = CSLFindString( papszFields, "Bounds" );
+        if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
+        {
+            m_dXMin = CPLAtof(papszFields[++iBounds]);
+            m_dYMin = CPLAtof(papszFields[++iBounds]);
+            m_dXMax = CPLAtof(papszFields[++iBounds]);
+            m_dYMax = CPLAtof(papszFields[++iBounds]);
+            m_bBoundsSet = TRUE;
+        }
+        CSLDestroy( papszFields );
     }
 
     if (!bAllColumnsRead)
@@ -1615,10 +1633,6 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
                             GBool bIndexed /*=FALSE*/, GBool bUnique/*=FALSE*/, int /*bApproxOK*/ )
 {
-    int nStatus = 0;
-    char szNewFieldName[31+1]; /* 31 is the max characters for a field name*/
-    unsigned int nRenameNum = 1;
-
     /*-----------------------------------------------------------------
      * Check that call happens at the right time in dataset's life.
      *----------------------------------------------------------------*/
@@ -1661,37 +1675,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         m_poDefn->Reference();
     }
 
-    strncpy(szNewFieldName, pszName, sizeof(szNewFieldName)-1);
-    szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
-
-    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
-           nRenameNum < 10)
-    {
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1u", pszName, nRenameNum );
-      nRenameNum ++;
-    }
-
-    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
-           nRenameNum < 100)
-    {
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2u", pszName, nRenameNum );
-      nRenameNum ++;
-    }
-
-    if (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end())
-    {
-      CPLError( CE_Failure, CPLE_NotSupported,
-                "Too many field names like '%s' when truncated to 31 letters "
-                "for MapInfo format.", pszName );
-    }
-
-    if( !EQUAL(pszName,szNewFieldName) )
-    {
-      CPLError( CE_Warning, CPLE_NotSupported,
-                "Normalized/laundered field name: '%s' to '%s'",
-                pszName,
-                szNewFieldName );
-    }
+    CPLString   osName(NormalizeFieldName(pszName));
 
     /*-----------------------------------------------------------------
      * Map MapInfo native types to OGR types
@@ -1704,28 +1688,28 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * CHAR type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTString);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
         poFieldDefn->SetWidth(nWidth);
         break;
       case TABFInteger:
         /*-------------------------------------------------
          * INTEGER type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTInteger);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
         poFieldDefn->SetWidth(nWidth);
         break;
       case TABFSmallInt:
         /*-------------------------------------------------
          * SMALLINT type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTInteger);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
         poFieldDefn->SetWidth(nWidth);
         break;
       case TABFDecimal:
         /*-------------------------------------------------
          * DECIMAL type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTReal);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
         poFieldDefn->SetWidth(nWidth);
         poFieldDefn->SetPrecision(nPrecision);
         break;
@@ -1733,13 +1717,13 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * FLOAT type
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTReal);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
         break;
       case TABFDate:
         /*-------------------------------------------------
          * DATE type (V450, returned as a string: "DD/MM/YYYY" or "YYYYMMDD")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDate);
 #else
@@ -1752,7 +1736,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * TIME type (v900, returned as a string: "HH:MM:SS" or "HHMMSSmmm")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTTime);
 #else
@@ -1766,7 +1750,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
          * DATETIME type (v900, returned as a string: "DD/MM/YYYY HH:MM:SS",
          * "YYYY/MM/DD HH:MM:SS" or "YYYYMMDDHHMMSSmmm")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName,
+        poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDateTime);
 #else
@@ -1779,7 +1763,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         /*-------------------------------------------------
          * LOGICAL type (value "T" or "F")
          *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(szNewFieldName, OFTString);
+        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
         poFieldDefn->SetWidth(1);
         break;
       default:
@@ -1815,7 +1799,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     m_pabFieldIndexed[m_poDefn->GetFieldCount()-1] = bIndexed;
     m_pabFieldUnique[m_poDefn->GetFieldCount()-1] = bUnique;
 
-    return nStatus;
+    return 0;
 }
 
 /**********************************************************************

@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -406,9 +406,7 @@ def test_hfa_clean_ige():
     out_ds = drv.CreateCopy('tmp/igetest.img', src_ds)
     del out_ds
 
-    with pytest.raises(IOError, message='ige file not cleaned up properly.'):
-        open('tmp/igetest.ige')
-    
+    assert not os.path.exists('tmp/igetest.ige')
 
     drv.Delete('tmp/igetest.img')
 
@@ -917,11 +915,8 @@ def test_hfa_write_bit2grayscale():
     gdal.SetConfigOption('HFA_USE_RRD', 'NO')
 
     # as an aside, confirm the .rrd file was deleted.
-    with pytest.raises(IOError, message='tmp/small1bit.rrd not deleted!'):
-        open('tmp/small1bit.rrd')
-    
+    assert not os.path.exists('tmp/small1bit.rrd')
 
-    
 ###############################################################################
 # Verify handling of camera model metadata (#2675)
 

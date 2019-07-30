@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  OpenFileGDB driver testing.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -1315,7 +1315,23 @@ def test_ogr_openfilegdb_21():
         f.DumpReadable()
         pytest.fail()
 
-    
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/1369
+# where a polygon with inner rings has its exterior ring with wrong orientation
+
+def test_ogr_openfilegdb_weird_winding_order():
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    ds = ogr.Open('/vsizip/data/weird_winding_order_fgdb.zip/roads_clip Drawing.gdb')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetGeometryCount() == 1
+    assert g.GetGeometryRef(0).GetGeometryCount() == 17
+
+
 ###############################################################################
 # Cleanup
 

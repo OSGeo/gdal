@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Atlantis Scientific, Inc.
- * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -913,6 +913,8 @@ int EnvisatFile_SetKeyValueAsString( EnvisatFile *self,
 {
     int	entry_count, key_index;
     EnvisatNameValue **entries;
+    size_t nValueLen;
+    size_t nEntryValueLen;
 
     if( !self->updatable )
     {
@@ -951,16 +953,16 @@ int EnvisatFile_SetKeyValueAsString( EnvisatFile *self,
     }
 
     self->header_dirty = 1;
-    if( strlen(value) > strlen(entries[key_index]->value) )
+    nValueLen = strlen(value);
+    nEntryValueLen = strlen(entries[key_index]->value);
+    if( nValueLen >= nEntryValueLen )
     {
-        strncpy( entries[key_index]->value, value,
-                 strlen(entries[key_index]->value) );
+        memcpy( entries[key_index]->value, value, nEntryValueLen );
     }
     else
     {
-        memset( entries[key_index]->value, ' ',
-                strlen(entries[key_index]->value) );
-        strncpy( entries[key_index]->value, value, strlen(value) );
+        memcpy( entries[key_index]->value, value, nValueLen );
+        memset( entries[key_index]->value + nValueLen, ' ', nEntryValueLen - nValueLen );
     }
 
     return SUCCESS;

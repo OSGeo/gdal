@@ -3,13 +3,13 @@
  * Project:  GDAL DEM Utilities
  * Purpose:
  * Authors:  Matthew Perry, perrygeo at gmail.com
- *           Even Rouault, even dot rouault at mines dash paris dot org
+ *           Even Rouault, even dot rouault at spatialys.com
  *           Howard Butler, hobu.inc at gmail.com
  *           Chris Yesson, chris dot yesson at ioz dot ac dot uk
  *
  ******************************************************************************
  * Copyright (c) 2006, 2009 Matthew Perry
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  * Portions derived from GRASS 4.1 (public domain) See
  * http://trac.osgeo.org/gdal/ticket/2975 for more information regarding
  * history of this code
@@ -151,6 +151,7 @@ struct GDALDEMProcessingOptions
     bool bComputeAtEdges;
     bool bZevenbergenThorne;
     bool bCombined;
+    bool bIgor;
     bool bMultiDirectional;
     char** papszCreateOptions;
     int nBand;
@@ -780,6 +781,7 @@ typedef struct
     double square_z_mul_square_inv_res;
     double cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res;
     double sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res;
+    double z_scaled;
 } GDALHillshadeAlgData;
 
 /* Unoptimized formulas are :
@@ -857,6 +859,80 @@ inline double ApproxADivByInvSqrtB( double a, double b )
     return a / sqrt(b);
 }
 #endif
+
+static double NormalizeAngle (double angle, double normalizer)
+{
+    angle = std::fmod(angle, normalizer);
+    if (angle < 0)
+        angle = normalizer + angle;
+
+    return angle;
+}
+
+static double DifferenceBetweenAngles (double angle1, double angle2, double normalizer)
+{
+    double diff = NormalizeAngle (angle1, normalizer) - NormalizeAngle (angle2, normalizer);
+    diff = std::abs(diff);
+    if (diff > normalizer / 2)
+        diff = normalizer - diff;
+    return diff;
+}
+
+template<class T, GradientAlg alg>
+static
+float GDALHillshadeIgorAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
+{
+    GDALHillshadeAlgData* psData = static_cast<GDALHillshadeAlgData*>(pData);
+
+    double slopeDegrees;
+    if (alg == HORN)
+    {
+        const double dx = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+            (afWin[2] + afWin[5] + afWin[5] + afWin[8])) * psData->inv_ewres;
+
+        const double dy = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+            (afWin[0] + afWin[1] + afWin[1] + afWin[2])) * psData->inv_nsres;
+
+        const double key = (dx * dx + dy * dy);
+        slopeDegrees = atan(sqrt(key) * psData->z_scaled) * kdfRadiansToDegrees;
+    }
+    else // ZEVENBERGEN_THORNE
+    {
+        const double dx = (afWin[3] - afWin[5]) * psData->inv_ewres;
+        const double dy = (afWin[7] - afWin[1]) * psData->inv_nsres;
+        const double key = dx * dx + dy * dy;
+
+        slopeDegrees = atan(sqrt(key) * psData->z_scaled) * kdfRadiansToDegrees;
+    }
+
+    double aspect;
+    if (alg == HORN)
+    {
+        const double dx = ((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
+            (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
+
+        const double dy2 = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+            (afWin[0] + afWin[1] + afWin[1] + afWin[2]));
+
+        aspect = atan2(dy2, -dx);
+    }
+    else // ZEVENBERGEN_THORNE
+    {
+        const double dx = afWin[5] - afWin[3];
+        const double dy = afWin[7] - afWin[1];
+        aspect = atan2(dy, -dx);
+    }
+
+    double slopeStrength = slopeDegrees / 90;
+
+    double aspectDiff = DifferenceBetweenAngles(aspect, M_PI * 3 / 2 - psData->azRadians, M_PI * 2);
+
+    double aspectStrength = 1 - aspectDiff / M_PI;
+
+    double shadowness = 1.0 - slopeStrength * aspectStrength;
+
+    return static_cast<float>(255.0 * shadowness);
+}
 
 template<class T, GradientAlg alg>
 static
@@ -1081,14 +1157,14 @@ void* GDALCreateHillshadeData( double* adfGeoTransform,
     pData->inv_ewres = 1.0 / adfGeoTransform[1];
     pData->sin_altRadians = sin(alt * kdfDegreesToRadians);
     pData->azRadians = az * kdfDegreesToRadians;
-    const double z_scaled = z / ((bZevenbergenThorne ? 2 : 8) * scale);
+    pData->z_scaled = z / ((bZevenbergenThorne ? 2 : 8) * scale);
     pData->cos_alt_mul_z =
-        cos(alt * kdfDegreesToRadians) * z_scaled;
+        cos(alt * kdfDegreesToRadians) * pData->z_scaled;
     pData->cos_az_mul_cos_alt_mul_z =
         cos(pData->azRadians) * pData->cos_alt_mul_z;
     pData->sin_az_mul_cos_alt_mul_z =
         sin(pData->azRadians) * pData->cos_alt_mul_z;
-    pData->square_z = z_scaled * z_scaled;
+    pData->square_z = pData->z_scaled * pData->z_scaled;
 
     pData->sin_altRadians_mul_254 = 254.0 *
                                     pData->sin_altRadians;
@@ -3321,6 +3397,16 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         return nullptr;
     }
 
+    if( psOptionsIn && psOptionsIn->bIgor && eUtilityMode != HILL_SHADE )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "-igor can only be used with hillshade");
+
+        if(pbUsageError)
+            *pbUsageError = TRUE;
+        return nullptr;
+    }
+
     if( psOptionsIn && psOptionsIn->bMultiDirectional && eUtilityMode != HILL_SHADE )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -3438,20 +3524,35 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                                         psOptions->bZevenbergenThorne);
         if( psOptions->bZevenbergenThorne )
         {
-            if( !psOptions->bCombined )
-            {
-                pfnAlgFloat = GDALHillshadeAlg<float, ZEVENBERGEN_THORNE>;
-                pfnAlgInt32 = GDALHillshadeAlg<GInt32, ZEVENBERGEN_THORNE>;
-            }
-            else
+            if( psOptions->bCombined )
             {
                 pfnAlgFloat = GDALHillshadeCombinedAlg<float, ZEVENBERGEN_THORNE>;
                 pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, ZEVENBERGEN_THORNE>;
             }
+            else if( psOptions->bIgor )
+            {
+                pfnAlgFloat = GDALHillshadeIgorAlg<float, ZEVENBERGEN_THORNE>;
+                pfnAlgInt32 = GDALHillshadeIgorAlg<GInt32, ZEVENBERGEN_THORNE>;
+            }
+            else
+            {
+                pfnAlgFloat = GDALHillshadeAlg<float, ZEVENBERGEN_THORNE>;
+                pfnAlgInt32 = GDALHillshadeAlg<GInt32, ZEVENBERGEN_THORNE>;
+            }
         }
         else
         {
-            if( !psOptions->bCombined )
+            if( psOptions->bCombined )
+            {
+                pfnAlgFloat = GDALHillshadeCombinedAlg<float, HORN>;
+                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, HORN>;
+            }
+            else if( psOptions->bIgor )
+            {
+                pfnAlgFloat = GDALHillshadeIgorAlg<float, HORN>;
+                pfnAlgInt32 = GDALHillshadeIgorAlg<GInt32, HORN>;
+            }
+            else
             {
                 if( adfGeoTransform[1] == -adfGeoTransform[5] )
                 {
@@ -3467,11 +3568,6 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                     pfnAlgFloat = GDALHillshadeAlg<float, HORN>;
                     pfnAlgInt32 = GDALHillshadeAlg<GInt32, HORN>;
                 }
-            }
-            else
-            {
-                pfnAlgFloat = GDALHillshadeCombinedAlg<float, HORN>;
-                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, HORN>;
             }
         }
     }
@@ -3798,10 +3894,12 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
     psOptions->bComputeAtEdges = false;
     psOptions->bZevenbergenThorne = false;
     psOptions->bCombined = false;
+    psOptions->bIgor = false;
     psOptions->bMultiDirectional = false;
     psOptions->nBand = 1;
     psOptions->papszCreateOptions = nullptr;
     bool bAzimuthSpecified = false;
+    bool bAltSpecified = false;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -3933,6 +4031,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
                 GDALDEMProcessingOptionsFree(psOptions);
                 return nullptr;
             }
+            bAltSpecified = true;
             psOptions->alt = CPLAtof(papszArgv[i]);
         }
         else if(
@@ -3941,6 +4040,13 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
           )
         {
             psOptions->bCombined = true;
+        }
+        else if(
+            (EQUAL(papszArgv[i], "-igor") ||
+             EQUAL(papszArgv[i], "--igor"))
+          )
+        {
+            psOptions->bIgor = true;
         }
         else if( EQUAL(papszArgv[i], "-multidirectional") ||
                  EQUAL(papszArgv[i], "--multidirectional") )
@@ -3999,11 +4105,10 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
         }
     }
 
-    if( psOptions->bMultiDirectional &&
-        psOptions->bCombined)
+    if( psOptions->bMultiDirectional + psOptions->bCombined + psOptions->bIgor > 1)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                    "-multidirectional and -combined cannot be used together");
+                    "only one of -multidirectional, -combined or -igor can be used");
         GDALDEMProcessingOptionsFree(psOptions);
         return nullptr;
     }
@@ -4012,6 +4117,14 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "-multidirectional and -az cannot be used together");
+        GDALDEMProcessingOptionsFree(psOptions);
+        return nullptr;
+    }
+
+    if( psOptions->bIgor && bAltSpecified )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "-igor and -alt cannot be used together");
         GDALDEMProcessingOptionsFree(psOptions);
         return nullptr;
     }

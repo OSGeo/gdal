@@ -698,6 +698,7 @@ void PostGISRasterDataset::BuildOverviews()
         for(iOV = 0; iOV < nOV; iOV++)
         {
             PostGISRasterDataset* poOvrDS = new PostGISRasterDataset();
+            poOvrDS->ShareLockWithParentDataset(this);
             poOvrDS->nOverviewFactor = poOV[iOV].nFactor;
             poOvrDS->poConn = poConn;
             poOvrDS->eAccess = eAccess;
@@ -1760,6 +1761,7 @@ PostGISRasterTileDataset* PostGISRasterDataset::BuildRasterTileDataset(const cha
 
     PostGISRasterTileDataset* poRTDS =
         new PostGISRasterTileDataset(this, l_nTileWidth, l_nTileHeight);
+    poRTDS->ShareLockWithParentDataset(this);
 
     if (GetPrimaryKeyRef() != nullptr)
     {
@@ -3225,7 +3227,7 @@ char **PostGISRasterDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "SUBDATASETS", NULL);
+                                   "SUBDATASETS", nullptr);
 }
 
 /*****************************************

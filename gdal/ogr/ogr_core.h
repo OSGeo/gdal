@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,6 @@ extern "C++"
 {
 #include <limits>
 
-// cppcheck-suppress copyCtorAndEqOperator
 class CPL_DLL OGREnvelope
 {
   public:
@@ -69,6 +68,7 @@ class CPL_DLL OGREnvelope
             MinX(oOther.MinX),MaxX(oOther.MaxX), MinY(oOther.MinY), MaxY(oOther.MaxY)
         {
         }
+        OGREnvelope& operator=(const OGREnvelope&) = default;
 
     double      MinX;
     double      MaxX;
@@ -156,7 +156,6 @@ typedef struct
 
 extern "C++" {
 
-// cppcheck-suppress copyCtorAndEqOperator
 class CPL_DLL OGREnvelope3D : public OGREnvelope
 {
   public:
@@ -171,6 +170,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
                             MinZ(oOther.MinZ), MaxZ(oOther.MaxZ)
         {
         }
+        OGREnvelope3D& operator=(const OGREnvelope3D&) = default;
 
     double      MinZ;
     double      MaxZ;

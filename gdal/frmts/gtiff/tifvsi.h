@@ -9,7 +9,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam, warmerdam@pobox.com
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,12 +38,16 @@
 #include "tiffio.h"
 
 TIFF* VSI_TIFFOpen( const char* name, const char* mode, VSILFILE* fp );
+TIFF* VSI_TIFFOpenChild( TIFF* parent ); // the returned handle must be closed before the parent. They share the same underlying VSILFILE
 VSILFILE* VSI_TIFFGetVSILFile( thandle_t th );
 int VSI_TIFFFlushBufferedWrite( thandle_t th );
+toff_t VSI_TIFFSeek(TIFF* tif, toff_t off, int whence );
+int VSI_TIFFWrite( TIFF* tif, const void* buffer, size_t buffersize );
 int VSI_TIFFHasCachedRanges( thandle_t th );
 void VSI_TIFFSetCachedRanges( thandle_t th, int nRanges,
                               void ** ppData, // memory pointed by ppData[i] must be kept alive by caller
                               const vsi_l_offset* panOffsets,
                               const size_t* panSizes );
+void* VSI_TIFFGetCachedRange( thandle_t th, vsi_l_offset nOffset, size_t nSize );
 
 #endif // TIFVSI_H_INCLUDED

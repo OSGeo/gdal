@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
@@ -3039,7 +3039,7 @@ char **NITFDataset::GetMetadataDomainList()
                                    TRUE,
                                    "NITF_METADATA", "NITF_DES", "NITF_DES_METADATA",
                                    "NITF_FILE_HEADER_TRES", "NITF_IMAGE_SEGMENT_TRES",
-                                   "CGM", "TEXT", "TRE", "xml:TRE", "OVERVIEWS", NULL);
+                                   "CGM", "TEXT", "TRE", "xml:TRE", "OVERVIEWS", nullptr);
 }
 
 /************************************************************************/

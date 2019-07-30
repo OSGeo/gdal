@@ -16,7 +16,7 @@
 #
 ###############################################################################
 # Copyright (c) 2008, Klokan Petr Pridal
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,8 @@
 from __future__ import print_function, division
 
 import math
-from multiprocessing import Pipe, Pool, Process, Manager
+from multiprocessing import Pool
+from functools import partial
 import os
 import tempfile
 import threading
@@ -894,7 +895,7 @@ def nb_data_bands(dataset):
         return dataset.RasterCount - 1
     return dataset.RasterCount
 
-def create_base_tile(tile_job_info, tile_detail, queue=None):
+def create_base_tile(tile_job_info, tile_detail):
 
     dataBandsCount = tile_job_info.nb_data_bands
     output = tile_job_info.output_file_path
@@ -997,8 +998,6 @@ def create_base_tile(tile_job_info, tile_detail, queue=None):
                     get_tile_swne(tile_job_info, options), tile_job_info.options
                 ).encode('utf-8'))
 
-    if queue:
-        queue.put("tile %s %s %s" % (tx, ty, tz))
 
 
 def create_overview_tiles(tile_job_info, output_folder, options):
@@ -1511,8 +1510,8 @@ class GDAL2Tiles(object):
         if not self.warped_input_dataset:
             self.warped_input_dataset = input_dataset
 
-        self.warped_input_dataset.GetDriver().CreateCopy(self.tmp_vrt_filename,
-                                                         self.warped_input_dataset)
+        gdal.GetDriverByName('VRT').CreateCopy(self.tmp_vrt_filename,
+                                               self.warped_input_dataset)
 
         # Get alpha band (either directly or from NODATA value)
         self.alphaband = self.warped_input_dataset.GetRasterBand(1).GetMaskBand()
@@ -2747,29 +2746,12 @@ class GDAL2Tiles(object):
         return s
 
 
-def worker_tile_details(input_file, output_folder, options, send_pipe=None):
-    try:
-        gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
-        gdal2tiles.open_input()
-        gdal2tiles.generate_metadata()
-        tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
-        return_data = (tile_job_info, tile_details)
-        if send_pipe:
-            send_pipe.send(return_data)
-
-        return return_data
-    except Exception as e:
-        print("worker_tile_details failed ", str(e))
-
-
-def progress_printer_thread(queue, nb_jobs):
-    pb = ProgressBar(nb_jobs)
-    pb.start()
-    for _ in range(nb_jobs):
-        queue.get()
-        pb.log_progress()
-        queue.task_done()
-
+def worker_tile_details(input_file, output_folder, options):
+      gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
+      gdal2tiles.open_input()
+      gdal2tiles.generate_metadata()
+      tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
+      return tile_job_info, tile_details
 
 class ProgressBar(object):
 
@@ -2875,39 +2857,28 @@ def multi_threaded_tiling(input_file, output_folder, options):
     # Make sure that all processes do not consume more than GDAL_CACHEMAX
     os.environ['GDAL_CACHEMAX'] = '%d' % int(gdal.GetCacheMax() / nb_processes)
 
-    (conf_receiver, conf_sender) = Pipe(False)
+    pool = Pool(processes=nb_processes)
 
     if options.verbose:
         print("Begin tiles details calc")
-    p = Process(target=worker_tile_details,
-                args=[input_file, output_folder, options],
-                kwargs={"send_pipe": conf_sender})
-    p.start()
-    # Make sure to consume the queue before joining. If the payload is too big, it won't be put in
-    # one go in the queue and therefore the sending process will never finish, waiting for space in
-    # the queue to send data
-    conf, tile_details = conf_receiver.recv()
-    p.join()
+
+    conf, tile_details = pool.apply(worker_tile_details, [input_file, output_folder, options])
+
     if options.verbose:
         print("Tiles details calc complete.")
-    # Have to create the Queue through a multiprocessing.Manager to get a Queue Proxy,
-    # otherwise you can't pass it as a param in the method invoked by the pool...
-    manager = Manager()
-    queue = manager.Queue()
-    pool = Pool(processes=nb_processes)
+        
+    if not options.verbose and not options.quiet:
+        progress_bar = ProgressBar(len(tile_details))
+        progress_bar.start()
+
     # TODO: gbataille - check the confs for which each element is an array... one useless level?
     # TODO: gbataille - assign an ID to each job for print in verbose mode "ReadRaster Extent ..."
-    for tile_detail in tile_details:
-        pool.apply_async(create_base_tile, (conf, tile_detail), {"queue": queue})
-
-    if not options.verbose and not options.quiet:
-        p = Process(target=progress_printer_thread, args=[queue, len(tile_details)])
-        p.start()
+    for _ in pool.imap_unordered(partial(create_base_tile, conf), tile_details, chunksize=128):
+        if not options.verbose and not options.quiet:
+            progress_bar.log_progress()
 
     pool.close()
     pool.join()     # Jobs finished
-    if not options.verbose and not options.quiet:
-        p.join()        # Traces done
 
     create_overview_tiles(conf, output_folder, options)
 

@@ -194,7 +194,10 @@ CPLErr KEARasterBand::SetHistogramFromString(const char *pszString)
     if( nCol == -1 )
     {
         if( pTable->CreateColumn("Histogram", GFT_Real, GFU_PixelCount) != CE_None )
+        {
+            CPLFree(pszBinValues);
             return CE_Failure;
+        }
 
         nCol = pTable->GetColumnCount() - 1;
     }
@@ -375,6 +378,11 @@ CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != nullptr ) && ( *pszDomain != '\0' ) )
         return CE_Failure;
+
+    // kealib doesn't currently support removing values
+    if( pszValue == nullptr )
+        return CE_Failure;
+
     try
     {
         // if it is LAYER_TYPE handle it separately
@@ -483,7 +491,10 @@ CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
                 else if( EQUAL( pszName, "STATISTICS_HISTOBINVALUES" ) )
                 {
                     if( this->SetHistogramFromString(pszValue) != CE_None )
+                    {
+                        CPLFree(pszName);
                         return CE_Failure;
+                    }
                 }
                 else
                 {

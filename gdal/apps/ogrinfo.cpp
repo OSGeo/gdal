@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -957,6 +957,12 @@ MAIN_START(nArgc, papszArgv)
                 if( !bAllLayers )
                 {
                     printf("%d: %s", iLayer + 1, poLayer->GetName());
+
+                    const char* pszTitle = poLayer->GetMetadataItem("TITLE");
+                    if( pszTitle )
+                    {
+                        printf(" (title: %s)", pszTitle);
+                    }
 
                     const int nGeomFieldCount =
                         poLayer->GetLayerDefn()->GetGeomFieldCount();

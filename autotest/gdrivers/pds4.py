@@ -58,8 +58,9 @@ def validate_xml(filename):
                                   force_download=True):
         pytest.skip()
 
-    if not gdaltest.download_file('https://raw.githubusercontent.com/thareUSGS/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd',
-                                  'raw.githubusercontent.com_thareUSGS_ldd_cart_master_build_1.B.0.0_PDS4_CART_1B00.xsd',
+
+    if not gdaltest.download_file('https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd',
+                                  'raw.githubusercontent.com_nasa_pds_data_dictionaries_ldd_cart_master_build_1.B.0.0_PDS4_CART_1B00.xsd',
                                   force_download=True):
         pytest.skip()
 
@@ -568,7 +569,7 @@ def test_pds4_12():
                                                       'VAR_UNUSED=foo',
                                                       'TEMPLATE=data/byte_pds4.xml',
                                                       'BOUNDING_DEGREES=1,2,3,4',
-                                                      'LATITUDE_TYPE=planetographic',
+                                                      'LATITUDE_TYPE=Planetographic',
                                                       'LONGITUDE_DIRECTION=Positive West',
                                                       'IMAGE_FILENAME=/vsimem/myimage.raw'])
     sr = osr.SpatialReference()
@@ -586,7 +587,7 @@ def test_pds4_12():
     assert '<cart:east_bounding_coordinate unit="deg">3</cart:east_bounding_coordinate>' in data
     assert '<cart:north_bounding_coordinate unit="deg">4</cart:north_bounding_coordinate>' in data
     assert '<cart:south_bounding_coordinate unit="deg">2</cart:south_bounding_coordinate>' in data
-    assert '<cart:latitude_type>planetographic</cart:latitude_type>' in data
+    assert '<cart:latitude_type>Planetographic</cart:latitude_type>' in data
     assert '<cart:longitude_direction>Positive West</cart:longitude_direction>' in data
     assert '<file_name>myimage.raw</file_name>' in data
 

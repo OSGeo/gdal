@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdaladdo testing
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -126,9 +126,7 @@ def test_gdaladdo_4():
 
     assert cnt == 0, 'did not clean overviews.'
 
-    with pytest.raises(OSError, message='.ovr file still exists'):
-        os.stat('tmp/test_gdaladdo_3.tif.ovr')
-    
+    assert not os.path.exists('tmp/test_gdaladdo_3.tif.ovr')
 
     os.remove('tmp/test_gdaladdo_3.tif')
 

@@ -961,11 +961,12 @@ hFeat:  handle to the feature that owned the field.
 
 iField:  the field to set, from 0 to GetFieldCount()-1.
 
-papszValues:  the values to assign. ";
+papszValues:  the values to assign. List of NUL-terminated string,
+ending with a NULL pointer. ";
 
 %feature("docstring")  SetFieldBinary "void
-OGR_F_SetFieldBinary(OGRFeatureH hFeat, int iField, int nBytes, GByte
-*pabyData)
+OGR_F_SetFieldBinary(OGRFeatureH hFeat, int iField, int nBytes, const
+void *pabyData)
 
 Set field to binary data.
 

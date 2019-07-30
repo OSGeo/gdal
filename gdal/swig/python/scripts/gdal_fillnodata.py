@@ -8,7 +8,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
-#  Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+#  Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -175,7 +175,9 @@ if dst_filename is not None:
     wkt = src_ds.GetProjection()
     if wkt != '':
         dst_ds.SetProjection(wkt)
-    dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
+    gt = src_ds.GetGeoTransform(can_return_null=True)
+    if gt:
+        dst_ds.SetGeoTransform(gt)
 
     dstband = dst_ds.GetRasterBand(1)
     CopyBand(srcband, dstband)

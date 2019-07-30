@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Adam Nowacki
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017, Dmitry Baryshnikov, <polimax@mail.ru>
  * Copyright (c) 2017, NextGIS, <info@nextgis.com>
  *
@@ -224,8 +224,13 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                 // One more try to get cached block. For example if no web access
                 // available
                 CPLDebug("WMS", "ReadBlockFromCache");
-                ret = ReadBlockFromCache(request.URL, request.x,
-                                         request.y, nBand, p, advise_read);
+
+                if (m_parent_dataset->m_cache != nullptr)
+                    ret = ReadBlockFromCache(request.URL, request.x,
+                        request.y, nBand, p, advise_read);
+                else
+                    ret = CE_Failure;
+
                 if( ret != CE_None )
                 {
                     CPLDebug("WMS", "After ReadBlockFromCache");

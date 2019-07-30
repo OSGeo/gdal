@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -194,7 +194,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
 {
-    char szBasename[20];
+    char szBasename[32];
     char *pszFilename;
     AIGTileInfo *psTInfo;
     const size_t nFilenameLen = strlen(psInfo->pszCoverName)+40;

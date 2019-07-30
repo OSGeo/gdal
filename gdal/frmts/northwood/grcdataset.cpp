@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Waypoint Information Technology
- * Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 class NWT_GRCRasterBand;
 
-class NWT_GRCDataset : public GDALPamDataset
+class NWT_GRCDataset final : public GDALPamDataset
 {
   friend class NWT_GRCRasterBand;
 
@@ -80,7 +80,7 @@ class NWT_GRCDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class NWT_GRCRasterBand : public GDALPamRasterBand
+class NWT_GRCRasterBand final : public GDALPamRasterBand
 {
   friend class NWT_GRCDataset;
 
@@ -262,7 +262,7 @@ NWT_GRCDataset::~NWT_GRCDataset()
     delete poColorTable;
     CSLDestroy( papszCategories );
 
-    FlushCache();
+    NWT_GRCDataset::FlushCache();
     pGrd->fp = nullptr;       // this prevents nwtCloseGrid from closing the fp
     nwtCloseGrid( pGrd );
 

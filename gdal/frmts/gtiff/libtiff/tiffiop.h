@@ -127,6 +127,9 @@ struct tiff {
         #define TIFF_DIRTYSTRIP 0x200000U /* stripoffsets/stripbytecount dirty*/
         #define TIFF_PERSAMPLE  0x400000U /* get/set per sample tags as arrays */
         #define TIFF_BUFFERMMAP 0x800000U /* read buffer (tif_rawdata) points into mmap() memory */
+        #define TIFF_DEFERSTRILELOAD 0x1000000U /* defer strip/tile offset/bytecount array loading. */
+        #define TIFF_LAZYSTRILELOAD  0x2000000U /* lazy/ondemand loading of strip/tile offset/bytecount values. Only used if TIFF_DEFERSTRILELOAD is set and in read-only mode */
+        #define TIFF_CHOPPEDUPARRAYS 0x4000000U /* set when allocChoppedUpStripArrays() has modified strip array */
 	uint64               tif_diroff;       /* file offset of current directory */
 	uint64               tif_nextdiroff;   /* file offset of following directory */
 	uint64*              tif_dirlist;      /* list of offsets to already seen directories to prevent IFD looping */
@@ -373,6 +376,8 @@ extern void* _TIFFCheckRealloc(TIFF*, void*, tmsize_t, tmsize_t, const char*);
 
 extern double _TIFFUInt64ToDouble(uint64);
 extern float _TIFFUInt64ToFloat(uint64);
+
+extern float _TIFFClampDoubleToFloat(double);
 
 extern tmsize_t
 _TIFFReadEncodedStripAndAllocBuffer(TIFF* tif, uint32 strip,

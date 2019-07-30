@@ -28,7 +28,7 @@ tar xzf sqlite-autoconf-3250100.tar.gz
 (cd sqlite-autoconf-3250100 && ./configure --host=armeb-linux-gnueabihf --prefix=/tmp/install && make -j3 && make install)
 
 # Build proj
-(cd proj;  ./autogen.sh && ./configure --host=armeb-linux-gnueabihf --with-sqlite3_include=/tmp/install/include --with-sqlite3_ldflags="-L/tmp/install/lib -lsqlite3" --prefix=/tmp/install --disable-lto && make -j3 && make install)
+(cd proj;  ./autogen.sh && PKG_CONFIG_PATH=/tmp/install/lib/pkgconfig ./configure  --disable-static --host=armeb-linux-gnueabihf --prefix=/tmp/install --disable-lto && make -j3 && make install)
 
 cd gdal
 ./configure --host=armeb-linux-gnueabihf --without-libtool --with-proj=/tmp/install || cat config.log

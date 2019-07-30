@@ -97,6 +97,8 @@ public:
     virtual bool AddRecord( long nFID, unsigned nClassCode,
                             vsi_l_offset nOffset, bool bHasSemantic,
                             size_t nSemanticsSize );
+private:
+    static int CanRecode(const char* pszEncoding);
 };
 
 /************************************************************************/
@@ -116,18 +118,20 @@ class OGRSXFDataSource : public OGRDataSource
     CPLMutex  *hIOMutex;
     void FillLayers();
     void CreateLayers();
-    void CreateLayers(VSILFILE* fpRSC);
+    void CreateLayers(VSILFILE* fpRSC, const char* const* papszOpenOpts);
     static OGRErr ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& passport);
     OGRErr ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passport);
-    static void SetVertCS(const long iVCS, SXFPassport& passport);
-    static OGRErr ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& passport);
+    static void SetVertCS(const long iVCS, SXFPassport& passport,
+                          const char* const* papszOpenOpts);
+    static OGRErr ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& passport,
+                                        const char* const* papszOpenOpts);
     OGRSXFLayer*       GetLayerById(GByte);
 public:
                         OGRSXFDataSource();
                         virtual ~OGRSXFDataSource();
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int                 Open(const char * pszFilename, bool bUpdate,
+                             const char* const* papszOpenOpts = nullptr );
 
     virtual const char*     GetName() override { return pszName; }
 
@@ -142,15 +146,14 @@ public:
 /*                         OGRSXFDriver                          */
 /************************************************************************/
 
-class OGRSXFDriver : public OGRSFDriver
+class OGRSXFDriver : public GDALDriver
 {
   public:
                 ~OGRSXFDriver();
 
-    const char*     GetName() override;
-    OGRDataSource*  Open( const char *, int ) override;
-    OGRErr          DeleteDataSource(const char* pszName) override;
-    int             TestCapability(const char *) override;
+    static GDALDataset* Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
+    static CPLErr       DeleteDataSource(const char* pszName);
 };
 
 #endif

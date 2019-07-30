@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for JP2OpenJPEG driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -1807,6 +1807,12 @@ def test_jp2openjpeg_43():
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
     assert ret is not None
 
+    ret = gdal.GetJPEG2000StructureAsString('data/byte_tlm_plt.jp2', ['ALL=YES'])
+    assert ret is not None
+
+    ret = gdal.GetJPEG2000StructureAsString('data/byte_one_poc.j2k', ['ALL=YES'])
+    assert ret is not None
+
 ###############################################################################
 # Check a file against a OrthoimageryCoverage document
 
@@ -2760,7 +2766,7 @@ def test_jp2openjpeg_online_2():
     ds.GetRasterBand(1).Checksum()
     assert len(ds.GetGCPs()) == 15, 'bad number of GCP'
 
-    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]"""
+    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
     assert ds.GetGCPProjection() == expected_wkt, 'bad GCP projection'
 
     ds = None

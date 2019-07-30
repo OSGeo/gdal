@@ -662,8 +662,8 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
             }
         }
     }
-    if( pbGotFileList )
-        *pbGotFileList = bOK;
+
+    *pbGotFileList = bOK;
 
     CPLFree(sWriteFuncData.pBuffer);
     curl_easy_cleanup(hCurlHandle);
@@ -1116,7 +1116,7 @@ retry:
         // pause.
         const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
             static_cast<int>(response_code), dfRetryDelay,
-            nullptr);
+            nullptr, szCurlErrBuf);
         if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {

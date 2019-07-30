@@ -108,13 +108,13 @@ CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 /*                           GTIFGetPCSInfo()                           */
 /************************************************************************/
 
-static
-int GTIFGetPCSInfoEx( PJ_CONTEXT* ctx,
+int GTIFGetPCSInfoEx( void* ctxIn,
                       int nPCSCode, char **ppszEPSGName,
                       short *pnProjOp, short *pnUOMLengthCode,
                       short *pnGeogCS )
 
 {
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     int         nDatum;
     int         nZone;
 
@@ -393,12 +393,12 @@ double GTIFAngleStringToDD( const char * pszAngle, int nUOMAngle )
 /*      GCS.                                                            */
 /************************************************************************/
 
-static
-int GTIFGetGCSInfoEx( PJ_CONTEXT* ctx,
+int GTIFGetGCSInfoEx( void* ctxIn,
                       int nGCSCode, char ** ppszName,
                       short * pnDatum, short * pnPM, short *pnUOMAngle )
 
 {
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     int		nDatum=0, nPM, nUOMAngle;
 
 /* -------------------------------------------------------------------- */
@@ -577,12 +577,12 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 /*      where that is provided.                                         */
 /************************************************************************/
 
-static
-int GTIFGetEllipsoidInfoEx( PJ_CONTEXT* ctx,
+int GTIFGetEllipsoidInfoEx( void* ctxIn,
                             int nEllipseCode, char ** ppszName,
                             double * pdfSemiMajor, double * pdfSemiMinor )
 
 {
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
 /* -------------------------------------------------------------------- */
 /*      Try some well known ellipsoids.                                 */
 /* -------------------------------------------------------------------- */
@@ -688,11 +688,12 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
 /*      in degrees.                                                     */
 /************************************************************************/
 
-static
-int GTIFGetPMInfoEx( PJ_CONTEXT* ctx,
+int GTIFGetPMInfoEx( void* ctxIn,
                      int nPMCode, char ** ppszName, double *pdfOffset )
 
 {
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
+
 /* -------------------------------------------------------------------- */
 /*      Use a special short cut for Greenwich, since it is so common.   */
 /* -------------------------------------------------------------------- */
@@ -761,11 +762,11 @@ int GTIFGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
 /*      Fetch the ellipsoid, and name for a datum.                      */
 /************************************************************************/
 
-static
-int GTIFGetDatumInfoEx( PJ_CONTEXT* ctx,
+int GTIFGetDatumInfoEx( void* ctxIn,
                         int nDatumCode, char ** ppszName, short * pnEllipsoid )
 
 {
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     const char* pszName = NULL;
     int		nEllipsoid = 0;
 
@@ -878,13 +879,13 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
 /*      lookup length aliases in the UOM_LE_ALIAS table.                */
 /************************************************************************/
 
-static
-int GTIFGetUOMLengthInfoEx( PJ_CONTEXT* ctx,
+int GTIFGetUOMLengthInfoEx( void* ctxIn,
                             int nUOMLengthCode,
                             char **ppszUOMName,
                             double * pdfInMeters )
 
 {
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
 /* -------------------------------------------------------------------- */
 /*      We short cut meter to save work and avoid failure for missing   */
 /*      in the most common cases.       				*/
@@ -957,13 +958,13 @@ int GTIFGetUOMLengthInfo( int nUOMLengthCode,
 /*                        GTIFGetUOMAngleInfo()                         */
 /************************************************************************/
 
-static
-int GTIFGetUOMAngleInfoEx( PJ_CONTEXT* ctx,
+int GTIFGetUOMAngleInfoEx( void* ctxIn,
                            int nUOMAngleCode,
                            char **ppszUOMName,
                            double * pdfInDegrees )
 
 {
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     const char	*pszUOMName = NULL;
     double	dfInDegrees = 1.0;
 
@@ -1377,14 +1378,15 @@ static int SetGTParmIds( int nCTProjection,
 /*      normalized into degrees and meters.                             */
 /************************************************************************/
 
-static
-int GTIFGetProjTRFInfoEx( PJ_CONTEXT* ctx,
+int GTIFGetProjTRFInfoEx( void* ctxIn,
                           int nProjTRFCode,
                           char **ppszProjTRFName,
                           short * pnProjMethod,
                           double * padfProjParms )
 
 {
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
+
     if ((nProjTRFCode >= Proj_UTM_zone_1N && nProjTRFCode <= Proj_UTM_zone_60N) ||
         (nProjTRFCode >= Proj_UTM_zone_1S && nProjTRFCode <= Proj_UTM_zone_60S))
     {
@@ -1451,7 +1453,7 @@ int GTIFGetProjTRFInfoEx( PJ_CONTEXT* ctx,
         /* Get the projection method code */
         proj_coordoperation_get_method_info(ctx, transf,
                                             NULL, /* method name */
-                                            NULL, /* method auth name (should be EPSG) */ 
+                                            NULL, /* method auth name (should be EPSG) */
                                             &pszMethodCode);
         assert( pszMethodCode );
         nProjMethod = atoi(pszMethodCode);
@@ -2469,7 +2471,10 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*	Extract the Geog units.  					*/
 /* -------------------------------------------------------------------- */
     nGeogUOMLinear = 9001; /* Linear_Meter */
-    GTIFKeyGetSHORT(psGTIF, GeogLinearUnitsGeoKey, &nGeogUOMLinear, 0, 1 );
+    if( GTIFKeyGetSHORT(psGTIF, GeogLinearUnitsGeoKey, &nGeogUOMLinear, 0, 1 ) == 1 )
+    {
+        psDefn->UOMLength = nGeogUOMLinear;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to get a PCS.                                               */
@@ -2721,12 +2726,20 @@ const char *GTIFDecToDMS( double dfAngle, const char * pszAxis,
     double	dfRound;
     int		i;
 
+    if( !(dfAngle >= -360 && dfAngle <= 360) )
+        return "";
+
     dfRound = 0.5/60;
     for( i = 0; i < nPrecision; i++ )
         dfRound = dfRound * 0.1;
 
     nDegrees = (int) ABS(dfAngle);
     nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60 + dfRound);
+    if( nMinutes == 60 )
+    {
+        nDegrees ++;
+        nMinutes = 0;
+    }
     dfSeconds = ABS((ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60));
 
     if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
@@ -3050,14 +3063,14 @@ void GTIFAttachPROJContext( GTIF *psGTIF, void* pjContext )
 /*                         GTIFGetPROJContext()                         */
 /*                                                                      */
 /*      Return the PROJ context attached to the GTIF handle.            */
-/*      If it has not yet been instanciated and instanciateIfNeeded=TRUE*/
-/*      then, it will be instanciated (and owned by GTIF handle).       */
+/*      If it has not yet been instantiated and instantiateIfNeeded=TRUE*/
+/*      then, it will be instantiated (and owned by GTIF handle).       */
 /************************************************************************/
 
-void *GTIFGetPROJContext( GTIF *psGTIF, int instanciateIfNeeded,
+void *GTIFGetPROJContext( GTIF *psGTIF, int instantiateIfNeeded,
                           int* out_gtif_own_pj_context )
 {
-    if( psGTIF->pj_context || !instanciateIfNeeded )
+    if( psGTIF->pj_context || !instantiateIfNeeded )
     {
         if( out_gtif_own_pj_context )
         {
@@ -3073,3 +3086,17 @@ void *GTIFGetPROJContext( GTIF *psGTIF, int instanciateIfNeeded,
     }
     return psGTIF->pj_context;
 }
+
+
+void GTIFDeaccessCSV( void )
+{
+    /* No operation */
+}
+
+#ifndef GDAL_COMPILATION
+void SetCSVFilenameHook( const char *(*CSVFileOverride)(const char *) )
+{
+    (void)CSVFileOverride;
+    /* No operation */
+}
+#endif

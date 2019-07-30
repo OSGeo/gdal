@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,6 +45,12 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #include "commonutils.h"
+
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 CPL_CVSID("$Id$")
 
@@ -168,6 +174,7 @@ MAIN_START(argc, argv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszSRS = argv[++i];
+            // coverity[tainted_data]
             if( !IsValidSRS(pszSRS) )
                 exit(1);
             aosTO.SetNameValue("SRC_SRS", pszSRS );
@@ -323,6 +330,22 @@ MAIN_START(argc, argv)
 /*      Read points from stdin, transform and write to stdout.          */
 /* -------------------------------------------------------------------- */
     double dfLastT = 0.0;
+    
+    if( !bCoordOnCommandLine )
+    {
+        // Is it an interactive terminal ?
+        if( isatty(static_cast<int>(fileno(stdin))) )
+        {
+            if( pszSrcFilename != nullptr )
+            {
+                fprintf(stderr, "Enter column line values separated by space, and press Return.\n");
+            }
+            else
+            {
+                fprintf(stderr, "Enter X Y [Z [T]] values separated by space, and press Return.\n");
+            }
+        }
+    }
 
     while( bCoordOnCommandLine || !feof(stdin) )
     {

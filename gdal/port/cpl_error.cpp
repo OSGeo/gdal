@@ -7,7 +7,7 @@
  *
  **********************************************************************
  * Copyright (c) 1998, Daniel Morissette
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -206,7 +206,6 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
         psCtx->psHandlerStack ?
         psCtx->psHandlerStack->pUserData : pErrorHandlerUserData );
 }
-
 
 static void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
                         CPLErrorNum err_no, const char *pszMessage)
@@ -1337,4 +1336,12 @@ void CPLCleanupErrorMutex()
         CPLDestroyMutex(hErrorMutex);
         hErrorMutex = nullptr;
     }
+}
+
+bool CPLIsDefaultErrorHandlerAndCatchDebug()
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+    return (psCtx == nullptr || psCtx->psHandlerStack == nullptr) &&
+            gbCatchDebug &&
+           pfnErrorHandler == CPLDefaultErrorHandler;
 }

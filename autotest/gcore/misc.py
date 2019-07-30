@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Various test of GDAL core.
-# Author:   Even Rouault <even dot rouault at mines dash parid dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -427,18 +427,35 @@ def test_misc_6():
 
 def test_misc_7():
 
-    try:
-        gdal.InvGeoTransform
-    except AttributeError:
-        pytest.skip()
-
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.InvGeoTransform(gt)
     expected_inv_gt = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0)
     for i in range(6):
-        assert abs(res[i] - expected_inv_gt[i]) <= 1e-6
+        assert abs(res[i] - expected_inv_gt[i]) <= 1e-6, res
 
-    
+    gt = (10, 1, 1, 20, 2, 2)
+    res = gdal.InvGeoTransform(gt)
+    assert not res
+
+    gt = (10, 1e10, 1e10, 20, 2e10, 2e10)
+    res = gdal.InvGeoTransform(gt)
+    assert not res
+
+    gt = (10, 1e-10, 1e-10, 20, 2e-10, 2e-10)
+    res = gdal.InvGeoTransform(gt)
+    assert not res
+
+    # Test fix for #1615
+    gt = (-2, 1e-8, 1e-9, 52, 1e-9, -1e-8)
+    res = gdal.InvGeoTransform(gt)
+    expected_inv_gt = (-316831683.16831684, 99009900.990099, 9900990.099009901,
+                       5168316831.683168, 9900990.099009901, -99009900.990099)
+    for i in range(6):
+        assert abs(res[i] - expected_inv_gt[i]) <= 1e-6, res
+    res2 = gdal.InvGeoTransform(res)
+    for i in range(6):
+        assert abs(res2[i] - gt[i]) <= 1e-6, res2
+
 ###############################################################################
 # Test gdal.ApplyGeoTransform()
 

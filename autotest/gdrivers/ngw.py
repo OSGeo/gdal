@@ -64,6 +64,8 @@ def check_availability(url):
             return False
         limit = quota_json['limit']
         count = quota_json['count']
+        if limit is None or count is None:
+            return True
         return limit - count > 10
     except:
         return False
@@ -85,7 +87,7 @@ def test_ngw_1():
         gdaltest.ngw_drv = None
         pytest.skip()
 
-    gdaltest.ngw_test_server = 'http://dev.nextgis.com/sandbox'
+    gdaltest.ngw_test_server = 'https://sandbox.nextgis.com' # 'http://dev.nextgis.com/sandbox'
 
     if check_availability(gdaltest.ngw_test_server) == False:
         gdaltest.ngw_drv = None

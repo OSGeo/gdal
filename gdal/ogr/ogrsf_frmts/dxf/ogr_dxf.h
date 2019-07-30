@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009,  Frank Warmerdam
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -266,7 +266,7 @@ private:
     double aadfInverse[4][4];
 
 public:
-    OGRDXFOCSTransformer( double adfNIn[3], bool bInverse = false );
+    explicit OGRDXFOCSTransformer( double adfNIn[3], bool bInverse = false );
 
     OGRSpatialReference *GetSourceCS() override { return nullptr; }
     OGRSpatialReference *GetTargetCS() override { return nullptr; }

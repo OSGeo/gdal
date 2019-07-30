@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2010, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -34,6 +34,7 @@
 #include "ogr_api.h"
 
 #include <algorithm>
+#include <cmath>
 #include "ogrdxf_polyline_smooth.h"
 
 CPL_CVSID("$Id$")
@@ -407,10 +408,16 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
             // The start and end angles are stored as circular angles. However,
             // approximateArcAngles is expecting elliptical angles (what AutoCAD
             // calls "parameters"), so let's transform them.
-            dfStartAngle = 180.0 * floor ( ( dfStartAngle + 90 ) / 180 ) +
-                    atan( ( 1.0 / dfRatio ) * tan( dfStartAngle * M_PI / 180 ) ) * 180 / M_PI;
-            dfEndAngle = 180.0 * floor ( ( dfEndAngle + 90 ) / 180 ) +
-                    atan( ( 1.0 / dfRatio ) * tan( dfEndAngle * M_PI / 180 ) ) * 180 / M_PI;
+            dfStartAngle = 180.0 * round( dfStartAngle / 180 ) +
+                ( fabs( fmod( dfStartAngle, 180 ) ) == 90 ?
+                    ( std::signbit( dfStartAngle ) ? 180 : -180 ) :
+                    0 ) +
+                atan( ( 1.0 / dfRatio ) * tan( dfStartAngle * M_PI / 180 ) ) * 180 / M_PI;
+            dfEndAngle = 180.0 * round( dfEndAngle / 180 ) +
+                ( fabs( fmod( dfEndAngle, 180 ) ) == 90 ?
+                    ( std::signbit( dfEndAngle ) ? 180 : -180 ) :
+                    0 ) +
+                atan( ( 1.0 / dfRatio ) * tan( dfEndAngle * M_PI / 180 ) ) * 180 / M_PI;
 
             if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
             {

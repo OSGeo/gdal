@@ -159,16 +159,16 @@ def test_kea_4():
         gdal.PopErrorHandler()
         assert ret != 0
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = ds.AddBand(gdal.GDT_Byte)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.AddBand(gdal.GDT_Byte)
     assert ret != 0
 
-    ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, '\0')
-    gdal.ErrorReset()
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds.FlushCache()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, '\0')
+    assert ret != 0
+    with gdaltest.error_handler():
+        ret = ds.FlushCache()
+    assert ret != 0
     assert ds.GetRasterBand(1).Checksum() == 3
 
     ds = None

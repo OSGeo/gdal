@@ -1,5 +1,6 @@
 /* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */
 #define add_ms gdal_add_ms
+#define allocChoppedUpStripArrays gdal_allocChoppedUpStripArrays
 #define buildMap gdal_buildMap
 #define BuildMapBitdepth16To8 gdal_BuildMapBitdepth16To8
 #define BuildMapUaToAa gdal_BuildMapUaToAa
@@ -302,8 +303,7 @@
 #define TIFFCheckTile gdal_TIFFCheckTile
 #define TIFFCIELabToRGBInit gdal_TIFFCIELabToRGBInit
 #define TIFFCIELabToXYZ gdal_TIFFCIELabToXYZ
-#define TIFFClampDoubleToFloat gdal_TIFFClampDoubleToFloat
-#define TIFFClampDoubleToFloat gdal_TIFFClampDoubleToFloat
+#define _TIFFClampDoubleToFloat gdal__TIFFClampDoubleToFloat
 #define TIFFClampDoubleToInt16 gdal_TIFFClampDoubleToInt16
 #define TIFFClampDoubleToInt32 gdal_TIFFClampDoubleToInt32
 #define TIFFClampDoubleToInt8 gdal_TIFFClampDoubleToInt8
@@ -685,6 +685,7 @@
 #define TIFFXYZToRGB gdal_TIFFXYZToRGB
 #define TIFFYCbCrtoRGB gdal_TIFFYCbCrtoRGB
 #define TIFFYCbCrToRGBInit gdal_TIFFYCbCrToRGBInit
+#define TryChopUpUncompressedBigTiff gdal_TryChopUpUncompressedBigTiff
 #define TWebPCleanup gdal_TWebPCleanup
 #define TWebPDatasetWriter gdal_TWebPDatasetWriter
 #define TWebPDecode gdal_TWebPDecode

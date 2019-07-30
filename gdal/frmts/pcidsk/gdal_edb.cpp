@@ -51,14 +51,14 @@ EDBFile *GDAL_EDBOpen( const std::string& osFilename, const std::string& osAcces
 /* ==================================================================== */
 /************************************************************************/
 
-class GDAL_EDBFile : public EDBFile
+class GDAL_EDBFile final : public EDBFile
 {
     GDALDataset     *poDS;
 
 public:
 
     explicit GDAL_EDBFile( GDALDataset *poDSIn ) { poDS = poDSIn; }
-    ~GDAL_EDBFile() { if( poDS ) Close(); }
+    ~GDAL_EDBFile() { if( poDS ) GDAL_EDBFile::Close(); }
 
     int Close() const override;
     int GetWidth() const override;

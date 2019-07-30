@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  ADRG reader
- * Author:   Even Rouault, even.rouault at mines-paris.org
+ * Author:   Even Rouault, even.rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -717,7 +717,7 @@ char **ADRGDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "SUBDATASETS", NULL);
+                                   "SUBDATASETS", nullptr);
 }
 
 /************************************************************************/
@@ -1422,6 +1422,14 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             // TODO: Fix the non-GIN section or remove it.
             if( strcmp(RTY, "GIN") != 0 )
                 continue;
+
+            /* make sure that the GEN file is part of an ADRG dataset, not a SRP dataset, by checking that the GEN field contains a NWO subfield */
+            const char* NWO = record->GetStringSubfield("GEN", 0, "NWO", 0);
+            if( NWO == nullptr )
+            {
+                CSLDestroy(papszFileNames);
+                return nullptr;
+            }
 
             field = record->GetField(3);
             if( field == nullptr )

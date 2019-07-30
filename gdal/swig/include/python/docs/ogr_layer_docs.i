@@ -1145,8 +1145,8 @@ create_field_map(OGRFeatureDefn *poDefn, int **map) ";
 
 %feature("docstring")  set_result_schema "static OGRErr
 set_result_schema(OGRLayer *pLayerResult, OGRFeatureDefn *poDefnInput,
-OGRFeatureDefn *poDefnMethod, int *mapInput, int *mapMethod, int
-combined, char **papszOptions) ";
+OGRFeatureDefn *poDefnMethod, int *mapInput, int *mapMethod, bool
+combined, const char *const *papszOptions) ";
 
 %feature("docstring")  set_filter_from "static OGRGeometry*
 set_filter_from(OGRLayer *pLayer, OGRGeometry

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017, Ari Jolma
  * Copyright (c) 2017, Finnish Environment Institute
  *
@@ -144,12 +144,13 @@ std::vector<CPLString> Split(const char *value, const char *delim, bool swap_the
 CPLString Join(const std::vector<CPLString> &array, const char *delim, bool swap_the_first_two)
 {
     CPLString str;
-    for (unsigned int i = 0; i < array.size(); ++i) {
+    const auto arraySize = array.size();
+    for (unsigned int i = 0; i < arraySize; ++i) {
         if (i > 0) {
             str += delim;
         }
         if (swap_the_first_two) {
-            if (i == 0 && array.size() > 0) {
+            if (i == 0 && arraySize >= 2) {
                 str += array[1];
             } else if (i == 1) {
                 str += array[0];

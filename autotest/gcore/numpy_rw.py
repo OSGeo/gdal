@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -378,39 +378,39 @@ def test_numpy_rw_13():
 
     # Try reading into unsupported array type
     ar = numpy.empty([1, 2], dtype=numpy.int64)
-    with pytest.raises(Exception, message='expected "ValueError: array does not have '
-                             'corresponding GDAL data type"'):
+    with pytest.raises(Exception, match='array does not have '
+                             'corresponding GDAL data type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar)
     
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_ysize not consistent '
+                             'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
     
 
     # Same with 3 dimensions
     ar = numpy.empty([1, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_ysize not consistent '
+                             'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
     
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_xsize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_xsize not consistent '
+                             'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=1,
                                         buf_ysize=1)
     
 
     # Inconsistent data type
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_type not consistent '
-                             'with array type"'):
+    with pytest.raises(Exception, match='Specified buf_type not consistent '
+                             'with array type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar,
                                         buf_type=gdal.GDT_Int16)
     
@@ -450,41 +450,41 @@ def test_numpy_rw_13():
         ds.GetRasterBand(i + 1).WriteArray(ar[i])
 
     ar = numpy.empty([3, 1, 2], dtype=numpy.int64)
-    with pytest.raises(Exception, message='expected "ValueError: array does not have '
-                             'corresponding GDAL data type"'):
+    with pytest.raises(Exception, match='array does not have '
+                             'corresponding GDAL data type'):
         ds.ReadAsArray(buf_obj=ar)
     
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_ysize not consistent '
+                             'with array shape'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=2, buf_ysize=2)
     
 
     # With 2 dimensions
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "ValueError: Array should have 3 '
-                             'dimensions"'):
+    with pytest.raises(Exception, match='Array should have 3 '
+                             'dimensions'):
         ds.ReadAsArray(buf_obj=ar)
     
 
     # Try call with inconsistent parameters
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_xsize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_xsize not consistent '
+                             'with array shape'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=1, buf_ysize=1)
     
 
     # Inconsistent data type
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_type not consistent with array type"'):
+    with pytest.raises(Exception, match='Specified buf_type not consistent with array type'):
         ds.ReadAsArray(buf_obj=ar, buf_type=gdal.GDT_Int16)
     
 
     # Not enough space in first dimension
     ar = numpy.empty([2, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Array should have space for 3 bands"'):
+    with pytest.raises(Exception, match='Array should have space for 3 bands'):
         ds.ReadAsArray(buf_obj=ar)
     
 
@@ -701,6 +701,34 @@ def test_numpy_rw_18():
 
     res = ds.ReadAsArray(interleave='pixel')
     assert numpy.all(img == res)
+
+###############################################################################
+# The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
+
+def test_numpy_rw_failure_in_readasarray():
+
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/idontexist2.vrt')
+    assert ds is not None
+
+    exception_raised = False
+    with gdaltest.enable_exceptions():
+        try:
+            ds.ReadAsArray()
+        except RuntimeError:
+            exception_raised = True
+    assert exception_raised
+
+    exception_raised = False
+    with gdaltest.enable_exceptions():
+        try:
+            ds.GetRasterBand(1).ReadAsArray()
+        except RuntimeError:
+            exception_raised = True
+    assert exception_raised
+
 
 
 def test_numpy_rw_cleanup():

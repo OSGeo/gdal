@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, Waypoint Information Technology
- * Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,7 +67,7 @@ void replaceExt(std::string& s, const std::string& newExt) {
 /************************************************************************/
 class NWT_GRDRasterBand;
 
-class NWT_GRDDataset: public GDALPamDataset {
+class NWT_GRDDataset final: public GDALPamDataset {
     friend class NWT_GRDRasterBand;
 
     VSILFILE *fp;
@@ -108,7 +108,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class NWT_GRDRasterBand: public GDALPamRasterBand {
+class NWT_GRDRasterBand final: public GDALPamRasterBand {
     friend class NWT_GRDDataset;
 
     int bHaveOffsetScale;
@@ -409,7 +409,7 @@ NWT_GRDDataset::~NWT_GRDDataset() {
     // Make sure any changes to the header etc are written
     // if we are in update mode.
     if (eAccess == GA_Update) {
-        FlushCache();
+        NWT_GRDDataset::FlushCache();
     }
     pGrd->fp = nullptr;       // this prevents nwtCloseGrid from closing the fp
     nwtCloseGrid(pGrd);

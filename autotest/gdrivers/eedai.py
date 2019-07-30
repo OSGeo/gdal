@@ -82,7 +82,7 @@ def test_eedai_2():
             {
                 "id": "B1",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 65535
                     }
@@ -105,7 +105,7 @@ def test_eedai_2():
             {
                 "id": "B2",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 65535
                     }
@@ -128,7 +128,7 @@ def test_eedai_2():
             {
                 "id": "B9",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 65535
                     }
@@ -522,7 +522,7 @@ def test_eedai_4():
             {
                 "id": "B1",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 255
                     }
@@ -544,7 +544,7 @@ def test_eedai_4():
             {
                 "id": "B2",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 255
                     }
@@ -566,7 +566,7 @@ def test_eedai_4():
             {
                 "id": "B3",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 255
                     }
@@ -654,7 +654,7 @@ def test_eedai_geotiff():
             {
                 "id": "B1",
                 "dataType": {
-                    "precision": "INTEGER",
+                    "precision": "INT",
                     "range": {
                         "max": 65535
                     }
@@ -740,7 +740,7 @@ def test_eedai_real_service():
     ds = gdal.Open('EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725')
     assert ds is not None
     res = gdal.Info(ds, format='json')
-    expected = {'files': [], 'cornerCoordinates': {'upperRight': [415016.0, 4435536.0], 'lowerLeft': [408970.0, 4427936.0], 'lowerRight': [415016.0, 4427936.0], 'upperLeft': [408970.0, 4435536.0], 'center': [411993.0, 4431736.0]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[]]}, 'description': 'EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'R', 'band': 1, 'colorInterpretation': 'Red', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'G', 'band': 2, 'colorInterpretation': 'Green', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'B', 'band': 3, 'colorInterpretation': 'Blue', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 14N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-99],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26914"]]'}, 'geoTransform': [408970.0, 2.0, 0.0, 4435536.0, 0.0, -2.0], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}}, 'size': [3023, 3800]}
+    expected = {'files': [], 'cornerCoordinates': {'upperRight': [415016.0, 4435536.0], 'lowerLeft': [408970.0, 4427936.0], 'lowerRight': [415016.0, 4427936.0], 'upperLeft': [408970.0, 4435536.0], 'center': [411993.0, 4431736.0]}, 'wgs84Extent': {'type': 'Polygon', 'coordinates': [[[-100.067433, 40.0651671], [-100.0663662, 39.9967049], [-99.9955511, 39.9973349], [-99.9965471, 40.0657986], [-100.067433, 40.0651671]]]}, 'description': 'EEDAI:USDA/NAIP/DOQQ/n_4010064_se_14_2_20070725', 'driverShortName': 'EEDAI', 'driverLongName': 'Earth Engine Data API Image', 'bands': [{'description': 'R', 'band': 1, 'colorInterpretation': 'Red', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'G', 'band': 2, 'colorInterpretation': 'Green', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}, {'description': 'B', 'band': 3, 'colorInterpretation': 'Blue', 'overviews': [{'size': [1511, 1900]}, {'size': [755, 950]}, {'size': [377, 475]}, {'size': [188, 237]}], 'type': 'Byte', 'block': [256, 256], 'metadata': {}}], 'coordinateSystem': {'wkt': 'PROJCS["NAD83 / UTM zone 14N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-99],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26914"]]'}, 'geoTransform': [408970.0, 2.0, 0.0, 4435536.0, 0.0, -2.0], 'metadata': {'IMAGE_STRUCTURE': {'INTERLEAVE': 'PIXEL'}}, 'size': [3023, 3800]}
     assert expected == res
     assert ds.ReadRaster(0, 0, 1, 1) is not None
 

@@ -1,0 +1,284 @@
+@import url(theme.css);
+
+
+/*! Open Source Geospatial Foundation (OSGeo) Web Fonts
+    Open Font License (OFL 1.1 - see https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
+    Available for download at https://github.com/OSGeo/osgeo/tree/master/marketing/branding/fonts
+    Sintony - By Eduardo Rodriguez Tunni (https://github.com/etunni/sintony)
+    MiriamLibre - By Michal Sahar (https://github.com/MichalSahar/Miriam-Libre)
+*/
+
+@font-face {
+    font-family: 'sintonybold';
+    src: url('../fonts/sintony-bold-webfont.eot');
+    src: url('../fonts/sintony-bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/sintony-bold-webfont.woff2') format('woff2'),
+         url('../fonts/sintony-bold-webfont.woff') format('woff'),
+         url('../fonts/sintony-bold-webfont.ttf') format('truetype'),
+         url('../fonts/sintony-bold-webfont.svg#sintonybold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'sintonyregular';
+    src: url('../fonts/sintony-regular-webfont.eot');
+    src: url('../fonts/sintony-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/sintony-regular-webfont.woff2') format('woff2'),
+         url('../fonts/sintony-regular-webfont.woff') format('woff'),
+         url('../fonts/sintony-regular-webfont.ttf') format('truetype'),
+         url('../fonts/sintony-regular-webfont.svg#sintonyregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'miriamlibrebold';
+    src: url('../fonts/miriamlibre-bold-webfont.eot');
+    src: url('../fonts/miriamlibre-bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/miriamlibre-bold-webfont.woff2') format('woff2'),
+         url('../fonts/miriamlibre-bold-webfont.woff') format('woff'),
+         url('../fonts/miriamlibre-bold-webfont.ttf') format('truetype'),
+         url('../fonts/miriamlibre-bold-webfont.svg#miriam_librebold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'miriamlibreregular';
+    src: url('../fonts/miriamlibre-regular-webfont.eot');
+    src: url('../fonts/miriamlibre-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/miriamlibre-regular-webfont.woff2') format('woff2'),
+         url('../fonts/miriamlibre-regular-webfont.woff') format('woff'),
+         url('../fonts/miriamlibre-regular-webfont.ttf') format('truetype'),
+         url('../fonts/miriamlibre-regular-webfont.svg#miriam_libreregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@import url(theme.css);
+
+/* Boundless Fonts */
+
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("../fonts/proximanova-sbold-webfont.eot");
+  src: url("../fonts/proximanova-sbold.eot?#iefix") format("embedded-opentype"), url("../fonts/proximanova-sbold-webfont.woff") format("woff"), url("../fonts/proximanova-sbold-webfont.ttf") format("truetype"), url("../fonts/proximanova-sbold-webfont.svg#proxima_nova_ltsemibold") format("svg");
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Proxima Nova";
+  src: url("../fonts/proximanova-light-webfont.eot");
+  src: url("../fonts/proximanova-light-webfont.eot?#iefix") format("embedded-opentype"), url("../fonts/proximanova-light-webfont.woff") format("woff"), url("../fonts/proximanova-light-webfont.ttf") format("truetype"), url("../fonts/proximanova-light-webfont.svg#proxima_nova_ltlight") format("svg");
+  font-weight: 300;
+  font-style: normal;
+}
+
+/** Use of Boundless Fonts */
+h1, h2, h3, h4, h5, h6, legend
+{
+	margin-top: 0;
+	font-weight: 700;
+	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+}
+
+.rst-content .sidebar .sidebar-title
+{
+	display: block;
+	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+	font-weight: bold;
+	background: #e1e4e5;
+	padding: 6px 12px;
+	margin: -24px;
+	margin-bottom: 24px;
+	font-size: 100%;
+}
+
+h1, h2, h3, h4, h5, h6
+{
+	font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+	font-weight: bold;
+	margin-top: 0.8em;
+}
+
+/** Boundless Logo */
+footer { padding-top: 30px; }
+footer hr { margin: 24px 0 24px 0; }
+footer .info { display: inline-block; }
+
+footer .logo-link
+{
+	margin-bottom: 25px;
+	margin-right: 5px;
+}
+
+/** Set appearance for inline code format **/
+/*.rst-content code.literal { color: Black; }*/
+.rst-content code.literal
+{
+    color: Black;
+    font-family: 'Source Code Pro', Consolas, "Courier New", monospace;
+    font-size: 90%;
+}
+
+
+footer .copyright
+{
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 6px;
+}
+
+footer .copyright .normal-text { color: #999999; }
+
+footer .footer-aside
+{
+	display: inline-block;
+	float: right;
+	padding-top: 6px;
+}
+
+/* make tables scroll on mobile devices */
+.wy-table-responsive
+{
+    -webkit-overflow-scrolling: touch;
+}
+
+/*grid background for code blocks*/
+pre
+{
+    background: linear-gradient(-90deg, rgba(0, 0, 0, .01) 1px, transparent 1px), linear-gradient(rgba(0, 0, 0, .01) 1px, transparent 1px), linear-gradient(-90deg, rgba(0, 0, 0, .01) 1px, transparent 1px), linear-gradient(rgba(0, 0, 0, .01) 1px, transparent 1px), linear-gradient(transparent 3px, transparent 3px, transparent 78px, transparent 78px), linear-gradient(-90deg, transparent 1px, transparent 1px), linear-gradient(-90deg, transparent 3px, transparent 3px, transparent 78px, transparent 78px), linear-gradient(transparent 1px, transparent 1px), transparent;
+	background-size: 12px 12px, 12px 12px, 12px 12px, 12px 12px, 12px 12px, 12px 12px, 12px 12px, 12px 12px;
+	background-color: #f8f8f8;
+}
+
+.rst-content div[class^="highlight"] pre
+{
+	white-space: pre;
+	margin: 0;
+	padding: 12px 12px;
+	font-family: "Source Code Pro", "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+	font-size: 12px;
+	line-height: 1.5;
+	display: block;
+	overflow: auto;
+	color: #333333;
+}
+
+/* format TOC entries */
+.rst-content .toctree-wrapper
+{
+	  font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+    /*font-size: 14px;*/
+    font-weight: bold;
+}
+
+/* format captions */
+.rst-content .caption-text
+{
+	  font-family: "Proxima Nova", "Montserrat", "Helvetica", Arial, sans-serif;
+    font-size: 14px;
+    font-style: italic;
+}
+
+
+a.reference.external::after
+{
+	font-family: 'FontAwesome';
+	content: " \f08e";
+}
+
+/* override theme.css layout */
+.wy-nav-content
+{
+	max-width: unset;
+	/* use 100% width */
+}
+
+.wy-side-nav-search
+{
+	margin-bottom: unset;
+	padding-bottom: unset;
+	background-color: #28728d;
+}
+
+/*  Use sidebar versions area to link to course name */
+.rst-versions a {
+    color: white;
+    text-decoration: none;
+}
+
+/* Override wy-nav colors to match company branding */
+.wy-side-nav-search, .wy-side-nav-search img, .wy-nav .wy-menu-vertical header, .wy-nav-top, .wy-nav-top img
+{
+	  background-color: #28728d;
+}
+
+/* center figures and captions */
+.rst-content div.figure { text-align: center; }
+
+/* make menuselection have same style as guilabel */
+.rst-content .menuselection
+{
+	  border: 1px solid #7fbbe3;
+	  background: #e7f2fa;
+	  font-size: 80%;
+	  font-weight: 700;
+	  border-radius: 4px;
+	  padding: 2.4px 6px;
+	  margin: auto 2px;
+}
+
+/** Color schemes for admonitions **/
+/* Color scheme for explore admonition */
+/* title bar */
+div[class ^= "admonition-explore"] > p.admonition-title
+{
+    background-color: #2a728e;
+}
+
+/* Color scheme for challenge admonition */
+/* body */
+div[class ^= "admonition-challenge"].admonition
+{
+    background: #e1f7f3;
+}
+/* title bar */
+div[class ^= "admonition-challenge"] > p.admonition-title
+{
+    background-color: #00a78d;
+}
+
+/* Color scheme for instructor notes admonition */
+/* body */
+div[class ^= "admonition-instructor-notes"].admonition
+{
+    background: #ffd8c1;
+}
+/* title bar */
+div[class ^= "admonition-instructor-notes"] > p.admonition-title
+{
+    background-color: #f58d50;
+}
+
+/* Color scheme for demo admonition */
+/* body */
+div[class ^= "admonition-demo"].admonition
+{
+    background: #ffd8c1;
+}
+/* title bar */
+div[class ^= "admonition-demo"] > p.admonition-title
+{
+    background-color: #f58d50;
+}
+
+footer .logo-link .osgeo-logo
+{
+	background: url("../img/osgeo-emblem-24x24.png") no-repeat;
+	height: 24px;
+	width: 24px;
+	display: inline-block;
+}

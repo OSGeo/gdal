@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -1250,3 +1250,61 @@ def test_vrt_explicit_dataAxisToSRSAxisMapping_1_2():
     </VRTDataset>"""
     ds = gdal.Open(vrt_text)
     assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1,2]
+
+
+def test_vrt_shared_no_proxy_pool():
+
+    before = gdaltest.get_opened_files()
+    vrt_text = """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Red</ColorInterp>
+    <SimpleSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ColorInterp>Green</ColorInterp>
+    <SimpleSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <ColorInterp>Blue</ColorInterp>
+    <SimpleSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    ds = gdal.Open(vrt_text)
+    assert ds
+    assert ds.GetRasterBand(1).Checksum() == 21212
+    assert ds.GetRasterBand(2).Checksum() == 21053
+    assert ds.GetRasterBand(3).Checksum() == 21349
+    ds = None
+
+    after = gdaltest.get_opened_files()
+    assert len(before) == len(after)
+
+
+def test_vrt_shared_no_proxy_pool_error():
+
+    vrt_text = """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>10</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <SimpleSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>11</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    with gdaltest.error_handler():
+        ds = gdal.Open(vrt_text)
+    assert not ds

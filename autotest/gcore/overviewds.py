@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GDALOverviewDataset
-# Author:   Even Rouault <even dot rouault at mines spatialys dot com>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2014 Even Rouault <even dot rouault at mines spatialys dot com>
+# Copyright (c) 2014 Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),

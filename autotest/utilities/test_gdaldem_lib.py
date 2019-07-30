@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdaldem testing
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2015, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2015, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -285,6 +285,36 @@ def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
     ds = None
 
 ###############################################################################
+# Test gdaldem hillshade -igor
+
+
+def test_gdaldem_lib_hillshade_igor():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', igor=True, computeEdges=True, scale=111120, zFactor=30)
+    assert ds is not None
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 48830, 'Bad checksum'
+
+    ds = None
+
+###############################################################################
+# Test gdaldem hillshade -igor
+
+
+def test_gdaldem_lib_hillshade_igor_ZevenbergenThorne():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'hillshade', format='MEM', alg='ZevenbergenThorne', igor=True, computeEdges=True, scale=111120, zFactor=30)
+    assert ds is not None
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 49014, 'Bad checksum'
+
+    ds = None
+
+###############################################################################
 # Test gdaldem color relief
 
 
@@ -446,7 +476,7 @@ def test_gdaldem_lib_nodata():
         print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
         pytest.fail('Bad checksum')
 
-    
+
 
 
 

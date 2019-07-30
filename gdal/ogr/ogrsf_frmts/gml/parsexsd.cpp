@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam
- * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -451,6 +451,9 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 gmlType = GMLPT_Short;
             else if (EQUAL(pszStrippedNSType, "boolean") )
                 gmlType = GMLPT_Boolean;
+            // TODO: Would be nice to have a binary type.
+            else if (EQUAL(pszStrippedNSType, "hexBinary"))
+                gmlType = GMLPT_String;
             else if (strcmp(pszType, "gml:FeaturePropertyType") == 0 )
             {
                 gmlType = GMLPT_FeatureProperty;
@@ -1048,7 +1051,8 @@ bool GMLParseXSD( const char *pszFile,
 
         else if( !EQUALN(pszType, pszName, strlen(pszName))
             || !(EQUAL(pszType + strlen(pszName), "_Type") ||
-                    EQUAL(pszType + strlen(pszName), "Type")) )
+                    EQUAL(pszType + strlen(pszName), "Type") ||
+                    EQUAL(pszType + strlen(pszName), "FeatureType")) )
         {
             continue;
         }

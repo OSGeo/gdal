@@ -2,10 +2,10 @@
  * Purpose:  ASRP/USRP Reader
  * Author:   Frank Warmerdam (warmerdam@pobox.com)
  *
- * Derived from ADRG driver by Even Rouault, even.rouault at mines-paris.org.
+ * Derived from ADRG driver by Even Rouault, even.rouault at spatialys.com.
  *
  ******************************************************************************
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2009, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -1373,6 +1373,14 @@ char** SRPDataset::GetIMGListFromGEN(const char* pszFileName,
 
             if ( strcmp(RTY, "GIN") != 0 )
                 continue;
+
+            /* make sure that the GEN file is part of a SRP dataset, not an ADRG dataset, by checking that the GEN field does not contain a NWO subfield */
+            const char* NWO = record->GetStringSubfield("GEN", 0, "NWO", 0);
+            if( NWO )
+            {
+                CSLDestroy(papszFileNames);
+                return nullptr;
+            }
 
             field = record->GetField(3);
             if( field == nullptr )

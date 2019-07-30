@@ -8,7 +8,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2010, Chris Yesson <chris.yesson@ioz.ac.uk>
-#  Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
+#  Copyright (c) 2010-2011, Even Rouault <even dot rouault at spatialys.com>
 #  Copyright (c) 2016, Piers Titus van der Torren <pierstitus@gmail.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -101,14 +101,14 @@ def GetOutputDriversFor(filename):
 
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
+    ext = GetExtension(filename)
     if not drv_list:
-        ext = GetExtension(filename)
         if not ext:
             return 'GTiff'
         else:
             raise Exception("Cannot guess driver for %s" % filename)
     elif len(drv_list) > 1:
-        print("Several drivers matching %s extension. Using %s" % (ext, drv_list[0]))
+        print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
 
 ################################################################
@@ -249,9 +249,6 @@ def doit(opts, args):
 
     # use the block size of the first layer to read efficiently
     myBlockSize = myFiles[0].GetRasterBand(myBands[0]).GetBlockSize()
-    # store these numbers in variables that may change later
-    nXValid = myBlockSize[0]
-    nYValid = myBlockSize[1]
     # find total x and y blocks to be read
     nXBlocks = (int)((DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0])
     nYBlocks = (int)((DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1])
@@ -274,15 +271,18 @@ def doit(opts, args):
         ################################################################
         # start looping through blocks of data
         ################################################################
+        
+        # store these numbers in variables that may change later
+        nXValid = myBlockSize[0]
+        nYValid = myBlockSize[1]
 
         # loop through X-lines
         for X in range(0, nXBlocks):
 
-            # in the rare (impossible?) case that the blocks don't fit perfectly
+            # in case the blocks don't fit perfectly
             # change the block size of the final piece
             if X == nXBlocks - 1:
                 nXValid = DimensionsCheck[0] - X * myBlockSize[0]
-                myBufSize = nXValid * nYValid
 
             # find X offset
             myX = X * myBlockSize[0]
@@ -380,7 +380,7 @@ def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_optio
         Calc(calc="(A+B)/2", A="input1.tif", B="input2.tif", outfile="result.tif")
 
     set values of zero and below to null:
-        Calc(calc="A*(A>0)", A="input.tif", A_Band=2, outfile="result.tif", NoDataValue=0)
+        Calc(calc="A*(A>0)", A="input.tif", A_band=2, outfile="result.tif", NoDataValue=0)
     """
     opts = Values()
     opts.input_files = input_files

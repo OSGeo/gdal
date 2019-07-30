@@ -60,6 +60,10 @@ import org.gdal.ogr.Layer;
 import org.gdal.ogr.Feature;
 %}
 
+%typemap(javaimports) GDALMDArrayHS %{
+import org.gdal.osr.SpatialReference;
+%}
+
 
 %pragma(java) modulecode=%{
 

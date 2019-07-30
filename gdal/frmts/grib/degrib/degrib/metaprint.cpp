@@ -26,7 +26,8 @@
 #include "metaname.h"
 #include "myerror.h"
 #include "myutil.h"
-#ifdef ENABLE_TDLPACK
+#if 0
+/* tdlpack is no longer supported by GDAL */
 #include "tdlpack.h"
 #endif
 #include "myassert.h"

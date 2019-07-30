@@ -29,7 +29,6 @@
  * (and also some miscellaneous stuff)
  */
 #include "tiffiop.h"
-#include <float.h>
 
 /*
  * These are used in the backwards compatibility code...
@@ -165,15 +164,6 @@ bad:
 	    td->td_samplesperpixel,
 	    td->td_samplesperpixel-i);
 	return (0);
-}
-
-static float TIFFClampDoubleToFloat( double val )
-{
-    if( val > FLT_MAX )
-        return FLT_MAX;
-    if( val < -FLT_MAX )
-        return -FLT_MAX;
-    return (float)val;
 }
 
 static int
@@ -346,13 +336,13 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
         dblval = va_arg(ap, double);
         if( dblval < 0 )
             goto badvaluedouble;
-		td->td_xresolution = TIFFClampDoubleToFloat( dblval );
+		td->td_xresolution = _TIFFClampDoubleToFloat( dblval );
 		break;
 	case TIFFTAG_YRESOLUTION:
         dblval = va_arg(ap, double);
         if( dblval < 0 )
             goto badvaluedouble;
-		td->td_yresolution = TIFFClampDoubleToFloat( dblval );
+		td->td_yresolution = _TIFFClampDoubleToFloat( dblval );
 		break;
 	case TIFFTAG_PLANARCONFIG:
 		v = (uint16) va_arg(ap, uint16_vap);
@@ -361,10 +351,10 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		td->td_planarconfig = (uint16) v;
 		break;
 	case TIFFTAG_XPOSITION:
-		td->td_xposition = TIFFClampDoubleToFloat( va_arg(ap, double) );
+		td->td_xposition = _TIFFClampDoubleToFloat( va_arg(ap, double) );
 		break;
 	case TIFFTAG_YPOSITION:
-		td->td_yposition = TIFFClampDoubleToFloat( va_arg(ap, double) );
+		td->td_yposition = _TIFFClampDoubleToFloat( va_arg(ap, double) );
 		break;
 	case TIFFTAG_RESOLUTIONUNIT:
 		v = (uint16) va_arg(ap, uint16_vap);
@@ -710,7 +700,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				case TIFF_SRATIONAL:
 				case TIFF_FLOAT:
 					{
-						float v2 = TIFFClampDoubleToFloat(va_arg(ap, double));
+						float v2 = _TIFFClampDoubleToFloat(va_arg(ap, double));
 						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
@@ -1028,12 +1018,12 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 		case TIFFTAG_STRIPOFFSETS:
 		case TIFFTAG_TILEOFFSETS:
 			_TIFFFillStriles( tif );
-			*va_arg(ap, uint64**) = td->td_stripoffset;
+			*va_arg(ap, uint64**) = td->td_stripoffset_p;
 			break;
 		case TIFFTAG_STRIPBYTECOUNTS:
 		case TIFFTAG_TILEBYTECOUNTS:
 			_TIFFFillStriles( tif );
-			*va_arg(ap, uint64**) = td->td_stripbytecount;
+			*va_arg(ap, uint64**) = td->td_stripbytecount_p;
 			break;
 		case TIFFTAG_MATTEING:
 			*va_arg(ap, uint16*) =
@@ -1292,8 +1282,9 @@ TIFFFreeDirectory(TIFF* tif)
 	CleanupField(td_transferfunction[0]);
 	CleanupField(td_transferfunction[1]);
 	CleanupField(td_transferfunction[2]);
-	CleanupField(td_stripoffset);
-	CleanupField(td_stripbytecount);
+	CleanupField(td_stripoffset_p);
+	CleanupField(td_stripbytecount_p);
+        td->td_stripoffsetbyteallocsize = 0;
 	TIFFClrFieldBit(tif, FIELD_YCBCRSUBSAMPLING);
 	TIFFClrFieldBit(tif, FIELD_YCBCRPOSITIONING);
 
@@ -1306,10 +1297,8 @@ TIFFFreeDirectory(TIFF* tif)
 	td->td_customValueCount = 0;
 	CleanupField(td_customValues);
 
-#if defined(DEFER_STRILE_LOAD)
         _TIFFmemset( &(td->td_stripoffset_entry), 0, sizeof(TIFFDirEntry));
         _TIFFmemset( &(td->td_stripbytecount_entry), 0, sizeof(TIFFDirEntry));
-#endif        
 }
 #undef CleanupField
 
@@ -1397,7 +1386,9 @@ TIFFDefaultDirectory(TIFF* tif)
 	td->td_tilewidth = 0;
 	td->td_tilelength = 0;
 	td->td_tiledepth = 1;
+#ifdef STRIPBYTECOUNTSORTED_UNUSED
 	td->td_stripbytecountsorted = 1; /* Our own arrays always sorted. */  
+#endif
 	td->td_resolutionunit = RESUNIT_INCH;
 	td->td_sampleformat = SAMPLEFORMAT_UINT;
 	td->td_imagedepth = 1;

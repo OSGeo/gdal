@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2013, Alan Boudreault
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -255,7 +255,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
                                  pabyScanlines, nXSize, size_y, GDT_Byte,
                                  nBands, NULL,
                                  nBands,
-                                 nBands * nXSize, 1, NULL);
+                                 nBands * nXSize, 1, nullptr);
 
         if (eErr != CE_None)
             break;

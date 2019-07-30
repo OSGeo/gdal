@@ -760,7 +760,7 @@ class XMMReg4Double
   public:
     __m256d ymm;
 
-    XMMReg4Double() {}
+    XMMReg4Double(): ymm(_mm256_setzero_pd()) {}
     XMMReg4Double(const XMMReg4Double& other) : ymm(other.ymm) {}
 
     static inline XMMReg4Double Zero()

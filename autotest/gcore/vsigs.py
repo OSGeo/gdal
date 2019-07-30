@@ -411,7 +411,52 @@ def test_vsigs_write():
             ret = gdal.VSIFCloseL(f)
         assert ret != 0
 
-    
+###############################################################################
+# Test write with retry
+
+
+def test_vsigs_write_retry():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options({'GDAL_HTTP_MAX_RETRY': '2',
+                                  'GDAL_HTTP_RETRY_DELAY': '0.01'}):
+
+        f = gdal.VSIFOpenL('/vsigs/test_write_retry/put_with_retry.bin', 'wb')
+        assert f is not None
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            request.protocol_version = 'HTTP/1.1'
+            request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+            content = ''
+            while True:
+                numchars = int(request.rfile.readline().strip(), 16)
+                content += request.rfile.read(numchars).decode('ascii')
+                request.rfile.read(2)
+                if numchars == 0:
+                    break
+            if len(content) != 3:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+            request.send_response(200)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+
+        handler.add('PUT', '/test_write_retry/put_with_retry.bin', 502)
+        handler.add('PUT', '/test_write_retry/put_with_retry.bin', custom_method=method)
+
+        with webserver.install_http_handler(handler):
+            assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+            gdal.VSIFCloseL(f)
+
 ###############################################################################
 # Read credentials with OAuth2 refresh_token
 

@@ -681,7 +681,7 @@ std::vector<PairURIFilename> OGRGMLASDataSource::BuildXSDVector(
                                             const CPLString& osXSDFilenames)
 {
     std::vector<PairURIFilename> aoXSDs;
-    char** papszTokens = CSLTokenizeString2(osXSDFilenames," ,",0);
+    char** papszTokens = CSLTokenizeString2(osXSDFilenames, ",", 0);
     char* pszCurDir = CPLGetCurrentDir();
     for( int i=0; papszTokens != nullptr && papszTokens[i] != nullptr; i++ )
     {

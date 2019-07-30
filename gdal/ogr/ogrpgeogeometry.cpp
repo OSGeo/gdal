@@ -8,7 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
- * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2882,8 +2882,12 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     if( tabPolygons != nullptr )
                     {
                         int isValidGeometry = FALSE;
+                        // The outer ring is supposed to be clockwise oriented
+                        // If it is not, then use the default/slow method.
                         const char* papszOptions[] =
-                            { "METHOD=ONLY_CCW", nullptr };
+                            { !(tabPolygons[0]->getExteriorRing()->isClockwise()) ?
+                                "METHOD=DEFAULT" : "METHOD=ONLY_CCW",
+                              nullptr };
                         poOGR = OGRGeometryFactory::organizePolygons(
                             reinterpret_cast<OGRGeometry **>(tabPolygons),
                             nParts,

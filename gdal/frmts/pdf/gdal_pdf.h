@@ -3,7 +3,7 @@
  *
  * Project:  PDF Translator
  * Purpose:  Definition of classes for OGR .pdf driver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
  *
@@ -13,7 +13,7 @@
  * Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
  *
  ******************************************************************************
- * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,11 +63,15 @@
 #define     PDFLIB_PDFIUM     2
 #define     PDFLIB_COUNT      3
 
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
+#define HAVE_PDF_READ_SUPPORT
+#endif
+
 /************************************************************************/
 /*                             OGRPDFLayer                              */
 /************************************************************************/
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
+#ifdef HAVE_PDF_READ_SUPPORT
 
 class PDFDataset;
 
@@ -178,7 +182,7 @@ class ObjectAutoFree;
 #define MAX_TOKEN_SIZE 256
 #define TOKEN_STACK_SIZE 8
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
+#ifdef HAVE_PDF_READ_SUPPORT
 
 class PDFDataset final: public GDALPamDataset
 {
@@ -264,7 +268,7 @@ class PDFDataset final: public GDALPamDataset
     void         ExploreLayersPoppler(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
     void         FindLayersPoppler();
     void         TurnLayersOnOffPoppler();
-    std::map<CPLString, OptionalContentGroup*> oLayerOCGMapPoppler;
+    std::vector<std::pair<CPLString, OptionalContentGroup*> > oLayerOCGListPoppler;
 #endif
 
 #ifdef HAVE_PDFIUM
@@ -414,7 +418,12 @@ private:
 
     OGRGeometry        *GetGeometryFromMCID(int nMCID);
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    GDALPDFObject*      GetPageObj() { return poPageObj; }
+    double              GetPageWidth() const { return dfPageWidth; }
+    double              GetPageHeight() const { return dfPageHeight; }
+
+    static PDFDataset  *Open( GDALOpenInfo * );
+    static GDALDataset *OpenWrapper( GDALOpenInfo * poOpenInfo ) { return Open(poOpenInfo); }
     static int          Identify( GDALOpenInfo * );
 
 #ifdef HAVE_PDFIUM
@@ -460,7 +469,7 @@ class PDFRasterBand: public GDALPamRasterBand
 #endif
 };
 
-#endif /*  defined(HAVE_POPPLER) || defined(HAVE_PODOFO)|| defined(HAVE_PDFIUM) */
+#endif /* HAVE_PDF_READ_SUPPORT */
 
 /************************************************************************/
 /*                          PDFWritableDataset                          */

@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test /vsicurl
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -446,7 +446,22 @@ def test_vsicurl_test_parse_html_filelist_apache():
     with webserver.install_http_handler(handler):
         assert gdal.VSIStatL('/vsicurl/http://localhost:%d/mydir/i_dont_exist' % gdaltest.webserver_port, gdal.VSI_STAT_EXISTS_FLAG) is None
 
-    
+
+###############################################################################
+
+
+def test_vsicurl_no_size_in_HEAD():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/test_vsicurl_no_size_in_HEAD.bin', 200, {}, add_content_length_header=False)
+    handler.add('GET', '/test_vsicurl_no_size_in_HEAD.bin', 200, {}, 'X' * 10)
+    with webserver.install_http_handler(handler):
+        statres = gdal.VSIStatL('/vsicurl/http://localhost:%d/test_vsicurl_no_size_in_HEAD.bin' % gdaltest.webserver_port)
+    assert statres.size == 10
+
 ###############################################################################
 
 

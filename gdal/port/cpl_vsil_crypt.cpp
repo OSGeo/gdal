@@ -1515,6 +1515,7 @@ static CPLString GetKey( const char* pszFilename )
             memset(key, 0, osKeyB64.size());
             CPLFree(key);
         }
+        // coverity[tainted_data]
         memset(const_cast<char*>(osKeyB64.c_str()), 0, osKeyB64.size());
     }
     return osKey;

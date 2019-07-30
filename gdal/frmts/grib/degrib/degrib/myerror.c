@@ -185,7 +185,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                slen = strlen (bufpart);
                lenBuff += slen;
                buffer = (char *) realloc ((void *) buffer, lenBuff);
-               strncpy (buffer + ipos, bufpart, slen);
+               memcpy (buffer + ipos, bufpart, slen);
                ipos = lenBuff - 1;
                break;
             case 'f':
@@ -193,7 +193,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                slen = strlen (bufpart);
                lenBuff += slen;
                buffer = (char *) realloc ((void *) buffer, lenBuff);
-               strncpy (buffer + ipos, bufpart, slen);
+               memcpy (buffer + ipos, bufpart, slen);
                ipos = lenBuff - 1;
                break;
             case 'e':
@@ -201,7 +201,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                slen = strlen (bufpart);
                lenBuff += slen;
                buffer = (char *) realloc ((void *) buffer, lenBuff);
-               strncpy (buffer + ipos, bufpart, slen);
+               memcpy (buffer + ipos, bufpart, slen);
                ipos = lenBuff - 1;
                break;
             case 'g':
@@ -209,7 +209,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                slen = strlen (bufpart);
                lenBuff += slen;
                buffer = (char *) realloc ((void *) buffer, lenBuff);
-               strncpy (buffer + ipos, bufpart, slen);
+               memcpy (buffer + ipos, bufpart, slen);
                ipos = lenBuff - 1;
                break;
             case 'c':
@@ -227,7 +227,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                   slen = strlen (sval);
                   lenBuff += slen;
                   buffer = (char *) realloc ((void *) buffer, lenBuff);
-                  strncpy (buffer + ipos, sval, slen);
+                  memcpy (buffer + ipos, sval, slen);
                   ipos = lenBuff - 1;
                   break;
                }

@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test TIL driver
-# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault, <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,6 @@ import os
 
 import gdaltest
 from osgeo import gdal
-import pytest
 
 ###############################################################################
 # Test a fake TIL dataset
@@ -68,10 +67,7 @@ def test_til_2():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/testtil.til.aux.xml'):
-        os.stat('data/testtil.til.aux.xml')
-    
-
+    assert not os.path.exists('data/testtil.til.aux.xml')
     
 ###############################################################################
 # Check GetFileList() & XML
@@ -97,10 +93,6 @@ def test_til_3():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/testtil.til.aux.xml'):
-        os.stat('data/testtil.til.aux.xml')
-    
-
-    
+    assert not os.path.exists('data/testtil.til.aux.xml')
 
 

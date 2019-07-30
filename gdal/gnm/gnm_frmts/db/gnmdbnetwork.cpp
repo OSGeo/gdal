@@ -148,6 +148,7 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "The network spatial reference should be present" );
+            CPLFree(wktSrs);
             return CE_Failure;
         }
         m_soSRS = wktSrs;

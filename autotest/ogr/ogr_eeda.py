@@ -60,7 +60,7 @@ def test_eeda_2():
         pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageSize=1', json.dumps({
-        'assets': [
+        'images': [
             {
                 'properties':
                 {
@@ -94,13 +94,13 @@ def test_eeda_2():
     assert lyr.GetFeatureCount() == -1
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages', json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-public/assets/collection/first_feature',
                 'id': 'collection/first_feature',
-                'path': 'collection/first_feature',
-                'time': '2017-01-02T12:34:56.789Z',
-                'updateTime': '2017-01-03T12:34:56.789Z',
+                'updateTime': '2017-01-04T12:34:56.789Z',
+                'startTime': '2017-01-02T12:34:56.789Z',
+                'endTime': '2017-01-03T12:34:56.789Z',
                 'sizeBytes': 1,
                 'geometry': {'type': 'Polygon', 'coordinates': [[[2, 49], [2.1, 49], [2.1, 49.1], [2, 49.1], [2, 49]]]},
                 'properties':
@@ -115,7 +115,7 @@ def test_eeda_2():
                     {
                         "id": "B1",
                         "dataType": {
-                            "precision": "INTEGER",
+                            "precision": "INT",
                             "range": {
                                 "max": 255
                             }
@@ -146,10 +146,10 @@ def test_eeda_2():
     f = lyr.GetNextFeature()
     if f.GetField('name') != 'projects/earthengine-public/assets/collection/first_feature' or \
        f.GetField('id') != 'collection/first_feature' or \
-       f.GetField('path') != 'collection/first_feature' or \
        f.GetField('gdal_dataset') != 'EEDAI:projects/earthengine-public/assets/collection/first_feature' or \
-       f.GetField('time') != '2017/01/02 12:34:56.789+00' or \
-       f.GetField('updateTime') != '2017/01/03 12:34:56.789+00' or \
+       f.GetField('updateTime') != '2017/01/04 12:34:56.789+00' or \
+       f.GetField('startTime') != '2017/01/02 12:34:56.789+00' or \
+       f.GetField('endTime') != '2017/01/03 12:34:56.789+00' or \
        f.GetField('sizeBytes') != 1 or \
        f.GetField('band_count') != 1 or \
        f.GetField('band_max_width') != 1830 or \
@@ -173,7 +173,7 @@ def test_eeda_2():
         pytest.fail()
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?pageToken=myToken', json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-public/assets/collection/third_feature'
             }
@@ -198,7 +198,7 @@ def test_eeda_2():
     lyr.SetAttributeFilter('EEDA:raw_filter')
 
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/collection:listImages?filter=raw%5Ffilter', json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-public/assets/collection/raw_filter'
             }
@@ -209,8 +209,7 @@ def test_eeda_2():
     assert f.GetField('name') == 'projects/earthengine-public/assets/collection/raw_filter'
 
     lyr.SetAttributeFilter(None)
-    lyr.SetAttributeFilter("time >= '1980-01-01T00:00:00Z' AND " +
-                           "time <= '2100-01-01T00:00:00Z' AND " +
+    lyr.SetAttributeFilter("startTime >= '1980-01-01T00:00:00Z' AND " +
                            "string_field = 'bar' AND " +
                            "int_field > 0 AND " +
                            "int_field < 2 AND " +
@@ -220,13 +219,13 @@ def test_eeda_2():
                            "string_field IN ('bar', 'baz') AND " +
                            "NOT( int_field IN (0) OR double_field IN (3.5) )")
 
-    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?region=%7B%20%22type%22%3A%20%22Polygon%22%2C%20%22coordinates%22%3A%20%5B%20%5B%20%5B%20%2D180%2E0%2C%20%2D90%2E0%20%5D%2C%20%5B%20%2D180%2E0%2C%2090%2E0%20%5D%2C%20%5B%20180%2E0%2C%2090%2E0%20%5D%2C%20%5B%20180%2E0%2C%20%2D90%2E0%20%5D%2C%20%5B%20%2D180%2E0%2C%20%2D90%2E0%20%5D%20%5D%20%5D%20%7D&filter=%28%28%28%28%28%28%28string%5Ffield%20%3D%20%22bar%22%20AND%20int%5Ffield%20%3E%200%29%20AND%20int%5Ffield%20%3C%202%29%20AND%20int64%5Ffield%20%3E%3D%200%29%20AND%20int64%5Ffield%20%3C%3D%209999999999999%29%20AND%20double%5Ffield%20%21%3D%203%2E5%29%20AND%20string%5Ffield%20%3D%20%22bar%22%20OR%20string%5Ffield%20%3D%20%22baz%22%29%20AND%20%28NOT%20%28int%5Ffield%20%3D%200%20OR%20double%5Ffield%20%3D%203%2E5%29%29%29&startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=2100%2D01%2D01T00%3A00%3A00Z'
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?region=%7B%20%22type%22%3A%20%22Polygon%22%2C%20%22coordinates%22%3A%20%5B%20%5B%20%5B%20%2D180%2E0%2C%20%2D90%2E0%20%5D%2C%20%5B%20%2D180%2E0%2C%2090%2E0%20%5D%2C%20%5B%20180%2E0%2C%2090%2E0%20%5D%2C%20%5B%20180%2E0%2C%20%2D90%2E0%20%5D%2C%20%5B%20%2D180%2E0%2C%20%2D90%2E0%20%5D%20%5D%20%5D%20%7D&filter=%28%28%28%28%28%28%28string%5Ffield%20%3D%20%22bar%22%20AND%20int%5Ffield%20%3E%200%29%20AND%20int%5Ffield%20%3C%202%29%20AND%20int64%5Ffield%20%3E%3D%200%29%20AND%20int64%5Ffield%20%3C%3D%209999999999999%29%20AND%20double%5Ffield%20%21%3D%203%2E5%29%20AND%20string%5Ffield%20%3D%20%22bar%22%20OR%20string%5Ffield%20%3D%20%22baz%22%29%20AND%20%28NOT%20%28int%5Ffield%20%3D%200%20OR%20double%5Ffield%20%3D%203%2E5%29%29%29&startTime=1980%2D01%2D01T00%3A00%3A00Z'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-public/assets/collection/filtered_feature',
-                'time': '2017-01-02T12:34:56.789Z',
                 'updateTime': '2017-01-03T12:34:56.789Z',
+                'startTime': '2017-01-02T12:34:56.789Z',
                 'sizeBytes': 1,
                 'geometry': {'type': 'Polygon', 'coordinates': [[[2, 49], [2.1, 49], [2.1, 49.1], [2, 49.1], [2, 49]]]},
                 'properties':
@@ -254,14 +253,15 @@ def test_eeda_2():
     lyr.SetSpatialFilter(None)
 
     # Test time equality with second granularity
-    lyr.SetAttributeFilter("time = '1980-01-01T00:00:00Z'")
+    lyr.SetAttributeFilter("startTime >= '1980-01-01T00:00:00Z' AND endTime <= '1980-01-02T23:59:59Z'")
 
-    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T00%3A00%3A01Z'
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D02T23%3A59%3A59Z'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-public/assets/collection/filtered_feature',
-                'time': '1980-01-01T00:00:00Z'
+                'startTime': '1980-01-01T00:00:00Z',
+                'endTime': '1980-01-02T23:59:59Z'
             },
             {
                 'name': 'projects/earthengine-public/assets/collection/second_feature'
@@ -275,14 +275,15 @@ def test_eeda_2():
     assert f.GetField('name') == 'projects/earthengine-public/assets/collection/filtered_feature'
 
     # Test time equality with day granularity
-    lyr.SetAttributeFilter("time = '1980-01-01'")
+    lyr.SetAttributeFilter("startTime = '1980-01-01' AND endTime = '1980-01-02'")
 
-    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D01T23%3A59%3A59Z'
+    ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/collection:listImages?startTime=1980%2D01%2D01T00%3A00%3A00Z&endTime=1980%2D01%2D02T23%3A59%3A59Z'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-public/assets/collection/filtered_feature',
-                'time': '1980-01-01T12:00:00Z',
+                'startTime': '1980-01-01T12:00:00Z',
+                'endTime': '1980-01-02T23:59:59Z'
             },
             {
                 'name': 'projects/earthengine-public/assets/collection/second_feature'
@@ -335,7 +336,7 @@ def test_eeda_4():
     # User asset ID ("users/**").
     ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-legacy/assets/users/foo:listImages?pageSize=1'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-legacy/assets/users/foo/bar'
             }
@@ -347,7 +348,7 @@ def test_eeda_4():
     # Project asset ID ("projects/**").
     ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-legacy/assets/projects/foo:listImages?pageSize=1'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-legacy/assets/projects/foo/bar'
             }
@@ -361,7 +362,7 @@ def test_eeda_4():
     # Multi-folder project asset ID ("projects/foo/bar/baz").
     ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-legacy/assets/projects/foo/bar/baz:listImages?pageSize=1'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-legacy/assets/projects/foo/bar/baz/qux'
             }
@@ -375,7 +376,7 @@ def test_eeda_4():
     # Public-catalog asset ID (e.g. "LANDSAT").
     ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/earthengine-public/assets/foo:listImages?pageSize=1'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/earthengine-public/assets/foo/bar'
             }
@@ -389,7 +390,7 @@ def test_eeda_4():
     # Asset name ("projects/*/assets/**").
     ogrtest.eeda_drv_tmpfile = '/vsimem/ee/projects/foo/assets/bar:listImages?pageSize=1'
     gdal.FileFromMemBuffer(ogrtest.eeda_drv_tmpfile, json.dumps({
-        'assets': [
+        'images': [
             {
                 'name': 'projects/foo/assets/bar/baz'
             }

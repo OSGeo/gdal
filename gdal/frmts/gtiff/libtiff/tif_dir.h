@@ -97,13 +97,14 @@ typedef struct {
 	 * number of striles */
 	uint32  td_stripsperimage;  
 	uint32  td_nstrips;              /* size of offset & bytecount arrays */
-	uint64* td_stripoffset;
-	uint64* td_stripbytecount;
+	uint64* td_stripoffset_p;        /* should be accessed with TIFFGetStrileOffset */
+	uint64* td_stripbytecount_p;     /* should be accessed with TIFFGetStrileByteCount */
+        uint32  td_stripoffsetbyteallocsize; /* number of elements currently allocated for td_stripoffset/td_stripbytecount. Only used if TIFF_LAZYSTRILELOAD is set */
+#ifdef STRIPBYTECOUNTSORTED_UNUSED
 	int     td_stripbytecountsorted; /* is the bytecount array sorted ascending? */
-#if defined(DEFER_STRILE_LOAD)
+#endif
         TIFFDirEntry td_stripoffset_entry;    /* for deferred loading */
         TIFFDirEntry td_stripbytecount_entry; /* for deferred loading */
-#endif
 	uint16  td_nsubifd;
 	uint64* td_subifd;
 	/* YCbCr parameters */
@@ -118,6 +119,8 @@ typedef struct {
 
 	int     td_customValueCount;
         TIFFTagValue *td_customValues;
+
+        unsigned char td_deferstrilearraywriting; /* see TIFFDeferStrileArrayWriting() */
 } TIFFDirectory;
 
 /*

@@ -306,7 +306,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
  *
  *  <b>Example:</b>
  *
- *  <pre>
+ * \code{.cpp}
  *    const char* wkt= "POINT(0 0)";
  *
  *    // cast because OGR_G_CreateFromWkt will move the pointer
@@ -315,7 +315,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
  *    OGRGeometryH new_geom;
  *    OSRSetAxisMappingStrategy(poSR, OAMS_TRADITIONAL_GIS_ORDER);
  *    OGRErr err = OGR_G_CreateFromWkt(&pszWkt, ref, &new_geom);
- *  </pre>
+ * \endcode
  *
  *
  *
@@ -3778,6 +3778,22 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
 
     if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")) )
     {
+        if( poDstGeom->getSpatialReference() &&
+            !poDstGeom->getSpatialReference()->IsGeographic() )
+        {
+            static bool bHasWarned = false;
+            if( !bHasWarned )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "WRAPDATELINE is without effect when reprojecting to a "
+                        "non-geographic CRS");
+                bHasWarned = true;
+            }
+            return poDstGeom;
+        }
+        // TODO and we should probably also test that the axis order + data axis mapping
+        // is long-lat...
+
         const OGRwkbGeometryType eType =
             wkbFlatten(poDstGeom->getGeometryType());
         if( eType == wkbPoint )
@@ -4680,7 +4696,7 @@ int OGRGeometryFactory::GetCurveParmeters(
     dy12 *= dfInvScale;
 
     const double det = dx01 * dy12 - dx12 * dy01;
-    if( fabs(det) < 1.0e-8 )
+    if( fabs(det) < 1.0e-8 || CPLIsNan(det) )
     {
         return FALSE;
     }

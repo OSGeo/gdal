@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -127,6 +127,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
         snprintf( szDODS_CONF, knBufSize, "DODS_CONF=%.980s",
                   CPLGetConfigOption( "DODS_CONF", "" ) );
+        // coverity[tainted_string]
         putenv( szDODS_CONF );
     }
 

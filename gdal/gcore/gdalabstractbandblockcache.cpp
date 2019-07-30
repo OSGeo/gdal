@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <new>
 
@@ -194,4 +195,86 @@ GDALRasterBlock* GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
             poBand, nXBlockOff, nYBlockOff );
     return poBlock;
 }
+
+/************************************************************************/
+/*                         IncDirtyBlocks()                             */
+/************************************************************************/
+
+/**
+ * \brief Increment/decrement the number of dirty blocks
+ */
+
+void GDALAbstractBandBlockCache::IncDirtyBlocks( int nInc )
+{
+    CPLAtomicAdd(&m_nDirtyBlocks, nInc);
+}
+
+/************************************************************************/
+/*                      StartDirtyBlockFlushingLog()                    */
+/************************************************************************/
+
+void GDALAbstractBandBlockCache::StartDirtyBlockFlushingLog()
+{
+    m_nInitialDirtyBlocksInFlushCache = 0;
+    if( m_nDirtyBlocks > 0 && CPLIsDefaultErrorHandlerAndCatchDebug() )
+    {
+        const char *pszDebug = CPLGetConfigOption("CPL_DEBUG", nullptr);
+        if( pszDebug && (EQUAL(pszDebug, "ON") || EQUAL(pszDebug, "GDAL")) &&
+            CPLGetConfigOption("GDAL_REPORT_DIRTY_BLOCK_FLUSHING", nullptr) == nullptr )
+        {
+            m_nInitialDirtyBlocksInFlushCache = m_nDirtyBlocks;
+            m_nLastTick = -1;
+        }
+    }
+}
+
+/************************************************************************/
+/*                      UpdateDirtyBlockFlushingLog()                   */
+/************************************************************************/
+
+void GDALAbstractBandBlockCache::UpdateDirtyBlockFlushingLog()
+{
+    // Poor man progress report for console applications
+    if( m_nInitialDirtyBlocksInFlushCache )
+    {
+        const auto nRemainingDirtyBlocks = m_nDirtyBlocks;
+        const auto nFlushedBlocks =
+            m_nInitialDirtyBlocksInFlushCache - nRemainingDirtyBlocks + 1;
+        const double dfComplete = double(nFlushedBlocks) / m_nInitialDirtyBlocksInFlushCache;
+        const int nThisTick = std::min(40, std::max(0,
+            static_cast<int>(dfComplete * 40.0) ));
+        if( nThisTick > m_nLastTick )
+        {
+            if( m_nLastTick < 0 )
+            {
+                fprintf(stderr, "GDAL: Flushing dirty blocks: "); /*ok*/
+                fflush(stderr); /*ok*/
+            }
+            while( nThisTick > m_nLastTick )
+            {
+                ++m_nLastTick;
+                if( m_nLastTick % 4 == 0 )
+                    fprintf( stderr, "%d", (m_nLastTick / 4) * 10 ); /*ok*/
+                else
+                    fprintf( stderr, "." ); /*ok*/
+            }
+
+            if( nThisTick == 40 )
+                fprintf( stderr, " - done.\n" ); /*ok*/
+            else
+                fflush( stderr ); /*ok*/
+        }
+    }
+}
+
+/************************************************************************/
+/*                       EndDirtyBlockFlushingLog()                     */
+/************************************************************************/
+
+void GDALAbstractBandBlockCache::EndDirtyBlockFlushingLog()
+{
+    m_nInitialDirtyBlocksInFlushCache = 0;
+    m_nLastTick = -1;
+}
+
 //! @endcond

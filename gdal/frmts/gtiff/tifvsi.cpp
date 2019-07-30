@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam, warmerdam@pobox.com
- * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,7 @@
 #include "cpl_port.h"
 #include "tifvsi.h"
 
+#include <assert.h>
 #include <string.h>
 #include <cerrno>
 #if HAVE_FCNTL_H
@@ -64,11 +65,25 @@ CPL_C_END
 
 constexpr int BUFFER_SIZE = 65536;
 
-typedef struct
+struct GDALTiffHandle;
+
+struct GDALTiffHandleShared
 {
-    VSILFILE*   fpL;
-    bool        bAtEndOfFile;
-    vsi_l_offset nExpectedPos;
+    VSILFILE       *fpL;
+    bool            bReadOnly;
+    bool            bLazyStrileLoading;
+    char           *pszName;
+    GDALTiffHandle *psActiveHandle; // only used on the parent
+    int             nUserCounter;
+    bool            bAtEndOfFile;
+    vsi_l_offset    nFileLength;
+};
+
+struct GDALTiffHandle
+{
+    GDALTiffHandle* psParent; // nullptr for the parent itself
+    GDALTiffHandleShared* psShared;
+
     GByte      *abyWriteBuffer;
     int         nWriteBufferSize;
 
@@ -81,34 +96,65 @@ typedef struct
     void**       ppCachedData;
     vsi_l_offset* panCachedOffsets;
     size_t*       panCachedSizes;
-} GDALTiffHandle;
+};
+
+static bool GTHFlushBuffer( thandle_t th );
+
+static void SetActiveGTH(GDALTiffHandle* psGTH)
+{
+    auto psShared = psGTH->psShared;
+    if( psShared->psActiveHandle != psGTH )
+    {
+        if( psShared->psActiveHandle != nullptr )
+        {
+            GTHFlushBuffer( static_cast<thandle_t>(psShared->psActiveHandle) );
+        }
+        psShared->psActiveHandle = psGTH;
+    }
+}
+
+void* VSI_TIFFGetCachedRange( thandle_t th, vsi_l_offset nOffset, size_t nSize )
+{
+    GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
+    for( int i = 0; i < psGTH->nCachedRanges; i++ )
+    {
+        if( nOffset >= psGTH->panCachedOffsets[i] &&
+            nOffset + nSize <=
+                psGTH->panCachedOffsets[i] + psGTH->panCachedSizes[i] )
+        {
+            return static_cast<GByte*>(psGTH->ppCachedData[i]) +
+                            (nOffset - psGTH->panCachedOffsets[i]);
+        }
+        if( nOffset < psGTH->panCachedOffsets[i] )
+            break;
+    }
+    return nullptr;
+}
 
 static tsize_t
 _tiffReadProc( thandle_t th, tdata_t buf, tsize_t size )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle *>(th);
+    //SetActiveGTH(psGTH);
 
     if( psGTH->nCachedRanges )
     {
-        const vsi_l_offset nCurOffset = VSIFTellL( psGTH->fpL );
-        for( int i = 0; i < psGTH->nCachedRanges; i++ )
+        const vsi_l_offset nCurOffset = VSIFTellL( psGTH->psShared->fpL );
+        void* data = VSI_TIFFGetCachedRange(th, nCurOffset, static_cast<size_t>(size));
+        if( data )
         {
-            if( nCurOffset >= psGTH->panCachedOffsets[i] &&
-                nCurOffset + static_cast<size_t>(size) <=
-                    psGTH->panCachedOffsets[i] + psGTH->panCachedSizes[i] )
-            {
-                memcpy( buf,
-                        static_cast<GByte*>(psGTH->ppCachedData[i]) +
-                            (nCurOffset - psGTH->panCachedOffsets[i]), size );
-                VSIFSeekL( psGTH->fpL, nCurOffset + size, SEEK_SET );
-                return size;
-            }
-            if( nCurOffset < psGTH->panCachedOffsets[i] )
-                break;
+            memcpy(buf, data, size);
+            VSIFSeekL( psGTH->psShared->fpL, nCurOffset + size, SEEK_SET );
+            return size;
         }
     }
 
-    return VSIFReadL( buf, 1, size, psGTH->fpL );
+#ifdef DEBUG_VERBOSE_EXTRA
+    CPLDebug("GTiff", "Reading %d bytes at offset " CPL_FRMT_GUIB,
+             static_cast<int>(size),
+             VSIFTellL( psGTH->psShared->fpL ));
+#endif
+    return VSIFReadL( buf, 1, size, psGTH->psShared->fpL );
 }
 
 static bool GTHFlushBuffer( thandle_t th )
@@ -118,7 +164,7 @@ static bool GTHFlushBuffer( thandle_t th )
     if( psGTH->abyWriteBuffer && psGTH->nWriteBufferSize )
     {
         const tsize_t nRet = VSIFWriteL( psGTH->abyWriteBuffer, 1,
-                                         psGTH->nWriteBufferSize, psGTH->fpL );
+                                         psGTH->nWriteBufferSize, psGTH->psShared->fpL );
         bRet = nRet == psGTH->nWriteBufferSize;
         if( !bRet )
         {
@@ -133,10 +179,11 @@ static tsize_t
 _tiffWriteProc( thandle_t th, tdata_t buf, tsize_t size )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle *>( th );
+    SetActiveGTH(psGTH);
 
     // If we have a write buffer and are at end of file, then accumulate
     // the bytes until the buffer is full.
-    if( psGTH->bAtEndOfFile && psGTH->abyWriteBuffer )
+    if( psGTH->psShared->bAtEndOfFile && psGTH->abyWriteBuffer )
     {
         const GByte* pabyData = reinterpret_cast<GByte *>( buf );
         tsize_t nRemainingBytes = size;
@@ -147,7 +194,10 @@ _tiffWriteProc( thandle_t th, tdata_t buf, tsize_t size )
                 memcpy( psGTH->abyWriteBuffer + psGTH->nWriteBufferSize,
                         pabyData, nRemainingBytes );
                 psGTH->nWriteBufferSize += static_cast<int>(nRemainingBytes);
-                psGTH->nExpectedPos += size;
+                if( psGTH->psShared->bAtEndOfFile )
+                {
+                    psGTH->psShared->nFileLength += size;
+                }
                 return size;
             }
 
@@ -155,7 +205,7 @@ _tiffWriteProc( thandle_t th, tdata_t buf, tsize_t size )
             memcpy( psGTH->abyWriteBuffer + psGTH->nWriteBufferSize, pabyData,
                     nAppendable );
             const tsize_t nRet = VSIFWriteL( psGTH->abyWriteBuffer, 1,
-                                             BUFFER_SIZE, psGTH->fpL );
+                                             BUFFER_SIZE, psGTH->psShared->fpL );
             psGTH->nWriteBufferSize = 0;
             if( nRet != BUFFER_SIZE )
             {
@@ -168,14 +218,14 @@ _tiffWriteProc( thandle_t th, tdata_t buf, tsize_t size )
         }
     }
 
-    const tsize_t nRet = VSIFWriteL( buf, 1, size, psGTH->fpL );
+    const tsize_t nRet = VSIFWriteL( buf, 1, size, psGTH->psShared->fpL );
     if( nRet < size )
     {
         TIFFErrorExt( th, "_tiffWriteProc", "%s", VSIStrerror( errno ) );
     }
-    if( psGTH->bAtEndOfFile )
+    if( psGTH->psShared->bAtEndOfFile )
     {
-        psGTH->nExpectedPos += nRet;
+        psGTH->psShared->nFileLength += nRet;
     }
     return nRet;
 }
@@ -184,33 +234,34 @@ static toff_t
 _tiffSeekProc( thandle_t th, toff_t off, int whence )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle *>( th );
+    SetActiveGTH(psGTH);
 
     // Optimization: if we are already at end, then no need to
     // issue a VSIFSeekL().
     if( whence == SEEK_END )
     {
-        if( psGTH->bAtEndOfFile )
+        if( psGTH->psShared->bAtEndOfFile )
         {
-            return static_cast<toff_t>( psGTH->nExpectedPos );
+            return static_cast<toff_t>( psGTH->psShared->nFileLength );
         }
 
-        if( VSIFSeekL( psGTH->fpL, off, whence ) != 0 )
+        if( VSIFSeekL( psGTH->psShared->fpL, off, whence ) != 0 )
         {
             TIFFErrorExt( th, "_tiffSeekProc", "%s", VSIStrerror( errno ) );
             return static_cast<toff_t>( -1 );
         }
-        psGTH->bAtEndOfFile = true;
-        psGTH->nExpectedPos = VSIFTellL( psGTH->fpL );
-        return static_cast<toff_t>(psGTH->nExpectedPos);
+        psGTH->psShared->bAtEndOfFile = true;
+        psGTH->psShared->nFileLength = VSIFTellL( psGTH->psShared->fpL );
+        return static_cast<toff_t>(psGTH->psShared->nFileLength);
     }
 
     GTHFlushBuffer(th);
-    psGTH->bAtEndOfFile = false;
-    psGTH->nExpectedPos = 0;
+    psGTH->psShared->bAtEndOfFile = false;
+    psGTH->psShared->nFileLength = 0;
 
-    if( VSIFSeekL( psGTH->fpL, off, whence ) == 0 )
+    if( VSIFSeekL( psGTH->psShared->fpL, off, whence ) == 0 )
     {
-        return static_cast<toff_t>( VSIFTellL( psGTH->fpL ) );
+        return static_cast<toff_t>( VSIFTellL( psGTH->psShared->fpL ) );
     }
     else
     {
@@ -219,16 +270,34 @@ _tiffSeekProc( thandle_t th, toff_t off, int whence )
     }
 }
 
-static int
-_tiffCloseProc( thandle_t th )
+static void FreeGTH(GDALTiffHandle* psGTH)
 {
-    GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
-    GTHFlushBuffer(th);
+    psGTH->psShared->nUserCounter --;
+    if( psGTH->psParent == nullptr )
+    {
+        assert( psGTH->psShared->nUserCounter == 0 );
+        CPLFree(psGTH->psShared->pszName);
+        CPLFree(psGTH->psShared);
+    }
+    else
+    {
+        if( psGTH->psShared->psActiveHandle == psGTH )
+            psGTH->psShared->psActiveHandle = nullptr;
+    }
     CPLFree(psGTH->abyWriteBuffer);
     CPLFree(psGTH->ppCachedData);
     CPLFree(psGTH->panCachedOffsets);
     CPLFree(psGTH->panCachedSizes);
     CPLFree(psGTH);
+}
+
+static int
+_tiffCloseProc( thandle_t th )
+{
+    GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
+    SetActiveGTH(psGTH);
+    GTHFlushBuffer(th);
+    FreeGTH(psGTH);
     return 0;
 }
 
@@ -236,16 +305,18 @@ static toff_t
 _tiffSizeProc( thandle_t th )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
-    if( psGTH->bAtEndOfFile )
+    SetActiveGTH(psGTH);
+
+    if( psGTH->psShared->bAtEndOfFile )
     {
-        return static_cast<toff_t>( psGTH->nExpectedPos );
+        return static_cast<toff_t>( psGTH->psShared->nFileLength );
     }
 
-    const vsi_l_offset old_off = VSIFTellL( psGTH->fpL );
-    CPL_IGNORE_RET_VAL(VSIFSeekL( psGTH->fpL, 0, SEEK_END ));
+    const vsi_l_offset old_off = VSIFTellL( psGTH->psShared->fpL );
+    CPL_IGNORE_RET_VAL(VSIFSeekL( psGTH->psShared->fpL, 0, SEEK_END ));
 
-    const toff_t file_size = static_cast<toff_t>(VSIFTellL( psGTH->fpL ));
-    CPL_IGNORE_RET_VAL(VSIFSeekL( psGTH->fpL, old_off, SEEK_SET ));
+    const toff_t file_size = static_cast<toff_t>(VSIFTellL( psGTH->psShared->fpL ));
+    CPL_IGNORE_RET_VAL(VSIFSeekL( psGTH->psShared->fpL, old_off, SEEK_SET ));
 
     return file_size;
 }
@@ -254,6 +325,8 @@ static int
 _tiffMapProc( thandle_t th, tdata_t* pbase , toff_t* psize )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
+    //SetActiveGTH(psGTH);
+
     if( psGTH->pBase )
     {
         *pbase = psGTH->pBase;
@@ -270,14 +343,16 @@ _tiffUnmapProc( thandle_t /* th */, tdata_t /* base */, toff_t /* size */ )
 VSILFILE* VSI_TIFFGetVSILFile( thandle_t th )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle *>( th );
+    SetActiveGTH(psGTH);
     VSI_TIFFFlushBufferedWrite(th);
-    return psGTH->fpL;
+    return psGTH->psShared->fpL;
 }
 
 int VSI_TIFFFlushBufferedWrite( thandle_t th )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
-    psGTH->bAtEndOfFile = false;
+    SetActiveGTH(psGTH);
+    psGTH->psShared->bAtEndOfFile = false;
     return GTHFlushBuffer(th);
 }
 
@@ -285,6 +360,19 @@ int VSI_TIFFHasCachedRanges( thandle_t th )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
     return psGTH->nCachedRanges != 0;
+}
+
+toff_t VSI_TIFFSeek(TIFF* tif, toff_t off, int whence )
+{
+    thandle_t th = TIFFClientdata( tif );
+    return _tiffSeekProc(th, off, whence);
+}
+
+int VSI_TIFFWrite( TIFF* tif, const void* buffer, size_t buffersize )
+{
+    thandle_t th = TIFFClientdata( tif );
+    return static_cast<size_t>(
+        _tiffWriteProc( th, const_cast<tdata_t>(buffer), buffersize )) == buffersize;
 }
 
 void VSI_TIFFSetCachedRanges( thandle_t th, int nRanges,
@@ -316,23 +404,11 @@ void VSI_TIFFSetCachedRanges( thandle_t th, int nRanges,
     }
 }
 
-// Open a TIFF file for read/writing.
-TIFF* VSI_TIFFOpen( const char* name, const char* mode,
-                    VSILFILE* fpL )
+static bool IsReadOnly(const char* mode)
 {
-    char access[32] = { '\0' };
     bool bReadOnly = true;
-    int a_out = 0;
     for( int i = 0; mode[i] != '\0'; i++ )
     {
-        if( mode[i] == 'r'
-            || mode[i] == 'w'
-            || mode[i] == '+'
-            || mode[i] == 'a' )
-        {
-            access[a_out++] = mode[i];
-            access[a_out] = '\0';
-        }
         if( mode[i] == 'w'
             || mode[i] == '+'
             || mode[i] == 'a' )
@@ -340,28 +416,22 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
             bReadOnly = false;
         }
     }
+    return bReadOnly;
+}
 
-    strcat( access, "b" );
-
-    if( VSIFSeekL(fpL, 0, SEEK_SET) < 0 )
-        return nullptr;
-
-    GDALTiffHandle* psGTH = static_cast<GDALTiffHandle *>(
-        CPLCalloc(1, sizeof(GDALTiffHandle)) );
-    psGTH->fpL = fpL;
-    psGTH->nExpectedPos = 0;
-    psGTH->bAtEndOfFile = false;
-
+static void InitializeWriteBuffer(GDALTiffHandle* psGTH, const char* pszMode)
+{
     // No need to buffer on /vsimem/
+    const bool bReadOnly = IsReadOnly(pszMode);
     bool bAllocBuffer = !bReadOnly;
-    if( STARTS_WITH(name, "/vsimem/") )
+    if( STARTS_WITH(psGTH->psShared->pszName, "/vsimem/") )
     {
         if( bReadOnly &&
             CPLTestBool(CPLGetConfigOption("GTIFF_USE_MMAP", "NO")) )
         {
             psGTH->nDataLength = 0;
             psGTH->pBase = 
-                VSIGetMemFileBuffer(name, &psGTH->nDataLength, FALSE);
+                VSIGetMemFileBuffer(psGTH->psShared->pszName, &psGTH->nDataLength, FALSE);
         }
         bAllocBuffer = false;
     }
@@ -370,15 +440,67 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
         bAllocBuffer ? static_cast<GByte *>( VSIMalloc(BUFFER_SIZE) ) : nullptr;
     psGTH->nWriteBufferSize = 0;
 
+}
+
+static TIFF* VSI_TIFFOpen_common(GDALTiffHandle* psGTH, const char* pszMode)
+{
+    InitializeWriteBuffer(psGTH, pszMode);
 
     TIFF *tif =
-        XTIFFClientOpen( name, mode,
+        XTIFFClientOpen( psGTH->psShared->pszName,
+                         pszMode,
                          reinterpret_cast<thandle_t>(psGTH),
                          _tiffReadProc, _tiffWriteProc,
                          _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
                          _tiffMapProc, _tiffUnmapProc );
     if( tif == nullptr )
-        CPLFree(psGTH);
+        FreeGTH(psGTH);
 
     return tif;
+}
+
+// Open a TIFF file for read/writing.
+TIFF* VSI_TIFFOpen( const char* name, const char* mode,
+                    VSILFILE* fpL )
+{
+
+    if( VSIFSeekL(fpL, 0, SEEK_SET) < 0 )
+        return nullptr;
+
+    GDALTiffHandle* psGTH = static_cast<GDALTiffHandle *>(
+        CPLCalloc(1, sizeof(GDALTiffHandle)) );
+    psGTH->psParent = nullptr;
+    psGTH->psShared = static_cast<GDALTiffHandleShared *>(
+        CPLCalloc(1, sizeof(GDALTiffHandleShared)) );
+    psGTH->psShared->bReadOnly = (strchr(mode, '+') == nullptr);
+    psGTH->psShared->bLazyStrileLoading = (strchr(mode, 'D') != nullptr);
+    psGTH->psShared->pszName = CPLStrdup(name);
+    psGTH->psShared->fpL = fpL;
+    psGTH->psShared->psActiveHandle = psGTH;
+    psGTH->psShared->nFileLength = 0;
+    psGTH->psShared->bAtEndOfFile = false;
+    psGTH->psShared->nUserCounter = 1;
+
+    return VSI_TIFFOpen_common(psGTH, mode);
+}
+
+TIFF* VSI_TIFFOpenChild( TIFF* parent )
+{
+    GDALTiffHandle* psGTHParent =
+        reinterpret_cast<GDALTiffHandle*>(TIFFClientdata(parent));
+
+    GDALTiffHandle* psGTH = static_cast<GDALTiffHandle *>(
+        CPLCalloc(1, sizeof(GDALTiffHandle)) );
+    psGTH->psParent = psGTHParent;
+    psGTH->psShared = psGTHParent->psShared;
+    psGTH->psShared->nUserCounter ++;
+
+    SetActiveGTH(psGTH);
+    VSIFSeekL( psGTH->psShared->fpL, 0, SEEK_SET );
+
+    const char* mode = 
+        psGTH->psShared->bReadOnly && psGTH->psShared->bLazyStrileLoading ? "rDO" :
+        psGTH->psShared->bReadOnly ? "r" :
+        psGTH->psShared->bLazyStrileLoading ? "r+D" : "r+";
+    return VSI_TIFFOpen_common(psGTH, mode);
 }

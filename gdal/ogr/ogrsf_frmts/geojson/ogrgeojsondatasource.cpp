@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -390,9 +390,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
                         "Failed to create coordinate transformation between the "
-                        "input coordinate system and WGS84.  This may be because "
-                        "they are not transformable, or because projection "
-                        "services (PROJ.4 DLL/.so) could not be loaded." );
+                        "input coordinate system and WGS84." );
 
                     return nullptr;
                 }
@@ -814,7 +812,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
         GDALOpenInfo oOpenInfo(pszUnprefixed, GA_ReadOnly);
         if( oOpenInfo.fpL == nullptr || oOpenInfo.pabyHeader == nullptr )
             return;
-        oOpenInfo.TryToIngest(6000);
+        CPL_IGNORE_RET_VAL(oOpenInfo.TryToIngest(6000));
         CPLFree(pszGeoData_);
         pszGeoData_ = CPLStrdup(
                         reinterpret_cast<const char*>(oOpenInfo.pabyHeader));

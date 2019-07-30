@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2012-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -1940,7 +1940,9 @@ def test_ogr_mitab_44():
 def test_ogr_mitab_45():
 
     lyrNames = ['lyr1', 'lyr2']
-    fldNames = ['field1', 'поле1']
+    #                     0         1         2         3
+    #                     012345678901234567890123456789012
+    fldNames = ['field1', 'абвгдежзийклмнопрстуфхцчшщьъэюя']
     featNames = ['аз',
                  'буки',
                  'веди']
@@ -2351,6 +2353,55 @@ def test_ogr_mitab_delete_feature_no_geometry():
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+
+###############################################################################
+# Check fix for https://github.com/OSGeo/gdal/issues/1636
+
+def test_ogr_mitab_too_large_value_for_decimal_field():
+
+    filename = '/vsimem/test.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    fld = ogr.FieldDefn('f', ogr.OFTReal)
+    fld.SetWidth(20)
+    fld.SetPrecision(12)
+    lyr.CreateField(fld)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['f'] = 1234567.012
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['f'] = 123456789.012
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    f = None
+
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+
+###############################################################################
+# Check custom datum/spheroid parameters export
+
+def test_ogr_mitab_custom_datum_export():
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS('Custom', 'Custom', 'Sphere', 6370997.0, 0.0)
+    sr.SetTOWGS84(1, 2, 3, 4, 5, 6, 7)
+    proj =  sr.ExportToMICoordSys()
+    assert proj == 'Earth Projection 1, 9999, 12, 1, 2, 3, -4, -5, -6, -7, 0'
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS('Custom', 'Custom', 'NWL-9D or WGS-66', 6378145.0, 298.25)
+    sr.SetTOWGS84(1, 2, 3, 4, 5, 6, 7)
+    sr.SetUTM(33)
+    proj =  sr.ExportToMICoordSys()
+    assert proj == 'Earth Projection 8, 9999, 42, 1, 2, 3, -4, -5, -6, -7, 0, "m", 15, 0, 0.9996, 500000, 0'
+
 
 ###############################################################################
 #

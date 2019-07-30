@@ -5,10 +5,10 @@
  *           a default band mask based on the NODATA_VALUES metadata item.
  *           A pixel is considered nodata in all bands if and only if all bands
  *           match the corresponding value in the NODATA_VALUES tuple
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot ogr>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,7 +87,7 @@ GDALNoDataValuesMaskBand::~GDALNoDataValuesMaskBand()
 /*                            FillOutBuffer()                           */
 /************************************************************************/
 
-template<class T> static void FillOutBuffer(int nBlockOffsetPixels,
+template<class T> static void FillOutBuffer(GPtrDiff_t nBlockOffsetPixels,
                                             int nBands,
                                             const void* pabySrc,
                                             const double* padfNodataValues,
@@ -100,7 +100,7 @@ template<class T> static void FillOutBuffer(int nBlockOffsetPixels,
         paNoData[iBand] = static_cast<T>(padfNodataValues[iBand]);
     }
 
-    for( int i = 0; i < nBlockOffsetPixels; i++ )
+    for( GPtrDiff_t i = 0; i < nBlockOffsetPixels; i++ )
     {
         int nCountNoData = 0;
         for( int iBand = 0; iBand < nBands; ++iBand )
@@ -191,9 +191,9 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
                 nBlockXSize * nBlockYSize );
     }
 
-    int nBlockOffsetPixels = nBlockXSize * nBlockYSize;
-    const int nBandOffsetByte =
-        GDALGetDataTypeSizeBytes(eWrkDT) * nBlockXSize * nBlockYSize;
+    const GPtrDiff_t nBlockOffsetPixels = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+    const GPtrDiff_t nBandOffsetByte =
+        GDALGetDataTypeSizeBytes(eWrkDT) * nBlockOffsetPixels;
     for( int iBand = 0; iBand < nBands; ++iBand )
     {
         const CPLErr eErr =
@@ -207,7 +207,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
                 nXSizeRequest,
                 nYSizeRequest,
                 eWrkDT, 0,
-                nBlockXSize * GDALGetDataTypeSizeBytes(eWrkDT),
+                static_cast<GSpacing>(nBlockXSize) * GDALGetDataTypeSizeBytes(eWrkDT),
                 nullptr );
         if( eErr != CE_None )
             return eErr;

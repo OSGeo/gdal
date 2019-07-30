@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -329,7 +329,8 @@ CPLErr VRTRasterBand::SetCategoryNames( char ** papszNewNames )
 
 CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
                                const char *pszVRTPath,
-                               void* pUniqueHandle )
+                               void* pUniqueHandle,
+                               std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
 /* -------------------------------------------------------------------- */
@@ -576,7 +577,8 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
             break;
         }
 
-        if( poBand->XMLInit( psNode, pszVRTPath, pUniqueHandle ) == CE_None )
+        if( poBand->XMLInit( psNode, pszVRTPath, pUniqueHandle,
+                             oMapSharedSources ) == CE_None )
         {
             SetMaskBand(poBand);
         }
@@ -589,6 +591,37 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                        VRTSerializeNoData()                          */
+/************************************************************************/
+
+CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
+                             int nPrecision)
+{
+    if (CPLIsNan(dfVal))
+    {
+        return "nan";
+    }
+    else if( eDataType == GDT_Float32 &&
+                dfVal == -std::numeric_limits<float>::max() )
+    {
+        // To avoid rounding out of the range of float
+        return "-3.4028234663852886e+38";
+    }
+    else if( eDataType == GDT_Float32 &&
+                dfVal == std::numeric_limits<float>::max() )
+    {
+        // To avoid rounding out of the range of float
+        return "3.4028234663852886e+38";
+    }
+    else
+    {
+        char szFormat[16];
+        snprintf(szFormat, sizeof(szFormat), "%%.%dg", nPrecision);
+        return CPLSPrintf(szFormat, dfVal );
+    }
 }
 
 /************************************************************************/
@@ -620,27 +653,8 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
 
     if( m_bNoDataValueSet )
     {
-        if (CPLIsNan(m_dfNoDataValue))
-        {
-            CPLSetXMLValue( psTree, "NoDataValue", "nan");
-        }
-        else if( eDataType == GDT_Float32 &&
-                 m_dfNoDataValue == -std::numeric_limits<float>::max() )
-        {
-            // To avoid rounding out of the range of float
-            CPLSetXMLValue( psTree, "NoDataValue", "-3.4028234663852886e+38");
-        }
-        else if( eDataType == GDT_Float32 &&
-                 m_dfNoDataValue == std::numeric_limits<float>::max() )
-        {
-            // To avoid rounding out of the range of float
-            CPLSetXMLValue( psTree, "NoDataValue", "3.4028234663852886e+38");
-        }
-        else
-        {
-            CPLSetXMLValue( psTree, "NoDataValue",
-                            CPLSPrintf( "%.16g", m_dfNoDataValue ) );
-        }
+        CPLSetXMLValue( psTree, "NoDataValue",
+            VRTSerializeNoData(m_dfNoDataValue, eDataType, 16).c_str());
     }
 
     if( m_bHideNoDataValue )

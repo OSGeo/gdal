@@ -39,9 +39,14 @@ CPL_CVSID("$Id$")
 static int OGRGMTDriverIdentify( GDALOpenInfo *poOpenInfo )
 
 {
-    return poOpenInfo->nHeaderBytes &&
-           strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
-                  "@VGMT") != nullptr;
+    const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
+    if( poOpenInfo->nHeaderBytes && strstr(pszHeader, "@VGMT") != nullptr )
+        return true;
+
+    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GMT") )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/

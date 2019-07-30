@@ -171,7 +171,9 @@ int OGROGDIDataSource::Open( const char * pszNewName )
     m_poSpatialRef = new OGRSpatialReference;
     m_poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    if( m_poSpatialRef->importFromProj4( ECSTEXT(psResult) ) != OGRERR_NONE )
+    CPLString osProjString( ECSTEXT(psResult) );
+    osProjString.replaceAll("datum=wgs84", "datum=WGS84");
+    if( m_poSpatialRef->importFromProj4(osProjString) != OGRERR_NONE )
     {
         CPLError( CE_Warning, CPLE_NotSupported,
                   "untranslatable PROJ.4 projection: %s\n",

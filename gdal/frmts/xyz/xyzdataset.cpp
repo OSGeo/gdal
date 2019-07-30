@@ -2,10 +2,10 @@
  *
  * Project:  XYZ driver
  * Purpose:  GDALDataset driver for XYZ dataset.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -624,20 +624,21 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
         char** papszTokens = CSLTokenizeString2( osHeaderLine, " ,\t;",
                                                  CSLT_HONOURSTRINGS );
         int nTokens = CSLCount(papszTokens);
-        for( i = 0; i < nTokens; i++ )
+        for( int iToken = 0; iToken < nTokens; iToken++ )
         {
-            if (EQUAL(papszTokens[i], "x") ||
-                STARTS_WITH_CI(papszTokens[i], "lon") ||
-                STARTS_WITH_CI(papszTokens[i], "east"))
-                nXIndex = i;
-            else if (EQUAL(papszTokens[i], "y") ||
-                     STARTS_WITH_CI(papszTokens[i], "lat") ||
-                     STARTS_WITH_CI(papszTokens[i], "north"))
-                nYIndex = i;
-            else if (EQUAL(papszTokens[i], "z") ||
-                     STARTS_WITH_CI(papszTokens[i], "alt") ||
-                     EQUAL(papszTokens[i], "height"))
-                nZIndex = i;
+            const char* pszToken = papszTokens[iToken];
+            if (EQUAL(pszToken, "x") ||
+                STARTS_WITH_CI(pszToken, "lon") ||
+                STARTS_WITH_CI(pszToken, "east"))
+                nXIndex = iToken;
+            else if (EQUAL(pszToken, "y") ||
+                     STARTS_WITH_CI(pszToken, "lat") ||
+                     STARTS_WITH_CI(pszToken, "north"))
+                nYIndex = iToken;
+            else if (EQUAL(pszToken, "z") ||
+                     STARTS_WITH_CI(pszToken, "alt") ||
+                     EQUAL(pszToken, "height"))
+                nZIndex = iToken;
         }
         CSLDestroy(papszTokens);
         if( nXIndex >= 0 && nYIndex >= 0 && nZIndex >= 0)
@@ -1281,6 +1282,51 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy imagery                                                    */
 /* -------------------------------------------------------------------- */
+    char szFormat[50] = { '\0' };
+    if (eReqDT == GDT_Int32)
+        strcpy(szFormat, "%.18g%c%.18g%c%d\n");
+    else
+        strcpy(szFormat, "%.18g%c%.18g%c%.18g\n");
+    const char *pszDecimalPrecision =
+        CSLFetchNameValue(papszOptions, "DECIMAL_PRECISION");
+    const char *pszSignificantDigits =
+        CSLFetchNameValue(papszOptions, "SIGNIFICANT_DIGITS");
+    bool bIgnoreSigDigits = false;
+    if( pszDecimalPrecision && pszSignificantDigits )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Conflicting precision arguments, using DECIMAL_PRECISION");
+        bIgnoreSigDigits = true;
+    }
+    int nPrecision;
+    if ( pszSignificantDigits && !bIgnoreSigDigits )
+    {
+        nPrecision = atoi(pszSignificantDigits);
+        if (nPrecision >= 0)
+        {
+            if (eReqDT == GDT_Int32)
+                snprintf(szFormat, sizeof(szFormat), "%%.%dg%%c%%.%dg%%c%%d\n",
+                     nPrecision, nPrecision);
+            else
+                snprintf(szFormat, sizeof(szFormat), "%%.%dg%%c%%.%dg%%c%%.%dg\n",
+                     nPrecision, nPrecision, nPrecision);
+        }
+        CPLDebug("XYZ", "Setting precision format: %s", szFormat);
+    }
+    else if( pszDecimalPrecision )
+    {
+        nPrecision = atoi(pszDecimalPrecision);
+        if ( nPrecision >= 0 )
+        {
+            if (eReqDT == GDT_Int32)
+                snprintf(szFormat, sizeof(szFormat), "%%.%df%%c%%.%df%%c%%d\n",
+                     nPrecision, nPrecision);
+            else
+                snprintf(szFormat, sizeof(szFormat), "%%.%df%%c%%.%df%%c%%.%df\n",
+                     nPrecision, nPrecision, nPrecision);
+        }
+        CPLDebug("XYZ", "Setting precision format: %s", szFormat);
+    }
     void* pLineBuffer
         = reinterpret_cast<void *>( CPLMalloc( nXSize * sizeof(int) ) );
     CPLErr eErr = CE_None;
@@ -1300,11 +1346,11 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
                 = adfGeoTransform[0] + (i + 0.5) * adfGeoTransform[1];
             char szBuf[256];
             if (eReqDT == GDT_Int32)
-                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%d\n",
+                CPLsnprintf(szBuf, sizeof(szBuf), szFormat,
                             dfX, pszColSep[0], dfY, pszColSep[0],
                             reinterpret_cast<int *>( pLineBuffer )[i] );
             else
-                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%.18g\n",
+                CPLsnprintf(szBuf, sizeof(szBuf), szFormat,
                             dfX, pszColSep[0], dfY, pszColSep[0],
                             reinterpret_cast<float *>( pLineBuffer )[i]);
             osBuf += szBuf;
@@ -1394,6 +1440,8 @@ void GDALRegister_XYZ()
 "<CreationOptionList>"
 "   <Option name='COLUMN_SEPARATOR' type='string' default=' ' description='Separator between fields.'/>"
 "   <Option name='ADD_HEADER_LINE' type='boolean' default='false' description='Add an header line with column names.'/>"
+"   <Option name='SIGNIFICANT_DIGITS' type='int' description='Number of significant digits when writing floating-point numbers (%g format; default with 18).'/>\n"
+"   <Option name='DECIMAL_PRECISION' type='int' description='Number of decimal places when writing floating-point numbers (%f format).'/>\n"
 "</CreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

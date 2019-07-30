@@ -72,7 +72,8 @@ INCDIR = "$(GDAL_HOME)\include"
 DATADIR = "$(GDAL_HOME)\data"
 !ENDIF
 !IFNDEF HTMLDIR
-HTMLDIR = "$(GDAL_HOME)\html"
+# If you want the documentation to be build define a directory
+# HTMLDIR = "$(GDAL_HOME)\html"
 !ENDIF
 
 # Set this to the installed directory containing python.  If you don't
@@ -204,7 +205,7 @@ STDCALL=YES
 # Version number embedded in DLL name. 
 # If GDAL version is X.Y.Z, VERSION = X * 100 + Y
 !IFNDEF VERSION
-VERSION =	204
+VERSION =	300
 !ENDIF
 
 # Comment the following out if you want PAM supported disabled
@@ -294,12 +295,9 @@ JPEG12_SUPPORTED = 1
 #PNGDIR = c:/projects/libpng-1.0.8
 #PNG_LIB = $(PNGDIR)/libpng.lib
 
-# if using an external libtiff library
+# if using an external libtiff library. Must be libtiff >= 4.0
 #TIFF_INC =	-Ic:/warmerda/libtiff/libtiff
 #TIFF_LIB =	c:/warmerda/libtiff/libtiff/libtiff_i.lib
-# uncomment following line, if you have libtiff version >= 4.0 to
-# enable BigTIFF support
-#TIFF_OPTS=	-DBIGTIFF_SUPPORT
 
 # if using an external libgeotiff library
 #GEOTIFF_INC =   -Ic:/warmerda/libgeotiff -Ic:/warmerda/libgeotiff/libxtiff
@@ -436,9 +434,12 @@ JPEG12_SUPPORTED = 1
 #KAKDIR = C:\0_PGH\SRC_CSD\CSD_INTEGRATION\cots\kakadu\download\dev
 #KAKLIB = $(KAKDIR)\lib_x64\kdu_v79R.lib 	$(KAKDIR)\lib_x64\kdu_a79R.lib
 #KAKSRC = $(KAKDIR)\v7_9_1-01156C
+#KAKEXTRAINC=-I$(KAKDIR)
 #KAKOBJDIR =  $(KAKDIR)\v7_generated_x86
-KAKADU_7_5_OR_LATER = YES
 #JP2KAK_PLUGIN = YES
+!IFNDEF KAKADU_7_5_OR_LATER
+KAKADU_7_5_OR_LATER = YES
+!ENDIF
 
 # Uncomment the following and update to enable NCSA HDF Release 4 support.
 #HDF4_PLUGIN = NO
@@ -683,6 +684,16 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Uncomment for ZSTD TIFF support
 #ZSTD_CFLAGS = -IC:/install-zstd/include
 #ZSTD_LIBS = C:/install-zstd/lib/libzstd.lib
+
+# Uncomment for TileDB support
+#TILEDB_ENABLED = YES
+#TILEDB_CFLAGS = -IC:/install-tiledb/dist/include
+#TILEDB_LIBS = C:/install-tiledb/dist/lib/libtiledb.lib
+
+# Uncomment for RDB support
+#RDB_ENABLED = YES
+#RDB_CFLAGS = -IC:\rdb\rdblib-2.2.0-x86_64-windows\interface\cpp -IC:\rdb\rdblib-2.2.0-x86_64-windows\interface\c
+#RDB_LIB = C:\rdb\rdblib-2.2.0-x86_64-windows\library\rdblib.lib
 
 # Uncomment for WEBP support
 #WEBP_ENABLED = YES
@@ -989,6 +1000,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ZLIB_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) \
-	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
+	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(TILEDB_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(MONGODBV3_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) $(CHARLS_LIB) ws2_32.lib \
+	$(RDB_LIB) \
     kernel32.lib psapi.lib

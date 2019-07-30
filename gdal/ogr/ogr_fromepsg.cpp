@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -222,7 +222,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
 /*      We will need to adjust the linear projection parameter to       */
 /*      match the provided units, and clear the authority code.         */
 /* -------------------------------------------------------------------- */
-    if( dfOverrideUnit != 0.0
+    if( pszOverrideUnitName != nullptr && dfOverrideUnit != 0.0
         && fabs(dfOverrideUnit - GetLinearUnits()) > 0.0000000001 )
     {
         const double dfFalseEasting = GetNormProjParm( SRS_PP_FALSE_EASTING );

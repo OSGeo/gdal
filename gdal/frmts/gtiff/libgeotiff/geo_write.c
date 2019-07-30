@@ -58,9 +58,9 @@ int GTIFWriteKeys(GTIF *gt)
     /* Set up header of ProjectionInfo tag */
     header = (KeyHeader *)gt->gt_short;
     header->hdr_num_keys = (pinfo_t) gt->gt_num_keys;
-    header->hdr_version  = GvCurrentVersion;
-    header->hdr_rev_major  = GvCurrentRevision;
-    header->hdr_rev_minor  = GvCurrentMinorRev;
+    header->hdr_version  = gt->gt_version;
+    header->hdr_rev_major  = gt->gt_rev_major;
+    header->hdr_rev_minor  = gt->gt_rev_minor;
 
     /* Sum up the ASCII tag lengths */
     for (i = 0; i < gt->gt_num_keys; i++)

@@ -1421,3 +1421,21 @@ def test_isis3_write_utm():
     assert 'MinimumLatitude    = 33.891530168' in data, data
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/temp.lbl')
 
+
+###############################################################################
+# Test bugfix https://github.com/OSGeo/gdal/issues/1510
+
+def test_isis3_parse_list_and_write_quote_string_in_list():
+
+    src_ds = gdal.Open('data/FC21B0037339_15142232818F1C_3bands_truncated.cub')
+    gdal.GetDriverByName('ISIS3').CreateCopy('/vsimem/temp.lbl', src_ds,
+                                            options=['DATA_LOCATION=EXTERNAL'])
+    f = gdal.VSIFOpenL('/vsimem/temp.lbl', 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert 'FilterNumber = (1, 1, 1)' in data, data
+    assert 'FilterName   = (Clear_F1, Clear_F1, Clear_F1)' in data, data
+    assert 'Name         = ("band 1", "band 2", "band 3")' in data, data
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/temp.lbl')
+

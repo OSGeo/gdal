@@ -8,7 +8,7 @@
  *
  **********************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2563,8 +2563,36 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 pszCondVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, NULL);
                 if (pszCondVal == NULL)
                 {
+                    /* Needed for SENSRB */
+                    /* See https://github.com/OSGeo/gdal/issues/1520 */
+                    /* If the condition variable is not found at this level, */
+                    /* try to research it at upper levels by shortening on _ */
+                    /* separators */
+                    char* pszMDPrefixShortened = CPLStrdup(pszMDPrefix);
+                    char* pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
+                    if( pszLastUnderscore )
+                    {
+                        *pszLastUnderscore = 0;
+                        pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
+                    }
+                    while( pszLastUnderscore )
+                    {
+                        pszLastUnderscore[1] = 0;
+                        CPLFree(pszMDItemName);
+                        pszMDItemName = CPLStrdup(
+                            CPLSPrintf("%s%s", pszMDPrefixShortened, pszCondVar));
+                        pszCondVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, NULL);
+                        if( pszCondVal )
+                            break;
+                        *pszLastUnderscore = 0;
+                        pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
+                    }
+                    CPLFree(pszMDPrefixShortened);
+                }
+                if( pszCondVal == NULL )
+                {
                     CPLDebug("NITF", "Cannot find if cond variable %s",
-                             pszMDItemName);
+                            pszCondVar);
                 }
                 else if ((bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) == 0) ||
                          (!bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0))

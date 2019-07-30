@@ -417,9 +417,14 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 
     if( !poFile->IsBoundsSet() && !m_bCreateMIF )
     {
-        if( poSRSIn != nullptr && poSRSIn->GetRoot() != nullptr &&
-            EQUAL(poSRSIn->GetRoot()->GetValue(),"GEOGCS") )
+        if( poSRSIn != nullptr && poSRSIn->IsGeographic() )
             poFile->SetBounds(-1000, -1000, 1000, 1000);
+        else if( poSRSIn != nullptr && poSRSIn->IsProjected() )
+        {
+            const double FE = poSRSIn->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+            const double FN = poSRSIn->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+            poFile->SetBounds(-30000000 + FE, -15000000 + FN, 30000000 + FE, 15000000 + FN);
+        }
         else
             poFile->SetBounds(-30000000, -15000000, 30000000, 15000000);
     }

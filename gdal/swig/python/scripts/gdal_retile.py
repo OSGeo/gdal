@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Christian Mueller
-# Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@
 
 import os
 import sys
+import shutil
 
 from osgeo import gdal
 from osgeo import ogr
@@ -148,6 +149,7 @@ class mosaic_info(object):
         self.bands = fhInputTile.RasterCount
         self.band_type = fhInputTile.GetRasterBand(1).DataType
         self.projection = fhInputTile.GetProjection()
+        self.nodata = fhInputTile.GetRasterBand(1).GetNoDataValue()
 
         dec = AffineTransformDecorator(fhInputTile.GetGeoTransform())
         self.scaleX = dec.scaleX
@@ -209,6 +211,12 @@ class mosaic_info(object):
         resultDS = self.TempDriver.Create("TEMP", resultSizeX, resultSizeY, self.bands, self.band_type, [])
         resultDS.SetGeoTransform([minx, self.scaleX, 0, maxy, 0, self.scaleY])
 
+        for bandNr in range(1, self.bands + 1):
+            t_band = resultDS.GetRasterBand(bandNr)
+            if self.nodata is not None:
+                t_band.Fill(self.nodata)
+                t_band.SetNoDataValue(self.nodata)
+
         for feature in features:
             featureName = feature.GetField(0)
             sourceDS = self.cache.get(featureName)
@@ -240,8 +248,6 @@ class mosaic_info(object):
             tw_yoff = int((tgw_uly - maxy) / self.scaleY + 0.5)
             tw_xsize = min(resultDS.RasterXSize, int((tgw_lrx - minx) / self.scaleX + 0.5)) - tw_xoff
             tw_ysize = min(resultDS.RasterYSize, int((tgw_lry - maxy) / self.scaleY + 0.5)) - tw_yoff
-            # print(sw_xoff, sw_yoff, sw_xsize, sw_ysize, sourceDS.RasterXSize, sourceDS.RasterYSize)
-            # print(tw_xoff, tw_yoff, tw_xsize, tw_ysize, resultDS.RasterXSize, resultDS.RasterYSize)
             if tw_xsize <= 0 or tw_ysize <= 0:
                 continue
 
@@ -350,7 +356,8 @@ def tileImage(minfo, ti):
             if offsetY + height > ti.height:
                 height = ti.height - offsetY
 
-            createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS)
+            feature_only = Resume and os.path.exists(tilename)
+            createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_only)
 
             if not Quiet and not Verbose:
                 processed += 1
@@ -413,7 +420,9 @@ def copyTileIndexToCSV(OGRDS, fileName):
     csvfile.close()
 
 
-def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName, OGRDS):
+def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName, OGRDS, feature_only):
+
+    temp_tilename = tileName + '.tmp'
 
     sx = levelMosaicInfo.scaleX * 2
     sy = levelMosaicInfo.scaleY * 2
@@ -421,14 +430,17 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName
     dec = AffineTransformDecorator([levelMosaicInfo.ulx + offsetX * sx, sx, 0,
                                     levelMosaicInfo.uly + offsetY * sy, 0, sy])
 
+    if OGRDS is not None:
+        points = dec.pointsFor(width, height)
+        addFeature(OGRDS, tileName, points[0], points[1])
+    
+    if feature_only:
+        return
+
     s_fh = levelMosaicInfo.getDataSet(dec.ulx, dec.uly + height * dec.scaleY,
                                       dec.ulx + width * dec.scaleX, dec.uly)
     if s_fh is None:
         return
-
-    if OGRDS is not None:
-        points = dec.pointsFor(width, height)
-        addFeature(OGRDS, tileName, points[0], points[1])
 
     if BandType is None:
         bt = levelMosaicInfo.band_type
@@ -440,9 +452,9 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName
     bands = levelMosaicInfo.bands
 
     if MemDriver is None:
-        t_fh = Driver.Create(tileName, width, height, bands, bt, CreateOptions)
+        t_fh = Driver.Create(temp_tilename, width, height, bands, bt, CreateOptions)
     else:
-        t_fh = MemDriver.Create(tileName, width, height, bands, bt)
+        t_fh = MemDriver.Create('', width, height, bands, bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
@@ -456,28 +468,43 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tileName
             t_band.SetRasterColorTable(levelMosaicInfo.ct)
         t_band.SetRasterColorInterpretation(levelMosaicInfo.ci[band - 1])
 
+    if levelMosaicInfo.nodata is not None:
+        for band in range(1, bands + 1):
+            t_band = t_fh.GetRasterBand(band)
+            t_band.Fill(levelMosaicInfo.nodata)
+            t_band.SetNoDataValue(levelMosaicInfo.nodata)
+
     res = gdal.ReprojectImage(s_fh, t_fh, None, None, ResamplingMethod)
     if res != 0:
-        print("Reprojection failed for %s, error %d" % (tileName, res))
+        print("Reprojection failed for %s, error %d" % (temp_tilename, res))
         sys.exit(1)
 
     levelMosaicInfo.closeDataSet(s_fh)
 
-    if MemDriver is not None:
-        tt_fh = Driver.CreateCopy(tileName, t_fh, 0, CreateOptions)
+    if MemDriver is None:
+        t_fh.FlushCache()
+    else:
+        tt_fh = Driver.CreateCopy(temp_tilename, t_fh, 0, CreateOptions)
         tt_fh.FlushCache()
+        tt_fh = None
+
+    t_fh = None
+
+    if os.path.exists(tileName):
+        os.remove(tileName)
+    shutil.move(temp_tilename, tileName)
 
     if Verbose:
         print(tileName + " : " + str(offsetX) + "|" + str(offsetY) + "-->" + str(width) + "-" + str(height))
 
 
-def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS):
+def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_only):
     """
 
     Create tile
-    return name of created tile
 
     """
+    temp_tilename = tilename + '.tmp'
 
     if BandType is None:
         bt = minfo.band_type
@@ -485,12 +512,6 @@ def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS):
         bt = BandType
 
     dec = AffineTransformDecorator([minfo.ulx, minfo.scaleX, 0, minfo.uly, 0, minfo.scaleY])
-
-    s_fh = minfo.getDataSet(dec.ulx + offsetX * dec.scaleX, dec.uly + offsetY * dec.scaleY + height * dec.scaleY,
-                            dec.ulx + offsetX * dec.scaleX + width * dec.scaleX,
-                            dec.uly + offsetY * dec.scaleY)
-    if s_fh is None:
-        return
 
     geotransform = [dec.ulx + offsetX * dec.scaleX, dec.scaleX, 0,
                     dec.uly + offsetY * dec.scaleY, 0, dec.scaleY]
@@ -500,12 +521,21 @@ def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS):
         points = dec2.pointsFor(width, height)
         addFeature(OGRDS, tilename, points[0], points[1])
 
+    if feature_only:
+        return
+
+    s_fh = minfo.getDataSet(dec.ulx + offsetX * dec.scaleX, dec.uly + offsetY * dec.scaleY + height * dec.scaleY,
+                            dec.ulx + offsetX * dec.scaleX + width * dec.scaleX,
+                            dec.uly + offsetY * dec.scaleY)
+    if s_fh is None:
+        return
+
     bands = minfo.bands
 
     if MemDriver is None:
-        t_fh = Driver.Create(tilename, width, height, bands, bt, CreateOptions)
+        t_fh = Driver.Create(temp_tilename, width, height, bands, bt, CreateOptions)
     else:
-        t_fh = MemDriver.Create(tilename, width, height, bands, bt)
+        t_fh = MemDriver.Create('', width, height, bands, bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
@@ -522,16 +552,27 @@ def createTile(minfo, offsetX, offsetY, width, height, tilename, OGRDS):
         t_band = t_fh.GetRasterBand(band)
         if minfo.ct is not None:
             t_band.SetRasterColorTable(minfo.ct)
+        if minfo.nodata is not None:
+            t_band.Fill(minfo.nodata)
+            t_band.SetNoDataValue(minfo.nodata)
 
-#        data = s_band.ReadRaster( offsetX,offsetY,width,height,width,height, t_band.DataType )
         data = s_band.ReadRaster(0, 0, readX, readY, readX, readY, t_band.DataType)
         t_band.WriteRaster(0, 0, readX, readY, data, readX, readY, t_band.DataType)
 
     minfo.closeDataSet(s_fh)
 
-    if MemDriver is not None:
-        tt_fh = Driver.CreateCopy(tilename, t_fh, 0, CreateOptions)
+    if MemDriver is None:
+        t_fh.FlushCache()
+    else:
+        tt_fh = Driver.CreateCopy(temp_tilename, t_fh, 0, CreateOptions)
         tt_fh.FlushCache()
+        tt_fh = None
+
+    t_fh = None
+
+    if os.path.exists(tilename):
+        os.remove(tilename)
+    shutil.move(temp_tilename, tilename)
 
     if Verbose:
         print(tilename + " : " + str(offsetX) + "|" + str(offsetY) + "-->" + str(width) + "-" + str(height))
@@ -630,8 +671,10 @@ def buildPyramidLevel(levelMosaicInfo, levelOutputTileInfo, level):
                 height = levelOutputTileInfo.height - offsetY
 
             tilename = getTileName(levelMosaicInfo, levelOutputTileInfo, xIndex, yIndex, level)
-            createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tilename, OGRDS)
 
+            feature_only = Resume and os.path.exists(tilename)
+            createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_only)
+    
     if TileIndexName is not None:
         shapeName = getTargetDir(level) + TileIndexName
         copyTileIndexToDisk(OGRDS, shapeName)
@@ -698,7 +741,7 @@ def Usage():
     print('        [ -csv fileName [-csvDelim delimiter]]')
     print('        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels')
     print('        [-r {near/bilinear/cubic/cubicspline/lanczos}]')
-    print('        [-useDirForEachRow]')
+    print('        [-useDirForEachRow] [-resume]')
     print('        -targetDir TileDirectory input_files')
 
 # =============================================================================
@@ -735,6 +778,7 @@ def main(args=None):
     global Levels
     global PyramidOnly
     global UseDirForEachRow
+    global Resume
 
     gdal.AllRegister()
 
@@ -839,6 +883,8 @@ def main(args=None):
             CsvDelimiter = argv[i]
         elif arg == '-useDirForEachRow':
             UseDirForEachRow = True
+        elif arg == "-resume":
+            Resume = True
         elif arg[:1] == '-':
             print('Unrecognized command option: %s' % arg)
             Usage()
@@ -951,6 +997,7 @@ def initGlobals():
     global PyramidOnly
     global LastRowIndx
     global UseDirForEachRow
+    global Resume
 
     Verbose = False
     CreateOptions = []
@@ -976,6 +1023,7 @@ def initGlobals():
     PyramidOnly = False
     LastRowIndx = -1
     UseDirForEachRow = False
+    Resume = False
 
 
 # global vars
@@ -1003,6 +1051,7 @@ Levels = 0
 PyramidOnly = False
 LastRowIndx = -1
 UseDirForEachRow = False
+Resume = False
 
 
 if __name__ == '__main__':

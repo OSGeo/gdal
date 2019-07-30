@@ -30,6 +30,7 @@
 
 import os
 import shutil
+import sys
 from osgeo import gdal
 
 
@@ -412,8 +413,24 @@ def test_vrtwarp_read_vrt_of_warped_vrt():
     assert cs == 4672
 
 ###############################################################################
-# Test different nodata values on bands and partial blocks (#6581)
+# Test reading a warped VRT with blocks > 2 gigapixels
 
 
+def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
 
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+    if sys.maxsize < 2**32:
+        pytest.skip('Test not available on 32 bit')
 
+    import psutil
+    if psutil.virtual_memory().available < 2 * 50000 * 50000:
+        pytest.skip("Not enough virtual memory available")
+
+    ds = gdal.Open('data/test_deflate_2GB.vrt')
+
+    data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
+    assert data
+    ref_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    ref_ds.GetRasterBand(1).Fill(127)
+    assert data == ref_ds.ReadRaster()

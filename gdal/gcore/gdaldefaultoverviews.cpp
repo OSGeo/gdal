@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, 2007, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -660,7 +660,7 @@ GDALDefaultOverviews::BuildOverviews(
         if( bFoundSinglePixelOverview &&
             (poBand->GetXSize() + panOverviewList[i] - 1)
                 / panOverviewList[i] == 1 &&
-            (poBand->GetXSize() + panOverviewList[i] - 1)
+            (poBand->GetYSize() + panOverviewList[i] - 1)
                 / panOverviewList[i] == 1 )
         {
             abValidLevel[i] = false;
@@ -701,7 +701,7 @@ GDALDefaultOverviews::BuildOverviews(
 
             if( (poBand->GetXSize() + panOverviewList[i] - 1)
                     / panOverviewList[i] == 1 &&
-                (poBand->GetXSize() + panOverviewList[i] - 1)
+                (poBand->GetYSize() + panOverviewList[i] - 1)
                     / panOverviewList[i] == 1 )
             {
                 bFoundSinglePixelOverview = true;
@@ -726,9 +726,14 @@ GDALDefaultOverviews::BuildOverviews(
 
     CPLErr eErr = CE_None;
 
+    void* pScaledOverviewWithoutMask = GDALCreateScaledProgress(
+            0,
+            ( HaveMaskFile() && poMaskDS ) ? double(nBands) / (nBands + 1) : 1,
+            pfnProgress, pProgressData );
+
     void* pScaledProgress = GDALCreateScaledProgress(
             0, dfAreaNewOverviews / dfAreaRefreshedOverviews,
-            pfnProgress, pProgressData );
+            GDALScaledProgress, pScaledOverviewWithoutMask );
     if( bOvrIsAux )
     {
         if( nNewOverviews == 0 )
@@ -862,7 +867,7 @@ GDALDefaultOverviews::BuildOverviews(
             pScaledProgress = GDALCreateScaledProgress(
                     dfOffset + dfScale * iBand / nBands,
                     dfOffset + dfScale * (iBand+1) / nBands,
-                    pfnProgress, pProgressData );
+                    GDALScaledProgress, pScaledOverviewWithoutMask );
             eErr = GDALRegenerateOverviews( GDALRasterBand::ToHandle(poBand),
                                             nNewOverviews,
                                             reinterpret_cast<GDALRasterBandH*>(papoOverviewBands),
@@ -878,11 +883,12 @@ GDALDefaultOverviews::BuildOverviews(
     CPLFree( papoOverviewBands );
     CPLFree( panNewOverviewList );
     CPLFree( pahBands );
+    GDALDestroyScaledProgress( pScaledOverviewWithoutMask );
 
 /* -------------------------------------------------------------------- */
 /*      If we have a mask file, we need to build its overviews too.     */
 /* -------------------------------------------------------------------- */
-    if( HaveMaskFile() && poMaskDS )
+    if( HaveMaskFile() && poMaskDS && eErr == CE_None )
     {
         // Some config option are not compatible with mask overviews
         // so unset them, and define more sensible values.
@@ -895,8 +901,13 @@ GDALDefaultOverviews::BuildOverviews(
         if( bPHOTOMETRIC_YCBCR )
             CPLSetThreadLocalConfigOption("PHOTOMETRIC_OVERVIEW", "");
 
-        poMaskDS->BuildOverviews( pszResampling, nOverviews, panOverviewList,
-                                  0, nullptr, pfnProgress, pProgressData );
+        pScaledProgress = GDALCreateScaledProgress(
+                    double(nBands) / (nBands + 1),
+                    1.0,
+                    pfnProgress, pProgressData );
+        eErr = poMaskDS->BuildOverviews( pszResampling, nOverviews, panOverviewList,
+                                  0, nullptr, GDALScaledProgress, pScaledProgress );
+        GDALDestroyScaledProgress( pScaledProgress );
 
         // Restore config option.
         if( bJPEG )

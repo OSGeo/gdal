@@ -85,7 +85,7 @@ class IMapInfoFile : public OGRLayer
     GBool               m_bBoundsSet;
 
     char                *m_pszCharset;
-
+    std::set<CPLString> m_oSetFields{};
     TABFeature*         CreateTABFeature(OGRFeature *poFeature);
 
   public:
@@ -178,6 +178,7 @@ class IMapInfoFile : public OGRLayer
     void SetEncoding( const char* );
     const char* GetEncoding() const;
     int TestUtf8Capability() const;
+    CPLString NormalizeFieldName(const char *pszName) const;
     ///////////////
     // semi-private.
     virtual int  GetProjInfo(TABProjInfo *poPI) = 0;
@@ -216,7 +217,6 @@ class TABFile final : public IMapInfoFile
     TABINDFile  *m_poINDFile;   // Attributes index file
 
     OGRFeatureDefn *m_poDefn;
-    std::set<CPLString> m_oSetFields{};
     OGRSpatialReference *m_poSpatialRef;
     int         bUseSpatialTraversal;
 
@@ -654,7 +654,6 @@ class MIFFile final : public IMapInfoFile
     MIDDATAFile  *m_poMIFFile;   // Mif File
 
     OGRFeatureDefn *m_poDefn;
-    std::set<CPLString> m_oSetFields{};
     OGRSpatialReference *m_poSpatialRef;
 
     int         m_nFeatureCount;

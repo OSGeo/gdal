@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -292,7 +292,7 @@ def test_osr_epsg_13():
 
     # Two matches (and test GEOGCS)
     # This will now match with 4126 (which is deprecated), since the datum
-    # is identified to 6126 and GetEPSGGeogCS has logic to substract 2000 to it.
+    # is identified to 6126 and GetEPSGGeogCS has logic to subtract 2000 to it.
     #sr.SetFromUserInput("""GEOGCS["myLKS94",
     #DATUM["Lithuania_1994_ETRS89",
     #    SPHEROID["GRS 1980",6378137,298.257222101],
@@ -405,4 +405,35 @@ def test_osr_epsg_geoccs_deprecated():
 ###############################################################################
 
 
+def test_osr_epsg_area_of_use():
 
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(2154)
+    area = srs.GetAreaOfUse()
+    assert area.west_lon_degree == -9.86
+    assert area.south_lat_degree == 41.15
+    assert area.east_lon_degree == 10.38
+    assert area.north_lat_degree == 51.56
+    assert area.name == 'France'
+
+###############################################################################
+
+
+def test_osr_GetCRSInfoListFromDatabase():
+
+    l = osr.GetCRSInfoListFromDatabase('EPSG')
+    found = False
+    for record in l:
+        if record.auth_name == 'EPSG' and record.code == '2154':
+            assert record.name == 'RGF93 / Lambert-93'
+            assert record.type == osr.OSR_CRS_TYPE_PROJECTED
+            assert not record.deprecated
+            assert record.bbox_valid
+            assert record.west_lon_degree == -9.86
+            assert record.south_lat_degree == 41.15
+            assert record.east_lon_degree == 10.38
+            assert record.north_lat_degree == 51.56
+            assert record.area_name == 'France'
+            assert record.projection_method == 'Lambert Conic Conformal (2SP)'
+            found = True
+    assert found

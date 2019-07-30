@@ -1,0 +1,102 @@
+%PDF-1.6
+%ÿÿÿÿ
+3 0 obj
+<< /Name (foo) /Type /OCG >>
+endobj
+4 0 obj
+<< /Name (bar) /Type /OCG >>
+endobj
+5 0 obj
+<< /Contents 6 0 R /Group << /CS /DeviceRGB /S /Transparency /Type /Group >> /MediaBox [ 0 0 20 20 ] /Parent 1 0 R /Resources 7 0 R /Type /Page /UserUnit 1 >>
+endobj
+6 0 obj
+<< /Length 8 0 R >>
+stream
+endstream
+endobj
+8 0 obj
+   0
+endobj
+7 0 obj
+<< >>
+endobj
+9 0 obj
+<< /Contents 10 0 R /Group << /CS /DeviceRGB /S /Transparency /Type /Group >> /MediaBox [ 0 0 20 20 ] /Parent 1 0 R /Resources 11 0 R /Type /Page /UserUnit 1 >>
+endobj
+10 0 obj
+<< /Length 12 0 R >>
+stream
+endstream
+endobj
+12 0 obj
+   0
+endobj
+11 0 obj
+<< >>
+endobj
+22 0 obj
+<< /Count 9 /First 13 0 R /Last 21 0 R /Type /Outlines >>
+endobj
+13 0 obj
+<< /A << /S /SetOCGState /State [ /ON 3 0 R 4 0 R ] /Type /Action >> /F 1 /Next 14 0 R /Parent 22 0 R /Title (turn all on) >>
+endobj
+14 0 obj
+<< /A << /S /SetOCGState /State [ /OFF 3 0 R 4 0 R ] /Type /Action >> /F 2 /Next 15 0 R /Parent 22 0 R /Prev 13 0 R /Title (turn all off) >>
+endobj
+15 0 obj
+<< /A << /JS (app.fs.isFullScreen = true;) /Next << /S /SetOCGState /State [ /OFF 4 0 R /ON 3 0 R ] /Type /Action >> /S /JavaScript /Type /Action >> /Next 16 0 R /Parent 22 0 R /Prev 14 0 R /Title (foo on, bar off + fullscreen) >>
+endobj
+16 0 obj
+<< /Count 4 /Dest [ 5 0 R /XYZ null null null ] /First 17 0 R /Last 20 0 R /Next 21 0 R /Parent 22 0 R /Prev 15 0 R /Title (1: page 1) >>
+endobj
+17 0 obj
+<< /Count -2 /First 18 0 R /Last 19 0 R /Next 20 0 R /Parent 16 0 R /Title (1.1) >>
+endobj
+18 0 obj
+<< /Dest [ 5 0 R /XYZ null null null ] /Next 19 0 R /Parent 17 0 R /Title (1.1.1: Page 1) >>
+endobj
+19 0 obj
+<< /Dest [ 9 0 R /XYZ null null null ] /Parent 17 0 R /Prev 18 0 R /Title (1.1.2: Page 2) >>
+endobj
+20 0 obj
+<< /A << /D [ 9 0 R /FitR 1 3 2 4 ] /Next << /S /SetOCGState /State [ /ON 3 0 R ] /Type /Action >> /S /GoTo /Type /Action >> /Parent 16 0 R /Prev 17 0 R /Title <FEFF0031002E0032003A00200050006100670065002000320028007A006F006F006D0065006400200069006E00290020002B00200066006F006F0020006F006E> >>
+endobj
+21 0 obj
+<< /Dest [ 9 0 R /XYZ null null null ] /Parent 22 0 R /Prev 16 0 R /Title (2: page 2) >>
+endobj
+1 0 obj
+<< /Count 2 /Kids [ 5 0 R 9 0 R ] /Type /Pages >>
+endobj
+2 0 obj
+<< /OCProperties << /D << /Order [ 3 0 R 4 0 R ] >> /OCGs [ 3 0 R 4 0 R ] >> /Outlines 22 0 R /Pages 1 0 R /Type /Catalog >>
+endobj
+xref
+0 23
+0000000000 65535 f 
+0000002150 00000 n 
+0000002215 00000 n 
+0000000015 00000 n 
+0000000059 00000 n 
+0000000103 00000 n 
+0000000277 00000 n 
+0000000349 00000 n 
+0000000329 00000 n 
+0000000370 00000 n 
+0000000546 00000 n 
+0000000621 00000 n 
+0000000600 00000 n 
+0000000717 00000 n 
+0000000859 00000 n 
+0000001016 00000 n 
+0000001263 00000 n 
+0000001417 00000 n 
+0000001517 00000 n 
+0000001626 00000 n 
+0000001735 00000 n 
+0000002045 00000 n 
+0000000643 00000 n 
+trailer
+<< /Root 2 0 R /Size 23 >>
+startxref
+2355
+%%EOF

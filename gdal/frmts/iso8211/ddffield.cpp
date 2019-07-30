@@ -169,7 +169,7 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
         {
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
 
-            if( nDataSize < iOffset )
+            if( nDataSize <= iOffset )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid data size for subfield %s of %s",

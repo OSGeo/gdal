@@ -4,12 +4,12 @@
 #
 # Project:  GDAL Utilities
 # Purpose:  Python port of Commandline application to list info about a file.
-# Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault, <even dot rouault at spatialys.com>
 #
 # Port from gdalinfo.c whose author is Frank Warmerdam
 #
 # *****************************************************************************
-# Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2011, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 1998, Frank Warmerdam
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -503,9 +503,15 @@ def main(argv=None):
                 print("    %3d: %s" % (i, category))
                 i = i + 1
 
-        if hBand.GetScale() != 1.0 or hBand.GetOffset() != 0.0:
+        scale = hBand.GetScale()
+        if not scale:
+            scale = 1.0
+        offset = hBand.GetOffset()
+        if not offset:
+            offset = 0.0
+        if scale != 1.0 or offset != 0.0:
             print("  Offset: %.15g,   Scale:%.15g" %
-                  (hBand.GetOffset(), hBand.GetScale()))
+                  (offset, scale))
 
         if bShowMetadata:
             papszMetadata = hBand.GetMetadata_List()

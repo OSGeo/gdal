@@ -1083,8 +1083,12 @@ def test_ogr_gmlas_instantiate_only_gml_feature():
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
 
-    ds = gdal.OpenEx('GMLAS:',
-                     open_options=['XSD=data/gmlas/gmlas_instantiate_only_gml_feature.xsd'])
+    with gdaltest.tempfile('/vsimem/with space/gmlas_instantiate_only_gml_feature.xsd',
+                       open('data/gmlas/gmlas_instantiate_only_gml_feature.xsd', 'rb').read()):
+        with gdaltest.tempfile('/vsimem/with space/gmlas_fake_gml32.xsd',
+                       open('data/gmlas/gmlas_fake_gml32.xsd', 'rb').read()):
+            ds = gdal.OpenEx('GMLAS:',
+                            open_options=['XSD=/vsimem/with space/gmlas_instantiate_only_gml_feature.xsd'])
     assert ds.GetLayerCount() == 1
     ds = None
 

@@ -47,7 +47,7 @@ extern "C" void CPL_DLL RegisterOGRMongoDBv3();
 using bsoncxx::builder::basic::kvp;
 
 static mongocxx::instance* g_pInst = nullptr;
-static bool g_bCanInstanciateMongo = true;
+static bool g_bCanInstantiateMongo = true;
 
 namespace {
 typedef struct _IntOrMap IntOrMap;
@@ -2561,7 +2561,7 @@ static GDALDataset* OGRMongoDBv3DriverOpen( GDALOpenInfo* poOpenInfo )
         std::lock_guard<std::mutex> oLock(oMutex);
         if( g_pInst == nullptr )
         {
-            if( !g_bCanInstanciateMongo )
+            if( !g_bCanInstantiateMongo )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "MongoDB client has been previously shut down and "
@@ -2615,7 +2615,7 @@ static void OGRMongoDBv3DriverUnload( GDALDriver* )
     {
         delete g_pInst;
         g_pInst = nullptr;
-        g_bCanInstanciateMongo = false;
+        g_bCanInstantiateMongo = false;
     }
 }
 /************************************************************************/

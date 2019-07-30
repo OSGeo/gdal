@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -758,6 +758,8 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 
     const CPLString osOldPath = NormalizePath(pszOldPath);
     const CPLString osNewPath = NormalizePath(pszNewPath);
+    if( !STARTS_WITH(pszNewPath, "/vsimem/") )
+        return -1;
 
     if( osOldPath.compare(osNewPath) == 0 )
         return 0;

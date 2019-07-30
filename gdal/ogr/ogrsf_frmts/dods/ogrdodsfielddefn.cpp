@@ -74,8 +74,9 @@ bool OGRDODSFieldDefn::Initialize( AttrTable *poEntry,
                                    BaseType *poSuperSeq )
 
 {
-    const char *l_pszFieldScope = poEntry->get_attr("scope").c_str();
-    if( l_pszFieldScope == nullptr )
+    auto osScope(poEntry->get_attr("scope"));
+    const char *l_pszFieldScope = osScope.c_str();
+    if( osScope.empty() )
         l_pszFieldScope = "dds";
 
     return Initialize( poEntry->get_attr("name").c_str(), l_pszFieldScope,

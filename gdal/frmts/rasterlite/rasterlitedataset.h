@@ -3,10 +3,10 @@
  *
  * Project:  GDAL Rasterlite driver
  * Purpose:  Implement GDAL Rasterlite support using OGR SQLite driver
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -112,6 +112,8 @@ class RasterliteDataset final: public GDALPamDataset
     CPLString osOvrFileName;
 
     OGRDataSourceH hDS;
+
+    int m_nLastBadTileId = -1;
 
     void AddSubDataset( const char* pszDSName);
     int  GetBlockParams(OGRLayerH hRasterLyr, int nLevel, int* pnBands,

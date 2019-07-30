@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test JP2 metadata support.
-# Author:   Even Rouault < even dot rouault @ mines-paris dot org >
+# Author:   Even Rouault < even dot rouault @ spatialys.com >
 #
 ###############################################################################
-# Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -84,9 +84,7 @@ def test_jp2metadata_2():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/IMG_md_ple_R1C1.jp2.aux.xml'):
-        os.stat('data/IMG_md_ple_R1C1.jp2.aux.xml')
-    
+    assert not os.path.exists('data/IMG_md_ple_R1C1.jp2.aux.xml')
 
     
 ###############################################################################

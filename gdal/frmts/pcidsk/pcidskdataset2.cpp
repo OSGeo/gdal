@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -517,8 +517,9 @@ void PCIDSK2Band::RefreshOverviewList()
 /* -------------------------------------------------------------------- */
     for( int iOver = 0; iOver < poChannel->GetOverviewCount(); iOver++ )
     {
-        apoOverviews.push_back(
-            new PCIDSK2Band( poChannel->GetOverview(iOver) ) );
+        auto poOvrBand = new PCIDSK2Band( poChannel->GetOverview(iOver) );
+        poOvrBand->eAccess = eAccess;
+        apoOverviews.push_back( poOvrBand );
     }
 }
 
@@ -710,7 +711,7 @@ char **PCIDSK2Band::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamRasterBand::GetMetadataDomainList(),
                                    TRUE,
-                                   "", NULL);
+                                   "", nullptr);
 }
 
 /************************************************************************/
@@ -1147,7 +1148,7 @@ char **PCIDSK2Dataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "", NULL);
+                                   "", nullptr);
 }
 
 /************************************************************************/

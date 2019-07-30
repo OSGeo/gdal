@@ -12,3 +12,4 @@ then
 	brew uninstall gdal
 fi
 brew install sqlite3 ccache
+brew upgrade sqlite

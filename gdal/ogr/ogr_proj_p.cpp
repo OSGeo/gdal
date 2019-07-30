@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  PROJ-related functionnality
+ * Purpose:  PROJ-related functionality
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
@@ -106,7 +106,7 @@ PJ_CONTEXT* OSRGetProjTLSContext()
     auto& l_projContext = g_tls_projContext;
     l_projContext.init();
     {
-        // If OSRSetPROJSearchPaths() has been called since we created the mutex,
+        // If OSRSetPROJSearchPaths() has been called since we created the context,
         // set the new search paths on the context.
         std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
         if( l_projContext.searchPathGenerationCounter !=
@@ -141,11 +141,33 @@ void OSRCleanupTLSContext()
 /** \brief Set the search path(s) for PROJ resource files.
  * 
  * @param papszPaths NULL terminated list of directory paths.
- * @since GDAL 2.5
+ * @since GDAL 3.0
  */
 void OSRSetPROJSearchPaths( const char* const * papszPaths )
 {
     std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
     g_searchPathGenerationCounter ++;
     g_aosSearchpaths.Assign(CSLDuplicate(papszPaths), true);
+}
+
+/************************************************************************/
+/*                         OSRGetPROJVersion()                          */
+/************************************************************************/
+
+/** \brief Get the PROJ version
+ *
+ * @param pnMajor Pointer to major version number, or NULL
+ * @param pnMinor Pointer to minor version number, or NULL
+ * @param pnPatch Pointer to patch version number, or NULL
+ * @since GDAL 3.0.1
+ */
+void OSRGetPROJVersion( int* pnMajor, int* pnMinor, int* pnPatch )
+{
+    auto info = proj_info();
+    if (pnMajor)
+        *pnMajor = info.major;
+    if (pnMinor)
+        *pnMinor = info.minor;
+    if (pnPatch)
+        *pnPatch = info.patch;
 }

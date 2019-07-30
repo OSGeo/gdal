@@ -1,6 +1,6 @@
 include ../../GDALmake.opt
 
-OBJ	=	pdfdataset.o pdfio.o pdfobject.o pdfcreatecopy.o ogrpdflayer.o pdfwritabledataset.o pdfreadvectors.o
+OBJ	=	pdfdataset.o pdfio.o pdfobject.o pdfcreatecopy.o ogrpdflayer.o pdfwritabledataset.o pdfreadvectors.o pdfcreatefromcomposition.o
 
 PLUGIN_DL =	gdal_PDF.so
 
@@ -28,7 +28,7 @@ CPPFLAGS +=  -DHAVE_PDFIUM
 CXX := $(subst -Wzero-as-null-pointer-constant,,${CXX})
 endif
 
-$(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h gdal_pdf.h ../../ogr/ogrsf_frmts/mem/ogr_mem.h
+$(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h pdfcreatefromcomposition.h gdal_pdf.h ../../ogr/ogrsf_frmts/mem/ogr_mem.h
 
 CPPFLAGS	:=	 -I../vrt -I../mem -I../../ogr/ogrsf_frmts/mem $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC) $(PDFIUM_INC) -DDO_NOT_USE_DEBUG_BOOL
 

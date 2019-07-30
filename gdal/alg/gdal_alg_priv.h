@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,6 +57,9 @@ typedef struct {
     int nYSize;
     int nBands;
     GDALDataType eType;
+    int nPixelSpace;
+    GSpacing nLineSpace;
+    GSpacing nBandSpace;
     double *padfBurnValue;
     GDALBurnValueSrc eBurnValueSource;
     GDALRasterMergeAlg eMergeAlg;
@@ -90,7 +93,8 @@ void GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                                  int nPartCount, int *panPartSize,
                                  double *padfX, double *padfY,
                                  double *padfVariant,
-                                 llPointFunc pfnPointFunc, void *pCBData );
+                                 llPointFunc pfnPointFunc, void *pCBData,
+                                 int bAvoidBurningSamePoints );
 
 void GDALdllImageFilledPolygon( int nRasterXSize, int nRasterYSize,
                                 int nPartCount, int *panPartSize,

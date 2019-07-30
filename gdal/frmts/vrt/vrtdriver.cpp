@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -78,7 +78,7 @@ char **VRTDriver::GetMetadataDomainList()
 {
     return BuildMetadataDomainList( GDALDriver::GetMetadataDomainList(),
                                     TRUE,
-                                    "SourceParsers", NULL );
+                                    "SourceParsers", nullptr );
 }
 
 /************************************************************************/
@@ -137,7 +137,8 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 /************************************************************************/
 
 VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
-                                   void* pUniqueHandle )
+                                   void* pUniqueHandle,
+                                   std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
 
@@ -162,7 +163,7 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
     if( pfnParser == nullptr )
         return nullptr;
 
-    return pfnParser( psSrc, pszVRTPath, pUniqueHandle );
+    return pfnParser( psSrc, pszVRTPath, pUniqueHandle, oMapSharedSources );
 }
 
 /************************************************************************/
@@ -224,19 +225,44 @@ VRTCreateCopy( const char * pszFilename,
                 bRet = false;
 
             if( bRet )
-                pCopyDS = reinterpret_cast<GDALDataset *>(
-                    GDALOpen( pszFilename, GA_Update ) );
+                pCopyDS = GDALDataset::Open( pszFilename,
+                    GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_UPDATE);
         }
         else
         {
             /* No destination file is given, so pass serialized XML directly. */
-            pCopyDS = reinterpret_cast<GDALDataset *>(
-                GDALOpen( pszXML, GA_Update ) );
+            pCopyDS = GDALDataset::Open( pszXML,
+                GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_UPDATE);
         }
 
         CPLFree( pszXML );
 
         return pCopyDS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Multidimensional raster ?                                       */
+/* -------------------------------------------------------------------- */
+    auto poSrcGroup = poSrcDS->GetRootGroup();
+    if( poSrcGroup != nullptr )
+    {
+        auto poDstDS = std::unique_ptr<GDALDataset>(
+            VRTDataset::CreateMultiDimensional(pszFilename,
+                                   nullptr,
+                                   nullptr));
+        if( !poDstDS )
+            return nullptr;
+        auto poDstGroup = poDstDS->GetRootGroup();
+        if( !poDstGroup )
+            return nullptr;
+        if( GDALDriver::DefaultCreateCopyMultiDimensional(poSrcDS,
+                                              poDstDS.get(),
+                                              false,
+                                              nullptr,
+                                              nullptr,
+                                              nullptr) != CE_None )
+            return nullptr;
+        return poDstDS.release();
     }
 
 /* -------------------------------------------------------------------- */
@@ -380,6 +406,7 @@ void GDALRegister_VRT()
 
     poDriver->SetDescription( "VRT" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Virtual Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "gdal_vrttut.html" );
@@ -390,6 +417,7 @@ void GDALRegister_VRT()
     poDriver->pfnOpen = VRTDataset::Open;
     poDriver->pfnCreateCopy = VRTCreateCopy;
     poDriver->pfnCreate = VRTDataset::Create;
+    poDriver->pfnCreateMultiDimensional = VRTDataset::CreateMultiDimensional;
     poDriver->pfnIdentify = VRTDataset::Identify;
     poDriver->pfnDelete = VRTDataset::Delete;
 

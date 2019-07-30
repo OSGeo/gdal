@@ -1162,6 +1162,7 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
     for(int i=0; i<m_nOverviewCount; i++)
     {
         MBTilesDataset* poOvrDS = new MBTilesDataset();
+        poOvrDS->ShareLockWithParentDataset(this);
         int nBlockSize;
         GetRasterBand(1)->GetBlockSize(&nBlockSize, &nBlockSize);
         poOvrDS->InitRaster ( this, i, nBands,
@@ -1215,6 +1216,11 @@ bool MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
         return false;
     }
 
+    if( poParentDS )
+    {
+        eAccess = poParentDS->eAccess;
+    }
+
     for(int i = 1; i <= nBandCount; i ++)
         SetBand( i, new MBTilesBand(this, nTileSize) );
 
@@ -1227,7 +1233,6 @@ bool MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
     {
         m_poParentDS = poParentDS;
         poMainDS = poParentDS;
-        eAccess = poParentDS->eAccess;
         hDS = poParentDS->hDS;
         hDB = poParentDS->hDB;
         m_eTF = poParentDS->m_eTF;
@@ -1287,7 +1292,7 @@ char **MBTilesDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "", NULL);
+                                   "", nullptr);
 }
 
 /************************************************************************/
@@ -2074,7 +2079,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
 #else
         pszSQL = "SELECT min(zoom_level), max(zoom_level) FROM tiles";
         CPLDebug("MBTILES", "%s", pszSQL);
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, nullptr);
         if (hSQLLyr == NULL)
         {
             return FALSE;
@@ -2828,6 +2833,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         for( int iLevel = nMaxLevel - 1; iLevel >= nMinLevel; iLevel-- )
         {
             MBTilesDataset* poOvrDS = new MBTilesDataset();
+            poOvrDS->ShareLockWithParentDataset(poDS);
             poOvrDS->InitRaster ( poDS, iLevel, nBands, nTileSize,
                                   dfMinX, dfMinY, dfMaxX, dfMaxY );
 

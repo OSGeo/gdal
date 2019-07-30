@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (C) 2001 Information Interoperability Institute (3i)
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  * Permission to use, copy, modify and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies, that
@@ -129,7 +129,8 @@ public:
     void           Dump( FILE *fp, int depth );
     swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables,
                           int bAllowMismatchTypeOnFieldComparison,
-                          swq_custom_func_registrar* poCustomFuncRegistrar );
+                          swq_custom_func_registrar* poCustomFuncRegistrar,
+                          int depth = 0 );
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher,
                              void *record );
     swq_expr_node* Clone();

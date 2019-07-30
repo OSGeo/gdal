@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -627,9 +627,9 @@ def test_ogr_sql_28():
     field_defn = ogr.FieldDefn("strfield2", ogr.OFTString)
     lyr.CreateField(field_defn)
 
-    with pytest.raises(Exception, message='expected error on NULL query'):
+    with pytest.raises(Exception):
         sql_lyr = ds.ExecuteSQL(None)
-    
+        pytest.fail('expected exception on NULL query')
 
     queries = [
         '',

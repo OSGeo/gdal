@@ -2,10 +2,10 @@
  *
  * Project:  PDF Translator
  * Purpose:  Implements OGRPDFDataSource class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@
 
 CPL_CVSID("$Id$")
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
+#ifdef HAVE_PDF_READ_SUPPORT
 
 /************************************************************************/
 /*                            OGRPDFLayer()                             */
@@ -168,7 +168,7 @@ int OGRPDFLayer::TestCapability( const char * pszCap )
         return OGRMemLayer::TestCapability(pszCap);
 }
 
-#endif /* defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM) */
+#endif /* HAVE_PDF_READ_SUPPORT */
 
 /************************************************************************/
 /*                        OGRPDFWritableLayer()                         */

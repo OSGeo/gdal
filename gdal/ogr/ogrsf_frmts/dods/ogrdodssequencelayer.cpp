@@ -289,7 +289,7 @@ BaseType *OGRDODSSequenceLayer::GetFieldValue( OGRDODSFieldDefn *poFDefn,
     if( seq == nullptr )
         seq = dynamic_cast<Sequence *>(poTargetVar);
 
-    if( !poFDefn->bValid )
+    if( seq == nullptr || !poFDefn->bValid )
         return nullptr;
 
 /* ==================================================================== */
@@ -380,10 +380,10 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       break;
 
       case dods_float32_c:
-        return dynamic_cast<Float32 *>(poBT)->value();
+        return cpl::down_cast<Float32 *>(poBT)->value();
 
       case dods_float64_c:
-        return dynamic_cast<Float64 *>(poBT)->value();
+        return cpl::down_cast<Float64 *>(poBT)->value();
 
       case dods_str_c:
       case dods_url_c:
@@ -479,6 +479,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             seq = dynamic_cast<Sequence *>(poTargetVar);
         }
     }
+    if( !seq )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature being read.                                  */
@@ -557,12 +559,12 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 
           case dods_float32_c:
             poFeature->SetField( iField,
-                                 dynamic_cast<Float32 *>(poFieldVar)->value());
+                                 cpl::down_cast<Float32 *>(poFieldVar)->value());
             break;
 
           case dods_float64_c:
             poFeature->SetField( iField,
-                                 dynamic_cast<Float64 *>(poFieldVar)->value());
+                                 cpl::down_cast<Float64 *>(poFieldVar)->value());
             break;
 
           case dods_str_c:
@@ -712,13 +714,13 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
               case dods_float32_c:
                 if( padfDblList )
                     padfDblList[iSubIndex] =
-                        dynamic_cast<Float32 *>(poFieldVar)->value();
+                        cpl::down_cast<Float32 *>(poFieldVar)->value();
                 break;
 
               case dods_float64_c:
                 if( padfDblList )
                     padfDblList[iSubIndex] =
-                        dynamic_cast<Float64 *>(poFieldVar)->value();
+                        cpl::down_cast<Float64 *>(poFieldVar)->value();
                 break;
 
               case dods_str_c:
@@ -740,22 +742,22 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Apply back to feature.                                          */
 /* -------------------------------------------------------------------- */
-        if( poOFD->GetType() == OFTIntegerList )
+        if( poOFD->GetType() == OFTIntegerList && panIntList )
         {
             poFeature->SetField( iField, nSubSeqCount, panIntList );
-            CPLFree(panIntList);
         }
-        else if( poOFD->GetType() == OFTRealList )
+        else if( poOFD->GetType() == OFTRealList && padfDblList )
         {
             poFeature->SetField( iField, nSubSeqCount, padfDblList );
-            CPLFree(padfDblList);
         }
-        else if( poOFD->GetType() == OFTStringList )
+        else if( poOFD->GetType() == OFTStringList && papszStrList )
         {
             poFeature->SetField( iField, papszStrList );
-            CSLDestroy( papszStrList );
         }
-    }
+        CPLFree(panIntList);
+        CPLFree(padfDblList);
+        CSLDestroy( papszStrList );
+        }
 
 /* ==================================================================== */
 /*      Fetch the geometry.                                             */
@@ -840,10 +842,14 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         else
         {
             poFeature->SetGeometryDirectly(
-                new OGRPoint(
-                    poFeature->GetFieldAsDouble( iXField ),
-                    poFeature->GetFieldAsDouble( iYField ),
-                    poFeature->GetFieldAsDouble( iZField ) ) );
+                iZField >= 0 ?
+                    new OGRPoint(
+                        poFeature->GetFieldAsDouble( iXField ),
+                        poFeature->GetFieldAsDouble( iYField ),
+                        poFeature->GetFieldAsDouble( iZField ) ) :
+                    new OGRPoint(
+                        poFeature->GetFieldAsDouble( iXField ),
+                        poFeature->GetFieldAsDouble( iYField ) ) );
         }
     }
 
@@ -920,7 +926,7 @@ bool OGRDODSSequenceLayer::ProvideDataDDS()
         }
     }
 
-    return poTargetVar != nullptr;
+    return true;
 }
 
 /* IEEE Constants:

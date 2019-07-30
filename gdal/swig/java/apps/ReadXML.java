@@ -4,7 +4,7 @@
  * Name:     ReadXML.java
  * Project:  GDAL Java Interface
  * Purpose:  A sample app for demonstrating the usage of the XMLNode class.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  * Port from ReadXML.cs by Tamas Szekeres
  *

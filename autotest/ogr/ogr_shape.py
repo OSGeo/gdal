@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -31,7 +31,7 @@ import os
 import shutil
 import struct
 import sys
-
+import time
 
 import gdaltest
 import ogrtest
@@ -4495,6 +4495,263 @@ def test_ogr_shape_111_delete_field_no_record():
     ds = None
 
     shape_drv.DeleteDataSource(filename)
+
+
+###############################################################################
+
+
+def test_ogr_shape_112_delete_layer():
+
+    dirname = '/vsimem/test_ogr_shape_112_delete_layer'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(dirname)
+    ds.CreateLayer("test")
+    ds = None
+
+    ds = ogr.Open(dirname)
+    with gdaltest.error_handler():
+        assert ds.DeleteLayer(0) != 0
+    ds = None
+
+    ds = ogr.Open(dirname, update = 1)
+    with gdaltest.error_handler():
+        assert ds.DeleteLayer(-1) != 0
+        assert ds.DeleteLayer(1) != 0
+    gdal.FileFromMemBuffer(dirname + "/test.cpg", "foo")
+    assert ds.DeleteLayer(0) == 0
+    assert not gdal.VSIStatL(dirname + "/test.shp")
+    assert not gdal.VSIStatL(dirname + "/test.cpg")
+    ds = None
+
+    shape_drv.DeleteDataSource(dirname)
+
+
+###############################################################################
+
+
+def test_ogr_shape_113_restore_shx_empty_shp_shx():
+
+    dirname = '/vsimem/test_ogr_shape_113_restore_shx_empty_shp_shx'
+    dbfname = dirname + "/foo.dbf"
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(dbfname)
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = 'bar'
+    lyr.CreateFeature(f)
+    ds = None
+
+    gdal.FileFromMemBuffer(dirname + '/foo.shp', '')
+    gdal.FileFromMemBuffer(dirname + '/foo.shx', '')
+
+    with gdaltest.config_option('SHAPE_RESTORE_SHX', 'YES'):
+        with gdaltest.error_handler():
+            ds = ogr.Open(dbfname)
+    assert ds
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['foo'] == 'bar'
+    ds = None
+
+    shape_drv.DeleteDataSource(dbfname)
+
+###############################################################################
+
+
+def test_ogr_shape_layer_no_geom_but_srs():
+
+    filename = '/vsimem/test_ogr_shape_layer_no_geom_but_srs'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(filename)
+    sr = osr.SpatialReference()
+    ds.CreateLayer("test", sr, ogr.wkbNone)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.CreateLayer("test2", sr, ogr.wkbNone)
+    ds = None
+
+    shape_drv.DeleteDataSource(filename)
+
+
+###############################################################################
+
+
+def test_ogr_shape_114_shz():
+
+    shz_name = 'tmp/test_ogr_shape_114.shz'
+    gdal.Unlink(shz_name)
+    assert gdal.VectorTranslate(shz_name, 'data/poly.shp')
+
+    # Add an extra unrelated file
+    f = gdal.VSIFOpenL('/vsizip/{' + shz_name + '}/README.TXT', 'wb')
+    assert f
+    gdal.VSIFWriteL("hello", 1, len("hello"), f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open(shz_name)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'test_ogr_shape_114'
+    assert lyr.GetFeatureCount() == 10
+    ds = None
+
+    ds = ogr.Open(shz_name, update = 1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 10
+    assert ds.TestCapability(ogr.ODsCCreateLayer) == 0
+    with gdaltest.error_handler():
+        assert not ds.CreateLayer('foo')
+    assert ds.TestCapability(ogr.ODsCDeleteLayer) == 0
+    with gdaltest.error_handler():
+        assert ds.DeleteLayer(0) == ogr.OGRERR_FAILURE
+    assert lyr.DeleteFeature(1) == 0
+    ds = None
+
+    ds = ogr.Open(shz_name)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 9
+    ds = None
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' ' + shz_name)
+        assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+    # Check that our extra unrelated file is still there
+    assert gdal.VSIStatL('/vsizip/{' + shz_name + '}/README.TXT')
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    shape_drv.DeleteDataSource(shz_name)
+    assert not gdal.VSIStatL(shz_name)
+
+    with gdaltest.error_handler():
+        assert not shape_drv.CreateDataSource('/i_do/not_exist/my.shz')
+
+###############################################################################
+
+
+def test_ogr_shape_115_shp_zip():
+
+    dirname = 'tmp/test_ogr_shape_115'
+    gdal.RmdirRecursive(dirname)
+    os.mkdir(dirname)
+    filename = dirname + '/test_ogr_shape_115.shp.zip'
+    tmp_uncompressed = 'test_ogr_shape_115.shp.zip_tmp_uncompressed'
+    lockfile = 'test_ogr_shape_115.shp.zip.gdal.lock'
+
+    with gdaltest.config_option('OGR_SHAPE_PACK_IN_PLACE', 'YES'):
+        ds = gdal.VectorTranslate(filename, 'data/poly.shp')
+        assert tmp_uncompressed in gdal.ReadDir(dirname)
+    assert ds
+    with gdaltest.config_option('OGR_SHAPE_PACK_IN_PLACE', 'NO'):
+        assert gdal.VectorTranslate(ds, 'data/poly.shp', options = '-nln polyY')
+    ds = None
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    with gdaltest.config_option('OGR_SHAPE_USE_VSIMEM_FOR_TEMP', 'NO'):
+        assert gdal.VectorTranslate(ds, 'data/poly.shp', options = '-nln polyX')
+        assert tmp_uncompressed in gdal.ReadDir(dirname)
+    ds = None
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    assert gdal.VectorTranslate(ds, 'data/poly.shp', options = '-nln polyZ')
+    assert tmp_uncompressed not in gdal.ReadDir(dirname)
+    ds = None
+
+    # Add an extra unrelated file
+    f = gdal.VSIFOpenL('/vsizip/{' + filename + '}/README.TXT', 'wb')
+    assert f
+    gdal.VSIFWriteL("hello", 1, len("hello"), f)
+    gdal.VSIFCloseL(f)
+
+    with gdaltest.config_option('OGR_SHAPE_USE_VSIMEM_FOR_TEMP', 'NO'):
+        ds = ogr.Open(filename)
+        assert ds.GetLayerCount() == 4
+        assert [ds.GetLayer(i).GetName() for i in range(4)] == ['poly', 'polyY', 'polyX', 'polyZ']
+        assert [ds.GetLayer(i).GetFeatureCount() for i in range(4)] == [ 10, 10, 10, 10 ]
+        assert not tmp_uncompressed in gdal.ReadDir(dirname)
+        gdal.ErrorReset()
+        ds.ExecuteSQL('UNCOMPRESS')
+        assert gdal.GetLastErrorMsg() == ''
+        assert not tmp_uncompressed in gdal.ReadDir(dirname)
+        ds = None
+
+        ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        lyr = ds.GetLayer(0)
+        assert not tmp_uncompressed in gdal.ReadDir(dirname)
+        with gdaltest.config_option('OGR_SHAPE_LOCK_DELAY', '0.01'):
+            ds.ExecuteSQL('UNCOMPRESS')
+        assert tmp_uncompressed in gdal.ReadDir(dirname)
+        assert lockfile in gdal.ReadDir(dirname)
+        old_data = open(dirname + '/' + lockfile, 'rb').read()
+        time.sleep(0.1)
+        assert open(dirname + '/' + lockfile, 'rb').read() != old_data
+        gdal.ErrorReset()
+        ds.ExecuteSQL('UNCOMPRESS')
+        assert gdal.GetLastErrorMsg() == ''
+        assert len(ds.GetFileList()) == 1
+        ds.ExecuteSQL('RECOMPRESS')
+        assert tmp_uncompressed not in gdal.ReadDir(dirname)
+        assert lockfile not in gdal.ReadDir(dirname)
+        gdal.ErrorReset()
+        ds.ExecuteSQL('RECOMPRESS')
+        assert gdal.GetLastErrorMsg() == ''
+        assert lyr.DeleteFeature(1) == 0
+        assert tmp_uncompressed in gdal.ReadDir(dirname)
+        assert lockfile in gdal.ReadDir(dirname)
+
+    # Check lock file
+    ds2 = ogr.Open(filename, update = 1)
+    lyr2 = ds2.GetLayer(0)
+    with gdaltest.error_handler():
+        assert lyr2.DeleteFeature(2) != 0
+    ds2 = None
+    ds = None
+
+    ds = ogr.Open(filename)
+    assert [ds.GetLayer(i).GetFeatureCount() for i in range(4)] == [ 9, 10, 10, 10 ]
+    ds = None
+
+    ds = ogr.Open(filename, update = 1)
+    assert ds.DeleteLayer(1) == 0
+    ds = None
+
+    ds = ogr.Open(filename)
+    assert ds.GetLayerCount() == 3
+    assert [ds.GetLayer(i).GetName() for i in range(3)] == ['poly', 'polyX', 'polyZ']
+    ds = None
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' ' + filename)
+        assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+    # Check that our extra unrelated file is still there
+    assert gdal.VSIStatL('/vsizip/{' + filename + '}/README.TXT')
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    shape_drv.DeleteDataSource(filename)
+    assert not gdal.VSIStatL(filename)
+    assert set(gdal.ReadDir(dirname)) in (set(['.', '..']), set([]))
+    gdal.RmdirRecursive(dirname)
+
+    with gdaltest.error_handler():
+        assert not shape_drv.CreateDataSource('/i_do/not_exist/my.shp.zip')
+
+###############################################################################
+
+
+def test_ogr_shape_116_invalid_layer_name():
+
+    dirname = 'tmp/test_ogr_shape_116_invalid_layer_name'
+    gdal.RmdirRecursive(dirname)
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(dirname)
+    with gdaltest.error_handler():
+        assert ds.CreateLayer('test<>:"/\\?*', None, ogr.wkbNone)
+    ds = None
+    ds = ogr.Open(dirname)
+    assert ds.GetLayerCount() == 1
+    ds = None
+    gdal.RmdirRecursive(dirname)
 
 ###############################################################################
 

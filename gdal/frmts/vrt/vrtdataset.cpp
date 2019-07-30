@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -126,7 +126,10 @@ VRTDataset::~VRTDataset()
 void VRTDataset::FlushCache()
 
 {
-    VRTFlushCacheStruct<VRTDataset>::FlushCache(*this);
+    if( m_poRootGroup )
+        m_poRootGroup->Serialize();
+    else
+        VRTFlushCacheStruct<VRTDataset>::FlushCache(*this);
 }
 
 /************************************************************************/
@@ -271,6 +274,9 @@ void CPL_STDCALL VRTFlushCache( VRTDatasetH hDataset )
 CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
 
 {
+    if( m_poRootGroup )
+        return m_poRootGroup->SerializeToXML(pszVRTPathIn);
+
     /* -------------------------------------------------------------------- */
     /*      Setup root node and attributes.                                 */
     /* -------------------------------------------------------------------- */
@@ -532,7 +538,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
 
             VRTRasterBand  *poBand = InitBand(pszSubclass, 0, false);
             if( poBand != nullptr
-                && poBand->XMLInit( psChild, pszVRTPathIn, this ) == CE_None )
+                && poBand->XMLInit( psChild, pszVRTPathIn, this,
+                                    m_oMapSharedSources ) == CE_None )
             {
                 SetMaskBand(poBand);
                 break;
@@ -559,7 +566,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
 
             VRTRasterBand  *poBand = InitBand(pszSubclass, l_nBands+1, true);
             if( poBand != nullptr
-                && poBand->XMLInit( psChild, pszVRTPathIn, this ) == CE_None )
+                && poBand->XMLInit( psChild, pszVRTPathIn, this,
+                                    m_oMapSharedSources ) == CE_None )
             {
                 l_nBands ++;
                 SetBand( l_nBands, poBand );
@@ -569,6 +577,26 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                 delete poBand;
                 return CE_Failure;
             }
+        }
+    }
+
+    CPLXMLNode* psGroup = CPLGetXMLNode(psTree, "Group");
+    if( psGroup )
+    {
+        const char* pszName = CPLGetXMLValue(psGroup, "name", nullptr);
+        if( pszName == nullptr || !EQUAL(pszName, "/") )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Missing name or not equal to '/'");
+            return CE_Failure;
+        }
+
+        m_poRootGroup = std::make_shared<VRTGroup>(std::string(), "/");
+        m_poRootGroup->SetIsRootGroup();
+        if( !m_poRootGroup->XMLInit( m_poRootGroup, m_poRootGroup,
+                                     psGroup, pszVRTPathIn ) )
+        {
+            return CE_Failure;
         }
     }
 
@@ -837,6 +865,24 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS != nullptr )
         poDS->m_bNeedsFlush = FALSE;
 
+    if( poDS != nullptr )
+    {
+        if( poDS->GetRasterCount() == 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) == 0 &&
+            strstr(pszXML, "VRTPansharpenedDataset") == nullptr )
+        {
+            delete poDS;
+            poDS = nullptr;
+        }
+        else if( poDS->GetRootGroup() == nullptr &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0 )
+        {
+            delete poDS;
+            poDS = nullptr;
+        }
+    }
+
     CPLFree( pszXML );
     CPLFree( pszVRTPath );
 
@@ -849,6 +895,12 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poOpenInfo->AreSiblingFilesLoaded() )
             poDS->oOvManager.TransferSiblingFiles(
                 poOpenInfo->StealSiblingFiles() );
+    }
+
+    if( poDS && poDS->eAccess == GA_Update &&
+        poDS->m_poRootGroup && !STARTS_WITH_CI(poOpenInfo->pszFilename, "<VRT") )
+    {
+        poDS->m_poRootGroup->SetFilename(poOpenInfo->pszFilename);
     }
 
     return poDS;
@@ -886,6 +938,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
         strcmp(pszSubClass, "VRTPansharpenedDataset" ) == 0;
 
     if( !bIsPansharpened &&
+        CPLGetXMLNode( psRoot, "Group" ) == nullptr &&
         (CPLGetXMLNode( psRoot, "rasterXSize" ) == nullptr
         || CPLGetXMLNode( psRoot, "rasterYSize" ) == nullptr
         || CPLGetXMLNode( psRoot, "VRTRasterBand" ) == nullptr) )
@@ -903,6 +956,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
     const int nYSize = atoi(CPLGetXMLValue(psRoot, "rasterYSize","0"));
 
     if( !bIsPansharpened &&
+        CPLGetXMLNode( psRoot, "VRTRasterBand" ) != nullptr &&
         !GDALCheckDatasetDimensions( nXSize, nYSize ) )
     {
         return nullptr;
@@ -1125,6 +1179,9 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 /**
  * @see VRTDataset::VRTAddBand().
+ *
+ * @note The return type of this function is int, but the actual values
+ * returned are of type CPLErr.
  */
 
 int CPL_STDCALL VRTAddBand( VRTDatasetH hDataset, GDALDataType eType,
@@ -1186,6 +1243,27 @@ VRTDataset::Create( const char * pszName,
 
     return poDS;
 }
+
+
+/************************************************************************/
+/*                     CreateMultiDimensional()                         */
+/************************************************************************/
+
+GDALDataset * VRTDataset::CreateMultiDimensional( const char * pszFilename,
+                                                  CSLConstList /*papszRootGroupOptions*/,
+                                                  CSLConstList /*papszOptions*/ )
+{
+    VRTDataset *poDS = new VRTDataset( 0, 0 );
+    poDS->eAccess = GA_Update;
+    poDS->SetDescription(pszFilename);
+    poDS->m_poRootGroup = std::make_shared<VRTGroup>(std::string(), "/");
+    poDS->m_poRootGroup->SetIsRootGroup();
+    poDS->m_poRootGroup->SetFilename(pszFilename);
+    poDS->m_poRootGroup->SetDirty();
+
+    return poDS;
+}
+
 
 /************************************************************************/
 /*                            GetFileList()                             */
@@ -1801,6 +1879,8 @@ void VRTDataset::BuildVirtualOverviews()
             return;
         if( iBand == 0 )
         {
+            if( poSrcBand->GetXSize() == 0 || poSrcBand->GetYSize() == 0 )
+                return;
             poFirstBand = poSrcBand;
             nOverviews = nOvrCount;
         }
@@ -1810,10 +1890,13 @@ void VRTDataset::BuildVirtualOverviews()
 
     for( int j = 0; j < nOverviews; j++)
     {
+        auto poOvrBand = poFirstBand->GetOverview(j);
+        if( !poOvrBand )
+            return;
         const double dfXRatio = static_cast<double>(
-            poFirstBand->GetOverview(j)->GetXSize() ) / poFirstBand->GetXSize();
+            poOvrBand->GetXSize() ) / poFirstBand->GetXSize();
         const double dfYRatio = static_cast<double>(
-            poFirstBand->GetOverview(j)->GetYSize() ) / poFirstBand->GetYSize();
+            poOvrBand->GetYSize() ) / poFirstBand->GetYSize();
         const int nOvrXSize = static_cast<int>(0.5 + nRasterXSize * dfXRatio);
         const int nOvrYSize = static_cast<int>(0.5 + nRasterYSize * dfYRatio);
         if( nOvrXSize < 128 || nOvrYSize < 128 )

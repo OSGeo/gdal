@@ -3,9 +3,9 @@ include ../../GDALmake.opt
 OBJ := vrtdataset.o vrtrasterband.o vrtdriver.o vrtsources.o
 OBJ += vrtfilters.o vrtsourcedrasterband.o vrtrawrasterband.o
 OBJ += vrtwarped.o vrtderivedrasterband.o vrtpansharpened.o
-OBJ += pixelfunctions.o
+OBJ += pixelfunctions.o vrtmultidim.o
 
-CPPFLAGS := -I../raw $(CPPFLAGS)
+CPPFLAGS := $(CPPFLAGS)
 
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS        :=      -DHAVE_GEOS=1 $(CPPFLAGS)
@@ -19,7 +19,7 @@ clean:
 
 install-obj: $(O_OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ) $(O_OBJ): vrtdataset.h ../../alg/gdalwarper.h ../raw/rawdataset.h
+$(OBJ) $(O_OBJ): vrtdataset.h ../../alg/gdalwarper.h
 $(OBJ) $(O_OBJ): ../../gcore/gdal_proxy.h
 
 install:

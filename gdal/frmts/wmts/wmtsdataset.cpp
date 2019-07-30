@@ -1619,17 +1619,17 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                     for( int j = 0; j < (bIsTMerc ? 2 : 1); j++ )
                     {
                         CPLString osOldVal =
-                            CPLGetThreadLocalConfigOption("OSR_USE_ETMERC", "");
+                            CPLGetThreadLocalConfigOption("OSR_USE_APPROX_TMERC", "");
                         if( bIsTMerc )
                         {
-                            CPLSetThreadLocalConfigOption("OSR_USE_ETMERC",
+                            CPLSetThreadLocalConfigOption("OSR_USE_APPROX_TMERC",
                                                       (j==0) ? "NO" : "YES");
                         }
                         OGRCoordinateTransformation* poRevCT =
                             OGRCreateCoordinateTransformation(&oTMS.oSRS, &oSRS);
                         if( bIsTMerc )
                         {
-                            CPLSetThreadLocalConfigOption("OSR_USE_ETMERC",
+                            CPLSetThreadLocalConfigOption("OSR_USE_APPROX_TMERC",
                                 osOldVal.empty() ? nullptr : osOldVal.c_str());
                         }
                         if( poRevCT != nullptr )

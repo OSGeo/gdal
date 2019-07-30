@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2014, Google
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -134,6 +134,8 @@ def test_osr_ct_4():
     ct = osr.CoordinateTransformation(ll_srs, utm_srs)
 
     result = ct.TransformPoints([(-117.5, 32.0, 0.0), (-117.5, 32.0)])
+    assert len(result) == 2
+    assert len(result[0]) == 3
 
     for i in range(2):
         assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
@@ -305,25 +307,25 @@ def test_osr_ct_towgs84_both_side():
     srs_other_towgs84.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_other_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    (x, y, z) = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
-    assert z != 0
+    assert z == 20
 
     srs_datum_wgs84 = osr.SpatialReference()
     srs_datum_wgs84.SetFromUserInput("+proj=longlat +datum=WGS84")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_datum_wgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    (x, y, z) = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
-    assert z != 0
+    assert z == 20
 
     ct = osr.CoordinateTransformation(srs_datum_wgs84, srs_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    (x, y, z) = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
-    assert z != 0
+    assert z == 20
 
 ###############################################################################
 # Test coordinate transformation with custom operation

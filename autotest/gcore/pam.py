@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -423,6 +423,25 @@ def test_pam_13():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
 
+###############################################################################
+# Test that existing PAM metadata is preserved when new is added
+# https://github.com/OSGeo/gdal/issues/1430
+
+
+def test_pam_metadata_preserved():
+
+    tmpfilename = '/vsimem/tmp.pnm'
+    ds = gdal.GetDriverByName('PNM').Create(tmpfilename, 1, 1)
+    ds.SetMetadataItem('foo', 'bar')
+    ds = None
+    ds = gdal.Open(tmpfilename)
+    ds.GetRasterBand(1).SetMetadataItem('bar', 'baz')
+    ds = None
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem('foo') == 'bar'
+    assert ds.GetRasterBand(1).GetMetadataItem('bar') == 'baz'
+    ds = None
+    gdal.GetDriverByName('PNM').Delete(tmpfilename)
 
 ###############################################################################
 # Cleanup.

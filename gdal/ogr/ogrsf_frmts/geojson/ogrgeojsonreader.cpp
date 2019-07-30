@@ -102,6 +102,9 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
         std::vector<OGRFeature*> m_apoFeatures;
         size_t m_nCurFeatureIdx;
 
+        bool m_bStartFeature = false;
+        bool m_bEndFeature = false;
+
         void AppendObject(json_object* poNewObj);
         void AnalyzeFeature();
         void TooComplex();
@@ -132,10 +135,14 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
 
         OGRFeature* GetNextFeature();
         json_object* StealRootObject();
-        bool IsTypeKnown() const { return m_bIsTypeKnown; }
-        bool IsFeatureCollection() const { return m_bIsFeatureCollection; }
-        GUIntBig GetTotalOGRFeatureMemEstimate() const { return m_nTotalOGRFeatureMemEstimate; }
-        bool CanEasilyAppend() const { return m_bCanEasilyAppend; }
+        inline bool IsTypeKnown() const { return m_bIsTypeKnown; }
+        inline bool IsFeatureCollection() const { return m_bIsFeatureCollection; }
+        inline GUIntBig GetTotalOGRFeatureMemEstimate() const { return m_nTotalOGRFeatureMemEstimate; }
+        inline bool CanEasilyAppend() const { return m_bCanEasilyAppend; }
+
+        inline void ResetFeatureDetectionState() { m_bStartFeature = false; m_bEndFeature = false; }
+        inline bool IsStartFeature() const { return m_bStartFeature; }
+        inline bool IsEndFeature() const { return m_bEndFeature; }
 };
 
 
@@ -409,6 +416,7 @@ void OGRGeoJSONReaderStreamingParser::StartObject()
             m_osJson = "{";
             m_abFirstMember.push_back(true);
         }
+        m_bStartFeature = true;
     }
     else if( m_poCurObj )
     {
@@ -490,6 +498,7 @@ void OGRGeoJSONReaderStreamingParser::EndObject()
         m_nTotalOGRFeatureMemEstimate += sizeof(OGRFeature);
         m_osJson.clear();
         m_abFirstMember.clear();
+        m_bEndFeature = true;
     }
     else if( m_poCurObj )
     {
@@ -1106,6 +1115,123 @@ OGRFeature* OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer* poLayer)
 }
 
 /************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature* OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer* poLayer, GIntBig nFID)
+{
+    CPLAssert( fp_ );
+
+    if( oMapFIDToOffsetSize_.empty() )
+    {
+        CPLDebug("GeoJSON", "Establishing index to features for first GetFeature() call");
+
+        delete poStreamingParser_;
+        poStreamingParser_ = nullptr;
+
+        OGRGeoJSONReaderStreamingParser oParser(*this, poLayer, false, bStoreNativeData_);
+        VSIFSeekL(fp_, 0, SEEK_SET);
+        bFirstSeg_ = true;
+        bJSonPLikeWrapper_ = false;
+        vsi_l_offset nCurOffset = 0;
+        vsi_l_offset nFeatureOffset = 0;
+        GIntBig nSeqFID = 0;
+        while( true )
+        {
+            size_t nRead = VSIFReadL(pabyBuffer_, 1, nBufferSize_, fp_);
+            const bool bFinished = nRead < nBufferSize_;
+            size_t nSkip = 0;
+            if( bFirstSeg_ )
+            {
+                bFirstSeg_ = false;
+                nSkip = SkipPrologEpilogAndUpdateJSonPLikeWrapper(nRead);
+            }
+            if( bFinished && bJSonPLikeWrapper_ && nRead - nSkip > 0 )
+                nRead --;
+            auto pszPtr = reinterpret_cast<const char*>(pabyBuffer_ + nSkip);
+            for( size_t i = 0; i < nRead - nSkip; i++ )
+            {
+                oParser.ResetFeatureDetectionState();
+                if( !oParser.Parse( pszPtr + i,
+                                    1, bFinished && (i + 1 == nRead - nSkip) ) ||
+                    oParser.ExceptionOccurred() )
+                {
+                    return nullptr;
+                }
+                if( oParser.IsStartFeature() )
+                {
+                    nFeatureOffset = nCurOffset + i;
+                }
+                else if( oParser.IsEndFeature() )
+                {
+                    vsi_l_offset nFeatureSize = (nCurOffset + i) - nFeatureOffset + 1;
+                    auto poFeat = oParser.GetNextFeature();
+                    if( poFeat )
+                    {
+                        GIntBig nThisFID = poFeat->GetFID();
+                        if( nThisFID < 0 )
+                        {
+                            nThisFID = nSeqFID;
+                            nSeqFID++;
+                        }
+                        if( oMapFIDToOffsetSize_.find(nThisFID) == oMapFIDToOffsetSize_.end() )
+                        {
+                            oMapFIDToOffsetSize_[nThisFID] =
+                                std::pair<vsi_l_offset, vsi_l_offset>(nFeatureOffset, nFeatureSize);
+                        }
+                        delete poFeat;
+                    }
+                }
+            }
+
+            if( bFinished  )
+                break;
+            nCurOffset += nRead;
+        }
+    }
+
+    auto oIter = oMapFIDToOffsetSize_.find(nFID);
+    if( oIter == oMapFIDToOffsetSize_.end() )
+    {
+        return nullptr;
+    }
+
+    VSIFSeekL(fp_, oIter->second.first, SEEK_SET);
+    if( oIter->second.second > 1000 * 1000 * 1000 )
+    {
+        return nullptr;
+    }
+    size_t nSize = static_cast<size_t>(oIter->second.second);
+    char* pszBuffer = static_cast<char*>(VSIMalloc(nSize + 1));
+    if( !pszBuffer )
+    {
+        return nullptr;
+    }
+    if( VSIFReadL(pszBuffer, 1, nSize, fp_) != nSize )
+    {
+        VSIFree(pszBuffer);
+        return nullptr;
+    }
+    pszBuffer[nSize] = 0;
+    json_object* poObj = nullptr;
+    if( !OGRJSonParse(pszBuffer, &poObj) )
+    {
+        VSIFree(pszBuffer);
+        return nullptr;
+    }
+
+    OGRFeature* poFeat = ReadFeature(poLayer, poObj, pszBuffer);
+    json_object_put(poObj);
+    VSIFree(pszBuffer);
+    if( !poFeat )
+    {
+        return nullptr;
+    }
+    poFeat->SetFID(nFID);
+    return poFeat;
+}
+
+/************************************************************************/
 /*                           IngestAll()                                */
 /************************************************************************/
 
@@ -1332,7 +1458,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             }
         }
 
-        if( STARTS_WITH_CI(pszSrsType, "EPSG") )
+        else if( STARTS_WITH_CI(pszSrsType, "EPSG") )
         {
             json_object* poObjSrsProps =
                 OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
@@ -1355,7 +1481,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             }
         }
 
-        if( STARTS_WITH_CI(pszSrsType, "URL") ||
+        else if( STARTS_WITH_CI(pszSrsType, "URL") ||
             STARTS_WITH_CI(pszSrsType, "LINK")  )
         {
             json_object* poObjSrsProps =
@@ -1384,7 +1510,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
             }
         }
 
-        if( EQUAL( pszSrsType, "OGC" ) )
+        else if( EQUAL( pszSrsType, "OGC" ) )
         {
             json_object* poObjSrsProps =
                 OGRGeoJSONFindMemberByName( poObjSrs, "properties" );
@@ -1899,41 +2025,14 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
             CPL_json_object_object_get(poObj, "geometry");
         if( poGeomObj && json_object_get_type(poGeomObj) == json_type_object )
         {
-            json_object* poGeomTypeObj =
-                CPL_json_object_object_get(poGeomObj, "type");
-            if( poGeomTypeObj &&
-                json_object_get_type(poGeomTypeObj) == json_type_string )
+            auto poGeom = OGRGeoJSONReadGeometry(poGeomObj);
+            if( poGeom )
             {
-                const char* pszType = json_object_get_string(poGeomTypeObj);
-                OGRwkbGeometryType eType = wkbUnknown;
-                if( EQUAL( pszType, "Point" ) )
-                    eType = wkbPoint;
-                else if( EQUAL( pszType, "LineString" ) )
-                    eType = wkbLineString;
-                else if( EQUAL( pszType, "Polygon" ) )
-                    eType = wkbPolygon;
-                else if( EQUAL( pszType, "MultiPoint" ) )
-                    eType = wkbMultiPoint;
-                else if( EQUAL( pszType, "MultiLineString" ) )
-                    eType = wkbMultiLineString;
-                else if( EQUAL( pszType, "MultiPolygon" ) )
-                    eType = wkbMultiPolygon;
-                else if( EQUAL( pszType, "GeometryCollection" ) )
-                    eType = wkbGeometryCollection;
-                if( m_bFirstGeometry )
-                {
-                    m_eLayerGeomType = eType;
-                    poLayer->GetLayerDefn()->SetGeomType( m_eLayerGeomType );
-                    m_bFirstGeometry = false;
-                }
-                else if( eType != m_eLayerGeomType )
-                {
-                    CPLDebug( "GeoJSON",
-                        "Detected layer of mixed-geometry type features." );
-                    poLayer->GetLayerDefn()->SetGeomType( wkbUnknown );
-                    m_bDetectLayerGeomType = false;
-                }
+                const auto eType = poGeom->getGeometryType();
+                m_bDetectLayerGeomType = OGRGeoJSONUpdateLayerGeomType(
+                    poLayer, m_bFirstGeometry, eType, m_eLayerGeomType);
             }
+            delete poGeom;
         }
     }
 
@@ -2048,6 +2147,42 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
     }
 
     return bSuccess;
+}
+
+/************************************************************************/
+/*                   OGRGeoJSONUpdateLayerGeomType()                    */
+/************************************************************************/
+
+bool OGRGeoJSONUpdateLayerGeomType( OGRLayer* poLayer,
+                                    bool& bFirstGeom,
+                                    OGRwkbGeometryType eGeomType,
+                                    OGRwkbGeometryType& eLayerGeomType )
+{
+    if( bFirstGeom )
+    {
+        eLayerGeomType = eGeomType;
+        poLayer->GetLayerDefn()->SetGeomType( eLayerGeomType );
+        bFirstGeom = false;
+    }
+    else if( OGR_GT_HasZ(eGeomType) && !OGR_GT_HasZ(eLayerGeomType) &&
+             wkbFlatten(eGeomType) == wkbFlatten(eLayerGeomType) )
+    {
+        eLayerGeomType = eGeomType;
+        poLayer->GetLayerDefn()->SetGeomType( eLayerGeomType );
+    }
+    else if( !OGR_GT_HasZ(eGeomType) && OGR_GT_HasZ(eLayerGeomType) &&
+             wkbFlatten(eGeomType) == wkbFlatten(eLayerGeomType) )
+    {
+        // ok
+    }
+    else if( eGeomType != eLayerGeomType )
+    {
+        CPLDebug( "GeoJSON",
+            "Detected layer of mixed-geometry type features." );
+        poLayer->GetLayerDefn()->SetGeomType( wkbUnknown );
+        return false;
+    }
+    return true;
 }
 
 /************************************************************************/

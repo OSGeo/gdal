@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -646,23 +646,13 @@ void* GDALWarpOperation::CreateDestinationBuffer(
 /*      for this block.                                                 */
 /* -------------------------------------------------------------------- */
     const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
-    const int nBandSize = nWordSize * nDstXSize * nDstYSize;
 
-    const int knIntMax = std::numeric_limits<int>::max();
-    if( nDstXSize > knIntMax / nDstYSize ||
-        nDstXSize * nDstYSize > knIntMax / (nWordSize * psOptions->nBandCount) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Integer overflow : nDstXSize=%d, nDstYSize=%d",
-                  nDstXSize, nDstYSize);
-        return nullptr;
-    }
-
-    void *pDstBuffer = VSI_MALLOC_VERBOSE( nBandSize * psOptions->nBandCount );
+    void *pDstBuffer = VSI_MALLOC3_VERBOSE( nWordSize * psOptions->nBandCount, nDstXSize, nDstYSize );
     if( pDstBuffer == nullptr )
     {
         return nullptr;
     }
+    const GPtrDiff_t nBandSize = static_cast<GPtrDiff_t>(nWordSize) * nDstXSize * nDstYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize if requested in the options                                 */
@@ -729,17 +719,17 @@ void* GDALWarpOperation::CreateDestinationBuffer(
         }
         else if( !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
         {
-            GDALCopyWords( &adfInitRealImag, GDT_Float64, 0,
+            GDALCopyWords64( &adfInitRealImag, GDT_Float64, 0,
                             pBandData, psOptions->eWorkingDataType,
                             nWordSize,
-                            nDstXSize * nDstYSize );
+                            static_cast<GPtrDiff_t>(nDstXSize) * nDstYSize );
         }
         else
         {
-            GDALCopyWords( &adfInitRealImag, GDT_CFloat64, 0,
+            GDALCopyWords64( &adfInitRealImag, GDT_CFloat64, 0,
                             pBandData, psOptions->eWorkingDataType,
                             nWordSize,
-                            nDstXSize * nDstYSize );
+                            static_cast<GPtrDiff_t>(nDstXSize) * nDstYSize );
         }
     }
 
@@ -1817,23 +1807,22 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.dfSrcXExtraSize = dfSrcXExtraSize;
     oWK.dfSrcYExtraSize = dfSrcYExtraSize;
 
-    const int knIntMax = std::numeric_limits<int>::max();
-    if( nSrcXSize != 0 && nSrcYSize != 0 &&
-        (nSrcXSize > knIntMax / nSrcYSize ||
-         nSrcXSize * nSrcYSize >
-         knIntMax / (nWordSize * psOptions->nBandCount) - WARP_EXTRA_ELTS) )
+    GInt64 nAlloc64 = nWordSize * (static_cast<GInt64>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS)
+                           * psOptions->nBandCount;
+#if SIZEOF_VOIDP == 4
+    if( nAlloc64 != static_cast<GInt64>(static_cast<size_t>(nAlloc64)) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Integer overflow : nSrcXSize=%d, nSrcYSize=%d",
                   nSrcXSize, nSrcYSize);
         return CE_Failure;
     }
+#endif
 
     oWK.papabySrcImage = static_cast<GByte **>(
         CPLCalloc(sizeof(GByte*), psOptions->nBandCount));
     oWK.papabySrcImage[0] = static_cast<GByte *>(
-        VSI_MALLOC_VERBOSE(nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS)
-                           * psOptions->nBandCount));
+        VSI_MALLOC_VERBOSE(static_cast<size_t>(nAlloc64)));
 
     CPLErr eErr =
         nSrcXSize != 0 && nSrcYSize != 0 && oWK.papabySrcImage[0] == nullptr
@@ -1843,7 +1832,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
     for( int i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
         oWK.papabySrcImage[i] = reinterpret_cast<GByte *>(oWK.papabySrcImage[0])
-            + nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) * i;
+            + nWordSize * (static_cast<GPtrDiff_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) * i;
 
     if( eErr == CE_None && nSrcXSize > 0 && nSrcYSize > 0 )
     {
@@ -1866,7 +1855,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                   oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
                   psOptions->eWorkingDataType,
                   psOptions->nBandCount, psOptions->panSrcBands,
-                  0, 0, nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS),
+                  0, 0, nWordSize * (static_cast<GPtrDiff_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS),
                   nullptr );
         }
     }
@@ -1888,7 +1877,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     for( ; i1 < psOptions->nBandCount && eErr == CE_None; i1++ )
     {
         oWK.papabyDstImage[i1] = static_cast<GByte *>(pDataBuf)
-            + i1 * nDstXSize * nDstYSize * nWordSize;
+            + i1 * static_cast<GPtrDiff_t>(nDstXSize) * nDstYSize * nWordSize;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1945,7 +1934,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
             if( eErr == CE_None )
             {
-                for( int j = 0; j < oWK.nSrcXSize * oWK.nSrcYSize; j++ )
+                for( GPtrDiff_t j = 0; j < static_cast<GPtrDiff_t>(oWK.nSrcXSize) * oWK.nSrcYSize; j++ )
                     oWK.pafUnifiedSrcDensity[j] = 1.0;
             }
         }
@@ -2055,7 +2044,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                           false )
             && eErr == CE_None )
         {
-            const int nBytesInMask = (oWK.nSrcXSize * oWK.nSrcYSize + 31) / 8;
+            const GPtrDiff_t nBytesInMask = (static_cast<GPtrDiff_t>(oWK.nSrcXSize) * oWK.nSrcYSize + 31) / 8;
 
             eErr = CreateKernelMask( &oWK, i2, "UnifiedSrcValid" );
 
@@ -2065,7 +2054,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
                 for( int k = 0; k < psOptions->nBandCount; k++ )
                 {
-                    for( int iWord = nBytesInMask/4 - 1; iWord >= 0; iWord-- )
+                    for( GPtrDiff_t iWord = nBytesInMask/4 - 1; iWord >= 0; iWord-- )
                         oWK.panUnifiedSrcValid[iWord] |=
                             oWK.papanBandSrcValid[k][iWord];
                     CPLFree( oWK.papanBandSrcValid[k] );
@@ -2124,7 +2113,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         CPLAssert( oWK.panDstValid == nullptr );
 
-        const int nMaskWords = (oWK.nDstXSize * oWK.nDstYSize + 31)/32;
+        const GPtrDiff_t nMaskWords = (static_cast<GPtrDiff_t>(oWK.nDstXSize) * oWK.nDstYSize + 31)/32;
 
         eErr = CreateKernelMask( &oWK, 0, "DstValid" );
         GUInt32 *panBandMask =
@@ -2168,7 +2157,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                     break;
                 }
 
-                for( int iWord = nMaskWords - 1; iWord >= 0; iWord-- )
+                for( GPtrDiff_t iWord = nMaskWords - 1; iWord >= 0; iWord-- )
                     oWK.panDstValid[iWord] |= panBandMask[iWord];
             }
             CPLFree( panBandMask );

@@ -3280,6 +3280,58 @@ def test_gpkg_wkt2():
     gdal.Unlink(filename)
 
 ###############################################################################
+# Test reading a 50000x25000 block uint16
+
+def test_gpkg_50000_25000_uint16():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+    if sys.maxsize < 2**32:
+        pytest.skip('Test not available on 32 bit')
+
+    ds = gdal.Open('/vsizip/data/50000_25000_uint16.gpkg.zip/50000_25000_uint16.gpkg')
+
+    import psutil
+    sizeof_uint16 = 2
+    sizeof_block = 50000 * 25000 * sizeof_uint16
+    # 2 * sizeof_block, because of GDAL block cache and GPKG internal cache
+    if psutil.virtual_memory().available < 2 * sizeof_block:
+        pytest.skip("Not enough virtual memory available")
+
+    data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
+    assert data
+    ref_ds = gdal.Open('../gcore/data/uint16.tif')
+    assert data == ref_ds.ReadRaster()
+
+###############################################################################
+# Test reading a 50000x50000 block uint16
+
+def test_gpkg_50000_50000_uint16():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+    if not gdaltest.run_slow_tests():
+        pytest.skip()
+    if sys.maxsize < 2**32:
+        pytest.skip('Test not available on 32 bit')
+
+    ds = gdal.Open('/vsizip/data/50000_50000_uint16.gpkg.zip/50000_50000_uint16.gpkg')
+
+    import psutil
+    sizeof_uint16 = 2
+    sizeof_block = 50000 * 50000 * sizeof_uint16
+    # 2 * sizeof_block, because of GDAL block cache and GPKG internal cache
+    if psutil.virtual_memory().available < 2 * sizeof_block:
+        pytest.skip("Not enough virtual memory available")
+
+    data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
+    assert data
+    ref_ds = gdal.Open('../gcore/data/uint16.tif')
+    assert data == ref_ds.ReadRaster()
+
+###############################################################################
 #
 
 

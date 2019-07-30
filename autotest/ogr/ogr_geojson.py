@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Mateusz Loskot <mateusz@loskot.net>
-# Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
 #
 # This library is free software; you can redistribute it and/or
@@ -3605,6 +3605,148 @@ def test_ogr_geojson_non_finite():
     ds = None
 
     gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+def test_ogr_geojson_random_reading_with_id():
+
+    json_content = """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "id": 1, "properties": { "a": "a" }, "geometry": null },
+      { "type": "Feature", "id": 2, "properties": { "a": "bc" }, "geometry": null }
+  ]
+}"""
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, json_content)
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    f1_ref = lyr.GetNextFeature()
+    f2_ref = lyr.GetNextFeature()
+    f1 = lyr.GetFeature(1)
+    f2 = lyr.GetFeature(2)
+    assert f1.Equal(f1_ref)
+    assert f2.Equal(f2_ref)
+    assert not lyr.GetFeature(3)
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+def test_ogr_geojson_random_reading_without_id():
+
+    json_content = """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "properties": { "a": "a" }, "geometry": null },
+      { "type": "Feature", "properties": { "a": "bc" }, "geometry": null }
+  ]
+}"""
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, json_content)
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    f1_ref = lyr.GetNextFeature()
+    f2_ref = lyr.GetNextFeature()
+    f1 = lyr.GetFeature(0)
+    f2 = lyr.GetFeature(1)
+    assert f1.Equal(f1_ref)
+    assert f2.Equal(f2_ref)
+    assert not lyr.GetFeature(2)
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+def test_ogr_geojson_single_feature_random_reading_with_id():
+
+    json_content = """
+      { "type": "Feature", "id": 1, "properties": { "a": "a" }, "geometry": null }
+}"""
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, json_content)
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    f1_ref = lyr.GetNextFeature()
+    f1 = lyr.GetFeature(1)
+    assert f1.Equal(f1_ref)
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+def test_ogr_geojson_3D_geom_type():
+
+    if gdaltest.geojson_drv is None:
+        pytest.skip()
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+###############################################################################
+
+def test_ogr_geojson_update_in_loop():
+
+    if gdaltest.geojson_drv is None:
+        pytest.skip()
+
+    tmpfilename = '/vsimem/temp.json'
+
+    # No explicit id
+    gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "geometry": null }]}')
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
+    fids = []
+    for feature in layer:
+        fids.append(feature.GetFID())
+        layer.SetFeature(feature)
+    assert fids == [0, 1]
+    ds = None
+
+    # Explicit id no holes
+    gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "id": 0, "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "id": 1, "geometry": null }]}')
+
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
+    fids = []
+    for feature in layer:
+        fids.append(feature.GetFID())
+        layer.SetFeature(feature)
+    assert fids == [0, 1]
+    ds = None
+
+    # Explicit id with holes
+    gdal.FileFromMemBuffer(tmpfilename, '{"type": "FeatureCollection", "name": "test", "features": [{ "type": "Feature", "id": 1, "properties": { "foo": 1 }, "geometry": null }, { "type": "Feature", "properties": { "foo": 2 }, "id": 3, "geometry": null }]}')
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.GA_Update)
+    layer = ds.GetLayer()
+    fids = []
+    for feature in layer:
+        fids.append(feature.GetFID())
+        layer.SetFeature(feature)
+    assert fids == [1, 3]
+    ds = None
+
+
+    gdal.Unlink(tmpfilename)
+
 
 ###############################################################################
 

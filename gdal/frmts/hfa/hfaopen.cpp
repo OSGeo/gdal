@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
- * Copyright (c) 2007-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2163,6 +2163,9 @@ HFAHandle HFACreate( const char *pszFilename,
             ((( nBlockSize < 32 ) || (nBlockSize > 2048)) &&
             !CPLTestBool(CPLGetConfigOption("FORCE_BLOCKSIZE", "NO"))) )
         {
+            if( nBlockSize != 0 )
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Forcing BLOCKSIZE to %d", 64);
             nBlockSize = 64;
         }
     }
@@ -2183,8 +2186,14 @@ HFAHandle HFACreate( const char *pszFilename,
         return nullptr;
     }
     const int nBlocks = nBlocksPerRow * nBlocksPerColumn;
-    const int nBytesPerBlock =
-        (nBlockSize * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
+    const GInt64 nBytesPerBlock64 =
+        (static_cast<GInt64>(nBlockSize) * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
+    if( nBytesPerBlock64 > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Too large block");
+        return nullptr;
+    }
+    const int nBytesPerBlock = static_cast<int>(nBytesPerBlock64);
 
     // Create the low level structure.
     HFAHandle psInfo = HFACreateLL(pszFilename);

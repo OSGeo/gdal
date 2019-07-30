@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -3210,7 +3210,10 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
         sfcgal_geometry_t *poOther =
             OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poOther == nullptr)
+        {
+            sfcgal_geometry_delete(poThis);
             return -1.0;
+        }
 
         const double dfDistance = sfcgal_geometry_distance(poThis, poOther);
 
@@ -3510,6 +3513,124 @@ static OGRBoolean OGRGEOSBooleanPredicate(
 
 
 /************************************************************************/
+/*                            MakeValid()                               */
+/************************************************************************/
+
+/**
+ * \brief Attempts to make an invalid geometry valid without losing vertices.
+ *
+ * Already-valid geometries are cloned without further intervention.
+ *
+ * This method is the same as the C function OGR_G_MakeValid().
+ *
+ * This function is built on the GEOS >= 3.8 library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS >= 3.8 library, this function will return
+ * a clone of the input geometry if it is valid, or NULL if it is invalid
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.0
+ */
+OGRGeometry *OGRGeometry::MakeValid() const
+{
+#ifndef HAVE_GEOS
+    if( IsValid() )
+        return clone();
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS support not enabled." );
+    return nullptr;
+#elif GEOS_VERSION_MAJOR < 3 || \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 8)
+    if( IsValid() )
+        return clone();
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS 3.8 or later needed for MakeValid." );
+    return nullptr;
+#else
+    if( IsSFCGALCompatible() )
+    {
+        if( IsValid() )
+            return clone();
+    }
+    else if( wkbFlatten(getGeometryType()) == wkbCurvePolygon )
+    {
+        GEOSContextHandle_t hGEOSCtxt = initGEOS_r( nullptr, nullptr );
+        OGRBoolean bIsValid = FALSE;
+        GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+        if( hGeosGeom )
+        {
+            bIsValid = GEOSisValid_r(hGEOSCtxt, hGeosGeom);
+            GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
+        }
+        freeGEOSContext( hGEOSCtxt );
+        if( bIsValid )
+            return clone();
+    }
+
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+    if( hGeosGeom != nullptr )
+    {
+        GEOSGeom hGEOSRet = GEOSMakeValid_r( hGEOSCtxt, hGeosGeom );
+        GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
+
+        if( hGEOSRet != nullptr )
+        {
+            poOGRProduct =
+                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGEOSRet);
+            if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
+            poOGRProduct =
+                OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
+            GEOSGeom_destroy_r( hGEOSCtxt, hGEOSRet);
+        }
+    }
+    freeGEOSContext( hGEOSCtxt );
+
+    return poOGRProduct;
+#endif
+}
+
+/************************************************************************/
+/*                         OGR_G_MakeValid()                            */
+/************************************************************************/
+
+/**
+ * \brief Attempts to make an invalid geometry valid without losing vertices.
+ *
+ * Already-valid geometries are cloned without further intervention.
+ *
+ * This function is the same as the C++ method OGRGeometry::MakeValid().
+ *
+ * This function is built on the GEOS >= 3.8 library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS >= 3.8 library, this function will return
+ * a clone of the input geometry if it is valid, or NULL if it is invalid
+ *
+ * @param hGeom The Geometry to make valid.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.0
+ */
+
+OGRGeometryH OGR_G_MakeValid( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_MakeValid", nullptr );
+
+    return reinterpret_cast<OGRGeometryH>(
+        reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid());
+}
+
+/************************************************************************/
 /*                             ConvexHull()                             */
 /************************************************************************/
 
@@ -3550,8 +3671,8 @@ OGRGeometry *OGRGeometry::ConvexHull() const
 
         sfcgal_geometry_t *poRes = sfcgal_geometry_convexhull_3d(poThis);
         OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
-
-        h_prodGeom->assignSpatialReference(getSpatialReference());
+        if( h_prodGeom )
+            h_prodGeom->assignSpatialReference(getSpatialReference());
 
         sfcgal_geometry_delete(poThis);
         sfcgal_geometry_delete(poRes);
@@ -3894,12 +4015,14 @@ OGRGeometry *OGRGeometry::Intersection(
             return nullptr;
 
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
-        if (poThis == nullptr)
+        if (poOther == nullptr)
+        {
+            sfcgal_geometry_delete(poThis);
             return nullptr;
+        }
 
         sfcgal_geometry_t *poRes = sfcgal_geometry_intersection_3d(poThis, poOther);
         OGRGeometry *h_prodGeom = SFCGALexportToOGR(poRes);
-
         if (h_prodGeom != nullptr && getSpatialReference() != nullptr
             && poOtherGeom->getSpatialReference() != nullptr
             && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
@@ -4012,16 +4135,13 @@ OGRGeometry *OGRGeometry::Union(
 
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poOther == nullptr)
+        {
+            sfcgal_geometry_delete(poThis);
             return nullptr;
+        }
 
         sfcgal_geometry_t *poRes = sfcgal_geometry_union_3d(poThis, poOther);
-        if (poRes == nullptr)
-            return nullptr;
-
         OGRGeometry *h_prodGeom = OGRGeometry::SFCGALexportToOGR(poRes);
-        if (h_prodGeom == nullptr)
-            return nullptr;
-
         if (h_prodGeom != nullptr && getSpatialReference() != nullptr
             && poOtherGeom->getSpatialReference() != nullptr
             && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
@@ -4029,6 +4149,7 @@ OGRGeometry *OGRGeometry::Union(
 
         sfcgal_geometry_delete(poThis);
         sfcgal_geometry_delete(poOther);
+        sfcgal_geometry_delete(poRes);
 
         return h_prodGeom;
 
@@ -4215,14 +4336,13 @@ OGRGeometry *OGRGeometry::Difference(
 
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poOther == nullptr)
+        {
+            sfcgal_geometry_delete(poThis);
             return nullptr;
+        }
 
         sfcgal_geometry_t *poRes = sfcgal_geometry_difference_3d(poThis, poOther);
         OGRGeometry *h_prodGeom = OGRGeometry::SFCGALexportToOGR(poRes);
-
-        if (h_prodGeom == nullptr)
-            return nullptr;
-
         if (h_prodGeom != nullptr && getSpatialReference() != nullptr
             && poOtherGeom->getSpatialReference() != nullptr
             && poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()))
@@ -6731,6 +6851,8 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(
     UNUSED_IF_NO_SFCGAL const sfcgal_geometry_t* geometry )
 {
 #ifdef HAVE_SFCGAL
+    if( geometry == nullptr )
+        return nullptr;
 
     sfcgal_init();
     char* pabySFCGALWKT = nullptr;
@@ -6740,7 +6862,6 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(
     memcpy(pszWKT, pabySFCGALWKT, nLength);
     pszWKT[nLength] = 0;
     free(pabySFCGALWKT);
-    const char *pszTmpWKT = pszWKT;
 
     sfcgal_geometry_type_t geom_type = sfcgal_geometry_type_id (geometry);
 
@@ -6787,10 +6908,12 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(
     }
     else
     {
+        CPLFree(pszWKT);
         return nullptr;
     }
 
-    if( poGeom->importFromWkt(&pszTmpWKT) == OGRERR_NONE )
+    const char* pszWKTTmp = pszWKT;
+    if( poGeom->importFromWkt(&pszWKTTmp) == OGRERR_NONE )
     {
         CPLFree(pszWKT);
         return poGeom;

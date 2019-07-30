@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -567,7 +567,8 @@ ParseXPM( const char *pszInput,
 
     for( int iColor = 0; iColor < nColorCount; iColor++ )
     {
-        if( papszXPMList[iColor+1] == nullptr )
+        if( papszXPMList[iColor+1] == nullptr ||
+            papszXPMList[iColor+1][0] == '\0' )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing color definition for %d in XPM header.",

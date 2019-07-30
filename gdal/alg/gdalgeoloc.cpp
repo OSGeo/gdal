@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -83,6 +83,7 @@ typedef struct {
     GDALRasterBandH  hBand_X;
     GDALDatasetH     hDS_Y;
     GDALRasterBandH  hBand_Y;
+    int              bSwapXY;
 
     // Located geolocation data.
     int              nGeoLocXSize;
@@ -764,6 +765,9 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         return nullptr;
     }
 
+    psTransform->bSwapXY = CPLTestBool(CSLFetchNameValueDef(
+        papszGeolocationInfo, "SWAP_XY", "NO"));
+
 /* -------------------------------------------------------------------- */
 /*     Check that X and Y bands have the same dimensions                */
 /* -------------------------------------------------------------------- */
@@ -948,6 +952,11 @@ int GDALGeoLocTransform( void *pTransformArg,
                 padfY[i] = padfGLY[0];
             }
 
+            if( psTransform->bSwapXY )
+            {
+                std::swap(padfX[i], padfY[i]);
+            }
+
             panSuccess[i] = TRUE;
         }
     }
@@ -963,6 +972,11 @@ int GDALGeoLocTransform( void *pTransformArg,
             {
                 panSuccess[i] = FALSE;
                 continue;
+            }
+
+            if( psTransform->bSwapXY )
+            {
+                std::swap(padfX[i], padfY[i]);
             }
 
             const double dfBMX =

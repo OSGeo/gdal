@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017 Hobu Inc
  * Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
  * Copyright (c) 2017, NextGIS <info@nextgis.com>
@@ -244,6 +244,9 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
         std::vector<char> oStackArrayBeginChar;
         CPLString osWord;
 
+        oStackArrayBeginChar.push_back(*pszHeaderNext);
+        osValue += *pszHeaderNext;
+        pszHeaderNext++;
 
         while( ReadWord( osWord, m_bStripSurroundingQuotes,
                          true, &bIsString ) )

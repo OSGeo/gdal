@@ -164,7 +164,7 @@ static CPLErr OGRNGWDriverDelete( const char *pszName )
     CPLErrorReset();
     if( !stUri.osNewResourceName.empty() )
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported url %s", pszName);
+        CPLError(CE_Warning, CPLE_NotSupported, "Cannot delete new resource with name %s", pszName);
         return CE_Failure;
     }
 

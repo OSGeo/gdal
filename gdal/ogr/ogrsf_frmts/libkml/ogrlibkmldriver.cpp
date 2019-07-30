@@ -64,9 +64,23 @@ static int OGRLIBKMLDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->bIsDirectory )
         return -1;
 
-    return
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "kml") ||
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "kmz");
+    const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    if( EQUAL(pszExt, "kml") ||
+        EQUAL(pszExt, "kmz") )
+    {
+        return TRUE;
+    }
+
+    if( poOpenInfo->pabyHeader &&
+        ( strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                  "<kml") != nullptr ||
+          strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                  "<kml:kml") != nullptr) )
+    {
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 /******************************************************************************

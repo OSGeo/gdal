@@ -7,7 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2003, Applied Coherent Technology Corporation, www.actgate.com
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2018, Oslandia <infos at oslandia dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -501,17 +501,17 @@ an averaged value from the two nearby points (in this case (12+3+5)/3).
  *   ELEV_FIELD=d
  *
  * This will be used as a field index to indicate where the elevation value
- * of the contour should be written.
+ * of the contour should be written. Only used in line contouring mode.
  *
  *   ELEV_FIELD_MIN=d
  *
  * This will be used as a field index to indicate where the minimum elevation value
- * of the polygon contour should be written.
+ * of the polygon contour should be written. Only used in polygonal contouring mode.
  *
  *   ELEV_FIELD_MAX=d
  *
  * This will be used as a field index to indicate where the maximum elevation value
- * of the polygon contour should be written.
+ * of the polygon contour should be written. Only used in polygonal contouring mode.
  *
  *   POLYGONIZE=YES|NO
  *

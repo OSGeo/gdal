@@ -73,14 +73,16 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     if( poTargVar->type() == dods_grid_c )
     {
         poTargetGrid = dynamic_cast<Grid *>( poTargVar );
-        poTargetArray = dynamic_cast<Array *>(poTargetGrid->array_var());
+        if( poTargetGrid )
+            poTargetArray = dynamic_cast<Array *>(poTargetGrid->array_var());
     }
     else if( poTargVar->type() == dods_array_c )
     {
         poTargetGrid = nullptr;
         poTargetArray = dynamic_cast<Array *>( poTargVar );
     }
-    else
+
+    if( !poTargetArray )
     {
         CPLAssert( false );
         return;
@@ -122,7 +124,8 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
         for( dv_i = poExtraContainers->attr_begin();
              dv_i != poExtraContainers->attr_end(); dv_i++ )
         {
-            const char *pszTargetName=poExtraContainers->get_attr(dv_i).c_str();
+            auto osTargetName(poExtraContainers->get_attr(dv_i));
+            const char *pszTargetName = osTargetName.c_str();
             BaseType *poExtraTarget = poDS->poDDS->var( pszTargetName );
 
             if( poExtraTarget == nullptr )
@@ -538,10 +541,12 @@ bool OGRDODSGridLayer::ProvideDataDDS()
         BaseType *poTarget = poDataDDS->var( poRef->pszName );
 
         // Reset ref array pointer to point in DataDDS result.
+        poRef->poArray = nullptr;
         if( poTarget->type() == dods_grid_c )
         {
             Grid *poGrid = dynamic_cast<Grid *>( poTarget );
-            poRef->poArray = dynamic_cast<Array *>(poGrid->array_var());
+            if( poGrid )
+                poRef->poArray = dynamic_cast<Array *>(poGrid->array_var());
 
             if( iArray == 0 )
                 poTargetGrid = poGrid;
@@ -550,7 +555,8 @@ bool OGRDODSGridLayer::ProvideDataDDS()
         {
             poRef->poArray = dynamic_cast<Array *>( poTarget );
         }
-        else
+
+        if( !(poRef->poArray) )
         {
             CPLAssert( false );
             return false;

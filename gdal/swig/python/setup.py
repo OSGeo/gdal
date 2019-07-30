@@ -7,7 +7,7 @@
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '2.4.0'
+gdal_version = '3.0.0'
 
 import sys
 import os
@@ -211,6 +211,18 @@ int main () { return 0; }""")
         os.unlink('gdal_python_cxx11_test.o')
     return ret
 
+###Based on: https://stackoverflow.com/questions/28641408/how-to-tell-which-compiler-will-be-invoked-for-a-python-c-extension-in-setuptool
+def has_flag(compiler, flagname):
+    import tempfile
+    from distutils.errors import CompileError
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([f.name], extra_postargs=[flagname])
+        except CompileError:
+            return False
+    return True
+
 
 class gdal_ext(build_ext):
 
@@ -228,6 +240,7 @@ class gdal_ext(build_ext):
         self.gdaldir = None
         self.gdal_config = self.GDAL_CONFIG
         self.extra_cflags = []
+        self.parallel = True # Python 3.5 only
 
     def get_compiler(self):
         return self.compiler or get_default_compiler()
@@ -255,6 +268,18 @@ class gdal_ext(build_ext):
                     # gdalconst builds as a .c file
                     if ext.name != 'osgeo._gdalconst':
                         ext.extra_compile_args += [cxx11_flag]
+
+                    # Adding arch flags here if OS X and compiler is clang
+                    if sys.platform == 'darwin' and [int(x) for x in os.uname()[2].split('.')] >= [11, 0, 0]:
+                        # since MacOS X 10.9, clang no longer accepts -mno-fused-madd
+                        # extra_compile_args.append('-Qunused-arguments')
+                        clang_flag = '-Wno-error=unused-command-line-argument-hard-error-in-future'
+                        if has_flag(self.compiler, clang_flag):
+                            ext.extra_compile_args += [clang_flag]
+                        else:
+                            clang_flag = '-Wno-error=unused-command-line-argument'
+                            if has_flag(self.compiler, clang_flag):
+                                ext.extra_compile_args += [clang_flag]
 
         build_ext.build_extensions(self)
 
@@ -299,14 +324,26 @@ class gdal_ext(build_ext):
         ext.extra_compile_args.extend(self.extra_cflags)
         return build_ext.build_extension(self, ext)
 
+# This is only needed with Python 2.
+if sys.version_info < (3,):
+    try:
+        import multiprocessing
+        from concurrent.futures import ThreadPoolExecutor as Pool
+
+        num_jobs = multiprocessing.cpu_count()
+
+        def parallel_build_extensions(self):
+            self.check_extensions_list(self.extensions)
+
+            with Pool(num_jobs) as pool:
+                pool.map(self.build_extension, self.extensions)
+
+        build_ext.build_extensions = parallel_build_extensions
+    except:
+        pass
 
 extra_link_args = []
 extra_compile_args = []
-
-if sys.platform == 'darwin' and [int(x) for x in os.uname()[2].split('.')] >= [11, 0, 0]:
-    # since MacOS X 10.9, clang no longer accepts -mno-fused-madd
-    # extra_compile_args.append('-Qunused-arguments')
-    os.environ['ARCHFLAGS'] = '-Wno-error=unused-command-line-argument-hard-error-in-future'
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
@@ -364,7 +401,7 @@ if HAVE_NUMPY:
 
 packages = ["osgeo", ]
 
-readme = str(open('README.txt', 'rb').read())
+readme = str(open('README.rst', 'rb').read())
 
 name = 'GDAL'
 version = gdal_version
@@ -408,6 +445,7 @@ setup_kwargs = dict(
     maintainer=maintainer,
     maintainer_email=maintainer_email,
     long_description=readme,
+    long_description_content_type='text/x-rst',
     description=description,
     license=license_type,
     classifiers=classifiers,

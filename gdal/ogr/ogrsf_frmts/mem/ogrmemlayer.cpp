@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -244,7 +244,8 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
 
     // If we don't have a FID, find one available
-    if( poFeature->GetFID() == OGRNullFID )
+    GIntBig nFID = poFeature->GetFID();
+    if( nFID == OGRNullFID )
     {
         if( m_papoFeatures != nullptr )
         {
@@ -261,19 +262,40 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
                    m_oMapFeatures.end() )
                 ++m_iNextCreateFID;
         }
-        poFeature->SetFID(m_iNextCreateFID++);
+        nFID = m_iNextCreateFID++;
+        poFeature->SetFID(nFID);
     }
-    else if( poFeature->GetFID() < OGRNullFID )
+    else if( nFID < OGRNullFID )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "negative FID are not supported");
         return OGRERR_FAILURE;
     }
+    else
+    {
+        if( !m_bHasHoles )
+        {
+            // If the feature does not exist, set m_bHasHoles
+            if( m_papoFeatures != nullptr )
+            {
+                if( nFID >= m_nMaxFeatureCount ||
+                    m_papoFeatures[nFID] == nullptr )
+                {
+                    m_bHasHoles = true;
+                }
+            }
+            else
+            {
+                FeatureIterator oIter = m_oMapFeatures.find(nFID);
+                if( oIter == m_oMapFeatures.end() )
+                    m_bHasHoles = true;
+            }
+        }
+    }
 
     OGRFeature *poFeatureCloned = poFeature->Clone();
     if( poFeatureCloned == nullptr )
         return OGRERR_FAILURE;
-    const GIntBig nFID = poFeature->GetFID();
 
     if( m_papoFeatures != nullptr && nFID > 100000 &&
         nFID > m_nMaxFeatureCount + 1000 )

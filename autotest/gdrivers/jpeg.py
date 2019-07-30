@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -152,9 +152,7 @@ def test_jpeg_3():
 
     gdal.GetDriverByName('JPEG').Delete('tmp/byte.jpg')
 
-    with pytest.raises(OSError, message='did not expect to find .wld file at that point'):
-        os.stat('tmp/byte.wld')
-    
+    assert not os.path.exists('tmp/byte.wld')
 
     
 ###############################################################################

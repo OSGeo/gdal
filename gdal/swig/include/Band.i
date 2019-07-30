@@ -721,6 +721,11 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 %clear (GDALDataType *buf_type);
 %clear (int band_list, int *pband_list );
 
+%newobject AsMDArray;
+  GDALMDArrayHS *AsMDArray()
+  {
+    return GDALRasterBandAsMDArray(self);
+  }
 
 } /* %extend */
 

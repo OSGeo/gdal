@@ -289,9 +289,9 @@ const char* OGRAmigoCloudDataSource::GetAPIURL() const
         return pszAPIURL;
 
     else if( bUseHTTPS )
-        return CPLSPrintf("https://www.amigocloud.com/api/v1");
+        return CPLSPrintf("https://app.amigocloud.com/api/v1");
     else
-        return CPLSPrintf("http://www.amigocloud.com/api/v1");
+        return CPLSPrintf("http://app.amigocloud.com/api/v1");
 }
 
 /************************************************************************/

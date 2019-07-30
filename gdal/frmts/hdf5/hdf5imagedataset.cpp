@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,21 +33,13 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "gh5_convenience.h"
 #include "hdf5dataset.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
 
 CPL_CVSID("$Id$")
-
-// Release 1.6.3 or 1.6.4 changed the type of count in some API functions.
-
-#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 \
-       && (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
-#  define H5OFFSET_TYPE hssize_t
-#else
-#  define H5OFFSET_TYPE  hsize_t
-#endif
 
 class HDF5ImageDataset : public HDF5Dataset
 {
@@ -240,7 +232,6 @@ class HDF5ImageRasterBand : public GDALPamRasterBand
 
     virtual CPLErr      IReadBlock( int, int, void * ) override;
     virtual double      GetNoDataValue( int * ) override;
-    virtual CPLErr      SetNoDataValue( double ) override;
     // virtual CPLErr IWriteBlock( int, int, void * );
 };
 
@@ -299,6 +290,12 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDSIn, int nBandIn,
 
         H5Pclose(listid);
     }
+
+    // netCDF convention for nodata
+    bNoDataSet = GH5_FetchAttribute(
+        poDSIn->dataset_id, "_FillValue", dfNoDataValue);
+    if( !bNoDataSet )
+        dfNoDataValue = -9999.0;
 }
 
 /************************************************************************/
@@ -319,18 +316,6 @@ double HDF5ImageRasterBand::GetNoDataValue( int *pbSuccess )
 }
 
 /************************************************************************/
-/*                           SetNoDataValue()                           */
-/************************************************************************/
-CPLErr HDF5ImageRasterBand::SetNoDataValue( double dfNoData )
-
-{
-    bNoDataSet = true;
-    dfNoDataValue = dfNoData;
-
-    return CE_None;
-}
-
-/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
@@ -338,10 +323,11 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     HDF5ImageDataset *poGDS = static_cast<HDF5ImageDataset *>(poDS);
 
+    memset(pImage, 0,
+            static_cast<size_t>(nBlockXSize) * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType));
+
     if( poGDS->eAccess == GA_Update )
     {
-        memset(pImage, 0,
-               nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eDataType) / 8);
         return CE_None;
     }
 
@@ -371,9 +357,6 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     count[poGDS->GetYIndex()] = nBlockYSize;
     count[poGDS->GetXIndex()] = nBlockXSize;
 
-    const int nSizeOfData = static_cast<int>(H5Tget_size(poGDS->native));
-    memset(pImage, 0, nBlockXSize * nBlockYSize * nSizeOfData);
-
     // Blocksize may not be a multiple of imagesize.
     count[poGDS->GetYIndex()] =
         std::min(hsize_t(nBlockYSize),
@@ -402,7 +385,10 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   mem_offset, nullptr,
                                   count, nullptr);
     if( status < 0 )
+    {
+        H5Sclose(memspace);
         return CE_Failure;
+    }
 
     status = H5Dread(poGDS->dataset_id, poGDS->native, memspace,
                      poGDS->dataspace_id, H5P_DEFAULT, pImage);
@@ -572,8 +558,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
             new HDF5ImageRasterBand(poDS, i, poDS->GetDataType(poDS->native));
 
         poDS->SetBand(i, poBand);
-        if( poBand->bNoDataSet )
-            poBand->SetNoDataValue(255);
     }
 
     poDS->CreateProjections();
@@ -753,7 +737,9 @@ CPLErr HDF5ImageDataset::CreateProjections()
 
         // The Latitude and Longitude arrays must have a rank of 2 to retrieve
         // GCPs.
-        if( poH5Objects->nRank != 2 )
+        if( poH5Objects->nRank != 2 ||
+            poH5Objects->paDims[0] != static_cast<size_t>(nRasterYSize) ||
+            poH5Objects->paDims[1] != static_cast<size_t>(nRasterXSize) )
         {
             return CE_None;
         }
@@ -763,6 +749,17 @@ CPLErr HDF5ImageDataset::CreateProjections()
         // LatitudeDataspaceID = H5Dget_space(dataset_id);
 
         poH5Objects = HDF5FindDatasetObjects(poH5RootGroup, "Longitude");
+        // GCPs.
+        if( poH5Objects == nullptr ||
+            poH5Objects->nRank != 2 ||
+            poH5Objects->paDims[0] != static_cast<size_t>(nRasterYSize) ||
+            poH5Objects->paDims[1] != static_cast<size_t>(nRasterXSize) )
+        {
+            if( LatitudeDatasetID > 0 )
+                H5Dclose(LatitudeDatasetID);
+            return CE_None;
+        }
+
         const hid_t LongitudeDatasetID = H5Dopen(hHDF5, poH5Objects->pszPath);
         // LongitudeDataspaceID = H5Dget_space(dataset_id);
 
@@ -775,6 +772,15 @@ CPLErr HDF5ImageDataset::CreateProjections()
             memset(Latitude, 0, nRasterXSize * nRasterYSize * sizeof(float));
             memset(Longitude, 0, nRasterXSize * nRasterYSize * sizeof(float));
 
+            // netCDF convention for nodata
+            double dfLatNoData = 0;
+            bool bHasLatNoData = GH5_FetchAttribute(
+                LatitudeDatasetID, "_FillValue", dfLatNoData);
+
+            double dfLongNoData = 0;
+            bool bHasLongNoData = GH5_FetchAttribute(
+                LongitudeDatasetID, "_FillValue", dfLongNoData);
+
             H5Dread(LatitudeDatasetID, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
                     H5P_DEFAULT, Latitude);
 
@@ -783,18 +789,9 @@ CPLErr HDF5ImageDataset::CreateProjections()
 
             oSRS.SetWellKnownGeogCS("WGS84");
             CPLFree(pszProjection);
+            pszProjection = nullptr;
             CPLFree(pszGCPProjection);
-            oSRS.exportToWkt(&pszProjection);
             oSRS.exportToWkt(&pszGCPProjection);
-
-            // Fill the GCPs list.
-
-            nGCPCount = (nRasterYSize / nDeltaLat) * (nRasterXSize / nDeltaLon);
-
-            pasGCPList =
-                static_cast<GDAL_GCP *>(CPLCalloc(nGCPCount, sizeof(GDAL_GCP)));
-
-            GDALInitGCPs(nGCPCount, pasGCPList);
 
             const int nYLimit =
                 (static_cast<int>(nRasterYSize) / nDeltaLat) * nDeltaLat;
@@ -809,19 +806,32 @@ CPLErr HDF5ImageDataset::CreateProjections()
             bool bHasLonNearMinus180 = false;
             bool bHasLonNearPlus180 = false;
             bool bHasLonNearZero = false;
+            nGCPCount = 0;
             for( int j = 0; j < nYLimit; j += nDeltaLat )
             {
                 for( int i = 0; i < nXLimit; i += nDeltaLon )
                 {
                     const int iGCP = j * nRasterXSize + i;
+                    if( (bHasLatNoData && static_cast<float>(dfLatNoData) == Latitude[iGCP]) ||
+                        (bHasLongNoData && static_cast<float>(dfLongNoData) == Longitude[iGCP]) )
+                        continue;
                     if( Longitude[iGCP] > 170 && Longitude[iGCP] <= 180 )
                         bHasLonNearPlus180 = true;
                     if( Longitude[iGCP] < -170 && Longitude[iGCP] >= -180 )
                         bHasLonNearMinus180 = true;
                     if( fabs(Longitude[iGCP]) < 90 )
                         bHasLonNearZero = true;
+                    nGCPCount ++;
                 }
             }
+
+            // Fill the GCPs list.
+
+            pasGCPList =
+                static_cast<GDAL_GCP *>(CPLCalloc(nGCPCount, sizeof(GDAL_GCP)));
+
+            GDALInitGCPs(nGCPCount, pasGCPList);
+
             const char *pszShiftGCP =
                 CPLGetConfigOption("HDF5_SHIFT_GCPX_BY_180", nullptr);
             const bool bAdd180 =
@@ -835,6 +845,9 @@ CPLErr HDF5ImageDataset::CreateProjections()
                 for( int i = 0; i < nXLimit; i += nDeltaLon )
                 {
                     const int iGCP = j * nRasterXSize + i;
+                    if( (bHasLatNoData && static_cast<float>(dfLatNoData) == Latitude[iGCP]) ||
+                        (bHasLongNoData && static_cast<float>(dfLongNoData) == Longitude[iGCP]) )
+                        continue;
                     pasGCPList[k].dfGCPX = static_cast<double>(Longitude[iGCP]);
                     if( bAdd180 )
                         pasGCPList[k].dfGCPX += 180.0;

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2015, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2015, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,7 +72,7 @@ static void Usage( const char* pszAdditionalMsg = nullptr, bool bShort = true )
         "               [-progress] [-sql <sql statement>|@filename] [-dialect dialect]\n"
         "               [-preserve_fid] [-fid FID] [-limit nb_features]\n"
         "               [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]\n"
-        "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] [-ct proj_string]\n"
+        "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] [-ct string]\n"
         "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
         "               dst_datasource_name src_datasource_name\n"
         "               [-lco NAME=VALUE] [-nln name] \n"

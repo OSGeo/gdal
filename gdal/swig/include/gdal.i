@@ -54,6 +54,7 @@
 
 %{
 #include <iostream>
+#include <vector>
 using namespace std;
 
 #define CPL_SUPRESS_CPLUSPLUS
@@ -76,6 +77,14 @@ typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
+
+typedef GDALExtendedDataTypeHS GDALExtendedDataTypeHS;
+typedef GDALEDTComponentHS GDALEDTComponentHS;
+typedef GDALGroupHS GDALGroupHS;
+typedef GDALMDArrayHS GDALMDArrayHS;
+typedef GDALAttributeHS GDALAttributeHS;
+typedef GDALDimensionHS GDALDimensionHS;
+
 %}
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
@@ -537,6 +546,8 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //
 //************************************************************************
 %include "Dataset.i"
+
+%include "MultiDimensional.i"
 
 //************************************************************************
 //
@@ -1082,6 +1093,34 @@ struct GDALInfoOptions {
 #endif
 retStringAndCPLFree *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
 
+//************************************************************************
+// gdal.MultiDimInfo()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (MultiDimInfoOptions) GDALMultiDimInfoOptions;
+#endif
+struct GDALMultiDimInfoOptions {
+%extend {
+    GDALMultiDimInfoOptions(char** options) {
+        return GDALMultiDimInfoOptionsNew(options, NULL);
+    }
+
+    ~GDALMultiDimInfoOptions() {
+        GDALMultiDimInfoOptionsFree( self );
+    }
+}
+};
+
+#ifdef SWIGPYTHON
+%rename (MultiDimInfoInternal) GDALMultiDimInfo;
+#endif
+retStringAndCPLFree *GDALMultiDimInfo( GDALDatasetShadow *hDataset, GDALMultiDimInfoOptions *infoOptions );
+
+//************************************************************************
+// gdal.Translate()
+//************************************************************************
+
 #ifdef SWIGJAVA
 %rename (TranslateOptions) GDALTranslateOptions;
 #endif
@@ -1096,10 +1135,6 @@ struct GDALTranslateOptions {
     }
 }
 };
-
-//************************************************************************
-// gdal.Translate()
-//************************************************************************
 
 #ifdef SWIGPYTHON
 %rename (TranslateInternal) wrapper_GDALTranslate;
@@ -1813,6 +1848,69 @@ GDALDatasetShadow* wrapper_GDALBuildVRT_names( const char* dest,
 }
 %}
 %clear char** source_filenames;
+
+//************************************************************************
+// gdal.MultiDimTranslate()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (MultiDimTranslateOptions) GDALMultiDimTranslateOptions;
+#endif
+struct GDALMultiDimTranslateOptions {
+%extend {
+    GDALMultiDimTranslateOptions(char** options) {
+        return GDALMultiDimTranslateOptionsNew(options, NULL);
+    }
+
+    ~GDALMultiDimTranslateOptions() {
+        GDALMultiDimTranslateOptionsFree( self );
+    }
+}
+};
+
+#ifdef SWIGJAVA
+%rename (MultiDimTranslate) wrapper_GDALMultiDimTranslateDestName;
+#endif
+
+%newobject wrapper_GDALMultiDimTranslateDestName;
+
+%inline %{
+GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
+                                             int object_list_count, GDALDatasetShadow** poObjects,
+                                             GDALMultiDimTranslateOptions* multiDimTranslateOptions,
+                                             GDALProgressFunc callback=NULL,
+                                             void* callback_data=NULL)
+{
+    int usageError; /* ignored */
+    bool bFreeOptions = false;
+    if( callback )
+    {
+        if( multiDimTranslateOptions == NULL )
+        {
+            bFreeOptions = true;
+            multiDimTranslateOptions = GDALMultiDimTranslateOptionsNew(NULL, NULL);
+        }
+        GDALMultiDimTranslateOptionsSetProgress(multiDimTranslateOptions, callback, callback_data);
+    }
+#ifdef SWIGPYTHON
+    std::vector<ErrorStruct> aoErrors;
+    if( bUseExceptions )
+    {
+        PushStackingErrorHandler(&aoErrors);
+    }
+#endif
+    GDALDatasetH hDSRet = GDALMultiDimTranslate(dest, NULL, object_list_count, poObjects, multiDimTranslateOptions, &usageError);
+    if( bFreeOptions )
+        GDALMultiDimTranslateOptionsFree(multiDimTranslateOptions);
+#ifdef SWIGPYTHON
+    if( bUseExceptions )
+    {
+        PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
+    }
+#endif
+    return hDSRet;
+}
+%}
 
 
 %clear (const char* dest);

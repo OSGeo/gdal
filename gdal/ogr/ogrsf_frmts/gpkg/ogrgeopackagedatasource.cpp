@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2013, Paul Ramsey <pramsey@boundlessgeo.com>
- * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -758,6 +758,11 @@ bool GDALGeoPackageDataset::ICanIWriteBlock()
         return false;
     }
 
+    if( m_pabyCachedTiles == nullptr )
+    {
+        return false;
+    }
+
     if( !m_bGeoTransformValid || m_nSRID == UNKNOWN_SRID )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1126,13 +1131,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     /* Requirement 7: The SQLite PRAGMA foreign_key_check() SQL with no */
     /* parameter value SHALL return an empty result set */
     /* http://opengis.github.io/geopackage/#_file_integrity */
-    if ( CPLTestBool(CPLGetConfigOption("OGR_GPKG_FOREIGN_KEY_CHECK", "YES")) &&
+    /* Disable the check by default, since it is to corrupt databases, and */
+    /* that causes issues to downstream software that can't open them. */
+    if ( CPLTestBool(CPLGetConfigOption("OGR_GPKG_FOREIGN_KEY_CHECK", "NO")) &&
          OGRERR_NONE != PragmaCheck("foreign_key_check", "", 0) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "pragma foreign_key_check on '%s' failed. You can disable "
-                  "this check by setting the OGR_GPKG_FOREIGN_KEY_CHECK "
-                  "configuration option to NO",
+                  "pragma foreign_key_check on '%s' failed.",
                   m_pszFilename);
         return FALSE;
     }
@@ -1510,7 +1515,7 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     int nBandCount = atoi(CSLFetchNameValueDef(papszOpenOptionsIn, "BAND_COUNT", "4"));
     if( nBandCount != 1 && nBandCount != 2 && nBandCount != 3 && nBandCount != 4 )
         nBandCount = 4;
-    if( m_eDT != GDT_Byte )
+    if( (poParentDS ? poParentDS->m_eDT : m_eDT) != GDT_Byte )
         nBandCount = 1;
 
     return InitRaster(poParentDS, pszTableName, nZoomLevel, nBandCount, dfMinX, dfMaxY,
@@ -1543,6 +1548,32 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
     int nShiftYPixels = static_cast<int>(floor(0.5 + dfShiftYPixels));
     m_nShiftYTiles = static_cast<int>(floor(1.0 * nShiftYPixels / nTileHeight));
     m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
+    return true;
+}
+
+/************************************************************************/
+/*                            AllocCachedTiles()                        */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::AllocCachedTiles()
+{
+    int nTileWidth, nTileHeight;
+    GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
+
+    const int nCacheCount =
+        (m_nShiftXPixelsMod != 0 || m_nShiftYPixelsMod != 0) ? 4 :
+        (bUpdate && m_eDT == GDT_Byte) ? 2 : 1;
+
+    m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(
+        nCacheCount * (m_eDT == GDT_Byte ? 4 : 1) * m_nDTSize,
+        nTileWidth, nTileHeight);
+    if( m_pabyCachedTiles == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too big tiles: %d x %d", nTileWidth, nTileHeight);
+        return false;
+    }
+
     return true;
 }
 
@@ -1638,16 +1669,7 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     GDALPamDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
 
-    m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4 * m_nDTSize,
-                                                     nTileWidth, nTileHeight);
-    if( m_pabyCachedTiles == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too big tiles: %d x %d", nTileWidth, nTileHeight);
-        return false;
-    }
-
-    return true;
+    return AllocCachedTiles();
 }
 
 /************************************************************************/
@@ -2074,6 +2096,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     for( int i = 1; i < oResult.nRowCount; i++ )
     {
         GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
+        poOvrDS->ShareLockWithParentDataset(this);
         if( !poOvrDS->InitRaster(
             this, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
             pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
@@ -2318,7 +2341,12 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Overflow occurred in ComputeTileAndPixelShifts()");
         return CE_Failure;
-    };
+    }
+
+    if( !AllocCachedTiles() )
+    {
+        return CE_Failure;
+    }
 
     double dfGDALMinX = m_adfGeoTransform[0];
     double dfGDALMinY = m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5];
@@ -2396,6 +2424,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         if( i < m_nZoomLevel )
         {
             GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
+            poOvrDS->ShareLockWithParentDataset(this);
             poOvrDS->InitRaster( this, m_osRasterTable, i, nBands,
                                  m_dfTMSMinX, m_dfTMSMaxY,
                                  dfPixelXSizeZoomLevel, dfPixelYSizeZoomLevel,
@@ -2752,6 +2781,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     m_papoOverviewDS[k]->m_nZoomLevel ++;
 
                 GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
+                poOvrDS->ShareLockWithParentDataset(this);
                 poOvrDS->InitRaster(
                     this, m_osRasterTable,
                     nNewZoomLevel, nBands,
@@ -2857,7 +2887,7 @@ char **GDALGeoPackageDataset::GetMetadataDomainList()
         GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "SUBDATASETS", NULL);
+                                   "SUBDATASETS", nullptr);
 }
 
 /************************************************************************/
@@ -4149,13 +4179,6 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid block dimensions: %dx%d",
                      nTileWidth, nTileHeight);
-            return FALSE;
-        }
-
-        m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4 * m_nDTSize,
-                                                         nTileWidth, nTileHeight);
-        if( m_pabyCachedTiles == nullptr )
-        {
             return FALSE;
         }
 

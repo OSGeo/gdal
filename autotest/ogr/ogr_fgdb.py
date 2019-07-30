@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  FGDB driver testing.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -400,9 +400,7 @@ def test_ogr_fgdb_5():
     assert ogrtest.fgdb_drv.DeleteDataSource("tmp/test.gdb") == 0, \
         'DeleteDataSource() failed'
 
-    with pytest.raises(OSError, message="tmp/test.gdb still existing"):
-        os.stat("tmp/test.gdb")
-    
+    assert not os.path.exists("tmp/test.gdb")
 
     
 ###############################################################################
@@ -1097,12 +1095,8 @@ def test_ogr_fgdb_19():
 
     assert ds.StartTransaction(force=True) == 0
 
-    try:
-        os.stat('tmp/test.gdb.ogredited')
-    except OSError:
-        pytest.fail()
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
+    assert os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
     
 
     ret = lyr.CreateField(ogr.FieldDefn('foobar', ogr.OFTString))
@@ -1167,13 +1161,8 @@ def test_ogr_fgdb_19():
     # Test that CommitTransaction() works
     assert ds.CommitTransaction() == 0
 
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogredited')
-    
-
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
-    
+    assert not os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
 
     lst = gdal.ReadDir('tmp/test.gdb')
     for filename in lst:
@@ -1216,13 +1205,8 @@ def test_ogr_fgdb_19():
 
     assert ds.RollbackTransaction() == 0
 
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogredited')
-    
-
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
-    
+    assert not os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
 
     assert lyr.GetFeatureCount() == old_count
 
@@ -1421,9 +1405,7 @@ def test_ogr_fgdb_19():
             ds = None
 
             if case == 'CASE4':
-                with pytest.raises(OSError, message=case):
-                    os.stat('tmp/test.gdb.ogredited')
-                
+                assert not os.path.exists('tmp/test.gdb.ogredited'), case
             else:
                 shutil.rmtree('tmp/test.gdb.ogredited')
 
@@ -2100,6 +2082,9 @@ def test_ogr_fgdb_23():
 
 def test_ogr_fgdb_24():
 
+    if ogrtest.fgdb_drv is None:
+        pytest.skip()
+
     ds = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb')
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb.csv')
@@ -2127,6 +2112,9 @@ def test_ogr_fgdb_24():
 
 def test_ogr_fgdb_25():
 
+    if ogrtest.fgdb_drv is None:
+        pytest.skip()
+
     ds = ogr.Open('data/curves.gdb')
     sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
     assert sql_lyr is not None
@@ -2145,7 +2133,36 @@ def test_ogr_fgdb_25():
         f.DumpReadable()
         pytest.fail()
 
-    
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/1369
+# where a polygon with inner rings has its exterior ring with wrong orientation
+
+def test_ogr_fgdb_weird_winding_order():
+
+    if ogrtest.fgdb_drv is None:
+        pytest.skip()
+
+    if not ogr_fgdb_is_sdk_1_4_or_later():
+        pytest.skip('SDK 1.4 required')
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    try:
+        shutil.rmtree('tmp/roads_clip Drawing.gdb')
+    except OSError:
+        pass
+    gdaltest.unzip('tmp', 'data/weird_winding_order_fgdb.zip')
+
+    ds = ogr.Open('tmp/roads_clip Drawing.gdb')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetGeometryCount() == 1
+    assert g.GetGeometryRef(0).GetGeometryCount() == 17
+
+
 ###############################################################################
 # Cleanup
 
@@ -2169,6 +2186,10 @@ def test_ogr_fgdb_cleanup():
         pass
     try:
         shutil.rmtree('tmp/test3005.gdb')
+    except OSError:
+        pass
+    try:
+        shutil.rmtree('tmp/roads_clip Drawing.gdb')
     except OSError:
         pass
 

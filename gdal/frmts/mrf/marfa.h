@@ -53,6 +53,7 @@
 #include <ogr_srs_api.h>
 #include <ogr_spatialref.h>
 
+#include <limits>
 // For printing values
 #include <ostream>
 #include <iostream>
@@ -273,13 +274,25 @@ static inline int pcount(const int n, const int sz) {
 }
 
 // Returns a pagecount per dimension, .l will have the total number
+// or -1 in case of error
 static inline const ILSize pcount(const ILSize &size, const ILSize &psz) {
     ILSize pcnt;
     pcnt.x = pcount(size.x, psz.x);
     pcnt.y = pcount(size.y, psz.y);
     pcnt.z = pcount(size.z, psz.z);
     pcnt.c = pcount(size.c, psz.c);
-    pcnt.l = static_cast<GIntBig>(pcnt.x) * pcnt.y * pcnt.z * pcnt.c;
+    auto xy = static_cast<GIntBig>(pcnt.x) * pcnt.y;
+    auto zc = static_cast<GIntBig>(pcnt.z) * pcnt.c;
+    if( zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Integer overflow in page count computation");
+        pcnt.l = -1;
+    }
+    else
+    {
+        pcnt.l = xy * zc;
+    }
     return pcnt;
 }
 

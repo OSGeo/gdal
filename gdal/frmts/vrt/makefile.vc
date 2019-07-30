@@ -2,13 +2,13 @@
 OBJ	=	vrtdataset.obj vrtrasterband.obj vrtdriver.obj \
 		vrtsources.obj vrtfilters.obj vrtsourcedrasterband.obj \
 		vrtrawrasterband.obj vrtderivedrasterband.obj vrtwarped.obj \
-		vrtpansharpened.obj pixelfunctions.obj
+		vrtpansharpened.obj pixelfunctions.obj vrtmultidim.obj
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = 	-I..\raw  $(GEOS_CFLAGS)
+EXTRAFLAGS = 	$(GEOS_CFLAGS)
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

@@ -8,7 +8,7 @@
  *
  * ****************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -284,14 +284,13 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     bool bGotSRS = false;
     GDALDataset *poGDALDS = nullptr;
     OGRLayer      *poLayer = nullptr;
-    CPLErrorHandler oErrorHandler = nullptr;
     bool bIsFile = false;
     OGRErr eErr = OGRERR_NONE;
 
     /* temporarily suppress error messages we may get from xOpen() */
     bool bDebug = CPLTestBool(CPLGetConfigOption("CPL_DEBUG", "OFF"));
     if( !bDebug )
-        oErrorHandler = CPLSetErrorHandler ( CPLQuietErrorHandler );
+        CPLPushErrorHandler ( CPLQuietErrorHandler );
 
     /* Test if argument is a file */
     VSILFILE *fp = VSIFOpenL( pszInput, "r" );
@@ -358,6 +357,10 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
         }
     }
 
+    /* restore error messages */
+    if( !bDebug )
+        CPLPopErrorHandler();
+
     /* Last resort, try OSRSetFromUserInput() */
     if ( ! bGotSRS ) {
         CPLDebug( "gdalsrsinfo",
@@ -376,10 +379,6 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
             bGotSRS = true;
         }
     }
-
-    /* restore error messages */
-    if( !bDebug )
-        CPLSetErrorHandler ( oErrorHandler );
 
     return bGotSRS;
 }

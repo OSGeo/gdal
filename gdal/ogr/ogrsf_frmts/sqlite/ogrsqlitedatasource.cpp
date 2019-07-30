@@ -13,7 +13,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -348,13 +348,13 @@ OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource() :
 OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 
 {
+    CloseDB();
 #ifdef SPATIALITE_412_OR_LATER
     FinishNewSpatialite();
 #endif
 #ifdef HAVE_RASTERLITE2
     FinishRasterLite2();
 #endif
-    CloseDB();
 
     if( m_bCallUndeclareFileNotToOpen )
     {
@@ -796,6 +796,11 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
                   "sqlite3_open(%s) failed: %s",
                   m_pszFilename, sqlite3_errmsg( hDB ) );
         return FALSE;
+    }
+
+    const char* pszVal = CPLGetConfigOption("SQLITE_BUSY_TIMEOUT", "5000");
+    if ( pszVal != nullptr ) {
+        sqlite3_busy_timeout(hDB, atoi(pszVal));
     }
 
     if( (flagsIn & SQLITE_OPEN_CREATE) == 0 )

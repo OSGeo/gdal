@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "segv",
+"features": [
+{ "type": "Feature", "properties": { "NAMES": "seg1" }, "geometry": { "type": "LineString", "coordinates": [ [ 1.5, -1.5 ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "seg2" }, "geometry": { "type": "LineString", "coordinates": [ [ 30.5, 30.5 ], [ 5.0, 5.0 ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "seg3" }, "geometry": { "type": "LineString", "coordinates": [ [ 9.0, -9.0 ], [ 10.0, -10.0 ], [ -1.0, 1.0 ] ] } }
+]
+}

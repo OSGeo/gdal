@@ -10,7 +10,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2001, Frank Warmerdam
-#  Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+#  Copyright (c) 2009-2010, 2019, Even Rouault <even dot rouault at spatialys.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -42,112 +42,85 @@ from osgeo import gdal
 def Usage():
 
     print('Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]')
-    print('                  [-skip] [-list filename] [start_code [end_code]]')
+    print('                  [-authority name]')
     sys.exit(1)
 
 # =============================================================================
 
 
-def trHandleCode(code, gen_dict_line, report_error, output_format):
+def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
 
-    try:
-        err = prj_srs.ImportFromEPSG(code)
-    except:
-        err = 1
+    if output_format == '-pretty_wkt':
+        print('%s:%s' % (auth_name, str(code)))
+        print(srs.ExportToPrettyWkt())
 
-    if err != 0 and report_error:
-        print('Unable to lookup %d, either not a valid EPSG' % code)
-        print('code, or it the EPSG CSV files are not accessible.')
-        sys.exit(2)
-    else:
-        if output_format == '-pretty_wkt':
-            if gen_dict_line:
-                print('EPSG:%d' % code)
+    if output_format == '-xml':
+        print(srs.ExportToXML())
 
-            print(prj_srs.ExportToPrettyWkt())
+    if output_format == '-wkt':
+        print('EPSG:%d' % code)
+        print(srs.ExportToWkt())
 
-        if output_format == '-xml':
-            print(prj_srs.ExportToXML())
+    if output_format == '-proj4':
+        out_string = srs.ExportToProj4()
 
-        if output_format == '-wkt':
-            if gen_dict_line:
-                print('EPSG:%d' % code)
+        name = srs.GetName()
 
-            print(prj_srs.ExportToWkt())
+        print('# %s' % name)
+        if out_string.find('+proj=') > -1:
+            print('<%s> %s <>' % (str(code), out_string))
+        else:
+            print('# Unable to translate coordinate system '
+                    '%s:%s into PROJ.4 format.' % (auth_name, str(code)))
+            print('#')
 
-        if output_format == '-proj4':
-            out_string = prj_srs.ExportToProj4()
+    if output_format == '-postgis':
 
-            name = prj_srs.GetAttrValue('COMPD_CS')
-            if name is None:
-                name = prj_srs.GetAttrValue('PROJCS')
-            if name is None:
-                name = prj_srs.GetAttrValue('GEOGCS')
-            if name is None:
-                name = prj_srs.GetAttrValue('GEOCCS')
+        if code in set_srid:
+            if auth_name == 'ESRI':
+                if int(code) < 32767:
+                    return
+        assert code not in set_srid, (auth_name, code)
+        set_srid.add(code)
 
-            if name is None:
-                name = 'Unknown'
+        name = srs.GetName()
+        if deprecated and 'deprecated' not in name:
+            name += " (deprecated)"
+        wkt = srs.ExportToWkt()
+        proj4text = srs.ExportToProj4()
 
-            print('# %s' % name)
-            if err == 0 and out_string.find('+proj=') > -1:
-                print('<%s> %s <>' % (str(code), out_string))
-            else:
-                print('# Unable to translate coordinate system '
-                      'EPSG:%d into PROJ.4 format.' % code)
-                print('#')
+        print('---')
+        print('--- %s %s : %s' % (auth_name, str(code), name))
+        print('---')
 
-        if output_format == '-postgis':
+        if proj4text is None or len(proj4text) == 0:
+            print('-- (unable to translate to PROJ.4)')
+        else:
+            wkt = gdal.EscapeString(wkt, scheme=gdal.CPLES_SQL)
+            proj4text = gdal.EscapeString(proj4text, scheme=gdal.CPLES_SQL)
+            print('INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%d,\'%s\',%d,\'%s\',\'%s\');' %
+                    (int(code), auth_name, int(code), wkt, proj4text))
 
-            name = prj_srs.GetAttrValue('COMPD_CS')
-            if name is None:
-                name = prj_srs.GetAttrValue('PROJCS')
-            if name is None:
-                name = prj_srs.GetAttrValue('GEOGCS')
-            if name is None:
-                name = prj_srs.GetAttrValue('GEOCCS')
+    # INGRES COPY command input.
+    if output_format == '-copy':
 
-            try:
-                proj4text = prj_srs.ExportToProj4()
-            except:
-                err = 1
-            wkt = prj_srs.ExportToWkt()
+        try:
+            wkt = srs.ExportToWkt()
+            proj4text = srs.ExportToProj4()
 
-            print('---')
-            print('--- EPSG %d : %s' % (code, name))
-            print('---')
-
-            if err:
-                print('-- (unable to translate)')
-            else:
-                wkt = gdal.EscapeString(wkt, scheme=gdal.CPLES_SQL)
-                proj4text = gdal.EscapeString(proj4text, scheme=gdal.CPLES_SQL)
-                print('INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%s,\'EPSG\',%s,\'%s\',\'%s\');' %
-                      (str(code), str(code), wkt, proj4text))
-
-        # INGRES COPY command input.
-        if output_format == '-copy':
-
-            try:
-                wkt = prj_srs.ExportToWkt()
-                proj4text = prj_srs.ExportToProj4()
-
-                print('%d\t%d%s\t%d\t%d%s\t%d%s\n'
-                      % (code, 4, 'EPSG', code, len(wkt), wkt,
-                          len(proj4text), proj4text))
-            except:
-                pass
+            print('%s\t%d%s\t%s\t%d%s\t%d%s\n'
+                    % (str(code), 4, auth_name, str(code), len(wkt), wkt,
+                        len(proj4text), proj4text))
+        except:
+            pass
 
 # =============================================================================
 
 
 if __name__ == '__main__':
 
-    start_code = -1
-    end_code = -1
-    list_file = None
     output_format = '-pretty_wkt'
-    report_error = 1
+    authority = None
 
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv is None:
@@ -163,25 +136,13 @@ if __name__ == '__main__':
            or arg == '-postgis' or arg == '-xml' or arg == '-copy':
             output_format = arg
 
-        elif arg[:5] == '-skip':
-            report_error = 0
-
-        elif arg == '-list' and i < len(argv) - 1:
+        elif arg == '-authority':
             i = i + 1
-            list_file = argv[i]
+            authority = argv[i]
 
         elif arg[0] == '-':
             Usage()
 
-        elif int(arg) > 0:
-
-            if start_code == -1:
-                start_code = int(arg)
-                end_code = int(arg)
-            elif end_code == start_code:
-                end_code = int(arg)
-            else:
-                Usage()
         else:
             Usage()
 
@@ -191,42 +152,69 @@ if __name__ == '__main__':
     if output_format == '-postgis':
         print('BEGIN;')
 
-    # Do we need to produce a single output definition, or include a
-    # dictionary line for each entry?
-
-    gen_dict_line = start_code != end_code
-
     # loop over all codes to generate output
-
-    prj_srs = osr.SpatialReference()
-
-    if start_code != -1:
-        for code in range(start_code, end_code + 1):
-            trHandleCode(code, gen_dict_line, report_error, output_format)
-
-    # loop over codes read from list file.
-
-    elif list_file is not None:
-
-        list_fd = open(list_file)
-        line = list_fd.readline()
-        while line:
-            try:
-                c_offset = line.find(',')
-                if c_offset > 0:
-                    line = line[:c_offset]
-
-                code = int(line)
-            except:
-                code = -1
-
-            if code != -1:
-                trHandleCode(code, gen_dict_line, report_error, output_format)
-
-            line = list_fd.readline()
-
+    
+    if authority:
+        authorities = [ authority ]
+    elif output_format == '-postgis' :
+        authorities = [ 'EPSG', 'ESRI' ]
     else:
-        Usage()
+        authorities = [ 'EPSG', 'ESRI', 'IGNF' ]
+
+    set_srid = set()
+    for authority in authorities:
+        if authority in ('EPSG', 'ESRI'):
+            set_codes_geographic = set()
+            set_codes_geographic_3d = set()
+            set_codes_projected = set()
+            set_codes_geocentric = set()
+            set_codes_compound = set()
+            set_deprecated = set()
+
+            for crs_info in osr.GetCRSInfoListFromDatabase(authority):
+                code = int(crs_info.code)
+                if crs_info.type == osr.OSR_CRS_TYPE_COMPOUND:
+                    set_codes_compound.add(code)
+                elif crs_info.type == osr.OSR_CRS_TYPE_GEOGRAPHIC_3D:
+                    set_codes_geographic_3d.add(code)
+                elif crs_info.type == osr.OSR_CRS_TYPE_GEOGRAPHIC_2D:
+                    set_codes_geographic.add(code)
+                elif crs_info.type == osr.OSR_CRS_TYPE_PROJECTED:
+                    set_codes_projected.add(code)
+                elif crs_info.type == osr.OSR_CRS_TYPE_GEOCENTRIC:
+                    set_codes_geocentric.add(code)
+
+                if crs_info.deprecated:
+                    set_deprecated.add(code)
+
+            set_codes_geographic = sorted(set_codes_geographic)
+            set_codes_geographic_3d = sorted(set_codes_geographic_3d)
+            set_codes_projected = sorted(set_codes_projected)
+            set_codes_geocentric = sorted(set_codes_geocentric)
+            set_codes_compound = sorted(set_codes_compound)
+            for typestr, set_codes in (('Geographic 2D CRS', set_codes_geographic),
+                                       ('Projected CRS', set_codes_projected),
+                                       ('Geocentric CRS', set_codes_geocentric),
+                                       ('Compound CRS', set_codes_compound),
+                                       ('Geographic 3D CRS', set_codes_geographic_3d)):
+                if set_codes and output_format == '-postgis':
+                    print('-' * 80)
+                    print('--- ' + authority + ' ' + typestr)
+                    print('-' * 80)
+
+                for code in set_codes:
+                    srs = osr.SpatialReference()
+                    srs.SetFromUserInput(authority + ':' + str(code))
+                    deprecated = False
+                    if code in set_deprecated:
+                        deprecated = True
+                    trHandleCode(set_srid, srs, authority, str(code), deprecated, output_format)
+
+        else:
+            for crs_info in osr.GetCRSInfoListFromDatabase(authority):
+                srs = osr.SpatialReference()
+                srs.SetFromUserInput(authority + ':' + crs_info.code)
+                trHandleCode(set_srid, srs, authority, crs_info.code, crs_info.deprecated, output_format)
 
     # Output COMMIT transaction for PostGIS
     if output_format == '-postgis':

@@ -58,7 +58,6 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
 {
     SetDescription( poLayerDefn->GetName() );
     poLayerDefn->Reference();
-    poLayerDefn->SetGeomType( wkbLineString25D );
     poLayerDefn->GetGeomFieldDefn(0)->SetType( wkbLineString25D );
     poLayerDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSpatialReference );
     if( poSpatialReference ) poSpatialReference->Reference();
@@ -92,7 +91,10 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
     pdfAdjacentPointTolerance(pdfAdjacentPointToleranceParam),
     pdfPointToCircleRadius(pdfPointToCircleRadiusParam)
 {
+    SetDescription( poLayerDefn->GetName() );
     poLayerDefn->Reference();
+    poLayerDefn->GetGeomFieldDefn(0)->SetType( wkbLineString25D );
+    poLayerDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSpatialReference );
     if (poSpatialReference) poSpatialReference->Reference();
 }
 

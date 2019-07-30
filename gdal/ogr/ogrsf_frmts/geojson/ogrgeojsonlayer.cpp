@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -128,6 +128,7 @@ void OGRGeoJSONLayer::SetFIDColumn( const char* pszFIDColumn )
 
 void OGRGeoJSONLayer::ResetReading()
 {
+    nFeatureReadSinceReset_ = 0;
     if( poReader_ )
     {
         TerminateAppendSession();
@@ -165,6 +166,7 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
                 && (m_poAttrQuery == nullptr ||
                     m_poAttrQuery->Evaluate(poFeature)) )
             {
+                nFeatureReadSinceReset_ ++;
                 return poFeature;
             }
             delete poFeature;
@@ -172,7 +174,12 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
     }
     else
     {
-        return OGRMemLayer::GetNextFeature();
+        auto ret = OGRMemLayer::GetNextFeature();
+        if( ret )
+        {
+            nFeatureReadSinceReset_ ++;
+        }
+        return ret;
     }
 }
 
@@ -205,6 +212,10 @@ OGRFeature* OGRGeoJSONLayer::GetFeature(GIntBig nFID)
 {
     if( poReader_ )
     {
+        if( !IsUpdatable() )
+        {
+            return poReader_->GetFeature(this, nFID);
+        }
         return OGRLayer::GetFeature(nFID);
     }
     else
@@ -244,8 +255,15 @@ bool OGRGeoJSONLayer::IngestAll()
 
 OGRErr OGRGeoJSONLayer::ISetFeature( OGRFeature *poFeature )
 {
-    if( !IsUpdatable() || !IngestAll() )
+    if( !IsUpdatable() )
         return OGRERR_FAILURE;
+    if( poReader_ )
+    {
+        auto nNextIndex = nFeatureReadSinceReset_;
+        if( !IngestAll() )
+            return OGRERR_FAILURE;
+        SetNextByIndex(nNextIndex);
+    }
     return OGRMemLayer::ISetFeature(poFeature);
 }
 
@@ -525,17 +543,9 @@ void OGRGeoJSONLayer::DetectGeometryType()
         if( nullptr != poGeometry )
         {
             OGRwkbGeometryType eGeomType = poGeometry->getGeometryType();
-            if( bFirstGeometry )
+            if( !OGRGeoJSONUpdateLayerGeomType(
+                    this, bFirstGeometry, eGeomType, eLayerGeomType) )
             {
-                eLayerGeomType = eGeomType;
-                GetLayerDefn()->SetGeomType( eGeomType );
-                bFirstGeometry = false;
-            }
-            else if( eGeomType != eLayerGeomType )
-            {
-                CPLDebug( "GeoJSON",
-                    "Detected layer of mixed-geometry type features." );
-                GetLayerDefn()->SetGeomType( DefaultGeometryType );
                 delete poFeature;
                 break;
             }

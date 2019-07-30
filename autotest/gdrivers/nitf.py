@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -2572,6 +2572,148 @@ def test_nitf_read_C4():
     ds = gdal.Open('data/RPFTOC01.ON2')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 53599
+
+###############################################################################
+# Test reading a file with a SENSRB TRE
+
+
+def test_nitf_SENSRB():
+
+    ds = gdal.Open('data/SENSRB_TRE.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    expected_data = """<tres>
+  <tre name="SENSRB" location="image">
+    <field name="GENERAL_DATA" value="Y" />
+    <field name="SENSOR" value="" />
+    <field name="SENSOR_URI" value="" />
+    <field name="PLATFORM" value="                      UMS" />
+    <field name="PLATFORM_URI" value="" />
+    <field name="OPERATION_DOMAIN" value="" />
+    <field name="CONTENT_LEVEL" value="4" />
+    <field name="GEODETIC_SYSTEM" value="" />
+    <field name="GEODETIC_TYPE" value="" />
+    <field name="ELEVATION_DATUM" value="" />
+    <field name="LENGTH_UNIT" value=" m" />
+    <field name="ANGULAR_UNIT" value="deg" />
+    <field name="START_DATE" value="" />
+    <field name="START_TIME" value="00000000000000" />
+    <field name="END_DATE" value="20190507" />
+    <field name="END_TIME" value="0000084.059869" />
+    <field name="GENERATION_COUNT" value="00" />
+    <field name="GENERATION_DATE" value="" />
+    <field name="GENERATION_TIME" value="" />
+    <field name="SENSOR_ARRAY_DATA" value="" />
+    <field name="SENSOR_CALIBRATION_DATA" value="" />
+    <field name="IMAGE_FORMATION_DATA" value="Y" />
+    <field name="METHOD" value="" />
+    <field name="MODE" value="" />
+    <field name="ROW_COUNT" value="00000000" />
+    <field name="COLUMN_COUNT" value="00000000" />
+    <field name="ROW_SET" value="00000000" />
+    <field name="COLUMN_SET" value="00000000" />
+    <field name="ROW_RATE" value="0000000000" />
+    <field name="COLUMN_RATE" value="0000000000" />
+    <field name="FIRST_PIXEL_ROW" value="00000000" />
+    <field name="FIRST_PIXEL_COLUMN" value="00000000" />
+    <field name="TRANSFORM_PARAMS" value="3" />
+    <repeated name="TRANSFORM_PARAM" number="3">
+      <group index="0">
+        <field name="TRANSFORM_PARAM" value="         470" />
+      </group>
+      <group index="1">
+        <field name="TRANSFORM_PARAM" value="         471" />
+      </group>
+      <group index="2">
+        <field name="TRANSFORM_PARAM" value="         472" />
+      </group>
+    </repeated>
+    <field name="REFERENCE_TIME" value="" />
+    <field name="REFERENCE_ROW" value="" />
+    <field name="REFERENCE_COLUMN" value="" />
+    <field name="LATITUDE_OR_X" value="   43643267" />
+    <field name="LONGITUDE_OR_Y" value="" />
+    <field name="ALTITUDE_OR_Z" value="" />
+    <field name="SENSOR_X_OFFSET" value="00000000" />
+    <field name="SENSOR_Y_OFFSET" value="00000000" />
+    <field name="SENSOR_Z_OFFSET" value="00000000" />
+    <field name="ATTITUDE_EULER_ANGLES" value="" />
+    <field name="ATTITUDE_UNIT_VECTORS" value="" />
+    <field name="ATTITUDE_QUATERNION" value="" />
+    <field name="SENSOR_VELOCITY_DATA" value="" />
+    <field name="POINT_SET_DATA" value="00" />
+    <field name="TIME_STAMPED_DATA_SETS" value="02" />
+    <repeated name="TIME_STAMPED_SET" number="2">
+      <group index="0">
+        <field name="TIME_STAMP_TYPE_MM" value="06b" />
+        <field name="TIME_STAMP_COUNT_MM" value="0003" />
+        <repeated name="TIME_STAMP_COUNTS" number="3">
+          <group index="0">
+            <field name="TIME_STAMP_TIME_NNNN" value="111111111111" />
+            <field name="TIME_STAMP_VALUE_NNNN" value="111100001111" />
+          </group>
+          <group index="1">
+            <field name="TIME_STAMP_TIME_NNNN" value="222222222222" />
+            <field name="TIME_STAMP_VALUE_NNNN" value="222200001111" />
+          </group>
+          <group index="2">
+            <field name="TIME_STAMP_TIME_NNNN" value="333333333333" />
+            <field name="TIME_STAMP_VALUE_NNNN" value="333300001111" />
+          </group>
+        </repeated>
+      </group>
+      <group index="1">
+        <field name="TIME_STAMP_TYPE_MM" value="06e" />
+        <field name="TIME_STAMP_COUNT_MM" value="0002" />
+        <repeated name="TIME_STAMP_COUNTS" number="2">
+          <group index="0">
+            <field name="TIME_STAMP_TIME_NNNN" value="444444444444" />
+            <field name="TIME_STAMP_VALUE_NNNN" value="44440000" />
+          </group>
+          <group index="1">
+            <field name="TIME_STAMP_TIME_NNNN" value="555555555555" />
+            <field name="TIME_STAMP_VALUE_NNNN" value="55550000" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+    <field name="PIXEL_REFERENCED_DATA_SETS" value="00" />
+    <field name="UNCERTAINTY_DATA" value="000" />
+    <field name="ADDITIONAL_PARAMETER_DATA" value="000" />
+  </tre>
+</tres>
+"""
+
+    assert data == expected_data, data
+
+###############################################################################
+# Verify we can read UDID metadata
+
+def test_nitf_valid_udid():
+
+    ds = gdal.Open('data/valid_udid.ntf')
+
+    md = ds.GetMetadata()
+    assert md['NITF_CSDIDA_YEAR'] == '2019', \
+        'UDID CSDIDA metadata has unexpected value.'
+
+    assert md['NITF_BLOCKA_BLOCK_INSTANCE_01'] == '01', \
+        'BLOCKA metadata has unexpected value.'
+
+###############################################################################
+# Verify that bad UDID metadata doesn't prevent reading IXSHD metadata
+
+def test_nitf_invalid_udid():
+
+    ds = gdal.Open('data/invalid_udid.ntf')
+
+    md = ds.GetMetadata()
+    assert 'NITF_CSDIDA_YEAR' not in md, \
+        'Unexpected parings of UDID CSDIDA metadata.'
+
+    assert md['NITF_BLOCKA_BLOCK_INSTANCE_01'] == '01', \
+        'BLOCKA metadata has unexpected value.'
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714

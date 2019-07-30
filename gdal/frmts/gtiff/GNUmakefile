@@ -2,10 +2,11 @@
 include ../../GDALmake.opt
 
 OBJ	=	geotiff.o gt_wkt_srs.o gt_citation.o  gt_overview.o \
-		tif_float.o tifvsi.o gt_jpeg_copy.o
+		tif_float.o tifvsi.o gt_jpeg_copy.o cogdriver.o
 
 SUBLIBS 	=
 
+TIFF_OPTS	=
 ifeq ($(TIFF_SETTING),internal)
 
 SUBLIBS	:= lib-tiff $(SUBLIBS)

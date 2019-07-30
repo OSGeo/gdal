@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2011, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -160,7 +160,7 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
     CNCSError    oErr;
 
     for( i = 0; i < nBandCount; i++ )
-        anBandIndices.push_back( panBandMap[i] - 1 );
+        anBandIndices.push_back( poReader->panBandMap[i] - 1 );
 
     oErr = poReader->poFileView->SetView( nBandCount, &(anBandIndices[0]),
                                           nXOff, nYOff,
@@ -199,11 +199,6 @@ ECWAsyncReader::ECWAsyncReader()
 {
     hMutex = CPLCreateMutex();
     CPLReleaseMutex( hMutex );
-
-    poFileView = nullptr;
-    bUpdateReady = FALSE;
-    bComplete = FALSE;
-    panBandMap = nullptr;
 }
 
 /************************************************************************/
@@ -279,7 +274,8 @@ NCSEcwReadStatus ECWAsyncReader::RefreshCB( NCSFileView *pFileView )
         if( !poReader->bComplete )
             poReader->bUpdateReady = TRUE;
 
-        if( psVSI->nBlocksAvailable == psVSI->nBlocksInView )
+        if( psVSI != nullptr &&
+            psVSI->nBlocksAvailable == psVSI->nBlocksInView )
             poReader->bComplete = TRUE;
     }
 

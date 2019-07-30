@@ -159,7 +159,7 @@ const char *MIDDATAFile::GetLine()
         return nullptr;
     }
 
-    const char *pszLine = CPLReadLineL(m_fp);
+    const char *pszLine = CPLReadLine2L(m_fp, MIDMAXCHAR, nullptr);
 
     if(pszLine == nullptr)
     {

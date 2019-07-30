@@ -7,7 +7,8 @@ sudo apt-get purge -y libgeos* libspatialite*
 sudo apt-get remove libpq* postgresql*
 find  /etc/apt/sources.list.d
 sudo mv /etc/apt/sources.list.d/pgdg* /tmp
-sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+sudo add-apt-repository -y ppa:ubuntugis/ppa
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-testing
 #sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update
 
@@ -92,13 +93,14 @@ sudo make install PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
 cd ../..
 
 # MSSQL: client side
-sudo bash -c "curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -"
-sudo bash -c "curl https://packages.microsoft.com/config/ubuntu/14.04/prod.list | tee /etc/apt/sources.list.d/msprod.list"
-sudo apt-get update
-sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
+# Disabled because of 'Failed to fetch https://packages.microsoft.com/ubuntu/14.04/prod/dists/trusty/main/binary-amd64/Packages.gz  Hash Sum mismatch'
+#sudo bash -c "curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -"
+#sudo bash -c "curl https://packages.microsoft.com/config/ubuntu/14.04/prod.list | tee /etc/apt/sources.list.d/msprod.list"
+#sudo apt-get update
+#sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
 # Nasty: force reinstallation of unixodbc-dev since the previous line installed unixodbc 2.3.1 from microsoft repo, which lacks the -dev package
-# DONT DO THAT ON YOUR PRODUCTION SERVER.
+# DON'T DO THAT ON YOUR PRODUCTION SERVER.
 wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/libodbc1_2.3.1-4.1_amd64.deb
 wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/odbcinst1debian2_2.3.1-4.1_amd64.deb
 wget http://mirrors.edge.kernel.org/ubuntu/pool/main/u/unixodbc/odbcinst_2.3.1-4.1_amd64.deb

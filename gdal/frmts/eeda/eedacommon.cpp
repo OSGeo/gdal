@@ -65,7 +65,7 @@ std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
             continue;
         GDALDataType eDT = GDT_Byte;
         bool bSignedByte = false;
-        if( EQUAL(pszPrecision, "INTEGER") )
+        if( EQUAL(pszPrecision, "INT") )
         {
             json_object* poRange = CPL_json_object_object_get(poDataType,
                                                               "range");
@@ -108,11 +108,11 @@ std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
                 }
             }
         }
-        else if( EQUAL(pszPrecision, "FLOAT32") )
+        else if( EQUAL(pszPrecision, "FLOAT") )
         {
             eDT = GDT_Float32;
         }
-        else if( EQUAL(pszPrecision, "FLOAT64") )
+        else if( EQUAL(pszPrecision, "DOUBLE") )
         {
             eDT = GDT_Float64;
         }

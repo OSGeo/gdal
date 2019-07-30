@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test /vsizip/vsimem/
-# Author:   Even Rouault <even dot rouault at mines dash parid dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -544,7 +544,24 @@ def test_vsizip_multi_thread():
 
         pytest.fail()
 
-    
+###############################################################################
+# Test multithreaded compression, with I/O error
+
+
+def test_vsizip_multi_thread_error():
+
+    with gdaltest.error_handler():
+        with gdaltest.config_options({'GDAL_NUM_THREADS': 'ALL_CPUS',
+                                    'CPL_VSIL_DEFLATE_CHUNK_SIZE': '16K'}):
+            fmain = gdal.VSIFOpenL('/vsizip/{/vsimem/vsizip_multi_thread.zip||maxlength=1000}', 'wb')
+            f = gdal.VSIFOpenL('/vsizip/{/vsimem/vsizip_multi_thread.zip||maxlength=1000}/test', 'wb')
+            for i in range(100000):
+                gdal.VSIFWriteL('hello', 1, 5, f)
+            gdal.VSIFCloseL(f)
+            gdal.VSIFCloseL(fmain)
+
+    gdal.Unlink('/vsimem/vsizip_multi_thread.zip')
+
 ###############################################################################
 # Test multithreaded compression, below the threshold where it triggers
 

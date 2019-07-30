@@ -1,0 +1,80 @@
+Object = IsisCube
+  Object = Core
+    StartByte   = 1
+    Format      = Tile
+    TileSamples = 1
+    TileLines   = 1
+
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 3
+    End_Group
+
+    Group = Pixels
+      Type       = Real
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = Instrument
+    SpacecraftName            = DAWN
+    InstrumentId              = FC2
+    SpacecraftClockStartCount = 485609365:149
+    SpacecraftClockStopCount  = 485609365:214
+    StartTime                 = 2015-142T23:28:18.858
+    StopTime                  = 2015-142T23:28:19.112
+    ExposureDuration          = 60.000 <millisecond>
+    PixelAveragingWidth       = 1
+    PixelAveragingHeight      = 1
+    TargetName                = CERES
+    OriginalTargetName        = "1 CERES"
+    OrbitNumber               = N/A
+    FirstLine                 = 17
+    FirstLineSample           = 35
+  End_Group
+
+  Group = Archive
+    FileName                = FC21B0037339_15142232818F1C.IMG
+    SoftwareName            = CALLIOPE
+    SoftwareVersionId       = 3.01
+    DataSetName             = "DAWN FC2 CALIBRATED CERES IMAGES V1.0"
+    DataSetId               = DAWN-A-FC2-3-RDR-CERES-IMAGES-V1.0
+    ProductId               = 0037339
+    ProductType             = DATA
+    StandardDataProductId   = FC_IMAGE
+    ObservationId           = NAV_CTS_OpNav9_001
+    ProducerFullName        = "PABLO GUTIERREZ-MARQUES"
+    ProducerInstitutionName = "MAX PLANCK INSTITUT FUER SONNENSYSTEMFORSCHUNG"
+    ProductCreationTime     = 2016-04-17T14:22:52.000
+    ProductVersionId        = C
+    ReleaseId               = N/A
+  End_Group
+
+  Group = BandBin
+    FilterNumber = (1, 1, 1)
+    Center       = (700, 700, 700)
+    Width        = (700, 700, 700)
+    FilterName   = (Clear_F1, Clear_F1, Clear_F1)
+    Name         = ("band 1","band 2","band 3")
+  End_Group
+
+  Group = Kernels
+    NaifFrameCode = -203121
+  End_Group
+
+  Group = AlphaCube
+    AlphaSamples        = 1024
+    AlphaLines          = 1024
+    AlphaStartingSample = 299.5
+    AlphaStartingLine   = 0.5
+    AlphaEndingSample   = 599.5
+    AlphaEndingLine     = 300.5
+    BetaSamples         = 300
+    BetaLines           = 300
+  End_Group
+End_Object
+
+End

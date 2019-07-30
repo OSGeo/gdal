@@ -6,11 +6,11 @@ OBJ	=	sar_ceosdataset.o \
 include ../../GDALmake.opt
 
 
-CPPFLAGS	:=	-I../raw  $(CPPFLAGS)
+CPPFLAGS	:=	 $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
-$(O_OBJ):	../raw/rawdataset.h
+$(O_OBJ):	../../gcore/rawdataset.h
 
 clean:
 	rm -f *.o $(O_OBJ)

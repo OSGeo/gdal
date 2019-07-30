@@ -2,10 +2,10 @@
  *
  * Project:  PDF driver
  * Purpose:  GDALDataset driver for PDF dataset (writable vector dataset)
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@
 #include "gdal_pdf.h"
 #include "pdfcreatecopy.h"
 #include "memdataset.h"
+#include "pdfcreatefromcomposition.h"
 
 CPL_CVSID("$Id$")
 
@@ -62,12 +63,26 @@ PDFWritableVectorDataset::~PDFWritableVectorDataset()
 /************************************************************************/
 
 GDALDataset* PDFWritableVectorDataset::Create( const char * pszName,
-                                               CPL_UNUSED int nXSize,
-                                               CPL_UNUSED int nYSize,
+                                               int nXSize,
+                                               int nYSize,
                                                int nBands,
-                                               CPL_UNUSED GDALDataType eType,
+                                               GDALDataType eType,
                                                char ** papszOptions )
 {
+    if( nBands == 0 && nXSize == 0 && nYSize == 0 && eType == GDT_Unknown )
+    {
+        const char* pszFilename = CSLFetchNameValue(papszOptions, "COMPOSITION_FILE");
+        if( pszFilename )
+        {
+            if( CSLCount(papszOptions) != 1 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "All others options than COMPOSITION_FILE are ignored");
+            }
+            return GDALPDFCreateFromCompositionFile(pszName, pszFilename);
+        }
+    }
+
     if( nBands != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -276,12 +291,24 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     if (dfRatio < 1)
     {
         nWidth = 1024;
-        nHeight = static_cast<int>(nWidth * dfRatio);
+        const double dfHeight = nWidth * dfRatio;
+        if( dfHeight < 1 || dfHeight > INT_MAX || CPLIsNan(dfHeight) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
+            return OGRERR_FAILURE;
+        }
+        nHeight = static_cast<int>(dfHeight);
     }
     else
     {
         nHeight = 1024;
-        nWidth = static_cast<int>(nHeight / dfRatio);
+        const double dfWidth = nHeight / dfRatio;
+        if( dfWidth < 1 || dfWidth > INT_MAX || CPLIsNan(dfWidth) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
+            return OGRERR_FAILURE;
+        }
+        nWidth = static_cast<int>(dfWidth);
     }
 
     GDALDataset* poSrcDS = MEMDataset::Create( "MEM:::", nWidth, nHeight, 0, GDT_Byte, nullptr );

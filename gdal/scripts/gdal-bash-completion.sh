@@ -143,7 +143,7 @@ _gdal_contour()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-b -a -3d -inodata -snodata -f -i -dsco -lco -off -fl -nln -q "
+      key_list="-b -a -amin -amax -3d -inodata -snodata -f -i -dsco -lco -off -fl -e -nln -q -p "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -173,7 +173,7 @@ _gdal_edit.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -a_nodata -unsetnodata -offset -scale -colorinterp_X -unsetstats -stats -approx_stats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -unsetrpc -a_nodata -unsetnodata -offset -scale -colorinterp_X -unsetstats -stats -approx_stats -setstats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -300,7 +300,7 @@ _gdalinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -json -mm -stats -hist -nogcp -nomd -norat -noct -nofl -checksum -proj4 -listmdd -mdd -sd -oo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -json -mm -stats -hist -nogcp -nomd -norat -noct -nofl -checksum -proj4 -listmdd -mdd -wkt_format -sd -oo --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -553,7 +553,7 @@ _gdaltransform()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -i -s_srs -t_srs -to -order -tps -rpc -geoloc -gcp -output_xy --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -i -s_srs -t_srs -to -ct -order -tps -rpc -geoloc -gcp -output_xy --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -635,7 +635,7 @@ _ogr2ogr()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -skipfailures -append -update -select -where -progress -sql -dialect -preserve_fid -fid -limit -spat -spat_srs -geomfield -a_srs -t_srs -s_srs -f -overwrite -dsco -lco -nln -nlt -dim --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -skipfailures -append -update -select -where -progress -sql -dialect -preserve_fid -fid -limit -spat -spat_srs -geomfield -a_srs -t_srs -s_srs -ct -f -overwrite -dsco -lco -nln -nlt -dim --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -661,7 +661,7 @@ _ogrinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -q -where -spat -geomfield -fid -sql -dialect -al -rl -so -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -oo -nomd -listmdd -mdd -nocount -noextent --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -q -where -spat -geomfield -fid -sql -dialect -al -rl -so -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -oo -nomd -listmdd -mdd -nocount -noextent -wkt_format --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;

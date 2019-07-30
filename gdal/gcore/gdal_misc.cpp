@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2749,6 +2749,8 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
 
 static void StripIrrelevantOptions(CPLXMLNode* psCOL, int nOptions)
 {
+    if( psCOL == nullptr )
+        return;
     if( nOptions == 0 )
         nOptions = GDAL_OF_RASTER;
     if( (nOptions & GDAL_OF_RASTER) != 0 && (nOptions & GDAL_OF_VECTOR) != 0 )
@@ -3081,7 +3083,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
 
-                const char *pszRFlag = "", *pszWFlag, *pszVirtualIO, *pszSubdatasets, *pszKind;
+                const char *pszRFlag = "", *pszWFlag, *pszVirtualIO, *pszSubdatasets;
                 char** papszMD = GDALGetMetadata( hDriver, nullptr );
 
                 if( nOptions == GDAL_OF_RASTER &&
@@ -3092,6 +3094,9 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     continue;
                 if( nOptions == GDAL_OF_GNM &&
                     !CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
+                    continue;
+                if( nOptions == GDAL_OF_MULTIDIM_RASTER &&
+                    !CPLFetchBool( papszMD, GDAL_DCAP_MULTIDIM_RASTER, false ) )
                     continue;
 
                 if( CPLFetchBool( papszMD, GDAL_DCAP_OPEN, false ) )
@@ -3114,21 +3119,30 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 else
                     pszSubdatasets = "";
 
-                if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) &&
-                    CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ))
-                    pszKind = "raster,vector";
-                else if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
-                    pszKind = "raster";
-                else if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
-                    pszKind = "vector";
-                else if( CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
-                    pszKind = "geography network";
-                else
-                    pszKind = "unknown kind";
+                CPLString osKind;
+                if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
+                    osKind = "raster";
+                if( CPLFetchBool( papszMD, GDAL_DCAP_MULTIDIM_RASTER, false ) )
+                {
+                    if( !osKind.empty() ) osKind += ',';
+                    osKind = "multidimensional raster";
+                }
+                if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
+                {
+                    if( !osKind.empty() ) osKind += ',';
+                    osKind = "vector";
+                }
+                if( CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
+                {
+                    if( !osKind.empty() ) osKind += ',';
+                    osKind = "geography network";
+                }
+                if( osKind.empty() )
+                    osKind = "unknown kind";
 
                 printf( "  %s -%s- (%s%s%s%s): %s\n",/*ok*/
                         GDALGetDriverShortName( hDriver ),
-                        pszKind,
+                        osKind.c_str(),
                         pszRFlag, pszWFlag, pszVirtualIO, pszSubdatasets,
                         GDALGetDriverLongName( hDriver ) );
             }
@@ -3174,6 +3188,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             papszMD = GDALGetMetadata( hDriver, nullptr );
             if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
                 printf( "  Supports: Raster\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_MULTIDIM_RASTER, false ) )
+                printf( "  Supports: Multidimensional raster\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
                 printf( "  Supports: Vector\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
@@ -3197,6 +3213,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Supports: Open() - Open existing dataset.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_CREATE, false ) )
                 printf( "  Supports: Create() - Create writable dataset.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_CREATE_MULTIDIMENSIONAL, false ) )
+                printf( "  Supports: CreateMultiDimensional() - Create multidimensional dataset.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_CREATECOPY, false ) )
                 printf( "  Supports: CreateCopy() - Create dataset by copying another.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_VIRTUALIO, false ) )
@@ -3220,35 +3238,30 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  No support for geometries.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_FEATURE_STYLES, false ) )
                 printf( "  Supports: Feature styles.\n" );/*ok*/
-            if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONOPTIONLIST ) )
+
+            for( const char* key: { GDAL_DMD_CREATIONOPTIONLIST,
+                                    GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
+                                    GDAL_DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST,
+                                    GDAL_DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST,
+                                    GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+                                    GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,
+                                    GDAL_DS_LAYER_CREATIONOPTIONLIST } )
             {
-                CPLXMLNode *psCOL =
-                    CPLParseXMLString(
-                        CSLFetchNameValue( papszMD,
-                                           GDAL_DMD_CREATIONOPTIONLIST ) );
-                StripIrrelevantOptions(psCOL, nOptions);
-                char *pszFormattedXML =
-                    CPLSerializeXMLTree( psCOL );
+                if( CSLFetchNameValue( papszMD, key ) )
+                {
+                    CPLXMLNode *psCOL =
+                        CPLParseXMLString(
+                            CSLFetchNameValue( papszMD,
+                                            key ) );
+                    StripIrrelevantOptions(psCOL, nOptions);
+                    char *pszFormattedXML =
+                        CPLSerializeXMLTree( psCOL );
 
-                CPLDestroyXMLNode( psCOL );
+                    CPLDestroyXMLNode( psCOL );
 
-                printf( "\n%s\n", pszFormattedXML );/*ok*/
-                CPLFree( pszFormattedXML );
-            }
-            if( CSLFetchNameValue( papszMD, GDAL_DS_LAYER_CREATIONOPTIONLIST ) )
-            {
-                CPLXMLNode *psCOL =
-                    CPLParseXMLString(
-                        CSLFetchNameValue( papszMD,
-                                           GDAL_DS_LAYER_CREATIONOPTIONLIST ) );
-                StripIrrelevantOptions(psCOL, nOptions);
-                char *pszFormattedXML =
-                    CPLSerializeXMLTree( psCOL );
-
-                CPLDestroyXMLNode( psCOL );
-
-                printf( "\n%s\n", pszFormattedXML );/*ok*/
-                CPLFree( pszFormattedXML );
+                    printf( "\n%s\n", pszFormattedXML );/*ok*/
+                    CPLFree( pszFormattedXML );
+                }
             }
 
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CONNECTION_PREFIX ) )

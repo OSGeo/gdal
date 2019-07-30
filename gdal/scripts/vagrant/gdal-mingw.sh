@@ -27,13 +27,15 @@ wine64 cmd /c dir
 ln -sf /usr/lib/gcc/x86_64-w64-mingw32/4.8/libstdc++-6.dll  "$HOME/.wine/drive_c/windows"
 ln -sf /usr/lib/gcc/x86_64-w64-mingw32/4.8/libgcc_s_sjlj-1.dll  "$HOME/.wine/drive_c/windows"
 ln -sf /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll  "$HOME/.wine/drive_c/windows"
-ln -sf /usr/x86_64-w64-mingw32/lib/libproj-9.dll "$HOME/.wine/drive_c/windows"
+ln -sf /usr/local/x86_64-w64-mingw32/bin/libsqlite3-0.dll "$HOME/.wine/drive_c/windows"
+ln -sf /usr/local/x86_64-w64-mingw32/bin/libproj-15.dll "$HOME/.wine/drive_c/windows"
 ln -sf /usr/x86_64-w64-mingw32/lib/libgeos_c-1.dll "$HOME/.wine/drive_c/windows"
 ln -sf /usr/x86_64-w64-mingw32/lib/libgeos-3-5-0.dll "$HOME/.wine/drive_c/windows"
 
 (cd /home/vagrant/gnumake-build-mingw-w64
     CC="ccache x86_64-w64-mingw32-gcc" CXX="ccache x86_64-w64-mingw32-g++" LD=x86_64-w64-mingw32-ld \
-    ./configure --prefix=/usr/x86_64-w64-mingw32  --host=x86_64-w64-mingw32  --with-geos #--with-proj
+    ./configure --prefix=/usr/x86_64-w64-mingw32  --host=x86_64-w64-mingw32  --with-geos \
+     --with-sqlite3=/usr/local/x86_64-w64-mingw32 --with-proj=/usr/local/x86_64-w64-mingw32 \
     ln -sf "$PWD/.libs/libgdal-20.dll" "$HOME/.wine/drive_c/windows"
 
     # Python bindings

@@ -191,6 +191,82 @@ typedef int* retIntArray;
 %}
 #endif
 
+
+/************************************************************************/
+/*                             AreaOfUse()                              */
+/************************************************************************/
+
+%{
+typedef struct
+{
+  double west_lon_degree;
+  double south_lat_degree;
+  double east_lon_degree;
+  double north_lat_degree;
+  char* name;
+} OSRAreaOfUse;
+%}
+
+%rename (AreaOfUse) OSRAreaOfUse;
+
+struct OSRAreaOfUse {
+%extend {
+%immutable;
+  double west_lon_degree;
+  double south_lat_degree;
+  double east_lon_degree;
+  double north_lat_degree;
+  char* name;
+
+public:
+  OSRAreaOfUse( double west_lon_degree,
+             double south_lat_degree,
+             double east_lon_degree,
+             double north_lat_degree,
+             char* name )
+  {
+    OSRAreaOfUse *self = (OSRAreaOfUse*) CPLMalloc( sizeof( OSRAreaOfUse ) );
+    self->west_lon_degree = west_lon_degree;
+    self->south_lat_degree = south_lat_degree;
+    self->east_lon_degree = east_lon_degree;
+    self->north_lat_degree = north_lat_degree;
+    self->name = name ? CPLStrdup(name) : NULL;
+    return self;
+  }
+
+  ~OSRAreaOfUse()
+  {
+    CPLFree( self->name );
+    CPLFree( self );
+  }
+} /* extend */
+}; /* OSRAreaOfUse */
+
+%apply Pointer NONNULL {OSRAreaOfUse *area};
+%inline %{
+
+double OSRAreaOfUse_west_lon_degree_get( OSRAreaOfUse *area ) {
+  return area->west_lon_degree;
+}
+
+double OSRAreaOfUse_south_lat_degree_get( OSRAreaOfUse *area ) {
+  return area->south_lat_degree;
+}
+
+double OSRAreaOfUse_east_lon_degree_get( OSRAreaOfUse *area ) {
+  return area->east_lon_degree;
+}
+
+double OSRAreaOfUse_north_lat_degree_get( OSRAreaOfUse *area ) {
+  return area->north_lat_degree;
+}
+
+const char* OSRAreaOfUse_name_get( OSRAreaOfUse *area ) {
+  return area->name;
+}
+
+%}
+
 /******************************************************************************
  *
  *  Spatial Reference Object.
@@ -381,9 +457,32 @@ public:
     return OSRGetAuthorityName( self, target_key );
   }
 
+  %newobject GetAreaOfUse;
+  OSRAreaOfUse* GetAreaOfUse() {
+    OSRAreaOfUse* pArea = new_OSRAreaOfUse(0,0,0,0,NULL);
+    const char* name = NULL;
+    if( !OSRGetAreaOfUse(self,
+                    &pArea->west_lon_degree,
+                    &pArea->south_lat_degree,
+                    &pArea->east_lon_degree,
+                    &pArea->north_lat_degree,
+                    &name) )
+    {
+        delete_OSRAreaOfUse(pArea);
+        return NULL;
+    }
+    pArea->name = name ? CPLStrdup(name) : NULL;
+    return pArea;
+  }
+
   /* Added in GDAL 2.1 */
   const char *GetAxisName( const char *target_key, int iAxis ) {
     return OSRGetAxis( self, target_key, iAxis, NULL );
+  }
+
+  /* Added in GDAL 3.1 */
+  int GetAxesCount() {
+    return OSRGetAxesCount(self);
   }
 
   /* Added in GDAL 2.1 */
@@ -419,6 +518,10 @@ public:
       *pList = OSRGetDataAxisToSRSAxisMapping(self, nLen);
   }
 #endif
+
+  OGRErr SetDataAxisToSRSAxisMapping(int nList, int* pList) {
+    return OSRSetDataAxisToSRSAxisMapping(self, nList, pList);
+  }
 
   OGRErr SetUTM( int zone, int north =1 ) {
     return OSRSetUTM( self, zone, north );
@@ -1118,6 +1221,199 @@ public:
 }
 %}
 
+/************************************************************************/
+/*                   GetCRSInfoListFromDatabase()                       */
+/************************************************************************/
+
+#ifdef SWIGPYTHON
+
+%rename (CRSType) OSRCRSType;
+typedef enum OSRCRSType
+{
+    /** Geographic 2D CRS */
+    OSR_CRS_TYPE_GEOGRAPHIC_2D = 0,
+    /** Geographic 3D CRS */
+    OSR_CRS_TYPE_GEOGRAPHIC_3D = 1,
+    /** Geocentric CRS */
+    OSR_CRS_TYPE_GEOCENTRIC = 2,
+    /** Projected CRS */
+    OSR_CRS_TYPE_PROJECTED = 3,
+    /** Vertical CRS */
+    OSR_CRS_TYPE_VERTICAL = 4,
+    /** Compound CRS */
+    OSR_CRS_TYPE_COMPOUND = 5,
+    /** Other */
+    OSR_CRS_TYPE_OTHER = 6,
+};
+
+%rename (CRSInfo) OSRCRSInfo;
+
+struct OSRCRSInfo {
+%extend {
+%immutable;
+    /** Authority name. */
+    char* auth_name;
+    /** Object code. */
+    char* code;
+    /** Object name. */
+    char* name;
+    /** Object type. */
+    OSRCRSType type;
+    /** Whether the object is deprecated */
+    bool deprecated;
+    /** Whereas the west_lon_degree, south_lat_degree, east_lon_degree and
+     * north_lat_degree fields are valid. */
+    bool  bbox_valid;
+    /** Western-most longitude of the area of use, in degrees. */
+    double west_lon_degree;
+    /** Southern-most latitude of the area of use, in degrees. */
+    double south_lat_degree;
+    /** Eastern-most longitude of the area of use, in degrees. */
+    double east_lon_degree;
+    /** Northern-most latitude of the area of use, in degrees. */
+    double north_lat_degree;
+    /** Name of the area of use. */
+    char* area_name;
+    /** Name of the projection method for a projected CRS. Might be NULL even
+     *for projected CRS in some cases. */
+    char* projection_method;
+
+  OSRCRSInfo( const char* auth_name,
+              const char* code,
+              const char* name,
+              OSRCRSType type,
+              bool deprecated,
+              bool bbox_valid,
+              double west_lon_degree,
+              double south_lat_degree,
+              double east_lon_degree,
+              double north_lat_degree,
+              const char* area_name,
+              const char* projection_method)
+    {
+    OSRCRSInfo *self = (OSRCRSInfo*) CPLMalloc( sizeof( OSRCRSInfo ) );
+    self->pszAuthName = auth_name ? CPLStrdup(auth_name) : NULL;
+    self->pszCode = code ? CPLStrdup(code) : NULL;
+    self->pszName = name ? CPLStrdup(name) : NULL;
+    self->eType = type;
+    self->bDeprecated = deprecated;
+    self->bBboxValid = bbox_valid;
+    self->dfWestLongitudeDeg = west_lon_degree;
+    self->dfSouthLatitudeDeg = south_lat_degree;
+    self->dfEastLongitudeDeg = east_lon_degree;
+    self->dfNorthLatitudeDeg = north_lat_degree;
+    self->pszAreaName = area_name ? CPLStrdup(area_name) : NULL;
+    self->pszProjectionMethod = projection_method ? CPLStrdup(projection_method) : NULL;
+    return self;
+  }
+
+  ~OSRCRSInfo() {
+    CPLFree( self->pszAuthName );
+    CPLFree( self->pszCode );
+    CPLFree( self->pszName );
+    CPLFree( self->pszAreaName );
+    CPLFree( self->pszProjectionMethod );
+    CPLFree( self );
+  }
+} /* extend */
+}; /* OSRCRSInfo */
+
+%apply Pointer NONNULL {OSRCRSInfo *crsInfo};
+%inline %{
+
+const char* OSRCRSInfo_auth_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszAuthName;
+}
+
+const char* OSRCRSInfo_code_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszCode;
+}
+
+const char* OSRCRSInfo_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszName;
+}
+
+OSRCRSType OSRCRSInfo_type_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->eType;
+}
+
+bool OSRCRSInfo_deprecated_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->bDeprecated;
+}
+
+bool OSRCRSInfo_bbox_valid_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->bBboxValid;
+}
+
+double OSRCRSInfo_west_lon_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfWestLongitudeDeg;
+}
+
+double OSRCRSInfo_south_lat_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfSouthLatitudeDeg;
+}
+
+double OSRCRSInfo_east_lon_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfEastLongitudeDeg;
+}
+
+double OSRCRSInfo_north_lat_degree_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->dfNorthLatitudeDeg;
+}
+
+const char* OSRCRSInfo_area_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszAreaName;
+}
+
+const char* OSRCRSInfo_projection_method_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszProjectionMethod;
+}
+
+%}
+
+%inline %{
+void GetCRSInfoListFromDatabase( const char *authName,
+                                 OSRCRSInfo*** pList,
+                                 int* pnListCount)
+{
+    *pList = OSRGetCRSInfoListFromDatabase(authName, NULL, pnListCount);
+}
+%}
+
+#endif // SWIGPYTHON
+
+%inline %{
+void SetPROJSearchPath( const char *utf8_path )
+{
+    const char* const apszPaths[2] = { utf8_path, NULL };
+    OSRSetPROJSearchPaths(apszPaths);
+}
+%}
+
+%apply (char **options) { (char **) };
+%inline %{
+void SetPROJSearchPaths( char** paths )
+{
+    OSRSetPROJSearchPaths(paths);
+}
+%}
+%clear (char **);
+
+%inline %{
+int GetPROJVersionMajor()
+{
+    int num;
+    OSRGetPROJVersion(&num, NULL, NULL);
+    return num;
+}
+
+int GetPROJVersionMinor()
+{
+    int num;
+    OSRGetPROJVersion(NULL, &num, NULL);
+    return num;
+}
+%}
 
 #ifdef SWIGPYTHON
 %thread;

@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Fake HTTP server
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -56,7 +56,7 @@ def install_http_handler(handler_instance):
 
 
 class RequestResponse(object):
-    def __init__(self, method, path, code, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
+    def __init__(self, method, path, code, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None, add_content_length_header=True):
         self.method = method
         self.path = path
         self.code = code
@@ -65,6 +65,7 @@ class RequestResponse(object):
         self.custom_method = custom_method
         self.expected_headers = {} if expected_headers is None else expected_headers
         self.expected_body = expected_body
+        self.add_content_length_header = add_content_length_header
 
 
 class FileHandler(object):
@@ -118,16 +119,16 @@ class SequentialHandler(object):
         assert self.req_count == len(self.req_resp), (self.req_count, len(self.req_resp))
         assert not self.req_resp_map
 
-    def add(self, method, path, code=None, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
+    def add(self, method, path, code=None, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None, add_content_length_header=True):
         hdrs = {} if headers is None else headers
         expected_hdrs = {} if expected_headers is None else expected_headers
         assert not self.req_resp_map
-        self.req_resp.append(RequestResponse(method, path, code, hdrs, body, custom_method, expected_hdrs, expected_body))
+        self.req_resp.append(RequestResponse(method, path, code, hdrs, body, custom_method, expected_hdrs, expected_body, add_content_length_header))
 
-    def add_unordered(self, method, path, code=None, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None):
+    def add_unordered(self, method, path, code=None, headers=None, body=None, custom_method=None, expected_headers=None, expected_body=None, add_content_length_header=True):
         hdrs = {} if headers is None else headers
         expected_hdrs = {} if expected_headers is None else expected_headers
-        self.req_resp_map[(method, path)] = RequestResponse(method, path, code, hdrs, body, custom_method, expected_hdrs, expected_body)
+        self.req_resp_map[(method, path)] = RequestResponse(method, path, code, hdrs, body, custom_method, expected_hdrs, expected_body, add_content_length_header)
 
     @staticmethod
     def _process_req_resp(req_resp, request):
@@ -156,10 +157,11 @@ class SequentialHandler(object):
             request.send_response(req_resp.code)
             for k in req_resp.headers:
                 request.send_header(k, req_resp.headers[k])
-            if req_resp.body:
-                request.send_header('Content-Length', len(req_resp.body))
-            elif 'Content-Length' not in req_resp.headers:
-                request.send_header('Content-Length', '0')
+            if req_resp.add_content_length_header:
+                if req_resp.body:
+                    request.send_header('Content-Length', len(req_resp.body))
+                elif 'Content-Length' not in req_resp.headers:
+                    request.send_header('Content-Length', '0')
             request.end_headers()
             if req_resp.body:
                 try:

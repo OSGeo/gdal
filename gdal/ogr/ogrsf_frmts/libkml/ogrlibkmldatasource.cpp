@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2010, Brian Case
- * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -651,7 +651,7 @@ void OGRLIBKMLDataSource::FlushCache()
 OGRLIBKMLDataSource::~OGRLIBKMLDataSource()
 {
     /***** sync the DS to disk *****/
-    FlushCache();
+    OGRLIBKMLDataSource::FlushCache();
 
     CPLFree( m_pszName );
 

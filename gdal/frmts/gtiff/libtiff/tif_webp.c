@@ -553,12 +553,10 @@ TWebPCleanup(TIFF* tif)
       _TIFFfree(sp->pBuffer);
       sp->pBuffer = NULL;    
   }
-  
-  if (tif->tif_data) {
-    _TIFFfree(tif->tif_data);
-    tif->tif_data = NULL;
-  }
-  
+
+  _TIFFfree(tif->tif_data);
+  tif->tif_data = NULL;
+
   _TIFFSetDefaultCompressionState(tif);
 }
 

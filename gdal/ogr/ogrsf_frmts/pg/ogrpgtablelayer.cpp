@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@ class OGRPGTableFeatureDefn final: public OGRPGFeatureDefn
         void SolveFields() const;
 
     public:
-        OGRPGTableFeatureDefn( OGRPGTableLayer* poLayerIn,
+        explicit OGRPGTableFeatureDefn( OGRPGTableLayer* poLayerIn,
                                const char * pszName = nullptr ) :
             OGRPGFeatureDefn(pszName), poLayer(poLayerIn)
         {
@@ -1338,7 +1338,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                 char    *pszWKT = nullptr;
 
                 if (poGeom != nullptr)
-                    poGeom->exportToWkt( &pszWKT );
+                    poGeom->exportToWkt( &pszWKT, wkbVariantIso );
 
                 int nSRSId = poGeomFieldDefn->nSRSId;
                 if( pszWKT != nullptr )
@@ -1776,7 +1776,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             else
             {
                 char    *pszWKT = nullptr;
-                poGeom->exportToWkt( &pszWKT );
+                poGeom->exportToWkt( &pszWKT, wkbVariantIso );
 
                 if( pszWKT != nullptr )
                 {

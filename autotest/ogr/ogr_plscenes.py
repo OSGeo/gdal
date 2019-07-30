@@ -141,7 +141,7 @@ def test_ogr_plscenes_data_v1_nominal():
     assert ext == (-180.0, 180.0, -90.0, 90.0)
 
     field_count = lyr.GetLayerDefn().GetFieldCount()
-    assert field_count == 68
+    assert field_count == 78
 
     # Regular /items/ fetching
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[]}}""",

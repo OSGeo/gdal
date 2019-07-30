@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -222,9 +222,7 @@ def test_ogr_index_9():
     # After dataset closing, check that the index files do not exist after
     # dropping the index
     for filename in ['join_t.idm', 'join_t.ind']:
-        with pytest.raises(OSError, message="%s should not exist" % filename):
-            os.stat(filename)
-        
+        assert not os.path.exists(filename)
 
     # Re-create an index
     gdaltest.s_ds = ogr.OpenShared('join_t.dbf', update=1)
@@ -429,9 +427,7 @@ def test_ogr_index_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('join_t.dbf')
 
     for filename in ['join_t.idm', 'join_t.ind']:
-        with pytest.raises(OSError, message="%s should not exist" % filename):
-            os.stat(filename)
-        
+        assert not os.path.exists(filename)
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
         'tmp/ogr_index_10.shp')

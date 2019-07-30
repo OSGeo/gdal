@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -168,7 +168,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 
     if( nBlockXSize != nXSizeRequest || nBlockYSize != nYSizeRequest )
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        memset(pImage, 0, static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
     }
 
     GDALRasterIOExtraArg sExtraArg;

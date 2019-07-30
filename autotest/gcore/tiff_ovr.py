@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -49,10 +49,8 @@ def both_endian(request):
     Runs tests with both values of GDAL_TIFF_ENDIANNESS
     """
     if request.param == 'invert':
-        original = gdal.GetConfigOption('GDAL_TIFF_ENDIANNESS', "NATIVE")
-        gdal.SetConfigOption('GDAL_TIFF_ENDIANNESS', 'INVERTED')
-        yield
-        gdal.SetConfigOption('GDAL_TIFF_ENDIANNESS', original)
+        with gdaltest.config_option('GDAL_TIFF_ENDIANNESS', 'INVERTED'):
+            yield
     else:
         yield
 
@@ -251,16 +249,12 @@ def test_tiff_ovr_6(both_endian):
 
     shutil.copyfile('data/nodata_byte.tif', 'tmp/ovr6.tif')
 
-    oldOption = gdal.GetConfigOption('USE_RRD', 'NO')
-    gdal.SetConfigOption('USE_RRD', 'YES')
+    with gdaltest.config_option('USE_RRD', 'YES'):
+        wrk_ds = gdal.Open('tmp/ovr6.tif', gdal.GA_Update)
 
-    wrk_ds = gdal.Open('tmp/ovr6.tif', gdal.GA_Update)
+        assert wrk_ds is not None, 'Failed to open test dataset.'
 
-    assert wrk_ds is not None, 'Failed to open test dataset.'
-
-    wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2])
-
-    gdal.SetConfigOption('USE_RRD', oldOption)
+        wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     try:
         os.stat('tmp/ovr6.aux')
@@ -327,24 +321,15 @@ def test_tiff_ovr_8(both_endian):
 def test_tiff_ovr_9(both_endian):
     gdaltest.tiff_drv.Delete('tmp/ovr9.tif')
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     shutil.copyfile('data/rgbsmall.tif', 'tmp/ovr9.tif')
 
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
-    gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', 'YCBCR')
+    with gdaltest.config_options({'COMPRESS_OVERVIEW': 'JPEG',
+                                  'PHOTOMETRIC_OVERVIEW': 'YCBCR'}):
+        ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
 
-    ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
+        assert ds is not None, 'Failed to open test dataset.'
 
-    assert ds is not None, 'Failed to open test dataset.'
-
-    ds.BuildOverviews('AVERAGE', overviewlist=[2])
-
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
-    gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', '')
+        ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 5562
@@ -405,15 +390,6 @@ def test_tiff_ovr_11(both_endian):
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr11.tif', src_ds)
     src_ds = None
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-        ds = None
-        ds = gdal.Open('tmp/ovr11.tif', gdal.GA_Update)
-
     ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
     ds = None
@@ -442,15 +418,6 @@ def test_tiff_ovr_12(both_endian):
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr12.tif', src_ds, options=['COMPRESS=DEFLATE'])
     src_ds = None
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-        ds = None
-        ds = gdal.Open('tmp/ovr12.tif', gdal.GA_Update)
 
     ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
@@ -531,15 +498,6 @@ def test_tiff_ovr_15(both_endian):
 
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr15.tif', src_ds, options=['COMPRESS=DEFLATE'])
     src_ds = None
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if (md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1 or
-            int(gdal.VersionInfo('VERSION_NUM')) < 1700):
-        # The two following lines are necessary with inverted endianness
-        # for the moment with older libtiff
-        # See http://bugzilla.maptools.org/show_bug.cgi?id=1924 for more details
-        ds = None
-        ds = gdal.Open('tmp/ovr15.tif', gdal.GA_Update)
 
     ds.BuildOverviews('GAUSS', overviewlist=[2])
 
@@ -631,16 +589,9 @@ def test_tiff_ovr_18(both_endian):
 
 ###############################################################################
 # Check that we can create overviews on a newly create file (#2621)
-# Will cause older libtiff versions (<=3.8.2 for sure) to crash, so skip it
-# if BigTIFF is not supported (this is a sign of an older libtiff...)
 
 
 def test_tiff_ovr_19(both_endian):
-
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/ovr19.tif', 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
@@ -668,11 +619,6 @@ def test_tiff_ovr_19(both_endian):
 
 def test_tiff_ovr_20(both_endian):
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/ovr20.tif', 100, 100, 1)
     ds = None
 
@@ -680,9 +626,8 @@ def test_tiff_ovr_20(both_endian):
 
     assert ds is not None, 'Failed to open test dataset.'
 
-    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'YES')
-    ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
-    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
+    with gdaltest.config_option('BIGTIFF_OVERVIEW', 'YES'):
+        ds.BuildOverviews('NEAREST', overviewlist=[2, 4])
 
     ds = None
 
@@ -700,11 +645,6 @@ def test_tiff_ovr_20(both_endian):
 # Test BIGTIFF_OVERVIEW=IF_NEEDED option
 
 def test_tiff_ovr_21(both_endian):
-
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr21.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
@@ -734,11 +674,6 @@ def test_tiff_ovr_21(both_endian):
 
 def test_tiff_ovr_22(both_endian):
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/ovr22.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
@@ -748,11 +683,9 @@ def test_tiff_ovr_22(both_endian):
 
     # 170 k * 100 k = 17 GB. 17 GB / (2^2) = 4.25 GB > 4.2 GB
     # so BigTIFF is needed
-    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'NO')
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    err = ds.BuildOverviews('NONE', overviewlist=[2])
-    gdal.PopErrorHandler()
-    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
+    with gdaltest.config_option('BIGTIFF_OVERVIEW', 'NO'):
+        with gdaltest.error_handler():
+            err = ds.BuildOverviews('NONE', overviewlist=[2])
 
     ds = None
 
@@ -767,11 +700,6 @@ def test_tiff_ovr_22(both_endian):
 
 def test_tiff_ovr_23(both_endian):
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/ovr23.tif', 170000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
@@ -779,11 +707,9 @@ def test_tiff_ovr_23(both_endian):
 
     assert ds is not None, 'Failed to open test dataset.'
 
-    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'NO')
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    ds.BuildOverviews('NONE', overviewlist=[2])
-    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
+    with gdaltest.config_option('BIGTIFF_OVERVIEW', 'NO'):
+        with gdaltest.config_option('COMPRESS_OVERVIEW', 'DEFLATE'):
+            ds.BuildOverviews('NONE', overviewlist=[2])
 
     ds = None
 
@@ -802,11 +728,6 @@ def test_tiff_ovr_23(both_endian):
 
 def test_tiff_ovr_24(both_endian):
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     ds = gdaltest.tiff_drv.Create('tmp/ovr24.tif', 85000, 100000, 1, options=['SPARSE_OK=YES'])
     ds = None
 
@@ -816,9 +737,8 @@ def test_tiff_ovr_24(both_endian):
 
     # 85 k * 100 k = 8.5 GB, so BigTIFF might be needed as
     # 8.5 GB / 2 > 4.2 GB
-    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_SAFER')
-    ds.BuildOverviews('NONE', overviewlist=[16])
-    gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
+    with gdaltest.config_option('BIGTIFF_OVERVIEW', 'IF_SAFER'):
+        ds.BuildOverviews('NONE', overviewlist=[16])
 
     ds = None
 
@@ -944,9 +864,7 @@ def test_tiff_ovr_29(both_endian):
 
     png_ds = None
 
-    with pytest.raises(OSError, message='.ovr file still present'):
-        os.stat('tmp/ovr29.png.ovr')
-    
+    assert not os.path.exists('tmp/ovr29.png.ovr')
 
     gdal.GetDriverByName('PNG').Delete('tmp/ovr29.png')
 
@@ -1001,11 +919,6 @@ def test_tiff_ovr_31(both_endian):
 
 def test_tiff_ovr_32(both_endian):
 
-    drv = gdal.GetDriverByName('GTiff')
-    md = drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     # 4 regular band
     shutil.copyfile('data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif')
 
@@ -1056,11 +969,9 @@ def test_tiff_ovr_32(both_endian):
     shutil.copyfile('data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif')
 
     ds = gdal.Open('tmp/ovr32.tif')
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
-    ds.BuildOverviews('cubic', overviewlist=[2, 5])
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'DEFLATE'):
+        with gdaltest.config_option('INTERLEAVE_OVERVIEW', 'PIXEL'):
+            ds.BuildOverviews('cubic', overviewlist=[2, 5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     expected_cs = 21168
@@ -1213,13 +1124,8 @@ def test_tiff_ovr_35(both_endian):
 
 def test_tiff_ovr_36(both_endian):
 
-    oldval = gdal.GetConfigOption('GDAL_FORCE_CACHING', 'NO')
-    gdal.SetConfigOption('GDAL_FORCE_CACHING', 'YES')
-
-    ret = test_tiff_ovr_35(both_endian)
-
-    gdal.SetConfigOption('GDAL_FORCE_CACHING', oldval)
-
+    with gdaltest.config_option('GDAL_FORCE_CACHING', 'YES'):
+        ret = test_tiff_ovr_35(both_endian)
     return ret
 
 ###############################################################################
@@ -1234,11 +1140,9 @@ def test_tiff_ovr_37(both_endian):
 
     assert ds is not None, 'Failed to open test dataset.'
 
-    gdal.SetConfigOption('PREDICTOR_OVERVIEW', '2')
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'LZW')
-    ds.BuildOverviews('NEAR', overviewlist=[2])
-    gdal.SetConfigOption('PREDICTOR_OVERVIEW', None)
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+    with gdaltest.config_option('PREDICTOR_OVERVIEW', '2'):
+        with gdaltest.config_option('COMPRESS_OVERVIEW', 'LZW'):
+            ds.BuildOverviews('NEAR', overviewlist=[2])
 
     ds = None
 
@@ -1257,11 +1161,6 @@ def test_tiff_ovr_37(both_endian):
 
 
 def test_tiff_ovr_38(both_endian):
-
-    # Skip with old libtiff (crash with 3.8.2)
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr38.tif', src_ds, options=['COMPRESS=LZW', 'PREDICTOR=2'])
@@ -1448,19 +1347,14 @@ def test_tiff_ovr_43(both_endian):
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
-    old_accum = gdal.GetConfigOption('CPL_ACCUM_ERROR_MSG', 'OFF')
-    gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
-    gdal.ErrorReset()
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-
-    try:
-        ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')
-        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
-    except:
-        ds = None
-
-    gdal.PopErrorHandler()
-    gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', old_accum)
+    with gdaltest.config_option('CPL_ACCUM_ERROR_MSG', 'ON'):
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            try:
+                ds = gdal.Open('data/mandrilmini_12bitjpeg.tif')
+                ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
+            except:
+                ds = None
 
     if gdal.GetLastErrorMsg().find(
             'Unsupported JPEG data precision 12') != -1:
@@ -1477,10 +1371,9 @@ def test_tiff_ovr_43(both_endian):
         pass
 
     ds = gdal.Open('tmp/ovr43.tif')
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
-    ds.BuildOverviews('NEAREST', overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'JPEG'):
+        ds.BuildOverviews('NEAREST', overviewlist=[2])
+        ds = None
 
     ds = gdal.Open('tmp/ovr43.tif.ovr')
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
@@ -1501,11 +1394,10 @@ def test_tiff_ovr_43(both_endian):
 def test_tiff_ovr_44(both_endian):
 
     shutil.copyfile('data/byte.tif', 'tmp/ovr44.tif')
-    gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', '256')
-    ds = gdal.Open('tmp/ovr44.tif', gdal.GA_Update)
-    ds.BuildOverviews(overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', None)
+    with gdaltest.config_option('GDAL_TIFF_OVR_BLOCKSIZE', '256'):
+        ds = gdal.Open('tmp/ovr44.tif', gdal.GA_Update)
+        ds.BuildOverviews(overviewlist=[2])
+        ds = None
 
     ds = gdal.Open('tmp/ovr44.tif')
     ovr_band = ds.GetRasterBand(1).GetOverview(0)
@@ -1526,11 +1418,10 @@ def test_tiff_ovr_44(both_endian):
 def test_tiff_ovr_45(both_endian):
 
     shutil.copyfile('data/byte.tif', 'tmp/ovr45.tif')
-    gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', '256')
-    ds = gdal.Open('tmp/ovr45.tif', gdal.GA_ReadOnly)
-    ds.BuildOverviews(overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GDAL_TIFF_OVR_BLOCKSIZE', None)
+    with gdaltest.config_option('GDAL_TIFF_OVR_BLOCKSIZE', '256'):
+        ds = gdal.Open('tmp/ovr45.tif', gdal.GA_ReadOnly)
+        ds.BuildOverviews(overviewlist=[2])
+        ds = None
 
     ds = gdal.Open('tmp/ovr45.tif.ovr')
     ovr_band = ds.GetRasterBand(1)
@@ -1550,92 +1441,80 @@ def test_tiff_ovr_45(both_endian):
 
 def test_tiff_ovr_46():
 
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        pytest.skip()
-
     if not gdaltest.run_slow_tests():
         pytest.skip()
 
     # Test NEAREST
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
-    ds.BuildOverviews('NEAREST', overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+    with gdaltest.config_option('GTIFF_DONT_WRITE_BLOCKS', 'YES'):
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+        ds.BuildOverviews('NEAREST', overviewlist=[2])
+        ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
     # Test AVERAGE in optimized case (x2 reduction)
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
-    ds.BuildOverviews('AVERAGE', overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+    with gdaltest.config_option('GTIFF_DONT_WRITE_BLOCKS', 'YES'):
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+        ds.BuildOverviews('AVERAGE', overviewlist=[2])
+        ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
     # Test AVERAGE in un-optimized case (x3 reduction)
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
-    ds.BuildOverviews('AVERAGE', overviewlist=[3])
-    ds = None
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+    with gdaltest.config_option('GTIFF_DONT_WRITE_BLOCKS', 'YES'):
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+        ds.BuildOverviews('AVERAGE', overviewlist=[3])
+        ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
     # Test AVERAGE in un-optimized case (color table)
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+    with gdaltest.config_option('GTIFF_DONT_WRITE_BLOCKS', 'YES'):
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
 
-    ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (255, 0, 0))
-    ds.GetRasterBand(1).SetRasterColorTable(ct)
+        ct = gdal.ColorTable()
+        ct.SetColorEntry(0, (255, 0, 0))
+        ds.GetRasterBand(1).SetRasterColorTable(ct)
 
-    ds.BuildOverviews('AVERAGE', overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+        ds.BuildOverviews('AVERAGE', overviewlist=[2])
+        ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
     # Test GAUSS
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
-    ds.BuildOverviews('GAUSS', overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+    with gdaltest.config_option('GTIFF_DONT_WRITE_BLOCKS', 'YES'):
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+        ds.BuildOverviews('GAUSS', overviewlist=[2])
+        ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
     # Test GAUSS with color table
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+    with gdaltest.config_option('GTIFF_DONT_WRITE_BLOCKS', 'YES'):
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
 
-    ct = gdal.ColorTable()
-    ct.SetColorEntry(0, (255, 0, 0))
-    ds.GetRasterBand(1).SetRasterColorTable(ct)
+        ct = gdal.ColorTable()
+        ct.SetColorEntry(0, (255, 0, 0))
+        ds.GetRasterBand(1).SetRasterColorTable(ct)
 
-    ds.BuildOverviews('GAUSS', overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+        ds.BuildOverviews('GAUSS', overviewlist=[2])
+        ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
     # Test MODE
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
-    ds.BuildOverviews('MODE', overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+    with gdaltest.config_option('GTIFF_DONT_WRITE_BLOCKS', 'YES'):
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+        ds.BuildOverviews('MODE', overviewlist=[2])
+        ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
     # Test CUBIC
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
-    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
-    ds.BuildOverviews('CUBIC', overviewlist=[2])
-    ds = None
-    gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
+    with gdaltest.config_option('GTIFF_DONT_WRITE_BLOCKS', 'YES'):
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_ovr_46.tif', 50000, 50000, options=['SPARSE_OK=YES'])
+        ds.BuildOverviews('CUBIC', overviewlist=[2])
+        ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_ovr_46.tif')
 
@@ -1685,9 +1564,8 @@ def test_tiff_ovr_48(both_endian):
     # samples will cause the target pixel to be zeroed.
     shutil.copy('data/rgba_with_alpha_0_and_255.tif', 'tmp')
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif')
-    gdal.SetConfigOption('GDAL_OVR_PROPAGATE_NODATA', 'YES')
-    ds.BuildOverviews('AVERAGE', [2])
-    gdal.SetConfigOption('GDAL_OVR_PROPAGATE_NODATA', None)
+    with gdaltest.config_option('GDAL_OVR_PROPAGATE_NODATA', 'YES'):
+        ds.BuildOverviews('AVERAGE', [2])
     ds = None
 
     ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
@@ -1710,9 +1588,8 @@ def test_tiff_ovr_49(both_endian):
     ds.GetRasterBand(1).WriteRaster(col, 0, 1, 1023, c, 1, 1)
     ds = None
     ds = gdal.Open('/vsimem/tiff_ovr_49.tif')
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    ds.BuildOverviews('AVERAGE', overviewlist=[2])
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'DEFLATE'):
+        ds.BuildOverviews('AVERAGE', overviewlist=[2])
     ds = None
     ds = gdal.Open('/vsimem/tiff_ovr_49.tif.ovr')
     assert ds.GetRasterBand(1).Checksum() != 0
@@ -1766,16 +1643,14 @@ def test_tiff_ovr_52():
         pytest.skip()
 
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_52.tif', src_ds)
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
-    ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
-    ds.BuildOverviews('NEAR', [4])
-    ds = None
-    ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
-    ds.BuildOverviews('NEAR', [2])
-    ds = None
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'DEFLATE'):
+        with gdaltest.config_option('INTERLEAVE_OVERVIEW', 'PIXEL'):
+            ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
+            ds.BuildOverviews('NEAR', [4])
+            ds = None
+            ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
+            ds.BuildOverviews('NEAR', [2])
+            ds = None
 
     ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1787,13 +1662,11 @@ def test_tiff_ovr_52():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_52.tif')
 
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_52.tif', src_ds)
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
-    ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
-    ds.BuildOverviews('NEAR', [4, 2])
-    ds = None
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'DEFLATE'):
+        with gdaltest.config_option('INTERLEAVE_OVERVIEW', 'PIXEL'):
+            ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
+            ds.BuildOverviews('NEAR', [4, 2])
+            ds = None
 
     ds = gdal.Open('/vsimem/tiff_ovr_52.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1835,18 +1708,16 @@ def test_tiff_ovr_53():
 
     # Compressed code path
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_53.tif', src_ds)
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
-    ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
-    ds.BuildOverviews('NEAR', [2])
-    ds = None
-    # Note: currently this will compute it from the base raster and not
-    # ov_factor=2 !
-    ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
-    ds.BuildOverviews('NEAR', [4])
-    ds = None
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'DEFLATE'):
+        with gdaltest.config_option('INTERLEAVE_OVERVIEW', 'PIXEL'):
+            ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
+            ds.BuildOverviews('NEAR', [2])
+            ds = None
+            # Note: currently this will compute it from the base raster and not
+            # ov_factor=2 !
+            ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
+            ds.BuildOverviews('NEAR', [4])
+            ds = None
 
     ds = gdal.Open('/vsimem/tiff_ovr_53.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1871,18 +1742,15 @@ def test_tiff_ovr_54():
     src_ds = gdal.Open('../gdrivers/data/small_world.tif')
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_54.tif', src_ds)
 
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
-    gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', 'YCBCR')
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
-    ds = gdal.Open('/vsimem/tiff_ovr_54.tif')
-    ds.BuildOverviews('AVERAGE', [2])
-    ds = None
-    ds = gdal.Open('/vsimem/tiff_ovr_54.tif')
-    ds.BuildOverviews('AVERAGE', [4])
-    ds = None
-    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
-    gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', None)
-    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+    with gdaltest.config_options({'COMPRESS_OVERVIEW': 'JPEG',
+                                  'PHOTOMETRIC_OVERVIEW': 'YCBCR',
+                                  'INTERLEAVE_OVERVIEW': 'PIXEL'}):
+        ds = gdal.Open('/vsimem/tiff_ovr_54.tif')
+        ds.BuildOverviews('AVERAGE', [2])
+        ds = None
+        ds = gdal.Open('/vsimem/tiff_ovr_54.tif')
+        ds.BuildOverviews('AVERAGE', [4])
+        ds = None
 
     ds = gdal.Open('/vsimem/tiff_ovr_54.tif')
     cs0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1962,4 +1830,39 @@ def test_tiff_ovr_average_multiband_vs_singleband():
     assert cs_band == cs_pixel
 
 
+###############################################################################
+# Cleanup
 
+def test_tiff_ovr_cleanup():
+    gdaltest.tiff_drv.Delete('tmp/mfloat32.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr4.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr5.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr6.tif')
+    gdaltest.tiff_drv.Delete('tmp/test_average_palette.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr9.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr10.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr11.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr12.tif')
+    gdaltest.tiff_drv.Delete('tmp/test_gauss_palette.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr15.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr16.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr17.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr18.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr19.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr20.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr21.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr22.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr23.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr24.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr25.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr26.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr27.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr30.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr31.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr37.dt0')
+    gdaltest.tiff_drv.Delete('tmp/ovr38.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr39.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr40.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr41.tif')
+    gdaltest.tiff_drv.Delete('tmp/ovr42.tif')
+    gdaltest.tiff_drv.Delete('tmp/rgba_with_alpha_0_and_255.tif')

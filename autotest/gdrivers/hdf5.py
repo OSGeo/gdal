@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for HDF5 driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -317,12 +317,9 @@ def test_hdf5_12():
     assert 'Azimuthal_Equidistant' in got_projection
 
     got_gt = ds.GetGeoTransform()
-    expected_gt = (-240890.02470187756, 1001.7181388478905, 0.0, 239638.21326987055, 0.0, -1000.3790932482976)
-    # Proj 4.9.3
-    expected_gt2 = (-240889.94573659054, 1001.7178235672992, 0.0, 239638.28570609915, 0.0, -1000.3794089534567)
+    expected_gt = (-239999.9823595533, 997.9165855496311, 0.0, 239000.03320328312, 0.0, -997.9167782264051)
 
-    assert (max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-5 or \
-       max([abs(got_gt[i] - expected_gt2[i]) for i in range(6)]) <= 1e-5)
+    assert max([abs(got_gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-5, got_gt
 
 ###############################################################################
 # Test MODIS L2 HDF5 GCPs (#6666)
@@ -397,6 +394,21 @@ def test_hdf5_single_char_varname():
     ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
     assert ds is not None
 
+def test_hdf5_attr_all_datatypes():
+
+    ds = gdal.Open('data/attr_all_datatypes.h5')
+    assert ds is not None
+    assert ds.GetMetadata() == {'attr_float16': '125 ',
+                                'attr_float32': '125 ',
+                                'attr_float64': '125 ',
+                                'attr_int16': '125 ',
+                                'attr_int32': '125 ',
+                                'attr_int8': '125 ',
+                                'attr_uint16': '125 ',
+                                'attr_uint32': '125 ',
+                                'attr_uint8': '125 '}
+
+
 
 def test_hdf5_virtual_file():
     hdf5_files = [
@@ -439,5 +451,25 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
     assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
 
+def test_hdf5_dimension_labels_with_null():
+    assert gdal.Open('data/dimension_labels_with_null.h5')
 
 
+def test_hdf5_recursive_groups():
+
+    # File generated with
+    # import h5py
+    # f = h5py.File('recursive_groups.h5','w')
+    # group = f.create_group("subgroup")
+    # group['link_to_root'] = f
+    # group['link_to_self'] = group
+    # group['soft_link_to_root'] = h5py.SoftLink('/')
+    # group['soft_link_to_self'] = h5py.SoftLink('/subgroup')
+    # group['soft_link_to_not_existing'] = h5py.SoftLink('/not_existing')
+    # group['hard_link_to_root'] = h5py.HardLink('/')
+    # group['ext_link_to_self_root'] = h5py.ExternalLink("recursive_groups.h5", "/")
+    # f.close()
+
+    ds = gdal.Open('data/recursive_groups.h5')
+    assert ds is not None
+    ds.GetSubDatasets()

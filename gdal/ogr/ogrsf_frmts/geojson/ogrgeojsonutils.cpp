@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -172,10 +172,18 @@ static bool IsGeoJSONLikeObject( const char* pszText, bool* pbMightBeSequence )
         return true;
     }
 
-    CPLString osWithoutSpace = GetCompactJSon(pszText,
-                                            strlen(szESRIJSonPotentialStart1));
+    CPLString osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
     if( osWithoutSpace.find("{\"features\":[") == 0 &&
         osWithoutSpace.find(szESRIJSonPotentialStart1) != 0 )
+    {
+        if( pbMightBeSequence )
+            *pbMightBeSequence = false;
+        return true;
+    }
+
+    // See https://raw.githubusercontent.com/icepack/icepack-data/master/meshes/larsen/larsen_inflow.geojson
+    if( osWithoutSpace.find("{\"crs\":{") == 0 &&
+        osWithoutSpace.find(",\"features\":[") != std::string::npos )
     {
         if( pbMightBeSequence )
             *pbMightBeSequence = false;

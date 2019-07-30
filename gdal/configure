@@ -636,11 +636,13 @@ HAVE_OPENSSL_CRYPTO
 USE_ONLY_CRYPTODLL_ALG
 HAVE_CRYPTOPP
 HAVE_ARMADILLO
+RDB_SETTING
 RASDAMAN_LIB
 RASDAMAN_INC
 RASDAMAN_ENABLED
 JVM_LIB
 MDB_ENABLED
+TILEDB_SETTING
 JNI_LIB
 HDFS_INC
 HDFS_LIB
@@ -738,7 +740,6 @@ HAVE_EXPAT
 EXPAT_VERSION
 EXPAT_LDFLAGS
 EXPAT_CFLAGS
-HAVE_NAS
 XERCES_INCLUDE
 HAVE_XERCES
 XERCES_LDFLAGS
@@ -806,7 +807,6 @@ OGDI_INCLUDE
 HAVE_OGDI
 OGDI_LIBS
 OGDI_CFLAGS
-PKG_CONFIG
 GIF_SETTING
 TIFF_JPEG12_ENABLED
 JPEG12_ENABLED
@@ -815,7 +815,6 @@ HAVE_CHARLS
 JPEG_SETTING
 GEOTIFF_INCLUDE
 GEOTIFF_SETTING
-TIFF_OPTS
 TIFF_SETTING
 PCIDSK_INCLUDE
 PCIDSK_LIB
@@ -833,7 +832,12 @@ GRASS_SETTING
 PG_LIB
 PG_INC
 HAVE_PG
-PG_CONFIG
+PQ_LIBS
+PQ_CFLAGS
+PKG_CONFIG
+GDALFORMATS_ENABLED
+OGRFORMATS_ENABLED_CFLAGS
+OGRFORMATS_ENABLED
 ZSTD_SETTING
 LIBLZMA_SETTING
 PROJ_INCLUDE
@@ -984,6 +988,141 @@ with_libiconv_prefix
 with_proj
 with_liblzma
 with_zstd
+enable_all_optional_drivers
+enable_driver_aaigrid
+enable_driver_adrg
+enable_driver_aigrid
+enable_driver_airsar
+enable_driver_arg
+enable_driver_blx
+enable_driver_bmp
+enable_driver_bsb
+enable_driver_cals
+enable_driver_ceos
+enable_driver_ceos2
+enable_driver_coasp
+enable_driver_cosar
+enable_driver_ctg
+enable_driver_dimap
+enable_driver_dted
+enable_driver_e00grid
+enable_driver_elas
+enable_driver_envisat
+enable_driver_ers
+enable_driver_fit
+enable_driver_gff
+enable_driver_gsg
+enable_driver_gxf
+enable_driver_hf2
+enable_driver_idrisi
+enable_driver_ignfheightasciigrid
+enable_driver_ilwis
+enable_driver_ingr
+enable_driver_iris
+enable_driver_iso8211
+enable_driver_jaxapalsar
+enable_driver_jdem
+enable_driver_kmlsuperoverlay
+enable_driver_l1b
+enable_driver_leveller
+enable_driver_map
+enable_driver_mrf
+enable_driver_msgn
+enable_driver_ngsgeoid
+enable_driver_nitf
+enable_driver_northwood
+enable_driver_pds
+enable_driver_prf
+enable_driver_r
+enable_driver_raw
+enable_driver_rmf
+enable_driver_rs2
+enable_driver_safe
+enable_driver_saga
+enable_driver_sdts
+enable_driver_sentinel2
+enable_driver_sgi
+enable_driver_sigdem
+enable_driver_srtmhgt
+enable_driver_terragen
+enable_driver_til
+enable_driver_tsx
+enable_driver_usgsdem
+enable_driver_xpm
+enable_driver_xyz
+enable_driver_zmap
+enable_driver_grib
+enable_driver_ozi
+enable_driver_pdf
+enable_driver_rik
+enable_driver_aeronavfaa
+enable_driver_arcgen
+enable_driver_avc
+enable_driver_bna
+enable_driver_cad
+enable_driver_csv
+enable_driver_dgn
+enable_driver_dxf
+enable_driver_edigeo
+enable_driver_geoconcept
+enable_driver_georss
+enable_driver_gml
+enable_driver_gmt
+enable_driver_gpsbabel
+enable_driver_gpx
+enable_driver_gtm
+enable_driver_htf
+enable_driver_jml
+enable_driver_mvt
+enable_driver_ntf
+enable_driver_openair
+enable_driver_openfilegdb
+enable_driver_pgdump
+enable_driver_rec
+enable_driver_s57
+enable_driver_segukooa
+enable_driver_segy
+enable_driver_selafin
+enable_driver_shape
+enable_driver_sua
+enable_driver_svg
+enable_driver_sxf
+enable_driver_tiger
+enable_driver_vdv
+enable_driver_wasp
+enable_driver_xplane
+enable_driver_eeda
+enable_driver_plmosaic
+enable_driver_rda
+enable_driver_wcs
+enable_driver_wms
+enable_driver_wmts
+enable_driver_daas
+enable_driver_amigocloud
+enable_driver_carto
+enable_driver_cloudant
+enable_driver_couchdb
+enable_driver_csw
+enable_driver_elastic
+enable_driver_gft
+enable_driver_ngw
+enable_driver_plscenes
+enable_driver_wfs
+enable_driver_rasterlite
+enable_driver_mbtiles
+enable_driver_gpkg
+enable_driver_vfk
+enable_driver_osm
+enable_driver_ods
+enable_driver_xlsx
+enable_driver_nas
+enable_driver_ili
+enable_driver_gmlas
+enable_driver_odbc
+enable_driver_pgeo
+enable_driver_mssqlspatial
+enable_driver_geomedia
+enable_driver_walk
 with_pg
 with_grass
 with_libgrass
@@ -1019,11 +1158,9 @@ with_jp2mrsid
 with_mrsid_lidar
 with_jp2lura
 with_msg
-with_bsb
 with_oci
 with_oci_include
 with_oci_lib
-with_grib
 with_gnm
 with_mysql
 with_ingres
@@ -1075,14 +1212,15 @@ with_perl
 with_python
 with_java
 with_hdfs
+with_tiledb
 with_mdb
 with_jvm_lib
 with_jvm_lib_add_rpath
 with_rasdaman
+with_rdb
 with_armadillo
 with_cryptopp
 with_crypto
-with_mrf
 with_lerc
 with_null
 '
@@ -1101,6 +1239,8 @@ LT_SYS_LIBRARY_PATH
 CPP
 CXXCPP
 PKG_CONFIG
+PQ_CFLAGS
+PQ_LIBS
 OGDI_CFLAGS
 OGDI_LIBS
 MONGOCXXV3_CFLAGS
@@ -1744,6 +1884,211 @@ Optional Features:
   --enable-lto            enable LTO(link time optimization) (disabled by
                           default)
   --disable-rpath         do not hardcode runtime library paths
+  --disable-all-optional-drivers
+                          disable all non-mandatory internal drivers.
+                          Individual drivers can be added with
+                          --enable-driver-XXX
+  --disable-driver-aaigrid
+                          disable aaigrid driver support (enabled by default)
+  --disable-driver-adrg   disable adrg driver support (enabled by default)
+  --disable-driver-aigrid disable aigrid driver support (enabled by default)
+  --disable-driver-airsar disable airsar driver support (enabled by default)
+  --disable-driver-arg    disable arg driver support (enabled by default)
+  --disable-driver-blx    disable blx driver support (enabled by default)
+  --disable-driver-bmp    disable bmp driver support (enabled by default)
+  --disable-driver-bsb    disable bsb driver support (enabled by default)
+  --disable-driver-cals   disable cals driver support (enabled by default)
+  --disable-driver-ceos   disable ceos driver support (enabled by default)
+  --disable-driver-ceos2  disable ceos2 driver support (enabled by default)
+  --disable-driver-coasp  disable coasp driver support (enabled by default)
+  --disable-driver-cosar  disable cosar driver support (enabled by default)
+  --disable-driver-ctg    disable ctg driver support (enabled by default)
+  --disable-driver-dimap  disable dimap driver support (enabled by default)
+  --disable-driver-dted   disable dted driver support (enabled by default)
+  --disable-driver-e00grid
+                          disable e00grid driver support (enabled by default)
+  --disable-driver-elas   disable elas driver support (enabled by default)
+  --disable-driver-envisat
+                          disable envisat driver support (enabled by default)
+  --disable-driver-ers    disable ers driver support (enabled by default)
+  --disable-driver-fit    disable fit driver support (enabled by default)
+  --disable-driver-gff    disable gff driver support (enabled by default)
+  --disable-driver-gsg    disable gsg driver support (enabled by default)
+  --disable-driver-gxf    disable gxf driver support (enabled by default)
+  --disable-driver-hf2    disable hf2 driver support (enabled by default)
+  --disable-driver-idrisi disable idrisi driver support (enabled by default)
+  --disable-driver-ignfheightasciigrid
+                          disable ignfheightasciigrid driver support (enabled by default)
+  --disable-driver-ilwis  disable ilwis driver support (enabled by default)
+  --disable-driver-ingr   disable ingr driver support (enabled by default)
+  --disable-driver-iris   disable iris driver support (enabled by default)
+  --disable-driver-iso8211
+                          disable iso8211 driver support (enabled by default)
+  --disable-driver-jaxapalsar
+                          disable jaxapalsar driver support (enabled by default)
+  --disable-driver-jdem   disable jdem driver support (enabled by default)
+  --disable-driver-kmlsuperoverlay
+                          disable kmlsuperoverlay driver support (enabled by default)
+  --disable-driver-l1b    disable l1b driver support (enabled by default)
+  --disable-driver-leveller
+                          disable leveller driver support (enabled by default)
+  --disable-driver-map    disable map driver support (enabled by default)
+  --disable-driver-mrf    disable mrf driver support (enabled by default)
+  --disable-driver-msgn   disable msgn driver support (enabled by default)
+  --disable-driver-ngsgeoid
+                          disable ngsgeoid driver support (enabled by default)
+  --disable-driver-nitf   disable nitf driver support (enabled by default)
+  --disable-driver-northwood
+                          disable northwood driver support (enabled by default)
+  --disable-driver-pds    disable pds driver support (enabled by default)
+  --disable-driver-prf    disable prf driver support (enabled by default)
+  --disable-driver-r      disable r driver support (enabled by default)
+  --disable-driver-raw    disable raw driver support (enabled by default)
+  --disable-driver-rmf    disable rmf driver support (enabled by default)
+  --disable-driver-rs2    disable rs2 driver support (enabled by default)
+  --disable-driver-safe   disable safe driver support (enabled by default)
+  --disable-driver-saga   disable saga driver support (enabled by default)
+  --disable-driver-sdts   disable sdts driver support (enabled by default)
+  --disable-driver-sentinel2
+                          disable sentinel2 driver support (enabled by default)
+  --disable-driver-sgi    disable sgi driver support (enabled by default)
+  --disable-driver-sigdem disable sigdem driver support (enabled by default)
+  --disable-driver-srtmhgt
+                          disable srtmhgt driver support (enabled by default)
+  --disable-driver-terragen
+                          disable terragen driver support (enabled by default)
+  --disable-driver-til    disable til driver support (enabled by default)
+  --disable-driver-tsx    disable tsx driver support (enabled by default)
+  --disable-driver-usgsdem
+                          disable usgsdem driver support (enabled by default)
+  --disable-driver-xpm    disable xpm driver support (enabled by default)
+  --disable-driver-xyz    disable xyz driver support (enabled by default)
+  --disable-driver-zmap   disable zmap driver support (enabled by default)
+  --disable-driver-grib   disable grib format support (enabled by default,
+                          requires dependency)
+  --disable-driver-ozi    disable ozi format support (enabled by default,
+                          requires dependency)
+  --disable-driver-pdf    disable pdf format support (enabled by default,
+                          requires dependency)
+  --disable-driver-rik    disable rik format support (enabled by default,
+                          requires dependency)
+  --disable-driver-aeronavfaa
+                          disable aeronavfaa driver support (enabled by default)
+  --disable-driver-arcgen disable arcgen driver support (enabled by default)
+  --disable-driver-avc    disable avc driver support (enabled by default)
+  --disable-driver-bna    disable bna driver support (enabled by default)
+  --disable-driver-cad    disable cad driver support (enabled by default)
+  --disable-driver-csv    disable csv driver support (enabled by default)
+  --disable-driver-dgn    disable dgn driver support (enabled by default)
+  --disable-driver-dxf    disable dxf driver support (enabled by default)
+  --disable-driver-edigeo disable edigeo driver support (enabled by default)
+  --disable-driver-geoconcept
+                          disable geoconcept driver support (enabled by default)
+  --disable-driver-georss disable georss driver support (enabled by default)
+  --disable-driver-gml    disable gml driver support (enabled by default)
+  --disable-driver-gmt    disable gmt driver support (enabled by default)
+  --disable-driver-gpsbabel
+                          disable gpsbabel driver support (enabled by default)
+  --disable-driver-gpx    disable gpx driver support (enabled by default)
+  --disable-driver-gtm    disable gtm driver support (enabled by default)
+  --disable-driver-htf    disable htf driver support (enabled by default)
+  --disable-driver-jml    disable jml driver support (enabled by default)
+  --disable-driver-mvt    disable mvt driver support (enabled by default)
+  --disable-driver-ntf    disable ntf driver support (enabled by default)
+  --disable-driver-openair
+                          disable openair driver support (enabled by default)
+  --disable-driver-openfilegdb
+                          disable openfilegdb driver support (enabled by default)
+  --disable-driver-pgdump disable pgdump driver support (enabled by default)
+  --disable-driver-rec    disable rec driver support (enabled by default)
+  --disable-driver-s57    disable s57 driver support (enabled by default)
+  --disable-driver-segukooa
+                          disable segukooa driver support (enabled by default)
+  --disable-driver-segy   disable segy driver support (enabled by default)
+  --disable-driver-selafin
+                          disable selafin driver support (enabled by default)
+  --disable-driver-shape  disable shape driver support (enabled by default)
+  --disable-driver-sua    disable sua driver support (enabled by default)
+  --disable-driver-svg    disable svg driver support (enabled by default)
+  --disable-driver-sxf    disable sxf driver support (enabled by default)
+  --disable-driver-tiger  disable tiger driver support (enabled by default)
+  --disable-driver-vdv    disable vdv driver support (enabled by default)
+  --disable-driver-wasp   disable wasp driver support (enabled by default)
+  --disable-driver-xplane disable xplane driver support (enabled by default)
+  --disable-driver-eeda   disable eeda format support (enabled by default,
+                          requires curl)
+  --disable-driver-plmosaic
+                          disable plmosaic format support (enabled by default,
+                          requires curl)
+  --disable-driver-rda    disable rda format support (enabled by default,
+                          requires curl)
+  --disable-driver-wcs    disable wcs format support (enabled by default,
+                          requires curl)
+  --disable-driver-wms    disable wms format support (enabled by default,
+                          requires curl)
+  --disable-driver-wmts   disable wmts format support (enabled by default,
+                          requires curl)
+  --disable-driver-daas   disable daas format support (enabled by default,
+                          requires curl)
+  --disable-driver-amigocloud
+                          disable amigocloud driver support (enabled by default,
+                          requires curl)
+  --disable-driver-carto  disable carto driver support (enabled by default,
+                          requires curl)
+  --disable-driver-cloudant
+                          disable cloudant driver support (enabled by default,
+                          requires curl)
+  --disable-driver-couchdb
+                          disable couchdb driver support (enabled by default,
+                          requires curl)
+  --disable-driver-csw    disable csw driver support (enabled by default,
+                          requires curl)
+  --disable-driver-elastic
+                          disable elastic driver support (enabled by default,
+                          requires curl)
+  --disable-driver-gft    disable gft driver support (enabled by default,
+                          requires curl)
+  --disable-driver-ngw    disable ngw driver support (enabled by default,
+                          requires curl)
+  --disable-driver-plscenes
+                          disable plscenes driver support (enabled by default,
+                          requires curl)
+  --disable-driver-wfs    disable wfs driver support (enabled by default,
+                          requires curl)
+  --disable-driver-rasterlite
+                          disable rasterlite format support (enabled by default,
+                          requires sqlite3)
+  --disable-driver-mbtiles
+                          disable mbtiles format support (enabled by default,
+                          requires sqlite3)
+  --disable-driver-gpkg   disable gpkg driver support (enabled by default,
+                          requires sqlite3)
+  --disable-driver-vfk    disable vfk driver support (enabled by default,
+                          requires sqlite3)
+  --disable-driver-osm    disable osm driver support (enabled by default,
+                          requires sqlite3)
+  --disable-driver-ods    disable ods driver support (enabled by default,
+                          requires expat)
+  --disable-driver-xlsx   disable xlsx driver support (enabled by default,
+                          requires expat)
+  --disable-driver-nas    disable nas driver support (enabled by default,
+                          requires xerces-c)
+  --disable-driver-ili    disable ili driver support (enabled by default,
+                          requires xerces-c)
+  --disable-driver-gmlas  disable gmlas driver support (enabled by default,
+                          requires xerces-c)
+  --disable-driver-odbc   disable odbc driver support (enabled by default,
+                          requires odbc)
+  --disable-driver-pgeo   disable pgeo driver support (enabled by default,
+                          requires odbc)
+  --disable-driver-mssqlspatial
+                          disable mssqlspatial driver support (enabled by default,
+                          requires odbc)
+  --disable-driver-geomedia
+                          disable geomedia driver support (enabled by default,
+                          requires odbc)
+  --disable-driver-walk   disable walk driver support (enabled by default,
+                          requires odbc)
   --enable-pdf-plugin     enable PDF driver as a plugin (included in libgdal
                           by default)
 
@@ -1778,8 +2123,7 @@ Optional Packages:
   --with-proj=ARG Compile with PROJ.x (ARG=yes or path)
   --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
   --with-zstd=ARG       Include zstd support (ARG=yes/no/installation_prefix)
-  --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=path to
-                          pg_config)
+  --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=yes,no)
   --with-grass=ARG      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)
   --with-libgrass=ARG   Include GRASS support based on libgrass (GRASS 5.0+)
   --with-cfitsio=ARG    Include FITS support (ARG=no or libcfitsio path)
@@ -1814,14 +2158,12 @@ Optional Packages:
   --with-mrsid_lidar=ARG      Include MrSID/MG4 LiDAR support (ARG=path to LizardTech LiDAR SDK or no)
   --with-j2lura=ARG    Include JP2Lua support (ARG=no, lura SDK install path)
   --with-msg=ARG          Enable MSG driver (ARG=yes or no)
-  --without-bsb           Disable BSB driver (legal issues pending
   --with-oci=[ARG]        use Oracle OCI API from given Oracle home
                           (ARG=path); use existing ORACLE_HOME (ARG=yes);
                           disable Oracle OCI support (ARG=no)
   --with-oci-include=[DIR]
                           use Oracle OCI API headers from given path
   --with-oci-lib=[DIR]    use Oracle OCI API libraries from given path
-  --without-grib          Disable GRIB driver
   --with-gnm            Build GNM into shared library
   --with-mysql=ARG      Include MySQL (ARG=path to mysql_config) [default=no]
   --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)
@@ -1878,14 +2220,15 @@ Optional Packages:
   --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)
   --with-java       Include Java support (ARG=yes, no or JDK home path)  [default=no]
   --with-hdfs=ARG        Include HDFS support (ARG=Path or no)
+  --with-tiledb=ARG    Include TileDB support (ARG=no, yes or tiledb install root path)
   --with-mdb       Include MDB driver
   --with-jvm-lib=ARG        ARG is dlopen or points to Java libjvm path
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
+  --with-rdb=ARG    Include RDB support (ARG=no, yes or RDB SDK root path)
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
   --with-crypto=ARG       Include crypto (from openssl) support (ARG=yes, no or path)
-  --without-mrf           Disable MRF driver
   --without-lerc          Disable LERC library
   --with-null             Enable NULL driver (only useful for development
                           purposes
@@ -1905,6 +2248,8 @@ Some influential environment variables:
   CPP         C preprocessor
   CXXCPP      C++ preprocessor
   PKG_CONFIG  path to pkg-config utility
+  PQ_CFLAGS   C compiler flags for PQ, overriding pkg-config
+  PQ_LIBS     linker flags for PQ, overriding pkg-config
   OGDI_CFLAGS C compiler flags for OGDI, overriding pkg-config
   OGDI_LIBS   linker flags for OGDI, overriding pkg-config
   MONGOCXXV3_CFLAGS
@@ -23546,7 +23891,7 @@ fi
 PROJ_INCLUDE=""
 if test "x$with_proj" = "xno" ; then
 
-  as_fn_error $? "PROJ 6 is a required dependency." "$LINENO" 5
+  as_fn_error $? "PROJ >= 6 is a required dependency." "$LINENO" 5
 
 else
 
@@ -24311,6 +24656,3848 @@ fi
 ZSTD_SETTING=$ZSTD_SETTING
 
 
+GDALFORMATS_ENABLED=
+GDALFORMATS_DISABLED=
+OGRFORMATS_ENABLED=
+OGRFORMATS_ENABLED_CFLAGS=
+OGRFORMATS_DISABLED=
+
+
+
+
+# Check whether --enable-all-optional-drivers was given.
+if test "${enable_all_optional_drivers+set}" = set; then :
+  enableval=$enable_all_optional_drivers;
+fi
+
+if test "x$enable_all_optional_drivers" = "xno"; then :
+  all_drivers_disabled=yes
+else
+  all_drivers_disabled=no
+fi
+
+
+
+
+
+
+# Check whether --enable-driver-aaigrid was given.
+if test "${enable_driver_aaigrid+set}" = set; then :
+  enableval=$enable_driver_aaigrid;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_aaigrid
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED aaigrid"
+  INTERNAL_FORMAT_aaigrid_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED aaigrid"
+  INTERNAL_FORMAT_aaigrid_ENABLED=no
+fi
+
+# Check whether --enable-driver-adrg was given.
+if test "${enable_driver_adrg+set}" = set; then :
+  enableval=$enable_driver_adrg;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_adrg
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED adrg"
+  INTERNAL_FORMAT_adrg_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED adrg"
+  INTERNAL_FORMAT_adrg_ENABLED=no
+fi
+
+# Check whether --enable-driver-aigrid was given.
+if test "${enable_driver_aigrid+set}" = set; then :
+  enableval=$enable_driver_aigrid;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_aigrid
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED aigrid"
+  INTERNAL_FORMAT_aigrid_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED aigrid"
+  INTERNAL_FORMAT_aigrid_ENABLED=no
+fi
+
+# Check whether --enable-driver-airsar was given.
+if test "${enable_driver_airsar+set}" = set; then :
+  enableval=$enable_driver_airsar;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_airsar
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED airsar"
+  INTERNAL_FORMAT_airsar_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED airsar"
+  INTERNAL_FORMAT_airsar_ENABLED=no
+fi
+
+# Check whether --enable-driver-arg was given.
+if test "${enable_driver_arg+set}" = set; then :
+  enableval=$enable_driver_arg;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_arg
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED arg"
+  INTERNAL_FORMAT_arg_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED arg"
+  INTERNAL_FORMAT_arg_ENABLED=no
+fi
+
+# Check whether --enable-driver-blx was given.
+if test "${enable_driver_blx+set}" = set; then :
+  enableval=$enable_driver_blx;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_blx
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED blx"
+  INTERNAL_FORMAT_blx_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED blx"
+  INTERNAL_FORMAT_blx_ENABLED=no
+fi
+
+# Check whether --enable-driver-bmp was given.
+if test "${enable_driver_bmp+set}" = set; then :
+  enableval=$enable_driver_bmp;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_bmp
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED bmp"
+  INTERNAL_FORMAT_bmp_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED bmp"
+  INTERNAL_FORMAT_bmp_ENABLED=no
+fi
+
+# Check whether --enable-driver-bsb was given.
+if test "${enable_driver_bsb+set}" = set; then :
+  enableval=$enable_driver_bsb;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_bsb
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED bsb"
+  INTERNAL_FORMAT_bsb_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED bsb"
+  INTERNAL_FORMAT_bsb_ENABLED=no
+fi
+
+# Check whether --enable-driver-cals was given.
+if test "${enable_driver_cals+set}" = set; then :
+  enableval=$enable_driver_cals;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_cals
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED cals"
+  INTERNAL_FORMAT_cals_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED cals"
+  INTERNAL_FORMAT_cals_ENABLED=no
+fi
+
+# Check whether --enable-driver-ceos was given.
+if test "${enable_driver_ceos+set}" = set; then :
+  enableval=$enable_driver_ceos;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ceos
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ceos"
+  INTERNAL_FORMAT_ceos_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ceos"
+  INTERNAL_FORMAT_ceos_ENABLED=no
+fi
+
+# Check whether --enable-driver-ceos2 was given.
+if test "${enable_driver_ceos2+set}" = set; then :
+  enableval=$enable_driver_ceos2;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ceos2
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ceos2"
+  INTERNAL_FORMAT_ceos2_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ceos2"
+  INTERNAL_FORMAT_ceos2_ENABLED=no
+fi
+
+# Check whether --enable-driver-coasp was given.
+if test "${enable_driver_coasp+set}" = set; then :
+  enableval=$enable_driver_coasp;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_coasp
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED coasp"
+  INTERNAL_FORMAT_coasp_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED coasp"
+  INTERNAL_FORMAT_coasp_ENABLED=no
+fi
+
+# Check whether --enable-driver-cosar was given.
+if test "${enable_driver_cosar+set}" = set; then :
+  enableval=$enable_driver_cosar;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_cosar
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED cosar"
+  INTERNAL_FORMAT_cosar_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED cosar"
+  INTERNAL_FORMAT_cosar_ENABLED=no
+fi
+
+# Check whether --enable-driver-ctg was given.
+if test "${enable_driver_ctg+set}" = set; then :
+  enableval=$enable_driver_ctg;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ctg
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ctg"
+  INTERNAL_FORMAT_ctg_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ctg"
+  INTERNAL_FORMAT_ctg_ENABLED=no
+fi
+
+# Check whether --enable-driver-dimap was given.
+if test "${enable_driver_dimap+set}" = set; then :
+  enableval=$enable_driver_dimap;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_dimap
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED dimap"
+  INTERNAL_FORMAT_dimap_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED dimap"
+  INTERNAL_FORMAT_dimap_ENABLED=no
+fi
+
+# Check whether --enable-driver-dted was given.
+if test "${enable_driver_dted+set}" = set; then :
+  enableval=$enable_driver_dted;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_dted
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED dted"
+  INTERNAL_FORMAT_dted_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED dted"
+  INTERNAL_FORMAT_dted_ENABLED=no
+fi
+
+# Check whether --enable-driver-e00grid was given.
+if test "${enable_driver_e00grid+set}" = set; then :
+  enableval=$enable_driver_e00grid;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_e00grid
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED e00grid"
+  INTERNAL_FORMAT_e00grid_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED e00grid"
+  INTERNAL_FORMAT_e00grid_ENABLED=no
+fi
+
+# Check whether --enable-driver-elas was given.
+if test "${enable_driver_elas+set}" = set; then :
+  enableval=$enable_driver_elas;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_elas
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED elas"
+  INTERNAL_FORMAT_elas_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED elas"
+  INTERNAL_FORMAT_elas_ENABLED=no
+fi
+
+# Check whether --enable-driver-envisat was given.
+if test "${enable_driver_envisat+set}" = set; then :
+  enableval=$enable_driver_envisat;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_envisat
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED envisat"
+  INTERNAL_FORMAT_envisat_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED envisat"
+  INTERNAL_FORMAT_envisat_ENABLED=no
+fi
+
+# Check whether --enable-driver-ers was given.
+if test "${enable_driver_ers+set}" = set; then :
+  enableval=$enable_driver_ers;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ers
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ers"
+  INTERNAL_FORMAT_ers_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ers"
+  INTERNAL_FORMAT_ers_ENABLED=no
+fi
+
+# Check whether --enable-driver-fit was given.
+if test "${enable_driver_fit+set}" = set; then :
+  enableval=$enable_driver_fit;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_fit
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED fit"
+  INTERNAL_FORMAT_fit_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED fit"
+  INTERNAL_FORMAT_fit_ENABLED=no
+fi
+
+# Check whether --enable-driver-gff was given.
+if test "${enable_driver_gff+set}" = set; then :
+  enableval=$enable_driver_gff;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gff
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED gff"
+  INTERNAL_FORMAT_gff_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED gff"
+  INTERNAL_FORMAT_gff_ENABLED=no
+fi
+
+# Check whether --enable-driver-gsg was given.
+if test "${enable_driver_gsg+set}" = set; then :
+  enableval=$enable_driver_gsg;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gsg
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED gsg"
+  INTERNAL_FORMAT_gsg_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED gsg"
+  INTERNAL_FORMAT_gsg_ENABLED=no
+fi
+
+# Check whether --enable-driver-gxf was given.
+if test "${enable_driver_gxf+set}" = set; then :
+  enableval=$enable_driver_gxf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gxf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED gxf"
+  INTERNAL_FORMAT_gxf_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED gxf"
+  INTERNAL_FORMAT_gxf_ENABLED=no
+fi
+
+# Check whether --enable-driver-hf2 was given.
+if test "${enable_driver_hf2+set}" = set; then :
+  enableval=$enable_driver_hf2;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_hf2
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED hf2"
+  INTERNAL_FORMAT_hf2_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED hf2"
+  INTERNAL_FORMAT_hf2_ENABLED=no
+fi
+
+# Check whether --enable-driver-idrisi was given.
+if test "${enable_driver_idrisi+set}" = set; then :
+  enableval=$enable_driver_idrisi;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_idrisi
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED idrisi"
+  INTERNAL_FORMAT_idrisi_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED idrisi"
+  INTERNAL_FORMAT_idrisi_ENABLED=no
+fi
+
+# Check whether --enable-driver-ignfheightasciigrid was given.
+if test "${enable_driver_ignfheightasciigrid+set}" = set; then :
+  enableval=$enable_driver_ignfheightasciigrid;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ignfheightasciigrid
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ignfheightasciigrid"
+  INTERNAL_FORMAT_ignfheightasciigrid_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ignfheightasciigrid"
+  INTERNAL_FORMAT_ignfheightasciigrid_ENABLED=no
+fi
+
+# Check whether --enable-driver-ilwis was given.
+if test "${enable_driver_ilwis+set}" = set; then :
+  enableval=$enable_driver_ilwis;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ilwis
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ilwis"
+  INTERNAL_FORMAT_ilwis_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ilwis"
+  INTERNAL_FORMAT_ilwis_ENABLED=no
+fi
+
+# Check whether --enable-driver-ingr was given.
+if test "${enable_driver_ingr+set}" = set; then :
+  enableval=$enable_driver_ingr;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ingr
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ingr"
+  INTERNAL_FORMAT_ingr_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ingr"
+  INTERNAL_FORMAT_ingr_ENABLED=no
+fi
+
+# Check whether --enable-driver-iris was given.
+if test "${enable_driver_iris+set}" = set; then :
+  enableval=$enable_driver_iris;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_iris
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED iris"
+  INTERNAL_FORMAT_iris_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED iris"
+  INTERNAL_FORMAT_iris_ENABLED=no
+fi
+
+# Check whether --enable-driver-iso8211 was given.
+if test "${enable_driver_iso8211+set}" = set; then :
+  enableval=$enable_driver_iso8211;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_iso8211
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED iso8211"
+  INTERNAL_FORMAT_iso8211_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED iso8211"
+  INTERNAL_FORMAT_iso8211_ENABLED=no
+fi
+
+# Check whether --enable-driver-jaxapalsar was given.
+if test "${enable_driver_jaxapalsar+set}" = set; then :
+  enableval=$enable_driver_jaxapalsar;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_jaxapalsar
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED jaxapalsar"
+  INTERNAL_FORMAT_jaxapalsar_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED jaxapalsar"
+  INTERNAL_FORMAT_jaxapalsar_ENABLED=no
+fi
+
+# Check whether --enable-driver-jdem was given.
+if test "${enable_driver_jdem+set}" = set; then :
+  enableval=$enable_driver_jdem;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_jdem
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED jdem"
+  INTERNAL_FORMAT_jdem_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED jdem"
+  INTERNAL_FORMAT_jdem_ENABLED=no
+fi
+
+# Check whether --enable-driver-kmlsuperoverlay was given.
+if test "${enable_driver_kmlsuperoverlay+set}" = set; then :
+  enableval=$enable_driver_kmlsuperoverlay;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_kmlsuperoverlay
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED kmlsuperoverlay"
+  INTERNAL_FORMAT_kmlsuperoverlay_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED kmlsuperoverlay"
+  INTERNAL_FORMAT_kmlsuperoverlay_ENABLED=no
+fi
+
+# Check whether --enable-driver-l1b was given.
+if test "${enable_driver_l1b+set}" = set; then :
+  enableval=$enable_driver_l1b;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_l1b
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED l1b"
+  INTERNAL_FORMAT_l1b_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED l1b"
+  INTERNAL_FORMAT_l1b_ENABLED=no
+fi
+
+# Check whether --enable-driver-leveller was given.
+if test "${enable_driver_leveller+set}" = set; then :
+  enableval=$enable_driver_leveller;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_leveller
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED leveller"
+  INTERNAL_FORMAT_leveller_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED leveller"
+  INTERNAL_FORMAT_leveller_ENABLED=no
+fi
+
+# Check whether --enable-driver-map was given.
+if test "${enable_driver_map+set}" = set; then :
+  enableval=$enable_driver_map;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_map
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED map"
+  INTERNAL_FORMAT_map_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED map"
+  INTERNAL_FORMAT_map_ENABLED=no
+fi
+
+# Check whether --enable-driver-mrf was given.
+if test "${enable_driver_mrf+set}" = set; then :
+  enableval=$enable_driver_mrf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_mrf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED mrf"
+  INTERNAL_FORMAT_mrf_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED mrf"
+  INTERNAL_FORMAT_mrf_ENABLED=no
+fi
+
+# Check whether --enable-driver-msgn was given.
+if test "${enable_driver_msgn+set}" = set; then :
+  enableval=$enable_driver_msgn;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_msgn
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED msgn"
+  INTERNAL_FORMAT_msgn_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED msgn"
+  INTERNAL_FORMAT_msgn_ENABLED=no
+fi
+
+# Check whether --enable-driver-ngsgeoid was given.
+if test "${enable_driver_ngsgeoid+set}" = set; then :
+  enableval=$enable_driver_ngsgeoid;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ngsgeoid
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ngsgeoid"
+  INTERNAL_FORMAT_ngsgeoid_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ngsgeoid"
+  INTERNAL_FORMAT_ngsgeoid_ENABLED=no
+fi
+
+# Check whether --enable-driver-nitf was given.
+if test "${enable_driver_nitf+set}" = set; then :
+  enableval=$enable_driver_nitf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_nitf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED nitf"
+  INTERNAL_FORMAT_nitf_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED nitf"
+  INTERNAL_FORMAT_nitf_ENABLED=no
+fi
+
+# Check whether --enable-driver-northwood was given.
+if test "${enable_driver_northwood+set}" = set; then :
+  enableval=$enable_driver_northwood;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_northwood
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED northwood"
+  INTERNAL_FORMAT_northwood_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED northwood"
+  INTERNAL_FORMAT_northwood_ENABLED=no
+fi
+
+# Check whether --enable-driver-pds was given.
+if test "${enable_driver_pds+set}" = set; then :
+  enableval=$enable_driver_pds;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_pds
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED pds"
+  INTERNAL_FORMAT_pds_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED pds"
+  INTERNAL_FORMAT_pds_ENABLED=no
+fi
+
+# Check whether --enable-driver-prf was given.
+if test "${enable_driver_prf+set}" = set; then :
+  enableval=$enable_driver_prf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_prf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED prf"
+  INTERNAL_FORMAT_prf_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED prf"
+  INTERNAL_FORMAT_prf_ENABLED=no
+fi
+
+# Check whether --enable-driver-r was given.
+if test "${enable_driver_r+set}" = set; then :
+  enableval=$enable_driver_r;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_r
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED r"
+  INTERNAL_FORMAT_r_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED r"
+  INTERNAL_FORMAT_r_ENABLED=no
+fi
+
+# Check whether --enable-driver-raw was given.
+if test "${enable_driver_raw+set}" = set; then :
+  enableval=$enable_driver_raw;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_raw
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED raw"
+  INTERNAL_FORMAT_raw_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED raw"
+  INTERNAL_FORMAT_raw_ENABLED=no
+fi
+
+# Check whether --enable-driver-rmf was given.
+if test "${enable_driver_rmf+set}" = set; then :
+  enableval=$enable_driver_rmf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_rmf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rmf"
+  INTERNAL_FORMAT_rmf_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED rmf"
+  INTERNAL_FORMAT_rmf_ENABLED=no
+fi
+
+# Check whether --enable-driver-rs2 was given.
+if test "${enable_driver_rs2+set}" = set; then :
+  enableval=$enable_driver_rs2;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_rs2
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rs2"
+  INTERNAL_FORMAT_rs2_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED rs2"
+  INTERNAL_FORMAT_rs2_ENABLED=no
+fi
+
+# Check whether --enable-driver-safe was given.
+if test "${enable_driver_safe+set}" = set; then :
+  enableval=$enable_driver_safe;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_safe
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED safe"
+  INTERNAL_FORMAT_safe_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED safe"
+  INTERNAL_FORMAT_safe_ENABLED=no
+fi
+
+# Check whether --enable-driver-saga was given.
+if test "${enable_driver_saga+set}" = set; then :
+  enableval=$enable_driver_saga;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_saga
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED saga"
+  INTERNAL_FORMAT_saga_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED saga"
+  INTERNAL_FORMAT_saga_ENABLED=no
+fi
+
+# Check whether --enable-driver-sdts was given.
+if test "${enable_driver_sdts+set}" = set; then :
+  enableval=$enable_driver_sdts;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_sdts
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED sdts"
+  INTERNAL_FORMAT_sdts_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED sdts"
+  INTERNAL_FORMAT_sdts_ENABLED=no
+fi
+
+# Check whether --enable-driver-sentinel2 was given.
+if test "${enable_driver_sentinel2+set}" = set; then :
+  enableval=$enable_driver_sentinel2;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_sentinel2
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED sentinel2"
+  INTERNAL_FORMAT_sentinel2_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED sentinel2"
+  INTERNAL_FORMAT_sentinel2_ENABLED=no
+fi
+
+# Check whether --enable-driver-sgi was given.
+if test "${enable_driver_sgi+set}" = set; then :
+  enableval=$enable_driver_sgi;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_sgi
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED sgi"
+  INTERNAL_FORMAT_sgi_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED sgi"
+  INTERNAL_FORMAT_sgi_ENABLED=no
+fi
+
+# Check whether --enable-driver-sigdem was given.
+if test "${enable_driver_sigdem+set}" = set; then :
+  enableval=$enable_driver_sigdem;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_sigdem
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED sigdem"
+  INTERNAL_FORMAT_sigdem_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED sigdem"
+  INTERNAL_FORMAT_sigdem_ENABLED=no
+fi
+
+# Check whether --enable-driver-srtmhgt was given.
+if test "${enable_driver_srtmhgt+set}" = set; then :
+  enableval=$enable_driver_srtmhgt;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_srtmhgt
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED srtmhgt"
+  INTERNAL_FORMAT_srtmhgt_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED srtmhgt"
+  INTERNAL_FORMAT_srtmhgt_ENABLED=no
+fi
+
+# Check whether --enable-driver-terragen was given.
+if test "${enable_driver_terragen+set}" = set; then :
+  enableval=$enable_driver_terragen;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_terragen
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED terragen"
+  INTERNAL_FORMAT_terragen_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED terragen"
+  INTERNAL_FORMAT_terragen_ENABLED=no
+fi
+
+# Check whether --enable-driver-til was given.
+if test "${enable_driver_til+set}" = set; then :
+  enableval=$enable_driver_til;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_til
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED til"
+  INTERNAL_FORMAT_til_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED til"
+  INTERNAL_FORMAT_til_ENABLED=no
+fi
+
+# Check whether --enable-driver-tsx was given.
+if test "${enable_driver_tsx+set}" = set; then :
+  enableval=$enable_driver_tsx;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_tsx
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED tsx"
+  INTERNAL_FORMAT_tsx_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED tsx"
+  INTERNAL_FORMAT_tsx_ENABLED=no
+fi
+
+# Check whether --enable-driver-usgsdem was given.
+if test "${enable_driver_usgsdem+set}" = set; then :
+  enableval=$enable_driver_usgsdem;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_usgsdem
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED usgsdem"
+  INTERNAL_FORMAT_usgsdem_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED usgsdem"
+  INTERNAL_FORMAT_usgsdem_ENABLED=no
+fi
+
+# Check whether --enable-driver-xpm was given.
+if test "${enable_driver_xpm+set}" = set; then :
+  enableval=$enable_driver_xpm;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_xpm
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED xpm"
+  INTERNAL_FORMAT_xpm_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED xpm"
+  INTERNAL_FORMAT_xpm_ENABLED=no
+fi
+
+# Check whether --enable-driver-xyz was given.
+if test "${enable_driver_xyz+set}" = set; then :
+  enableval=$enable_driver_xyz;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_xyz
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED xyz"
+  INTERNAL_FORMAT_xyz_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED xyz"
+  INTERNAL_FORMAT_xyz_ENABLED=no
+fi
+
+# Check whether --enable-driver-zmap was given.
+if test "${enable_driver_zmap+set}" = set; then :
+  enableval=$enable_driver_zmap;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_zmap
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED zmap"
+  INTERNAL_FORMAT_zmap_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED zmap"
+  INTERNAL_FORMAT_zmap_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-grib was given.
+if test "${enable_driver_grib+set}" = set; then :
+  enableval=$enable_driver_grib;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_grib
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_grib_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED grib"
+  INTERNAL_FORMAT_grib_ENABLED=no
+fi
+
+# Check whether --enable-driver-ozi was given.
+if test "${enable_driver_ozi+set}" = set; then :
+  enableval=$enable_driver_ozi;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ozi
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_ozi_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ozi"
+  INTERNAL_FORMAT_ozi_ENABLED=no
+fi
+
+# Check whether --enable-driver-pdf was given.
+if test "${enable_driver_pdf+set}" = set; then :
+  enableval=$enable_driver_pdf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_pdf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_pdf_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED pdf"
+  INTERNAL_FORMAT_pdf_ENABLED=no
+fi
+
+# Check whether --enable-driver-rik was given.
+if test "${enable_driver_rik+set}" = set; then :
+  enableval=$enable_driver_rik;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_rik
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_rik_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED rik"
+  INTERNAL_FORMAT_rik_ENABLED=no
+fi
+
+
+
+
+
+# Check whether --enable-driver-aeronavfaa was given.
+if test "${enable_driver_aeronavfaa+set}" = set; then :
+  enableval=$enable_driver_aeronavfaa;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_aeronavfaa
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED aeronavfaa"
+  INTERNAL_FORMAT_aeronavfaa_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DAERONAVFAA_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED aeronavfaa"
+  INTERNAL_FORMAT_aeronavfaa_ENABLED=no
+fi
+
+# Check whether --enable-driver-arcgen was given.
+if test "${enable_driver_arcgen+set}" = set; then :
+  enableval=$enable_driver_arcgen;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_arcgen
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED arcgen"
+  INTERNAL_FORMAT_arcgen_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DARCGEN_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED arcgen"
+  INTERNAL_FORMAT_arcgen_ENABLED=no
+fi
+
+# Check whether --enable-driver-avc was given.
+if test "${enable_driver_avc+set}" = set; then :
+  enableval=$enable_driver_avc;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_avc
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED avc"
+  INTERNAL_FORMAT_avc_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DAVC_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED avc"
+  INTERNAL_FORMAT_avc_ENABLED=no
+fi
+
+# Check whether --enable-driver-bna was given.
+if test "${enable_driver_bna+set}" = set; then :
+  enableval=$enable_driver_bna;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_bna
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED bna"
+  INTERNAL_FORMAT_bna_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DBNA_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED bna"
+  INTERNAL_FORMAT_bna_ENABLED=no
+fi
+
+# Check whether --enable-driver-cad was given.
+if test "${enable_driver_cad+set}" = set; then :
+  enableval=$enable_driver_cad;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_cad
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED cad"
+  INTERNAL_FORMAT_cad_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DCAD_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED cad"
+  INTERNAL_FORMAT_cad_ENABLED=no
+fi
+
+# Check whether --enable-driver-csv was given.
+if test "${enable_driver_csv+set}" = set; then :
+  enableval=$enable_driver_csv;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_csv
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED csv"
+  INTERNAL_FORMAT_csv_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DCSV_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED csv"
+  INTERNAL_FORMAT_csv_ENABLED=no
+fi
+
+# Check whether --enable-driver-dgn was given.
+if test "${enable_driver_dgn+set}" = set; then :
+  enableval=$enable_driver_dgn;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_dgn
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED dgn"
+  INTERNAL_FORMAT_dgn_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DDGN_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED dgn"
+  INTERNAL_FORMAT_dgn_ENABLED=no
+fi
+
+# Check whether --enable-driver-dxf was given.
+if test "${enable_driver_dxf+set}" = set; then :
+  enableval=$enable_driver_dxf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_dxf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED dxf"
+  INTERNAL_FORMAT_dxf_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DDXF_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED dxf"
+  INTERNAL_FORMAT_dxf_ENABLED=no
+fi
+
+# Check whether --enable-driver-edigeo was given.
+if test "${enable_driver_edigeo+set}" = set; then :
+  enableval=$enable_driver_edigeo;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_edigeo
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED edigeo"
+  INTERNAL_FORMAT_edigeo_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DEDIGEO_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED edigeo"
+  INTERNAL_FORMAT_edigeo_ENABLED=no
+fi
+
+# Check whether --enable-driver-geoconcept was given.
+if test "${enable_driver_geoconcept+set}" = set; then :
+  enableval=$enable_driver_geoconcept;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_geoconcept
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED geoconcept"
+  INTERNAL_FORMAT_geoconcept_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGEOCONCEPT_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED geoconcept"
+  INTERNAL_FORMAT_geoconcept_ENABLED=no
+fi
+
+# Check whether --enable-driver-georss was given.
+if test "${enable_driver_georss+set}" = set; then :
+  enableval=$enable_driver_georss;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_georss
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED georss"
+  INTERNAL_FORMAT_georss_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGEORSS_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED georss"
+  INTERNAL_FORMAT_georss_ENABLED=no
+fi
+
+# Check whether --enable-driver-gml was given.
+if test "${enable_driver_gml+set}" = set; then :
+  enableval=$enable_driver_gml;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gml
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gml"
+  INTERNAL_FORMAT_gml_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGML_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gml"
+  INTERNAL_FORMAT_gml_ENABLED=no
+fi
+
+# Check whether --enable-driver-gmt was given.
+if test "${enable_driver_gmt+set}" = set; then :
+  enableval=$enable_driver_gmt;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gmt
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gmt"
+  INTERNAL_FORMAT_gmt_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGMT_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gmt"
+  INTERNAL_FORMAT_gmt_ENABLED=no
+fi
+
+# Check whether --enable-driver-gpsbabel was given.
+if test "${enable_driver_gpsbabel+set}" = set; then :
+  enableval=$enable_driver_gpsbabel;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gpsbabel
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gpsbabel"
+  INTERNAL_FORMAT_gpsbabel_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGPSBABEL_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gpsbabel"
+  INTERNAL_FORMAT_gpsbabel_ENABLED=no
+fi
+
+# Check whether --enable-driver-gpx was given.
+if test "${enable_driver_gpx+set}" = set; then :
+  enableval=$enable_driver_gpx;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gpx
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gpx"
+  INTERNAL_FORMAT_gpx_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGPX_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gpx"
+  INTERNAL_FORMAT_gpx_ENABLED=no
+fi
+
+# Check whether --enable-driver-gtm was given.
+if test "${enable_driver_gtm+set}" = set; then :
+  enableval=$enable_driver_gtm;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gtm
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gtm"
+  INTERNAL_FORMAT_gtm_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGTM_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gtm"
+  INTERNAL_FORMAT_gtm_ENABLED=no
+fi
+
+# Check whether --enable-driver-htf was given.
+if test "${enable_driver_htf+set}" = set; then :
+  enableval=$enable_driver_htf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_htf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED htf"
+  INTERNAL_FORMAT_htf_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DHTF_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED htf"
+  INTERNAL_FORMAT_htf_ENABLED=no
+fi
+
+# Check whether --enable-driver-jml was given.
+if test "${enable_driver_jml+set}" = set; then :
+  enableval=$enable_driver_jml;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_jml
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED jml"
+  INTERNAL_FORMAT_jml_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DJML_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED jml"
+  INTERNAL_FORMAT_jml_ENABLED=no
+fi
+
+# Check whether --enable-driver-mvt was given.
+if test "${enable_driver_mvt+set}" = set; then :
+  enableval=$enable_driver_mvt;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_mvt
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED mvt"
+  INTERNAL_FORMAT_mvt_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DMVT_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED mvt"
+  INTERNAL_FORMAT_mvt_ENABLED=no
+fi
+
+# Check whether --enable-driver-ntf was given.
+if test "${enable_driver_ntf+set}" = set; then :
+  enableval=$enable_driver_ntf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ntf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED ntf"
+  INTERNAL_FORMAT_ntf_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DNTF_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED ntf"
+  INTERNAL_FORMAT_ntf_ENABLED=no
+fi
+
+# Check whether --enable-driver-openair was given.
+if test "${enable_driver_openair+set}" = set; then :
+  enableval=$enable_driver_openair;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_openair
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED openair"
+  INTERNAL_FORMAT_openair_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DOPENAIR_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED openair"
+  INTERNAL_FORMAT_openair_ENABLED=no
+fi
+
+# Check whether --enable-driver-openfilegdb was given.
+if test "${enable_driver_openfilegdb+set}" = set; then :
+  enableval=$enable_driver_openfilegdb;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_openfilegdb
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED openfilegdb"
+  INTERNAL_FORMAT_openfilegdb_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DOPENFILEGDB_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED openfilegdb"
+  INTERNAL_FORMAT_openfilegdb_ENABLED=no
+fi
+
+# Check whether --enable-driver-pgdump was given.
+if test "${enable_driver_pgdump+set}" = set; then :
+  enableval=$enable_driver_pgdump;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_pgdump
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED pgdump"
+  INTERNAL_FORMAT_pgdump_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DPGDUMP_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED pgdump"
+  INTERNAL_FORMAT_pgdump_ENABLED=no
+fi
+
+# Check whether --enable-driver-rec was given.
+if test "${enable_driver_rec+set}" = set; then :
+  enableval=$enable_driver_rec;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_rec
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED rec"
+  INTERNAL_FORMAT_rec_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DREC_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED rec"
+  INTERNAL_FORMAT_rec_ENABLED=no
+fi
+
+# Check whether --enable-driver-s57 was given.
+if test "${enable_driver_s57+set}" = set; then :
+  enableval=$enable_driver_s57;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_s57
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED s57"
+  INTERNAL_FORMAT_s57_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DS57_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED s57"
+  INTERNAL_FORMAT_s57_ENABLED=no
+fi
+
+# Check whether --enable-driver-segukooa was given.
+if test "${enable_driver_segukooa+set}" = set; then :
+  enableval=$enable_driver_segukooa;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_segukooa
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED segukooa"
+  INTERNAL_FORMAT_segukooa_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSEGUKOOA_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED segukooa"
+  INTERNAL_FORMAT_segukooa_ENABLED=no
+fi
+
+# Check whether --enable-driver-segy was given.
+if test "${enable_driver_segy+set}" = set; then :
+  enableval=$enable_driver_segy;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_segy
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED segy"
+  INTERNAL_FORMAT_segy_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSEGY_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED segy"
+  INTERNAL_FORMAT_segy_ENABLED=no
+fi
+
+# Check whether --enable-driver-selafin was given.
+if test "${enable_driver_selafin+set}" = set; then :
+  enableval=$enable_driver_selafin;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_selafin
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED selafin"
+  INTERNAL_FORMAT_selafin_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSELAFIN_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED selafin"
+  INTERNAL_FORMAT_selafin_ENABLED=no
+fi
+
+# Check whether --enable-driver-shape was given.
+if test "${enable_driver_shape+set}" = set; then :
+  enableval=$enable_driver_shape;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_shape
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED shape"
+  INTERNAL_FORMAT_shape_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSHAPE_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED shape"
+  INTERNAL_FORMAT_shape_ENABLED=no
+fi
+
+# Check whether --enable-driver-sua was given.
+if test "${enable_driver_sua+set}" = set; then :
+  enableval=$enable_driver_sua;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_sua
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED sua"
+  INTERNAL_FORMAT_sua_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSUA_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED sua"
+  INTERNAL_FORMAT_sua_ENABLED=no
+fi
+
+# Check whether --enable-driver-svg was given.
+if test "${enable_driver_svg+set}" = set; then :
+  enableval=$enable_driver_svg;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_svg
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED svg"
+  INTERNAL_FORMAT_svg_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSVG_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED svg"
+  INTERNAL_FORMAT_svg_ENABLED=no
+fi
+
+# Check whether --enable-driver-sxf was given.
+if test "${enable_driver_sxf+set}" = set; then :
+  enableval=$enable_driver_sxf;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_sxf
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED sxf"
+  INTERNAL_FORMAT_sxf_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSXF_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED sxf"
+  INTERNAL_FORMAT_sxf_ENABLED=no
+fi
+
+# Check whether --enable-driver-tiger was given.
+if test "${enable_driver_tiger+set}" = set; then :
+  enableval=$enable_driver_tiger;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_tiger
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED tiger"
+  INTERNAL_FORMAT_tiger_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DTIGER_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED tiger"
+  INTERNAL_FORMAT_tiger_ENABLED=no
+fi
+
+# Check whether --enable-driver-vdv was given.
+if test "${enable_driver_vdv+set}" = set; then :
+  enableval=$enable_driver_vdv;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_vdv
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED vdv"
+  INTERNAL_FORMAT_vdv_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DVDV_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED vdv"
+  INTERNAL_FORMAT_vdv_ENABLED=no
+fi
+
+# Check whether --enable-driver-wasp was given.
+if test "${enable_driver_wasp+set}" = set; then :
+  enableval=$enable_driver_wasp;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_wasp
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED wasp"
+  INTERNAL_FORMAT_wasp_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DWASP_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED wasp"
+  INTERNAL_FORMAT_wasp_ENABLED=no
+fi
+
+# Check whether --enable-driver-xplane was given.
+if test "${enable_driver_xplane+set}" = set; then :
+  enableval=$enable_driver_xplane;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_xplane
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED xplane"
+  INTERNAL_FORMAT_xplane_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DXPLANE_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED xplane"
+  INTERNAL_FORMAT_xplane_ENABLED=no
+fi
+
+
+
+driver_enabled=$INTERNAL_FORMAT_idrisi_ENABLED
+if test "x$driver_enabled" != "xno"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED idrisi"
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DIDRISI_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED idrisi"
+fi
+
+driver_enabled=$INTERNAL_FORMAT_pds_ENABLED
+if test "x$driver_enabled" != "xno"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED pds"
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DPDS_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED pds"
+fi
+
+driver_enabled=$INTERNAL_FORMAT_sdts_ENABLED
+if test "x$driver_enabled" != "xno"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED sdts"
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSDTS_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED sdts"
+fi
+
+
+
+# Check whether --enable-driver-eeda was given.
+if test "${enable_driver_eeda+set}" = set; then :
+  enableval=$enable_driver_eeda;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_eeda
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_eeda_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED eeda"
+  INTERNAL_FORMAT_eeda_ENABLED=no
+fi
+
+# Check whether --enable-driver-plmosaic was given.
+if test "${enable_driver_plmosaic+set}" = set; then :
+  enableval=$enable_driver_plmosaic;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_plmosaic
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_plmosaic_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED plmosaic"
+  INTERNAL_FORMAT_plmosaic_ENABLED=no
+fi
+
+# Check whether --enable-driver-rda was given.
+if test "${enable_driver_rda+set}" = set; then :
+  enableval=$enable_driver_rda;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_rda
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_rda_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED rda"
+  INTERNAL_FORMAT_rda_ENABLED=no
+fi
+
+# Check whether --enable-driver-wcs was given.
+if test "${enable_driver_wcs+set}" = set; then :
+  enableval=$enable_driver_wcs;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_wcs
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_wcs_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED wcs"
+  INTERNAL_FORMAT_wcs_ENABLED=no
+fi
+
+# Check whether --enable-driver-wms was given.
+if test "${enable_driver_wms+set}" = set; then :
+  enableval=$enable_driver_wms;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_wms
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_wms_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED wms"
+  INTERNAL_FORMAT_wms_ENABLED=no
+fi
+
+# Check whether --enable-driver-wmts was given.
+if test "${enable_driver_wmts+set}" = set; then :
+  enableval=$enable_driver_wmts;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_wmts
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_wmts_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED wmts"
+  INTERNAL_FORMAT_wmts_ENABLED=no
+fi
+
+# Check whether --enable-driver-daas was given.
+if test "${enable_driver_daas+set}" = set; then :
+  enableval=$enable_driver_daas;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_daas
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_daas_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED daas"
+  INTERNAL_FORMAT_daas_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-amigocloud was given.
+if test "${enable_driver_amigocloud+set}" = set; then :
+  enableval=$enable_driver_amigocloud;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_amigocloud
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_amigocloud_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED amigocloud"
+  INTERNAL_FORMAT_amigocloud_ENABLED=no
+fi
+
+# Check whether --enable-driver-carto was given.
+if test "${enable_driver_carto+set}" = set; then :
+  enableval=$enable_driver_carto;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_carto
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_carto_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED carto"
+  INTERNAL_FORMAT_carto_ENABLED=no
+fi
+
+# Check whether --enable-driver-cloudant was given.
+if test "${enable_driver_cloudant+set}" = set; then :
+  enableval=$enable_driver_cloudant;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_cloudant
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_cloudant_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED cloudant"
+  INTERNAL_FORMAT_cloudant_ENABLED=no
+fi
+
+# Check whether --enable-driver-couchdb was given.
+if test "${enable_driver_couchdb+set}" = set; then :
+  enableval=$enable_driver_couchdb;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_couchdb
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_couchdb_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED couchdb"
+  INTERNAL_FORMAT_couchdb_ENABLED=no
+fi
+
+# Check whether --enable-driver-csw was given.
+if test "${enable_driver_csw+set}" = set; then :
+  enableval=$enable_driver_csw;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_csw
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_csw_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED csw"
+  INTERNAL_FORMAT_csw_ENABLED=no
+fi
+
+# Check whether --enable-driver-elastic was given.
+if test "${enable_driver_elastic+set}" = set; then :
+  enableval=$enable_driver_elastic;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_elastic
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_elastic_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED elastic"
+  INTERNAL_FORMAT_elastic_ENABLED=no
+fi
+
+# Check whether --enable-driver-gft was given.
+if test "${enable_driver_gft+set}" = set; then :
+  enableval=$enable_driver_gft;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gft
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_gft_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gft"
+  INTERNAL_FORMAT_gft_ENABLED=no
+fi
+
+# Check whether --enable-driver-ngw was given.
+if test "${enable_driver_ngw+set}" = set; then :
+  enableval=$enable_driver_ngw;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ngw
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_ngw_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED ngw"
+  INTERNAL_FORMAT_ngw_ENABLED=no
+fi
+
+# Check whether --enable-driver-plscenes was given.
+if test "${enable_driver_plscenes+set}" = set; then :
+  enableval=$enable_driver_plscenes;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_plscenes
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_plscenes_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED plscenes"
+  INTERNAL_FORMAT_plscenes_ENABLED=no
+fi
+
+# Check whether --enable-driver-wfs was given.
+if test "${enable_driver_wfs+set}" = set; then :
+  enableval=$enable_driver_wfs;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_wfs
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_wfs_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED wfs"
+  INTERNAL_FORMAT_wfs_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-rasterlite was given.
+if test "${enable_driver_rasterlite+set}" = set; then :
+  enableval=$enable_driver_rasterlite;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_rasterlite
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_rasterlite_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED rasterlite"
+  INTERNAL_FORMAT_rasterlite_ENABLED=no
+fi
+
+# Check whether --enable-driver-mbtiles was given.
+if test "${enable_driver_mbtiles+set}" = set; then :
+  enableval=$enable_driver_mbtiles;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_mbtiles
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_mbtiles_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED mbtiles"
+  INTERNAL_FORMAT_mbtiles_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-gpkg was given.
+if test "${enable_driver_gpkg+set}" = set; then :
+  enableval=$enable_driver_gpkg;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gpkg
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_gpkg_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gpkg"
+  INTERNAL_FORMAT_gpkg_ENABLED=no
+fi
+
+# Check whether --enable-driver-vfk was given.
+if test "${enable_driver_vfk+set}" = set; then :
+  enableval=$enable_driver_vfk;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_vfk
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_vfk_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED vfk"
+  INTERNAL_FORMAT_vfk_ENABLED=no
+fi
+
+# Check whether --enable-driver-osm was given.
+if test "${enable_driver_osm+set}" = set; then :
+  enableval=$enable_driver_osm;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_osm
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_osm_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED osm"
+  INTERNAL_FORMAT_osm_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-ods was given.
+if test "${enable_driver_ods+set}" = set; then :
+  enableval=$enable_driver_ods;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ods
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_ods_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED ods"
+  INTERNAL_FORMAT_ods_ENABLED=no
+fi
+
+# Check whether --enable-driver-xlsx was given.
+if test "${enable_driver_xlsx+set}" = set; then :
+  enableval=$enable_driver_xlsx;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_xlsx
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_xlsx_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED xlsx"
+  INTERNAL_FORMAT_xlsx_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-nas was given.
+if test "${enable_driver_nas+set}" = set; then :
+  enableval=$enable_driver_nas;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_nas
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_nas_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED nas"
+  INTERNAL_FORMAT_nas_ENABLED=no
+fi
+
+# Check whether --enable-driver-ili was given.
+if test "${enable_driver_ili+set}" = set; then :
+  enableval=$enable_driver_ili;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ili
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_ili_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED ili"
+  INTERNAL_FORMAT_ili_ENABLED=no
+fi
+
+# Check whether --enable-driver-gmlas was given.
+if test "${enable_driver_gmlas+set}" = set; then :
+  enableval=$enable_driver_gmlas;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_gmlas
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_gmlas_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gmlas"
+  INTERNAL_FORMAT_gmlas_ENABLED=no
+fi
+
+
+
+# Check whether --enable-driver-odbc was given.
+if test "${enable_driver_odbc+set}" = set; then :
+  enableval=$enable_driver_odbc;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_odbc
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_odbc_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED odbc"
+  INTERNAL_FORMAT_odbc_ENABLED=no
+fi
+
+# Check whether --enable-driver-pgeo was given.
+if test "${enable_driver_pgeo+set}" = set; then :
+  enableval=$enable_driver_pgeo;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_pgeo
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_pgeo_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED pgeo"
+  INTERNAL_FORMAT_pgeo_ENABLED=no
+fi
+
+# Check whether --enable-driver-mssqlspatial was given.
+if test "${enable_driver_mssqlspatial+set}" = set; then :
+  enableval=$enable_driver_mssqlspatial;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_mssqlspatial
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_mssqlspatial_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED mssqlspatial"
+  INTERNAL_FORMAT_mssqlspatial_ENABLED=no
+fi
+
+# Check whether --enable-driver-geomedia was given.
+if test "${enable_driver_geomedia+set}" = set; then :
+  enableval=$enable_driver_geomedia;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_geomedia
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_geomedia_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED geomedia"
+  INTERNAL_FORMAT_geomedia_ENABLED=no
+fi
+
+# Check whether --enable-driver-walk was given.
+if test "${enable_driver_walk+set}" = set; then :
+  enableval=$enable_driver_walk;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_walk
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_walk_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED walk"
+  INTERNAL_FORMAT_walk_ENABLED=no
+fi
+
+
+OGRFORMATS_ENABLED=$OGRFORMATS_ENABLED
+
+OGRFORMATS_ENABLED_CFLAGS=$OGRFORMATS_ENABLED_CFLAGS
+
+GDALFORMATS_ENABLED=$GDALFORMATS_ENABLED
+
+
+if test "$LIBZ_SETTING" != "no" ; then
+  if test "x$INTERNAL_FORMAT_rik_ENABLED" = "xyes"; then
+      GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rik"
+  fi
+  if test "x$INTERNAL_FORMAT_ozi_ENABLED" = "xyes"; then
+      GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ozi"
+  fi
+fi
+
+
+
 
 PG_CONFIG=no
 
@@ -24322,49 +28509,7 @@ fi
 
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
-  # Extract the first word of "pg_config", so it can be a program name with args.
-set dummy pg_config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PG_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PG_CONFIG="$PG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PG_CONFIG" && ac_cv_path_PG_CONFIG="no"
-  ;;
-esac
-fi
-PG_CONFIG=$ac_cv_path_PG_CONFIG
-if test -n "$PG_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PG_CONFIG" >&5
-$as_echo "$PG_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-else
-  PG_CONFIG=$with_pg
+  PG_CONFIG=yes
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL" >&5
@@ -24380,28 +28525,207 @@ if test "x$PG_CONFIG" = "xno" ; then
 $as_echo "no" >&6; }
 
 else
-  if test -d ${PG_CONFIG} ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-      as_fn_error $? "--with-pg argument is a directory.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config." "$LINENO" 5
-  fi
 
-  if test \! -x ${PG_CONFIG} ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-      as_fn_error $? "--with-pg argument is a not an executable file.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config." "$LINENO" 5
-  fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.21
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQconnectdb in -lpq" >&5
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQ" >&5
+$as_echo_n "checking for PQ... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$PQ_CFLAGS"; then
+        pkg_cv_PQ_CFLAGS="$PQ_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpq > 9.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libpq > 9.1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_PQ_CFLAGS=`$PKG_CONFIG --cflags "libpq > 9.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$PQ_LIBS"; then
+        pkg_cv_PQ_LIBS="$PQ_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpq > 9.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libpq > 9.1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_PQ_LIBS=`$PKG_CONFIG --libs "libpq > 9.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        PQ_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libpq > 9.1"`
+        else
+	        PQ_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libpq > 9.1"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$PQ_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                HAVE_PG=no
+elif test $pkg_failed = untried; then
+	HAVE_PG=no
+else
+	PQ_CFLAGS=$pkg_cv_PQ_CFLAGS
+	PQ_LIBS=$pkg_cv_PQ_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	HAVE_PG=yes
+fi
+
+  if test "${HAVE_PG}" = "yes" ; then
+    PG_LIB="${PQ_LIBS}"
+    PG_INC="${PQ_CFLAGS}"
+    SAVED_LIBS="${LIBS}"
+    LIBS="${PG_LIB}"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQconnectdb in -lpq" >&5
 $as_echo_n "checking for PQconnectdb in -lpq... " >&6; }
 if ${ac_cv_lib_pq_PQconnectdb+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpq -L`$PG_CONFIG --libdir` $LIBS"
+LIBS="-lpq  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -24437,10 +28761,14 @@ else
   HAVE_PG=no
 fi
 
-
-  if test "${HAVE_PG}" = "yes" ; then
-    LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
-    PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
+    LIBS="${SAVED_LIBS}"
+    if test "${HAVE_PG}" = "yes" ; then
+      LIBS="${PG_LIB} ${LIBS}"
+    fi
+  else
+    if test "x$with_pg" = "xyes"; then
+      as_fn_error $? "--with-pg was requested, but libpq is not available" "$LINENO" 5
+    fi
   fi
 
 fi
@@ -25000,6 +29328,9 @@ PNG_SETTING=$PNG_SETTING
 
 if test "$PNG_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="png $OPT_GDAL_FORMATS"
+  if test "x$INTERNAL_FORMAT_grib_ENABLED" = "xyes"; then
+  	GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED grib"
+  fi
 fi
 
 
@@ -25348,17 +29679,11 @@ fi
 
 fi
 
-if test "${HAVE_BIGTIFF}" = "yes" ; then
-  TIFF_OPTS="-DBIGTIFF_SUPPORT"
-
-
-echo "BigTIFF support enabled."
-
+if test "${HAVE_BIGTIFF}" != "yes" ; then
+  as_fn_error $? "libtiff >= 4.0 is required." "$LINENO" 5
 fi
 
 TIFF_SETTING=${TIFF_SETTING}
-
-TIFF_OPTS=${TIFF_OPTS}
 
 
 
@@ -26023,122 +30348,6 @@ if test "$with_ogdi" = "no" ; then
 
 elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
 
-
-
-if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
-	if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
-set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PKG_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-if test -n "$PKG_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
-$as_echo "$PKG_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-fi
-if test -z "$ac_cv_path_PKG_CONFIG"; then
-  ac_pt_PKG_CONFIG=$PKG_CONFIG
-  # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $ac_pt_PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
-if test -n "$ac_pt_PKG_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
-$as_echo "$ac_pt_PKG_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_pt_PKG_CONFIG" = x; then
-    PKG_CONFIG=""
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    PKG_CONFIG=$ac_pt_PKG_CONFIG
-  fi
-else
-  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
-fi
-
-fi
-if test -n "$PKG_CONFIG"; then
-	_pkg_min_version=0.9.0
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
-$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
-	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-		PKG_CONFIG=""
-	fi
-
-fi
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OGDI" >&5
@@ -28178,7 +32387,8 @@ if test "$NETCDF_SETTING" != "no" ; then
    for ac_header in $NETCDF_INCLUDEDIR/netcdf_mem.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#include <$NETCDF_INCLUDEDIR/netcdf.h>
+"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
@@ -29438,25 +33648,6 @@ fi
 
 
 
-
-# Check whether --with-bsb was given.
-if test "${with_bsb+set}" = set; then :
-  withval=$with_bsb;
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for BSB" >&5
-$as_echo_n "checking for BSB... " >&6; }
-if test "$with_bsb" = yes -o x"$with_bsb" = x ; then
-    OPT_GDAL_FORMATS="bsb $OPT_GDAL_FORMATS"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
-$as_echo "disabled by user" >&6; }
-fi
-
-
 ORACLE_OCI_REQ_VERSION="10.0.1"
 
 
@@ -29798,27 +33989,6 @@ if test "$HAVE_ORACLE_OCI" = "yes"; then
     HAVE_GEORASTER=yes
 else
     HAVE_GEORASTER=no
-fi
-
-
-
-# Check whether --with-grib was given.
-if test "${with_grib+set}" = set; then :
-  withval=$with_grib;
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GRIB" >&5
-$as_echo_n "checking for GRIB... " >&6; }
-if test "$with_grib" = yes -o x"$with_grib" = x ; then
-    OPT_GDAL_FORMATS="grib $OPT_GDAL_FORMATS"
-    HAVE_GRIB=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-else
-    HAVE_GRIB=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
-$as_echo "disabled by user" >&6; }
 fi
 
 
@@ -30283,20 +34453,32 @@ $as_echo "$as_me: WARNING: Xerces C++ Parser support requested but headers or li
 
 if test "$HAVE_XERCES" = "yes"; then
     LIBS="$XERCES_LDFLAGS $LIBS"
+
+
+  driver_enabled=$INTERNAL_FORMAT_nas_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED nas"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DNAS_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_ili_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED ili"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DILI_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_gmlas_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gmlas"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGMLAS_ENABLED"
+  fi
+
+
 fi
 
 HAVE_XERCES=$HAVE_XERCES
 
 XERCES_INCLUDE=$XERCES_CFLAGS
-
-
-
-if test "$HAVE_XERCES" = "yes" ; then
-  HAVE_NAS=yes
-else
-  HAVE_NAS=no
-fi
-HAVE_NAS=$HAVE_NAS
 
 
 
@@ -30662,6 +34844,21 @@ $as_echo "$as_me: WARNING: Expat XML Parser support requested but headers or lib
 
 if test "$HAVE_EXPAT" = "yes"; then
     LIBS="$EXPAT_LDFLAGS $LIBS"
+
+
+  driver_enabled=$INTERNAL_FORMAT_ods_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED ods"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DODS_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_xlsx_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED xlsx"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DXLSX_ENABLED"
+  fi
+
+
 fi
 
 HAVE_EXPAT=$HAVE_EXPAT
@@ -31531,6 +35728,40 @@ fi
   echo "using odbc library from $with_odbc."
 fi
 
+if test "$ODBC_SETTING" = "yes"  ; then
+
+  driver_enabled=$INTERNAL_FORMAT_odbc_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED odbc"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DODBC_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_pgeo_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED pgeo"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DPGEO_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_mssqlspatial_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED mssqlspatial"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DMSSQLSPATIAL_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_geomedia_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED geomedia"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGEOMEDIA_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_walk_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED walk"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DWALK_ENABLED"
+  fi
+
+fi
+
 ODBC_SETTING=$ODBC_SETTING
 
 
@@ -32093,7 +36324,103 @@ if test "$CURL_SETTING" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  OPT_GDAL_FORMATS="wcs wms plmosaic wmts rda eeda $OPT_GDAL_FORMATS"
+
+  driver_enabled=$INTERNAL_FORMAT_eeda_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED eeda"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_plmosaic_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED plmosaic"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_rda_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rda"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_wcs_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED wcs"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_wms_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED wms"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_wmts_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED wmts"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_daas_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED daas"
+  fi
+
+
+  driver_enabled=$INTERNAL_FORMAT_amigocloud_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED amigocloud"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DAMIGOCLOUD_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_carto_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED carto"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DCARTO_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_cloudant_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED cloudant"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DCLOUDANT_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_couchdb_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED couchdb"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DCOUCHDB_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_csw_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED csw"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DCSW_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_elastic_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED elastic"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DELASTIC_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_gft_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gft"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGFT_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_ngw_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED ngw"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DNGW_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_plscenes_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED plscenes"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DPLSCENES_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_wfs_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED wfs"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DWFS_ENABLED"
+  fi
+
 
 fi
 
@@ -33144,6 +37471,42 @@ HAVE_SQLITE=$HAVE_SQLITE3
 SQLITE_HAS_COLUMN_METADATA=$SQLITE_HAS_COLUMN_METADATA
 
 HAVE_SQLITE=$HAVE_SQLITE3
+
+if test "$HAVE_SQLITE3" = "yes"; then
+
+  driver_enabled=$INTERNAL_FORMAT_rasterlite_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rasterlite"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_mbtiles_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED mbtiles"
+  fi
+
+
+
+  driver_enabled=$INTERNAL_FORMAT_gpkg_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gpkg"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGPKG_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_vfk_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED vfk"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DVFK_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_osm_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED osm"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DOSM_ENABLED"
+  fi
+
+
+fi
+
 
 
 
@@ -35632,6 +39995,13 @@ fi
 
 PDF_PLUGIN=$PDF_PLUGIN
 
+if test "$PDF_PLUGIN" != "yes" ; then
+  if test "x$INTERNAL_FORMAT_pdf_ENABLED" = "xyes"; then
+    if test "$LIBZ_SETTING" != "no" ; then
+      GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED pdf"
+    fi
+  fi
+fi
 
 
 
@@ -36584,6 +40954,128 @@ JNI_LIB=$JNI_LIB
 
 
 
+# Check whether --with-tiledb was given.
+if test "${with_tiledb+set}" = set; then :
+  withval=$with_tiledb;
+fi
+
+
+TILEDB_SETTING=no
+
+if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for tiledb_coords in -ltiledb" >&5
+$as_echo_n "checking for tiledb_coords in -ltiledb... " >&6; }
+if ${ac_cv_lib_tiledb_tiledb_coords+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltiledb  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char tiledb_coords ();
+int
+main ()
+{
+return tiledb_coords ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_tiledb_tiledb_coords=yes
+else
+  ac_cv_lib_tiledb_tiledb_coords=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tiledb_tiledb_coords" >&5
+$as_echo "$ac_cv_lib_tiledb_tiledb_coords" >&6; }
+if test "x$ac_cv_lib_tiledb_tiledb_coords" = xyes; then :
+  TILEDB_SETTING=yes
+else
+  TILEDB_SETTING=no
+fi
+
+
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-ltiledb $LIBS"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+elif test "$with_tiledb" != "no" -a "$with_tiledb" != ""; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for tiledb_coords in -ltiledb" >&5
+$as_echo_n "checking for tiledb_coords in -ltiledb... " >&6; }
+if ${ac_cv_lib_tiledb_tiledb_coords+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltiledb -L$with_tiledb/lib -ltiledb $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char tiledb_coords ();
+int
+main ()
+{
+return tiledb_coords ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_tiledb_tiledb_coords=yes
+else
+  ac_cv_lib_tiledb_tiledb_coords=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tiledb_tiledb_coords" >&5
+$as_echo "$ac_cv_lib_tiledb_tiledb_coords" >&6; }
+if test "x$ac_cv_lib_tiledb_tiledb_coords" = xyes; then :
+  TILEDB_SETTING=yes
+else
+  TILEDB_SETTING=no
+fi
+
+
+  if test "$TILEDB_SETTING" = "yes" ; then
+    LIBS="-L$with_tiledb/lib -ltiledb $LIBS"
+    EXTRA_INCLUDES="-I$with_tiledb/include $EXTRA_INCLUDES"
+  else
+    echo "libtiledb not found - TileDB support disabled"
+  fi
+
+fi
+
+TILEDB_SETTING=$TILEDB_SETTING
+
+
+if test "$TILEDB_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="tiledb $OPT_GDAL_FORMATS"
+fi
+
+
+
 # Check whether --with-mdb was given.
 if test "${with_mdb+set}" = set; then :
   withval=$with_mdb;
@@ -37031,6 +41523,129 @@ RASDAMAN_LIB=$RASDAMAN_LIB
 
 
 
+# Check whether --with-rdb was given.
+if test "${with_rdb+set}" = set; then :
+  withval=$with_rdb;
+fi
+
+
+RDB_SETTING=no
+
+if test "$with_rdb" = "yes" -o "$with_rdb" = "" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rdb_library_name in -lrdb" >&5
+$as_echo_n "checking for rdb_library_name in -lrdb... " >&6; }
+if ${ac_cv_lib_rdb_rdb_library_name+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrdb  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rdb_library_name ();
+int
+main ()
+{
+return rdb_library_name ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rdb_rdb_library_name=yes
+else
+  ac_cv_lib_rdb_rdb_library_name=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rdb_rdb_library_name" >&5
+$as_echo "$ac_cv_lib_rdb_rdb_library_name" >&6; }
+if test "x$ac_cv_lib_rdb_rdb_library_name" = xyes; then :
+  RDB_SETTING=yes
+else
+  RDB_SETTING=no
+fi
+
+
+  if test "$RDB_SETTING" = "yes" ; then
+    LIBS="-lrdb $LIBS"
+  else
+    echo "librdb not found - RDB support disabled"
+  fi
+
+elif test "$with_rdb" != "no" -a "$with_rdb" != ""; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rdb_library_name in -lrdb" >&5
+$as_echo_n "checking for rdb_library_name in -lrdb... " >&6; }
+if ${ac_cv_lib_rdb_rdb_library_name+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrdb -L$with_rdb/library -lrdb $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rdb_library_name ();
+int
+main ()
+{
+return rdb_library_name ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rdb_rdb_library_name=yes
+else
+  ac_cv_lib_rdb_rdb_library_name=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rdb_rdb_library_name" >&5
+$as_echo "$ac_cv_lib_rdb_rdb_library_name" >&6; }
+if test "x$ac_cv_lib_rdb_rdb_library_name" = xyes; then :
+  RDB_SETTING=yes
+else
+  RDB_SETTING=no
+fi
+
+
+  if test "$RDB_SETTING" = "yes" ; then
+    LIBS="-L$with_rdb/library -lrdb $LIBS"
+    EXTRA_INCLUDES="-I$with_rdb/interface/cpp/ -I$with_rdb/interface/c/ $EXTRA_INCLUDES"
+  else
+    echo "librdb not found - RDB support disabled"
+  fi
+
+fi
+
+RDB_SETTING=$RDB_SETTING
+
+
+if test "$RDB_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="rdb $OPT_GDAL_FORMATS"
+fi
+
+
+
+
 # Check whether --with-armadillo was given.
 if test "${with_armadillo+set}" = set; then :
   withval=$with_armadillo;
@@ -37308,27 +41923,6 @@ fi
 
 HAVE_OPENSSL_CRYPTO=$HAVE_OPENSSL_CRYPTO
 
-
-
-
-# Check whether --with-mrf was given.
-if test "${with_mrf+set}" = set; then :
-  withval=$with_mrf;
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for MRF" >&5
-$as_echo_n "checking for MRF... " >&6; }
-if test "$with_mrf" = yes -o x"$with_mrf" = x ; then
-    OPT_GDAL_FORMATS="mrf $OPT_GDAL_FORMATS"
-    HAVE_MRF=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-else
-    HAVE_MRF=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
-$as_echo "disabled by user" >&6; }
-fi
 
 
 
@@ -39863,9 +44457,6 @@ echo "  JP2Lura support:           ${HAVE_JP2LURA}"
 echo "  MSG support:               ${HAVE_MSG}"
 
 
-echo "  GRIB support:              ${HAVE_GRIB}"
-
-
 echo "  EPSILON support:           ${EPSILON_SETTING}"
 
 
@@ -39876,9 +44467,6 @@ echo "  cURL support (wms/wcs/...):${CURL_SETTING}"
 
 
 echo "  PostgreSQL support:        ${HAVE_PG}"
-
-
-echo "  MRF support:               ${HAVE_MRF}"
 
 
 echo "  LERC support:              ${HAVE_LERC}"
@@ -39893,9 +44481,6 @@ echo "  Ingres support:            ${HAVE_INGRES}"
 echo "  Xerces-C support:          ${HAVE_XERCES}"
 
 
-echo "  NAS support:               ${HAVE_NAS}"
-
-
 echo "  Expat support:             ${HAVE_EXPAT}"
 
 
@@ -39906,9 +44491,6 @@ echo "  Google libkml support:     ${HAVE_LIBKML}"
 
 
 echo "  ODBC support:              ${ODBC_SETTING}"
-
-
-echo "  PGeo support:              ${ODBC_SETTING}"
 
 
 echo "  FGDB support:              ${FGDB_ENABLED}"
@@ -39930,6 +44512,9 @@ echo "  SDE support:               ${SDE_ENABLED}"
 
 
 echo "  Rasdaman support:          ${RASDAMAN_ENABLED}"
+
+
+echo "  RDB support:               ${RDB_SETTING}"
 
 
 echo "  DODS support:              ${HAVE_DODS}"
@@ -39997,7 +44582,22 @@ echo "  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}"
 echo "  HDFS support:              ${HDFS_ENABLED}"
 
 
+echo "  TileDB support:            ${TILEDB_SETTING}"
+
+
 echo "  userfaultfd support:       ${ENABLE_UFFD}"
+
+
+echo "  misc. gdal formats:       ${GDALFORMATS_ENABLED}"
+
+
+echo "  disabled gdal formats:    ${GDALFORMATS_DISABLED}"
+
+
+echo "  misc. ogr formats:        ${OGRFORMATS_ENABLED}"
+
+
+echo "  disabled ogr formats:     ${OGRFORMATS_DISABLED}"
 
 
 

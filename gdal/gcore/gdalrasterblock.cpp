@@ -7,7 +7,7 @@
  *
  **********************************************************************
  * Copyright (c) 1998, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -678,7 +678,7 @@ GDALRasterBlock::~GDALRasterBlock()
 /*                        GetEffectiveBlockSize()                       */
 /************************************************************************/
 
-static size_t GetEffectiveBlockSize(int nBlockSize)
+static size_t GetEffectiveBlockSize(GPtrDiff_t nBlockSize)
 {
     // The real cost of a block allocation is more than just nBlockSize
     // As we allocate with 64-byte alignment, use 64 as a multiple.
@@ -938,7 +938,7 @@ CPLErr GDALRasterBlock::Internalize()
     const GIntBig nCurCacheMax = GDALGetCacheMax64();
 
     // No risk of overflow as it is checked in GDALRasterBand::InitBlockInfo().
-    const int nSizeInBytes = GetBlockSize();
+    const auto nSizeInBytes = GetBlockSize();
 
 /* -------------------------------------------------------------------- */
 /*      Flush old blocks if we are nearing our memory limit.            */
@@ -1075,9 +1075,13 @@ CPLErr GDALRasterBlock::Internalize()
 
 void GDALRasterBlock::MarkDirty()
 {
-    bDirty = true;
     if( poBand )
+    {
         poBand->InitRWLock();
+        if( !bDirty )
+            poBand->IncDirtyBlocks(1);
+    }
+    bDirty = true;
 }
 
 /************************************************************************/
@@ -1091,7 +1095,12 @@ void GDALRasterBlock::MarkDirty()
  * to disk before it can be flushed.
  */
 
-void GDALRasterBlock::MarkClean() { bDirty = false; }
+void GDALRasterBlock::MarkClean()
+{
+    if( bDirty && poBand )
+        poBand->IncDirtyBlocks(-1);
+    bDirty = false;
+}
 
 /************************************************************************/
 /*                          DestroyRBMutex()                           */

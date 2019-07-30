@@ -42,7 +42,7 @@ class vsil_target : public kdu_compressed_target {
 
 public:
     vsil_target() { file = nullptr; }
-    ~vsil_target() { close(); }
+    ~vsil_target() { vsil_target::close(); }
 
     void open(const char *fname, const char *access )
         {

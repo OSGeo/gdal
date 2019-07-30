@@ -56,20 +56,6 @@ OWConnection::OWConnection( OCIExtProcContext* poWithContext )
     pszPassword     = CPLStrdup( "" );
     pszServer       = CPLStrdup( "" );
 
-    hEnv            = nullptr;
-    hError          = nullptr;
-    hSvcCtx         = nullptr;
-    hSession        = nullptr;
-    hDescribe       = nullptr;
-    hNumArrayTDO    = nullptr;
-    hGeometryTDO    = nullptr;
-    hGeoRasterTDO   = nullptr;
-    hElemArrayTDO   = nullptr;
-    hOrdnArrayTDO   = nullptr;
-    bSuceeeded      = false;
-    nCharSize       = 1;
-    bExtProc        = false;
-
     if( ! poWithContext )
     {
        return;
@@ -105,7 +91,7 @@ OWConnection::OWConnection( OCIExtProcContext* poWithContext )
     poStmt->Define(szUser);
     poStmt->Define(szSchema);
 
-    poStmt->Execute();
+    CPL_IGNORE_RET_VAL(poStmt->Execute());
 
     pszExtProcSchema = CPLStrdup( szSchema );
     pszExtProcUser   = CPLStrdup( szUser );
@@ -127,20 +113,6 @@ OWConnection::OWConnection( const char* pszUserIn,
     pszUser         = CPLStrdup( pszUserIn );
     pszPassword     = CPLStrdup( pszPasswordIn );
     pszServer       = CPLStrdup( pszServerIn );
-
-    hEnv            = nullptr;
-    hError          = nullptr;
-    hSvcCtx         = nullptr;
-    hSession        = nullptr;
-    hDescribe       = nullptr;
-    hNumArrayTDO    = nullptr;
-    hGeometryTDO    = nullptr;
-    hGeoRasterTDO   = nullptr;
-    hElemArrayTDO   = nullptr;
-    hOrdnArrayTDO   = nullptr;
-    bSuceeeded      = false;
-    nCharSize       = 1;
-    bExtProc        = false;
 
     // ------------------------------------------------------
     //  Operational Systems's authentication option
@@ -325,6 +297,8 @@ OWConnection::~OWConnection()
     DestroyType( hGeoRasterTDO );
     DestroyType( hElemArrayTDO );
     DestroyType( hOrdnArrayTDO );
+    if( hPCTDO )
+        DestroyType( hPCTDO );
 
     OCIHandleFree( (dvoid*) hDescribe, (ub4) OCI_HTYPE_DESCRIBE);
 
@@ -370,6 +344,9 @@ OWConnection::~OWConnection()
     {
         OCIHandleFree((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION);
     }
+
+    CPLFree( pszExtProcUser );
+    CPLFree( pszExtProcSchema );
 }
 
 OCIType* OWConnection::DescribeType( const char *pszTypeName )
@@ -1565,7 +1542,7 @@ char* OWStatement::ReadCLob( OCILobLocator* phLocator )
 
     nSize *= this->poConnection->nCharSize;
 
-    pszBuffer = (char*) VSIMalloc( sizeof(char*) * nSize );
+    pszBuffer = (char*) VSICalloc( 1, nSize + 1 );
 
     if( pszBuffer == nullptr)
     {
@@ -1870,8 +1847,7 @@ void OWUpperIfNoQuotes( char* pszText )
 /*****************************************************************************/
 /*                     Parse Value after a Hint on a string                  */
 /*****************************************************************************/
-static
-const char *OWParseValue( const char* pszText,
+static CPLString OWParseValue( const char* pszText,
                           const char* pszSeparators,
                           const char* pszHint,
                           int nOffset )
@@ -1885,20 +1861,20 @@ const char *OWParseValue( const char* pszText,
         CSLT_PRESERVEQUOTES );
 
     nCount = CSLCount( papszTokens );
-    const char* pszResult = "";
+    CPLString osResult;
 
     for( i = 0; ( i + nOffset ) < nCount; i++ )
     {
         if( EQUAL( papszTokens[i], pszHint ) )
         {
-            pszResult = CPLStrdup( papszTokens[i + nOffset] );
+            osResult = papszTokens[i + nOffset];
             break;
         }
     }
 
     CSLDestroy( papszTokens );
 
-    return pszResult;
+    return osResult;
 }
 
 /*****************************************************************************/
@@ -1911,12 +1887,12 @@ const char *OWParseValue( const char* pszText,
  *
  */
 
-const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
+CPLString OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
 {
     char  szUpcase[OWTEXT];
     char* pszIn = nullptr;
 
-    strcpy( szUpcase, pszInsert );
+    snprintf( szUpcase, sizeof(szUpcase), "%s", pszInsert );
 
     for( pszIn = szUpcase; *pszIn != '\0'; pszIn++ )
     {
@@ -1948,9 +1924,9 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
     strncpy( szBuffer, pszStart, nLength );
     szBuffer[nLength] = '\0';
 
-    const char* pszValue = OWParseValue( szBuffer, " (,)", "INIT", nField );
+    auto osValue = OWParseValue( szBuffer, " (,)", "INIT", nField );
 
-    return EQUAL( pszValue, "" ) ? "NULL" : pszValue;
+    return EQUAL( osValue, "" ) ? "NULL" : osValue;
 }
 
 /*****************************************************************************/
@@ -1966,9 +1942,7 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
 
 int OWParseServerVersion( const char* pszText )
 {
-    const char* pszValue = OWParseValue( pszText, " .", "Release", 1 );
-
-    return pszValue == nullptr ? 0 : atoi( pszValue );
+    return atoi(OWParseValue( pszText, " .", "Release", 1 ));
 }
 
 /*****************************************************************************/
@@ -1984,9 +1958,7 @@ int OWParseServerVersion( const char* pszText )
 
 int OWParseEPSG( const char* pszText )
 {
-    const char* pszValue = OWParseValue( pszText, " ()", "EPSG", 2 );
-
-    return pszValue == nullptr ? 0 : atoi( pszValue );
+    return atoi(OWParseValue( pszText, " ()", "EPSG", 2 ));
 }
 
 /*****************************************************************************/

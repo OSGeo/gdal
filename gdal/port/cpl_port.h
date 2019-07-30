@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -345,13 +345,21 @@ typedef unsigned int  GUIntptr_t;
 #ifndef CPL_DLL
 #if defined(_MSC_VER) && !defined(CPL_DISABLE_DLL)
 #  define CPL_DLL     __declspec(dllexport)
+#  define CPL_INTERNAL
 #else
 #  if defined(USE_GCC_VISIBILITY_FLAG)
 #    define CPL_DLL     __attribute__ ((visibility("default")))
+#    if !defined(__MINGW32__)
+#        define CPL_INTERNAL __attribute__((visibility("hidden")))
+#    else
+#        define CPL_INTERNAL
+#    endif
 #  else
 #    define CPL_DLL
+#    define CPL_INTERNAL
 #  endif
 #endif
+
 #endif
 
 /*! @cond Doxygen_Suppress */

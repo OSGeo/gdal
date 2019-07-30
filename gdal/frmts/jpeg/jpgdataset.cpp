@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
@@ -240,7 +240,7 @@ char **JPGDatasetCommon::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:XMP", "COLOR_PROFILE", NULL);
+                                   "xml:XMP", "COLOR_PROFILE", nullptr);
 }
 
 /************************************************************************/
@@ -1345,9 +1345,9 @@ JPGDataset::~JPGDataset()
 
 bool JPGDataset::ErrorOutOnNonFatalError()
 {
-    if( sErrorStruct.bNonFatalErrorEncountered )
+    if( sUserData.bNonFatalErrorEncountered )
     {
-        sErrorStruct.bNonFatalErrorEncountered = false;
+        sUserData.bNonFatalErrorEncountered = false;
         return true;
     }
     return false;
@@ -1364,7 +1364,7 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
         return CE_None;
 
     // setup to trap a fatal error.
-    if (setjmp(sErrorStruct.setjmp_buffer))
+    if (setjmp(sUserData.setjmp_buffer))
         return CE_Failure;
 
     if (!bHasDoneJpegStartDecompress)
@@ -1661,7 +1661,7 @@ CPLErr JPGDataset::Restart()
 
 {
     // Setup to trap a fatal error.
-    if (setjmp(sErrorStruct.setjmp_buffer))
+    if (setjmp(sUserData.setjmp_buffer))
         return CE_Failure;
 
     J_COLOR_SPACE colorSpace = sDInfo.out_color_space;
@@ -2042,7 +2042,7 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
                                      JPGDataset *&poDS )
 {
     // Will detect mismatch between compile-time and run-time libjpeg versions.
-    if (setjmp(poDS->sErrorStruct.setjmp_buffer))
+    if (setjmp(poDS->sUserData.setjmp_buffer))
     {
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
         if (poDS->sDInfo.data_precision == 12 && poDS->fpImage != nullptr)
@@ -2169,9 +2169,9 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
 
     poDS->sDInfo.err = jpeg_std_error(&poDS->sJErr);
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
-    poDS->sErrorStruct.p_previous_emit_message = poDS->sJErr.emit_message;
+    poDS->sUserData.p_previous_emit_message = poDS->sJErr.emit_message;
     poDS->sJErr.emit_message = JPGDataset::EmitMessage;
-    poDS->sDInfo.client_data = &poDS->sErrorStruct;
+    poDS->sDInfo.client_data = &poDS->sUserData;
 
     jpeg_create_decompress(&poDS->sDInfo);
     poDS->bHasDoneJpegCreateDecompress = true;
@@ -2562,8 +2562,8 @@ void JPGDatasetCommon::DecompressMask()
 
 void JPGDataset::ErrorExit(j_common_ptr cinfo)
 {
-    GDALJPEGErrorStruct *psErrorStruct =
-        static_cast<GDALJPEGErrorStruct *>(cinfo->client_data);
+    GDALJPEGUserData *psUserData =
+        static_cast<GDALJPEGUserData *>(cinfo->client_data);
     char buffer[JMSG_LENGTH_MAX] = {};
 
     // Create the message.
@@ -2578,7 +2578,7 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
     CPLError(CE_Failure, CPLE_AppDefined, "libjpeg: %s", buffer);
 
     // Return control to the setjmp point.
-    longjmp(psErrorStruct->setjmp_buffer, 1);
+    longjmp(psUserData->setjmp_buffer, 1);
 }
 
 /************************************************************************/
@@ -2587,12 +2587,12 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
 
 void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
 {
-    GDALJPEGErrorStruct *psErrorStruct =
-        static_cast<GDALJPEGErrorStruct *>(cinfo->client_data);
+    GDALJPEGUserData *psUserData =
+        static_cast<GDALJPEGUserData *>(cinfo->client_data);
     if( msg_level >= 0 )  // Trace message.
     {
-        if( psErrorStruct->p_previous_emit_message != nullptr )
-            psErrorStruct->p_previous_emit_message(cinfo, msg_level);
+        if( psUserData->p_previous_emit_message != nullptr )
+            psUserData->p_previous_emit_message(cinfo, msg_level);
     }
     else
     {
@@ -2614,7 +2614,7 @@ void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
             if( CPLTestBool(
                    CPLGetConfigOption("GDAL_ERROR_ON_LIBJPEG_WARNING", "NO")) )
             {
-                psErrorStruct->bNonFatalErrorEncountered = true;
+                psUserData->bNonFatalErrorEncountered = true;
                 CPLError(CE_Failure, CPLE_AppDefined, "libjpeg: %s", buffer);
             }
             else
@@ -2643,20 +2643,18 @@ void JPGDataset::ProgressMonitor(j_common_ptr cinfo)
 {
     if (cinfo->is_decompressor)
     {
+        GDALJPEGUserData *psUserData =
+            static_cast<GDALJPEGUserData *>(cinfo->client_data);
         const int scan_no =
             reinterpret_cast<j_decompress_ptr>(cinfo)->input_scan_number;
-        const int MAX_SCANS = atoi(
-            CPLGetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "100"));
-        if (scan_no >= MAX_SCANS)
+        if (scan_no >= psUserData->nMaxScans)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Scan number %d exceeds maximum scans (%d)",
-                     scan_no, MAX_SCANS);
+                     scan_no, psUserData->nMaxScans);
 
-            GDALJPEGErrorStruct *psErrorStruct =
-                static_cast<GDALJPEGErrorStruct *>(cinfo->client_data);
             // Return control to the setjmp point.
-            longjmp(psErrorStruct->setjmp_buffer, 1);
+            longjmp(psUserData->setjmp_buffer, 1);
         }
     }
 }
@@ -3042,8 +3040,8 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     }
 
     VSILFILE *fpImage = nullptr;
-    GDALJPEGErrorStruct sErrorStruct;
-    sErrorStruct.bNonFatalErrorEncountered = false;
+    GDALJPEGUserData sUserData;
+    sUserData.bNonFatalErrorEncountered = false;
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
@@ -3131,7 +3129,7 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                             pfnProgress, pProgressData,
                             fpImage, eDT, nQuality,
                             bAppendMask,
-                            sErrorStruct, sCInfo, sJErr, pabyScanline);
+                            sUserData, sCInfo, sJErr, pabyScanline);
 }
 
 GDALDataset *
@@ -3143,13 +3141,13 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
                               GDALDataType eDT,
                               int nQuality,
                               bool bAppendMask,
-                              GDALJPEGErrorStruct &sErrorStruct,
+                              GDALJPEGUserData &sUserData,
                               struct jpeg_compress_struct &sCInfo,
                               struct jpeg_error_mgr &sJErr,
                               GByte *&pabyScanline)
 
 {
-    if (setjmp(sErrorStruct.setjmp_buffer))
+    if (setjmp(sUserData.setjmp_buffer))
     {
         if( fpImage )
             VSIFCloseL(fpImage);
@@ -3159,12 +3157,12 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
     // Initialize JPG access to the file.
     sCInfo.err = jpeg_std_error(&sJErr);
     sJErr.error_exit = JPGDataset::ErrorExit;
-    sErrorStruct.p_previous_emit_message = sJErr.emit_message;
+    sUserData.p_previous_emit_message = sJErr.emit_message;
     sJErr.emit_message = JPGDataset::EmitMessage;
-    sCInfo.client_data = &sErrorStruct;
+    sCInfo.client_data = &sUserData;
 
     jpeg_create_compress(&sCInfo);
-    if (setjmp(sErrorStruct.setjmp_buffer))
+    if (setjmp(sUserData.setjmp_buffer))
     {
         if( fpImage )
             VSIFCloseL(fpImage);
@@ -3294,7 +3292,7 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
     pabyScanline =
         static_cast<GByte *>(CPLMalloc(nBands * nXSize * nWorkDTSize));
 
-    if (setjmp(sErrorStruct.setjmp_buffer))
+    if (setjmp(sUserData.setjmp_buffer))
     {
         VSIFCloseL(fpImage);
         CPLFree(pabyScanline);

@@ -1002,17 +1002,21 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                         {
                             bool bSimpleEnoughOut = true;
                             int nSubCountSubEltOut = 0;
-                            FindElementsWithMustBeToLevel(
-                                    osXPath,
-                                    poCT->getParticle()->getModelGroupTerm(),
-                                    0,
-                                    oSetVisitedEltDecl,
-                                    oSetVisitedModelGroups,
-                                    oVectorEltsForTopClass,
-                                    aoSetXPathEltsForTopClass,
-                                    poModel,
-                                    bSimpleEnoughOut,
-                                    nSubCountSubEltOut );
+                            auto poParticle = poCT->getParticle();
+                            if( poParticle )
+                            {
+                                FindElementsWithMustBeToLevel(
+                                        osXPath,
+                                        poParticle->getModelGroupTerm(),
+                                        0,
+                                        oSetVisitedEltDecl,
+                                        oSetVisitedModelGroups,
+                                        oVectorEltsForTopClass,
+                                        aoSetXPathEltsForTopClass,
+                                        poModel,
+                                        bSimpleEnoughOut,
+                                        nSubCountSubEltOut );
+                            }
                         }
                     }
                 }

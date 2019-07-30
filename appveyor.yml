@@ -1,4 +1,8 @@
 
+branches:
+  except:
+    - /(cherry-pick-)?backport-\d+-to-/
+
 environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
@@ -67,7 +71,8 @@ install:
       Install-Module Pscx -AllowClobber
       Install-Module VSSetup -Scope CurrentUser
       # Install SWIG and VC for Python2.7 by Choco
-      cinst -y --no-progress swig vcpython27
+      cinst -y --no-progress --version 3.0.12 --force swig
+      cinst -y --no-progress vcpython27
       Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
       exec { pip install numpy }
       $env:SDK_ZIP="$env:SDK"+"-dev.zip"
@@ -126,8 +131,8 @@ install:
       $env:NMAKE_LOCAL+="NETCDF_LIB=`$(SDK_LIB)\netcdf.lib`n"
       $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"
       $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
-      $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:APPVEYOR_BUILD_FOLDER\install-proj\local\include`n"
-      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\local\lib\proj_6_0.lib`n"
+      $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:APPVEYOR_BUILD_FOLDER\install-proj\include`n"
+      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj_6_1.lib`n"
       $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
       #
       cd $env:APPVEYOR_BUILD_FOLDER
@@ -139,17 +144,18 @@ install:
       exec { vcpkg install sqlite3:$env:VCPKG_PLATFORM }
       appveyor DownloadFile https://sqlite.org/2018/sqlite-tools-win32-x86-3250100.zip
       exec { 7z x sqlite-tools-win32-x86-3250100.zip }
-      exec { copy sqlite-tools-win32-x86-3250100/sqlite3.exe . }
+      exec { copy sqlite-tools-win32-x86-3250100/sqlite3.exe $env:APPVEYOR_BUILD_FOLDER }
+      $env:PATH="$env:APPVEYOR_BUILD_FOLDER;$env:PATH"
       $env:PROJ_INSTALL_DIR="$env:APPVEYOR_BUILD_FOLDER"+"\install-proj"
       $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:PROJ_INSTALL_DIR
       exec { cmake -G $env:VS_FULL .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake }
       exec { cmake --build . --config Release --target install }
-      cd $env:APPVEYOR_BUILD_FOLDER\install-proj\share
+      cd $env:APPVEYOR_BUILD_FOLDER\install-proj\share\proj
       appveyor DownloadFile https://download.osgeo.org/proj/proj-datumgrid-1.8.zip
-      exec { 7z x proj-datumgrid-1.8.zip }
+      exec { 7z x proj-datumgrid-1.8.zip -aoa }
       #
       cd $env:APPVEYOR_BUILD_FOLDER\gdal
-      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\proj_6_0.dll . }
+      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\proj_6_1.dll . }
       exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
       cd apps
       exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
