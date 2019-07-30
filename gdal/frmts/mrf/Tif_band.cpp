@@ -182,13 +182,13 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     else
     {
         ret = poTiff->RasterIO(GF_Read, 0, 0, img.pagesize.x, img.pagesize.y,
-            dst.buffer, img.pagesize.x, img.pagesize.y,
-            img.dt, img.pagesize.c, nullptr,
-            nDTSize * img.pagesize.c,
-            nDTSize * img.pagesize.c * img.pagesize.x,
-            nDTSize
+                    dst.buffer, img.pagesize.x, img.pagesize.y,
+                    img.dt, img.pagesize.c, nullptr,
+                    nDTSize * img.pagesize.c,
+                    nDTSize * img.pagesize.c * img.pagesize.x,
+                    nDTSize
 #if GDAL_VERSION_MAJOR >= 2
-            , nullptr
+                    , nullptr
 #endif
         );
     }
