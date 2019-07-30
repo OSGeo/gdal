@@ -596,11 +596,6 @@ bool netCDFLayer::Create(char **papszOptions,
             if (poSRS != nullptr)
             {
                 m_poDS->vcdf.nc_put_vatt_text(m_layerSGDefn.get_containerID(), CF_GRD_MAPPING, m_sgCRSname.c_str());
-                NCDF_ERR(status);
-                if(status != NC_NOERR)
-                {
-                    throw nccfdriver::SGWriter_Exception_NCWriteFailure(this->GetName(), CF_GRD_MAPPING, "attribute");
-                }
 
                 std::vector<int>& ncv = m_layerSGDefn.get_nodeCoordVarIDs();
                 int xVar = ncv[0];
@@ -608,13 +603,13 @@ bool netCDFLayer::Create(char **papszOptions,
 
                 if (poSRS->IsGeographic())
                 {
-                    NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, xVar, yVar);
+                    NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, xVar, yVar, &(m_poDS->vcdf));
                 }
 
                 else if (poSRS->IsProjected())
                 {
                     NCDFWriteXYVarsAttributes(m_nLayerCDFId, xVar, yVar,
-                        poSRS);
+                        poSRS, &(m_poDS->vcdf));
                 }
             }
         }
@@ -1397,7 +1392,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
         if(m_layerSGDefn.get_containerID() == nccfdriver::INVALID_VAR_ID)
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Append mode is not supported for CF-1.8 datasets.");
-            return OGRERR_UNSUPPORTED_OPERATION;        
+            return OGRERR_UNSUPPORTED_OPERATION;
         }
     }
 
@@ -1631,8 +1626,19 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         case NC_STRING:
         {
             const char *pszVal = poFeature->GetFieldAsString(i);
-            status = nc_put_var1_string(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                        anIndex, &pszVal);
+
+            if (m_poDS->HasInfiniteRecordDim())
+            {
+                status = nc_put_var1_string(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                            anIndex, &pszVal);
+            }
+
+            else
+            {
+                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_String_Transaction(m_aoFieldDesc[i].nVarId, pszVal));
+                m_poDS->FieldScribe.enqueue_transaction(ptr);
+            }
+
             break;
         }
 #endif
@@ -1661,8 +1667,19 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         {
             int nVal = poFeature->GetFieldAsInteger(i);
             unsigned char uchVal = static_cast<unsigned char>(nVal);
-            status = nc_put_var1_uchar(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                       anIndex, &uchVal);
+
+            if (m_poDS->HasInfiniteRecordDim())
+            {
+                status = nc_put_var1_uchar(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                           anIndex, &uchVal);
+            }
+
+            else
+            {
+                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_UByte_Transaction(m_aoFieldDesc[i].nVarId, uchVal));
+                m_poDS->FieldScribe.enqueue_transaction(ptr);
+            }
+            break;
             break;
         }
 #endif
@@ -1690,8 +1707,18 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         {
             int nVal = poFeature->GetFieldAsInteger(i);
             unsigned short usVal = static_cast<unsigned short>(nVal);
-            status = nc_put_var1_ushort(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                        anIndex, &usVal);
+
+            if (m_poDS->HasInfiniteRecordDim())
+            {
+                status = nc_put_var1_ushort(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                            anIndex, &usVal);
+            }
+            else
+            {
+                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_UShort_Transaction(m_aoFieldDesc[i].nVarId, usVal));
+                m_poDS->FieldScribe.enqueue_transaction(ptr);
+            }
+
             break;
         }
 #endif
@@ -1746,8 +1773,18 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         {
             GIntBig nVal = poFeature->GetFieldAsInteger64(i);
             unsigned int unVal = static_cast<unsigned int>(nVal);
-            status = nc_put_var1_uint(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                      anIndex, &unVal);
+
+            if (m_poDS->HasInfiniteRecordDim())
+            {
+                status = nc_put_var1_uint(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                          anIndex, &unVal);
+            }
+            else
+            {
+                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_UInt_Transaction(m_aoFieldDesc[i].nVarId, unVal));
+                m_poDS->FieldScribe.enqueue_transaction(ptr);
+            }
+
             break;
         }
 #endif
@@ -1756,8 +1793,16 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         case NC_INT64:
         {
             GIntBig nVal = poFeature->GetFieldAsInteger64(i);
-            status = nc_put_var1_longlong(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+            if (m_poDS->HasInfiniteRecordDim())
+            {
+                status = nc_put_var1_longlong(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+            }
+            else
+            {
+                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_Int64_Transaction(m_aoFieldDesc[i].nVarId, nVal));
+                m_poDS->FieldScribe.enqueue_transaction(ptr);
+            }
             break;
         }
 
@@ -1765,8 +1810,18 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         {
             double dfVal = poFeature->GetFieldAsDouble(i);
             GUIntBig nVal = static_cast<GUIntBig>(dfVal);
-            status = nc_put_var1_ulonglong(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+
+            if (m_poDS->HasInfiniteRecordDim())
+            {
+                status = nc_put_var1_ulonglong(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+            }
+            else
+            {
+                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_UInt64_Transaction(m_aoFieldDesc[i].nVarId, nVal));
+                m_poDS->FieldScribe.enqueue_transaction(ptr);
+            }
+
             break;
         }
 #endif
@@ -2443,8 +2498,15 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
         {
             nType = NC_STRING;
-            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
-                                &nMainDimId, &nVarID);
+            if(m_bLegacyCreateMode)
+            {
+                status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
+                                    &nMainDimId, &nVarID);
+            }
+            else
+            {
+                status = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            }
         }
 #endif
         else

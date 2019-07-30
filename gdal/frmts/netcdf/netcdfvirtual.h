@@ -211,6 +211,11 @@ namespace nccfdriver
 			void nc_put_vatt_byte(int varid, const char* name, const signed char* out);
 
                         // Writing Functions
+			template<class out_T> void nc_put_vvar_generic(int varid, const size_t* index, const out_T* out)
+			{
+				nc_put_var1(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+			}
+
 			void nc_put_vvar1_text(int varid, const size_t* index, const char* out);
 			void nc_put_vvara_text(int varid, const size_t* start, const size_t* index, const char* out);
 			void nc_put_vvar1_short(int varid, const size_t* index, short* out);
@@ -218,6 +223,10 @@ namespace nccfdriver
 			void nc_put_vvar1_schar(int varid, const size_t* index, signed char* out);
 			void nc_put_vvar1_float(int varid, const size_t* index, float* out);
 			void nc_put_vvar1_double(int varid, const size_t* index, double* out);
+
+#ifdef NETCDF_HAS_NC4
+			void nc_put_vvar1_string(int varid, const size_t* index, const char** out);
+#endif
 
 			// Equivalent "enquiry" functions
 			netCDFVVariable& virtualVIDToVar(int virtualID); // converts a virtual var ID to a real ID

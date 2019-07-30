@@ -183,6 +183,8 @@ namespace nccfdriver
     {
         std::string char_rep;
 
+        protected:
+            const char* getRepPtr() { return char_rep.c_str(); }
         public:
             void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_text(OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
@@ -215,93 +217,60 @@ namespace nccfdriver
             }
     };
 
-    class OGR_SGFS_NC_Byte_Transaction: public OGR_SGFS_Transaction
+    template <class VClass, nc_type ntype> class OGR_SGFS_NC_Transaction_Generic : public OGR_SGFS_Transaction
     {
-        signed char schar_rep;
+        VClass rep;
 
         public:
-            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_schar(OGR_SGFS_Transaction::getVarId(), &write_loc, &schar_rep); }
+            void commit(netCDFVID& n, size_t write_loc) override
+            {
+                n.nc_put_vvar_generic<VClass>(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep);
+            }
+
             unsigned long long count() override { return sizeof(*this); }
-            void appendToLog(FILE* f) override { genericLogAppend<signed char, NC_BYTE>(schar_rep, OGR_SGFS_Transaction::getVarId(), f); }
-            OGR_SGFS_NC_Byte_Transaction(int i_varId, signed char scin) : 
-               schar_rep(scin)
+            void appendToLog(FILE* f) override
+            {
+                genericLogAppend<VClass, ntype>(rep, OGR_SGFS_Transaction::getVarId(), f);
+            }
+
+            OGR_SGFS_NC_Transaction_Generic(int i_varId, VClass in) : 
+               rep(in)
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
             }
     };
 
-    /* OGR_SGFS_NC_Short_Transaction 
-     * Writes to an NC_SHORT variable
+    typedef OGR_SGFS_NC_Transaction_Generic<signed char, NC_BYTE> OGR_SGFS_NC_Byte_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<short, NC_SHORT> OGR_SGFS_NC_Short_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<int, NC_INT> OGR_SGFS_NC_Int_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<float, NC_FLOAT> OGR_SGFS_NC_Float_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<double, NC_DOUBLE> OGR_SGFS_NC_Double_Transaction;
+
+#ifdef NETCDF_HAS_NC4
+    typedef OGR_SGFS_NC_Transaction_Generic<unsigned, NC_UINT> OGR_SGFS_NC_UInt_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<unsigned long long, NC_UINT64> OGR_SGFS_NC_UInt64_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<long long, NC_INT> OGR_SGFS_NC_Int64_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<unsigned char, NC_INT> OGR_SGFS_NC_UByte_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<unsigned short, NC_USHORT> OGR_SGFS_NC_UShort_Transaction;
+
+    /* OGR_SGFS_NC_String_Transaction
+     * Writes to an NC_STRING variable, in a similar manner as NC_Char
      */
-    class OGR_SGFS_NC_Short_Transaction: public OGR_SGFS_Transaction
+    class OGR_SGFS_NC_String_Transaction : public OGR_SGFS_NC_Char_Transaction
     {
-        short rep;
-
         public:
-            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_short(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
-            unsigned long long count() override { return sizeof(*this); }
-            void appendToLog(FILE* f) override { genericLogAppend<short, NC_SHORT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
-            OGR_SGFS_NC_Short_Transaction(int i_varId, short shin) : 
-               rep(shin)
+            void commit(netCDFVID& n, size_t write_loc) override
             {
-                OGR_SGFS_Transaction::setVarId(i_varId);
+                const char * writable = OGR_SGFS_NC_Char_Transaction::getRepPtr();
+                n.nc_put_vvar1_string(OGR_SGFS_Transaction::getVarId(), &write_loc, &(writable));
             }
+
+            OGR_SGFS_NC_String_Transaction(int i_varId, const char* pszVal) : 
+               OGR_SGFS_NC_Char_Transaction(i_varId, pszVal)
+            {}
     };
 
-    /* OGR_SGFS_NC_Int_Transaction
-     * Writes to an NC_INT variable
-     */
-    class OGR_SGFS_NC_Int_Transaction: public OGR_SGFS_Transaction
-    {
-        int rep;
-
-        public:
-            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_int(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
-            unsigned long long count() override { return sizeof(*this); }
-            void appendToLog(FILE* f) override { genericLogAppend<int, NC_INT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
-            OGR_SGFS_NC_Int_Transaction(int i_varId, int iin) : 
-               rep(iin)
-            {
-                OGR_SGFS_Transaction::setVarId(i_varId);
-            }
-    };
-
-    
-    /* OGR_SGFS_NC_Float_Transaction
-     * Writes to an NC_FLOAT variable
-     */
-    class OGR_SGFS_NC_Float_Transaction: public OGR_SGFS_Transaction
-    {
-        float rep;
-
-        public:
-            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_float(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
-            unsigned long long count() override { return sizeof(*this); }
-            void appendToLog(FILE* f) override { genericLogAppend<float, NC_FLOAT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
-            OGR_SGFS_NC_Float_Transaction(int i_varId, float fin) : 
-               rep(fin)
-            {
-                OGR_SGFS_Transaction::setVarId(i_varId);
-            }
-    };
-
-    /* OGR_SGFS_NC_Double_Transaction
-     * Writes to an NC_DOUBLE variable
-     */
-    class OGR_SGFS_NC_Double_Transaction: public OGR_SGFS_Transaction
-    {
-        double rep;
-
-        public:
-            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_double(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
-            unsigned long long count() override { return sizeof(*this); }
-            void appendToLog(FILE* f) override { genericLogAppend<double, NC_DOUBLE>(rep, OGR_SGFS_Transaction::getVarId(), f); }
-            OGR_SGFS_NC_Double_Transaction(int i_varId, double fin) : 
-               rep(fin)
-            {
-                OGR_SGFS_Transaction::setVarId(i_varId);
-            }
-    };
+#endif
 
     /* OGR_NCScribe
      * Buffers several netCDF transactions in memory or in a log.

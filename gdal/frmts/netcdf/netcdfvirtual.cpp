@@ -223,27 +223,34 @@ namespace nccfdriver
 
 	void netCDFVID::nc_put_vvar1_short(int varid, const size_t* index, short* out)
 	{
-		nc_put_var1_short(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+		nc_put_vvar_generic<short>(varid, index, out);
 	}
 
 	void netCDFVID::nc_put_vvar1_int(int varid, const size_t* index, int* out)
 	{
-		nc_put_var1_int(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+		nc_put_vvar_generic<int>(varid, index, out);
 	}
 
 	void netCDFVID::nc_put_vvar1_schar(int varid, const size_t* index, signed char* out)
 	{
-		nc_put_var1_schar(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+		nc_put_vvar_generic<signed char>(varid, index, out);
 	}
 
 	void netCDFVID::nc_put_vvar1_float(int varid, const size_t* index, float* out)
 	{
-		nc_put_var1_float(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+		nc_put_vvar_generic<float>(varid, index, out);
 	}
 
 	void netCDFVID::nc_put_vvar1_double(int varid, const size_t* index, double* out)
 	{
-		nc_put_var1_double(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+		nc_put_vvar_generic<double>(varid, index, out);
 	}
+
+#ifdef NETCDF_HAS_NC4
+	void netCDFVID::nc_put_vvar1_string(int varid, const size_t* index, const char** out)
+	{
+		nc_put_var1_string(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+	}
+#endif
 
 }

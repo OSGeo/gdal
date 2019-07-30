@@ -4492,35 +4492,52 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
 /*                   NCDFWriteLonLatVarsAttributes()                    */
 /************************************************************************/
 
+void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID, nccfdriver::netCDFVID * vcdf)
+{
+    if(vcdf == nullptr)
+    {
+        int status =
+            nc_put_att_text(cdfid, nVarLatID, CF_STD_NAME,
+                            strlen(CF_LATITUDE_STD_NAME), CF_LATITUDE_STD_NAME);
+        NCDF_ERR(status);
+
+        status =
+            nc_put_att_text(cdfid, nVarLatID, CF_LNG_NAME,
+                            strlen(CF_LATITUDE_LNG_NAME), CF_LATITUDE_LNG_NAME);
+        NCDF_ERR(status);
+
+        status = nc_put_att_text(cdfid, nVarLatID, CF_UNITS,
+                                strlen(CF_DEGREES_NORTH), CF_DEGREES_NORTH);
+        NCDF_ERR(status);
+
+        status =
+            nc_put_att_text(cdfid, nVarLonID, CF_STD_NAME,
+                            strlen(CF_LONGITUDE_STD_NAME), CF_LONGITUDE_STD_NAME);
+        NCDF_ERR(status);
+
+        status =
+            nc_put_att_text(cdfid, nVarLonID, CF_LNG_NAME,
+                            strlen(CF_LONGITUDE_LNG_NAME), CF_LONGITUDE_LNG_NAME);
+        NCDF_ERR(status);
+
+        status = nc_put_att_text(cdfid, nVarLonID, CF_UNITS,
+                                strlen(CF_DEGREES_EAST), CF_DEGREES_EAST);
+        NCDF_ERR(status);
+    }
+    else
+    {
+        vcdf->nc_put_vatt_text(nVarLatID, CF_STD_NAME, CF_LATITUDE_STD_NAME);
+        vcdf->nc_put_vatt_text(nVarLatID, CF_LNG_NAME, CF_LATITUDE_LNG_NAME);
+        vcdf->nc_put_vatt_text(nVarLatID, CF_UNITS, CF_DEGREES_NORTH);
+        vcdf->nc_put_vatt_text(nVarLonID, CF_STD_NAME, CF_LONGITUDE_STD_NAME);
+        vcdf->nc_put_vatt_text(nVarLonID, CF_LNG_NAME, CF_LONGITUDE_LNG_NAME);
+        vcdf->nc_put_vatt_text(nVarLonID, CF_UNITS, CF_DEGREES_EAST);
+    }
+}
+
 void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID)
 {
-    int status =
-        nc_put_att_text(cdfid, nVarLatID, CF_STD_NAME,
-                        strlen(CF_LATITUDE_STD_NAME), CF_LATITUDE_STD_NAME);
-    NCDF_ERR(status);
-
-    status =
-        nc_put_att_text(cdfid, nVarLatID, CF_LNG_NAME,
-                        strlen(CF_LATITUDE_LNG_NAME), CF_LATITUDE_LNG_NAME);
-    NCDF_ERR(status);
-
-    status = nc_put_att_text(cdfid, nVarLatID, CF_UNITS,
-                             strlen(CF_DEGREES_NORTH), CF_DEGREES_NORTH);
-    NCDF_ERR(status);
-
-    status =
-        nc_put_att_text(cdfid, nVarLonID, CF_STD_NAME,
-                        strlen(CF_LONGITUDE_STD_NAME), CF_LONGITUDE_STD_NAME);
-    NCDF_ERR(status);
-
-    status =
-        nc_put_att_text(cdfid, nVarLonID, CF_LNG_NAME,
-                        strlen(CF_LONGITUDE_LNG_NAME), CF_LONGITUDE_LNG_NAME);
-    NCDF_ERR(status);
-
-    status = nc_put_att_text(cdfid, nVarLonID, CF_UNITS,
-                             strlen(CF_DEGREES_EAST), CF_DEGREES_EAST);
-    NCDF_ERR(status);
+    NCDFWriteLonLatVarsAttributes(cdfid, nVarLonID, nVarLatID, nullptr);
 }
 
 /************************************************************************/
@@ -4557,36 +4574,56 @@ const char* NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS)
 /************************************************************************/
 
 void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
-                               OGRSpatialReference *poSRS)
+                               OGRSpatialReference *poSRS, nccfdriver::netCDFVID* vcdf)
 {
     int status;
     const char *pszUnitsToWrite = NCDFGetProjectedCFUnit(poSRS);
 
-    status = nc_put_att_text(cdfid, nVarXID, CF_STD_NAME,
-                             strlen(CF_PROJ_X_COORD), CF_PROJ_X_COORD);
-    NCDF_ERR(status);
+    if(vcdf == nullptr)
+    {
+        status = nc_put_att_text(cdfid, nVarXID, CF_STD_NAME,
+                                 strlen(CF_PROJ_X_COORD), CF_PROJ_X_COORD);
+        NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarXID, CF_LNG_NAME,
-                             strlen(CF_PROJ_X_COORD_LONG_NAME),
-                             CF_PROJ_X_COORD_LONG_NAME);
-    NCDF_ERR(status);
+        status = nc_put_att_text(cdfid, nVarXID, CF_LNG_NAME,
+                                 strlen(CF_PROJ_X_COORD_LONG_NAME),
+                                 CF_PROJ_X_COORD_LONG_NAME);
+        NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarXID, CF_UNITS,
-                             strlen(pszUnitsToWrite), pszUnitsToWrite);
-    NCDF_ERR(status);
+        status = nc_put_att_text(cdfid, nVarXID, CF_UNITS,
+                                 strlen(pszUnitsToWrite), pszUnitsToWrite);
+        NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarYID, CF_STD_NAME,
+        status = nc_put_att_text(cdfid, nVarYID, CF_STD_NAME,
                              strlen(CF_PROJ_Y_COORD), CF_PROJ_Y_COORD);
-    NCDF_ERR(status);
+        NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarYID, CF_LNG_NAME,
-                             strlen(CF_PROJ_Y_COORD_LONG_NAME),
-                             CF_PROJ_Y_COORD_LONG_NAME);
-    NCDF_ERR(status);
+        status = nc_put_att_text(cdfid, nVarYID, CF_LNG_NAME,
+                                 strlen(CF_PROJ_Y_COORD_LONG_NAME),
+                                 CF_PROJ_Y_COORD_LONG_NAME);
+        NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarYID, CF_UNITS, strlen(pszUnitsToWrite),
-                             pszUnitsToWrite);
-    NCDF_ERR(status);
+        status = nc_put_att_text(cdfid, nVarYID, CF_UNITS, strlen(pszUnitsToWrite),
+                                 pszUnitsToWrite);
+        NCDF_ERR(status);
+    }
+
+    else
+    {
+        // If group support is added to CF-1.8, then this will have to slightly change
+        vcdf->nc_put_vatt_text(nVarXID, CF_STD_NAME, CF_PROJ_X_COORD);
+        vcdf->nc_put_vatt_text(nVarXID, CF_LNG_NAME, CF_PROJ_X_COORD_LONG_NAME);
+        vcdf->nc_put_vatt_text(nVarXID, CF_UNITS, pszUnitsToWrite);
+        vcdf->nc_put_vatt_text(nVarYID, CF_STD_NAME, CF_PROJ_Y_COORD);
+        vcdf->nc_put_vatt_text(nVarYID, CF_LNG_NAME, CF_PROJ_Y_COORD_LONG_NAME);
+        vcdf->nc_put_vatt_text(nVarYID, CF_UNITS, pszUnitsToWrite);
+    }
+}
+
+void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
+                               OGRSpatialReference *poSRS)
+{
+    NCDFWriteXYVarsAttributes(cdfid, nVarXID, nVarYID, poSRS, nullptr);
 }
 
 /************************************************************************/
@@ -8823,7 +8860,7 @@ void netCDFDataset::ProcessCreationOptions()
         CSLFetchNameValueDef(papszCreationOptions, "MULTIPLE_LAYERS", "NO");
     const char *pszGeometryEnc =
         CSLFetchNameValueDef(papszCreationOptions, "GEOMETRY_ENCODING", "CF_1.8");
-    if( EQUAL(pszMultipleLayerBehaviour, "NO") || EQUAL(pszGeometryEnc, "CF_1.8")) 
+    if( EQUAL(pszMultipleLayerBehaviour, "NO") || EQUAL(pszGeometryEnc, "CF_1.8"))
     {
         eMultipleLayerBehaviour = SINGLE_LAYER;
     }
@@ -9330,7 +9367,7 @@ static bool NCDFIsCfProjection( const char *pszProjection )
 
 // NOTE: modifications by ET to combine the specific and generic mappings.
 
-static std::vector<std::pair<std::string, double> > 
+static std::vector<std::pair<std::string, double> >
             NCDFGetProjAttribs( const OGR_SRSNode *poPROJCS,
                                   const char *pszProjection )
 {

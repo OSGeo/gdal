@@ -972,7 +972,7 @@ class netCDFDataset final: public GDALPamDataset
 
     int GetCDFID() const { return cdfid; }
 
-    bool HasInfiniteRecordDim() { return eFormat == NCDF_FORMAT_NC4 || !bSGSupport; }
+    inline bool HasInfiniteRecordDim() { return !bSGSupport; }
 
     /* static functions */
     static int Identify( GDALOpenInfo * );
@@ -1123,9 +1123,12 @@ class netCDFLayer final: public OGRLayer
 };
 
 const char* NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS);
+void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID, nccfdriver::netCDFVID* vcdf);
 void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID);
 void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
                                       OGRSpatialReference* poSRS);
+void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
+                               OGRSpatialReference *poSRS, nccfdriver::netCDFVID* vcdf);
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                                 char** ppszCFProjection, bool bWriteGDALTags, std::string&);
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS, char** ppszCFProjection, bool bWriteGDALTags);
