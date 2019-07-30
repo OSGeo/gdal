@@ -50,7 +50,7 @@ namespace nccfdriver
 		int dimID = dimTicket;
 
 		// Check if name is already defined
-		if(nameDimTable.at(std::string(name)))
+		if(nameDimTable.count(std::string(name)) > 0)
 		{
 			// TODO: throw exception
 		}
@@ -68,7 +68,7 @@ namespace nccfdriver
 		int varID = varTicket;
 
 		// Check if name is already defined
-		if(nameVarTable.at(std::string(name)))
+		if(nameVarTable.count(std::string(name)) > 0)
 		{
 			// TODO: throw exception
 		}
@@ -91,8 +91,20 @@ namespace nccfdriver
 		}
 	}
 
+	void netCDFVID::nc_set_define_mode()
+	{
+		nc_redef(ncid);
+	}
+
+	void netCDFVID::nc_set_data_mode()
+	{
+		nc_enddef(ncid);
+	}
+
         void netCDFVID::nc_vmap()
 	{
+		nc_set_define_mode();
+
 		for(size_t itr_d = 0; itr_d < dimList.size(); itr_d++)
 		{
 			int realDimID;
@@ -118,6 +130,7 @@ namespace nccfdriver
 			var.setRealID(realVarID);
 		}
 
+		nc_set_data_mode();
 	}
 
 	/* Enquiry Functions
@@ -164,7 +177,7 @@ namespace nccfdriver
 
 	void netCDFVID::nc_put_vvara_text(int varid, const size_t* count, const size_t* index, const char* out)
 	{
-		nc_put_var1_text(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+		nc_put_vara_text(ncid, virtualVIDToVar(varid).getRealID(), count, index, out);
 	}
 
 	void netCDFVID::nc_put_vvar1_short(int varid, const size_t* index, short* out)

@@ -226,20 +226,29 @@ void netCDFDataset::SGCommitPendingTransaction()
 
                 // Resize node coordinates
                 int ncoord_did = layerMD.get_node_coord_dimID();
-                vcdf.nc_resize_vdim(ncoord_did, layerMD.get_next_write_pos_node_coord());
+                if(ncoord_did != nccfdriver::INVALID_DIM_ID)
+                {
+                    vcdf.nc_resize_vdim(ncoord_did, layerMD.get_next_write_pos_node_coord());
+                }
 
                 // Resize node count (for all except POINT)
                 if(wType != nccfdriver::POINT)
                 {
                     int ncount_did = layerMD.get_node_count_dimID();
-                    vcdf.nc_resize_vdim(ncount_did, layerMD.get_next_write_pos_node_count());
+                    if(ncount_did != nccfdriver::INVALID_DIM_ID)
+                    {
+                        vcdf.nc_resize_vdim(ncount_did, layerMD.get_next_write_pos_node_count());
+                    }
                 }
 
                 // Resize part node count (for MULTILINE, POLYGON, MULTIPOLYGON)
                 if(wType == nccfdriver::MULTILINE || wType == nccfdriver::POLYGON || wType == nccfdriver::MULTIPOLYGON)
                 {
                     int pnc_did = layerMD.get_pnc_dimID();
-                    vcdf.nc_resize_vdim(pnc_did, layerMD.get_next_write_pos_pnc());
+                    if(pnc_did != nccfdriver::INVALID_DIM_ID)
+                    {
+                        vcdf.nc_resize_vdim(pnc_did, layerMD.get_next_write_pos_pnc());
+                    }
                 }
 
                 // todo: detect POLYGON blacklist 

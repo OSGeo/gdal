@@ -111,6 +111,8 @@ namespace nccfdriver
 			int nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp);
 			int nc_register_vvar(int realID); // for vars that DO already exist in netCDF file
 			void nc_resize_vdim(int dimid, size_t dimlen); // for dims that haven't been mapped to physical yet
+			void nc_set_define_mode();
+			void nc_set_data_mode();
 
 			/* nc_vmap()
 			 * Maps virtual IDs to real physical ID if that mapping doesn't already exist
