@@ -128,6 +128,14 @@ namespace nccfdriver
 			
 			nc_def_var(ncid, var.getName().c_str(), var.getType(), var.getDimCount(), newdims.get(), &realVarID);
 			var.setRealID(realVarID);
+
+			// Now write each of its attributes
+			for(size_t attrct = 0; attrct < var.getAttributes().size(); attrct++)
+			{
+				var.getAttributes()[attrct]->vsync(ncid, realVarID);
+			}
+
+			var.getAttributes().clear();
 		}
 
 		nc_set_data_mode();
@@ -148,7 +156,6 @@ namespace nccfdriver
 
 	netCDFVDimension& netCDFVID::virtualDIDToDim(int virtualID)
 	{
-
 		if(virtualID >= static_cast<int>(dimList.size()) || virtualID < 0)
 		{
 			// TODO: throw exception
@@ -165,6 +172,41 @@ namespace nccfdriver
 	int netCDFVID::nameToVirtualDID(std::string& name)
 	{
 		return nameDimTable.at(name); // todo exception handling
+	}
+
+	/* Attribute writing
+	 * 
+	 */
+	void netCDFVID::nc_put_vatt_text(int varid, const char* name, const char* out)
+	{
+		if(varid >= static_cast<int>(dimList.size()) || varid < 0)
+		{
+			// TODO: throw exception
+		}
+
+		netCDFVVariable& v = virtualVIDToVar(varid);
+                v.getAttributes().push_back(std::shared_ptr<netCDFVAttribute>(new netCDFVTextAttribute(name, out)));
+	}
+
+	void netCDFVID::nc_put_vatt_int(int varid, const char* name, const int* out)
+	{
+		if(varid >= static_cast<int>(dimList.size()) || varid < 0)
+		{
+			// TODO: throw exception
+		}
+
+		netCDFVVariable& v = virtualVIDToVar(varid);
+                v.getAttributes().push_back(std::shared_ptr<netCDFVAttribute>(new netCDFVIntAttribute(name, *out)));
+	}
+
+	void netCDFVTextAttribute::vsync(int realncid, int realvarid)
+	{
+		nc_put_att_text(realncid, realvarid, name.c_str(), value.size(), value.c_str()); //TODO exception
+	}
+
+	void netCDFVIntAttribute::vsync(int realncid, int realvarid)
+	{
+		nc_put_att_int(realncid, realvarid, name.c_str(), NC_INT, sizeof(int), &value); //TODO exception
 	}
 
 	/* Single Datum Writing

@@ -37,6 +37,61 @@
 // that can be mapped to a real netCDF ID
 namespace nccfdriver
 {
+	/* netCDFVAttribute
+	 * -
+	 * Contains attribute name and data.
+	 * Central to derived types are reimplementations of vsync
+	 */
+	class netCDFVAttribute
+	{
+		public:
+			/* vsync(...)
+			 * Implementation: Given the REAL ncID and REAL variable ID
+			 * Write the attribute to the variable
+			 */
+			virtual void vsync(int realncid, int realvarid) = 0;
+
+			/*  ~netCDFVAttribute()
+			 * Virtual destructor
+			 */
+			virtual ~netCDFVAttribute() { }
+	};
+
+	/* netCDFVTextAttribute
+	 * -
+	 * Attribute that has a text string value
+	 */
+	class netCDFVTextAttribute : public netCDFVAttribute
+	{
+		std::string name;
+		std::string value;
+
+		public:
+			netCDFVTextAttribute(const char* a_name, const char* a_value) :
+				name(a_name),
+				value(a_value)		
+			{}
+
+			void vsync(int realncid, int realvarid) override;
+	};
+
+	/* netCDFVIntAttribute
+	 * -
+	 * Attribute that has an int value
+	 */
+	class netCDFVIntAttribute : public netCDFVAttribute
+	{
+		std::string name;
+		int value;
+
+		public:
+			netCDFVIntAttribute(const char* a_name, int a_value) :
+				name(a_name),
+				value(a_value)		
+			{}
+
+			void vsync(int realncid, int realvarid) override;
+	};
 
 	/* netCDFVDimension
 	 * -
@@ -70,13 +125,18 @@ namespace nccfdriver
 	 */
 	class netCDFVVariable
 	{
+		friend class netCDFVID;
+
 		std::string real_var_name;
 		nc_type ntype;
                 int r_vid = INVALID_VAR_ID;
 		int v_vid;
 		int ndimc;
 		std::unique_ptr<int, std::default_delete<int[]>> dimid;
+		std::vector<std::shared_ptr<netCDFVAttribute>> attribs;
 
+		protected:
+			std::vector<std::shared_ptr<netCDFVAttribute>>& getAttributes() { return attribs; }
 		public:
 			netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp, int varid);
 			std::string& getName() { return real_var_name; }
@@ -91,8 +151,15 @@ namespace nccfdriver
 	 * -
 	 * A netCDF ID that sits on top of an actual netCDF ID
 	 * And manages actual interaction with the real netCDF file
-	 * Some differences is that netCDFVDataset:
-	 * - doesn't have fixed dim sizes, until defines are committed
+	 * A bit difference is that netCDFVDataset
+	 * doesn't have fixed dim sizes, until defines are committed
+	 *
+	 * Also, virtual attributes only exist until the variable is committed. Use "real" attributes
+	 * for a variable after its been commited.
+	 *
+	 * ** Do not mix netCDF virtual dim and variable IDs with regular netCDF dim (a.k.a. "real") 
+	 * ids and variable ids. They are NOT compatible, and must be translated first, to be
+	 * used in this manner **
 	 */
 	class netCDFVID
         {
@@ -122,6 +189,7 @@ namespace nccfdriver
 
                         // Attribute function(s)
 			void nc_put_vatt_text(int varid, const char * name, const char * out);
+			void nc_put_vatt_int(int varid, const char* name, const int* out);
 
                         // Writing Functions
 			void nc_put_vvar1_text(int varid, const size_t* index, const char* out);

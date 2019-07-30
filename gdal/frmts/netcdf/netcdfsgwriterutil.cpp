@@ -258,10 +258,21 @@ namespace nccfdriver
         // Do the same for part node count, if it exists
         char pnc_name[NC_MAX_CHAR + 1] = {0};
         err_code = nc_get_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, pnc_name);
+
+
         if(err_code == NC_NOERR)
         {
             pnc_dimID = ncdf.nc_def_vdim(pnc_name, 1);
             pnc_varID = ncdf.nc_def_vvar(pnc_name, NC_INT, 1, &pnc_dimID);
+
+            char ir_name[NC_MAX_CHAR + 1] = {0}; 
+            err_code = nc_get_att_text(ncID, containerVarID, CF_SG_INTERIOR_RING, ir_name);
+
+            // For interior ring too (for POLYGON and MULTIPOLYGON)
+            if(this->writableType == POLYGON || this->writableType == MULTIPOLYGON)
+            {
+                intring_varID = ncdf.nc_def_vvar(ir_name, NC_INT, 1, &pnc_dimID);
+            }
         }
 
         // Node coordinates Var Definitions
@@ -273,13 +284,13 @@ namespace nccfdriver
 
         // first it's X
         new_varID = ncdf.nc_def_vvar(aosNcoord[0], NC_DOUBLE, 1, &node_coordinates_dimID);
-        //ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_X_AXIS);
+        ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_X_AXIS);
 
         this->node_coordinates_varIDs.push_back(new_varID);
 
         // second it's Y
         new_varID = ncdf.nc_def_vvar(aosNcoord[1], NC_DOUBLE, 1, &node_coordinates_dimID);
-        //ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Y_AXIS);
+        ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Y_AXIS);
 
         this->node_coordinates_varIDs.push_back(new_varID);
 
@@ -287,7 +298,7 @@ namespace nccfdriver
         if(aosNcoord.size() > 2)
         {
             new_varID = ncdf.nc_def_vvar(aosNcoord[2], NC_DOUBLE, 1, &node_coordinates_dimID);
-            //ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Z_AXIS);
+            ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Z_AXIS);
 
             this->node_coordinates_varIDs.push_back(new_varID);
         }
@@ -596,7 +607,7 @@ namespace nccfdriver
             return;
         }
 
-        // See if in the variable name is already being written to
+        // See if the variable name is already being written to
         if(this->varMaxInds.count(transactionAdd->getVarId()) > 0)
         {
             size_t varWriteLength = this->varMaxInds[transactionAdd->getVarId()];

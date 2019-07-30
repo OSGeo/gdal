@@ -369,6 +369,7 @@ namespace nccfdriver
             geom_t getWritableType() { return this->writableType; }
             void writeSGeometryFeature(SGeometry_Feature& ft);
             int get_containerID() { return this->containerVarID; }
+            std::string get_containerName() { return this->containerVarName; }
             int get_node_count_dimID() { return this->node_count_dimID; }
             int get_node_coord_dimID() { return this->node_coordinates_dimID; }
             int get_pnc_dimID() { return this->pnc_dimID; }
