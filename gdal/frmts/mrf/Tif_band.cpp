@@ -171,18 +171,26 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     }
 
     CPLErr ret;
-    // Bypass the GDAL caching
-    if (img.pagesize.c == 1) {
-        ret = poTiff->GetRasterBand(1)->ReadBlock(0,0,dst.buffer);
-    } else {
-        int dtsize = GDALGetDataTypeSizeBytes(img.dt);
-        ret = poTiff->RasterIO(GF_Read,0,0,img.pagesize.x,img.pagesize.y,
-            dst.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
-            nullptr, dtsize * img.pagesize.c , dtsize * img.pagesize.c * img.pagesize.x, dtsize
+    // Bypass the GDAL caching if single band and block size is right
+    int nBlockXSize = 0, nBlockYSize = 0;
+    if (img.pagesize.c == 1)
+        poTiff->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    if (img.pagesize.c == 1 && nBlockXSize == img.pagesize.x && nBlockYSize == img.pagesize.y)
+    {
+        ret = poTiff->GetRasterBand(1)->ReadBlock(0, 0, dst.buffer);
+    }
+    else
+    {
+        ret = poTiff->RasterIO(GF_Read, 0, 0, img.pagesize.x, img.pagesize.y,
+            dst.buffer, img.pagesize.x, img.pagesize.y,
+            img.dt, img.pagesize.c, nullptr,
+            nDTSize * img.pagesize.c,
+            nDTSize * img.pagesize.c * img.pagesize.x,
+            nDTSize
 #if GDAL_VERSION_MAJOR >= 2
-            ,nullptr
+            , nullptr
 #endif
-            );
+        );
     }
     GDALClose(poTiff);
     VSIUnlink(fname);
