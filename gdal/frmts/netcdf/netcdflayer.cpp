@@ -2376,6 +2376,8 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         }
     }
 
+    status = NC_NOERR;
+
     switch( eType )
     {
     case OFTString:
@@ -2386,8 +2388,17 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         if( poFieldDefn->GetWidth() == 1 )
         {
             nType = NC_CHAR;
-            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
+
+            if(!m_bLegacyCreateMode)
+            {
+                m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            }
+
+            else
+            {
+                status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
                                 &nMainDimId, &nVarID);
+            }
         }
 #ifdef NETCDF_HAS_NC4
         else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
@@ -2432,9 +2443,19 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
             nDimCount = 2;
             int anDims[2] = {nMainDimId, nSecDimId};
             nType = NC_CHAR;
-            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 2, anDims,
-                                &nVarID);
+
+            if(!m_bLegacyCreateMode)
+            {
+                m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 2, anDims);
+            }
+
+            else
+            {
+                status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 2, anDims,
+                                    &nVarID);
+            }
         }
+
         NCDF_ERR(status);
         if( status != NC_NOERR )
         {
@@ -2457,8 +2478,17 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         else if( nType == NC_INT )
             nodata.nVal = NC_FILL_INT;
 
-        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                            &nVarID);
+        if(!m_bLegacyCreateMode)
+        {
+            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+        }
+
+        else
+        {
+            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                                &nVarID);
+        }
+
         NCDF_ERR(status);
         if( status != NC_NOERR )
         {
@@ -2486,8 +2516,18 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
             nodata.nVal64 = NC_FILL_INT64;
         }
 #endif
-        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                            &nVarID);
+
+        if(!m_bLegacyCreateMode)
+        {
+            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+        }
+
+        else
+        {
+            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                                &nVarID);
+        }
+
         NCDF_ERR(status);
         if( status != NC_NOERR )
         {
@@ -2503,8 +2543,18 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
             nodata.fVal = NC_FILL_FLOAT;
         else
             nodata.dfVal = NC_FILL_DOUBLE;
-        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                            &nVarID);
+
+        if(!m_bLegacyCreateMode)
+        {
+            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+        }
+
+        else
+        {
+            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                                &nVarID);
+        }
+
         NCDF_ERR(status);
         if( status != NC_NOERR )
         {
@@ -2517,8 +2567,18 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
     case OFTDate:
     {
         nType = NC_INT;
-        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                            &nVarID);
+
+        if(!m_bLegacyCreateMode)
+        {
+            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+        }
+
+        else
+        {
+            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                                &nVarID);
+        }
+
         NCDF_ERR(status);
         if( status != NC_NOERR )
         {
@@ -2537,8 +2597,18 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
     case OFTDateTime:
     {
         nType = NC_DOUBLE;
-        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                            &nVarID);
+
+        if(!m_bLegacyCreateMode)
+        {
+            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+        }
+
+        else
+        {
+            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                                &nVarID);
+        }
+
         NCDF_ERR(status);
         if( status != NC_NOERR )
         {
