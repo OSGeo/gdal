@@ -839,10 +839,10 @@ class netCDFDataset final: public GDALPamDataset
     bool          bSGSupport;
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
+    nccfdriver::netCDFVID vcdf;
     nccfdriver::OGR_NCScribe GeometryScribe;
     nccfdriver::OGR_NCScribe FieldScribe;
     nccfdriver::WBufferManager bufManager;
-    nccfdriver::netCDFVID vcdf;
 
     /* projection/GT */
     double       adfGeoTransform[6];
@@ -1105,6 +1105,7 @@ class netCDFLayer final: public OGRLayer
         int             GetCDFID() const { return m_nLayerCDFId; }
         void            SetCDFID(int nId) { m_nLayerCDFId = nId; }
         void            SetSGeometryRepresentation(std::shared_ptr<nccfdriver::SGeometry_Reader> sg) { m_simpleGeometryReader = sg; }
+        nccfdriver::ncLayer_SG_Metadata& getLayerSGMetadata() { return m_layerSGDefn; }
 
         virtual void ResetReading() override;
         virtual OGRFeature* GetNextFeature() override;

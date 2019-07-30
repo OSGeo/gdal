@@ -110,9 +110,8 @@ namespace nccfdriver
              *            int write_loc, the index in which to write to
              * Implementation: should write the transaction to netCDF file
              *
-             * Returns: error code from transaction
              */
-            virtual int commit(int ncid, size_t write_loc) = 0;
+            virtual void commit(netCDFVID& n, size_t write_loc) = 0;
 
             /* unsigned long long count(...)
              * Implementation: supposed to return an approximate count of memory usage
@@ -185,7 +184,7 @@ namespace nccfdriver
         std::string char_rep;
 
         public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_var1_text(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
+            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_text(OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(FILE* f) override;
             OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) : 
@@ -205,7 +204,7 @@ namespace nccfdriver
         size_t counts[2];
 
         public:
-            int commit(int ncid, size_t write_loc) override { size_t ind[2] = {write_loc, 0}; return nc_put_vara_text(ncid, OGR_SGFS_Transaction::getVarId(), ind, counts, char_rep.c_str()); }
+            void commit(netCDFVID& n, size_t write_loc) override { size_t ind[2] = {write_loc, 0}; n.nc_put_vvara_text(OGR_SGFS_Transaction::getVarId(), ind, counts, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(FILE* f) override;
             OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) : 
@@ -221,7 +220,7 @@ namespace nccfdriver
         signed char schar_rep;
 
         public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_var1_schar(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &schar_rep); }
+            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_schar(OGR_SGFS_Transaction::getVarId(), &write_loc, &schar_rep); }
             unsigned long long count() override { return sizeof(*this); }
             void appendToLog(FILE* f) override { genericLogAppend<signed char, NC_BYTE>(schar_rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Byte_Transaction(int i_varId, signed char scin) : 
@@ -239,7 +238,7 @@ namespace nccfdriver
         short rep;
 
         public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_var1_short(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_short(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
             unsigned long long count() override { return sizeof(*this); }
             void appendToLog(FILE* f) override { genericLogAppend<short, NC_SHORT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Short_Transaction(int i_varId, short shin) : 
@@ -257,7 +256,7 @@ namespace nccfdriver
         int rep;
 
         public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_var1_int(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_int(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
             unsigned long long count() override { return sizeof(*this); }
             void appendToLog(FILE* f) override { genericLogAppend<int, NC_INT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Int_Transaction(int i_varId, int iin) : 
@@ -276,7 +275,7 @@ namespace nccfdriver
         float rep;
 
         public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_var1_float(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_float(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
             unsigned long long count() override { return sizeof(*this); }
             void appendToLog(FILE* f) override { genericLogAppend<float, NC_FLOAT>(rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Float_Transaction(int i_varId, float fin) : 
@@ -294,7 +293,7 @@ namespace nccfdriver
         double rep;
 
         public:
-            int commit(int ncid, size_t write_loc) override { return nc_put_var1_double(ncid, OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
+            void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_double(OGR_SGFS_Transaction::getVarId(), &write_loc, &rep); }
             unsigned long long count() override { return sizeof(*this); }
             void appendToLog(FILE* f) override { genericLogAppend<double, NC_DOUBLE>(rep, OGR_SGFS_Transaction::getVarId(), f); }
             OGR_SGFS_NC_Double_Transaction(int i_varId, double fin) : 
@@ -310,8 +309,7 @@ namespace nccfdriver
      */
     class OGR_NCScribe
     {
-        const int & ncid;
-        int ncID() { return this->ncid; } // creates copy of const reference ncid
+        netCDFVID & ncvd;
         int recordDimID = INVALID_DIM_ID;
         WBuffer buf;
 
@@ -341,9 +339,8 @@ namespace nccfdriver
            /* OGR_SGeometry_Field_Scribe()
             * Constructs a Field Scribe over a dataset
             */
-           explicit OGR_NCScribe(const int& in_ncid) :
-               ncid(in_ncid),
-               buf()
+           explicit OGR_NCScribe(netCDFVID& ncd) :
+               ncvd(ncd)
            {}
 
     };

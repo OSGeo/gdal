@@ -216,8 +216,39 @@ void netCDFDataset::SGCommitPendingTransaction()
 {
     try
     {
-        this->FieldScribe.commit_transaction();
-        this->GeometryScribe.commit_transaction();
+        if(bSGSupport)
+        {
+            // Go through all the layers and resize dimensions accordingly
+            for(size_t layerInd = 0; layerInd < papoLayers.size(); layerInd++)
+            {
+                nccfdriver::ncLayer_SG_Metadata& layerMD = papoLayers[layerInd]->getLayerSGMetadata();
+                nccfdriver::geom_t wType = layerMD.getWritableType();
+
+                // Resize node coordinates
+                int ncoord_did = layerMD.get_node_coord_dimID();
+                vcdf.nc_resize_vdim(ncoord_did, layerMD.get_next_write_pos_node_coord());
+
+                // Resize node count (for all except POINT)
+                if(wType != nccfdriver::POINT)
+                {
+                    int ncount_did = layerMD.get_node_count_dimID();
+                    vcdf.nc_resize_vdim(ncount_did, layerMD.get_next_write_pos_node_count());
+                }
+
+                // Resize part node count (for MULTILINE, POLYGON, MULTIPOLYGON)
+                if(wType == nccfdriver::MULTILINE || wType == nccfdriver::POLYGON || wType == nccfdriver::MULTIPOLYGON)
+                {
+                    int pnc_did = layerMD.get_pnc_dimID();
+                    vcdf.nc_resize_vdim(pnc_did, layerMD.get_next_write_pos_pnc());
+                }
+
+                // todo: detect POLYGON blacklist 
+            }
+
+            vcdf.nc_vmap(); 
+            this->FieldScribe.commit_transaction();
+            this->GeometryScribe.commit_transaction();
+        }
     }
 
     catch(nccfdriver::SG_Exception& sge)

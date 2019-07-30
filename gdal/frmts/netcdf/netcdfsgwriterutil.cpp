@@ -273,13 +273,13 @@ namespace nccfdriver
 
         // first it's X
         new_varID = ncdf.nc_def_vvar(aosNcoord[0], NC_DOUBLE, 1, &node_coordinates_dimID);
-        ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_X_AXIS);
+        //ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_X_AXIS);
 
         this->node_coordinates_varIDs.push_back(new_varID);
 
         // second it's Y
         new_varID = ncdf.nc_def_vvar(aosNcoord[1], NC_DOUBLE, 1, &node_coordinates_dimID);
-        ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Y_AXIS);
+        //ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Y_AXIS);
 
         this->node_coordinates_varIDs.push_back(new_varID);
 
@@ -287,7 +287,7 @@ namespace nccfdriver
         if(aosNcoord.size() > 2)
         {
             new_varID = ncdf.nc_def_vvar(aosNcoord[2], NC_DOUBLE, 1, &node_coordinates_dimID);
-            ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Z_AXIS);
+            //ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_Z_AXIS);
 
             this->node_coordinates_varIDs.push_back(new_varID);
         }
@@ -439,6 +439,7 @@ namespace nccfdriver
             {
                 int pnc_writable = static_cast<int>(ft.getPerPartNodeCount()[part_no]);
                 ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(pnc_varID, pnc_writable)));
+                this->next_write_pos_pnc++;
             }
 
             for(size_t pt_ind = 0; pt_ind < ft.getPerPartNodeCount()[part_no]; pt_ind++)
@@ -459,6 +460,8 @@ namespace nccfdriver
                     ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Double_Transaction(node_coordinates_varIDs[2], z)));
                 }
             }
+
+            this->next_write_pos_node_coord += ft.getPerPartNodeCount()[part_no];
         }
 
         // Append node counts from the end, if not a POINT
@@ -466,6 +469,7 @@ namespace nccfdriver
         {
             int ncount_add = static_cast<int>(ft.getTotalNodeCount());
             ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(node_count_varID, ncount_add)));
+            this->next_write_pos_node_count++;
         }
     }
 
@@ -643,7 +647,7 @@ namespace nccfdriver
             this->buf.subCount(t->count()); // account for pointee
 
             // todo: check return value
-            t->commit(this->ncID(), writeInd);
+            t->commit(ncvd, writeInd);
 
             // increment index
             this->varWriteInds[varId]++;
@@ -874,11 +878,27 @@ namespace nccfdriver
         /* Part_Node_Count Attribute
          * (only needed for MULTILINE, MULTIPOLYGON, and (potentially) POLYGON)
          */
-        if (geometry_type == MULTILINE || geometry_type == MULTIPOLYGON)
+        if (geometry_type == MULTILINE || geometry_type == MULTIPOLYGON || geometry_type == POLYGON)
         {
             std::string pnc_atr_str = name + "_part_node_count";
 
             err_code = nc_put_att_text(ncID, write_var_id, CF_SG_PART_NODE_COUNT, pnc_atr_str.size(), pnc_atr_str.c_str());
+
+            NCDF_ERR(err_code);
+            if(err_code != NC_NOERR)
+            {
+                throw SGWriter_Exception_NCWriteFailure(name.c_str(), CF_SG_PART_NODE_COUNT, "attribute in geometry_container");
+            }
+        }
+
+        /* Interior Ring Attribute
+         * (only needed potentially for MULTIPOLYGON and POLYGON)
+         */
+        if (geometry_type == MULTIPOLYGON || geometry_type == POLYGON)
+        {
+            std::string ir_atr_str = name + "_interior_ring";
+
+            err_code = nc_put_att_text(ncID, write_var_id, CF_SG_INTERIOR_RING, ir_atr_str.size(), ir_atr_str.c_str());
 
             NCDF_ERR(err_code);
             if(err_code != NC_NOERR)

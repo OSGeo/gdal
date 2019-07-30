@@ -37,6 +37,7 @@
 // that can be mapped to a real netCDF ID
 namespace nccfdriver
 {
+
 	/* netCDFVDimension
 	 * -
 	 * Contains the real dim id, real dimension name, and dimension length
@@ -57,6 +58,7 @@ namespace nccfdriver
 
 		std::string& getName() { return this->real_dim_name; }
 		size_t getLen() { return this->dim_len; }
+		void setLen(size_t len) { this->dim_len = len; }
 		int getRealID() { return this->r_did; }
 		void setRealID(int realID) { this->r_did = realID; }
 		int getVirtualID() { return this->v_did; }
@@ -120,12 +122,13 @@ namespace nccfdriver
 			void nc_put_vatt_text(int varid, const char * name, const char * out);
 
                         // Writing Functions
-                        void nc_put_vvar1_text(int varid, const size_t* index, char* out);
-                        void nc_put_vvar1_short(int varid, const size_t* index, short* out);
-                        void nc_put_vvar1_int(int varid, const size_t* index, int* out);
-                        void nc_put_vvar1_schar(int varid, const size_t* index, signed char* out);
-                        void nc_put_vvar1_float(int varid, const size_t* index, float* out);
-                        void nc_put_vvar1_double(int varid, const size_t* index, double* out);
+			void nc_put_vvar1_text(int varid, const size_t* index, const char* out);
+			void nc_put_vvara_text(int varid, const size_t* start, const size_t* index, const char* out);
+			void nc_put_vvar1_short(int varid, const size_t* index, short* out);
+			void nc_put_vvar1_int(int varid, const size_t* index, int* out);
+			void nc_put_vvar1_schar(int varid, const size_t* index, signed char* out);
+			void nc_put_vvar1_float(int varid, const size_t* index, float* out);
+			void nc_put_vvar1_double(int varid, const size_t* index, double* out);
 
 			// Equivalent "enquiry" functions
 			netCDFVVariable& virtualVIDToVar(int virtualID); // converts a virtual var ID to a real ID

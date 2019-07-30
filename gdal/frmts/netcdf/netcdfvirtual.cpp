@@ -81,6 +81,16 @@ namespace nccfdriver
 		return varID;
 	}
 
+	void netCDFVID::nc_resize_vdim(int dimid, size_t dimlen)
+	{
+		netCDFVDimension& dim = virtualDIDToDim(dimid);
+
+		if(dim.getRealID() == INVALID_DIM_ID)
+		{
+			dim.setLen(dimlen);
+		}
+	}
+
         void netCDFVID::nc_vmap()
 	{
 		for(size_t itr_d = 0; itr_d < dimList.size(); itr_d++)
@@ -147,7 +157,12 @@ namespace nccfdriver
 	/* Single Datum Writing
 	 * (mostly just convenience functions)
 	 */        
-	void netCDFVID::nc_put_vvar1_text(int varid, const size_t* index, char* out)
+	void netCDFVID::nc_put_vvar1_text(int varid, const size_t* index, const char* out)
+	{
+		nc_put_var1_text(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+	}
+
+	void netCDFVID::nc_put_vvara_text(int varid, const size_t* count, const size_t* index, const char* out)
 	{
 		nc_put_var1_text(ncid, virtualVIDToVar(varid).getRealID(), index, out);
 	}

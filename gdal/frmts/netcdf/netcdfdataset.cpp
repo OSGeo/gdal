@@ -2094,7 +2094,9 @@ netCDFDataset::netCDFDataset() :
     nCFVersion(1.6),
     bSGSupport(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
-    FieldScribe(cdfid),
+    vcdf(cdfid),
+    GeometryScribe(vcdf),
+    FieldScribe(vcdf),
     bufManager(CPLGetUsablePhysicalRAM() / 10),
 
     // projection/GT.
@@ -2131,7 +2133,7 @@ netCDFDataset::netCDFDataset() :
     adfGeoTransform[5] = 1.0;
 
     // Set buffers
-    bufManager.addBuffer(&GeometryScribe);
+    bufManager.addBuffer(&(GeometryScribe.getMemBuffer()));
     bufManager.addBuffer(&(FieldScribe.getMemBuffer()));
 }
 
