@@ -175,9 +175,9 @@ namespace nccfdriver
 		nc_put_var1_text(ncid, virtualVIDToVar(varid).getRealID(), index, out);
 	}
 
-	void netCDFVID::nc_put_vvara_text(int varid, const size_t* count, const size_t* index, const char* out)
+	void netCDFVID::nc_put_vvara_text(int varid, const size_t* start, const size_t* count, const char* out)
 	{
-		nc_put_vara_text(ncid, virtualVIDToVar(varid).getRealID(), count, index, out);
+		nc_put_vara_text(ncid, virtualVIDToVar(varid).getRealID(), start, count, out);
 	}
 
 	void netCDFVID::nc_put_vvar1_short(int varid, const size_t* index, short* out)

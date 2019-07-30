@@ -1540,12 +1540,23 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                 anCount[0] = 1;
                 anCount[1] = strlen(pszVal);
                 size_t nWidth = 0;
-                nc_inq_dimlen(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId,
-                              &nWidth);
+
+                if(m_bLegacyCreateMode)
+                {
+                    nc_inq_dimlen(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId,
+                                  &nWidth);
+                }
+                else
+                {
+                    nWidth = m_poDS->vcdf.virtualDIDToDim(m_aoFieldDesc[i].nSecDimId).getLen();
+                }
+
                 if( anCount[1] > nWidth )
                 {
-                    if( m_bAutoGrowStrings &&
-                        m_poFeatureDefn->GetFieldDefn(i)->GetWidth() == 0 )
+                    // Always grow the dim if not writing to WKT- it's rather inexpensive in CF-1.8
+
+                    if( (m_bAutoGrowStrings &&
+                         m_poFeatureDefn->GetFieldDefn(i)->GetWidth() == 0) || !m_bLegacyCreateMode)
                     {
                         size_t nNewSize = anCount[1] + anCount[1] / 3;
 
@@ -1553,8 +1564,16 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                                  m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
                                  static_cast<unsigned>(nWidth),
                                  static_cast<unsigned>(nNewSize));
-                        m_poDS->GrowDim(m_nLayerCDFId,
-                                        m_aoFieldDesc[i].nSecDimId, nNewSize);
+
+                        if(m_bLegacyCreateMode)
+                        {
+                            m_poDS->GrowDim(m_nLayerCDFId,
+                                            m_aoFieldDesc[i].nSecDimId, nNewSize);
+                        }
+                        else
+                        {
+                            m_poDS->vcdf.nc_resize_vdim(m_aoFieldDesc[i].nSecDimId, nNewSize);
+                        }
 
                         pszVal = poFeature->GetFieldAsString(i);
                     }
@@ -2391,7 +2410,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
             if(!m_bLegacyCreateMode)
             {
-                m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+                nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
             }
 
             else
@@ -2414,9 +2433,18 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
             {
                 if( m_nDefaultMaxWidthDimId < 0 )
                 {
-                    status =
-                        nc_def_dim(m_nLayerCDFId, "string_default_max_width",
-                                   m_nDefaultWidth, &m_nDefaultMaxWidthDimId);
+                    if(!m_bLegacyCreateMode)
+                    {
+                        m_nDefaultMaxWidthDimId = m_poDS->vcdf.nc_def_vdim("string_default_max_width", m_nDefaultWidth);
+                    }
+
+                    else
+                    {
+                        status =
+                            nc_def_dim(m_nLayerCDFId, "string_default_max_width",
+                                       m_nDefaultWidth, &m_nDefaultMaxWidthDimId);
+                    }
+
                     NCDF_ERR(status);
                     if( status != NC_NOERR )
                     {
@@ -2430,9 +2458,18 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
                 size_t nDim = poFieldDefn->GetWidth() == 0
                                   ? m_nDefaultWidth
                                   : poFieldDefn->GetWidth();
+            if(!m_bLegacyCreateMode)
+            {
+                std::string ndimname = std::string(pszVarName) + std::string("_max_width");
+                nSecDimId = m_poDS->vcdf.nc_def_vdim(ndimname.c_str(), m_nDefaultWidth);
+            }
+
+            else
+            {
                 status = nc_def_dim(m_nLayerCDFId,
                                     CPLSPrintf("%s_max_width", pszVarName),
                                     nDim, &nSecDimId);
+            }
                 NCDF_ERR(status);
                 if( status != NC_NOERR )
                 {
@@ -2446,7 +2483,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
             if(!m_bLegacyCreateMode)
             {
-                m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 2, anDims);
+                nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 2, anDims);
             }
 
             else
@@ -2480,7 +2517,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
         if(!m_bLegacyCreateMode)
         {
-            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
         }
 
         else
@@ -2519,7 +2556,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
         if(!m_bLegacyCreateMode)
         {
-            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
         }
 
         else
@@ -2546,7 +2583,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
         if(!m_bLegacyCreateMode)
         {
-            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
         }
 
         else
@@ -2570,7 +2607,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
         if(!m_bLegacyCreateMode)
         {
-            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
         }
 
         else
@@ -2600,7 +2637,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
         if(!m_bLegacyCreateMode)
         {
-            m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
         }
 
         else
