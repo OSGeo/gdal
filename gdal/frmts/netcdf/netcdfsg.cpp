@@ -767,8 +767,17 @@ namespace nccfdriver
             // If matches, then establish a reference by placing this variable's data in both vectors
             if(!strcmp(contname, buf))
             {
-                char property_name[NC_MAX_NAME];
-                nc_inq_varname(this->nc, curr, property_name);
+                char property_name[NC_MAX_NAME] = {0};
+
+                // look for special OGR original name field
+                if(nc_get_att_text(this->nc, curr, OGR_SG_ORIGINAL_LAYERNAME, property_name) != NC_NOERR)
+                {
+                    // if doesn't exist, then just use the variable name
+                    if(nc_inq_varname(this->nc, curr, property_name) != NC_NOERR)
+                    {
+                        throw SG_Exception_General_Malformed(contname);
+                    }
+                }
                 
                 std::string n(property_name);
                 v_ids.push_back(curr);

@@ -276,6 +276,9 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 #define CF_SG_Y_AXIS                 "Y"
 #define CF_SG_Z_AXIS                 "Z"
 
+/* Some additional metadata */
+#define OGR_SG_ORIGINAL_LAYERNAME        "ogr_original_name"
+
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
 /* -------------------------------------------------------------------- */

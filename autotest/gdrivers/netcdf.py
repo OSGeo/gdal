@@ -4506,7 +4506,7 @@ def test_write_multiple_layers_one_nc_NC4():
     # it writes to NC4, not NC3 (changing a file from NC3 to NC4)
     # and it writes them all at once (non update)
 
-    src = gdal.OpenEx("tmp/mlnc4.nc", gdal.OF_VECTOR) 
+    src = gdal.OpenEx("tmp/mlnc.nc", gdal.OF_VECTOR) 
     assert(src is not None)
     gdal.VectorTranslate("tmp/mlnc4.nc4", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4']);
 
@@ -4676,5 +4676,5 @@ def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
     # Not actually a test, just cleans up tmp...
-    gdaltest.clean_tmp()
+    #gdaltest.clean_tmp()
     pytest.skip()

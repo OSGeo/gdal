@@ -2414,18 +2414,35 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
                            ? poConfig->m_osNetCDFName
                            : CPLString(poFieldDefn->GetNameRef()));
 
-    status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
-    if( status == NC_NOERR )
+    std::string originalName = osVarName;
+
+    if(!m_bLegacyCreateMode)
     {
-        for( int i = 1; i <= 100; i++ )
+        // To help avoid naming conflicts, append the layer name as a prefix
+        const char * prefix = this->GetName();
+
+
+        osVarName = prefix + osVarName;
+
+        // Of course, this solution doesn't completely solve all problems.
+        // TODO: create loop that appends names and times out at some point, corresponding to conflicts
+    }
+    else
+    {
+        status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
+        if( status == NC_NOERR )
         {
-            osVarName = CPLSPrintf("%s%d", poFieldDefn->GetNameRef(), i);
-            status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
-            if( status != NC_NOERR )
-                break;
+            for( int i = 1; i <= 100; i++ )
+            {
+                osVarName = CPLSPrintf("%s%d", poFieldDefn->GetNameRef(), i);
+                status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
+                if( status != NC_NOERR )
+                    break;
+            }
+
+            CPLDebug("netCDF", "Field %s is written in variable %s",
+                     poFieldDefn->GetNameRef(), osVarName.c_str());
         }
-        CPLDebug("netCDF", "Field %s is written in variable %s",
-                 poFieldDefn->GetNameRef(), osVarName.c_str());
     }
 
     const char *pszVarName = osVarName.c_str();
@@ -2448,9 +2465,8 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
             nMainDimId = m_nProfileDimID;
         CSLDestroy(papszTokens);
     }
-    if( poConfig != nullptr && !poConfig->m_osMainDim.empty() )
+    if( poConfig != nullptr && !poConfig->m_osMainDim.empty() && m_bLegacyCreateMode)
     {
-        //TODO: update for netCDFVID
         int ndims = 0;
         status = nc_inq_ndims(m_nLayerCDFId, &ndims);
         NCDF_ERR(status);
@@ -2769,9 +2785,17 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
         break;
     }
+        
 
     default:
         return OGRERR_FAILURE;
+    }
+
+    if(!m_bLegacyCreateMode)
+    {
+        // Add attribute that gives additional original naming information to prevent recursive issues
+        // This isn't CF metadata, but OGR metadata that helps OGR in future processing, doesn't affect CF-1.8 compatibility
+        m_poDS->vcdf.nc_put_vatt_text(nVarID, OGR_SG_ORIGINAL_LAYERNAME, originalName.c_str());
     }
 
     FieldDesc fieldDesc;
