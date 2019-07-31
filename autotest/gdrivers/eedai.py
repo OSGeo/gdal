@@ -344,9 +344,6 @@ def test_eedai_3():
     if gdaltest.eedai_drv is None:
         pytest.skip()
 
-    if gdaltest.is_travis_branch('gcc52_stdcpp14_sanitize'):
-        pytest.skip()
-
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
     # Generated with 'openssl genrsa -out rsa-openssl.pem 1024' and
     # 'openssl pkcs8 -nocrypt -in rsa-openssl.pem -inform PEM -topk8 -outform PEM -out rsa-openssl.pkcs8.pem'
@@ -392,9 +389,6 @@ gwE6fxOLyJDxuWRf
 def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
 
     if gdaltest.eedai_drv is None:
-        pytest.skip()
-
-    if gdaltest.is_travis_branch('gcc52_stdcpp14_sanitize'):
         pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/my.json', """{

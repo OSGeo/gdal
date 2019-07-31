@@ -2,10 +2,6 @@
 
 set -e
 
-export PATH=$PWD/install-gcc-5.2.0/bin:$PATH
-export LD_LIBRARY_PATH=$PWD/install-gcc-5.2.0/lib64
-export PRELOAD=$PWD/install-gcc-5.2.0/lib64/libasan.so.2.0.0:$PWD/install-gcc-5.2.0/lib64/libubsan.so.0.0.0
-#export PRELOAD=$PWD/install-gcc-5.2.0/lib64/libubsan.so.0.0.0
 export ASAN_OPTIONS=allocator_may_return_null=1 
 
 cd gdal
@@ -32,10 +28,7 @@ sudo ln -s  /usr/lib/libproj.so.12 /usr/lib/libproj.so.0.7.0
 sudo ldconfig
 ls -al /usr/lib/libproj*
 
-# Disable --with-fgdb=/usr/local since it causes /usr/local/include/GeodatabaseManagement.h:56:1: error: expected constructor, destructor, or type conversion before ‘(’ token EXT_FILEGDB_API fgdbError CreateGeodatabase(const std::wstring& path, Geodatabase& geodatabase);
-# Disable --with-mongocxx=/usr/local since it should also likely be compiled with C+11, but this fails because boost itself should probably be
-CC="ccache gcc" CXX="ccache g++ " CPPFLAGS="-DMAKE_SANITIZE_HAPPY -fsanitize=undefined -fsanitize=address" LDFLAGS="-fsanitize=undefined -fsanitize=address" ./configure --with-cpp14 --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-poppler --without-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-ecw=/usr/local  --with-libtiff=internal --with-rename-internal-libtiff-symbols --with-hide-internal-symbols --with-gnm
-#  --with-gta
+CPPFLAGS="-DMAKE_SANITIZE_HAPPY -fsanitize=undefined -fsanitize=address" LDFLAGS="-fsanitize=undefined -fsanitize=address" ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-poppler --without-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-libtiff=internal --with-rename-internal-libtiff-symbols --with-hide-internal-symbols --with-gnm --with-fgdb=$PWD/../FileGDB_API-64gcc51
 make USER_DEFS="-Werror" -j3
 cd apps
 make USER_DEFS="-Werror" test_ogrsf
