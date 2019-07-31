@@ -2,3 +2,7 @@ leak:SwigPyClientData_New
 leak:spatialite_alloc_connection
 leak:/usr/bin/zip
 leak:/usr/lib/x86_64-linux-gnu/libfontconfig.so.1
+leak:/usr/bin/python2.7
+leak:/usr/lib/python2.7/lib-dynload/_ctypes.x86_64-linux-gnu.so
+leak:PyDataMem_NEW
+leak:PyArray_NewFromDescr_int
