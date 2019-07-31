@@ -595,7 +595,12 @@ bool netCDFLayer::Create(char **papszOptions,
             // Write the grid mapping, if it exists:
             if (poSRS != nullptr)
             {
-                m_poDS->vcdf.nc_put_vatt_text(m_layerSGDefn.get_containerID(), CF_GRD_MAPPING, m_sgCRSname.c_str());
+                status = nc_put_att_text(m_nLayerCDFId, m_layerSGDefn.get_containerID(), CF_GRD_MAPPING, strlen(m_sgCRSname.c_str()), m_sgCRSname.c_str());
+
+                if(status != NC_NOERR)
+                {
+                    throw nccfdriver::SGWriter_Exception_NCWriteFailure(m_layerSGDefn.get_containerName().c_str(), CF_GRD_MAPPING, "attribute"); 
+                }
 
                 std::vector<int>& ncv = m_layerSGDefn.get_nodeCoordVarIDs();
                 int xVar = ncv[0];
@@ -2445,6 +2450,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
     }
     if( poConfig != nullptr && !poConfig->m_osMainDim.empty() )
     {
+        //TODO: update for netCDFVID
         int ndims = 0;
         status = nc_inq_ndims(m_nLayerCDFId, &ndims);
         NCDF_ERR(status);
@@ -2498,14 +2504,14 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
         {
             nType = NC_STRING;
-            if(m_bLegacyCreateMode)
+            if(!m_bLegacyCreateMode)
             {
-                status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
-                                    &nMainDimId, &nVarID);
+                nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
             }
             else
             {
-                status = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+                status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
+                                    &nMainDimId, &nVarID);
             }
         }
 #endif

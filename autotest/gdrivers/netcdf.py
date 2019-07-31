@@ -4434,13 +4434,13 @@ def test_write_multiple_layers_one_nc():
 
     src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/mlnc4.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF");
 
     src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/mlnc4.nc", src, format="netCDF", accessMode='update');
+    gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF", accessMode='update');
 
-    nc_tsrc = ogr.Open("tmp/mlnc4.nc")
+    nc_tsrc = ogr.Open("tmp/mlnc.nc")
     assert(nc_tsrc.GetLayerCount() == 2)
 
     # Test layer properties

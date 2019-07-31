@@ -249,8 +249,8 @@ namespace nccfdriver
 #ifdef NETCDF_HAS_NC4
     typedef OGR_SGFS_NC_Transaction_Generic<unsigned, NC_UINT> OGR_SGFS_NC_UInt_Transaction;
     typedef OGR_SGFS_NC_Transaction_Generic<unsigned long long, NC_UINT64> OGR_SGFS_NC_UInt64_Transaction;
-    typedef OGR_SGFS_NC_Transaction_Generic<long long, NC_INT> OGR_SGFS_NC_Int64_Transaction;
-    typedef OGR_SGFS_NC_Transaction_Generic<unsigned char, NC_INT> OGR_SGFS_NC_UByte_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<long long, NC_INT64> OGR_SGFS_NC_Int64_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<unsigned char, NC_UBYTE> OGR_SGFS_NC_UByte_Transaction;
     typedef OGR_SGFS_NC_Transaction_Generic<unsigned short, NC_USHORT> OGR_SGFS_NC_UShort_Transaction;
 
     /* OGR_SGFS_NC_String_Transaction
