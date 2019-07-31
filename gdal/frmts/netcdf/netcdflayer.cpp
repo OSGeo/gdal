@@ -595,7 +595,7 @@ bool netCDFLayer::Create(char **papszOptions,
             // Write the grid mapping, if it exists:
             if (poSRS != nullptr)
             {
-                status = nc_put_att_text(m_nLayerCDFId, m_layerSGDefn.get_containerID(), CF_GRD_MAPPING, strlen(m_sgCRSname.c_str()), m_sgCRSname.c_str());
+                status = nc_put_att_text(m_nLayerCDFId, m_layerSGDefn.get_containerRealID(), CF_GRD_MAPPING, strlen(m_sgCRSname.c_str()), m_sgCRSname.c_str());
 
                 if(status != NC_NOERR)
                 {
@@ -1394,7 +1394,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
     if( !m_bLegacyCreateMode )
     {
         // Detects: append mode
-        if(m_layerSGDefn.get_containerID() == nccfdriver::INVALID_VAR_ID)
+        if(m_layerSGDefn.get_containerRealID() == nccfdriver::INVALID_VAR_ID)
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Append mode is not supported for CF-1.8 datasets.");
             return OGRERR_UNSUPPORTED_OPERATION;

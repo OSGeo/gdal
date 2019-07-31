@@ -317,11 +317,12 @@ namespace nccfdriver
     class ncLayer_SG_Metadata
     {
         int & ncID;
+
         netCDFVID& vDataset;
         OGR_NCScribe & ncb;
         geom_t writableType = NONE;
         std::string containerVarName;
-        int containerVarID = INVALID_VAR_ID;
+        int containerVar_realID = INVALID_VAR_ID;
         bool interiorRingDetected = false; // flips on when an interior ring polygon has been detected
         std::vector<int> node_coordinates_varIDs;// ids in X, Y (and then possibly Z) order
         int node_coordinates_dimID = INVALID_DIM_ID; // dim of all node_coordinates
@@ -337,7 +338,7 @@ namespace nccfdriver
         public:
             geom_t getWritableType() { return this->writableType; }
             void writeSGeometryFeature(SGeometry_Feature& ft);
-            int get_containerID() { return this->containerVarID; }
+            int get_containerRealID() { return this->containerVar_realID; }
             std::string get_containerName() { return this->containerVarName; }
             int get_node_count_dimID() { return this->node_count_dimID; }
             int get_node_coord_dimID() { return this->node_coordinates_dimID; }
@@ -348,7 +349,6 @@ namespace nccfdriver
             size_t get_next_write_pos_pnc() { return this->next_write_pos_pnc; }
             bool getInteriorRingDetected() { return this->interiorRingDetected; }
             void initializeNewContainer(int containerVID);
-            void scanExistingContainer(int containerVID);
             ncLayer_SG_Metadata(int & i_ncID, geom_t geo, netCDFVID& ncdf, OGR_NCScribe& scribe);
     };
 

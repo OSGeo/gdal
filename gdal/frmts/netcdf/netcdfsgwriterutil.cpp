@@ -210,7 +210,7 @@ namespace nccfdriver
 
     void ncLayer_SG_Metadata::initializeNewContainer(int containerVID)
     {
-        this->containerVarID = containerVID;
+        this->containerVar_realID = containerVID;
 
         netCDFVID& ncdf = this->vDataset;
         geom_t geo = this->writableType;
@@ -225,7 +225,7 @@ namespace nccfdriver
         intring_varID = INVALID_VAR_ID;
 
         int err_code;
-        err_code = nc_inq_varname(ncID, containerVarID, container_name);
+        err_code = nc_inq_varname(ncID, containerVar_realID, container_name);
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
         {
@@ -240,7 +240,7 @@ namespace nccfdriver
         node_coordinates_dimID = ncdf.nc_def_vdim(nodecoord_name.c_str(), 1);
 
         // Node Coordinates - Variable Names
-        err_code = nc_get_att_text(ncID, containerVarID, CF_SG_NODE_COORDINATES, node_coord_names);
+        err_code = nc_get_att_text(ncID, containerVar_realID, CF_SG_NODE_COORDINATES, node_coord_names);
         NCDF_ERR(err_code);
         if (err_code != NC_NOERR)
         {
@@ -257,7 +257,7 @@ namespace nccfdriver
 
         // Do the same for part node count, if it exists
         char pnc_name[NC_MAX_CHAR + 1] = {0};
-        err_code = nc_get_att_text(ncID, containerVarID, CF_SG_PART_NODE_COUNT, pnc_name);
+        err_code = nc_get_att_text(ncID, containerVar_realID, CF_SG_PART_NODE_COUNT, pnc_name);
 
 
         if(err_code == NC_NOERR)
@@ -266,7 +266,7 @@ namespace nccfdriver
             pnc_varID = ncdf.nc_def_vvar(pnc_name, NC_INT, 1, &pnc_dimID);
 
             char ir_name[NC_MAX_CHAR + 1] = {0}; 
-            err_code = nc_get_att_text(ncID, containerVarID, CF_SG_INTERIOR_RING, ir_name);
+            err_code = nc_get_att_text(ncID, containerVar_realID, CF_SG_INTERIOR_RING, ir_name);
 
             // For interior ring too (for POLYGON and MULTIPOLYGON)
             if(this->writableType == POLYGON || this->writableType == MULTIPOLYGON)
@@ -304,11 +304,11 @@ namespace nccfdriver
         }
     }
 
-    void ncLayer_SG_Metadata::scanExistingContainer(int containerVID)
+/*    void ncLayer_SG_Metadata::scanExistingContainer(int containerVID)
     {
         // todo:
     }
-
+*/
     ncLayer_SG_Metadata::ncLayer_SG_Metadata(int & i_ncID, geom_t geo, netCDFVID& ncdf, OGR_NCScribe& ncs) :
         ncID(i_ncID),
         vDataset(ncdf),
@@ -905,18 +905,18 @@ namespace nccfdriver
         /* Interior Ring Attribute
          * (only needed potentially for MULTIPOLYGON and POLYGON)
          */
+
         if (geometry_type == MULTIPOLYGON || geometry_type == POLYGON)
         {
             std::string ir_atr_str = name + "_interior_ring";
 
             err_code = nc_put_att_text(ncID, write_var_id, CF_SG_INTERIOR_RING, ir_atr_str.size(), ir_atr_str.c_str());
-
             NCDF_ERR(err_code);
             if(err_code != NC_NOERR)
             {
-                throw SGWriter_Exception_NCWriteFailure(name.c_str(), CF_SG_PART_NODE_COUNT, "attribute in geometry_container");
+                throw nccfdriver::SGWriter_Exception_NCWriteFailure(name.c_str(), CF_SG_INTERIOR_RING, "attribute in geometry_container");
             }
-        }
+         }
 
         return write_var_id;
     }
