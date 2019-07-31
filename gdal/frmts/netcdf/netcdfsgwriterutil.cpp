@@ -484,93 +484,6 @@ namespace nccfdriver
         }
     }
 
-    /* Writes buffer contents to the netCDF File
-     * Flushes buffer,
-     * And sets new iterators accordingly
-     * If the transaction is empty, then this function does nothing
-    void OGR_SGeometry_Scribe::commit_transaction()
-    {
-        int err_code;
-
-        // Append from the end
-        while(!ncounts.empty())
-        {
-            int ncount = NCOUNTDequeue();
-            err_code = nc_put_var1_int(ncID, node_count_varID, &next_write_pos_node_count, &ncount);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COUNT, "integer datum");
-            }
-
-            next_write_pos_node_count++;
-        }
-
-        while(!pnc.empty())
-        {
-            // Write each point from each part in node coordinates
-            if(( this->writableType == POLYGON && this->interiorRingDetected ) || this->writableType == MULTILINE || this->writableType == MULTIPOLYGON)
-            {
-                // if interior rings is present, go write part node counts and interior ring info
-                if( (this->writableType == POLYGON || this->writableType == MULTIPOLYGON) && this->interiorRingDetected )
-                {
-                    int interior_ring_w = IRingDequeue() ? 1 : 0;
-
-                    err_code = nc_put_var1_int(ncID, intring_varID, &next_write_pos_pnc, &interior_ring_w);
-                    NCDF_ERR(err_code);
-                    if (err_code != NC_NOERR)
-                    {
-                        throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_INTERIOR_RING, "integer datum");
-                    }
-                }
-
-                int pnc_writable = PNCDequeue();
-                err_code = nc_put_var1_int(ncID, pnc_varID, &next_write_pos_pnc, &pnc_writable);
-                NCDF_ERR(err_code);
-                if (err_code != NC_NOERR)
-                {
-                    throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_PART_NODE_COUNT, "integer datum");
-                }
-
-                next_write_pos_pnc++;
-            }
-        }
-
-        while(!xC.empty() && !yC.empty())
-        {
-            // Write each node coordinate
-            double x = XCoordDequeue();
-            err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[0], &next_write_pos_node_coord, &x);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "x double-precision datum");
-            }
-
-            double y = YCoordDequeue();
-            err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[1], &next_write_pos_node_coord, &y);
-            NCDF_ERR(err_code);
-            if (err_code != NC_NOERR)
-            {
-                throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "y double-precision datum");
-            }
-
-            if(this->node_coordinates_varIDs.size() > 2)
-            {
-                double z = ZCoordDequeue();
-                err_code = nc_put_var1_double(ncID, node_coordinates_varIDs[2], &next_write_pos_node_coord, &z);
-                if (err_code != NC_NOERR)
-                {
-                    throw SGWriter_Exception_NCWriteFailure(containerVarName.c_str(), CF_SG_NODE_COORDINATES, "z double-precision datum");
-                }
-            }
-
-            // Step the position
-            this->next_write_pos_node_coord++;
-        }
-    }
-*/
-
     static std::string sgwe_msg_builder
         (    const char * layer_name,
             const char * failure_name,
@@ -632,6 +545,42 @@ namespace nccfdriver
 
     void OGR_NCScribe::commit_transaction()
     {
+        wl.startRead();
+
+        // Buffered changes are the earliest, so commit those first
+        MTPtr m = this->wl.pop();
+        while(m.get() != nullptr)
+        {
+            int varId = m->getVarId();
+            size_t writeInd;
+
+            // First, find where to write. If doesn't exist, write to index 0
+            if(this->varWriteInds.count(varId) > 0)
+            {
+                writeInd = this->varWriteInds[varId];
+            }
+
+            else
+            {
+                std::pair<int, size_t> insertable(varId, 0);
+                this->varWriteInds.insert(insertable);
+                writeInd = 0;
+            }
+
+            // Then write
+            // Subtract sizes from memory count
+            this->buf.subCount(sizeof(m)); // account for pointer
+            this->buf.subCount(m->count()); // account for pointee
+
+            // todo: check return value
+            m->commit(ncvd, writeInd);
+
+            // increment index
+            this->varWriteInds[varId]++;
+
+            m = this->wl.pop();
+        }
+
         while(!transactionQueue.empty())
         {
             std::shared_ptr<OGR_SGFS_Transaction> t = this->transactionQueue.front();
@@ -667,6 +616,18 @@ namespace nccfdriver
         }
     }
 
+    void OGR_NCScribe::log_transaction()
+    {
+        if(wl.logIsNull())
+            wl.startLog();
+
+        while(!transactionQueue.empty())
+        {
+            wl.push(transactionQueue.front());
+            this->transactionQueue.pop();
+        }
+    }
+
     // WBufferManager
     bool WBufferManager::isOverQuota()
     {
@@ -678,7 +639,7 @@ namespace nccfdriver
         }
 
         return sum > this->buffer_soft_limit;
-    };
+    }
 
     // Transactions
     void OGR_SGFS_NC_Char_Transaction::appendToLog(FILE * f)
@@ -711,15 +672,22 @@ namespace nccfdriver
     }
 
     // WTransactionLog
-    WTransactionLog::WTransactionLog(std::string& logName) :
-        wlogName(logName),
-        log(fopen(logName.c_str(), "w"))
+    WTransactionLog::WTransactionLog(std::shared_ptr<std::string> logName) :
+        wlogName(*logName),
+        log(nullptr)
     {
-        this->wlogName = logName;
+    }
+
+    void WTransactionLog::startLog()
+    {
+        log = fopen(wlogName.c_str(), "w");
     }
 
     void WTransactionLog::startRead()
     {
+        if(log == nullptr)
+            return;
+
         fclose(this->log);
         this->log = fopen(wlogName.c_str(), "r");
     }
@@ -731,6 +699,9 @@ namespace nccfdriver
 
     std::shared_ptr<OGR_SGFS_Transaction> WTransactionLog::pop()
     {
+         if(log == nullptr)
+             return std::shared_ptr<OGR_SGFS_Transaction>(nullptr);
+
          int varId;
          nc_type ntype;
          int itemsread; 
@@ -803,7 +774,8 @@ namespace nccfdriver
 
     WTransactionLog::~WTransactionLog()
     {
-        fclose(log);
+        if(log != nullptr)
+            fclose(log);
     }
 
     // Helper function definitions

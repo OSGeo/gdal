@@ -300,8 +300,7 @@ void netCDFDataset::SGCommitPendingTransaction()
 
 void netCDFDataset::SGLogPendingTransaction()
 {
-    GeometryScribe.log_transaction();
-    FieldScribe.log_transaction(); 
+
 }
 
 /* Takes an index and using the layer geometry builds the equivalent
@@ -353,7 +352,7 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
     return feat;
 }
 
-std::shared_ptr<std::string> netCDFDataset::generateLogName()
+std::string netCDFDataset::generateLogName()
 {
     const char * lognumc;
 
@@ -364,5 +363,5 @@ std::shared_ptr<std::string> netCDFDataset::generateLogName()
     }
 
     lognumc = CPLSPrintf("%d", logCount++);
-    return std::shared_ptr<std::string>(new std::string(std::string(lognumc) + std::string("tmp"))); 
+    return std::string(lognumc) + std::string("tmp"); 
 }

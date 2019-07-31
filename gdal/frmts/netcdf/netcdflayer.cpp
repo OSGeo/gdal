@@ -2051,7 +2051,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             // Check if ready to dump buffer to LOG
             if(m_poDS->bufManager.isOverQuota())
             {
-                //m_poDS->SGLogPendingTransaction();
+                m_poDS->SGLogPendingTransaction();
             }
 
             // Finally, "write" the feature
@@ -2414,15 +2414,13 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
                            ? poConfig->m_osNetCDFName
                            : CPLString(poFieldDefn->GetNameRef()));
 
-    std::string originalName = osVarName;
-
-    if(!m_bLegacyCreateMode)
+    if(!m_bLegacyCreateMode && m_bWriteGDALTags)
     {
         // To help avoid naming conflicts, append the layer name as a prefix
         const char * prefix = this->GetName();
+        const char * fprefix = "_field_";
 
-
-        osVarName = prefix + osVarName;
+        osVarName = CPLString(prefix) + CPLString(fprefix) + osVarName;
 
         // Of course, this solution doesn't completely solve all problems.
         // TODO: create loop that appends names and times out at some point, corresponding to conflicts
@@ -2789,13 +2787,6 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
     default:
         return OGRERR_FAILURE;
-    }
-
-    if(!m_bLegacyCreateMode)
-    {
-        // Add attribute that gives additional original naming information to prevent recursive issues
-        // This isn't CF metadata, but OGR metadata that helps OGR in future processing, doesn't affect CF-1.8 compatibility
-        m_poDS->vcdf.nc_put_vatt_text(nVarID, OGR_SG_ORIGINAL_LAYERNAME, originalName.c_str());
     }
 
     FieldDesc fieldDesc;

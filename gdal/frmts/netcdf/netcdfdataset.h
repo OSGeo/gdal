@@ -30,7 +30,9 @@
 #ifndef NETCDFDATASET_H_INCLUDED_
 #define NETCDFDATASET_H_INCLUDED_
 
+#include <ctime>
 #include <cfloat>
+#include <cstdlib>
 #include <map>
 #include <memory>
 #include <vector>
@@ -277,7 +279,7 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 #define CF_SG_Z_AXIS                 "Z"
 
 /* Some additional metadata */
-#define OGR_SG_ORIGINAL_LAYERNAME        "ogr_original_name"
+#define OGR_SG_ORIGINAL_LAYERNAME        "ogr_layer_name"
 
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
@@ -846,6 +848,7 @@ class netCDFDataset final: public GDALPamDataset
     nccfdriver::OGR_NCScribe GeometryScribe;
     nccfdriver::OGR_NCScribe FieldScribe;
     nccfdriver::WBufferManager bufManager;
+    int logCount = 0;
 
     /* projection/GT */
     double       adfGeoTransform[6];
@@ -928,6 +931,7 @@ class netCDFDataset final: public GDALPamDataset
 
     CPLErr DetectAndFillSGLayers( int ncid );
     CPLErr LoadSGVarIntoLayer( int ncid, int nc_basevarId );
+    
 
 #ifdef NETCDF_HAS_NC4
     static GDALDataset *OpenMultiDim( GDALOpenInfo * );
@@ -948,6 +952,8 @@ class netCDFDataset final: public GDALPamDataset
     netCDFDataset();
     virtual ~netCDFDataset();
     void SGCommitPendingTransaction();
+    void SGLogPendingTransaction();
+    std::shared_ptr<std::string> generateLogName();
 
     /* Projection/GT */
     CPLErr      GetGeoTransform( double * ) override;

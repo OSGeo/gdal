@@ -2095,8 +2095,8 @@ netCDFDataset::netCDFDataset() :
     bSGSupport(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
     vcdf(cdfid),
-    GeometryScribe(vcdf),
-    FieldScribe(vcdf),
+    GeometryScribe(vcdf, this->generateLogName()),
+    FieldScribe(vcdf, this->generateLogName()),
     bufManager(CPLGetUsablePhysicalRAM() / 10),
 
     // projection/GT.

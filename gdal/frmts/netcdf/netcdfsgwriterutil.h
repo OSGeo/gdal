@@ -272,6 +272,34 @@ namespace nccfdriver
 
 #endif
 
+    /* WTransactionLog
+     * -
+     * A temporary file which contains transactions to be written to a netCDF file.
+     * Once the transaction log is created it is set on write mode, it can only be read to after startRead() is called
+     */
+    class WTransactionLog
+    {
+        bool readMode;
+        std::string wlogName; // name of the temporary file, should be unique
+        FILE* log;
+
+        WTransactionLog(WTransactionLog&); // avoid possible undefined behavior
+        WTransactionLog operator=(const WTransactionLog&);
+
+        public:
+            bool logIsNull() { return log == nullptr; } 
+            void startLog(); // always call this first to open the file
+            void startRead(); // then call this before reading it
+            void push(std::shared_ptr<OGR_SGFS_Transaction>);
+
+            // read mode
+            std::shared_ptr<OGR_SGFS_Transaction> pop();  // to test for EOF, test to see if pointer returned is null ptr
+
+            // construction, destruction
+            WTransactionLog(std::shared_ptr<std::string> logName);
+            ~WTransactionLog();
+    };
+
     /* OGR_NCScribe
      * Buffers several netCDF transactions in memory or in a log.
      * General scribe class
@@ -281,6 +309,7 @@ namespace nccfdriver
         netCDFVID & ncvd;
         int recordDimID = INVALID_DIM_ID;
         WBuffer buf;
+        WTransactionLog wl;
 
         std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
         std::map<int, size_t> varWriteInds;
@@ -297,6 +326,11 @@ namespace nccfdriver
              */
            void commit_transaction();
 
+           /* void log_transacion();
+            * Saves the current queued transactions to a log.
+            */
+           void log_transaction();
+
            /* void enqueue_transaction()
             * Add a transaction to perform
             * Once a transaction is enqueued, it will only be dequeued on commit
@@ -308,8 +342,9 @@ namespace nccfdriver
            /* OGR_SGeometry_Field_Scribe()
             * Constructs a Field Scribe over a dataset
             */
-           explicit OGR_NCScribe(netCDFVID& ncd) :
-               ncvd(ncd)
+           OGR_NCScribe(netCDFVID& ncd, std::shared_ptr<std::string> name) :
+               ncvd(ncd),
+               wl(name)
            {}
 
     };
@@ -368,35 +403,10 @@ namespace nccfdriver
             bool isOverQuota();
             void adjustLimit(unsigned long long lim) { this->buffer_soft_limit = lim; }
             void addBuffer(WBuffer* b) { this->bufs.push_back(b); }
+            void logAll();
             explicit WBufferManager(unsigned long long lim) : buffer_soft_limit(lim){ }
     };
 
-    /* WTransactionLog
-     * -
-     * A temporary file which contains transactions to be written to a netCDF file.
-     * Once the transaction log is created it is set on write mode, it can only be read to after startRead() is called
-     */
-    class WTransactionLog
-    {
-        bool readMode;
-        std::string wlogName; // name of the temporary file, should be unique
-        FILE* log;
-
-        WTransactionLog(WTransactionLog&); // avoid possible undefined behavior
-        WTransactionLog operator=(const WTransactionLog&);
-
-        public:
-            // write mode
-            void startRead();
-            void push(std::shared_ptr<OGR_SGFS_Transaction>);
-
-            // read mode
-            std::shared_ptr<OGR_SGFS_Transaction> pop();  // to test for EOF, test to see if pointer returned is null ptr
-
-            // construction, destruction
-            WTransactionLog(std::string& logName);
-            ~WTransactionLog();
-    };
 
     // Exception Classes
     class SGWriter_Exception : public SG_Exception
