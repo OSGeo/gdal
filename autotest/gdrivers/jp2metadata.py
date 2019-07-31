@@ -32,6 +32,7 @@ import os
 
 
 from osgeo import gdal
+from osgeo import osr
 
 import pytest
 
@@ -163,17 +164,12 @@ def test_jp2metadata_4():
 
 def test_jp2metadata_5():
 
-    exp_wkt = 'PROJCS["ETRS89 / LAEA Europe",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6258"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4258"]],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",52],PARAMETER["longitude_of_center",10],PARAMETER["false_easting",4321000],PARAMETER["false_northing",3210000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Northing",NORTH],AXIS["Easting",EAST],AUTHORITY["EPSG","3035"]]'
-
     ds = gdal.Open('data/gmljp2_epsg3035_easting_northing.jp2')
     if ds is None:
         pytest.skip()
-    wkt = ds.GetProjection()
 
-    if wkt != exp_wkt:
-        print('got: ', wkt)
-        print('exp: ', exp_wkt)
-        pytest.fail('did not get expected WKT')
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityCode(None) == '3035'
 
     gt = ds.GetGeoTransform()
     gte = (4895766.000000001, 2.0, 0.0, 2296946.0, 0.0, -2.0)
