@@ -158,7 +158,7 @@ namespace nccfdriver
 	 * A bit difference is that netCDFVDataset
 	 * doesn't have fixed dim sizes, until defines are committed
 	 *
-	 * Also, virtual attributes only exist until the variable is committed. Use "real" attributes
+	 * Also, virtual attributes only exist until the variable is committed. Use "real" attributes and "real" IDs
 	 * for a variable after its been commited.
 	 *
 	 * ** Do not mix netCDF virtual dim and variable IDs with regular netCDF dim (a.k.a. "real") 
@@ -177,12 +177,33 @@ namespace nccfdriver
 
                 public:
 			// Each of these returns an ID, NOT an error code
+
+			/* nc_def_vdim(...)
+			 * Defines a virtual dim given the parameters NAME and LENGTH.
+			 * Returns: virtual dimID
+			 */
 			int nc_def_vdim(const char * name, size_t dimlen); // for dims that don't already exist in netCDF file
-			int nc_register_vdim(int realID); // for dims that DO already exist in netCDF file
+
+			/* nc_def_vvar(...)
+			 * Defines a virtual var given the parameters NAME, NC TYPE, NUMBER OF DIMS, and DIM IDS
+			 * The dim IDs in dimidsp given are to be virtual dim IDs, using real dim IDs is undefined
+			 */
 			int nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp);
-			int nc_register_vvar(int realID); // for vars that DO already exist in netCDF file
+
+			/* nc_resize_vdim(...)
+			 * Change the size of a virtual dim to the given size.
+			 * NOTE: if the dim has committed using nc_vmap then this has no effect.
+			 */
 			void nc_resize_vdim(int dimid, size_t dimlen); // for dims that haven't been mapped to physical yet
+
+			/* nc_set_define_mode()
+			 * Convenience function for setting the ncid to define mode
+			 */
 			void nc_set_define_mode();
+
+			/* nc_set_data_mode()
+			 * Convenience function for setting the ncid to data mode
+			 */
 			void nc_set_data_mode();
 
 			/* nc_vmap()
