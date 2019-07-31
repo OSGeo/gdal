@@ -775,7 +775,10 @@ namespace nccfdriver
     WTransactionLog::~WTransactionLog()
     {
         if(log != nullptr)
+        {
             fclose(log);
+            VSIUnlink(this->wlogName.c_str());
+        }
     }
 
     // Helper function definitions

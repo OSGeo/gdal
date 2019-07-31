@@ -30,6 +30,7 @@
 #include <cstdio>
 #include <queue>
 #include <vector>
+#include "cpl_vsi.h"
 #include "ogr_core.h"
 #include "ogrsf_frmts.h"
 #include "netcdflayersg.h"
@@ -282,6 +283,7 @@ namespace nccfdriver
         bool readMode;
         std::string wlogName; // name of the temporary file, should be unique
         FILE* log;
+        
 
         WTransactionLog(WTransactionLog&); // avoid possible undefined behavior
         WTransactionLog operator=(const WTransactionLog&);
@@ -326,7 +328,7 @@ namespace nccfdriver
              */
            void commit_transaction();
 
-           /* void log_transacion();
+           /* void log_transacion()
             * Saves the current queued transactions to a log.
             */
            void log_transaction();
