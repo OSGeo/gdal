@@ -2510,9 +2510,29 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     std::shared_ptr<GDALDataset> ds =
                 std::shared_ptr<GDALDataset>(poTileDS);
     poTileDS->MarkSuppressOnClose();
-    if( !(poTileDS->GetRasterCount() == static_cast<int>(anRequestedBands.size()) &&
-          poTileDS->GetRasterXSize() == nRequestWidth &&
-          poTileDS->GetRasterYSize() == nRequestHeight) )
+
+    bool bExpectedImageCharacteristics =
+         (poTileDS->GetRasterXSize() == nRequestWidth &&
+          poTileDS->GetRasterYSize() == nRequestHeight);
+    if( bExpectedImageCharacteristics )
+    {
+        if( poTileDS->GetRasterCount() == static_cast<int>(anRequestedBands.size()) )
+        {
+            // ok
+        }
+        else if( eRequestFormat == GDALDAASDataset::Format::PNG &&
+                 anRequestedBands.size() == 1 &&
+                 poTileDS->GetRasterCount() == 4 )
+        {
+            // ok
+        }
+        else
+        {
+            bExpectedImageCharacteristics = false;
+        }
+    }
+
+    if( !bExpectedImageCharacteristics )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Got tile of size %dx%dx%d, whereas %dx%dx%d was expected",
