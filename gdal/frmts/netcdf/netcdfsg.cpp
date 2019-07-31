@@ -27,6 +27,7 @@
  ****************************************************************************/
 #include <cstdio>
 #include <cstring>
+#include <set>
 #include <vector>
 #include "netcdf.h"
 #include "netcdfdataset.h"
@@ -1058,7 +1059,7 @@ namespace nccfdriver
         return writer;
     }
 
-    int scanForGeometryContainers(int ncid, std::vector<int> & r_ids)
+    int scanForGeometryContainers(int ncid, std::set<int> & r_ids)
     {
         int nvars;
         if(nc_inq_nvars(ncid, &nvars) != NC_NOERR)
@@ -1088,16 +1089,7 @@ namespace nccfdriver
 
             // Now have variable ID. See if vector contains it, and if not
             // insert
-            bool contains = false;
-            for(size_t itr_1 = 0; itr_1 < r_ids.size(); itr_1++)
-            {
-                if(r_ids[itr_1] == varID) contains = true;    
-            }
-
-            if(!contains)
-            {
-                r_ids.push_back(varID);
-            }
+            r_ids.insert(varID); // It's a set. No big deal sets don't allow duplicates anyways
         }    
 
         return 0 ;

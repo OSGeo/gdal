@@ -29,6 +29,7 @@
 #define __NETCDFSG_H__
 #include <cstring>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include "netcdf.h"
@@ -325,7 +326,7 @@ namespace nccfdriver
      * Scans the given ncid for geometry containers
      * The vector passed in will be overwritten with a vector of scan results
      */
-    int scanForGeometryContainers(int ncid, std::vector<int> & r_ids);
+    int scanForGeometryContainers(int ncid, std::set<int> & r_ids);
 
     /* Attribute Fetch
      * -

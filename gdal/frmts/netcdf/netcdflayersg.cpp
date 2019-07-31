@@ -126,22 +126,24 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
     // Discover simple geometry variables
     int var_count;
     nc_inq_nvars(ncid, &var_count);
-    std::vector<int> vidList;
+    std::set<int> vidList;
 
     nccfdriver::scanForGeometryContainers(ncid, vidList);
 
-    for(size_t itr = 0; itr < vidList.size(); itr++)
+    if(vidList.size() > 0)
     {
-        try
+        for(std::set<int>::iterator itr = vidList.begin(); itr != vidList.end(); itr++)
         {
-            LoadSGVarIntoLayer(ncid, vidList[itr]);
+            try
+            {
+                LoadSGVarIntoLayer(ncid, *itr);
+            }
 
-        }
-
-        catch(nccfdriver::SG_Exception& e)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                "Translation of a simple geometry layer has been terminated prematurely due to an error.\n%s", e.get_err_msg());
+            catch(nccfdriver::SG_Exception& e)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                    "Translation of a simple geometry layer has been terminated prematurely due to an error.\n%s", e.get_err_msg());
+            }
         }
     }
 
