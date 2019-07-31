@@ -44,10 +44,6 @@ import random
 from datetime import datetime
 
 def check_availability(url):
-
-    # FIXME. temporarily disabled
-    return False
-
     # Sandbox cleans at 1:05 on monday (UTC)
     now = datetime.utcnow()
     if now.weekday() == 0:
