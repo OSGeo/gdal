@@ -7,8 +7,8 @@ NetCDF: Network Common Data Form - Vector
 
 .. shortname:: netCDF
 
-The netCDF driver support read and write
-(creation from scratch and append operations) to vector datasets (you
+The netCDF driver supports read and write
+(creation from scratch and in some cases append operations) to vector datasets (you
 can find documentation for the :ref:`raster side <raster.netcdf>`)
 
 NetCDF is an interface for array-oriented data access and is used for
@@ -19,7 +19,7 @@ types <http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_featu
 of the CF 1.6 convention. For CF-1.7 and below (as well as non-CF files), it also supports a more custom approach for
 non-point geometries.
 
-The driver also supports reading from CF-1.8 convention compliant files that
+The driver also supports writing and reading from CF-1.8 convention compliant files that
 have simple geometry information encoded within them.
 
 Driver capabilities
@@ -41,7 +41,7 @@ Distinguishing the Two Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is *CF-1.8* or higher (in this exact
 format, as specified in the CF convention) then the driver will treat the netCDF file as one that has *CF-1.8* geometries contained within
-it. If the *Conventions* attribute has a value of CF-1.6, the the file will be treated as following the CF-1.6 convention. 
+it. If the *Conventions* attribute has a value of CF-1.6, the the file will be treated as following the CF-1.6 convention.
 
 CF-1.8 Writing Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,11 +51,30 @@ Other geometries, such as non-simple curve geometries, are not supported in any 
 
 CF-1.8 datasets also do not support the *append* access mode.
 
-Finally, writing a very large CF-1.8 dataset may incur a lot of unneccessary I/O, slowing down the creation process.
-This is largely part in due to dimension resizing for netCDF-3 files. Generally, the performance penalty from dimension resizing
-is greatly reduced by `specifying a larger- but still reasonable- buffer size <#layer-creation-options>`__.
+There are what are considered *reserved variable names* for CF-1.8 datasets. These variable names are used by the driver to store its metadata.
+Refrain from using these names as layer names to avoid naming conflicts when writing datasets with multiple layers.
 
-CF-1.6/WKT datasets, however, are not limited to these restrictions.
+Suppose a layer in a CF-1.8 dataset has the name LAYER with a field with name FIELD. Then the following names would be considered *reserved*:
+
+-  *LAYER_node_coordinates*: used to store point information
+-  *LAYER_node_count*: used to store per shape point count information (not created if LAYER has a geometry type of Point)
+-  *LAYER_part_node_count*: used to store per part point count information (only created if LAYER consists of MultiLineStrings, MultiPolygons, or has at least one Polygon with interior rings)
+-  *LAYER_interior_ring*: used to store interior ring information (only created if LAYER consists of at least one Polygon with interior rings)
+-  *LAYER_field_FIELD*: used to store field information for FIELD.
+
+Furthermore, these names are the only reserved names.
+
+CF-1.6/WKT datasets are not limited to the aforementioned restrictions.
+
+CF-1.8 Known Issues
+~~~~~~~~~~~~~~~~~~~
+Some known issues exist with writing CF-1.8 datasets:
+
+-  *Certain layers of empty polygons are not readable after being written*: This issue is currently being worked on.
+-  *Slow write performance*: This issue is due to the manner in which data is being written with the netCDF library. Currently being worked on.
+-  *Compression seemingly doesn't work with NC4*: This issue is currently being worked on (https://github.com/osgeo/gdal/issues/1738).
+
+CF-1.8 datasets are still considered experimental. Use them at your own risk.
 
 Mapping of concepts
 -------------------
@@ -357,11 +376,11 @@ The following example shows all possibilities and precedence rules:
    <!-- applies to all layers -->
        <Attribute name="copyright" value="Copyright(C) 2016 Example"/>
        <Field name="weight">  <!-- edit user field/variable -->
-           <Attribute name="units" value="kg"/> 
+           <Attribute name="units" value="kg"/>
            <Attribute name="maximum" value="10" type="double"/>
        </Field>
        <Field netcdf_name="z"> <!-- edit predefined variable -->
-           <Attribute name="long_name" value="Elevation"/> 
+           <Attribute name="long_name" value="Elevation"/>
        </Field>
    <!-- start of layer specific definitions -->
        <Layer name="1st_layer" netcdf_name="firstlayer"> <!-- OGR layer "1st_layer" is renamed as "firstlayer" netCDF group -->
