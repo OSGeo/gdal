@@ -37,6 +37,51 @@
 // that can be mapped to a real netCDF ID
 namespace nccfdriver
 {
+	// Exceptions
+	class SG_Exception_NVOOB : public SG_Exception
+	{
+		std::string err_msg;
+
+		public:
+			SG_Exception_NVOOB(const char* dsname) :
+				err_msg(std::string("An attempt to read an undefined ID from ") + std::string(dsname) + std::string(" was made")) {}
+			const char* get_err_msg() override { return this->err_msg.c_str(); }
+	};
+
+	class SG_Exception_DupName: public SG_Exception
+	{
+		std::string err_msg;
+
+		public:
+			SG_Exception_DupName(const char * keyn, const char* dsname) :
+				err_msg(std::string("The key ") + std::string(keyn) + std::string(" already exists in") + std::string(dsname)) {}
+			const char* get_err_msg() override { return this->err_msg.c_str(); }
+	};
+
+	class SG_Exception_BadMapping : public SG_Exception
+	{
+		std::string err_msg;
+
+		public:
+			SG_Exception_BadMapping(const char* key, const char* where) :
+				err_msg(std::string(key) + std::string(" not found in ") + std::string(where))
+			{}
+
+			const char* get_err_msg() override { return this->err_msg.c_str(); }
+	};
+
+        class SG_Exception_VWrite_Failure : public SG_Exception
+	{
+		std::string err_msg;
+
+		public:
+			SG_Exception_VWrite_Failure(const char* where, const char* type) :
+				err_msg(std::string("Failed to write ") + std::string(type) + std::string(" to ") + std::string(where))
+			{}
+
+			const char* get_err_msg() override { return this->err_msg.c_str(); }
+	};
+
 	/* netCDFVAttribute
 	 * -
 	 * Contains attribute name and data.
@@ -70,7 +115,10 @@ namespace nccfdriver
 
 			void vsync(int realncid, int realvarid) override
 			{
-				nc_put_att(realncid, realvarid, name.c_str(), ntype, 1, &value);
+				if(nc_put_att(realncid, realvarid, name.c_str(), ntype, 1, &value) != NC_NOERR)
+				{
+					throw SG_Exception_VWrite_Failure("variable", "attribute");
+				}
 			}
 	};
 
@@ -243,9 +291,9 @@ namespace nccfdriver
 			template<class attrC, class attrT> void nc_put_vatt_generic(int varid, const char* name, const attrT* out)
 			{
 				
-				if(varid >= static_cast<int>(dimList.size()) || varid < 0)
+				if(varid >= static_cast<int>(varList.size()) || varid < 0)
 				{
-					// TODO: throw exception
+					throw SG_Exception_NVOOB("virtual variable collection");
 				}
 
 				netCDFVVariable& v = virtualVIDToVar(varid);
@@ -261,7 +309,15 @@ namespace nccfdriver
                         // Writing Functions
 			template<class out_T> void nc_put_vvar_generic(int varid, const size_t* index, const out_T* out)
 			{
-				nc_put_var1(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+				int rvarid = virtualVIDToVar(varid).getRealID();
+
+				if(rvarid == INVALID_VAR_ID)
+					return; // invalidated variable, don't care condition that Scribe relies on
+
+				if(nc_put_var1(ncid, rvarid, index, out) != NC_NOERR)
+				{
+					throw SG_Exception_VWrite_Failure("variable", "datum");
+				}
 			}
 
 			void nc_put_vvar1_text(int varid, const size_t* index, const char* out);
@@ -286,4 +342,5 @@ namespace nccfdriver
 			// Constructor
 			netCDFVID(int & ncid_in) : ncid(ncid_in) {}
         };
+
 }

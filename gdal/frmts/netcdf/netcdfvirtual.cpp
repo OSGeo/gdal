@@ -65,7 +65,7 @@ namespace nccfdriver
 		// Check if name is already defined
 		if(nameDimTable.count(std::string(name)) > 0)
 		{
-			// TODO: throw exception
+			throw SG_Exception_DupName(name, "virtual dimension collection");
 		}
 
 		// Add to lookup tables
@@ -83,7 +83,7 @@ namespace nccfdriver
 		// Check if name is already defined
 		if(nameVarTable.count(std::string(name)) > 0)
 		{
-			// TODO: throw exception
+			throw SG_Exception_DupName(name, "virtual variable collection");
 		}
 
 		// Add to lookup tables
@@ -189,7 +189,7 @@ namespace nccfdriver
 	{
 		if(virtualID >= static_cast<int>(varList.size()) || virtualID < 0)
 		{
-			// TODO: throw exception
+			throw SG_Exception_NVOOB("virtual variable collection");
 		}
 
 		return varList[virtualID];
@@ -199,7 +199,7 @@ namespace nccfdriver
 	{
 		if(virtualID >= static_cast<int>(dimList.size()) || virtualID < 0)
 		{
-			// TODO: throw exception
+			throw SG_Exception_NVOOB("virtual dimension collection");
 		}
 
 		return dimList[virtualID];
@@ -207,12 +207,21 @@ namespace nccfdriver
 
 	int netCDFVID::nameToVirtualVID(std::string& name)
 	{
-		return nameVarTable.at(name); // todo exception handling
+		if(nameVarTable.count(name) < 1)
+		{
+			throw SG_Exception_BadMapping(name.c_str(), "variable ID lookup");
+		}
+
+		return nameVarTable.at(name);
 	}
 
 	int netCDFVID::nameToVirtualDID(std::string& name)
 	{
-		return nameDimTable.at(name); // todo exception handling
+		if(nameDimTable.count(name) < 1)
+		{
+			throw SG_Exception_BadMapping(name.c_str(), "dimension ID lookup");
+		}
+		return nameDimTable.at(name);
 	}
 
 	/* Attribute writing
@@ -246,7 +255,10 @@ namespace nccfdriver
 
 	void netCDFVTextAttribute::vsync(int realncid, int realvarid)
 	{
-		nc_put_att_text(realncid, realvarid, name.c_str(), value.size(), value.c_str()); //TODO exception
+		if(nc_put_att_text(realncid, realvarid, name.c_str(), value.size(), value.c_str()) != NC_NOERR)
+		{
+			throw SG_Exception_VWrite_Failure("variable", "attribute");
+		}
 	}
 
 	/* Single Datum Writing
@@ -254,12 +266,25 @@ namespace nccfdriver
 	 */        
 	void netCDFVID::nc_put_vvar1_text(int varid, const size_t* index, const char* out)
 	{
-		nc_put_var1_text(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+		int rvarid = virtualVIDToVar(varid).getRealID();
+		if(rvarid == INVALID_VAR_ID)
+			return; // invalidated variable, don't care condition that Scribe relies on
+
+		if(nc_put_var1_text(ncid, rvarid, index, out) != NC_NOERR)
+		{
+			throw SG_Exception_VWrite_Failure("variable", "datum");
+		}
 	}
 
 	void netCDFVID::nc_put_vvara_text(int varid, const size_t* start, const size_t* count, const char* out)
 	{
-		nc_put_vara_text(ncid, virtualVIDToVar(varid).getRealID(), start, count, out);
+		int rvarid = virtualVIDToVar(varid).getRealID();
+		if(rvarid == INVALID_VAR_ID)
+			return; // invalidated variable, don't care condition that Scribe relies on
+		if(nc_put_vara_text(ncid, rvarid, start, count, out) != NC_NOERR)
+		{
+			throw SG_Exception_VWrite_Failure("variable", "datum");
+		}
 	}
 
 	void netCDFVID::nc_put_vvar1_short(int varid, const size_t* index, short* out)
@@ -290,7 +315,15 @@ namespace nccfdriver
 #ifdef NETCDF_HAS_NC4
 	void netCDFVID::nc_put_vvar1_string(int varid, const size_t* index, const char** out)
 	{
-		nc_put_var1_string(ncid, virtualVIDToVar(varid).getRealID(), index, out);
+		int rvarid = virtualVIDToVar(varid).getRealID();
+
+		if(rvarid == INVALID_VAR_ID)
+			return; // invalidated variable
+
+		if(nc_put_var1_string(ncid, rvarid, index, out) != NC_NOERR)
+		{
+			throw SG_Exception_VWrite_Failure("variable", "datum");
+		}
 	}
 #endif
 

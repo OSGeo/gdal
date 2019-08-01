@@ -473,6 +473,16 @@ namespace nccfdriver
             SGWriter_Exception_RingOOB() : msg("An attempt was made to read a polygon ring that does not exist.") {}
     };
 
+    class SGWriter_Exception_NCDelFailure : public SGWriter_Exception
+    {
+        std::string msg;
+
+        public:
+            const char * get_err_msg() override { return this->msg.c_str(); }
+            SGWriter_Exception_NCDelFailure(const char* layer, const char* what)
+                : msg("[" + std::string(layer) + "] Failed to delete: " + std::string(what))
+            {}
+    };
 
     // Functions that interface with netCDF, for writing
 

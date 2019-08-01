@@ -267,7 +267,8 @@ void netCDFDataset::SGCommitPendingTransaction()
                     NCDF_ERR(err_code);
                     if(err_code != NC_NOERR)
                     {
-                        throw nccfdriver::SGWriter_Exception_NCWriteFailure(layerMD.get_containerName().c_str(), CF_SG_INTERIOR_RING, "attribute in geometry_container"); // todo replace these exceptions with removal ones
+                        std::string frmt = std::string("attribute: ") + std::string(CF_SG_INTERIOR_RING);
+                        throw nccfdriver::SGWriter_Exception_NCDelFailure(layerMD.get_containerName().c_str(), frmt.c_str()); 
                     }
 
                     // Invalidate variable writes as well - Interior Ring
@@ -279,7 +280,8 @@ void netCDFDataset::SGCommitPendingTransaction()
                         NCDF_ERR(err_code);
                         if(err_code != NC_NOERR)
                         {
-                            throw nccfdriver::SGWriter_Exception_NCWriteFailure(layerMD.get_containerName().c_str(), CF_SG_PART_NODE_COUNT, "attribute in geometry_container");
+                            std::string frmt = std::string("attribute: ") + std::string(CF_SG_PART_NODE_COUNT); 
+                            throw nccfdriver::SGWriter_Exception_NCDelFailure(layerMD.get_containerName().c_str(), frmt.c_str());
                         }
 
                         // Invalidate variable writes as well - Part Node Count
