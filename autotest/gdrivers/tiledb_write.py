@@ -70,6 +70,30 @@ def test_tiledb_write_custom_blocksize():
     gdaltest.tiledb_drv.Delete('tmp/tiledb_custom')
 
 @pytest.mark.require_driver('TileDB')
+def test_tiledb_write_update():
+    gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
+
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+    array = src_ds.ReadAsArray()
+
+    new_ds = gdaltest.tiledb_drv.Create('tmp/tiledb_update', src_ds.RasterYSize,
+                                         src_ds.RasterXSize)
+    del new_ds
+
+    update_ds = gdal.Open('tmp/tiledb_update', gdal.GA_Update)
+    update_bnd = update_ds.GetRasterBand(1)    
+    # this write is in TileDB row major order
+    update_bnd.WriteArray(array)
+    update_bnd = None
+    update_ds = None
+
+    test_ds = gdal.Open('tmp/tiledb_update')
+    assert test_ds.GetRasterBand(1).Checksum() == 4672, 'Didnt get expected checksum on file update' 
+    test_ds = None
+
+    gdaltest.tiledb_drv.Delete('tmp/tiledb_update')
+
+@pytest.mark.require_driver('TileDB')
 def test_tiledb_write_rgb():
     gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
 
