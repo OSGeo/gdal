@@ -90,6 +90,9 @@ class TestMetaCRS(object):
 
             pytest.fail(err_msg)
 
+        self.src_srs = None
+        self.dst_srs = None
+
     def parse_line(self):
         test_line = self.test_line
 
