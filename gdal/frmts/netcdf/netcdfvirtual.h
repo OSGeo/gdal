@@ -103,11 +103,18 @@ namespace nccfdriver
 	 */
 	class netCDFVDimension
 	{
+		friend class netCDFVID;
+
 		std::string real_dim_name;
 		int r_did = INVALID_DIM_ID;
 		int v_did;
 		size_t dim_len;
+		bool valid = true;
 
+		protected:
+			void setRealID(int realID) { this->r_did = realID; }
+			void invalidate();
+			void setLen(size_t len) { this->dim_len = len; }
 		public:
                     netCDFVDimension(const char * name, size_t len, int dimid) :
                         real_dim_name(name),
@@ -115,12 +122,11 @@ namespace nccfdriver
                         dim_len(len)
                     {} 
 
-		std::string& getName() { return this->real_dim_name; }
-		size_t getLen() { return this->dim_len; }
-		void setLen(size_t len) { this->dim_len = len; }
-		int getRealID() { return this->r_did; }
-		void setRealID(int realID) { this->r_did = realID; }
-		int getVirtualID() { return this->v_did; }
+			std::string& getName() { return this->real_dim_name; }
+			size_t getLen() { return this->dim_len; }
+			int getRealID() { return this->r_did; }
+			int getVirtualID() { return this->v_did; }
+			bool isValid() { return this->valid; }
 	};
 
 	/* netCDFVVariable
@@ -138,17 +144,20 @@ namespace nccfdriver
 		int ndimc;
 		std::unique_ptr<int, std::default_delete<int[]>> dimid;
 		std::vector<std::shared_ptr<netCDFVAttribute>> attribs;
+		bool valid = true;
 
 		protected:
 			std::vector<std::shared_ptr<netCDFVAttribute>>& getAttributes() { return attribs; }
+			void invalidate(); 
+			void setRealID(int realID) { this->r_vid = realID; }
 		public:
 			netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp, int varid);
 			std::string& getName() { return real_var_name; }
 			int getRealID() { return r_vid; }
-			void setRealID(int realID) { this->r_vid = realID; }
 			nc_type getType() { return ntype; }
 			int getDimCount() { return this->ndimc; }	
 			const int* getDimIds() { return this->dimid.get(); }
+			bool isValid() { return this->valid; }
 	};
 
 	/* netCDFVID
@@ -170,8 +179,10 @@ namespace nccfdriver
 		int & ncid;
 		int dimTicket = 0;
 		int varTicket = 0;
-		std::vector<netCDFVVariable> varList; // for now: direct mapping into var and dim list, might use a more flexible mapping system later
+
+		std::vector<netCDFVVariable> varList;
 		std::vector<netCDFVDimension> dimList;
+
 		std::map<std::string, int> nameDimTable;
 		std::map<std::string, int> nameVarTable;
 
@@ -189,6 +200,22 @@ namespace nccfdriver
 			 * The dim IDs in dimidsp given are to be virtual dim IDs, using real dim IDs is undefined
 			 */
 			int nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp);
+
+			/* nc_del_vdim(...)
+			 * Delete a virtual dimension 
+			 * NOTES:
+			 *     This doesn't work on committed IDs.
+			 *     Also the dimension (for now) will be only invalidated, doesn't completely *delete* it in memory.
+			 */
+			void nc_del_vdim(int dimid);
+
+			/* nc_del_vvar(...)
+			 * Delete a virtual variable
+			 * NOTES:
+			 *     This doesn't work on committed IDs.
+			 *     Also the variable (for now) will be only invalidated, doesn't completely *delete* it in memory.
+			 */
+			void nc_del_vvar(int varid);
 
 			/* nc_resize_vdim(...)
 			 * Change the size of a virtual dim to the given size.

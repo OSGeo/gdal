@@ -32,6 +32,12 @@
 // that can be mapped to a real netCDF ID
 namespace nccfdriver
 {
+	void netCDFVDimension::invalidate()
+	{
+		this->valid = false;
+		real_dim_name.clear();
+	}
+
 	netCDFVVariable::netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp, int varid) :
 		real_var_name(name),
 		ntype(xtype),
@@ -43,6 +49,13 @@ namespace nccfdriver
 		{
 			dimid.get()[c] = dimidsp[c];
 		}
+	}
+
+	void netCDFVVariable::invalidate()
+	{
+		this->valid = false;
+		real_var_name.clear();
+		attribs.clear();
 	}
 
 	int netCDFVID::nc_def_vdim(const char * name, size_t len)
@@ -81,6 +94,24 @@ namespace nccfdriver
 		return varID;
 	}
 
+	void netCDFVID::nc_del_vdim(int dimid)
+	{
+		// First remove from name map
+		nameDimTable.erase(this->dimList[dimid].getName());
+
+		// Then clear actual dim
+		this->dimList[dimid].invalidate();
+	}
+
+	void netCDFVID::nc_del_vvar(int varid)
+	{
+		// First remove from name map
+		nameVarTable.erase(this->varList[varid].getName());
+
+		// Then clear actual variable
+		this->varList[varid].invalidate(); 
+	}
+
 	void netCDFVID::nc_resize_vdim(int dimid, size_t dimlen)
 	{
 		netCDFVDimension& dim = virtualDIDToDim(dimid);
@@ -110,6 +141,11 @@ namespace nccfdriver
 			int realDimID;
 			netCDFVDimension& dim = dimList[itr_d];
 
+			if(!dim.isValid())
+			{
+				continue; // don't do anywork if variable is invalid
+			}
+
 			nc_def_dim(ncid, dim.getName().c_str(), dim.getLen(), &realDimID);
 			dimList[itr_d].setRealID(realDimID);
 		}
@@ -118,6 +154,11 @@ namespace nccfdriver
 		{
 			int realVarID;
 			netCDFVVariable& var = varList[itr_v];
+
+			if(!var.isValid())
+			{
+				continue; // don't do anywork if variable is invalid
+			}
 
 			// Convert each virtual dimID to a physical dimID:
 			std::unique_ptr<int, std::default_delete<int[]>> newdims(new int[var.getDimCount()]);

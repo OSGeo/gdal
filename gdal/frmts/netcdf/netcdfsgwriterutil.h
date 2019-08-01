@@ -386,6 +386,8 @@ namespace nccfdriver
             int get_node_count_dimID() { return this->node_count_dimID; }
             int get_node_coord_dimID() { return this->node_coordinates_dimID; }
             int get_pnc_dimID() { return this->pnc_dimID; }
+            int get_pnc_varID() { return this->pnc_varID; }
+            int get_intring_varID() { return this->intring_varID; }
             std::vector<int>& get_nodeCoordVarIDs() { return this->node_coordinates_varIDs; }
             size_t get_next_write_pos_node_coord() { return this->next_write_pos_node_coord; }
             size_t get_next_write_pos_node_count() { return this->next_write_pos_node_count; }

@@ -255,8 +255,7 @@ void netCDFDataset::SGCommitPendingTransaction()
 
                  nccfdriver::geom_t geometry_type = layerMD.getWritableType();
 
-               /* Interior Ring Attribute
-                * (only needed potentially for MULTIPOLYGON and POLYGON)
+               /* Delete interior ring stuff if not detected
                 */
 
                 if (!layerMD.getInteriorRingDetected() && (geometry_type == nccfdriver::MULTIPOLYGON || geometry_type == nccfdriver::POLYGON) &&
@@ -271,15 +270,23 @@ void netCDFDataset::SGCommitPendingTransaction()
                         throw nccfdriver::SGWriter_Exception_NCWriteFailure(layerMD.get_containerName().c_str(), CF_SG_INTERIOR_RING, "attribute in geometry_container"); // todo replace these exceptions with removal ones
                     }
 
+                    // Invalidate variable writes as well - Interior Ring
+                    vcdf.nc_del_vvar(layerMD.get_intring_varID());
+
                     if(geometry_type == nccfdriver::POLYGON) 
                     {
-
                         err_code = nc_del_att(cdfid, layerMD.get_containerRealID(), CF_SG_PART_NODE_COUNT);
                         NCDF_ERR(err_code);
                         if(err_code != NC_NOERR)
                         {
                             throw nccfdriver::SGWriter_Exception_NCWriteFailure(layerMD.get_containerName().c_str(), CF_SG_PART_NODE_COUNT, "attribute in geometry_container");
                         }
+
+                        // Invalidate variable writes as well - Part Node Count
+                        vcdf.nc_del_vvar(layerMD.get_pnc_varID());
+
+                        // Invalidate dimension as well - Part Node Count
+                        vcdf.nc_del_vdim(layerMD.get_pnc_dimID());
                     }
 
                     SetDefineMode(false);
