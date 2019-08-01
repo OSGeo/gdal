@@ -4332,17 +4332,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
     {
         // Write CF-1.5 compliant Geographics attributes.
         // Note: WKT information will not be preserved (e.g. WGS84).
-
-        if(srsVarName == "")
-        {
-            pszCFProjection = CPLStrdup("crs");
-        } // WKT case
-
-        else
-        {
-            pszCFProjection = CPLStrdup(srsVarName.c_str());
-        } // CF-1.8 case
-
+        pszCFProjection = CPLStrdup("crs");
         addParamString(CF_GRD_MAPPING_NAME, CF_PT_LATITUDE_LONGITUDE);
     }
 
@@ -4452,6 +4442,12 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
     }
 
     *ppszCFProjection = pszCFProjection;
+
+    if(srsVarName != "")
+    {
+        pszCFProjection = CPLStrdup(srsVarName.c_str());
+
+    }
 
     int status =
         nc_def_var(cdfid, pszCFProjection, NC_CHAR, 0, nullptr, &NCDFVarID);
