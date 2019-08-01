@@ -184,8 +184,6 @@ namespace nccfdriver
     {
         std::string char_rep;
 
-        protected:
-            const char* getRepPtr() { return char_rep.c_str(); }
         public:
             void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_text(OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
@@ -257,18 +255,26 @@ namespace nccfdriver
     /* OGR_SGFS_NC_String_Transaction
      * Writes to an NC_STRING variable, in a similar manner as NC_Char
      */
-    class OGR_SGFS_NC_String_Transaction : public OGR_SGFS_NC_Char_Transaction
+    class OGR_SGFS_NC_String_Transaction : public OGR_SGFS_Transaction
     {
+        std::string char_rep;
+
         public:
             void commit(netCDFVID& n, size_t write_loc) override
             {
-                const char * writable = OGR_SGFS_NC_Char_Transaction::getRepPtr();
+                const char * writable = char_rep.c_str();
                 n.nc_put_vvar1_string(OGR_SGFS_Transaction::getVarId(), &write_loc, &(writable));
             }
 
+            unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
+
+            void appendToLog(FILE * f) override;
+
             OGR_SGFS_NC_String_Transaction(int i_varId, const char* pszVal) : 
-               OGR_SGFS_NC_Char_Transaction(i_varId, pszVal)
-            {}
+                char_rep(pszVal)
+            {
+                OGR_SGFS_Transaction::setVarId(i_varId);
+            }
     };
 
 #endif

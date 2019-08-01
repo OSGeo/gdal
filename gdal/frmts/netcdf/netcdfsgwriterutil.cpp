@@ -656,6 +656,20 @@ namespace nccfdriver
         fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
     }
 
+#ifdef NETCDF_HAS_NC4
+    void OGR_SGFS_NC_String_Transaction::appendToLog(FILE * f)
+    {
+        int vid = OGR_SGFS_Transaction::getVarId();
+        int type = NC_STRING;
+        size_t DATA_SIZE = char_rep.length(); 
+
+        fwrite(&vid, sizeof(int), 1, f); // write varID data
+        fwrite(&type, sizeof(int), 1, f); // write NC type
+        fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
+        fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
+    }
+#endif
+
     void OGR_SGFS_NC_CharA_Transaction::appendToLog(FILE * f)
     {
         int vid = OGR_SGFS_Transaction::getVarId();
@@ -725,6 +739,18 @@ namespace nccfdriver
                  return genericLogDataRead<OGR_SGFS_NC_Float_Transaction, float>(varId, log);
              case NC_DOUBLE:
                  return genericLogDataRead<OGR_SGFS_NC_Double_Transaction, double>(varId, log);
+#ifndef NETCDF_HAS_NC4
+             case NC_UBYTE:
+                 return genericLogDataRead<OGR_SGFS_NC_UByte_Transaction, unsigned char>(varId, log);
+             case NC_USHORT:
+                 return genericLogDataRead<OGR_SGFS_NC_UShort_Transaction, unsigned short>(varId, log);
+             case NC_UINT:
+                 return genericLogDataRead<OGR_SGFS_NC_UInt_Transaction, unsigned int>(varId, log);
+             case NC_INT64:
+                 return genericLogDataRead<OGR_SGFS_NC_Int64_Transaction, long long>(varId, log);
+             case NC_UINT64:
+                 return genericLogDataRead<OGR_SGFS_NC_UInt64_Transaction, unsigned long long>(varId, log);
+#endif
              case NC_CHAR:
              {
                  int readcheck; // 0 means at least one read 0 bytes
@@ -732,17 +758,19 @@ namespace nccfdriver
                  // Check what type of OP is requested 
                  int8_t op = 0;
                  readcheck = fread(&op, sizeof(int8_t), 1, log);
+                 if(!readcheck) return MTPtr(); // read failure
 
                  size_t strsize;
 
                  // get how much data to read
-                 readcheck &= fread(&strsize, sizeof(size_t), 1, log);
+                 readcheck = fread(&strsize, sizeof(size_t), 1, log);
+                 if(!readcheck) return MTPtr(); // read failure
 
                  std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
+                 memset(data.get(), 0, strsize + 1);
 
                  // read that data and return it
-                 readcheck &= fread(data.get(), sizeof(char), strsize, log);
-
+                 readcheck = fread(data.get(), sizeof(char), strsize, log);
                  if(!readcheck) return MTPtr(); // read failure
 
                  // case: its a standard CHAR op
@@ -764,7 +792,31 @@ namespace nccfdriver
                  } 
 
              }
-             break;
+
+#ifdef NETCDF_HAS_NC4
+             case NC_STRING:
+             {
+                 int readcheck; // 0 means at least one read 0 bytes
+
+                 size_t strsize;
+
+                 // get how much data to read
+                 readcheck = fread(&strsize, sizeof(size_t), 1, log);
+
+                 if(!readcheck) return MTPtr(); // read failure
+
+                 std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
+                 memset(data.get(), 0, strsize + 1);
+
+                 // read that data and return it
+                 readcheck = fread(data.get(), sizeof(char), strsize, log);
+
+                 if(!readcheck)
+                     return MTPtr(); // read failure
+
+                 return MTPtr(new OGR_SGFS_NC_String_Transaction(varId, data.get()));  // data is copied so okay!
+             }
+#endif
 
              default:
                  // Unsupported type
