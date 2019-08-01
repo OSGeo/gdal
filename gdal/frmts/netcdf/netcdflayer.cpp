@@ -1512,7 +1512,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         if( m_aoFieldDesc[i].nMainDimId != nMainDimId )
             continue;
 
-        if( !(poFeature->IsFieldSetAndNotNull(i)) )
+        if( !(poFeature->IsFieldSetAndNotNull(i)) && m_bLegacyCreateMode )
         {
 #ifdef NETCDF_HAS_NC4
             if( m_bNCDumpCompat && m_aoFieldDesc[i].nType == NC_STRING )
