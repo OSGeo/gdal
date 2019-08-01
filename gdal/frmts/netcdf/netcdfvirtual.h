@@ -254,6 +254,7 @@ namespace nccfdriver
 			netCDFVDimension& virtualDIDToDim(int virtualID); // converts a virtual dim ID to a real ID
 			int nameToVirtualVID(std::string& name);
 			int nameToVirtualDID(std::string& name);
+                        bool virtualVarNameDefined(std::string& nm) { return nameVarTable.count(nm) > 0; }
 
 			// Constructor
 			netCDFVID(int & ncid_in) : ncid(ncid_in) {}

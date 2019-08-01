@@ -2422,25 +2422,29 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
         osVarName = CPLString(prefix) + CPLString(fprefix) + osVarName;
 
-        // Of course, this solution doesn't completely solve all problems.
-        // TODO: create loop that appends names and times out at some point, corresponding to conflicts
     }
-    else
-    {
-        status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
-        if( status == NC_NOERR )
-        {
-            for( int i = 1; i <= 100; i++ )
-            {
-                osVarName = CPLSPrintf("%s%d", poFieldDefn->GetNameRef(), i);
-                status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
-                if( status != NC_NOERR )
-                    break;
-            }
 
-            CPLDebug("netCDF", "Field %s is written in variable %s",
-                     poFieldDefn->GetNameRef(), osVarName.c_str());
+    bool vCDFHas = false;
+    if(!m_bLegacyCreateMode)
+    {
+        vCDFHas = m_poDS->vcdf.virtualVarNameDefined(osVarName);
+    }
+
+    // Also check the real
+    status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
+    if( status == NC_NOERR || vCDFHas)
+    {
+        for( int i = 1; i <= 100; i++ )
+        {
+            osVarName = CPLSPrintf("%s%d", poFieldDefn->GetNameRef(), i);
+            status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
+            if(!m_bLegacyCreateMode) vCDFHas = m_poDS->vcdf.virtualVarNameDefined(osVarName);
+            if( status != NC_NOERR && !vCDFHas )
+                break;
         }
+
+        CPLDebug("netCDF", "Field %s is written in variable %s",
+                 poFieldDefn->GetNameRef(), osVarName.c_str());
     }
 
     const char *pszVarName = osVarName.c_str();
