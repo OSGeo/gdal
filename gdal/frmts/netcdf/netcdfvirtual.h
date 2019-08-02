@@ -306,7 +306,7 @@ namespace nccfdriver
             void nc_put_vatt_float(int varid, const char* name, const float* out);
             void nc_put_vatt_byte(int varid, const char* name, const signed char* out);
 
-                        // Writing Functions
+            // Writing Functions
             template<class out_T> void nc_put_vvar_generic(int varid, const size_t* index, const out_T* out)
             {
                 int rvarid = virtualVIDToVar(varid).getRealID();
@@ -319,6 +319,19 @@ namespace nccfdriver
                     throw SG_Exception_VWrite_Failure("variable", "datum");
                 }
             }
+
+			template<class outArr_T> void nc_put_vvara_generic(int varid, const size_t* index, const size_t* count, const outArr_T* out)
+			{
+				int rvarid = virtualVIDToVar(varid).getRealID();
+
+				if (rvarid == INVALID_VAR_ID)
+					return; // invalidated variable, don't care condition that Scribe relies on
+
+				if (nc_put_vara(ncid, varid, index, count, out) != NC_NOERR)
+				{
+					throw SG_Exception_VWrite_Failure("variable", "data array");
+				}
+			}
 
             void nc_put_vvar1_text(int varid, const size_t* index, const char* out);
             void nc_put_vvara_text(int varid, const size_t* start, const size_t* index, const char* out);

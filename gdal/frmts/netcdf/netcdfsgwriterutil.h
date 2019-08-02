@@ -29,6 +29,7 @@
 #define __NETCDFSGWRITERUTIL_H__
 #include <cstdio>
 #include <queue>
+#include <typeinfo>
 #include <vector>
 #include "cpl_vsi.h"
 #include "ogr_core.h"
@@ -148,6 +149,11 @@ namespace nccfdriver
              */
             int getVarId() { return this->varId; }
 
+            /* nc_type getType
+             * Returns the type of transaction being saved
+             */
+			virtual nc_type getType() = 0;
+
             /* void setVarId(...);
              * Sets the var in which to commit the transaction to.
              */
@@ -155,6 +161,8 @@ namespace nccfdriver
 
     };
 
+	typedef std::map<int, void*> NCWMap;
+	typedef std::pair<int, void*> NCWEntry; // NC Writer Entry
     typedef std::shared_ptr<OGR_SGFS_Transaction> MTPtr; // a.k.a Managed Transaction Ptr
 
     template<class T_c_type, nc_type T_nc_type> void genericLogAppend(T_c_type r, int vId, FILE * f)
@@ -188,6 +196,7 @@ namespace nccfdriver
             void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_text(OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(FILE* f) override;
+            nc_type getType() { return NC_CHAR; }
             OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) : 
                char_rep(pszVal)
             {
@@ -208,6 +217,7 @@ namespace nccfdriver
             void commit(netCDFVID& n, size_t write_loc) override { size_t ind[2] = {write_loc, 0}; n.nc_put_vvara_text(OGR_SGFS_Transaction::getVarId(), ind, counts, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(FILE* f) override;
+            nc_type getType() { return NC_CHAR; }
             OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) : 
                char_rep(pszVal),
                counts{1, str_width}
@@ -237,6 +247,13 @@ namespace nccfdriver
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
             }
+
+			VClass getData()
+			{
+				return rep;
+			}
+
+            nc_type getType() { return ntype; }
     };
 
     typedef OGR_SGFS_NC_Transaction_Generic<signed char, NC_BYTE> OGR_SGFS_NC_Byte_Transaction;
@@ -246,7 +263,7 @@ namespace nccfdriver
     typedef OGR_SGFS_NC_Transaction_Generic<double, NC_DOUBLE> OGR_SGFS_NC_Double_Transaction;
 
 #ifdef NETCDF_HAS_NC4
-    typedef OGR_SGFS_NC_Transaction_Generic<unsigned, NC_UINT> OGR_SGFS_NC_UInt_Transaction;
+	typedef OGR_SGFS_NC_Transaction_Generic<unsigned, NC_UINT> OGR_SGFS_NC_UInt_Transaction;
     typedef OGR_SGFS_NC_Transaction_Generic<unsigned long long, NC_UINT64> OGR_SGFS_NC_UInt64_Transaction;
     typedef OGR_SGFS_NC_Transaction_Generic<long long, NC_INT64> OGR_SGFS_NC_Int64_Transaction;
     typedef OGR_SGFS_NC_Transaction_Generic<unsigned char, NC_UBYTE> OGR_SGFS_NC_UByte_Transaction;
@@ -267,6 +284,8 @@ namespace nccfdriver
             }
 
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
+
+			nc_type getType() { return NC_STRING; }
 
             void appendToLog(FILE * f) override;
 
@@ -420,7 +439,6 @@ namespace nccfdriver
             bool isOverQuota();
             void adjustLimit(unsigned long long lim) { this->buffer_soft_limit = lim; }
             void addBuffer(WBuffer* b) { this->bufs.push_back(b); }
-            void logAll();
             explicit WBufferManager(unsigned long long lim) : buffer_soft_limit(lim){ }
     };
 
@@ -491,7 +509,7 @@ namespace nccfdriver
             {}
     };
 
-    // Functions that interface with netCDF, for writing
+    // Helper Functions that for writing
 
     /* std::vector<..> writeGeometryContainer(...)
      * Writes a geometry container of a given geometry type given the following arguments:
@@ -505,6 +523,39 @@ namespace nccfdriver
      */
     int write_Geometry_Container
         (int ncID, const std::string& name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names);
+	
+	template<class W_type> inline void NCWMapAllocIfNeeded(int varid, NCWMap& mapAdd, size_t numEntries, std::vector<int> & v)
+	{
+		if(mapAdd.count(varid) < 1)
+		{
+			mapAdd.insert(NCWEntry(varid,  CPLMalloc(sizeof(W_type) * numEntries)));
+			v.push_back(varid);
+		}
+	}
+
+	template<class W_type> inline void NCWMapWriteAndCommit(int varid, NCWMap& mapAdd, size_t currentEntry, size_t numEntries, W_type data, netCDFVID& vcdf)
+	{
+		W_type* ptr = static_cast<W_type*>(mapAdd.at(varid));
+		ptr[currentEntry] = data;
+		static const size_t BEGIN = 0;
+
+		// If all items are ready, write the array, and free it, delete the pointer
+		if (numEntries == (currentEntry - 1))
+		{
+			try
+			{
+				// Write the whole array at once
+				vcdf.nc_put_vvara_generic<W_type>(varid, &BEGIN, &numEntries, ptr);
+			}
+			catch (SG_Exception_VWrite_Failure& e)
+			{
+				CPLError(CE_Warning, CPLE_FileIO, e.get_err_msg());
+			}
+
+			CPLFree(mapAdd.at(varid));
+			mapAdd.erase(varid);
+		}
+	}
 }
 
 #endif
