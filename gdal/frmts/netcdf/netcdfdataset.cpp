@@ -8135,7 +8135,6 @@ netCDFDataset::CreateLL( const char *pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
     poDS->osFilename = pszFilename;
-    poDS->logHeader = pszFilename;
 
     // From gtiff driver, is this ok?
     /*

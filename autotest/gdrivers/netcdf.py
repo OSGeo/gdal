@@ -4672,6 +4672,34 @@ def test_SG_NC3_field_write():
     assert(fflt == 1.5)
     assert(fdbl == 99.5) 
 
+def test_states_full_layer_buffer_restrict_correctness():
+    # Tests whether or not having the write buffer restriction
+    # Writes correct data.
+    # Note: this is different than the Yahara version in that it also tests
+    # Correctness of writing buffered NC_CHARs and NC_STRINGs (NC4)
+
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/cf1.8_states.json")
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/states_4K_restrict.nc", src, format="netCDF", layerCreationOptions = ['BUFFER_SIZE=4096'])
+    gdal.VectorTranslate("tmp/states_default_buf.nc", src, format="netCDF")
+
+    fk_ds = ogr.Open("tmp/states_4K_restrict.nc")
+    db_ds = ogr.Open("tmp/states_default_buf.nc")
+
+    fk_ds_layer = fk_ds.GetLayerByName("geometry_container")
+    db_ds_layer = db_ds.GetLayerByName("geometry_container")
+    assert(fk_ds_layer is not None)
+    assert(db_ds_layer is not None)
+
+    for feat in range(49):
+        lft = fk_ds_layer.GetNextFeature()
+        dft = db_ds_layer.GetNextFeature()
+        lftgeo = lft.GetGeometryRef()
+        dftgeo = dft.GetGeometryRef()
+        assert(lftgeo.Equal(dftgeo))
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
