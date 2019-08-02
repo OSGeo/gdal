@@ -71,7 +71,6 @@ Known Issues with CF-1.8 Datasets
 Some known issues exist with writing CF-1.8 datasets:
 
 -  *Certain layers of empty polygons are not readable after being written*: This issue is currently being worked on.
--  *Slow write performance*: This issue is due to the manner in which data is being written with the netCDF library. Currently being worked on.
 -  *Compression seemingly doesn't work with NC4*: This issue is currently being worked on (https://github.com/osgeo/gdal/issues/1738).
 
 CF-1.8 datasets are still considered experimental. Use them at your own risk.
