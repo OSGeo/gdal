@@ -66,8 +66,8 @@ Furthermore, these names are the only reserved names.
 
 CF-1.6/WKT datasets are not limited to the aforementioned restrictions.
 
-CF-1.8 Known Issues
-~~~~~~~~~~~~~~~~~~~
+Known Issues with CF-1.8 Datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Some known issues exist with writing CF-1.8 datasets:
 
 -  *Certain layers of empty polygons are not readable after being written*: This issue is currently being worked on.
@@ -328,7 +328,7 @@ The following option requires a dataset with GEOMETRY_ENCODING=CF_1.8:
 -  **BUFFER_SIZE**\ =int. The soft limit of the write buffer in bytes. Larger
    values generally imply better performance, but values should be comfortably
    less than that of available physical memory or else thrashing can occur.
-   By default, this value is set at 10% of usable physical memory (usable meaning
+   By default, this value is set at 20% of usable physical memory (usable meaning
    total physical RAM considering limitations of virtual address space size).
    Buffer contents are committed between translating features, but not *during*
    translating a feature, so this limit does not apply to a single feature. Minimum

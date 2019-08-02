@@ -2097,7 +2097,7 @@ netCDFDataset::netCDFDataset() :
     vcdf(cdfid),
     GeometryScribe(vcdf, this->generateLogName()),
     FieldScribe(vcdf, this->generateLogName()),
-    bufManager(CPLGetUsablePhysicalRAM() / 10),
+    bufManager(CPLGetUsablePhysicalRAM() / 5),
 
     // projection/GT.
     pszProjection(nullptr),
