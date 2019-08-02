@@ -368,7 +368,7 @@ std::shared_ptr<std::string> netCDFDataset::generateLogName()
 
     if(this->logCount == 0)
     {
-        srand(time(nullptr));
+        srand(static_cast<unsigned int>(time(nullptr)));
         logCount = rand();
     }
 
