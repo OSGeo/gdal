@@ -234,7 +234,7 @@ namespace nccfdriver
         std::map<std::string, int> nameDimTable;
         std::map<std::string, int> nameVarTable;
 
-                public:
+        public:
             // Each of these returns an ID, NOT an error code
 
             /* nc_def_vdim(...)
@@ -327,7 +327,7 @@ namespace nccfdriver
 				if (rvarid == INVALID_VAR_ID)
 					return; // invalidated variable, don't care condition that Scribe relies on
 
-				if (nc_put_vara(ncid, varid, index, count, out) != NC_NOERR)
+				if (nc_put_vara(ncid, rvarid, index, count, out) != NC_NOERR)
 				{
 					throw SG_Exception_VWrite_Failure("variable", "data array");
 				}

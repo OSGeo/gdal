@@ -196,7 +196,7 @@ namespace nccfdriver
             void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_text(OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(FILE* f) override;
-            nc_type getType() { return NC_CHAR; }
+            nc_type getType() override { return NC_CHAR; }
             OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) : 
                char_rep(pszVal)
             {
@@ -217,7 +217,7 @@ namespace nccfdriver
             void commit(netCDFVID& n, size_t write_loc) override { size_t ind[2] = {write_loc, 0}; n.nc_put_vvara_text(OGR_SGFS_Transaction::getVarId(), ind, counts, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(FILE* f) override;
-            nc_type getType() { return NC_CHAR; }
+            nc_type getType() override { return NC_CHAR; }
             OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) : 
                char_rep(pszVal),
                counts{1, str_width}
@@ -253,7 +253,7 @@ namespace nccfdriver
 				return rep;
 			}
 
-            nc_type getType() { return ntype; }
+            nc_type getType() override { return ntype; }
     };
 
     typedef OGR_SGFS_NC_Transaction_Generic<signed char, NC_BYTE> OGR_SGFS_NC_Byte_Transaction;
@@ -285,7 +285,7 @@ namespace nccfdriver
 
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
 
-			nc_type getType() { return NC_STRING; }
+			nc_type getType() override { return NC_STRING; }
 
             void appendToLog(FILE * f) override;
 
@@ -540,7 +540,7 @@ namespace nccfdriver
 		static const size_t BEGIN = 0;
 
 		// If all items are ready, write the array, and free it, delete the pointer
-		if (numEntries == (currentEntry - 1))
+		if (currentEntry == (numEntries - 1))
 		{
 			try
 			{
@@ -549,7 +549,7 @@ namespace nccfdriver
 			}
 			catch (SG_Exception_VWrite_Failure& e)
 			{
-				CPLError(CE_Warning, CPLE_FileIO, e.get_err_msg());
+				CPLError(CE_Warning, CPLE_FileIO, "%s", e.get_err_msg());
 			}
 
 			CPLFree(mapAdd.at(varid));
