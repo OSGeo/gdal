@@ -2094,6 +2094,7 @@ netCDFDataset::netCDFDataset() :
     nCFVersion(1.6),
     bSGSupport(false),
     eMultipleLayerBehaviour(SINGLE_LAYER),
+    logCount(0),
     vcdf(cdfid),
     GeometryScribe(vcdf, this->generateLogName()),
     FieldScribe(vcdf, this->generateLogName()),
@@ -4443,14 +4444,19 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
 
     *ppszCFProjection = pszCFProjection;
 
+    const char* pszVarName;
+
     if(srsVarName != "")
     {
-        pszCFProjection = CPLStrdup(srsVarName.c_str());
-
+        pszVarName = srsVarName.c_str();
+    }
+    else
+    {
+        pszVarName = pszCFProjection;
     }
 
     int status =
-        nc_def_var(cdfid, pszCFProjection, NC_CHAR, 0, nullptr, &NCDFVarID);
+        nc_def_var(cdfid, pszVarName, NC_CHAR, 0, nullptr, &NCDFVarID);
     NCDF_ERR(status);
     for( const auto& it: oParams )
     {
@@ -8129,6 +8135,7 @@ netCDFDataset::CreateLL( const char *pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
     poDS->osFilename = pszFilename;
+    poDS->logHeader = pszFilename;
 
     // From gtiff driver, is this ok?
     /*

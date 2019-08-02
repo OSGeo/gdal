@@ -844,11 +844,12 @@ class netCDFDataset final: public GDALPamDataset
     bool          bSGSupport;
     MultipleLayerBehaviour eMultipleLayerBehaviour;
     std::vector<netCDFDataset*> apoVectorDatasets;
+    std::string logHeader;
+    int logCount;
     nccfdriver::netCDFVID vcdf;
     nccfdriver::OGR_NCScribe GeometryScribe;
     nccfdriver::OGR_NCScribe FieldScribe;
     nccfdriver::WBufferManager bufManager;
-    int logCount = 0;
 
     /* projection/GT */
     double       adfGeoTransform[6];
