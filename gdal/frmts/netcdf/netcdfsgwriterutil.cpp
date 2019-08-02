@@ -780,8 +780,8 @@ namespace nccfdriver
         fwrite(&type, sizeof(int), 1, f); // write NC type
         fwrite(&OP, sizeof(int8_t), 1, f); // write "OP" flag
         fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
-        fwrite((this->counts) + 1, sizeof(size_t), 1, f);
         fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
+        fwrite((this->counts), sizeof(size_t), 1, f);
     }
 
     // WTransactionLog
