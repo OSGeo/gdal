@@ -33,6 +33,8 @@ import shutil
 
 import pytest
 
+import webserver
+
 import gdaltest
 from osgeo import gdal, osr
 
@@ -1026,39 +1028,69 @@ def test_tiff_read_online_1():
 # support
 
 
-def test_tiff_read_online_2():
+def test_tiff_read_vsicurl_multirange():
 
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
-    # For some reason this fails on this configuration
-    if gdaltest.is_travis_branch('sanitize'):
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if webserver_port == 0:
         pytest.skip()
 
-    if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/gtiff/utm.tif') is None:
-        pytest.skip('cannot open URL')
+    gdal.VSICurlClearCache()
 
-    old_val = gdal.GetConfigOption('GTIFF_DIRECT_IO')
-    gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
-    gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', '.tif')
-    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
-    ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif')
-    gdal.SetConfigOption('GTIFF_DIRECT_IO', old_val)
-    gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', None)
-    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', None)
+    try:
+        filesize = 262976
+        handler = webserver.SequentialHandler()
+        handler.add('HEAD', '/utm.tif', 200, {'Content-Length': '%d' % filesize})
+        def method(request):
+            #sys.stderr.write('%s\n' % str(request.headers))
 
-    assert ds is not None, 'could not open dataset'
+            if request.headers['Range'].startswith('bytes='):
+                rng = request.headers['Range'][len('bytes='):]
+                assert len(rng.split('-')) == 2
+                start = int(rng.split('-')[0])
+                end = int(rng.split('-')[1])
 
-    # Read subsampled data
-    subsampled_data = ds.ReadRaster(0, 0, 512, 512, 128, 128)
-    ds = None
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(206)
+                request.send_header('Content-type', 'application/octet-stream')
+                request.send_header('Content-Range', 'bytes %d-%d/%d' % (start, end, filesize))
+                request.send_header('Content-Length', end - start + 1)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open('../gdrivers/data/utm.tif', 'rb') as f:
+                    f.seek(start, 0)
+                    request.wfile.write(f.read(end - start + 1))
 
-    ds = gdal.GetDriverByName('MEM').Create('', 128, 128)
-    ds.WriteRaster(0, 0, 128, 128, subsampled_data)
-    cs = ds.GetRasterBand(1).Checksum()
-    ds = None
+        for i in range(6):
+            handler.add('GET', '/utm.tif', custom_method=method)
 
-    assert cs == 54935, 'wrong checksum'
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_options({ 'GTIFF_DIRECT_IO': 'YES',
+                                           'CPL_VSIL_CURL_ALLOWED_EXTENSIONS': '.tif',
+                                           'GDAL_DISABLE_READDIR_ON_OPEN': 'EMPTY_DIR' }):
+                ds = gdal.Open('/vsicurl/http://127.0.0.1:%d/utm.tif' % webserver_port)
+                assert ds is not None, 'could not open dataset'
+
+                # Read subsampled data
+                subsampled_data = ds.ReadRaster(0, 0, 512, 32, 128, 4)
+                ds = None
+
+                ds = gdal.GetDriverByName('MEM').Create('', 128, 4)
+                ds.WriteRaster(0, 0, 128, 4, subsampled_data)
+                cs = ds.GetRasterBand(1).Checksum()
+                ds = None
+
+                assert cs == 6429, 'wrong checksum'
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
 
 ###############################################################################
 # Test reading a TIFF made of a single-strip that is more than 2GB (#5403)
