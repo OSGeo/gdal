@@ -607,6 +607,7 @@ int VSICryptFileHeader::ReadFromFile( VSIVirtualHandle* fp,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "CryptoPP exception: %s", e.what());
+            delete poEncCipher;
             return FALSE;
         }
 
