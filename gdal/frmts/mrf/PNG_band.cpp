@@ -132,7 +132,6 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     // Ready to read
     png_read_info(pngp, infop);
     GInt32 height = static_cast<GInt32>(png_get_image_height(pngp, infop));
-    GInt32 byte_count = png_get_bit_depth(pngp, infop) / 8;
     // Check the size
     if (dst.size < (png_get_rowbytes(pngp, infop)*height)) {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -148,7 +147,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
         png_rowp[i] = (png_bytep)dst.buffer + i*rowbytes;
 
 #if defined(CPL_LSB)
-    if (byte_count != 1) {
+    if (png_get_bit_depth(pngp, infop) > 8) {
         png_set_swap(pngp);
         // Call update info if any png_set is used
         png_read_update_info(pngp, infop);
