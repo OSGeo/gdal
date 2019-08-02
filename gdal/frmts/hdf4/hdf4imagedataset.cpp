@@ -412,7 +412,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           const int nDataTypeSize =
               GDALGetDataTypeSizeBytes(poGDS->GetDataType(poGDS->iNumType));
           GByte *pbBuffer = reinterpret_cast<GByte *>(
-              CPLMalloc(nBlockXSize*nBlockYSize*poGDS->iRank*nBlockYSize) );
+              CPLMalloc(nBlockXSize*nBlockYSize*poGDS->iRank*nDataTypeSize) );
 
           aiStart[poGDS->iYDim] = nYOff;
           aiEdges[poGDS->iYDim] = nYSize;
@@ -3581,38 +3581,30 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         // We will duplicate global metadata for every subdataset.
         poDS->papszLocalMetadata = CSLDuplicate( poDS->papszGlobalMetadata );
 
-        for( int32 iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
-        {
-            char szAttrName[H4_MAX_NC_NAME] = {};
-            int32 nValues = 0;
-            int32 iAttrNumType = 0;
-            GRattrinfo( poDS->iGR, iAttribute, szAttrName,
-                        &iAttrNumType, &nValues );
-            poDS->papszLocalMetadata =
-                poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute,
-                                               szAttrName, iAttrNumType,
-                                               nValues,
-                                               poDS->papszLocalMetadata );
-        }
         poDS->SetMetadata( poDS->papszLocalMetadata, "" );
         // Read colour table
 
-        poDS->iPal = GRgetlutid ( poDS->iGR, poDS->iDataset );
+        poDS->iPal = GRgetlutid ( poDS->iGR, 0 );
         if( poDS->iPal != -1 )
         {
             GRgetlutinfo( poDS->iPal, &poDS->nComps, &poDS->iPalDataType,
                           &poDS->iPalInterlaceMode, &poDS->nPalEntries );
-            GRreadlut( poDS->iPal, poDS->aiPaletteData );
-            poDS->poColorTable = new GDALColorTable();
-            GDALColorEntry oEntry;
-            for( int i = 0; i < N_COLOR_ENTRIES; i++ )
+            if( poDS->nPalEntries && poDS->nComps == 3 &&
+                GDALGetDataTypeSizeBytes(GetDataType(poDS->iPalDataType)) == 1 &&
+                poDS->nPalEntries <= 256 )
             {
-                oEntry.c1 = poDS->aiPaletteData[i][0];
-                oEntry.c2 = poDS->aiPaletteData[i][1];
-                oEntry.c3 = poDS->aiPaletteData[i][2];
-                oEntry.c4 = 255;
+                GRreadlut( poDS->iPal, poDS->aiPaletteData );
+                poDS->poColorTable = new GDALColorTable();
+                GDALColorEntry oEntry;
+                for( int i = 0; i < std::min(static_cast<int>(poDS->nPalEntries), N_COLOR_ENTRIES); i++ )
+                {
+                    oEntry.c1 = poDS->aiPaletteData[i][0];
+                    oEntry.c2 = poDS->aiPaletteData[i][1];
+                    oEntry.c3 = poDS->aiPaletteData[i][2];
+                    oEntry.c4 = 255;
 
-                poDS->poColorTable->SetColorEntry( i, &oEntry );
+                    poDS->poColorTable->SetColorEntry( i, &oEntry );
+                }
             }
         }
 
