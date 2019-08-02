@@ -322,6 +322,7 @@ namespace nccfdriver
         std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
         std::map<int, size_t> varWriteInds;
         std::map<int, size_t> varMaxInds;
+        //std::map<int, void*> rawWrite;
 
         public:
            /* size_t getWriteCount()
@@ -333,6 +334,12 @@ namespace nccfdriver
              * Replays all transactions to disk (according to fs stipulations)
              */
            void commit_transaction();
+
+           /* std::shared_ptr<OGR_SGFS_Transaction> pop()
+            * Get the next transaction, if it exists.
+            * If not, it will just return a shared_ptr with nullptr inside
+            */
+           MTPtr pop();
 
            /* void log_transacion()
             * Saves the current queued transactions to a log.

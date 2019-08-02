@@ -547,44 +547,10 @@ namespace nccfdriver
     {
         wl.startRead();
 
-        // Buffered changes are the earliest, so commit those first
-        MTPtr m = this->wl.pop();
-        while(m.get() != nullptr)
+        MTPtr t;
+        t = this->pop();
+        while(t.get() != nullptr)
         {
-            int varId = m->getVarId();
-            size_t writeInd;
-
-            // First, find where to write. If doesn't exist, write to index 0
-            if(this->varWriteInds.count(varId) > 0)
-            {
-                writeInd = this->varWriteInds[varId];
-            }
-
-            else
-            {
-                std::pair<int, size_t> insertable(varId, 0);
-                this->varWriteInds.insert(insertable);
-                writeInd = 0;
-            }
-
-            // Then write
-            // Subtract sizes from memory count
-            this->buf.subCount(sizeof(m)); // account for pointer
-            this->buf.subCount(m->count()); // account for pointee
-
-            // todo: check return value
-            m->commit(ncvd, writeInd);
-
-            // increment index
-            this->varWriteInds[varId]++;
-
-            m = this->wl.pop();
-        }
-
-        while(!transactionQueue.empty())
-        {
-            std::shared_ptr<OGR_SGFS_Transaction> t = this->transactionQueue.front();
-
             int varId = t->getVarId();
             size_t writeInd;
 
@@ -606,13 +572,33 @@ namespace nccfdriver
             this->buf.subCount(sizeof(t)); // account for pointer
             this->buf.subCount(t->count()); // account for pointee
 
-            // todo: check return value
             t->commit(ncvd, writeInd);
 
             // increment index
             this->varWriteInds[varId]++;
+            t = this->pop();
+        }
+    }
 
+    MTPtr OGR_NCScribe::pop()
+    {
+        // Buffered changes are the earliest, so commit those first
+        MTPtr m = this->wl.pop();
+        if(m.get() != nullptr)
+        {
+            return m;
+        }
+
+        else if(!transactionQueue.empty())
+        {
+            std::shared_ptr<OGR_SGFS_Transaction> t = this->transactionQueue.front();
+            MTPtr ret = this->transactionQueue.front();
             this->transactionQueue.pop();
+            return ret;
+        }
+        else
+        {
+            return MTPtr();
         }
     }
 
