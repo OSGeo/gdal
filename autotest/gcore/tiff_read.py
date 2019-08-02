@@ -33,6 +33,8 @@ import shutil
 
 import pytest
 
+import webserver
+
 import gdaltest
 from osgeo import gdal, osr
 
