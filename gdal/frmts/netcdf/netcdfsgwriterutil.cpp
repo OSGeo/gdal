@@ -589,7 +589,7 @@ namespace nccfdriver
             // If variable length type, for now, continue using old committing scheme
             // Maybe some future work: optimize this in the similar manner to other types
             // However, CHAR and STRING have huge copying overhead and are more complicated to memory manage correctly
-            if(t->getType() == NC_CHAR || t->getType() == NC_STRING)
+            if(t->getType() == NC_CHAR || t->getType() == NC_STRING || singleDatumMode)
             {
                 t->commit(ncvd, writeInd);
             }

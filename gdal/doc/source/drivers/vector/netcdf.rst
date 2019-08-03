@@ -62,18 +62,9 @@ Suppose a layer in a CF-1.8 dataset has the name LAYER with a field with name FI
 -  *LAYER_interior_ring*: used to store interior ring information (only created if LAYER consists of at least one Polygon with interior rings)
 -  *LAYER_field_FIELD*: used to store field information for FIELD.
 
-Furthermore, these names are the only reserved names.
+These names are the only reserved names applying to CF-1.8 datasets.
 
 CF-1.6/WKT datasets are not limited to the aforementioned restrictions.
-
-Known Issues with CF-1.8 Datasets
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Some known issues exist with writing CF-1.8 datasets:
-
--  *Certain layers of empty polygons are not readable after being written*: This issue is currently being worked on.
--  *Compression seemingly doesn't work with NC4*: This issue is currently being worked on (https://github.com/osgeo/gdal/issues/1738).
-
-CF-1.8 datasets are still considered experimental. Use them at your own risk.
 
 Mapping of concepts
 -------------------
@@ -165,13 +156,22 @@ Strings
 Variable length strings are not natively supported in netCDF v3 format.
 To work around that, OGR uses bi-dimensional char variables, whose first
 dimension is the record dimension, and second dimension the maximum
-width of the string. By default, OGR implements a "auto-grow" mode in
+width of the string.
+
+By default, OGR implements a "auto-grow" mode in
 writing, where the maximum width of the variable used to store a OGR
-string field is extended when needed. Note that this leads to a full
-rewrite of already written records : this is transparent for the user,
-but can slow down the creation process in non-linear ways. A similar
+string field is extended when needed.
+
+For WKT datasets, this leads to a full
+rewrite of already written records; although this process is transparent for the user,
+it can slow down the creation process in non-linear ways. A similar
 mechanism is used to handle layers with geometry types other than point
 to store the ISO WKT representation of the geometries.
+
+For CF-1.8 datasets, growing the string width dimension is
+a relatively inexpensive process which does not involve recopying of records, but involves
+only a simple integer reassignment. Because of how inexpensive dimension growth is with CF-1.8 datasets,
+auto growth of the string width dimension is always on.
 
 When using a netCDF v4 output format (NC4), strings will be by default
 written as netCDF v4 variable length strings.
@@ -287,6 +287,12 @@ The following option will only have effect when simultaneously specifying GEOMET
 Layer creation options
 ----------------------
 
+The following option applies to both dataset types:
+
+-  **USE_STRING_IN_NC4**\ =YES/NO. Whether to use NetCDF string type for
+   strings in NC4 format. If NO, bidimensional char variable are used.
+   Default to YES when FORMAT=NC4.
+
 The following options require a dataset with GEOMETRY_ENCODING=WKT:
 
 -  **RECORD_DIM_NAME**\ =string. Name of the unlimited dimension that
@@ -294,9 +300,6 @@ The following options require a dataset with GEOMETRY_ENCODING=WKT:
 -  **STRING_DEFAULT_WIDTH**\ =int. Default width of strings (when using
    bi-dimensional char variables). Default is 10 in autogrow mode, 80
    otherwise.
--  **USE_STRING_IN_NC4**\ =YES/NO. Whether to use NetCDF string type for
-   strings in NC4 format. If NO, bidimensional char variable are used.
-   Default to YES when FORMAT=NC4.
 -  **WKT_DEFAULT_WIDTH**\ =int. Default width of WKT strings (when using
    bi-dimensional char variables). Default is 1000 in autogrow mode,
    10000 otherwise.
@@ -330,9 +333,19 @@ The following option requires a dataset with GEOMETRY_ENCODING=CF_1.8:
    By default, this value is set at 20% of usable physical memory (usable meaning
    total physical RAM considering limitations of virtual address space size).
    Buffer contents are committed between translating features, but not *during*
-   translating a feature, so this limit does not apply to a single feature. Minimum
+   translating a feature, so this limit does not apply to a single feature. The minimum
    acceptable size is 4096. If a value lower than this is specified the default will
    be used.
+-  **GROUPLESS_WRITE_BACK**\ =YES/NO. In order to reduce time used to write data to the target
+   netCDF file, data is often grouped together in arrays and written all at once.
+   Each of these arrays is associated with a variable in the target dataset. 
+   Arrays are destroyed as soon as the associated data is written to the netCDF file
+   which in turn occurs as soon as a complete data array for a variable is assembled in memory.
+   For machines with small memory sizes, this optimization may cause issues
+   when writing large datasets with large layers. Turning this option on by specifying "YES" disables array writing
+   and causes data to be written one datum at a time. It is strongly recommended to keep this option off
+   unless out of memory errors or performance issues occur. In the general case,
+   this technique greatly improves translation efficiency. The default value is NO.
 
 XML configuration file
 ----------------------

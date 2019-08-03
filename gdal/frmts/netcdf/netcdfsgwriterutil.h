@@ -337,6 +337,7 @@ namespace nccfdriver
         int recordDimID = INVALID_DIM_ID;
         WBuffer buf;
         WTransactionLog wl;
+        bool singleDatumMode = false;
 
         std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
         std::map<int, size_t> varWriteInds;
@@ -380,6 +381,13 @@ namespace nccfdriver
                ncvd(ncd),
                wl(name)
            {}
+
+           /* setSingleDatumMode(...)
+            * Enables or disables single datum mode
+            * DO NOT use this when a commit is taking place, otherwise 
+            * corruption may occur...
+            */
+           void setSingleDatumMode(bool sdm) { this->singleDatumMode = sdm; }
 
     };
 

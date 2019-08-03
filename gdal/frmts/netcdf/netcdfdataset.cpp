@@ -9096,6 +9096,7 @@ void GDALRegister_netCDF()
 "       <Value>PROFILE</Value>"
 "   </Option>"
 "   <Option name='BUFFER_SIZE' type='int' default='' description='Specifies the soft limit of buffer translation in bytes. Minimum size is 4096. Does not apply to datasets with CF version less than 1.8.'/>"
+"   <Option name='GROUPLESS_WRITE_BACK' type='boolean' default='NO' description='Enables or disables array building write back for CF-1.8.'/>"
 "   <Option name='PROFILE_DIM_NAME' type='string' description='Name of the profile dimension and variable' default='profile'/>"
 "   <Option name='PROFILE_DIM_INIT_SIZE' type='string' description='Initial size of profile dimension (default 100), or UNLIMITED for NC4 files'/>"
 "   <Option name='PROFILE_VARIABLES' type='string' description='Comma separated list of field names that must be indexed by the profile dimension'/>"

@@ -4786,6 +4786,29 @@ def test_empty_multipolygon_read_write():
     assert(second.GetFieldAsString("NAMES") == "Everywhere")
     assert(second.GetGeometryRef().IsEmpty())
 
+def test_states_full_layer_buffer_restrict_correctness_single_datum():
+    # Single datum regression test
+
+    src = gdal.OpenEx("data/netcdf-sg/write-tests/cf1.8_states.json")
+    assert(src is not None)
+    assert(src.GetLayerCount() == 1)
+
+    gdal.VectorTranslate("tmp/states_4K_restrict_sd.nc", src, format="netCDF", layerCreationOptions = ['BUFFER_SIZE=4096', "GROUPLESS_WRITE_BACK=YES"])
+    fk_ds = ogr.Open("tmp/states_4K_restrict_sd.nc")
+    db_ds = ogr.Open("tmp/states_4K_restrict.nc")
+
+    fk_ds_layer = fk_ds.GetLayerByName("geometry_container")
+    db_ds_layer = db_ds.GetLayerByName("geometry_container")
+    assert(fk_ds_layer is not None)
+    assert(db_ds_layer is not None)
+
+    for feat in range(49):
+        lft = fk_ds_layer.GetNextFeature()
+        dft = db_ds_layer.GetNextFeature()
+        lftgeo = lft.GetGeometryRef()
+        dftgeo = dft.GetGeometryRef()
+        assert(lftgeo.Equal(dftgeo))
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.

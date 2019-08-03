@@ -185,6 +185,15 @@ bool netCDFLayer::Create(char **papszOptions,
         newbufsize = strtoll(memorySizeLimitation, nullptr, 10);
     }
 
+    const char * singleDatumMode = CSLFetchNameValueDef(papszOptions, "GROUPLESS_WRITE_BACK", "NO");
+    std::string singleDatumMode_s = std::string(singleDatumMode);
+
+    if(singleDatumMode_s == "YES")
+    {
+        m_poDS->GeometryScribe.setSingleDatumMode(true);    
+        m_poDS->FieldScribe.setSingleDatumMode(true);    
+    }
+
     if(m_bLegacyCreateMode)
     {
         m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
