@@ -481,6 +481,16 @@ namespace nccfdriver
             int ncount_add = static_cast<int>(ft.getTotalNodeCount());
             ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(node_count_varID, ncount_add)));
             this->next_write_pos_node_count++;
+
+            // Special case: The "empty" MultiPolygon type
+            // MultiPolygon part_node_counts are counted in terms of "rings" not parts contrary to the name
+            // so an empty multipolygon with no rings will slip past the regular part_node_count placement
+            // In essence this is probably taken as "if there are no rings" then "there are also no points"
+            if(ft.getTotalPartCount() == 0 && this->writableType == MULTIPOLYGON &&
+               (ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON))
+            {
+                ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(pnc_varID, 0)));
+            }
         }
     }
 
