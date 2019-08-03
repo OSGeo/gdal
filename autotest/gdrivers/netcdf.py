@@ -3101,11 +3101,17 @@ def test_bad_cf1_8():
     bad_feature = ogr.Open("data/netcdf-sg/bad_feature_test.nc")
     missing_node_counts_test = ogr.Open("data/netcdf-sg/missing_node_counts_test.nc")
     uneq_x_y = ogr.Open("data/netcdf-sg/unequal_xy.nc")
+    corrupt_poly_1 = ogr.Open("data/netcdf-sg/corrupted_polygon_ncpncir.nc")
+    corrupt_poly_2 = ogr.Open("data/netcdf-sg/corrupted_polygon_pnc.nc")
+    corrupt_poly_3 = ogr.Open("data/netcdf-sg/corrupted_polygon_ir.nc")
 
     # error IS fatal
-    assert(bad_geometry == None)
-    assert(bad_feature == None)
-    assert(missing_node_counts_test == None)
+    assert(bad_geometry is None)
+    assert(bad_feature is None)
+    assert(missing_node_counts_test is None)
+    assert(corrupt_poly_1 is None)
+    assert(corrupt_poly_2 is None)
+    assert(corrupt_poly_3 is None)
 
     # this error is no longer fatal
     assert(uneq_x_y != None)

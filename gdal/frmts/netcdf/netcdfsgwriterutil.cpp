@@ -265,7 +265,7 @@ namespace nccfdriver
             pnc_dimID = ncdf.nc_def_vdim(pnc_name, 1);
             pnc_varID = ncdf.nc_def_vvar(pnc_name, NC_INT, 1, &pnc_dimID);
 
-            char ir_name[NC_MAX_CHAR + 1] = {0}; 
+            char ir_name[NC_MAX_CHAR + 1] = {0};
             err_code = nc_get_att_text(ncID, containerVar_realID, CF_SG_INTERIOR_RING, ir_name);
 
             // For interior ring too (for POLYGON and MULTIPOLYGON)
@@ -557,8 +557,8 @@ namespace nccfdriver
     {
         wl.startRead();
 
-		NCWMap writerMap;
-		std::vector<int> varV;
+        NCWMap writerMap;
+        std::vector<int> varV;
 
         MTPtr t;
         t = this->pop();
@@ -586,121 +586,121 @@ namespace nccfdriver
             this->buf.subCount(sizeof(t)); // account for pointer
             this->buf.subCount(t->count()); // account for pointee
 
-			// If variable length type, for now, continue using old committing scheme
-			// Maybe some future work: optimize this in the similar manner to other types
-			// However, CHAR and STRING have huge copying overhead and are more complicated to memory manage correctly
-			if(t->getType() == NC_CHAR || t->getType() == NC_STRING)
-			{
-				t->commit(ncvd, writeInd);
-			}
+            // If variable length type, for now, continue using old committing scheme
+            // Maybe some future work: optimize this in the similar manner to other types
+            // However, CHAR and STRING have huge copying overhead and are more complicated to memory manage correctly
+            if(t->getType() == NC_CHAR || t->getType() == NC_STRING)
+            {
+                t->commit(ncvd, writeInd);
+            }
 
-			// Other types: Use a more optimized approach
-			else
-			{
-				int wvid = t->getVarId();
-				size_t numEntries = this->varMaxInds.at(wvid);
-				nc_type ncw = t->getType();
-				size_t curWrInd = this->varWriteInds.at(wvid);
-				OGR_SGFS_Transaction& t_ref = *t;
+            // Other types: Use a more optimized approach
+            else
+            {
+                int wvid = t->getVarId();
+                size_t numEntries = this->varMaxInds.at(wvid);
+                nc_type ncw = t->getType();
+                size_t curWrInd = this->varWriteInds.at(wvid);
+                OGR_SGFS_Transaction& t_ref = *t;
 
-				// If entry doesn't exist in map, then add it
-				switch (ncw)
-				{
-					case NC_BYTE:
-					{
-						NCWMapAllocIfNeeded<signed char>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_Byte_Transaction& byte_trn = dynamic_cast<OGR_SGFS_NC_Byte_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<signed char>(wvid, writerMap, curWrInd, numEntries, byte_trn.getData(), this->ncvd);
-						break;
-					}
-					case NC_SHORT:
-					{
-						NCWMapAllocIfNeeded<short>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_Short_Transaction& short_trn = dynamic_cast<OGR_SGFS_NC_Short_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<short>(wvid, writerMap, curWrInd, numEntries, short_trn.getData(), this->ncvd);
-						break;
-					}
-					case NC_INT:
-					{
-						NCWMapAllocIfNeeded<int>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_Int_Transaction& int_trn = dynamic_cast<OGR_SGFS_NC_Int_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<int>(wvid, writerMap, curWrInd, numEntries, int_trn.getData(), this->ncvd);
-						break;
-					}
-					case NC_FLOAT:
-					{
-						NCWMapAllocIfNeeded<float>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_Float_Transaction& float_trn = dynamic_cast<OGR_SGFS_NC_Float_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<float>(wvid, writerMap, curWrInd, numEntries, float_trn.getData(), this->ncvd);
-						break;
-					}
-					case NC_DOUBLE:
-					{
-						NCWMapAllocIfNeeded<double>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_Double_Transaction& double_trn = dynamic_cast<OGR_SGFS_NC_Double_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<double>(wvid, writerMap, curWrInd, numEntries, double_trn.getData(), this->ncvd);
-						break;
-					}
+                // If entry doesn't exist in map, then add it
+                switch (ncw)
+                {
+                    case NC_BYTE:
+                    {
+                        NCWMapAllocIfNeeded<signed char>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_Byte_Transaction& byte_trn = dynamic_cast<OGR_SGFS_NC_Byte_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<signed char>(wvid, writerMap, curWrInd, numEntries, byte_trn.getData(), this->ncvd);
+                        break;
+                    }
+                    case NC_SHORT:
+                    {
+                        NCWMapAllocIfNeeded<short>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_Short_Transaction& short_trn = dynamic_cast<OGR_SGFS_NC_Short_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<short>(wvid, writerMap, curWrInd, numEntries, short_trn.getData(), this->ncvd);
+                        break;
+                    }
+                    case NC_INT:
+                    {
+                        NCWMapAllocIfNeeded<int>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_Int_Transaction& int_trn = dynamic_cast<OGR_SGFS_NC_Int_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<int>(wvid, writerMap, curWrInd, numEntries, int_trn.getData(), this->ncvd);
+                        break;
+                    }
+                    case NC_FLOAT:
+                    {
+                        NCWMapAllocIfNeeded<float>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_Float_Transaction& float_trn = dynamic_cast<OGR_SGFS_NC_Float_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<float>(wvid, writerMap, curWrInd, numEntries, float_trn.getData(), this->ncvd);
+                        break;
+                    }
+                    case NC_DOUBLE:
+                    {
+                        NCWMapAllocIfNeeded<double>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_Double_Transaction& double_trn = dynamic_cast<OGR_SGFS_NC_Double_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<double>(wvid, writerMap, curWrInd, numEntries, double_trn.getData(), this->ncvd);
+                        break;
+                    }
 #ifdef NETCDF_HAS_NC4
-					case NC_UINT:
-					{
-						NCWMapAllocIfNeeded<unsigned>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_UInt_Transaction& uint_trn = dynamic_cast<OGR_SGFS_NC_UInt_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<unsigned>(wvid, writerMap, curWrInd, numEntries, uint_trn.getData(), this->ncvd);
-						break;
-					}
-					case NC_UINT64:
-					{
-						NCWMapAllocIfNeeded<unsigned long long>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_UInt64_Transaction& uint64_trn = dynamic_cast<OGR_SGFS_NC_UInt64_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<unsigned long long>(wvid, writerMap, curWrInd, numEntries, uint64_trn.getData(), this->ncvd);
-						break;
-					}
-					case NC_INT64:
-					{
-						NCWMapAllocIfNeeded<long long>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_Int64_Transaction& int64_trn = dynamic_cast<OGR_SGFS_NC_Int64_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<long long>(wvid, writerMap, curWrInd, numEntries, int64_trn.getData(), this->ncvd);
-						break;
-					}
-					case NC_UBYTE:
-					{
-						NCWMapAllocIfNeeded<unsigned char>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_UByte_Transaction& ubyte_trn = dynamic_cast<OGR_SGFS_NC_UByte_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<unsigned char>(wvid, writerMap, curWrInd, numEntries, ubyte_trn.getData(), this->ncvd);
-						break;
-					}
-					case NC_USHORT:
-					{
-						NCWMapAllocIfNeeded<unsigned short>(wvid, writerMap, numEntries, varV);
-						OGR_SGFS_NC_UShort_Transaction& ushort_trn = dynamic_cast<OGR_SGFS_NC_UShort_Transaction&>(t_ref);
-						NCWMapWriteAndCommit<unsigned short>(wvid, writerMap, curWrInd, numEntries, ushort_trn.getData(), this->ncvd);
-						break;
-					}
+                    case NC_UINT:
+                    {
+                        NCWMapAllocIfNeeded<unsigned>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_UInt_Transaction& uint_trn = dynamic_cast<OGR_SGFS_NC_UInt_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<unsigned>(wvid, writerMap, curWrInd, numEntries, uint_trn.getData(), this->ncvd);
+                        break;
+                    }
+                    case NC_UINT64:
+                    {
+                        NCWMapAllocIfNeeded<unsigned long long>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_UInt64_Transaction& uint64_trn = dynamic_cast<OGR_SGFS_NC_UInt64_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<unsigned long long>(wvid, writerMap, curWrInd, numEntries, uint64_trn.getData(), this->ncvd);
+                        break;
+                    }
+                    case NC_INT64:
+                    {
+                        NCWMapAllocIfNeeded<long long>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_Int64_Transaction& int64_trn = dynamic_cast<OGR_SGFS_NC_Int64_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<long long>(wvid, writerMap, curWrInd, numEntries, int64_trn.getData(), this->ncvd);
+                        break;
+                    }
+                    case NC_UBYTE:
+                    {
+                        NCWMapAllocIfNeeded<unsigned char>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_UByte_Transaction& ubyte_trn = dynamic_cast<OGR_SGFS_NC_UByte_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<unsigned char>(wvid, writerMap, curWrInd, numEntries, ubyte_trn.getData(), this->ncvd);
+                        break;
+                    }
+                    case NC_USHORT:
+                    {
+                        NCWMapAllocIfNeeded<unsigned short>(wvid, writerMap, numEntries, varV);
+                        OGR_SGFS_NC_UShort_Transaction& ushort_trn = dynamic_cast<OGR_SGFS_NC_UShort_Transaction&>(t_ref);
+                        NCWMapWriteAndCommit<unsigned short>(wvid, writerMap, curWrInd, numEntries, ushort_trn.getData(), this->ncvd);
+                        break;
+                    }
 #endif
-					default:
-					{
-						break;
-					}
-				}
-			}
+                    default:
+                    {
+                        break;
+                    }
+                }
+            }
 
             // increment index
             this->varWriteInds[varId]++;
             t = this->pop();
         }
 
-		// Clean up afterwards, potential miswrites
-		for (size_t vcount = 0; vcount < varV.size(); vcount++)
-		{
-			int cleanid = varV[vcount];
+        // Clean up afterwards, potential miswrites
+        for (size_t vcount = 0; vcount < varV.size(); vcount++)
+        {
+            int cleanid = varV[vcount];
 
-			if (writerMap.count(cleanid) > 0)
-			{
-				CPLFree(writerMap.at(cleanid));
-				CPLError(CE_Failure, CPLE_FileIO, "Transaction corruption detected. The target variable will most likely be missing data.");
-			}
-		}
+            if (writerMap.count(cleanid) > 0)
+            {
+                CPLFree(writerMap.at(cleanid));
+                CPLError(CE_Failure, CPLE_FileIO, "Transaction corruption detected. The target variable will most likely be missing data.");
+            }
+        }
     }
 
     MTPtr OGR_NCScribe::pop()
@@ -756,7 +756,7 @@ namespace nccfdriver
         int vid = OGR_SGFS_Transaction::getVarId();
         int type = NC_CHAR;
         int8_t OP = 0;
-        size_t DATA_SIZE = char_rep.length(); 
+        size_t DATA_SIZE = char_rep.length();
 
         fwrite(&vid, sizeof(int), 1, f); // write varID data
         fwrite(&type, sizeof(int), 1, f); // write NC type
@@ -770,7 +770,7 @@ namespace nccfdriver
     {
         int vid = OGR_SGFS_Transaction::getVarId();
         int type = NC_STRING;
-        size_t DATA_SIZE = char_rep.length(); 
+        size_t DATA_SIZE = char_rep.length();
 
         fwrite(&vid, sizeof(int), 1, f); // write varID data
         fwrite(&type, sizeof(int), 1, f); // write NC type
@@ -784,7 +784,7 @@ namespace nccfdriver
         int vid = OGR_SGFS_Transaction::getVarId();
         int type = NC_CHAR;
         int8_t OP = 1;
-        size_t DATA_SIZE = char_rep.length(); 
+        size_t DATA_SIZE = char_rep.length();
 
         fwrite(&vid, sizeof(int), 1, f); // write varID data
         fwrite(&type, sizeof(int), 1, f); // write NC type
@@ -817,7 +817,7 @@ namespace nccfdriver
 
     void WTransactionLog::push(std::shared_ptr<OGR_SGFS_Transaction> t)
     {
-        t->appendToLog(this->log); 
+        t->appendToLog(this->log);
     }
 
     std::shared_ptr<OGR_SGFS_Transaction> WTransactionLog::pop()
@@ -827,7 +827,7 @@ namespace nccfdriver
 
          int varId;
          nc_type ntype;
-         size_t itemsread; 
+         size_t itemsread;
          itemsread = fread(&varId, sizeof(int), 1, log);
          itemsread &= fread(&ntype, sizeof(nc_type), 1, log);
 
@@ -864,7 +864,7 @@ namespace nccfdriver
              {
                  size_t readcheck; // 0 means at least one read 0 bytes
 
-                 // Check what type of OP is requested 
+                 // Check what type of OP is requested
                  int8_t op = 0;
                  readcheck = fread(&op, sizeof(int8_t), 1, log);
                  if(!readcheck) return MTPtr(); // read failure
@@ -898,7 +898,7 @@ namespace nccfdriver
                      }
 
                      return MTPtr(new OGR_SGFS_NC_CharA_Transaction(varId, data.get(), fullSizeCount));
-                 } 
+                 }
 
              }
 
@@ -929,8 +929,8 @@ namespace nccfdriver
 
              default:
                  // Unsupported type
-                 return MTPtr(); 
-         } 
+                 return MTPtr();
+         }
     }
 
     WTransactionLog::~WTransactionLog()

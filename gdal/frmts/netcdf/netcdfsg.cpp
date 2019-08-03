@@ -124,12 +124,19 @@ namespace nccfdriver
         int buf;
         size_t bound = 0;
         size_t total_node_count = 0; // used in error checks later
+        size_t total_part_node_count = 0;
         if(attrf(ncId, geoVarId, CF_SG_NODE_COUNT, nc_name_s) != "")
         {
             const char * nc_name = nc_name_s.c_str();
             nc_inq_varid(ncId, nc_name, &nc_vid);
             while(nc_get_var1_int(ncId, nc_vid, &bound, &buf) == NC_NOERR)
             {
+                if(buf < 0)
+                {
+                    throw SG_Exception_Value_Violation(static_cast<const char*>(container_name), CF_SG_NODE_COUNT,
+                                                       "negative");
+                }
+
                 this->node_counts.push_back(buf);
                 total_node_count += buf;
                 bound++;    
@@ -144,7 +151,14 @@ namespace nccfdriver
             nc_inq_varid(ncId, pnc_name, &pnc_vid);
             while(nc_get_var1_int(ncId, pnc_vid, &bound, &buf) == NC_NOERR)
             {
+                if(buf < 0)
+                {
+                    throw SG_Exception_Value_Violation(static_cast<const char*>(container_name), CF_SG_PART_NODE_COUNT,
+                                                       "negative");
+                }
+
                 this->pnode_counts.push_back(buf);
+                total_part_node_count += buf;
                 bound++;    
             }    
         }    
@@ -157,11 +171,17 @@ namespace nccfdriver
             while(nc_get_var1_int(ncId, ir_vid, &bound, &buf) == NC_NOERR)
             {
                 bool store = buf == 0 ? false : true;
+
+                if(buf != 0 && buf != 1)
+                {
+                    throw SG_Exception_Value_Required(static_cast<const char*>(container_name), CF_SG_INTERIOR_RING,
+                                                       "0 or 1");
+                }
+
                 this->int_rings.push_back(store);
                 bound++;
             }
         }
-        
 
 
         /* Enforcement of well formed CF files
@@ -173,6 +193,12 @@ namespace nccfdriver
         if(pnode_counts.size() > 0 && node_counts.size() == 0)
         {
             throw SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
+        }
+
+        // part node counts and node counts don't match up in count
+        if(pnc_vid != INVALID_VAR_ID && total_node_count != total_part_node_count)
+        {
+            throw SG_Exception_BadSum(static_cast<const char*>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_PART_NODE_COUNT); 
         }
 
         // interior rings only exist when part node counts exist

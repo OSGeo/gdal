@@ -79,7 +79,7 @@ namespace nccfdriver
     {
         unsigned long long used_mem = 0;
 
-        public: 
+        public:
             /* addCount(...)
              * Takes in a size, and directly adds that size to memory count
              */
@@ -152,7 +152,7 @@ namespace nccfdriver
             /* nc_type getType
              * Returns the type of transaction being saved
              */
-			virtual nc_type getType() = 0;
+            virtual nc_type getType() = 0;
 
             /* void setVarId(...);
              * Sets the var in which to commit the transaction to.
@@ -161,8 +161,8 @@ namespace nccfdriver
 
     };
 
-	typedef std::map<int, void*> NCWMap;
-	typedef std::pair<int, void*> NCWEntry; // NC Writer Entry
+    typedef std::map<int, void*> NCWMap;
+    typedef std::pair<int, void*> NCWEntry; // NC Writer Entry
     typedef std::shared_ptr<OGR_SGFS_Transaction> MTPtr; // a.k.a Managed Transaction Ptr
 
     template<class T_c_type, nc_type T_nc_type> void genericLogAppend(T_c_type r, int vId, FILE * f)
@@ -185,7 +185,7 @@ namespace nccfdriver
         return std::shared_ptr<OGR_SGFS_Transaction>(new T_c_type(varId, data));
     }
 
-    /* OGR_SGFS_NC_Char_Transaction 
+    /* OGR_SGFS_NC_Char_Transaction
      * Writes to an NC_CHAR variable
      */
     class OGR_SGFS_NC_Char_Transaction : public OGR_SGFS_Transaction
@@ -197,7 +197,7 @@ namespace nccfdriver
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(FILE* f) override;
             nc_type getType() override { return NC_CHAR; }
-            OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) : 
+            OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) :
                char_rep(pszVal)
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
@@ -218,10 +218,10 @@ namespace nccfdriver
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(FILE* f) override;
             nc_type getType() override { return NC_CHAR; }
-            OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) : 
+            OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) :
                char_rep(pszVal),
                counts{1, str_width}
-            { 
+            {
                 OGR_SGFS_Transaction::setVarId(i_varId);
             }
     };
@@ -242,16 +242,16 @@ namespace nccfdriver
                 genericLogAppend<VClass, ntype>(rep, OGR_SGFS_Transaction::getVarId(), f);
             }
 
-            OGR_SGFS_NC_Transaction_Generic(int i_varId, VClass in) : 
+            OGR_SGFS_NC_Transaction_Generic(int i_varId, VClass in) :
                rep(in)
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
             }
 
-			VClass getData()
-			{
-				return rep;
-			}
+            VClass getData()
+            {
+                return rep;
+            }
 
             nc_type getType() override { return ntype; }
     };
@@ -263,7 +263,7 @@ namespace nccfdriver
     typedef OGR_SGFS_NC_Transaction_Generic<double, NC_DOUBLE> OGR_SGFS_NC_Double_Transaction;
 
 #ifdef NETCDF_HAS_NC4
-	typedef OGR_SGFS_NC_Transaction_Generic<unsigned, NC_UINT> OGR_SGFS_NC_UInt_Transaction;
+    typedef OGR_SGFS_NC_Transaction_Generic<unsigned, NC_UINT> OGR_SGFS_NC_UInt_Transaction;
     typedef OGR_SGFS_NC_Transaction_Generic<unsigned long long, NC_UINT64> OGR_SGFS_NC_UInt64_Transaction;
     typedef OGR_SGFS_NC_Transaction_Generic<long long, NC_INT64> OGR_SGFS_NC_Int64_Transaction;
     typedef OGR_SGFS_NC_Transaction_Generic<unsigned char, NC_UBYTE> OGR_SGFS_NC_UByte_Transaction;
@@ -285,11 +285,11 @@ namespace nccfdriver
 
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
 
-			nc_type getType() override { return NC_STRING; }
+            nc_type getType() override { return NC_STRING; }
 
             void appendToLog(FILE * f) override;
 
-            OGR_SGFS_NC_String_Transaction(int i_varId, const char* pszVal) : 
+            OGR_SGFS_NC_String_Transaction(int i_varId, const char* pszVal) :
                 char_rep(pszVal)
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
@@ -308,13 +308,13 @@ namespace nccfdriver
         bool readMode;
         std::string wlogName; // name of the temporary file, should be unique
         FILE* log;
-        
+
 
         WTransactionLog(WTransactionLog&); // avoid possible undefined behavior
         WTransactionLog operator=(const WTransactionLog&);
 
         public:
-            bool logIsNull() { return log == nullptr; } 
+            bool logIsNull() { return log == nullptr; }
             void startLog(); // always call this first to open the file
             void startRead(); // then call this before reading it
             void push(std::shared_ptr<OGR_SGFS_Transaction>);
@@ -523,39 +523,39 @@ namespace nccfdriver
      */
     int write_Geometry_Container
         (int ncID, const std::string& name, geom_t geometry_type, const std::vector<std::string> & node_coordinate_names);
-	
-	template<class W_type> inline void NCWMapAllocIfNeeded(int varid, NCWMap& mapAdd, size_t numEntries, std::vector<int> & v)
-	{
-		if(mapAdd.count(varid) < 1)
-		{
-			mapAdd.insert(NCWEntry(varid,  CPLMalloc(sizeof(W_type) * numEntries)));
-			v.push_back(varid);
-		}
-	}
 
-	template<class W_type> inline void NCWMapWriteAndCommit(int varid, NCWMap& mapAdd, size_t currentEntry, size_t numEntries, W_type data, netCDFVID& vcdf)
-	{
-		W_type* ptr = static_cast<W_type*>(mapAdd.at(varid));
-		ptr[currentEntry] = data;
-		static const size_t BEGIN = 0;
+    template<class W_type> inline void NCWMapAllocIfNeeded(int varid, NCWMap& mapAdd, size_t numEntries, std::vector<int> & v)
+    {
+        if(mapAdd.count(varid) < 1)
+        {
+            mapAdd.insert(NCWEntry(varid,  CPLMalloc(sizeof(W_type) * numEntries)));
+            v.push_back(varid);
+        }
+    }
 
-		// If all items are ready, write the array, and free it, delete the pointer
-		if (currentEntry == (numEntries - 1))
-		{
-			try
-			{
-				// Write the whole array at once
-				vcdf.nc_put_vvara_generic<W_type>(varid, &BEGIN, &numEntries, ptr);
-			}
-			catch (SG_Exception_VWrite_Failure& e)
-			{
-				CPLError(CE_Warning, CPLE_FileIO, "%s", e.get_err_msg());
-			}
+    template<class W_type> inline void NCWMapWriteAndCommit(int varid, NCWMap& mapAdd, size_t currentEntry, size_t numEntries, W_type data, netCDFVID& vcdf)
+    {
+        W_type* ptr = static_cast<W_type*>(mapAdd.at(varid));
+        ptr[currentEntry] = data;
+        static const size_t BEGIN = 0;
 
-			CPLFree(mapAdd.at(varid));
-			mapAdd.erase(varid);
-		}
-	}
+        // If all items are ready, write the array, and free it, delete the pointer
+        if (currentEntry == (numEntries - 1))
+        {
+            try
+            {
+                // Write the whole array at once
+                vcdf.nc_put_vvara_generic<W_type>(varid, &BEGIN, &numEntries, ptr);
+            }
+            catch (SG_Exception_VWrite_Failure& e)
+            {
+                CPLError(CE_Warning, CPLE_FileIO, "%s", e.get_err_msg());
+            }
+
+            CPLFree(mapAdd.at(varid));
+            mapAdd.erase(varid);
+        }
+    }
 }
 
 #endif
