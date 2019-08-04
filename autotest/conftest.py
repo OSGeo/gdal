@@ -15,6 +15,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
 # put the autotest dir on the path too. This lets us import all test modules
 sys.path.insert(1, os.path.dirname(__file__))
 
+DO_RUN_ON_DEMAND = gdal.GetConfigOption('RUN_ON_DEMAND')
+
 
 # These files may be non-importable, and don't contain tests anyway.
 # So we skip searching them during test collection.
@@ -81,36 +83,83 @@ def _apply_config_options(request):
             yield
 
 
-def pytest_collection_modifyitems(config, items):
-    # skip tests with @pytest.mark.require_driver(name) when the driver isn't available
-    skip_driver_not_present = pytest.mark.skip("Driver not present")
-    # skip test with @pytest.mark.require_run_on_demand when RUN_ON_DEMAND is not set
-    skip_run_on_demand_not_set = pytest.mark.skip("RUN_ON_DEMAND not set")
+skip_driver_not_present = pytest.mark.skip("Driver not present")
+skip_run_on_demand_not_set = pytest.mark.skip("RUN_ON_DEMAND not set")
 
+
+_marker_behaviour = {}
+
+
+def marker_with_behaviour(func):
+    """
+    Register a function to add behaviour to a given marker.
+    The function is called during collection for each item iff
+    the item has a mark with the same name as the function (with leading 'marker_' removed)
+    """
+    name = func.__name__
+    assert name.startswith('marker_')
+    name = name[7:]
+    _marker_behaviour[name] = func
+    return func
+
+
+@marker_with_behaviour
+def marker_require_driver(mark, item):
+    """
+    skip tests with @pytest.mark.require_driver(name) when the driver isn't available
+    """
     import gdaltest
-    import ogrtest
+    drivers_checked = {}
+    for driver_name in mark.args:
+        if driver_name not in drivers_checked:
+            driver = gdal.GetDriverByName(driver_name)
+            if driver:
+                # Store the driver on gdaltest module so test functions can assume it's there.
+                setattr(gdaltest, '%s_drv' % driver_name.lower().replace(' ', '_'), driver)
+            drivers_checked[driver_name] = bool(driver)
+        if not drivers_checked[driver_name]:
+            item.add_marker(skip_driver_not_present)
 
+
+@marker_with_behaviour
+def marker_require_ogr_driver(mark, item):
+    """
+    skip tests with @pytest.mark.require_ogr_driver(name) when the driver isn't available
+    """
+    import ogrtest
+    drivers_checked = {}
+    for driver_name in mark.args:
+        if driver_name not in drivers_checked:
+            driver = ogr.GetDriverByName(driver_name)
+            if driver:
+                # Store the driver on gdaltest module so test functions can assume it's there.
+                setattr(ogrtest, '%s_drv' % driver_name.lower().replace(' ', '_'), driver)
+            drivers_checked[driver_name] = bool(driver)
+        if not drivers_checked[driver_name]:
+            item.add_marker(skip_driver_not_present)
+
+
+@marker_with_behaviour
+def marker_require_run_on_demand(mark, item):
+    """
+    skip test with @pytest.mark.require_run_on_demand when RUN_ON_DEMAND is not set
+    """
+    if DO_RUN_ON_DEMAND:
+        item.add_marker(skip_run_on_demand_not_set)
+
+
+@marker_with_behaviour
+def marker_config_options(mark, item):
+    """
+    Add the _apply_config_options fixture, which does all the actual work
+    """
+    item.fixturenames.append('_apply_config_options')
+
+
+def pytest_collection_modifyitems(config, items):
     for item in items:
-        for mark_name in ('require_driver', 'require_ogr_driver'):
-            drivers_checked = {}
-            for mark in item.iter_markers(mark_name):
-                driver_name = mark.args[0]
-                if driver_name not in drivers_checked:
-                    if mark_name == 'require_ogr_driver':
-                        # ogr and gdal drivers are a bit different.
-                        test_module = ogrtest
-                        driver = ogr.GetDriverByName(driver_name)
-                    else:
-                        test_module = gdaltest
-                        driver = gdal.GetDriverByName(driver_name)
-                    if driver:
-                        # Store the driver on gdaltest module so test functions can assume it's there.
-                        setattr(test_module, '%s_drv' % driver_name.lower().replace(' ', '_'), driver)
-                    drivers_checked[driver_name] = bool(driver)
-                if not drivers_checked[driver_name]:
-                    item.add_marker(skip_driver_not_present)
-        if not gdal.GetConfigOption('RUN_ON_DEMAND'):
-            for mark in item.iter_markers('require_run_on_demand'):
-                item.add_marker(skip_run_on_demand_not_set)
-        for mark in item.iter_markers('config_options'):
-            item.fixturenames.append('_apply_config_options')
+        for mark in item.iter_markers():
+            if mark.name in _marker_behaviour:
+                # Apply behaviour for our custom markers
+                # (e.g. skip things with require_driver if the driver isn't present)
+                _marker_behaviour[mark.name](mark, item)
