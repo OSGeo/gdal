@@ -1083,10 +1083,22 @@ def test_mem_md_array_as_classic_dataset():
     with gdaltest.error_handler():
         assert not ar.AsClassicDataset(0, 0)
 
-    ar = rg.CreateMDArray("1d", [ dim_y ],
+    ar = rg.CreateMDArray("1d", [ dim_x ],
                           gdal.ExtendedDataType.Create(gdal.GDT_Byte))
     with gdaltest.error_handler():
-        assert not ar.AsClassicDataset(0, 0)
+        assert not ar.AsClassicDataset(1, 0)
+    ds = ar.AsClassicDataset(0, 0)
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 1
+    assert ds.RasterCount == 1
+    assert not ds.GetSpatialRef()
+    data = struct.pack('B' * 3, 0, 1, 2)
+    assert ar.Write(data) == gdal.CE_None
+    band = ds.GetRasterBand(1)
+    assert len(band.ReadRaster()) == len(data)
+    assert band.ReadRaster() == data
+    assert band.WriteRaster(0, 0, 3, 1, data) == gdal.CE_None
+    assert band.ReadRaster() == data
 
     ar = rg.CreateMDArray("2d_string", [ dim_y, dim_x ],
                           gdal.ExtendedDataType.CreateString())
