@@ -2475,7 +2475,7 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
     }
 
     // First collect all dimension ids referenced by all datasets
-    std::set<int32> oSetDimId;
+    std::map<int32, int32> oMapDimIdToDimSize;
     std::set<std::string> oSetArrayNames;
     for(const auto& oIter: m_oMapNameToSDSIdx)
     {
@@ -2489,7 +2489,8 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
                 &nAttrs);
         for( int i = 0; i < iRank; i++ )
         {
-            oSetDimId.insert(SDgetdimid(iSDS, i));
+            const auto dimId = SDgetdimid(iSDS, i);
+            oMapDimIdToDimSize[dimId] = std::max(oMapDimIdToDimSize[dimId], aiDimSizes[i]);
         }
         oSetArrayNames.insert(oIter.first);
         SDendaccess(iSDS);
@@ -2497,14 +2498,14 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
 
     // Instanciate dimensions
     std::set<std::shared_ptr<HDF4SDSDimension>> oSetDimsWithVariable;
-    for(const auto& dimId: oSetDimId )
+    for(const auto& iter: oMapDimIdToDimSize )
     {
         std::string osName;
         osName.resize(VSNAMELENMAX);
-        int32 iSize = 0;
+        int32 iSize = 0; // can be 0 for unlimited dimension
         int32 iNumType = 0;
         int32 nAttrs = 0;
-        SDdiminfo(dimId, &osName[0], &iSize, &iNumType, &nAttrs);
+        SDdiminfo(iter.first, &osName[0], &iSize, &iNumType, &nAttrs);
         osName.resize(strlen(osName.c_str()));
 
         std::string osType;
@@ -2531,11 +2532,13 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
             }
         }
 
+        // Do not trust iSize which can be 0 for a unlimited dimension, but
+        // the size actually taken by the array(s)
         auto poDim(std::make_shared<HDF4SDSDimension>(GetFullName(),
                                                       osName,
                                                       osType,
                                                       osDirection,
-                                                      iSize));
+                                                      iter.second));
         if( bIsIndexedDim )
         {
             oSetDimsWithVariable.insert(poDim);

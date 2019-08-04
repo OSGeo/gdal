@@ -271,10 +271,82 @@ def test_hdf4multidim_gdal_sds_3d():
 
 
 ###############################################################################
-# Test reading a 'random' SDS product
+# Test reading a simple SDS product
 
 
 def test_hdf4multidim_sds():
+
+    # Generated with
+    # https://support.hdfgroup.org/ftp/HDF/HDF_Current/src/unpacked/mfhdf/examples/SD_create_sds.c
+    # + https://support.hdfgroup.org/ftp/HDF/HDF_Current/src/unpacked/mfhdf/examples/SD_set_get_dim_info.c
+    # + https://support.hdfgroup.org/ftp/HDF/HDF_Current/src/unpacked/mfhdf/examples/SD_set_attr.c
+    ds = gdal.OpenEx('data/SDS.hdf', gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg.GetGroupNames() == ['scientific_datasets']
+    subg = rg.OpenGroup('scientific_datasets')
+    assert subg
+    attrs = rg.GetAttributes()
+    assert len(attrs) == 1
+    assert attrs[0].GetName() == 'File_contents'
+    assert attrs[0].Read() == 'Storm_track_data'
+    assert not rg.OpenGroup('foo')
+    assert not rg.GetMDArrayNames()
+    assert not rg.OpenMDArray('foo')
+    assert not subg.GetGroupNames()
+    assert not subg.OpenGroup('foo')
+    assert subg.GetMDArrayNames() == ['SDStemplate', 'Y_Axis', 'X_Axis']
+    dims = subg.GetDimensions()
+    assert len(dims) == 2
+    array = subg.OpenMDArray('SDStemplate')
+    assert array
+    dims = array.GetDimensions()
+    assert len(dims) == 2
+    assert dims[0].GetFullName() == '/scientific_datasets/Y_Axis'
+    assert dims[0].GetIndexingVariable()
+    assert dims[1].GetFullName() == '/scientific_datasets/X_Axis'
+    assert dims[1].GetIndexingVariable()
+    attrs = array.GetAttributes()
+    assert len(attrs) == 1
+    assert attrs[0].GetName() == 'Valid_range'
+    attr = array.GetAttribute('Valid_range')
+    assert attr
+    assert attr.Read() == (2, 10)
+    assert array.GetUnit() == ''
+    assert not array.GetSpatialRef()
+
+
+###############################################################################
+# Test reading a SDS product with unlimited dimension
+
+
+def test_hdf4multidim_sds_unlimited_dim():
+
+    # Generated with
+    # hhttps://support.hdfgroup.org/ftp/HDF/HDF_Current/src/unpacked/mfhdf/examples/SD_unlimited_sds.c
+    ds = gdal.OpenEx('data/SDSUNLIMITED.hdf', gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg.GetGroupNames() == ['scientific_datasets']
+    subg = rg.OpenGroup('scientific_datasets')
+    assert subg
+    dims = subg.GetDimensions()
+    assert len(dims) == 2
+    assert dims[0].GetName() == 'fakeDim0'
+    assert dims[0].GetSize() == 11
+    array = subg.OpenMDArray('AppendableData')
+    dims = array.GetDimensions()
+    assert len(dims) == 2
+    assert dims[0].GetName() == 'fakeDim0'
+    assert dims[0].GetSize() == 11
+    assert len(array.Read()) == 11 * 10 * 4
+
+
+###############################################################################
+# Test reading a 'random' SDS product
+
+
+def test_hdf4multidim_sds_read_world():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/A2004259075000.L2_LAC_SST.hdf', 'A2004259075000.L2_LAC_SST.hdf'):
         pytest.skip()
@@ -311,7 +383,7 @@ def test_hdf4multidim_sds():
 # Test reading a SDS product with indexed dimensions
 
 
-def test_hdf4multidim_sds_with_indexing_variable():
+def test_hdf4multidim_sds_read_world_with_indexing_variable():
 
     if not gdaltest.download_file('https://download.osgeo.org/gdal/data/hdf4/REANALYSIS_1999217.hdf', 'REANALYSIS_1999217.hdf'):
         pytest.skip()
