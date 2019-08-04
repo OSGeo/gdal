@@ -73,7 +73,6 @@ static void* OGRExpatRealloc( void *ptr, size_t size )
     CPLError(CE_Failure, CPLE_OutOfMemory,
              "Expat tried to realloc %d bytes. File probably corrupted",
              static_cast<int>(size));
-    free(ptr);
     return nullptr;
 }
 
