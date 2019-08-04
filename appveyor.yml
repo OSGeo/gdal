@@ -7,10 +7,10 @@ environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     VS_VERSION: Visual Studio 15
-    platform: x86
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    VS_VERSION: Visual Studio 14
     platform: x64
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    VS_VERSION: Visual Studio 15
+    platform: x86
 
 shallow_clone: true
 
@@ -35,9 +35,9 @@ init:
       else
       {
         $env:PATH="c:\Python27-x64;c:\Python27-x64\Scripts;$env:PATH"
-        $env:VS_VER=2015
-        $env:SDK="release-1900-x64"
-        $env:MSVC_VER=1900
+        $env:VS_VER=2017
+        $env:SDK="release-1911-x64"
+        $env:MSVC_VER=1911
         $env:ARCHITECTURE="amd64"
         $env:WIN64_ARG="WIN64=YES"
         $env:VS_FULL="$env:VS_VERSION Win64"
