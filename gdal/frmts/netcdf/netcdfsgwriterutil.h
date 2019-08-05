@@ -305,9 +305,9 @@ namespace nccfdriver
      */
     class WTransactionLog
     {
-        bool readMode;
+        bool readMode = false;
         std::string wlogName; // name of the temporary file, should be unique
-        FILE* log;
+        FILE* log = nullptr;
 
 
         WTransactionLog(WTransactionLog&); // avoid possible undefined behavior
@@ -334,7 +334,6 @@ namespace nccfdriver
     class OGR_NCScribe
     {
         netCDFVID & ncvd;
-        int recordDimID = INVALID_DIM_ID;
         WBuffer buf;
         WTransactionLog wl;
         bool singleDatumMode = false;

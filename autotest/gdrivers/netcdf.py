@@ -4746,26 +4746,6 @@ def test_empty_multiline_read_write():
     assert(second.GetFieldAsString("NAMES") == "Everywhere")
     assert(second.GetGeometryRef().IsEmpty())
 
-def test_empty_multiline_read_write():
-    # Tests writing features to a layer of empty polygons
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/empty_mline_write_test.json", gdal.OF_VECTOR) 
-    assert(src is not None)
-    assert(src.GetLayerCount() == 1)
-
-    gdal.VectorTranslate("tmp/empty_mline.nc", src, format="netCDF");
-
-    nc_tsrc = ogr.Open("tmp/empty_mline.nc")
-    assert(nc_tsrc is not None)
-
-    nc_layer = nc_tsrc.GetLayerByName("places");
-    assert(nc_layer.GetFeatureCount() == 2)
-    first = nc_layer.GetNextFeature()
-    assert(first.GetFieldAsString("NAMES") == "Nowhere")
-    assert(first.GetGeometryRef().IsEmpty())
-    second = nc_layer.GetNextFeature()
-    assert(second.GetFieldAsString("NAMES") == "Everywhere")
-    assert(second.GetGeometryRef().IsEmpty())
-
 def test_empty_multipolygon_read_write():
     # Tests writing features to a layer of empty polygons
     src = gdal.OpenEx("data/netcdf-sg/write-tests/empty_multipolygon_write_test.json", gdal.OF_VECTOR) 

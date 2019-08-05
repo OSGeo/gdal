@@ -803,8 +803,7 @@ namespace nccfdriver
 
     // WTransactionLog
     WTransactionLog::WTransactionLog(std::shared_ptr<std::string> logName) :
-        wlogName(*logName),
-        log(nullptr)
+        wlogName(*logName)
     {
     }
 
