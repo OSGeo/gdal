@@ -178,7 +178,7 @@ namespace nccfdriver
     template<class T_c_type, class T_r_type> std::shared_ptr<OGR_SGFS_Transaction> genericLogDataRead(int varId, FILE* f)
     {
         T_r_type data;
-        if(!fread(&data, sizeof(data), 1, f))
+        if(!fread(&data, sizeof(T_r_type), 1, f))
         {
              return std::shared_ptr<OGR_SGFS_Transaction>(nullptr); // invalid read case
         }

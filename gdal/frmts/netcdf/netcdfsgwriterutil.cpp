@@ -742,6 +742,8 @@ namespace nccfdriver
             wl.push(transactionQueue.front());
             this->transactionQueue.pop();
         }
+
+		this->buf.reset();
     }
 
     // WBufferManager
@@ -764,12 +766,13 @@ namespace nccfdriver
         int type = NC_CHAR;
         int8_t OP = 0;
         size_t DATA_SIZE = char_rep.length();
-
+		
         fwrite(&vid, sizeof(int), 1, f); // write varID data
         fwrite(&type, sizeof(int), 1, f); // write NC type
         fwrite(&OP, sizeof(int8_t), 1, f); // write "OP" flag
         fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
         fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
+		
     }
 
 #ifdef NETCDF_HAS_NC4
@@ -798,7 +801,7 @@ namespace nccfdriver
         fwrite(&OP, sizeof(int8_t), 1, f); // write "OP" flag
         fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
         fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
-        fwrite((this->counts), sizeof(size_t), 1, f);
+        fwrite((this->counts + 1), sizeof(size_t), 1, f); // write writable strlength (might remove this later)
     }
 
     // WTransactionLog
@@ -838,7 +841,8 @@ namespace nccfdriver
          itemsread &= fread(&ntype, sizeof(nc_type), 1, log);
 
          // If one of the two reads failed, then return nullptr
-         if(!itemsread) return std::shared_ptr<OGR_SGFS_Transaction>(nullptr);
+         if(!itemsread)
+			 return std::shared_ptr<OGR_SGFS_Transaction>(nullptr);
 
          // If not, continue on and parse additional fields
          switch(ntype)
@@ -873,20 +877,23 @@ namespace nccfdriver
                  // Check what type of OP is requested
                  int8_t op = 0;
                  readcheck = fread(&op, sizeof(int8_t), 1, log);
-                 if(!readcheck) return MTPtr(); // read failure
-
+                 if(!readcheck)
+					 return MTPtr(); // read failure
+					 
                  size_t strsize;
 
                  // get how much data to read
                  readcheck = fread(&strsize, sizeof(size_t), 1, log);
-                 if(!readcheck) return MTPtr(); // read failure
+                 if(!readcheck)
+					 return MTPtr(); // read failure
 
                  std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
                  memset(data.get(), 0, strsize + 1);
 
                  // read that data and return it
                  readcheck = fread(data.get(), sizeof(char), strsize, log);
-                 if(!readcheck) return MTPtr(); // read failure
+                 if(!readcheck)
+					 return MTPtr(); // read failure
 
                  // case: its a standard CHAR op
                  if(!op)
@@ -918,7 +925,8 @@ namespace nccfdriver
                  // get how much data to read
                  readcheck = fread(&strsize, sizeof(size_t), 1, log);
 
-                 if(!readcheck) return MTPtr(); // read failure
+                 if(!readcheck)
+					 return MTPtr(); // read failure
 
                  std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
                  memset(data.get(), 0, strsize + 1);

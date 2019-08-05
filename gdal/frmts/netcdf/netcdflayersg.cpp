@@ -372,6 +372,6 @@ std::shared_ptr<std::string> netCDFDataset::generateLogName()
         logCount = rand();
     }
 
-    lognumc = CPLSPrintf("%d", logCount++);
+    lognumc = CPLSPrintf("%d", logCount);
     return std::shared_ptr<std::string>(new std::string(CPLGenerateTempFilename(lognumc))); 
 }
