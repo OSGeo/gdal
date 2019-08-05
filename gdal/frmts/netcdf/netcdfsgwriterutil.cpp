@@ -760,48 +760,48 @@ namespace nccfdriver
     }
 
     // Transactions
-    void OGR_SGFS_NC_Char_Transaction::appendToLog(FILE * f)
+    void OGR_SGFS_NC_Char_Transaction::appendToLog(VSILFILE* f)
     {
         int vid = OGR_SGFS_Transaction::getVarId();
         int type = NC_CHAR;
         int8_t OP = 0;
         size_t DATA_SIZE = char_rep.length();
 		
-        fwrite(&vid, sizeof(int), 1, f); // write varID data
-        fwrite(&type, sizeof(int), 1, f); // write NC type
-        fwrite(&OP, sizeof(int8_t), 1, f); // write "OP" flag
-        fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
-        fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
+        VSIFWriteL(&vid, sizeof(int), 1, f); // write varID data
+        VSIFWriteL(&type, sizeof(int), 1, f); // write NC type
+        VSIFWriteL(&OP, sizeof(int8_t), 1, f); // write "OP" flag
+        VSIFWriteL(&DATA_SIZE, sizeof(size_t), 1, f); // write length
+        VSIFWriteL(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
 		
     }
 
 #ifdef NETCDF_HAS_NC4
-    void OGR_SGFS_NC_String_Transaction::appendToLog(FILE * f)
+    void OGR_SGFS_NC_String_Transaction::appendToLog(VSILFILE* f)
     {
         int vid = OGR_SGFS_Transaction::getVarId();
         int type = NC_STRING;
         size_t DATA_SIZE = char_rep.length();
 
-        fwrite(&vid, sizeof(int), 1, f); // write varID data
-        fwrite(&type, sizeof(int), 1, f); // write NC type
-        fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
-        fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
+        VSIFWriteL(&vid, sizeof(int), 1, f); // write varID data
+        VSIFWriteL(&type, sizeof(int), 1, f); // write NC type
+        VSIFWriteL(&DATA_SIZE, sizeof(size_t), 1, f); // write length
+        VSIFWriteL(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
     }
 #endif
 
-    void OGR_SGFS_NC_CharA_Transaction::appendToLog(FILE * f)
+    void OGR_SGFS_NC_CharA_Transaction::appendToLog(VSILFILE* f)
     {
         int vid = OGR_SGFS_Transaction::getVarId();
         int type = NC_CHAR;
         int8_t OP = 1;
         size_t DATA_SIZE = char_rep.length();
 
-        fwrite(&vid, sizeof(int), 1, f); // write varID data
-        fwrite(&type, sizeof(int), 1, f); // write NC type
-        fwrite(&OP, sizeof(int8_t), 1, f); // write "OP" flag
-        fwrite(&DATA_SIZE, sizeof(size_t), 1, f); // write length
-        fwrite(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
-        fwrite((this->counts + 1), sizeof(size_t), 1, f); // write writable strlength (might remove this later)
+        VSIFWriteL(&vid, sizeof(int), 1, f); // write varID data
+        VSIFWriteL(&type, sizeof(int), 1, f); // write NC type
+        VSIFWriteL(&OP, sizeof(int8_t), 1, f); // write "OP" flag
+        VSIFWriteL(&DATA_SIZE, sizeof(size_t), 1, f); // write length
+        VSIFWriteL(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
+        VSIFWriteL((this->counts + 1), sizeof(size_t), 1, f); // write writable strlength (might remove this later)
     }
 
     // WTransactionLog
@@ -812,7 +812,7 @@ namespace nccfdriver
 
     void WTransactionLog::startLog()
     {
-        log = fopen(wlogName.c_str(), "w");
+        log = VSIFOpenL(wlogName.c_str(), "w");
     }
 
     void WTransactionLog::startRead()
@@ -820,8 +820,8 @@ namespace nccfdriver
         if(log == nullptr)
             return;
 
-        fclose(this->log);
-        this->log = fopen(wlogName.c_str(), "r");
+        VSIFCloseL(this->log);
+        this->log = VSIFOpenL(wlogName.c_str(), "r");
     }
 
     void WTransactionLog::push(std::shared_ptr<OGR_SGFS_Transaction> t)
@@ -837,8 +837,8 @@ namespace nccfdriver
          int varId;
          nc_type ntype;
          size_t itemsread;
-         itemsread = fread(&varId, sizeof(int), 1, log);
-         itemsread &= fread(&ntype, sizeof(nc_type), 1, log);
+         itemsread = VSIFReadL(&varId, sizeof(int), 1, log);
+         itemsread &= VSIFReadL(&ntype, sizeof(nc_type), 1, log);
 
          // If one of the two reads failed, then return nullptr
          if(!itemsread)
@@ -876,14 +876,14 @@ namespace nccfdriver
 
                  // Check what type of OP is requested
                  int8_t op = 0;
-                 readcheck = fread(&op, sizeof(int8_t), 1, log);
+                 readcheck = VSIFReadL(&op, sizeof(int8_t), 1, log);
                  if(!readcheck)
 					 return MTPtr(); // read failure
 					 
                  size_t strsize;
 
                  // get how much data to read
-                 readcheck = fread(&strsize, sizeof(size_t), 1, log);
+                 readcheck = VSIFReadL(&strsize, sizeof(size_t), 1, log);
                  if(!readcheck)
 					 return MTPtr(); // read failure
 
@@ -891,7 +891,7 @@ namespace nccfdriver
                  memset(data.get(), 0, strsize + 1);
 
                  // read that data and return it
-                 readcheck = fread(data.get(), sizeof(char), strsize, log);
+                 readcheck = VSIFReadL(data.get(), sizeof(char), strsize, log);
                  if(!readcheck)
 					 return MTPtr(); // read failure
 
@@ -905,7 +905,7 @@ namespace nccfdriver
                  else
                  {
                      size_t fullSizeCount;
-                     if(!fread(&fullSizeCount, sizeof(size_t), 1, log))
+                     if(!VSIFReadL(&fullSizeCount, sizeof(size_t), 1, log))
                      {
                          return MTPtr();
                      }
@@ -923,7 +923,7 @@ namespace nccfdriver
                  size_t strsize;
 
                  // get how much data to read
-                 readcheck = fread(&strsize, sizeof(size_t), 1, log);
+                 readcheck = VSIFReadL(&strsize, sizeof(size_t), 1, log);
 
                  if(!readcheck)
 					 return MTPtr(); // read failure
@@ -932,7 +932,7 @@ namespace nccfdriver
                  memset(data.get(), 0, strsize + 1);
 
                  // read that data and return it
-                 readcheck = fread(data.get(), sizeof(char), strsize, log);
+                 readcheck = VSIFReadL(data.get(), sizeof(char), strsize, log);
 
                  if(!readcheck)
                      return MTPtr(); // read failure
@@ -951,7 +951,7 @@ namespace nccfdriver
     {
         if(log != nullptr)
         {
-            fclose(log);
+            VSIFCloseL(log);
             VSIUnlink(this->wlogName.c_str());
         }
     }

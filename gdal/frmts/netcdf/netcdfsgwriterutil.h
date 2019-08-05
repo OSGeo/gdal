@@ -131,7 +131,7 @@ namespace nccfdriver
              * (nc_char && OP != 0 only) COUNT - sizeof(size_t) bytes the second dimension of the "count" arg
              * DATA - size depends on NC_TYPE
              */
-            virtual void appendToLog(FILE*) = 0;
+            virtual void appendToLog(VSILFILE*) = 0;
 
             /* ~OGR_SGFS_Transaction()
              * Empty. Simply here to stop the compiler from complaining...
@@ -165,20 +165,20 @@ namespace nccfdriver
     typedef std::pair<int, void*> NCWEntry; // NC Writer Entry
     typedef std::shared_ptr<OGR_SGFS_Transaction> MTPtr; // a.k.a Managed Transaction Ptr
 
-    template<class T_c_type, nc_type T_nc_type> void genericLogAppend(T_c_type r, int vId, FILE * f)
+    template<class T_c_type, nc_type T_nc_type> void genericLogAppend(T_c_type r, int vId, VSILFILE* f)
     {
         T_c_type rep = r;
         int varId = vId;
         int type = T_nc_type;
-        fwrite(&varId, sizeof(int), 1, f); // write varID data
-        fwrite(&type, sizeof(int), 1, f); // write NC type
-        fwrite(&rep, sizeof(T_c_type), 1, f); // write data
+        VSIFWriteL(&varId, sizeof(int), 1, f); // write varID data
+        VSIFWriteL(&type, sizeof(int), 1, f); // write NC type
+        VSIFWriteL(&rep, sizeof(T_c_type), 1, f); // write data
     }
 
-    template<class T_c_type, class T_r_type> std::shared_ptr<OGR_SGFS_Transaction> genericLogDataRead(int varId, FILE* f)
+    template<class T_c_type, class T_r_type> std::shared_ptr<OGR_SGFS_Transaction> genericLogDataRead(int varId, VSILFILE* f)
     {
         T_r_type data;
-        if(!fread(&data, sizeof(T_r_type), 1, f))
+        if(!VSIFReadL(&data, sizeof(T_r_type), 1, f))
         {
              return std::shared_ptr<OGR_SGFS_Transaction>(nullptr); // invalid read case
         }
@@ -195,7 +195,7 @@ namespace nccfdriver
         public:
             void commit(netCDFVID& n, size_t write_loc) override { n.nc_put_vvar1_text(OGR_SGFS_Transaction::getVarId(), &write_loc, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
-            void appendToLog(FILE* f) override;
+            void appendToLog(VSILFILE* f) override;
             nc_type getType() override { return NC_CHAR; }
             OGR_SGFS_NC_Char_Transaction(int i_varId, const char* pszVal) :
                char_rep(pszVal)
@@ -216,7 +216,7 @@ namespace nccfdriver
         public:
             void commit(netCDFVID& n, size_t write_loc) override { size_t ind[2] = {write_loc, 0}; n.nc_put_vvara_text(OGR_SGFS_Transaction::getVarId(), ind, counts, char_rep.c_str()); }
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
-            void appendToLog(FILE* f) override;
+            void appendToLog(VSILFILE* f) override;
             nc_type getType() override { return NC_CHAR; }
             OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) :
                char_rep(pszVal),
@@ -237,7 +237,7 @@ namespace nccfdriver
             }
 
             unsigned long long count() override { return sizeof(*this); }
-            void appendToLog(FILE* f) override
+            void appendToLog(VSILFILE* f) override
             {
                 genericLogAppend<VClass, ntype>(rep, OGR_SGFS_Transaction::getVarId(), f);
             }
@@ -287,7 +287,7 @@ namespace nccfdriver
 
             nc_type getType() override { return NC_STRING; }
 
-            void appendToLog(FILE * f) override;
+            void appendToLog(VSILFILE* f) override;
 
             OGR_SGFS_NC_String_Transaction(int i_varId, const char* pszVal) :
                 char_rep(pszVal)
@@ -307,7 +307,7 @@ namespace nccfdriver
     {
         bool readMode = false;
         std::string wlogName; // name of the temporary file, should be unique
-        FILE* log = nullptr;
+        VSILFILE* log = nullptr;
 
 
         WTransactionLog(WTransactionLog&); // avoid possible undefined behavior
