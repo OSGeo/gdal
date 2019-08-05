@@ -41,28 +41,23 @@ import pytest
 #
 
 
-def test_ogr_opaif_init():
+pytestmark = pytest.mark.require_ogr_driver('OAPIF')
 
-    gdaltest.opaif_drv = ogr.GetDriverByName('OAPIF')
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = \
+@pytest.fixture(autouse=True, scope='module')
+def ogr_opaif_init():
+    (webserver_process, gdaltest.webserver_port) = \
         webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         pytest.skip()
+    yield
+    webserver.server_stop(webserver_process, gdaltest.webserver_port)
 
     
 ###############################################################################
 
 
 def test_ogr_opaif_errors():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 404)
     with webserver.install_http_handler(handler):
@@ -127,12 +122,6 @@ def test_ogr_opaif_errors():
 
 
 def test_ogr_opaif_collections_paging():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 200,
                 {'Content-Type': 'application/json'},
@@ -152,12 +141,6 @@ def test_ogr_opaif_collections_paging():
 
 
 def test_ogr_opaif_empty_layer_and_user_query_parameters():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections?FOO=BAR', 200,
                 {'Content-Type': 'application/json'},
@@ -181,12 +164,6 @@ def test_ogr_opaif_empty_layer_and_user_query_parameters():
 
 
 def test_ogr_opaif_open_by_collection_and_legacy_wfs3_prefix():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections/foo', 200,
                 {'Content-Type': 'application/json'},
@@ -210,12 +187,6 @@ def test_ogr_opaif_open_by_collection_and_legacy_wfs3_prefix():
 
 
 def test_ogr_opaif_fc_links_next_geojson():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
                 '{ "collections" : [ { "name": "foo" }] }')
@@ -280,12 +251,6 @@ def test_ogr_opaif_fc_links_next_geojson():
 
 
 def test_ogr_opaif_id_is_integer():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
                 '{ "collections" : [ { "name": "foo" }] }')
@@ -342,12 +307,6 @@ def test_ogr_opaif_id_is_integer():
 
 
 def NO_LONGER_USED_test_ogr_opaif_fc_links_next_headers():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
                 '{ "collections" : [ { "name": "foo" }] }')
@@ -412,12 +371,6 @@ def NO_LONGER_USED_test_ogr_opaif_fc_links_next_headers():
 
 
 def test_ogr_opaif_spatial_filter():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     # Deprecated API
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
@@ -566,12 +519,6 @@ def test_ogr_opaif_spatial_filter():
 
 
 def test_ogr_opaif_get_feature_count():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
                 """{ "collections" : [ {
@@ -632,12 +579,6 @@ def test_ogr_opaif_get_feature_count():
 
 
 def test_ogr_opaif_get_feature_count_from_numberMatched():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
                 """{ "collections" : [ {
@@ -661,12 +602,6 @@ def test_ogr_opaif_get_feature_count_from_numberMatched():
 
 
 def test_ogr_opaif_attribute_filter():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
                 """{ "collections" : [ {
@@ -877,16 +812,3 @@ def test_ogr_opaif_attribute_filter():
     assert f is not None
 
 ###############################################################################
-
-
-def test_ogr_opaif_cleanup():
-
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port != 0:
-        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    
-
-

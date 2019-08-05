@@ -34,17 +34,14 @@ from osgeo import gdal
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.require_driver('PCRaster')
+
+
 ###############################################################################
 # Perform simple read test.
 
 
 def test_pcraster_1():
-
-    gdaltest.pcraster_drv = gdal.GetDriverByName('PCRaster')
-
-    if gdaltest.pcraster_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest('PCRaster', 'ldd.map', 1, 4528)
     return tst.testOpen()
 
@@ -53,10 +50,6 @@ def test_pcraster_1():
 
 
 def test_pcraster_2():
-
-    if gdaltest.pcraster_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/ldd.map')
 
     gt = ds.GetGeoTransform()
@@ -66,7 +59,3 @@ def test_pcraster_2():
 
     band1 = ds.GetRasterBand(1)
     assert band1.GetNoDataValue() == 255, 'PCRaster NODATA value wrong or missing.'
-
-
-
-

@@ -39,28 +39,33 @@ from osgeo import ogr
 from osgeo import osr
 import pytest
 
+
+@pytest.fixture(autouse=True, scope='module')
+def ogr_wasp_cleanup():
+    yield
+    wasp_drv = ogr.GetDriverByName('WAsP')
+    wasp_drv.DeleteDataSource('tmp.map')
+
+
 ###############################################################################
 # Create wasp datasource
 
 
-def test_ogr_wasp_create_ds():
-
+def _ogr_wasp_create_ds():
     wasp_drv = ogr.GetDriverByName('WAsP')
     wasp_drv.DeleteDataSource('tmp.map')
 
     gdaltest.wasp_ds = wasp_drv.CreateDataSource('tmp.map')
 
-    if gdaltest.wasp_ds is not None:
-        return
-    pytest.fail()
+    assert gdaltest.wasp_ds is not None
+
 
 ###############################################################################
 # Create elevation .map from linestrings z
 
 
 def test_ogr_wasp_elevation_from_linestring_z():
-
-    test_ogr_wasp_create_ds()
+    _ogr_wasp_create_ds()
 
     ref = osr.SpatialReference()
     ref.ImportFromProj4('+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356514.999978254 +pm=2.337229167 +units=m +no_defs')
@@ -102,13 +107,13 @@ def test_ogr_wasp_elevation_from_linestring_z():
 
     assert j == 10, ('nb of feature should be 10 and is %d' % j)
 
+
 ###############################################################################
 # Create elevation .map from linestrings z with simplification
 
 
 def test_ogr_wasp_elevation_from_linestring_z_toler():
-
-    test_ogr_wasp_create_ds()
+    _ogr_wasp_create_ds()
 
     ref = osr.SpatialReference()
     ref.ImportFromProj4('+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356514.999978254 +pm=2.337229167 +units=m +no_defs')
@@ -164,8 +169,7 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
 # Create elevation .map from linestrings field
 
 def test_ogr_wasp_elevation_from_linestring_field():
-
-    test_ogr_wasp_create_ds()
+    _ogr_wasp_create_ds()
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                          options=['WASP_FIELDS=elevation'],
@@ -203,14 +207,13 @@ def test_ogr_wasp_elevation_from_linestring_field():
             j += 1
         i += 1
 
-    
+
 ###############################################################################
 # Create roughness .map from linestrings fields
 
 
 def test_ogr_wasp_roughness_from_linestring_fields():
-
-    test_ogr_wasp_create_ds()
+    _ogr_wasp_create_ds()
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                          options=['WASP_FIELDS=z_left,z_right'],
@@ -260,8 +263,7 @@ def test_ogr_wasp_roughness_from_linestring_fields():
 
 
 def test_ogr_wasp_roughness_from_polygon_z():
-
-    test_ogr_wasp_create_ds()
+    _ogr_wasp_create_ds()
 
     if not ogrtest.have_geos():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -318,8 +320,7 @@ def test_ogr_wasp_roughness_from_polygon_z():
 
 
 def test_ogr_wasp_roughness_from_polygon_field():
-
-    test_ogr_wasp_create_ds()
+    _ogr_wasp_create_ds()
 
     if not ogrtest.have_geos():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -381,8 +382,7 @@ def test_ogr_wasp_roughness_from_polygon_field():
 
 
 def test_ogr_wasp_merge():
-
-    test_ogr_wasp_create_ds()
+    _ogr_wasp_create_ds()
 
     if not ogrtest.have_geos():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -456,14 +456,3 @@ def test_ogr_wasp_reading():
         i += 1
 
     assert i == 10
-###############################################################################
-# Cleanup
-
-
-def test_ogr_wasp_cleanup():
-
-    wasp_drv = ogr.GetDriverByName('WAsP')
-    wasp_drv.DeleteDataSource('tmp.map')
-
-
-

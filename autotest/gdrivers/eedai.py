@@ -41,17 +41,11 @@ import webserver
 import pytest
 
 
-###############################################################################
-# Find EEDAI driver
+pytestmark = pytest.mark.require_driver('EEDAI')
 
 
-def test_eedai_1():
-
-    gdaltest.eedai_drv = gdal.GetDriverByName('EEDAI')
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
+@pytest.fixture(scope='module')
+def eedai_init():
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     gdaltest.EEDA_BEARER = gdal.GetConfigOption('EEDA_BEARER')
@@ -61,15 +55,26 @@ def test_eedai_1():
     gdaltest.GOOGLE_APPLICATION_CREDENTIALS = gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS')
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
 
+    yield
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
+    gdal.SetConfigOption('EEDA_BEARER', gdaltest.EEDA_BEARER)
+    gdal.SetConfigOption('EEDA_URL', gdaltest.EEDA_URL)
+    gdal.SetConfigOption('EEDA_PRIVATE_KEY', gdaltest.EEDA_PRIVATE_KEY)
+    gdal.SetConfigOption('EEDA_CLIENT_EMAIL', gdaltest.EEDA_CLIENT_EMAIL)
+    gdal.SetConfigOption('GO2A_AUD', None)
+    gdal.SetConfigOption('GOA2_NOW', None)
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', gdaltest.GOOGLE_APPLICATION_CREDENTIALS)
+
+    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/image')
+    gdal.RmdirRecursive('/vsimem/ee/')
+
+
 ###############################################################################
 # Nominal case
 
 
-def test_eedai_2():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
+def test_eedai_2(eedai_init):
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'properties':
@@ -339,11 +344,7 @@ def test_eedai_2():
 # Test OAuth2 with ServiceAccount
 
 
-def test_eedai_3():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
+def test_eedai_3(eedai_init):
     gdal.SetConfigOption('EEDA_URL', '/vsimem/ee/')
     # Generated with 'openssl genrsa -out rsa-openssl.pem 1024' and
     # 'openssl pkcs8 -nocrypt -in rsa-openssl.pem -inform PEM -topk8 -outform PEM -out rsa-openssl.pkcs8.pem'
@@ -386,10 +387,7 @@ gwE6fxOLyJDxuWRf
 # Test OAuth2 with GOOGLE_APPLICATION_CREDENTIALS
 
 
-def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
+def test_eedai_GOOGLE_APPLICATION_CREDENTIALS(eedai_init):
 
     gdal.FileFromMemBuffer('/vsimem/my.json', """{
 "private_key":"-----BEGIN PRIVATE KEY-----
@@ -438,11 +436,7 @@ gwE6fxOLyJDxuWRf\n
 # Read credentials from simulated GCE instance
 
 
-def test_eedai_gce_credentials():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
+def test_eedai_gce_credentials(eedai_init):
     if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
@@ -504,11 +498,7 @@ def test_eedai_gce_credentials():
 # Request in PNG mode
 
 
-def test_eedai_4():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
+def test_eedai_4(eedai_init):
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'bands':
@@ -636,11 +626,7 @@ def test_eedai_4():
 # Request in AUTO GTIFF mode
 
 
-def test_eedai_geotiff():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
+def test_eedai_geotiff(eedai_init):
     gdal.FileFromMemBuffer('/vsimem/ee/projects/earthengine-public/assets/image', json.dumps({
         'type': 'IMAGE',
         'bands':
@@ -693,36 +679,12 @@ def test_eedai_geotiff():
 
     gdal.SetConfigOption('EEDA_BEARER', None)
 
-###############################################################################
-#
-
-
-def test_eedai_cleanup():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
-    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
-    gdal.SetConfigOption('EEDA_BEARER', gdaltest.EEDA_BEARER)
-    gdal.SetConfigOption('EEDA_URL', gdaltest.EEDA_URL)
-    gdal.SetConfigOption('EEDA_PRIVATE_KEY', gdaltest.EEDA_PRIVATE_KEY)
-    gdal.SetConfigOption('EEDA_CLIENT_EMAIL', gdaltest.EEDA_CLIENT_EMAIL)
-    gdal.SetConfigOption('GO2A_AUD', None)
-    gdal.SetConfigOption('GOA2_NOW', None)
-    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', gdaltest.GOOGLE_APPLICATION_CREDENTIALS)
-
-    gdal.Unlink('/vsimem/ee/projects/earthengine-public/assets/image')
-    gdal.RmdirRecursive('/vsimem/ee/')
 
 ###############################################################################
 #
 
 
 def test_eedai_real_service():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
     if gdal.GetConfigOption('GOOGLE_APPLICATION_CREDENTIALS') is None:
 
         if gdal.GetConfigOption('EEDA_PRIVATE_KEY_FILE') is None and gdal.GetConfigOption('EEDA_PRIVATE_KEY') is None:

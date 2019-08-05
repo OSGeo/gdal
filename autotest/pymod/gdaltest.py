@@ -1611,7 +1611,11 @@ def config_option(key, val):
 
 
 @contextlib.contextmanager
-def config_options(options):
+def config_options(_a_dict=None, **options):
+    # Handle either config_options({'A': 'b'}) or config_options(A='b')
+    if _a_dict is not None:
+        options.update(_a_dict)
+
     oldvals = {key: gdal.GetConfigOption(key) for key in options}
     for key in options:
         gdal.SetConfigOption(key, options[key])

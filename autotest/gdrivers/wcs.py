@@ -53,31 +53,42 @@ import gdaltest
 ###############################################################################
 # Verify we have the driver.
 
+pytestmark = pytest.mark.require_driver('WCS')
 
-def test_wcs_1():
 
+@pytest.fixture(autouse=True, scope='module')
+def wcs_init():
     # Disable wcs tests till we have a more reliable test server.
-    gdaltest.wcs_drv = gdal.GetDriverByName('WCS')
 
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WCS service is online.
     # Nothing genuine but helps to keep the buildbot waterfall green.
     srv = 'http://demo.opengeo.org/geoserver/wcs?'
     if gdaltest.gdalurlopen(srv) is None:
-        gdaltest.wcs_drv = None
+        pytest.skip()
 
     gdaltest.wcs_ds = None
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
-    
+
+    yield
+
+    gdaltest.wcs_ds = None
+
+    try:
+        os.remove('tmp/geoserver.wcs')
+    except OSError:
+        pass
+
+    try:
+        shutil.rmtree('wcs_cache')
+    except OSError:
+        pass
+
+
 ###############################################################################
 # Open the GeoServer WCS service.
 
 
 def wcs_2():
-
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
 
     # first, copy to tmp directory.
     open('tmp/geoserver.wcs', 'w').write(open('data/geoserver.wcs').read())
@@ -95,7 +106,7 @@ def wcs_2():
 
 def test_wcs_3():
 
-    if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
+    if gdaltest.wcs_ds is None:
         pytest.skip()
 
     assert gdaltest.wcs_ds.RasterXSize == 983 and gdaltest.wcs_ds.RasterYSize == 598 and gdaltest.wcs_ds.RasterCount == 3, \
@@ -120,7 +131,7 @@ def test_wcs_3():
 
 def test_wcs_4():
 
-    if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
+    if gdaltest.wcs_ds is None:
         pytest.skip()
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum()
@@ -131,9 +142,6 @@ def test_wcs_4():
 
 
 def wcs_5():
-
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
 
     fn = """<WCS_GDAL>
   <ServiceURL>http://demo.opengeo.org/geoserver/wcs?</ServiceURL>
@@ -155,9 +163,6 @@ def wcs_5():
 
 def old_wcs_2():
 
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
-
     # first, copy to tmp directory.
     open('tmp/srtmplus.wcs', 'w').write(open('data/srtmplus.wcs').read())
 
@@ -174,7 +179,7 @@ def old_wcs_2():
 
 def old_wcs_3():
 
-    if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
+    if gdaltest.wcs_ds is None:
         pytest.skip()
 
     assert gdaltest.wcs_ds.RasterXSize == 43200 and gdaltest.wcs_ds.RasterYSize == 21600 and gdaltest.wcs_ds.RasterCount == 1, \
@@ -198,7 +203,7 @@ def old_wcs_3():
 
 def old_wcs_4():
 
-    if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
+    if gdaltest.wcs_ds is None:
         pytest.skip()
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum(0, 0, 100, 100)
@@ -209,9 +214,6 @@ def old_wcs_4():
 
 
 def old_wcs_5():
-
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
 
     fn = '<WCS_GDAL><ServiceURL>http://geodata.telascience.org/cgi-bin/mapserv_dem?</ServiceURL><CoverageName>srtmplus_raw</CoverageName><Timeout>75</Timeout></WCS_GDAL>'
 
@@ -517,24 +519,3 @@ def test_wcs_6():
 # parsing Capabilities and DescribeCoverage: test data in metadata and service files?
 
 ###############################################################################
-
-
-def test_wcs_cleanup():
-
-    gdaltest.wcs_drv = None
-    gdaltest.wcs_ds = None
-
-    try:
-        os.remove('tmp/geoserver.wcs')
-    except OSError:
-        pass
-
-    try:
-        shutil.rmtree('wcs_cache')
-    except OSError:
-        pass
-
-    
-
-
-

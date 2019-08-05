@@ -40,12 +40,8 @@ import pytest
 # Test handling NaN with GDT_Float32 data
 
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_nan_1():
-
-    gdaltest.gtiff_drv = gdal.GetDriverByName('GTiff')
-    if gdaltest.gtiff_drv is None:
-        pytest.skip()
-
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
     shutil.copyfile('data/nan32.tif', 'tmp/nan32.tif')
@@ -61,11 +57,8 @@ def test_stats_nan_1():
 # Test handling NaN with GDT_Float64 data
 
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_nan_2():
-
-    if gdaltest.gtiff_drv is None:
-        pytest.skip()
-
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
     shutil.copyfile('data/nan64.tif', 'tmp/nan64.tif')
@@ -81,11 +74,8 @@ def test_stats_nan_2():
 # Test stats on signed byte (#3151)
 
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_signedbyte():
-
-    if gdaltest.gtiff_drv is None:
-        pytest.skip()
-
     stats = (-128.0, 127.0, -0.2, 80.64)
 
     shutil.copyfile('data/stats_signed_byte.img', 'tmp/stats_signed_byte.img')
@@ -102,6 +92,7 @@ def test_stats_signedbyte():
 # Test return of GetStatistics() when we don't have stats and don't
 # force their computation (#3572)
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_dont_force():
 
     gdal.Unlink('data/byte.tif.aux.xml')
@@ -114,6 +105,7 @@ def test_stats_dont_force():
 # Test statistics when stored nodata value doesn't accurately match the nodata
 # value used in the imagery (#3573)
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_approx_nodata():
 
     shutil.copyfile('data/minfloat.tif', 'tmp/minfloat.tif')
@@ -151,6 +143,7 @@ def test_stats_approx_nodata():
 ###############################################################################
 # Test read and copy of dataset with nan as nodata value (#3576)
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_nan_3():
 
     src_ds = gdal.Open('data/nan32_nodata.tif')
@@ -188,13 +181,14 @@ def test_stats_nan_4():
 
     assert cs == 874, 'did not get expected checksum'
 
-    assert gdaltest.isnan(nodata), ('expected nan, got %f' % nodata)
+    assert gdaltest.isnan(nodata)
 
 ###############################################################################
 # Test reading a VRT with a complex source that define 0 as band nodata
 # and complex source nodata (nan must be translated to 0 then) (#3576)
 
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_nan_5():
 
     ds = gdal.Open('data/nan32_nodata_nan_to_zero.vrt')
@@ -260,6 +254,7 @@ def stats_nodata_inf_progress_cbk(value, string, extra):
     extra[0] = value
 
 
+@pytest.mark.require_driver('HFA')
 def test_stats_nodata_inf():
 
     ds = gdal.GetDriverByName('HFA').Create('/vsimem/stats_nodata_inf.img', 3, 1, 1, gdal.GDT_Float32)
@@ -290,14 +285,17 @@ def stats_nodata_check(filename, expected_nodata):
     assert nodata == expected_nodata, 'did not get expected nodata value'
 
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_nodata_neginf_linux():
     return stats_nodata_check('data/stats_nodata_neginf.tif', gdaltest.neginf())
 
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_nodata_neginf_msvc():
     return stats_nodata_check('data/stats_nodata_neginf_msvc.tif', gdaltest.neginf())
 
 
+@pytest.mark.require_driver('GTiff')
 def test_stats_nodata_posinf_linux():
     return stats_nodata_check('data/stats_nodata_posinf.tif', gdaltest.posinf())
 

@@ -39,6 +39,8 @@ from osgeo import osr
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.require_driver('NetCDF')
+
 ###############################################################################
 # Netcdf CF compliance Functions
 ###############################################################################
@@ -53,10 +55,6 @@ def netcdf_cf_setup():
     gdaltest.netcdf_cf_method = None
     gdaltest.netcdf_cf_files = None
     gdaltest.netcdf_cf_check_error = ''
-
-    # if netcdf is not supported, skip detection
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
 
     # skip if on windows
     if os.name != 'posix':
@@ -552,9 +550,6 @@ def test_netcdf_cf_1(netcdf_setup):  # noqa
     # setup netcdf and netcdf_cf environment
     netcdf_cf_setup()
 
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
-
     # tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
     # result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
     result = netcdf_test_copy('data/trmm.nc', 1, 14, 'tmp/netcdf_cf_1.nc')
@@ -576,9 +571,6 @@ def test_netcdf_cf_1(netcdf_setup):  # noqa
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
 def test_netcdf_cf_2():
 
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
-
     result = netcdf_test_copy('data/trmm.nc', 1, 14, 'tmp/netcdf_cf_2.nc')
 
     result_cf = 'success'
@@ -594,9 +586,6 @@ def test_netcdf_cf_2():
 # test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
 # note: this test fails in trunk (before r23246)
 def test_netcdf_cf_3():
-
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
 
     result = 'success'
     result_cf = 'success'
@@ -622,9 +611,6 @@ def test_netcdf_cf_3():
 
 def test_netcdf_cf_4():
 
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
-
     result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif',
                                     netcdf_cfproj_int_fmt_maps,
                                     'data', 'tmp', 'translate_results.txt')
@@ -638,9 +624,6 @@ def test_netcdf_cf_4():
 
 
 def test_netcdf_cf_5():
-
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
 
     ifiles = ['NETCDF:data/orog_CRCM1.nc:orog', 'NETCDF:data/orog_CRCM2.nc:orog']
     for ifile in ifiles:
@@ -658,9 +641,6 @@ def test_netcdf_cf_5():
 # test CF support for dims and variables in different groups 
 
 def test_netcdf_cf_6():
-
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
 
     ifiles = ('data/cf_dimsindiff_4326.nc',
               'NETCDF:data/cf_nasa_4326.nc:/science/grids/data/temp',
@@ -680,9 +660,6 @@ def test_netcdf_cf_6():
 def test_netcdf_cf_7(netcdf_setup):  # noqa
     # setup netcdf and netcdf_cf environment
     netcdf_cf_setup()
-
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
 
     checks = (('data/cf_dimsindiff_4326.nc', 1, 2041),
               ('NETCDF:data/cf_nasa_4326.nc:/science/grids/data/temp', 1, 2041),

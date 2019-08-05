@@ -50,27 +50,16 @@ pytestmark = pytest.mark.require_ogr_driver('GeoJSON')
 
 def validate_layer(lyr, name, features, typ, fields, box):
 
-    if name is not None and name != lyr.GetName():
-        print('Wrong layer name')
-        return False
+    assert name is None or name == lyr.GetName(), 'Wrong layer name'
 
-    if features != lyr.GetFeatureCount():
-        print('Wrong number of features')
-        return False
+    assert features == lyr.GetFeatureCount()
 
     lyrDefn = lyr.GetLayerDefn()
-    if lyrDefn is None:
-        print('Layer definition is none')
-        return False
+    assert lyrDefn is not None
 
-    if typ != lyrDefn.GetGeomType():
-        print('Wrong geometry type')
-        print(lyrDefn.GetGeomType())
-        return False
+    assert typ == lyrDefn.GetGeomType(), lyrDefn.GetGeomType()
 
-    if fields != lyrDefn.GetFieldCount():
-        print('Wrong number of fields')
-        return False
+    assert fields == lyrDefn.GetFieldCount()
 
     extent = lyr.GetExtent()
 
@@ -79,12 +68,7 @@ def validate_layer(lyr, name, features, typ, fields, box):
     miny = abs(extent[2] - box[2])
     maxy = abs(extent[3] - box[3])
 
-    if max(minx, maxx, miny, maxy) > 0.0001:
-        print('Wrong spatial extent of layer')
-        print(extent)
-        return False
-
-    return True
+    assert max(minx, maxx, miny, maxy) <= 0.0001, extent
 
 
 def verify_geojson_copy(name, fids, names):
@@ -215,8 +199,7 @@ def test_ogr_geojson_2():
 
     extent = (100.0, 100.0, 0.0, 0.0)
 
-    rc = validate_layer(lyr, 'point', 1, ogr.wkbPoint, 0, extent)
-    assert rc
+    validate_layer(lyr, 'point', 1, ogr.wkbPoint, 0, extent)
 
     lyr = None
 
@@ -235,8 +218,7 @@ def test_ogr_geojson_3():
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'linestring', 1, ogr.wkbLineString, 0, extent)
-    assert rc
+    validate_layer(lyr, 'linestring', 1, ogr.wkbLineString, 0, extent)
 
     lyr = None
 
@@ -255,8 +237,7 @@ def test_ogr_geojson_4():
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'polygon', 1, ogr.wkbPolygon, 0, extent)
-    assert rc
+    validate_layer(lyr, 'polygon', 1, ogr.wkbPolygon, 0, extent)
 
     lyr = None
 
@@ -275,8 +256,7 @@ def test_ogr_geojson_5():
 
     extent = (100.0, 102.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'geometrycollection', 1, ogr.wkbGeometryCollection, 0, extent)
-    assert rc
+    validate_layer(lyr, 'geometrycollection', 1, ogr.wkbGeometryCollection, 0, extent)
 
     lyr = None
 
@@ -295,8 +275,7 @@ def test_ogr_geojson_6():
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'multipoint', 1, ogr.wkbMultiPoint, 0, extent)
-    assert rc
+    validate_layer(lyr, 'multipoint', 1, ogr.wkbMultiPoint, 0, extent)
 
     lyr = None
 
@@ -315,8 +294,7 @@ def test_ogr_geojson_7():
 
     extent = (100.0, 103.0, 0.0, 3.0)
 
-    rc = validate_layer(lyr, 'multilinestring', 1, ogr.wkbMultiLineString, 0, extent)
-    assert rc
+    validate_layer(lyr, 'multilinestring', 1, ogr.wkbMultiLineString, 0, extent)
 
     lyr = None
 
@@ -335,8 +313,7 @@ def test_ogr_geojson_8():
 
     extent = (100.0, 103.0, 0.0, 3.0)
 
-    rc = validate_layer(lyr, 'multipolygon', 1, ogr.wkbMultiPolygon, 0, extent)
-    assert rc
+    validate_layer(lyr, 'multipolygon', 1, ogr.wkbMultiPolygon, 0, extent)
 
     lyr = None
 
@@ -402,8 +379,7 @@ def test_ogr_geojson_11():
 
     extent = (100.0, 102.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'srs_name', 1, ogr.wkbGeometryCollection, 0, extent)
-    assert rc
+    validate_layer(lyr, 'srs_name', 1, ogr.wkbGeometryCollection, 0, extent)
 
     ref = lyr.GetSpatialRef()
     pcs = int(ref.GetAuthorityCode('PROJCS'))
@@ -522,8 +498,7 @@ def test_ogr_geojson_16():
 
     extent = (2, 2, 49, 49)
 
-    rc = validate_layer(lyr, 'esripoint', 1, ogr.wkbPoint, 4, extent)
-    assert rc
+    validate_layer(lyr, 'esripoint', 1, ogr.wkbPoint, 4, extent)
 
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode('GEOGCS'))
@@ -569,8 +544,7 @@ def test_ogr_geojson_17():
 
     extent = (2, 3, 49, 50)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbLineString, 0, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbLineString, 0, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 50)')
@@ -618,8 +592,7 @@ def test_ogr_geojson_18():
 
     extent = (-3, 3, 49, 50)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbPolygon, 0, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbPolygon, 0, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON (((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.1 49.9,2.9 49.9,2.9 49.1,2.1 49.1)),((-2 49,-2 50,-3 50,-3 49,-2 49)))')
@@ -655,8 +628,7 @@ def test_ogr_geojson_19():
 
     extent = (2, 3, 49, 50)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49,3 50)')
@@ -1048,8 +1020,7 @@ def test_ogr_geojson_28():
     # validate layer doesn't check z, but put it in
     extent = (2, 2, 49, 49, 1, 1)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbPoint, 4, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbPoint, 4, extent)
 
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode('GEOGCS'))
@@ -1096,8 +1067,7 @@ def test_ogr_geojson_29():
     # validate layer doesn't check z, but put it in
     extent = (2, 3, 49, 50, 1, 2)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbLineString, 0, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbLineString, 0, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('LINESTRING (2 49 1,3 50 2)')
@@ -1123,8 +1093,7 @@ def test_ogr_geojson_30():
     # validate layer doesn't check z, but put it in
     extent = (2, 3, 49, 50, 1, 2)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49 1,3 50 2)')
@@ -1150,8 +1119,7 @@ def test_ogr_geojson_31():
     # validate layer doesn't check z, but put it in
     extent = (2, 3, 49, 50, 1, 4)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbPolygon, 0, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbPolygon, 0, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('POLYGON ((2 49 1,2 50 2,3 50 3,3 49 4,2 49 1))')
@@ -1176,8 +1144,7 @@ def test_ogr_geojson_32():
 
     extent = (2, 3, 49, 50)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT M ((2 49 1),(3 50 2))')
@@ -1202,8 +1169,7 @@ def test_ogr_geojson_33():
 
     extent = (2, 3, 49, 50)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49,3 50)')
@@ -1228,8 +1194,7 @@ def test_ogr_geojson_34():
 
     extent = (2, 3, 49, 50)
 
-    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
-    assert rc
+    validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT ZM ((2 49 1 100),(3 50 2 100))')

@@ -35,31 +35,41 @@ import struct
 
 
 from osgeo import gdal
-
-import gdaltest
 import pytest
 
-###############################################################################
-# Find PLMosaic driver
+
+pytestmark = pytest.mark.require_driver('PLMosaic')
 
 
-def test_plmosaic_1():
+@pytest.fixture(autouse=True, scope='module')
+def plmosaic_init():
+    yield
 
-    gdaltest.plmosaic_drv = gdal.GetDriverByName('PLMosaic')
+    gdal.Unlink('/vsimem/root_no_mosaics')
+    gdal.Unlink('/vsimem/root')
+    gdal.Unlink('/vsimem/root/?page=2')
+    gdal.Unlink('/vsimem/root/?name__is=my_mosaic')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/0-2047/full')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/0-2047/items')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/455-1272/full')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/455-1272/items')
+    gdal.Unlink('/vsimem/root/?name__is=mosaic_uint16')
+    gdal.Unlink('/vsimem/root/?name__is=mosaic_without_tiles')
 
-    if gdaltest.plmosaic_drv is not None:
-        return
-    pytest.skip()
+    if gdal.ReadDir('/vsimem/root') is not None:
+        print(gdal.ReadDir('/vsimem/root'))
+
+    try:
+        shutil.rmtree('tmp/plmosaic_cache')
+    except OSError:
+        pass
+
 
 ###############################################################################
 # Error: no API_KEY
 
 
 def test_plmosaic_2():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER)
@@ -72,10 +82,6 @@ def test_plmosaic_2():
 
 
 def test_plmosaic_3():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/does_not_exist/')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo'])
@@ -88,10 +94,6 @@ def test_plmosaic_3():
 
 
 def test_plmosaic_4():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root', """{""")
 
     gdal.PushErrorHandler()
@@ -106,10 +108,6 @@ def test_plmosaic_4():
 
 
 def test_plmosaic_5():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root', """null""")
 
     gdal.PushErrorHandler()
@@ -124,10 +122,6 @@ def test_plmosaic_5():
 
 
 def test_plmosaic_6():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root', """{}""")
 
     gdal.PushErrorHandler()
@@ -142,10 +136,6 @@ def test_plmosaic_6():
 
 
 def test_plmosaic_7():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root', """{
     "mosaics": [],
 }""")
@@ -161,10 +151,6 @@ def test_plmosaic_7():
 
 
 def test_plmosaic_8():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root', """{
     "_links" : { "_next": "/vsimem/root/?page=2" },
     "mosaics": [
@@ -214,10 +200,6 @@ def test_plmosaic_8():
 
 
 def test_plmosaic_9():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.PushErrorHandler()
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=does_not_exist'])
@@ -230,10 +212,6 @@ def test_plmosaic_9():
 
 
 def test_plmosaic_9bis():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
@@ -247,10 +225,6 @@ def test_plmosaic_9bis():
 
 
 def test_plmosaic_9ter():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{}""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
@@ -264,10 +238,6 @@ def test_plmosaic_9ter():
 
 
 def test_plmosaic_10():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
 "mosaics": [{
     "id": "my_mosaic_id",
@@ -286,10 +256,6 @@ def test_plmosaic_10():
 
 
 def test_plmosaic_11():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
 "mosaics": [{
     "id": "my_mosaic_id",
@@ -314,10 +280,6 @@ def test_plmosaic_11():
 
 
 def test_plmosaic_12():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
 "mosaics": [{
     "id": "my_mosaic_id",
@@ -342,10 +304,6 @@ def test_plmosaic_12():
 
 
 def test_plmosaic_13():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
 "mosaics": [{
     "id": "my_mosaic_id",
@@ -370,10 +328,6 @@ def test_plmosaic_13():
 
 
 def test_plmosaic_14():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
 "mosaics": [{
     "id": "my_mosaic_id",
@@ -398,10 +352,6 @@ def test_plmosaic_14():
 
 
 def test_plmosaic_15():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
 "mosaics": [{
     "id": "my_mosaic_id",
@@ -435,10 +385,6 @@ def test_plmosaic_15():
 
 
 def test_plmosaic_16():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     try:
         shutil.rmtree('tmp/plmosaic_cache')
     except OSError:
@@ -497,10 +443,6 @@ def test_plmosaic_16():
 
 
 def test_plmosaic_17():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.SetConfigOption('PL_URL', None)
@@ -618,10 +560,6 @@ def test_plmosaic_17():
 
 
 def test_plmosaic_18():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     shutil.rmtree('tmp/plmosaic_cache')
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
@@ -659,10 +597,6 @@ def test_plmosaic_18():
 
 
 def test_plmosaic_19():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=/does_not_exist'])
     gdal.SetConfigOption('PL_URL', None)
@@ -682,10 +616,6 @@ def test_plmosaic_19():
 
 
 def test_plmosaic_20():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH='])
     gdal.SetConfigOption('PL_URL', None)
@@ -703,10 +633,6 @@ def test_plmosaic_20():
 
 
 def test_plmosaic_21():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options=['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=', 'USE_TILES=YES'])
     gdal.SetConfigOption('PL_URL', None)
@@ -787,10 +713,6 @@ def test_plmosaic_21():
 
 
 def test_plmosaic_with_bbox():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     try:
         shutil.rmtree('tmp/plmosaic_cache')
     except OSError:
@@ -870,35 +792,5 @@ def test_plmosaic_with_bbox():
   </Scenes>
 </LocationInfo>
 """
-
-###############################################################################
-#
-
-
-def test_plmosaic_cleanup():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
-    gdal.Unlink('/vsimem/root_no_mosaics')
-    gdal.Unlink('/vsimem/root')
-    gdal.Unlink('/vsimem/root/?page=2')
-    gdal.Unlink('/vsimem/root/?name__is=my_mosaic')
-    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/0-2047/full')
-    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/0-2047/items')
-    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/455-1272/full')
-    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/455-1272/items')
-    gdal.Unlink('/vsimem/root/?name__is=mosaic_uint16')
-    gdal.Unlink('/vsimem/root/?name__is=mosaic_without_tiles')
-
-    if gdal.ReadDir('/vsimem/root') is not None:
-        print(gdal.ReadDir('/vsimem/root'))
-
-    try:
-        shutil.rmtree('tmp/plmosaic_cache')
-    except OSError:
-        pass
-
-    
 
 

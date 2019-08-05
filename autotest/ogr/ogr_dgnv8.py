@@ -37,16 +37,14 @@ import ogrtest
 from osgeo import gdal, ogr
 import pytest
 
+
+pytestmark = pytest.mark.require_ogr_driver('DGNv8')
+
 ###############################################################################
 # Verify we can open the test file.
 
 
 def test_ogr_dgnv8_1():
-
-    gdaltest.dgnv8_drv = ogr.GetDriverByName('DGNv8')
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/test_dgnv8.dgn')
     assert ds is not None, 'failed to open test file.'
 
@@ -55,10 +53,6 @@ def test_ogr_dgnv8_1():
 
 
 def test_ogr_dgnv8_2():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
     gdal.VectorTranslate('/vsimem/ogr_dgnv8_2.csv', 'data/test_dgnv8.dgn',
                          options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
 
@@ -66,21 +60,15 @@ def test_ogr_dgnv8_2():
     lyr_ref = ds_ref.GetLayer(0)
     ds = ogr.Open('data/test_dgnv8_ref.csv')
     lyr = ds.GetLayer(0)
-    ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields=['WKT'])
+    ogrtest.compare_layers(lyr, lyr_ref, excluded_fields=['WKT'])
 
     gdal.Unlink('/vsimem/ogr_dgnv8_2.csv')
-
-    return ret
 
 ###############################################################################
 # Run test_ogrsf
 
 
 def test_ogr_dgnv8_3():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -100,10 +88,6 @@ def test_ogr_dgnv8_3():
 
 
 def test_ogr_dgnv8_4():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
     tmp_dgn = 'tmp/ogr_dgnv8_4.dgn'
     gdal.VectorTranslate(tmp_dgn, 'data/test_dgnv8.dgn', format='DGNv8')
 
@@ -116,21 +100,15 @@ def test_ogr_dgnv8_4():
     lyr_ref = ds_ref.GetLayer(0)
     ds = ogr.Open('data/test_dgnv8_write_ref.csv')
     lyr = ds.GetLayer(0)
-    ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields=['WKT'])
+    ogrtest.compare_layers(lyr, lyr_ref, excluded_fields=['WKT'])
 
     gdal.Unlink(tmp_csv)
-
-    return ret
 
 ###############################################################################
 # Test creation options
 
 
 def test_ogr_dgnv8_5():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
     tmp_dgn = 'tmp/ogr_dgnv8_5.dgn'
     options = ['APPLICATION=application',
                'TITLE=title',
@@ -183,13 +161,3 @@ def test_ogr_dgnv8_5():
 
     gdal.Unlink(tmp_dgn)
     gdal.Unlink(tmp2_dgn)
-
-
-###############################################################################
-#  Cleanup
-
-def test_ogr_dgnv8_cleanup():
-
-    pass
-
-

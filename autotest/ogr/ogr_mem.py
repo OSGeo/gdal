@@ -37,6 +37,7 @@ from osgeo import ogr
 from osgeo import gdal
 import pytest
 
+
 ###############################################################################
 # Open Memory datasource.
 

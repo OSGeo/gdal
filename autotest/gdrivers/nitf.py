@@ -1141,6 +1141,7 @@ def test_nitf_43_jasper():
     return nitf_43('JPEG2000', ['IC=C8'])
 
 
+@pytest.mark.require_driver('ECW')
 def test_nitf_43_jp2ecw():
     import ecw
     if not ecw.has_write_support():

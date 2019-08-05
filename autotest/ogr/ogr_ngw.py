@@ -43,6 +43,10 @@ import pytest
 import random
 from datetime import datetime
 
+
+pytestmark = pytest.mark.require_driver('NGW')
+
+
 def check_availability(url):
     # Sandbox cleans at 1:05 on monday (UTC)
     now = datetime.utcnow()
@@ -71,38 +75,38 @@ def check_availability(url):
     except:
         return False
 
+
 def get_new_name():
     return 'gdaltest_group_' + str(int(time.time())) + '_' + str(random.randint(10, 99))
 
 ###############################################################################
 # Check driver existence.
 
-def test_ogr_ngw_1():
 
+@pytest.fixture(autouse=True, scope='module')
+def ngw_init():
     gdaltest.ngw_ds = None
-    gdaltest.ngw_drv = None
-
-    gdaltest.ngw_drv = gdal.GetDriverByName('NGW')
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
 
     gdaltest.ngw_test_server = 'https://sandbox.nextgis.com' # 'http://dev.nextgis.com/sandbox'
 
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
+    yield
+
+    if gdaltest.group_id is not None:
+        delete_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + gdaltest.group_id
+
+        gdaltest.ngw_layer = None
+        gdaltest.ngw_ds = None
+
+        assert gdaltest.ngw_drv.Delete(delete_url) == gdal.CE_None, \
+            'Failed to delete datasource ' + delete_url + '.'
+
+    gdaltest.ngw_ds = None
+
 
 ###############################################################################
 # Check create datasource.
 
 def test_ogr_ngw_2():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     create_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/0/' + get_new_name()
     gdal.PushErrorHandler()
     gdaltest.ngw_ds = gdaltest.ngw_drv.Create(create_url, 0, 0, 0, gdal.GDT_Unknown, \
@@ -122,13 +126,6 @@ def test_ogr_ngw_2():
 # Check rename datasource.
 
 def test_ogr_ngw_3():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     new_name = get_new_name() + '_2'
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     rename_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + ds_resource_id
@@ -140,13 +137,6 @@ def test_ogr_ngw_3():
 # Check datasource metadata.
 
 def test_ogr_ngw_4():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     gdaltest.ngw_ds.SetMetadataItem('test_int.d', '777', 'NGW')
     gdaltest.ngw_ds.SetMetadataItem('test_float.f', '777.555', 'NGW')
@@ -219,13 +209,6 @@ def add_metadata(lyr):
 # Check create vector layers.
 
 def test_ogr_ngw_5():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3857)
     lyr = gdaltest.ngw_ds.CreateLayer('test_pt_layer', srs=sr, geom_type=ogr.wkbMultiPoint, options=['OVERWRITE=YES', 'DESCRIPTION=Test point layer'])
@@ -315,13 +298,6 @@ def test_ogr_ngw_5():
 # Check open single vector layer.
 
 def test_ogr_ngw_6():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
     lyr_resource_id = lyr.GetMetadataItem('id', '')
     url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + lyr_resource_id
@@ -333,13 +309,6 @@ def test_ogr_ngw_6():
 # Check insert, update and delete features.
 
 def test_ogr_ngw_7():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -366,13 +335,6 @@ def test_ogr_ngw_7():
 # Check insert, update features in batch mode.
 
 def test_ogr_ngw_8():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     gdaltest.ngw_ds = None
 
@@ -416,13 +378,6 @@ def test_ogr_ngw_8():
 # Check paging while GetNextFeature.
 
 def test_ogr_ngw_9():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     gdaltest.ngw_ds = None
 
@@ -446,11 +401,7 @@ def test_ogr_ngw_9():
 # Check native data.
 
 def test_ogr_ngw_10():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
     if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
         pytest.skip()
 
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
@@ -481,11 +432,7 @@ def test_ogr_ngw_10():
 # Check ignored fields works ok
 
 def test_ogr_ngw_11():
-    if gdaltest.ngw_drv is None or gdaltest.ngw_ds is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
@@ -515,13 +462,6 @@ def test_ogr_ngw_11():
 # Check attribute filter.
 
 def test_ogr_ngw_12():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
     lyr.SetAttributeFilter("STRFIELD = 'русский'")
     fc = lyr.GetFeatureCount()
@@ -540,13 +480,6 @@ def test_ogr_ngw_12():
 # Check spatial filter.
 
 def test_ogr_ngw_13():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     lyr = gdaltest.ngw_ds.GetLayerByName('test_pt_layer')
 
     # Reset any attribute filters
@@ -561,13 +494,6 @@ def test_ogr_ngw_13():
 # Check ExecuteSQL.
 
 def test_ogr_ngw_14():
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
-        pytest.skip()
-
     gdaltest.ngw_ds.ExecuteSQL('DELLAYER:test_ln_layer')
     lyr = gdaltest.ngw_ds.GetLayerByName('test_ln_layer')
     assert lyr is None, 'Expected fail to get layer test_ln_layer.'
@@ -612,11 +538,7 @@ def test_ogr_ngw_14():
 #  Run test_ogrsf
 
 def test_ogr_ngw_test_ogrsf():
-    if gdaltest.ngw_drv is None or gdal.GetConfigOption('SKIP_SLOW') is not None:
-        pytest.skip()
-
-    if check_availability(gdaltest.ngw_test_server) == False:
-        gdaltest.ngw_drv = None
+    if gdal.GetConfigOption('SKIP_SLOW') is not None:
         pytest.skip()
 
     if gdaltest.skip_on_travis():
@@ -642,22 +564,3 @@ def test_ogr_ngw_test_ogrsf():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' ' + url + ' -oo BATCH_SIZE=5 -oo PAGE_SIZE=100')
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
-###############################################################################
-# Cleanup
-
-def test_ogr_ngw_cleanup():
-
-    if gdaltest.ngw_drv is None:
-        pytest.skip()
-
-    if gdaltest.group_id is not None:
-        delete_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + gdaltest.group_id
-
-        gdaltest.ngw_layer = None
-        gdaltest.ngw_ds = None
-
-        assert gdaltest.ngw_drv.Delete(delete_url) == gdal.CE_None, \
-            'Failed to delete datasource ' + delete_url + '.'
-
-    gdaltest.ngw_ds = None

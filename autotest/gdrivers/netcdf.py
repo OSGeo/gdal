@@ -101,6 +101,7 @@ def netcdf_setup():
 
 @pytest.fixture(autouse=True, scope='module')
 def netcdf_teardown():
+    yield
     diff = len(gdaltest.get_opened_files()) - gdaltest.count_opened_files
     assert diff == 0, 'Leak of file handles: %d leaked' % diff
 
@@ -707,19 +708,9 @@ def test_netcdf_22():
 # check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
 
 
+@pytest.mark.require_driver('HDF4')
+@pytest.mark.require_driver('HDF4Image')
 def test_netcdf_23():
-
-    # don't skip if netcdf is not enabled in GDAL
-    # if gdaltest.netcdf_drv is None:
-    #    return 'skip'
-    # if not gdaltest.netcdf_drv_has_hdf4:
-    #    return 'skip'
-
-    # skip test if Hdf4 is not enabled in GDAL
-    if gdal.GetDriverByName('HDF4') is None and \
-            gdal.GetDriverByName('HDF4Image') is None:
-        pytest.skip()
-
     ifile = 'data/hdifftst2.hdf'
 
     # test with Open()

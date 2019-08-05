@@ -40,25 +40,15 @@ import pytest
 ###############################################################################
 # Get the rasterlite driver
 
+pytestmark = pytest.mark.require_driver('RASTERLITE')
 
-def test_rasterlite_1():
 
-    gdaltest.rasterlite_drv = gdal.GetDriverByName('RASTERLITE')
-    gdaltest.epsilon_drv = gdal.GetDriverByName('EPSILON')
-
+@pytest.fixture(autouse=True, scope='module')
+def rasterlite_init():
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
     # w.r.t system/OS crashes, unless you know what you are doing.
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
-
-###############################################################################
-# Test opening a rasterlite DB without overviews
-
-
-def test_rasterlite_2():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
 
     # Test if SQLite3 supports rtrees
     try:
@@ -74,16 +64,63 @@ def test_rasterlite_2():
     except OSError:
         pass
     if gdal.GetLastErrorMsg().find('rtree') != -1:
-        gdaltest.rasterlite_drv = None
         pytest.skip('Please upgrade your sqlite3 library to be able to read Rasterlite DBs (needs rtree support)!')
 
     gdal.ErrorReset()
     ds = gdal.Open('data/rasterlite.sqlite')
     if ds is None:
         if gdal.GetLastErrorMsg().find('unsupported file format') != -1:
-            gdaltest.rasterlite_drv = None
             pytest.skip('Please upgrade your sqlite3 library to be able to read Rasterlite DBs!')
         pytest.fail()
+
+    yield
+
+    # Cleanup
+    try:
+        os.remove('tmp/spatialite_test.db')
+    except OSError:
+        pass
+
+    try:
+        os.remove('tmp/byte.sqlite')
+    except OSError:
+        pass
+
+    try:
+        os.remove('tmp/byte.tif.tst')
+    except OSError:
+        pass
+
+    try:
+        os.remove('tmp/rgbsmall.tif.tst')
+    except OSError:
+        pass
+
+
+@pytest.fixture(scope='module')
+def spatialite():
+    # Test first if spatialite is available
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ogr_ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test.db', options=['SPATIALITE=YES'])
+    if ogr_ds is not None:
+        sql_lyr = ogr_ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
+    else:
+        sql_lyr = None
+    gdal.PopErrorHandler()
+    if sql_lyr is None:
+        ogr_ds = None
+        pytest.skip()
+
+    ogr_ds.ReleaseResultSet(sql_lyr)
+    ogr_ds.Destroy()
+
+
+###############################################################################
+# Test opening a rasterlite DB without overviews
+
+
+def test_rasterlite_2():
+    ds = gdal.Open('data/rasterlite.sqlite')
 
     assert ds.RasterCount == 3, 'expected 3 bands'
 
@@ -119,10 +156,6 @@ def test_rasterlite_2():
 
 
 def test_rasterlite_3():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('RASTERLITE:data/rasterlite_pyramids.sqlite,table=test')
 
     assert ds.RasterCount == 3, 'expected 3 bands'
@@ -151,10 +184,6 @@ def test_rasterlite_3():
 
 
 def test_rasterlite_4():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,minx=0,miny=0,maxx=180,maxy=90')
 
     assert ds.RasterCount == 1, 'expected 1 band'
@@ -176,10 +205,6 @@ def test_rasterlite_4():
 
 
 def test_rasterlite_5():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,bands=3')
 
     assert ds.RasterCount == 3, 'expected 3 bands'
@@ -208,28 +233,7 @@ def test_rasterlite_5():
 # Test CreateCopy()
 
 
-def test_rasterlite_6():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    # Test first if spatialite is available
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ogr_ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test.db', options=['SPATIALITE=YES'])
-    if ogr_ds is not None:
-        sql_lyr = ogr_ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
-    else:
-        sql_lyr = None
-    gdal.PopErrorHandler()
-    if sql_lyr is None:
-        gdaltest.has_spatialite = False
-        ogr_ds = None
-        pytest.skip()
-
-    gdaltest.has_spatialite = True
-    ogr_ds.ReleaseResultSet(sql_lyr)
-    ogr_ds.Destroy()
-
+def test_rasterlite_6(spatialite):
     # Test now CreateCopy()
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('RASTERLITE').CreateCopy('RASTERLITE:tmp/byte.sqlite,table=byte', src_ds)
@@ -253,14 +257,7 @@ def test_rasterlite_6():
 # Test BuildOverviews()
 
 
-def test_rasterlite_7():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    if gdaltest.has_spatialite is False:
-        pytest.skip()
-
+def test_rasterlite_7(spatialite):
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
     # Resampling method is not taken into account
@@ -286,14 +283,7 @@ def test_rasterlite_7():
 # Test CleanOverviews()
 
 
-def test_rasterlite_8():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    if gdaltest.has_spatialite is False:
-        pytest.skip()
-
+def test_rasterlite_8(spatialite):
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
     ds.BuildOverviews(overviewlist=[])
@@ -304,17 +294,8 @@ def test_rasterlite_8():
 # Create a rasterlite dataset with EPSILON tiles
 
 
-def test_rasterlite_9():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    if gdaltest.has_spatialite is False:
-        pytest.skip()
-
-    if gdaltest.epsilon_drv is None:
-        pytest.skip()
-
+@pytest.mark.require_driver('EPSILON')
+def test_rasterlite_9(spatialite):
     tst = gdaltest.GDALTest('RASTERLITE', 'byte.tif', 1, 4866, options=['DRIVER=EPSILON'])
 
     return tst.testCreateCopy(check_gt=1, check_srs=1, check_minmax=0)
@@ -323,17 +304,8 @@ def test_rasterlite_9():
 # Create a rasterlite dataset with EPSILON tiles
 
 
-def test_rasterlite_10():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    if gdaltest.has_spatialite is False:
-        pytest.skip()
-
-    if gdaltest.epsilon_drv is None:
-        pytest.skip()
-
+@pytest.mark.require_driver('EPSILON')
+def test_rasterlite_10(spatialite):
     tst = gdaltest.GDALTest('RASTERLITE', 'rgbsmall.tif', 1, 23189, options=['DRIVER=EPSILON'])
 
     return tst.testCreateCopy(check_gt=1, check_srs=1, check_minmax=0)
@@ -342,14 +314,7 @@ def test_rasterlite_10():
 # Test BuildOverviews() with AVERAGE resampling
 
 
-def test_rasterlite_11():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    if gdaltest.has_spatialite is False:
-        pytest.skip()
-
+def test_rasterlite_11(spatialite):
     ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
     ds.BuildOverviews(overviewlist=[])
@@ -371,14 +336,7 @@ def test_rasterlite_11():
 # Test opening a .rasterlite file
 
 
-def test_rasterlite_12():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    if gdaltest.has_spatialite is False:
-        pytest.skip()
-
+def test_rasterlite_12(spatialite):
     ds = gdal.Open('data/byte.rasterlite')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
 
@@ -386,49 +344,9 @@ def test_rasterlite_12():
 # Test opening a .rasterlite.sql file
 
 
-def test_rasterlite_13():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    if gdaltest.has_spatialite is False:
-        pytest.skip()
-
+def test_rasterlite_13(spatialite):
     if gdaltest.rasterlite_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
         pytest.skip()
 
     ds = gdal.Open('data/byte.rasterlite.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
-
-###############################################################################
-# Cleanup
-
-
-def test_rasterlite_cleanup():
-
-    if gdaltest.rasterlite_drv is None:
-        pytest.skip()
-
-    try:
-        os.remove('tmp/spatialite_test.db')
-    except OSError:
-        pass
-
-    try:
-        os.remove('tmp/byte.sqlite')
-    except OSError:
-        pass
-
-    try:
-        os.remove('tmp/byte.tif.tst')
-    except OSError:
-        pass
-
-    try:
-        os.remove('tmp/rgbsmall.tif.tst')
-    except OSError:
-        pass
-
-    
-
-

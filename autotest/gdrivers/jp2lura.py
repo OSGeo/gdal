@@ -47,24 +47,26 @@ sys.path.append('../../gdal/swig/python/samples')
 # Verify we have the driver.
 
 
-def test_jp2lura_1():
+pytestmark = pytest.mark.require_driver('JP2Lura')
 
-    gdaltest.jp2lura_drv = gdal.GetDriverByName('JP2Lura')
-    if gdaltest.jp2lura_drv is None:
-        pytest.skip()
 
-    if gdaltest.jp2lura_drv is not None:
-        if gdal.GetConfigOption('LURA_LICENSE_NUM_1') is None or \
-           gdal.GetConfigOption('LURA_LICENSE_NUM_2') is None:
-            gdaltest.jp2lura_drv = None
-            pytest.skip('Driver JP2Lura is registered, but missing LURA_LICENSE_NUM_1 and LURA_LICENSE_NUM_2')
+@pytest.fixture(autouse=True, scope='module')
+def jp2lura_init():
+    if gdal.GetConfigOption('LURA_LICENSE_NUM_1') is None or \
+            gdal.GetConfigOption('LURA_LICENSE_NUM_2') is None:
+        pytest.skip('Driver JP2Lura is registered, but missing LURA_LICENSE_NUM_1 and LURA_LICENSE_NUM_2')
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2Lura')
 
-    ds = gdal.Open('data/byte.jp2')
-    if ds is None and gdal.GetLastErrorMsg().find('license') >= 0:
-        gdaltest.jp2lura_drv = None
-        pytest.skip('Driver JP2Lura is registered, but issue with license')
+    try:
+        ds = gdal.Open('data/byte.jp2')
+        if ds is None and gdal.GetLastErrorMsg().find('license') >= 0:
+            pytest.skip('Driver JP2Lura is registered, but issue with license')
+
+        yield
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
+
 
 ###############################################################################
 #
@@ -1792,9 +1794,3 @@ def test_jp2lura_54():
     ds = None
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_54.jp2')
-
-
-###############################################################################
-def test_jp2lura_cleanup():
-
-    gdaltest.reregister_all_jpeg2000_drivers()

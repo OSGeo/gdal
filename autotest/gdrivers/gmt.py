@@ -28,23 +28,19 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
 
 import gdaltest
 import pytest
+
+
+pytestmark = pytest.mark.require_driver('GMT')
+
 
 ###############################################################################
 # Perform simple read test.
 
 
 def test_gmt_1():
-
-    gdaltest.gmt_drv = gdal.GetDriverByName('GMT')
-
-    if gdaltest.gmt_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest('GMT', 'gmt_1.grd', 1, 34762)
 
     gt = (59.958333333333336, 0.083333333333333, 0.0,
@@ -57,15 +53,7 @@ def test_gmt_1():
 
 
 def test_gmt_2():
-
-    if gdaltest.gmt_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest('GMT', 'int16.tif', 1, 4672)
     return tst.testCreateCopy(check_gt=1)
 
 ###############################################################################
-
-
-
-

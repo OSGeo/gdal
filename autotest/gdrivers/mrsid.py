@@ -37,16 +37,15 @@ from osgeo import gdal
 import gdaltest
 import pytest
 
+
+pytestmark = pytest.mark.require_driver('MrSID')
+
+
 ###############################################################################
 # Read a simple byte file, checking projections and geotransform.
 
 
 def test_mrsid_1():
-
-    gdaltest.mrsid_drv = gdal.GetDriverByName('MrSID')
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest('MrSID', 'mercator.sid', 1, None)
 
     gt = (-15436.385771224039, 60.0, 0.0, 3321987.8617962394, 0.0, -60.0)
@@ -135,10 +134,6 @@ def test_mrsid_1():
 
 
 def test_mrsid_2():
-
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/mercator.sid')
 
     try:
@@ -167,10 +162,6 @@ def test_mrsid_2():
 
 
 def test_mrsid_3():
-
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/mercator.sid')
 
     band = ds.GetRasterBand(1)
@@ -194,10 +185,6 @@ def test_mrsid_3():
 
 
 def test_mrsid_4():
-
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     try:
         os.remove('data/mercator_new.sid.aux.xml')
     except OSError:
@@ -239,22 +226,22 @@ def test_mrsid_4():
 # Test JP2MrSID driver
 
 
-def test_mrsid_5():
+@pytest.fixture(scope='module')
+def jp2mrsid():
     gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
     if gdaltest.jp2mrsid_drv is None:
         pytest.skip()
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
+    yield
+    gdaltest.reregister_all_jpeg2000_drivers()
+
 
 ###############################################################################
 # Open byte.jp2
 
 
-def test_mrsid_6():
-
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
+def test_mrsid_6(jp2mrsid):
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
         DATUM["North_American_Datum_1927",
@@ -283,11 +270,7 @@ def test_mrsid_6():
 ###############################################################################
 # Open int16.jp2
 
-def test_mrsid_7():
-
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
+def test_mrsid_7(jp2mrsid):
     ds = gdal.Open('data/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
 
@@ -309,10 +292,6 @@ def test_mrsid_7():
 
 
 def test_mrsid_8():
-
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     new_gt = (10000, 50, 0, 20000, 0, -50)
     new_srs = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","27700"]]"""
 
@@ -346,10 +325,6 @@ def test_mrsid_8():
 
 
 def test_mrsid_9():
-
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     f = open('data/mercator.sid', 'rb')
     data = f.read()
     f.close()
@@ -368,11 +343,7 @@ def test_mrsid_9():
 # Test VSI*L IO with .jp2
 
 
-def test_mrsid_10():
-
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
+def test_mrsid_10(jp2mrsid):
     f = open('data/int16.jp2', 'rb')
     data = f.read()
     f.close()
@@ -391,11 +362,7 @@ def test_mrsid_10():
 # Check that we can use .j2w world files (#4651)
 
 
-def test_mrsid_11():
-
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
+def test_mrsid_11(jp2mrsid):
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
@@ -407,11 +374,7 @@ def test_mrsid_11():
 ###############################################################################
 
 
-def test_mrsid_online_1():
-
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
+def test_mrsid_online_1(jp2mrsid):
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
         pytest.skip()
 
@@ -427,11 +390,7 @@ def test_mrsid_online_1():
 ###############################################################################
 
 
-def test_mrsid_online_2():
-
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
+def test_mrsid_online_2(jp2mrsid):
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
         pytest.skip()
 
@@ -457,11 +416,7 @@ def test_mrsid_online_2():
 ###############################################################################
 
 
-def test_mrsid_online_3():
-
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
+def test_mrsid_online_3(jp2mrsid):
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.j2k', 'Bretagne1.j2k'):
         pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne1.bmp', 'Bretagne1.bmp'):
@@ -491,11 +446,7 @@ def test_mrsid_online_3():
 ###############################################################################
 
 
-def test_mrsid_online_4():
-
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
+def test_mrsid_online_4(jp2mrsid):
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.j2k', 'Bretagne2.j2k'):
         pytest.skip()
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
@@ -531,8 +482,3 @@ def test_mrsid_cleanup():
         os.remove('data/mercator_new.sid.aux.xml')
     except OSError:
         pass
-
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-
-

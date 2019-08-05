@@ -29,11 +29,29 @@
 ###############################################################################
 
 
-
 import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+
+import pytest
+
+
+pytestmark = pytest.mark.require_ogr_driver('GMT')
+
+
+@pytest.fixture(autouse=True, scope='module')
+def ogr_gmt_cleanup():
+    gdaltest.gmt_ds = None
+    gdaltest.gmt_lyr = None
+
+    yield
+
+    gdaltest.gmt_lyr = None
+    gdaltest.gmt_ds = None
+
+    gdaltest.clean_tmp()
+
 
 ###############################################################################
 # Open Memory datasource.
@@ -221,17 +239,3 @@ def test_ogr_gmt_coord_only():
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert not ogrtest.check_feature_geometry(f, 'POINT Z (1 2 3)'), f.GetGeometryRef().ExportToIsoWkt()
-
-###############################################################################
-#
-
-def test_ogr_gmt_cleanup():
-
-    if gdaltest.gmt_ds is not None:
-        gdaltest.gmt_lyr = None
-        gdaltest.gmt_ds = None
-
-    gdaltest.clean_tmp()
-
-
-

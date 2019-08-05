@@ -37,6 +37,10 @@ import pytest
 import struct
 import sys
 
+
+pytestmark = pytest.mark.require_driver('NetCDF')
+
+
 def test_netcdf_multidim_invalid_file(netcdf_setup):  # noqa
 
     if not gdaltest.netcdf_drv_has_nc4:

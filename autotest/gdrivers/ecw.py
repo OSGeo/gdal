@@ -52,9 +52,15 @@ def has_write_support():
     if hasattr(gdaltest, 'b_ecw_has_write_support'):
         return gdaltest.b_ecw_has_write_support
     gdaltest.b_ecw_has_write_support = False
-    if test_ecw_1() != 'success':
+    try:
+        test_ecw_1()
+    except Exception:
         return False
-    if test_ecw_3() == 'success':
+    try:
+        test_ecw_3()
+    except Exception:
+        pass
+    else:
         gdaltest.b_ecw_has_write_support = True
     try:
         os.remove('tmp/jrc_out.ecw')
@@ -75,32 +81,27 @@ def test_ecw_init():
 
 
 def test_ecw_1():
-
-    gdaltest.ecw_drv = gdal.GetDriverByName('ECW')
-    gdaltest.jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
-
     gdaltest.ecw_write = 0
 
-    if gdaltest.ecw_drv is not None:
-        if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') is not None:
-            gdaltest.ecw_write = 1
+    if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') is not None:
+        gdaltest.ecw_write = 1
 
-        longname = gdaltest.ecw_drv.GetMetadataItem('DMD_LONGNAME')
+    longname = gdaltest.ecw_drv.GetMetadataItem('DMD_LONGNAME')
 
-        sdk_off = longname.find('SDK ')
-        if sdk_off != -1:
-            gdaltest.ecw_drv.major_version = int(float(longname[sdk_off + 4]))
-            sdk_minor_off = longname.find('.', sdk_off)
-            if sdk_minor_off >= 0:
-                if longname[sdk_minor_off + 1] == 'x':
-                    gdaltest.ecw_drv.minor_version = 3
-                else:
-                    gdaltest.ecw_drv.minor_version = int(longname[sdk_minor_off + 1])
+    sdk_off = longname.find('SDK ')
+    if sdk_off != -1:
+        gdaltest.ecw_drv.major_version = int(float(longname[sdk_off + 4]))
+        sdk_minor_off = longname.find('.', sdk_off)
+        if sdk_minor_off >= 0:
+            if longname[sdk_minor_off + 1] == 'x':
+                gdaltest.ecw_drv.minor_version = 3
             else:
-                gdaltest.ecw_drv.minor_version = 0
+                gdaltest.ecw_drv.minor_version = int(longname[sdk_minor_off + 1])
         else:
-            gdaltest.ecw_drv.major_version = 3
-            gdaltest.ecw_drv.minor_version = 3
+            gdaltest.ecw_drv.minor_version = 0
+    else:
+        gdaltest.ecw_drv.major_version = 3
+        gdaltest.ecw_drv.minor_version = 3
 
     # we set ECW to not resolve projection and datum strings to get 3.x behavior.
     gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")

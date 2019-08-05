@@ -28,8 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
 
 import gdaltest
 import pytest
@@ -38,22 +36,14 @@ import pytest
 ###############################################################################
 # Test if GRASS driver is present
 
-def test_grass_1():
+pytestmark = pytest.mark.require_driver('GRASS')
 
-    gdaltest.grass_drv = gdal.GetDriverByName('GRASS')
-    if gdaltest.grass_drv is None:
-        pytest.skip()
 
-    
 ###############################################################################
 # Read existing simple 1 band GRASS dataset.
 
 
 def test_grass_2():
-
-    if gdaltest.grass_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest('GRASS', 'small_grass_dataset/demomapset/cellhd/elevation', 1, 41487)
 
     srs = """PROJCS["UTM Zone 18, Northern Hemisphere",
@@ -71,11 +61,6 @@ def test_grass_2():
     PARAMETER["false_northing",0],
     UNIT["meter",1]]"""
 
-    ret = tst.testOpen(check_prj=srs)
-    if ret != 'success':
-        gdaltest.post_reason('If that test fails, checks that the GISBASE environment variable point to the root of your GRASS install. For example GIS_BASE=/usr/local/grass-6.4.svn')
-    return ret
-
-
-
-
+    # If this test fails, check that the GISBASE environment variable points to the root of your GRASS install.
+    # For example GIS_BASE=/usr/local/grass-6.4.svn
+    tst.testOpen(check_prj=srs)

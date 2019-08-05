@@ -30,43 +30,31 @@
 ###############################################################################
 
 import os
-import sys
 import pytest
-
-# Make sure we run from the directory of the script
-if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
-    if os.path.dirname(sys.argv[0]) != '':
-        os.chdir(os.path.dirname(sys.argv[0]))
-
 
 from osgeo import gdal
 import gdaltest
+
+
+pytestmark = pytest.mark.require_driver('DB2ODBC')
+
 
 ###############################################################################
 # Test if DB2 and tile drivers are available
 
 
-def test_gpkg_init():
-
-    gdaltest.db2_drv = None
-
-    gdaltest.db2_drv = gdal.GetDriverByName('DB2ODBC')
-    if gdaltest.db2_drv is None:
-        pytest.skip()
-
-    gdaltest.png_dr = gdal.GetDriverByName('PNG')
-    gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
-    gdaltest.webp_dr = gdal.GetDriverByName('WEBP')
+@pytest.fixture(autouse=True, scope='module')
+def db2_init():
+    webp_drv = gdal.GetDriverByName('WEBP')
     gdaltest.webp_supports_rgba = False
-    if gdaltest.webp_dr is not None and gdal.GetConfigOption("GPKG_SIMUL_WEBP_3BAND") is None:
-        md = gdaltest.webp_dr.GetMetadata()
+    if webp_drv is not None and gdal.GetConfigOption("GPKG_SIMUL_WEBP_3BAND") is None:
+        md = webp_drv.GetMetadata()
         if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') >= 0:
             gdaltest.webp_supports_rgba = True
 
     if 'DB2_TEST_SERVER' in os.environ:
         gdaltest.db2_test_server = "DB2ODBC:" + os.environ['DB2_TEST_SERVER']
     else:
-        gdaltest.db2_drv = None
         pytest.skip('Environment variable DB2_TEST_SERVER not found')
 
     print("\ntest server: " + gdaltest.db2_test_server + "\n")
@@ -157,20 +145,15 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 # Single band, PNG
 
 
+@pytest.mark.require_driver('PNG')
 def test_gpkg_1():
-
-    if gdaltest.db2_drv is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
-
     # With padding
     ds = gdal.Open('data/byte.tif')
     expected_cs = ds.GetRasterBand(1).Checksum()
 #   clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output = False)[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    out_ds = gdaltest.db2_drv.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options=['TILE_FORMAT=PNG'])
+    out_ds = gdaltest.db2odbc_drv.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options=['TILE_FORMAT=PNG'])
     out_ds = None
     ds = None
 

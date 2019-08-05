@@ -30,36 +30,30 @@
 
 
 
-import gdaltest
 from osgeo import gdal
 import pytest
 import struct
 
+
 ###############################################################################
 # verify that we can load Numeric python, and find the Numpy driver.
 
+pytestmark = pytest.mark.require_driver('NUMPY')
 
-def test_numpy_rw_multidim_init():
 
-    gdaltest.numpy_drv = None
+@pytest.fixture(autouse=True, scope='module')
+def gdalnumeric_is_present():
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except (ImportError, AttributeError):
         pytest.skip()
 
-    gdal.AllRegister()
-
-    gdaltest.numpy_drv = gdal.GetDriverByName('NUMPY')
-    assert gdaltest.numpy_drv is not None, 'NUMPY driver not found!'
 
 ###############################################################################
 
 
 def test_numpy_rw_multidim_readasarray_writearray():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
     import numpy as np
 
     drv = gdal.GetDriverByName('MEM')
@@ -84,9 +78,6 @@ def test_numpy_rw_multidim_readasarray_writearray():
 
 
 def test_numpy_rw_multidim_numpy_array_as_dataset():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
     from osgeo import gdalnumeric
     import numpy as np
 
@@ -104,9 +95,6 @@ def test_numpy_rw_multidim_numpy_array_as_dataset():
 
 
 def test_numpy_rw_multidim_readasarray_writearray_negative_strides():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
     import numpy as np
 
     drv = gdal.GetDriverByName('MEM')
@@ -132,9 +120,6 @@ def test_numpy_rw_multidim_readasarray_writearray_negative_strides():
 
 
 def test_numpy_rw_multidim_numpy_array_as_dataset_negative_strides():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
     from osgeo import gdalnumeric
     import numpy as np
 
@@ -153,9 +138,6 @@ def test_numpy_rw_multidim_numpy_array_as_dataset_negative_strides():
 
 
 def test_numpy_rw_multidim_compound_datatype():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
     from osgeo import gdalnumeric
     import numpy as np
 

@@ -34,6 +34,12 @@ from osgeo import gdal
 import gdaltest
 import pytest
 
+
+pytestmark = [
+    pytest.mark.skip(),
+    pytest.mark.require_driver('JPIPKAK'),
+]
+
 ###############################################################################
 # Read test of simple byte reference data.
 
@@ -43,10 +49,6 @@ def test_jpipkak_1():
     pytest.skip()
 
     # pylint: disable=unreachable
-    gdaltest.jpipkak_drv = gdal.GetDriverByName('JPIPKAK')
-    if gdaltest.jpipkak_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_msi_uint')
     assert ds is not None, 'failed to open jpip stream.'
 
@@ -66,9 +68,6 @@ def test_jpipkak_2():
     pytest.skip()
 
     # pylint: disable=unreachable
-    if gdaltest.jpipkak_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_pan_byte')
     assert ds is not None, 'failed to open jpip stream.'
 
@@ -93,9 +92,6 @@ def test_jpipkak_3():
     pytest.skip()
 
     # pylint: disable=unreachable
-    if gdaltest.jpipkak_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_pan_11bit')
     assert ds is not None, 'failed to open jpip stream.'
 
@@ -115,9 +111,6 @@ def test_jpipkak_4():
     pytest.skip()
 
     # pylint: disable=unreachable
-    if gdaltest.jpipkak_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_pan_20bit')
     assert ds is not None, 'failed to open jpip stream.'
 
@@ -137,9 +130,6 @@ def test_jpipkak_5():
     pytest.skip()
 
     # pylint: disable=unreachable
-    if gdaltest.jpipkak_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('jpip://216.150.195.220/JP2Server/qb_boulder_pan_byte')
     assert ds is not None, 'failed to open jpip stream.'
 

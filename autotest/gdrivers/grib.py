@@ -33,12 +33,14 @@
 import os
 import struct
 import shutil
+import sys
 from osgeo import gdal
 from osgeo import osr
 import pytest
 
 import gdaltest
 
+sys.path.append('../osr')
 
 pytestmark = pytest.mark.require_driver('GRIB')
 
@@ -1069,9 +1071,9 @@ def test_grib_grib2_write_data_encodings():
         cs = out_ds.GetRasterBand(1).Checksum()
         out_ds = None
         gdal.Unlink(tmpfilename)
-        if cs == 0 or cs == 50235:  # 50235: lossless checksum
-            gdaltest.post_reason('did not get expected checksum for lossy JPEG2000 with ' + drvname)
-            print(cs)
+
+        # 50235: lossless checksum
+        assert cs not in (0, 50235), 'did not get expected checksum for lossy JPEG2000 with ' + drvname
 
 
 ###############################################################################
@@ -1195,10 +1197,6 @@ def test_grib_grib2_write_temperatures():
 
 
 def test_grib_grib2_write_nodata():
-
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     for src_type in [ gdal.GDT_Byte, gdal.GDT_Float32 ]:
         src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, src_type)
         src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])

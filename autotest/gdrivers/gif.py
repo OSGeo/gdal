@@ -29,33 +29,30 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pytest
+
 from osgeo import gdal
 
-
 import gdaltest
+
 
 ###############################################################################
 # Get the GIF driver, and verify a few things about it.
 
+pytestmark = pytest.mark.require_driver('GIF', 'BIGGIF')
 
-def test_gif_1():
 
-    gdaltest.gif_drv = gdal.GetDriverByName('GIF')
-    if gdaltest.gif_drv is None:
-        gdaltest.post_reason('GIF driver not found!')
-        return 'false'
-
+@pytest.fixture(autouse=True, scope='module')
+def gif_init():
     # Move the BIGGIF driver after the GIF driver.
     drv = gdal.GetDriverByName('BIGGIF')
     drv.Deregister()
     drv.Register()
 
     drv_md = gdaltest.gif_drv.GetMetadata()
-    if drv_md['DMD_MIMETYPE'] != 'image/gif':
-        gdaltest.post_reason('mime type is wrong')
-        return 'false'
+    assert drv_md['DMD_MIMETYPE'] == 'image/gif'
 
-    
+
 ###############################################################################
 # Read test of simple byte reference data.
 
@@ -114,14 +111,10 @@ def test_gif_6():
     src_ds = gdal.Open('../gcore/data/nodata_byte.tif')
 
     new_ds = gdaltest.gif_drv.CreateCopy('tmp/nodata_byte.gif', src_ds)
-    if new_ds is None:
-        gdaltest.post_reason('Create copy operation failure')
-        return 'false'
+    assert new_ds, 'Create copy operation failure'
 
     bnd = new_ds.GetRasterBand(1)
-    if bnd.Checksum() != 4440:
-        gdaltest.post_reason('Wrong checksum')
-        return 'false'
+    assert bnd.Checksum() == 4440
 
     bnd = None
     new_ds = None
@@ -130,15 +123,11 @@ def test_gif_6():
     new_ds = gdal.Open('tmp/nodata_byte.gif')
 
     bnd = new_ds.GetRasterBand(1)
-    if bnd.Checksum() != 4440:
-        gdaltest.post_reason('Wrong checksum')
-        return 'false'
+    assert bnd.Checksum() == 4440
 
     # NOTE - mloskot: condition may fail as nodata is a float-point number
     nodata = bnd.GetNoDataValue()
-    if nodata != 0:
-        gdaltest.post_reason('Got unexpected nodata value.')
-        return 'false'
+    assert nodata == 0
 
     bnd = None
     new_ds = None
