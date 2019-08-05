@@ -1694,7 +1694,6 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                 m_poDS->FieldScribe.enqueue_transaction(ptr);
             }
             break;
-            break;
         }
 #endif
 

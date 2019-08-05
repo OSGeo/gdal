@@ -43,7 +43,7 @@ namespace nccfdriver
         std::string err_msg;
 
         public:
-            SG_Exception_NVOOB(const char* dsname) :
+            explicit SG_Exception_NVOOB(const char* dsname) :
                 err_msg(std::string("An attempt to read an undefined ID from ") + std::string(dsname) + std::string(" was made")) {}
             const char* get_err_msg() override { return this->err_msg.c_str(); }
     };
@@ -70,7 +70,7 @@ namespace nccfdriver
             const char* get_err_msg() override { return this->err_msg.c_str(); }
     };
 
-        class SG_Exception_VWrite_Failure : public SG_Exception
+    class SG_Exception_VWrite_Failure : public SG_Exception
     {
         std::string err_msg;
 
@@ -353,7 +353,7 @@ namespace nccfdriver
                         bool virtualVarNameDefined(std::string& nm) { return nameVarTable.count(nm) > 0; }
 
             // Constructor
-            netCDFVID(int & ncid_in) : ncid(ncid_in) {}
+            explicit netCDFVID(int & ncid_in) : ncid(ncid_in) {}
         };
 
 }

@@ -132,7 +132,7 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 
     if(vidList.size() > 0)
     {
-        for(std::set<int>::iterator itr = vidList.begin(); itr != vidList.end(); itr++)
+        for(std::set<int>::iterator itr = vidList.begin(); itr != vidList.end(); ++itr)
         {
             try
             {

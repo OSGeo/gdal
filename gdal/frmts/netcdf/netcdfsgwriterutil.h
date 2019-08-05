@@ -323,7 +323,7 @@ namespace nccfdriver
             std::shared_ptr<OGR_SGFS_Transaction> pop();  // to test for EOF, test to see if pointer returned is null ptr
 
             // construction, destruction
-            WTransactionLog(std::shared_ptr<std::string> logName);
+            explicit WTransactionLog(std::shared_ptr<std::string> logName);
             ~WTransactionLog();
     };
 

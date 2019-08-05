@@ -266,9 +266,11 @@ namespace nccfdriver
             pnc_varID = ncdf.nc_def_vvar(pnc_name, NC_INT, 1, &pnc_dimID);
 
             char ir_name[NC_MAX_CHAR + 1] = {0};
-            err_code = nc_get_att_text(ncID, containerVar_realID, CF_SG_INTERIOR_RING, ir_name);
+            nc_get_att_text(ncID, containerVar_realID, CF_SG_INTERIOR_RING, ir_name);
 
-            // For interior ring too (for POLYGON and MULTIPOLYGON)
+            // For interior ring too (for POLYGON and MULTIPOLYGON); there's always an assumption
+            // that interior rings really do exist until the very end in which case it's known whether or not
+            // that assumption was true or false (if false, this (and PNC attribute for Polygons) will just be deleted)
             if(this->writableType == POLYGON || this->writableType == MULTIPOLYGON)
             {
                 intring_varID = ncdf.nc_def_vvar(ir_name, NC_INT, 1, &pnc_dimID);
@@ -643,7 +645,7 @@ namespace nccfdriver
                             NCWMapWriteAndCommit<double>(wvid, writerMap, curWrInd, numEntries, double_trn.getData(), this->ncvd);
                             break;
                         }
-    #ifdef NETCDF_HAS_NC4
+#ifdef NETCDF_HAS_NC4
                         case NC_UINT:
                         {
                             NCWMapAllocIfNeeded<unsigned>(wvid, writerMap, numEntries, varV);
@@ -679,7 +681,7 @@ namespace nccfdriver
                             NCWMapWriteAndCommit<unsigned short>(wvid, writerMap, curWrInd, numEntries, ushort_trn.getData(), this->ncvd);
                             break;
                         }
-    #endif
+#endif
                         default:
                         {
                             break;
@@ -743,7 +745,7 @@ namespace nccfdriver
             this->transactionQueue.pop();
         }
 
-		this->buf.reset();
+        this->buf.reset();
     }
 
     // WBufferManager
@@ -766,13 +768,13 @@ namespace nccfdriver
         int type = NC_CHAR;
         int8_t OP = 0;
         size_t DATA_SIZE = char_rep.length();
-		
+
         VSIFWriteL(&vid, sizeof(int), 1, f); // write varID data
         VSIFWriteL(&type, sizeof(int), 1, f); // write NC type
         VSIFWriteL(&OP, sizeof(int8_t), 1, f); // write "OP" flag
         VSIFWriteL(&DATA_SIZE, sizeof(size_t), 1, f); // write length
         VSIFWriteL(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
-		
+
     }
 
 #ifdef NETCDF_HAS_NC4
@@ -842,7 +844,7 @@ namespace nccfdriver
 
          // If one of the two reads failed, then return nullptr
          if(!itemsread)
-			 return std::shared_ptr<OGR_SGFS_Transaction>(nullptr);
+             return std::shared_ptr<OGR_SGFS_Transaction>(nullptr);
 
          // If not, continue on and parse additional fields
          switch(ntype)
@@ -878,14 +880,14 @@ namespace nccfdriver
                  int8_t op = 0;
                  readcheck = VSIFReadL(&op, sizeof(int8_t), 1, log);
                  if(!readcheck)
-					 return MTPtr(); // read failure
-					 
+                     return MTPtr(); // read failure
+
                  size_t strsize;
 
                  // get how much data to read
                  readcheck = VSIFReadL(&strsize, sizeof(size_t), 1, log);
                  if(!readcheck)
-					 return MTPtr(); // read failure
+                     return MTPtr(); // read failure
 
                  std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
                  memset(data.get(), 0, strsize + 1);
@@ -893,7 +895,7 @@ namespace nccfdriver
                  // read that data and return it
                  readcheck = VSIFReadL(data.get(), sizeof(char), strsize, log);
                  if(!readcheck)
-					 return MTPtr(); // read failure
+                     return MTPtr(); // read failure
 
                  // case: its a standard CHAR op
                  if(!op)
@@ -926,7 +928,7 @@ namespace nccfdriver
                  readcheck = VSIFReadL(&strsize, sizeof(size_t), 1, log);
 
                  if(!readcheck)
-					 return MTPtr(); // read failure
+                     return MTPtr(); // read failure
 
                  std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
                  memset(data.get(), 0, strsize + 1);
