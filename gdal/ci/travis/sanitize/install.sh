@@ -22,9 +22,6 @@ make -j3
 sudo make install
 cd ..
 
-sudo rm /usr/lib/libproj.so.0  /usr/lib/libproj.so.0.7.0
-sudo ln -s  /usr/lib/libproj.so.12 /usr/lib/libproj.so.0
-sudo ln -s  /usr/lib/libproj.so.12 /usr/lib/libproj.so.0.7.0
 sudo ldconfig
 ls -al /usr/lib/libproj*
 
