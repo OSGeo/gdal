@@ -55,9 +55,6 @@ def check_no_file_leaks():
 
 
 def test_bag_2():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/true_n_nominal.bag')
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -99,9 +96,6 @@ def test_bag_2():
 
 
 def test_bag_3():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/southern_hemi_false_northing.bag')
 
     nr = ds.RasterCount
@@ -124,9 +118,6 @@ def test_bag_3():
 
 
 def test_bag_vr_normal():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/test_vr.bag')
     assert ds is not None
 
@@ -188,9 +179,6 @@ def test_bag_vr_normal():
 
 
 def test_bag_vr_list_supergrids():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('data/test_vr.bag', open_options=['MODE=LIST_SUPERGRIDS'])
     assert ds is not None
     sub_ds = ds.GetSubDatasets()
@@ -245,9 +233,6 @@ def test_bag_vr_list_supergrids():
 
 
 def test_bag_vr_open_supergrids():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('BAG:"data/test_vr.bag":supergrid:0:0')
     assert ds is not None
 
@@ -315,9 +300,6 @@ def test_bag_vr_open_supergrids():
 
 
 def test_bag_vr_resampled():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('data/test_vr.bag', open_options=['MODE=RESAMPLED_GRID'])
     assert ds is not None
 
@@ -557,9 +539,6 @@ def test_bag_vr_resampled():
 
 
 def test_bag_vr_resampled_mask():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('data/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
                                    'SUPERGRIDS_MASK=YES'])
@@ -576,9 +555,6 @@ def test_bag_vr_resampled_mask():
 
 
 def test_bag_vr_resampled_interpolated():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('data/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
                                    'INTERPOLATION=INVDIST'])
@@ -605,9 +581,6 @@ def test_bag_vr_resampled_interpolated():
 
 
 def test_bag_write_single_band():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest('BAG', 'byte.tif', 1, 4672)
     ret = tst.testCreateCopy(quiet_error_handler=False,
                              new_filename='/vsimem/out.bag')
@@ -619,9 +592,6 @@ def test_bag_write_single_band():
 
 
 def test_bag_write_two_bands():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest('BAG', 'test_vr.bag', 2, 60,
                             options=['BLOCK_SIZE=2',
                                      'VAR_ABSTRACT=foo',
@@ -643,9 +613,6 @@ def test_bag_write_two_bands():
 
 
 def test_bag_write_south_up():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     # Generate a south-up dataset
     src_ds = gdal.Warp('', 'data/byte.tif',
                        format='MEM',
@@ -671,17 +638,11 @@ def test_bag_write_south_up():
 
 
 def test_bag_read_invalid_bag_vlen_bag_version():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/invalid_bag_vlen_bag_version.bag')
     assert not ds
 
 
 def test_bag_read_incorrect_northeast_corner():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/test_offset_ne_corner.bag')
 
     geotransform = ds.GetGeoTransform()

@@ -40,6 +40,10 @@ from osgeo import gdal
 import gdaltest
 import ogrtest
 import pytest
+
+
+pytestmark = pytest.mark.require_ogr_driver('GeoJSON')
+
 ###############################################################################
 # Test utilities
 
@@ -139,10 +143,6 @@ def verify_geojson_copy(name, fids, names):
 
 
 def copy_shape_to_geojson(gjname, compress=None):
-
-    if gdaltest.geojson_drv is None:
-        return False
-
     if compress is not None:
         if compress[0:5] == '/vsig':
             dst_name = os.path.join('/vsigzip/', 'tmp', gjname + '.geojson' + '.gz')
@@ -155,7 +155,7 @@ def copy_shape_to_geojson(gjname, compress=None):
     else:
         dst_name = os.path.join('tmp', gjname + '.geojson')
 
-    ds = gdaltest.geojson_drv.CreateDataSource(dst_name)
+    ds = ogrtest.geojson_drv.CreateDataSource(dst_name)
     if ds is None:
         return False
 
@@ -199,27 +199,12 @@ def copy_shape_to_geojson(gjname, compress=None):
 
     return True
 
-###############################################################################
-# Find GeoJSON driver
-
-
-def test_ogr_geojson_1():
-
-    gdaltest.geojson_drv = ogr.GetDriverByName('GeoJSON')
-
-    if gdaltest.geojson_drv is not None:
-        return
-    pytest.fail()
 
 ###############################################################################
 # Test file-based DS with standalone "Point" feature object.
 
 
 def test_ogr_geojson_2():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/point.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -240,10 +225,6 @@ def test_ogr_geojson_2():
 
 
 def test_ogr_geojson_3():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/linestring.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -264,10 +245,6 @@ def test_ogr_geojson_3():
 
 
 def test_ogr_geojson_4():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/polygon.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -288,10 +265,6 @@ def test_ogr_geojson_4():
 
 
 def test_ogr_geojson_5():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/geometrycollection.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -312,10 +285,6 @@ def test_ogr_geojson_5():
 
 
 def test_ogr_geojson_6():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/multipoint.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -336,10 +305,6 @@ def test_ogr_geojson_6():
 
 
 def test_ogr_geojson_7():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/multilinestring.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -360,10 +325,6 @@ def test_ogr_geojson_7():
 
 
 def test_ogr_geojson_8():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/multipolygon.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -384,10 +345,6 @@ def test_ogr_geojson_8():
 
 
 def test_ogr_geojson_9():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     gdaltest.tests = [
         ['gjpoint', [1], ['Point 1']],
         ['gjline', [1], ['Line 1']],
@@ -412,10 +369,6 @@ def test_ogr_geojson_9():
 
 
 def test_ogr_geojson_10():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     gdaltest.tests = [
         ['gjpoint', [1], ['Point 1']],
         ['gjline', [1], ['Line 1']],
@@ -439,10 +392,6 @@ def test_ogr_geojson_10():
 
 
 def test_ogr_geojson_11():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/srs_name.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -474,10 +423,6 @@ def test_ogr_geojson_11():
 
 
 def test_ogr_geojson_12():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     if os.name == 'nt':
         pytest.skip()
 
@@ -494,10 +439,6 @@ def test_ogr_geojson_12():
 # Test writing to stdout (#3381)
 
 def test_ogr_geojson_13():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     test = ['gjpoint', [1], ['Point 1']]
 
     rc = copy_shape_to_geojson(test[0], '/vsistdout/')
@@ -508,10 +449,6 @@ def test_ogr_geojson_13():
 
 
 def test_ogr_geojson_14():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     if int(gdal.VersionInfo('VERSION_NUM')) < 1800:
         pytest.skip()
 
@@ -519,7 +456,7 @@ def test_ogr_geojson_14():
         ds = ogr.Open('data/ogr_geojson_14.geojson')
     lyr = ds.GetLayer(0)
 
-    out_ds = gdaltest.geojson_drv.CreateDataSource('tmp/out_ogr_geojson_14.geojson')
+    out_ds = ogrtest.geojson_drv.CreateDataSource('tmp/out_ogr_geojson_14.geojson')
     out_lyr = out_ds.CreateLayer('lyr')
 
     with gdaltest.error_handler():
@@ -575,10 +512,6 @@ def test_ogr_geojson_15():
 
 
 def test_ogr_geojson_16():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esripoint.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -627,10 +560,6 @@ def test_ogr_geojson_16():
 
 
 def test_ogr_geojson_17():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esrilinestring.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -680,10 +609,6 @@ def test_ogr_geojson_17():
 
 
 def test_ogr_geojson_18():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esripolygon.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -721,10 +646,6 @@ def test_ogr_geojson_18():
 
 
 def test_ogr_geojson_19():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esrimultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -751,10 +672,6 @@ def test_ogr_geojson_19():
 
 
 def test_ogr_geojson_20():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     from glob import glob
 
     geojson_files = glob('data/*.json')
@@ -785,10 +702,6 @@ def test_ogr_geojson_20():
 
 
 def test_ogr_geojson_21():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature",
  "geometry": {"type":"Point","coordinates":[1,2]},
@@ -815,10 +728,6 @@ def test_ogr_geojson_21():
 
 
 def test_ogr_geojson_22():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature",
  "geometry": {"type":"Point","coordinates":[1,2]},
@@ -859,11 +768,7 @@ def test_ogr_geojson_22():
 
 
 def test_ogr_geojson_23():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_23.json')
+    ds = ogrtest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_23.json')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4322)
     lyr = ds.CreateLayer('foo', srs=sr, options=['WRITE_BBOX=YES'])
@@ -900,10 +805,6 @@ def test_ogr_geojson_23():
 
 
 def test_ogr_geojson_24():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     content = """loadGeoJSON({"layerFoo": { "type": "Feature",
   "geometry": {
     "type": "Point",
@@ -957,10 +858,6 @@ def test_ogr_geojson_24():
 
 
 def test_ogr_geojson_25():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/topojson1.topojson')
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'a_layer'
@@ -1044,10 +941,6 @@ def test_ogr_geojson_25():
 
 
 def test_ogr_geojson_26():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature", "id": 1,
  "geometry": {"type":"Point","coordinates":[1,2]},
@@ -1086,7 +979,7 @@ def test_ogr_geojson_26():
     lyr = None
     ds = None
 
-    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_26.json')
+    ds = ogrtest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_26.json')
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('int64', ogr.OFTInteger64))
     lyr.CreateField(ogr.FieldDefn('int64list', ogr.OFTInteger64List))
@@ -1111,10 +1004,6 @@ def test_ogr_geojson_26():
 
 
 def test_ogr_geojson_27():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     # Warning 1: Integer values probably ranging out of 64bit integer range
     # have been found. Will be clamped to INT64_MIN/INT64_MAX
@@ -1149,10 +1038,6 @@ def test_ogr_geojson_27():
 
 
 def test_ogr_geojson_28():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esrizpoint.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -1201,10 +1086,6 @@ def test_ogr_geojson_28():
 
 
 def test_ogr_geojson_29():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esrizlinestring.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -1232,10 +1113,6 @@ def test_ogr_geojson_29():
 
 
 def test_ogr_geojson_30():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esrizmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -1263,10 +1140,6 @@ def test_ogr_geojson_30():
 
 
 def test_ogr_geojson_31():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esrizpolygon.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -1294,10 +1167,6 @@ def test_ogr_geojson_31():
 
 
 def test_ogr_geojson_32():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esrihasmnozmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -1324,10 +1193,6 @@ def test_ogr_geojson_32():
 
 
 def test_ogr_geojson_33():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esriinvalidhaszmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -1354,10 +1219,6 @@ def test_ogr_geojson_33():
 
 
 def test_ogr_geojson_34():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/esrizmmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
@@ -1384,11 +1245,7 @@ def test_ogr_geojson_34():
 
 
 def test_ogr_geojson_35():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_35.json')
+    ds = ogrtest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_35.json')
     lyr = ds.CreateLayer('foo')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
@@ -1481,10 +1338,6 @@ def test_ogr_geojson_35():
 
 
 def test_ogr_geojson_36():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/point_with_utf8bom.json')
     assert ds is not None, 'Failed to open datasource'
     ds = None
@@ -1494,10 +1347,6 @@ def test_ogr_geojson_36():
 
 
 def test_ogr_geojson_37():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     # Test read support
     ds = ogr.Open("""{"type": "FeatureCollection","features": [
 { "type": "Feature", "properties": { "bool" : false, "not_bool": false, "bool_list" : [false, true], "notbool_list" : [false, 3]}, "geometry": null  },
@@ -1538,10 +1387,6 @@ def test_ogr_geojson_37():
 
 
 def test_ogr_geojson_38():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     # Test read support
     ds = gdal.OpenEx("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "properties": { "dt": "2014-11-20 12:34:56+0100", "dt2": "2014\/11\/20", "date":"2014\/11\/20", "time":"12:34:56", "no_dt": "2014-11-20 12:34:56+0100", "no_dt2": "2014-11-20 12:34:56+0100" }, "geometry": null },
@@ -1582,10 +1427,6 @@ def test_ogr_geojson_38():
 
 
 def test_ogr_geojson_39():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : "foo", "properties": { "bar" : "baz" }, "geometry": null },
 ] }""")
@@ -1741,10 +1582,6 @@ def test_ogr_geojson_39():
 
 
 def test_ogr_geojson_40():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = gdal.OpenEx("""{
   "type": "FeatureCollection",
   "features" :
@@ -1793,10 +1630,6 @@ def test_ogr_geojson_40():
 
 
 def test_ogr_geojson_41():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     # Check that by default we return a WGS 84 SRS
     g = ogr.CreateGeometryFromJson("{ 'type': 'Point', 'coordinates' : [ 2, 49] }")
     assert g.ExportToWkt() == 'POINT (2 49)'
@@ -1820,10 +1653,6 @@ def test_ogr_geojson_41():
 
 
 def test_ogr_geojson_42():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
     resultOffset0 = """
@@ -1996,9 +1825,6 @@ def test_ogr_geojson_42():
 
 
 def test_ogr_geojson_43():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature", "properties": {"foo": "bar"}}]}""")
     assert ds is not None, 'Failed to open datasource'
@@ -2018,9 +1844,6 @@ def test_ogr_geojson_43():
 
 
 def test_ogr_geojson_44():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     with gdaltest.error_handler():
         ogr.Open("""{"type": "FeatureCollection", "features":[ null ]}""")
 
@@ -2030,9 +1853,6 @@ def test_ogr_geojson_44():
 
 
 def test_ogr_geojson_45():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     # Test read support
     content = """{"type": "FeatureCollection", "foo": "bar", "bar": "baz",
     "features":[ { "type": "Feature", "foo": ["bar", "baz", 1.0, true, false,[],{}], "properties": { "myprop": "myvalue" }, "geometry": null } ]}"""
@@ -2153,9 +1973,6 @@ def test_ogr_geojson_45():
 
 
 def test_ogr_geojson_46():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_46.json')
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('myprop'))
@@ -2177,9 +1994,6 @@ def test_ogr_geojson_46():
 
 
 def test_ogr_geojson_47():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     # ERROR 6: Update from inline definition not supported
     with gdaltest.error_handler():
         ds = ogr.Open('{"type": "FeatureCollection", "features":[]}', update=1)
@@ -2332,9 +2146,6 @@ def test_ogr_geojson_47():
 
 
 def test_ogr_geojson_48():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_48.json',
                            """{ "type": "Feature", "bar": "baz", "bbox": [2,49,2,49], "properties": { "myprop": "myvalue" }, "geometry": {"type": "Point", "coordinates": [ 2, 49]} }""")
 
@@ -2368,9 +2179,6 @@ def test_ogr_geojson_48():
 
 
 def test_ogr_geojson_49():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_49.json',
                            """{ "type": "Feature", "properties": { "foo": ["bar"] }, "geometry": null }""")
 
@@ -2391,9 +2199,6 @@ def test_ogr_geojson_49():
 
 
 def test_ogr_geojson_50():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_50.json')
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('val', ogr.OFTReal))
@@ -2459,9 +2264,6 @@ def test_ogr_geojson_50():
 
 
 def test_ogr_geojson_51():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_51.json')
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
@@ -2521,9 +2323,6 @@ def test_ogr_geojson_51():
 
 
 def test_ogr_geojson_52():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/nullvalues.geojson')
     assert ds is not None, 'Failed to open datasource'
 
@@ -2547,9 +2346,6 @@ def test_ogr_geojson_52():
 
 
 def test_ogr_geojson_53():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_53.json')
     lyr = ds.CreateLayer('test')
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -2570,9 +2366,6 @@ def test_ogr_geojson_53():
 
 
 def test_ogr_geojson_54():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("""{
    "type": "FeatureCollection",
 
@@ -2613,9 +2406,6 @@ def read_file(filename):
 
 
 def test_ogr_geojson_55():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     # Basic test for standard bbox and coordinate truncation
     gdal.VectorTranslate('/vsimem/out.json', """{
    "type": "FeatureCollection",
@@ -2715,8 +2505,6 @@ def test_ogr_geojson_55():
 
 
 def test_ogr_geojson_56():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
     if not ogrtest.have_geos():
         pytest.skip()
 
@@ -2783,8 +2571,6 @@ def test_ogr_geojson_56():
 
 
 def test_ogr_geojson_57():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
     if not ogrtest.have_geos():
         pytest.skip()
 
@@ -3002,9 +2788,6 @@ def test_ogr_geojson_57():
 
 
 def test_ogr_geojson_58():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('{ "type": "FeatureCollection", "name": "layer_name", "features": []}')
     assert ds is not None, 'Failed to open datasource'
 
@@ -3025,9 +2808,6 @@ def test_ogr_geojson_58():
 
 
 def test_ogr_geojson_59():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('{ "type": "FeatureCollection", "description": "my_description", "features": []}')
     assert ds is not None, 'Failed to open datasource'
 
@@ -3050,9 +2830,6 @@ def test_ogr_geojson_59():
 
 
 def test_ogr_geojson_60():
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = gdal.OpenEx("""{ "type": "FeatureCollection", "features": [
 { "type": "Feature", "properties" : { "foo" : "bar" } },
 { "type": "Feature", "properties" : { "foo": null } },
@@ -3688,9 +3465,6 @@ def test_ogr_geojson_single_feature_random_reading_with_id():
 
 def test_ogr_geojson_3D_geom_type():
 
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
 {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
@@ -3715,9 +3489,6 @@ def test_ogr_geojson_3D_geom_type():
 ###############################################################################
 
 def test_ogr_geojson_update_in_loop():
-
-    if gdaltest.geojson_drv is None:
-        pytest.skip()
 
     tmpfilename = '/vsimem/temp.json'
 

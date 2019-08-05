@@ -31,29 +31,17 @@
 from osgeo import ogr
 
 
-import gdaltest
 import pytest
 
 
-###############################################################################
-# Test if GRASS driver is present
+pytestmark = pytest.mark.require_ogr_driver('GRASS')
 
-def test_ogr_grass_1():
 
-    gdaltest.ogr_grass_drv = ogr.GetDriverByName('GRASS')
-    if gdaltest.ogr_grass_drv is None:
-        pytest.skip()
-
-    
 ###############################################################################
 # Read 'point' datasource
 
 
 def test_ogr_grass_2():
-
-    if gdaltest.ogr_grass_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('./data/PERMANENT/vector/point/head')
     assert ds is not None, 'Cannot open datasource'
 
@@ -66,7 +54,3 @@ def test_ogr_grass_2():
     assert feat.GetFieldAsString('name') == 'my point'
 
     ds = None
-
-
-
-

@@ -38,23 +38,15 @@ import gdaltest
 import webserver
 import pytest
 
-###############################################################################
-# Get the mbtiles driver
 
+pytestmark = pytest.mark.require_driver('MBTiles')
 
-def test_mbtiles_1():
-
-    gdaltest.mbtiles_drv = gdal.GetDriverByName('MBTiles')
 
 ###############################################################################
 # Basic test
 
 
 def test_mbtiles_2():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('JPEG') is None:
         pytest.skip()
 
@@ -104,10 +96,6 @@ def test_mbtiles_2():
 
 
 def test_mbtiles_3():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
@@ -149,10 +137,6 @@ def test_mbtiles_3():
 
 
 def test_mbtiles_start_webserver():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
@@ -166,10 +150,6 @@ def test_mbtiles_start_webserver():
 
 
 def test_mbtiles_http_jpeg_three_bands():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
@@ -190,10 +170,6 @@ def test_mbtiles_http_jpeg_three_bands():
 
 
 def test_mbtiles_http_jpeg_single_band():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
@@ -214,10 +190,6 @@ def test_mbtiles_http_jpeg_single_band():
 
 
 def test_mbtiles_http_png():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
@@ -238,10 +210,6 @@ def test_mbtiles_http_png():
 
 
 def test_mbtiles_stop_webserver():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
@@ -254,10 +222,6 @@ def test_mbtiles_stop_webserver():
 
 
 def test_mbtiles_4():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('JPEG') is None:
         pytest.skip()
 
@@ -283,10 +247,6 @@ def test_mbtiles_4():
 
 
 def test_mbtiles_5():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('PNG') is None:
         pytest.skip()
 
@@ -319,10 +279,6 @@ def test_mbtiles_5():
 
 
 def test_mbtiles_6():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('JPEG') is None:
         pytest.skip()
 
@@ -354,10 +310,6 @@ def test_mbtiles_6():
 
 
 def test_mbtiles_7():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('PNG') is None:
         pytest.skip()
 
@@ -408,10 +360,6 @@ def test_mbtiles_7():
 
 
 def test_mbtiles_8():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('PNG') is None:
         pytest.skip()
 
@@ -451,10 +399,6 @@ def test_mbtiles_8():
 
 
 def test_mbtiles_9():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('PNG') is None:
         pytest.skip()
 
@@ -478,10 +422,6 @@ def test_mbtiles_9():
 
 
 def test_mbtiles_10():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdal.GetDriverByName('PNG') is None:
         pytest.skip()
 
@@ -503,10 +443,6 @@ def test_mbtiles_10():
 
 
 def test_mbtiles_11():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     if gdaltest.mbtiles_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
         pytest.skip()
 
@@ -519,10 +455,6 @@ def test_mbtiles_11():
 
 
 def test_mbtiles_raster_open_in_vector_mode():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/byte.mbtiles')
     assert ds is None
 
@@ -530,10 +462,6 @@ def test_mbtiles_raster_open_in_vector_mode():
 
 
 def test_mbtiles_create():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()
-
     filename = '/vsimem/mbtiles_create.mbtiles'
     gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
     with gdaltest.error_handler():
@@ -588,12 +516,3 @@ def test_mbtiles_create():
     ds = None
 
     gdal.Unlink(filename)
-
-
-###############################################################################
-# Cleanup
-
-def test_mbtiles_cleanup():
-
-    if gdaltest.mbtiles_drv is None:
-        pytest.skip()

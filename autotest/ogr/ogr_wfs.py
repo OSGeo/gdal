@@ -50,20 +50,17 @@ import webserver
 #
 
 
-pytestmark = pytest.mark.require_driver('WFS')
+pytestmark = pytest.mark.require_ogr_driver('WFS')
 
 
 @pytest.fixture(autouse=True, scope='module')
 def ogr_wfs_init():
-    gdaltest.wfs_drv = ogr.GetDriverByName('WFS')
-
     gdaltest.geoserver_wfs = None
     gdaltest.deegree_wfs = None
     gdaltest.ionic_wfs = None
 
     gml_ds = ogr.Open('data/ionic_wfs.gml')
     if gml_ds is None:
-        gdaltest.wfs_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             pytest.skip()
         pytest.skip('failed to open test file.')
@@ -85,9 +82,6 @@ def with_and_without_streaming(request):
 
 @pytest.mark.skip()
 def test_ogr_wfs_mapserver():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     if gdaltest.gdalurlopen('http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap') is None:
         pytest.skip('cannot open URL')
 
@@ -122,9 +116,6 @@ def test_ogr_wfs_mapserver():
 
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType') is None:
         gdaltest.geoserver_wfs = False
         pytest.skip('cannot open URL')
@@ -215,9 +206,6 @@ def test_ogr_wfs_geoserver():
 
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver_json():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     if not gdaltest.geoserver_wfs:
         pytest.skip()
 
@@ -249,9 +237,6 @@ def test_ogr_wfs_geoserver_json():
 
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver_shapezip():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     if not gdaltest.geoserver_wfs:
         pytest.skip()
 
@@ -283,9 +268,6 @@ def test_ogr_wfs_geoserver_shapezip():
 
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver_paging():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     if not gdaltest.geoserver_wfs:
         pytest.skip()
 
@@ -337,9 +319,6 @@ def test_ogr_wfs_geoserver_paging():
 
 @pytest.mark.skip()
 def test_ogr_wfs_deegree():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace') is None:
         gdaltest.deegree_wfs = False
         pytest.skip('cannot open URL')
@@ -392,9 +371,6 @@ def test_ogr_wfs_deegree():
 
 @pytest.mark.skip()
 def test_ogr_wfs_test_ogrsf():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     if not gdaltest.deegree_wfs:
         pytest.skip()
 
@@ -468,9 +444,6 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
 
 
 def test_ogr_wfs_fake_wfs_server():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     (process, port) = webserver.launch(handler=WFSHTTPHandler)
     if port == 0:
         pytest.skip()
@@ -512,9 +485,6 @@ def test_ogr_wfs_fake_wfs_server():
 
 @pytest.mark.skip('FIXME: re-enable after adapting test')
 def test_ogr_wfs_geoserver_wfst():
-    if gdaltest.wfs_drv is None:
-        pytest.skip()
-
     if not gdaltest.geoserver_wfs:
         pytest.skip()
 
@@ -4499,7 +4469,3 @@ def test_ogr_wfs_vsimem_cleanup(with_and_without_streaming):
 
     for f in gdal.ReadDir('/vsimem/'):
         gdal.Unlink('/vsimem/' + f)
-
-    
-
-

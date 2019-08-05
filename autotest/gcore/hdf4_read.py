@@ -34,6 +34,9 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver('HDF4')
 
+pytestmark = pytest.mark.require_driver('HDF4')
+
+
 init_list = [
     ('byte_3.hdf', 4672),
     ('int16_3.hdf', 4672),
@@ -95,12 +98,6 @@ def test_hdf4_read_gr_palette():
 
 
 def test_hdf4_read_online_1():
-
-    gdaltest.hdf4_drv = gdal.GetDriverByName('HDF4')
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/A2004259075000.L2_LAC_SST.hdf', 'A2004259075000.L2_LAC_SST.hdf'):
         pytest.skip()
 
@@ -113,10 +110,6 @@ def test_hdf4_read_online_1():
 
 
 def test_hdf4_read_online_2():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/A2006005182000.L2_LAC_SST.x.hdf', 'A2006005182000.L2_LAC_SST.x.hdf'):
         pytest.skip()
 
@@ -136,10 +129,6 @@ def test_hdf4_read_online_2():
 # Test HDF4_EOS:EOS_GRID
 
 def test_hdf4_read_online_3():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf', 'MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf'):
         pytest.skip()
 
@@ -163,10 +152,6 @@ def test_hdf4_read_online_3():
 
 
 def test_hdf4_read_online_4():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf', 'S2002196124536.L1A_HDUN.BartonBendish.extract.hdf'):
         pytest.skip()
 
@@ -184,10 +169,6 @@ def test_hdf4_read_online_4():
 
 
 def test_hdf4_read_online_5():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     # 13 MB
     if not gdaltest.download_file('ftp://data.nodc.noaa.gov/pub/data.nodc/pathfinder/Version5.0/Monthly/1991/199101.s04m1pfv50-sst-16b.hdf', '199101.s04m1pfv50-sst-16b.hdf'):
         pytest.skip()
@@ -201,10 +182,6 @@ def test_hdf4_read_online_5():
 
 
 def test_hdf4_read_online_6():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     # 1 MB
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf', 'MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf'):
         pytest.skip()
@@ -230,10 +207,6 @@ def test_hdf4_read_online_6():
 
 
 def test_hdf4_read_online_7():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     # 4 MB
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/hdf4/MOD09A1.A2010041.h06v03.005.2010051001103.hdf', 'MOD09A1.A2010041.h06v03.005.2010051001103.hdf'):
         pytest.skip()
@@ -259,10 +232,6 @@ def test_hdf4_read_online_7():
 # but that will lead to very poor performance (#3386)
 
 def test_hdf4_read_online_8():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     # 5 MB
     if not gdaltest.download_file('https://e4ftl01.cr.usgs.gov/MOLT/MOD13Q1.006/2006.06.10/MOD13Q1.A2006161.h34v09.006.2015161173716.hdf', 'MOD13Q1.A2006161.h34v09.006.2015161173716.hdf'):
         pytest.skip()
@@ -289,10 +258,6 @@ def test_hdf4_read_online_8():
 
 
 def test_hdf4_read_online_9():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://www.geogratis.cgdi.gc.ca/download/landsat_7/hdf/L71002025_02520010722/L71002025_02520010722_MTL.L1G', 'L71002025_02520010722_MTL.L1G'):
         pytest.skip()
 
@@ -313,10 +278,6 @@ def test_hdf4_read_online_9():
 
 
 def test_hdf4_read_online_10():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/4672/MOD16A2.A2000M01.h14v02.105.2010357183410.hdf', 'MOD16A2.A2000M01.h14v02.105.2010357183410.hdf'):
         pytest.skip()
 

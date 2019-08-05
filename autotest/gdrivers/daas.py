@@ -40,17 +40,14 @@ import gdaltest
 import webserver
 import pytest
 
+pytestmark = pytest.mark.require_driver('DAAS')
+
+
 ###############################################################################
 # Find DAAS driver
 
 
 def test_daas_test_presence():
-
-    gdaltest.daas_drv = gdal.GetDriverByName('DAAS')
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-
     gdaltest.daas_vars = {}
     for var in ('GDAL_DAAS_API_KEY', 'GDAL_DAAS_CLIENT_ID', 'GDAL_DAAS_AUTH_URL'):
         gdaltest.daas_vars[var] = gdal.GetConfigOption(var)
@@ -66,9 +63,6 @@ def test_daas_test_presence():
 
 
 def test_daas_missing_parameters():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -80,9 +74,6 @@ def test_daas_missing_parameters():
 
 
 def test_daas_authentication_failure():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -135,9 +126,6 @@ def test_daas_authentication_failure():
 
 
 def test_daas_authentication():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -205,9 +193,6 @@ def test_daas_authentication():
 
 
 def test_daas_getimagemetadata_failure():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -362,9 +347,6 @@ def test_daas_getimagemetadata_failure():
 
 
 def test_daas_getimagemetadata():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -491,9 +473,6 @@ def test_daas_getimagemetadata():
 
 
 def test_daas_getimagemetadata_http_retry():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -571,9 +550,6 @@ def test_daas_getimagemetadata_http_retry():
 
 
 def test_daas_getbuffer_failure():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
     metadata_response = json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
@@ -779,9 +755,6 @@ Content-Type: application/json
 
 
 def test_daas_getbuffer_pixel_encoding_failures():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -874,9 +847,6 @@ def test_daas_getbuffer_pixel_encoding_failures():
 
 
 def test_daas_getbuffer_raw():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -972,9 +942,6 @@ Content-Type: application/json
 
 
 def _daas_getbuffer(pixel_encoding, drv_name, drv_options, mime_type):
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
     drv = gdal.GetDriverByName(drv_name)
@@ -1078,9 +1045,6 @@ def test_daas_getbuffer_jpeg2000_jp2openjpeg():
 
 
 def test_daas_getbuffer_overview():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -1174,9 +1138,6 @@ Content-Type: application/json
 
 
 def test_daas_rasterio():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -1350,9 +1311,6 @@ Content-Type: application/json
 
 
 def test_daas_mask():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -1433,9 +1391,6 @@ Content-Type: application/json
 
 
 def test_daas_png_response_4_bands_for_a_one_band_request():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
@@ -1507,9 +1462,6 @@ Content-Type: application/json
 
 
 def test_daas_cleanup():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
 
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process,

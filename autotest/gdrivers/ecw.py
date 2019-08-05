@@ -43,6 +43,8 @@ from osgeo import osr
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.require_driver('ECW')
+
 ###############################################################################
 
 
@@ -107,11 +109,8 @@ def test_ecw_1():
 # Verify various information about our test image.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_2():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/jrc.ecw')
 
     if gdaltest.ecw_drv.major_version == 3:
@@ -136,7 +135,7 @@ def test_ecw_2():
 
 
 def test_ecw_3():
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('data/jrc.ecw')
@@ -159,8 +158,7 @@ def test_ecw_3():
 
 
 def test_ecw_4():
-
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     gdal.Unlink('tmp/jrc_out.ecw.aux.xml')
@@ -192,8 +190,9 @@ def test_ecw_4():
 # Now try writing a JPEG2000 compressed version of the same with the ECW driver
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_5():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('data/small.vrt')
@@ -207,9 +206,10 @@ def test_ecw_5():
 # Verify various information about our generated image.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_6():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('tmp/ecw_5.jp2')
@@ -250,8 +250,9 @@ def test_ecw_6():
 # Write the same image to NITF.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_7():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('data/small.vrt')
@@ -263,9 +264,10 @@ def test_ecw_7():
 # Verify various information about our generated image.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_8():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('tmp/ecw_7.ntf')
@@ -290,8 +292,9 @@ def test_ecw_8():
 # Try writing 16bit JP2 file directly using Create().
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_9():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     # This always crashes on Frank's machine - some bug in old sdk.
@@ -315,8 +318,9 @@ def test_ecw_9():
 # Verify previous 16bit file.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_10():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     # This always crashes on Frank's machine - some bug in old sdk.
@@ -339,8 +343,9 @@ def test_ecw_10():
 # Test direct creation of an NITF/JPEG2000 file.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_11():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     drv = gdal.GetDriverByName('NITF')
@@ -366,8 +371,9 @@ def test_ecw_11():
 # Verify previous file
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_12():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('tmp/test_11.ntf')
@@ -394,10 +400,8 @@ def test_ecw_12():
 # type and select an altered band list.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_13():
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/rgb16_ecwsdk.jp2')
 
     wrktype = gdal.GDT_Float32
@@ -421,8 +425,9 @@ def test_ecw_13():
 # Write out image with GCPs.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_14():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('data/rgb_gcp.vrt')
@@ -432,9 +437,9 @@ def test_ecw_14():
 # Verify various information about our generated image.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_15():
-
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('tmp/rgb_gcp.jp2')
@@ -454,10 +459,8 @@ def test_ecw_15():
 # Open byte.jp2
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_16():
-
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -487,11 +490,8 @@ def test_ecw_16():
 # Open int16.jp2
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_17():
-
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
-
     if gdaltest.ecw_drv.major_version == 4:
         pytest.skip('4.x SDK gets unreliable results for jp2')
 
@@ -510,10 +510,8 @@ def test_ecw_17():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_18():
-
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -543,10 +541,8 @@ def test_ecw_18():
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_19():
-
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
 
@@ -563,11 +559,8 @@ def test_ecw_19():
 # are as expected.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_20():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/jrc.ecw')
 
     band = ds.GetRasterBand(1)
@@ -599,11 +592,8 @@ def test_ecw_20():
 # line by line.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_21():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/jrc.ecw')
     mem_ds = gdal.GetDriverByName('MEM').CreateCopy('xxxyyy', ds, options=['INTERLEAVE=PIXEL'])
     ds = None
@@ -626,11 +616,8 @@ def test_ecw_21():
 # ECW file.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_22():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/spif83.ecw')
 
     expected_wkt = """PROJCS["L2CAL6M",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",32.7833333078095],PARAMETER["standard_parallel_2",33.8833333208765],PARAMETER["latitude_of_origin",32.166666682432],PARAMETER["central_meridian",-116.249999974595],PARAMETER["false_easting",2000000],PARAMETER["false_northing",500000],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
@@ -643,11 +630,8 @@ def test_ecw_22():
 # preserving the ecw derived georeferencing.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_23():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
     shutil.copyfile('data/spif83_hidden.ecw.aux.xml', 'tmp/spif83.ecw.aux.xml')
 
@@ -673,11 +657,8 @@ def test_ecw_23():
 # Test that we can alter geotransform on existing ECW
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_24():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
@@ -716,11 +697,8 @@ def test_ecw_24():
 # Test that we can alter projection info on existing ECW (through SetProjection())
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_25():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
@@ -771,11 +749,8 @@ def test_ecw_25():
 # Test that we can alter projection info on existing ECW (through SetMetadataItem())
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_26():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
@@ -829,9 +804,10 @@ def test_ecw_26():
 # Check that we can use .j2w world files (#4651)
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_27():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.Open('data/byte_without_geotransform.jp2')
@@ -846,11 +822,8 @@ def test_ecw_27():
 # Check picking use case
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_28():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     x = y = 50
 
     ds = gdal.Open('data/jrc.ecw')
@@ -871,11 +844,8 @@ def test_ecw_28():
 # Test supersampling
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_29():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/jrc.ecw')
     data_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400)
     ds = None
@@ -942,11 +912,8 @@ def test_ecw_29():
 # Test IReadBlock()
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_30():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/jrc.ecw')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     data_readraster = ds.GetRasterBand(1).ReadRaster(0, 0, blockxsize, blockysize)
@@ -959,11 +926,8 @@ def test_ecw_30():
 # Test async reader interface ( SDK >= 4.x )
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_31():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     if gdaltest.ecw_drv.major_version < 4:
         pytest.skip()
 
@@ -1003,11 +967,8 @@ def test_ecw_31():
 # It ignores the content of panBandMap. (#4234)
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_32():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/jrc.ecw')
     data_123 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3])
     data_321 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[3, 2, 1])
@@ -1041,11 +1002,8 @@ def test_ecw_32():
 # Test heuristics that detect successive band reading pattern
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_33():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/jrc.ecw')
     multiband_data = ds.ReadRaster(100, 100, 50, 50)
     ds = None
@@ -1093,11 +1051,8 @@ def test_ecw_33():
 # Check bugfix for #5262
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_33_bis():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/jrc.ecw')
     data_ref = ds.ReadRaster(0, 0, 50, 50)
 
@@ -1130,7 +1085,7 @@ def test_ecw_33_bis():
 
 def test_ecw_34():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
@@ -1154,8 +1109,9 @@ def test_ecw_34():
 # Verify that an write the imagery out to a new JP2 file. Source file is 16 bit.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_35():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     ds = gdal.GetDriverByName('MEM').Create('MEM:::', 128, 128, 1, gdal.GDT_UInt16)
@@ -1177,7 +1133,7 @@ def test_ecw_35():
 
 def test_ecw_36():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
@@ -1234,7 +1190,7 @@ def test_ecw_36():
 
 def test_ecw_37():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
@@ -1267,11 +1223,8 @@ def test_ecw_37():
 # Check opening unicode files.
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_38():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     gdaltest.ecw_38_fname = ''
     if version_info >= (3, 0, 0):
         exec("""gdaltest.ecw_38_fname = 'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
@@ -1302,7 +1255,7 @@ def test_ecw_38():
 
 def test_ecw_39():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
@@ -1327,11 +1280,8 @@ def test_ecw_39():
 # Check reading a ECW v3 file
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_40():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/stefan_full_rgba_ecwv3_meta.ecw')
     if ds is None:
         if gdaltest.ecw_drv.major_version < 5:
@@ -1375,7 +1325,7 @@ def test_ecw_40():
 
 def test_ecw_41():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
+    if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
 
     shutil.copy('data/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1446,7 +1396,7 @@ def test_ecw_41():
 
 def test_ecw_42():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
+    if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
 
     shutil.copy('data/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1515,10 +1465,8 @@ def test_ecw_42():
 # Note: only works on reversible files like this one
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_43():
-
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
@@ -1551,10 +1499,8 @@ def test_ecw_43():
 # Test metadata retrieval from JP2 file
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_44():
-
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
     if gdaltest.ecw_drv.major_version < 5 or (gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version < 1):
         pytest.skip()
 
@@ -1599,8 +1545,9 @@ def RemoveDriverMetadata(md):
     return md
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_45():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     # No metadata
@@ -1673,9 +1620,10 @@ def test_ecw_45():
 # Test non nearest upsampling
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_46():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.ecw_write == 0:
         pytest.skip()
 
     tmp_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_46.jp2', gdal.Open('data/int16.tif'))
@@ -1701,11 +1649,8 @@ def test_ecw_46():
 # /vsi reading with ECW (#6482)
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_47():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     if gdaltest.ecw_drv.major_version == 3:
         pytest.skip()
 
@@ -1733,11 +1678,8 @@ def test_ecw_47():
 # Test "Upward" orientation is forced by default
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_48():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ecw_upward = gdal.GetConfigOption('ECW_ALWAYS_UPWARD', 'TRUE')
     assert ecw_upward == 'TRUE' or ecw_upward == 'ON', \
         'ECW_ALWAYS_UPWARD default value must be TRUE.'
@@ -1753,11 +1695,8 @@ def test_ecw_48():
 # Test "Upward" orientation can be overridden with ECW_ALWAYS_UPWARD=FALSE
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_49():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ecw_upward_old = gdal.GetConfigOption('ECW_ALWAYS_UPWARD', 'TRUE')
     gdal.SetConfigOption('ECW_ALWAYS_UPWARD', 'FALSE')
     ds = gdal.Open('data/spif83_downward.ecw')
@@ -1771,10 +1710,8 @@ def test_ecw_49():
 ###############################################################################
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_online_1():
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
         pytest.skip()
 
@@ -1790,10 +1727,8 @@ def test_ecw_online_1():
 ###############################################################################
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_online_2():
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
         pytest.skip()
 
@@ -1814,9 +1749,8 @@ def test_ecw_online_2():
 ###############################################################################
 
 
+@pytest.mark.require_driver('JP2ECW')
 def ecw_online_3():
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
     if gdaltest.ecw_drv.major_version == 4:
         pytest.skip('4.x SDK gets unreliable results for jp2')
 
@@ -1845,10 +1779,8 @@ def ecw_online_3():
 ###############################################################################
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_online_4():
-
-    if gdaltest.jp2ecw_drv is None:
-        pytest.skip()
 
     if gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version == 2:
         pytest.skip('This test hangs on Linux in a mutex in the SDK 5.2.1')
@@ -1878,11 +1810,8 @@ def test_ecw_online_4():
 ###############################################################################
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_online_5():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ecw/red_flower.ecw', 'red_flower.ecw'):
         pytest.skip()
 
@@ -1909,11 +1838,8 @@ def test_ecw_online_5():
 # and in particular the .ecw extension, to make the ECW driver happy
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_online_6():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
         pytest.skip()
@@ -1946,11 +1872,8 @@ def test_ecw_online_6():
 # ECWv2 file with alpha channel (#6028)
 
 
+@pytest.mark.require_driver('JP2ECW')
 def test_ecw_online_7():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ecw/sandiego2m_null.ecw', 'sandiego2m_null.ecw'):
         pytest.skip()
 
@@ -2047,6 +1970,3 @@ def test_ecw_cleanup():
     except OSError:
         pass
     gdaltest.reregister_all_jpeg2000_drivers()
-
-
-

@@ -43,22 +43,14 @@ import pytest
 ###############################################################################
 # Verify we have the driver.
 
+pytestmark = pytest.mark.require_driver('WMS')
 
-def test_wms_1():
 
-    gdaltest.wms_drv = gdal.GetDriverByName('WMS')
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-    
 ###############################################################################
 # Open the WMS dataset
 
 
 def wms_2():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WMS service is online.
     # Nothing genuine but helps to keep the buildbot waterfall green.
@@ -81,8 +73,7 @@ def wms_2():
 
 
 def wms_3():
-
-    if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
+    if gdaltest.wms_ds is None:
         pytest.skip()
 
     if not gdaltest.wms_srv1_ok:
@@ -108,8 +99,7 @@ def wms_3():
 
 
 def wms_4():
-
-    if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
+    if gdaltest.wms_ds is None:
         pytest.skip()
 
     if not gdaltest.wms_srv1_ok:
@@ -135,10 +125,6 @@ def wms_4():
 
 
 def test_wms_5():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     # We don't need to check if the remote service is online as we
     # don't need a connection for this test
 
@@ -158,10 +144,6 @@ def test_wms_5():
 
 
 def test_wms_6():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     # We don't need to check if the remote service is online as we
     # don't need a connection for this test
 
@@ -181,10 +163,6 @@ def test_wms_6():
 
 
 def test_wms_7():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     srv = 'http://tilecache.osgeo.org/wms-c/Basic.py'
     gdaltest.metacarta_tms = False
     if gdaltest.gdalurlopen(srv) is None:
@@ -230,10 +208,6 @@ def test_wms_7():
 # Test TMS with cache
 
 def test_wms_8():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     # server_url = 'http://tilecache.osgeo.org/wms-c/Basic.py'
     # wmstms_version = '/1.0.0/basic'
     # zero_tile = wmstms_version + '/0/0/0.png'
@@ -445,10 +419,6 @@ def test_wms_8():
 
 
 def wms_9():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     tms = """<GDAL_WMS>
     <Service name="TiledWMS">
         <ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>
@@ -477,10 +447,6 @@ def wms_9():
 
 
 def wms_10():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     if not gdaltest.wms_srv1_ok:
         pytest.skip()
 
@@ -504,10 +470,6 @@ def wms_10():
 
 
 def test_wms_11():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     if gdaltest.skip_on_travis():
         pytest.skip()
 
@@ -535,10 +497,6 @@ def test_wms_11():
 
 
 def test_wms_12():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     if gdaltest.metacarta_tms is not True:
         pytest.skip()
 
@@ -571,10 +529,6 @@ def test_wms_12():
 
 
 def test_wms_13():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/DNEC_250K.vrt")
     if ds.ReadRaster(0, 0, 1024, 682) is None:
         srv = 'http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GeCapabilities'
@@ -588,9 +542,6 @@ def test_wms_13():
 # Test reading Virtual Earth layer
 
 def test_wms_14():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
     ds = gdal.Open("""<GDAL_WMS>
   <Service name="VirtualEarth">
     <ServerUrl>http://a${server_num}.ortho.tiles.virtualearth.net/tiles/a${quadkey}.jpeg?g=90</ServerUrl>
@@ -623,9 +574,6 @@ def test_wms_14():
 
 
 def test_wms_15():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
     src_ds = gdal.Open("http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true")
     if src_ds is None:
         srv = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true'
@@ -663,10 +611,6 @@ def test_wms_15():
 
 
 def test_wms_16():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     if not gdaltest.run_slow_tests():
         # server often returns a 504 after ages; this test can take minutes
         pytest.skip()
@@ -744,10 +688,6 @@ def test_wms_16():
 
 
 def wms_17():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     srv = 'http://onmoon.lmmp.nasa.gov/sites/wms.cgi?'
     if gdaltest.gdalurlopen(srv) is None:
         pytest.skip()
@@ -766,10 +706,6 @@ def wms_17():
 
 
 def test_wms_18():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     # We don't need to check if the remote service is online as we
     # don't need a connection for this test.
 
@@ -799,10 +735,6 @@ def test_wms_18():
 
 
 def test_wms_19():
-
-    if gdaltest.wms_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('IIP:http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif')
 
     if ds is None:

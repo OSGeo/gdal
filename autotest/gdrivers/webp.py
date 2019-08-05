@@ -35,26 +35,15 @@ from osgeo import gdal
 import gdaltest
 import pytest
 
-###############################################################################
-# Test if WEBP driver is present
+
+pytestmark = pytest.mark.require_driver('WEBP')
 
 
-def test_webp_1():
-
-    gdaltest.webp_drv = gdal.GetDriverByName('WEBP')
-    if gdaltest.webp_drv is None:
-        pytest.skip()
-
-    
 ###############################################################################
 # Open() test
 
 
 def test_webp_2():
-
-    if gdaltest.webp_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/rgbsmall.webp')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 21464 or cs == 21450 or cs == 21459, \
@@ -65,10 +54,6 @@ def test_webp_2():
 
 
 def test_webp_3():
-
-    if gdaltest.webp_drv is None:
-        pytest.skip()
-
     src_ds = gdal.Open('data/rgbsmall.tif')
     out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_3.webp', src_ds, options=['QUALITY=80'])
     src_ds = None
@@ -86,10 +71,6 @@ def test_webp_3():
 
 
 def test_webp_4():
-
-    if gdaltest.webp_drv is None:
-        pytest.skip()
-
     md = gdaltest.webp_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1:
         pytest.skip()
@@ -113,10 +94,6 @@ def test_webp_4():
 
 
 def test_webp_5():
-
-    if gdaltest.webp_drv is None:
-        pytest.skip()
-
     md = gdaltest.webp_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1:
         pytest.skip()

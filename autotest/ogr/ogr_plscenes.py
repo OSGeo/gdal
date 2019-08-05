@@ -30,34 +30,21 @@
 ###############################################################################
 
 
-
 from osgeo import ogr
 from osgeo import gdal
 
 import gdaltest
 import pytest
 
-###############################################################################
-# Find PLScenes driver
 
+pytestmark = pytest.mark.require_driver('PLScenes')
 
-def test_ogr_plscenes_init():
-
-    gdaltest.plscenes_drv = ogr.GetDriverByName('PLScenes')
-
-    if gdaltest.plscenes_drv is not None:
-        return
-    pytest.skip()
 
 ###############################################################################
 # Test Data V1 API catalog listing with a single catalog
 
 
 def test_ogr_plscenes_data_v1_catalog_no_paging():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types', '{ "item_types": [ { "id": "PSScene3Band" } ] }')
     gdal.SetConfigOption('PL_URL', '/vsimem/data_v1/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options=['VERSION=data_v1', 'API_KEY=foo'])
@@ -77,10 +64,6 @@ def test_ogr_plscenes_data_v1_catalog_no_paging():
 
 
 def test_ogr_plscenes_data_v1_catalog_paging():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types', '{"_links": { "_next" : "/vsimem/data_v1/item-types/page_2"}, "item_types": [ { "id": "PSScene3Band" } ] }')
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types/page_2', '{ "item_types": [ { "id": "PSScene4Band" } ] }')
     gdal.SetConfigOption('PL_URL', '/vsimem/data_v1/')
@@ -106,10 +89,6 @@ def test_ogr_plscenes_data_v1_catalog_paging():
 
 
 def test_ogr_plscenes_data_v1_nominal():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer('/vsimem/data_v1/item-types',
                            """{ "item_types": [
     {"display_description" : "display_description",
@@ -523,10 +502,6 @@ def test_ogr_plscenes_data_v1_nominal():
 
 
 def test_ogr_plscenes_data_v1_errors():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
-
     # No PL_API_KEY
     gdal.SetConfigOption('PL_URL', '/vsimem/data_v1/')
     old_key = gdal.GetConfigOption('PL_API_KEY')
@@ -623,10 +598,6 @@ def test_ogr_plscenes_data_v1_errors():
 
 
 def test_ogr_plscenes_data_v1_live():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
-
     api_key = gdal.GetConfigOption('PL_API_KEY')
     if api_key is None:
         pytest.skip('Skipping test as PL_API_KEY not defined')
@@ -703,6 +674,3 @@ def test_ogr_plscenes_data_v1_live():
     ds = gdal.Open('PLScenes:version=data_v1,itemtypes=%s,scene=%s,asset=%s' % (catalog, scene, asset_name))
     assert ds is not None
     assert ds.RasterCount != 0
-
-
-

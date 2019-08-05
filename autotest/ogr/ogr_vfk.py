@@ -38,17 +38,15 @@ from osgeo import gdal
 from osgeo import ogr
 import pytest
 
+
+pytestmark = pytest.mark.require_driver('VFK')
+
 ###############################################################################
 # Open file, check number of layers, get first layer,
 # check number of fields and features
 
 
 def test_ogr_vfk_1():
-
-    gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_VFK_DB_OVERWRITE', 'YES')
 
     gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
@@ -76,10 +74,6 @@ def test_ogr_vfk_1():
 
 
 def test_ogr_vfk_2():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     gdaltest.vfk_layer_par.ResetReading()
 
     feat = gdaltest.vfk_layer_par.GetNextFeature()
@@ -102,10 +96,6 @@ def test_ogr_vfk_2():
 
 
 def test_ogr_vfk_3():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     gdaltest.vfk_layer_sobr = gdaltest.vfk_ds.GetLayer(43)
 
     assert gdaltest.vfk_layer_sobr.GetName() == 'SOBR', \
@@ -128,10 +118,6 @@ def test_ogr_vfk_3():
 
 
 def test_ogr_vfk_4():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
 
     assert gdaltest.vfk_layer_sbp, 'did not get expected layer name "SBP"'
@@ -146,10 +132,6 @@ def test_ogr_vfk_4():
 
 
 def test_ogr_vfk_5():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     gdaltest.vfk_layer_hp = gdaltest.vfk_ds.GetLayerByName('HP')
 
     assert gdaltest.vfk_layer_hp != 'HP', 'did not get expected layer name "HP"'
@@ -164,10 +146,6 @@ def test_ogr_vfk_5():
 
 
 def test_ogr_vfk_6():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     gdaltest.vfk_layer_par = None
     gdaltest.vfk_layer_sobr = None
     gdaltest.vfk_ds = None
@@ -196,10 +174,6 @@ def test_ogr_vfk_6():
 
 
 def test_ogr_vfk_7():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     defn = gdaltest.vfk_layer_par.GetLayerDefn()
 
     for idx, name, ctype in ((0, "ID", ogr.OFTInteger64),
@@ -216,10 +190,6 @@ def test_ogr_vfk_7():
 
 
 def test_ogr_vfk_8():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     # open by SQLite driver first
     vfk_ds_db = ogr.Open('data/bylany.db')
     count1 = vfk_ds_db.GetLayerCount()
@@ -241,10 +211,6 @@ def test_ogr_vfk_8():
 
 
 def test_ogr_vfk_9():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     # open with suppressing geometry
     vfk_ds = None
     vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options=['SUPPRESS_GEOMETRY=YES'])
@@ -265,10 +231,6 @@ def test_ogr_vfk_9():
 
 
 def test_ogr_vfk_10():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     # open with suppressing geometry
     vfk_ds = None
     vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options=['FILE_FIELD=YES'])
@@ -300,10 +262,6 @@ def test_ogr_vfk_11():
             count += 1
 
         return count
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     count = gdaltest.vfk_layer_par.GetFeatureCount()
     for i in range(2):  # perform check twice, mix with random access
         if count != count_features():
@@ -316,10 +274,6 @@ def test_ogr_vfk_11():
 
 
 def test_ogr_vfk_12():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
 
     gdaltest.vfk_layer_sbp.SetAttributeFilter("PARAMETRY_SPOJENI = '16'")
@@ -337,10 +291,6 @@ def test_ogr_vfk_12():
 
 
 def test_ogr_vfk_cleanup():
-
-    if gdaltest.vfk_drv is None:
-        pytest.skip()
-
     gdaltest.vfk_layer_par = None
     gdaltest.vfk_layer_hp = None
     gdaltest.vfk_layer_sobr = None

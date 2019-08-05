@@ -53,23 +53,14 @@ init_list = [
 ###############################################################################
 # Verify we have the driver.
 
+pytestmark = pytest.mark.require_driver('GTA')
 
-def test_gta_1():
 
-    gdaltest.gta_drv = gdal.GetDriverByName('GTA')
-    if gdaltest.gta_drv is None:
-        pytest.skip()
-
-    
 ###############################################################################
 # Test updating existing dataset, check srs, check gt
 
 
 def test_gta_2():
-
-    if gdaltest.gta_drv is None:
-        pytest.skip()
-
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.gta_drv.CreateCopy('/vsimem/byte.gta', src_ds)
     out_ds = None
@@ -108,10 +99,6 @@ def test_gta_2():
 
 
 def test_gta_3():
-
-    if gdaltest.gta_drv is None:
-        pytest.skip()
-
     src_ds = gdal.Open('../gcore/data/gcps.vrt')
 
     new_ds = gdaltest.gta_drv.CreateCopy('/vsimem/gta_3.gta', src_ds)
@@ -140,10 +127,6 @@ def test_gta_3():
 
 
 def test_gta_4():
-
-    if gdaltest.gta_drv is None:
-        pytest.skip()
-
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 17)
     src_ds.GetRasterBand(1).Fill(255)
     src_ds.GetRasterBand(1).ComputeStatistics(False)
@@ -185,10 +168,6 @@ def test_gta_4():
 
 
 def test_gta_5():
-
-    if gdaltest.gta_drv is None:
-        pytest.skip()
-
     src_ds = gdal.Open('data/byte.tif')
 
     compress_list = ['NONE',
@@ -217,12 +196,8 @@ def test_gta_5():
     init_list,
     ids=[tup[0].split('.')[0] for tup in init_list],
 )
-@pytest.mark.require_driver('GTA')
 def test_gta_create(filename, checksum):
     if filename != 'byte_signed.tif':
         filename = '../../gcore/data/' + filename
     ut = gdaltest.GDALTest('GTA', filename, 1, checksum, options=[])
     ut.testCreateCopy()
-
-
-
