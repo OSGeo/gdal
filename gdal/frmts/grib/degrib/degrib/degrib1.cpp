@@ -1667,14 +1667,24 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    f_convert = ((meta->gds.scan & 0xe0) != 0x40);
 
    if (f_bms) {
+      meta->gridAttrib.f_miss = 1;
+      meta->gridAttrib.missPri = UNDEFINED;
+   }
+   else
+   {
+      meta->gridAttrib.f_miss = 0;
+   }
+
+   if( !data )
+       return 0;
+
+   if (f_bms) {
 /*
 #ifdef DEBUG
       printf ("There is a bitmap?\n");
 #endif
 */
       /* Start unpacking the data, assuming there is a bitmap. */
-      meta->gridAttrib.f_miss = 1;
-      meta->gridAttrib.missPri = UNDEFINED;
       for (i = 0; i < meta->gds.numPts; i++) {
          /* Find the destination index. */
          if (f_convert) {
@@ -1756,7 +1766,6 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
 #endif
 
       /* Start unpacking the data, assuming there is NO bitmap. */
-      meta->gridAttrib.f_miss = 0;
       for (i = 0; i < meta->gds.numPts; i++) {
          if (numBits != 0) {
             /* Find the destination index. */
@@ -1868,7 +1877,7 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
    uInt4 curLoc;        /* Current location in the GRIB message. */
    char f_gds;          /* flag if there is a gds section. */
    char f_bms;          /* flag if there is a bms section. */
-   double *grib_Data;   /* A pointer to Grib_Data for ease of manipulation. */
+   double *grib_Data = nullptr;   /* A pointer to Grib_Data for ease of manipulation. */
    uChar *bitmap = nullptr; /* A char field (0=noData, 1=data) set up in BMS. */
    short int DSF;       /* Decimal Scale Factor for unpacking the data. */
    double unitM = 1;    /* M in y = Mx + B, for unit conversion. */
@@ -1946,8 +1955,10 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
       }
    }
 
-   /* Allocate memory for the grid. */
-   if (meta->gds.numPts > *grib_DataLen) {
+   if( Grib_Data )
+   {
+     /* Allocate memory for the grid. */
+     if (meta->gds.numPts > *grib_DataLen) {
       if( meta->gds.numPts > 100 * 1024 * 1024 )
       {
           vsi_l_offset curPos = VSIFTellL(fp);
@@ -1972,8 +1983,9 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
         *grib_DataLen = 0;
         return -1;
       }
+     }
+     grib_Data = *Grib_Data;
    }
-   grib_Data = *Grib_Data;
 
    /* Get the Bit Map Section. */
    if (f_bms) {
