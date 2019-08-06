@@ -6880,3 +6880,43 @@ GDALDatasetH GDALMDArrayAsClassicDataset(GDALMDArrayH hArray,
     return GDALDataset::ToHandle(
         hArray->m_poImpl->AsClassicDataset(iXDim, iYDim));
 }
+
+
+//! @cond Doxygen_Suppress
+
+GDALAttributeString::GDALAttributeString(const std::string& osParentName,
+                  const std::string& osName,
+                  const std::string& osValue):
+        GDALAbstractMDArray(osParentName, osName),
+        GDALAttribute(osParentName, osName),
+        m_osValue(osValue)
+{}
+
+const std::vector<std::shared_ptr<GDALDimension>>& GDALAttributeString::GetDimensions() const
+{
+    return m_dims;
+}
+
+const GDALExtendedDataType &GDALAttributeString::GetDataType() const
+{
+    return m_dt;
+}
+
+bool GDALAttributeString::IRead(const GUInt64* ,
+            const size_t* ,
+            const GInt64* ,
+            const GPtrDiff_t* ,
+            const GDALExtendedDataType& bufferDataType,
+            void* pDstBuffer) const
+{
+    if( bufferDataType.GetClass() != GEDTC_STRING )
+        return false;
+    char* pszStr = static_cast<char*>(VSIMalloc(m_osValue.size() + 1));
+    if( !pszStr ) 
+        return false;
+    memcpy(pszStr, m_osValue.c_str(), m_osValue.size() + 1);
+    *static_cast<char**>(pDstBuffer) = pszStr;
+    return true;
+}
+
+//! @endcond

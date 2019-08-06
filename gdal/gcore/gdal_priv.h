@@ -2194,6 +2194,37 @@ public:
 
 };
 
+/************************************************************************/
+/*                            GDALAttributeString                       */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+class CPL_DLL GDALAttributeString: public GDALAttribute
+{
+    std::vector<std::shared_ptr<GDALDimension>> m_dims{};
+    GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();
+    std::string m_osValue;
+
+protected:
+
+    bool IRead(const GUInt64* ,
+               const size_t* ,
+               const GInt64* ,
+               const GPtrDiff_t* ,
+               const GDALExtendedDataType& bufferDataType,
+               void* pDstBuffer) const override;
+
+public:
+    GDALAttributeString(const std::string& osParentName,
+                  const std::string& osName,
+                  const std::string& osValue);
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override;
+
+    const GDALExtendedDataType &GetDataType() const override;
+};
+//! @endcond
+
 /* ******************************************************************** */
 /*                              GDALMDArray                             */
 /* ******************************************************************** */

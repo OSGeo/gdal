@@ -881,49 +881,6 @@ public:
 };
 
 /************************************************************************/
-/*                            GDALAttributeString                       */
-/************************************************************************/
-
-class GDALAttributeString: public GDALAttribute
-{
-    std::vector<std::shared_ptr<GDALDimension>> m_dims{};
-    GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();
-    std::string m_osValue;
-
-protected:
-
-    bool IRead(const GUInt64* ,
-               const size_t* ,
-               const GInt64* ,
-               const GPtrDiff_t* ,
-               const GDALExtendedDataType& bufferDataType,
-               void* pDstBuffer) const override
-    {
-        if( bufferDataType.GetClass() != GEDTC_STRING )
-            return false;
-        char* pszStr = static_cast<char*>(VSIMalloc(m_osValue.size() + 1));
-        if( !pszStr ) 
-            return false;
-        memcpy(pszStr, m_osValue.c_str(), m_osValue.size() + 1);
-        *static_cast<char**>(pDstBuffer) = pszStr;
-        return true;
-    }
-
-public:
-    GDALAttributeString(const std::string& osParentName,
-                  const std::string& osName,
-                  const std::string& osValue):
-        GDALAbstractMDArray(osParentName, osName),
-        GDALAttribute(osParentName, osName),
-        m_osValue(osValue)
-    {}
-
-    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
-
-    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
-};
-
-/************************************************************************/
 /*                        ~HDF4SharedResources()                        */
 /************************************************************************/
 
