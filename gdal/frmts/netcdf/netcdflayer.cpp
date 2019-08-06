@@ -186,9 +186,8 @@ bool netCDFLayer::Create(char **papszOptions,
     }
 
     const char * singleDatumMode = CSLFetchNameValueDef(papszOptions, "GROUPLESS_WRITE_BACK", "NO");
-    std::string singleDatumMode_s = std::string(singleDatumMode);
 
-    if(singleDatumMode_s == "YES")
+    if(CPLTestBool(singleDatumMode))
     {
         m_poDS->GeometryScribe.setSingleDatumMode(true);    
         m_poDS->FieldScribe.setSingleDatumMode(true);    
