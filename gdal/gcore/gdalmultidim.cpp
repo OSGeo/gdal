@@ -6919,4 +6919,78 @@ bool GDALAttributeString::IRead(const GUInt64* ,
     return true;
 }
 
+GDALAttributeNumeric::GDALAttributeNumeric(const std::string& osParentName,
+                  const std::string& osName,
+                  double dfValue):
+        GDALAbstractMDArray(osParentName, osName),
+        GDALAttribute(osParentName, osName),
+        m_dt(GDALExtendedDataType::Create(GDT_Float64)),
+        m_dfValue(dfValue)
+{}
+
+GDALAttributeNumeric::GDALAttributeNumeric(const std::string& osParentName,
+                  const std::string& osName,
+                  int nValue):
+        GDALAbstractMDArray(osParentName, osName),
+        GDALAttribute(osParentName, osName),
+        m_dt(GDALExtendedDataType::Create(GDT_Int32)),
+        m_nValue(nValue)
+{}
+
+GDALAttributeNumeric::GDALAttributeNumeric(const std::string& osParentName,
+                  const std::string& osName,
+                  const std::vector<GUInt32>& anValues):
+        GDALAbstractMDArray(osParentName, osName),
+        GDALAttribute(osParentName, osName),
+        m_dt(GDALExtendedDataType::Create(GDT_UInt32)),
+        m_anValuesUInt32(anValues)
+{
+    m_dims.push_back(std::make_shared<GDALDimension>(
+        std::string(), "dim0", std::string(), std::string(), m_anValuesUInt32.size()));
+}
+
+const std::vector<std::shared_ptr<GDALDimension>>& GDALAttributeNumeric::GetDimensions() const
+{
+    return m_dims;
+}
+
+const GDALExtendedDataType &GDALAttributeNumeric::GetDataType() const
+{
+    return m_dt;
+}
+
+bool GDALAttributeNumeric::IRead(const GUInt64* arrayStartIdx,
+                                 const size_t* count,
+                                 const GInt64* arrayStep,
+                                 const GPtrDiff_t* bufferStride,
+                                 const GDALExtendedDataType& bufferDataType,
+                                 void* pDstBuffer) const
+{
+    if( m_dims.empty() )
+    {
+        if( m_dt.GetNumericDataType() == GDT_Float64 )
+            GDALExtendedDataType::CopyValue(&m_dfValue, m_dt, pDstBuffer, bufferDataType);
+        else
+        {
+            CPLAssert( m_dt.GetNumericDataType() == GDT_Int32 );
+            GDALExtendedDataType::CopyValue(&m_nValue, m_dt, pDstBuffer, bufferDataType);
+        }
+    }
+    else
+    {
+        CPLAssert( m_dt.GetNumericDataType() == GDT_UInt32 );
+        GByte* pabyDstBuffer = static_cast<GByte*>(pDstBuffer);
+        for(size_t i = 0; i < count[0]; ++i )
+        {
+            GDALExtendedDataType::CopyValue(
+                &m_anValuesUInt32[static_cast<size_t>(arrayStartIdx[0] + i * arrayStep[0])],
+                m_dt,
+                pabyDstBuffer,
+                bufferDataType);
+            pabyDstBuffer += bufferDataType.GetSize() * bufferStride[0];
+        }
+    }
+    return true;
+}
+
 //! @endcond

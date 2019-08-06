@@ -2225,6 +2225,45 @@ public:
 };
 //! @endcond
 
+/************************************************************************/
+/*                           GDALAttributeNumeric                       */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+class CPL_DLL GDALAttributeNumeric: public GDALAttribute
+{
+    std::vector<std::shared_ptr<GDALDimension>> m_dims{};
+    GDALExtendedDataType m_dt;
+    int m_nValue = 0;
+    double m_dfValue = 0;
+    std::vector<GUInt32> m_anValuesUInt32{};
+
+protected:
+
+    bool IRead(const GUInt64* ,
+               const size_t* ,
+               const GInt64* ,
+               const GPtrDiff_t* ,
+               const GDALExtendedDataType& bufferDataType,
+               void* pDstBuffer) const override;
+
+public:
+    GDALAttributeNumeric(const std::string& osParentName,
+                  const std::string& osName,
+                  double dfValue);
+    GDALAttributeNumeric(const std::string& osParentName,
+                  const std::string& osName,
+                  int nValue);
+    GDALAttributeNumeric(const std::string& osParentName,
+                  const std::string& osName,
+                  const std::vector<GUInt32>& anValues);
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override;
+
+    const GDALExtendedDataType &GetDataType() const override;
+};
+//! @endcond
+
 /* ******************************************************************** */
 /*                              GDALMDArray                             */
 /* ******************************************************************** */
