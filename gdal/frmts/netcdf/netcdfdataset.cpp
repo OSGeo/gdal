@@ -4204,7 +4204,7 @@ CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
 /************************************************************************/
 
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
-                                char **ppszCFProjection, bool bWriteGDALTags, std::string& srsVarName)
+                                char **ppszCFProjection, bool bWriteGDALTags, const std::string& srsVarName)
 {
     char *pszCFProjection = nullptr;
 
@@ -4480,16 +4480,6 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
     return NCDFVarID;
 }
 
-// Use a default name (variable name: crs)
-int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
-                                char **ppszCFProjection, bool bWriteGDALTags)
-{
-    std::string srsVarName = ""; // for versions NOT CF-1.8
-
-    return NCDFWriteSRSVariable(cdfid, poSRS, ppszCFProjection,
-                                bWriteGDALTags, srsVarName);
-}
-
 /************************************************************************/
 /*                   NCDFWriteLonLatVarsAttributes()                    */
 /************************************************************************/
@@ -4535,11 +4525,6 @@ void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID, nccf
         vcdf->nc_put_vatt_text(nVarLonID, CF_LNG_NAME, CF_LONGITUDE_LNG_NAME);
         vcdf->nc_put_vatt_text(nVarLonID, CF_UNITS, CF_DEGREES_EAST);
     }
-}
-
-void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID)
-{
-    NCDFWriteLonLatVarsAttributes(cdfid, nVarLonID, nVarLatID, nullptr);
 }
 
 /************************************************************************/
