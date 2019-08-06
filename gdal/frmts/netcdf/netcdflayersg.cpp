@@ -363,7 +363,7 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
     return feat;
 }
 
-std::shared_ptr<std::string> netCDFDataset::generateLogName()
+std::string netCDFDataset::generateLogName()
 {
-    return std::shared_ptr<std::string>(new std::string(CPLGenerateTempFilename(nullptr))); 
+    return std::string(CPLGenerateTempFilename(nullptr)); 
 }

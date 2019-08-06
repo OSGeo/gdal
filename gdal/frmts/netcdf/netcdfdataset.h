@@ -954,7 +954,7 @@ class netCDFDataset final: public GDALPamDataset
     virtual ~netCDFDataset();
     void SGCommitPendingTransaction();
     void SGLogPendingTransaction();
-    std::shared_ptr<std::string> generateLogName();
+    std::string generateLogName();
 
     /* Projection/GT */
     CPLErr      GetGeoTransform( double * ) override;
