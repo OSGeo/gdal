@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+import pytest
 
 from osgeo import osr
 
@@ -43,10 +43,10 @@ def test_osr_pm_1():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27572)
 
-    assert abs(float(srs.GetAttrValue('PRIMEM', 1)) - 2.33722917) <= 0.0000005, \
+    assert float(srs.GetAttrValue('PRIMEM', 1)) == pytest.approx(2.33722917, abs=1e-9), \
         'Wrong prime meridian.'
 
-    assert abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) - 0.0) <= 0.0000005, \
+    assert srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) == pytest.approx(0), \
         'Wrong central meridian.'
 
 ###############################################################################
@@ -74,10 +74,10 @@ def test_osr_pm_3():
     srs = osr.SpatialReference()
     srs.ImportFromProj4('+proj=utm +zone=30 +datum=WGS84 +pm=bogota')
 
-    assert abs(float(srs.GetAttrValue('PRIMEM', 1)) + 74.08091666678081) <= 0.0000005, \
+    assert float(srs.GetAttrValue('PRIMEM', 1)) == pytest.approx(-74.08091666678081, abs=0.0000005), \
         'Wrong prime meridian.'
 
-    assert abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) + 3.0) <= 0.0000005, \
+    assert srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) == pytest.approx(-3.0, rel=1e-10), \
         'Wrong central meridian.'
 
 
