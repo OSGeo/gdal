@@ -164,11 +164,11 @@ namespace nccfdriver
             void invalidate();
             void setLen(size_t len) { this->dim_len = len; }
         public:
-                    netCDFVDimension(const char * name, size_t len, int dimid) :
-                        real_dim_name(name),
-                        v_did(dimid),
-                        dim_len(len)
-                    {}
+            netCDFVDimension(const char * name, size_t len, int dimid) :
+                             real_dim_name(name),
+                             v_did(dimid),
+                             dim_len(len)
+                             {}
 
             std::string& getName() { return this->real_dim_name; }
             size_t getLen() { return this->dim_len; }
@@ -288,7 +288,7 @@ namespace nccfdriver
             void nc_vmap();
 
             // Attribute function(s)
-            template<class attrC, class attrT> void nc_put_vatt_generic(int varid, const char* name, const attrT* out)
+            template<class attrC, class attrT> void nc_put_vatt_generic(int varid, const char* name, const attrT* value)
             {
 
                 if(varid >= static_cast<int>(varList.size()) || varid < 0)
@@ -297,47 +297,47 @@ namespace nccfdriver
                 }
 
                 netCDFVVariable& v = virtualVIDToVar(varid);
-                        v.getAttributes().push_back(std::shared_ptr<netCDFVAttribute>(new attrC(name, out)));
+                        v.getAttributes().push_back(std::shared_ptr<netCDFVAttribute>(new attrC(name, value)));
             }
 
-            void nc_put_vatt_text(int varid, const char * name, const char * out);
-            void nc_put_vatt_int(int varid, const char* name, const int* out);
-            void nc_put_vatt_double(int varid, const char* name, const double* out);
-            void nc_put_vatt_float(int varid, const char* name, const float* out);
-            void nc_put_vatt_byte(int varid, const char* name, const signed char* out);
+            void nc_put_vatt_text(int varid, const char * name, const char * value);
+            void nc_put_vatt_int(int varid, const char* name, const int* value);
+            void nc_put_vatt_double(int varid, const char* name, const double* value);
+            void nc_put_vatt_float(int varid, const char* name, const float* value);
+            void nc_put_vatt_byte(int varid, const char* name, const signed char* value);
 
             // Writing Functions
-            template<class out_T> void nc_put_vvar_generic(int varid, const size_t* index, const out_T* out)
+            template<class out_T> void nc_put_vvar_generic(int varid, const size_t* index, const out_T* value)
             {
                 int rvarid = virtualVIDToVar(varid).getRealID();
 
                 if(rvarid == INVALID_VAR_ID)
-                    return; // invalidated variable, don't care condition that Scribe relies on
+                    return; // invalidated variable, specific condition that Scribe relies on
 
-                if(nc_put_var1(ncid, rvarid, index, out) != NC_NOERR)
+                if(nc_put_var1(ncid, rvarid, index, value) != NC_NOERR)
                 {
                     throw SG_Exception_VWrite_Failure("variable", "datum");
                 }
             }
 
-            template<class outArr_T> void nc_put_vvara_generic(int varid, const size_t* index, const size_t* count, const outArr_T* out)
+            template<class outArr_T> void nc_put_vvara_generic(int varid, const size_t* index, const size_t* count, const outArr_T* value)
             {
                 int rvarid = virtualVIDToVar(varid).getRealID();
 
                 if (rvarid == INVALID_VAR_ID)
-                    return; // invalidated variable, don't care condition that Scribe relies on
+                    return; // invalidated variable, specific condition that Scribe relies on
 
-                if (nc_put_vara(ncid, rvarid, index, count, out) != NC_NOERR)
+                if (nc_put_vara(ncid, rvarid, index, count, value) != NC_NOERR)
                 {
                     throw SG_Exception_VWrite_Failure("variable", "data array");
                 }
             }
 
-            void nc_put_vvar1_text(int varid, const size_t* index, const char* out);
-            void nc_put_vvara_text(int varid, const size_t* start, const size_t* index, const char* out);
+            void nc_put_vvar1_text(int varid, const size_t* index, const char* value);
+            void nc_put_vvara_text(int varid, const size_t* start, const size_t* index, const char* value);
 
 #ifdef NETCDF_HAS_NC4
-            void nc_put_vvar1_string(int varid, const size_t* index, const char** out);
+            void nc_put_vvar1_string(int varid, const size_t* index, const char** value);
 #endif
 
             // Equivalent "enquiry" functions

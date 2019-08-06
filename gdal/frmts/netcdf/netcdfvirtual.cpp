@@ -88,7 +88,8 @@ namespace nccfdriver
         }
 
         // Add to lookup tables
-        varList.push_back(netCDFVVariable(name, xtype, ndims, dimidsp, varTicket++));
+        varList.push_back(netCDFVVariable(name, xtype, ndims, dimidsp, varTicket));
+        varTicket++;
         nameVarTable.insert(std::pair<std::string, int>(std::string(name), varID));
 
         // Return virtual dimID
@@ -229,29 +230,29 @@ namespace nccfdriver
      *
      */
 
-    void netCDFVID::nc_put_vatt_text(int varid, const char* name, const char* out)
+    void netCDFVID::nc_put_vatt_text(int varid, const char* name, const char* value)
     {
-        nc_put_vatt_generic<netCDFVTextAttribute, char>(varid, name, out);
+        nc_put_vatt_generic<netCDFVTextAttribute, char>(varid, name, value);
     }
 
-    void netCDFVID::nc_put_vatt_int(int varid, const char* name, const int* out)
+    void netCDFVID::nc_put_vatt_int(int varid, const char* name, const int* value)
     {
-        nc_put_vatt_generic<netCDFVIntAttribute, int>(varid, name, out);
+        nc_put_vatt_generic<netCDFVIntAttribute, int>(varid, name, value);
     }
 
-    void netCDFVID::nc_put_vatt_double(int varid, const char* name, const double* out)
+    void netCDFVID::nc_put_vatt_double(int varid, const char* name, const double* value)
     {
-        nc_put_vatt_generic<netCDFVDoubleAttribute, double>(varid, name, out);
+        nc_put_vatt_generic<netCDFVDoubleAttribute, double>(varid, name, value);
     }
 
-    void netCDFVID::nc_put_vatt_float(int varid, const char* name, const float* out)
+    void netCDFVID::nc_put_vatt_float(int varid, const char* name, const float* value)
     {
-        nc_put_vatt_generic<netCDFVFloatAttribute, float>(varid, name, out);
+        nc_put_vatt_generic<netCDFVFloatAttribute, float>(varid, name, value);
         }
 
-    void netCDFVID::nc_put_vatt_byte(int varid, const char* name, const signed char* out)
+    void netCDFVID::nc_put_vatt_byte(int varid, const char* name, const signed char* value)
     {
-        nc_put_vatt_generic<netCDFVByteAttribute, signed char>(varid, name, out);
+        nc_put_vatt_generic<netCDFVByteAttribute, signed char>(varid, name, value);
         }
 
     void netCDFVTextAttribute::vsync(int realncid, int realvarid)
@@ -289,14 +290,14 @@ namespace nccfdriver
     }
 
 #ifdef NETCDF_HAS_NC4
-    void netCDFVID::nc_put_vvar1_string(int varid, const size_t* index, const char** out)
+    void netCDFVID::nc_put_vvar1_string(int varid, const size_t* index, const char** value)
     {
         int rvarid = virtualVIDToVar(varid).getRealID();
 
         if(rvarid == INVALID_VAR_ID)
             return; // invalidated variable
 
-        if(nc_put_var1_string(ncid, rvarid, index, out) != NC_NOERR)
+        if(nc_put_var1_string(ncid, rvarid, index, value) != NC_NOERR)
         {
             throw SG_Exception_VWrite_Failure("variable", "datum");
         }
