@@ -3870,6 +3870,8 @@ public:
     void GuessGeoTransform()
     {
         const auto& dims(m_poArray->GetDimensions());
+        if( dims.size() < 2 )
+            return;
         auto poVarX = dims[m_iXDim]->GetIndexingVariable();
         auto poVarY = dims[m_iYDim]->GetIndexingVariable();
         if( poVarX && poVarX->GetDimensionCount() == 1 &&
@@ -3939,19 +3941,19 @@ public:
     {
         const auto& dims(m_poArray->GetDimensions());
         const auto nDimCount = dims.size();
-        nRasterYSize = static_cast<int>(
+        nRasterYSize = nDimCount < 2 ? 1 : static_cast<int>(
             std::min(static_cast<GUInt64>(INT_MAX), dims[iYDim]->GetSize()));
         nRasterXSize = static_cast<int>(
             std::min(static_cast<GUInt64>(INT_MAX), dims[iXDim]->GetSize()));
         eAccess = array->IsWritable() ? GA_Update: GA_ReadOnly;
 
-        const size_t nNewDimCount = nDimCount - 2;
+        const size_t nNewDimCount = nDimCount >= 2 ? nDimCount - 2 : 0;
         std::vector<GUInt64> anOtherDimCoord(nNewDimCount);
         std::vector<GUInt64> anStackIters(nDimCount);
         std::vector<size_t> anMapNewToOld(nNewDimCount);
         for( size_t i = 0, j = 0; i < nDimCount; ++i )
         {
-            if( i != iXDim && i != iYDim )
+            if( i != iXDim && !(nDimCount >= 2 && i == iYDim) )
             {
                 anMapNewToOld[j] = i;
                 j++;
@@ -4017,6 +4019,8 @@ lbl_return_to_caller:
 
     const OGRSpatialReference* GetSpatialRef() const override
     {
+        if( m_poArray->GetDimensionCount() < 2 )
+            return nullptr;
         m_poSRS = m_poArray->GetSpatialRef();
         if( m_poSRS )
         {
@@ -4049,7 +4053,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
     const auto& dims(poArray->GetDimensions());
     const auto nDimCount(dims.size());
     const auto blockSize(poArray->GetBlockSize());
-    nBlockYSize = blockSize[poDSIn->m_iYDim] ? static_cast<int>(
+    nBlockYSize = (nDimCount >= 2 && blockSize[poDSIn->m_iYDim]) ? static_cast<int>(
         std::min(static_cast<GUInt64>(INT_MAX), blockSize[poDSIn->m_iYDim])) : 1;
     nBlockXSize = blockSize[poDSIn->m_iXDim] ? static_cast<int>(
         std::min(static_cast<GUInt64>(INT_MAX), blockSize[poDSIn->m_iXDim])) :
@@ -4061,7 +4065,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
     m_anStride.resize(nDimCount);
     for( size_t i = 0, j = 0; i < nDimCount; ++i )
     {
-        if( i != poDSIn->m_iXDim && i != poDSIn->m_iYDim )
+        if( i != poDSIn->m_iXDim && !(nDimCount >= 2 && i == poDSIn->m_iYDim) )
         {
             std::string dimName(dims[i]->GetName());
             GUInt64 nIndex = anOtherDimCoord[j];
@@ -4236,13 +4240,16 @@ CPLErr GDALRasterBandFromArray::IRasterIO( GDALRWFlag eRWFlag,
         (nPixelSpaceBuf % nDTSize) == 0 && (nLineSpaceBuf % nDTSize) == 0 )
     {
         m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
-        m_anOffset[l_poDS->m_iYDim] = static_cast<GUInt64>(nYOff);
         m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
-        m_anCount[l_poDS->m_iYDim] = static_cast<size_t>(nYSize);
         m_anStride[l_poDS->m_iXDim] =
             static_cast<GPtrDiff_t>(nPixelSpaceBuf / nDTSize);
-        m_anStride[l_poDS->m_iYDim] =
-            static_cast<GPtrDiff_t>(nLineSpaceBuf / nDTSize);
+        if( poArray->GetDimensionCount() >= 2 )
+        {
+            m_anOffset[l_poDS->m_iYDim] = static_cast<GUInt64>(nYOff);
+            m_anCount[l_poDS->m_iYDim] = static_cast<size_t>(nYSize);
+            m_anStride[l_poDS->m_iYDim] =
+                static_cast<GPtrDiff_t>(nLineSpaceBuf / nDTSize);
+        }
         if( eRWFlag == GF_Read )
         {
             return poArray->Read(m_anOffset.data(),
@@ -4273,8 +4280,6 @@ CPLErr GDALRasterBandFromArray::IRasterIO( GDALRWFlag eRWFlag,
 
 /** Return a view of this array as a "classic" GDALDataset (ie 2D)
  *
- * Only 2D or more arrays are supported.
- *
  * In the case of > 2D arrays, additional dimensions will be represented as
  * raster bands.
  *
@@ -4284,6 +4289,7 @@ CPLErr GDALRasterBandFromArray::IRasterIO( GDALRWFlag eRWFlag,
  *
  * @param iXDim Index of the dimension that will be used as the X/width axis.
  * @param iYDim Index of the dimension that will be used as the Y/height axis.
+ *              Ignored if the dimension count is 1.
  * @return a new GDALDataset that must be freed with GDALClose(), or nullptr
  */
 GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
@@ -4296,7 +4302,7 @@ GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
         return nullptr;
     }
     const auto nDimCount(GetDimensionCount());
-    if( nDimCount < 2 )
+    if( nDimCount == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupported number of dimensions");
@@ -4310,7 +4316,8 @@ GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
                  "can be exposed as classic GDALDataset");
         return nullptr;
     }
-    if( iXDim >= nDimCount || iYDim >= nDimCount || iXDim == iYDim )
+    if( iXDim >= nDimCount ||
+        (nDimCount >=2 && (iYDim >= nDimCount || iXDim == iYDim)) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid iXDim and/or iYDim");
@@ -4320,7 +4327,7 @@ GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
     const auto& dims(GetDimensions());
     for( size_t i = 0; i < nDimCount; ++i )
     {
-        if( i != iXDim && i != iYDim )
+        if( i != iXDim && !(nDimCount >= 2 && i == iYDim) )
         {
             if( dims[i]->GetSize() > 65536 / nBands )
             {

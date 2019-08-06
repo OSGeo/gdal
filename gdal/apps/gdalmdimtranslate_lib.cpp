@@ -1526,7 +1526,11 @@ static GDALDatasetH CopyToNonMultiDimensionalDriver(
             iYDim = i;
         }
     }
-    if( dims.size() >= 2 &&
+    if( dims.size() == 1 )
+    {
+        iXDim = 0;
+    }
+    else if( dims.size() >= 2 &&
         (iXDim == static_cast<size_t>(-1) || iYDim == static_cast<size_t>(-1)) )
     {
         iXDim = dims.size() - 1;

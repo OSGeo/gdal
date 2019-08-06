@@ -393,6 +393,9 @@ def test_vsicrypt_4():
         test_content = gdal.VSIFReadL(1, 100000, test_f)
         ref_content = gdal.VSIFReadL(1, 100000, ref_f)
 
+        gdal.VSIFCloseL(test_f)
+        gdal.VSIFCloseL(ref_f)
+
         if test_content != ref_content:
             print(seed)
             print('Test content (%d):' % len(test_content))

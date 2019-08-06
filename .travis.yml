@@ -92,13 +92,13 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: precise
+      dist: xenial
       cache:
         apt: true
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=gcc52_stdcpp14_sanitize
+        - BUILD_NAME=sanitize
         - DETAILS=""
     - os: linux
       compiler: gcc
