@@ -224,7 +224,7 @@ namespace nccfdriver
      */
     class netCDFVID
     {
-        int & ncid;
+        int & ncid; // ncid REF. which tracks ncID changes that may be made upstream
         int dimTicket = 0;
         int varTicket = 0;
 

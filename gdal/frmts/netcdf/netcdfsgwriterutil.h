@@ -390,7 +390,7 @@ namespace nccfdriver
 
     class ncLayer_SG_Metadata
     {
-        int & ncID;
+        int & ncID; // ncid REF. which tracks ncID changes that may be made upstream
 
         netCDFVID& vDataset;
         OGR_NCScribe & ncb;
