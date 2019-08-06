@@ -73,33 +73,34 @@ namespace nccfdriver
     geom_t OGRtoRaw(OGRwkbGeometryType type)
     {
         geom_t ret = NONE;
+        auto eFlatType = wkbFlatten(type);
 
-        if (type == wkbPoint || type == wkbPoint25D || type == wkbPointM || type == wkbPointZM)
+        if (eFlatType == wkbPoint)
         {
             ret = POINT;
         }
 
-        else if (type == wkbLineString || type == wkbLineString25D || type == wkbLineStringM || type == wkbLineStringZM)
+        else if (eFlatType == wkbLineString)
         {
             ret = LINE;
         }
 
-        else if(type == wkbPolygon || type == wkbPolygon25D || type == wkbPolygonM || type == wkbPolygonZM)
+        else if(eFlatType == wkbPolygon)
         {
             ret = POLYGON;
         }
 
-        else if (type == wkbMultiPoint || type == wkbMultiPoint25D || type == wkbMultiPointM || type == wkbMultiPointZM)
+        else if (eFlatType == wkbMultiPoint)
         {
             ret = MULTIPOINT;
         }
 
-        else if (type == wkbMultiLineString || type == wkbMultiLineString25D || type == wkbMultiLineStringM || type == wkbMultiLineStringZM)
+        else if (eFlatType == wkbMultiLineString)
         {
             ret = MULTILINE;
         }
 
-        else if (type == wkbMultiPolygon || type == wkbMultiPolygon25D || type == wkbMultiPolygonM || type == wkbMultiPolygonZM)
+        else if (eFlatType == wkbMultiPolygon)
         {
             ret = MULTIPOLYGON;
         }
@@ -130,13 +131,13 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
 
     nccfdriver::scanForGeometryContainers(ncid, vidList);
 
-    if(vidList.size() > 0)
+    if(!vidList.empty())
     {
-        for(std::set<int>::iterator itr = vidList.begin(); itr != vidList.end(); ++itr)
+        for(auto vid: vidList)
         {
             try
             {
-                LoadSGVarIntoLayer(ncid, *itr);
+                LoadSGVarIntoLayer(ncid, vid);
             }
 
             catch(nccfdriver::SG_Exception& e)
@@ -364,14 +365,5 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
 
 std::shared_ptr<std::string> netCDFDataset::generateLogName()
 {
-    const char * lognumc;
-
-    if(this->logCount == 0)
-    {
-        srand(static_cast<unsigned int>(time(nullptr)));
-        logCount = rand();
-    }
-
-    lognumc = CPLSPrintf("%d", logCount);
-    return std::shared_ptr<std::string>(new std::string(CPLGenerateTempFilename(lognumc))); 
+    return std::shared_ptr<std::string>(new std::string(CPLGenerateTempFilename(nullptr))); 
 }

@@ -187,7 +187,7 @@ namespace nccfdriver
 
         std::string real_var_name;
         nc_type ntype;
-                int r_vid = INVALID_VAR_ID;
+        int r_vid = INVALID_VAR_ID;
         int v_vid;
         int ndimc;
         std::unique_ptr<int, std::default_delete<int[]>> dimid;
@@ -223,7 +223,7 @@ namespace nccfdriver
      * used in this manner **
      */
     class netCDFVID
-        {
+    {
         int & ncid;
         int dimTicket = 0;
         int varTicket = 0;
@@ -287,7 +287,7 @@ namespace nccfdriver
              */
             void nc_vmap();
 
-                        // Attribute function(s)
+            // Attribute function(s)
             template<class attrC, class attrT> void nc_put_vatt_generic(int varid, const char* name, const attrT* out)
             {
 
@@ -335,11 +335,6 @@ namespace nccfdriver
 
             void nc_put_vvar1_text(int varid, const size_t* index, const char* out);
             void nc_put_vvara_text(int varid, const size_t* start, const size_t* index, const char* out);
-            void nc_put_vvar1_short(int varid, const size_t* index, short* out);
-            void nc_put_vvar1_int(int varid, const size_t* index, int* out);
-            void nc_put_vvar1_schar(int varid, const size_t* index, signed char* out);
-            void nc_put_vvar1_float(int varid, const size_t* index, float* out);
-            void nc_put_vvar1_double(int varid, const size_t* index, double* out);
 
 #ifdef NETCDF_HAS_NC4
             void nc_put_vvar1_string(int varid, const size_t* index, const char** out);
@@ -350,7 +345,7 @@ namespace nccfdriver
             netCDFVDimension& virtualDIDToDim(int virtualID); // converts a virtual dim ID to a real ID
             int nameToVirtualVID(std::string& name);
             int nameToVirtualDID(std::string& name);
-                        bool virtualVarNameDefined(std::string& nm) { return nameVarTable.count(nm) > 0; }
+            bool virtualVarNameDefined(std::string& nm) { return nameVarTable.count(nm) > 0; }
 
             // Constructor
             explicit netCDFVID(int & ncid_in) : ncid(ncid_in) {}

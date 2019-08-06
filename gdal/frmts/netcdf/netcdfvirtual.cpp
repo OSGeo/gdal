@@ -69,7 +69,8 @@ namespace nccfdriver
         }
 
         // Add to lookup tables
-                dimList.push_back(netCDFVDimension(name, len, dimTicket++));
+        dimList.push_back(netCDFVDimension(name, len, dimTicket));
+        dimTicket++;
         nameDimTable.insert(std::pair<std::string, int>(std::string(name), dimID));
 
         // Return virtual dimID
@@ -132,7 +133,7 @@ namespace nccfdriver
         nc_enddef(ncid);
     }
 
-        void netCDFVID::nc_vmap()
+    void netCDFVID::nc_vmap()
     {
         nc_set_define_mode();
 
@@ -264,52 +265,27 @@ namespace nccfdriver
     /* Single Datum Writing
      * (mostly just convenience functions)
      */
-    void netCDFVID::nc_put_vvar1_text(int varid, const size_t* index, const char* out)
+    void netCDFVID::nc_put_vvar1_text(int varid, const size_t* index, const char* value)
     {
         int rvarid = virtualVIDToVar(varid).getRealID();
         if(rvarid == INVALID_VAR_ID)
             return; // invalidated variable, don't care condition that Scribe relies on
 
-        if(nc_put_var1_text(ncid, rvarid, index, out) != NC_NOERR)
+        if(nc_put_var1_text(ncid, rvarid, index, value) != NC_NOERR)
         {
             throw SG_Exception_VWrite_Failure("variable", "datum");
         }
     }
 
-    void netCDFVID::nc_put_vvara_text(int varid, const size_t* start, const size_t* count, const char* out)
+    void netCDFVID::nc_put_vvara_text(int varid, const size_t* start, const size_t* count, const char* value)
     {
         int rvarid = virtualVIDToVar(varid).getRealID();
         if(rvarid == INVALID_VAR_ID)
             return; // invalidated variable, don't care condition that Scribe relies on
-        if(nc_put_vara_text(ncid, rvarid, start, count, out) != NC_NOERR)
+        if(nc_put_vara_text(ncid, rvarid, start, count, value) != NC_NOERR)
         {
             throw SG_Exception_VWrite_Failure("variable", "datum");
         }
-    }
-
-    void netCDFVID::nc_put_vvar1_short(int varid, const size_t* index, short* out)
-    {
-        nc_put_vvar_generic<short>(varid, index, out);
-    }
-
-    void netCDFVID::nc_put_vvar1_int(int varid, const size_t* index, int* out)
-    {
-        nc_put_vvar_generic<int>(varid, index, out);
-    }
-
-    void netCDFVID::nc_put_vvar1_schar(int varid, const size_t* index, signed char* out)
-    {
-        nc_put_vvar_generic<signed char>(varid, index, out);
-    }
-
-    void netCDFVID::nc_put_vvar1_float(int varid, const size_t* index, float* out)
-    {
-        nc_put_vvar_generic<float>(varid, index, out);
-    }
-
-    void netCDFVID::nc_put_vvar1_double(int varid, const size_t* index, double* out)
-    {
-        nc_put_vvar_generic<double>(varid, index, out);
     }
 
 #ifdef NETCDF_HAS_NC4

@@ -306,11 +306,6 @@ namespace nccfdriver
         }
     }
 
-/*    void ncLayer_SG_Metadata::scanExistingContainer(int containerVID)
-    {
-        // todo:
-    }
-*/
     ncLayer_SG_Metadata::ncLayer_SG_Metadata(int & i_ncID, geom_t geo, netCDFVID& ncdf, OGR_NCScribe& ncs) :
         ncID(i_ncID),
         vDataset(ncdf),

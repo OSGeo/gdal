@@ -794,7 +794,7 @@ namespace nccfdriver
             // If matches, then establish a reference by placing this variable's data in both vectors
             if(!strcmp(contname, buf))
             {
-                char property_name[NC_MAX_NAME] = {0};
+                char property_name[NC_MAX_NAME + 1] = {0};
 
                 // look for special OGR original name field
                 if(nc_get_att_text(this->nc, curr, OGR_SG_ORIGINAL_LAYERNAME, property_name) != NC_NOERR)
