@@ -30,6 +30,7 @@
 ###############################################################################
 
 import gdaltest
+import struct
 
 from osgeo import gdal
 
@@ -69,6 +70,24 @@ def test_gdalmdimtranslate_multidim_to_classic():
 
     assert gdal.MultiDimTranslate(tmpfile, 'data/mdim.vrt',
                                   arraySpecs = ['/my_subgroup/array_in_subgroup'])
+
+    gdal.Unlink(tmpfile)
+
+###############################################################################
+
+
+def test_gdalmdimtranslate_multidim_1d_to_classic():
+
+    tmpfile = '/vsimem/out.tif'
+
+    assert gdal.MultiDimTranslate(tmpfile, 'data/mdim.vrt',
+                                  arraySpecs = ['latitude'])
+    ds = gdal.Open(tmpfile)
+    band = ds.GetRasterBand(1)
+    data = band.ReadRaster()
+    assert len(data) == 10 * 4
+    assert struct.unpack('f' * 10, data)[0] == 90.0
+    ds = None
 
     gdal.Unlink(tmpfile)
 
