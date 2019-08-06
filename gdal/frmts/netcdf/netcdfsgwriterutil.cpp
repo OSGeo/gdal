@@ -883,24 +883,24 @@ namespace nccfdriver
                  if(!readcheck)
                      return MTPtr(); // read failure
 
-                 std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
-                 memset(data.get(), 0, strsize + 1);
+                 std::string data;
+                 data.resize(strsize);
 
                  // read that data and return it
-                 readcheck = VSIFReadL(data.get(), sizeof(char), strsize, log);
+                 readcheck = VSIFReadL(&data[0], sizeof(char), strsize, log);
                  if(!readcheck)
                      return MTPtr(); // read failure
 
                  // case: its a standard CHAR op
                  if(!op)
                  {
-                     return MTPtr(new OGR_SGFS_NC_Char_Transaction(varId, data.get()));  // data is copied so okay!
+                     return MTPtr(new OGR_SGFS_NC_Char_Transaction(varId, &data[0]));  // data is copied so okay!
                  }
 
                  // case: its a CHARA op, additional processing
                  else
                  {
-                     return MTPtr(new OGR_SGFS_NC_CharA_Transaction(varId, data.get()));
+                     return MTPtr(new OGR_SGFS_NC_CharA_Transaction(varId, &data[0]));
                  }
 
              }
@@ -918,16 +918,16 @@ namespace nccfdriver
                  if(!readcheck)
                      return MTPtr(); // read failure
 
-                 std::unique_ptr<char, std::default_delete<char[]>> data(new char[strsize + 1]);
-                 memset(data.get(), 0, strsize + 1);
+                 std::string data;
+                 data.resize(strsize);
 
                  // read that data and return it
-                 readcheck = VSIFReadL(data.get(), sizeof(char), strsize, log);
+                 readcheck = VSIFReadL(&data[0], sizeof(char), strsize, log);
 
                  if(!readcheck)
                      return MTPtr(); // read failure
 
-                 return MTPtr(new OGR_SGFS_NC_String_Transaction(varId, data.get()));  // data is copied so okay!
+                 return MTPtr(new OGR_SGFS_NC_String_Transaction(varId, &data[0]));  // data is copied so okay!
              }
 #endif
 
