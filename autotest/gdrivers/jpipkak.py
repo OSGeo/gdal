@@ -35,10 +35,7 @@ import gdaltest
 import pytest
 
 
-pytestmark = [
-    pytest.mark.skip(),
-    pytest.mark.require_driver('JPIPKAK'),
-]
+pytestmark = pytest.mark.require_driver('JPIPKAK')
 
 ###############################################################################
 # Read test of simple byte reference data.
