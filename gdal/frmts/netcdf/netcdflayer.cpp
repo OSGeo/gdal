@@ -1703,13 +1703,13 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 
             if (m_poDS->HasInfiniteRecordDim())
             {
-                            status = nc_put_var1_short(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                anIndex, &sVal);
+                status = nc_put_var1_short(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                           anIndex, &sVal);
             }
             else
             {
-                            std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_Short_Transaction(m_aoFieldDesc[i].nVarId, sVal));
-                            m_poDS->FieldScribe.enqueue_transaction(ptr);
+                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_Short_Transaction(m_aoFieldDesc[i].nVarId, sVal));
+                m_poDS->FieldScribe.enqueue_transaction(ptr);
             }
             break;
         }
