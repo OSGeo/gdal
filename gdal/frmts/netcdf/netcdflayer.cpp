@@ -1628,7 +1628,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                 }
                 else
                 {
-                    std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_CharA_Transaction(m_aoFieldDesc[i].nVarId, pszVal, anCount[1]));
+                    std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_CharA_Transaction(m_aoFieldDesc[i].nVarId, pszVal));
                     m_poDS->FieldScribe.enqueue_transaction(ptr);
                 }
             }

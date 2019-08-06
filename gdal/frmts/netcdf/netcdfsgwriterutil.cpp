@@ -798,7 +798,6 @@ namespace nccfdriver
         VSIFWriteL(&OP, sizeof(int8_t), 1, f); // write "OP" flag
         VSIFWriteL(&DATA_SIZE, sizeof(size_t), 1, f); // write length
         VSIFWriteL(char_rep.c_str(), sizeof(char), DATA_SIZE, f); // write data
-        VSIFWriteL((this->counts + 1), sizeof(size_t), 1, f); // write writable strlength (might remove this later)
     }
 
     // WTransactionLog
@@ -901,13 +900,7 @@ namespace nccfdriver
                  // case: its a CHARA op, additional processing
                  else
                  {
-                     size_t fullSizeCount;
-                     if(!VSIFReadL(&fullSizeCount, sizeof(size_t), 1, log))
-                     {
-                         return MTPtr();
-                     }
-
-                     return MTPtr(new OGR_SGFS_NC_CharA_Transaction(varId, data.get(), fullSizeCount));
+                     return MTPtr(new OGR_SGFS_NC_CharA_Transaction(varId, data.get()));
                  }
 
              }

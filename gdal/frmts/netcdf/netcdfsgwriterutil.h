@@ -128,7 +128,6 @@ namespace nccfdriver
              * NC_TYPE - sizeof(int) bytes
              * (nc_char only) OP - 1 byte (0 if does not require COUNT or non-zero i.e. 1 if does)
              * (nc_char only): SIZE of data - sizeof(size_t) bytes
-             * (nc_char && OP != 0 only) COUNT - sizeof(size_t) bytes the second dimension of the "count" arg
              * DATA - size depends on NC_TYPE
              */
             virtual void appendToLog(VSILFILE*) = 0;
@@ -218,9 +217,9 @@ namespace nccfdriver
             unsigned long long count() override { return char_rep.size() + sizeof(*this); } // account for actual character representation, this class
             void appendToLog(VSILFILE* f) override;
             nc_type getType() override { return NC_CHAR; }
-            OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal, size_t str_width) :
+            OGR_SGFS_NC_CharA_Transaction(int i_varId, const char* pszVal) :
                char_rep(pszVal),
-               counts{1, str_width}
+               counts{1, char_rep.length()}
             {
                 OGR_SGFS_Transaction::setVarId(i_varId);
             }
