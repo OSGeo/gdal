@@ -520,7 +520,7 @@ namespace nccfdriver
     {}
 
     // OGR_NCScribe
-    void OGR_NCScribe::enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd)
+    void OGR_NCScribe::enqueue_transaction(MTPtr transactionAdd)
     {
         if(transactionAdd.get() == nullptr)
         {
@@ -718,7 +718,7 @@ namespace nccfdriver
 
         else if(!transactionQueue.empty())
         {
-            std::shared_ptr<OGR_SGFS_Transaction> t = this->transactionQueue.front();
+            MTPtr t = this->transactionQueue.front();
             MTPtr ret = this->transactionQueue.front();
             this->transactionQueue.pop();
             return ret;
@@ -820,15 +820,15 @@ namespace nccfdriver
         this->log = VSIFOpenL(wlogName.c_str(), "r");
     }
 
-    void WTransactionLog::push(std::shared_ptr<OGR_SGFS_Transaction> t)
+    void WTransactionLog::push(MTPtr t)
     {
         t->appendToLog(this->log);
     }
 
-    std::shared_ptr<OGR_SGFS_Transaction> WTransactionLog::pop()
+    MTPtr WTransactionLog::pop()
     {
          if(log == nullptr)
-             return std::shared_ptr<OGR_SGFS_Transaction>(nullptr);
+             return MTPtr(nullptr);
 
          int varId;
          nc_type ntype;
@@ -838,7 +838,7 @@ namespace nccfdriver
 
          // If one of the two reads failed, then return nullptr
          if(!itemsread)
-             return std::shared_ptr<OGR_SGFS_Transaction>(nullptr);
+             return MTPtr(nullptr);
 
          // If not, continue on and parse additional fields
          switch(ntype)

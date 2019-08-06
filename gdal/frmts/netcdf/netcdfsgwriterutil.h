@@ -174,14 +174,14 @@ namespace nccfdriver
         VSIFWriteL(&rep, sizeof(T_c_type), 1, f); // write data
     }
 
-    template<class T_c_type, class T_r_type> std::shared_ptr<OGR_SGFS_Transaction> genericLogDataRead(int varId, VSILFILE* f)
+    template<class T_c_type, class T_r_type> MTPtr genericLogDataRead(int varId, VSILFILE* f)
     {
         T_r_type data;
         if(!VSIFReadL(&data, sizeof(T_r_type), 1, f))
         {
-             return std::shared_ptr<OGR_SGFS_Transaction>(nullptr); // invalid read case
+             return MTPtr(nullptr); // invalid read case
         }
-        return std::shared_ptr<OGR_SGFS_Transaction>(new T_c_type(varId, data));
+        return MTPtr(new T_c_type(varId, data));
     }
 
     /* OGR_SGFS_NC_Char_Transaction
@@ -316,10 +316,10 @@ namespace nccfdriver
             bool logIsNull() { return log == nullptr; }
             void startLog(); // always call this first to open the file
             void startRead(); // then call this before reading it
-            void push(std::shared_ptr<OGR_SGFS_Transaction>);
+            void push(MTPtr);
 
             // read mode
-            std::shared_ptr<OGR_SGFS_Transaction> pop();  // to test for EOF, test to see if pointer returned is null ptr
+            MTPtr pop();  // to test for EOF, test to see if pointer returned is null ptr
 
             // construction, destruction
             explicit WTransactionLog(std::shared_ptr<std::string> logName);
@@ -337,7 +337,7 @@ namespace nccfdriver
         WTransactionLog wl;
         bool singleDatumMode = false;
 
-        std::queue<std::shared_ptr<OGR_SGFS_Transaction>> transactionQueue;
+        std::queue<MTPtr> transactionQueue;
         std::map<int, size_t> varWriteInds;
         std::map<int, size_t> varMaxInds;
         //std::map<int, void*> rawWrite;
@@ -353,7 +353,7 @@ namespace nccfdriver
              */
            void commit_transaction();
 
-           /* std::shared_ptr<OGR_SGFS_Transaction> pop()
+           /* MTPtr pop()
             * Get the next transaction, if it exists.
             * If not, it will just return a shared_ptr with nullptr inside
             */
@@ -368,7 +368,7 @@ namespace nccfdriver
             * Add a transaction to perform
             * Once a transaction is enqueued, it will only be dequeued on commit
             */
-           void enqueue_transaction(std::shared_ptr<OGR_SGFS_Transaction> transactionAdd);
+           void enqueue_transaction(MTPtr transactionAdd);
 
            WBuffer& getMemBuffer() { return buf; }
 
