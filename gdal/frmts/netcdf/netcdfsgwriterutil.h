@@ -162,7 +162,7 @@ namespace nccfdriver
 
     typedef std::map<int, void*> NCWMap;
     typedef std::pair<int, void*> NCWEntry; // NC Writer Entry
-    typedef std::shared_ptr<OGR_SGFS_Transaction> MTPtr; // a.k.a Managed Transaction Ptr
+    typedef std::unique_ptr<OGR_SGFS_Transaction> MTPtr; // a.k.a Managed Transaction Ptr
 
     template<class T_c_type, nc_type T_nc_type> void genericLogAppend(T_c_type r, int vId, VSILFILE* f)
     {
@@ -340,7 +340,6 @@ namespace nccfdriver
         std::queue<MTPtr> transactionQueue;
         std::map<int, size_t> varWriteInds;
         std::map<int, size_t> varMaxInds;
-        //std::map<int, void*> rawWrite;
 
         public:
            /* size_t getWriteCount()

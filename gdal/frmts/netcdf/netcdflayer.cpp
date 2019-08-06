@@ -1558,8 +1558,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                 }
                 else
                 {
-                    nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_Char_Transaction(m_aoFieldDesc[i].nVarId, pszVal));
-                    m_poDS->FieldScribe.enqueue_transaction(ptr);
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Char_Transaction(m_aoFieldDesc[i].nVarId, pszVal)));
                 }
             }
             else
@@ -1628,8 +1627,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                 }
                 else
                 {
-                    nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_CharA_Transaction(m_aoFieldDesc[i].nVarId, pszVal));
-                    m_poDS->FieldScribe.enqueue_transaction(ptr);
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_CharA_Transaction(m_aoFieldDesc[i].nVarId, pszVal)));
                 }
             }
             break;
@@ -1648,8 +1646,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 
             else
             {
-                nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_String_Transaction(m_aoFieldDesc[i].nVarId, pszVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_String_Transaction(m_aoFieldDesc[i].nVarId, pszVal)));
             }
 
             break;
@@ -1669,8 +1666,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 
             else
             {
-                nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_Byte_Transaction(m_aoFieldDesc[i].nVarId, chVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Byte_Transaction(m_aoFieldDesc[i].nVarId, chVal)));
             }
             break;
         }
@@ -1689,8 +1685,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 
             else
             {
-                nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_UByte_Transaction(m_aoFieldDesc[i].nVarId, uchVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_UByte_Transaction(m_aoFieldDesc[i].nVarId, uchVal)));
             }
             break;
         }
@@ -1708,8 +1703,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_Short_Transaction(m_aoFieldDesc[i].nVarId, sVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Short_Transaction(m_aoFieldDesc[i].nVarId, sVal)));
             }
             break;
         }
@@ -1727,8 +1721,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_UShort_Transaction(m_aoFieldDesc[i].nVarId, usVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_UShort_Transaction(m_aoFieldDesc[i].nVarId, usVal)));
             }
 
             break;
@@ -1773,8 +1766,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_Int_Transaction(m_aoFieldDesc[i].nVarId, nVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Int_Transaction(m_aoFieldDesc[i].nVarId, nVal)));
             }
 
             break;
@@ -1793,8 +1785,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                nccfdriver::MTPtr ptr(new nccfdriver::OGR_SGFS_NC_UInt_Transaction(m_aoFieldDesc[i].nVarId, unVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_UInt_Transaction(m_aoFieldDesc[i].nVarId, unVal)));
             }
 
             break;
@@ -1812,8 +1803,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_Int64_Transaction(m_aoFieldDesc[i].nVarId, nVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Int64_Transaction(m_aoFieldDesc[i].nVarId, nVal)));
             }
             break;
         }
@@ -1830,8 +1820,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_UInt64_Transaction(m_aoFieldDesc[i].nVarId, nVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_UInt64_Transaction(m_aoFieldDesc[i].nVarId, nVal)));
             }
 
             break;
@@ -1850,8 +1839,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_Float_Transaction(m_aoFieldDesc[i].nVarId, fVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Float_Transaction(m_aoFieldDesc[i].nVarId, fVal)));
             }
 
             break;
@@ -1896,8 +1884,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                std::shared_ptr<nccfdriver::OGR_SGFS_Transaction> ptr(new nccfdriver::OGR_SGFS_NC_Double_Transaction(m_aoFieldDesc[i].nVarId, dfVal));
-                m_poDS->FieldScribe.enqueue_transaction(ptr);
+                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Double_Transaction(m_aoFieldDesc[i].nVarId, dfVal)));
             }
 
             break;

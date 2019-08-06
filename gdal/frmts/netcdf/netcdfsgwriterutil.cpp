@@ -547,7 +547,7 @@ namespace nccfdriver
         this->buf.addCount(transactionAdd->count()); // account for pointee
 
         // Finally push the transaction in
-        this->transactionQueue.push(transactionAdd);
+        this->transactionQueue.push(MTPtr(transactionAdd.release()));
     }
 
     void OGR_NCScribe::commit_transaction()
@@ -718,10 +718,10 @@ namespace nccfdriver
 
         else if(!transactionQueue.empty())
         {
-            MTPtr t = this->transactionQueue.front();
-            MTPtr ret = this->transactionQueue.front();
+            OGR_SGFS_Transaction * value = this->transactionQueue.front().release(); // due to delete copy A.K.A uniqueness of unique_ptr
             this->transactionQueue.pop();
-            return ret;
+            
+            return MTPtr(value);
         }
         else
         {
@@ -736,7 +736,7 @@ namespace nccfdriver
 
         while(!transactionQueue.empty())
         {
-            wl.push(transactionQueue.front());
+            wl.push(MTPtr(transactionQueue.front().release()));
             this->transactionQueue.pop();
         }
 
