@@ -6993,4 +6993,76 @@ bool GDALAttributeNumeric::IRead(const GUInt64* arrayStartIdx,
     return true;
 }
 
+GDALMDArrayRegularlySpaced::GDALMDArrayRegularlySpaced(
+                const std::string& osParentName,
+                const std::string& osName,
+                const std::shared_ptr<GDALDimension>& poDim,
+                double dfStart, double dfIncrement,
+                double dfOffsetInIncrement):
+    GDALAbstractMDArray(osParentName, osName),
+    GDALMDArray(osParentName, osName),
+    m_dfStart(dfStart),
+    m_dfIncrement(dfIncrement),
+    m_dfOffsetInIncrement(dfOffsetInIncrement),
+    m_dims{poDim}
+{}
+
+const std::vector<std::shared_ptr<GDALDimension>>& GDALMDArrayRegularlySpaced::GetDimensions() const
+{
+    return m_dims;
+}
+
+const GDALExtendedDataType &GDALMDArrayRegularlySpaced::GetDataType() const
+{
+    return m_dt;
+}
+
+std::vector<std::shared_ptr<GDALAttribute>> GDALMDArrayRegularlySpaced::GetAttributes(CSLConstList) const
+{
+    return m_attributes;
+}
+
+void GDALMDArrayRegularlySpaced::AddAttribute(const std::shared_ptr<GDALAttribute>& poAttr)
+{
+    m_attributes.emplace_back(poAttr);
+}
+
+bool GDALMDArrayRegularlySpaced::IRead(const GUInt64* arrayStartIdx,
+                                       const size_t* count,
+                                       const GInt64* arrayStep,
+                                       const GPtrDiff_t* bufferStride,
+                                       const GDALExtendedDataType& bufferDataType,
+                                       void* pDstBuffer) const
+{
+    GByte* pabyDstBuffer = static_cast<GByte*>(pDstBuffer);
+    for( size_t i = 0; i < count[0]; i++ )
+    {
+        const double dfVal = m_dfStart +
+            (arrayStartIdx[0] + i * arrayStep[0] + m_dfOffsetInIncrement) * m_dfIncrement;
+        GDALExtendedDataType::CopyValue(&dfVal, m_dt,
+                                        pabyDstBuffer, bufferDataType);
+        pabyDstBuffer += bufferStride[0] * bufferDataType.GetSize();
+    }
+    return true;
+}
+
+GDALDimensionWeakIndexingVar::GDALDimensionWeakIndexingVar(const std::string& osParentName,
+                  const std::string& osName,
+                  const std::string& osType,
+                  const std::string& osDirection,
+                  GUInt64 nSize) :
+        GDALDimension(osParentName, osName, osType, osDirection, nSize)
+{}
+
+std::shared_ptr<GDALMDArray> GDALDimensionWeakIndexingVar::GetIndexingVariable() const
+{
+    return m_poIndexingVariable.lock();
+}
+
+bool GDALDimensionWeakIndexingVar::SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable)
+{
+    m_poIndexingVariable = poIndexingVariable;
+    return true;
+}
+
 //! @endcond

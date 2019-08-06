@@ -1269,27 +1269,6 @@ public:
 };
 
 /************************************************************************/
-/*                          GRIBDimension()                             */
-/************************************************************************/
-
-class GRIBDimension: public GDALDimension
-{
-    friend class GRIBArray;
-
-    std::weak_ptr<GDALMDArray> m_poIndexingVariable{};
-
-public:
-    GRIBDimension(const std::string& osParentName,
-                  const std::string& osName,
-                  const std::string& osType,
-                  const std::string& osDirection,
-                  GUInt64 nSize) :
-        GDALDimension(osParentName, osName, osType, osDirection, nSize) {}
-
-    std::shared_ptr<GDALMDArray> GetIndexingVariable() const override { return m_poIndexingVariable.lock(); }
-};
-
-/************************************************************************/
 /*                          GetMDArrayNames()                           */
 /************************************************************************/
 
@@ -1385,7 +1364,7 @@ void GRIBArray::Init(GRIBGroup* poGroup,
                     double dfVal = 0;
                     poVar->Read(&nStart, &nCount, nullptr, nullptr,
                                 m_dt, &dfVal);
-                    if( dfVal != adfGT[3] + (poDS->nRasterYSize - 0.5) * adfGT[5] )
+                    if( dfVal != adfGT[3] + poDS->nRasterYSize * adfGT[5] - 0.5 * adfGT[5] )
                     {
                         bOK = false;
                     }
@@ -1410,26 +1389,18 @@ void GRIBArray::Init(GRIBGroup* poGroup,
                 osName = CPLSPrintf("Y%d", poGroup->m_nHorizDimCounter);
             }
 
-            auto poGRIBDimY = std::make_shared<GRIBDimension>(
+            poDimY = std::make_shared<GDALDimensionWeakIndexingVar>(
                 poGroup->GetFullName(), osName, GDAL_DIM_TYPE_HORIZONTAL_Y, std::string(),
                 poDS->GetRasterYSize());
-            poDimY = poGRIBDimY;
             poGroup->m_oMapDims[osName] = poDimY;
             poGroup->m_dims.emplace_back(poDimY);
 
-            auto var = poGroup->m_memRootGroup->CreateMDArray(poDimY->GetName(),
-                std::vector<std::shared_ptr<GDALDimension>>{poDimY},
-                GDALExtendedDataType::Create(GDT_Float64), nullptr);
-            poGRIBDimY->m_poIndexingVariable = var;
+            auto var = std::make_shared<GDALMDArrayRegularlySpaced>(
+                "/", poDimY->GetName(), poDimY,
+                adfGT[3] + poDS->GetRasterYSize() * adfGT[5],
+                -adfGT[5], 0.5);
+            poDimY->SetIndexingVariable(var);
             poGroup->AddArray(var);
-
-            std::vector<double> adfTmp( poDS->GetRasterYSize());
-            for(int i = 0; i < poDS->GetRasterYSize(); i++)
-                adfTmp[i] = adfGT[3] + (poDS->GetRasterYSize() - (i + 0.5)) * adfGT[5];
-            GUInt64 nStart = 0;
-            size_t nCount = poDS->GetRasterYSize();
-            var->Write(&nStart, &nCount, nullptr, nullptr,
-                    var->GetDataType(), &adfTmp[0]);
         }
 
         {
@@ -1439,26 +1410,18 @@ void GRIBArray::Init(GRIBGroup* poGroup,
                 osName = CPLSPrintf("X%d", poGroup->m_nHorizDimCounter);
             }
 
-            auto poGRIBDimX = std::make_shared<GRIBDimension>(
+            poDimX = std::make_shared<GDALDimensionWeakIndexingVar>(
                 poGroup->GetFullName(), osName, GDAL_DIM_TYPE_HORIZONTAL_X, std::string(),
                 poDS->GetRasterXSize());
-            poDimX = poGRIBDimX;
             poGroup->m_oMapDims[osName] = poDimX;
             poGroup->m_dims.emplace_back(poDimX);
 
-            auto var = poGroup->m_memRootGroup->CreateMDArray(poDimX->GetName(),
-                std::vector<std::shared_ptr<GDALDimension>>{poDimX},
-                GDALExtendedDataType::Create(GDT_Float64), nullptr);
-            poGRIBDimX->m_poIndexingVariable = var;
+            auto var = std::make_shared<GDALMDArrayRegularlySpaced>(
+                "/", poDimX->GetName(), poDimX,
+                adfGT[0],
+                adfGT[1], 0.5);
+            poDimX->SetIndexingVariable(var);
             poGroup->AddArray(var);
-
-            std::vector<double> adfTmp( poDS->GetRasterXSize());
-            for(int i = 0; i < poDS->GetRasterXSize(); i++)
-                adfTmp[i] = adfGT[0] + (i + 0.5) * adfGT[1];
-            GUInt64 nStart = 0;
-            size_t nCount = poDS->GetRasterXSize();
-            var->Write(&nStart, &nCount, nullptr, nullptr,
-                    var->GetDataType(), &adfTmp[0]);
         }
     }
 
@@ -1639,17 +1602,16 @@ void GRIBArray::Finalize(GRIBGroup* poGroup, inventoryType *psInv)
             counter++;
         }
 
-        auto poGRIBDimTime = std::make_shared<GRIBDimension>(
+        poDimTime = std::make_shared<GDALDimensionWeakIndexingVar>(
             poGroup->GetFullName(), osName, GDAL_DIM_TYPE_TEMPORAL, std::string(),
             m_adfTimes.size());
-        poDimTime = poGRIBDimTime;
         poGroup->m_oMapDims[osName] = poDimTime;
         poGroup->m_dims.emplace_back(poDimTime);
 
         auto var = poGroup->m_memRootGroup->CreateMDArray(poDimTime->GetName(),
             std::vector<std::shared_ptr<GDALDimension>>{poDimTime},
             GDALExtendedDataType::Create(GDT_Float64), nullptr);
-        poGRIBDimTime->m_poIndexingVariable = var;
+        poDimTime->SetIndexingVariable(var);
         poGroup->AddArray(var);
 
         GUInt64 nStart = 0;

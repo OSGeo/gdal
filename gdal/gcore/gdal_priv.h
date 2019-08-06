@@ -2399,6 +2399,50 @@ public:
 //! @endcond
 };
 
+
+/************************************************************************/
+/*                     GDALMDArrayRegularlySpaced                       */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+class CPL_DLL GDALMDArrayRegularlySpaced: public GDALMDArray
+{
+    double m_dfStart;
+    double m_dfIncrement;
+    double m_dfOffsetInIncrement;
+    GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
+    std::vector<std::shared_ptr<GDALDimension>> m_dims;
+    std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
+
+protected:
+
+    bool IRead(const GUInt64* ,
+               const size_t* ,
+               const GInt64* ,
+               const GPtrDiff_t* ,
+               const GDALExtendedDataType& bufferDataType,
+               void* pDstBuffer) const override;
+
+public:
+    GDALMDArrayRegularlySpaced(
+                const std::string& osParentName,
+                const std::string& osName,
+                const std::shared_ptr<GDALDimension>& poDim,
+                double dfStart, double dfIncrement,
+                double dfOffsetInIncrement);
+
+    bool IsWritable() const override { return false; }
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override;
+
+    const GDALExtendedDataType &GetDataType() const override;
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList) const override;
+
+    void AddAttribute(const std::shared_ptr<GDALAttribute>& poAttr);
+};
+//! @endcond
+
 /* ******************************************************************** */
 /*                            GDALDimension                             */
 /* ******************************************************************** */
@@ -2478,6 +2522,29 @@ protected:
     GUInt64 m_nSize;
 //! @endcond
 };
+
+
+/************************************************************************/
+/*                   GDALDimensionWeakIndexingVar()                     */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+class CPL_DLL GDALDimensionWeakIndexingVar: public GDALDimension
+{
+    std::weak_ptr<GDALMDArray> m_poIndexingVariable{};
+
+public:
+    GDALDimensionWeakIndexingVar(const std::string& osParentName,
+                  const std::string& osName,
+                  const std::string& osType,
+                  const std::string& osDirection,
+                  GUInt64 nSize);
+
+    std::shared_ptr<GDALMDArray> GetIndexingVariable() const override;
+
+    bool SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable) override;
+};
+//! @endcond
 
 /* ==================================================================== */
 /*      An assortment of overview related stuff.                        */
