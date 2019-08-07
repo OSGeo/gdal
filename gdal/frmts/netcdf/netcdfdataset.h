@@ -954,7 +954,7 @@ class netCDFDataset final: public GDALPamDataset
     virtual ~netCDFDataset();
     void SGCommitPendingTransaction();
     void SGLogPendingTransaction();
-    std::string generateLogName();
+    static std::string generateLogName();
 
     /* Projection/GT */
     CPLErr      GetGeoTransform( double * ) override;
@@ -1073,6 +1073,8 @@ class netCDFLayer final: public OGRLayer
         bool            m_bProfileVarUnlimited;
         int             m_nParentIndexVarID;
         std::shared_ptr<nccfdriver::SGeometry_Reader>       m_simpleGeometryReader;
+        std::unique_ptr<nccfdriver::netCDFVID>              layerVID_alloc; // Allocation wrapper for group specifc netCDFVID
+        nccfdriver::netCDFVID& layerVID; // refers to the "correct" VID
         std::string     m_sgCRSname;
         size_t          m_SGeometryFeatInd;
 
@@ -1133,11 +1135,9 @@ class netCDFLayer final: public OGRLayer
 };
 
 const char* NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS);
-void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID, nccfdriver::netCDFVID* vcdf = nullptr);
-void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
+void NCDFWriteLonLatVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarLonID, int nVarLatID);
+void NCDFWriteXYVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarXID, int nVarYID,
                                       OGRSpatialReference* poSRS);
-void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
-                               OGRSpatialReference *poSRS, nccfdriver::netCDFVID* vcdf);
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                          char** ppszCFProjection, bool bWriteGDALTags, const std::string& = std::string());
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,

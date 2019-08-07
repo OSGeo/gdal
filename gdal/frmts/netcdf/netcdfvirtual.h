@@ -212,7 +212,8 @@ namespace nccfdriver
      * -
      * A netCDF ID that sits on top of an actual netCDF ID
      * And manages actual interaction with the real netCDF file
-     * A bit difference is that netCDFVDataset
+     *
+     * A bit difference is that netCDFVID
      * doesn't have fixed dim sizes, until defines are committed
      *
      * Also, virtual attributes only exist until the variable is committed. Use "real" attributes and "real" IDs
@@ -221,12 +222,17 @@ namespace nccfdriver
      * ** Do not mix netCDF virtual dim and variable IDs with regular netCDF dim (a.k.a. "real")
      * ids and variable ids. They are NOT necessarily compatible, and must be translated first, to be
      * used in this manner **
+     *
+     * The netCDFVID can also be used in what is called "direct mode" and the netCDFVID will just act as a wrapper to the netCDF Library.
+     * In such a case netCDFVID should take real IDs, not real ones. However, the big advantages of using netCDFVID (such as quick dim resizing)
+     * are no longer are available.
      */
     class netCDFVID
     {
         int & ncid; // ncid REF. which tracks ncID changes that may be made upstream
         int dimTicket = 0;
         int varTicket = 0;
+        bool directMode = true;
 
         std::vector<netCDFVVariable> varList;
         std::vector<netCDFVDimension> dimList;
@@ -287,6 +293,11 @@ namespace nccfdriver
              */
             void nc_vmap();
 
+            /* void enableFullVirtualMode
+             * Enables full virtual mode (i.e. allows netCDFVID to use its full capabilities).
+             */
+            void enableFullVirtualMode() { this->directMode = false; }
+
             // Attribute function(s)
             template<class attrC, class attrT> void nc_put_vatt_generic(int varid, const char* name, const attrT* value)
             {
@@ -309,7 +320,7 @@ namespace nccfdriver
             // Writing Functions
             template<class out_T> void nc_put_vvar_generic(int varid, const size_t* index, const out_T* value)
             {
-                int rvarid = virtualVIDToVar(varid).getRealID();
+                int rvarid = !directMode ? virtualVIDToVar(varid).getRealID() : varid;
 
                 if(rvarid == INVALID_VAR_ID)
                     return; // invalidated variable, specific condition that Scribe relies on
@@ -322,7 +333,7 @@ namespace nccfdriver
 
             template<class outArr_T> void nc_put_vvara_generic(int varid, const size_t* index, const size_t* count, const outArr_T* value)
             {
-                int rvarid = virtualVIDToVar(varid).getRealID();
+                int rvarid = !directMode ? virtualVIDToVar(varid).getRealID() : varid;
 
                 if (rvarid == INVALID_VAR_ID)
                     return; // invalidated variable, specific condition that Scribe relies on

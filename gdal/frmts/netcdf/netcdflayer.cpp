@@ -71,6 +71,8 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nProfileVarID(-1),
         m_bProfileVarUnlimited(false),
         m_nParentIndexVarID(-1),
+        layerVID_alloc(poDS->cdfid == m_nLayerCDFId ? new nccfdriver::netCDFVID(m_nLayerCDFId) : nullptr),
+        layerVID(layerVID_alloc.get() == nullptr ? poDS->vcdf : *layerVID_alloc),
         m_SGeometryFeatInd(0),
         m_poLayerConfig(nullptr),
         m_layerSGDefn(poDS->cdfid, nccfdriver::OGRtoRaw(eGeomType),
@@ -189,8 +191,8 @@ bool netCDFLayer::Create(char **papszOptions,
 
     if(CPLTestBool(singleDatumMode))
     {
-        m_poDS->GeometryScribe.setSingleDatumMode(true);    
-        m_poDS->FieldScribe.setSingleDatumMode(true);    
+        m_poDS->GeometryScribe.setSingleDatumMode(true);
+        m_poDS->FieldScribe.setSingleDatumMode(true);
     }
 
     if(m_bLegacyCreateMode)
@@ -369,13 +371,15 @@ bool netCDFLayer::Create(char **papszOptions,
 
             if (poSRS == nullptr || poSRS->IsGeographic())
             {
-                NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID);
+                // Deal with potentional issues of multiple groups
+                NCDFWriteLonLatVarsAttributes(m_poDS->vcdf, m_nXVarID, m_nYVarID);
 
             }
 
             else if (poSRS != nullptr && poSRS->IsProjected())
             {
-                NCDFWriteXYVarsAttributes(m_nLayerCDFId, m_nXVarID, m_nYVarID,
+                // Deal with potentional issues of multiple groups
+                NCDFWriteXYVarsAttributes(m_poDS->vcdf, m_nXVarID, m_nYVarID,
                     poSRS);
 
             }
@@ -607,7 +611,7 @@ bool netCDFLayer::Create(char **papszOptions,
 
                 if(status != NC_NOERR)
                 {
-                    throw nccfdriver::SGWriter_Exception_NCWriteFailure(m_layerSGDefn.get_containerName().c_str(), CF_GRD_MAPPING, "attribute"); 
+                    throw nccfdriver::SGWriter_Exception_NCWriteFailure(m_layerSGDefn.get_containerName().c_str(), CF_GRD_MAPPING, "attribute");
                 }
 
                 std::vector<int>& ncv = m_layerSGDefn.get_nodeCoordVarIDs();
@@ -616,13 +620,12 @@ bool netCDFLayer::Create(char **papszOptions,
 
                 if (poSRS->IsGeographic())
                 {
-                    NCDFWriteLonLatVarsAttributes(m_nLayerCDFId, xVar, yVar, &(m_poDS->vcdf));
+                    NCDFWriteLonLatVarsAttributes(m_poDS->vcdf, xVar, yVar);
                 }
 
                 else if (poSRS->IsProjected())
                 {
-                    NCDFWriteXYVarsAttributes(m_nLayerCDFId, xVar, yVar,
-                        poSRS, &(m_poDS->vcdf));
+                    NCDFWriteXYVarsAttributes(m_poDS->vcdf, xVar, yVar, poSRS);
                 }
             }
         }
@@ -2490,438 +2493,211 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
     status = NC_NOERR;
 
-    switch( eType )
+    try
     {
-    case OFTString:
-    case OFTStringList:
-    case OFTIntegerList:
-    case OFTRealList:
-    {
-        if( poFieldDefn->GetWidth() == 1 )
+        switch( eType )
         {
-            nType = NC_CHAR;
-
-            if(!m_bLegacyCreateMode)
+        case OFTString:
+        case OFTStringList:
+        case OFTIntegerList:
+        case OFTRealList:
+        {
+            if( poFieldDefn->GetWidth() == 1 )
             {
-                nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+                nType = NC_CHAR;
+                nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
             }
-
+    #ifdef NETCDF_HAS_NC4
+            else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
+            {
+                nType = NC_STRING;
+                nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            }
+    #endif
             else
             {
-                status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
-                                &nMainDimId, &nVarID);
-            }
-        }
-#ifdef NETCDF_HAS_NC4
-        else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
-        {
-            nType = NC_STRING;
-            if(!m_bLegacyCreateMode)
-            {
-                nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-            }
-            else
-            {
-                status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
-                                    &nMainDimId, &nVarID);
-            }
-        }
-#endif
-        else
-        {
-            if( poFieldDefn->GetWidth() == 0 && !m_bAutoGrowStrings )
-            {
-                if( m_nDefaultMaxWidthDimId < 0 )
+                if( poFieldDefn->GetWidth() == 0 && !m_bAutoGrowStrings )
                 {
-                    if(!m_bLegacyCreateMode)
+                    if( m_nDefaultMaxWidthDimId < 0 )
                     {
-                        m_nDefaultMaxWidthDimId = m_poDS->vcdf.nc_def_vdim("string_default_max_width", m_nDefaultWidth);
+                        m_nDefaultMaxWidthDimId = layerVID.nc_def_vdim("string_default_max_width", m_nDefaultWidth);
                     }
 
-                    else
-                    {
-                        status =
-                            nc_def_dim(m_nLayerCDFId, "string_default_max_width",
-                                       m_nDefaultWidth, &m_nDefaultMaxWidthDimId);
-                    }
-
-                    NCDF_ERR(status);
-                    if( status != NC_NOERR )
-                    {
-                        return OGRERR_FAILURE;
-                    }
+                    nSecDimId = m_nDefaultMaxWidthDimId;
                 }
-                nSecDimId = m_nDefaultMaxWidthDimId;
-            }
-            else
-            {
-                size_t nDim = poFieldDefn->GetWidth() == 0
-                                  ? m_nDefaultWidth
-                                  : poFieldDefn->GetWidth();
-            if(!m_bLegacyCreateMode)
-            {
-                std::string ndimname = std::string(pszVarName) + std::string("_max_width");
-                nSecDimId = m_poDS->vcdf.nc_def_vdim(ndimname.c_str(), m_nDefaultWidth);
-            }
-
-            else
-            {
-                status = nc_def_dim(m_nLayerCDFId,
-                                    CPLSPrintf("%s_max_width", pszVarName),
-                                    nDim, &nSecDimId);
-            }
-                NCDF_ERR(status);
-                if( status != NC_NOERR )
-                {
-                    return OGRERR_FAILURE;
-                }
-            }
-
-            nDimCount = 2;
-            int anDims[2] = {nMainDimId, nSecDimId};
-            nType = NC_CHAR;
-
-            if(!m_bLegacyCreateMode)
-            {
-                nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 2, anDims);
-            }
-
-            else
-            {
-                status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 2, anDims,
-                                    &nVarID);
-            }
-        }
-
-        NCDF_ERR(status);
-        if( status != NC_NOERR )
-        {
-            return OGRERR_FAILURE;
-        }
-
-        break;
-    }
-
-    case OFTInteger:
-    {
-        nType = eSubType == OFSTBoolean
-                    ? NC_BYTE
-                    : (eSubType == OFSTInt16) ? NC_SHORT : NC_INT;
-
-        if( nType == NC_BYTE )
-            nodata.chVal = NC_FILL_BYTE;
-        else if( nType == NC_SHORT )
-            nodata.sVal = NC_FILL_SHORT;
-        else if( nType == NC_INT )
-            nodata.nVal = NC_FILL_INT;
-
-        if(!m_bLegacyCreateMode)
-        {
-            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-        }
-
-        else
-        {
-            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                                &nVarID);
-        }
-
-        NCDF_ERR(status);
-        if( status != NC_NOERR )
-        {
-            return OGRERR_FAILURE;
-        }
-
-        if( eSubType == OFSTBoolean )
-        {
-            if(m_bLegacyCreateMode)
-            {
-                signed char anRange[2] = { 0, 1 };
-                nc_put_att_schar(m_nLayerCDFId, nVarID, "valid_range", NC_BYTE, 2,
-                             anRange);
-            }
-        }
-
-        break;
-    }
-
-    case OFTInteger64:
-    {
-        nType = NC_DOUBLE;
-        nodata.dfVal = NC_FILL_DOUBLE;
-#ifdef NETCDF_HAS_NC4
-        if( m_poDS->eFormat == NCDF_FORMAT_NC4 )
-        {
-            nType = NC_INT64;
-            nodata.nVal64 = NC_FILL_INT64;
-        }
-#endif
-
-        if(!m_bLegacyCreateMode)
-        {
-            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-        }
-
-        else
-        {
-            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                                &nVarID);
-        }
-
-        NCDF_ERR(status);
-        if( status != NC_NOERR )
-        {
-            return OGRERR_FAILURE;
-        }
-        break;
-    }
-
-    case OFTReal:
-    {
-        nType = (eSubType == OFSTFloat32) ? NC_FLOAT : NC_DOUBLE;
-        if( eSubType == OFSTFloat32 )
-            nodata.fVal = NC_FILL_FLOAT;
-        else
-            nodata.dfVal = NC_FILL_DOUBLE;
-
-        if(!m_bLegacyCreateMode)
-        {
-            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-        }
-
-        else
-        {
-            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                                &nVarID);
-        }
-
-        NCDF_ERR(status);
-        if( status != NC_NOERR )
-        {
-            return OGRERR_FAILURE;
-        }
-
-        break;
-    }
-
-    case OFTDate:
-    {
-        nType = NC_INT;
-
-        if(!m_bLegacyCreateMode)
-        {
-            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-        }
-
-        else
-        {
-            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                                &nVarID);
-        }
-
-        NCDF_ERR(status);
-        if( status != NC_NOERR )
-        {
-            return OGRERR_FAILURE;
-        }
-        nodata.nVal = NC_FILL_INT;
-
-        if(!m_bLegacyCreateMode)
-        {
-            m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_UNITS,
-                                 "days since 1970-1-1");
-        }
-
-        else
-        {
-            status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
-                                 strlen("days since 1970-1-1"),
-                                 "days since 1970-1-1");
-            NCDF_ERR(status);
-        }
-
-        break;
-    }
-
-    case OFTDateTime:
-    {
-        nType = NC_DOUBLE;
-
-        if(!m_bLegacyCreateMode)
-        {
-            nVarID = m_poDS->vcdf.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-        }
-
-        else
-        {
-            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
-                                &nVarID);
-        }
-
-        NCDF_ERR(status);
-        if( status != NC_NOERR )
-        {
-            return OGRERR_FAILURE;
-        }
-        nodata.dfVal = NC_FILL_DOUBLE;
-
-        if(!m_bLegacyCreateMode)
-        {
-            m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_UNITS,
-                                                   "seconds since 1970-1-1 0:0:0");
-        }
-
-        else
-        {
-            status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
-                                 strlen("seconds since 1970-1-1 0:0:0"),
-                                 "seconds since 1970-1-1 0:0:0");
-            NCDF_ERR(status);
-        }
-
-        break;
-    }
-        
-
-    default:
-        return OGRERR_FAILURE;
-    }
-
-    FieldDesc fieldDesc;
-    fieldDesc.uNoData = nodata;
-    fieldDesc.nType = nType;
-    fieldDesc.nVarId = nVarID;
-    fieldDesc.nDimCount = nDimCount;
-    fieldDesc.nMainDimId = nMainDimId;
-    fieldDesc.nSecDimId = nSecDimId;
-    fieldDesc.bHasWarnedAboutTruncation = false;
-    fieldDesc.bIsDays = (eType == OFTDate);
-    m_aoFieldDesc.push_back(fieldDesc);
-
-    const char *pszLongName = CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
-
-    if ( !m_bLegacyCreateMode )
-    {
-        m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_LNG_NAME, pszLongName);
-
-        std::string ct_name(m_layerSGDefn.get_containerName());
-        m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_SG_GEOMETRY, ct_name.c_str());
-    }
-
-    else
-    {
-        status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_LNG_NAME,
-                                 strlen(pszLongName), pszLongName);
-        NCDF_ERR(status);
-    }
-
-    if( m_bWriteGDALTags )
-    {
-        if ( !m_bLegacyCreateMode )
-        {
-            m_poDS->vcdf.nc_put_vatt_text(nVarID, "ogr_field_name", poFieldDefn->GetNameRef());
-        }
-
-        else
-        {
-            status = nc_put_att_text(m_nLayerCDFId, nVarID, "ogr_field_name",
-                                     strlen(poFieldDefn->GetNameRef()),
-                                     poFieldDefn->GetNameRef());
-            NCDF_ERR(status);
-        }
-
-        const char *pszType = OGRFieldDefn::GetFieldTypeName(eType);
-        if( eSubType != OFSTNone )
-        {
-            pszType = CPLSPrintf("%s(%s)", pszType,
-                                 OGRFieldDefn::GetFieldSubTypeName(eSubType));
-        }
-
-        if ( !m_bLegacyCreateMode )
-        {
-            m_poDS->vcdf.nc_put_vatt_text(nVarID, "ogr_field_type", pszType);
-        }
-
-        else
-        {
-            status = nc_put_att_text(m_nLayerCDFId, nVarID, "ogr_field_type",
-                                     strlen(pszType), pszType);
-            NCDF_ERR(status);
-        }
-
-        const int nWidth = poFieldDefn->GetWidth();
-        if(nWidth || nType == NC_CHAR)
-        {
-            if ( !m_bLegacyCreateMode )
-            {
-                m_poDS->vcdf.nc_put_vatt_int(nVarID, "ogr_field_width", &nWidth);
-            }
-
-            else
-            {
-                status = nc_put_att_int(m_nLayerCDFId, nVarID, "ogr_field_width",
-                                        NC_INT, 1, &nWidth);
-                NCDF_ERR(status);
-            }
-
-            const int nPrecision = poFieldDefn->GetPrecision();
-            if( nPrecision )
-            {
-
-                if ( !m_bLegacyCreateMode )
-                {
-                    m_poDS->vcdf.nc_put_vatt_int(nVarID, "ogr_field_precision", &nPrecision);
-                }
-
                 else
                 {
-                    status =
-                         nc_put_att_int(m_nLayerCDFId, nVarID, "ogr_field_precision",
-                                        NC_INT, 1, &nPrecision);
-                         NCDF_ERR(status);
+                    size_t nDim = poFieldDefn->GetWidth() == 0
+                                    ? m_nDefaultWidth
+                                    : poFieldDefn->GetWidth();
+
+                    std::string ndimname = std::string(pszVarName) + std::string("_max_width");
+                    nSecDimId = layerVID.nc_def_vdim(ndimname.c_str(), nDim);
+                }
+
+                nDimCount = 2;
+                int anDims[2] = {nMainDimId, nSecDimId};
+                nType = NC_CHAR;
+                nVarID = layerVID.nc_def_vvar(pszVarName, nType, 2, anDims);
+            }
+
+            break;
+        }
+
+        case OFTInteger:
+        {
+            nType = eSubType == OFSTBoolean
+                        ? NC_BYTE
+                        : (eSubType == OFSTInt16) ? NC_SHORT : NC_INT;
+
+            if( nType == NC_BYTE )
+                nodata.chVal = NC_FILL_BYTE;
+            else if( nType == NC_SHORT )
+                nodata.sVal = NC_FILL_SHORT;
+            else if( nType == NC_INT )
+                nodata.nVal = NC_FILL_INT;
+
+            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+
+            if( eSubType == OFSTBoolean )
+            {
+                if(m_bLegacyCreateMode)
+                {
+                    signed char anRange[2] = { 0, 1 };
+                    nc_put_att_schar(m_nLayerCDFId, nVarID, "valid_range", NC_BYTE, 2,
+                                anRange);
+                }
+            }
+
+            break;
+        }
+
+        case OFTInteger64:
+        {
+            nType = NC_DOUBLE;
+            nodata.dfVal = NC_FILL_DOUBLE;
+    #ifdef NETCDF_HAS_NC4
+            if( m_poDS->eFormat == NCDF_FORMAT_NC4 )
+            {
+                nType = NC_INT64;
+                nodata.nVal64 = NC_FILL_INT64;
+            }
+    #endif
+
+            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            break;
+        }
+
+        case OFTReal:
+        {
+            nType = (eSubType == OFSTFloat32) ? NC_FLOAT : NC_DOUBLE;
+            if( eSubType == OFSTFloat32 )
+                nodata.fVal = NC_FILL_FLOAT;
+            else
+                nodata.dfVal = NC_FILL_DOUBLE;
+
+            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            break;
+        }
+
+        case OFTDate:
+        {
+            nType = NC_INT;
+
+            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+            nodata.nVal = NC_FILL_INT;
+
+            layerVID.nc_put_vatt_text(nVarID, CF_UNITS,
+                                    "days since 1970-1-1");
+            break;
+        }
+
+        case OFTDateTime:
+        {
+            nType = NC_DOUBLE;
+            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+
+            nodata.dfVal = NC_FILL_DOUBLE;
+
+            layerVID.nc_put_vatt_text(nVarID, CF_UNITS,
+                                                    "seconds since 1970-1-1 0:0:0");
+            break;
+        }
+
+
+        default:
+            return OGRERR_FAILURE;
+        }
+
+        FieldDesc fieldDesc;
+        fieldDesc.uNoData = nodata;
+        fieldDesc.nType = nType;
+        fieldDesc.nVarId = nVarID;
+        fieldDesc.nDimCount = nDimCount;
+        fieldDesc.nMainDimId = nMainDimId;
+        fieldDesc.nSecDimId = nSecDimId;
+        fieldDesc.bHasWarnedAboutTruncation = false;
+        fieldDesc.bIsDays = (eType == OFTDate);
+        m_aoFieldDesc.push_back(fieldDesc);
+
+        const char *pszLongName = CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
+
+        layerVID.nc_put_vatt_text(nVarID, CF_LNG_NAME, pszLongName);
+
+        std::string ct_name(m_layerSGDefn.get_containerName());
+        layerVID.nc_put_vatt_text(nVarID, CF_SG_GEOMETRY, ct_name.c_str());
+
+        if( m_bWriteGDALTags )
+        {
+            layerVID.nc_put_vatt_text(nVarID, "ogr_field_name", poFieldDefn->GetNameRef());
+
+            const char *pszType = OGRFieldDefn::GetFieldTypeName(eType);
+            if( eSubType != OFSTNone )
+            {
+                pszType = CPLSPrintf("%s(%s)", pszType,
+                                    OGRFieldDefn::GetFieldSubTypeName(eSubType));
+            }
+
+            layerVID.nc_put_vatt_text(nVarID, "ogr_field_type", pszType);
+
+            const int nWidth = poFieldDefn->GetWidth();
+            if(nWidth || nType == NC_CHAR)
+            {
+                layerVID.nc_put_vatt_int(nVarID, "ogr_field_width", &nWidth);
+
+                const int nPrecision = poFieldDefn->GetPrecision();
+                if( nPrecision )
+                {
+                    layerVID.nc_put_vatt_int(nVarID, "ogr_field_precision", &nPrecision);
                 }
             }
         }
-    }
 
-    // nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
-    //                 strlen("none"), "none");
+        // nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
+        //                 strlen("none"), "none");
 
-    if( !m_osGridMapping.empty() && nMainDimId == m_nRecordDimID )
-    {
-        if ( !m_bLegacyCreateMode )
+        if( !m_osGridMapping.empty() && nMainDimId == m_nRecordDimID )
         {
-            m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_GRD_MAPPING, m_osGridMapping.c_str());
+            layerVID.nc_put_vatt_text(nVarID, CF_GRD_MAPPING, m_osGridMapping.c_str());
         }
 
-        else
+        if( !m_osCoordinatesValue.empty() && nMainDimId == m_nRecordDimID )
         {
-            status =
-                nc_put_att_text(m_nLayerCDFId, nVarID, CF_GRD_MAPPING,
-                            m_osGridMapping.size(), m_osGridMapping.c_str());
-            NCDF_ERR(status);
+            layerVID.nc_put_vatt_text(nVarID, CF_COORDINATES, m_osCoordinatesValue.c_str());
         }
-    }
 
-    if( !m_osCoordinatesValue.empty() && nMainDimId == m_nRecordDimID )
-    {
-        if ( !m_bLegacyCreateMode )
-        {
-            m_poDS->vcdf.nc_put_vatt_text(nVarID, CF_COORDINATES, m_osCoordinatesValue.c_str());
-        }
-        else
-        {
-            status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_COORDINATES,
-                                     m_osCoordinatesValue.size(),
-                                     m_osCoordinatesValue.c_str());
-            NCDF_ERR(status);
-        }
-    }
 
-    if( poConfig != nullptr )
-    {
-        netCDFWriteAttributesFromConf(m_nLayerCDFId, nVarID,
+        if( poConfig != nullptr )
+        {
+            netCDFWriteAttributesFromConf(m_nLayerCDFId, nVarID,
                                       poConfig->m_aoAttributes);
+        }
+    }
+
+    catch(nccfdriver::SG_Exception& e)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "%s", e.get_err_msg());
+        return OGRERR_FAILURE;
     }
 
     m_poFeatureDefn->AddFieldDefn(poFieldDefn);

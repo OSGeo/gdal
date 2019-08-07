@@ -60,6 +60,18 @@ namespace nccfdriver
 
     int netCDFVID::nc_def_vdim(const char * name, size_t len)
     {
+        if(directMode)
+        {
+            int ddim;
+            int err;
+            if((err = nc_def_dim(ncid, name, len, &ddim)) != NC_NOERR)
+            {
+                throw SG_Exception_VWrite_Failure("netCDF file", "a dimension definition");
+            }
+
+            return ddim;
+        }
+
         int dimID = dimTicket;
 
         // Check if name is already defined
@@ -79,6 +91,18 @@ namespace nccfdriver
 
     int netCDFVID::nc_def_vvar(const char * name, nc_type xtype, int ndims, const int* dimidsp)
     {
+        if(directMode)
+        {
+            int dvar;
+            int err;
+            if((err = nc_def_var(ncid, name, xtype, ndims, dimidsp, &dvar)) != NC_NOERR)
+            {
+                throw SG_Exception_VWrite_Failure("netCDF file", "a dimension definition");
+            }
+
+            return dvar;
+        }
+
         int varID = varTicket;
 
         // Check if name is already defined
@@ -232,28 +256,78 @@ namespace nccfdriver
 
     void netCDFVID::nc_put_vatt_text(int varid, const char* name, const char* value)
     {
+        if(directMode)
+        {
+            int err;
+            if((err = nc_put_att_text(ncid, varid, name, strlen(value), value)) != NC_NOERR)
+            {
+                throw SG_Exception_VWrite_Failure("variable", "text attribute");
+            }
+            return;
+        }
+
         nc_put_vatt_generic<netCDFVTextAttribute, char>(varid, name, value);
     }
 
     void netCDFVID::nc_put_vatt_int(int varid, const char* name, const int* value)
     {
+        if(directMode)
+        {
+            int err;
+            if((err = nc_put_att_int(ncid, varid, name, NC_INT, 1, value)) != NC_NOERR)
+            {
+                throw SG_Exception_VWrite_Failure("variable", "int attribute");
+            }
+            return;
+        }
+
         nc_put_vatt_generic<netCDFVIntAttribute, int>(varid, name, value);
     }
 
     void netCDFVID::nc_put_vatt_double(int varid, const char* name, const double* value)
     {
+        if(directMode)
+        {
+            int err;
+            if((err = nc_put_att_double(ncid, varid, name, NC_DOUBLE, 1, value)) != NC_NOERR)
+            {
+                throw SG_Exception_VWrite_Failure("variable", "double attribute");
+            }
+            return;
+        }
+
         nc_put_vatt_generic<netCDFVDoubleAttribute, double>(varid, name, value);
     }
 
     void netCDFVID::nc_put_vatt_float(int varid, const char* name, const float* value)
     {
-        nc_put_vatt_generic<netCDFVFloatAttribute, float>(varid, name, value);
+        if(directMode)
+        {
+            int err;
+            if((err = nc_put_att_float(ncid, varid, name, NC_FLOAT, 1, value)) != NC_NOERR)
+            {
+                throw SG_Exception_VWrite_Failure("variable", "float attribute");
+            }
+            return;
         }
+
+        nc_put_vatt_generic<netCDFVFloatAttribute, float>(varid, name, value);
+    }
 
     void netCDFVID::nc_put_vatt_byte(int varid, const char* name, const signed char* value)
     {
-        nc_put_vatt_generic<netCDFVByteAttribute, signed char>(varid, name, value);
+        if(directMode)
+        {
+            int err;
+            if((err = nc_put_att_schar(ncid, varid, name, NC_BYTE, 1, value)) != NC_NOERR)
+            {
+                throw SG_Exception_VWrite_Failure("variable", "byte attribute");
+            }
+            return;
         }
+
+        nc_put_vatt_generic<netCDFVByteAttribute, signed char>(varid, name, value);
+    }
 
     void netCDFVTextAttribute::vsync(int realncid, int realvarid)
     {
@@ -268,7 +342,7 @@ namespace nccfdriver
      */
     void netCDFVID::nc_put_vvar1_text(int varid, const size_t* index, const char* value)
     {
-        int rvarid = virtualVIDToVar(varid).getRealID();
+        int rvarid = !directMode ? virtualVIDToVar(varid).getRealID() : varid;
         if(rvarid == INVALID_VAR_ID)
             return; // invalidated variable, don't care condition that Scribe relies on
 
@@ -280,7 +354,7 @@ namespace nccfdriver
 
     void netCDFVID::nc_put_vvara_text(int varid, const size_t* start, const size_t* count, const char* value)
     {
-        int rvarid = virtualVIDToVar(varid).getRealID();
+        int rvarid = !directMode ? virtualVIDToVar(varid).getRealID() : varid;
         if(rvarid == INVALID_VAR_ID)
             return; // invalidated variable, don't care condition that Scribe relies on
         if(nc_put_vara_text(ncid, rvarid, start, count, value) != NC_NOERR)
@@ -292,7 +366,7 @@ namespace nccfdriver
 #ifdef NETCDF_HAS_NC4
     void netCDFVID::nc_put_vvar1_string(int varid, const size_t* index, const char** value)
     {
-        int rvarid = virtualVIDToVar(varid).getRealID();
+        int rvarid = !directMode ? virtualVIDToVar(varid).getRealID() : varid;
 
         if(rvarid == INVALID_VAR_ID)
             return; // invalidated variable

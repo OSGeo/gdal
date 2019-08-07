@@ -4484,46 +4484,21 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
 /*                   NCDFWriteLonLatVarsAttributes()                    */
 /************************************************************************/
 
-void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID, nccfdriver::netCDFVID * vcdf)
+void NCDFWriteLonLatVarsAttributes(nccfdriver::netCDFVID & vcdf, int nVarLonID, int nVarLatID)
 {
-    if(vcdf == nullptr)
+
+    try
     {
-        int status =
-            nc_put_att_text(cdfid, nVarLatID, CF_STD_NAME,
-                            strlen(CF_LATITUDE_STD_NAME), CF_LATITUDE_STD_NAME);
-        NCDF_ERR(status);
-
-        status =
-            nc_put_att_text(cdfid, nVarLatID, CF_LNG_NAME,
-                            strlen(CF_LATITUDE_LNG_NAME), CF_LATITUDE_LNG_NAME);
-        NCDF_ERR(status);
-
-        status = nc_put_att_text(cdfid, nVarLatID, CF_UNITS,
-                                strlen(CF_DEGREES_NORTH), CF_DEGREES_NORTH);
-        NCDF_ERR(status);
-
-        status =
-            nc_put_att_text(cdfid, nVarLonID, CF_STD_NAME,
-                            strlen(CF_LONGITUDE_STD_NAME), CF_LONGITUDE_STD_NAME);
-        NCDF_ERR(status);
-
-        status =
-            nc_put_att_text(cdfid, nVarLonID, CF_LNG_NAME,
-                            strlen(CF_LONGITUDE_LNG_NAME), CF_LONGITUDE_LNG_NAME);
-        NCDF_ERR(status);
-
-        status = nc_put_att_text(cdfid, nVarLonID, CF_UNITS,
-                                strlen(CF_DEGREES_EAST), CF_DEGREES_EAST);
-        NCDF_ERR(status);
+        vcdf.nc_put_vatt_text(nVarLatID, CF_STD_NAME, CF_LATITUDE_STD_NAME);
+        vcdf.nc_put_vatt_text(nVarLatID, CF_LNG_NAME, CF_LATITUDE_LNG_NAME);
+        vcdf.nc_put_vatt_text(nVarLatID, CF_UNITS, CF_DEGREES_NORTH);
+        vcdf.nc_put_vatt_text(nVarLonID, CF_STD_NAME, CF_LONGITUDE_STD_NAME);
+        vcdf.nc_put_vatt_text(nVarLonID, CF_LNG_NAME, CF_LONGITUDE_LNG_NAME);
+        vcdf.nc_put_vatt_text(nVarLonID, CF_UNITS, CF_DEGREES_EAST);
     }
-    else
+    catch(nccfdriver::SG_Exception& e)
     {
-        vcdf->nc_put_vatt_text(nVarLatID, CF_STD_NAME, CF_LATITUDE_STD_NAME);
-        vcdf->nc_put_vatt_text(nVarLatID, CF_LNG_NAME, CF_LATITUDE_LNG_NAME);
-        vcdf->nc_put_vatt_text(nVarLatID, CF_UNITS, CF_DEGREES_NORTH);
-        vcdf->nc_put_vatt_text(nVarLonID, CF_STD_NAME, CF_LONGITUDE_STD_NAME);
-        vcdf->nc_put_vatt_text(nVarLonID, CF_LNG_NAME, CF_LONGITUDE_LNG_NAME);
-        vcdf->nc_put_vatt_text(nVarLonID, CF_UNITS, CF_DEGREES_EAST);
+        CPLError(CE_Failure, CPLE_FileIO, "%s", e.get_err_msg());
     }
 }
 
@@ -4560,57 +4535,24 @@ const char* NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS)
 /*                     NCDFWriteXYVarsAttributes()                      */
 /************************************************************************/
 
-void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
-                               OGRSpatialReference *poSRS, nccfdriver::netCDFVID* vcdf)
-{
-    int status;
-    const char *pszUnitsToWrite = NCDFGetProjectedCFUnit(poSRS);
-
-    if(vcdf == nullptr)
-    {
-        status = nc_put_att_text(cdfid, nVarXID, CF_STD_NAME,
-                                 strlen(CF_PROJ_X_COORD), CF_PROJ_X_COORD);
-        NCDF_ERR(status);
-
-        status = nc_put_att_text(cdfid, nVarXID, CF_LNG_NAME,
-                                 strlen(CF_PROJ_X_COORD_LONG_NAME),
-                                 CF_PROJ_X_COORD_LONG_NAME);
-        NCDF_ERR(status);
-
-        status = nc_put_att_text(cdfid, nVarXID, CF_UNITS,
-                                 strlen(pszUnitsToWrite), pszUnitsToWrite);
-        NCDF_ERR(status);
-
-        status = nc_put_att_text(cdfid, nVarYID, CF_STD_NAME,
-                             strlen(CF_PROJ_Y_COORD), CF_PROJ_Y_COORD);
-        NCDF_ERR(status);
-
-        status = nc_put_att_text(cdfid, nVarYID, CF_LNG_NAME,
-                                 strlen(CF_PROJ_Y_COORD_LONG_NAME),
-                                 CF_PROJ_Y_COORD_LONG_NAME);
-        NCDF_ERR(status);
-
-        status = nc_put_att_text(cdfid, nVarYID, CF_UNITS, strlen(pszUnitsToWrite),
-                                 pszUnitsToWrite);
-        NCDF_ERR(status);
-    }
-
-    else
-    {
-        // If group support is added to CF-1.8, then this will have to slightly change
-        vcdf->nc_put_vatt_text(nVarXID, CF_STD_NAME, CF_PROJ_X_COORD);
-        vcdf->nc_put_vatt_text(nVarXID, CF_LNG_NAME, CF_PROJ_X_COORD_LONG_NAME);
-        vcdf->nc_put_vatt_text(nVarXID, CF_UNITS, pszUnitsToWrite);
-        vcdf->nc_put_vatt_text(nVarYID, CF_STD_NAME, CF_PROJ_Y_COORD);
-        vcdf->nc_put_vatt_text(nVarYID, CF_LNG_NAME, CF_PROJ_Y_COORD_LONG_NAME);
-        vcdf->nc_put_vatt_text(nVarYID, CF_UNITS, pszUnitsToWrite);
-    }
-}
-
-void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
+void NCDFWriteXYVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarXID, int nVarYID,
                                OGRSpatialReference *poSRS)
 {
-    NCDFWriteXYVarsAttributes(cdfid, nVarXID, nVarYID, poSRS, nullptr);
+    const char *pszUnitsToWrite = NCDFGetProjectedCFUnit(poSRS);
+
+    try
+    {
+        vcdf.nc_put_vatt_text(nVarXID, CF_STD_NAME, CF_PROJ_X_COORD);
+        vcdf.nc_put_vatt_text(nVarXID, CF_LNG_NAME, CF_PROJ_X_COORD_LONG_NAME);
+        vcdf.nc_put_vatt_text(nVarXID, CF_UNITS, pszUnitsToWrite);
+        vcdf.nc_put_vatt_text(nVarYID, CF_STD_NAME, CF_PROJ_Y_COORD);
+        vcdf.nc_put_vatt_text(nVarYID, CF_LNG_NAME, CF_PROJ_Y_COORD_LONG_NAME);
+        vcdf.nc_put_vatt_text(nVarYID, CF_UNITS, pszUnitsToWrite);
+    }
+    catch(nccfdriver::SG_Exception& e)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "%s", e.get_err_msg());
+    }
 }
 
 /************************************************************************/
@@ -4925,7 +4867,7 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
                                 1, anYDims, &nVarYID);
             NCDF_ERR(status);
 
-            NCDFWriteXYVarsAttributes(cdfid, nVarXID, nVarYID, &oSRS);
+            NCDFWriteXYVarsAttributes(this->vcdf, nVarXID, nVarYID, &oSRS);
         }
 
         // Write lat/lon attributes if needed.
@@ -5005,7 +4947,7 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             NCDF_ERR(status);
             DefVarDeflate(nVarLonID, false);  // Don't set chunking.
 
-            NCDFWriteLonLatVarsAttributes(cdfid, nVarLonID, nVarLatID);
+            NCDFWriteLonLatVarsAttributes(this->vcdf, nVarLonID, nVarLatID);
 
             CPLFree(panLatDims);
             CPLFree(panLonDims);
@@ -7425,12 +7367,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     if(poDS->nCFVersion >= 1.8)
     {
         poDS->bSGSupport = true;
+        poDS->DetectAndFillSGLayers(cdfid);
+        poDS->vcdf.enableFullVirtualMode();
     }
-    else poDS->bSGSupport = false;
-
-    if(poDS->bSGSupport)
+    else
     {
-         poDS->DetectAndFillSGLayers(cdfid);
+         poDS->bSGSupport = false;
     }
 
     char szConventions[NC_MAX_NAME + 1];
@@ -8264,6 +8206,7 @@ netCDFDataset::Create( const char *pszFilename,
     if (!legacyCreateMode)
     {
         poDS->bSGSupport = true;
+        poDS->vcdf.enableFullVirtualMode();
     }
 
     else
