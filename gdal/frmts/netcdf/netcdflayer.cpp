@@ -107,56 +107,43 @@ void netCDFLayer::netCDFWriteAttributesFromConf(
 {
     for(size_t i = 0; i < aoAttributes.size(); i++)
     {
-        const netCDFWriterConfigAttribute &oAtt = aoAttributes[i];
-        int status = NC_NOERR;
-        if( oAtt.m_osValue.empty() )
+        try
         {
-            int attid = -1;
-            status = nc_inq_attid(cdfid, varid, oAtt.m_osName, &attid);
-            if( status == NC_NOERR )
-                status = nc_del_att(cdfid, varid, oAtt.m_osName);
-            else
-                status = NC_NOERR;
+            const netCDFWriterConfigAttribute &oAtt = aoAttributes[i];
+            int status = NC_NOERR;
+            if( oAtt.m_osValue.empty() )
+            {
+                int attid = -1;
+                status = nc_inq_attid(cdfid, varid, oAtt.m_osName, &attid);
+                if( status == NC_NOERR )
+                    status = nc_del_att(cdfid, varid, oAtt.m_osName);
+                else
+                    status = NC_NOERR;
+            }
+            else if( EQUAL(oAtt.m_osType, "string") )
+            {
+                layerVID.nc_put_vatt_text(varid, oAtt.m_osName, oAtt.m_osValue);
+            }
+
+            else if( EQUAL(oAtt.m_osType, "integer") )
+            {
+                int nVal = atoi(oAtt.m_osValue);
+                layerVID.nc_put_vatt_int(varid, oAtt.m_osName, &nVal);
+            }
+
+            else if( EQUAL(oAtt.m_osType, "double") )
+            {
+                double dfVal = CPLAtof(oAtt.m_osValue);
+                layerVID.nc_put_vatt_double(varid, oAtt.m_osName, &dfVal);
+            }
+
+            NCDF_ERR(status);
         }
-        else if( EQUAL(oAtt.m_osType, "string") )
+
+        catch(nccfdriver::SG_Exception& e)
         {
-            if(m_bLegacyCreateMode)
-            {
-                status = nc_put_att_text(cdfid, varid, oAtt.m_osName,
-                                         oAtt.m_osValue.size(), oAtt.m_osValue);
-            }
-            else
-            {
-                m_poDS->vcdf.nc_put_vatt_text(varid, oAtt.m_osName, oAtt.m_osValue);
-            }
+            CPLError(CE_Failure, CPLE_FileIO, "%s", e.get_err_msg());
         }
-        else if( EQUAL(oAtt.m_osType, "integer") )
-        {
-            int nVal = atoi(oAtt.m_osValue);
-            if(m_bLegacyCreateMode)
-            {
-                status =
-                    nc_put_att_int(cdfid, varid, oAtt.m_osName, NC_INT, 1, &nVal);
-            }
-            else
-            {
-                m_poDS->vcdf.nc_put_vatt_int(varid, oAtt.m_osName, &nVal);
-            }
-        }
-        else if( EQUAL(oAtt.m_osType, "double") )
-        {
-            double dfVal = CPLAtof(oAtt.m_osValue);
-            if(m_bLegacyCreateMode)
-            {
-                 status = nc_put_att_double(cdfid, varid, oAtt.m_osName,
-                                       NC_DOUBLE, 1, &dfVal);
-            }
-            else
-            {
-                 m_poDS->vcdf.nc_put_vatt_double(varid, oAtt.m_osName, &dfVal);
-            }
-        }
-        NCDF_ERR(status);
     }
 }
 
