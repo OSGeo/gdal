@@ -182,7 +182,7 @@ def test_mrsid_3():
 
     stat_epsilon = 0.0001
     for i in range(4):
-        if abs(new_stat[i] - check_stat[i]) > stat_epsilon:
+        if new_stat[i] != pytest.approx(check_stat[i], abs=stat_epsilon):
             print('')
             print('old = ', check_stat)
             print('new = ', new_stat)

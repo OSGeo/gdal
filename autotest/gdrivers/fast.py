@@ -116,9 +116,9 @@ def test_fast_4():
     ds = None
 
     tolerance = 0.01
-    assert (abs(gt[0] - 280342.5) <= tolerance and abs(gt[1] - 15.0) <= tolerance and \
-       abs(gt[2] - 0.0) <= tolerance and abs(gt[3] - 3621457.5) <= tolerance and \
-       abs(gt[4] - 0.0) <= tolerance and abs(gt[5] + 15.0) <= tolerance), \
+    assert (gt[0] == pytest.approx(280342.5, abs=tolerance) and gt[1] == pytest.approx(15.0, abs=tolerance) and \
+       gt[2] == pytest.approx(0.0, abs=tolerance) and gt[3] == pytest.approx(3621457.5, abs=tolerance) and \
+       gt[4] == pytest.approx(0.0, abs=tolerance) and abs(gt[5] + 15.0) <= tolerance), \
         'FAST geotransform wrong'
 
 

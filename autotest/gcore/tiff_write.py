@@ -6586,7 +6586,7 @@ def test_tiff_write_webp_huge_single_strip():
 
     for i in range(3):
         for j in range(4):
-            assert abs(original_stats[i][j] - got_stats[i][j]) <= 1e-1 * abs(original_stats[i][j]), \
+            assert original_stats[i][j] == pytest.approx(got_stats[i][j], abs=1e-1 * abs(original_stats[i][j])), \
                 'did not get expected statistics'
 
     gdaltest.tiff_drv.Delete(filename)

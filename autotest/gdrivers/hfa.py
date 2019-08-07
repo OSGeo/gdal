@@ -169,13 +169,13 @@ def test_hfa_int_stats_2():
 
     tolerance = 0.0001
 
-    assert abs(stats[0] - 40918.0) <= tolerance, 'Minimum value is wrong.'
+    assert stats[0] == pytest.approx(40918.0, abs=tolerance), 'Minimum value is wrong.'
 
-    assert abs(stats[1] - 41134.0) <= tolerance, 'Maximum value is wrong.'
+    assert stats[1] == pytest.approx(41134.0, abs=tolerance), 'Maximum value is wrong.'
 
-    assert abs(stats[2] - 41019.784218148) <= tolerance, 'Mean value is wrong.'
+    assert stats[2] == pytest.approx(41019.784218148, abs=tolerance), 'Mean value is wrong.'
 
-    assert abs(stats[3] - 44.637237445468) <= tolerance, 'StdDev value is wrong.'
+    assert stats[3] == pytest.approx(44.637237445468, abs=tolerance), 'StdDev value is wrong.'
 
 ###############################################################################
 # Verify we can read metadata of float.img.
@@ -190,22 +190,22 @@ def test_hfa_float_stats_1():
     tolerance = 0.0001
 
     mini = float(md['STATISTICS_MINIMUM'])
-    assert abs(mini - 40.91858291626) <= tolerance, 'STATISTICS_MINIMUM is wrong.'
+    assert mini == pytest.approx(40.91858291626, abs=tolerance), 'STATISTICS_MINIMUM is wrong.'
 
     maxi = float(md['STATISTICS_MAXIMUM'])
-    assert abs(maxi - 41.134323120117) <= tolerance, 'STATISTICS_MAXIMUM is wrong.'
+    assert maxi == pytest.approx(41.134323120117, abs=tolerance), 'STATISTICS_MAXIMUM is wrong.'
 
     median = float(md['STATISTICS_MEDIAN'])
-    assert abs(median - 41.017182931304) <= tolerance, 'STATISTICS_MEDIAN is wrong.'
+    assert median == pytest.approx(41.017182931304, abs=tolerance), 'STATISTICS_MEDIAN is wrong.'
 
     mod = float(md['STATISTICS_MODE'])
-    assert abs(mod - 41.0104410499) <= tolerance, 'STATISTICS_MODE is wrong.'
+    assert mod == pytest.approx(41.0104410499, abs=tolerance), 'STATISTICS_MODE is wrong.'
 
     histMin = float(md['STATISTICS_HISTOMIN'])
-    assert abs(histMin - 40.91858291626) <= tolerance, 'STATISTICS_HISTOMIN is wrong.'
+    assert histMin == pytest.approx(40.91858291626, abs=tolerance), 'STATISTICS_HISTOMIN is wrong.'
 
     histMax = float(md['STATISTICS_HISTOMAX'])
-    assert abs(histMax - 41.134323120117) <= tolerance, 'STATISTICS_HISTOMAX is wrong.'
+    assert histMax == pytest.approx(41.134323120117, abs=tolerance), 'STATISTICS_HISTOMAX is wrong.'
 
     assert md['LAYER_TYPE'] == 'athematic', 'LAYER_TYPE is wrong.'
 
@@ -221,13 +221,13 @@ def test_hfa_float_stats_2():
 
     tolerance = 0.0001
 
-    assert abs(stats[0] - 40.91858291626) <= tolerance, 'Minimum value is wrong.'
+    assert stats[0] == pytest.approx(40.91858291626, abs=tolerance), 'Minimum value is wrong.'
 
-    assert abs(stats[1] - 41.134323120117) <= tolerance, 'Maximum value is wrong.'
+    assert stats[1] == pytest.approx(41.134323120117, abs=tolerance), 'Maximum value is wrong.'
 
-    assert abs(stats[2] - 41.020284249223) <= tolerance, 'Mean value is wrong.'
+    assert stats[2] == pytest.approx(41.020284249223, abs=tolerance), 'Mean value is wrong.'
 
-    assert abs(stats[3] - 0.044636441749041) <= tolerance, 'StdDev value is wrong.'
+    assert stats[3] == pytest.approx(0.044636441749041, abs=tolerance), 'StdDev value is wrong.'
 
 ###############################################################################
 # Verify we can read image data.
@@ -486,13 +486,13 @@ def test_hfa_nodata_read():
 
     tolerance = 0.0001
 
-    assert abs(stats[0] - 2) <= tolerance, 'Minimum value is wrong.'
+    assert stats[0] == pytest.approx(2, abs=tolerance), 'Minimum value is wrong.'
 
-    assert abs(stats[1] - 4) <= tolerance, 'Maximum value is wrong.'
+    assert stats[1] == pytest.approx(4, abs=tolerance), 'Maximum value is wrong.'
 
-    assert abs(stats[2] - 2.6666666666667) <= tolerance, 'Mean value is wrong.'
+    assert stats[2] == pytest.approx(2.6666666666667, abs=tolerance), 'Mean value is wrong.'
 
-    assert abs(stats[3] - 0.94280904158206) <= tolerance, 'StdDev value is wrong.'
+    assert stats[3] == pytest.approx(0.94280904158206, abs=tolerance), 'StdDev value is wrong.'
 
     b = None
     ds = None
@@ -514,7 +514,7 @@ def test_hfa_rotated_read():
 
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i] - check_gt[i]) > gt_epsilon:
+        if new_gt[i] != pytest.approx(check_gt[i], abs=gt_epsilon):
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -576,7 +576,7 @@ def test_hfa_rotated_write():
 
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i] - check_gt[i]) > gt_epsilon:
+        if new_gt[i] != pytest.approx(check_gt[i], abs=gt_epsilon):
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -735,7 +735,7 @@ def test_hfa_xforms_3rd():
         except (TypeError, ValueError):
             pytest.fail('metadata item %d missing' % check_item[0])
 
-        assert abs(value - check_item[1]) <= abs(value / 100000.0), \
+        assert value == pytest.approx(check_item[1], abs=abs(value / 100000.0)), \
             ('metadata item %s has wrong value: %.15g' %
                                  (check_item[0], value))
 

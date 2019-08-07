@@ -920,7 +920,7 @@ def test_ecw_29():
                 nvals = nvals + 1
                 sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1 - mean2)
                 sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)
-                if abs(mean1 - mean2) > (stddev1 + stddev2) / 2 or stddev1 != pytest.approx(stddev2, abs=30):
+                if mean1 != pytest.approx(mean2, abs=(stddev1 + stddev2) / 2) or stddev1 != pytest.approx(stddev2, abs=30):
                     print("%d, %d, %f, %f" % (j, i, abs(mean1 - mean2), abs(stddev1 - stddev2)))
                     ret = 'fail'
 
@@ -1724,7 +1724,7 @@ def test_ecw_47():
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= mean_tolerance and stddev == pytest.approx(exp_stddev, abs=0.5), \
+    assert mean == pytest.approx(exp_mean, abs=mean_tolerance) and stddev == pytest.approx(exp_stddev, abs=0.5), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
     gdal.Unlink('/vsimem/ecw_47.ecw')
@@ -1901,7 +1901,7 @@ def test_ecw_online_5():
 
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= mean_tolerance and stddev == pytest.approx(exp_stddev, abs=0.5), \
+    assert mean == pytest.approx(exp_mean, abs=mean_tolerance) and stddev == pytest.approx(exp_stddev, abs=0.5), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
 ###############################################################################
