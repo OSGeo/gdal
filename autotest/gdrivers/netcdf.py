@@ -4720,8 +4720,8 @@ def test_empty_polygon_read_write():
     nc_layer = nc_tsrc.GetLayerByName("places");
     assert(nc_layer.GetFeatureCount() == 2)
     first = nc_layer.GetNextFeature()
-    assert(first.GetFieldAsString("NAMES") == "Nowhere")
-    assert(first.GetGeometryRef().IsEmpty())
+    assert(first.GetFieldAsString("NAMES") == "Somewhere")
+    assert(first.GetGeometryRef().ExportToWkt() == "POLYGON ((0 1,1 0,2 0,0 1))")
     second = nc_layer.GetNextFeature()
     assert(second.GetFieldAsString("NAMES") == "Everywhere")
     assert(second.GetGeometryRef().IsEmpty())
@@ -4740,8 +4740,8 @@ def test_empty_multiline_read_write():
     nc_layer = nc_tsrc.GetLayerByName("places");
     assert(nc_layer.GetFeatureCount() == 2)
     first = nc_layer.GetNextFeature()
-    assert(first.GetFieldAsString("NAMES") == "Nowhere")
-    assert(first.GetGeometryRef().IsEmpty())
+    assert(first.GetFieldAsString("NAMES") == "Somewhere")
+    assert(first.GetGeometryRef().ExportToWkt() == "MULTILINESTRING ((0 5,2 0))")
     second = nc_layer.GetNextFeature()
     assert(second.GetFieldAsString("NAMES") == "Everywhere")
     assert(second.GetGeometryRef().IsEmpty())
@@ -4763,8 +4763,8 @@ def test_empty_multipolygon_read_write():
     assert(first.GetFieldAsString("NAMES") == "Nowhere")
     assert(first.GetGeometryRef().IsEmpty())
     second = nc_layer.GetNextFeature()
-    assert(second.GetFieldAsString("NAMES") == "Everywhere")
-    assert(second.GetGeometryRef().IsEmpty())
+    assert(second.GetFieldAsString("NAMES") == "Somewhere")
+    assert(second.GetGeometryRef().ExportToWkt() == "MULTIPOLYGON (((0 0,2 0,2 2,0 2,0 0)))")
 
 def test_states_full_layer_buffer_restrict_correctness_single_datum():
     # Single datum regression test

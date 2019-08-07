@@ -2,7 +2,7 @@
 "type": "FeatureCollection",
 "name": "places",
 "features": [
-{ "type": "Feature", "properties": { "NAMES": "Nowhere" }, "geometry": { "type": "Polygon", "coordinates": [ [ ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "Somewhere" }, "geometry": { "type": "Polygon", "coordinates": [ [ [0.0, 1.0], [1.0, 0.0], [2.0, 0.0], [0.0, 1.0]] ] } },
 { "type": "Feature", "properties": { "NAMES": "Everywhere" }, "geometry": { "type": "Polygon", "coordinates": [ [ ] ] } }
 ]
 }

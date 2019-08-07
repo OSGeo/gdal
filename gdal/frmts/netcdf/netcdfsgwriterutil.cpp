@@ -487,6 +487,7 @@ namespace nccfdriver
                (ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON))
             {
                 ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(pnc_varID, 0)));
+                this->next_write_pos_pnc++;
             }
         }
     }
