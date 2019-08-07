@@ -164,6 +164,16 @@ CPLString GetOutputDriverForRaster(const char* pszDestFilename)
 
 void EarlySetConfigOptions( int argc, char ** argv )
 {
+#if !defined(BUILD_SYSTEM_IS_MAKE) && !defined(BUILD_SYSTEM_IS_NMAKE)
+    fprintf(stderr, "====================================================\n");
+    fprintf(stderr, " Warning: I am aware I use a custom build system. \n");
+    fprintf(stderr, " GDAL comes with no guarantee, and even less in such\n");
+    fprintf(stderr, " a situation. As a preliminary to all discussions with\n");
+    fprintf(stderr, " the project, please mention this fact.\n");
+    fprintf(stderr, "====================================================\n");
+    fprintf(stderr, "\n");
+#endif
+
     // Must process some config options before GDALAllRegister() or
     // OGRRegisterAll(), but we can't call GDALGeneralCmdLineProcessor() or
     // OGRGeneralCmdLineProcessor(), because it needs the drivers to be
