@@ -71,7 +71,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS,
         m_nProfileVarID(-1),
         m_bProfileVarUnlimited(false),
         m_nParentIndexVarID(-1),
-        layerVID_alloc(poDS->cdfid == m_nLayerCDFId ? new nccfdriver::netCDFVID(m_nLayerCDFId) : nullptr),
+        layerVID_alloc(poDS->cdfid == m_nLayerCDFId ? nullptr : new nccfdriver::netCDFVID(m_nLayerCDFId)),
         layerVID(layerVID_alloc.get() == nullptr ? poDS->vcdf : *layerVID_alloc),
         m_SGeometryFeatInd(0),
         m_poLayerConfig(nullptr),
@@ -372,14 +372,14 @@ bool netCDFLayer::Create(char **papszOptions,
             if (poSRS == nullptr || poSRS->IsGeographic())
             {
                 // Deal with potentional issues of multiple groups
-                NCDFWriteLonLatVarsAttributes(m_poDS->vcdf, m_nXVarID, m_nYVarID);
+                NCDFWriteLonLatVarsAttributes(layerVID, m_nXVarID, m_nYVarID);
 
             }
 
             else if (poSRS != nullptr && poSRS->IsProjected())
             {
                 // Deal with potentional issues of multiple groups
-                NCDFWriteXYVarsAttributes(m_poDS->vcdf, m_nXVarID, m_nYVarID,
+                NCDFWriteXYVarsAttributes(layerVID, m_nXVarID, m_nYVarID,
                     poSRS);
 
             }
@@ -620,12 +620,12 @@ bool netCDFLayer::Create(char **papszOptions,
 
                 if (poSRS->IsGeographic())
                 {
-                    NCDFWriteLonLatVarsAttributes(m_poDS->vcdf, xVar, yVar);
+                    NCDFWriteLonLatVarsAttributes(layerVID, xVar, yVar);
                 }
 
                 else if (poSRS->IsProjected())
                 {
-                    NCDFWriteXYVarsAttributes(m_poDS->vcdf, xVar, yVar, poSRS);
+                    NCDFWriteXYVarsAttributes(layerVID, xVar, yVar, poSRS);
                 }
             }
         }
@@ -1578,7 +1578,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                 }
                 else
                 {
-                    nWidth = m_poDS->vcdf.virtualDIDToDim(m_aoFieldDesc[i].nSecDimId).getLen();
+                    nWidth = layerVID.virtualDIDToDim(m_aoFieldDesc[i].nSecDimId).getLen();
                 }
 
                 if( anCount[1] > nWidth )
@@ -1602,7 +1602,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                         }
                         else
                         {
-                            m_poDS->vcdf.nc_resize_vdim(m_aoFieldDesc[i].nSecDimId, nNewSize);
+                            layerVID.nc_resize_vdim(m_aoFieldDesc[i].nSecDimId, nNewSize);
                         }
 
                         pszVal = poFeature->GetFieldAsString(i);
@@ -2424,7 +2424,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
     bool vCDFHas = false;
     if(!m_bLegacyCreateMode)
     {
-        vCDFHas = m_poDS->vcdf.virtualVarNameDefined(osVarName);
+        vCDFHas = layerVID.virtualVarNameDefined(osVarName);
     }
 
     // Also check the real
@@ -2435,7 +2435,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         {
             osVarName = CPLSPrintf("%s%d", poFieldDefn->GetNameRef(), i);
             status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
-            if(!m_bLegacyCreateMode) vCDFHas = m_poDS->vcdf.virtualVarNameDefined(osVarName);
+            if(!m_bLegacyCreateMode) vCDFHas = layerVID.virtualVarNameDefined(osVarName);
             if( status != NC_NOERR && !vCDFHas )
                 break;
         }

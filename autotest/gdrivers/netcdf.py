@@ -3066,7 +3066,7 @@ init_list = [
 )
 @pytest.mark.require_driver('netcdf')
 def test_netcdf_functions_1(testfunction):
-    ut = gdaltest.GDALTest('netcdf', 'byte.tif', 1, 4672, options=[])
+    ut = gdaltest.GDALTest('netcdf', 'byte.tif', 1, 4672, options=["GEOMETRY_ENCODING=WKT"])
     getattr(ut, testfunction)()
 
 
