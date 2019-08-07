@@ -1132,7 +1132,7 @@ def test_tiff_write_32():
     ds = gdal.Open('tmp/byte_rotated_copy.tif')
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i] - gt[i]) > 1e-5:
+        if new_gt[i] != pytest.approx(gt[i], abs=1e-5):
             print('')
             print(('old = ', gt))
             print(('new = ', new_gt))
@@ -3778,7 +3778,7 @@ def test_tiff_write_104():
 
     srs = osr.SpatialReference(wkt)
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting'
 
     gdaltest.tiff_drv.Delete('tmp/test_104.tif')
 
@@ -5638,7 +5638,7 @@ def test_tiff_write_146():
 
     for i in range(4):
         for j in range(4):
-            assert i == 2 or j < 2 or abs(original_stats[i][j] - got_stats[i][j]) <= 5, \
+            assert i == 2 or j < 2 or original_stats[i][j] == pytest.approx(got_stats[i][j], abs=5), \
                 'did not get expected statistics'
 
     
@@ -5689,7 +5689,7 @@ def test_tiff_write_148():
 
     for i in range(4):
         for j in range(4):
-            assert j < 2 or abs(original_stats[i][j] - got_stats[i][j]) <= 5, \
+            assert j < 2 or original_stats[i][j] == pytest.approx(got_stats[i][j], abs=5), \
                 'did not get expected statistics'
 
     
@@ -6026,7 +6026,7 @@ def test_tiff_write_157():
     for i in range(14):
         if i == 4 or i == 5:
             assert got[i] != got[i]
-        elif abs(got[i] - expected[i]) > 1e-15:
+        elif got[i] != pytest.approx(expected[i], abs=1e-15):
             print(got[i])
             print(expected[i])
             pytest.fail(i)
@@ -6087,7 +6087,7 @@ def test_tiff_write_157():
     for i in range(18):
         if i == 4 or i == 5:
             assert got[i] != got[i]
-        elif abs(got[i] - expected[i]) > 1e-15:
+        elif got[i] != pytest.approx(expected[i], abs=1e-15):
             print(got[i])
             print(expected[i])
             pytest.fail(i)

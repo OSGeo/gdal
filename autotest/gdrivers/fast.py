@@ -88,12 +88,12 @@ def test_fast_3():
     gb_expected = (-6.199999809265137, 0.775686297697179)
 
     gain = float(md['GAIN1'])
-    if abs(gain - gb_expected[0]) > 0.0001:
+    if gain != pytest.approx(gb_expected[0], abs=0.0001):
         print('expected:', gb_expected[0])
         print('got:', gain)
 
     bias = float(md['BIAS1'])
-    if abs(bias - gb_expected[1]) > 0.0001:
+    if bias != pytest.approx(gb_expected[1], abs=0.0001):
         print('expected:', gb_expected[1])
         print('got:', bias)
 

@@ -267,7 +267,7 @@ def test_kmlsuperoverlay_6():
     got_gt = ds.GetGeoTransform()
     ref_gt = [1.2554125761846773, 1.6640895429971981e-05, 0.0, 43.452120815728101, 0.0, -1.0762348187666334e-05]
     for i in range(6):
-        assert abs(got_gt[i] - ref_gt[i]) <= 1e-6
+        assert got_gt[i] == pytest.approx(ref_gt[i], abs=1e-6)
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
         assert cs == 47673
@@ -287,7 +287,7 @@ def test_kmlsuperoverlay_7():
     got_gt = ds.GetGeoTransform()
     ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
     for i in range(6):
-        assert abs(got_gt[i] - ref_gt[i]) <= 1e-6
+        assert got_gt[i] == pytest.approx(ref_gt[i], abs=1e-6)
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 30111
@@ -304,7 +304,7 @@ def test_kmlsuperoverlay_single_overlay_document_folder_pct():
     got_gt = ds.GetGeoTransform()
     ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
     for i in range(6):
-        assert abs(got_gt[i] - ref_gt[i]) <= 1e-6
+        assert got_gt[i] == pytest.approx(ref_gt[i], abs=1e-6)
 
     assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_PaletteIndex
     assert ds.GetRasterBand(1).GetColorTable()

@@ -50,7 +50,7 @@ def test_jp2metadata_1():
     assert wkt.startswith('PROJCS["ETRS89')
     expected_gt = (356000.0, 0.5, 0.0, 7596000.0, 0.0, -0.5)
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-5
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
     
 ###############################################################################
 # Test Pleiades imagery metadata
@@ -111,11 +111,11 @@ def test_jp2metadata_3():
         pytest.fail('did not get expected WKT, should be WGS84')
 
     gt = ds.GetGeoTransform()
-    if abs(gt[0] - 8) > 0.0000001 or abs(gt[3] - 50) > 0.000001 \
-       or abs(gt[1] - 0.000761397164) > 0.000000000005 \
-       or abs(gt[2] - 0.0) > 0.000000000005 \
-       or abs(gt[4] - 0.0) > 0.000000000005 \
-       or abs(gt[5] - -0.000761397164) > 0.000000000005:
+    if gt[0] != pytest.approx(8, abs=0.0000001) or gt[3] != pytest.approx(50, abs=0.000001) \
+       or gt[1] != pytest.approx(0.000761397164, abs=0.000000000005) \
+       or gt[2] != pytest.approx(0.0, abs=0.000000000005) \
+       or gt[4] != pytest.approx(0.0, abs=0.000000000005) \
+       or gt[5] != pytest.approx(-0.000761397164, abs=0.000000000005):
         print('got: ', gt)
         pytest.fail('did not get expected geotransform')
 
@@ -146,11 +146,11 @@ def test_jp2metadata_4():
     gte = (42.999583333333369, 0.008271349862259, 0,
            34.000416666666631, 0, -0.008271349862259)
 
-    if abs(gt[0] - gte[0]) > 0.0000001 or abs(gt[3] - gte[3]) > 0.000001 \
-       or abs(gt[1] - gte[1]) > 0.000000000005 \
-       or abs(gt[2] - gte[2]) > 0.000000000005 \
-       or abs(gt[4] - gte[4]) > 0.000000000005 \
-       or abs(gt[5] - gte[5]) > 0.000000000005:
+    if gt[0] != pytest.approx(gte[0], abs=0.0000001) or gt[3] != pytest.approx(gte[3], abs=0.000001) \
+       or gt[1] != pytest.approx(gte[1], abs=0.000000000005) \
+       or gt[2] != pytest.approx(gte[2], abs=0.000000000005) \
+       or gt[4] != pytest.approx(gte[4], abs=0.000000000005) \
+       or gt[5] != pytest.approx(gte[5], abs=0.000000000005):
         print('got: ', gt)
         pytest.fail('did not get expected geotransform')
 
@@ -173,11 +173,11 @@ def test_jp2metadata_5():
     gt = ds.GetGeoTransform()
     gte = (4895766.000000001, 2.0, 0.0, 2296946.0, 0.0, -2.0)
 
-    if abs(gt[0] - gte[0]) > 0.0000001 or abs(gt[3] - gte[3]) > 0.000001 \
-       or abs(gt[1] - gte[1]) > 0.000000000005 \
-       or abs(gt[2] - gte[2]) > 0.000000000005 \
-       or abs(gt[4] - gte[4]) > 0.000000000005 \
-       or abs(gt[5] - gte[5]) > 0.000000000005:
+    if gt[0] != pytest.approx(gte[0], abs=0.0000001) or gt[3] != pytest.approx(gte[3], abs=0.000001) \
+       or gt[1] != pytest.approx(gte[1], abs=0.000000000005) \
+       or gt[2] != pytest.approx(gte[2], abs=0.000000000005) \
+       or gt[4] != pytest.approx(gte[4], abs=0.000000000005) \
+       or gt[5] != pytest.approx(gte[5], abs=0.000000000005):
         print('got: ', gt)
         pytest.fail('did not get expected geotransform')
 

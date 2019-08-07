@@ -437,7 +437,7 @@ def test_tiff_linearparmunits():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (1)'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting (1)'
 
     # Test the file with the old (broken) GDAL formulation.
 
@@ -448,7 +448,7 @@ def test_tiff_linearparmunits():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 609601.219202438) <= 0.001, 'did not get expected false easting (2)'
+    assert fe == pytest.approx(609601.219202438, abs=0.001), 'did not get expected false easting (2)'
 
     # Test the file when using an EPSG code.
 
@@ -459,7 +459,7 @@ def test_tiff_linearparmunits():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (3)'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting (3)'
 
 ###############################################################################
 # Check that the GTIFF_LINEAR_UNITS handling works properly (#3901)
@@ -478,7 +478,7 @@ def test_tiff_linearparmunits2():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 6561666.66667) <= 0.001, 'did not get expected false easting (1)'
+    assert fe == pytest.approx(6561666.66667, abs=0.001), 'did not get expected false easting (1)'
 
     # Test the file with the correct formulation that is marked as correct.
 
@@ -489,7 +489,7 @@ def test_tiff_linearparmunits2():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (2)'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting (2)'
 
     # Test the file with the old (broken) GDAL formulation.
 
@@ -500,7 +500,7 @@ def test_tiff_linearparmunits2():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (3)'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting (3)'
 
     gdal.SetConfigOption('GTIFF_LINEAR_UNITS', 'DEFAULT')
 
@@ -2487,11 +2487,11 @@ def test_tiff_read_arcgis93_geodataxform_gcp():
     assert ds.GetGCPProjection().find('26712') >= 0
     assert ds.GetGCPCount() == 16
     gcp = ds.GetGCPs()[0]
-    assert (abs(gcp.GCPPixel - 565) <= 1e-5 and \
-       abs(gcp.GCPLine - 11041) <= 1e-5 and \
-       abs(gcp.GCPX - 500000) <= 1e-5 and \
-       abs(gcp.GCPY - 4705078.79016612) <= 1e-5 and \
-       abs(gcp.GCPZ - 0) <= 1e-5)
+    assert (gcp.GCPPixel == pytest.approx(565, abs=1e-5) and \
+       gcp.GCPLine == pytest.approx(11041, abs=1e-5) and \
+       gcp.GCPX == pytest.approx(500000, abs=1e-5) and \
+       gcp.GCPY == pytest.approx(4705078.79016612, abs=1e-5) and \
+       gcp.GCPZ == pytest.approx(0, abs=1e-5))
 
 ###############################################################################
 # Test reading file with block size > signed int 32 bit

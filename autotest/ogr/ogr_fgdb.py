@@ -680,7 +680,7 @@ def test_ogr_fgdb_11():
     feat = lyr.GetNextFeature()
     if feat.GetField('esriFieldTypeSmallInteger') != 12 or \
        feat.GetField('esriFieldTypeInteger') != 3456 or \
-       abs(feat.GetField('esriFieldTypeSingle') - 78.9) > 1e-2 or \
+       feat.GetField('esriFieldTypeSingle') != pytest.approx(78.9, abs=1e-2) or \
        feat.GetField('esriFieldTypeDouble') != 1.23 or \
        feat.GetField('esriFieldTypeDate') != '2012/12/31 12:34:56' or \
        feat.GetField('esriFieldTypeString') != 'astr' or \

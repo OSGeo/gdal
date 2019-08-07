@@ -69,7 +69,7 @@ def vsifile_generic(filename):
 
     statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     assert statBuf.size == 7
-    assert abs(start_time - statBuf.mtime) <= 2
+    assert start_time == pytest.approx(statBuf.mtime, abs=2)
 
     fp = gdal.VSIFOpenL(filename, 'rb')
     buf = gdal.VSIFReadL(1, 7, fp)

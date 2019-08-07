@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Perform simple read test.
@@ -108,7 +109,7 @@ def test_dted_5():
     ds = gdal.Open('tmp/n43.dt1.tif')
     geotransform = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(geotransform[i] - ref_geotransform[i]) <= 1e-10
+        assert geotransform[i] == pytest.approx(ref_geotransform[i], abs=1e-10)
 
     ds = None
 
@@ -129,7 +130,7 @@ def test_dted_6():
     ds = gdal.Open('tmp/n43.dt2.tif')
     geotransform = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(geotransform[i] - ref_geotransform[i]) <= 1e-10
+        assert geotransform[i] == pytest.approx(ref_geotransform[i], abs=1e-10)
 
     ds = None
 

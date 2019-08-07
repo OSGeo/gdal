@@ -158,7 +158,7 @@ def misc_5_internal(drv, datatype, nBands):
         if drv.ShortName not in ['PNM', 'MFF', 'NULL']:
             got_gt = ds.GetGeoTransform()
             for i in range(6):
-                if abs(got_gt[i] - set_gt[i]) > 1e-10:
+                if got_gt[i] != pytest.approx(set_gt[i], abs=1e-10):
                     print('Did not get expected GT for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
                     print(got_gt)
                     return -1
@@ -431,7 +431,7 @@ def test_misc_7():
     res = gdal.InvGeoTransform(gt)
     expected_inv_gt = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0)
     for i in range(6):
-        assert abs(res[i] - expected_inv_gt[i]) <= 1e-6, res
+        assert res[i] == pytest.approx(expected_inv_gt[i], abs=1e-6), res
 
     gt = (10, 1, 1, 20, 2, 2)
     res = gdal.InvGeoTransform(gt)
@@ -451,10 +451,10 @@ def test_misc_7():
     expected_inv_gt = (-316831683.16831684, 99009900.990099, 9900990.099009901,
                        5168316831.683168, 9900990.099009901, -99009900.990099)
     for i in range(6):
-        assert abs(res[i] - expected_inv_gt[i]) <= 1e-6, res
+        assert res[i] == pytest.approx(expected_inv_gt[i], abs=1e-6), res
     res2 = gdal.InvGeoTransform(res)
     for i in range(6):
-        assert abs(res2[i] - gt[i]) <= 1e-6, res2
+        assert res2[i] == pytest.approx(gt[i], abs=1e-6), res2
 
 ###############################################################################
 # Test gdal.ApplyGeoTransform()

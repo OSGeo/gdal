@@ -29,6 +29,7 @@
 
 import gdaltest
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromPCI() function.
@@ -41,7 +42,7 @@ def test_osr_pci_1():
     srs = osr.SpatialReference()
     srs.ImportFromPCI('EC          E015', 'METRE', prj_parms)
 
-    assert abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) - 47.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) - 62.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) - 54.5) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) - 45.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) <= 0.0000005, \
+    assert srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) == pytest.approx(47.0, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) == pytest.approx(62.0, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) == pytest.approx(54.5, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) == pytest.approx(45.0, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) == pytest.approx(0.0, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) == pytest.approx(0.0, abs=0.0000005), \
         'Can not import Equidistant Conic projection.'
 
     expected = 'PROJCS["unnamed",GEOGCS["Unknown - PCI E015",DATUM["Unknown - PCI E015",SPHEROID["Krassowsky 1940",6378245,298.3,AUTHORITY["EPSG","7024"]]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equidistant_Conic"],PARAMETER["standard_parallel_1",47],PARAMETER["standard_parallel_2",62],PARAMETER["latitude_of_center",54.5],PARAMETER["longitude_of_center",45],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
@@ -75,7 +76,7 @@ def test_osr_pci_2():
 
     (proj, units, parms) = srs.ExportToPCI()
 
-    assert proj == 'LCC         D-01' and units == 'METRE' and abs(parms[2] - -117.4745429) <= 0.0000005 and abs(parms[3] - 33.76446203) <= 0.0000005 and abs(parms[4] - 33.90363403) <= 0.0000005 and abs(parms[5] - 33.62529003) <= 0.0000005, \
+    assert proj == 'LCC         D-01' and units == 'METRE' and parms[2] == pytest.approx(-117.4745429, abs=0.0000005) and parms[3] == pytest.approx(33.76446203, abs=0.0000005) and parms[4] == pytest.approx(33.90363403, abs=0.0000005) and parms[5] == pytest.approx(33.62529003, abs=0.0000005), \
         'Can not import Lambert Conformal Conic projection.'
 
 ###############################################################################

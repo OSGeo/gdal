@@ -116,7 +116,7 @@ def test_grib_read_units():
         print(md)
         return
     ds.GetRasterBand(1).ComputeStatistics(False)
-    if abs(ds.GetRasterBand(1).GetMinimum() - 13) > 1:
+    if ds.GetRasterBand(1).GetMinimum() != pytest.approx(13, abs=1):
         print(ds.GetRasterBand(1).GetMinimum())
         return
     ds = None
@@ -131,7 +131,7 @@ def test_grib_read_units():
         print(md)
         return
     ds.GetRasterBand(1).ComputeStatistics(False)
-    if abs(ds.GetRasterBand(1).GetMinimum() - 286) > 1:
+    if ds.GetRasterBand(1).GetMinimum() != pytest.approx(286, abs=1):
         print(ds.GetRasterBand(1).GetMinimum())
         return
     ds = None

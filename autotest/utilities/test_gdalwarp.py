@@ -518,7 +518,7 @@ def test_gdalwarp_25():
     gt = ds.GetGeoTransform()
     expected_gt = [-20037508.342789248, 78245.302611923355, 0.0, 10001965.729313632, 0.0, -77939.656898595524]
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1, 'Bad gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1), 'Bad gt'
 
     ds = None
 
@@ -541,7 +541,7 @@ def test_gdalwarp_26():
     gt = ds.GetGeoTransform()
     expected_gt = [-16921202.922943164, 41752.719393322564, 0.0, 8460601.4614715818, 0.0, -41701.109109770863]
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1, 'Bad gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1), 'Bad gt'
 
     ds = None
 
@@ -565,7 +565,7 @@ def test_gdalwarp_27():
     gt = ds.GetGeoTransform()
     expected_gt = [-20015109.356056381, 98651.645855415176, 0.0, 20015109.356056374, 0.0, -98651.645855415176]
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1, 'Bad gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1), 'Bad gt'
 
     ds = None
 
@@ -590,7 +590,7 @@ def test_gdalwarp_28():
     gt = ds.GetGeoTransform()
     expected_gt1 = [-18494092.97555049, 93907.15126464187, 0.0, 20003931.458625447, 0.0, -93907.15126464187]
     for i in range(6):
-        assert abs(gt[i] - expected_gt1[i]) <= 1 , \
+        assert gt[i] == pytest.approx(expected_gt1[i], abs=1) , \
             ('Bad gt', gt)
 
     ds = None
@@ -614,7 +614,7 @@ def test_gdalwarp_29():
     gt = ds.GetGeoTransform()
     expected_gt = [-20037508.342789248, 90054.726863985939, 0.0, 16213801.067583967, 0.0, -90056.750611190684]
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1, 'Bad gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1), 'Bad gt'
 
     ds = None
 
@@ -795,7 +795,7 @@ def test_gdalwarp_34():
 
     expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-5, 'bad gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5), 'bad gt'
 
     
 ###############################################################################

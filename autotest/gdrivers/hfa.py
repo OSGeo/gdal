@@ -261,7 +261,7 @@ def test_hfa_float_read():
     import struct
     value = struct.unpack('f' * 1, data)[0]
 
-    assert abs(value - 41.021659851074219) <= 0.0001, 'Pixel value is wrong.'
+    assert value == pytest.approx(41.021659851074219, abs=0.0001), 'Pixel value is wrong.'
 
 ###############################################################################
 # verify we can read PE_STRING coordinate system.
@@ -744,10 +744,10 @@ def test_hfa_xforms_3rd():
 
     gcps = ds.GetGCPs()
 
-    assert gcps[0].GCPPixel == 0.5 and gcps[0].GCPLine == 0.5 and abs(gcps[0].GCPX - 1667635.007) <= 0.001 and abs(gcps[0].GCPY - 2620003.171) <= 0.001, \
+    assert gcps[0].GCPPixel == 0.5 and gcps[0].GCPLine == 0.5 and gcps[0].GCPX == pytest.approx(1667635.007, abs=0.001) and gcps[0].GCPY == pytest.approx(2620003.171, abs=0.001), \
         'GCP 0 value wrong.'
 
-    assert abs(gcps[14].GCPPixel - 1769.7) <= 0.1 and abs(gcps[14].GCPLine - 2124.9) <= 0.1 and abs(gcps[14].GCPX - 1665221.064) <= 0.001 and abs(gcps[14].GCPY - 2632414.379) <= 0.001, \
+    assert gcps[14].GCPPixel == pytest.approx(1769.7, abs=0.1) and gcps[14].GCPLine == pytest.approx(2124.9, abs=0.1) and gcps[14].GCPX == pytest.approx(1665221.064, abs=0.001) and gcps[14].GCPY == pytest.approx(2632414.379, abs=0.001), \
         'GCP 14 value wrong.'
 
     ds = None

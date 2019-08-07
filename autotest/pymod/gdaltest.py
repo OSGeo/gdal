@@ -842,7 +842,7 @@ def approx_equal(a, b):
     if a == 0 and b != 0:
         return 0
 
-    if abs(b / a - 1.0) > .00000000001:
+    if b / a != pytest.approx(1.0, abs=.00000000001):
         return 0
     return 1
 

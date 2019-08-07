@@ -1497,7 +1497,7 @@ def test_ogr_vrt_29():
     expected_bb = (426857.98771727527, 485607.2165091355, 5427475.0501426803, 5516873.8591036052)
 
     for i in range(4):
-        assert abs(bb[i] - expected_bb[i]) <= 1, 'did not get expected extent'
+        assert bb[i] == pytest.approx(expected_bb[i], abs=1), 'did not get expected extent'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, 'POINT(426857.987717275274917 5427937.523466162383556)') != 0:
@@ -1758,7 +1758,7 @@ def test_ogr_vrt_30():
             expected_bb = (2.0, 4.7999999999999998, 49.0, 49.799999999999997)
 
             for i in range(4):
-                assert abs(bb[i] - expected_bb[i]) <= 1, 'did not get expected extent'
+                assert bb[i] == pytest.approx(expected_bb[i], abs=1), 'did not get expected extent'
         elif check == 2:
             feat_count = lyr.GetFeatureCount()
             assert feat_count == 2 * 5 * 5, 'did not get expected feature count'
@@ -1904,7 +1904,7 @@ def test_ogr_vrt_30():
             expected_bb = (-180.0, 180.0, -90.0, 90.0)
 
             for i in range(4):
-                assert abs(bb[i] - expected_bb[i]) <= 1, 'did not get expected extent'
+                assert bb[i] == pytest.approx(expected_bb[i], abs=1), 'did not get expected extent'
 
         elif check == 2:
             assert lyr.GetFeatureCount() == 100, 'did not get expected feature count'
