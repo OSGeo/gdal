@@ -2478,8 +2478,6 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         }
     }
 
-    status = NC_NOERR;
-
     try
     {
         switch( eType )

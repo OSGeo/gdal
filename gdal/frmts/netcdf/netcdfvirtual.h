@@ -25,6 +25,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+#ifndef __NETCDFVIRTUAL_H__
+#define __NETCDFVIRTUAL_H__
 #include <map>
 #include <memory>
 #include <string>
@@ -363,3 +365,4 @@ namespace nccfdriver
         };
 
 }
+#endif

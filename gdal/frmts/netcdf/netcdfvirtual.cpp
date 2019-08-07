@@ -25,6 +25,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+#include "netcdfdataset.h"
 #include "netcdfvirtual.h"
 
 // netCDF Virtual
@@ -66,6 +67,7 @@ namespace nccfdriver
             int err;
             if((err = nc_def_dim(ncid, name, len, &ddim)) != NC_NOERR)
             {
+                NCDF_ERR(err);
                 throw SG_Exception_VWrite_Failure("netCDF file", "a dimension definition");
             }
 
@@ -97,6 +99,7 @@ namespace nccfdriver
             int err;
             if((err = nc_def_var(ncid, name, xtype, ndims, dimidsp, &dvar)) != NC_NOERR)
             {
+                NCDF_ERR(err);
                 throw SG_Exception_VWrite_Failure("netCDF file", "a dimension definition");
             }
 
@@ -261,6 +264,7 @@ namespace nccfdriver
             int err;
             if((err = nc_put_att_text(ncid, varid, name, strlen(value), value)) != NC_NOERR)
             {
+                NCDF_ERR(err);
                 throw SG_Exception_VWrite_Failure("variable", "text attribute");
             }
             return;
@@ -276,6 +280,7 @@ namespace nccfdriver
             int err;
             if((err = nc_put_att_int(ncid, varid, name, NC_INT, 1, value)) != NC_NOERR)
             {
+                NCDF_ERR(err);
                 throw SG_Exception_VWrite_Failure("variable", "int attribute");
             }
             return;
@@ -291,6 +296,7 @@ namespace nccfdriver
             int err;
             if((err = nc_put_att_double(ncid, varid, name, NC_DOUBLE, 1, value)) != NC_NOERR)
             {
+                NCDF_ERR(err);
                 throw SG_Exception_VWrite_Failure("variable", "double attribute");
             }
             return;
@@ -306,6 +312,7 @@ namespace nccfdriver
             int err;
             if((err = nc_put_att_float(ncid, varid, name, NC_FLOAT, 1, value)) != NC_NOERR)
             {
+                NCDF_ERR(err);
                 throw SG_Exception_VWrite_Failure("variable", "float attribute");
             }
             return;
@@ -321,6 +328,7 @@ namespace nccfdriver
             int err;
             if((err = nc_put_att_schar(ncid, varid, name, NC_BYTE, 1, value)) != NC_NOERR)
             {
+                NCDF_ERR(err);
                 throw SG_Exception_VWrite_Failure("variable", "byte attribute");
             }
             return;
