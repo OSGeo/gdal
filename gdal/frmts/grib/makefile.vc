@@ -5,6 +5,8 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+EXTRAFLAGS = 	-I..\mem
+
 !IF DEFINED(PNG_LIB)
 LINK_PNG	=	$(PNG_LIB)
 !ELSE

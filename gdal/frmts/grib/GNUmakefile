@@ -1,6 +1,6 @@
 
 
-EXTRAFLAGS = -Idegrib/degrib
+EXTRAFLAGS = -Idegrib/degrib -I../mem
 
 include ../../GDALmake.opt
 

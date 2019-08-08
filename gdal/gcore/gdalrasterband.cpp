@@ -52,7 +52,6 @@
 #include "gdal.h"
 #include "gdal_rat.h"
 #include "gdal_priv_templates.hpp"
-#include "memdataset.h"
 
 CPL_CVSID("$Id$")
 
@@ -7082,7 +7081,6 @@ class GDALMDArrayFromRasterBand: public GDALMDArray
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
     std::string m_osUnit;
     std::vector<GByte> m_pabyNoData{};
-    std::shared_ptr<GDALGroup> m_rg{};
     std::shared_ptr<GDALMDArray> m_varX{};
     std::shared_ptr<GDALMDArray> m_varY{};
 
@@ -7120,11 +7118,6 @@ protected:
                           1);
         }
 
-        {
-            std::unique_ptr<GDALDataset> poTmpDS(
-                    MEMDataset::CreateMultiDimensional("", nullptr, nullptr));
-            m_rg = poTmpDS->GetRootGroup();
-        }
         const int nXSize = poBand->GetXSize();
         const int nYSize = poBand->GetYSize();
 
@@ -7163,44 +7156,27 @@ protected:
         }
 
         m_dims = {
-            m_rg->CreateDimension(
-                "Y", osTypeY, osDirectionY,
-                nYSize, nullptr),
-            m_rg->CreateDimension(
-                "X", osTypeX, osDirectionX,
-                nXSize, nullptr)
+            std::make_shared<GDALDimensionWeakIndexingVar>(
+                "/", "Y", osTypeY, osDirectionY, nYSize),
+            std::make_shared<GDALDimensionWeakIndexingVar>(
+                "/", "X", osTypeX, osDirectionX, nXSize)
         };
 
         double adfGeoTransform[6];
         if( m_poDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-            adfGeoTransform[2] == 0 && adfGeoTransform[4] == 0 &&
-            std::max(nXSize, nYSize) < 10 * 1000 * 1000 )
+            adfGeoTransform[2] == 0 && adfGeoTransform[4] == 0 )
         {
-            m_varX = m_rg->CreateMDArray("X",
-                std::vector<std::shared_ptr<GDALDimension>>{m_dims[1]},
-                GDALExtendedDataType::Create(GDT_Float64), nullptr);
+            m_varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+                "/", "X", m_dims[1],
+                adfGeoTransform[0],
+                adfGeoTransform[1], 0.5);
             m_dims[1]->SetIndexingVariable(m_varX);
 
-            m_varY = m_rg->CreateMDArray("Y",
-                std::vector<std::shared_ptr<GDALDimension>>{m_dims[0]},
-                GDALExtendedDataType::Create(GDT_Float64), nullptr);
+            m_varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+                "/", "Y", m_dims[0],
+                adfGeoTransform[3],
+                adfGeoTransform[5], 0.5);
             m_dims[0]->SetIndexingVariable(m_varY);
-
-            std::vector<double> adfTmp(
-                std::max(nXSize, nYSize));
-            const GUInt64 nStart = 0;
-
-            for(int i = 0; i < nXSize; i++)
-                adfTmp[i] = adfGeoTransform[0] + (i + 0.5) * adfGeoTransform[1];
-            size_t nCount = nXSize;
-            m_varX->Write(&nStart, &nCount, nullptr, nullptr,
-                        m_varX->GetDataType(), &adfTmp[0]);
-
-            for(int i = 0; i < nYSize; i++)
-                adfTmp[i] = adfGeoTransform[3] + (i + 0.5) * adfGeoTransform[5];
-            nCount = nYSize;
-            m_varY->Write(&nStart, &nCount, nullptr, nullptr,
-                        m_varY->GetDataType(), &adfTmp[0]);
         }
     }
 

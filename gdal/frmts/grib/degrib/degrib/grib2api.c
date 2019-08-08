@@ -516,6 +516,7 @@ static int TransferFloat(float *fld, sInt4 ngrdpts, sInt4 ibitmap,
       return 1;
    }
    if (f_ignoreScan || ((*scan & 0xf0) == 64)) {
+    if( ain ) {
       if (ibitmap) {
          for (i = 0; i < ngrdpts; i++) {
             ib[i] = bmap[i];
@@ -531,6 +532,7 @@ static int TransferFloat(float *fld, sInt4 ngrdpts, sInt4 ibitmap,
             ain[i] = fld[i];
          }
       }
+    }
    } else {
       if( nx <= 0 || ny <= 0 )
       {
@@ -550,11 +552,14 @@ static int TransferFloat(float *fld, sInt4 ngrdpts, sInt4 ibitmap,
             if (curIndex >= (uInt4)nd2x3)
                 return 1;
             ib[curIndex] = bmap[i];
-            /* Check if we are supposed to insert xmissp into the field */
-            if ((iclean != 0) && (ib[curIndex] == 0)) {
-               ain[i] = xmissp;
-            } else {
-               ain[curIndex] = fld[i];
+            if( ain )
+            {
+                /* Check if we are supposed to insert xmissp into the field */
+                if ((iclean != 0) && (ib[curIndex] == 0)) {
+                ain[i] = xmissp;
+                } else {
+                ain[curIndex] = fld[i];
+                }
             }
          }
       } else {
@@ -564,7 +569,8 @@ static int TransferFloat(float *fld, sInt4 ngrdpts, sInt4 ibitmap,
             curIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * (uInt4)nx;
             if( curIndex >= (uInt4)nd2x3 )
                 return 1;
-            ain[curIndex] = fld[i];
+            if( ain )
+                ain[curIndex] = fld[i];
          }
       }
       *scan = 64 + (*scan & 0x0f);
@@ -862,7 +868,7 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
    }
 
    /* Expand the desired subgrid. */
-   unpack = 1;
+   unpack = ain != NULL || iain != NULL;
    expand = 1;
    /* The size of c_ipack is *nd5 * sizeof(sInt4) */
    ierr = g2_getfld(c_ipack, *nd5 * sizeof(sInt4), subgNum + 1, unpack, expand, &gfld);
@@ -917,7 +923,7 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
       return;
    }
    /* Check if data was not unpacked. */
-   if (!gfld->unpacked) {
+   if (unpack && !gfld->unpacked) {
       jer[0 + *ndjer] = 2;
       *kjer = 1;
       g2_free(gfld);
@@ -1165,6 +1171,13 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
 
    /* Check type of original field, before transferring the memory. */
    myAssert(*ns5 > 20);
+
+   if( ain == NULL && iain == NULL )
+   {
+      g2_free(gfld);
+      return;
+   }
+
    /* Check if NCEP had problems expanding the data.  If so we currently
     * abort. May need to revisit this behavior. */
    if (!gfld->expanded) {

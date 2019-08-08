@@ -43,6 +43,7 @@
 #endif
 
 #include <algorithm>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -66,6 +67,7 @@ CPL_C_END
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
+#include "memdataset.h"
 
 CPL_CVSID("$Id$")
 
@@ -166,8 +168,10 @@ void GRIBRasterBand::FindPDSTemplate()
         "Reserved",
         "Oceanographic Products"
     };
+    m_nDisciplineCode = nDiscipline;
     if( nDiscipline < CPL_ARRAYSIZE(table00) )
     {
+        m_osDisciplineName = table00[nDiscipline];
         osDiscipline += CPLString("(") +
             CPLString(table00[nDiscipline]).replaceAll(' ','_') + ")";
     }
@@ -195,10 +199,14 @@ void GRIBRasterBand::FindPDSTemplate()
             if( nCenter != GRIB2MISSING_u1 && nCenter != GRIB2MISSING_u2 )
             {
                 osIDS += "CENTER=";
+                m_nCenter = nCenter;
                 osIDS += CPLSPrintf("%d", nCenter);
                 const char* pszCenter = centerLookup(nCenter);
                 if( pszCenter )
+                {
+                    m_osCenterName = pszCenter;
                     osIDS += CPLString("(")+pszCenter+")";
+                }
             }
 
             unsigned short nSubCenter = static_cast<unsigned short>(
@@ -208,9 +216,13 @@ void GRIBRasterBand::FindPDSTemplate()
                 if( !osIDS.empty() ) osIDS += " ";
                 osIDS += "SUBCENTER=";
                 osIDS += CPLSPrintf("%d", nSubCenter);
+                m_nSubCenter = nSubCenter;
                 const char* pszSubCenter = subCenterLookup(nCenter, nSubCenter);
                 if( pszSubCenter )
+                {
+                    m_osSubCenterName = pszSubCenter;
                     osIDS += CPLString("(")+pszSubCenter+")";
+                }
             }
 
             if( !osIDS.empty() ) osIDS += " ";
@@ -231,18 +243,20 @@ void GRIBRasterBand::FindPDSTemplate()
             };
             if( nSignRefTime < CPL_ARRAYSIZE(table12) )
             {
+                m_osSignRefTimeName = table12[nSignRefTime];
                 osIDS += CPLString("(") +
                     CPLString(table12[nSignRefTime]).replaceAll(' ','_') + ")";
             }
             osIDS += " ";
             osIDS += "REF_TIME=";
-            osIDS += CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+            m_osRefTime = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
                                 pabyBody[13-1] * 256 + pabyBody[14-1],
                                 pabyBody[15-1],
                                 pabyBody[16-1],
                                 pabyBody[17-1],
                                 pabyBody[18-1],
                                 pabyBody[19-1]);
+            osIDS += m_osRefTime;
             osIDS += " ";
             osIDS += "PROD_STATUS=";
             unsigned nProdStatus = pabyBody[20-1];
@@ -261,6 +275,7 @@ void GRIBRasterBand::FindPDSTemplate()
             };
             if( nProdStatus < CPL_ARRAYSIZE(table13) )
             {
+                m_osProductionStatus = table13[nProdStatus];
                 osIDS += CPLString("(") +
                     CPLString(table13[nProdStatus]).replaceAll(' ','_') + ")";
             }
@@ -280,6 +295,7 @@ void GRIBRasterBand::FindPDSTemplate()
             };
             if( nType < CPL_ARRAYSIZE(table14) )
             {
+                m_osType = table14[nType];
                 osIDS += CPLString("(") +
                     CPLString(table14[nType]).replaceAll(' ','_') + ")";
             }
@@ -332,6 +348,7 @@ void GRIBRasterBand::FindPDSTemplate()
             CPL_MSBPTR16(&nPDTN);
 
             SetMetadataItem("GRIB_PDS_PDTN", CPLString().Printf("%d", nPDTN));
+            m_nPDTN = nPDTN;
 
             CPLString osOctet;
             const int nTemplateFoundByteCount =
@@ -384,10 +401,18 @@ void GRIBRasterBand::FindPDSTemplate()
                                 mappds->map[i] :
                                 mappds->ext[i - mappds->maplen];
                             if( nEltSize == 4 )
+                            {
+                                m_anPDSTemplateAssembledValues.push_back(
+                                    static_cast<GUInt32>(pdstempl[i]));
                                 osValues += CPLSPrintf("%u",
                                             static_cast<GUInt32>(pdstempl[i]));
+                            }
                             else
+                            {
+                                m_anPDSTemplateAssembledValues.push_back(
+                                    pdstempl[i]);
                                 osValues += CPLSPrintf("%d", pdstempl[i]);
+                            }
                         }
                         SetMetadataItem("GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES", osValues);
                     }
@@ -636,6 +661,12 @@ CPLErr GRIBRasterBand::LoadData()
         }
 
         // we don't seem to have any way to detect errors in this!
+        if (m_Grib_MetaData != nullptr)
+        {
+            MetaFree(m_Grib_MetaData);
+            delete m_Grib_MetaData;
+            m_Grib_MetaData = nullptr;
+        }
         ReadGribData(poGDS->fp, start, subgNum, &m_Grib_Data, &m_Grib_MetaData);
         if( !m_Grib_Data )
         {
@@ -732,11 +763,6 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
 
 double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
 {
-    if( m_nGribVersion == 2 && !m_bHasLookedForNoData )
-    {
-        FindNoDataGrib2();
-    }
-
     if( m_bHasLookedForNoData )
     {
         if( pbSuccess )
@@ -744,10 +770,20 @@ double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
         return m_dfNoData;
     }
 
-    CPLErr eErr = LoadData();
-    if (eErr != CE_None ||
-        m_Grib_MetaData == nullptr ||
-        m_Grib_MetaData->gridAttrib.f_miss == 0)
+    m_bHasLookedForNoData = true;
+    if( m_Grib_MetaData == nullptr )
+    {
+        GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+        ReadGribData(poGDS->fp, start, subgNum, nullptr, &m_Grib_MetaData);
+        if( m_Grib_MetaData == nullptr )
+        {
+            if (pbSuccess)
+            *pbSuccess = FALSE;
+            return 0;
+        }
+    }
+
+    if( m_Grib_MetaData->gridAttrib.f_miss == 0)
     {
         if (pbSuccess)
             *pbSuccess = FALSE;
@@ -855,7 +891,6 @@ GRIBRasterBand::~GRIBRasterBand()
 
 GRIBDataset::GRIBDataset() :
     fp(nullptr),
-    pszProjection(CPLStrdup("")),
     nCachedBytes(0),
     // Switch caching strategy once 100 MB threshold is reached.
     // Why 100 MB? --> Why not.
@@ -883,8 +918,6 @@ GRIBDataset::~GRIBDataset()
     FlushCache();
     if( fp != nullptr )
         VSIFCloseL(fp);
-
-    CPLFree(pszProjection);
 }
 
 /************************************************************************/
@@ -897,12 +930,6 @@ CPLErr GRIBDataset::GetGeoTransform( double *padfTransform )
     memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
     return CE_None;
 }
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *GRIBDataset::_GetProjectionRef() { return pszProjection; }
 
 /************************************************************************/
 /*                            Identify()                                */
@@ -985,6 +1012,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
+    if( poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER )
+    {
+        return OpenMultiDim(poOpenInfo);
+    }
+
     // Create a corresponding GDALDataset.
     GRIBDataset *poDS = new GRIBDataset();
 
@@ -1056,12 +1088,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             // Important: set DataSet extents before creating first RasterBand
             // in it.
-            double *data = nullptr;
             grib_MetaData *metaData = nullptr;
             GRIBRasterBand::ReadGribData(poDS->fp, 0,
                                          psInv->subgNum,
-                                         &data, &metaData);
-            if( data == nullptr || metaData == nullptr || metaData->gds.Nx < 1 ||
+                                         nullptr, &metaData);
+            if( metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
@@ -1078,10 +1109,6 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
                     MetaFree(metaData);
                     delete metaData;
                 }
-                if (data != nullptr)
-                {
-                    free(data);
-                }
                 return nullptr;
             }
 
@@ -1093,7 +1120,6 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
             if( psInv->GribVersion == 2 )
                 gribBand->FindPDSTemplate();
 
-            gribBand->m_Grib_Data = data;
             gribBand->m_Grib_MetaData = metaData;
         }
         else
@@ -1121,6 +1147,799 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
                                 poOpenInfo->GetSiblingFiles());
     CPLAcquireMutex(hGRIBMutex, 1000.0);
 
+    return poDS;
+}
+
+/************************************************************************/
+/*                          GRIBSharedResource                          */
+/************************************************************************/
+
+struct GRIBSharedResource
+{
+    VSILFILE* m_fp = nullptr;
+    vsi_l_offset m_nOffsetCurData = static_cast<vsi_l_offset>(-1);
+    std::vector<double> m_adfCurData{};
+
+    explicit GRIBSharedResource(VSILFILE* fp) : m_fp(fp) {}
+
+    ~GRIBSharedResource()
+    {
+        if( m_fp )
+            VSIFCloseL(m_fp);
+    }
+
+    const std::vector<double>& LoadData(vsi_l_offset nOffset, int subgNum);
+};
+
+/************************************************************************/
+/*                                GRIBGroup                             */
+/************************************************************************/
+
+class GRIBArray;
+
+class GRIBGroup: public GDALGroup
+{
+    friend class GRIBArray;
+    std::shared_ptr<GRIBSharedResource> m_poShared{};
+    std::vector<std::shared_ptr<GDALMDArray>> m_poArrays{};
+    std::vector<std::shared_ptr<GDALDimension>> m_dims{};
+    std::map<std::string, std::shared_ptr<GDALDimension>> m_oMapDims{};
+    int m_nHorizDimCounter = 0;
+    std::shared_ptr<GDALGroup> m_memRootGroup{};
+
+public:
+    explicit GRIBGroup(const std::shared_ptr<GRIBSharedResource>& poShared):
+        GDALGroup(std::string(), "/"),
+        m_poShared(poShared)
+    {
+        std::unique_ptr<GDALDataset> poTmpDS(
+                        MEMDataset::CreateMultiDimensional("", nullptr, nullptr));
+        m_memRootGroup = poTmpDS->GetRootGroup();
+    }
+
+    void AddArray(const std::shared_ptr<GDALMDArray>& array)
+    {
+        m_poArrays.emplace_back(array);
+    }
+
+    std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions) const override;
+    std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
+                                             CSLConstList papszOptions) const override;
+
+    std::vector<std::shared_ptr<GDALDimension>> GetDimensions(CSLConstList) const override { return m_dims; }
+};
+
+/************************************************************************/
+/*                                GRIBArray                             */
+/************************************************************************/
+
+class GRIBArray: public GDALMDArray
+{
+    std::shared_ptr<GRIBSharedResource> m_poShared;
+    std::vector<std::shared_ptr<GDALDimension>> m_dims{};
+    GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
+    std::shared_ptr<OGRSpatialReference> m_poSRS{};
+    std::vector<vsi_l_offset> m_anOffsets{};
+    std::vector<int> m_anSubgNums{};
+    std::vector<double> m_adfTimes{};
+    std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
+    std::string m_osUnit{};
+    std::vector<GByte> m_abyNoData{};
+
+    GRIBArray(const std::string& osName,
+              const std::shared_ptr<GRIBSharedResource>& poShared);
+
+protected:
+    bool IRead(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer) const override;
+
+public:
+    static std::shared_ptr<GRIBArray> Create(
+            const std::string& osName,
+            const std::shared_ptr<GRIBSharedResource>& poShared)
+    {
+        auto ar(std::shared_ptr<GRIBArray>(new GRIBArray(
+            osName, poShared)));
+        ar->SetSelf(ar);
+        return ar;
+    }
+
+    void Init(GRIBGroup* poGroup, GRIBDataset* poDS,
+              GRIBRasterBand* poBand, inventoryType *psInv);
+    void ExtendTimeDim(vsi_l_offset nOffset, int subgNum, double dfValidTime);
+    void Finalize(GRIBGroup* poGroup, inventoryType *psInv);
+
+    bool IsWritable() const override { return false; }
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
+
+    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override { return m_poSRS; }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList) const override { return m_attributes; }
+
+    const std::string& GetUnit() const override { return m_osUnit; }
+
+    const void* GetRawNoDataValue() const override { return m_abyNoData.empty() ? nullptr:  m_abyNoData.data(); }
+};
+
+/************************************************************************/
+/*                          GetMDArrayNames()                           */
+/************************************************************************/
+
+std::vector<std::string> GRIBGroup::GetMDArrayNames(CSLConstList) const
+{
+    std::vector<std::string> ret;
+    for( const auto& array: m_poArrays )
+    {
+        ret.push_back(array->GetName());
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*                            OpenMDArray()                             */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> GRIBGroup::OpenMDArray(const std::string& osName,
+                                                    CSLConstList) const
+{
+    for( const auto& array: m_poArrays )
+    {
+        if( array->GetName() == osName )
+            return array;
+    }
+    return nullptr;
+}
+
+/************************************************************************/
+/*                             GRIBArray()                              */
+/************************************************************************/
+
+GRIBArray::GRIBArray(const std::string& osName,
+              const std::shared_ptr<GRIBSharedResource>& poShared):
+    GDALAbstractMDArray("/", osName),
+    GDALMDArray("/", osName),
+    m_poShared(poShared)
+{
+}
+
+/************************************************************************/
+/*                                Init()                                */
+/************************************************************************/
+
+void GRIBArray::Init(GRIBGroup* poGroup,
+                     GRIBDataset* poDS,
+                     GRIBRasterBand* poBand,
+                     inventoryType *psInv)
+{
+    std::shared_ptr<GDALDimension> poDimX;
+    std::shared_ptr<GDALDimension> poDimY;
+
+    double adfGT[6];
+    poDS->GetGeoTransform(adfGT);
+
+    for( int i = 1; i <= poGroup->m_nHorizDimCounter; i++ )
+    {
+        std::string osXLookup("X");
+        std::string osYLookup("Y");
+        if( i > 1 )
+        {
+            osXLookup += CPLSPrintf("%d", i);
+            osYLookup += CPLSPrintf("%d", i);
+        }
+        auto oIterX = poGroup->m_oMapDims.find(osXLookup);
+        auto oIterY = poGroup->m_oMapDims.find(osYLookup);
+        CPLAssert( oIterX != poGroup->m_oMapDims.end() );
+        CPLAssert( oIterY != poGroup->m_oMapDims.end() );
+        if( oIterX->second->GetSize() == static_cast<size_t>(poDS->GetRasterXSize()) &&
+            oIterY->second->GetSize() == static_cast<size_t>(poDS->GetRasterYSize()) )
+        {
+            bool bOK = true;
+            auto poVar = oIterX->second->GetIndexingVariable();
+            if( poVar )
+            {
+                GUInt64 nStart = 0;
+                size_t nCount = 1;
+                double dfVal = 0;
+                poVar->Read(&nStart, &nCount, nullptr, nullptr,
+                            m_dt, &dfVal);
+                if( dfVal != adfGT[0] + 0.5 * adfGT[1] )
+                {
+                    bOK = false;
+                }
+            }
+            if( bOK )
+            {
+                poVar = oIterY->second->GetIndexingVariable();
+                if( poVar )
+                {
+                    GUInt64 nStart = 0;
+                    size_t nCount = 1;
+                    double dfVal = 0;
+                    poVar->Read(&nStart, &nCount, nullptr, nullptr,
+                                m_dt, &dfVal);
+                    if( dfVal != adfGT[3] + poDS->nRasterYSize * adfGT[5] - 0.5 * adfGT[5] )
+                    {
+                        bOK = false;
+                    }
+                }
+            }
+            if( bOK )
+            {
+                poDimX = oIterX->second;
+                poDimY = oIterY->second;
+                break;
+            }
+        }
+    }
+
+    if( !poDimX || !poDimY )
+    {
+        poGroup->m_nHorizDimCounter ++;
+        {
+            std::string osName("Y");
+            if( poGroup->m_nHorizDimCounter >= 2 )
+            {
+                osName = CPLSPrintf("Y%d", poGroup->m_nHorizDimCounter);
+            }
+
+            poDimY = std::make_shared<GDALDimensionWeakIndexingVar>(
+                poGroup->GetFullName(), osName, GDAL_DIM_TYPE_HORIZONTAL_Y, std::string(),
+                poDS->GetRasterYSize());
+            poGroup->m_oMapDims[osName] = poDimY;
+            poGroup->m_dims.emplace_back(poDimY);
+
+            auto var = std::make_shared<GDALMDArrayRegularlySpaced>(
+                "/", poDimY->GetName(), poDimY,
+                adfGT[3] + poDS->GetRasterYSize() * adfGT[5],
+                -adfGT[5], 0.5);
+            poDimY->SetIndexingVariable(var);
+            poGroup->AddArray(var);
+        }
+
+        {
+            std::string osName("X");
+            if( poGroup->m_nHorizDimCounter >= 2 )
+            {
+                osName = CPLSPrintf("X%d", poGroup->m_nHorizDimCounter);
+            }
+
+            poDimX = std::make_shared<GDALDimensionWeakIndexingVar>(
+                poGroup->GetFullName(), osName, GDAL_DIM_TYPE_HORIZONTAL_X, std::string(),
+                poDS->GetRasterXSize());
+            poGroup->m_oMapDims[osName] = poDimX;
+            poGroup->m_dims.emplace_back(poDimX);
+
+            auto var = std::make_shared<GDALMDArrayRegularlySpaced>(
+                "/", poDimX->GetName(), poDimX,
+                adfGT[0],
+                adfGT[1], 0.5);
+            poDimX->SetIndexingVariable(var);
+            poGroup->AddArray(var);
+        }
+    }
+
+    m_dims.emplace_back(poDimY);
+    m_dims.emplace_back(poDimX);
+    if( poDS->m_poSRS.get() )
+    {
+        m_poSRS.reset(poDS->m_poSRS->Clone());
+        if( poDS->m_poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{ 2, 1 } )
+            m_poSRS->SetDataAxisToSRSAxisMapping({ 1, 2 });
+        else
+            m_poSRS->SetDataAxisToSRSAxisMapping({ 2, 1 });
+    }
+
+    const char *pszGribNormalizeUnits =
+        CPLGetConfigOption("GRIB_NORMALIZE_UNITS", "YES");
+    const bool bMetricUnits = CPLTestBool(pszGribNormalizeUnits);
+
+    m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+        GetFullName(), "name", psInv->element));
+    m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+        GetFullName(), "long_name",
+        ConvertUnitInText(bMetricUnits, psInv->comment)));
+    m_osUnit = ConvertUnitInText(bMetricUnits, psInv->unitName);
+    if( !m_osUnit.empty() && m_osUnit[0] == '[' && m_osUnit.back() == ']' )
+    {
+        m_osUnit = m_osUnit.substr(1, m_osUnit.size() - 2);
+    }
+    m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+        GetFullName(), "first_level", psInv->shortFstLevel));
+
+    if( poBand->m_nDisciplineCode >= 0 )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeNumeric>(
+            GetFullName(), "discipline_code", poBand->m_nDisciplineCode));
+    }
+    if( !poBand->m_osDisciplineName.empty() )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "discipline_name",
+            poBand->m_osDisciplineName));
+    }
+    if( poBand->m_nCenter >= 0 )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeNumeric>(
+            GetFullName(), "center_code", poBand->m_nCenter));
+    }
+    if( !poBand->m_osCenterName.empty() )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "center_name",
+            poBand->m_osCenterName));
+    }
+    if( poBand->m_nSubCenter >= 0 )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeNumeric>(
+            GetFullName(), "subcenter_code", poBand->m_nSubCenter));
+    }
+    if( !poBand->m_osSubCenterName.empty() )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "subcenter_name",
+            poBand->m_osSubCenterName));
+    }
+    if( !poBand->m_osSignRefTimeName.empty() )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "signification_of_ref_time",
+            poBand->m_osSignRefTimeName));
+    }
+    if( !poBand->m_osRefTime.empty() )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "reference_time_iso8601",
+            poBand->m_osRefTime));
+    }
+    if( !poBand->m_osProductionStatus.empty() )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "production_status",
+            poBand->m_osProductionStatus));
+    }
+    if( !poBand->m_osType.empty() )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "type",
+            poBand->m_osType));
+    }
+    if( poBand->m_nPDTN >= 0 )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeNumeric>(
+            GetFullName(), "product_definition_template_number", poBand->m_nPDTN));
+    }
+    if( !poBand->m_anPDSTemplateAssembledValues.empty() )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeNumeric>(
+            GetFullName(), "product_definition_numbers",
+            poBand->m_anPDSTemplateAssembledValues));
+    }
+
+     int bHasNoData = FALSE;
+     double dfNoData = poBand->GetNoDataValue(&bHasNoData);
+     if( bHasNoData )
+     {
+         m_abyNoData.resize(sizeof(double));
+         memcpy(&m_abyNoData[0], &dfNoData, sizeof(double));
+     }
+}
+
+/************************************************************************/
+/*                         ExtendTimeDim()                              */
+/************************************************************************/
+
+void GRIBArray::ExtendTimeDim(vsi_l_offset nOffset, int subgNum, double dfValidTime)
+{
+    m_anOffsets.push_back(nOffset);
+    m_anSubgNums.push_back(subgNum);
+    m_adfTimes.push_back(dfValidTime);
+}
+
+/************************************************************************/
+/*                           Finalize()                                 */
+/************************************************************************/
+
+void GRIBArray::Finalize(GRIBGroup* poGroup, inventoryType *psInv)
+{
+    CPLAssert( !m_adfTimes.empty() );
+    CPLAssert( m_anOffsets.size() == m_adfTimes.size() );
+
+    if( m_adfTimes.size() == 1 )
+    {
+        m_attributes.emplace_back(std::make_shared<GDALAttributeNumeric>(
+            GetFullName(), "forecast_time", psInv->foreSec));
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "forecast_time_unit", "sec"));
+        m_attributes.emplace_back(std::make_shared<GDALAttributeNumeric>(
+            GetFullName(), "reference_time", psInv->refTime));
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "reference_time_unit", "sec UTC"));
+        m_attributes.emplace_back(std::make_shared<GDALAttributeNumeric>(
+            GetFullName(), "validity_time", m_adfTimes[0]));
+        m_attributes.emplace_back(std::make_shared<GDALAttributeString>(
+            GetFullName(), "validity_time_unit", "sec UTC"));
+        return;
+    }
+
+    std::shared_ptr<GDALDimension> poDimTime;
+
+    for( const auto poDim: poGroup->m_dims )
+    {
+        if( STARTS_WITH(poDim->GetName().c_str(), "TIME") &&
+            poDim->GetSize() == m_adfTimes.size() )
+        {
+            auto poVar = poDim->GetIndexingVariable();
+            if( poVar )
+            {
+                GUInt64 nStart = 0;
+                size_t nCount = 1;
+                double dfStartTime = 0;
+                poVar->Read(&nStart, &nCount, nullptr, nullptr,
+                            m_dt, &dfStartTime);
+                if( dfStartTime == m_adfTimes[0] )
+                {
+                    poDimTime = poDim;
+                    break;
+                }
+            }
+        }
+    }
+
+    if( !poDimTime )
+    {
+        std::string osName("TIME");
+        int counter = 2;
+        while( poGroup->m_oMapDims.find(osName) != poGroup->m_oMapDims.end() )
+        {
+            osName = CPLSPrintf("TIME%d", counter);
+            counter++;
+        }
+
+        poDimTime = std::make_shared<GDALDimensionWeakIndexingVar>(
+            poGroup->GetFullName(), osName, GDAL_DIM_TYPE_TEMPORAL, std::string(),
+            m_adfTimes.size());
+        poGroup->m_oMapDims[osName] = poDimTime;
+        poGroup->m_dims.emplace_back(poDimTime);
+
+        auto var = poGroup->m_memRootGroup->CreateMDArray(poDimTime->GetName(),
+            std::vector<std::shared_ptr<GDALDimension>>{poDimTime},
+            GDALExtendedDataType::Create(GDT_Float64), nullptr);
+        poDimTime->SetIndexingVariable(var);
+        poGroup->AddArray(var);
+
+        GUInt64 nStart = 0;
+        size_t nCount = m_adfTimes.size();
+        var->SetUnit("sec UTC");
+        var->Write(&nStart, &nCount, nullptr, nullptr,
+                   var->GetDataType(), &m_adfTimes[0]);
+        auto attr = var->CreateAttribute("long_name", {},
+                                         GDALExtendedDataType::CreateString());
+        attr->Write("validity_time");
+    }
+
+    m_dims.insert(m_dims.begin(), poDimTime);
+    if( m_poSRS )
+    {
+        auto mapping = m_poSRS->GetDataAxisToSRSAxisMapping();
+        for( auto& v: mapping )
+            v += 1;
+        m_poSRS->SetDataAxisToSRSAxisMapping(mapping);
+    }
+}
+
+/************************************************************************/
+/*                              LoadData()                              */
+/************************************************************************/
+
+const std::vector<double>& GRIBSharedResource::LoadData(vsi_l_offset nOffset,
+                                                        int subgNum)
+{
+    if( m_nOffsetCurData == nOffset )
+        return m_adfCurData;
+
+    grib_MetaData *metadata = nullptr;
+    double* data = nullptr;
+    GRIBRasterBand::ReadGribData(m_fp, nOffset, subgNum, &data, &metadata);
+    if( data == nullptr || metadata == nullptr)
+    {
+        if (metadata != nullptr)
+        {
+            MetaFree(metadata);
+            delete metadata;
+        }
+        free(data);
+        m_adfCurData.clear();
+        return m_adfCurData;
+    }
+    const int nx = metadata->gds.Nx;
+    const int ny = metadata->gds.Ny;
+    if( nx <= 0 || ny <= 0 )
+    {
+        if (metadata != nullptr)
+        {
+            MetaFree(metadata);
+            delete metadata;
+        }
+        free(data);
+        m_adfCurData.clear();
+        return m_adfCurData;
+    }
+    m_adfCurData.resize( static_cast<size_t>(nx) * ny );
+    m_nOffsetCurData = nOffset;
+    memcpy(&m_adfCurData[0], data, static_cast<size_t>(nx) * ny * sizeof(double));
+    if (metadata != nullptr)
+    {
+        MetaFree(metadata);
+        delete metadata;
+    }
+    free(data);
+    return m_adfCurData;
+}
+
+
+/************************************************************************/
+/*                             IRead()                                  */
+/************************************************************************/
+
+bool GRIBArray::IRead(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer) const
+{
+    const size_t nBufferDTSize(bufferDataType.GetSize());
+    if( m_dims.size() == 2 )
+    {
+        auto& vals = m_poShared->LoadData(m_anOffsets[0], m_anSubgNums[0]);
+        constexpr int Y_IDX = 0;
+        constexpr int X_IDX = 1;
+        if( vals.empty() || vals.size() != m_dims[Y_IDX]->GetSize() * m_dims[X_IDX]->GetSize() )
+            return false;
+        const size_t nWidth(static_cast<size_t>(m_dims[X_IDX]->GetSize()));
+        const bool bDirectCopy =
+            m_dt == bufferDataType && arrayStep[X_IDX] == 1 && bufferStride[X_IDX] == 1;
+        for( size_t j = 0; j < count[Y_IDX]; j++ )
+        {
+            const size_t y = static_cast<size_t>(arrayStartIdx[Y_IDX] + j * arrayStep[Y_IDX]);
+            GByte* pabyDstPtr = static_cast<GByte*>(pDstBuffer) + j * bufferStride[Y_IDX] * nBufferDTSize;
+            const size_t x = static_cast<size_t>(arrayStartIdx[X_IDX]);
+            const double* srcPtr = &vals[y * nWidth + x];
+            if( bDirectCopy )
+            {
+                memcpy(pabyDstPtr, srcPtr, count[X_IDX] * sizeof(double));
+            }
+            else
+            {
+                const auto dstPtrInc = bufferStride[X_IDX] * nBufferDTSize;
+                for( size_t i = 0; i < count[X_IDX]; i++ )
+                {
+                    GDALExtendedDataType::CopyValue(
+                        srcPtr,
+                        m_dt,
+                        pabyDstPtr,
+                        bufferDataType);
+                    srcPtr += static_cast<std::ptrdiff_t>(arrayStep[X_IDX]);
+                    pabyDstPtr += dstPtrInc;
+                }
+            }
+        }
+        return true;
+    }
+
+    constexpr int T_IDX = 0;
+    constexpr int Y_IDX = 1;
+    constexpr int X_IDX = 2;
+    const size_t nWidth(static_cast<size_t>(m_dims[X_IDX]->GetSize()));
+    const bool bDirectCopy =
+        m_dt == bufferDataType && arrayStep[X_IDX] == 1 && bufferStride[X_IDX] == 1;
+    for(size_t k = 0; k < count[T_IDX]; k++ )
+    {
+        const size_t tIdx = static_cast<size_t>(arrayStartIdx[T_IDX] + k * arrayStep[T_IDX]);
+        CPLAssert(tIdx < m_anOffsets.size());
+        auto& vals = m_poShared->LoadData(m_anOffsets[tIdx], m_anSubgNums[tIdx]);
+        if( vals.empty() || vals.size() != m_dims[Y_IDX]->GetSize() * m_dims[X_IDX]->GetSize() )
+            return false;
+        for( size_t j = 0; j < count[Y_IDX]; j++ )
+        {
+            const size_t y = static_cast<size_t>(arrayStartIdx[Y_IDX] + j * arrayStep[Y_IDX]);
+            GByte* pabyDstPtr = static_cast<GByte*>(pDstBuffer) +
+                (k * bufferStride[T_IDX] + j * bufferStride[Y_IDX]) * nBufferDTSize;
+            const size_t x = static_cast<size_t>(arrayStartIdx[X_IDX]);
+            const double* srcPtr = &vals[y * nWidth + x];
+            if( bDirectCopy )
+            {
+                memcpy(pabyDstPtr, srcPtr, count[X_IDX] * sizeof(double));
+            }
+            else
+            {
+                const auto dstPtrInc = bufferStride[X_IDX] * nBufferDTSize;
+                for( size_t i = 0; i < count[X_IDX]; i++ )
+                {
+                    GDALExtendedDataType::CopyValue(
+                        srcPtr,
+                        m_dt,
+                        pabyDstPtr,
+                        bufferDataType);
+                    srcPtr += static_cast<std::ptrdiff_t>(arrayStep[X_IDX]);
+                    pabyDstPtr += dstPtrInc;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                          OpenMultiDim()                              */
+/************************************************************************/
+
+GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
+
+{
+    auto poShared = std::make_shared<GRIBSharedResource>(poOpenInfo->fpL);
+    auto poRootGroup = std::make_shared<GRIBGroup>(poShared);
+    poOpenInfo->fpL = nullptr;
+
+    VSIFSeekL(poShared->m_fp, 0, SEEK_SET);
+
+    // Contains an GRIB2 message inventory of the file.
+    gdal::grib::InventoryWrapper oInventories(poShared->m_fp);
+
+    if( oInventories.result() <= 0 )
+    {
+        char *errMsg = errSprintf(nullptr);
+        if( errMsg != nullptr )
+            CPLDebug("GRIB", "%s", errMsg);
+        free(errMsg);
+
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "%s is a grib file, "
+                 "but no raster dataset was successfully identified.",
+                 poOpenInfo->pszFilename);
+        return nullptr;
+    }
+
+    // Create band objects.
+    GRIBDataset *poDS = new GRIBDataset();
+    poDS->fp = poShared->m_fp;
+
+    std::shared_ptr<GRIBArray> poArray;
+    std::set<std::string> oSetArrayNames;
+    std::string osElement;
+    std::string osShortFstLevel;
+    double dfRefTime = 0;
+    double dfForecastTime = 0;
+    for (uInt4 i = 0; i < oInventories.length(); ++i)
+    {
+        inventoryType *psInv = oInventories.get(i);
+        uInt4 bandNr = i + 1;
+
+        // GRIB messages can be preceded by "garbage". GRIB2Inventory()
+        // does not return the offset to the real start of the message
+        GByte abyHeader[1024 + 1];
+        VSIFSeekL( poShared->m_fp, psInv->start, SEEK_SET );
+        size_t nRead = VSIFReadL( abyHeader, 1, sizeof(abyHeader)-1, poShared->m_fp );
+        abyHeader[nRead] = 0;
+        // Find the real offset of the fist message
+        const char *pasHeader = reinterpret_cast<char *>(abyHeader);
+        int nOffsetFirstMessage = 0;
+        for(int j = 0; j < poOpenInfo->nHeaderBytes - 3; j++)
+        {
+            if(STARTS_WITH_CI(pasHeader + j, "GRIB")
+#ifdef ENABLE_TDLP
+               || STARTS_WITH_CI(pasHeader + j, "TDLP")
+#endif
+            )
+            {
+                nOffsetFirstMessage = j;
+                break;
+            }
+        }
+        psInv->start += nOffsetFirstMessage;
+
+        bool bNewArray = false;
+        if( osElement.empty() )
+        {
+            bNewArray = true;
+        }
+        else
+        {
+            if( osElement != psInv->element ||
+                osShortFstLevel != psInv->shortFstLevel ||
+                !((dfRefTime == psInv->refTime && dfForecastTime != psInv->foreSec) ||
+                  (dfRefTime != psInv->refTime && dfForecastTime == psInv->foreSec)) )
+            {
+                bNewArray = true;
+            }
+            else
+            {
+                poArray->ExtendTimeDim(psInv->start, psInv->subgNum, psInv->validTime);
+            }
+        }
+
+        if (bNewArray)
+        {
+            if( poArray)
+            {
+                poArray->Finalize(poRootGroup.get(), oInventories.get(i-1));
+                poRootGroup->AddArray(poArray);
+            }
+
+            grib_MetaData *metaData = nullptr;
+            GRIBRasterBand::ReadGribData(poShared->m_fp, psInv->start,
+                                         psInv->subgNum,
+                                         nullptr, &metaData);
+            if( metaData == nullptr || metaData->gds.Nx < 1 ||
+                metaData->gds.Ny < 1 )
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "%s is a grib file, "
+                         "but no raster dataset was successfully identified.",
+                         poOpenInfo->pszFilename);
+
+                if (metaData != nullptr)
+                {
+                    MetaFree(metaData);
+                    delete metaData;
+                }
+                poDS->fp = nullptr;
+                CPLReleaseMutex(hGRIBMutex);
+                delete poDS;
+                CPLAcquireMutex(hGRIBMutex, 1000.0);
+                return nullptr;
+            }
+
+            // Set the DataSet's x,y size, georeference and projection from
+            // the first GRIB band.
+            poDS->SetGribMetaData(metaData);
+
+            GRIBRasterBand gribBand(poDS, bandNr, psInv);
+            if( psInv->GribVersion == 2 )
+                gribBand.FindPDSTemplate();
+            osElement = psInv->element;
+            osShortFstLevel = psInv->shortFstLevel;
+            dfRefTime = psInv->refTime;
+            dfForecastTime = psInv->foreSec;
+
+            std::string osRadix(osElement + '_' + osShortFstLevel);
+            std::string osName(osRadix);
+            int nCounter = 2;
+            while( oSetArrayNames.find(osName) != oSetArrayNames.end() )
+            {
+                osName = osRadix + CPLSPrintf("_%d", nCounter);
+                nCounter ++;
+            }
+            oSetArrayNames.insert(osName);
+            poArray = GRIBArray::Create(osName, poShared);
+            poArray->Init(poRootGroup.get(), poDS, &gribBand, psInv);
+            poArray->ExtendTimeDim(psInv->start, psInv->subgNum, psInv->validTime);
+
+            if (metaData != nullptr)
+            {
+                MetaFree(metaData);
+                delete metaData;
+            }
+        }
+    }
+
+    if( poArray)
+    {
+        poArray->Finalize(poRootGroup.get(),
+                          oInventories.get(oInventories.length()-1));
+        poRootGroup->AddArray(poArray);
+    }
+
+    poDS->fp = nullptr;
+    poDS->m_poRootGroup = poRootGroup;
     return poDS;
 }
 
@@ -1260,6 +2079,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     double rMaxY = 0.0;
     double rPixelSizeX = 0.0;
     double rPixelSizeY = 0.0;
+    bool bError = false;
     if (meta->gds.projType == GS3_ORTHOGRAPHIC)
     {
         // This is what should work, but it doesn't. Dx seems to have an
@@ -1287,11 +2107,17 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         rMinX = meta->gds.lon1;
         // Latitude in degrees, to be transformed to meters.
         rMaxY = meta->gds.lat1;
-        OGRCoordinateTransformation *poTransformLLtoSRS =
-            OGRCreateCoordinateTransformation(&(oLL), &(oSRS));
+
+        if( m_poSRS == nullptr || m_poLL == nullptr ||
+            !m_poSRS->IsSame(&oSRS) || !m_poLL->IsSame(&oLL) )
+        {
+            m_poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                        OGRCreateCoordinateTransformation(&(oLL), &(oSRS)));
+        }
+
         // Transform it to meters.
-        if( (poTransformLLtoSRS != nullptr) &&
-            poTransformLLtoSRS->Transform(1, &rMinX, &rMaxY) )
+        if( (m_poCT != nullptr) &&
+            m_poCT->Transform(1, &rMinX, &rMaxY) )
         {
             if (meta->gds.scan == GRIB2BIT_2)  // Y is minY, GDAL wants maxY.
             {
@@ -1310,15 +2136,13 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
             rPixelSizeX = 1.0;
             rPixelSizeY = -1.0;
 
-            oSRS.Clear();
-
+            bError = true;
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Unable to perform coordinate transformations, so the "
                      "correct projected geotransform could not be deduced "
                      "from the lat/long control points.  "
                      "Defaulting to ungeoreferenced.");
         }
-        delete poTransformLLtoSRS;
     }
     else
     {
@@ -1392,9 +2216,11 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
                        meta->gds.southLon, -meta->gds.southLat, a, b));
     }
 
-    CPLFree(pszProjection);
-    pszProjection = nullptr;
-    oSRS.exportToWkt(&pszProjection);
+    if( bError )
+        m_poSRS.reset();
+    else
+        m_poSRS.reset(oSRS.Clone());
+    m_poLL = std::unique_ptr<OGRSpatialReference>(oLL.Clone());
 }
 
 /************************************************************************/
@@ -1591,6 +2417,8 @@ void GDALRegister_GRIB()
         return;
 
     GDALDriver *poDriver = new GDALGRIBDriver();
+
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
 
     poDriver->SetDescription("GRIB");
 
