@@ -132,7 +132,7 @@ def get_filename(drv, dirname):
 # Test Create() with various band numbers (including 0) and datatype
 
 
-def misc_5_internal(drv, datatype, nBands):
+def _misc_5_internal(drv, datatype, nBands):
 
     dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
     # print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
@@ -143,9 +143,9 @@ def misc_5_internal(drv, datatype, nBands):
             os.stat(dirname)
             # Hum the directory already exists... Not expected, but let's try to go on
         except OSError:
-            reason = 'Cannot create %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-            gdaltest.post_reason(reason)
-            return 0
+            pytest.fail(
+                'Cannot create %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+            )
 
     filename = get_filename(drv, dirname)
     ds = drv.Create(filename, 100, 100, nBands, datatype)
@@ -158,10 +158,8 @@ def misc_5_internal(drv, datatype, nBands):
         if drv.ShortName not in ['PNM', 'MFF', 'NULL']:
             got_gt = ds.GetGeoTransform()
             for i in range(6):
-                if got_gt[i] != pytest.approx(set_gt[i], abs=1e-10):
-                    print('Did not get expected GT for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
-                    print(got_gt)
-                    return -1
+                assert got_gt[i] == pytest.approx(set_gt[i], abs=1e-10), \
+                    'Did not get expected GT for drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
 
         # if ds.RasterCount > 0:
         #    ds.GetRasterBand(1).Fill(255)
@@ -180,11 +178,9 @@ def misc_5_internal(drv, datatype, nBands):
     try:
         shutil.rmtree(dirname)
     except OSError:
-        reason = 'Cannot remove %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-        gdaltest.post_reason(reason)
-        return 0
-
-    return 1
+        pytest.fail(
+            'Cannot remove %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+        )
 
 
 def test_misc_5():
@@ -210,8 +206,6 @@ def test_misc_5():
     # w.r.t system/OS crashes, unless you know what you are doing.
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
 
-    ret = 'success'
-
     # Test Create() with various band numbers, including 0
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
@@ -225,8 +219,7 @@ def test_misc_5():
         if 'DCAP_CREATE' in md and 'DCAP_RASTER' in md:
             datatype = gdal.GDT_Byte
             for nBands in range(6):
-                if misc_5_internal(drv, datatype, nBands) < 0:
-                    ret = 'fail'
+                _misc_5_internal(drv, datatype, nBands)
 
             for nBands in [1, 3]:
                 for datatype in (gdal.GDT_UInt16,
@@ -239,12 +232,9 @@ def test_misc_5():
                                  gdal.GDT_CInt32,
                                  gdal.GDT_CFloat32,
                                  gdal.GDT_CFloat64):
-                    if misc_5_internal(drv, datatype, nBands) < 0:
-                        ret = 'fail'
+                    _misc_5_internal(drv, datatype, nBands)
 
     gdal.PopErrorHandler()
-
-    return ret
 
 
 ###############################################################################
