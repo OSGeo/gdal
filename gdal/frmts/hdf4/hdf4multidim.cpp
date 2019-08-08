@@ -31,7 +31,6 @@
 #include "mfhdf.h"
 
 #include "HdfEosDef.h"
-#include "memdataset.h"
 
 #include <algorithm>
 #include <map>
@@ -374,7 +373,6 @@ class HDF4EOSGridGroup: public GDALGroup
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GDHandle> m_poGDHandle;
     mutable std::vector<std::shared_ptr<GDALDimension>> m_dims{};
-    mutable std::shared_ptr<GDALGroup> m_rg{};
     mutable std::shared_ptr<GDALMDArray> m_varX{};
     mutable std::shared_ptr<GDALMDArray> m_varY{};
 
@@ -535,7 +533,6 @@ class HDF4SDSGroup: public GDALGroup
     mutable bool m_bInGetDimensions = false;
     bool m_bIsGDALDataset = false;
     std::vector<std::shared_ptr<GDALAttribute>> m_oGlobalAttributes{};
-    mutable std::shared_ptr<GDALGroup> m_rg{};
     mutable std::shared_ptr<GDALMDArray> m_varX{};
     mutable std::shared_ptr<GDALMDArray> m_varY{};
 
@@ -556,36 +553,6 @@ public:
     std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions) const override;
     std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
                                              CSLConstList papszOptions) const override;
-};
-
-/************************************************************************/
-/*                          HDF4SDSDimension                            */
-/************************************************************************/
-
-class HDF4SDSDimension: public GDALDimension
-{
-    std::weak_ptr<GDALMDArray> m_poIndexingVariable{};
-
-public:
-    HDF4SDSDimension(const std::string& osParentName,
-                  const std::string& osName,
-                  const std::string& osType,
-                  const std::string& osDirection,
-                  GUInt64 nSize):
-        GDALDimension(osParentName, osName, osType, osDirection, nSize)
-    {
-    }
-
-    bool SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable) override
-    {
-        m_poIndexingVariable = poIndexingVariable;
-        return true;
-    }
-
-    std::shared_ptr<GDALMDArray> GetIndexingVariable() const override
-    {
-        return m_poIndexingVariable.lock();
-    }
 };
 
 /************************************************************************/
@@ -874,49 +841,6 @@ public:
                   const std::shared_ptr<HDF4GRHandle>& poGRHandle,
                   int32 iPal,
                   int32 nValues);
-
-    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
-
-    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
-};
-
-/************************************************************************/
-/*                            GDALAttributeString                       */
-/************************************************************************/
-
-class GDALAttributeString: public GDALAttribute
-{
-    std::vector<std::shared_ptr<GDALDimension>> m_dims{};
-    GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();
-    std::string m_osValue;
-
-protected:
-
-    bool IRead(const GUInt64* ,
-               const size_t* ,
-               const GInt64* ,
-               const GPtrDiff_t* ,
-               const GDALExtendedDataType& bufferDataType,
-               void* pDstBuffer) const override
-    {
-        if( bufferDataType.GetClass() != GEDTC_STRING )
-            return false;
-        char* pszStr = static_cast<char*>(VSIMalloc(m_osValue.size() + 1));
-        if( !pszStr ) 
-            return false;
-        memcpy(pszStr, m_osValue.c_str(), m_osValue.size() + 1);
-        *static_cast<char**>(pDstBuffer) = pszStr;
-        return true;
-    }
-
-public:
-    GDALAttributeString(const std::string& osParentName,
-                  const std::string& osName,
-                  const std::string& osValue):
-        GDALAbstractMDArray(osParentName, osName),
-        GDALAttribute(osParentName, osName),
-        m_osValue(osValue)
-    {}
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
@@ -1823,56 +1747,34 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4EOSGridGroup::GetDimensions(CSLC
                                           adfUpLeft, adfLowRight ) >= 0;
     if( bGotGridInfo  )
     {
-        std::unique_ptr<GDALDataset> poTmpDS(
-                    MEMDataset::CreateMultiDimensional("", nullptr, nullptr));
-        m_rg = poTmpDS->GetRootGroup();
-        auto group = m_rg->CreateGroup("eos_grids")->CreateGroup(GetName());
-
         m_dims = {
-            group->CreateDimension(
-                "YDim", GDAL_DIM_TYPE_HORIZONTAL_Y, "NORTH",
-                nYSize, nullptr),
-            group->CreateDimension(
-                "XDim", GDAL_DIM_TYPE_HORIZONTAL_X, "EAST",
-                nXSize, nullptr)
+            std::make_shared<GDALDimensionWeakIndexingVar>(
+                GetFullName(), "YDim", GDAL_DIM_TYPE_HORIZONTAL_Y, "NORTH",
+                nYSize),
+            std::make_shared<GDALDimensionWeakIndexingVar>(
+                GetFullName(), "XDim", GDAL_DIM_TYPE_HORIZONTAL_X, "EAST",
+                nXSize)
         };
 
-        if( std::max(nXSize, nYSize) < 10 * 1000 * 1000 )
+        if( iProjCode == 0 )
         {
-            m_varX = group->CreateMDArray(m_dims[1]->GetName(),
-                std::vector<std::shared_ptr<GDALDimension>>{m_dims[1]},
-                GDALExtendedDataType::Create(GDT_Float64), nullptr);
-            m_dims[1]->SetIndexingVariable(m_varX);
-
-            m_varY = group->CreateMDArray(m_dims[0]->GetName(),
-                std::vector<std::shared_ptr<GDALDimension>>{m_dims[0]},
-                GDALExtendedDataType::Create(GDT_Float64), nullptr);
-            m_dims[0]->SetIndexingVariable(m_varY);
-
-            std::vector<double> adfTmp(
-                std::max(nXSize, nYSize));
-            const GUInt64 nStart = 0;
-
-            if( iProjCode == 0 )
-            {
-                adfLowRight[0] = CPLPackedDMSToDec(adfLowRight[0]);
-                adfLowRight[1] = CPLPackedDMSToDec(adfLowRight[1]);
-                adfUpLeft[0] = CPLPackedDMSToDec(adfUpLeft[0]);
-                adfUpLeft[1] = CPLPackedDMSToDec(adfUpLeft[1]);
-            }
-
-            for(int i = 0; i < nXSize; i++)
-                adfTmp[i] = adfUpLeft[0] + (i + 0.5) * (adfLowRight[0] - adfUpLeft[0]) / nXSize;
-            size_t nCount = nXSize;
-            m_varX->Write(&nStart, &nCount, nullptr, nullptr,
-                        m_varX->GetDataType(), &adfTmp[0]);
-
-            for(int i = 0; i < nYSize; i++)
-                adfTmp[i] = adfUpLeft[1] + (i + 0.5) * (adfLowRight[1] - adfUpLeft[1]) / nYSize;
-            nCount = nYSize;
-            m_varY->Write(&nStart, &nCount, nullptr, nullptr,
-                        m_varY->GetDataType(), &adfTmp[0]);
+            adfLowRight[0] = CPLPackedDMSToDec(adfLowRight[0]);
+            adfLowRight[1] = CPLPackedDMSToDec(adfLowRight[1]);
+            adfUpLeft[0] = CPLPackedDMSToDec(adfUpLeft[0]);
+            adfUpLeft[1] = CPLPackedDMSToDec(adfUpLeft[1]);
         }
+
+        m_varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+            GetFullName(), m_dims[1]->GetName(), m_dims[1],
+            adfUpLeft[0],
+            (adfLowRight[0] - adfUpLeft[0]) / nXSize, 0.5);
+        m_dims[1]->SetIndexingVariable(m_varX);
+
+        m_varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+            GetFullName(), m_dims[0]->GetName(), m_dims[0],
+            adfUpLeft[1],
+            (adfLowRight[1] - adfUpLeft[1]) / nYSize, 0.5);
+        m_dims[0]->SetIndexingVariable(m_varY);
     }
 
 #if 0
@@ -2497,7 +2399,7 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
     }
 
     // Instanciate dimensions
-    std::set<std::shared_ptr<HDF4SDSDimension>> oSetDimsWithVariable;
+    std::set<std::shared_ptr<GDALDimensionWeakIndexingVar>> oSetDimsWithVariable;
     for(const auto& iter: oMapDimIdToDimSize )
     {
         std::string osName;
@@ -2534,7 +2436,7 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
 
         // Do not trust iSize which can be 0 for a unlimited dimension, but
         // the size actually taken by the array(s)
-        auto poDim(std::make_shared<HDF4SDSDimension>(GetFullName(),
+        auto poDim(std::make_shared<GDALDimensionWeakIndexingVar>(GetFullName(),
                                                       osName,
                                                       osType,
                                                       osDirection,
@@ -2554,58 +2456,34 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
         if( aosCoeffs.size() == 6 && CPLAtof(aosCoeffs[2]) == 0 &&
             CPLAtof(aosCoeffs[4]) == 0 )
         {
-            std::unique_ptr<GDALDataset> poTmpDS(
-                        MEMDataset::CreateMultiDimensional("", nullptr, nullptr));
-            m_rg = poTmpDS->GetRootGroup();
-            auto group = m_rg;
-
             auto newDims = std::vector<std::shared_ptr<GDALDimension>>{
-                group->CreateDimension(
-                    "Y", GDAL_DIM_TYPE_HORIZONTAL_Y, std::string(),
-                    m_dims[0]->GetSize(), nullptr),
-                group->CreateDimension(
-                    "X", GDAL_DIM_TYPE_HORIZONTAL_X, std::string(),
-                    m_dims[1]->GetSize(), nullptr)
+                std::make_shared<GDALDimensionWeakIndexingVar>(
+                    GetFullName(), "Y", GDAL_DIM_TYPE_HORIZONTAL_Y, std::string(),
+                    m_dims[0]->GetSize()),
+                std::make_shared<GDALDimensionWeakIndexingVar>(
+                    GetFullName(), "X", GDAL_DIM_TYPE_HORIZONTAL_X, std::string(),
+                    m_dims[1]->GetSize())
             };
             if( m_dims.size() == 3 )
             {
                 newDims.push_back(
-                    group->CreateDimension(
-                        "Band", std::string(), std::string(),
-                        m_dims[2]->GetSize(), nullptr));
+                    std::make_shared<GDALDimensionWeakIndexingVar>(
+                    GetFullName(), "Band", std::string(), std::string(),
+                    m_dims[2]->GetSize()));
             }
             m_dims = newDims;
 
-            const int nXSize = static_cast<int>(m_dims[1]->GetSize());
-            const int nYSize = static_cast<int>(m_dims[0]->GetSize());
-            if( std::max(nXSize, nYSize) < 10 * 1000 * 1000 )
-            {
-                m_varX = group->CreateMDArray(m_dims[1]->GetName(),
-                    std::vector<std::shared_ptr<GDALDimension>>{m_dims[1]},
-                    GDALExtendedDataType::Create(GDT_Float64), nullptr);
-                m_dims[1]->SetIndexingVariable(m_varX);
+            m_varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+                GetFullName(), m_dims[1]->GetName(), m_dims[1],
+                CPLAtof(aosCoeffs[0]),
+                CPLAtof(aosCoeffs[1]), 0.5);
+            m_dims[1]->SetIndexingVariable(m_varX);
 
-                m_varY = group->CreateMDArray(m_dims[0]->GetName(),
-                    std::vector<std::shared_ptr<GDALDimension>>{m_dims[0]},
-                    GDALExtendedDataType::Create(GDT_Float64), nullptr);
-                m_dims[0]->SetIndexingVariable(m_varY);
-
-                std::vector<double> adfTmp(
-                    std::max(nXSize, nYSize));
-                const GUInt64 nStart = 0;
-
-                for(int i = 0; i < nXSize; i++)
-                    adfTmp[i] = CPLAtof(aosCoeffs[0]) + (i + 0.5) * CPLAtof(aosCoeffs[1]);
-                size_t nCount = nXSize;
-                m_varX->Write(&nStart, &nCount, nullptr, nullptr,
-                            m_varX->GetDataType(), &adfTmp[0]);
-
-                for(int i = 0; i < nYSize; i++)
-                    adfTmp[i] = CPLAtof(aosCoeffs[3]) + (i + 0.5) * CPLAtof(aosCoeffs[5]);
-                nCount = nYSize;
-                m_varY->Write(&nStart, &nCount, nullptr, nullptr,
-                            m_varY->GetDataType(), &adfTmp[0]);
-            }
+            m_varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+                GetFullName(), m_dims[0]->GetName(), m_dims[0],
+                CPLAtof(aosCoeffs[3]),
+                CPLAtof(aosCoeffs[5]), 0.5);
+            m_dims[0]->SetIndexingVariable(m_varY);
         }
     }
 

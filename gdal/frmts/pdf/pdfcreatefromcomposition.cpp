@@ -1281,7 +1281,7 @@ bool GDALPDFComposerWriter::ExploreContent(const CPLXMLNode* psNode,
                 return false;
 #else
             CPLError(CE_Failure, CPLE_NotSupported,
-                    "PDF node not supported due to PDF read support in this GDAL build");
+                    "PDF node not supported due to missing PDF read support in this GDAL build");
             return false;
 #endif
         }
