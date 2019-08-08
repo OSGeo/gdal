@@ -173,6 +173,26 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
       }
       break;
 
+      case 101:
+        // Embedded objects mark the end of meaningful DXF data
+        // See http://docs.autodesk.com/ACDMAC/2016/ENU/ObjectARX_Dev_Guide/files/GUID-C953866F-A335-4FFD-AE8C-256A76065552.htm
+      {
+          char szLineBuf[257];
+          // Eat the rest of this entity
+          while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 &&
+              nCode > 0 );
+
+          if( nCode < 0 )
+          {
+              // Let the entity reader function discover this error for itself
+              return;
+          }
+
+          if( nCode == 0 )
+              poDS->UnreadValue();
+      }
+      break;
+
       case 60:
         poFeature->oStyleProperties["Hidden"] = pszValue;
         break;
