@@ -6084,13 +6084,13 @@ def test_tiff_write_157():
     expected = (0.0, -0.0, gdaltest.posinf(), -gdaltest.posinf(),
                 gdaltest.NaN(), gdaltest.NaN(), gdaltest.NaN(), gdaltest.NaN(),
                 1.25, -1.25, 0.0, -0.0, 0.0, -0.0, 0.0, -0.0, 5.9604644775390625e-08, gdaltest.posinf())
+
     for i in range(18):
-        if i == 4 or i == 5:
+        if i in (4, 5, 6, 7):
+            # NaN comparison doesn't work like you'd expect
             assert got[i] != got[i]
-        elif got[i] != pytest.approx(expected[i], abs=1e-15):
-            print(got[i])
-            print(expected[i])
-            pytest.fail(i)
+        else:
+            assert got[i] == pytest.approx(expected[i], abs=1e-15)
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_157.tif')
 
