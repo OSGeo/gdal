@@ -39,10 +39,9 @@ namespace nccfdriver
         real_dim_name.clear();
     }
 
-    netCDFVVariable::netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp, int varid) :
+    netCDFVVariable::netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp) :
         real_var_name(name),
         ntype(xtype),
-        v_vid(varid),
         ndimc(ndims),
         dimid(new int[ndims])
     {
@@ -115,7 +114,7 @@ namespace nccfdriver
         }
 
         // Add to lookup tables
-        varList.push_back(netCDFVVariable(name, xtype, ndims, dimidsp, varTicket));
+        varList.push_back(netCDFVVariable(name, xtype, ndims, dimidsp));
         varTicket++;
         nameVarTable.insert(std::pair<std::string, int>(std::string(name), varID));
 

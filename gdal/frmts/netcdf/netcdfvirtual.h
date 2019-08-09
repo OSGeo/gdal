@@ -190,7 +190,6 @@ namespace nccfdriver
         std::string real_var_name;
         nc_type ntype;
         int r_vid = INVALID_VAR_ID;
-        int v_vid;
         int ndimc;
         std::unique_ptr<int, std::default_delete<int[]>> dimid;
         std::vector<std::shared_ptr<netCDFVAttribute>> attribs;
@@ -201,7 +200,7 @@ namespace nccfdriver
             void invalidate();
             void setRealID(int realID) { this->r_vid = realID; }
         public:
-            netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp, int varid);
+            netCDFVVariable(const char * name, nc_type xtype, int ndims, const int* dimidsp);
             std::string& getName() { return real_var_name; }
             int getRealID() { return r_vid; }
             nc_type getType() { return ntype; }
