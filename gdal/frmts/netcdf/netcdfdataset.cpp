@@ -7246,7 +7246,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
       pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
     if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
-      status2 = nc_open_mem(osFilenameForNCOpen, nMode, nVmaSize, pVma, &cdfid);
+      status2 = nc_open_mem(osFilenameForNCOpen, nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
     else
       status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #else
