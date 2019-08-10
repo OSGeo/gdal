@@ -83,8 +83,8 @@ extern const struct drstemplate templatesdrs[MAXDRSTEMP];
 #endif
 
 static sInt4 FloatToSInt4Clamp(float val) {
-   if (val >= INT_MAX) return INT_MAX;
-   if (val <= INT_MIN) return INT_MIN;
+   if ((double)val >= (double)INT_MAX) return INT_MAX;
+   if ((double)val <= (double)INT_MIN) return INT_MIN;
    if (CPLIsNan(val)) return 0;
    return (sInt4)val;
 }
