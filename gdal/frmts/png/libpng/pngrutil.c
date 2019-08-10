@@ -1,8 +1,8 @@
 
 /* pngrutil.c - utilities to read a PNG file
  *
- * Last changed in libpng 1.2.55 [%RDATE%]
- * Copyright (c) 1998-2002,2004,2006-2015 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.59 [September 28, 2017]
+ * Copyright (c) 1998-2002,2004,2006-2015,2017 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -130,6 +130,9 @@ png_read_chunk_header(png_structp png_ptr)
 
    /* Check to see if chunk name is valid */
    png_check_chunk_name(png_ptr, png_ptr->chunk_name);
+
+   /* Check for too-large chunk length */
+   png_check_chunk_length(png_ptr, length);
 
    return length;
 }
@@ -2507,6 +2510,41 @@ png_check_chunk_name(png_structp png_ptr, png_bytep chunk_name)
       png_chunk_warning(png_ptr, "invalid chunk type");
    }
 }
+
+void /* PRIVATE */
+png_check_chunk_length(png_structp png_ptr, png_uint_32 length)
+{
+   png_uint_32 limit = PNG_UINT_31_MAX;
+# if PNG_USER_CHUNK_MALLOC_MAX > 0
+      if (PNG_USER_CHUNK_MALLOC_MAX < limit)
+         limit = PNG_USER_CHUNK_MALLOC_MAX;
+# endif
+   /* if (png_ptr->chunk_name == png_IDAT) */
+   if (png_ptr->chunk_name[0] != 73 || png_ptr->chunk_name[1] !=68 ||
+       png_ptr->chunk_name[2] != 65 || png_ptr->chunk_name[3] !=84)
+   {
+      png_uint_32 idat_limit = PNG_UINT_31_MAX;
+      size_t row_factor =
+         (png_ptr->width * png_ptr->channels * (png_ptr->bit_depth > 8? 2: 1)
+          + 1 + (png_ptr->interlaced? 6: 0));
+      if (png_ptr->height > PNG_UINT_32_MAX/row_factor)
+         idat_limit=PNG_UINT_31_MAX;
+      else
+         idat_limit = png_ptr->height * row_factor;
+      row_factor = row_factor > 32566? 32566 : row_factor;
+      idat_limit += 6 + 5*(idat_limit/row_factor+1); /* zlib+deflate overhead */
+      idat_limit=idat_limit < PNG_UINT_31_MAX? idat_limit : PNG_UINT_31_MAX;
+      limit = limit < idat_limit? idat_limit : limit;
+   }
+
+   if (length > limit)
+   {
+      png_debug2(0," length = %lu, limit = %lu",
+         (unsigned long)length,(unsigned long)limit);
+      png_chunk_error(png_ptr, "chunk data is too large");
+   }
+}
+
 
 /* Combines the row recently read in with the existing pixels in the
    row.  This routine takes care of alpha and transparency if requested.
