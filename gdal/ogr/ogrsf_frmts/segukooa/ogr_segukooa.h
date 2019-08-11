@@ -36,7 +36,7 @@
 /*                        OGRSEGUKOOABaseLayer                          */
 /************************************************************************/
 
-class OGRSEGUKOOABaseLayer : public OGRLayer
+class OGRSEGUKOOABaseLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn*    poFeatureDefn;

@@ -223,7 +223,7 @@ typedef enum
 
 class OGRMDBDataSource;
 
-class OGRMDBLayer : public OGRLayer
+class OGRMDBLayer final: public OGRLayer
 {
   protected:
     OGRMDBTable* poMDBTable;
@@ -293,7 +293,7 @@ class OGRMDBLayer : public OGRLayer
 /*                           OGRMDBDataSource                            */
 /************************************************************************/
 
-class OGRMDBDataSource : public OGRDataSource
+class OGRMDBDataSource final: public OGRDataSource
 {
     OGRMDBLayer        **papoLayers;
     int                 nLayers;
@@ -333,7 +333,7 @@ class OGRMDBDataSource : public OGRDataSource
 /*                             OGRMDBDriver                             */
 /************************************************************************/
 
-class OGRMDBDriver : public OGRSFDriver
+class OGRMDBDriver final: public OGRSFDriver
 {
   public:
                 ~OGRMDBDriver();

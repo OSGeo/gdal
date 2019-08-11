@@ -2614,7 +2614,7 @@ void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
 /*                     OGRGMLSingleFeatureLayer                         */
 /************************************************************************/
 
-class OGRGMLSingleFeatureLayer : public OGRLayer
+class OGRGMLSingleFeatureLayer final: public OGRLayer
 {
   private:
     int                 nVal;

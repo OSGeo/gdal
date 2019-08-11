@@ -53,7 +53,7 @@ typedef enum
 /************************************************************************/
 class OGRCouchDBDataSource;
 
-class OGRCouchDBLayer : public OGRLayer
+class OGRCouchDBLayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRCouchDBDataSource*       poDS;
@@ -106,7 +106,7 @@ protected:
 /*                      OGRCouchDBTableLayer                            */
 /************************************************************************/
 
-class OGRCouchDBTableLayer : public OGRCouchDBLayer
+class OGRCouchDBTableLayer CPL_NON_FINAL: public OGRCouchDBLayer
 {
     int                       nNextFIDForCreate;
     bool                      bInTransaction;
@@ -219,7 +219,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 /*                       OGRCouchDBRowsLayer                            */
 /************************************************************************/
 
-class OGRCouchDBRowsLayer : public OGRCouchDBLayer
+class OGRCouchDBRowsLayer final: public OGRCouchDBLayer
 {
     bool                      bAllInOne;
 
@@ -240,7 +240,7 @@ class OGRCouchDBRowsLayer : public OGRCouchDBLayer
 /*                         OGRCouchDBDataSource                         */
 /************************************************************************/
 
-class OGRCouchDBDataSource : public OGRDataSource
+class OGRCouchDBDataSource CPL_NON_FINAL: public OGRDataSource
 {
   protected:
     char*               pszName;

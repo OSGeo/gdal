@@ -39,7 +39,7 @@ class OGRXPlaneDataSource;
 /*                             OGRXPlaneLayer                           */
 /************************************************************************/
 
-class OGRXPlaneLayer: public OGRLayer
+class OGRXPlaneLayer CPL_NON_FINAL: public OGRLayer
 {
   private:
     int                nFID;

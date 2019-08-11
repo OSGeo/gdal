@@ -43,7 +43,7 @@ class OGRILI2DataSource;
 /*                           OGRILI2Layer                               */
 /************************************************************************/
 
-class OGRILI2Layer : public OGRLayer
+class OGRILI2Layer final: public OGRLayer
 {
   private:
     OGRFeatureDefn     *poFeatureDefn;
@@ -82,7 +82,7 @@ class OGRILI2Layer : public OGRLayer
 /*                          OGRILI2DataSource                           */
 /************************************************************************/
 
-class OGRILI2DataSource : public OGRDataSource
+class OGRILI2DataSource final: public OGRDataSource
 {
   private:
     std::list<OGRLayer *> listLayer;

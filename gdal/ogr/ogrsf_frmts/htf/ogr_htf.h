@@ -38,7 +38,7 @@
 /*                             OGRHTFLayer                              */
 /************************************************************************/
 
-class OGRHTFLayer : public OGRLayer
+class OGRHTFLayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRFeatureDefn*    poFeatureDefn;

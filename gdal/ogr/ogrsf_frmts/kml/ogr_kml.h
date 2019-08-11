@@ -45,7 +45,7 @@ class OGRKMLDataSource;
 /*                            OGRKMLLayer                               */
 /************************************************************************/
 
-class OGRKMLLayer : public OGRLayer
+class OGRKMLLayer final: public OGRLayer
 {
   public:
     OGRKMLLayer( const char* pszName_,
@@ -101,7 +101,7 @@ class OGRKMLLayer : public OGRLayer
 /*                           OGRKMLDataSource                           */
 /************************************************************************/
 
-class OGRKMLDataSource : public OGRDataSource
+class OGRKMLDataSource final: public OGRDataSource
 {
   public:
     OGRKMLDataSource();

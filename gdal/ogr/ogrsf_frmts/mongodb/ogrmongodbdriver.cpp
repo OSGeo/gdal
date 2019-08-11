@@ -2594,7 +2594,7 @@ int OGRMongoDBDataSource::TestCapability( const char * pszCap )
 /*                    OGRMongoDBSingleFeatureLayer                      */
 /************************************************************************/
 
-class OGRMongoDBSingleFeatureLayer: public OGRLayer
+class OGRMongoDBSingleFeatureLayer final: public OGRLayer
 {
     OGRFeatureDefn     *m_poFeatureDefn;
     CPLString           osVal;

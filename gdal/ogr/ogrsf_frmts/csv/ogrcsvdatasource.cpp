@@ -53,7 +53,7 @@ CPL_CVSID("$Id$")
 /*                     OGRCSVEditableLayerSynchronizer                  */
 /************************************************************************/
 
-class OGRCSVEditableLayerSynchronizer : public IOGREditableLayerSynchronizer
+class OGRCSVEditableLayerSynchronizer final: public IOGREditableLayerSynchronizer
 {
     OGRCSVLayer *m_poCSVLayer;
     char        **m_papszOpenOptions;
@@ -297,7 +297,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
 /*                        OGRCSVEditableLayer                           */
 /************************************************************************/
 
-class OGRCSVEditableLayer: public OGREditableLayer
+class OGRCSVEditableLayer final: public OGREditableLayer
 {
     std::set<CPLString> m_oSetFields;
 

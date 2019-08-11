@@ -75,7 +75,7 @@ public:
 
 class OGRDODSDataSource;
 
-class OGRDODSLayer : public OGRLayer
+class OGRDODSLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -132,7 +132,7 @@ class OGRDODSLayer : public OGRLayer
 /*                         OGRDODSSequenceLayer                         */
 /************************************************************************/
 
-class OGRDODSSequenceLayer : public OGRDODSLayer
+class OGRDODSSequenceLayer final: public OGRDODSLayer
 {
 private:
     OGRDODSFieldDefn    oXField;
@@ -226,7 +226,7 @@ public:
     void  *pRawData;
 };
 
-class OGRDODSGridLayer : public OGRDODSLayer
+class OGRDODSGridLayer final: public OGRDODSLayer
 {
     Grid               *poTargetGrid; // NULL if simple array used.
     Array              *poTargetArray;
@@ -266,7 +266,7 @@ public:
 /*                          OGRDODSDataSource                           */
 /************************************************************************/
 
-class OGRDODSDataSource : public OGRDataSource
+class OGRDODSDataSource final: public OGRDataSource
 {
     OGRDODSLayer        **papoLayers;
     int                 nLayers;
@@ -306,7 +306,7 @@ class OGRDODSDataSource : public OGRDataSource
 /*                             OGRDODSDriver                            */
 /************************************************************************/
 
-class OGRDODSDriver : public OGRSFDriver
+class OGRDODSDriver final: public OGRSFDriver
 {
   public:
                 ~OGRDODSDriver();

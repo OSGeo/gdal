@@ -2674,7 +2674,7 @@ OGRErr OGRPGDataSource::DoTransactionCommand(const char* pszCommand)
 /*                     OGRPGNoResetResultLayer                          */
 /************************************************************************/
 
-class OGRPGNoResetResultLayer : public OGRPGLayer
+class OGRPGNoResetResultLayer final: public OGRPGLayer
 {
   public:
                         OGRPGNoResetResultLayer(OGRPGDataSource *poDSIn,
@@ -2749,7 +2749,7 @@ OGRFeature *OGRPGNoResetResultLayer::GetNextFeature()
 /*                      OGRPGMemLayerWrapper                            */
 /************************************************************************/
 
-class OGRPGMemLayerWrapper : public OGRLayer
+class OGRPGMemLayerWrapper final: public OGRLayer
 {
   private:
       GDALDataset  *poMemDS;

@@ -374,7 +374,7 @@ class NTFFileReader
 /*                             OGRNTFLayer                              */
 /************************************************************************/
 
-class OGRNTFLayer : public OGRLayer
+class OGRNTFLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
     NTFFeatureTranslator pfnTranslator;
@@ -417,7 +417,7 @@ class OGRNTFLayer : public OGRLayer
 /*                       OGRNTFFeatureClassLayer                        */
 /************************************************************************/
 
-class OGRNTFFeatureClassLayer : public OGRLayer
+class OGRNTFFeatureClassLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
     OGRGeometry        *poFilterGeom;
@@ -451,7 +451,7 @@ class OGRNTFFeatureClassLayer : public OGRLayer
 /*                          OGRNTFRasterLayer                           */
 /************************************************************************/
 
-class OGRNTFRasterLayer : public OGRLayer
+class OGRNTFRasterLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
     OGRGeometry        *poFilterGeom;
@@ -492,7 +492,7 @@ class OGRNTFRasterLayer : public OGRLayer
 /*                           OGRNTFDataSource                           */
 /************************************************************************/
 
-class OGRNTFDataSource : public OGRDataSource
+class OGRNTFDataSource final: public OGRDataSource
 {
     char                *pszName;
 

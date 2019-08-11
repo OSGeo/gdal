@@ -58,7 +58,7 @@ class OGRESRIFeatureServiceDataset;
 /*                      OGRESRIFeatureServiceLayer                      */
 /************************************************************************/
 
-class OGRESRIFeatureServiceLayer: public OGRLayer
+class OGRESRIFeatureServiceLayer final: public OGRLayer
 {
     OGRESRIFeatureServiceDataset* poDS;
     OGRFeatureDefn* poFeatureDefn;
@@ -87,7 +87,7 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
 /*                       OGRESRIFeatureServiceDataset                   */
 /************************************************************************/
 
-class OGRESRIFeatureServiceDataset: public GDALDataset
+class OGRESRIFeatureServiceDataset final: public GDALDataset
 {
     CPLString              osURL;
     GIntBig                nFirstOffset;
