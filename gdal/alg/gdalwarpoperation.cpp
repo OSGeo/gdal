@@ -2430,7 +2430,7 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
             privateData->adfDstY.resize(nSampleMax);
             adfDstZ.resize(nSampleMax);
         }
-        catch( const std::bad_alloc& )
+        catch( const std::exception& )
         {
             return;
         }

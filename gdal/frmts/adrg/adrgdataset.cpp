@@ -1096,7 +1096,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         {
             TILEINDEX = new int [NFL * NFC];
         }
-        catch( const std::bad_alloc& )
+        catch( const std::exception& )
         {
             return nullptr;
         }
