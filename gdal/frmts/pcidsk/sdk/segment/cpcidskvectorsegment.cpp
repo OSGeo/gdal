@@ -1011,7 +1011,7 @@ void CPCIDSKVectorSegment::GetVertices( ShapeId shape_id,
     {
         vertices.resize( vertex_count );
     }
-    catch( const std::bad_alloc& ex )
+    catch( const std::exception& ex )
     {
         return ThrowPCIDSKException("Out of memory allocating vertices(%u): %s",
                                     vertex_count, ex.what());
