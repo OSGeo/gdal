@@ -47,7 +47,7 @@ typedef struct
     int fillB;
 } OpenAirStyle;
 
-class OGROpenAirLayer : public OGRLayer
+class OGROpenAirLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -79,7 +79,7 @@ class OGROpenAirLayer : public OGRLayer
 /*                       OGROpenAirLabelLayer                           */
 /************************************************************************/
 
-class OGROpenAirLabelLayer : public OGRLayer
+class OGROpenAirLabelLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -112,7 +112,7 @@ class OGROpenAirLabelLayer : public OGRLayer
 /*                         OGROpenAirDataSource                         */
 /************************************************************************/
 
-class OGROpenAirDataSource : public OGRDataSource
+class OGROpenAirDataSource final: public OGRDataSource
 {
     char*               pszName;
 

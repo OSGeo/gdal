@@ -41,7 +41,7 @@
 
 class OGRPGeoDataSource;
 
-class OGRPGeoLayer : public OGRLayer
+class OGRPGeoLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -90,7 +90,7 @@ class OGRPGeoLayer : public OGRLayer
 /*                           OGRPGeoTableLayer                            */
 /************************************************************************/
 
-class OGRPGeoTableLayer : public OGRPGeoLayer
+class OGRPGeoTableLayer final: public OGRPGeoLayer
 {
     char                *pszQuery;
 
@@ -132,7 +132,7 @@ class OGRPGeoTableLayer : public OGRPGeoLayer
 /*                          OGRPGeoSelectLayer                          */
 /************************************************************************/
 
-class OGRPGeoSelectLayer : public OGRPGeoLayer
+class OGRPGeoSelectLayer final: public OGRPGeoLayer
 {
     char                *pszBaseStatement;
 
@@ -158,7 +158,7 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
 /*                           OGRPGeoDataSource                            */
 /************************************************************************/
 
-class OGRPGeoDataSource : public OGRDataSource
+class OGRPGeoDataSource final: public OGRDataSource
 {
     OGRPGeoLayer        **papoLayers;
     int                 nLayers;
@@ -196,7 +196,7 @@ class OGRPGeoDataSource : public OGRDataSource
 /*                           OGRODBCMDBDriver                           */
 /************************************************************************/
 
-class OGRODBCMDBDriver : public OGRSFDriver
+class OGRODBCMDBDriver CPL_NON_FINAL: public OGRSFDriver
 {
 #ifndef WIN32
     CPLString   osDriverFile;
@@ -215,7 +215,7 @@ protected:
 /*                             OGRPGeoDriver                            */
 /************************************************************************/
 
-class OGRPGeoDriver : public OGRODBCMDBDriver
+class OGRPGeoDriver final: public OGRODBCMDBDriver
 {
   public:
                 ~OGRPGeoDriver();

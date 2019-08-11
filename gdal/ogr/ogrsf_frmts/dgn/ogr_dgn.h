@@ -37,7 +37,7 @@
 /*                            OGRDGNLayer                               */
 /************************************************************************/
 
-class OGRDGNLayer : public OGRLayer
+class OGRDGNLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
@@ -91,7 +91,7 @@ class OGRDGNLayer : public OGRLayer
 /*                          OGRDGNDataSource                            */
 /************************************************************************/
 
-class OGRDGNDataSource : public OGRDataSource
+class OGRDGNDataSource final: public OGRDataSource
 {
     OGRDGNLayer     **papoLayers;
     int                 nLayers;

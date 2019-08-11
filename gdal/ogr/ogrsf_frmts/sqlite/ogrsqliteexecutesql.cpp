@@ -55,7 +55,7 @@ CPL_CVSID("$Id$")
 /*                       OGRSQLiteExecuteSQLLayer                       */
 /************************************************************************/
 
-class OGRSQLiteExecuteSQLLayer: public OGRSQLiteSelectLayer
+class OGRSQLiteExecuteSQLLayer final: public OGRSQLiteSelectLayer
 {
     char             *pszTmpDBName;
 

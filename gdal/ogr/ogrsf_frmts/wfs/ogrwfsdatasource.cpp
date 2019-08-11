@@ -104,7 +104,7 @@ CPLXMLNode* WFSFindNode( CPLXMLNode* psXML, const char* pszRootName )
 /*                       OGRWFSWrappedResultLayer                       */
 /************************************************************************/
 
-class OGRWFSWrappedResultLayer : public OGRLayer
+class OGRWFSWrappedResultLayer final: public OGRLayer
 {
     GDALDataset *poDS;
     OGRLayer    *poLayer;

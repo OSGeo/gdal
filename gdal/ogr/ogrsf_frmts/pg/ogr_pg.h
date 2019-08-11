@@ -137,7 +137,7 @@ class OGRPGGeomFieldDefn final: public OGRGeomFieldDefn
 /*                          OGRPGFeatureDefn                            */
 /************************************************************************/
 
-class OGRPGFeatureDefn: public OGRFeatureDefn
+class OGRPGFeatureDefn CPL_NON_FINAL: public OGRFeatureDefn
 {
     public:
         explicit OGRPGFeatureDefn( const char * pszName = nullptr ) :
@@ -162,7 +162,7 @@ class OGRPGFeatureDefn: public OGRFeatureDefn
 /*                            OGRPGLayer                                */
 /************************************************************************/
 
-class OGRPGLayer : public OGRLayer
+class OGRPGLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRPGFeatureDefn   *poFeatureDefn;

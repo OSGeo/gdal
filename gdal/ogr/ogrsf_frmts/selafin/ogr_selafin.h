@@ -64,7 +64,7 @@ class Range {
 /*                             OGRSelafinLayer                          */
 /************************************************************************/
 
-class OGRSelafinLayer : public OGRLayer {
+class OGRSelafinLayer final: public OGRLayer {
     private:
         SelafinTypeDef eType;
         bool bUpdate;
@@ -104,7 +104,7 @@ class OGRSelafinLayer : public OGRLayer {
 /*                           OGRSelafinDataSource                       */
 /************************************************************************/
 
-class OGRSelafinDataSource : public OGRDataSource {
+class OGRSelafinDataSource final: public OGRDataSource {
     private:
         char *pszName;
         OGRSelafinLayer **papoLayers;

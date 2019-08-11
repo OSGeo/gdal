@@ -298,7 +298,7 @@ void OGRDB2AppendEscaped( OGRDB2Statement* poStatement,
 /*                             OGRDB2Layer                              */
 /************************************************************************/
 
-class OGRDB2Layer : public OGRLayer
+class OGRDB2Layer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRDB2DataSource *m_poDS; // GPKG - where set?
@@ -373,7 +373,7 @@ public:
 /*                       OGRDB2TableLayer                               */
 /************************************************************************/
 
-class OGRDB2TableLayer : public OGRDB2Layer
+class OGRDB2TableLayer final: public OGRDB2Layer
 {
     int                 bUpdateAccess;
     int                 bLaunderColumnNames;
@@ -543,7 +543,7 @@ private:
 /*                      OGRDB2SelectLayer                      */
 /************************************************************************/
 
-class OGRDB2SelectLayer : public OGRDB2Layer
+class OGRDB2SelectLayer final: public OGRDB2Layer
 {
     char                *pszBaseStatement;
 
@@ -573,7 +573,7 @@ public:
 /*                           OGRDB2DataSource                           */
 /************************************************************************/
 
-class OGRDB2DataSource : public GDALPamDataset
+class OGRDB2DataSource final: public GDALPamDataset
 {
     friend class GDALDB2RasterBand;
     friend class OGRDB2TableLayer;
@@ -876,7 +876,7 @@ public:
 /*                             OGRDB2Driver                             */
 /************************************************************************/
 
-class OGRDB2Driver : public GDALDriver
+class OGRDB2Driver final: public GDALDriver
 {
 public:
     ~OGRDB2Driver();
@@ -886,7 +886,7 @@ public:
 /*                        GDALDB2RasterBand                             */
 /************************************************************************/
 
-class GDALDB2RasterBand: public GDALPamRasterBand
+class GDALDB2RasterBand final: public GDALPamRasterBand
 {
 public:
 
