@@ -7071,7 +7071,7 @@ void GDALRasterBand::InitRWLock()
 /*                     GDALMDArrayFromRasterBand                        */
 /************************************************************************/
 
-class GDALMDArrayFromRasterBand: public GDALMDArray
+class GDALMDArrayFromRasterBand final: public GDALMDArray
 {
     CPL_DISALLOW_COPY_ASSIGN(GDALMDArrayFromRasterBand)
 

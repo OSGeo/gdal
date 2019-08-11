@@ -57,7 +57,7 @@ public:
 /*                               HDF5Group                              */
 /************************************************************************/
 
-class HDF5Group: public GDALGroup
+class HDF5Group final: public GDALGroup
 {
     std::shared_ptr<HDF5SharedResources> m_poShared;
     hid_t           m_hGroup;
@@ -115,7 +115,7 @@ public:
 /*                             HDF5Dimension                            */
 /************************************************************************/
 
-class HDF5Dimension: public GDALDimension
+class HDF5Dimension final: public GDALDimension
 {
     std::string m_osGroupFullname;
     std::shared_ptr<HDF5SharedResources> m_poShared;
@@ -261,7 +261,7 @@ static void GetDataTypesInGroup(hid_t hHDF5,
 /*                            HDF5Array                                 */
 /************************************************************************/
 
-class HDF5Array: public GDALMDArray
+class HDF5Array final: public GDALMDArray
 {
     std::string     m_osGroupFullname;
     std::shared_ptr<HDF5SharedResources> m_poShared;
@@ -358,7 +358,7 @@ public:
 /*                           HDF5Attribute                              */
 /************************************************************************/
 
-class HDF5Attribute: public GDALAttribute
+class HDF5Attribute final: public GDALAttribute
 {
     std::shared_ptr<HDF5SharedResources> m_poShared;
     hid_t           m_hAttribute;
@@ -814,7 +814,7 @@ HDF5Array::HDF5Array(const std::string& osParentName,
         return;
     }
 
-    GetAttributes();
+    HDF5Array::GetAttributes();
 
     if( bSkipFullDimensionInstantiation )
     {

@@ -2199,7 +2199,7 @@ public:
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-class CPL_DLL GDALAttributeString: public GDALAttribute
+class CPL_DLL GDALAttributeString final: public GDALAttribute
 {
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
     GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();
@@ -2230,7 +2230,7 @@ public:
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-class CPL_DLL GDALAttributeNumeric: public GDALAttribute
+class CPL_DLL GDALAttributeNumeric final: public GDALAttribute
 {
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
     GDALExtendedDataType m_dt;

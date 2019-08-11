@@ -63,7 +63,7 @@ public:
 
 class HDF4SDSGroup;
 
-class HDF4Group: public GDALGroup
+class HDF4Group final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4SDSGroup> m_poGDALGroup{};
@@ -150,7 +150,7 @@ struct HDF4SwathHandle
 /*                            HDF4SwathsGroup                           */
 /************************************************************************/
 
-class HDF4SwathsGroup: public GDALGroup
+class HDF4SwathsGroup final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4SwathsHandle> m_poSwathsHandle;
@@ -174,7 +174,7 @@ public:
 /*                            HDF4SwathGroup                            */
 /************************************************************************/
 
-class HDF4SwathGroup: public GDALGroup
+class HDF4SwathGroup final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4SwathHandle> m_poSwathHandle;
@@ -203,7 +203,7 @@ public:
 /*                         HDF4SwathSubGroup                            */
 /************************************************************************/
 
-class HDF4SwathSubGroup: public GDALGroup
+class HDF4SwathSubGroup final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4SwathHandle> m_poSwathHandle;
@@ -234,7 +234,7 @@ public:
 /*                            HDF4SwathArray                            */
 /************************************************************************/
 
-class HDF4SwathArray: public GDALMDArray
+class HDF4SwathArray final: public GDALMDArray
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4SwathHandle> m_poSwathHandle;
@@ -292,7 +292,7 @@ public:
 /*                            HDF4SDAttribute                             */
 /************************************************************************/
 
-class HDF4SwathAttribute: public HDF4AbstractAttribute
+class HDF4SwathAttribute final: public HDF4AbstractAttribute
 {
     std::shared_ptr<HDF4SwathHandle> m_poSwathHandle;
 
@@ -344,7 +344,7 @@ struct HDF4GDHandle
 /*                          HDF4EOSGridsGroup                           */
 /************************************************************************/
 
-class HDF4EOSGridsGroup: public GDALGroup
+class HDF4EOSGridsGroup final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GDsHandle> m_poGDsHandle;
@@ -368,7 +368,7 @@ public:
 /*                          HDF4EOSGridGroup                            */
 /************************************************************************/
 
-class HDF4EOSGridGroup: public GDALGroup
+class HDF4EOSGridGroup final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GDHandle> m_poGDHandle;
@@ -402,7 +402,7 @@ public:
 /*                         HDF4EOSGridSubGroup                          */
 /************************************************************************/
 
-class HDF4EOSGridSubGroup: public GDALGroup
+class HDF4EOSGridSubGroup final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GDHandle> m_poGDHandle;
@@ -433,7 +433,7 @@ public:
 /*                          HDF4EOSGridArray                            */
 /************************************************************************/
 
-class HDF4EOSGridArray: public GDALMDArray
+class HDF4EOSGridArray final: public GDALMDArray
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GDHandle> m_poGDHandle;
@@ -499,7 +499,7 @@ public:
 /*                      HDF4EOSGridAttribute                            */
 /************************************************************************/
 
-class HDF4EOSGridAttribute: public HDF4AbstractAttribute
+class HDF4EOSGridAttribute final: public HDF4AbstractAttribute
 {
     std::shared_ptr<HDF4GDHandle> m_poGDHandle;
 
@@ -524,7 +524,7 @@ public:
 /*                             HDF4SDSGroup                             */
 /************************************************************************/
 
-class HDF4SDSGroup: public GDALGroup
+class HDF4SDSGroup final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     mutable std::map<std::string, int> m_oMapNameToSDSIdx{};
@@ -559,7 +559,7 @@ public:
 /*                            HDF4SDSArray                              */
 /************************************************************************/
 
-class HDF4SDSArray: public GDALMDArray
+class HDF4SDSArray final: public GDALMDArray
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     int32 m_iSDS;
@@ -663,7 +663,7 @@ struct HDF4GRHandle
 /*                            HDF4GRsGroup                              */
 /************************************************************************/
 
-class HDF4GRsGroup: public GDALGroup
+class HDF4GRsGroup final: public GDALGroup
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GRsHandle> m_poGRsHandle;
@@ -692,7 +692,7 @@ public:
 /*                            HDF4GRArray                               */
 /************************************************************************/
 
-class HDF4GRArray: public GDALMDArray
+class HDF4GRArray final: public GDALMDArray
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GRHandle> m_poGRHandle;
@@ -748,7 +748,7 @@ public:
 /*                            HDF4SDAttribute                           */
 /************************************************************************/
 
-class HDF4SDAttribute: public HDF4AbstractAttribute
+class HDF4SDAttribute final: public HDF4AbstractAttribute
 {
     std::shared_ptr<HDF4SwathHandle> m_poSwathHandle;
     std::shared_ptr<HDF4GDHandle> m_poGDHandle;
@@ -782,7 +782,7 @@ public:
 /*                           HDF4GRAttribute                            */
 /************************************************************************/
 
-class HDF4GRAttribute: public HDF4AbstractAttribute
+class HDF4GRAttribute final: public HDF4AbstractAttribute
 {
     std::shared_ptr<HDF4GRsHandle> m_poGRsHandle;
     std::shared_ptr<HDF4GRHandle> m_poGRHandle;
@@ -816,7 +816,7 @@ public:
 /*                         HDF4GRPalette                                */
 /************************************************************************/
 
-class HDF4GRPalette: public GDALAttribute
+class HDF4GRPalette final: public GDALAttribute
 {
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4GRHandle> m_poGRHandle;

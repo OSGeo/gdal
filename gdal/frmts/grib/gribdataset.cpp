@@ -1177,7 +1177,7 @@ struct GRIBSharedResource
 
 class GRIBArray;
 
-class GRIBGroup: public GDALGroup
+class GRIBGroup final: public GDALGroup
 {
     friend class GRIBArray;
     std::shared_ptr<GRIBSharedResource> m_poShared{};
@@ -1213,7 +1213,7 @@ public:
 /*                                GRIBArray                             */
 /************************************************************************/
 
-class GRIBArray: public GDALMDArray
+class GRIBArray final: public GDALMDArray
 {
     std::shared_ptr<GRIBSharedResource> m_poShared;
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
@@ -1662,11 +1662,8 @@ const std::vector<double>& GRIBSharedResource::LoadData(vsi_l_offset nOffset,
     const int ny = metadata->gds.Ny;
     if( nx <= 0 || ny <= 0 )
     {
-        if (metadata != nullptr)
-        {
-            MetaFree(metadata);
-            delete metadata;
-        }
+        MetaFree(metadata);
+        delete metadata;
         free(data);
         m_adfCurData.clear();
         return m_adfCurData;
@@ -1674,11 +1671,8 @@ const std::vector<double>& GRIBSharedResource::LoadData(vsi_l_offset nOffset,
     m_adfCurData.resize( static_cast<size_t>(nx) * ny );
     m_nOffsetCurData = nOffset;
     memcpy(&m_adfCurData[0], data, static_cast<size_t>(nx) * ny * sizeof(double));
-    if (metadata != nullptr)
-    {
-        MetaFree(metadata);
-        delete metadata;
-    }
+    MetaFree(metadata);
+    delete metadata;
     free(data);
     return m_adfCurData;
 }
@@ -1923,11 +1917,8 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             poArray->Init(poRootGroup.get(), poDS, &gribBand, psInv);
             poArray->ExtendTimeDim(psInv->start, psInv->subgNum, psInv->validTime);
 
-            if (metaData != nullptr)
-            {
-                MetaFree(metaData);
-                delete metaData;
-            }
+            MetaFree(metaData);
+            delete metaData;
         }
     }
 

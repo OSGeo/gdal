@@ -2770,7 +2770,7 @@ CSLConstList GDALMDArray::GetStructuralInfo() const
 /*                       GDALSlicedMDArray                              */
 /************************************************************************/
 
-class GDALSlicedMDArray: public GDALMDArray
+class GDALSlicedMDArray final: public GDALMDArray
 {
 private:
     std::shared_ptr<GDALMDArray> m_poParent{};
@@ -3197,7 +3197,7 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
 /*                       GDALExtractFieldMDArray                        */
 /************************************************************************/
 
-class GDALExtractFieldMDArray: public GDALMDArray
+class GDALExtractFieldMDArray final: public GDALMDArray
 {
 private:
     std::shared_ptr<GDALMDArray> m_poParent{};
@@ -3545,7 +3545,7 @@ std::shared_ptr<GDALMDArray> GDALMDArray::operator[](const std::string& fieldNam
 /*                      GDALMDArrayTransposed                           */
 /************************************************************************/
 
-class GDALMDArrayTransposed: public GDALMDArray
+class GDALMDArrayTransposed final: public GDALMDArray
 {
 private:
     std::shared_ptr<GDALMDArray> m_poParent{};
@@ -3828,7 +3828,7 @@ std::shared_ptr<GDALMDArray> GDALMDArray::Transpose(
 
 class GDALDatasetFromArray;
 
-class GDALRasterBandFromArray: public GDALRasterBand
+class GDALRasterBandFromArray final: public GDALRasterBand
 {
     std::vector<GUInt64>     m_anOffset{};
     std::vector<size_t>      m_anCount{};
@@ -3855,7 +3855,7 @@ public:
 };
 
 
-class GDALDatasetFromArray: public GDALDataset
+class GDALDatasetFromArray final: public GDALDataset
 {
     friend class GDALRasterBandFromArray;
 

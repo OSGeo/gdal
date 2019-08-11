@@ -147,7 +147,7 @@ bool netCDFSharedResources::SetDefineMode( bool bNewDefineMode )
 /*                           netCDFGroup                                */
 /************************************************************************/
 
-class netCDFGroup: public GDALGroup
+class netCDFGroup final: public GDALGroup
 {
     std::shared_ptr<netCDFSharedResources> m_poShared;
     int m_gid = 0;
@@ -205,7 +205,7 @@ public:
 /*                         netCDFDimension                              */
 /************************************************************************/
 
-class netCDFDimension: public GDALDimension
+class netCDFDimension final: public GDALDimension
 {
     std::shared_ptr<netCDFSharedResources> m_poShared;
     int m_gid = 0;
@@ -241,7 +241,7 @@ public:
 /************************************************************************/
 
 
-class netCDFAttribute: public GDALAttribute
+class netCDFAttribute final: public GDALAttribute
 {
     std::shared_ptr<netCDFSharedResources> m_poShared;
     int m_gid = 0;
@@ -297,7 +297,7 @@ public:
 /*                         netCDFVariable                               */
 /************************************************************************/
 
-class netCDFVariable: public GDALMDArray
+class netCDFVariable final: public GDALMDArray
 {
     std::shared_ptr<netCDFSharedResources> m_poShared;
     int m_gid = 0;
@@ -1169,7 +1169,7 @@ netCDFVariable::netCDFVariable(std::shared_ptr<netCDFSharedResources> poShared,
             m_aosStructuralInfo.SetNameValue("COMPRESS", "DEFLATE");
         }
     }
-    auto unit = GetAttribute(CF_UNITS);
+    auto unit = netCDFVariable::GetAttribute(CF_UNITS);
     if( unit )
     {
         const char* pszVal = unit->ReadAsString();
