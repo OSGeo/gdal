@@ -577,7 +577,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
         {
             TILEINDEX = new int [NFL * NFC];
         }
-        catch( const std::bad_alloc& )
+        catch( const std::exception& )
         {
             return false;
         }
