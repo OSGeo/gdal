@@ -93,7 +93,7 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
 
 class GIFRasterBand;
 
-class GIFDataset : public GIFAbstractDataset
+class GIFDataset final: public GIFAbstractDataset
 {
     friend class GIFRasterBand;
 
@@ -115,7 +115,7 @@ class GIFDataset : public GIFAbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GIFRasterBand : public GIFAbstractRasterBand
+class GIFRasterBand final: public GIFAbstractRasterBand
 {
   public:
     GIFRasterBand( GIFDataset *, int, SavedImage *, int );

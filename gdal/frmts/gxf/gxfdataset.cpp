@@ -41,7 +41,7 @@ CPL_CVSID("$Id$")
 
 class GXFRasterBand;
 
-class GXFDataset : public GDALPamDataset
+class GXFDataset final: public GDALPamDataset
 {
     friend class GXFRasterBand;
 
@@ -70,7 +70,7 @@ class GXFDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GXFRasterBand : public GDALPamRasterBand
+class GXFRasterBand final: public GDALPamRasterBand
 {
     friend class GXFDataset;
 

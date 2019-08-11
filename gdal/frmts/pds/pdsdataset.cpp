@@ -1136,7 +1136,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 /*      proxy for the jp2 or other compressed bands.                    */
 /* ==================================================================== */
 /************************************************************************/
-class PDSWrapperRasterBand : public GDALProxyRasterBand
+class PDSWrapperRasterBand final: public GDALProxyRasterBand
 {
   GDALRasterBand* poBaseBand;
 

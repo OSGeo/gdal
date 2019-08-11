@@ -142,7 +142,7 @@ class FASTDataset final: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class FASTRasterBand : public RawRasterBand
+class FASTRasterBand final: public RawRasterBand
 {
     friend class FASTDataset;
 

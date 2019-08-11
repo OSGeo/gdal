@@ -93,7 +93,7 @@ public:
 /*                           JPIPKAKDataset                             */
 /* ==================================================================== */
 /************************************************************************/
-class JPIPKAKDataset: public GDALPamDataset
+class JPIPKAKDataset final: public GDALPamDataset
 {
 private:
     int       bNeedReinitialize;
@@ -216,7 +216,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class JPIPKAKRasterBand : public GDALPamRasterBand
+class JPIPKAKRasterBand final: public GDALPamRasterBand
 {
     friend class JPIPKAKDataset;
 
@@ -256,7 +256,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class JPIPKAKAsyncReader : public GDALAsyncReader
+class JPIPKAKAsyncReader final: public GDALAsyncReader
 {
 private:
     void *pAppBuf;

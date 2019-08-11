@@ -77,7 +77,7 @@ IMPLEMENT_OBJECT_CREATE(CropableMG4PointReader)
 
 static double MaxRasterSize = 2048.0;
 static double MaxBlockSideSize = 1024.0;
-class MG4LidarDataset : public GDALPamDataset
+class MG4LidarDataset final: public GDALPamDataset
 {
 friend class MG4LidarRasterBand;
 
@@ -109,7 +109,7 @@ protected:
 /*                            MG4LidarRasterBand                                          */
 /* ========================================  */
 
-class MG4LidarRasterBand : public GDALPamRasterBand
+class MG4LidarRasterBand final: public GDALPamRasterBand
 {
    friend class MG4LidarDataset;
 

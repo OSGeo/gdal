@@ -229,7 +229,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class BAGBaseBand: public GDALRasterBand
+class BAGBaseBand CPL_NON_FINAL: public GDALRasterBand
 {
     protected:
         bool        m_bHasNoData = false;

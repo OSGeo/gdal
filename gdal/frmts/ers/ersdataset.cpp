@@ -745,7 +745,7 @@ void ERSDataset::ReadGCPs()
 /* ==================================================================== */
 /************************************************************************/
 
-class ERSRasterBand : public RawRasterBand
+class ERSRasterBand final: public RawRasterBand
 {
   public:
     ERSRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,

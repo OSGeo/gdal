@@ -34,7 +34,7 @@
 //     Intergraph IntergraphRasterBand
 //  ----------------------------------------------------------------------------
 
-class IntergraphRasterBand : public GDALPamRasterBand
+class IntergraphRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 {
     friend class IntergraphDataset;
 
@@ -89,7 +89,7 @@ protected:
 //     Intergraph IntergraphRGBBand
 //  ----------------------------------------------------------------------------
 
-class IntergraphRGBBand : public IntergraphRasterBand
+class IntergraphRGBBand final: public IntergraphRasterBand
 {
 public:
     IntergraphRGBBand( IntergraphDataset *poDS,
@@ -104,7 +104,7 @@ public:
 //     Intergraph IntergraphBitmapBand
 //  ----------------------------------------------------------------------------
 
-class IntergraphBitmapBand : public IntergraphRasterBand
+class IntergraphBitmapBand final: public IntergraphRasterBand
 {
     friend class IntergraphDataset;
 
@@ -129,7 +129,7 @@ public:
 //     Intergraph IntergraphRLEBand
 //  ----------------------------------------------------------------------------
 
-class IntergraphRLEBand : public IntergraphRasterBand
+class IntergraphRLEBand final: public IntergraphRasterBand
 {
     friend class IntergraphDataset;
 

@@ -123,7 +123,7 @@ class SAR_CEOSRasterBand;
 class CCPRasterBand;
 class PALSARRasterBand;
 
-class SAR_CEOSDataset : public GDALPamDataset
+class SAR_CEOSDataset final: public GDALPamDataset
 {
     friend class SAR_CEOSRasterBand;
     friend class CCPRasterBand;
@@ -165,7 +165,7 @@ class SAR_CEOSDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CCPRasterBand : public GDALPamRasterBand
+class CCPRasterBand final: public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 
@@ -181,7 +181,7 @@ class CCPRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class PALSARRasterBand : public GDALPamRasterBand
+class PALSARRasterBand final: public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 
@@ -197,7 +197,7 @@ class PALSARRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class SAR_CEOSRasterBand : public GDALPamRasterBand
+class SAR_CEOSRasterBand final: public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 

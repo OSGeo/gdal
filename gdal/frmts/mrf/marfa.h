@@ -526,7 +526,7 @@ protected:
     std::vector<double> vNoData, vMin, vMax;
 };
 
-class GDALMRFRasterBand : public GDALPamRasterBand {
+class GDALMRFRasterBand CPL_NON_FINAL: public GDALPamRasterBand {
     friend class GDALMRFDataset;
 public:
     GDALMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int);
@@ -643,7 +643,7 @@ private:
     PNG_Codec& operator= (const PNG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
 };
 
-class PNG_Band : public GDALMRFRasterBand {
+class PNG_Band final: public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     PNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
@@ -683,7 +683,7 @@ private:
     JPEG_Codec& operator= (const JPEG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
 };
 
-class JPEG_Band : public GDALMRFRasterBand {
+class JPEG_Band final: public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
@@ -697,7 +697,7 @@ protected:
 };
 
 // A 2 or 4 band, with JPEG and/or PNG page encoding, optimized for size
-class JPNG_Band : public GDALMRFRasterBand {
+class JPNG_Band final: public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     JPNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
@@ -711,7 +711,7 @@ protected:
     bool rgb, sameres, optimize;
 };
 
-class Raw_Band : public GDALMRFRasterBand {
+class Raw_Band final: public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     Raw_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
@@ -722,7 +722,7 @@ protected:
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
 };
 
-class TIF_Band : public GDALMRFRasterBand {
+class TIF_Band final: public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     TIF_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
@@ -736,7 +736,7 @@ protected:
 };
 
 #if defined(LERC)
-class LERC_Band : public GDALMRFRasterBand {
+class LERC_Band final: public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     LERC_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);

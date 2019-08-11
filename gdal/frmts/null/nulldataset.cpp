@@ -35,7 +35,7 @@ extern "C" void GDALRegister_NULL();
 /*                          GDALNullDataset                             */
 /************************************************************************/
 
-class GDALNullDataset: public GDALDataset
+class GDALNullDataset final: public GDALDataset
 {
             int                 m_nLayers;
             OGRLayer**          m_papoLayers;
@@ -72,7 +72,7 @@ class GDALNullDataset: public GDALDataset
 /*                           GDALNullLayer                              */
 /************************************************************************/
 
-class GDALNullRasterBand: public GDALRasterBand
+class GDALNullRasterBand final: public GDALRasterBand
 {
     public:
             explicit GDALNullRasterBand(GDALDataType eDT);
@@ -92,7 +92,7 @@ class GDALNullRasterBand: public GDALRasterBand
 /*                           GDALNullLayer                              */
 /************************************************************************/
 
-class GDALNullLayer : public OGRLayer
+class GDALNullLayer final: public OGRLayer
 {
     OGRFeatureDefn      *poFeatureDefn;
     OGRSpatialReference *poSRS;

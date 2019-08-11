@@ -102,7 +102,7 @@ typedef std::map<Subset, r_Ref<r_GMarray> > ArrayCache;
 class RasdamanRasterBand;
 static CPLString getQuery(const char *templateString, const char* x_lo, const char* x_hi, const char* y_lo, const char* y_hi);
 
-class RasdamanDataset : public GDALPamDataset
+class RasdamanDataset final: public GDALPamDataset
 {
   friend class RasdamanRasterBand;
 
@@ -295,7 +295,7 @@ void RasdamanDataset::clear_array_cache() {
 /* ==================================================================== */
 /************************************************************************/
 
-class RasdamanRasterBand : public GDALPamRasterBand
+class RasdamanRasterBand final: public GDALPamRasterBand
 {
   friend class RasdamanDataset;
 

@@ -70,7 +70,7 @@ class GDALDAASBandDesc
 
 class GDALDAASRasterBand;
 
-class GDALDAASDataset: public GDALDataset
+class GDALDAASDataset final: public GDALDataset
 {
     public:
         enum class Format
@@ -179,7 +179,7 @@ class GDALDAASDataset: public GDALDataset
 /*                         GDALDAASRasterBand                            */
 /************************************************************************/
 
-class GDALDAASRasterBand: public GDALRasterBand
+class GDALDAASRasterBand final: public GDALRasterBand
 {
         friend class GDALDAASDataset;
 

@@ -34,7 +34,7 @@
 #include "jp2luracallbacks.h"
 #include "gdaljp2metadata.h"
 
-class JP2LuraDataset : public GDALJP2AbstractDataset
+class JP2LuraDataset final: public GDALJP2AbstractDataset
 {
     friend class JP2LuraRasterBand;
 

@@ -496,7 +496,7 @@ class IdrisiRasterBand;
 //        Idrisi GDALDataset
 //  ----------------------------------------------------------------------------
 
-class IdrisiDataset : public GDALPamDataset
+class IdrisiDataset final: public GDALPamDataset
 {
     friend class IdrisiRasterBand;
 
@@ -553,7 +553,7 @@ public:
 //        Idrisi GDALPamRasterBand
 //  ----------------------------------------------------------------------------
 
-class IdrisiRasterBand : public GDALPamRasterBand
+class IdrisiRasterBand final: public GDALPamRasterBand
 {
     friend class IdrisiDataset;
 

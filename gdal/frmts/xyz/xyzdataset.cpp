@@ -46,7 +46,7 @@ constexpr double RELATIVE_ERROR = 1e-3;
 
 class XYZRasterBand;
 
-class XYZDataset : public GDALPamDataset
+class XYZDataset final: public GDALPamDataset
 {
     friend class XYZRasterBand;
 
@@ -88,7 +88,7 @@ class XYZDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class XYZRasterBand : public GDALPamRasterBand
+class XYZRasterBand final: public GDALPamRasterBand
 {
     friend class XYZDataset;
 

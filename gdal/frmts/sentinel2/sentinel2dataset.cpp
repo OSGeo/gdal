@@ -158,13 +158,13 @@ class SENTINEL2GranuleInfo
 /* ==================================================================== */
 /************************************************************************/
 
-class SENTINEL2DatasetContainer: public GDALPamDataset
+class SENTINEL2DatasetContainer final: public GDALPamDataset
 {
     public:
         SENTINEL2DatasetContainer() {}
 };
 
-class SENTINEL2Dataset : public VRTDataset
+class SENTINEL2Dataset final: public VRTDataset
 {
         std::vector<CPLString>   aosNonJP2Files;
 
@@ -220,7 +220,7 @@ class SENTINEL2Dataset : public VRTDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SENTINEL2AlphaBand: public VRTSourcedRasterBand
+class SENTINEL2AlphaBand final: public VRTSourcedRasterBand
 {
                     int m_nSaturatedVal;
                     int m_nNodataVal;

@@ -189,7 +189,7 @@ int jp2_encode_uuid(jas_image_t *image, jas_stream_t *out,
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEG2000Dataset : public GDALJP2AbstractDataset
+class JPEG2000Dataset final: public GDALJP2AbstractDataset
 {
     friend class JPEG2000RasterBand;
 
@@ -215,7 +215,7 @@ class JPEG2000Dataset : public GDALJP2AbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEG2000RasterBand : public GDALPamRasterBand
+class JPEG2000RasterBand final: public GDALPamRasterBand
 {
     friend class JPEG2000Dataset;
 

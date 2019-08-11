@@ -39,7 +39,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class FujiBASDataset : public RawDataset
+class FujiBASDataset final: public RawDataset
 {
     VSILFILE        *fpImage;  // image data file.
     CPLString        osRawFilename{};

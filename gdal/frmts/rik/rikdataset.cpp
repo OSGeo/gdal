@@ -114,7 +114,7 @@ typedef struct
 
 class RIKRasterBand;
 
-class RIKDataset : public GDALPamDataset
+class RIKDataset final: public GDALPamDataset
 {
     friend class RIKRasterBand;
 
@@ -152,7 +152,7 @@ class RIKDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RIKRasterBand : public GDALPamRasterBand
+class RIKRasterBand final: public GDALPamRasterBand
 {
     friend class RIKDataset;
 

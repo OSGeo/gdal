@@ -50,7 +50,7 @@ using namespace gstEndian;
 
 class FITRasterBand;
 
-class FITDataset : public GDALPamDataset
+class FITDataset final: public GDALPamDataset
 {
     friend class FITRasterBand;
 
@@ -77,7 +77,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /* ==================================================================== */
 /************************************************************************/
 
-class FITRasterBand : public GDALPamRasterBand
+class FITRasterBand final: public GDALPamRasterBand
 {
     friend class FITDataset;
 

@@ -155,7 +155,7 @@ enum ePolarization {
 
 class PALSARJaxaRasterBand;
 
-class PALSARJaxaDataset : public GDALPamDataset {
+class PALSARJaxaDataset final: public GDALPamDataset {
     friend class PALSARJaxaRasterBand;
 private:
     GDAL_GCP *pasGCPList;
@@ -194,7 +194,7 @@ PALSARJaxaDataset::~PALSARJaxaDataset()
 /* ==================================================================== */
 /************************************************************************/
 
-class PALSARJaxaRasterBand : public GDALRasterBand {
+class PALSARJaxaRasterBand final: public GDALRasterBand {
     VSILFILE *fp;
     ePolarization nPolarization;
     eFileType nFileType;

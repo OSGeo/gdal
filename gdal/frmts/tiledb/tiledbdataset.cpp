@@ -47,7 +47,7 @@ const CPLString TILEDB_VALUES( "TDB_VALUES" );
 
 class TileDBRasterBand;
 
-class TileDBDataset : public GDALPamDataset
+class TileDBDataset final: public GDALPamDataset
 {
     friend class TileDBRasterBand;
 
@@ -116,7 +116,7 @@ class TileDBDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class TileDBRasterBand : public GDALPamRasterBand
+class TileDBRasterBand final: public GDALPamRasterBand
 {
     friend class TileDBDataset;
     protected:

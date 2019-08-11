@@ -61,7 +61,7 @@ struct PDFMargins
     int nBottom = 0;
 };
 
-class GDALFakePDFDataset : public GDALDataset
+class GDALFakePDFDataset final: public GDALDataset
 {
     public:
         GDALFakePDFDataset() = default;
@@ -314,7 +314,7 @@ public:
                 const char* pszXMP);
 };
 
-class GDALPDFUpdateWriter: public GDALPDFBaseWriter
+class GDALPDFUpdateWriter final: public GDALPDFBaseWriter
 {
         bool m_bUpdateNeeded = false;
         vsi_l_offset m_nLastStartXRef = 0;
@@ -340,7 +340,7 @@ public:
                        GDALPDFDictionaryRW* poCatalogDict);
 };
 
-class GDALPDFWriter: public GDALPDFBaseWriter
+class GDALPDFWriter final: public GDALPDFBaseWriter
 {
     GDALPDFPageContext oPageContext{};
 

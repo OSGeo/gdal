@@ -10,7 +10,7 @@
 /************************************************************************/
 class SDEDataset;
 
-class SDERasterBand : public GDALRasterBand
+class SDERasterBand final: public GDALRasterBand
 {
     friend class SDEDataset;
 
