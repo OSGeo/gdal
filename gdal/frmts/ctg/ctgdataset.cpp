@@ -108,7 +108,7 @@ static const char* const apszBandDescription[] =
 
 class CTGRasterBand;
 
-class CTGDataset : public GDALPamDataset
+class CTGDataset final: public GDALPamDataset
 {
     friend class CTGRasterBand;
 
@@ -145,7 +145,7 @@ class CTGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CTGRasterBand : public GDALPamRasterBand
+class CTGRasterBand final: public GDALPamRasterBand
 {
     friend class CTGDataset;
 

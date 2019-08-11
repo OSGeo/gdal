@@ -219,7 +219,7 @@ static int findfirstonbit( GUInt32 n )
 /* ==================================================================== */
 /************************************************************************/
 
-class BMPDataset : public GDALPamDataset
+class BMPDataset final: public GDALPamDataset
 {
     friend class BMPRasterBand;
     friend class BMPComprRasterBand;
@@ -263,7 +263,7 @@ class BMPDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BMPRasterBand : public GDALPamRasterBand
+class BMPRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 {
     friend class BMPDataset;
 
@@ -681,7 +681,7 @@ GDALColorInterp BMPRasterBand::GetColorInterpretation()
 /* ==================================================================== */
 /************************************************************************/
 
-class BMPComprRasterBand : public BMPRasterBand
+class BMPComprRasterBand final: public BMPRasterBand
 {
     friend class BMPDataset;
 

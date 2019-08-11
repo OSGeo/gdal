@@ -42,7 +42,7 @@ class PCRasterDataset;
 //! This class specialises the GDALRasterBand class for PCRaster rasters.
 /*!
 */
-class PCRasterRasterBand: public GDALPamRasterBand
+class PCRasterRasterBand final: public GDALPamRasterBand
 {
 
 private:

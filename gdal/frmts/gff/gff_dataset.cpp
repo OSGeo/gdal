@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
 
 class GFFRasterBand;
 
-class GFFDataset : public GDALPamDataset
+class GFFDataset final: public GDALPamDataset
 {
     friend class GFFRasterBand;
     VSILFILE *fp;
@@ -103,7 +103,7 @@ GFFDataset::~GFFDataset()
  * Declaration and implementation of the GFFRasterBand Class         *
  *********************************************************************/
 
-class GFFRasterBand : public GDALPamRasterBand {
+class GFFRasterBand final: public GDALPamRasterBand {
     long nRasterBandMemory;
     int nSampleSize;
   public:

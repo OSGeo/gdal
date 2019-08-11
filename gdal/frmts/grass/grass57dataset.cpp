@@ -117,7 +117,7 @@ static int Grass2CPLErrorHook( char * pszMessage, int bFatal )
 
 class GRASSRasterBand;
 
-class GRASSDataset : public GDALDataset
+class GRASSDataset final: public GDALDataset
 {
     friend class GRASSRasterBand;
 
@@ -153,7 +153,7 @@ class GRASSDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRASSRasterBand : public GDALRasterBand
+class GRASSRasterBand final: public GDALRasterBand
 {
     friend class GRASSDataset;
 

@@ -103,7 +103,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class FITSRasterBand : public GDALPamRasterBand {
+class FITSRasterBand final: public GDALPamRasterBand {
 
   friend class  FITSDataset;
 

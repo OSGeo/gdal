@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class CALSDataset : public GDALPamDataset
+class CALSDataset final: public GDALPamDataset
 {
     friend class CALSRasterBand;
 
@@ -73,7 +73,7 @@ class CALSDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CALSRasterBand: public GDALPamRasterBand
+class CALSRasterBand final: public GDALPamRasterBand
 {
     GDALRasterBand* poUnderlyingBand;
 
@@ -134,7 +134,7 @@ class CALSRasterBand: public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class CALSWrapperSrcBand: public GDALPamRasterBand
+class CALSWrapperSrcBand final: public GDALPamRasterBand
 {
         GDALDataset* poSrcDS;
         bool bInvertValues;
@@ -205,7 +205,7 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class CALSWrapperSrcDataset: public GDALPamDataset
+class CALSWrapperSrcDataset final: public GDALPamDataset
 {
     public:
         CALSWrapperSrcDataset( GDALDataset* poSrcDS, const char* pszPadding )

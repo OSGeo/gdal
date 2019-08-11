@@ -76,7 +76,7 @@ std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
 /*                      GDALEEDABaseDataset                             */
 /************************************************************************/
 
-class GDALEEDABaseDataset: public GDALDataset
+class GDALEEDABaseDataset CPL_NON_FINAL: public GDALDataset
 {
     protected:
             bool        m_bMustCleanPersistent;

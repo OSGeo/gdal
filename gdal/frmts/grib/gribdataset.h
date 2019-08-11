@@ -74,7 +74,7 @@
 class GRIBArray;
 class GRIBRasterBand;
 
-class GRIBDataset : public GDALPamDataset
+class GRIBDataset final: public GDALPamDataset
 {
     friend class GRIBArray;
     friend class GRIBRasterBand;
@@ -122,7 +122,7 @@ class GRIBDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRIBRasterBand : public GDALPamRasterBand
+class GRIBRasterBand final: public GDALPamRasterBand
 {
     friend class GRIBArray;
     friend class GRIBDataset;

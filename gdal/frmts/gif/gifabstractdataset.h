@@ -42,7 +42,7 @@ CPL_C_END
 /* ==================================================================== */
 /************************************************************************/
 
-class GIFAbstractDataset : public GDALPamDataset
+class GIFAbstractDataset CPL_NON_FINAL: public GDALPamDataset
 {
   protected:
     friend class    GIFAbstractRasterBand;
@@ -102,7 +102,7 @@ class GIFAbstractDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GIFAbstractRasterBand : public GDALPamRasterBand
+class GIFAbstractRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 {
   protected:
     SavedImage  *psImage;

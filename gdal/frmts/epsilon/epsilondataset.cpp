@@ -71,7 +71,7 @@ typedef struct
 /* ==================================================================== */
 /************************************************************************/
 
-class EpsilonDataset : public GDALPamDataset
+class EpsilonDataset final: public GDALPamDataset
 {
     friend class EpsilonRasterBand;
 
@@ -116,7 +116,7 @@ class EpsilonDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class EpsilonRasterBand : public GDALPamRasterBand
+class EpsilonRasterBand final: public GDALPamRasterBand
 {
   public:
     EpsilonRasterBand( EpsilonDataset* poDS, int nBand );

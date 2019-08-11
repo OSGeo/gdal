@@ -139,7 +139,7 @@ static bool approx_equal(double a, double b)
 
 class TerragenRasterBand;
 
-class TerragenDataset : public GDALPamDataset
+class TerragenDataset final: public GDALPamDataset
 {
     friend class TerragenRasterBand;
 
@@ -210,7 +210,7 @@ class TerragenDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class TerragenRasterBand : public GDALPamRasterBand
+class TerragenRasterBand final: public GDALPamRasterBand
 {
     friend class TerragenDataset;
 

@@ -1140,7 +1140,7 @@ void GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode )
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffRasterBand : public GDALPamRasterBand
+class GTiffRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 {
     CPL_DISALLOW_COPY_ASSIGN(GTiffRasterBand)
 
@@ -6412,7 +6412,7 @@ GDALColorInterp GTiffRGBABand::GetColorInterpretation()
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffOddBitsBand : public GTiffRasterBand
+class GTiffOddBitsBand CPL_NON_FINAL: public GTiffRasterBand
 {
     friend class GTiffDataset;
   public:

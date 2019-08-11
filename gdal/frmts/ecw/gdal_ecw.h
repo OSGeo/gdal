@@ -76,9 +76,9 @@ void ECWReportError(CNCSError& oErr, const char* pszMsg = "");
 /************************************************************************/
 #ifdef HAVE_COMPRESS
 #if ECWSDK_VERSION>=50
-class JP2UserBox : public CNCSSDKBox {
+class JP2UserBox final: public CNCSSDKBox {
 #else
-class JP2UserBox : public CNCSJP2Box {
+class JP2UserBox final: public CNCSJP2Box {
 #endif
 private:
     int           nDataLength;
@@ -115,7 +115,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIIOStream : public CNCSJPCIOStream
+class VSIIOStream final: public CNCSJPCIOStream
 
 {
   private:
@@ -395,7 +395,7 @@ class ECWDataset;
 
 #if ECWSDK_VERSION >= 40
 
-class ECWAsyncReader : public GDALAsyncReader
+class ECWAsyncReader final: public GDALAsyncReader
 {
 private:
     CNCSJP2FileView *poFileView = nullptr;
@@ -444,7 +444,7 @@ typedef struct
     GByte* pabyData;
 } ECWCachedMultiBandIO;
 
-class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
+class CPL_DLL ECWDataset final: public GDALJP2AbstractDataset
 {
     friend class ECWRasterBand;
     friend class ECWAsyncReader;
@@ -611,7 +611,7 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ECWRasterBand : public GDALPamRasterBand
+class ECWRasterBand final: public GDALPamRasterBand
 {
     friend class ECWDataset;
 

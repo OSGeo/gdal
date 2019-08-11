@@ -51,7 +51,7 @@ CPL_CVSID("$Id$")
 
 class BPGRasterBand;
 
-class BPGDataset : public GDALPamDataset
+class BPGDataset final: public GDALPamDataset
 {
     friend class BPGRasterBand;
 
@@ -75,7 +75,7 @@ class BPGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BPGRasterBand : public GDALPamRasterBand
+class BPGRasterBand final: public GDALPamRasterBand
 {
     friend class BPGDataset;
 

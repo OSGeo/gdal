@@ -440,7 +440,7 @@ private:
 /* ==================================================================== */
 /************************************************************************/
 
-class PDFRasterBand: public GDALPamRasterBand
+class PDFRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 {
     friend class PDFDataset;
 

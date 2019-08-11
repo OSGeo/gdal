@@ -47,7 +47,7 @@ CPL_CVSID("$Id$")
 
 class HF2RasterBand;
 
-class HF2Dataset : public GDALPamDataset
+class HF2Dataset final: public GDALPamDataset
 {
     friend class HF2RasterBand;
 
@@ -83,7 +83,7 @@ class HF2Dataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HF2RasterBand : public GDALPamRasterBand
+class HF2RasterBand final: public GDALPamRasterBand
 {
     friend class HF2Dataset;
 

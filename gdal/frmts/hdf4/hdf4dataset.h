@@ -63,7 +63,7 @@ typedef enum                    // Types of data products:
 /* ==================================================================== */
 /************************************************************************/
 
-class HDF4Dataset : public GDALPamDataset
+class HDF4Dataset CPL_NON_FINAL: public GDALPamDataset
 {
 
   private:

@@ -53,7 +53,7 @@ class MSGNRasterBand;
 /* ==================================================================== */
 /************************************************************************/
 
-class MSGNDataset : public GDALDataset
+class MSGNDataset final: public GDALDataset
 {
     friend class MSGNRasterBand;
 
@@ -82,7 +82,7 @@ class MSGNDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class MSGNRasterBand : public GDALRasterBand
+class MSGNRasterBand final: public GDALRasterBand
 {
     friend class MSGNDataset;
 

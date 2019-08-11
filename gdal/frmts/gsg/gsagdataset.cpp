@@ -49,7 +49,7 @@ CPL_CVSID("$Id$")
 
 class GSAGRasterBand;
 
-class GSAGDataset : public GDALPamDataset
+class GSAGDataset final: public GDALPamDataset
 {
     friend class GSAGRasterBand;
 
@@ -93,7 +93,7 @@ const size_t GSAGDataset::nMAX_HEADER_SIZE = 200;
 /* ==================================================================== */
 /************************************************************************/
 
-class GSAGRasterBand : public GDALPamRasterBand
+class GSAGRasterBand final: public GDALPamRasterBand
 {
     friend class GSAGDataset;
 

@@ -61,7 +61,7 @@ constexpr GByte SG_NODATA_GDT_Byte = 255;
 
 class SAGARasterBand;
 
-class SAGADataset : public GDALPamDataset
+class SAGADataset final: public GDALPamDataset
 {
     friend class SAGARasterBand;
 
@@ -109,7 +109,7 @@ class SAGADataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SAGARasterBand : public GDALPamRasterBand
+class SAGARasterBand final: public GDALPamRasterBand
 {
     friend class SAGADataset;
 

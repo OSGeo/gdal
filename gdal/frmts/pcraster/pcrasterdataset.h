@@ -53,7 +53,7 @@ namespace gdal {
   Additional documentation about this driver can be found in
   frmts/frmts_various.html of the GDAL source code distribution.
 */
-class PCRasterDataset: public GDALPamDataset
+class PCRasterDataset final: public GDALPamDataset
 {
 
   friend class gdal::PCRasterDatasetTest;

@@ -79,7 +79,7 @@ static double JDEMGetAngle( const char *pszField )
 
 class JDEMRasterBand;
 
-class JDEMDataset : public GDALPamDataset
+class JDEMDataset final: public GDALPamDataset
 {
     friend class JDEMRasterBand;
 
@@ -106,7 +106,7 @@ class JDEMDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JDEMRasterBand : public GDALPamRasterBand
+class JDEMRasterBand final: public GDALPamRasterBand
 {
     friend class JDEMDataset;
 

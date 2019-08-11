@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 
 class OZIRasterBand;
 
-class OZIDataset : public GDALPamDataset
+class OZIDataset final: public GDALPamDataset
 {
     friend class OZIRasterBand;
 
@@ -69,7 +69,7 @@ class OZIDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class OZIRasterBand : public GDALPamRasterBand
+class OZIRasterBand final: public GDALPamRasterBand
 {
     friend class OZIDataset;
 

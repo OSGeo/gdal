@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class VICARDataset : public RawDataset
+class VICARDataset final: public RawDataset
 {
     VSILFILE    *fpImage;
 
