@@ -321,34 +321,41 @@ namespace nccfdriver
             // Point case: always return the single point regardless of any thing
 
             OGRPoint* as_p_ref = dynamic_cast<OGRPoint*>(this->geometry_ref);
+            CPLAssert(as_p_ref);
             return  *as_p_ref;
         }
 
         if (this->type == MULTIPOINT)
         {
             OGRMultiPoint* as_mp_ref = dynamic_cast<OGRMultiPoint*>(this->geometry_ref);
+            CPLAssert(as_mp_ref);
             int part_ind = static_cast<int>(part_no);
             OGRPoint * pt = dynamic_cast<OGRPoint*>(as_mp_ref->getGeometryRef(part_ind));
+            CPLAssert(pt);
             return *pt;
         }
 
         if (this->type == LINE)
         {
             OGRLineString* as_line_ref = dynamic_cast<OGRLineString*>(this->geometry_ref);
+            CPLAssert(as_line_ref);
             as_line_ref->getPoint(point_index, &pt_buffer);
         }
 
         if (this->type == MULTILINE)
         {
             OGRMultiLineString* as_mline_ref = dynamic_cast<OGRMultiLineString*>(this->geometry_ref);
+            CPLAssert(as_mline_ref);
             int part_ind = static_cast<int>(part_no);
             OGRLineString* lstring = dynamic_cast<OGRLineString*>(as_mline_ref->getGeometryRef(part_ind));
+            CPLAssert(lstring);
             lstring->getPoint(point_index, &pt_buffer);
         }
 
         if (this->type == POLYGON)
         {
             OGRPolygon* as_polygon_ref = dynamic_cast<OGRPolygon*>(this->geometry_ref);
+            CPLAssert(as_polygon_ref);
             int ring_ind = static_cast<int>(part_no);
 
             if(part_no == 0)
@@ -365,6 +372,7 @@ namespace nccfdriver
         if (this->type == MULTIPOLYGON)
         {
             OGRMultiPolygon* as_mpolygon_ref = dynamic_cast<OGRMultiPolygon*>(this->geometry_ref);
+            CPLAssert(as_mpolygon_ref);
 
             int polygon_num = 0;
             int ring_number = 0;
@@ -374,6 +382,7 @@ namespace nccfdriver
             for(int pind = 0; pind < as_mpolygon_ref->getNumGeometries(); pind++)
             {
                 OGRPolygon * itr_poly = dynamic_cast<OGRPolygon*>(as_mpolygon_ref->getGeometryRef(pind));
+                CPLAssert(itr_poly);
                 if(pno_itr < (itr_poly->getNumInteriorRings() + 1)) // + 1 is counting the EXTERIOR ring
                 {
                     ring_number = static_cast<int>(pno_itr);
@@ -388,6 +397,7 @@ namespace nccfdriver
             }
 
             OGRPolygon* key_polygon = dynamic_cast<OGRPolygon*>(as_mpolygon_ref->getGeometryRef(polygon_num));
+            CPLAssert(key_polygon);
 
             if(ring_number == 0)
             {
