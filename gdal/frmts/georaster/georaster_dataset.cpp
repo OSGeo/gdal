@@ -602,6 +602,7 @@ boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
     
     if( CSLCount(papszFileList) == 0 )
     {
+        CSLDestroy( papszFileList );
         return false;
     }
     
