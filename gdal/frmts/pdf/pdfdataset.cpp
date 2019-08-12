@@ -3339,6 +3339,8 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
     for(int i=0;i<nLength;i++)
     {
         GDALPDFObject* poObj = poArray->Get(i);
+        if( poObj == nullptr )
+            continue;
         if (i == 0 && poObj->GetType() == PDFObjectType_String)
         {
             CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
