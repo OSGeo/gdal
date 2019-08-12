@@ -9255,14 +9255,14 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
     auto poTP = m_poBaseDS ?
         m_poBaseDS->m_poCompressThreadPool : m_poCompressThreadPool;
 
-    if( !( poTP != nullptr &&
-           (m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
+    if( poTP == nullptr ||
+          !(m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
             m_nCompression == COMPRESSION_LZW ||
             m_nCompression == COMPRESSION_PACKBITS ||
             m_nCompression == COMPRESSION_LZMA ||
             m_nCompression == COMPRESSION_ZSTD ||
             m_nCompression == COMPRESSION_LERC ||
-            m_nCompression == COMPRESSION_WEBP) ) )
+            m_nCompression == COMPRESSION_WEBP) )
     {
         if( m_bBlockOrderRowMajor || m_bLeaderSizeAsUInt4 ||
             m_bTrailerRepeatedLast4BytesRepeated )

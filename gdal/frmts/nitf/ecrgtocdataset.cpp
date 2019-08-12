@@ -30,6 +30,7 @@
 
 #include "cpl_port.h"
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -328,6 +329,9 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
               double& dfPixelXSize, double& dfPixelYSize)
 {
     const int nAbsZone = abs(nZone);
+#ifdef DEBUG
+    assert( nAbsZone > 0 && nAbsZone <= 8 );
+#endif
 
 /************************************************************************/
 /*  Compute east-west constant                                          */

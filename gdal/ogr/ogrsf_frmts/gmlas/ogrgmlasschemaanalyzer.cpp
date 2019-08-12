@@ -612,15 +612,13 @@ XSElementDeclaration* GMLASSchemaAnalyzer::GetTopElementDeclarationFromXPath(
                                                     XSModel* poModel)
 {
     const char* pszTypename = osXPath.c_str();
-    const char* pszName = strrchr(pszTypename, ':');
-    if( pszName )
-        pszName ++;
+    const char* pszColon = strrchr(pszTypename, ':');
     XSElementDeclaration* poEltDecl = nullptr;
-    if( pszName != nullptr )
+    if( pszColon != nullptr )
     {
         CPLString osNSPrefix = pszTypename;
-        osNSPrefix.resize( pszName - 1 - pszTypename );
-        CPLString osName = pszName;
+        osNSPrefix.resize( pszColon - pszTypename );
+        CPLString osName = pszColon + 1;
         CPLString osNSURI;
 
         for( const auto& oIterNS: m_oMapURIToPrefix )

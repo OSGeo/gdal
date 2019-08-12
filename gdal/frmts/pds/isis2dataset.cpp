@@ -388,23 +388,19 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********   Grab LINE_PROJECTION_OFFSET ************/
     double dfULYMap = 0.5;
-    double yulcenter = 0.0;
 
     value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
-        yulcenter = static_cast<float>( CPLAtof(value) );
-        yulcenter = ((yulcenter) * dfYDim);
+        const double yulcenter = static_cast<float>( CPLAtof(value) ) * dfYDim;
         dfULYMap = yulcenter - (dfYDim/2);
     }
 
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
     double dfULXMap = 0.5;
-    double xulcenter = 0.0;
 
     value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
-        xulcenter= static_cast<float>( CPLAtof(value) );
-        xulcenter = ((xulcenter) * dfXDim);
+        const double xulcenter = static_cast<float>( CPLAtof(value) ) * dfXDim;
         dfULXMap = xulcenter - (dfXDim/2);
     }
 
