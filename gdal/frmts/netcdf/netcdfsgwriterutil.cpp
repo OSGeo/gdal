@@ -812,7 +812,7 @@ namespace nccfdriver
     }
 
     // WTransactionLog
-    WTransactionLog::WTransactionLog(std::string logName) :
+    WTransactionLog::WTransactionLog(const std::string& logName) :
         wlogName(logName)
     {
     }

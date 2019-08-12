@@ -1129,7 +1129,7 @@ std::unique_ptr<VRTMDArraySourceInlinedValues> VRTMDArraySourceInlinedValues::Cr
                                                 const CPLXMLNode* psNode)
 {
     const bool bIsConstantValue = strcmp(psNode->pszValue, "ConstantValue") == 0;
-    const auto dt = array->GetDataType();
+    const auto& dt(array->GetDataType());
     const size_t nDTSize = dt.GetSize();
     if( strcmp(psNode->pszValue, "InlineValuesWithValueElement") == 0 )
     {

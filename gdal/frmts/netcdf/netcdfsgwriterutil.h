@@ -322,7 +322,7 @@ namespace nccfdriver
             MTPtr pop();  // to test for EOF, test to see if pointer returned is null ptr
 
             // construction, destruction
-            explicit WTransactionLog(std::string logName);
+            explicit WTransactionLog(const std::string& logName);
             ~WTransactionLog();
     };
 
@@ -374,7 +374,7 @@ namespace nccfdriver
            /* OGR_SGeometry_Field_Scribe()
             * Constructs a Field Scribe over a dataset
             */
-           OGR_NCScribe(netCDFVID& ncd, std::string name) :
+           OGR_NCScribe(netCDFVID& ncd, const std::string& name) :
                ncvd(ncd),
                wl(name)
            {}
