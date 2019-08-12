@@ -357,7 +357,8 @@ namespace nccfdriver
          * (3) there are at least two node coordinate variable ids
          */
 
-        int all_dim = INVALID_VAR_ID; bool dim_set = false;
+        int all_dim = INVALID_VAR_ID;
+        bool dim_set = false;
         int dimC = 0;
         //(1) one dimension check, each node_coordinates have same dimension
         for(size_t nvitr = 0; nvitr < nodec_varIds.size(); nvitr++)
@@ -380,6 +381,7 @@ namespace nccfdriver
             if(!dim_set)
             {
                 all_dim = inter_dim[0];
+                dim_set = true;
             }    
 
             else
