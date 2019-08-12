@@ -821,8 +821,10 @@ int CADBuffer::ReadBITLONG()
 
         case BITLONG_NOT_USED:
         {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             std::cerr <<
             "THAT SHOULD NEVER HAPPENED! BUG. (in file, or reader, or both.) ReadBITLONG(), case BITLONG_NOT_USED\n";
+#endif
             m_nBitOffsetFromStart += 0;
             return 0;
         }

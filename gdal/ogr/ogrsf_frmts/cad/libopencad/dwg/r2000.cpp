@@ -90,6 +90,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if( memcmp( bufferPre, DWGConstants::HeaderVariablesStart,
                            DWGConstants::SentinelLength ) )
     {
@@ -98,6 +99,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
+#endif
 
     readSize = pFileIO->Read( &dHeaderVarsSectionLength, dSizeOfSectionSize );
         DebugMsg( "Header variables section length: %d\n",
@@ -658,14 +660,17 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     int returnCode = CADErrorCodes::SUCCESS;
     unsigned short dSectionCRC = validateEntityCRC( buffer,
         static_cast<unsigned int>(dHeaderVarsSectionLength + dSizeOfSectionSize), "HEADERVARS" );
-
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    (void)dSectionCRC;
+#else
     if(dSectionCRC == 0)
     {
         std::cerr << "File is corrupted (HEADERVARS section CRC doesn't match.)\n";
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
-
+#endif
     pFileIO->Read( bufferPre, DWGConstants::SentinelLength );
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if( memcmp( bufferPre, DWGConstants::HeaderVariablesEnd,
                          DWGConstants::SentinelLength ) )
     {
@@ -673,7 +678,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
                           "doesn't match.)\n";
         returnCode = CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
-
+#endif
     return returnCode;
 }
 
@@ -688,6 +693,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         pFileIO->Seek( sectionLocatorRecords[1].dSeeker, CADFileIO::SeekOrigin::BEG );
 
         pFileIO->Read( bufferPre, DWGConstants::SentinelLength );
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         if( memcmp( bufferPre, DWGConstants::DSClassesStart,
                                DWGConstants::SentinelLength ) )
         {
@@ -696,6 +702,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
 
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
+#endif
 
         pFileIO->Read( &dSectionSize, dSizeOfSectionSize );
         DebugMsg("Classes section length: %d\n",
@@ -737,13 +744,18 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         unsigned short dSectionCRC = validateEntityCRC( buffer,
                     static_cast<unsigned int>(dSectionSize + dSizeOfSectionSize),
                                                         "CLASSES" );
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        (void)dSectionCRC;
+#else
         if(dSectionCRC == 0)
         {
             std::cerr << "File is corrupted (CLASSES section CRC doesn't match.)\n";
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
+#endif
 
         pFileIO->Read( bufferPre, DWGConstants::SentinelLength );
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         if( memcmp( bufferPre, DWGConstants::DSClassesEnd,
                                DWGConstants::SentinelLength ) )
         {
@@ -751,6 +763,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
                     "doesn't match.)\n";
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
+#endif
     }
     return CADErrorCodes::SUCCESS;
 }
@@ -836,12 +849,15 @@ int DWGFileR2000::CreateFileMap()
 
         unsigned short dSectionCRC = validateEntityCRC( buffer,
                     static_cast<unsigned int>(dSectionSize), "OBJECTMAP", true );
-
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        (void)dSectionCRC;
+#else
         if(dSectionCRC == 0)
         {
             std::cerr << "File is corrupted (OBJECTMAP section CRC doesn't match.)\n";
             return CADErrorCodes::OBJECTS_SECTION_READ_FAILED;
         }
+#endif
     }
 
     return CADErrorCodes::SUCCESS;
