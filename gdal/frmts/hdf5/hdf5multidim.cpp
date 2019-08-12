@@ -178,7 +178,7 @@ static GDALExtendedDataType BuildDataType(hid_t hDataType, bool& bHasVLen, bool&
             char* pszName = H5Tget_member_name(hDataType, i);
             if( !pszName )
                 return GDALExtendedDataType::Create(GDT_Unknown);
-            CPLString osCompName(pszName ? pszName : "");
+            CPLString osCompName(pszName);
             H5free_memory(pszName);
             auto hMemberType = H5Tget_member_type(hDataType, i);
             if( hMemberType < 0 )
@@ -1547,14 +1547,15 @@ static void CopyValue(const GByte* pabySrcBuffer, hid_t hSrcDataType,
     {
         if( H5Tequal(H5T_NATIVE_SCHAR, hSrcDataType) )
         {
-            GInt16 nVal = *reinterpret_cast<const signed char*>(pabySrcBuffer);
+            const GInt16 nVal = *reinterpret_cast<const signed char*>(pabySrcBuffer);
+            // coverity[overrun-buffer-val]
             GDALExtendedDataType::CopyValue(
                 &nVal, GDALExtendedDataType::Create(GDT_Int16),
                 pabyDstBuffer, dstDataType);
         }
         else if( H5Tequal(H5T_NATIVE_LLONG, hSrcDataType) )
         {
-            double dfVal = static_cast<double>(
+            const double dfVal = static_cast<double>(
                 *reinterpret_cast<const GInt64*>(pabySrcBuffer));
             GDALExtendedDataType::CopyValue(
                 &dfVal, GDALExtendedDataType::Create(GDT_Float64),
@@ -1562,7 +1563,7 @@ static void CopyValue(const GByte* pabySrcBuffer, hid_t hSrcDataType,
         }
         else if( H5Tequal(H5T_NATIVE_ULLONG, hSrcDataType) )
         {
-            double dfVal = static_cast<double>(
+            const double dfVal = static_cast<double>(
                 *reinterpret_cast<const GUInt64*>(pabySrcBuffer));
             GDALExtendedDataType::CopyValue(
                 &dfVal, GDALExtendedDataType::Create(GDT_Float64),
@@ -1719,7 +1720,10 @@ bool HDF5Array::IRead(const GUInt64* arrayStartIdx,
             hBufferType = GetHDF5DataTypeFromGDALDataType(
                 m_dt, m_hNativeDT, bufferDataType);
             if( hBufferType == H5I_INVALID_HID )
+            {
+                VSIFree(pabyTemp);
                 return false;
+            }
         }
     }
     else
@@ -1847,14 +1851,14 @@ static void CopyAllAttrValuesInto(size_t nDims,
                                   const GDALExtendedDataType& bufferDataType,
                                   void* pDstBuffer,
                                   hid_t hSrcBufferType,
-                                  const GByte* pabySrcBuffer)
+                                  const void* pabySrcBuffer)
 {
     const size_t nBufferDataTypeSize(bufferDataType.GetSize());
     const size_t nSrcDataTypeSize(H5Tget_size(hSrcBufferType));
     std::vector<size_t> anStackCount(nDims);
     std::vector<const GByte*> pabySrcBufferStack(nDims + 1);
     std::vector<GByte*> pabyDstBufferStack(nDims + 1);
-    pabySrcBufferStack[0] = pabySrcBuffer;
+    pabySrcBufferStack[0] = static_cast<const GByte*>(pabySrcBuffer);
     if( nDims > 0 )
         pabySrcBufferStack[0] += arrayStartIdx[0] * nSrcDataTypeSize;
     pabyDstBufferStack[0] = static_cast<GByte*>(pDstBuffer);
@@ -1932,8 +1936,8 @@ bool HDF5Attribute::IRead(const GUInt64* arrayStartIdx,
         }
         else
         {
-            GByte* pabyTemp = static_cast<GByte*>(
-                VSI_CALLOC_VERBOSE(sizeof(char*), m_nElements));
+            void* pabyTemp =
+                VSI_CALLOC_VERBOSE(sizeof(char*), m_nElements);
             if( pabyTemp == nullptr )
                 return false;
             if( H5Sget_simple_extent_type(m_hDataSpace) != H5S_NULL &&
