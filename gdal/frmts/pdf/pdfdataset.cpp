@@ -2955,6 +2955,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
     const char* pszDPI = GetOption(papszOpenOptions, "DPI", nullptr);
     if (pszDPI != nullptr)
     {
+        // coverity[tainted_data]
         dfDPI = CPLAtof(pszDPI);
     }
     else
