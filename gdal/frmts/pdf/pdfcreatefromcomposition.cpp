@@ -510,7 +510,7 @@ GDALPDFDictionaryRW* GDALPDFComposerWriter::SerializeActions(
         }
 
         auto setLayerStateAction = dynamic_cast<SetLayerStateAction*>(poAction.get());
-        if( setLayerStateAction )
+        if( poActionDict == nullptr && setLayerStateAction )
         {
             poActionDict = new GDALPDFDictionaryRW();
             poActionDict->Add("Type", GDALPDFObjectRW::CreateName("Action"));
@@ -532,7 +532,7 @@ GDALPDFDictionaryRW* GDALPDFComposerWriter::SerializeActions(
         }
 
         auto javascriptAction = dynamic_cast<JavascriptAction*>(poAction.get());
-        if( javascriptAction )
+        if( poActionDict == nullptr && javascriptAction )
         {
             poActionDict = new GDALPDFDictionaryRW();
             poActionDict->Add("Type", GDALPDFObjectRW::CreateName("Action"));
@@ -1779,8 +1779,8 @@ bool GDALPDFComposerWriter::WriteVector(const CPLXMLNode* psNode,
     if( pszGeoreferencingId &&
         !SetupVectorGeoreferencing(pszGeoreferencingId,
                                    poLayer, oPageContext,
-                                   dfClippingMinX, dfClippingMaxX,
-                                   dfClippingMinY, dfClippingMaxY,
+                                   dfClippingMinX, dfClippingMinY,
+                                   dfClippingMaxX, dfClippingMaxY,
                                    adfMatrix, poCT) )
     {
         return false;
@@ -2030,8 +2030,8 @@ bool GDALPDFComposerWriter::WriteVectorLabel(const CPLXMLNode* psNode,
     if( pszGeoreferencingId &&
         !SetupVectorGeoreferencing(pszGeoreferencingId,
                                    poLayer, oPageContext,
-                                   dfClippingMinX, dfClippingMaxX,
-                                   dfClippingMinY, dfClippingMaxY,
+                                   dfClippingMinX, dfClippingMinY,
+                                   dfClippingMaxX, dfClippingMaxY,
                                    adfMatrix, poCT) )
     {
         return false;
