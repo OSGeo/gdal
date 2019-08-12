@@ -2403,6 +2403,8 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
 {
     const int nSrcRasterXSize = GDALGetRasterXSize(psOptions->hSrcDS);
     const int nSrcRasterYSize = GDALGetRasterYSize(psOptions->hSrcDS);
+    if( nSrcRasterXSize == 0 || nSrcRasterYSize == 0 )
+        return;
 
     GDALWarpPrivateData* privateData = GetWarpPrivateData(this);
     if( privateData->nStepCount == 0 )
