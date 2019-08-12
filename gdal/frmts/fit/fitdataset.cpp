@@ -1020,6 +1020,8 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    // Verified by above GDALCheckBandCount()
+    // coverity[tainted_data]
     for( int i = 0; i < (int)head->cSize; i++ )
     {
         FITRasterBand* poBand = new FITRasterBand( poDS, i+1, (int)head->cSize );
