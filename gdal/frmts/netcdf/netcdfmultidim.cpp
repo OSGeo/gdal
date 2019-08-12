@@ -2070,15 +2070,19 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
     bool bUseSlowPath = !m_bPerfectDataTypeMatch;
     for( int i = 0; i < m_nDims; i++ )
     {
+#if SIZEOF_VOIDP == 4
         if( arrayStartIdx[i] > std::numeric_limits<size_t>::max() )
             return false;
+#endif
         startp.push_back(static_cast<size_t>(arrayStartIdx[i]));
 
+#if SIZEOF_VOIDP == 4
         if( arrayStep[i] < std::numeric_limits<ptrdiff_t>::min() ||
             arrayStep[i] > std::numeric_limits<ptrdiff_t>::max() )
         {
             return false;
         }
+#endif
 
         if( arrayStep[i] <= 0 )
             bUseSlowPath = true; // netCDF rejects negative or NULL strides
@@ -2293,6 +2297,7 @@ bool netCDFVariable::IRead(const GUInt64* arrayStartIdx,
             NCDF_ERR(ret);
             if( ret != NC_NOERR )
                 return false;
+            // coverity[use_after_free]
             GDALExtendedDataType::CopyValue(&pszTmp, GetDataType(), pabyDstBuffer, GetDataType());
             array_idx[0] = static_cast<size_t>(array_idx[0] + arrayStep[0]);
             pabyDstBuffer += bufferStride[0] * sizeof(char*);
