@@ -421,7 +421,7 @@ def test_ogr_geos_distance():
 
     distance = g1.Distance(g2)
 
-    assert abs(distance - 1) <= 0.00000000001, \
+    assert distance == pytest.approx(1, abs=0.00000000001), \
         ('Distance() result wrong, got %g.' % distance)
 
 ###############################################################################

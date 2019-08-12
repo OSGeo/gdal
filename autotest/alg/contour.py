@@ -109,7 +109,7 @@ def test_contour_1():
         envelope = feat.GetGeometryRef().GetEnvelope()
         assert feat.GetField('elev') == expected_height[i]
         for j in range(4):
-            if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
+            if expected_envelopes[i][j] != pytest.approx(envelope[j], abs=precision / 2 * 1.001):
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
                 pytest.fail('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
@@ -168,7 +168,7 @@ def test_contour_2():
         envelope = feat.GetGeometryRef().GetEnvelope()
         assert feat.GetField('elev') == expected_height[i]
         for j in range(4):
-            if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
+            if expected_envelopes[i][j] != pytest.approx(envelope[j], abs=precision / 2 * 1.001):
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
                 pytest.fail('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
@@ -258,7 +258,7 @@ def test_contour_3():
 
         envelope = feat.GetGeometryRef().GetEnvelope()
         for j in range(4):
-            if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
+            if expected_envelopes[i][j] != pytest.approx(envelope[j], abs=precision / 2 * 1.001):
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
                 pytest.fail('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))

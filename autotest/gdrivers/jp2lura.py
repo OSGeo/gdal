@@ -251,7 +251,7 @@ def test_jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
         pytest.fail('bad spatial reference')
 
     for i in range(6):
-        assert abs(got_gt[i] - src_gt[i]) <= 1e-8, 'bad geotransform'
+        assert got_gt[i] == pytest.approx(src_gt[i], abs=1e-8), 'bad geotransform'
 
     assert cs == 50054, 'bad checksum'
 
@@ -331,7 +331,7 @@ def test_jp2lura_9():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+    assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
         'geotransform differs from expected'
 
     ds = None
@@ -1379,7 +1379,7 @@ def test_jp2lura_40():
     got_gt = ds.GetGeoTransform()
     expected_gt = (2, 0.1, 0, 49, 0, -0.1)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
     ds = None
     gdal.Unlink('/vsimem/jp2lura_40.jp2')
 

@@ -320,11 +320,11 @@ def test_numpy_rw_11():
 
         gdal.Unlink('/vsimem/' + type_tuple[0])
 
-        assert (not (type_tuple[0] == 'float32' and abs(ar2[0][0] - type_tuple[3]) > 1e-6) or \
+        assert (not (type_tuple[0] == 'float32' and ar2[0][0] != pytest.approx(type_tuple[3], abs=1e-6)) or \
            (type_tuple[0] != 'float32' and ar2[0][0] != type_tuple[3])), \
             'did not get expected result (1)'
 
-        assert (not (type_tuple[0] == 'float32' and abs(ar3[0][0] - type_tuple[3]) > 1e-6) or \
+        assert (not (type_tuple[0] == 'float32' and ar3[0][0] != pytest.approx(type_tuple[3], abs=1e-6)) or \
            (type_tuple[0] != 'float32' and ar3[0][0] != type_tuple[3])), \
             'did not get expected result (2)'
 
@@ -513,7 +513,7 @@ def test_numpy_rw_13():
 
 def numpy_rw_14_progress_callback(pct, message, user_data):
     # pylint: disable=unused-argument
-    if abs(pct - user_data[0]) > 1e-5:
+    if pct != pytest.approx(user_data[0], abs=1e-5):
         print('Expected %f, got %f' % (user_data[0], pct))
         user_data[1] = False
     user_data[0] = user_data[0] + 0.05
@@ -557,7 +557,7 @@ def test_numpy_rw_14():
                                            callback=numpy_rw_14_progress_callback,
                                            callback_data=tab)
     assert data is not None
-    assert abs(tab[0] - 1.05) <= 1e-5 and tab[1]
+    assert tab[0] == pytest.approx(1.05, abs=1e-5) and tab[1]
 
     # Test interruption
     tab = [0]
@@ -572,7 +572,7 @@ def test_numpy_rw_14():
                           callback=numpy_rw_14_progress_callback,
                           callback_data=tab)
     assert data is not None
-    assert abs(tab[0] - 1.05) <= 1e-5 and tab[1]
+    assert tab[0] == pytest.approx(1.05, abs=1e-5) and tab[1]
 
     # Same with interruption
     tab = [0]
@@ -586,7 +586,7 @@ def test_numpy_rw_14():
     last_pct = [0]
     data = ds.ReadAsArray(callback=numpy_rw_14_progress_callback_2,
                           callback_data=last_pct)
-    assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
+    assert not (data is None or last_pct[0] != pytest.approx(1.0, abs=1e-5))
 
     last_pct = [0]
 
@@ -595,7 +595,7 @@ def test_numpy_rw_14():
     data = ds.ReadAsArray(buf_obj=array,
                           callback=numpy_rw_14_progress_callback_2,
                           callback_data=last_pct)
-    assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
+    assert not (data is None or last_pct[0] != pytest.approx(1.0, abs=1e-5))
 
 ###############################################################################
 # Test NumPy GetGeoTransform/SetGeoTransform

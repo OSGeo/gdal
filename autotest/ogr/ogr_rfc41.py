@@ -681,7 +681,7 @@ def test_ogr_rfc41_7():
        feat.FIELD_4 != 'c' or \
        feat['p.eas_id'] != 168 or \
        feat.area_int != 215229 or \
-       abs(feat.area - 215229.266) > 1e-5 or \
+       feat.area != pytest.approx(215229.266, abs=1e-5) or \
        feat.geom1.GetGeometryType() != ogr.wkbPolygon or \
        feat.geom2 is not None or \
        feat.geom3.GetGeometryType() != ogr.wkbPoint or \

@@ -32,6 +32,7 @@
 
 
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Check that EPSG:27572 lookup has the prime meridian properly set,
@@ -43,10 +44,10 @@ def test_osr_pm_1():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27572)
 
-    assert abs(float(srs.GetAttrValue('PRIMEM', 1)) - 2.33722917) <= 0.0000005, \
+    assert float(srs.GetAttrValue('PRIMEM', 1)) == pytest.approx(2.33722917, abs=0.0000005), \
         'Wrong prime meridian.'
 
-    assert abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) - 0.0) <= 0.0000005, \
+    assert srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) == pytest.approx(0.0, abs=0.0000005), \
         'Wrong central meridian.'
 
 ###############################################################################

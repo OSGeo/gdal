@@ -48,12 +48,12 @@ def test_transformer_1():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    assert success and abs(pnt[0] - 441920) <= 0.00000001 and abs(pnt[1] - 3750720) <= 0.00000001 and pnt[2] == 0.0, \
+    assert success and pnt[0] == pytest.approx(441920, abs=0.00000001) and pnt[1] == pytest.approx(3750720, abs=0.00000001) and pnt[2] == 0.0, \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20) <= 0.00000001 and abs(pnt[1] - 10) <= 0.00000001 and pnt[2] == 0.0, \
+    assert success and pnt[0] == pytest.approx(20, abs=0.00000001) and pnt[1] == pytest.approx(10, abs=0.00000001) and pnt[2] == 0.0, \
         'got wrong reverse transform result.'
 
 ###############################################################################
@@ -67,12 +67,12 @@ def test_transformer_2():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    assert success and abs(pnt[0] - 441920) <= 0.001 and abs(pnt[1] - 3750720) <= 0.001 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(441920, abs=0.001) and pnt[1] == pytest.approx(3750720, abs=0.001) and pnt[2] == 0, \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20) <= 0.001 and abs(pnt[1] - 10) <= 0.001 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(20, abs=0.001) and pnt[1] == pytest.approx(10, abs=0.001) and pnt[2] == 0, \
         'got wrong reverse transform result.'
 
 ###############################################################################
@@ -86,12 +86,12 @@ def test_transformer_3():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    assert success and abs(pnt[0] - 441920) <= 0.001 and abs(pnt[1] - 3750720) <= 0.001 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(441920, abs=0.001) and pnt[1] == pytest.approx(3750720, abs=0.001) and pnt[2] == 0, \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20) <= 0.001 and abs(pnt[1] - 10) <= 0.001 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(20, abs=0.001) and pnt[1] == pytest.approx(10, abs=0.001) and pnt[2] == 0, \
         'got wrong reverse transform result.'
 
 ###############################################################################
@@ -105,12 +105,12 @@ def test_transformer_4():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    assert success and abs(pnt[0] + 81.961341857910156) <= 0.000001 and abs(pnt[1] - 29.612689971923828) <= 0.000001 and pnt[2] == 0, \
+    assert success and abs(pnt[0] + 81.961341857910156) <= 0.000001 and pnt[1] == pytest.approx(29.612689971923828, abs=0.000001) and pnt[2] == 0, \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20.436627518907024) <= 0.001 and abs(pnt[1] - 10.484599774610549) <= 0.001 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(20.436627518907024, abs=0.001) and pnt[1] == pytest.approx(10.484599774610549, abs=0.001) and pnt[2] == 0, \
         'got wrong reverse transform result.'
 
 ###############################################################################
@@ -123,23 +123,23 @@ def test_transformer_5():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_PIXEL_ERROR_THRESHOLD=0.05'])
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5)
-    assert success and abs(pnt[0] - 125.64830100509131) <= 0.000001 and abs(pnt[1] - 39.869433991997553) <= 0.000001 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(125.64830100509131, abs=0.000001) and pnt[1] == pytest.approx(39.869433991997553, abs=0.000001) and pnt[2] == 0, \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
-    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(20.5, abs=0.05) and pnt[1] == pytest.approx(10.5, abs=0.05) and pnt[2] == 0, \
         'got wrong reverse transform result.'
 
     # Try with a different height.
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 30)
 
-    assert success and abs(pnt[0] - 125.64828521533849) <= 0.000001 and abs(pnt[1] - 39.869345204440144) <= 0.000001 and pnt[2] == 30, \
+    assert success and pnt[0] == pytest.approx(125.64828521533849, abs=0.000001) and pnt[1] == pytest.approx(39.869345204440144, abs=0.000001) and pnt[2] == 30, \
         'got wrong forward transform result.(2)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05 and pnt[2] == 30, \
+    assert success and pnt[0] == pytest.approx(20.5, abs=0.05) and pnt[1] == pytest.approx(10.5, abs=0.05) and pnt[2] == 30, \
         'got wrong reverse transform result.(2)'
 
     # Test RPC_HEIGHT option
@@ -147,12 +147,12 @@ def test_transformer_5():
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5)
 
-    assert success and abs(pnt[0] - 125.64828521533849) <= 0.000001 and abs(pnt[1] - 39.869345204440144) <= 0.000001, \
+    assert success and pnt[0] == pytest.approx(125.64828521533849, abs=0.000001) and pnt[1] == pytest.approx(39.869345204440144, abs=0.000001), \
         'got wrong forward transform result.(3)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20.5) <= 0.1 and abs(pnt[1] - 10.5) <= 0.1, \
+    assert success and pnt[0] == pytest.approx(20.5, abs=0.1) and pnt[1] == pytest.approx(10.5, abs=0.1), \
         'got wrong reverse transform result.(3)'
 
     # Test RPC_DEM and RPC_HEIGHT_SCALE options
@@ -170,12 +170,12 @@ def test_transformer_5():
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
 
-    assert success and abs(pnt[0] - 125.64828521533849) <= 0.000001 and abs(pnt[1] - 39.869345204440144) <= 0.000001, \
+    assert success and pnt[0] == pytest.approx(125.64828521533849, abs=0.000001) and pnt[1] == pytest.approx(39.869345204440144, abs=0.000001), \
         'got wrong forward transform result.(4)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05, \
+    assert success and pnt[0] == pytest.approx(20.5, abs=0.05) and pnt[1] == pytest.approx(10.5, abs=0.05), \
         'got wrong reverse transform result.(4)'
 
     tr = None
@@ -186,12 +186,12 @@ def test_transformer_5():
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
 
-    assert success and abs(pnt[0] - 125.64828521533849) <= 0.000001 and abs(pnt[1] - 39.869345204440144) <= 0.000001, \
+    assert success and pnt[0] == pytest.approx(125.64828521533849, abs=0.000001) and pnt[1] == pytest.approx(39.869345204440144, abs=0.000001), \
         'got wrong forward transform result.(5)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05, \
+    assert success and pnt[0] == pytest.approx(20.5, abs=0.05) and pnt[1] == pytest.approx(10.5, abs=0.05), \
         'got wrong reverse transform result.(5)'
 
     tr = None
@@ -202,12 +202,12 @@ def test_transformer_5():
 
     (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
 
-    assert success and abs(pnt[0] - 125.64828521503811) <= 0.000001 and abs(pnt[1] - 39.869345204874911) <= 0.000001, \
+    assert success and pnt[0] == pytest.approx(125.64828521503811, abs=0.000001) and pnt[1] == pytest.approx(39.869345204874911, abs=0.000001), \
         'got wrong forward transform result.(6)'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and abs(pnt[0] - 20.5) <= 0.05 and abs(pnt[1] - 10.5) <= 0.05, \
+    assert success and pnt[0] == pytest.approx(20.5, abs=0.05) and pnt[1] == pytest.approx(10.5, abs=0.05), \
         'got wrong reverse transform result.(6)'
 
     tr = None
@@ -234,11 +234,11 @@ def test_transformer_5():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEM_MISSING_VALUE=0'])
 
     (success, pnt) = tr.TransformPoint(0, -99.5, 0.5, 0)
-    assert success and abs(pnt[0] - 125.64746155942839) <= 0.000001 and abs(pnt[1] - 39.869506789921168) <= 0.000001, \
+    assert success and pnt[0] == pytest.approx(125.64746155942839, abs=0.000001) and pnt[1] == pytest.approx(39.869506789921168, abs=0.000001), \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
-    assert success and abs(pnt[0] - -99.5) <= 0.05 and abs(pnt[1] - 0.5) <= 0.05, \
+    assert success and pnt[0] == pytest.approx(-99.5, abs=0.05) and pnt[1] == pytest.approx(0.5, abs=0.05), \
         'got wrong reverse transform result.'
 
     tr = None
@@ -256,7 +256,7 @@ def test_transformer_6():
 
     (success, pnt) = tr.TransformPoint(0, 0.5, 0.5)
 
-    assert success and abs(pnt[0] - 28.26163232) <= 0.0001 and abs(pnt[1] - -27.79853245) <= 0.0001 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(28.26163232, abs=0.0001) and pnt[1] == pytest.approx(-27.79853245, abs=0.0001) and pnt[2] == 0, \
         'got wrong forward transform result.'
 
 ###############################################################################
@@ -270,7 +270,7 @@ def test_transformer_7():
 
     (pnt, success) = tr.TransformPoints(0, [(20, 10)])
 
-    assert success[0] != 0 and abs(pnt[0][0] - 441920) <= 0.00000001 and abs(pnt[0][1] - 3750720) <= 0.00000001 and pnt[0][2] == 0.0, \
+    assert success[0] != 0 and pnt[0][0] == pytest.approx(441920, abs=0.00000001) and pnt[0][1] == pytest.approx(3750720, abs=0.00000001) and pnt[0][2] == 0.0, \
         'got wrong forward transform result.'
 
 ###############################################################################
@@ -394,13 +394,13 @@ def test_transformer_10():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt'])
     (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
-    assert success and abs(pnt[0] - 27.31476045569616) <= 1e-5 and abs(pnt[1] - -53.328814757762302) <= 1e-5 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(27.31476045569616, abs=1e-5) and pnt[1] == pytest.approx(-53.328814757762302, abs=1e-5) and pnt[2] == 0, \
         'got wrong result: %s' % str(pnt)
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt', 'RPC_DEM_APPLY_VDATUM_SHIFT=FALSE'])
     (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
-    assert success and abs(pnt[0] - 21.445626206892484) <= 1e-5 and abs(pnt[1] - 1.6460100520871492) <= 1e-5 and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(21.445626206892484, abs=1e-5) and pnt[1] == pytest.approx(1.6460100520871492, abs=1e-5) and pnt[2] == 0, \
         'got wrong result.'
 
     gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
@@ -439,7 +439,7 @@ def test_transformer_11():
     # But this one should succeed
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT=1150'])
     (success, pnt) = tr.TransformPoint(0, 0, 0, 0)
-    assert success and abs(pnt[0] - 77.350939956024618) <= 1e-7 and abs(pnt[1] - 38.739703990877814) <= 1e-7
+    assert success and pnt[0] == pytest.approx(77.350939956024618, abs=1e-7) and pnt[1] == pytest.approx(38.739703990877814, abs=1e-7)
 
 ###############################################################################
 # Test degenerate cases of TPS transformer
@@ -538,7 +538,7 @@ def test_transformer_13():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=data/transformer_13_dem.tif'])
     (success, pnt) = tr.TransformPoint(0, 6600, 24)
-    assert success and abs(pnt[0] - -108.00066000065341) <= 1e-7 and abs(pnt[1] - 39.157694013439489) <= 1e-7
+    assert success and pnt[0] == pytest.approx(-108.00066000065341, abs=1e-7) and pnt[1] == pytest.approx(39.157694013439489, abs=1e-7)
 
 ###############################################################################
 # Test inverse RPC transform when iterations do oscillations (#6377)
@@ -575,7 +575,7 @@ def test_transformer_14():
     gdal.SetConfigOption('RPC_INVERSE_VERBOSE', old_rpc_inverse_verbose)
     gdal.SetConfigOption('RPC_INVERSE_LOG', old_rpc_inverse_log)
     (success, pnt) = tr.TransformPoint(0, 0, 0)
-    assert success and abs(pnt[0] - 1.9391846640653961e-05) <= 1e-7 and abs(pnt[1] - -0.0038824752244123275) <= 1e-7
+    assert success and pnt[0] == pytest.approx(1.9391846640653961e-05, abs=1e-7) and pnt[1] == pytest.approx(-0.0038824752244123275, abs=1e-7)
 
     f = gdal.VSIFOpenL('/vsimem/transformer_14.csvt', 'rb')
     if f is not None:
@@ -635,14 +635,14 @@ def test_transformer_15():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/transformer_15_dem.vrt'])
     (success, pnt) = tr.TransformPoint(0, 0, 0)
-    assert success and abs(pnt[0] - 180.02280735469199) <= 1e-7 and abs(pnt[1] - 0.061069145746997976) <= 1e-7
+    assert success and pnt[0] == pytest.approx(180.02280735469199, abs=1e-7) and pnt[1] == pytest.approx(0.061069145746997976, abs=1e-7)
 
     (success, pnt_forward) = tr.TransformPoint(1, pnt[0], pnt[1], 0)
-    assert success and abs(pnt_forward[0] - 0) <= 0.1 and abs(pnt_forward[1] - 0) <= 0.1, \
+    assert success and pnt_forward[0] == pytest.approx(0, abs=0.1) and pnt_forward[1] == pytest.approx(0, abs=0.1), \
         'got wrong reverse transform result.'
 
     (success, pnt_forward) = tr.TransformPoint(1, pnt[0] - 360, pnt[1], 0)
-    assert success and abs(pnt_forward[0] - 0) <= 0.1 and abs(pnt_forward[1] - 0) <= 0.1, \
+    assert success and pnt_forward[0] == pytest.approx(0, abs=0.1) and pnt_forward[1] == pytest.approx(0, abs=0.1), \
         'got wrong reverse transform result.'
 
     # Now test around -180
@@ -653,14 +653,14 @@ def test_transformer_15():
 
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_DEM=/vsimem/transformer_15_dem.vrt'])
     (success, pnt) = tr.TransformPoint(0, 6600, 4400)
-    assert success and abs(pnt[0] - -180.02313813793387) <= 1e-7 and abs(pnt[1] - -0.061398913932229765) <= 1e-7
+    assert success and pnt[0] == pytest.approx(-180.02313813793387, abs=1e-7) and pnt[1] == pytest.approx(-0.061398913932229765, abs=1e-7)
 
     (success, pnt_forward) = tr.TransformPoint(1, pnt[0], pnt[1], 0)
-    assert success and abs(pnt_forward[0] - 6600) <= 0.1 and abs(pnt_forward[1] - 4400) <= 0.1, \
+    assert success and pnt_forward[0] == pytest.approx(6600, abs=0.1) and pnt_forward[1] == pytest.approx(4400, abs=0.1), \
         'got wrong reverse transform result.'
 
     (success, pnt_forward) = tr.TransformPoint(1, pnt[0] + 360, pnt[1], 0)
-    assert success and abs(pnt_forward[0] - 6600) <= 0.1 and abs(pnt_forward[1] - 4400) <= 0.1, \
+    assert success and pnt_forward[0] == pytest.approx(6600, abs=0.1) and pnt_forward[1] == pytest.approx(4400, abs=0.1), \
         'got wrong reverse transform result.'
 
     gdal.Unlink('/vsimem/demE179.tif')
@@ -714,8 +714,8 @@ def test_transformer_longlat_wrap_outside_180():
 
     (success, pnt) = tr.TransformPoint(0, -0.5, 0.5, 0)
     assert success
-    assert abs(pnt[0] - 359.5) <= 0.000001, pnt
-    assert abs(pnt[1] - 0.5) <= 0.000001, pnt
+    assert pnt[0] == pytest.approx(359.5, abs=0.000001), pnt
+    assert pnt[1] == pytest.approx(0.5, abs=0.000001), pnt
 
 
 
@@ -730,8 +730,8 @@ def test_transformer_no_reverse_method():
 
     (success, pnt) = tr.TransformPoint(0, 2, 49)
     assert success
-    assert abs(pnt[0] - 141270.54731856665) <= 1e-3, pnt
-    assert abs(pnt[1] - 4656605.104980032) <= 1e-3, pnt
+    assert pnt[0] == pytest.approx(141270.54731856665, abs=1e-3), pnt
+    assert pnt[1] == pytest.approx(4656605.104980032, abs=1e-3), pnt
 
     with gdaltest.error_handler():
         (success, pnt) = tr.TransformPoint(1, 2, 49)

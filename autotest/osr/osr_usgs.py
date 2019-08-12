@@ -32,6 +32,7 @@
 
 from osgeo import gdal
 from osgeo import osr
+import pytest
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromUSGS() function.
@@ -49,7 +50,7 @@ def test_osr_usgs_1():
          0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
         15)
 
-    assert abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) - 47.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) - 62.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) - 54.5) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) - 45.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) <= 0.0000005 and abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) <= 0.0000005, \
+    assert srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) == pytest.approx(47.0, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) == pytest.approx(62.0, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_CENTER) == pytest.approx(54.5, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_LONGITUDE_OF_CENTER) == pytest.approx(45.0, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) == pytest.approx(0.0, abs=0.0000005) and srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) == pytest.approx(0.0, abs=0.0000005), \
         'Can not import Equidistant Conic projection.'
 
 ###############################################################################
@@ -75,7 +76,7 @@ def test_osr_usgs_2():
 
     (proj_code, _, parms, datum_code) = srs.ExportToUSGS()
 
-    assert proj_code == 4 and datum_code == 0 and abs(gdal.PackedDMSToDec(parms[2]) - 33.90363403) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[3]) - 33.62529003) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[4]) - -117.4745429) <= 0.0000005 and abs(gdal.PackedDMSToDec(parms[5]) - 33.76446203) <= 0.0000005, \
+    assert proj_code == 4 and datum_code == 0 and gdal.PackedDMSToDec(parms[2]) == pytest.approx(33.90363403, abs=0.0000005) and gdal.PackedDMSToDec(parms[3]) == pytest.approx(33.62529003, abs=0.0000005) and gdal.PackedDMSToDec(parms[4]) == pytest.approx(-117.4745429, abs=0.0000005) and gdal.PackedDMSToDec(parms[5]) == pytest.approx(33.76446203, abs=0.0000005), \
         'Can not import Lambert Conformal Conic projection.'
 
 

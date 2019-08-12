@@ -184,7 +184,7 @@ def test_gpkg_1():
 
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
-        assert abs(expected_gt[i] - got_gt[i]) <= 1e-8
+        assert expected_gt[i] == pytest.approx(got_gt[i], abs=1e-8)
     got_wkt = out_ds.GetProjectionRef()
     print("\n** expected_wkt " + expected_wkt + " **\n")
     print("\n** got_wkt " + got_wkt + " **\n")

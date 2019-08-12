@@ -151,7 +151,7 @@ def test_hdf4_read_online_3():
     gt = ds.GetGeoTransform()
     expected_gt = [-180.0, 0.3515625, 0.0, 90.0, 0.0, -0.3515625]
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-8), 'did not get expected gt'
 
     srs = ds.GetProjectionRef()
     assert srs.find('Clarke') != -1, 'did not get expected projection'

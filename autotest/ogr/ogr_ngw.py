@@ -163,7 +163,7 @@ def test_ogr_ngw_4():
         'Did not get expected datasource metadata item. test_int.d is equal {}, but should {}.'.format(md_item, '777')
 
     md_item = gdaltest.ngw_ds.GetMetadataItem('test_float.f', 'NGW')
-    assert abs(float(md_item) - 777.555) < 0.00001, \
+    assert float(md_item) == pytest.approx(777.555, abs=0.00001), \
         'Did not get expected datasource metadata item. test_float.f is equal {}, but should {}.'.format(md_item, '777.555')
 
     md_item = gdaltest.ngw_ds.GetMetadataItem('test_string', 'NGW')
@@ -301,7 +301,7 @@ def test_ogr_ngw_5():
             'Did not get expected layer metadata item. test_int.d is equal {}, but should {}.'.format(md_item, '777')
 
         md_item = lyr.GetMetadataItem('test_float.f', 'NGW')
-        assert abs(float(md_item) - 777.555) < 0.00001, \
+        assert float(md_item) == pytest.approx(777.555, abs=0.00001), \
             'Did not get expected layer metadata item. test_float.f is equal {}, but should {}.'.format(md_item, '777.555')
 
         md_item = lyr.GetMetadataItem('test_string', 'NGW')

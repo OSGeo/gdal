@@ -160,11 +160,11 @@ def test_pdf_online_1(poppler_or_pdfium):
         expected_gt = (-77.112328333299956, 9.1666560000051172e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
 
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
+        if gt[i] != pytest.approx(expected_gt[i], abs=1e-15):
             # The remote file has been updated...
             other_expected_gt = (-77.112328333299928, 9.1666560000165691e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
             for j in range(6):
-                assert abs(gt[j] - other_expected_gt[j]) <= 1e-15, 'bad geotransform'
+                assert gt[j] == pytest.approx(other_expected_gt[j], abs=1e-15), 'bad geotransform'
 
     assert wkt.startswith('GEOGCS["WGS 84"'), 'bad WKT'
 
@@ -196,11 +196,11 @@ def test_pdf_online_2(poppler_or_pdfium):
         expected_gt = (-77.112328333299956, 9.1666560000051172e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
 
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-15:
+        if gt[i] != pytest.approx(expected_gt[i], abs=1e-15):
             # The remote file has been updated...
             other_expected_gt = (-77.112328333299928, 9.1666560000165691e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
             for j in range(6):
-                assert abs(gt[j] - other_expected_gt[j]) <= 1e-15, 'bad geotransform'
+                assert gt[j] == pytest.approx(other_expected_gt[j], abs=1e-15), 'bad geotransform'
 
     assert wkt.startswith('GEOGCS["WGS 84"')
 
@@ -223,7 +223,7 @@ def test_pdf_1(poppler_or_pdfium):
         expected_gt = (333274.61654367246, 31.764802242655662, 0.0, 4940391.7593506984, 0.0, -31.794745501708238)
 
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-6, 'bad geotransform'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-6), 'bad geotransform'
 
     expected_wkt = 'PROJCS["WGS 84 / UTM zone 20N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-63],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     assert wkt == expected_wkt, 'bad WKT'
@@ -619,7 +619,7 @@ def test_pdf_update_gt(poppler_or_pdfium_or_podofo):
 
     expected_gt = [2, 1, 0, 49, 0, -1]
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-8), 'did not get expected gt'
 
     # Clear geotransform
     ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
@@ -633,7 +633,7 @@ def test_pdf_update_gt(poppler_or_pdfium_or_podofo):
 
     expected_gt = [0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-8), 'did not get expected gt'
 
     # Set geotransform again
     ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
@@ -648,7 +648,7 @@ def test_pdf_update_gt(poppler_or_pdfium_or_podofo):
 
     expected_gt = [3, 1, 0, 50, 0, -1]
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-8), 'did not get expected gt'
 
     gdaltest.pdf_drv.Delete('tmp/pdf_update_gt.pdf')
 
@@ -829,7 +829,7 @@ def _pdf_update_gcps(poppler_or_pdfium):
     assert got_gcp_wkt == '', 'did not expect non null GetGCPProjection'
 
     for i in range(6):
-        assert abs(got_gt[i] - src_gt[i]) <= 1e-8, 'did not get expected gt'
+        assert got_gt[i] == pytest.approx(src_gt[i], abs=1e-8), 'did not get expected gt'
 
     assert got_gcp_count == 0, 'did not expect GCPs'
 
@@ -931,15 +931,15 @@ def test_pdf_set_5_gcps_ogc_bp(poppler_or_pdfium):
 
     expected_gt = [0, 1, 0, 0, 0, 1]
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8, 'did not get expected gt'
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8), 'did not get expected gt'
 
     assert got_gcp_count == len(gcp), 'did not get expected GCP count'
 
     for i in range(got_gcp_count):
-        assert (abs(got_gcps[i].GCPX - vrt_gcps[i].GCPX) <= 1e-5 and \
-           abs(got_gcps[i].GCPY - vrt_gcps[i].GCPY) <= 1e-5 and \
-           abs(got_gcps[i].GCPPixel - vrt_gcps[i].GCPPixel) <= 1e-5 and \
-           abs(got_gcps[i].GCPLine - vrt_gcps[i].GCPLine) <= 1e-5), \
+        assert (got_gcps[i].GCPX == pytest.approx(vrt_gcps[i].GCPX, abs=1e-5) and \
+           got_gcps[i].GCPY == pytest.approx(vrt_gcps[i].GCPY, abs=1e-5) and \
+           got_gcps[i].GCPPixel == pytest.approx(vrt_gcps[i].GCPPixel, abs=1e-5) and \
+           got_gcps[i].GCPLine == pytest.approx(vrt_gcps[i].GCPLine, abs=1e-5)), \
             ('did not get expected GCP (%d)' % i)
 
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
@@ -987,7 +987,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     ds = None
 
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 2e-7, 'did not get expected gt'
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=2e-7), 'did not get expected gt'
 
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
@@ -1017,7 +1017,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
 
     for i in range(6):
-        assert (not (expected_gt[i] == 0 and abs(got_gt[i] - expected_gt[i]) > 1e-7) or \
+        assert (not (expected_gt[i] == 0 and got_gt[i] != pytest.approx(expected_gt[i], abs=1e-7)) or \
            (expected_gt[i] != 0 and abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) > 1e-7)), \
             'did not get expected gt'
 

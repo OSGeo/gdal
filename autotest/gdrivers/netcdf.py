@@ -313,7 +313,7 @@ def test_netcdf_3():
     bnd = ds.GetRasterBand(1)
     minmax = bnd.ComputeRasterMinMax()
 
-    assert abs(minmax[0] - (-0.675758)) <= 0.000001 and abs(minmax[1] - 1.0) <= 0.000001, \
+    assert minmax[0] == pytest.approx((-0.675758), abs=0.000001) and minmax[1] == pytest.approx(1.0, abs=0.000001), \
         'Wrong min or max.'
 
     bnd = None
@@ -1501,8 +1501,8 @@ def test_netcdf_43():
 
     tmp_ds = gdal.Warp('', 'tmp/netcdf_43.nc', options = '-f MEM -geoloc')
     gt = tmp_ds.GetGeoTransform()
-    assert abs(gt[0] - -117.3) < 1, gt
-    assert abs(gt[3] - 33.9) < 1, gt
+    assert gt[0] == pytest.approx(-117.3, abs=1), gt
+    assert gt[3] == pytest.approx(33.9, abs=1), gt
 
 
 ###############################################################################

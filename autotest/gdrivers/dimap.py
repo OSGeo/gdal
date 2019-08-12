@@ -31,6 +31,7 @@
 import os
 import shutil
 from osgeo import gdal
+import pytest
 
 
 
@@ -63,7 +64,7 @@ def test_dimap_1():
        or gcp_srs.find('84') == -1)), 'GCP Projection not retained.'
 
     gcps = ds.GetGCPs()
-    assert len(gcps) == 4 and gcps[0].GCPPixel == 0.5 and gcps[0].GCPLine == 0.5 and abs(gcps[0].GCPX - 4.3641728) <= 0.0000002 and abs(gcps[0].GCPY - 44.2082255) <= 0.0000002 and abs(gcps[0].GCPZ - 0) <= 0.0000002, \
+    assert len(gcps) == 4 and gcps[0].GCPPixel == 0.5 and gcps[0].GCPLine == 0.5 and gcps[0].GCPX == pytest.approx(4.3641728, abs=0.0000002) and gcps[0].GCPY == pytest.approx(44.2082255, abs=0.0000002) and gcps[0].GCPZ == pytest.approx(0, abs=0.0000002), \
         'GCPs wrong.'
 
     ds = None

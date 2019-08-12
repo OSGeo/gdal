@@ -1339,7 +1339,7 @@ def test_warp_41():
     src_gt = src_ds.GetGeoTransform()
     vrt_gt = vrt_ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - vrt_gt[i]) <= 1e-5
+        assert src_gt[i] == pytest.approx(vrt_gt[i], abs=1e-5)
 
     
 ###############################################################################
@@ -1673,7 +1673,7 @@ def test_warp_56():
 
         exp = 0 if off < 1 else 100 * (off - 1)**2
         warped = pix_ds.GetRasterBand(1).ReadAsArray()[0, 0]
-        assert abs(warped - exp) <= 0.6, \
+        assert warped == pytest.approx(exp, abs=0.6), \
             'offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped)
 
 

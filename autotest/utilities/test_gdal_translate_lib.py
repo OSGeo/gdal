@@ -339,7 +339,7 @@ def test_gdal_translate_lib_102():
     ds2 = gdal.Translate('', ds, format='MEM', scaleParams=[[]], outputType=gdal.GDT_Byte)
     stats = ds2.GetRasterBand(1).ComputeStatistics(False)
     for i in range(4):
-        assert abs(stats[i] - expected_stats[i]) <= 1e-3
+        assert stats[i] == pytest.approx(expected_stats[i], abs=1e-3)
 
     
 ###############################################################################

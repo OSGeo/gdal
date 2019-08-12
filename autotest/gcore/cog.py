@@ -276,7 +276,7 @@ def test_cog_small_world_to_web_mercator():
     expected_gt = [-20037508.342789248, 156543.033928041, 0.0,
                    20037508.342789248, 0.0, -156543.033928041]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-10 * abs(expected_gt[i]):
+        if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
@@ -329,7 +329,7 @@ def test_cog_byte_to_web_mercator():
     expected_gt = [-13149614.849955443, 76.43702828517598, 0.0,
                    4070118.8821290657, 0.0, -76.43702828517598]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-10 * abs(expected_gt[i]):
+        if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
     assert ds.GetRasterBand(1).Checksum() == 4363
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
@@ -377,7 +377,7 @@ def test_cog_byte_to_web_mercator_manual():
     expected_gt = [-13149614.849955443, 76.43702828517598, 0.0,
                    4070118.8821290657, 0.0, -76.43702828517598]
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-10 * abs(expected_gt[i]):
+        if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
     assert ds.GetRasterBand(1).Checksum() == 4363
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
