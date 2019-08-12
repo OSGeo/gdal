@@ -199,7 +199,8 @@ static CPLErr SetBuffer( tiledb::Query* poQuery, GDALDataType eType,
 TileDBRasterBand::TileDBRasterBand(
         TileDBDataset *poDSIn, int nBandIn, CPLString osAttr ) :
     poGDS( poDSIn ),
-    bStats( poDSIn->bStats )
+    bStats( poDSIn->bStats ),
+    osAttrName(osAttr)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -209,7 +210,6 @@ TileDBRasterBand::TileDBRasterBand(
     nRasterYSize = poGDS->nRasterYSize;
     nBlockXSize = poGDS->nBlockXSize;
     nBlockYSize = poGDS->nBlockYSize;
-    osAttrName = osAttr;
 
     m_query.reset(new tiledb::Query( *poGDS->m_ctx, *poGDS->m_array ) );
     
