@@ -1617,7 +1617,9 @@ void GRIBArray::Finalize(GRIBGroup* poGroup, inventoryType *psInv)
         GUInt64 nStart = 0;
         size_t nCount = m_adfTimes.size();
         var->SetUnit("sec UTC");
-        var->Write(&nStart, &nCount, nullptr, nullptr,
+        const GUInt64 anStart[] = { nStart };
+        const size_t anCount[] = { nCount };
+        var->Write(anStart, anCount, nullptr, nullptr,
                    var->GetDataType(), &m_adfTimes[0]);
         auto attr = var->CreateAttribute("long_name", {},
                                          GDALExtendedDataType::CreateString());
