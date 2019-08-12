@@ -795,7 +795,7 @@ int DWGFileR2000::CreateFileMap()
         DebugMsg( "Object map section #%d size: %d\n",
                   static_cast<int>(++nSection), dSectionSize );
 
-        if( dSectionSize == dSizeOfSectionSize )
+        if( dSectionSize <= dSizeOfSectionSize )
             break; // Last section is empty.
 
         CADBuffer buffer(dSectionSize + dSizeOfSectionSize + 10);
