@@ -485,7 +485,9 @@ static const DimensionDesc* GetDimensionDesc(DimensionRemapper& oDimRemapper,
                              poDim->GetSize() - nStartIdx));
                 if( nCount == 0 )
                     break;
-                if( !var->Read(&nStartIdx, &nCount, nullptr, nullptr,
+                const GUInt64 anStartId[] = { nStartIdx };
+                const size_t anCount[] = { nCount };
+                if( !var->Read(anStartId, anCount, nullptr, nullptr,
                                dt, &abyTmp[0], nullptr, 0) )
                 {
                     return nullptr;
@@ -1606,8 +1608,10 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
     }
 
     const bool bCloseOutDSOnError = hDstDS == nullptr;
+#ifdef this_is_dead_code_for_now
     if( pszDest == nullptr )
         pszDest = GDALGetDescription(hDstDS);
+#endif
 
     GDALDriver* poDriver = nullptr;
     if( hDstDS == nullptr )
@@ -1639,8 +1643,6 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
             return nullptr;
         }
     }
-
-    bool bError = false;
 
     GDALDataset* poSrcDS = GDALDataset::FromHandle(pahSrcDS[0]);
 
@@ -1686,6 +1688,7 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
         poDriver->GetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL) == nullptr &&
         poDriver->GetMetadataItem(GDAL_DCAP_CREATECOPY_MULTIDIMENSIONAL) == nullptr )
     {
+#ifdef this_is_dead_code_for_now
         if( hDstDS )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -1694,6 +1697,7 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
             hDstDS = nullptr;
             return nullptr;
         }
+#endif
         hDstDS = CopyToNonMultiDimensionalDriver(
             poDriver, pszDest, poRG, psOptions);
     }
@@ -1704,12 +1708,6 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
                     psOptions ? const_cast<char**>(psOptions->aosCreateOptions.List()) : nullptr,
                     psOptions ? psOptions->pfnProgress : nullptr,
                     psOptions ? psOptions->pProgressData : nullptr));
-    }
-
-    if( bCloseOutDSOnError && bError )
-    {
-        GDALClose(hDstDS);
-        hDstDS = nullptr;
     }
 
     return hDstDS;
