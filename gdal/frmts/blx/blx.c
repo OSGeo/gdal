@@ -689,7 +689,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
 
 STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len, int *side, blxdata *outbuf, int outbufsize, int overviewlevel) {
     unsigned char *inptr=inbuf;
-    int resolution,l_div,level,c,n,i,j,dpos,v,tmp,a,value,l_index,step,cellsize;
+    int resolution,l_div,level,c,n,i,j,dpos,tmp,a,value,l_index,step,cellsize;
     int baseside[12] = { 0 };
     blxdata *base, *diff;
     struct component_s linfo[MAXLEVELS][MAXCOMPONENTS];
@@ -821,13 +821,14 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
                     goto error;
                 }
 		for(i=0; i<linfo[level][c].dlen; i++) {
-		    v = *inptr++;
+		    unsigned char v = *inptr++;
 		    if(v >= linfo[level][c].n-1) {
                         if(dpos + 256-v > baseside[level]*baseside[level]) {
                             BLXerror0("Cell corrupt\n");
                             outbuf = NULL;
                             goto error;
                         }
+                        /* coverity[tainted_data] */
 			for(j=0; j<256-v; j++)
 			    linfo[level][c].data[dpos++] = 0;
 		    }
