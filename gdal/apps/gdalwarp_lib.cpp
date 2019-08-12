@@ -1127,6 +1127,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS,
             CPLString osFormat = GetOutputDriverForRaster(pszDest);
             if( osFormat.empty() )
             {
+                GDALWarpAppOptionsFree(psOptions);
                 return nullptr;
             }
             psOptions->pszFormat = CPLStrdup(osFormat);
