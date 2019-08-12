@@ -2801,10 +2801,10 @@ protected:
         m_dims(std::move(dims)),
         m_mapDimIdxToParentDimIdx(std::move(mapDimIdxToParentDimIdx)),
         m_parentRanges(parentRanges),
-        m_parentStart(poParent->GetDimensionCount()),
-        m_parentCount(poParent->GetDimensionCount(), 1),
-        m_parentStep(poParent->GetDimensionCount()),
-        m_parentStride(poParent->GetDimensionCount())
+        m_parentStart(m_poParent->GetDimensionCount()),
+        m_parentCount(m_poParent->GetDimensionCount(), 1),
+        m_parentStep(m_poParent->GetDimensionCount()),
+        m_parentStride(m_poParent->GetDimensionCount())
     {
     }
 
@@ -3573,10 +3573,10 @@ protected:
         m_poParent(std::move(poParent)),
         m_anMapNewAxisToOldAxis(anMapNewAxisToOldAxis),
         m_dims(std::move(dims)),
-        m_parentStart(poParent->GetDimensionCount()),
-        m_parentCount(poParent->GetDimensionCount()),
-        m_parentStep(poParent->GetDimensionCount()),
-        m_parentStride(poParent->GetDimensionCount())
+        m_parentStart(m_poParent->GetDimensionCount()),
+        m_parentCount(m_poParent->GetDimensionCount()),
+        m_parentStep(m_poParent->GetDimensionCount()),
+        m_parentStride(m_poParent->GetDimensionCount())
     {
     }
 
