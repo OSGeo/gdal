@@ -40,6 +40,7 @@
 #endif
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <memory>
 #include <set>
@@ -2156,6 +2157,8 @@ int VSIIngestFile( VSILFILE* fp,
         // VSIMalloc could allocate. Catch it here.
         if( nDataLen != static_cast<vsi_l_offset>(static_cast<size_t>(nDataLen))
             || nDataLen + 1 < nDataLen
+            // opening a directory returns nDataLen = INT_MAX (on 32bit) or INT64_MAX (on 64bit)
+            || nDataLen + 1 > std::numeric_limits<size_t>::max() / 2
             || (nMaxSize >= 0 &&
                 nDataLen > static_cast<vsi_l_offset>(nMaxSize)) )
         {
