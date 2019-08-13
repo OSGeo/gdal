@@ -131,7 +131,8 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
                 poDSIn->apoVRTDataset[i]->GetRasterBand(nBandIn)));
 
             int bSuccess = FALSE;
-            double dfNoDataValue = GetNoDataValue(&bSuccess);
+            double dfNoDataValue =
+                RDBRasterBandInternal::GetNoDataValue(&bSuccess);
             if(bSuccess == FALSE)
             {
                 dfNoDataValue = VRT_NODATA_UNSET;
