@@ -315,12 +315,20 @@ bool RLE::decompress(const Byte* arrRLE, size_t nBytesRemaining, Byte* arr, size
 
     if (cnt > 0)
     {
-      while (i--) arr[arrIdx++] = *srcPtr++;
+      while (i)
+      {
+        --i;
+        arr[arrIdx++] = *srcPtr++;
+      }
     }
     else
     {
       Byte b = *srcPtr++;
-      while (i--) arr[arrIdx++] = b;
+      while (i)
+      {
+        --i;
+        arr[arrIdx++] = b;
+      }
     }
 
     nBytesRemaining -= m + 2;

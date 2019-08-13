@@ -175,8 +175,11 @@ static size_t fromYarn(const char *ibuffer, size_t ilen, char *obuf, size_t olen
 // Returns the least used byte value from a buffer
 static Byte getLeastUsed(const Byte *src, size_t len) {
   std::vector<unsigned int> hist(256, 0);
-  while (len--)
+  while (len)
+  {
+    --len;
     hist[*src++]++;
+  }
   return UC(std::min_element(hist.begin(), hist.end()) - hist.begin());
 }
 

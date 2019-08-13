@@ -5958,6 +5958,13 @@ static void TryChopUpUncompressedBigTiff( TIFF* tif )
     allocChoppedUpStripArrays(tif, nstrips, stripbytes, rowsperstrip);
 }
 
+
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static uint64 _TIFFUnsanitizedAddUInt64AndInt(uint64 a, int b)
+{
+    return a + b;
+}
+
 /* Read the value of [Strip|Tile]Offset or [Strip|Tile]ByteCount around
  * strip/tile of number strile. Also fetch the neighbouring values using a
  * 4096 byte page size.
@@ -6059,7 +6066,7 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
         iStartBefore = -strile;
     for( i = iStartBefore;
          (uint32)(strile + i) < arraySize &&
-         (uint64)(nOffset) + (i + 1) * sizeofvalint <= nOffsetEndPage;
+         _TIFFUnsanitizedAddUInt64AndInt(nOffset, (i + 1) * sizeofvalint) <= nOffsetEndPage;
          ++i )
     {
         if( sizeofval == sizeof(uint16) )

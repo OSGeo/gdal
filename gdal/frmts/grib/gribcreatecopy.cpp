@@ -756,7 +756,7 @@ float* GRIB2Section567Writer::GetFloatData()
         GDT_Float32,
         sizeof(float),
         m_adfGeoTransform[5] < 0 ?
-            static_cast<GSpacing>(-m_nXSize * sizeof(float)):
+            -static_cast<GSpacing>(m_nXSize * sizeof(float)):
             static_cast<GSpacing>(m_nXSize * sizeof(float)),
         nullptr);
     if( eErr != CE_None )

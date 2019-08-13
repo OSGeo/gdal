@@ -2,7 +2,7 @@
 
 set -e
 
-export PRELOAD=/usr/lib/gcc/x86_64-linux-gnu/5/libasan.so:/usr/lib/gcc/x86_64-linux-gnu/5/libubsan.so
+export PRELOAD=$PWD/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04/lib/clang/6.0.1/lib/linux/libclang_rt.asan-x86_64.so
 
 cd gdal
 
@@ -32,7 +32,7 @@ sudo -H pip install -U numpy
 # to not fail when the address sanitizer finds errors.
 # So we tee the output to a file and grep it to discover if the tests failed.
 export SKIP_MEM_INTENSIVE_TEST=YES SKIP_VIRTUALMEM=YES LD_PRELOAD=$PRELOAD \
-    ASAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/asan_suppressions.txt
+    LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/asan_suppressions.txt
 
 gdalinfo gcore/data/byte.tif
 python -c "from osgeo import gdal; print('yes')"

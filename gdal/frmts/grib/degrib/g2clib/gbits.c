@@ -118,7 +118,8 @@ void sbits(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte,g2int nski
              out[l_index] = (unsigned char)(itmp2 | itmp3);
              bitcnt = bitcnt - tbit;
              itmp = itmp >> tbit;
-             l_index--;
+             if( bitcnt > 0 )
+                l_index--;
          }
 
 //        now byte aligned
@@ -128,7 +129,8 @@ void sbits(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte,g2int nski
              out[l_index] = (unsigned char)(itmp & 255);
              itmp = itmp >> 8;
              bitcnt = bitcnt - 8;
-             l_index--;
+             if( bitcnt > 0 )
+                l_index--;
          }
 
 //        do last byte
