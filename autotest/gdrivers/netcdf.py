@@ -3112,9 +3112,7 @@ def test_bad_cf1_8():
     assert(corrupt_poly_1 is None)
     assert(corrupt_poly_2 is None)
     assert(corrupt_poly_3 is None)
-
-    # this error is no longer fatal
-    assert(uneq_x_y != None)
+    assert(uneq_x_y is None)
 
 def test_point_read():
     if gdaltest.netcdf_drv is None:
