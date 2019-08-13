@@ -710,9 +710,9 @@ size_t RMFDataset::DEMCompress(const GByte* pabyIn, GUInt32 nSizeIn,
 
         nLessCount++;
 
-        GUInt32 nElementDeltaSize(nRecordElementSize -
-                                  anDeltaTypeSize[eCurrType >> 5]);
-        if( nElementDeltaSize * nLessCount < 16)
+        GUInt32 nDeltaSize(anDeltaTypeSize[eCurrType >> 5]);
+        if(nRecordElementSize < nDeltaSize ||
+           (nRecordElementSize - nDeltaSize) * nLessCount < 16)
         {
             continue;
         }
