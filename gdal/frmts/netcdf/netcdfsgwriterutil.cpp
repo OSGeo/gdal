@@ -218,7 +218,7 @@ namespace nccfdriver
         /* detect underflow cases-
          * better not subtract more than we already counted...
          */
-        CPLAssert(used_mem >= memfree);
+        CPLAssert(this->used_mem >= memfree);
 
         this->used_mem -= memfree;
     }
