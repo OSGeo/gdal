@@ -215,12 +215,12 @@ namespace nccfdriver
 
     inline void WBuffer::subCount(unsigned long long memfree)
     {
-        unsigned long long oldmem = this->used_mem;
-        this->used_mem -= memfree;
-        CPLAssert(used_mem <= oldmem);
-        /* detect underflow cases- if we subtract, then the new value better not 
-         * be larger!
+        /* detect underflow cases-
+         * better not subtract more than we already counted...
          */
+        CPLAssert(used_mem >= memfree);
+
+        this->used_mem -= memfree;
     }
 
     void ncLayer_SG_Metadata::initializeNewContainer(int containerVID)
