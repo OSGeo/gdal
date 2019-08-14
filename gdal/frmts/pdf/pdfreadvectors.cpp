@@ -504,6 +504,8 @@ static OGRPoint* PDFGetStarCenter(OGRLineString* poLS)
     double dfSqD13 = SQUARE(poLS->getX(1) - poLS->getX(3)) +
                       SQUARE(poLS->getY(1) - poLS->getY(3));
     const double dfSin18divSin126 = 0.38196601125;
+    if( dfSqD02 == 0 )
+        return nullptr;
     int bOK = fabs(dfSqD13 / dfSqD02 - SQUARE(dfSin18divSin126)) < EPSILON;
     for(int i=1;i<10 && bOK;i++)
     {
