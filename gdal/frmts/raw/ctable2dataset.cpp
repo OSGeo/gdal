@@ -316,7 +316,7 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
 
     // write grid header.
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpImage, 0, SEEK_SET ));
-    CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 11, 16, fpImage ));
+    CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, sizeof(achHeader), fpImage ));
 
     return CE_None;
 }
