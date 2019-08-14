@@ -2413,6 +2413,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                             "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK", "NO"));
         if( !bApproxOK )
         {
+            // coverity[tainted_data]
             dfPixelThreshold =
                 CPLAtof(CPLGetConfigOption(
                     "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD", "0.25"));
