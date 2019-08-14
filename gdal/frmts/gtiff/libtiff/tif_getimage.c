@@ -755,9 +755,8 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	uint32 leftmost_tw;
 
 	tilesize = TIFFTileSize(tif);  
-	bufsize = TIFFSafeMultiply(tmsize_t,alpha?4:3,tilesize);
+	bufsize = _TIFFMultiplySSize(tif, alpha?4:3,tilesize, "gtTileSeparate");
 	if (bufsize == 0) {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in %s", "gtTileSeparate");
 		return (0);
 	}
 
@@ -1019,9 +1018,8 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
         uint16 colorchannels;
 
 	stripsize = TIFFStripSize(tif);  
-	bufsize = TIFFSafeMultiply(tmsize_t,alpha?4:3,stripsize);
+	bufsize = _TIFFMultiplySSize(tif,alpha?4:3,stripsize, "gtStripSeparate");
 	if (bufsize == 0) {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in %s", "gtStripSeparate");
 		return (0);
 	}
 
