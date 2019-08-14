@@ -190,7 +190,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
 
         if (CURLM_OK == mc) {
             int numfds;
-            curl_multi_wait(curl_multi, NULL, 0, 100, &numfds);
+            curl_multi_wait(curl_multi, nullptr, 0, 100, &numfds);
         }
     } while (still_running || conn_i != nRequestCount);
     CPLHTTPRestoreSigPipeHandler(old_handler);
