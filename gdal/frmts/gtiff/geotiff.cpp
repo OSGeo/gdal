@@ -67,6 +67,7 @@
 #include "cpl_config.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_error_internal.h"
 #include "cpl_mem_cache.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
@@ -7517,33 +7518,6 @@ int GTiffSplitBitmapBand::IGetDataCoverageStatus( int , int ,
 }
 
 /************************************************************************/
-/*                            GTIFFErrorHandler()                       */
-/************************************************************************/
-
-namespace {
-class GTIFFErrorStruct final
-{
-  public:
-    CPLErr type;
-    CPLErrorNum no;
-    CPLString msg{};
-
-    GTIFFErrorStruct() : type(CE_None), no(CPLE_None) {}
-    GTIFFErrorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
-        type(eErrIn), no(noIn), msg(msgIn) {}
-};
-}
-
-static void CPL_STDCALL GTIFFErrorHandler( CPLErr eErr, CPLErrorNum no,
-                                           const char* msg )
-{
-    std::vector<GTIFFErrorStruct>* paoErrors =
-        static_cast<std::vector<GTIFFErrorStruct> *>(
-            CPLGetErrorHandlerUserData());
-    paoErrors->push_back(GTIFFErrorStruct(eErr, no, msg));
-}
-
-/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
@@ -7577,11 +7551,11 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
     {
         ++m_poGDS->m_nLoadedBlock;
 
-        std::vector<GTIFFErrorStruct> aoErrors;
-        CPLPushErrorHandlerEx(GTIFFErrorHandler, &aoErrors);
+        std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+        CPLInstallErrorHandlerAccumulator(aoErrors);
         int nRet = TIFFReadScanline( m_poGDS->m_hTIFF, m_poGDS->m_pabyBlockBuf,
                                      m_poGDS->m_nLoadedBlock, 0 );
-        CPLPopErrorHandler();
+        CPLUninstallErrorHandlerAccumulator();
 
         for( size_t iError = 0; iError < aoErrors.size(); ++iError )
         {
@@ -12476,8 +12450,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // Store errors/warnings and emit them later.
-    std::vector<GTIFFErrorStruct> aoErrors;
-    CPLPushErrorHandlerEx(GTIFFErrorHandler, &aoErrors);
+    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+    CPLInstallErrorHandlerAccumulator(aoErrors);
     CPLSetCurrentErrorHandlerCatchDebug( FALSE );
     const bool bDeferStrileLoading = CPLTestBool(
         CPLGetConfigOption("GTIFF_USE_DEFER_STRILE_LOADING", "YES"));
@@ -12487,7 +12461,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                         ((bStreaming || !bDeferStrileLoading) ? "r" : "rDO") :
                         (!bDeferStrileLoading ? "r+" : "r+D"),
                       poOpenInfo->fpL );
-    CPLPopErrorHandler();
+    CPLUninstallErrorHandlerAccumulator();
 
     // Now emit errors and change their criticality if needed
     // We only emit failures if we didn't manage to open the file.
