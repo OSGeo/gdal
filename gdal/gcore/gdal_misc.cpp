@@ -3047,11 +3047,10 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
             VSIFCloseL( fpOptFile );
 
-            char** papszArgvOptfileMod = papszArgvOptfile;
             if( !bHasOptfile )
             {
                 if( GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
-                                        &papszArgvOptfileMod, nOptions) < 0 )
+                                        &papszArgvOptfile, nOptions) < 0 )
                 {
                     CSLDestroy( papszReturn );
                     CSLDestroy(papszArgvOptfile);
@@ -3059,14 +3058,13 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 }
             }
 
-            char** papszIter = papszArgvOptfileMod + 1;
+            char** papszIter = papszArgvOptfile + 1;
             while( *papszIter )
             {
                 papszReturn = CSLAddString(papszReturn, *papszIter);
                 ++ papszIter;
             }
             CSLDestroy(papszArgvOptfile);
-            CSLDestroy(papszArgvOptfileMod);
 
             iArg += 1;
         }
