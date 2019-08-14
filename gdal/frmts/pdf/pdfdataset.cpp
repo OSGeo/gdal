@@ -4413,6 +4413,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszDPI = GetOption(poOpenInfo->papszOpenOptions, "DPI", nullptr);
         if (pszDPI != nullptr)
         {
+            // coverity[tainted_data]
             poDS->dfDPI = CPLAtof(pszDPI);
         }
     }
