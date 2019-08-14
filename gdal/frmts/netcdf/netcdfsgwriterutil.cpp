@@ -208,6 +208,21 @@ namespace nccfdriver
         this->geometry_ref = ft.GetGeometryRef();
     }
 
+    inline void WBuffer::addCount(unsigned long long memuse)
+    {
+        this->used_mem += memuse;
+    }
+
+    inline void WBuffer::subCount(unsigned long long memfree)
+    {
+        unsigned long long oldmem = this->used_mem;
+        this->used_mem -= memfree;
+        CPLAssert(used_mem <= oldmem);
+        /* detect underflow cases- if we subtract, then the new value better not 
+         * be larger!
+         */
+    }
+
     void ncLayer_SG_Metadata::initializeNewContainer(int containerVID)
     {
         this->containerVar_realID = containerVID;
@@ -724,6 +739,9 @@ namespace nccfdriver
         MTPtr m = this->wl.pop();
         if(m.get() != nullptr)
         {
+            // add it to the buffer count
+            this->buf.addCount(sizeof(m));
+            this->buf.addCount(m->count());
             return m;
         }
 
@@ -750,7 +768,6 @@ namespace nccfdriver
             wl.push(MTPtr(transactionQueue.front().release()));
             this->transactionQueue.pop();
         }
-
         this->buf.reset();
     }
 
