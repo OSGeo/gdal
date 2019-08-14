@@ -1269,16 +1269,10 @@ LogL16GuessDataFmt(TIFFDirectory *td)
 	return (SGILOGDATAFMT_UNKNOWN);
 }
 
-
-#define TIFF_SIZE_T_MAX ((size_t) ~ ((size_t)0))
-#define TIFF_TMSIZE_T_MAX (tmsize_t)(TIFF_SIZE_T_MAX >> 1)
-
 static tmsize_t
 multiply_ms(tmsize_t m1, tmsize_t m2)
 {
-        if( m1 == 0 || m2 > TIFF_TMSIZE_T_MAX / m1 )
-            return 0;
-        return m1 * m2;
+        return _TIFFMultiplySSize(NULL, m1, m2, NULL);
 }
 
 static int

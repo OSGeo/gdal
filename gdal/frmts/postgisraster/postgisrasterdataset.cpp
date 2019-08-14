@@ -148,8 +148,10 @@ PostGISRasterDataset::PostGISRasterDataset() :
     adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
     adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = 0.0;
     adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
+    // coverity[tainted_data]
     adfGeoTransform[GEOTRSFRM_WE_RES] =
         CPLAtof(CPLGetConfigOption("PR_WE_RES", NO_VALID_RES));
+    // coverity[tainted_data]
     adfGeoTransform[GEOTRSFRM_NS_RES] =
         CPLAtof(CPLGetConfigOption("PR_NS_RES", NO_VALID_RES));
 

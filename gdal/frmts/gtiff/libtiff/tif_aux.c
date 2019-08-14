@@ -58,18 +58,57 @@ _TIFFMultiply64(TIFF* tif, uint64 first, uint64 second, const char* where)
 	return bytes;
 }
 
+tmsize_t
+_TIFFMultiplySSize(TIFF* tif, tmsize_t first, tmsize_t second, const char* where)
+{
+    if( first <= 0 || second <= 0 )
+    {
+        if( tif != NULL && where != NULL )
+        {
+            TIFFErrorExt(tif->tif_clientdata, where,
+                        "Invalid argument to _TIFFMultiplySSize() in %s", where);
+        }
+        return 0;
+    }
+
+    if( first > TIFF_TMSIZE_T_MAX / second )
+    {
+        if( tif != NULL && where != NULL )
+        {
+            TIFFErrorExt(tif->tif_clientdata, where,
+                        "Integer overflow in %s", where);
+        }
+        return 0;
+    }
+    return first * second;
+}
+
+tmsize_t _TIFFCastUInt64ToSSize(TIFF* tif, uint64 val, const char* module)
+{
+    if( val > (uint64)TIFF_TMSIZE_T_MAX )
+    {
+        if( tif != NULL && module != NULL )
+        {
+            TIFFErrorExt(tif->tif_clientdata,module,"Integer overflow");
+        }
+        return 0;
+    }
+    return (tmsize_t)val;
+}
+
 void*
 _TIFFCheckRealloc(TIFF* tif, void* buffer,
 		  tmsize_t nmemb, tmsize_t elem_size, const char* what)
 {
 	void* cp = NULL;
-	tmsize_t bytes = nmemb * elem_size;
-
+        tmsize_t count = _TIFFMultiplySSize(tif, nmemb, elem_size, NULL);
 	/*
-	 * XXX: Check for integer overflow.
+	 * Check for integer overflow.
 	 */
-	if (nmemb && elem_size && bytes / elem_size == nmemb)
-		cp = _TIFFrealloc(buffer, bytes);
+	if (count != 0)
+	{
+		cp = _TIFFrealloc(buffer, count);
+	}
 
 	if (cp == NULL) {
 		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,

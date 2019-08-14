@@ -9358,7 +9358,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
 /************************************************************************/
 
 template<class T> static void DiscardLsbT(GByte* pabyBuffer, 
-                                         GPtrDiff_t nBytes,
+                                         size_t nBytes,
                                          int iBand,
                                          int nBands,
                                          uint16 nPlanarConfig,
@@ -9368,7 +9368,7 @@ template<class T> static void DiscardLsbT(GByte* pabyBuffer,
     {
         const int nMask = panMaskOffsetLsb[iBand].nMask;
         const int nOffset = panMaskOffsetLsb[iBand].nOffset;
-        for( decltype(nBytes) i = 0; i < nBytes/2; ++i )
+        for( size_t i = 0; i < nBytes/sizeof(T); ++i )
         {
             reinterpret_cast<T*>(pabyBuffer)[i] =
                 static_cast<T>(
@@ -9378,7 +9378,7 @@ template<class T> static void DiscardLsbT(GByte* pabyBuffer,
     }
     else
     {
-        for( decltype(nBytes) i = 0; i < nBytes/2; i += nBands )
+        for( size_t i = 0; i < nBytes/sizeof(T); i += nBands )
         {
             for( int j = 0; j < nBands; ++j )
             {

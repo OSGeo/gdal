@@ -1107,6 +1107,12 @@ OJPEGReadHeaderInfo(TIFF* tif)
 	}
 	if (sp->strile_length<sp->image_length)
 	{
+		if (((sp->subsampling_hor!=1) && (sp->subsampling_hor!=2) && (sp->subsampling_hor!=4)) ||
+		    ((sp->subsampling_ver!=1) && (sp->subsampling_ver!=2) && (sp->subsampling_ver!=4)))
+		{
+			TIFFErrorExt(tif->tif_clientdata,module,"Invalid subsampling values");
+			return(0);
+		}
 		if (sp->strile_length%(sp->subsampling_ver*8)!=0)
 		{
 			TIFFErrorExt(tif->tif_clientdata,module,"Incompatible vertical subsampling and image strip/tile length");

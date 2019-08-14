@@ -348,15 +348,19 @@ void PDSDataset::ParseSRS()
 
     // https://trac.osgeo.org/gdal/ticket/5941 has the history of the default
     /* value of PDS_SampleProjOffset_Shift and PDS_LineProjOffset_Shift */
+    // coverity[tainted_data]
     double dfSampleOffset_Shift =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "0.5" ));
 
+    // coverity[tainted_data]
     const double dfLineOffset_Shift =
         CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "0.5" ));
 
+    // coverity[tainted_data]
     const double dfSampleOffset_Mult =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
 
+    // coverity[tainted_data]
     const double dfLineOffset_Mult =
         CPLAtof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
 
