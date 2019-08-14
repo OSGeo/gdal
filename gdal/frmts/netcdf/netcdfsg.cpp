@@ -27,6 +27,7 @@
  ****************************************************************************/
 #include <cstdio>
 #include <cstring>
+#include <set>
 #include <vector>
 #include "netcdf.h"
 #include "netcdfdataset.h"
@@ -123,12 +124,19 @@ namespace nccfdriver
         int buf;
         size_t bound = 0;
         size_t total_node_count = 0; // used in error checks later
+        size_t total_part_node_count = 0;
         if(attrf(ncId, geoVarId, CF_SG_NODE_COUNT, nc_name_s) != "")
         {
             const char * nc_name = nc_name_s.c_str();
             nc_inq_varid(ncId, nc_name, &nc_vid);
             while(nc_get_var1_int(ncId, nc_vid, &bound, &buf) == NC_NOERR)
             {
+                if(buf < 0)
+                {
+                    throw SG_Exception_Value_Violation(static_cast<const char*>(container_name), CF_SG_NODE_COUNT,
+                                                       "negative");
+                }
+
                 this->node_counts.push_back(buf);
                 total_node_count += buf;
                 bound++;    
@@ -143,7 +151,14 @@ namespace nccfdriver
             nc_inq_varid(ncId, pnc_name, &pnc_vid);
             while(nc_get_var1_int(ncId, pnc_vid, &bound, &buf) == NC_NOERR)
             {
+                if(buf < 0)
+                {
+                    throw SG_Exception_Value_Violation(static_cast<const char*>(container_name), CF_SG_PART_NODE_COUNT,
+                                                       "negative");
+                }
+
                 this->pnode_counts.push_back(buf);
+                total_part_node_count += buf;
                 bound++;    
             }    
         }    
@@ -156,11 +171,17 @@ namespace nccfdriver
             while(nc_get_var1_int(ncId, ir_vid, &bound, &buf) == NC_NOERR)
             {
                 bool store = buf == 0 ? false : true;
+
+                if(buf != 0 && buf != 1)
+                {
+                    throw SG_Exception_Value_Required(static_cast<const char*>(container_name), CF_SG_INTERIOR_RING,
+                                                       "0 or 1");
+                }
+
                 this->int_rings.push_back(store);
                 bound++;
             }
         }
-        
 
 
         /* Enforcement of well formed CF files
@@ -172,6 +193,12 @@ namespace nccfdriver
         if(pnode_counts.size() > 0 && node_counts.size() == 0)
         {
             throw SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
+        }
+
+        // part node counts and node counts don't match up in count
+        if(pnc_vid != INVALID_VAR_ID && total_node_count != total_part_node_count)
+        {
+            throw SG_Exception_BadSum(static_cast<const char*>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_PART_NODE_COUNT); 
         }
 
         // interior rings only exist when part node counts exist
@@ -330,7 +357,8 @@ namespace nccfdriver
          * (3) there are at least two node coordinate variable ids
          */
 
-        int all_dim = INVALID_VAR_ID; bool dim_set = false;
+        int all_dim = INVALID_VAR_ID;
+        bool dim_set = false;
         int dimC = 0;
         //(1) one dimension check, each node_coordinates have same dimension
         for(size_t nvitr = 0; nvitr < nodec_varIds.size(); nvitr++)
@@ -353,6 +381,7 @@ namespace nccfdriver
             if(!dim_set)
             {
                 all_dim = inter_dim[0];
+                dim_set = true;
             }    
 
             else
@@ -767,8 +796,17 @@ namespace nccfdriver
             // If matches, then establish a reference by placing this variable's data in both vectors
             if(!strcmp(contname, buf))
             {
-                char property_name[NC_MAX_NAME];
-                nc_inq_varname(this->nc, curr, property_name);
+                char property_name[NC_MAX_NAME + 1] = {0};
+
+                // look for special OGR original name field
+                if(nc_get_att_text(this->nc, curr, OGR_SG_ORIGINAL_LAYERNAME, property_name) != NC_NOERR)
+                {
+                    // if doesn't exist, then just use the variable name
+                    if(nc_inq_varname(this->nc, curr, property_name) != NC_NOERR)
+                    {
+                        throw SG_Exception_General_Malformed(contname);
+                    }
+                }
                 
                 std::string n(property_name);
                 v_ids.push_back(curr);
@@ -1049,7 +1087,7 @@ namespace nccfdriver
         return writer;
     }
 
-    int scanForGeometryContainers(int ncid, std::vector<int> & r_ids)
+    int scanForGeometryContainers(int ncid, std::set<int> & r_ids)
     {
         int nvars;
         if(nc_inq_nvars(ncid, &nvars) != NC_NOERR)
@@ -1079,16 +1117,7 @@ namespace nccfdriver
 
             // Now have variable ID. See if vector contains it, and if not
             // insert
-            bool contains = false;
-            for(size_t itr_1 = 0; itr_1 < r_ids.size(); itr_1++)
-            {
-                if(r_ids[itr_1] == varID) contains = true;    
-            }
-
-            if(!contains)
-            {
-                r_ids.push_back(varID);
-            }
+            r_ids.insert(varID); // It's a set. No big deal sets don't allow duplicates anyways
         }    
 
         return 0 ;

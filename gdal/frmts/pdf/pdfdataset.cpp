@@ -2955,6 +2955,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
     const char* pszDPI = GetOption(papszOpenOptions, "DPI", nullptr);
     if (pszDPI != nullptr)
     {
+        // coverity[tainted_data]
         dfDPI = CPLAtof(pszDPI);
     }
     else
@@ -3340,6 +3341,8 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
     for(int i=0;i<nLength;i++)
     {
         GDALPDFObject* poObj = poArray->Get(i);
+        if( poObj == nullptr )
+            continue;
         if (i == 0 && poObj->GetType() == PDFObjectType_String)
         {
             CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());

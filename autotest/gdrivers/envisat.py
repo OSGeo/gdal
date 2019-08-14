@@ -344,7 +344,7 @@ class TestEnvisatMERIS(EnvisatTestBase):
 
         for r, v in zip(ref, gcp_values):
             for i, ri in enumerate(r):
-                if abs(float(ri) - float(v[i])) > 1e-10:
+                if float(ri) != pytest.approx(float(v[i]), abs=1e-10):
                     print(r)
                     pytest.fail('Wrong GCP coordinates.')
 

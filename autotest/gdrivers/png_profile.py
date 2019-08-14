@@ -161,7 +161,7 @@ def test_png_copy_options_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
+        assert source_whitepoint2[i] == pytest.approx(source_whitepoint[i], abs=0.0001)
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -170,7 +170,7 @@ def test_png_copy_options_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
+            assert source_primaries2[j][i] == pytest.approx(source_primaries[j][i], abs=0.0001)
 
     assert float(md['PNG_GAMMA']) == 1.5
 
@@ -183,7 +183,7 @@ def test_png_copy_options_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
+        assert source_whitepoint2[i] == pytest.approx(source_whitepoint[i], abs=0.0001)
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -192,7 +192,7 @@ def test_png_copy_options_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
+            assert source_primaries2[j][i] == pytest.approx(source_primaries[j][i], abs=0.0001)
 
     assert float(md['PNG_GAMMA']) == 1.5
 
@@ -230,7 +230,7 @@ def test_png_copy_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
+        assert source_whitepoint2[i] == pytest.approx(source_whitepoint[i], abs=0.0001)
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -239,7 +239,7 @@ def test_png_copy_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
+            assert source_primaries2[j][i] == pytest.approx(source_primaries[j][i], abs=0.0001)
 
     assert float(md['PNG_GAMMA']) == 1.5
 
@@ -252,7 +252,7 @@ def test_png_copy_colorimetric_data():
     source_whitepoint2 = eval('(' + md['SOURCE_WHITEPOINT'] + ')')
 
     for i in range(0, 3):
-        assert abs(source_whitepoint2[i] - source_whitepoint[i]) <= 0.0001
+        assert source_whitepoint2[i] == pytest.approx(source_whitepoint[i], abs=0.0001)
 
     source_primaries2 = [
         eval('(' + md['SOURCE_PRIMARIES_RED'] + ')'),
@@ -261,7 +261,7 @@ def test_png_copy_colorimetric_data():
 
     for j in range(0, 3):
         for i in range(0, 3):
-            assert abs(source_primaries2[j][i] - source_primaries[j][i]) <= 0.0001
+            assert source_primaries2[j][i] == pytest.approx(source_primaries[j][i], abs=0.0001)
 
     assert float(md['PNG_GAMMA']) == 1.5
 

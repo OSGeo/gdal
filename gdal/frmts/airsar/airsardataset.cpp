@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
 
 class AirSARRasterBand;
 
-class AirSARDataset : public GDALPamDataset
+class AirSARDataset final: public GDALPamDataset
 {
     friend class AirSARRasterBand;
 
@@ -74,7 +74,7 @@ class AirSARDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AirSARRasterBand : public GDALPamRasterBand
+class AirSARRasterBand final: public GDALPamRasterBand
 {
   public:
     AirSARRasterBand( AirSARDataset *, int );

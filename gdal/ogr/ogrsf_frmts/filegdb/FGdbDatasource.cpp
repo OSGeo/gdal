@@ -572,7 +572,7 @@ FGdbDataSource::ICreateLayer( const char * pszLayerName,
 /*                   OGRFGdbSingleFeatureLayer                          */
 /************************************************************************/
 
-class OGRFGdbSingleFeatureLayer : public OGRLayer
+class OGRFGdbSingleFeatureLayer final: public OGRLayer
 {
   private:
     char               *pszVal;

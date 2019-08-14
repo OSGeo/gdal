@@ -70,17 +70,17 @@ def test_bag_2():
     assert cs == 1315, ('Wrong checksum on band 3, got %d.' % cs)
 
     b1 = ds.GetRasterBand(1)
-    assert abs(b1.GetMinimum() - 10) <= 0.01, 'band 1 minimum wrong.'
+    assert b1.GetMinimum() == pytest.approx(10, abs=0.01), 'band 1 minimum wrong.'
 
-    assert abs(b1.GetMaximum() - 19.8) <= 0.01, 'band 1 maximum wrong.'
+    assert b1.GetMaximum() == pytest.approx(19.8, abs=0.01), 'band 1 maximum wrong.'
 
-    assert abs(b1.GetNoDataValue() - 1000000.0) <= 0.1, 'band 1 nodata wrong.'
+    assert b1.GetNoDataValue() == pytest.approx(1000000.0, abs=0.1), 'band 1 nodata wrong.'
 
     b2 = ds.GetRasterBand(2)
-    assert abs(b2.GetNoDataValue() - 1000000.0) <= 0.1, 'band 2 nodata wrong.'
+    assert b2.GetNoDataValue() == pytest.approx(1000000.0, abs=0.1), 'band 2 nodata wrong.'
 
     b3 = ds.GetRasterBand(3)
-    assert abs(b3.GetNoDataValue() - 0.0) <= 0.1, 'band 3 nodata wrong.'
+    assert b3.GetNoDataValue() == pytest.approx(0.0, abs=0.1), 'band 3 nodata wrong.'
 
     # It would be nice to test srs and geotransform but they are
     # pretty much worthless on this dataset.

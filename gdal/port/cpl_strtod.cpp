@@ -159,6 +159,9 @@ double CPLAtofM( const char *nptr )
 /*                      CPLReplacePointByLocalePoint()                  */
 /************************************************************************/
 
+/* Return a newly allocated variable if substitution was done, or NULL
+ * otherwise.
+ */
 static char* CPLReplacePointByLocalePoint( const char* pszNumber, char point )
 {
 #if defined(__ANDROID__)
@@ -204,7 +207,7 @@ static char* CPLReplacePointByLocalePoint( const char* pszNumber, char point )
     }
 #endif  // __ANDROID__
 
-    return const_cast<char*>( pszNumber );
+    return nullptr;
 }
 
 /************************************************************************/
@@ -282,7 +285,8 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 /*  with the one, taken from locale settings and use standard strtod()  */
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
-    char* pszNumber = CPLReplacePointByLocalePoint(nptr, point);
+    char* pszNewNumberOrNull = CPLReplacePointByLocalePoint(nptr, point);
+    const char* pszNumber = pszNewNumberOrNull ? pszNewNumberOrNull : nptr;
 
     const double dfValue = strtod( pszNumber, endptr );
     const int nError = errno;
@@ -290,8 +294,8 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     if( endptr )
         *endptr = const_cast<char *>(nptr) + (*endptr - pszNumber);
 
-    if( pszNumber != const_cast<char *>(nptr) )
-        CPLFree( pszNumber );
+    if( pszNewNumberOrNull )
+        CPLFree( pszNewNumberOrNull );
 
     errno = nError;
     return dfValue;
@@ -353,15 +357,16 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 /*  with the one, taken from locale settings and use standard strtof()  */
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
-    char * const pszNumber = CPLReplacePointByLocalePoint(nptr, point);
+    char * const pszNewNumberOrNull = CPLReplacePointByLocalePoint(nptr, point);
+    const char* pszNumber = pszNewNumberOrNull ? pszNewNumberOrNull : nptr;
     double dfValue = strtof( pszNumber, endptr );
     const int nError = errno;
 
     if( endptr )
         *endptr = const_cast<char *>(nptr) + (*endptr - pszNumber);
 
-    if( pszNumber != nptr )
-        CPLFree( pszNumber );
+    if( pszNewNumberOrNull )
+        CPLFree( pszNewNumberOrNull );
 
     errno = nError;
     return static_cast<float>(dfValue);

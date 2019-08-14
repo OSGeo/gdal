@@ -42,7 +42,7 @@
 
 class OGRGeomediaDataSource;
 
-class OGRGeomediaLayer : public OGRLayer
+class OGRGeomediaLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -91,7 +91,7 @@ class OGRGeomediaLayer : public OGRLayer
 /*                       OGRGeomediaTableLayer                          */
 /************************************************************************/
 
-class OGRGeomediaTableLayer : public OGRGeomediaLayer
+class OGRGeomediaTableLayer final: public OGRGeomediaLayer
 {
     char                *pszQuery;
 
@@ -121,7 +121,7 @@ class OGRGeomediaTableLayer : public OGRGeomediaLayer
 /*                        OGRGeomediaSelectLayer                        */
 /************************************************************************/
 
-class OGRGeomediaSelectLayer : public OGRGeomediaLayer
+class OGRGeomediaSelectLayer final: public OGRGeomediaLayer
 {
     char                *pszBaseStatement;
 
@@ -147,7 +147,7 @@ class OGRGeomediaSelectLayer : public OGRGeomediaLayer
 /*                        OGRGeomediaDataSource                         */
 /************************************************************************/
 
-class OGRGeomediaDataSource : public OGRDataSource
+class OGRGeomediaDataSource final: public OGRDataSource
 {
     OGRGeomediaLayer  **papoLayers;
     int                 nLayers;
@@ -193,7 +193,7 @@ class OGRGeomediaDataSource : public OGRDataSource
 /*                          OGRGeomediaDriver                           */
 /************************************************************************/
 
-class OGRGeomediaDriver : public OGRODBCMDBDriver
+class OGRGeomediaDriver final: public OGRODBCMDBDriver
 {
   public:
                 ~OGRGeomediaDriver();

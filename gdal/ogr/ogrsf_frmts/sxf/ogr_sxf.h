@@ -47,7 +47,7 @@
 /************************************************************************/
 /*                         OGRSXFLayer                                */
 /************************************************************************/
-class OGRSXFLayer : public OGRLayer
+class OGRSXFLayer final: public OGRLayer
 {
 protected:
     OGRFeatureDefn*    poFeatureDefn;
@@ -105,7 +105,7 @@ private:
 /*                        OGRSXFDataSource                       */
 /************************************************************************/
 
-class OGRSXFDataSource : public OGRDataSource
+class OGRSXFDataSource final: public OGRDataSource
 {
     SXFPassport oSXFPassport;
 
@@ -146,7 +146,7 @@ public:
 /*                         OGRSXFDriver                          */
 /************************************************************************/
 
-class OGRSXFDriver : public GDALDriver
+class OGRSXFDriver final: public GDALDriver
 {
   public:
                 ~OGRSXFDriver();

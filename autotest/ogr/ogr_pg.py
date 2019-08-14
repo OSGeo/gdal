@@ -1234,16 +1234,16 @@ def check_value_23(layer_defn, feat):
     assert field_defn.GetType() == ogr.OFTRealList and field_defn.GetSubType() == ogr.OFSTFloat32, \
         ('Wrong field defn for my_float4array : %d, %d, %d, %d' % (field_defn.GetWidth(), field_defn.GetPrecision(), field_defn.GetType(), field_defn.GetSubType()))
 
-    if abs(feat.my_numeric - 1.2) > 1e-8 or \
+    if feat.my_numeric != pytest.approx(1.2, abs=1e-8) or \
         feat.my_numeric5 != 12345 or \
         feat.my_numeric5_3 != 0.123 or \
         feat.my_bool != 1 or \
         feat.my_int2 != 12345 or \
         feat.my_int4 != 12345678 or \
         feat.my_int8 != 1234567901234 or \
-        abs(feat.my_float4 - 0.123) > 1e-8 or \
+        feat.my_float4 != pytest.approx(0.123, abs=1e-8) or \
         feat.my_float8 != 0.12345678 or \
-        abs(feat.my_real - 0.876) > 1e-6 or \
+        feat.my_real != pytest.approx(0.876, abs=1e-6) or \
         feat.my_char != 'a' or \
         feat.my_varchar != 'ab' or \
         feat.my_varchar10 != 'varchar10 ' or \
@@ -1260,11 +1260,11 @@ def check_value_23(layer_defn, feat):
         feat.GetFieldAsString('my_int4array') != '(2:100,200)' or \
         feat.my_int8array != [1234567901234] or \
         feat.GetFieldAsString('my_boolarray') != '(2:1,0)' or \
-        abs(feat.my_float4array[0] - 100.1) > 1e-6 or \
-        abs(feat.my_float8array[0] - 100.12) > 1e-8 or \
-        abs(feat.my_numericarray[0] - 100.12) > 1e-8 or \
-        abs(feat.my_numeric5array[0] - 10) > 1e-8 or \
-            abs(feat.my_numeric5_3array[0] - 10.12) > 1e-8:
+        feat.my_float4array[0] != pytest.approx(100.1, abs=1e-6) or \
+        feat.my_float8array[0] != pytest.approx(100.12, abs=1e-8) or \
+        feat.my_numericarray[0] != pytest.approx(100.12, abs=1e-8) or \
+        feat.my_numeric5array[0] != pytest.approx(10, abs=1e-8) or \
+            feat.my_numeric5_3array[0] != pytest.approx(10.12, abs=1e-8):
         feat.DumpReadable()
         pytest.fail('Wrong values')
 

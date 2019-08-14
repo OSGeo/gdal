@@ -171,7 +171,7 @@ char **CPGDataset::GetFileList()
 /* ==================================================================== */
 /************************************************************************/
 
-class SIRC_QSLCRasterBand : public GDALRasterBand
+class SIRC_QSLCRasterBand final: public GDALRasterBand
 {
     friend class CPGDataset;
 
@@ -205,7 +205,7 @@ constexpr int M44 = 15;
 /* ==================================================================== */
 /************************************************************************/
 
-class CPG_STOKESRasterBand : public GDALRasterBand
+class CPG_STOKESRasterBand final: public GDALRasterBand
 {
     friend class CPGDataset;
 

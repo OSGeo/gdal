@@ -43,7 +43,7 @@ extern "C" void RegisterOGRCSW();
 
 class OGRCSWDataSource;
 
-class OGRCSWLayer : public OGRLayer
+class OGRCSWLayer final: public OGRLayer
 {
     OGRCSWDataSource*   poDS;
     OGRFeatureDefn*     poFeatureDefn;
@@ -84,7 +84,7 @@ class OGRCSWLayer : public OGRLayer
 /*                           OGRCSWDataSource                           */
 /************************************************************************/
 
-class OGRCSWDataSource : public OGRDataSource
+class OGRCSWDataSource final: public OGRDataSource
 {
     char*               pszName;
     CPLString           osBaseURL;

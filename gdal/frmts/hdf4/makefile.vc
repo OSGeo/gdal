@@ -2,7 +2,7 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-OBJ	=	hdf4dataset.obj hdf4imagedataset.obj
+OBJ	=	hdf4dataset.obj hdf4imagedataset.obj hdf4multidim.obj
 
 PLUGIN_DLL 	=	gdal_HDF4.dll
 

@@ -43,12 +43,12 @@ def test_osr_micoordsys_1():
     srs = osr.SpatialReference()
     srs.ImportFromMICoordSys('Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0')
 
-    if abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) - 33.9036340277778) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) - 33.6252900277778) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN) - 33.7644620277778) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) - (-117.474542888889)) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) - 0.0) > 0.0000005 \
-       or abs(srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) - 0.0) > 0.0000005:
+    if srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) != pytest.approx(33.9036340277778, abs=0.0000005) \
+       or srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) != pytest.approx(33.6252900277778, abs=0.0000005) \
+       or srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN) != pytest.approx(33.7644620277778, abs=0.0000005) \
+       or srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) != pytest.approx((-117.474542888889), abs=0.0000005) \
+       or srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) != pytest.approx(0.0, abs=0.0000005) \
+       or srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) != pytest.approx(0.0, abs=0.0000005):
         print(srs.ExportToPrettyWkt())
         pytest.fail('Can not export Lambert Conformal Conic projection.')
 

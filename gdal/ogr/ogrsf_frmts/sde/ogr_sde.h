@@ -51,7 +51,7 @@
 
 class OGRSDEDataSource;
 
-class OGRSDELayer : public OGRLayer
+class OGRSDELayer final: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -155,7 +155,7 @@ class OGRSDELayer : public OGRLayer
 /************************************************************************/
 /*                           OGRSDEDataSource                            */
 /************************************************************************/
-class OGRSDEDataSource : public OGRDataSource
+class OGRSDEDataSource final: public OGRDataSource
 {
     OGRSDELayer        **papoLayers;
     int                 nLayers;
@@ -218,7 +218,7 @@ class OGRSDEDataSource : public OGRDataSource
 /*                             OGRSDEDriver                              */
 /************************************************************************/
 
-class OGRSDEDriver : public OGRSFDriver
+class OGRSDEDriver final: public OGRSFDriver
 {
   public:
     virtual ~OGRSDEDriver();

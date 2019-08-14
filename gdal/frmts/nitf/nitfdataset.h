@@ -236,7 +236,7 @@ class NITFRasterBand final: public GDALPamRasterBand
 /* then to the underlying band if no value exist in PAM. The setters aren't */
 /* overridden, so they go to PAM */
 
-class NITFProxyPamRasterBand: public GDALPamRasterBand
+class NITFProxyPamRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 {
     private:
         std::map<CPLString, char**> oMDMap;

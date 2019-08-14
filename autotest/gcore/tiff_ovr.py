@@ -198,7 +198,7 @@ def test_tiff_ovr_4(both_endian):
 
     average = total / pix_count
     exp_average = 153.0656
-    assert abs(average - exp_average) <= 0.1, 'got wrong average for overview image'
+    assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting
     # the grayscale image.
@@ -218,7 +218,7 @@ def test_tiff_ovr_4(both_endian):
     average = total / pix_count
     exp_average = 0.6096
 
-    assert abs(average - exp_average) <= 0.01, 'got wrong average for downsampled image'
+    assert average == pytest.approx(exp_average, abs=0.01), 'got wrong average for downsampled image'
 
     wrk_ds = None
 
@@ -1258,7 +1258,7 @@ def test_tiff_ovr_40(both_endian):
 
     average = total / pix_count
     exp_average = 153.0656
-    assert abs(average - exp_average) <= 0.1, 'got wrong average for overview image'
+    assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting
     # the grayscale image.
@@ -1278,7 +1278,7 @@ def test_tiff_ovr_40(both_endian):
     average = total / pix_count
     exp_average = 0.6096
 
-    assert abs(average - exp_average) <= 0.01, 'got wrong average for downsampled image'
+    assert average == pytest.approx(exp_average, abs=0.01), 'got wrong average for downsampled image'
 
     wrk_ds = None
 

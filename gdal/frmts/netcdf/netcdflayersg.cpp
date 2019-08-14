@@ -73,35 +73,42 @@ namespace nccfdriver
     geom_t OGRtoRaw(OGRwkbGeometryType type)
     {
         geom_t ret = NONE;
+        auto eFlatType = wkbFlatten(type);
 
-        if (type == wkbPoint || type == wkbPoint25D)
+        if (eFlatType == wkbPoint)
         {
             ret = POINT;
         }
 
-        else if (type == wkbLineString || type == wkbLineString25D)
+        else if (eFlatType == wkbLineString)
         {
             ret = LINE;
         }
 
-        else if(type == wkbPolygon || type == wkbPolygon25D)
+        else if(eFlatType == wkbPolygon)
         {
             ret = POLYGON;
         }
 
-        else if (type == wkbMultiPoint || type == wkbMultiPoint25D)
+        else if (eFlatType == wkbMultiPoint)
         {
             ret = MULTIPOINT;
         }
 
-        else if (type == wkbMultiLineString || type == wkbMultiLineString25D)
+        else if (eFlatType == wkbMultiLineString)
         {
             ret = MULTILINE;
         }
 
-        else if (type == wkbMultiPolygon || type == wkbMultiPolygon25D)
+        else if (eFlatType == wkbMultiPolygon)
         {
             ret = MULTIPOLYGON;
+        }
+
+        // if the feature type isn't NONE potentially give a warning about measures
+        if(ret != NONE && wkbHasM(type))
+        {
+            CPLError(CE_Warning, CPLE_NotSupported, "A partially supported measured feature type was detected. X, Y, Z Geometry will be preserved but the measure axis and related information will be removed.");
         }
 
         return ret;
@@ -120,22 +127,24 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
     // Discover simple geometry variables
     int var_count;
     nc_inq_nvars(ncid, &var_count);
-    std::vector<int> vidList;
+    std::set<int> vidList;
 
     nccfdriver::scanForGeometryContainers(ncid, vidList);
 
-    for(size_t itr = 0; itr < vidList.size(); itr++)
+    if(!vidList.empty())
     {
-        try
+        for(auto vid: vidList)
         {
-            LoadSGVarIntoLayer(ncid, vidList[itr]);
+            try
+            {
+                LoadSGVarIntoLayer(ncid, vid);
+            }
 
-        }
-
-        catch(nccfdriver::SG_Exception& e)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                "Translation of a simple geometry layer has been terminated prematurely due to an error.\n%s", e.get_err_msg());
+            catch(nccfdriver::SG_Exception& e)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                    "Translation of a simple geometry layer has been terminated prematurely due to an error.\n%s", e.get_err_msg());
+            }
         }
     }
 
@@ -177,7 +186,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    netCDFLayer * poL = new netCDFLayer(this, ncid, baseName, owgt, poSRS);
+    std::shared_ptr<netCDFLayer> poL(new netCDFLayer(this, ncid, baseName, owgt, poSRS));
 
     if(poSRS != nullptr)
     {
@@ -199,56 +208,110 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     poL->SetSGeometryRepresentation(sg);
 
     // Create layer
-    papoLayers = (netCDFLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *));
-    papoLayers[nLayers] = poL;
-    nLayers++;
+    papoLayers.push_back(poL);
 
     return CE_None;
 }
 
-
-/* Really just wraps around OGR_SGeometry_Scribe but does additional work:
- * Re-sizes dimensions accordingly
- * Creates and fills any needed variables that haven't already been created
+/* Creates and fills any needed variables that haven't already been created
  */
 void netCDFDataset::SGCommitPendingTransaction()
 {
     try
     {
-        if(this->GeometryScribe.get_containerID() == nccfdriver::INVALID_VAR_ID)
+        if(bSGSupport)
         {
-            return; // do nothing if invalid scribe
-        }
-
-        int node_count_dimID = this->GeometryScribe.get_node_count_dimID();
-        int node_coord_dimID = this->GeometryScribe.get_node_coord_dimID();
-
-        // Grow dimensions to fit the next feature
-
-        if(this->eFormat != NCDF_FORMAT_NC4) // do NOT grow dimensions in NC4 (all infinite)
-        {
-            this->GrowDim(cdfid, node_count_dimID, this->GeometryScribe.get_next_write_pos_node_count() + this->GeometryScribe.getNCOUNTBufLength());
-
-            this->GrowDim(cdfid, node_coord_dimID,
-                this->GeometryScribe.get_next_write_pos_node_coord() + this->GeometryScribe.getXCBufLength());
-
-
-            if((this->GeometryScribe.getWritableType() == nccfdriver::POLYGON && this->GeometryScribe.getInteriorRingDetected())
-                || this->GeometryScribe.getWritableType() == nccfdriver::MULTILINE || this->GeometryScribe.getWritableType() == nccfdriver::MULTIPOLYGON )
+            // Go through all the layers and resize dimensions accordingly
+            for(size_t layerInd = 0; layerInd < papoLayers.size(); layerInd++)
             {
-                int pnc_dimID = this->GeometryScribe.get_pnc_dimID();
-                this->GrowDim(cdfid, pnc_dimID, this->GeometryScribe.get_next_write_pos_pnc() + this->GeometryScribe.getPNCBufLength());
-            }
-        }
+                nccfdriver::ncLayer_SG_Metadata& layerMD = papoLayers[layerInd]->getLayerSGMetadata();
+                nccfdriver::geom_t wType = layerMD.getWritableType();
 
-        this->GeometryScribe.update_ncID(cdfid); // set new CDF ID in case of updates
-        this->GeometryScribe.commit_transaction();
+                // Resize node coordinates
+                int ncoord_did = layerMD.get_node_coord_dimID();
+                if(ncoord_did != nccfdriver::INVALID_DIM_ID)
+                {
+                    vcdf.nc_resize_vdim(ncoord_did, layerMD.get_next_write_pos_node_coord());
+                }
+
+                // Resize node count (for all except POINT)
+                if(wType != nccfdriver::POINT)
+                {
+                    int ncount_did = layerMD.get_node_count_dimID();
+                    if(ncount_did != nccfdriver::INVALID_DIM_ID)
+                    {
+                        vcdf.nc_resize_vdim(ncount_did, layerMD.get_next_write_pos_node_count());
+                    }
+                }
+
+                // Resize part node count (for MULTILINE, POLYGON, MULTIPOLYGON)
+                if(wType == nccfdriver::MULTILINE || wType == nccfdriver::POLYGON || wType == nccfdriver::MULTIPOLYGON)
+                {
+                    int pnc_did = layerMD.get_pnc_dimID();
+                    if(pnc_did != nccfdriver::INVALID_DIM_ID)
+                    {
+                        vcdf.nc_resize_vdim(pnc_did, layerMD.get_next_write_pos_pnc());
+                    }
+                }
+
+                 nccfdriver::geom_t geometry_type = layerMD.getWritableType();
+
+               /* Delete interior ring stuff if not detected
+                */
+
+                if (!layerMD.getInteriorRingDetected() && (geometry_type == nccfdriver::MULTIPOLYGON || geometry_type == nccfdriver::POLYGON) &&
+                    layerMD.get_containerRealID() != nccfdriver::INVALID_VAR_ID)
+                {
+                    SetDefineMode(true);
+
+                    int err_code = nc_del_att(cdfid, layerMD.get_containerRealID(), CF_SG_INTERIOR_RING);
+                    NCDF_ERR(err_code);
+                    if(err_code != NC_NOERR)
+                    {
+                        std::string frmt = std::string("attribute: ") + std::string(CF_SG_INTERIOR_RING);
+                        throw nccfdriver::SGWriter_Exception_NCDelFailure(layerMD.get_containerName().c_str(), frmt.c_str()); 
+                    }
+
+                    // Invalidate variable writes as well - Interior Ring
+                    vcdf.nc_del_vvar(layerMD.get_intring_varID());
+
+                    if(geometry_type == nccfdriver::POLYGON) 
+                    {
+                        err_code = nc_del_att(cdfid, layerMD.get_containerRealID(), CF_SG_PART_NODE_COUNT);
+                        NCDF_ERR(err_code);
+                        if(err_code != NC_NOERR)
+                        {
+                            std::string frmt = std::string("attribute: ") + std::string(CF_SG_PART_NODE_COUNT); 
+                            throw nccfdriver::SGWriter_Exception_NCDelFailure(layerMD.get_containerName().c_str(), frmt.c_str());
+                        }
+
+                        // Invalidate variable writes as well - Part Node Count
+                        vcdf.nc_del_vvar(layerMD.get_pnc_varID());
+
+                        // Invalidate dimension as well - Part Node Count
+                        vcdf.nc_del_vdim(layerMD.get_pnc_dimID());
+                    }
+
+                    SetDefineMode(false);
+                }
+            }
+
+            vcdf.nc_vmap();
+            this->FieldScribe.commit_transaction();
+            this->GeometryScribe.commit_transaction();
+        }
     }
 
     catch(nccfdriver::SG_Exception& sge)
     {
         CPLError(CE_Fatal, CPLE_FileIO, "An error occurred while writing the target netCDF File. Translation will be terminated.\n%s", sge.get_err_msg());
     }
+}
+
+void netCDFDataset::SGLogPendingTransaction()
+{
+    GeometryScribe.log_transaction();
+    FieldScribe.log_transaction(); 
 }
 
 /* Takes an index and using the layer geometry builds the equivalent
@@ -298,4 +361,9 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
 
     feat -> SetFID(featureInd);
     return feat;
+}
+
+std::string netCDFDataset::generateLogName()
+{
+    return std::string(CPLGenerateTempFilename(nullptr)); 
 }

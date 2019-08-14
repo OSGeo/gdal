@@ -66,7 +66,7 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class JP2KAKDataset : public GDALJP2AbstractDataset
+class JP2KAKDataset final: public GDALJP2AbstractDataset
 {
     friend class JP2KAKRasterBand;
 
@@ -122,7 +122,7 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JP2KAKRasterBand : public GDALPamRasterBand
+class JP2KAKRasterBand final: public GDALPamRasterBand
 {
     friend class JP2KAKDataset;
 
@@ -175,7 +175,7 @@ class JP2KAKRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class kdu_cpl_error_message : public kdu_thread_safe_message
+class kdu_cpl_error_message final: public kdu_thread_safe_message
 {
   public:  // Member classes.
     using kdu_thread_safe_message::put_text;

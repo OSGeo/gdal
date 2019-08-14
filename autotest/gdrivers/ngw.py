@@ -200,12 +200,12 @@ def test_ngw_6():
 
     gt = gdaltest.ngw_ds.GetGeoTransform()
     # -20037508.34, 0.037322767712175846, 0.0, 20037508.34, 0.0, -0.037322767712175846
-    assert abs(gt[0] - -20037508.34) < 0.00001 \
-       or abs(gt[3] - 20037508.34) < 0.00001 \
-       or abs(gt[1] - 0.037322767712175846) < 0.00001 \
-       or abs(gt[2] - 0.0) < 0.00001 \
-       or abs(gt[5] - -0.037322767712175846) < 0.00001 \
-       or abs(gt[4] - 0.0) < 0.00001, 'Wrong geotransform. {}'.format(gt)
+    assert gt[0] == pytest.approx(-20037508.34, abs=0.00001) \
+       or gt[3] == pytest.approx(20037508.34, abs=0.00001) \
+       or gt[1] == pytest.approx(0.037322767712175846, abs=0.00001) \
+       or gt[2] == pytest.approx(0.0, abs=0.00001) \
+       or gt[5] == pytest.approx(-0.037322767712175846, abs=0.00001) \
+       or gt[4] == pytest.approx(0.0, abs=0.00001), 'Wrong geotransform. {}'.format(gt)
 
     assert gdaltest.ngw_ds.GetRasterBand(1).GetOverviewCount() > 0, 'No overviews!'
     assert gdaltest.ngw_ds.GetRasterBand(1).DataType == gdal.GDT_Byte, \

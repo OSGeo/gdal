@@ -49,7 +49,7 @@ CPL_CVSID("$Id$")
 
 class BSBRasterBand;
 
-class BSBDataset : public GDALPamDataset
+class BSBDataset final: public GDALPamDataset
 {
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -93,7 +93,7 @@ class BSBDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BSBRasterBand : public GDALPamRasterBand
+class BSBRasterBand final: public GDALPamRasterBand
 {
     GDALColorTable      oCT;
 

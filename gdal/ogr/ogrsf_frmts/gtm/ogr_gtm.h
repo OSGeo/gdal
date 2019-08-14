@@ -80,7 +80,7 @@ typedef enum
 /************************************************************************/
 /*                           OGRGTMLayer                                */
 /************************************************************************/
-class OGRGTMLayer : public OGRLayer
+class OGRGTMLayer CPL_NON_FINAL: public OGRLayer
 {
 public:
     OGRGTMLayer();
@@ -112,7 +112,7 @@ protected:
 /************************************************************************/
 /*                           GTMWaypointLayer                           */
 /************************************************************************/
-class GTMWaypointLayer : public OGRGTMLayer
+class GTMWaypointLayer final: public OGRGTMLayer
 {
   public:
     GTMWaypointLayer( const char* pszName,
@@ -134,7 +134,7 @@ class GTMWaypointLayer : public OGRGTMLayer
 /************************************************************************/
 /*                           GTMTrackLayer                              */
 /************************************************************************/
-class GTMTrackLayer : public OGRGTMLayer
+class GTMTrackLayer final: public OGRGTMLayer
 {
   public:
     GTMTrackLayer( const char* pszName,
@@ -156,7 +156,7 @@ class GTMTrackLayer : public OGRGTMLayer
 /************************************************************************/
 /*                           OGRGTMDataSource                           */
 /************************************************************************/
-class OGRGTMDataSource : public OGRDataSource
+class OGRGTMDataSource final: public OGRDataSource
 {
 public:
 

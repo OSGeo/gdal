@@ -50,7 +50,7 @@ static double RAD2DEG = 180.0 / M_PI;
 
 class IRISRasterBand;
 
-class IRISDataset : public GDALPamDataset
+class IRISDataset final: public GDALPamDataset
 {
     friend class IRISRasterBand;
 
@@ -148,7 +148,7 @@ const char* const IRISDataset::aszProjections[] = {
 /* ==================================================================== */
 /************************************************************************/
 
-class IRISRasterBand : public GDALPamRasterBand
+class IRISRasterBand final: public GDALPamRasterBand
 {
     friend class IRISDataset;
 

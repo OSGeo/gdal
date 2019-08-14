@@ -110,7 +110,7 @@ static void DOQGetDescription( GDALDataset *poDS, unsigned char *pabyData )
 /* ==================================================================== */
 /************************************************************************/
 
-class DOQ1Dataset : public RawDataset
+class DOQ1Dataset final: public RawDataset
 {
     VSILFILE    *fpImage;       // image data file.
 

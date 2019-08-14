@@ -30,6 +30,9 @@
 #ifndef HDF4DATASET_H_INCLUDED_
 #define HDF4DATASET_H_INCLUDED_
 
+#include "hdf.h"
+#include "mfhdf.h"
+
 #include "cpl_list.h"
 #include "gdal_pam.h"
 
@@ -60,18 +63,22 @@ typedef enum                    // Types of data products:
 /* ==================================================================== */
 /************************************************************************/
 
-class HDF4Dataset : public GDALPamDataset
+class HDF4Dataset CPL_NON_FINAL: public GDALPamDataset
 {
 
   private:
 
     bool bIsHDFEOS;
+    std::shared_ptr<GDALGroup> m_poRootGroup{};
 
     static char **HDF4EOSTokenizeAttrs( const char *pszString );
     static char **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
                                     char **ppszAttrClass, char **ppszAttrValue );
 
+    void OpenMultiDim(const char* pszFilename);
+
   protected:
+
     int32       hGR;
     int32       hSD;
     int32       nImages;
@@ -83,6 +90,7 @@ class HDF4Dataset : public GDALPamDataset
 
     CPLErr              ReadGlobalAttributes( int32 );
 
+  public:
     static GDALDataType GetDataType( int32 ) ;
     static const char   *GetDataTypeName( int32 );
     static int          GetDataTypeSize( int32 );
@@ -95,6 +103,8 @@ class HDF4Dataset : public GDALPamDataset
   public:
                 HDF4Dataset();
     virtual ~HDF4Dataset();
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
 
     virtual char      **GetMetadataDomainList() override;
     virtual char        **GetMetadata( const char * pszDomain = "" ) override;

@@ -54,7 +54,7 @@ const int SERVER_DIMENSION_LIMIT = 10000;
 /*                          GDALEEDAIDataset                            */
 /************************************************************************/
 
-class GDALEEDAIDataset: public GDALEEDABaseDataset
+class GDALEEDAIDataset final: public GDALEEDABaseDataset
 {
             CPL_DISALLOW_COPY_ASSIGN(GDALEEDAIDataset)
 
@@ -107,7 +107,7 @@ class GDALEEDAIDataset: public GDALEEDABaseDataset
 /*                        GDALEEDAIRasterBand                           */
 /************************************************************************/
 
-class GDALEEDAIRasterBand: public GDALRasterBand
+class GDALEEDAIRasterBand final: public GDALRasterBand
 {
                 CPL_DISALLOW_COPY_ASSIGN(GDALEEDAIRasterBand)
 

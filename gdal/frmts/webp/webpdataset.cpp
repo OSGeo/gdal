@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 
 class WEBPRasterBand;
 
-class WEBPDataset : public GDALPamDataset
+class WEBPDataset final: public GDALPamDataset
 {
     friend class WEBPRasterBand;
 
@@ -83,7 +83,7 @@ class WEBPDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class WEBPRasterBand : public GDALPamRasterBand
+class WEBPRasterBand final: public GDALPamRasterBand
 {
     friend class WEBPDataset;
 

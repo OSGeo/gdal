@@ -35,6 +35,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Perform simple read test.
@@ -57,7 +58,7 @@ def test_dted_2():
 
     max_error = 0.000001
 
-    assert abs(gt[0] - (-80.004166666666663)) <= max_error and abs(gt[1] - 0.0083333333333333332) <= max_error and abs(gt[2] - 0) <= max_error and abs(gt[3] - 44.00416666666667) <= max_error and abs(gt[4] - 0) <= max_error and abs(gt[5] - (-0.0083333333333333332)) <= max_error, \
+    assert gt[0] == pytest.approx((-80.004166666666663), abs=max_error) and gt[1] == pytest.approx(0.0083333333333333332, abs=max_error) and gt[2] == pytest.approx(0, abs=max_error) and gt[3] == pytest.approx(44.00416666666667, abs=max_error) and gt[4] == pytest.approx(0, abs=max_error) and gt[5] == pytest.approx((-0.0083333333333333332), abs=max_error), \
         'DTED geotransform wrong.'
 
     prj = ds.GetProjection()
@@ -108,7 +109,7 @@ def test_dted_5():
     ds = gdal.Open('tmp/n43.dt1.tif')
     geotransform = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(geotransform[i] - ref_geotransform[i]) <= 1e-10
+        assert geotransform[i] == pytest.approx(ref_geotransform[i], abs=1e-10)
 
     ds = None
 
@@ -129,7 +130,7 @@ def test_dted_6():
     ds = gdal.Open('tmp/n43.dt2.tif')
     geotransform = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(geotransform[i] - ref_geotransform[i]) <= 1e-10
+        assert geotransform[i] == pytest.approx(ref_geotransform[i], abs=1e-10)
 
     ds = None
 
@@ -233,7 +234,7 @@ def test_dted_11():
 
     max_error = 0.000001
 
-    assert abs(gt[0] - (-80.004166666666663)) <= max_error and abs(gt[1] - 0.0083333333333333332) <= max_error and abs(gt[2] - 0) <= max_error and abs(gt[3] - 44.00416666666667) <= max_error and abs(gt[4] - 0) <= max_error and abs(gt[5] - (-0.0083333333333333332)) <= max_error, \
+    assert gt[0] == pytest.approx((-80.004166666666663), abs=max_error) and gt[1] == pytest.approx(0.0083333333333333332, abs=max_error) and gt[2] == pytest.approx(0, abs=max_error) and gt[3] == pytest.approx(44.00416666666667, abs=max_error) and gt[4] == pytest.approx(0, abs=max_error) and gt[5] == pytest.approx((-0.0083333333333333332), abs=max_error), \
         'DTED geotransform wrong.'
 
     prj = ds.GetProjection()

@@ -144,7 +144,7 @@ def test_ogr_avc_5():
         if last_feature.GetFieldCount() != 5:
             f.DumpReadable()
             pytest.fail(filename)
-        if last_feature.GetField('ArcIds') != [-4, -5] or abs(last_feature.GetField('AREA') - 9939.059) > 1e-3:
+        if last_feature.GetField('ArcIds') != [-4, -5] or last_feature.GetField('AREA') != pytest.approx(9939.059, abs=1e-3):
             f.DumpReadable()
             pytest.fail(filename)
         if filename == 'data/testpolyavc/testpolyavc':

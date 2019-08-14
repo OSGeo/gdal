@@ -272,7 +272,7 @@ private:
 /*                            GDALWMSDataset                            */
 /************************************************************************/
 
-class GDALWMSDataset : public GDALPamDataset {
+class GDALWMSDataset final: public GDALPamDataset {
     friend class GDALWMSRasterBand;
 
 public:
@@ -461,7 +461,7 @@ protected:
 /*                            GDALWMSRasterBand                         */
 /************************************************************************/
 
-class GDALWMSRasterBand : public GDALPamRasterBand {
+class GDALWMSRasterBand final: public GDALPamRasterBand {
     friend class GDALWMSDataset;
     void    ComputeRequestInfo( GDALWMSImageRequestInfo &iri,
                                 GDALWMSTiledImageRequestInfo &tiri,

@@ -72,7 +72,7 @@ void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS);
 /*                             OGRCSVLayer                              */
 /************************************************************************/
 
-class OGRCSVLayer : public OGRLayer
+class OGRCSVLayer final: public OGRLayer
 {
   public:
 
@@ -211,7 +211,7 @@ class OGRCSVLayer : public OGRLayer
 /*                           OGRCSVDataSource                           */
 /************************************************************************/
 
-class OGRCSVDataSource : public OGRDataSource
+class OGRCSVDataSource final: public OGRDataSource
 {
     char                *pszName;
 

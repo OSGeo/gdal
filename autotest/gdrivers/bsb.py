@@ -144,7 +144,7 @@ def test_bsb_tmerc():
     gt = ds.GetGeoTransform()
     expected_gt = [28487.6637325402, 1.2711141208521637, 0.009061669923111566,
                    6539651.728646593, 0.015209115944776083, -1.267821834560455]
-    assert min([abs(gt[i] - expected_gt[i]) <= 1e-8 * abs(expected_gt[i]) for i in range(6)]) == True, gt
+    assert min([gt[i] == pytest.approx(expected_gt[i], abs=1e-8 * abs(expected_gt[i])) for i in range(6)]) == True, gt
     expected_wkt = """PROJCS["unnamed",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
@@ -178,8 +178,8 @@ def test_bsb_tmerc():
 
     assert gcps[0].GCPPixel == 25 and \
        gcps[0].GCPLine == 577 and \
-       abs(gcps[0].GCPX - 28524.670169107143) < 1e-5 and \
-       abs(gcps[0].GCPY - 6538920.57567595) < 1e-5 and \
+       gcps[0].GCPX == pytest.approx(28524.670169107143, abs=1e-5) and \
+       gcps[0].GCPY == pytest.approx(6538920.57567595, abs=1e-5) and \
        gcps[0].GCPZ == 0
 
 

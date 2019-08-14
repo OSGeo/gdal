@@ -158,7 +158,7 @@ public:
 class JPGRasterBand;
 class JPGMaskBand;
 
-class JPGDatasetCommon : public GDALPamDataset
+class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
 {
   protected:
     friend class JPGRasterBand;

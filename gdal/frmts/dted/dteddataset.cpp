@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 
 class DTEDRasterBand;
 
-class DTEDDataset : public GDALPamDataset
+class DTEDDataset final: public GDALPamDataset
 {
     friend class DTEDRasterBand;
 
@@ -77,7 +77,7 @@ class DTEDDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class DTEDRasterBand : public GDALPamRasterBand
+class DTEDRasterBand final: public GDALPamRasterBand
 {
     friend class DTEDDataset;
 

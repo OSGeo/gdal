@@ -110,7 +110,7 @@ def test_rasterlite_2():
     gt = ds.GetGeoTransform()
     expected_gt = (-180.0, 360. / ds.RasterXSize, 0.0, 90.0, 0.0, -180. / ds.RasterYSize)
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-15
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-15)
 
     ds = None
 

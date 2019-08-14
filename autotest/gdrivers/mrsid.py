@@ -182,7 +182,7 @@ def test_mrsid_3():
 
     stat_epsilon = 0.0001
     for i in range(4):
-        if abs(new_stat[i] - check_stat[i]) > stat_epsilon:
+        if new_stat[i] != pytest.approx(check_stat[i], abs=stat_epsilon):
             print('')
             print('old = ', check_stat)
             print('new = ', new_stat)
@@ -399,7 +399,7 @@ def test_mrsid_11():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+    assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
         'geotransform differs from expected'
 
     ds = None

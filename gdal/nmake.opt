@@ -231,9 +231,9 @@ INCLUDE_OGR_FRMTS = YES
 INCLUDE_GNM_FRMTS = YES
 !ENDIF
 
-# To be enabled defined to point to setargv.obj from the Visual C++ directory,
+# To be enabled defined to point to wsetargv.obj from the Visual C++ directory,
 # when you want the utility programs to be able to expand wildcards. 
-#SETARGV =	"D:\Software\VStudio\VC98\lib\setargv.obj"
+#SETARGV =	"D:\Software\VStudio\VC98\lib\wsetargv.obj"
 
 # PROJ stuff (required dependency: PROJ >= 6)
 #PROJ_INCLUDE = -Id:\install-proj\local\include

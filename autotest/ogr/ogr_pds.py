@@ -76,7 +76,7 @@ def test_ogr_pds_2():
     ds = ogr.Open('data/virsvd_orb_11187_050618.lbl')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if abs(f['INCIDENCE_ANGLE'] - 3.56775538) > 1e-7 or abs(f['TEMP_2'] - 28.1240005493164) > 1e-7:
+    if f['INCIDENCE_ANGLE'] != pytest.approx(3.56775538, abs=1e-7) or f['TEMP_2'] != pytest.approx(28.1240005493164, abs=1e-7):
         f.DumpReadable()
         pytest.fail()
 

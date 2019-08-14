@@ -219,7 +219,7 @@ public:
 
 class OGROCIDataSource;
 
-class OGROCILayer : public OGRLayer
+class OGROCILayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -282,7 +282,7 @@ class OGROCILayer : public OGRLayer
 /*                         OGROCIWritableLayer                          */
 /************************************************************************/
 
-class OGROCIWritableLayer : public OGROCILayer
+class OGROCIWritableLayer CPL_NON_FINAL: public OGROCILayer
 {
 protected:
     int                 nDimension;

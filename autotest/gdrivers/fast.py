@@ -88,12 +88,12 @@ def test_fast_3():
     gb_expected = (-6.199999809265137, 0.775686297697179)
 
     gain = float(md['GAIN1'])
-    if abs(gain - gb_expected[0]) > 0.0001:
+    if gain != pytest.approx(gb_expected[0], abs=0.0001):
         print('expected:', gb_expected[0])
         print('got:', gain)
 
     bias = float(md['BIAS1'])
-    if abs(bias - gb_expected[1]) > 0.0001:
+    if bias != pytest.approx(gb_expected[1], abs=0.0001):
         print('expected:', gb_expected[1])
         print('got:', bias)
 
@@ -116,9 +116,9 @@ def test_fast_4():
     ds = None
 
     tolerance = 0.01
-    assert (abs(gt[0] - 280342.5) <= tolerance and abs(gt[1] - 15.0) <= tolerance and \
-       abs(gt[2] - 0.0) <= tolerance and abs(gt[3] - 3621457.5) <= tolerance and \
-       abs(gt[4] - 0.0) <= tolerance and abs(gt[5] + 15.0) <= tolerance), \
+    assert (gt[0] == pytest.approx(280342.5, abs=tolerance) and gt[1] == pytest.approx(15.0, abs=tolerance) and \
+       gt[2] == pytest.approx(0.0, abs=tolerance) and gt[3] == pytest.approx(3621457.5, abs=tolerance) and \
+       gt[4] == pytest.approx(0.0, abs=tolerance) and abs(gt[5] + 15.0) <= tolerance), \
         'FAST geotransform wrong'
 
 

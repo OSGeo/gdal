@@ -7,8 +7,8 @@ NetCDF: Network Common Data Form - Vector
 
 .. shortname:: netCDF
 
-The netCDF driver support read and write
-(creation from scratch and append operations) to vector datasets (you
+The netCDF driver supports read and write
+(creation from scratch and in some cases append operations) to vector datasets (you
 can find documentation for the :ref:`raster side <raster.netcdf>`)
 
 NetCDF is an interface for array-oriented data access and is used for
@@ -19,7 +19,7 @@ types <http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_featu
 of the CF 1.6 convention. For CF-1.7 and below (as well as non-CF files), it also supports a more custom approach for
 non-point geometries.
 
-The driver also supports reading from CF-1.8 convention compliant files that
+The driver also supports writing and reading from CF-1.8 convention compliant files that
 have simple geometry information encoded within them.
 
 Driver capabilities
@@ -39,25 +39,32 @@ and by writing non-point geometry items as WKT.
 
 Distinguishing the Two Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is CF-1.8 (in this exact
-format, as specified in the CF convention) then the driver will treat the netCDF file as one that has CF-1.8 geometries contained within
-it. If the *Conventions* attribute is not CF-1.8 (or just not present at all), then the file will be treated as following the CF-1.6 convention
-with geometries stored in WKT.
+Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is *CF-1.8* or higher (in this exact
+format, as specified in the CF convention) then the driver will treat the netCDF file as one that has *CF-1.8* geometries contained within
+it. If the *Conventions* attribute has a value of CF-1.6, the the file will be treated as following the CF-1.6 convention.
 
 CF-1.8 Writing Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Writing to a CF-1.8 netCDF dataset poses some limitations. Only writing the feature types specified by the CF-1.8 standard (see
-section `Geometry <#geometry>`__ for more details) are supported. Other geometries, such as non-simple curve geometries, are not supported.
+section `Geometry <#geometry>`__ for more details) are supported, and measured features are only partially supported.
+Other geometries, such as non-simple curve geometries, are not supported in any way.
 
-Furthermore, multiple layer writing is not yet supported. This functionality will be added in a future update.
+CF-1.8 datasets also do not support the *append* access mode.
 
-Finally, writing a very large CF-1.8 dataset may incur a lot of unneccessary I/O, slowing down the creation process.
-This is largely part in due to dimension resizing for netCDF-3 files. In the future,
-this will be amelioriated by providing an option to take advantage of multiple infinite dimension support within NC4
-(though writing such a file in NC4, may reduce read performance). Generally, the performance penalty from dimension resizing
-is greatly reduced by `specifying a larger- but still reasonable- buffer size <#layer-creation-options>`__.
+There are what are considered *reserved variable names* for CF-1.8 datasets. These variable names are used by the driver to store its metadata.
+Refrain from using these names as layer names to avoid naming conflicts when writing datasets with multiple layers.
 
-CF-1.6/WKT datasets, however, are not limited to these restrictions.
+Suppose a layer in a CF-1.8 dataset has the name LAYER with a field with name FIELD. Then the following names would be considered *reserved*:
+
+-  *LAYER_node_coordinates*: used to store point information
+-  *LAYER_node_count*: used to store per shape point count information (not created if LAYER has a geometry type of Point)
+-  *LAYER_part_node_count*: used to store per part point count information (only created if LAYER consists of MultiLineStrings, MultiPolygons, or has at least one Polygon with interior rings)
+-  *LAYER_interior_ring*: used to store interior ring information (only created if LAYER consists of at least one Polygon with interior rings)
+-  *LAYER_field_FIELD*: used to store field information for FIELD.
+
+These names are the only reserved names applying to CF-1.8 datasets.
+
+CF-1.6/WKT datasets are not limited to the aforementioned restrictions.
 
 Mapping of concepts
 -------------------
@@ -129,7 +136,10 @@ In the CF-1.8 compliant driver, a single layer corresponds to a single
 the CF-1.8 specification, is referred to by another variable
 (presumably a data variable) through the **geometry** attribute. When reading
 a CF-1.8 compliant netCDF file, all geometry containers within the netCDF file
-will be present in the opened dataset as separate layers.
+will be present in the opened dataset as separate layers. Similarily, when writing to
+a CF-1.8 dataset, each layer will be written to a geometry container whose variable
+name is that of the source layer. When writing to a CF-1.8 dataset specifically, multiple layers are always
+enabled and are always in a single netCDF file, regardless of the `MULTIPLE_LAYERS <#MULTIPLE_LAYERS>`__ option.
 
 When working with files made with older versions of the driver (pre CF-1.8),
 a single netCDF file generally corresponds to a single OGR layer,
@@ -146,13 +156,22 @@ Strings
 Variable length strings are not natively supported in netCDF v3 format.
 To work around that, OGR uses bi-dimensional char variables, whose first
 dimension is the record dimension, and second dimension the maximum
-width of the string. By default, OGR implements a "auto-grow" mode in
+width of the string.
+
+By default, OGR implements a "auto-grow" mode in
 writing, where the maximum width of the variable used to store a OGR
-string field is extended when needed. Note that this leads to a full
-rewrite of already written records : this is transparent for the user,
-but can slow down the creation process in non-linear ways. A similar
+string field is extended when needed.
+
+For WKT datasets, this leads to a full
+rewrite of already written records; although this process is transparent for the user,
+it can slow down the creation process in non-linear ways. A similar
 mechanism is used to handle layers with geometry types other than point
 to store the ISO WKT representation of the geometries.
+
+For CF-1.8 datasets, growing the string width dimension is
+a relatively inexpensive process which does not involve recopying of records, but involves
+only a simple integer reassignment. Because of how inexpensive dimension growth is with CF-1.8 datasets,
+auto growth of the string width dimension is always on.
 
 When using a netCDF v4 output format (NC4), strings will be by default
 written as netCDF v4 variable length strings.
@@ -166,7 +185,10 @@ OGRMultiPolygon. Due to slight ambiguities present in the CF-1.8 convention conc
 Polygons versus MultiPolygons, the driver will in most cases default to assuming a MultiPolygon
 for the geometry of a layer with **geometry_type** polygon. The one exception where a Polygon type
 will be used is when the attribute **part_node_count** is not present within that layer's geometry container.
-Per convention requirements, the driver supports reading from geometries with X, Y, and Z axes.
+Per convention requirements, the driver supports reading and writing from geometries with X, Y, and Z axes.
+Writing from source layers with features containing an M axis is also partially supported. The X, Y, and Z
+information of a measured feature will be able to be captured in a CF-1.8 netCDF file, but the measure information
+will be lost completely.
 
 When working with a CF-1.6/WKT dataset, layers with a geometry type
 of Point or Point25D will cause the implicit creation of x,y(,z)
@@ -265,6 +287,12 @@ The following option will only have effect when simultaneously specifying GEOMET
 Layer creation options
 ----------------------
 
+The following option applies to both dataset types:
+
+-  **USE_STRING_IN_NC4**\ =YES/NO. Whether to use NetCDF string type for
+   strings in NC4 format. If NO, bidimensional char variable are used.
+   Default to YES when FORMAT=NC4.
+
 The following options require a dataset with GEOMETRY_ENCODING=WKT:
 
 -  **RECORD_DIM_NAME**\ =string. Name of the unlimited dimension that
@@ -272,9 +300,6 @@ The following options require a dataset with GEOMETRY_ENCODING=WKT:
 -  **STRING_DEFAULT_WIDTH**\ =int. Default width of strings (when using
    bi-dimensional char variables). Default is 10 in autogrow mode, 80
    otherwise.
--  **USE_STRING_IN_NC4**\ =YES/NO. Whether to use NetCDF string type for
-   strings in NC4 format. If NO, bidimensional char variable are used.
-   Default to YES when FORMAT=NC4.
 -  **WKT_DEFAULT_WIDTH**\ =int. Default width of WKT strings (when using
    bi-dimensional char variables). Default is 1000 in autogrow mode,
    10000 otherwise.
@@ -305,12 +330,22 @@ The following option requires a dataset with GEOMETRY_ENCODING=CF_1.8:
 -  **BUFFER_SIZE**\ =int. The soft limit of the write buffer in bytes. Larger
    values generally imply better performance, but values should be comfortably
    less than that of available physical memory or else thrashing can occur.
-   By default, this value is set at 10% of usable physical memory (usable meaning
+   By default, this value is set at 20% of usable physical memory (usable meaning
    total physical RAM considering limitations of virtual address space size).
    Buffer contents are committed between translating features, but not *during*
-   translating a feature, so this limit does not apply to a single feature. Minimum
+   translating a feature, so this limit does not apply to a single feature. The minimum
    acceptable size is 4096. If a value lower than this is specified the default will
    be used.
+-  **GROUPLESS_WRITE_BACK**\ =YES/NO. In order to reduce time used to write data to the target
+   netCDF file, data is often grouped together in arrays and written all at once.
+   Each of these arrays is associated with a variable in the target dataset. 
+   Arrays are destroyed as soon as the associated data is written to the netCDF file
+   which in turn occurs as soon as a complete data array for a variable is assembled in memory.
+   For machines with small memory sizes, this optimization may cause issues
+   when writing large datasets with large layers. Turning this option on by specifying "YES" disables array writing
+   and causes data to be written one datum at a time. It is strongly recommended to keep this option off
+   unless out of memory errors or performance issues occur. In the general case,
+   this technique greatly improves translation efficiency. The default value is NO.
 
 XML configuration file
 ----------------------
@@ -353,11 +388,11 @@ The following example shows all possibilities and precedence rules:
    <!-- applies to all layers -->
        <Attribute name="copyright" value="Copyright(C) 2016 Example"/>
        <Field name="weight">  <!-- edit user field/variable -->
-           <Attribute name="units" value="kg"/> 
+           <Attribute name="units" value="kg"/>
            <Attribute name="maximum" value="10" type="double"/>
        </Field>
        <Field netcdf_name="z"> <!-- edit predefined variable -->
-           <Attribute name="long_name" value="Elevation"/> 
+           <Attribute name="long_name" value="Elevation"/>
        </Field>
    <!-- start of layer specific definitions -->
        <Layer name="1st_layer" netcdf_name="firstlayer"> <!-- OGR layer "1st_layer" is renamed as "firstlayer" netCDF group -->

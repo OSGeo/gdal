@@ -90,7 +90,7 @@ void HDF5UnloadFileDriver();
 /*                              HDF5Dataset                             */
 /* ==================================================================== */
 /************************************************************************/
-class HDF5Dataset : public GDALPamDataset
+class HDF5Dataset CPL_NON_FINAL: public GDALPamDataset
 {
 protected:
     hid_t            hHDF5;

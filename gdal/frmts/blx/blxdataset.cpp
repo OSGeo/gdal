@@ -39,7 +39,7 @@ CPL_C_END
 
 CPL_CVSID("$Id$")
 
-class BLXDataset : public GDALPamDataset
+class BLXDataset final: public GDALPamDataset
 {
     friend class BLXRasterBand;
 
@@ -62,7 +62,7 @@ class BLXDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
-class BLXRasterBand : public GDALPamRasterBand
+class BLXRasterBand final: public GDALPamRasterBand
 {
     int overviewLevel;
 

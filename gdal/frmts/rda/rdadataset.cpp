@@ -78,7 +78,7 @@ static void GDALRDADriverUnload(GDALDriver*)
 /************************************************************************/
 enum class RDADatasetType : std::int8_t { UNDEFINED = -1, GRAPH = 1, TEMPLATE = 2 };
 
-class GDALRDADataset: public GDALDataset
+class GDALRDADataset final: public GDALDataset
 {
         friend class GDALRDARasterBand;
 
@@ -205,7 +205,7 @@ class GDALRDADataset: public GDALDataset
 /*                         GDALRDARasterBand                            */
 /************************************************************************/
 
-class GDALRDARasterBand: public GDALRasterBand
+class GDALRDARasterBand final: public GDALRasterBand
 {
     public:
         GDALRDARasterBand( GDALRDADataset* poDS, int nBand);

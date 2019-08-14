@@ -80,7 +80,7 @@ def test_gdal_edit_py_1():
 
     expected_gt = (2.0, 0.050000000000000003, 0.0, 50.0, 0.0, -0.050000000000000003)
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-10
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-10)
 
     assert nd == 123
 
@@ -247,9 +247,9 @@ def test_gdal_edit_py_6():
     stat_max = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MAXIMUM')
     assert stat_max is not None and float(stat_max) == 255
     stat_mean = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MEAN')
-    assert not (stat_mean is None or abs(float(stat_mean) - 126.765)>0.001)
+    assert not (stat_mean is None or float(stat_mean) != pytest.approx(126.765, abs=0.001))
     stat_stddev = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_STDDEV')
-    assert not (stat_stddev is None or abs(float(stat_stddev) - 22.928)>0.001)
+    assert not (stat_stddev is None or float(stat_stddev) != pytest.approx(22.928, abs=0.001))
 
     ds = None
 

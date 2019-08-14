@@ -45,7 +45,7 @@ class PDS4Dataset;
 /* ==================================================================== */
 /************************************************************************/
 
-class PDS4TableBaseLayer: public OGRLayer
+class PDS4TableBaseLayer CPL_NON_FINAL: public OGRLayer
 {
     protected:
         PDS4Dataset    *m_poDS = nullptr;
@@ -100,7 +100,7 @@ class PDS4TableBaseLayer: public OGRLayer
 /* ==================================================================== */
 /************************************************************************/
 
-template<class T> class PDS4EditableSynchronizer: public IOGREditableLayerSynchronizer
+template<class T> class PDS4EditableSynchronizer final: public IOGREditableLayerSynchronizer
 {
     public:
         PDS4EditableSynchronizer() = default;
@@ -115,7 +115,7 @@ template<class T> class PDS4EditableSynchronizer: public IOGREditableLayerSynchr
 /* ==================================================================== */
 /************************************************************************/
 
-class PDS4FixedWidthTable: public PDS4TableBaseLayer
+class PDS4FixedWidthTable CPL_NON_FINAL: public PDS4TableBaseLayer
 {
         friend class PDS4EditableSynchronizer<PDS4FixedWidthTable>;
 
@@ -224,7 +224,7 @@ class PDS4TableBinary final: public PDS4FixedWidthTable
 /* ==================================================================== */
 /************************************************************************/
 
-class PDS4DelimitedTable: public PDS4TableBaseLayer
+class PDS4DelimitedTable CPL_NON_FINAL: public PDS4TableBaseLayer
 {
         friend class PDS4EditableSynchronizer<PDS4DelimitedTable>;
 

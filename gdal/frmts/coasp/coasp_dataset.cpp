@@ -246,7 +246,7 @@ class COASPRasterBand;
  *    herein is from harassing various Defence Scientists at DRDC Ottawa.
  */
 
-class COASPDataset : public GDALDataset
+class COASPDataset final: public GDALDataset
 {
         friend class COASPRasterBand;
         VSILFILE *fpHdr; /* File pointer for the header file */
@@ -278,7 +278,7 @@ public:
  * ================================================================ *
  ********************************************************************/
 
-class COASPRasterBand : public GDALRasterBand {
+class COASPRasterBand final: public GDALRasterBand {
     VSILFILE *fp;
     // int ePol;
   public:

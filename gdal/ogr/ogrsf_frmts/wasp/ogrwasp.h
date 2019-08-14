@@ -39,7 +39,7 @@
 /*                             OGRWAsPLayer                             */
 /************************************************************************/
 
-class OGRWAsPLayer : public OGRLayer
+class OGRWAsPLayer final: public OGRLayer
 {
     /* stuff for polygon processing */
 
@@ -166,7 +166,7 @@ class OGRWAsPLayer : public OGRLayer
 /*                           OGRWAsPDataSource                          */
 /************************************************************************/
 
-class OGRWAsPDataSource : public OGRDataSource
+class OGRWAsPDataSource final: public OGRDataSource
 {
     CPLString                     sFilename;
     VSILFILE *                    hFile;
@@ -200,7 +200,7 @@ class OGRWAsPDataSource : public OGRDataSource
 /*                             OGRWAsPDriver                            */
 /************************************************************************/
 
-class OGRWAsPDriver : public OGRSFDriver
+class OGRWAsPDriver final: public OGRSFDriver
 {
 
   public:

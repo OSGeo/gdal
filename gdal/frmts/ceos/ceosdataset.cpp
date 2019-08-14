@@ -41,7 +41,7 @@ CPL_CVSID("$Id$")
 
 class CEOSRasterBand;
 
-class CEOSDataset : public GDALPamDataset
+class CEOSDataset final: public GDALPamDataset
 {
     friend class CEOSRasterBand;
 
@@ -59,7 +59,7 @@ class CEOSDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CEOSRasterBand : public GDALPamRasterBand
+class CEOSRasterBand final: public GDALPamRasterBand
 {
     friend class CEOSDataset;
 

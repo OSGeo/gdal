@@ -168,7 +168,7 @@ public:
 private:
     char* m_pBuffer;
     size_t m_nBitOffsetFromStart;
-    const char* m_guard;
+    size_t m_nSize;
     bool m_bEOB = false;
 };
 

@@ -46,7 +46,7 @@ typedef struct
   int   line;
 } OffsetAndLine;
 
-class OGRBNALayer : public OGRLayer
+class OGRBNALayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
 
@@ -101,7 +101,7 @@ class OGRBNALayer : public OGRLayer
 /*                           OGRBNADataSource                           */
 /************************************************************************/
 
-class OGRBNADataSource : public OGRDataSource
+class OGRBNADataSource final: public OGRDataSource
 {
     char*               pszName;
 

@@ -1479,13 +1479,13 @@ def test_ogr_mitab_34():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     geom = f.GetGeometryRef()
-    assert abs(geom.GetX(0) - -1000) <= 1e-2 and abs(geom.GetY(0) - 3000) <= 1e-2
+    assert geom.GetX(0) == pytest.approx(-1000, abs=1e-2) and geom.GetY(0) == pytest.approx(3000, abs=1e-2)
     for i in range(999):
-        assert abs(geom.GetX(i + 1) - (i + 1)) <= 1e-2 and abs(geom.GetY(i + 1) - (i + 1)) <= 1e-2
+        assert geom.GetX(i + 1) == pytest.approx((i + 1), abs=1e-2) and geom.GetY(i + 1) == pytest.approx((i + 1), abs=1e-2)
     f = lyr.GetNextFeature()
     geom = f.GetGeometryRef()
     for i in range(1000):
-        assert abs(geom.GetX(i) - (i)) <= 1e-2 and abs(geom.GetY(i) - (i)) <= 1e-2
+        assert geom.GetX(i) == pytest.approx((i), abs=1e-2) and geom.GetY(i) == pytest.approx((i), abs=1e-2)
     ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)

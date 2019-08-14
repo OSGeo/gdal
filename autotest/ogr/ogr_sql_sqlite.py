@@ -1512,7 +1512,7 @@ def test_ogr_sql_sqlite_25():
     geomA = ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))')
     val_ogr = geomA.GetArea()
 
-    assert abs(val_sql - val_ogr) <= 1e-5
+    assert val_sql == pytest.approx(val_ogr, abs=1e-5)
 
     assert val1_sql is None
 

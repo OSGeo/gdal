@@ -82,7 +82,7 @@ static CPLString CPLEscapeURLQueryParameter( const char *pszInput )
 
 class GDALEEDALayer;
 
-class GDALEEDADataset: public GDALEEDABaseDataset
+class GDALEEDADataset final: public GDALEEDABaseDataset
 {
             CPL_DISALLOW_COPY_ASSIGN(GDALEEDADataset)
 
@@ -104,7 +104,7 @@ class GDALEEDADataset: public GDALEEDABaseDataset
 /*                          GDALEEDALayer                               */
 /************************************************************************/
 
-class GDALEEDALayer: public OGRLayer
+class GDALEEDALayer final: public OGRLayer
 {
                 CPL_DISALLOW_COPY_ASSIGN(GDALEEDALayer)
 

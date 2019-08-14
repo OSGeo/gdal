@@ -149,7 +149,7 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
     assert chksum == chksum_expect, 'Did not get expected chksum for band 3'
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 100) <= 0.1 and abs(geotransform[1] - 0.1) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 30.0) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -0.1) <= 0.001, \
+    assert geotransform[0] == pytest.approx(100, abs=0.1) and geotransform[1] == pytest.approx(0.1, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(30.0, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-0.1, abs=0.001), \
         'geotransform differs from expected'
 
     if set_inverted_color_interp:
@@ -227,7 +227,7 @@ def test_nitf_9():
     (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(exp_mean - mean) <= 0.1 and abs(exp_stddev - stddev) <= 0.1, \
+    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(stddev, abs=0.1), \
         'did not get expected mean or standard dev.'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
@@ -328,7 +328,7 @@ def test_nitf_14():
     assert chksum == chksum_expect, 'Did not get expected chksum for band 1'
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 400000) <= .1 and abs(geotransform[1] - 10) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 6000000) <= .1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -10) <= 0.001, \
+    assert geotransform[0] == pytest.approx(400000, abs=.1) and geotransform[1] == pytest.approx(10, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(6000000, abs=.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-10, abs=0.001), \
         'geotransform differs from expected'
 
     prj = ds.GetProjectionRef()
@@ -860,7 +860,7 @@ def test_nitf_36():
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
 
-    assert abs(exp_mean - mean) <= 0.1 and abs(exp_stddev - stddev) <= 0.1, \
+    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(stddev, abs=0.1), \
         'did not get expected mean or standard dev.'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
@@ -875,7 +875,7 @@ def test_nitf_36():
         'Should have minimum value at that point.'
 
     (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
-    assert abs(exp_mean - mean) <= 0.1 and abs(exp_stddev - stddev) <= 0.1, \
+    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(stddev, abs=0.1), \
         'Should have statistics at that point.'
 
     ds = None
@@ -986,7 +986,7 @@ def test_nitf_39():
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(exp_mean - mean) <= 0.1 and abs(exp_stddev - stddev) <= 0.1, \
+    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(stddev, abs=0.1), \
         'did not get expected mean or standard dev.'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
@@ -1697,7 +1697,7 @@ def test_nitf_60():
 
     ref_gt = [1036422.8453166834, 149.94543479697344, 0.0, 345474.28177222813, 0.0, -149.94543479697404]
     for i in range(6):
-        assert abs(gt[i] - ref_gt[i]) <= 1e-6, 'did not get expected geotransform'
+        assert gt[i] == pytest.approx(ref_gt[i], abs=1e-6), 'did not get expected geotransform'
 
     
 ###############################################################################
@@ -1796,7 +1796,7 @@ def test_nitf_64():
     expected_gt = (2.123270588235294, 0.12345882352941177, 0.0, 49.123729411764707, 0.0, -0.12345882352941176)
     got_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(expected_gt[i] - got_gt[i]) <= 1e-10, \
+        assert expected_gt[i] == pytest.approx(got_gt[i], abs=1e-10), \
             'did not get expected GT in ICORDS=D mode'
     ds = None
 
@@ -1808,7 +1808,7 @@ def test_nitf_64():
     expected_gt = (2.1235495642701521, 0.12345642701525053, 0.0, 49.123394880174288, 0.0, -0.12345642701525052)
     got_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(expected_gt[i] - got_gt[i]) <= 1e-10, \
+        assert expected_gt[i] == pytest.approx(got_gt[i], abs=1e-10), \
             'did not get expected GT in ICORDS=G mode'
     ds = None
 
@@ -1820,7 +1820,7 @@ def test_nitf_64():
     expected_gt = (2.123456789, 0.1234567901234568, 0.0, 49.123456789000002, 0.0, -0.12345679012345678)
     got_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(expected_gt[i] - got_gt[i]) <= 1e-10, \
+        assert expected_gt[i] == pytest.approx(got_gt[i], abs=1e-10), \
             'did not get expected GT in SDE_TRE mode'
     ds = None
 
@@ -1950,23 +1950,23 @@ def test_nitf_69():
     # Check
 
     # Upper-left
-    assert (abs(got_gcps[0].GCPPixel - 0.5) <= 1e-5 and abs(got_gcps[0].GCPLine - 0.5) <= 1e-5 and \
-       abs(got_gcps[0].GCPX - 2) <= 1e-5 and abs(got_gcps[0].GCPY - 49) <= 1e-5), \
+    assert (got_gcps[0].GCPPixel == pytest.approx(0.5, abs=1e-5) and got_gcps[0].GCPLine == pytest.approx(0.5, abs=1e-5) and \
+       got_gcps[0].GCPX == pytest.approx(2, abs=1e-5) and got_gcps[0].GCPY == pytest.approx(49, abs=1e-5)), \
         'wrong gcp'
 
     # Upper-right
-    assert (abs(got_gcps[1].GCPPixel - 19.5) <= 1e-5 and abs(got_gcps[1].GCPLine - 0.5) <= 1e-5 and \
-       abs(got_gcps[1].GCPX - 3) <= 1e-5 and abs(got_gcps[1].GCPY - 49.5) <= 1e-5), \
+    assert (got_gcps[1].GCPPixel == pytest.approx(19.5, abs=1e-5) and got_gcps[1].GCPLine == pytest.approx(0.5, abs=1e-5) and \
+       got_gcps[1].GCPX == pytest.approx(3, abs=1e-5) and got_gcps[1].GCPY == pytest.approx(49.5, abs=1e-5)), \
         'wrong gcp'
 
     # Lower-right
-    assert (abs(got_gcps[2].GCPPixel - 19.5) <= 1e-5 and abs(got_gcps[2].GCPLine - 19.5) <= 1e-5 and \
-       abs(got_gcps[2].GCPX - 3) <= 1e-5 and abs(got_gcps[2].GCPY - 48) <= 1e-5), \
+    assert (got_gcps[2].GCPPixel == pytest.approx(19.5, abs=1e-5) and got_gcps[2].GCPLine == pytest.approx(19.5, abs=1e-5) and \
+       got_gcps[2].GCPX == pytest.approx(3, abs=1e-5) and got_gcps[2].GCPY == pytest.approx(48, abs=1e-5)), \
         'wrong gcp'
 
     # Lower-left
-    assert (abs(got_gcps[3].GCPPixel - 0.5) <= 1e-5 and abs(got_gcps[3].GCPLine - 19.5) <= 1e-5 and \
-       abs(got_gcps[3].GCPX - 2) <= 1e-5 and abs(got_gcps[3].GCPY - 48) <= 1e-5), \
+    assert (got_gcps[3].GCPPixel == pytest.approx(0.5, abs=1e-5) and got_gcps[3].GCPLine == pytest.approx(19.5, abs=1e-5) and \
+       got_gcps[3].GCPX == pytest.approx(2, abs=1e-5) and got_gcps[3].GCPY == pytest.approx(48, abs=1e-5)), \
         'wrong gcp'
 
 ###############################################################################
@@ -3223,7 +3223,7 @@ def test_nitf_online_18():
 
         gcps = ds.GetGCPs()
         gcp3 = gcps[3]
-        assert gcp3.GCPPixel == 0 and gcp3.GCPLine == 1536 and abs(gcp3.GCPX + 45) <= 0.0000000001 and abs(gcp3.GCPY - 68.78679656) <= 0.00000001, \
+        assert gcp3.GCPPixel == 0 and gcp3.GCPLine == 1536 and abs(gcp3.GCPX + 45) <= 0.0000000001 and gcp3.GCPY == pytest.approx(68.78679656, abs=0.00000001), \
             'did not get expected gcp.'
 
     ds = None

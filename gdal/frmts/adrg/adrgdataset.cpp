@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 
 #define DIGIT_ZERO '0'
 
-class ADRGDataset : public GDALPamDataset
+class ADRGDataset final: public GDALPamDataset
 {
     friend class ADRGRasterBand;
 
@@ -113,7 +113,7 @@ class ADRGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ADRGRasterBand : public GDALPamRasterBand
+class ADRGRasterBand final: public GDALPamRasterBand
 {
     friend class ADRGDataset;
 
@@ -1096,7 +1096,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         {
             TILEINDEX = new int [NFL * NFC];
         }
-        catch( const std::bad_alloc& )
+        catch( const std::exception& )
         {
             return nullptr;
         }

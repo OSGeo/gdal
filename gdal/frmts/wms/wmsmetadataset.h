@@ -55,7 +55,7 @@ class WMSCTileSetDesc
 /* ==================================================================== */
 /************************************************************************/
 
-class GDALWMSMetaDataset : public GDALPamDataset
+class GDALWMSMetaDataset final: public GDALPamDataset
 {
   private:
     CPLString osGetURL;

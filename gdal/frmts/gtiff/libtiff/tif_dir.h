@@ -58,6 +58,7 @@ typedef struct {
 		uint32 toff_long;
 		uint64 toff_long8;
 	} tdir_offset;		/* either offset or the data itself if fits */
+	uint8  tdir_ignore;	/* flag status to ignore tag when parsing tags in tif_dirread.c */
 } TIFFDirEntry;
 
 /*

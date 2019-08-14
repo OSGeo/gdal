@@ -989,6 +989,9 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 /** C++11 final qualifier */
 #  define CPL_FINAL final
 
+/** Mark that a class is explicitly recognized as non-final */
+#  define CPL_NON_FINAL
+
 /** Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 

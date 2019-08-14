@@ -867,7 +867,7 @@ OGRErr OGRMemLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
 /*                        OGRMemLayerIteratorArray                      */
 /************************************************************************/
 
-class OGRMemLayerIteratorArray: public IOGRMemLayerFeatureIterator
+class OGRMemLayerIteratorArray final: public IOGRMemLayerFeatureIterator
 {
     GIntBig m_iCurIdx;
     GIntBig m_nMaxFeatureCount;
@@ -900,7 +900,7 @@ class OGRMemLayerIteratorArray: public IOGRMemLayerFeatureIterator
 /*                         OGRMemLayerIteratorMap                       */
 /************************************************************************/
 
-class OGRMemLayerIteratorMap: public IOGRMemLayerFeatureIterator
+class OGRMemLayerIteratorMap final: public IOGRMemLayerFeatureIterator
 {
     typedef std::map<GIntBig, OGRFeature *>           FeatureMap;
     typedef std::map<GIntBig, OGRFeature *>::iterator FeatureIterator;

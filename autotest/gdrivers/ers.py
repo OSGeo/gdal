@@ -157,10 +157,10 @@ def test_ers_8():
         'did not get expected GCP number'
 
     for i, gcp in enumerate(gcps):
-        if abs(gcp.GCPPixel - expected_gcps[i].GCPPixel) > 1e-6 or \
-           abs(gcp.GCPLine - expected_gcps[i].GCPLine) > 1e-6 or \
-           abs(gcp.GCPX - expected_gcps[i].GCPX) > 1e-6 or \
-           abs(gcp.GCPY - expected_gcps[i].GCPY) > 1e-6:
+        if gcp.GCPPixel != pytest.approx(expected_gcps[i].GCPPixel, abs=1e-6) or \
+           gcp.GCPLine != pytest.approx(expected_gcps[i].GCPLine, abs=1e-6) or \
+           gcp.GCPX != pytest.approx(expected_gcps[i].GCPX, abs=1e-6) or \
+           gcp.GCPY != pytest.approx(expected_gcps[i].GCPY, abs=1e-6):
             print(gcps[i])
             pytest.fail('did not get expected GCP %d' % i)
 

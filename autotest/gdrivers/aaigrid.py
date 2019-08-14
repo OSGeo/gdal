@@ -206,7 +206,7 @@ def test_aaigrid_9():
 
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
 
-    if abs(got_minmax[0] - -0.84) < 1e-7:
+    if got_minmax[0] == pytest.approx(-0.84, abs=1e-7):
         return
     pytest.fail()
 
@@ -237,12 +237,12 @@ def test_aaigrid_10():
         assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64, 'Data type is not Float64!'
 
         nv = ds.GetRasterBand(1).GetNoDataValue()
-        assert abs(nv - -1.234567890123) <= 1e-16, 'did not get expected nodata value'
+        assert nv == pytest.approx(-1.234567890123, abs=1e-16), 'did not get expected nodata value'
 
         got_minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
-        assert abs(got_minmax[0] - 1.234567890123) <= 1e-16, \
+        assert got_minmax[0] == pytest.approx(1.234567890123, abs=1e-16), \
             'did not get expected min value'
-        assert abs(got_minmax[1] - 1.234567890123) <= 1e-16, \
+        assert got_minmax[1] == pytest.approx(1.234567890123, abs=1e-16), \
             'did not get expected max value'
 
         try:
@@ -264,7 +264,7 @@ def test_aaigrid_11():
 
     gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
 
-    if abs(got_minmax[0] - -0.84) < 1e-7:
+    if got_minmax[0] == pytest.approx(-0.84, abs=1e-7):
         return
     pytest.fail()
 

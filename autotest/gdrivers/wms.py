@@ -95,7 +95,7 @@ def wms_3():
     assert wkt[:14] == 'GEOGCS["WGS 84', ('Got wrong SRS: ' + wkt)
 
     gt = gdaltest.wms_ds.GetGeoTransform()
-    assert abs(gt[0] - -180) <= 0.00001 and abs(gt[3] - 85) <= 0.00001 and abs(gt[1] - 0.01) <= 0.00001 and abs(gt[2] - 0) <= 0.00001 and abs(gt[5] - -0.01) <= 0.00001 and abs(gt[4] - 0) <= 0.00001, \
+    assert gt[0] == pytest.approx(-180, abs=0.00001) and gt[3] == pytest.approx(85, abs=0.00001) and gt[1] == pytest.approx(0.01, abs=0.00001) and gt[2] == pytest.approx(0, abs=0.00001) and gt[5] == pytest.approx(-0.01, abs=0.00001) and gt[4] == pytest.approx(0, abs=0.00001), \
         'wrong geotransform'
 
     assert gdaltest.wms_ds.GetRasterBand(1).GetOverviewCount() >= 1, 'no overviews!'
@@ -607,7 +607,7 @@ def test_wms_14():
         ('Got wrong SRS: ' + wkt)
 
     gt = ds.GetGeoTransform()
-    assert abs(gt[0] - -20037508.34278924,) <= 0.00001 and abs(gt[3] - 20037508.34278924,) <= 0.00001 and abs(gt[1] - 0.2985821417389697) <= 0.00001 and abs(gt[2] - 0) <= 0.00001 and abs(gt[5] - -0.2985821417389697,) <= 0.00001 and abs(gt[4] - 0) <= 0.00001, \
+    assert abs(gt[0] - -20037508.34278924,) <= 0.00001 and abs(gt[3] - 20037508.34278924,) <= 0.00001 and gt[1] == pytest.approx(0.2985821417389697, abs=0.00001) and gt[2] == pytest.approx(0, abs=0.00001) and abs(gt[5] - -0.2985821417389697,) <= 0.00001 and gt[4] == pytest.approx(0, abs=0.00001), \
         'wrong geotransform'
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 18, 'bad overview count'
@@ -645,7 +645,7 @@ def test_wms_15():
     assert wkt.startswith('PROJCS["WGS 84 / Pseudo-Mercator"'), ('Got wrong SRS: ' + wkt)
 
     gt = ds.GetGeoTransform()
-    assert abs(gt[0] - -20037508.342787001) <= 0.00001 and abs(gt[3] - 20037508.342787001) <= 0.00001 and abs(gt[1] - 0.037322767717361482) <= 0.00001 and abs(gt[2] - 0) <= 0.00001 and abs(gt[5] - -0.037322767717361482) <= 0.00001 and abs(gt[4] - 0) <= 0.00001, \
+    assert gt[0] == pytest.approx(-20037508.342787001, abs=0.00001) and gt[3] == pytest.approx(20037508.342787001, abs=0.00001) and gt[1] == pytest.approx(0.037322767717361482, abs=0.00001) and gt[2] == pytest.approx(0, abs=0.00001) and gt[5] == pytest.approx(-0.037322767717361482, abs=0.00001) and gt[4] == pytest.approx(0, abs=0.00001), \
         'wrong geotransform'
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 22, 'bad overview count'

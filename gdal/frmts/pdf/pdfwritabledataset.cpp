@@ -194,6 +194,50 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
         return OGRERR_FAILURE;
     }
 
+    double dfRatio = (sGlobalExtent.MaxY - sGlobalExtent.MinY) / (sGlobalExtent.MaxX - sGlobalExtent.MinX);
+
+    int nWidth, nHeight;
+
+    if (dfRatio < 1)
+    {
+        nWidth = 1024;
+        const double dfHeight = nWidth * dfRatio;
+        if( dfHeight < 1 || dfHeight > INT_MAX || CPLIsNan(dfHeight) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
+            return OGRERR_FAILURE;
+        }
+        nHeight = static_cast<int>(dfHeight);
+    }
+    else
+    {
+        nHeight = 1024;
+        const double dfWidth = nHeight / dfRatio;
+        if( dfWidth < 1 || dfWidth > INT_MAX || CPLIsNan(dfWidth) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
+            return OGRERR_FAILURE;
+        }
+        nWidth = static_cast<int>(dfWidth);
+    }
+
+    double adfGeoTransform[6];
+    adfGeoTransform[0] = sGlobalExtent.MinX;
+    adfGeoTransform[1] = (sGlobalExtent.MaxX - sGlobalExtent.MinX) / nWidth;
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = sGlobalExtent.MaxY;
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = - (sGlobalExtent.MaxY - sGlobalExtent.MinY) / nHeight;
+
+    // Do again a check against 0, because the above divisions might
+    // transform a difference close to 0, to plain 0.
+    if (adfGeoTransform[1] == 0 || adfGeoTransform[5] == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot compute spatial extent of features");
+        return OGRERR_FAILURE;
+    }
+
     PDFCompressMethod eStreamCompressMethod = COMPRESS_DEFLATE;
     const char* pszStreamCompressMethod = CSLFetchNameValue(papszOptions, "STREAM_COMPRESS");
     if (pszStreamCompressMethod)
@@ -284,42 +328,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     GDALPDFWriter oWriter(fp);
 
-    double dfRatio = (sGlobalExtent.MaxY - sGlobalExtent.MinY) / (sGlobalExtent.MaxX - sGlobalExtent.MinX);
-
-    int nWidth, nHeight;
-
-    if (dfRatio < 1)
-    {
-        nWidth = 1024;
-        const double dfHeight = nWidth * dfRatio;
-        if( dfHeight < 1 || dfHeight > INT_MAX || CPLIsNan(dfHeight) )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
-            return OGRERR_FAILURE;
-        }
-        nHeight = static_cast<int>(dfHeight);
-    }
-    else
-    {
-        nHeight = 1024;
-        const double dfWidth = nHeight / dfRatio;
-        if( dfWidth < 1 || dfWidth > INT_MAX || CPLIsNan(dfWidth) )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
-            return OGRERR_FAILURE;
-        }
-        nWidth = static_cast<int>(dfWidth);
-    }
-
     GDALDataset* poSrcDS = MEMDataset::Create( "MEM:::", nWidth, nHeight, 0, GDT_Byte, nullptr );
-
-    double adfGeoTransform[6];
-    adfGeoTransform[0] = sGlobalExtent.MinX;
-    adfGeoTransform[1] = (sGlobalExtent.MaxX - sGlobalExtent.MinX) / nWidth;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = sGlobalExtent.MaxY;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = - (sGlobalExtent.MaxY - sGlobalExtent.MinY) / nHeight;
 
     poSrcDS->SetGeoTransform(adfGeoTransform);
 

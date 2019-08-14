@@ -77,7 +77,7 @@ typedef enum
 
 class AAIGRasterBand;
 
-class AAIGDataset : public GDALPamDataset
+class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
 {
     friend class AAIGRasterBand;
 
@@ -135,7 +135,7 @@ class AAIGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRASSASCIIDataset : public AAIGDataset
+class GRASSASCIIDataset final: public AAIGDataset
 {
     int ParseHeader(const char* pszHeader, const char* pszDataType) override;
 
@@ -153,7 +153,7 @@ class GRASSASCIIDataset : public AAIGDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AAIGRasterBand : public GDALPamRasterBand
+class AAIGRasterBand final: public GDALPamRasterBand
 {
     friend class AAIGDataset;
 

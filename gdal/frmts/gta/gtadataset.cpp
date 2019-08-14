@@ -129,7 +129,7 @@ static CPLString PrintDoubles( const double *padfDoubles, int nCount )
 /* ==================================================================== */
 /************************************************************************/
 
-class GTAIO : public gta::custom_io
+class GTAIO final: public gta::custom_io
 {
   private:
     VSILFILE *fp;
@@ -214,7 +214,7 @@ class GTAIO : public gta::custom_io
 
 class GTARasterBand;
 
-class GTADataset : public GDALPamDataset
+class GTADataset final: public GDALPamDataset
 {
     friend class GTARasterBand;
 
@@ -278,7 +278,7 @@ class GTADataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GTARasterBand : public GDALPamRasterBand
+class GTARasterBand final: public GDALPamRasterBand
 {
     friend class GTADataset;
   private:

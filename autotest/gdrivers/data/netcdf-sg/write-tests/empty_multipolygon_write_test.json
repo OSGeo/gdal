@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "places",
+"features": [
+{ "type": "Feature", "properties": { "NAMES": "Nowhere" }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "Somewhere" }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [0, 0], [2, 0], [2, 2], [0, 2], [0, 0] ] ] ] } }
+]
+}

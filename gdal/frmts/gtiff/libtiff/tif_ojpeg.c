@@ -2018,10 +2018,15 @@ OJPEGReadBufferFill(OJPEGState* sp)
 					sp->in_buffer_source=osibsEof;
 				else
 				{
-					sp->in_buffer_file_pos=TIFFGetStrileOffset(sp->tif, sp->in_buffer_next_strile);
+					int err = 0;
+					sp->in_buffer_file_pos=TIFFGetStrileOffsetWithErr(sp->tif, sp->in_buffer_next_strile, &err);
+					if( err )
+						return 0;
 					if (sp->in_buffer_file_pos!=0)
 					{
-                                                uint64 bytecount = TIFFGetStrileByteCount(sp->tif, sp->in_buffer_next_strile);
+						uint64 bytecount = TIFFGetStrileByteCountWithErr(sp->tif, sp->in_buffer_next_strile, &err);
+						if( err )
+							return 0;
 						if (sp->in_buffer_file_pos>=sp->file_size)
 							sp->in_buffer_file_pos=0;
 						else if (bytecount==0)
