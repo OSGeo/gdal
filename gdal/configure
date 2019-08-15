@@ -20339,6 +20339,8 @@ fi
 	fi
 	rm -f conftest*
 
+SAVED_CFLAGS=$CFLAGS
+CFLAGS=`echo "$CFLAGS " | sed "s/-fsanitize=undefined //" | sed "s/-fsanitize=address //" | sed "s/-fsanitize=unsigned-integer-overflow //"`
 
   echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
 
@@ -20482,6 +20484,7 @@ fi
   SO_EXT=$SO_EXT
 
 
+CFLAGS=$SAVED_CFLAGS
 else
 with_libtool=yes
 fi
