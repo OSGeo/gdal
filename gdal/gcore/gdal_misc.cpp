@@ -3049,6 +3049,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
             if( !bHasOptfile )
             {
+                char** papszArgvOptfileBefore = papszArgvOptfile;
                 if( GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
                                         &papszArgvOptfile, nOptions) < 0 )
                 {
@@ -3056,6 +3057,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     CSLDestroy(papszArgvOptfile);
                     return -1;
                 }
+                CSLDestroy(papszArgvOptfileBefore);
             }
 
             char** papszIter = papszArgvOptfile + 1;
