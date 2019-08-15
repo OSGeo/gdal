@@ -1108,8 +1108,16 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 /* -------------------------------------------------------------------- */
     if( !poClass->IsSchemaLocked() && !EQUAL(pszValue, OGR_GML_NULL) )
     {
-        poClass->GetProperty(iProperty)->AnalysePropertyValue(
-            poFeature->GetProperty(iProperty), m_bSetWidthFlag );
+        auto poClassProperty = poClass->GetProperty(iProperty);
+        if( poClassProperty )
+        {
+            poClassProperty->AnalysePropertyValue(
+                poFeature->GetProperty(iProperty), m_bSetWidthFlag );
+        }
+        else
+        {
+            CPLAssert(false);
+        }
     }
 }
 
