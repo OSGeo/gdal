@@ -649,7 +649,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
             if( !poOgrST )
                 continue;
 
-            if( poOgrST->GetType() == OGRSTCPen )
+            if( poOgrST->GetType() == OGRSTCPen &&
+                poOgrTmpST == nullptr )
             {
                 poOgrTmpST = poOgrST;
             }
@@ -685,7 +686,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
             if( !poOgrST )
                 continue;
 
-            if( poOgrST->GetType() == OGRSTCBrush )
+            if( poOgrST->GetType() == OGRSTCBrush &&
+                poOgrTmpST == nullptr )
             {
                 poOgrTmpST = poOgrST;
             }
@@ -721,7 +723,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
             if( !poOgrST )
                 continue;
 
-            if( poOgrST->GetType() == OGRSTCSymbol )
+            if( poOgrST->GetType() == OGRSTCSymbol &&
+                poOgrTmpST == nullptr )
             {
                 poOgrTmpST = poOgrST;
             }
@@ -757,7 +760,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
             if( !poOgrST )
                 continue;
 
-            if( poOgrST->GetType() == OGRSTCLabel )
+            if( poOgrST->GetType() == OGRSTCLabel &&
+                poOgrTmpST == nullptr )
             {
                 poOgrTmpST = poOgrST;
             }
