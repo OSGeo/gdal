@@ -644,8 +644,16 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
 /* -------------------------------------------------------------------- */
     if( !poClass->IsSchemaLocked() )
     {
-        poClass->GetProperty(iProperty)->AnalysePropertyValue(
-            poFeature->GetProperty(iProperty));
+        auto poClassProperty = poClass->GetProperty(iProperty);
+        if( poClassProperty )
+        {
+            poClassProperty->AnalysePropertyValue(
+                poFeature->GetProperty(iProperty));
+        }
+        else
+        {
+            CPLAssert(false);
+        }
     }
 }
 
