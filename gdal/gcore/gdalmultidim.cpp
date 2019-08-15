@@ -3094,8 +3094,8 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
                 return nullptr;
             }
             const char* pszStart = aosRangeTokens[0];
-            const char* pszEnd = (nRangeTokens >= 2) ? aosRangeTokens[1]: "";
-            const char* pszInc = (nRangeTokens >= 3) ? aosRangeTokens[2]: "";
+            const char* pszEnd = aosRangeTokens[1];
+            const char* pszInc = (nRangeTokens == 3) ? aosRangeTokens[2]: "";
             GDALSlicedMDArray::Range range;
             const GUInt64 nDimSize(srcDims[nCurSrcDim]->GetSize());
             range.m_nIncr = EQUAL(pszInc, "") ? 1 : CPLAtoGIntBig(pszInc);
@@ -3885,9 +3885,10 @@ public:
         {
             std::vector<double> adfTmp(static_cast<size_t>(std::max(
                  dims[m_iXDim]->GetSize(), dims[m_iYDim]->GetSize())));
-            const GUInt64 nStart = 0;
+            const GUInt64 anStart[1] = { 0 };
             size_t nCount = static_cast<size_t>(dims[m_iXDim]->GetSize());
-            if( !poVarX->Read(&nStart, &nCount, nullptr, nullptr,
+            size_t anCount[1] = { nCount };
+            if( !poVarX->Read(anStart, anCount, nullptr, nullptr,
                          GDALExtendedDataType::Create(GDT_Float64),
                          &adfTmp[0]) )
             {
@@ -3906,7 +3907,8 @@ public:
             const double dfXSpacing = dfSpacing;
 
             nCount = static_cast<size_t>(dims[m_iYDim]->GetSize());
-            if( !poVarY->Read(&nStart, &nCount, nullptr, nullptr,
+            anCount[0] = nCount;
+            if( !poVarY->Read(anStart, anCount, nullptr, nullptr,
                          GDALExtendedDataType::Create(GDT_Float64),
                          &adfTmp[0]) )
             {
@@ -4236,7 +4238,7 @@ CPLErr GDALRasterBandFromArray::IRasterIO( GDALRWFlag eRWFlag,
     auto l_poDS(cpl::down_cast<GDALDatasetFromArray*>(poDS));
     const auto& poArray(l_poDS->m_poArray);
     const int nDTSize(GDALGetDataTypeSizeBytes(eDataType));
-    if( nXSize == nBufXSize && nYSize == nBufYSize &&
+    if( nXSize == nBufXSize && nYSize == nBufYSize && nDTSize > 0 &&
         (nPixelSpaceBuf % nDTSize) == 0 && (nLineSpaceBuf % nDTSize) == 0 )
     {
         m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
@@ -5693,6 +5695,7 @@ int GDALMDArrayRead(GDALMDArrayH hArray,
     }
     VALIDATE_POINTER1( bufferDataType, __func__, FALSE );
     VALIDATE_POINTER1( pDstBuffer, __func__, FALSE );
+    // coverity[var_deref_model]
     return hArray->m_poImpl->Read(arrayStartIdx,
                                   count,
                                   arrayStep,
@@ -5732,6 +5735,7 @@ int GDALMDArrayWrite(GDALMDArrayH hArray,
     }
     VALIDATE_POINTER1( bufferDataType, __func__, FALSE );
     VALIDATE_POINTER1( pSrcBuffer, __func__, FALSE );
+    // coverity[var_deref_model]
     return hArray->m_poImpl->Write(arrayStartIdx,
                                   count,
                                   arrayStep,
