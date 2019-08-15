@@ -102,6 +102,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
         pszGeorefSourcesOption :
         CPLGetConfigOption("GDAL_GEOREF_SOURCES", "PAM,INTERNAL,WORLDFILE");
     size_t nInternalIdx = osGeorefSources.ifind("INTERNAL");
+    // coverity[tainted_data]
     if( nInternalIdx != std::string::npos &&
         (nInternalIdx == 0 || osGeorefSources[nInternalIdx-1] == ',') &&
         (nInternalIdx + strlen("INTERNAL") == osGeorefSources.size() ||
