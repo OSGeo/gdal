@@ -748,6 +748,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         //
         poParser->setFeature (XMLUni::fgXercesSchema, true);
 
+        // coverity[unsafe_xml_parse_config]
         poParser->setFeature (XMLUni::fgXercesValidationErrorAsFatal, false);
 
         // Use the loaded grammar during parsing.
@@ -1003,7 +1004,8 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                             auto poParticle = poCT->getParticle();
                             if( poParticle )
                             {
-                                FindElementsWithMustBeToLevel(
+                                CPL_IGNORE_RET_VAL(
+                                    FindElementsWithMustBeToLevel(
                                         osXPath,
                                         poParticle->getModelGroupTerm(),
                                         0,
@@ -1013,7 +1015,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                         aoSetXPathEltsForTopClass,
                                         poModel,
                                         bSimpleEnoughOut,
-                                        nSubCountSubEltOut );
+                                        nSubCountSubEltOut ));
                             }
                         }
                     }
