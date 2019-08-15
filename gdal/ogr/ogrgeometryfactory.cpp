@@ -3866,6 +3866,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
 
 static double OGRGF_GetDefaultStepSize()
 {
+    // coverity[tainted_data]
     return CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
 }
 
