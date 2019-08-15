@@ -325,7 +325,7 @@ void OGRGeoJSONSeqLayer::ResetReading()
         atoi(CPLGetConfigOption("OGR_GEOJSONSEQ_CHUNK_SIZE", "40960"))));
     const size_t nBufferSizeValidated =
         nBufferSize > static_cast<size_t>(100 * 1000 * 1000) ?
-            static_cast<size_t>(100 * 1000 * 1000) : nBufferSizeValidated;
+            static_cast<size_t>(100 * 1000 * 1000) : nBufferSize;
     m_osBuffer.resize(nBufferSizeValidated);
     m_osFeatureBuffer.clear();
     m_nPosInBuffer = nBufferSizeValidated;
