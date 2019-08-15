@@ -83,12 +83,12 @@ namespace nccfdriver
             /* addCount(...)
              * Takes in a size, and directly adds that size to memory count
              */
-             void addCount(unsigned long long memuse) { this->used_mem += memuse; }
+             void addCount(unsigned long long memuse);
 
             /* subCount(...)
              * Directly subtracts the specified size from used_mem
              */
-             void subCount(unsigned long long memfree) { this->used_mem -= memfree; }
+             void subCount(unsigned long long memfree);
              unsigned long long& getUsage() { return used_mem; }
 
              void reset() { this->used_mem = 0; }
