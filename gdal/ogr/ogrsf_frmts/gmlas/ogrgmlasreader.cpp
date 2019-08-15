@@ -596,6 +596,7 @@ bool GMLASReader::Init(const char* pszFilename,
         m_poSAXReader->setFeature (XMLUni::fgXercesSchema, true);
 
         // We want all errors to be reported
+        // coverity[unsafe_xml_parse_config]
         m_poSAXReader->setFeature (XMLUni::fgXercesValidationErrorAsFatal, false);
 
         CPLString osBaseDirname( CPLGetDirname(pszFilename) );
