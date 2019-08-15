@@ -949,16 +949,23 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	fromskew = (w < imagewidth ? imagewidth - w : 0);
 	for (row = 0; row < h; row += nrow)
 	{
+		uint32 temp;
 		rowstoread = rowsperstrip - (row + img->row_offset) % rowsperstrip;
 		nrow = (row + rowstoread > h ? h - row : rowstoread);
 		nrowsub = nrow;
 		if ((nrowsub%subsamplingver)!=0)
 			nrowsub+=subsamplingver-nrowsub%subsamplingver;
+		temp = (row + img->row_offset)%rowsperstrip + nrowsub;
+		if( scanline > 0 && temp > (size_t)(TIFF_TMSIZE_T_MAX / scanline) )
+		{
+			TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in gtStripContig");
+			return 0;
+		}
 		if (_TIFFReadEncodedStripAndAllocBuffer(tif,
 		    TIFFComputeStrip(tif,row+img->row_offset, 0),
 		    (void**)(&buf),
                     maxstripsize,
-		    ((row + img->row_offset)%rowsperstrip + nrowsub) * scanline)==(tmsize_t)(-1)
+		    temp * scanline)==(tmsize_t)(-1)
 		    && (buf == NULL || img->stoponerr))
 		{
 			ret = 0;
@@ -1051,15 +1058,22 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	fromskew = (w < imagewidth ? imagewidth - w : 0);
 	for (row = 0; row < h; row += nrow)
 	{
+                uint32 temp;
 		rowstoread = rowsperstrip - (row + img->row_offset) % rowsperstrip;
 		nrow = (row + rowstoread > h ? h - row : rowstoread);
 		offset_row = row + img->row_offset;
+                temp = (row + img->row_offset)%rowsperstrip + nrow;
+                if( scanline > 0 && temp > (size_t)(TIFF_TMSIZE_T_MAX / scanline) )
+                {
+                        TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in gtStripSeparate");
+                        return 0;
+                }
                 if( buf == NULL )
                 {
                     if (_TIFFReadEncodedStripAndAllocBuffer(
                             tif, TIFFComputeStrip(tif, offset_row, 0),
                             (void**) &buf, bufsize,
-                            ((row + img->row_offset)%rowsperstrip + nrow) * scanline)==(tmsize_t)(-1)
+                            temp * scanline)==(tmsize_t)(-1)
                         && (buf == NULL || img->stoponerr))
                     {
                             ret = 0;
@@ -1079,7 +1093,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
                     }
                 }
 		else if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 0),
-		    p0, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)==(tmsize_t)(-1)
+		    p0, temp * scanline)==(tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
@@ -1087,7 +1101,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		}
 		if (colorchannels > 1 
                     && TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 1),
-                                            p1, ((row + img->row_offset)%rowsperstrip + nrow) * scanline) == (tmsize_t)(-1)
+                                            p1, temp * scanline) == (tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
@@ -1095,7 +1109,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		}
 		if (colorchannels > 1 
                     && TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, 2),
-                                            p2, ((row + img->row_offset)%rowsperstrip + nrow) * scanline) == (tmsize_t)(-1)
+                                            p2, temp * scanline) == (tmsize_t)(-1)
 		    && img->stoponerr)
 		{
 			ret = 0;
@@ -1104,7 +1118,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		if (alpha)
 		{
 			if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, offset_row, colorchannels),
-			    pa, ((row + img->row_offset)%rowsperstrip + nrow) * scanline)==(tmsize_t)(-1)
+			    pa, temp * scanline)==(tmsize_t)(-1)
 			    && img->stoponerr)
 			{
 				ret = 0;
