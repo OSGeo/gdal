@@ -277,6 +277,7 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj,
     {
         GDALPDFArray* poArray = poK->GetArray();
         if (poArray->GetLength() > 0 &&
+            poArray->Get(0) &&
             poArray->Get(0)->GetType() == PDFObjectType_Dictionary &&
             poArray->Get(0)->GetDictionary()->Get("K") != nullptr &&
             poArray->Get(0)->GetDictionary()->Get("K")->GetType() == PDFObjectType_Int)
@@ -314,8 +315,14 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj,
         else
         {
             for(int i=0;i<poArray->GetLength();i++)
-                ExploreTree(poArray->Get(i), aoSetAlreadyVisited,
-                            nRecLevel + 1);
+            {
+                auto poSubObj = poArray->Get(i);
+                if (poSubObj )
+                {
+                    ExploreTree(poSubObj, aoSetAlreadyVisited,
+                                nRecLevel + 1);
+                }
+            }
         }
     }
     else if (poK->GetType() == PDFObjectType_Dictionary)
