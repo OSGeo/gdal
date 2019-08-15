@@ -316,6 +316,7 @@ OGRGeocodingSessionH OGRGeocodeCreateSession( char** papszOptions )
 
     const char* pszDelayBetweenQueries = OGRGeocodeGetParameter(papszOptions,
                                                                 "DELAY", "1.0");
+    // coverity[tainted_data]
     hSession->dfDelayBetweenQueries = CPLAtofM(pszDelayBetweenQueries);
 
     const char* pszQueryTemplateDefault = nullptr;
