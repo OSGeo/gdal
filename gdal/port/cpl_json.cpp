@@ -426,6 +426,8 @@ CPLJSONObject &CPLJSONObject::operator=(CPLJSONObject &&other)
         return *this;
 
     m_osKey = std::move(other.m_osKey);
+    if( m_poJsonObject )
+        json_object_put( TO_JSONOBJ(m_poJsonObject) );
     m_poJsonObject = other.m_poJsonObject;
     other.m_poJsonObject = nullptr;
     return *this;
