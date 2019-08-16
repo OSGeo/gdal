@@ -558,9 +558,9 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
 /************************************************************************/
 
 CPLHTTPResult* OGRElasticDataSource::HTTPFetch(const char* pszURL,
-                                               char** papszOptions)
+                                               CSLConstList papszOptions)
 {
-    CPLStringList aosOptions(papszOptions, false);
+    CPLStringList aosOptions(papszOptions);
     if( !m_osUserPwd.empty() )
         aosOptions.SetNameValue("USERPWD", m_osUserPwd.c_str());
     return CPLHTTPFetch(pszURL, aosOptions);
@@ -805,6 +805,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
 
     const char* pszMetaFile = CPLGetConfigOption("ES_META", nullptr);
     m_bOverwrite = CPLTestBool(CPLGetConfigOption("ES_OVERWRITE", "0"));
+    // coverity[tainted_data]
     m_nBulkUpload = (int) CPLAtof(CPLGetConfigOption("ES_BULK", "0"));
 
     // Read in the meta file from disk

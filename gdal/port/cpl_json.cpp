@@ -419,6 +419,17 @@ CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)
     m_poJsonObject = json_object_get( TO_JSONOBJ(other.m_poJsonObject) );
     return *this;
 }
+
+CPLJSONObject &CPLJSONObject::operator=(CPLJSONObject &&other)
+{
+    if( this == &other )
+        return *this;
+
+    m_osKey = std::move(other.m_osKey);
+    m_poJsonObject = other.m_poJsonObject;
+    other.m_poJsonObject = nullptr;
+    return *this;
+}
 /*! @endcond */
 
 /**

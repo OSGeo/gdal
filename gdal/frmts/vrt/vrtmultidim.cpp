@@ -2258,9 +2258,10 @@ bool VRTMDArray::CopyFrom(GDALDataset* poSrcDS,
             m_dims[0]->GetSize() < 10 * 1000 * 1000 )
         {
             std::vector<double> adfTmp(static_cast<size_t>(m_dims[0]->GetSize()));
-            const GUInt64 nStart = 0;
+            const GUInt64 anStart[] = { 0 };
             const size_t nCount = adfTmp.size();
-            if( poSrcArray->Read(&nStart, &nCount, nullptr, nullptr,
+            const size_t anCount[] = { nCount };
+            if( poSrcArray->Read(anStart, anCount, nullptr, nullptr,
                          GDALExtendedDataType::Create(GDT_Float64),
                          &adfTmp[0]) )
             {

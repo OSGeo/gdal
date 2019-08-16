@@ -719,7 +719,8 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
                 if( poFeature->IsFieldSetAndNotNull(iField) &&
                     !poFeature->IsFieldNull(iField) )
                 {
-                    poFieldRaw->Integer64 = poFieldRaw->Integer;
+                    const GIntBig nVal = poFieldRaw->Integer;
+                    poFieldRaw->Integer64 = nVal;
                 }
             }
             delete poIter;
@@ -737,7 +738,8 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
                 if( poFeature->IsFieldSetAndNotNull(iField) &&
                     !poFeature->IsFieldNull(iField) )
                 {
-                    poFieldRaw->Real = poFieldRaw->Integer;
+                    const double dfVal = poFieldRaw->Integer;
+                    poFieldRaw->Real = dfVal;
                 }
             }
             delete poIter;
@@ -755,8 +757,9 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
                 if( poFeature->IsFieldSetAndNotNull(iField) &&
                     !poFeature->IsFieldNull(iField) )
                 {
-                    poFieldRaw->Real =
+                    const double dfVal =
                         static_cast<double>(poFieldRaw->Integer64);
+                    poFieldRaw->Real = dfVal;
                 }
             }
             delete poIter;

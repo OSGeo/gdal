@@ -232,7 +232,7 @@ char ** OGRPGTableLayer::GetMetadataDomainList()
 {
     if( pszDescription == nullptr )
         GetMetadata();
-    if( pszDescription[0] != '\0' )
+    if( pszDescription != nullptr && pszDescription[0] != '\0' )
         return CSLAddString(nullptr, "");
     return nullptr;
 }

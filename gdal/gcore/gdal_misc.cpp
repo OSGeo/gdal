@@ -2413,6 +2413,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                             "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK", "NO"));
         if( !bApproxOK )
         {
+            // coverity[tainted_data]
             dfPixelThreshold =
                 CPLAtof(CPLGetConfigOption(
                     "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD", "0.25"));
@@ -3046,26 +3047,26 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
             VSIFCloseL( fpOptFile );
 
-            char** papszArgvOptfileMod = papszArgvOptfile;
             if( !bHasOptfile )
             {
+                char** papszArgvOptfileBefore = papszArgvOptfile;
                 if( GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
-                                        &papszArgvOptfileMod, nOptions) < 0 )
+                                        &papszArgvOptfile, nOptions) < 0 )
                 {
                     CSLDestroy( papszReturn );
                     CSLDestroy(papszArgvOptfile);
                     return -1;
                 }
+                CSLDestroy(papszArgvOptfileBefore);
             }
 
-            char** papszIter = papszArgvOptfileMod + 1;
+            char** papszIter = papszArgvOptfile + 1;
             while( *papszIter )
             {
                 papszReturn = CSLAddString(papszReturn, *papszIter);
                 ++ papszIter;
             }
             CSLDestroy(papszArgvOptfile);
-            CSLDestroy(papszArgvOptfileMod);
 
             iArg += 1;
         }

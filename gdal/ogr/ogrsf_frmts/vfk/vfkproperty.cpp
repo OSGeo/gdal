@@ -98,30 +98,6 @@ VFKProperty::VFKProperty( CPLString const& strValue ) :
 VFKProperty::~VFKProperty() {}
 
 /*!
-  \brief Copy constructor.
-*/
-VFKProperty::VFKProperty( VFKProperty const& other ) :
-    m_bIsNull(other.m_bIsNull),
-    m_iValue(other.m_iValue),
-    m_dValue(other.m_dValue),
-    m_strValue(other.m_strValue)
-{}
-
-/*!
-  \brief Assignment operator.
-*/
-VFKProperty& VFKProperty::operator=( VFKProperty const& other )
-{
-    if (&other != this) {
-        m_bIsNull = other.m_bIsNull;
-        m_iValue = other.m_iValue;
-        m_dValue = other.m_dValue;
-        m_strValue = other.m_strValue;
-    }
-    return *this;
-}
-
-/*!
   \brief Get string property
 
   \param escape true to escape characters for SQL

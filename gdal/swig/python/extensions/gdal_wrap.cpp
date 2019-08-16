@@ -5466,6 +5466,7 @@ static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
 }
 
 static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
+                                             bool bCheckOnlyDims,
                                              int nDims1, GUIntBig* array_start_idx,
                                              int nDims2, GUIntBig* count,
                                              int nDims3, GIntBig* array_step,
@@ -5473,12 +5474,6 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
                                              GDALExtendedDataTypeHS* buffer_datatype,
                                              size_t* pnBufferSize)
 {
-    if( !CheckNumericDataType(buffer_datatype) )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-            "non-numeric buffer data type not supported in SWIG bindings");
-        return CE_Failure;
-    }
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(array);
     if( nDims1 != nExpectedDims )
     {
@@ -5502,6 +5497,14 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Wrong number of values in buffer_stride");
+        return CE_Failure;
+    }
+    if( bCheckOnlyDims )
+        return CE_None;
+    if( !CheckNumericDataType(buffer_datatype) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+            "non-numeric buffer data type not supported in SWIG bindings");
         return CE_Failure;
     }
     GIntBig nBufferSize = 0;
@@ -5642,6 +5645,18 @@ SWIGINTERN char **GDALMDArrayHS_GetStructuralInfo(GDALMDArrayHS *self){
 SWIGINTERN CPLErr GDALMDArrayHS_Read(GDALMDArrayHS *self,int nDims1,GUIntBig *array_start_idx,int nDims2,GUIntBig *count,int nDims3,GIntBig *array_step,int nDims4,GIntBig *buffer_stride,GDALExtendedDataTypeHS *buffer_datatype,void **buf){
     *buf = NULL;
 
+    size_t buf_size = 0;
+    if( MDArrayReadWriteCheckArguments(self, true,
+                                        nDims1, array_start_idx,
+                                        nDims2, count,
+                                        nDims3, array_step,
+                                        nDims4, buffer_stride,
+                                        buffer_datatype,
+                                        &buf_size) != CE_None )
+    {
+      return CE_Failure;
+    }
+
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
     std::vector<size_t> count_internal(nExpectedDims + 1);
     std::vector<GPtrDiff_t> buffer_stride_internal(nExpectedDims + 1);
@@ -5715,8 +5730,7 @@ SWIGINTERN CPLErr GDALMDArrayHS_Read(GDALMDArrayHS *self,int nDims1,GUIntBig *ar
         return CE_None;
     }
 
-    size_t buf_size = 0;
-    if( MDArrayReadWriteCheckArguments(self,
+    if( MDArrayReadWriteCheckArguments(self, false,
                                         nDims1, array_start_idx,
                                         nDims2, count,
                                         nDims3, array_step,
@@ -5845,7 +5859,7 @@ SWIGINTERN CPLErr GDALMDArrayHS_WriteStringArray(GDALMDArrayHS *self,int nDims1,
 SWIGINTERN CPLErr GDALMDArrayHS_Write(GDALMDArrayHS *self,int nDims1,GUIntBig *array_start_idx,int nDims2,GUIntBig *count,int nDims3,GIntBig *array_step,int nDims4,GIntBig *buffer_stride,GDALExtendedDataTypeHS *buffer_datatype,GIntBig buf_len,char *buf_string){
 
     size_t buf_size = 0;
-    if( MDArrayReadWriteCheckArguments(self,
+    if( MDArrayReadWriteCheckArguments(self, false,
                                         nDims1, array_start_idx,
                                         nDims2, count,
                                         nDims3, array_step,
