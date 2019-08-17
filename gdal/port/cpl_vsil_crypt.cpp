@@ -447,10 +447,19 @@ VSICryptFileHeader::CryptKeyCheck( CryptoPP::BlockCipher* poEncCipher )
     CPLAssert( osIV.size() == poEncCipher->BlockSize() );
     // Generate a unique IV with a sector offset of 0xFFFFFFFFFFFFFFFF.
     std::string osCheckIV(VSICryptGenerateSectorIV(osIV, ~(static_cast<vsi_l_offset>(0))));
-    CryptoPP::StringSink* poSink = new CryptoPP::StringSink(osKeyCheckRes);
-    CryptoPP::StreamTransformation* poMode =
-        new CryptoPP::CBC_Mode_ExternalCipher::Encryption(
+    CryptoPP::StreamTransformation* poMode;
+    try
+    {
+        poMode = new CryptoPP::CBC_Mode_ExternalCipher::Encryption(
             *poEncCipher, reinterpret_cast<const cryptopp_byte*>(osCheckIV.c_str()));
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CryptoPP exception: %s", e.what());
+        return std::string();
+    }
+    CryptoPP::StringSink* poSink = new CryptoPP::StringSink(osKeyCheckRes);
     CryptoPP::StreamTransformationFilter* poEnc =
         new CryptoPP::StreamTransformationFilter(
             *poMode, poSink,
