@@ -131,6 +131,7 @@ TIFFClientOpen(
 	if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc) {
 		TIFFErrorExt(clientdata, module,
 		    "One of the client procedures is NULL pointer.");
+		_TIFFfree(tif);
 		goto bad2;
 	}
 	tif->tif_readproc = readproc;

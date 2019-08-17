@@ -302,8 +302,7 @@
 #define TIFFCheckTile gdal_TIFFCheckTile
 #define TIFFCIELabToRGBInit gdal_TIFFCIELabToRGBInit
 #define TIFFCIELabToXYZ gdal_TIFFCIELabToXYZ
-#define TIFFClampDoubleToFloat gdal_TIFFClampDoubleToFloat
-#define TIFFClampDoubleToFloat gdal_TIFFClampDoubleToFloat
+#define _TIFFClampDoubleToFloat gdal__TIFFClampDoubleToFloat
 #define TIFFClampDoubleToInt16 gdal_TIFFClampDoubleToInt16
 #define TIFFClampDoubleToInt32 gdal_TIFFClampDoubleToInt32
 #define TIFFClampDoubleToInt8 gdal_TIFFClampDoubleToInt8

@@ -1264,16 +1264,10 @@ LogL16GuessDataFmt(TIFFDirectory *td)
 	return (SGILOGDATAFMT_UNKNOWN);
 }
 
-
-#define TIFF_SIZE_T_MAX ((size_t) ~ ((size_t)0))
-#define TIFF_TMSIZE_T_MAX (tmsize_t)(TIFF_SIZE_T_MAX >> 1)
-
 static tmsize_t
 multiply_ms(tmsize_t m1, tmsize_t m2)
 {
-        if( m1 == 0 || m2 > TIFF_TMSIZE_T_MAX / m1 )
-            return 0;
-        return m1 * m2;
+        return _TIFFMultiplySSize(NULL, m1, m2, NULL);
 }
 
 static int
@@ -1507,7 +1501,7 @@ LogLuvSetupEncode(TIFF* tif)
 	switch (td->td_photometric) {
 	case PHOTOMETRIC_LOGLUV:
 		if (!LogLuvInitState(tif))
-			break;
+			return (0);
 		if (td->td_compression == COMPRESSION_SGILOG24) {
 			tif->tif_encoderow = LogLuvEncode24;
 			switch (sp->user_datafmt) {
@@ -1540,7 +1534,7 @@ LogLuvSetupEncode(TIFF* tif)
 		break;
 	case PHOTOMETRIC_LOGL:
 		if (!LogL16InitState(tif))
-			break;
+			return (0);
 		tif->tif_encoderow = LogL16Encode;  
 		switch (sp->user_datafmt) {
 		case SGILOGDATAFMT_FLOAT:
@@ -1556,7 +1550,7 @@ LogLuvSetupEncode(TIFF* tif)
 		TIFFErrorExt(tif->tif_clientdata, module,
 		    "Inappropriate photometric interpretation %d for SGILog compression; %s",
 		    td->td_photometric, "must be either LogLUV or LogL");
-		break;
+		return (0);
 	}
 	sp->encoder_state = 1;
 	return (1);
