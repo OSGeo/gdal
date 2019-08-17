@@ -46,8 +46,8 @@ setByteArray(void** vpp, void* vp, size_t nmemb, size_t elem_size)
 		*vpp = 0;
 	}
 	if (vp) {
-		tmsize_t bytes = (tmsize_t)(nmemb * elem_size);
-		if (elem_size && bytes / elem_size == nmemb)
+		tmsize_t bytes = _TIFFMultiplySSize(NULL, nmemb, elem_size, NULL);
+		if (bytes)
 			*vpp = (void*) _TIFFmalloc(bytes);
 		if (*vpp)
 			_TIFFmemcpy(*vpp, vp, bytes);

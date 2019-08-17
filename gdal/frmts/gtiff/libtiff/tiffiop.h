@@ -77,6 +77,9 @@ extern int snprintf(char* str, size_t size, const char* format, ...);
 #define	FALSE	0
 #endif
 
+#define TIFF_SIZE_T_MAX ((size_t) ~ ((size_t)0))
+#define TIFF_TMSIZE_T_MAX (tmsize_t)(TIFF_SIZE_T_MAX >> 1)
+
 typedef struct client_info {
     struct client_info *next;
     void *data;
@@ -258,7 +261,7 @@ struct tiff {
 #define TIFFhowmany8_64(x) (((x)&0x07)?((uint64)(x)>>3)+1:(uint64)(x)>>3)
 #define TIFFroundup_64(x, y) (TIFFhowmany_64(x,y)*(y))
 
-/* Safe multiply which returns zero if there is an integer overflow */
+/* Safe multiply which returns zero if there is an *unsigned* integer overflow. This macro is not safe for *signed* integer types */
 #define TIFFSafeMultiply(t,v,m) ((((t)(m) != (t)0) && (((t)(((v)*(m))/(m))) == (t)(v))) ? (t)((v)*(m)) : (t)0)
 
 #define TIFFmax(A,B) ((A)>(B)?(A):(B))
@@ -368,6 +371,8 @@ extern TIFFErrorHandlerExt _TIFFerrorHandlerExt;
 
 extern uint32 _TIFFMultiply32(TIFF*, uint32, uint32, const char*);
 extern uint64 _TIFFMultiply64(TIFF*, uint64, uint64, const char*);
+extern tmsize_t _TIFFMultiplySSize(TIFF*, tmsize_t, tmsize_t, const char*);
+extern tmsize_t _TIFFCastUInt64ToSSize(TIFF*, uint64, const char*);
 extern void* _TIFFCheckMalloc(TIFF*, tmsize_t, tmsize_t, const char*);
 extern void* _TIFFCheckRealloc(TIFF*, void*, tmsize_t, tmsize_t, const char*);
 
