@@ -128,7 +128,7 @@ typedef struct TigerRecordInfo {
 /*                            TigerFileBase                             */
 /************************************************************************/
 
-class TigerFileBase
+class TigerFileBase CPL_NON_FINAL
 {
 protected:
   OGRTigerDataSource  *poDS;
@@ -203,7 +203,7 @@ public:
 /*                          TigerCompleteChain                          */
 /************************************************************************/
 
-class TigerCompleteChain : public TigerFileBase
+class TigerCompleteChain final: public TigerFileBase
 {
   VSILFILE           *fpShape;
   int                *panShapeRecordId;
@@ -245,7 +245,7 @@ public:
 /*                    TigerAltName (Type 4 records)                     */
 /************************************************************************/
 
-class TigerAltName : public TigerFileBase
+class TigerAltName final: public TigerFileBase
 {
  public:
                       TigerAltName( OGRTigerDataSource *,
@@ -260,7 +260,7 @@ class TigerAltName : public TigerFileBase
 /*                    TigerFeatureIds (Type 5 records)                  */
 /************************************************************************/
 
-class TigerFeatureIds : public TigerFileBase
+class TigerFeatureIds final: public TigerFileBase
 {
  public:
                       TigerFeatureIds( OGRTigerDataSource *,
@@ -271,7 +271,7 @@ class TigerFeatureIds : public TigerFileBase
 /*                    TigerZipCodes (Type 6 records)                    */
 /************************************************************************/
 
-class TigerZipCodes : public TigerFileBase
+class TigerZipCodes final: public TigerFileBase
 {
 public:
                       TigerZipCodes( OGRTigerDataSource *, const char * );
@@ -285,7 +285,7 @@ public:
 /* layer classes.  mbp Sat Jan  4 16:41:19 2003.                        */
 /************************************************************************/
 
-class TigerPoint : public TigerFileBase
+class TigerPoint CPL_NON_FINAL: public TigerFileBase
 {
  protected:
                       explicit TigerPoint(int bRequireGeom,
@@ -316,7 +316,7 @@ class TigerPoint : public TigerFileBase
 /*                   TigerLandmarks (Type 7 records)                    */
 /************************************************************************/
 
-class TigerLandmarks : public TigerPoint
+class TigerLandmarks final: public TigerPoint
 {
  public:
                       TigerLandmarks( OGRTigerDataSource *, const char * );
@@ -330,7 +330,7 @@ class TigerLandmarks : public TigerPoint
 /*                   TigerAreaLandmarks (Type 8 records)                */
 /************************************************************************/
 
-class TigerAreaLandmarks : public TigerFileBase
+class TigerAreaLandmarks final: public TigerFileBase
 {
 public:
                       TigerAreaLandmarks( OGRTigerDataSource *, const char * );
@@ -340,7 +340,7 @@ public:
 /*                   TigerKeyFeatures (Type 9 records)                  */
 /************************************************************************/
 
-class TigerKeyFeatures : public TigerFileBase
+class TigerKeyFeatures final: public TigerFileBase
 {
 public:
                       TigerKeyFeatures( OGRTigerDataSource *, const char * );
@@ -350,7 +350,7 @@ public:
 /*                   TigerPolygon (Type A&S records)                    */
 /************************************************************************/
 
-class TigerPolygon : public TigerFileBase
+class TigerPolygon final: public TigerFileBase
 {
  private:
   const TigerRecordInfo    *psRTAInfo;
@@ -376,7 +376,7 @@ public:
 /*                    TigerPolygonCorrections (Type B records)          */
 /************************************************************************/
 
-class TigerPolygonCorrections : public TigerFileBase
+class TigerPolygonCorrections final: public TigerFileBase
 {
 public:
                       TigerPolygonCorrections( OGRTigerDataSource *, const char * );
@@ -386,7 +386,7 @@ public:
 /*                  TigerEntityNames (Type C records)                   */
 /************************************************************************/
 
-class TigerEntityNames : public TigerFileBase
+class TigerEntityNames final: public TigerFileBase
 {
 public:
                       TigerEntityNames( OGRTigerDataSource *, const char * );
@@ -396,7 +396,7 @@ public:
 /*                    TigerPolygonEconomic (Type E records)             */
 /************************************************************************/
 
-class TigerPolygonEconomic : public TigerFileBase
+class TigerPolygonEconomic final: public TigerFileBase
 {
 public:
                       TigerPolygonEconomic( OGRTigerDataSource *, const char * );
@@ -406,7 +406,7 @@ public:
 /*                  TigerIDHistory (Type H records)                     */
 /************************************************************************/
 
-class TigerIDHistory : public TigerFileBase
+class TigerIDHistory final: public TigerFileBase
 {
 public:
                       TigerIDHistory( OGRTigerDataSource *, const char * );
@@ -416,7 +416,7 @@ public:
 /*                   TigerPolyChainLink (Type I records)                */
 /************************************************************************/
 
-class TigerPolyChainLink : public TigerFileBase
+class TigerPolyChainLink final: public TigerFileBase
 {
 public:
                       TigerPolyChainLink( OGRTigerDataSource *, const char * );
@@ -426,7 +426,7 @@ public:
 /*                TigerSpatialMetadata (Type M records)                 */
 /************************************************************************/
 
-class TigerSpatialMetadata : public TigerFileBase
+class TigerSpatialMetadata final: public TigerFileBase
 {
 public:
                       TigerSpatialMetadata( OGRTigerDataSource *, const char * );
@@ -436,7 +436,7 @@ public:
 /*                   TigerPIP (Type P records)                          */
 /************************************************************************/
 
-class TigerPIP : public TigerPoint
+class TigerPIP final: public TigerPoint
 {
 public:
                       TigerPIP( OGRTigerDataSource *, const char * );
@@ -450,7 +450,7 @@ public:
 /*                   TigerTLIDRange (Type R records)                    */
 /************************************************************************/
 
-class TigerTLIDRange : public TigerFileBase
+class TigerTLIDRange final: public TigerFileBase
 {
 public:
                       TigerTLIDRange( OGRTigerDataSource *, const char * );
@@ -460,7 +460,7 @@ public:
 /*                    TigerZeroCellID (Type T records)                  */
 /************************************************************************/
 
-class TigerZeroCellID : public TigerFileBase
+class TigerZeroCellID final: public TigerFileBase
 {
 public:
                       TigerZeroCellID( OGRTigerDataSource *, const char * );
@@ -470,7 +470,7 @@ public:
 /*                    TigerOverUnder (Type U records)                   */
 /************************************************************************/
 
-class TigerOverUnder : public TigerPoint
+class TigerOverUnder final: public TigerPoint
 {
 public:
                       TigerOverUnder( OGRTigerDataSource *, const char * );
@@ -484,7 +484,7 @@ public:
 /*                    TigerZipPlus4 (Type Z records)                    */
 /************************************************************************/
 
-class TigerZipPlus4 : public TigerFileBase
+class TigerZipPlus4 final: public TigerFileBase
 {
  public:
                       TigerZipPlus4( OGRTigerDataSource *, const char * );
@@ -494,7 +494,7 @@ class TigerZipPlus4 : public TigerFileBase
 /*                            OGRTigerLayer                             */
 /************************************************************************/
 
-class OGRTigerLayer : public OGRLayer
+class OGRTigerLayer final: public OGRLayer
 {
     TigerFileBase      *poReader;
 
@@ -531,7 +531,7 @@ class OGRTigerLayer : public OGRLayer
 /*                          OGRTigerDataSource                          */
 /************************************************************************/
 
-class OGRTigerDataSource : public OGRDataSource
+class OGRTigerDataSource final: public OGRDataSource
 {
     char                *pszName;
 

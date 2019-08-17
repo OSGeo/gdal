@@ -218,7 +218,7 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
 
 class SGIRasterBand;
 
-class SGIDataset : public GDALPamDataset
+class SGIDataset final: public GDALPamDataset
 {
     friend class SGIRasterBand;
 
@@ -246,7 +246,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class SGIRasterBand : public GDALPamRasterBand
+class SGIRasterBand final: public GDALPamRasterBand
 {
     friend class SGIDataset;
 

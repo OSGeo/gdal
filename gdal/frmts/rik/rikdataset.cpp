@@ -114,7 +114,7 @@ typedef struct
 
 class RIKRasterBand;
 
-class RIKDataset : public GDALPamDataset
+class RIKDataset final: public GDALPamDataset
 {
     friend class RIKRasterBand;
 
@@ -152,7 +152,7 @@ class RIKDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RIKRasterBand : public GDALPamRasterBand
+class RIKRasterBand final: public GDALPamRasterBand
 {
     friend class RIKDataset;
 
@@ -573,7 +573,11 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         uLong destLen = pixels;
         Byte *upsideDown = static_cast<Byte *>( CPLMalloc( pixels ) );
 
-        uncompress( upsideDown, &destLen, blockData, nBlockSize );
+        if( uncompress( upsideDown, &destLen, blockData, nBlockSize ) != Z_OK )
+        {
+            CPLDebug("RIK", "Deflate compression failed on block %u",
+                     nBlockIndex);
+        }
 
         for (GUInt32 i = 0; i < poRDS->nBlockYSize; i++)
         {

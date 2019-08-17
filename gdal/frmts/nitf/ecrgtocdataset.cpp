@@ -30,6 +30,7 @@
 
 #include "cpl_port.h"
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -75,7 +76,7 @@ typedef struct
 /* ==================================================================== */
 /************************************************************************/
 
-class ECRGTOCDataset : public GDALPamDataset
+class ECRGTOCDataset final: public GDALPamDataset
 {
   char      **papszSubDatasets;
   double      adfGeoTransform[6];
@@ -136,7 +137,7 @@ class ECRGTOCDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ECRGTOCSubDataset : public VRTDataset
+class ECRGTOCSubDataset final: public VRTDataset
 {
   char**       papszFileList;
 
@@ -328,6 +329,9 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
               double& dfPixelXSize, double& dfPixelYSize)
 {
     const int nAbsZone = abs(nZone);
+#ifdef DEBUG
+    assert( nAbsZone > 0 && nAbsZone <= 8 );
+#endif
 
 /************************************************************************/
 /*  Compute east-west constant                                          */
@@ -416,7 +420,7 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
 /* ==================================================================== */
 /************************************************************************/
 
-class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
+class ECRGTOCProxyRasterDataSet final: public GDALProxyPoolDataset
 {
     /* The following parameters are only for sanity checking */
     mutable int checkDone;

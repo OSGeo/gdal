@@ -70,7 +70,7 @@ def test_rl2_2():
     gt = ds.GetGeoTransform()
     expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-15
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-15)
 
     wkt = ds.GetProjectionRef()
     assert '26711' in wkt

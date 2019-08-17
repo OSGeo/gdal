@@ -38,7 +38,7 @@
 /*                             OGRGmtLayer                              */
 /************************************************************************/
 
-class OGRGmtLayer : public OGRLayer
+class OGRGmtLayer final: public OGRLayer
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
@@ -93,7 +93,7 @@ class OGRGmtLayer : public OGRLayer
 /*                           OGRGmtDataSource                           */
 /************************************************************************/
 
-class OGRGmtDataSource : public OGRDataSource
+class OGRGmtDataSource final: public OGRDataSource
 {
     OGRGmtLayer       **papoLayers;
     int                 nLayers;

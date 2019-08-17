@@ -78,7 +78,7 @@ static const char *GetFilePath(CPLXMLNode *psXMLNode, const char **pszNodeType) 
 /* ==================================================================== */
 /************************************************************************/
 
-class TSXDataset : public GDALPamDataset {
+class TSXDataset final: public GDALPamDataset {
     int nGCPCount;
     GDAL_GCP *pasGCPList;
 
@@ -118,7 +118,7 @@ private:
 /* ==================================================================== */
 /************************************************************************/
 
-class TSXRasterBand : public GDALPamRasterBand {
+class TSXRasterBand final: public GDALPamRasterBand {
     GDALDataset *poBand;
     ePolarization ePol;
 public:

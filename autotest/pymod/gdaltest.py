@@ -274,7 +274,7 @@ class GDALTest(object):
 
             new_gt = ds.GetGeoTransform()
             for i in range(6):
-                if abs(new_gt[i] - check_gt[i]) > gt_epsilon:
+                if new_gt[i] != pytest.approx(check_gt[i], abs=gt_epsilon):
                     print('')
                     print('old = ', check_gt)
                     print('new = ', new_gt)
@@ -301,7 +301,7 @@ class GDALTest(object):
                 assert not ('n' in sv or 'i' in sv or '#' in sv), \
                     ('NaN or infinity value encountered \'%s\'.' % sv)
 
-                if abs(new_stat[i] - check_approx_stat[i]) > stat_epsilon:
+                if new_stat[i] != pytest.approx(check_approx_stat[i], abs=stat_epsilon):
                     print('')
                     print('old = ', check_approx_stat)
                     print('new = ', new_stat)
@@ -323,7 +323,7 @@ class GDALTest(object):
                 assert not ('n' in sv or 'i' in sv or '#' in sv), \
                     ('NaN or infinity value encountered \'%s\'.' % sv)
 
-                if abs(new_stat[i] - check_stat[i]) > stat_epsilon:
+                if new_stat[i] != pytest.approx(check_stat[i], abs=stat_epsilon):
                     print('')
                     print('old = ', check_stat)
                     print('new = ', new_stat)
@@ -457,12 +457,12 @@ class GDALTest(object):
             else:
                 eps = gt_epsilon
             new_gt = new_ds.GetGeoTransform()
-            if abs(new_gt[0] - src_gt[0]) > eps \
-               or abs(new_gt[1] - src_gt[1]) > eps \
-               or abs(new_gt[2] - src_gt[2]) > eps \
-               or abs(new_gt[3] - src_gt[3]) > eps \
-               or abs(new_gt[4] - src_gt[4]) > eps \
-               or abs(new_gt[5] - src_gt[5]) > eps:
+            if new_gt[0] != pytest.approx(src_gt[0], abs=eps) \
+               or new_gt[1] != pytest.approx(src_gt[1], abs=eps) \
+               or new_gt[2] != pytest.approx(src_gt[2], abs=eps) \
+               or new_gt[3] != pytest.approx(src_gt[3], abs=eps) \
+               or new_gt[4] != pytest.approx(src_gt[4], abs=eps) \
+               or new_gt[5] != pytest.approx(src_gt[5], abs=eps):
                 print('')
                 print('old = ', src_gt)
                 print('new = ', new_gt)
@@ -590,12 +590,12 @@ class GDALTest(object):
 
         eps = 0.00000001
         new_gt = new_ds.GetGeoTransform()
-        if abs(new_gt[0] - gt[0]) > eps \
-                or abs(new_gt[1] - gt[1]) > eps \
-                or abs(new_gt[2] - gt[2]) > eps \
-                or abs(new_gt[3] - gt[3]) > eps \
-                or abs(new_gt[4] - gt[4]) > eps \
-                or abs(new_gt[5] - gt[5]) > eps:
+        if new_gt[0] != pytest.approx(gt[0], abs=eps) \
+                or new_gt[1] != pytest.approx(gt[1], abs=eps) \
+                or new_gt[2] != pytest.approx(gt[2], abs=eps) \
+                or new_gt[3] != pytest.approx(gt[3], abs=eps) \
+                or new_gt[4] != pytest.approx(gt[4], abs=eps) \
+                or new_gt[5] != pytest.approx(gt[5], abs=eps):
             print('')
             print('old = ', gt)
             print('new = ', new_gt)
@@ -842,7 +842,7 @@ def approx_equal(a, b):
     if a == 0 and b != 0:
         return 0
 
-    if abs(b / a - 1.0) > .00000000001:
+    if b / a != pytest.approx(1.0, abs=.00000000001):
         return 0
     return 1
 
@@ -932,7 +932,7 @@ def rpcs_equal(md1, md2):
 
 def geotransform_equals(gt1, gt2, gt_epsilon):
     for i in range(6):
-        if abs(gt1[i] - gt2[i]) > gt_epsilon:
+        if gt1[i] != pytest.approx(gt2[i], abs=gt_epsilon):
             print('')
             print('gt1 = ', gt1)
             print('gt2 = ', gt2)

@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
 
 class ZMapRasterBand;
 
-class ZMapDataset : public GDALPamDataset
+class ZMapDataset final: public GDALPamDataset
 {
     friend class ZMapRasterBand;
 
@@ -75,7 +75,7 @@ class ZMapDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ZMapRasterBand : public GDALPamRasterBand
+class ZMapRasterBand final: public GDALPamRasterBand
 {
     friend class ZMapDataset;
 

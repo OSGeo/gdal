@@ -46,6 +46,7 @@
 #endif
 
 #include <algorithm>
+#include <memory>
 #include <string>
 
 #include "cpl_conv.h"
@@ -70,10 +71,12 @@
 /* ==================================================================== */
 /************************************************************************/
 
+class GRIBArray;
 class GRIBRasterBand;
 
-class GRIBDataset : public GDALPamDataset
+class GRIBDataset final: public GDALPamDataset
 {
+    friend class GRIBArray;
     friend class GRIBRasterBand;
 
   public:
@@ -89,15 +92,17 @@ class GRIBDataset : public GDALPamDataset
                                     void * pProgressData );
 
     CPLErr      GetGeoTransform( double *padfTransform ) override;
-    const char *_GetProjectionRef() override;
     const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
+        return m_poSRS.get();
     }
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
 
   private:
     void SetGribMetaData(grib_MetaData *meta);
+    static GDALDataset *OpenMultiDim( GDALOpenInfo * );
+
     VSILFILE *fp;
-    char *pszProjection;
     // Calculate and store once as GetGeoTransform may be called multiple times.
     double adfGeoTransform[6];
 
@@ -105,6 +110,10 @@ class GRIBDataset : public GDALPamDataset
     GIntBig nCachedBytesThreshold;
     int bCacheOnlyOneBand;
     GRIBRasterBand *poLastUsedBand;
+    std::shared_ptr<GDALGroup> m_poRootGroup{};
+    std::shared_ptr<OGRSpatialReference> m_poSRS{};
+    std::unique_ptr<OGRSpatialReference> m_poLL{};
+    std::unique_ptr<OGRCoordinateTransformation> m_poCT{};
 };
 
 /************************************************************************/
@@ -113,8 +122,9 @@ class GRIBDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRIBRasterBand : public GDALPamRasterBand
+class GRIBRasterBand final: public GDALPamRasterBand
 {
+    friend class GRIBArray;
     friend class GRIBDataset;
 
 public:
@@ -129,12 +139,12 @@ public:
 
     void    UncacheData();
 
+    static void ReadGribData( VSILFILE *, vsi_l_offset, int, double **,
+                              grib_MetaData ** );
 private:
     CPLErr       LoadData();
     void    FindNoDataGrib2(bool bSeekToStart = true);
 
-    static void ReadGribData( VSILFILE *, vsi_l_offset, int, double **,
-                              grib_MetaData ** );
     vsi_l_offset start;
     int subgNum;
     char *longFstLevel;
@@ -149,6 +159,19 @@ private:
     bool    m_bHasLookedForNoData;
     double  m_dfNoData;
     bool    m_bHasNoData;
+
+    int     m_nDisciplineCode = -1;
+    std::string m_osDisciplineName{};
+    int     m_nCenter = -1;
+    std::string m_osCenterName{};
+    int     m_nSubCenter = -1;
+    std::string m_osSubCenterName{};
+    std::string m_osSignRefTimeName{};
+    std::string m_osRefTime{};
+    std::string m_osProductionStatus{};
+    std::string m_osType{};
+    int     m_nPDTN = -1;
+    std::vector<GUInt32> m_anPDSTemplateAssembledValues{};
 };
 
 namespace gdal {

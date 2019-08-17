@@ -41,7 +41,7 @@
 
 class OGRIDBDataSource;
 
-class OGRIDBLayer : public OGRLayer
+class OGRIDBLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -89,7 +89,7 @@ class OGRIDBLayer : public OGRLayer
 /*                           OGRIDBTableLayer                          */
 /************************************************************************/
 
-class OGRIDBTableLayer : public OGRIDBLayer
+class OGRIDBTableLayer final: public OGRIDBLayer
 {
     int                 bUpdateAccess;
 
@@ -133,7 +133,7 @@ class OGRIDBTableLayer : public OGRIDBLayer
 /*                          OGRIDBSelectLayer                          */
 /************************************************************************/
 
-class OGRIDBSelectLayer : public OGRIDBLayer
+class OGRIDBSelectLayer final: public OGRIDBLayer
 {
     char                *pszBaseQuery;
 
@@ -163,7 +163,7 @@ class OGRIDBSelectLayer : public OGRIDBLayer
 /*                           OGRIDBDataSource                          */
 /************************************************************************/
 
-class OGRIDBDataSource : public OGRDataSource
+class OGRIDBDataSource final: public OGRDataSource
 {
     OGRIDBLayer        **papoLayers;
     int                 nLayers;
@@ -201,7 +201,7 @@ class OGRIDBDataSource : public OGRDataSource
 /*                             OGRIDBDriver                            */
 /************************************************************************/
 
-class OGRIDBDriver : public OGRSFDriver
+class OGRIDBDriver final: public OGRSFDriver
 {
     public:
                        ~OGRIDBDriver();

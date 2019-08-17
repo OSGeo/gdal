@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEGLSDataset : public GDALPamDataset
+class JPEGLSDataset final: public GDALPamDataset
 {
     friend class JPEGLSRasterBand;
 
@@ -74,7 +74,7 @@ class JPEGLSDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEGLSRasterBand : public GDALPamRasterBand
+class JPEGLSRasterBand final: public GDALPamRasterBand
 {
     friend class JPEGLSDataset;
 

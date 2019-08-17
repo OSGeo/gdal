@@ -514,20 +514,20 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "SENTINEL1_DS:"))
     {
       osMDFilename = poOpenInfo->pszFilename + strlen("SENTINEL1_DS:");
-      const char* pszSelection1 = strrchr(osMDFilename.c_str(), ':');
-      if (pszSelection1 == nullptr || pszSelection1 == osMDFilename.c_str() )
+      size_t nPosColon = osMDFilename.find(':');
+      if (nPosColon == std::string::npos || nPosColon == 0)
       {
           CPLError(CE_Failure, CPLE_AppDefined, "Invalid syntax for SENTINEL1_DS:");
           return nullptr;
       }
-      osMDFilename.resize( pszSelection1 - osMDFilename.c_str() );
-      osSelectedSubDS1 = pszSelection1 + strlen(":");
+      osSelectedSubDS1 = osMDFilename.substr(nPosColon+1);
+      osMDFilename.resize( nPosColon );
 
-      const char* pszSelection2 = strchr(osSelectedSubDS1.c_str(), '_');
-      if (pszSelection2 != nullptr && pszSelection2 != pszSelection1 )
+      size_t nPosUnderscore = osSelectedSubDS1.find('_');
+      if (nPosUnderscore != std::string::npos && nPosUnderscore != 0)
       {
-          osSelectedSubDS1.resize( pszSelection2 - osSelectedSubDS1.c_str() );
-          osSelectedSubDS2 = pszSelection2 + strlen("_");
+          osSelectedSubDS2 = osSelectedSubDS1.substr(nPosUnderscore+1);
+          osSelectedSubDS1.resize( nPosUnderscore );
       }
 
       //update directory check:

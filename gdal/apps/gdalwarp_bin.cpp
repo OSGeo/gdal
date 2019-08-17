@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
-#include "cpl_error.h"
+#include "cpl_error_internal.h"
 #include "gdal_version.h"
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
@@ -141,31 +141,6 @@ static int CPL_STDCALL WarpTermProgress( double dfProgress,
         iSrc ++;
     }
     return GDALTermProgress(dfProgress * gnSrcCount - iSrc, nullptr, nullptr);
-}
-
-/************************************************************************/
-/*                      ErrorHandlerAccumulator()                       */
-/************************************************************************/
-
-class ErrorStruct
-{
-  public:
-    CPLErr type;
-    CPLErrorNum no;
-    CPLString msg;
-
-    ErrorStruct() : type(CE_None), no(CPLE_None) {}
-    ErrorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
-        type(eErrIn), no(noIn), msg(msgIn) {}
-};
-
-static void CPL_STDCALL ErrorHandlerAccumulator( CPLErr eErr, CPLErrorNum no,
-                                                 const char* msg )
-{
-    std::vector<ErrorStruct>* paoErrors =
-        static_cast<std::vector<ErrorStruct> *>(
-            CPLGetErrorHandlerUserData());
-    paoErrors->push_back(ErrorStruct(eErr, no, msg));
 }
 
 /************************************************************************/
@@ -293,11 +268,11 @@ MAIN_START(argc, argv)
     }
     else
     {
-        std::vector<ErrorStruct> aoErrors;
-        CPLPushErrorHandlerEx( ErrorHandlerAccumulator, &aoErrors );
+        std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+        CPLInstallErrorHandlerAccumulator(aoErrors);
         hDstDS = GDALOpenEx( psOptionsForBinary->pszDstFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
                              nullptr, psOptionsForBinary->papszDestOpenOptions, nullptr );
-        CPLPopErrorHandler();
+        CPLUninstallErrorHandlerAccumulator();
         if( hDstDS != nullptr )
         {
             for( size_t i = 0; i < aoErrors.size(); i++ )

@@ -33,7 +33,7 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class WCSRasterBand : public GDALPamRasterBand
+class WCSRasterBand final: public GDALPamRasterBand
 {
     friend class WCSDataset;
 

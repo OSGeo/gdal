@@ -1540,6 +1540,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         m_psLockFile = f;
         m_bExitRefreshLockFileThread = false;
         // Config option mostly for testing purposes
+        // coverity[tainted_data]
         m_dfRefreshLockDelay = CPLAtof(
             CPLGetConfigOption("OGR_SHAPE_LOCK_DELAY",
                             CPLSPrintf("%d", knREFRESH_LOCK_FILE_DELAY_SEC)));

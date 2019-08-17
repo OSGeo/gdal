@@ -2472,5 +2472,6 @@ int DGNAddShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement,
 
     abyFillInfo[8] = (unsigned char) nColor;
 
+    // coverity[overrun-buffer-arg]
     return DGNAddRawAttrLink( hDGN, psElement, 16, abyFillInfo );
 }

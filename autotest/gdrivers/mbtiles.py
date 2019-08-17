@@ -92,7 +92,7 @@ def test_mbtiles_2():
     gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 20037508.342789244, 0.0, -78271.516964020484)
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-15, 'bad gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-15), 'bad gt'
 
     md = ds.GetMetadata()
     assert md['bounds'] == '-180.0,-85,180,85', 'bad metadata'
@@ -274,7 +274,7 @@ def test_mbtiles_4():
     gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 19971868.880408563, 0.0, -78271.516964020484)
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-15, 'bad gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-15), 'bad gt'
 
     ds = None
 
@@ -300,7 +300,7 @@ def test_mbtiles_5():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-13095853.550435878, 76.437028285176254, 0.0, 4015708.8887064462, 0.0, -76.437028285176254)
     for i in range(6):
-        assert abs(expected_gt[i] - got_gt[i]) <= 1e-6
+        assert expected_gt[i] == pytest.approx(got_gt[i], abs=1e-6)
     got_cs = ds.GetRasterBand(1).Checksum()
     assert got_cs == 4118
     got_cs = ds.GetRasterBand(2).Checksum()
@@ -468,7 +468,7 @@ def test_mbtiles_9():
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/mbtiles_9.mbtiles')
     assert ds.RasterXSize == 256 and ds.RasterYSize == 256
-    assert abs(ds.GetGeoTransform()[0] - -13110479.091473430395126) <= 1e-6
+    assert ds.GetGeoTransform()[0] == pytest.approx(-13110479.091473430395126, abs=1e-6)
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_9.mbtiles')

@@ -82,7 +82,7 @@ def test_osr_ct_2():
     ct = osr.CoordinateTransformation(ll_srs, utm_srs)
 
     result = ct.TransformPoint(32.0, -117.5, 0.0)
-    assert abs(result[0] - 452772.06) <= 0.01 and abs(result[1] - 3540544.89) <= 0.01 and abs(result[2] - 0.0) <= 0.01, \
+    assert result[0] == pytest.approx(452772.06, abs=0.01) and result[1] == pytest.approx(3540544.89, abs=0.01) and result[2] == pytest.approx(0.0, abs=0.01), \
         'Wrong LL to UTM result'
 
 ###############################################################################
@@ -138,7 +138,7 @@ def test_osr_ct_4():
     assert len(result[0]) == 3
 
     for i in range(2):
-        assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
+        assert result[i][0] == pytest.approx(452772.06, abs=0.01) and result[i][1] == pytest.approx(3540544.89, abs=0.01) and result[i][2] == pytest.approx(0.0, abs=0.01), \
             'Wrong LL to UTM result'
 
     
@@ -162,7 +162,7 @@ def test_osr_ct_5():
     result = ct.TransformPoints(((-117.5, 32.0, 0.0), (-117.5, 32.0)))
 
     for i in range(2):
-        assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
+        assert result[i][0] == pytest.approx(452772.06, abs=0.01) and result[i][1] == pytest.approx(3540544.89, abs=0.01) and result[i][2] == pytest.approx(0.0, abs=0.01), \
             'Wrong LL to UTM result'
 
     
@@ -189,7 +189,7 @@ def test_osr_ct_6():
     result = ct.TransformPoints(((-117.5, 32.0, 0.0), (-117.5, 32.0)))
 
     for i in range(2):
-        assert abs(result[i][0] - 452772.06) <= 0.01 and abs(result[i][1] - 3540544.89) <= 0.01 and abs(result[i][2] - 0.0) <= 0.01, \
+        assert result[i][0] == pytest.approx(452772.06, abs=0.01) and result[i][1] == pytest.approx(3540544.89, abs=0.01) and result[i][2] == pytest.approx(0.0, abs=0.01), \
             'Wrong LL to UTM result'
 
     
@@ -210,9 +210,9 @@ def test_osr_ct_7():
 
     (x, y, z) = ct.TransformPoint(7000000, 7000000, 0)
     (exp_x, exp_y, exp_z) = (62.8820698884, 53.0918187696, 0.0)
-    if (abs(exp_x - x) > 0.00001 or
-        abs(exp_y - y) > 0.00001 or
-            abs(exp_z - z) > 0.00001):
+    if (exp_x != pytest.approx(x, abs=0.00001) or
+        exp_y != pytest.approx(y, abs=0.00001) or
+            exp_z != pytest.approx(z, abs=0.00001)):
         print('Got:      (%f, %f, %f)' % (x, y, z))
         print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
         pytest.fail('Wrong LL for Pseudo Mercator result')
@@ -223,9 +223,9 @@ def test_osr_ct_7():
                                              ll_srs)
     result = pnt.Transform(ct)
     assert result == 0
-    if (abs(expected_pnt.GetX() - pnt.GetX()) > 0.00001 or
-        abs(expected_pnt.GetY() - pnt.GetY()) > 0.00001 or
-            abs(expected_pnt.GetZ() - pnt.GetZ()) > 0.00001):
+    if (expected_pnt.GetX() != pytest.approx(pnt.GetX(), abs=0.00001) or
+        expected_pnt.GetY() != pytest.approx(pnt.GetY(), abs=0.00001) or
+            expected_pnt.GetZ() != pytest.approx(pnt.GetZ(), abs=0.00001)):
         print('Got:      %s' % pnt.ExportToWkt())
         print('Expected: %s' % expected_pnt.ExportToWkt())
         pytest.fail('Failed to transform from Pseudo Mercator to LL')
@@ -252,7 +252,7 @@ def test_osr_ct_8():
 
     for i in range(2):
         for j in range(3):
-            if abs(result[i][j] - expected_result[i][j]) > 1e-10:
+            if result[i][j] != pytest.approx(expected_result[i][j], abs=1e-10):
                 print('Got:      %s' % str(result))
                 print('Expected: %s' % str(expected_result))
                 pytest.fail('Failed to transform from Pseudo Mercator to LL')
@@ -263,7 +263,7 @@ def test_osr_ct_8():
 
     for i in range(2):
         for j in range(3):
-            if abs(result[i][j] - expected_result[i][j]) > 1e-10:
+            if result[i][j] != pytest.approx(expected_result[i][j], abs=1e-10):
                 print('Got:      %s' % str(result))
                 print('Expected: %s' % str(expected_result))
                 pytest.fail('Failed to transform from Pseudo Mercator to LL')
@@ -363,7 +363,7 @@ def test_osr_ct_options_area_of_interest():
 
     x, y, z = ct.TransformPoint(40.5,-99.5,0)
     assert x != 40.5
-    assert abs(x - 40.5) < 1e-3
+    assert x == pytest.approx(40.5, abs=1e-3)
 
     x, y, z = ct.TransformPoint(0,0,0)
     assert x == float('inf')
@@ -380,27 +380,27 @@ def test_osr_ct_4D():
     assert ct
 
     x, y, z, t = ct.TransformPoint(2, 49, 0, 2000)
-    assert abs(x - 2.0000005420366) < 1e-10, x
-    assert abs(y - 49.0000003766711) < 1e-10, y
-    assert abs(z - -0.0222802283242345) < 1e-8, z
-    assert abs(t - 2000) < 1e-10, t
+    assert x == pytest.approx(2.0000005420366, abs=1e-10), x
+    assert y == pytest.approx(49.0000003766711, abs=1e-10), y
+    assert z == pytest.approx(-0.0222802283242345, abs=1e-8), z
+    assert t == pytest.approx(2000, abs=1e-10), t
 
     ret = ct.TransformPoints([[2, 49, 0, 2000], [2, 49, 0, 1988]])
     assert len(ret) == 2, ret
 
     assert len(ret[0]) == 4, ret
     x, y, z, t = ret[0]
-    assert abs(x - 2.0000005420366) < 1e-10, x
-    assert abs(y - 49.0000003766711) < 1e-10, y
-    assert abs(z - -0.0222802283242345) < 1e-8, z
-    assert abs(t - 2000) < 1e-10, t
+    assert x == pytest.approx(2.0000005420366, abs=1e-10), x
+    assert y == pytest.approx(49.0000003766711, abs=1e-10), y
+    assert z == pytest.approx(-0.0222802283242345, abs=1e-8), z
+    assert t == pytest.approx(2000, abs=1e-10), t
 
     assert len(ret[1]) == 4, ret
     x, y, z, t = ret[1]
-    assert abs(x - 1.9999998809056305) < 1e-10, x
-    assert abs(y - 48.9999995630005) < 1e-10, y
-    assert abs(z - 0.005032399669289589) < 1e-8, z
-    assert abs(t - 1988) < 1e-10, t
+    assert x == pytest.approx(1.9999998809056305, abs=1e-10), x
+    assert y == pytest.approx(48.9999995630005, abs=1e-10), y
+    assert z == pytest.approx(0.005032399669289589, abs=1e-8), z
+    assert t == pytest.approx(1988, abs=1e-10), t
 
 ###############################################################################
 # Test geocentric transformations
@@ -416,6 +416,6 @@ def test_osr_ct_geocentric():
     assert ct
 
     x, y, z = ct.TransformPoint(3356123.5400, 1303218.3090, 5247430.6050)
-    assert abs(x - 3353420.949) < 1e-1
-    assert abs(y - 1304075.021) < 1e-1
-    assert abs(z - 5248935.144) < 1e-1
+    assert x == pytest.approx(3353420.949, abs=1e-1)
+    assert y == pytest.approx(1304075.021, abs=1e-1)
+    assert z == pytest.approx(5248935.144, abs=1e-1)

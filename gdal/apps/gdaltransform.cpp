@@ -224,9 +224,13 @@ MAIN_START(argc, argv)
                 CPLRealloc(pasGCPs, sizeof(GDAL_GCP) * nGCPCount));
             GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
 
+            // coverity[tainted_data]
             pasGCPs[nGCPCount-1].dfGCPPixel = CPLAtof(argv[++i]);
+            // coverity[tainted_data]
             pasGCPs[nGCPCount-1].dfGCPLine = CPLAtof(argv[++i]);
+            // coverity[tainted_data]
             pasGCPs[nGCPCount-1].dfGCPX = CPLAtof(argv[++i]);
+            // coverity[tainted_data]
             pasGCPs[nGCPCount-1].dfGCPY = CPLAtof(argv[++i]);
             if( argv[i+1] != nullptr &&
                 (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
@@ -234,7 +238,10 @@ MAIN_START(argc, argv)
                 // Check that last argument is really a number and not a
                 // filename looking like a number (see ticket #863).
                 if (endptr && *endptr == 0)
+                {
+                    // coverity[tainted_data]
                     pasGCPs[nGCPCount-1].dfGCPZ = CPLAtof(argv[++i]);
+                }
             }
 
             /* should set id and info? */

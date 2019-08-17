@@ -41,7 +41,7 @@
 
 class OGREDIGEODataSource;
 
-class OGREDIGEOLayer : public OGRLayer
+class OGREDIGEOLayer final: public OGRLayer
 {
     OGREDIGEODataSource* poDS;
 
@@ -137,7 +137,7 @@ class OGREDIGEOFEADesc
         CPLString osQUP_RID;                   /* e.g. Actualite_Objet_X */
 };
 
-class OGREDIGEODataSource : public OGRDataSource
+class OGREDIGEODataSource final: public OGRDataSource
 {
     friend class OGREDIGEOLayer;
 

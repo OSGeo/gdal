@@ -59,7 +59,7 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* ==================================================================== */
 /************************************************************************/
 
-class RDataset : public GDALPamDataset
+class RDataset final: public GDALPamDataset
 {
     friend class RRasterBand;
     VSILFILE   *fp;
@@ -90,7 +90,7 @@ class RDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RRasterBand : public GDALPamRasterBand
+class RRasterBand final: public GDALPamRasterBand
 {
     friend class RDataset;
 

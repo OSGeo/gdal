@@ -46,7 +46,7 @@ CPL_C_END
 /*                        MerisL2FlagBand                         */
 /* ==================================================================== */
 /************************************************************************/
-class MerisL2FlagBand : public GDALPamRasterBand
+class MerisL2FlagBand final: public GDALPamRasterBand
 {
   public:
     MerisL2FlagBand( GDALDataset *, int, VSILFILE*, vsi_l_offset, int );
@@ -155,7 +155,7 @@ CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* ==================================================================== */
 /************************************************************************/
 
-class EnvisatDataset : public RawDataset
+class EnvisatDataset final: public RawDataset
 {
     EnvisatFile *hEnvisatFile;
     VSILFILE    *fpImage;

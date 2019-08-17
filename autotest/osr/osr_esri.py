@@ -343,7 +343,7 @@ def test_osr_esri_12():
         ('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
 
-    assert abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) <= 0.00001, \
+    assert srs.GetProjParm('standard_parallel_1') == pytest.approx(34.333333333, abs=0.00001), \
         ('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
 
@@ -370,7 +370,7 @@ def test_osr_esri_13():
         ('Got wrong PROJECTION name (%s) after ESRI morph.' %
                              srs.GetAttrValue('PROJECTION'))
 
-    assert abs(srs.GetProjParm('standard_parallel_1') - 34.333333333) <= 0.00001, \
+    assert srs.GetProjParm('standard_parallel_1') == pytest.approx(34.333333333, abs=0.00001), \
         ('Got wrong parameter value (%g) after ESRI morph.' %
                              srs.GetProjParm('standard_parallel_1'))
 
@@ -720,9 +720,9 @@ def test_osr_esri_25():
     # test an actual conversion
     (x, y, z) = transformer.TransformPoint(7000000, 7000000, 0)
     (exp_x, exp_y, exp_z) = (62.882069888366, 53.091818769596, 0.0)
-    if (abs(exp_x - x) > 0.00001 or
-        abs(exp_y - y) > 0.00001 or
-            abs(exp_z - z) > 0.00001):
+    if (exp_x != pytest.approx(x, abs=0.00001) or
+        exp_y != pytest.approx(y, abs=0.00001) or
+            exp_z != pytest.approx(z, abs=0.00001)):
         print('Got:      (%f, %f, %f)' % (x, y, z))
         pytest.fail('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
 

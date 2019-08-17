@@ -60,6 +60,7 @@ OGREDIGEODataSource::OGREDIGEODataSource() :
     iSIZE(-1),
     iOBJ_LNK(-1),
     iOBJ_LNK_LAYER(-1),
+    // coverity[tainted_data]
     dfSizeFactor(CPLAtof(
         CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"))),
     bIncludeFontFamily(CPLTestBool(

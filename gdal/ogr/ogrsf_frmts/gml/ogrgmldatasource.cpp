@@ -2541,12 +2541,12 @@ void OGRGMLDataSource::InsertHeader()
     if( fpSchema == fpOutput )
     {
         // Read the schema into memory.
-        int nSchemaSize = static_cast<int>(VSIFTellL(fpOutput) - nSchemaStart);
+        int nSchemaSize = static_cast<int>(VSIFTellL(fpSchema) - nSchemaStart);
         char *pszSchema = static_cast<char *>(CPLMalloc(nSchemaSize + 1));
 
-        VSIFSeekL(fpOutput, nSchemaStart, SEEK_SET);
+        VSIFSeekL(fpSchema, nSchemaStart, SEEK_SET);
 
-        VSIFReadL(pszSchema, 1, nSchemaSize, fpOutput);
+        VSIFReadL(pszSchema, 1, nSchemaSize, fpSchema);
         pszSchema[nSchemaSize] = '\0';
 
         // Move file data down by "schema size" bytes from after <?xml> header
@@ -2560,11 +2560,11 @@ void OGRGMLDataSource::InsertHeader()
             const int nBytesToMove =
                 std::min(nChunkSize, nEndOfUnmovedData - nSchemaInsertLocation);
 
-            VSIFSeekL(fpOutput, nEndOfUnmovedData - nBytesToMove, SEEK_SET);
-            VSIFReadL(pszChunk, 1, nBytesToMove, fpOutput);
-            VSIFSeekL(fpOutput, nEndOfUnmovedData - nBytesToMove + nSchemaSize,
+            VSIFSeekL(fpSchema, nEndOfUnmovedData - nBytesToMove, SEEK_SET);
+            VSIFReadL(pszChunk, 1, nBytesToMove, fpSchema);
+            VSIFSeekL(fpSchema, nEndOfUnmovedData - nBytesToMove + nSchemaSize,
                       SEEK_SET);
-            VSIFWriteL(pszChunk, 1, nBytesToMove, fpOutput);
+            VSIFWriteL(pszChunk, 1, nBytesToMove, fpSchema);
 
             nEndOfUnmovedData -= nBytesToMove;
         }
@@ -2572,10 +2572,10 @@ void OGRGMLDataSource::InsertHeader()
         CPLFree(pszChunk);
 
         // Write the schema in the opened slot.
-        VSIFSeekL(fpOutput, nSchemaInsertLocation, SEEK_SET);
-        VSIFWriteL(pszSchema, 1, nSchemaSize, fpOutput);
+        VSIFSeekL(fpSchema, nSchemaInsertLocation, SEEK_SET);
+        VSIFWriteL(pszSchema, 1, nSchemaSize, fpSchema);
 
-        VSIFSeekL(fpOutput, 0, SEEK_END);
+        VSIFSeekL(fpSchema, 0, SEEK_END);
 
         nBoundedByLocation += nSchemaSize;
 
@@ -2614,7 +2614,7 @@ void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
 /*                     OGRGMLSingleFeatureLayer                         */
 /************************************************************************/
 
-class OGRGMLSingleFeatureLayer : public OGRLayer
+class OGRGMLSingleFeatureLayer final: public OGRLayer
 {
   private:
     int                 nVal;

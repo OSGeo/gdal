@@ -98,7 +98,7 @@ class PAuxDataset final: public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class PAuxRasterBand : public RawRasterBand
+class PAuxRasterBand final: public RawRasterBand
 {
     CPL_DISALLOW_COPY_ASSIGN(PAuxRasterBand)
 

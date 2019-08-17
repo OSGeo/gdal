@@ -174,7 +174,7 @@ def test_gdal_rasterize_3():
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(gt[i] - gt_ref[i]) <= 1e-6, 'did not get expected geotransform'
+        assert gt[i] == pytest.approx(gt_ref[i], abs=1e-6), 'did not get expected geotransform'
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS_1984") != -1, 'did not get expected SRS'
@@ -207,7 +207,7 @@ def test_gdal_rasterize_4():
 
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
-    assert abs(gt[1] - gt_ref[1]) <= 1e-6 and abs(gt[5] - gt_ref[5]) <= 1e-6, \
+    assert gt[1] == pytest.approx(gt_ref[1], abs=1e-6) and gt[5] == pytest.approx(gt_ref[5], abs=1e-6), \
         'did not get expected geotransform(dx/dy)'
 
     # Allow output to grow by 1/2 cell, as per #6058
@@ -256,7 +256,7 @@ def test_gdal_rasterize_5():
     gt_ref = [0, 1, 0, 3, 0, -1]
     gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(gt[i] - gt_ref[i]) <= 1e-6, 'did not get expected geotransform'
+        assert gt[i] == pytest.approx(gt_ref[i], abs=1e-6), 'did not get expected geotransform'
 
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 3, 3)
     assert data.decode('iso-8859-1') == '\x02\x00\x03\x00\x05\x00\x01\x00\x04', \

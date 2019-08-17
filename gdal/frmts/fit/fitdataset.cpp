@@ -50,7 +50,7 @@ using namespace gstEndian;
 
 class FITRasterBand;
 
-class FITDataset : public GDALPamDataset
+class FITDataset final: public GDALPamDataset
 {
     friend class FITRasterBand;
 
@@ -77,7 +77,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /* ==================================================================== */
 /************************************************************************/
 
-class FITRasterBand : public GDALPamRasterBand
+class FITRasterBand final: public GDALPamRasterBand
 {
     friend class FITDataset;
 
@@ -1020,6 +1020,8 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    // Verified by above GDALCheckBandCount()
+    // coverity[tainted_data]
     for( int i = 0; i < (int)head->cSize; i++ )
     {
         FITRasterBand* poBand = new FITRasterBand( poDS, i+1, (int)head->cSize );

@@ -2134,7 +2134,11 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
               {
                 OGRGeometryH hPolyRing = OGR_G_CreateGeometry(wkbPolygon);
                 int bRes;
-                OGR_G_AddGeometryDirectly(hPolyRing, ring);
+                if(OGR_G_AddGeometryDirectly(hPolyRing, ring) != OGRERR_NONE )
+                {
+                  OGR_G_DestroyGeometry(hPolyRing);
+                  goto onError;
+                }
                 bRes = OGR_G_Contains(outer,hPolyRing) ;
                 OGR_G_RemoveGeometry(hPolyRing, 0, FALSE);
                 OGR_G_DestroyGeometry(hPolyRing);

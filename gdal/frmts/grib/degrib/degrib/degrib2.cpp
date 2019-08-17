@@ -1078,8 +1078,11 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
         }
 
          IS->nd2x3 = nd2x3;
-         IS->iain = (sInt4 *) realloc ((void *) IS->iain,
-                                       IS->nd2x3 * sizeof (sInt4));
+         if( Grib_Data )
+         {
+            IS->iain = (sInt4 *) realloc ((void *) IS->iain,
+                                        IS->nd2x3 * sizeof (sInt4));
+         }
          IS->ib = (sInt4 *) realloc ((void *) IS->ib,
                                      IS->nd2x3 * sizeof (sInt4));
       }
@@ -1287,7 +1290,7 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
    }
 #endif
 
-   if (strcmp (meta->element, "Wx") != 0) {
+   if (Grib_Data != nullptr && strcmp (meta->element, "Wx") != 0) {
       if (strcmp (meta->element, "WWA") != 0) {
          ParseGrid (fp, &(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
                     meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 0,
@@ -1312,7 +1315,7 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
             }
          }
       }
-   } else {
+   } else if( Grib_Data != nullptr ) {
       /* Handle weather grid.  ParseGrid looks up the values... If they are
        * "<Invalid>" it sets it to missing (or creates one).  If the table
        * entry is used it sets f_valid to 2. */

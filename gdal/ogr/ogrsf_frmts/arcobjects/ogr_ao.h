@@ -54,7 +54,7 @@ using namespace ATL;
 
 class AODataSource;
 
-class AOLayer : public OGRLayer
+class AOLayer final: public OGRLayer
 {
 public:
 
@@ -123,7 +123,7 @@ protected:
 /************************************************************************/
 /*                           AODataSource                            */
 /************************************************************************/
-class AODataSource : public OGRDataSource
+class AODataSource final: public OGRDataSource
 {
 
 public:
@@ -166,7 +166,7 @@ protected:
 /*                              AODriver                                */
 /************************************************************************/
 
-class AODriver : public OGRSFDriver
+class AODriver final: public OGRSFDriver
 {
 
 public:

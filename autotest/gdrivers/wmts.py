@@ -397,7 +397,7 @@ def test_wmts_13():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342799999, 156543.03392811998, 0.0, 20037508.342799999, 0.0, -156543.03392811998)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
     assert ds.GetProjectionRef().find('3857') >= 0
     assert ds.RasterCount == 4
     for i in range(4):
@@ -898,7 +898,7 @@ def test_wmts_16():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
     assert ds.GetProjectionRef().find('4326') >= 0
     assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
 
@@ -973,7 +973,7 @@ def test_wmts_17():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
     assert ds.GetProjectionRef().find('4326') >= 0
 
 ###############################################################################
@@ -1047,7 +1047,7 @@ def test_wmts_18():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
     assert ds.GetProjectionRef().find('4326') >= 0
 
 ###############################################################################
@@ -1126,7 +1126,7 @@ def test_wmts_19():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
     assert ds.GetProjectionRef().find('4326') >= 0
 
 ###############################################################################
@@ -1209,7 +1209,7 @@ def test_wmts_20():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
     assert ds.GetProjectionRef().find('4326') >= 0
 
 ###############################################################################
@@ -1288,7 +1288,7 @@ def test_wmts_21():
     got_gt = ds.GetGeoTransform()
     expected_gt = (90, 0.3515625, 0.0, 0.0, 0.0, -0.3515625)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
     assert ds.GetProjectionRef().find('4326') >= 0
 
     tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
@@ -1358,7 +1358,7 @@ def test_wmts_22():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-548576.0, 1.0000000000004, 0.0, 8388608.0, 0.0, -1.0000000000004)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
     assert ds.GetProjectionRef().find('3067') >= 0
 ###############################################################################
 #

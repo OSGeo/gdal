@@ -1049,7 +1049,11 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           int attr_bytes = psDGN->nElemBytes -
             (psDGN->abyElem[30] + psDGN->abyElem[31]*256)*2 - 32;
           int numelems = (psDGN->nElemBytes - 36 - attr_bytes)/4;
-
+          if( numelems < 1 )
+          {
+              CPLError(CE_Failure, CPLE_AssertionFailed, "numelems < 1");
+              return nullptr;
+          }
           DGNElemKnotWeight *psArray = static_cast<DGNElemKnotWeight *>(
               CPLCalloc(sizeof(DGNElemKnotWeight) + (numelems-1)*sizeof(float),
                         1));

@@ -42,7 +42,7 @@ class OGRMemDataSource;
 
 class IOGRMemLayerFeatureIterator;
 
-class OGRMemLayer : public OGRLayer
+class OGRMemLayer CPL_NON_FINAL: public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMemLayer)
 
@@ -119,7 +119,7 @@ class OGRMemLayer : public OGRLayer
 /*                           OGRMemDataSource                           */
 /************************************************************************/
 
-class OGRMemDataSource : public OGRDataSource
+class OGRMemDataSource CPL_NON_FINAL: public OGRDataSource
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMemDataSource)
 
@@ -149,7 +149,7 @@ class OGRMemDataSource : public OGRDataSource
 /*                             OGRMemDriver                             */
 /************************************************************************/
 
-class OGRMemDriver : public OGRSFDriver
+class OGRMemDriver final: public OGRSFDriver
 {
   public:
     virtual ~OGRMemDriver();

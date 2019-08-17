@@ -639,6 +639,10 @@ typedef enum
 
 class CPL_DLL GNMRule
 {
+    // to hopefully please Coverity Scan which complains about missing
+    // move assignment operator for performance reasons
+    GNMRule& operator==(GNMRule&&) = delete;
+
 public:
     /** Constructor */
     GNMRule();

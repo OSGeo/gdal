@@ -10,7 +10,8 @@ OBJ		=	netcdfdataset.obj \
 			netcdfsg.obj \
 			netcdflayersg.obj \
 			netcdfsgwriterutil.obj \
-			netcdfmultidim.obj
+			netcdfmultidim.obj \
+			netcdfvirtual.obj
 
 PLUGIN_DLL 	=	gdal_netCDF.dll
 

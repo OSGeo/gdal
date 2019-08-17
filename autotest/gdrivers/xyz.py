@@ -34,6 +34,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Test CreateCopy() of byte.tif
@@ -120,7 +121,7 @@ def test_xyz_4():
     got_gt = ds.GetGeoTransform()
     expected_gt = (440660.0, 60.0, 0.0, 3751350.0, 0.0, -120.0)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
 
     assert ds.GetRasterBand(1).GetMinimum() == 1
     assert ds.GetRasterBand(1).GetMaximum() == 7
@@ -153,7 +154,7 @@ def test_xyz_5():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
 
     
 
@@ -179,7 +180,7 @@ def test_xyz_6():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
 
     
 
@@ -216,7 +217,7 @@ def test_xyz_7():
     gdal.Unlink('/vsimem/grid.xyz')
 
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
 
     assert cs == 146
 

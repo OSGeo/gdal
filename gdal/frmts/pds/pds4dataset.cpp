@@ -1452,8 +1452,8 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
         CSLDestroy(papszTokens);
     }
 
-    CPLXMLNode* psRoot = CPLParseXMLFile(osXMLFilename);
-    CPLXMLTreeCloser oCloser(psRoot);
+    CPLXMLTreeCloser oCloser(CPLParseXMLFile(osXMLFilename));
+    CPLXMLNode* psRoot = oCloser.get();
     CPLStripXMLNamespace(psRoot, nullptr, TRUE);
 
     GDALAccess eAccess = STARTS_WITH_CI(poOpenInfo->pszFilename, "PDS4:") ?
@@ -2866,10 +2866,10 @@ static CPLXMLNode* GetSpecialConstants(const CPLString& osPrefix,
 
 void PDS4Dataset::WriteHeaderAppendCase()
 {
-    CPLXMLNode* psRoot = CPLParseXMLFile(GetDescription());
+    CPLXMLTreeCloser oCloser(CPLParseXMLFile(GetDescription()));
+    CPLXMLNode* psRoot = oCloser.get();
     if( psRoot == nullptr )
         return;
-    CPLXMLTreeCloser oCloser(psRoot);
     CPLString osPrefix;
     CPLXMLNode* psProduct = CPLGetXMLNode(psRoot, "=Product_Observational");
     if( psProduct == nullptr )
@@ -3500,9 +3500,10 @@ void PDS4Dataset::WriteHeader()
     {
         psRoot = CPLParseXMLFile(m_osXMLFilename);
     }
+    CPLXMLTreeCloser oCloser(psRoot);
+    psRoot = oCloser.get();
     if( psRoot == nullptr )
         return;
-    CPLXMLTreeCloser oCloser(psRoot);
     CPLXMLNode* psProduct = CPLGetXMLNode(psRoot, "=Product_Observational");
     if( psProduct == nullptr )
     {

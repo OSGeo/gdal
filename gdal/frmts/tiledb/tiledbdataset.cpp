@@ -47,7 +47,7 @@ const CPLString TILEDB_VALUES( "TDB_VALUES" );
 
 class TileDBRasterBand;
 
-class TileDBDataset : public GDALPamDataset
+class TileDBDataset final: public GDALPamDataset
 {
     friend class TileDBRasterBand;
 
@@ -116,7 +116,7 @@ class TileDBDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class TileDBRasterBand : public GDALPamRasterBand
+class TileDBRasterBand final: public GDALPamRasterBand
 {
     friend class TileDBDataset;
     protected:
@@ -199,7 +199,8 @@ static CPLErr SetBuffer( tiledb::Query* poQuery, GDALDataType eType,
 TileDBRasterBand::TileDBRasterBand(
         TileDBDataset *poDSIn, int nBandIn, CPLString osAttr ) :
     poGDS( poDSIn ),
-    bStats( poDSIn->bStats )
+    bStats( poDSIn->bStats ),
+    osAttrName(osAttr)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -209,7 +210,6 @@ TileDBRasterBand::TileDBRasterBand(
     nRasterYSize = poGDS->nRasterYSize;
     nBlockXSize = poGDS->nBlockXSize;
     nBlockYSize = poGDS->nBlockYSize;
-    osAttrName = osAttr;
 
     m_query.reset(new tiledb::Query( *poGDS->m_ctx, *poGDS->m_array ) );
     

@@ -39,7 +39,7 @@ class OGRILI1DataSource;
 /*                           OGRILI1Layer                               */
 /************************************************************************/
 
-class OGRILI1Layer : public OGRLayer
+class OGRILI1Layer final: public OGRLayer
 {
 private:
 #if 0
@@ -94,7 +94,7 @@ private:
 /*                          OGRILI1DataSource                           */
 /************************************************************************/
 
-class OGRILI1DataSource : public OGRDataSource
+class OGRILI1DataSource final: public OGRDataSource
 {
   private:
     char       *pszName;

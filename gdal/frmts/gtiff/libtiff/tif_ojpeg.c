@@ -1107,6 +1107,12 @@ OJPEGReadHeaderInfo(TIFF* tif)
 	}
 	if (sp->strile_length<sp->image_length)
 	{
+		if (((sp->subsampling_hor!=1) && (sp->subsampling_hor!=2) && (sp->subsampling_hor!=4)) ||
+		    ((sp->subsampling_ver!=1) && (sp->subsampling_ver!=2) && (sp->subsampling_ver!=4)))
+		{
+			TIFFErrorExt(tif->tif_clientdata,module,"Invalid subsampling values");
+			return(0);
+		}
 		if (sp->strile_length%(sp->subsampling_ver*8)!=0)
 		{
 			TIFFErrorExt(tif->tif_clientdata,module,"Incompatible vertical subsampling and image strip/tile length");
@@ -2018,10 +2024,15 @@ OJPEGReadBufferFill(OJPEGState* sp)
 					sp->in_buffer_source=osibsEof;
 				else
 				{
-					sp->in_buffer_file_pos=TIFFGetStrileOffset(sp->tif, sp->in_buffer_next_strile);
+					int err = 0;
+					sp->in_buffer_file_pos=TIFFGetStrileOffsetWithErr(sp->tif, sp->in_buffer_next_strile, &err);
+					if( err )
+						return 0;
 					if (sp->in_buffer_file_pos!=0)
 					{
-                                                uint64 bytecount = TIFFGetStrileByteCount(sp->tif, sp->in_buffer_next_strile);
+						uint64 bytecount = TIFFGetStrileByteCountWithErr(sp->tif, sp->in_buffer_next_strile, &err);
+						if( err )
+							return 0;
 						if (sp->in_buffer_file_pos>=sp->file_size)
 							sp->in_buffer_file_pos=0;
 						else if (bytecount==0)

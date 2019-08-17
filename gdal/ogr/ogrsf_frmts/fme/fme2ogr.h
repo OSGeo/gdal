@@ -48,7 +48,7 @@ void CPLFMEError( IFMESession *, const char *, ... );
 /*                             OGRFMELayer                              */
 /************************************************************************/
 
-class OGRFMELayer : public OGRLayer
+class OGRFMELayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -78,7 +78,7 @@ class OGRFMELayer : public OGRLayer
 /*                          OGRFMELayerCached                           */
 /************************************************************************/
 
-class OGRFMELayerCached : public OGRFMELayer
+class OGRFMELayerCached final: public OGRFMELayer
 {
   private:
     int                 nPreviousFeature;
@@ -114,7 +114,7 @@ class OGRFMELayerCached : public OGRFMELayer
 /*                            OGRFMELayerDB                             */
 /************************************************************************/
 
-class OGRFMELayerDB : public OGRFMELayer
+class OGRFMELayerDB final: public OGRFMELayer
 {
   private:
     int                 nPreviousFeature;
@@ -149,7 +149,7 @@ class OGRFMELayerDB : public OGRFMELayer
 /*                           OGRFMEDataSource                           */
 /************************************************************************/
 
-class OGRFMEDataSource : public OGRDataSource
+class OGRFMEDataSource final: public OGRDataSource
 {
     char                *pszName;          // full name, i.e. "SHAPE:D:\DATA"
     char                *pszReaderName;    // reader/driver name, i.e. "SHAPE"
@@ -219,7 +219,7 @@ class OGRFMEDataSource : public OGRDataSource
 /*                             OGRFMEDriver                             */
 /************************************************************************/
 
-class OGRFMEDriver : public OGRSFDriver
+class OGRFMEDriver final: public OGRSFDriver
 {
   public:
                 ~OGRFMEDriver();

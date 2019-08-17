@@ -51,11 +51,11 @@ def test_ogr_geom_area():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     area = geom.GetArea()
-    assert abs(area - 99.5) <= 0.00000000001, ('GetArea() result wrong, got %g.' % area)
+    assert area == pytest.approx(99.5, abs=0.00000000001), ('GetArea() result wrong, got %g.' % area)
 
     # OGR >= 1.8.0
     area = geom.Area()
-    assert abs(area - 99.5) <= 0.00000000001, ('Area() result wrong, got %g.' % area)
+    assert area == pytest.approx(99.5, abs=0.00000000001), ('Area() result wrong, got %g.' % area)
 
 ###############################################################################
 # Test Area calculation for a LinearRing (which exercises special case of
@@ -72,7 +72,7 @@ def test_ogr_geom_area_linearring():
     geom.AddPoint_2D(0, 0)
 
     area = geom.GetArea()
-    assert abs(area - 100.0) <= 0.00000000001, ('Area result wrong, got %g.' % area)
+    assert area == pytest.approx(100.0, abs=0.00000000001), ('Area result wrong, got %g.' % area)
 
 ###############################################################################
 # Test Area calculation for a GeometryCollection
@@ -85,7 +85,7 @@ def test_ogr_geom_area_geometrycollection():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     area = geom.Area()
-    assert abs(area - 1) <= 0.00000000001, ('Area() result wrong, got %g.' % area)
+    assert area == pytest.approx(1, abs=0.00000000001), ('Area() result wrong, got %g.' % area)
 
 ###############################################################################
 # Test Area calculation for a LinearRing whose coordinates are shifted by a
@@ -103,7 +103,7 @@ def test_ogr_geom_area_linearring_big_offset():
     geom.AddPoint_2D(BIGOFFSET + 0, BIGOFFSET + 0)
 
     area = geom.GetArea()
-    assert abs(area - 100.0) <= 0.00000000001, ('Area result wrong, got %g.' % area)
+    assert area == pytest.approx(100.0, abs=0.00000000001), ('Area result wrong, got %g.' % area)
 
 ###############################################################################
 # Test Area calculation for a Triangle
@@ -115,12 +115,12 @@ def test_ogr_geom_area_triangle():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     area = geom.GetArea()
-    assert abs(area - 4999.5) >= 0.00000000001, \
+    assert area != pytest.approx(4999.5, abs=0.00000000001), \
         ('GetArea() result wrong, got %g.' % area)
 
     # OGR >= 1.8.0
     area = geom.Area()
-    assert abs(area - 4999.5) >= 0.00000000001, ('Area() result wrong, got %g.' % area)
+    assert area != pytest.approx(4999.5, abs=0.00000000001), ('Area() result wrong, got %g.' % area)
 
 
 def test_ogr_geom_is_empty():
@@ -591,7 +591,7 @@ def test_ogr_geom_transform_to():
     sr2.ImportFromEPSG(32631)
     ret = geom.TransformTo(sr2)
 
-    assert ret == 0 and abs(geom.GetX() - 426857) <= 1 and abs(geom.GetY() - 5427937) <= 1, \
+    assert ret == 0 and geom.GetX() == pytest.approx(426857, abs=1) and geom.GetY() == pytest.approx(5427937, abs=1), \
         geom.ExportToWkt()
 
     # Geometry without SRS
@@ -623,7 +623,7 @@ def test_ogr_geom_transform():
 
     geom.Transform(ct)
 
-    assert abs(geom.GetX() - 426857) <= 1 and abs(geom.GetY() - 5427937) <= 1, \
+    assert geom.GetX() == pytest.approx(426857, abs=1) and geom.GetY() == pytest.approx(5427937, abs=1), \
         geom.ExportToWkt()
 
 ###############################################################################
@@ -891,7 +891,7 @@ def test_ogr_geom_length_multilinestring():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     length = geom.Length()
-    assert abs(length - 2) <= 0.00000000001, ('Length() result wrong, got %g.' % length)
+    assert length == pytest.approx(2, abs=0.00000000001), ('Length() result wrong, got %g.' % length)
 
 ###############################################################################
 # Test Length calculation for a GeometryCollection
@@ -904,7 +904,7 @@ def test_ogr_geom_length_geometrycollection():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     length = geom.Length()
-    assert abs(length - 4) <= 0.00000000001, ('Length() result wrong, got %g.' % length)
+    assert length == pytest.approx(4, abs=0.00000000001), ('Length() result wrong, got %g.' % length)
 
 ###############################################################################
 # Test Geometry.GetPoints() (#4016)
@@ -1203,12 +1203,12 @@ def test_ogr_geom_circularstring():
     env = g1.GetEnvelope()
     expected_env = (0.0, 2.0, -1.0, 1.0)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     # Test Length()
     length = g1.Length()
     expected_length = 1.5 * math.pi
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     # Test Value()
     p = g1.Value(-1)
@@ -1346,7 +1346,7 @@ def test_ogr_geom_circularstring():
 
     length = g1.Length()
     expected_length = 2 * math.pi * 0.5
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     # Test stroking of full circle (well defined)
     in_wkt = 'CIRCULARSTRING (0 0,0.5 0.5,1.0 0.0,0.5 -0.5,0.0 0.0)'
@@ -1357,7 +1357,7 @@ def test_ogr_geom_circularstring():
 
     length = g1.Length()
     expected_length = 2 * math.pi * 0.5
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     # Check segmentize
     g1.Segmentize(0.5)
@@ -1367,7 +1367,7 @@ def test_ogr_geom_circularstring():
     # Sanity check: the length must remain the same
     length = g1.Length()
     expected_length = 2 * math.pi * 0.5
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     # Check segmentize symmetry : do exact binary comparison
     in_wkt = 'CIRCULARSTRING (0 0,1.2 1,2 0)'
@@ -1402,7 +1402,7 @@ def test_ogr_geom_circularstring():
 
     length = g1.Length()
     expected_length = 2 * math.pi * 0.5
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     # Test stroking of a circular string with 3 colinear points
     in_wkt = 'CIRCULARSTRING (0 0,1 1,2 2)'
@@ -1413,7 +1413,7 @@ def test_ogr_geom_circularstring():
 
     length = g1.Length()
     expected_length = 2 * math.sqrt(2)
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     # Test Value()
     p = g1.Value(length / 4.0)
@@ -1431,7 +1431,7 @@ def test_ogr_geom_circularstring():
     # Sanity check: the length must remain the same
     length = g1.Length()
     expected_length = 2 * math.sqrt(2)
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     # Same with Z
     in_wkt = 'CIRCULARSTRING (0 0 1,1 1 2,2 2 1)'
@@ -1471,7 +1471,7 @@ def test_ogr_geom_circularstring():
     env = g1.GetEnvelope()
     expected_env = (cx + r * math.cos(a0), cx + r * math.cos(a2), cy + r * math.sin(a2), cy + r * math.sin(a0))
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     # From quadrant 0 to quadrant -1
     a0 = math.pi / 3
@@ -1485,7 +1485,7 @@ def test_ogr_geom_circularstring():
     env = g1.GetEnvelope()
     expected_env = (cx + r * math.cos(a0), cx + r, cy + r * math.sin(a2), cy + r * math.sin(a0))
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     # From quadrant 0 to quadrant 3
     a0 = math.pi / 3
@@ -1499,7 +1499,7 @@ def test_ogr_geom_circularstring():
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r * math.cos(a2), cy - r, cy + r)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     # From quadrant 0 to quadrant 4
     a0 = math.pi / 3
@@ -1513,7 +1513,7 @@ def test_ogr_geom_circularstring():
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r, cy - r, cy + r)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     # Full circle
     a0 = math.pi / 3
@@ -1527,7 +1527,7 @@ def test_ogr_geom_circularstring():
     env = g1.GetEnvelope()
     expected_env = (cx - r, cx + r, cy - r, cy + r)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     # Error case : not enough points
     in_wkt = 'CIRCULARSTRING (0 0)'
@@ -1566,11 +1566,11 @@ def test_ogr_geom_compoundcurve():
     env = g1.GetEnvelope()
     expected_env = (0.0, 2.0, -1.0, 1.0)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     length = g1.Length()
     expected_length = 1.5 * math.pi
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     g2 = ogr.CreateGeometryFromWkb(g1.ExportToWkb())
     out_wkt = g2.ExportToWkt()
@@ -1596,12 +1596,12 @@ def test_ogr_geom_compoundcurve():
     env = g1.GetEnvelope()
     expected_env = (0.0, 2.0, 0.0, 1.0)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     env = g1.GetEnvelope3D()
     expected_env = (0.0, 2.0, 0.0, 1.0, 10, 30)
     for i in range(6):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     # Test Value()
     p = g1.Value(-1e-3)
@@ -1650,7 +1650,7 @@ def test_ogr_geom_compoundcurve():
 
     length = g1.Length()
     expected_length = 1.5 * math.pi + math.sqrt(2)
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     g2 = ogr.CreateGeometryFromWkb(g1.ExportToWkb())
     out_wkt = g2.ExportToWkt()
@@ -1832,11 +1832,11 @@ def test_ogr_geom_curvepolygon():
     env = g1.GetEnvelope()
     expected_env = (0.0, 1.0, -0.5, 0.5)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     area = g1.Area()
     expected_area = math.pi * 0.5 * 0.5
-    assert abs(area - expected_area) <= 1e-8
+    assert area == pytest.approx(expected_area, abs=1e-8)
 
     g2 = ogr.CreateGeometryFromWkb(g1.ExportToWkb())
     out_wkt = g2.ExportToWkt()
@@ -2025,25 +2025,25 @@ def test_ogr_geom_curvepolygon():
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,1 -1,0 0))')
     area = g1.Area()
     expected_area = math.pi
-    assert abs(area - expected_area) <= 1e-10
+    assert area == pytest.approx(expected_area, abs=1e-10)
 
     # Test area on hippodrome
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,2 -1,2 -2,1 -3,0 -2,0 -1,0 0))')
     area = g1.Area()
     expected_area = math.pi + 2 * 2
-    assert abs(area - expected_area) <= 1e-10
+    assert area == pytest.approx(expected_area, abs=1e-10)
 
     # Same hippodrome but with different WKT
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (COMPOUNDCURVE(CIRCULARSTRING (0 0,1 1,2 0),(2 0,2 -2),CIRCULARSTRING(2 -2,1 -3,0 -2),(0 -2,0 0)))')
     area = g1.Area()
     expected_area = math.pi + 2 * 2
-    assert abs(area - expected_area) <= 1e-10
+    assert area == pytest.approx(expected_area, abs=1e-10)
 
     # Similar, but with concave part (does not trigger optimization)
     g1 = ogr.CreateGeometryFromWkt('CURVEPOLYGON (COMPOUNDCURVE(CIRCULARSTRING (0 0,1 1,2 0),(2 0,2 -2),CIRCULARSTRING(2 -2,1 -1,0 -2),(0 -2,0 0)))')
     area = g1.Area()
     expected_area = 2 * 2
-    assert abs(area - expected_area) <= 1e-10
+    assert area == pytest.approx(expected_area, abs=1e-10)
 
     # EMPTY
     for in_wkt in ['CURVEPOLYGON EMPTY', 'CURVEPOLYGON Z EMPTY']:
@@ -2063,7 +2063,7 @@ def test_ogr_geom_curvepolygon():
 
     # Non-convex CircularString
     g = ogr.CreateGeometryFromWkt('CURVEPOLYGON( COMPOUNDCURVE( CIRCULARSTRING(0 0,0.5 -0.5,1 0,1.5 0.5,2 0), (2 0,2 1,0 1,0 0) ) )')
-    assert abs(g.Area() - 2.0) <= 1e-10
+    assert g.Area() == pytest.approx(2.0, abs=1e-10)
 
 ###############################################################################
 # Test OGRMultiCurve
@@ -2083,11 +2083,11 @@ def test_ogr_geom_multicurve():
     env = g1.GetEnvelope()
     expected_env = (0.0, 1.0, -0.5, 0.5)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     length = g1.Length()
     expected_length = 2 * math.pi * 0.5
-    assert abs(length - expected_length) <= 1e-8
+    assert length == pytest.approx(expected_length, abs=1e-8)
 
     g2 = ogr.CreateGeometryFromWkb(g1.ExportToWkb())
     out_wkt = g2.ExportToWkt()
@@ -2159,11 +2159,11 @@ def test_ogr_geom_multisurface():
     env = g1.GetEnvelope()
     expected_env = (0.0, 1.0, -0.5, 0.5)
     for i in range(4):
-        assert abs(env[i] - expected_env[i]) <= 1e-8
+        assert env[i] == pytest.approx(expected_env[i], abs=1e-8)
 
     area = g1.Area()
     expected_area = math.pi * 0.5 * 0.5
-    assert abs(area - expected_area) <= 1e-8
+    assert area == pytest.approx(expected_area, abs=1e-8)
 
     g2 = ogr.CreateGeometryFromWkb(g1.ExportToWkb())
     out_wkt = g2.ExportToWkt()

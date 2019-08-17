@@ -36,7 +36,7 @@
 /*                             OGRARCGENLayer                              */
 /************************************************************************/
 
-class OGRARCGENLayer : public OGRLayer
+class OGRARCGENLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
 
@@ -64,7 +64,7 @@ class OGRARCGENLayer : public OGRLayer
 /*                           OGRARCGENDataSource                           */
 /************************************************************************/
 
-class OGRARCGENDataSource : public OGRDataSource
+class OGRARCGENDataSource final: public OGRDataSource
 {
     char*               pszName;
 

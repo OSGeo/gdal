@@ -680,6 +680,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     {
         bSourceWrap = true;
         bTargetWrap = true;
+        // coverity[tainted_data]
         dfSourceWrapLong = dfTargetWrapLong =
             CPLAtof(CPLGetConfigOption( "CENTER_LONG", "" ));
         CPLDebug( "OGRCT", "Wrap at %g.", dfSourceWrapLong );
@@ -719,11 +720,17 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
 
     // The threshold is experimental. Works well with the cases of ticket #2305.
     if( bSourceLatLong )
+    {
+        // coverity[tainted_data]
         dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", ".1" ));
+    }
     else
+    {
         // 1 works well for most projections, except for +proj=aeqd that
         // requires a tolerance of 10000.
+        // coverity[tainted_data]
         dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
+    }
 
     // Detect webmercator to WGS84
     OGRAxisOrientation orientAxis0, orientAxis1;

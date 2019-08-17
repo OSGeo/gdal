@@ -75,7 +75,7 @@ typedef enum
  * be available for any type of MapInfo dataset.
  *--------------------------------------------------------------------*/
 
-class IMapInfoFile : public OGRLayer
+class IMapInfoFile CPL_NON_FINAL: public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(IMapInfoFile)
 

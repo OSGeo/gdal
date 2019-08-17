@@ -56,7 +56,7 @@ extern CPLMutex *hNCMutex; /* shared with netcdf. See netcdfdataset.cpp */
 
 class GMTRasterBand;
 
-class GMTDataset : public GDALPamDataset
+class GMTDataset final: public GDALPamDataset
 {
     int         z_id;
     double      adfGeoTransform[6];
@@ -83,7 +83,7 @@ class GMTDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GMTRasterBand : public GDALPamRasterBand
+class GMTRasterBand final: public GDALPamRasterBand
 {
     nc_type nc_datatype;
     int         nZId;

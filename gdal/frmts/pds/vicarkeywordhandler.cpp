@@ -91,12 +91,9 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if( pch2 == nullptr )
         return FALSE;
 
-    char keyval[100];
-    strncpy( keyval, pch1, std::min(static_cast<size_t>(pch2 - pch1),
-                                    sizeof(keyval) - 1) );
-    keyval[std::min(static_cast<size_t>(pch2 - pch1),
-                    sizeof(keyval) - 1)] = '\0';
-    LabelSize = atoi( keyval );
+    std::string keyval;
+    keyval.assign(pch1, static_cast<size_t>(pch2 - pch1));
+    LabelSize = atoi( keyval.c_str() );
     if( LabelSize <= 0 || LabelSize > 10 * 1024 * 124 )
         return FALSE;
 
@@ -189,12 +186,10 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         VSIFree(pszEOLHeader);
         return FALSE;
     }
-    strncpy( keyval, pch1, std::min(static_cast<size_t>(pch2 - pch1),
-                                    sizeof(keyval) - 1 ) );
-    keyval[std::min( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
+    keyval.assign(pch1, static_cast<size_t>(pch2 - pch1));
     VSIFree(pszEOLHeader);
 
-    int EOLabelSize = atoi( keyval );
+    int EOLabelSize = atoi( keyval.c_str() );
     if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
         return FALSE;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )

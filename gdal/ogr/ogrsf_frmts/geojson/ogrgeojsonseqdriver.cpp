@@ -323,10 +323,13 @@ void OGRGeoJSONSeqLayer::ResetReading()
     // Undocumented: for testing purposes only
     const size_t nBufferSize = static_cast<size_t>(std::max(1,
         atoi(CPLGetConfigOption("OGR_GEOJSONSEQ_CHUNK_SIZE", "40960"))));
-    m_osBuffer.resize(nBufferSize);
+    const size_t nBufferSizeValidated =
+        nBufferSize > static_cast<size_t>(100 * 1000 * 1000) ?
+            static_cast<size_t>(100 * 1000 * 1000) : nBufferSize;
+    m_osBuffer.resize(nBufferSizeValidated);
     m_osFeatureBuffer.clear();
-    m_nPosInBuffer = nBufferSize;
-    m_nBufferValidSize = nBufferSize;
+    m_nPosInBuffer = nBufferSizeValidated;
+    m_nBufferValidSize = nBufferSizeValidated;
     m_nNextFID = 0;
 }
 

@@ -382,7 +382,7 @@ def test_gdalwarp_lib_34():
 
     expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-5, 'bad gt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5), 'bad gt'
 
     
 ###############################################################################
@@ -1083,7 +1083,7 @@ def test_gdalwarp_lib_132():
         for i in range(2):
             for x in range(33):
                 data = struct.unpack('B' * 1, ds.GetRasterBand(i + 1).ReadRaster(i, 0, 1, 1, buf_type=gdal.GDT_Byte))[0]
-                if abs(data - expected_val[i]) > 1:
+                if data != pytest.approx(expected_val[i], abs=1):
                     print(dt)
                     print(x)
                     pytest.fail('bad checksum')

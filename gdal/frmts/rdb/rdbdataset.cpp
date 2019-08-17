@@ -65,7 +65,7 @@ template <typename T> struct CPLMallocGuard
 
 template <typename T> class RDBRasterBandInternal;
 
-template <typename T> class RDBRasterBandInternal : public RDBRasterBand
+template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
 {
     std::vector<std::unique_ptr<RDBRasterBandInternal<T>>> aoOverviewBands;
     std::vector<VRTSourcedRasterBand *> aoVRTRasterBand;
@@ -131,7 +131,8 @@ template <typename T> class RDBRasterBandInternal : public RDBRasterBand
                 poDSIn->apoVRTDataset[i]->GetRasterBand(nBandIn)));
 
             int bSuccess = FALSE;
-            double dfNoDataValue = GetNoDataValue(&bSuccess);
+            double dfNoDataValue =
+                RDBRasterBandInternal::GetNoDataValue(&bSuccess);
             if(bSuccess == FALSE)
             {
                 dfNoDataValue = VRT_NODATA_UNSET;

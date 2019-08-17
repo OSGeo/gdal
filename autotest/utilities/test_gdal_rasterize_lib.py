@@ -129,7 +129,7 @@ def test_gdal_rasterize_lib_3():
     gt_ref = ds_ref.GetGeoTransform()
     gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(gt[i] - gt_ref[i]) <= 1e-6, 'did not get expected geotransform'
+        assert gt[i] == pytest.approx(gt_ref[i], abs=1e-6), 'did not get expected geotransform'
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS_1984") != -1, 'did not get expected SRS'

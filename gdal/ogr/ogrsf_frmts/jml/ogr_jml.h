@@ -63,7 +63,7 @@ class OGRJMLColumn
 /*                             OGRJMLLayer                              */
 /************************************************************************/
 
-class OGRJMLLayer : public OGRLayer
+class OGRJMLLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
@@ -142,7 +142,7 @@ class OGRJMLLayer : public OGRLayer
 /*                          OGRJMLWriterLayer                           */
 /************************************************************************/
 
-class OGRJMLWriterLayer : public OGRLayer
+class OGRJMLWriterLayer final: public OGRLayer
 {
     OGRJMLDataset      *poDS;
     OGRFeatureDefn     *poFeatureDefn;
@@ -184,7 +184,7 @@ class OGRJMLWriterLayer : public OGRLayer
 /*                            OGRJMLDataset                             */
 /************************************************************************/
 
-class OGRJMLDataset : public GDALDataset
+class OGRJMLDataset final: public GDALDataset
 {
     OGRLayer           *poLayer;
 

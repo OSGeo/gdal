@@ -40,7 +40,7 @@
 
 #include <set>
 
-class OGRCADLayer : public OGRLayer
+class OGRCADLayer final: public OGRLayer
 {
     OGRFeatureDefn  *poFeatureDefn;
     OGRSpatialReference * poSpatialRef;
@@ -62,7 +62,7 @@ public:
     int             TestCapability( const char * ) override { return( FALSE ); }
 };
 
-class GDALCADDataset : public GDALDataset
+class GDALCADDataset final: public GDALDataset
 {
     CPLString      osCADFilename;
     CADFile       *poCADFile;

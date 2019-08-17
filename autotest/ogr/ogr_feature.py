@@ -110,7 +110,7 @@ def mk_src_feature():
     got_vals = src_feature.GetFieldAsDateTime(feat_def.GetFieldIndex('field_datetime'))
     expected_vals = [2011, 11, 11, 14, 10, 35.123, 0]
     for i, exp_val in enumerate(expected_vals):
-        if abs(got_vals[i] - exp_val) > 1e-4:
+        if got_vals[i] != pytest.approx(exp_val, abs=1e-4):
             print(got_vals)
             print(expected_vals)
     src_feature.field_integerlist = '(3:10,20,30)'

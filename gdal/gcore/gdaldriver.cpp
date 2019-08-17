@@ -507,6 +507,7 @@ CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
                 eErr = poDstBand->CreateMaskBand( nMaskFlags );
                 if( eErr == CE_None )
                 {
+                    // coverity[divide_by_zero]
                     void* pScaledData = GDALCreateScaledProgress(
                         double(iBandWithMask) / nTotalBandsWithMask,
                         double(iBandWithMask + 1) / nTotalBandsWithMask,

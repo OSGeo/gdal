@@ -1871,6 +1871,7 @@ int MIFFile::SetSpatialRef( OGRSpatialReference * poSpatialRef )
 
 {
     CPLFree( m_pszCoordSys );
+    m_pszCoordSys = nullptr;
 
     char* pszCoordSys = MITABSpatialRef2CoordSys( poSpatialRef );
     if( pszCoordSys )

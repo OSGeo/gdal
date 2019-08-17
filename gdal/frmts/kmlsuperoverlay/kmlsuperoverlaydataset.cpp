@@ -572,7 +572,7 @@ int KmlSuperOverlayReadDataset::DetectTransparency( int rxsize, int rysize,
 /*                           CreateCopy()                               */
 /************************************************************************/
 
-class KmlSuperOverlayDummyDataset: public GDALDataset
+class KmlSuperOverlayDummyDataset final: public GDALDataset
 {
     public:
         KmlSuperOverlayDummyDataset() {}
@@ -1919,7 +1919,7 @@ class KmlSingleDocRasterDataset final: public GDALDataset
 /*                    KmlSingleDocRasterRasterBand                      */
 /************************************************************************/
 
-class KmlSingleDocRasterRasterBand: public GDALRasterBand
+class KmlSingleDocRasterRasterBand final: public GDALRasterBand
 {
     public:
         KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset* poDS,
@@ -2424,7 +2424,7 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
 /*                   KmlSingleOverlayRasterDataset                      */
 /************************************************************************/
 
-class KmlSingleOverlayRasterDataset: public VRTDataset
+class KmlSingleOverlayRasterDataset final: public VRTDataset
 {
     public:
                 KmlSingleOverlayRasterDataset(int nXSize, int nYSize) :

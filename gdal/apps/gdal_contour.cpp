@@ -150,31 +150,37 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-a") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszElevAttrib = argv[++i];
         }
         else if( EQUAL(argv[i],"-amin") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszElevAttribMin = argv[++i];
         }
         else if( EQUAL(argv[i],"-amax") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszElevAttribMax = argv[++i];
         }
         else if( EQUAL(argv[i],"-off") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             dfOffset = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-i") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             dfInterval = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-e") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             dfExpBase = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-p") )
@@ -190,26 +196,31 @@ MAIN_START(argc, argv)
                    && nFixedLevelCount
                    < static_cast<int>(sizeof(adfFixedLevels)/sizeof(double))
                    && ArgIsNumeric(argv[i+1]) )
+                // coverity[tainted_data]
                 adfFixedLevels[nFixedLevelCount++] = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-b") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             nBandIn = atoi(argv[++i]);
         }
         else if( EQUAL(argv[i],"-f") || EQUAL(argv[i],"-of") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszFormat = argv[++i];
         }
         else if( EQUAL(argv[i],"-dsco") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             papszDSCO = CSLAddString(papszDSCO, argv[++i] );
         }
         else if( EQUAL(argv[i],"-lco") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             papszLCO = CSLAddString(papszLCO, argv[++i] );
         }
         else if( EQUAL(argv[i],"-3d")  )
@@ -220,11 +231,13 @@ MAIN_START(argc, argv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             bNoDataSet = TRUE;
+            // coverity[tainted_data]
             dfNoData = CPLAtof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-nln") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszNewLayerName = argv[++i];
         }
         else if( EQUAL(argv[i],"-inodata") )

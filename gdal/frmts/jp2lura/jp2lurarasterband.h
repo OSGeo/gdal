@@ -34,7 +34,7 @@
 
 class JP2LuraDataset;
 
-class JP2LuraRasterBand : public GDALPamRasterBand
+class JP2LuraRasterBand final: public GDALPamRasterBand
 {
         friend class JP2LuraDataset;
 

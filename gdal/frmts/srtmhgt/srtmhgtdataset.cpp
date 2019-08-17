@@ -50,7 +50,7 @@ CPL_CVSID("$Id$")
 
 class SRTMHGTRasterBand;
 
-class SRTMHGTDataset : public GDALPamDataset
+class SRTMHGTDataset final: public GDALPamDataset
 {
     friend class SRTMHGTRasterBand;
 
@@ -81,7 +81,7 @@ class SRTMHGTDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SRTMHGTRasterBand : public GDALPamRasterBand
+class SRTMHGTRasterBand final: public GDALPamRasterBand
 {
     friend class SRTMHGTDataset;
 

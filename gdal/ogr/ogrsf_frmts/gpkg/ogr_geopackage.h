@@ -353,7 +353,7 @@ class GDALGeoPackageRasterBand final: public GDALGPKGMBTilesLikeRasterBand
 /*                           OGRGeoPackageLayer                         */
 /************************************************************************/
 
-class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
+class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpatialWhere
 {
   protected:
     GDALGeoPackageDataset *m_poDS;

@@ -76,6 +76,7 @@ class DatasetDescription
 
     DatasetDescription() = default;
     explicit DatasetDescription( int iDSIn ) : iDS(iDSIn) {}
+    DatasetDescription& operator=(DatasetDescription&&) = default;
     ~DatasetDescription();
 };
 

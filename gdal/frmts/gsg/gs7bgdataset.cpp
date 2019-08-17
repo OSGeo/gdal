@@ -50,7 +50,7 @@ class GS7BGRasterBand;
 
 constexpr double dfDefaultNoDataValue = 1.701410009187828e+38f;
 
-class GS7BGDataset : public GDALPamDataset
+class GS7BGDataset final: public GDALPamDataset
 {
     friend class GS7BGRasterBand;
 
@@ -105,7 +105,7 @@ const long  nFAULT_TAG = 0x49544c46;
 /* ==================================================================== */
 /************************************************************************/
 
-class GS7BGRasterBand : public GDALPamRasterBand
+class GS7BGRasterBand final: public GDALPamRasterBand
 {
     friend class GS7BGDataset;
 

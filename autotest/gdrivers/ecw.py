@@ -124,11 +124,11 @@ def test_ecw_2():
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= 0.5 and abs(stddev - exp_stddev) <= 0.5, \
+    assert mean == pytest.approx(exp_mean, abs=0.5) and stddev == pytest.approx(exp_stddev, abs=0.5), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 467498.5) <= 0.1 and abs(geotransform[1] - 16.5475) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 5077883.2825) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -16.5475) <= 0.001, \
+    assert geotransform[0] == pytest.approx(467498.5, abs=0.1) and geotransform[1] == pytest.approx(16.5475, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(5077883.2825, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-16.5475, abs=0.001), \
         'geotransform differs from expected'
 
 ###############################################################################
@@ -179,11 +179,11 @@ def test_ecw_4():
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= 1.5 and abs(stddev - exp_stddev) <= 0.5, \
+    assert mean == pytest.approx(exp_mean, abs=1.5) and stddev == pytest.approx(exp_stddev, abs=0.5), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 467498.5) <= 0.1 and abs(geotransform[1] - 16.5475) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 5077883.2825) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -16.5475) <= 0.001, \
+    assert geotransform[0] == pytest.approx(467498.5, abs=0.1) and geotransform[1] == pytest.approx(16.5475, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(5077883.2825, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-16.5475, abs=0.001), \
         'geotransform differs from expected'
 
     ds = None
@@ -222,7 +222,7 @@ def test_ecw_6():
 
     # The difference in the stddev is outrageously large between win32 and
     # Linux, but I don't know why.
-    assert abs(mean - exp_mean) <= 1.5 and abs(stddev - exp_stddev) <= 6, \
+    assert mean == pytest.approx(exp_mean, abs=1.5) and stddev == pytest.approx(exp_stddev, abs=6), \
         ('mean/stddev of (%g,%g) diffs from '
                              'expected(%g,%g)' % (mean, stddev, exp_mean,
                                                   exp_stddev))
@@ -231,13 +231,13 @@ def test_ecw_6():
 
     # The difference in the stddev is outrageously large between win32 and
     # Linux, but I don't know why.
-    assert abs(mean - exp_mean) <= 1.0 and abs(stddev - exp_stddev) <= 6, \
+    assert mean == pytest.approx(exp_mean, abs=1.0) and stddev == pytest.approx(exp_stddev, abs=6), \
         ('mean/stddev of (%g,%g) diffs from '
                              'expected(%g,%g)' % (mean, stddev, exp_mean,
                                                   exp_stddev))
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+    assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
         'geotransform differs from expected'
 
     prj = ds.GetProjectionRef()
@@ -273,11 +273,11 @@ def test_ecw_8():
     (exp_mean, exp_stddev) = (145.57, 43.1712)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= 1.0 and abs(stddev - exp_stddev) <= 1.0, \
+    assert mean == pytest.approx(exp_mean, abs=1.0) and stddev == pytest.approx(exp_stddev, abs=1.0), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+    assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
         'geotransform differs from expected'
 
     prj = ds.GetProjectionRef()
@@ -328,11 +328,11 @@ def test_ecw_10():
     (exp_mean, exp_stddev) = (98.49, 57.7129)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= 1.1 and abs(stddev - exp_stddev) <= 0.1, \
+    assert mean == pytest.approx(exp_mean, abs=1.1) and stddev == pytest.approx(exp_stddev, abs=0.1), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 100) <= 0.1 and abs(geotransform[1] - 0.1) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 30) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -0.1) <= 0.001, \
+    assert geotransform[0] == pytest.approx(100, abs=0.1) and geotransform[1] == pytest.approx(0.1, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(30, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-0.1, abs=0.001), \
         'geotransform differs from expected'
 
 ###############################################################################
@@ -373,7 +373,7 @@ def test_ecw_12():
     ds = gdal.Open('tmp/test_11.ntf')
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 100) <= 0.1 and abs(geotransform[1] - 0.1) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 30.0) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -0.1) <= 0.001, \
+    assert geotransform[0] == pytest.approx(100, abs=0.1) and geotransform[1] == pytest.approx(0.1, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(30.0, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-0.1, abs=0.001), \
         'geotransform differs from expected'
 
     assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_BlueBand, \
@@ -587,7 +587,7 @@ def test_ecw_20():
             (exp_mean, exp_stddev) = (140.889, 62.742)
     (mean, stddev) = band.GetOverview(0).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= 0.5 and abs(stddev - exp_stddev) <= 0.5, \
+    assert mean == pytest.approx(exp_mean, abs=0.5) and stddev == pytest.approx(exp_stddev, abs=0.5), \
         ('mean/stddev of (%g,%g) diffs from '
                              'expected(%g,%g)' % (mean, stddev, exp_mean,
                                                   exp_stddev))
@@ -618,7 +618,7 @@ def test_ecw_21():
 
     (mean, stddev) = mem_ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= 0.5 and abs(stddev - exp_stddev) <= 0.5, \
+    assert mean == pytest.approx(exp_mean, abs=0.5) and stddev == pytest.approx(exp_stddev, abs=0.5), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
 ###############################################################################
@@ -704,7 +704,7 @@ def test_ecw_24():
     ds = None
 
     for i in range(6):
-        assert abs(gt[i] - got_gt[i]) <= 1e-5
+        assert gt[i] == pytest.approx(got_gt[i], abs=1e-5)
 
     try:
         os.remove('tmp/spif83.ecw')
@@ -837,7 +837,7 @@ def test_ecw_27():
     ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
-    assert abs(geotransform[0] - 440720) <= 0.1 and abs(geotransform[1] - 60) <= 0.001 and abs(geotransform[2] - 0) <= 0.001 and abs(geotransform[3] - 3751320) <= 0.1 and abs(geotransform[4] - 0) <= 0.001 and abs(geotransform[5] - -60) <= 0.001, \
+    assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
         'geotransform differs from expected'
 
     ds = None
@@ -920,7 +920,7 @@ def test_ecw_29():
                 nvals = nvals + 1
                 sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1 - mean2)
                 sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)
-                if abs(mean1 - mean2) > (stddev1 + stddev2) / 2 or abs(stddev1 - stddev2) > 30:
+                if mean1 != pytest.approx(mean2, abs=(stddev1 + stddev2) / 2) or stddev1 != pytest.approx(stddev2, abs=30):
                     print("%d, %d, %f, %f" % (j, i, abs(mean1 - mean2), abs(stddev1 - stddev2)))
                     ret = 'fail'
 
@@ -1396,7 +1396,7 @@ def test_ecw_41():
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
-        assert abs(stats[i] - expected_stats[i]) <= 1
+        assert stats[i] == pytest.approx(expected_stats[i], abs=1)
 
     ds = None
 
@@ -1411,7 +1411,7 @@ def test_ecw_41():
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
     expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
     for i in range(4):
-        assert abs(stats[i] - expected_stats[i]) <= 1
+        assert stats[i] == pytest.approx(expected_stats[i], abs=1)
     ds = None
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1724,7 +1724,7 @@ def test_ecw_47():
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= mean_tolerance and abs(stddev - exp_stddev) <= 0.5, \
+    assert mean == pytest.approx(exp_mean, abs=mean_tolerance) and stddev == pytest.approx(exp_stddev, abs=0.5), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
     gdal.Unlink('/vsimem/ecw_47.ecw')
@@ -1901,7 +1901,7 @@ def test_ecw_online_5():
 
     (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
 
-    assert abs(mean - exp_mean) <= mean_tolerance and abs(stddev - exp_stddev) <= 0.5, \
+    assert mean == pytest.approx(exp_mean, abs=mean_tolerance) and stddev == pytest.approx(exp_stddev, abs=0.5), \
         ('mean/stddev of (%g,%g) diffs from expected(%g,%g)' % (mean, stddev, exp_mean, exp_stddev))
 
 ###############################################################################

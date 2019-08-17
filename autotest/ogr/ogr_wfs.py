@@ -1796,7 +1796,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(with_and_without_st
     expected_extent = (-20037508.342789248, 20037508.342789248, -20037508.342789154, 20037508.342789147)
     got_extent = lyr.GetExtent()
     for i in range(4):
-        assert abs(expected_extent[i] - got_extent[i]) <= 1e-5
+        assert expected_extent[i] == pytest.approx(got_extent[i], abs=1e-5)
 
     
 ###############################################################################

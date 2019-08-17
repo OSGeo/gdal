@@ -4264,7 +4264,7 @@ OGRErr OGROSMDataSource::GetExtent( OGREnvelope *psExtent )
 /*                   OGROSMSingleFeatureLayer                           */
 /************************************************************************/
 
-class OGROSMSingleFeatureLayer : public OGRLayer
+class OGROSMSingleFeatureLayer final: public OGRLayer
 {
   private:
     int                 nVal;
@@ -4349,7 +4349,7 @@ OGRFeature * OGROSMSingleFeatureLayer::GetNextFeature()
 /*                      OGROSMResultLayerDecorator                      */
 /************************************************************************/
 
-class OGROSMResultLayerDecorator : public OGRLayerDecorator
+class OGROSMResultLayerDecorator final: public OGRLayerDecorator
 {
         CPLString               osDSName;
         CPLString               osInterestLayers;
