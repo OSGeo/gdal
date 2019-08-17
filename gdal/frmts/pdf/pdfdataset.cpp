@@ -2567,6 +2567,9 @@ static void PDFDatasetErrorFunctionCommon(const CPLString& osError)
     CPLError(CE_Failure, CPLE_AppDefined, "%s", osError.c_str());
 }
 
+static int g_nPopplerErrors = 0;
+constexpr int MAX_POPPLER_ERRORS = 1000;
+
 static void PDFDatasetErrorFunction(void* /* userData*/,
                                     ErrorCategory /* eErrCategory */,
                                     Goffset nPos,
@@ -2577,6 +2580,10 @@ static void PDFDatasetErrorFunction(void* /* userData*/,
 #endif
                                    )
 {
+    if( g_nPopplerErrors >= MAX_POPPLER_ERRORS )
+        return;
+
+    g_nPopplerErrors ++;
     CPLString osError;
 
     if (nPos >= 0)
@@ -4091,6 +4098,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         if (pszUserPwd)
             poUserPwd = new GooString(pszUserPwd);
 
+        g_nPopplerErrors = 0;
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
         poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, std::move(oObj)), nullptr, poUserPwd);
 #else
@@ -4098,6 +4106,11 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, oObj.getObj()), nullptr, poUserPwd);
 #endif
         delete poUserPwd;
+        if( g_nPopplerErrors >= MAX_POPPLER_ERRORS )
+        {
+            PDFFreeDoc(poDocPoppler);
+            return nullptr;
+        }
 
         if ( !poDocPoppler->isOk() || poDocPoppler->getNumPages() == 0 )
         {
