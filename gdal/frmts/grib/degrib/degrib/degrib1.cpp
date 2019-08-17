@@ -1267,7 +1267,7 @@ printf ("Nx = %ld, Ny = %ld\n", gdsMeta->Nx, gdsMeta->Ny);
  *     bms = The compressed part of the message dealing with "BMS". (Input)
  * gribLen = The total length of the GRIB1 message. (Input)
  *  curLoc = Current location in the GRIB1 message. (Output)
- *  bitmap = The extracted bitmap. (Output)
+ * pBitmap = Pointer to the extracted bitmap. (Output)
  *    NxNy = The total size of the grid. (Input)
  *
  * FILES/DATABASES: None
@@ -1284,12 +1284,14 @@ printf ("Nx = %ld, Ny = %ld\n", gdsMeta->Nx, gdsMeta->Ny);
  *****************************************************************************
  */
 static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
-                           uChar *bitmap, uInt4 NxNy)
+                           uChar **pBitmap, uInt4 NxNy)
 {
    uInt4 sectLen;       /* Length in bytes of the current section. */
    short int numeric;   /* Determine if this is a predefined bitmap */
    uChar bits;          /* Used to locate which bit we are currently using. */
    uInt4 i;             /* Helps traverse the bitmap. */
+
+   *pBitmap = nullptr;
 
    uInt4 bmsRemainingSize = gribLen - *curLoc;
    if( bmsRemainingSize < 6 )
@@ -1327,6 +1329,13 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
    if( bmsRemainingSize < (NxNy+7) / 8 )
    {
       errSprintf ("Ran out of data in BMS (GRIB 1 Section 3)\n");
+      return -1;
+   }
+   *pBitmap = (uChar*) malloc(NxNy);
+   auto bitmap = *pBitmap;
+   if( bitmap== nullptr )
+   {
+      errSprintf ("Ran out of memory in allocating bitmap (GRIB 1 Section 3)\n");
       return -1;
    }
    bits = 0x80;
@@ -1989,8 +1998,7 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
 
    /* Get the Bit Map Section. */
    if (f_bms) {
-      bitmap = (uChar *) malloc (meta->gds.numPts * sizeof (uChar));
-      if (ReadGrib1Sect3 (c_ipack + curLoc, gribLen, &curLoc, bitmap,
+      if (ReadGrib1Sect3 (c_ipack + curLoc, gribLen, &curLoc, &bitmap,
                           meta->gds.numPts) != 0) {
          free (bitmap);
          preErrSprintf ("Inside ReadGrib1Record\n");
