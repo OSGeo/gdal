@@ -5322,6 +5322,12 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
                     nGCPCount ++;
                 }
             }
+
+            if( nGCPCount == 0 )
+            {
+                CPLFree(pasGCPList);
+                pasGCPList = nullptr;
+            }
         }
     }
 
