@@ -647,6 +647,7 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
         auto poClassProperty = poClass->GetProperty(iProperty);
         if( poClassProperty )
         {
+            // coverity[dereference]
             poClassProperty->AnalysePropertyValue(
                 poFeature->GetProperty(iProperty));
         }
