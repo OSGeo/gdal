@@ -168,8 +168,9 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
     int still_running;
     do {
         CURLMcode mc;
-        do mc = curl_multi_perform(curl_multi, &still_running);
-        while (CURLM_CALL_MULTI_PERFORM == mc);
+        do {
+            mc = curl_multi_perform(curl_multi, &still_running);
+        } while (CURLM_CALL_MULTI_PERFORM == mc);
 
         // Pick up messages, clean up the completed ones, add more
         int msgs_in_queue = 0;
