@@ -7159,6 +7159,18 @@ def test_tiff_write_compression_create_and_createcopy():
     gdaltest.tiff_drv.Delete(tmpfile)
 
 ###############################################################################
+# Attempt at creating a file with more than 4 billion tiles
+
+
+def test_tiff_write_too_many_tiles():
+
+    src_ds = gdal.Open('<VRTDataset rasterXSize="100000000" rasterYSize="100000000"><VRTRasterBand dataType="Byte" band="1"/></VRTDataset>')
+    with gdaltest.error_handler():
+        assert not gdaltest.tiff_drv.CreateCopy('/vsimem/tmp.tif', src_ds, options = ['TILED=YES'])
+    assert 'File too large regarding tile size' in gdal.GetLastErrorMsg()
+
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 

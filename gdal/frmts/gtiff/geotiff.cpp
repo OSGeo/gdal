@@ -15391,12 +15391,47 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     int l_nBlockXSize = 0;
     const char *pszValue = CSLFetchNameValue(papszParmList, "BLOCKXSIZE");
     if( pszValue != nullptr )
+    {
         l_nBlockXSize = atoi( pszValue );
+        if( l_nBlockXSize < 0 )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Invalid value for BLOCKXSIZE");
+            return nullptr;
+        }
+    }
 
     int l_nBlockYSize = 0;
     pszValue = CSLFetchNameValue(papszParmList, "BLOCKYSIZE");
     if( pszValue != nullptr )
+    {
         l_nBlockYSize = atoi( pszValue );
+        if( l_nBlockYSize < 0 )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Invalid value for BLOCKYSIZE");
+            return nullptr;
+        }
+    }
+
+    if( bTiled )
+    {
+        if( l_nBlockXSize == 0 )
+            l_nBlockXSize = 256;
+
+        if( l_nBlockYSize == 0 )
+            l_nBlockYSize = 256;
+
+        unsigned nTileXCount = DIV_ROUND_UP(nXSize, l_nBlockXSize);
+        unsigned nTileYCount = DIV_ROUND_UP(nYSize, l_nBlockYSize);
+        if( nTileXCount > UINT_MAX / nTileYCount )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "File too large regarding tile size. This would result "
+                     "in a file with more than 4 billion tiles");
+            return nullptr;
+        }
+    }
 
     int nPlanar = 0;
     pszValue = CSLFetchNameValue(papszParmList, "INTERLEAVE");
@@ -15951,12 +15986,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( bTiled )
     {
-        if( l_nBlockXSize == 0 )
-            l_nBlockXSize = 256;
-
-        if( l_nBlockYSize == 0 )
-            l_nBlockYSize = 256;
-
         if( !TIFFSetField( l_hTIFF, TIFFTAG_TILEWIDTH, l_nBlockXSize ) ||
             !TIFFSetField( l_hTIFF, TIFFTAG_TILELENGTH, l_nBlockYSize ) )
         {
