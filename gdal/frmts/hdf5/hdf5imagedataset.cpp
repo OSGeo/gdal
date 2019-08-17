@@ -41,7 +41,7 @@
 
 CPL_CVSID("$Id$")
 
-class HDF5ImageDataset : public HDF5Dataset
+class HDF5ImageDataset final: public HDF5Dataset
 {
     typedef enum { UNKNOWN_PRODUCT = 0, CSK_PRODUCT } Hdf5ProductType;
 
@@ -219,7 +219,7 @@ HDF5ImageDataset::~HDF5ImageDataset()
 /*                            Hdf5imagerasterband                       */
 /* ==================================================================== */
 /************************************************************************/
-class HDF5ImageRasterBand : public GDALPamRasterBand
+class HDF5ImageRasterBand final: public GDALPamRasterBand
 {
     friend class HDF5ImageDataset;
 

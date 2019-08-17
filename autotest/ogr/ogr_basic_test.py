@@ -528,7 +528,7 @@ def test_ogr_basic_12():
         f.SetField('fld', 1.230000000001)
         gdal.PopErrorHandler()
         assert gdal.GetLastErrorMsg() != ''
-        if abs(f.GetField('fld') - 1.23) < 1e-8:
+        if f.GetField('fld') == pytest.approx(1.23, abs=1e-8):
             f.DumpReadable()
             pytest.fail()
 

@@ -103,7 +103,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class FITSRasterBand : public GDALPamRasterBand {
+class FITSRasterBand final: public GDALPamRasterBand {
 
   friend class  FITSDataset;
 
@@ -828,10 +828,9 @@ void FITSDataset::WriteFITSInfo()
               ctype2.assign("EA");
             }
 
-            char * cstrobj = new char [object.length()+1];
-            std::strcpy (cstrobj, object.c_str());
-
-            fits_update_key( hFITS, TSTRING, "OBJECT", cstrobj, nullptr, &status);
+            fits_update_key( hFITS, TSTRING, "OBJECT",
+                             const_cast<void*>(static_cast<const void*>(object.c_str())),
+                             nullptr, &status);
         }
 
         double aradius = oSRS.GetSemiMajor();

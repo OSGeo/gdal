@@ -64,7 +64,7 @@ def test_osr_basic_1():
 
     for parm in parm_list:
         value = utm_srs.GetProjParm(parm[0], -1111)
-        assert abs(value - parm[1]) <= .00000000000010, ('got %g for %s instead of %g.'
+        assert value == pytest.approx(parm[1], abs=.00000000000010), ('got %g for %s instead of %g.'
                                  % (value, parm[0], parm[1]))
 
     auth_list = [('GEOGCS', '4326'),
@@ -266,7 +266,7 @@ def test_osr_basic_8():
 
     assert fe != 1000.0, 'false easting was unexpectedly not updated.'
 
-    assert abs(fe - 3280.840) <= 0.01, 'wrong updated false easting value.'
+    assert fe == pytest.approx(3280.840, abs=0.01), 'wrong updated false easting value.'
 
 ###############################################################################
 # Test the Validate() method.

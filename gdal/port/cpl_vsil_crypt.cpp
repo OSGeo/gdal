@@ -607,6 +607,7 @@ int VSICryptFileHeader::ReadFromFile( VSIVirtualHandle* fp,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "CryptoPP exception: %s", e.what());
+            delete poEncCipher;
             return FALSE;
         }
 
@@ -893,23 +894,32 @@ void VSICryptFileHandle::EncryptBlock( GByte* pabyData, vsi_l_offset nOffset )
     std::string osIV(VSICryptGenerateSectorIV(poHeader->osIV, nOffset));
     CPLAssert( static_cast<int>(osIV.size()) == nBlockSize );
 
-    CryptoPP::StringSink* poSink = new CryptoPP::StringSink(osRes);
     CryptoPP::StreamTransformation* poMode;
-    if( poHeader->eMode == MODE_CBC )
-        poMode = new CryptoPP::CBC_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
-    else if( poHeader->eMode == MODE_CFB )
-        poMode = new CryptoPP::CFB_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
-    else if( poHeader->eMode == MODE_OFB )
-        poMode = new CryptoPP::OFB_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
-    else if( poHeader->eMode == MODE_CTR )
-        poMode = new CryptoPP::CTR_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
-    else
-        poMode = new CryptoPP::CBC_CTS_Mode_ExternalCipher::Encryption(
-            *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
+    try
+    {
+        if( poHeader->eMode == MODE_CBC )
+            poMode = new CryptoPP::CBC_Mode_ExternalCipher::Encryption(
+                *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
+        else if( poHeader->eMode == MODE_CFB )
+            poMode = new CryptoPP::CFB_Mode_ExternalCipher::Encryption(
+                *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
+        else if( poHeader->eMode == MODE_OFB )
+            poMode = new CryptoPP::OFB_Mode_ExternalCipher::Encryption(
+                *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
+        else if( poHeader->eMode == MODE_CTR )
+            poMode = new CryptoPP::CTR_Mode_ExternalCipher::Encryption(
+                *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
+        else
+            poMode = new CryptoPP::CBC_CTS_Mode_ExternalCipher::Encryption(
+                *poEncCipher, reinterpret_cast<const cryptopp_byte *>(osIV.c_str()) );
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "cryptopp exception: %s", e.what());
+        return;
+    }
+    CryptoPP::StringSink* poSink = new CryptoPP::StringSink(osRes);
     CryptoPP::StreamTransformationFilter* poEnc =
         new CryptoPP::StreamTransformationFilter(
             *poMode, poSink, CryptoPP::StreamTransformationFilter::NO_PADDING);

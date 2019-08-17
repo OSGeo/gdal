@@ -74,7 +74,7 @@ http://wrri.nmsu.edu/publish/techrpt/tr322/GIS/dem.e00 (compressed)
 
 class E00GRIDRasterBand;
 
-class E00GRIDDataset : public GDALPamDataset
+class E00GRIDDataset final: public GDALPamDataset
 {
     friend class E00GRIDRasterBand;
 
@@ -126,7 +126,7 @@ class E00GRIDDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class E00GRIDRasterBand : public GDALPamRasterBand
+class E00GRIDRasterBand final: public GDALPamRasterBand
 {
     friend class E00GRIDDataset;
 

@@ -140,7 +140,7 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
         {
             block_index.resize( block_count );
         }
-        catch( const std::bad_alloc& ex )
+        catch( const std::exception& ex )
         {
             throw PCIDSKException("Out of memory allocating block_index(%u): %s",
                                   block_count, ex.what());

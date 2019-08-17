@@ -111,7 +111,7 @@ def test_gdaltransform_5():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    assert abs(x - 440720) <= 1e-4 and abs(y - 3751320) <= 1e-4, ret
+    assert x == pytest.approx(440720, abs=1e-4) and y == pytest.approx(3751320, abs=1e-4), ret
 
 ###############################################################################
 # Test with input file and output file
@@ -128,7 +128,7 @@ def test_gdaltransform_6():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    assert abs(x - 440720) <= 1e-4 and abs(y - 3751320) <= 1e-4, ret
+    assert x == pytest.approx(440720, abs=1e-4) and y == pytest.approx(3751320, abs=1e-4), ret
 
 
 ###############################################################################
@@ -145,7 +145,7 @@ def test_gdaltransform_7():
     x = float(text_split[0])
     y = float(text_split[1])
 
-    assert abs(x - 0) <= 1e-4 and abs(y - 0) <= 1e-4, ret
+    assert x == pytest.approx(0, abs=1e-4) and y == pytest.approx(0, abs=1e-4), ret
 
 ###############################################################################
 # Test -to
@@ -187,7 +187,7 @@ def test_gdaltransform_ct_4D():
 
     values = [float(x) for x in ret.split(' ')]
     assert len(values) == 3, ret
-    assert abs(values[0] - 2.0000005420366) < 1e-10, ret
-    assert abs(values[1] - 49.0000003766711) < 1e-10, ret
-    assert abs(values[2] - -0.0222802283242345) < 1e-8, ret
+    assert values[0] == pytest.approx(2.0000005420366, abs=1e-10), ret
+    assert values[1] == pytest.approx(49.0000003766711, abs=1e-10), ret
+    assert values[2] == pytest.approx(-0.0222802283242345, abs=1e-8), ret
 

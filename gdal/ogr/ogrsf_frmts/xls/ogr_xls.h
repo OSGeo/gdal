@@ -38,7 +38,7 @@
 
 class OGRXLSDataSource;
 
-class OGRXLSLayer : public OGRLayer
+class OGRXLSLayer final: public OGRLayer
 {
     OGRXLSDataSource*  poDS;
     OGRFeatureDefn*    poFeatureDefn;
@@ -83,7 +83,7 @@ class OGRXLSLayer : public OGRLayer
 /*                           OGRXLSDataSource                           */
 /************************************************************************/
 
-class OGRXLSDataSource : public OGRDataSource
+class OGRXLSDataSource final: public OGRDataSource
 {
     char*               pszName;
 
@@ -117,7 +117,7 @@ class OGRXLSDataSource : public OGRDataSource
 /*                             OGRXLSDriver                             */
 /************************************************************************/
 
-class OGRXLSDriver : public OGRSFDriver
+class OGRXLSDriver final: public OGRSFDriver
 {
   public:
                 virtual ~OGRXLSDriver();

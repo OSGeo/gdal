@@ -157,7 +157,7 @@ class VRTWarpedDataset;
 class VRTPansharpenedDataset;
 class VRTGroup;
 
-class CPL_DLL VRTDataset : public GDALDataset
+class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
 {
     friend class VRTRasterBand;
     friend struct VRTFlushCacheStruct<VRTDataset>;
@@ -286,7 +286,7 @@ class CPL_DLL VRTDataset : public GDALDataset
 class GDALWarpOperation;
 class VRTWarpedRasterBand;
 
-class CPL_DLL VRTWarpedDataset : public VRTDataset
+class CPL_DLL VRTWarpedDataset final: public VRTDataset
 {
     int               m_nBlockXSize;
     int               m_nBlockYSize;
@@ -362,7 +362,7 @@ typedef enum
     GTAdjust_NoneWithoutWarning
 } GTAdjustment;
 
-class VRTPansharpenedDataset : public VRTDataset
+class VRTPansharpenedDataset final: public VRTDataset
 {
     friend class      VRTPansharpenedRasterBand;
 
@@ -433,7 +433,7 @@ public:
 /*      no raster access.  That is handled by derived classes.          */
 /************************************************************************/
 
-class CPL_DLL VRTRasterBand : public GDALRasterBand
+class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 {
   protected:
     int            m_bIsMaskBand;
@@ -548,7 +548,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
 class VRTSimpleSource;
 
-class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
+class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
 {
   private:
     int            m_nRecursionCounter;
@@ -664,7 +664,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 /*                         VRTWarpedRasterBand                          */
 /************************************************************************/
 
-class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
+class CPL_DLL VRTWarpedRasterBand final: public VRTRasterBand
 {
   public:
                    VRTWarpedRasterBand( GDALDataset *poDS, int nBand,
@@ -683,7 +683,7 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
 /*                        VRTPansharpenedRasterBand                     */
 /************************************************************************/
 
-class VRTPansharpenedRasterBand : public VRTRasterBand
+class VRTPansharpenedRasterBand final: public VRTRasterBand
 {
     int               m_nIndexAsPansharpenedBand;
 
@@ -721,7 +721,7 @@ class VRTPansharpenedRasterBand : public VRTRasterBand
 
 class VRTDerivedRasterBandPrivateData;
 
-class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
+class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
 {
     VRTDerivedRasterBandPrivateData* m_poPrivate;
     bool InitializePython();
@@ -782,7 +782,7 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
 
 class RawRasterBand;
 
-class CPL_DLL VRTRawRasterBand : public VRTRasterBand
+class CPL_DLL VRTRawRasterBand CPL_NON_FINAL: public VRTRasterBand
 {
     RawRasterBand  *m_poRawRaster;
 
@@ -825,7 +825,7 @@ class CPL_DLL VRTRawRasterBand : public VRTRasterBand
 /*                              VRTDriver                               */
 /************************************************************************/
 
-class VRTDriver : public GDALDriver
+class VRTDriver final: public GDALDriver
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTDriver)
 
@@ -851,7 +851,7 @@ class VRTDriver : public GDALDriver
 /*                           VRTSimpleSource                            */
 /************************************************************************/
 
-class CPL_DLL VRTSimpleSource : public VRTSource
+class CPL_DLL VRTSimpleSource CPL_NON_FINAL: public VRTSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTSimpleSource)
 
@@ -967,7 +967,7 @@ public:
 /*                          VRTAveragedSource                           */
 /************************************************************************/
 
-class VRTAveragedSource : public VRTSimpleSource
+class VRTAveragedSource final: public VRTSimpleSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTAveragedSource)
 
@@ -1012,7 +1012,7 @@ typedef enum
     VRT_SCALING_EXPONENTIAL,
 } VRTComplexSourceScaling;
 
-class CPL_DLL VRTComplexSource : public VRTSimpleSource
+class CPL_DLL VRTComplexSource CPL_NON_FINAL: public VRTSimpleSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTComplexSource)
     bool           AreValuesUnchanged() const;
@@ -1095,7 +1095,7 @@ public:
 /*                           VRTFilteredSource                          */
 /************************************************************************/
 
-class VRTFilteredSource : public VRTComplexSource
+class VRTFilteredSource CPL_NON_FINAL: public VRTComplexSource
 {
 private:
     int          IsTypeSupported( GDALDataType eTestType ) const;
@@ -1130,7 +1130,7 @@ public:
 /*                       VRTKernelFilteredSource                        */
 /************************************************************************/
 
-class VRTKernelFilteredSource : public VRTFilteredSource
+class VRTKernelFilteredSource CPL_NON_FINAL: public VRTFilteredSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTKernelFilteredSource)
 
@@ -1162,7 +1162,7 @@ public:
 /*                       VRTAverageFilteredSource                       */
 /************************************************************************/
 
-class VRTAverageFilteredSource : public VRTKernelFilteredSource
+class VRTAverageFilteredSource final: public VRTKernelFilteredSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTAverageFilteredSource)
 
@@ -1178,7 +1178,7 @@ public:
 /************************************************************************/
 /*                            VRTFuncSource                             */
 /************************************************************************/
-class VRTFuncSource : public VRTSource
+class VRTFuncSource final: public VRTSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTFuncSource)
 
@@ -1235,7 +1235,7 @@ class VRTMDArray;
 class VRTAttribute;
 class VRTDimension;
 
-class VRTGroup: public GDALGroup
+class VRTGroup final: public GDALGroup
 {
 public:
     struct Ref
@@ -1332,7 +1332,7 @@ public:
 /*                            VRTDimension                              */
 /************************************************************************/
 
-class VRTDimension: public GDALDimension
+class VRTDimension final: public GDALDimension
 {
     std::weak_ptr<VRTGroup::Ref> m_poGroupRef;
     std::string m_osIndexingVariableName;
@@ -1367,7 +1367,7 @@ public:
 /*                            VRTAttribute                              */
 /************************************************************************/
 
-class VRTAttribute: public GDALAttribute
+class VRTAttribute final: public GDALAttribute
 {
     GDALExtendedDataType m_dt;
     std::vector<std::string> m_aosList{};
@@ -1461,7 +1461,7 @@ public:
 /*                            VRTMDArray                                */
 /************************************************************************/
 
-class TMP_CPL_DLL VRTMDArray: public GDALMDArray
+class VRTMDArray final: public GDALMDArray
 {
 protected:
     friend class VRTGroup; // for access to SetSelf()
@@ -1591,7 +1591,7 @@ public:
 /*                       VRTMDArraySourceInlinedValues                  */
 /************************************************************************/
 
-class VRTMDArraySourceInlinedValues: public VRTMDArraySource
+class VRTMDArraySourceInlinedValues final: public VRTMDArraySource
 {
     const VRTMDArray* m_poDstArray = nullptr;
     bool m_bIsConstantValue;
@@ -1651,7 +1651,7 @@ public:
 /*                     VRTMDArraySourceRegularlySpaced                  */
 /************************************************************************/
 
-class TMP_CPL_DLL VRTMDArraySourceRegularlySpaced: public VRTMDArraySource
+class VRTMDArraySourceRegularlySpaced final: public VRTMDArraySource
 {
     double m_dfStart;
     double m_dfIncrement;
@@ -1678,7 +1678,7 @@ public:
 /*                       VRTMDArraySourceFromArray                      */
 /************************************************************************/
 
-class TMP_CPL_DLL VRTMDArraySourceFromArray: public VRTMDArraySource
+class VRTMDArraySourceFromArray final: public VRTMDArraySource
 {
     const VRTMDArray* m_poDstArray = nullptr;
     bool m_bRelativeToVRTSet = false;

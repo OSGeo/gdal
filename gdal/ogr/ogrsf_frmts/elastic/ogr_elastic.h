@@ -252,7 +252,7 @@ public:
     int Create(const char *pszFilename,
                char **papszOptions);
 
-    CPLHTTPResult*      HTTPFetch(const char* pszURL, char** papszOptions);
+    CPLHTTPResult*      HTTPFetch(const char* pszURL, CSLConstList papszOptions);
 
     const char         *GetURL() { return m_osURL.c_str(); }
 

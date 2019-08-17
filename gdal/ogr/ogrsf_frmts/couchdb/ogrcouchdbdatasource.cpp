@@ -699,7 +699,7 @@ class PointerAutoFree
         ~PointerAutoFree() { CPLFree(m_p); }
 };
 
-class OGRCouchDBOneLineLayer : public OGRLayer
+class OGRCouchDBOneLineLayer final: public OGRLayer
 {
     public:
         OGRFeature* poFeature;

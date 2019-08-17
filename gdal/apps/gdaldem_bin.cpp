@@ -158,6 +158,7 @@ MAIN_START(argc, argv)
 
     GDALDEMProcessingOptionsForBinary* psOptionsForBinary =
         GDALDEMProcessingOptionsForBinaryNew();
+    // coverity[tainted_data]
     GDALDEMProcessingOptions *psOptions =
         GDALDEMProcessingOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );

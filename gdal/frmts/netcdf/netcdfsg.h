@@ -29,6 +29,7 @@
 #define __NETCDFSG_H__
 #include <cstring>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include "netcdf.h"
@@ -291,8 +292,8 @@ namespace nccfdriver
         SG_Exception_EmptyDim() : err_msg("A dimension has length <= 0, but it must have length > 0") {}
     };
 
-    // arg1 is general corruption or malformed error
-    class SG_Exception_General_Malformed: public SG_Exception
+    //general corruption or malformed error
+    class SG_Exception_General_Malformed : public SG_Exception
     {
         std::string err_msg;
 
@@ -301,6 +302,33 @@ namespace nccfdriver
         
         explicit SG_Exception_General_Malformed(const char*); 
     };
+
+    // Invalid value detected
+    class SG_Exception_Value_Violation : public SG_Exception
+    {
+        std::string err_msg;
+
+        public:
+            const char* get_err_msg() override { return err_msg.c_str(); }
+            SG_Exception_Value_Violation(const char* containername, const char* type, const char* badvalue) :
+                err_msg( std::string("[") + std::string(containername) + std::string("] ") + std::string(type) +
+                         std::string(" values may not be ") + std::string(badvalue)
+                       ) {}
+    };
+
+    // Required value(s)
+    class SG_Exception_Value_Required : public SG_Exception
+    {
+        std::string err_msg;
+
+        public:
+            const char* get_err_msg() override { return err_msg.c_str(); }
+            SG_Exception_Value_Required(const char* containername, const char* type, const char* expvalue) :
+                err_msg( std::string("[") + std::string(containername) + std::string("] ") + std::string(type) +
+                         std::string(" values must be ") + std::string(expvalue)
+                       ) {}
+    };
+
     // Some helpers which simply call some netcdf library functions, unless otherwise mentioned, ncid, refers to its use in netcdf.h
     
     /* Retrieves the version from the value Conventions global attr
@@ -325,7 +353,7 @@ namespace nccfdriver
      * Scans the given ncid for geometry containers
      * The vector passed in will be overwritten with a vector of scan results
      */
-    int scanForGeometryContainers(int ncid, std::vector<int> & r_ids);
+    int scanForGeometryContainers(int ncid, std::set<int> & r_ids);
 
     /* Attribute Fetch
      * -

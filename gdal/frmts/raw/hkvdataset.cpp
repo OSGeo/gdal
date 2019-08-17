@@ -49,7 +49,7 @@ CPL_CVSID("$Id$")
 
 class HKVDataset;
 
-class HKVRasterBand : public RawRasterBand
+class HKVRasterBand final: public RawRasterBand
 {
     friend class HKVDataset;
 

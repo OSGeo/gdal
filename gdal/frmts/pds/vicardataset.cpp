@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class VICARDataset : public RawDataset
+class VICARDataset final: public RawDataset
 {
     VSILFILE    *fpImage;
 
@@ -322,21 +322,19 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLAtof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
 
     /***********   Grab LINE_PROJECTION_OFFSET ************/
-    double yulcenter = 0.0;
     double dfULYMap = 0.5;
 
     value = poDS->GetKeyword("MAP.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
-        yulcenter = CPLAtof(value);
+        const double yulcenter = CPLAtof(value);
         dfULYMap = ((yulcenter + dfLineOffset_Shift) * -dfYDim * dfLineOffset_Mult);
     }
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
-    double xulcenter = 0.0;
     double dfULXMap=0.5;
 
     value = poDS->GetKeyword("MAP.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
-        xulcenter = CPLAtof(value);
+        const double xulcenter = CPLAtof(value);
         dfULXMap = ((xulcenter + dfSampleOffset_Shift) * dfXDim * dfSampleOffset_Mult);
     }
 

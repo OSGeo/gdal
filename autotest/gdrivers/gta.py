@@ -97,7 +97,7 @@ def test_gta_2():
 
     expected_gt = src_ds.GetGeoTransform()
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-6, 'did not get expected wkt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-6), 'did not get expected wkt'
 
     assert wkt == src_ds.GetProjectionRef(), 'did not get expected wkt'
 

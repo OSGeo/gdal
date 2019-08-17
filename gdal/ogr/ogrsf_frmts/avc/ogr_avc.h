@@ -39,7 +39,7 @@ class OGRAVCDataSource;
 /*                             OGRAVCLayer                              */
 /************************************************************************/
 
-class OGRAVCLayer : public OGRLayer
+class OGRAVCLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn      *poFeatureDefn;
@@ -73,7 +73,7 @@ class OGRAVCLayer : public OGRLayer
 /*                         OGRAVCDataSource                             */
 /************************************************************************/
 
-class OGRAVCDataSource : public OGRDataSource
+class OGRAVCDataSource CPL_NON_FINAL: public OGRDataSource
 {
   protected:
     bool                 m_bSRSFetched = false;
@@ -99,7 +99,7 @@ class OGRAVCBinDataSource;
 /*                            OGRAVCBinLayer                            */
 /************************************************************************/
 
-class OGRAVCBinLayer : public OGRAVCLayer
+class OGRAVCBinLayer final: public OGRAVCLayer
 {
     AVCE00Section       *m_psSection;
     AVCBinFile          *hFile;
@@ -137,7 +137,7 @@ class OGRAVCBinLayer : public OGRAVCLayer
 /*                         OGRAVCBinDataSource                          */
 /************************************************************************/
 
-class OGRAVCBinDataSource : public OGRAVCDataSource
+class OGRAVCBinDataSource final: public OGRAVCDataSource
 {
     OGRLayer            **papoLayers;
     int                 nLayers;
@@ -168,13 +168,14 @@ class OGRAVCBinDataSource : public OGRAVCDataSource
 /************************************************************************/
 /*                            OGRAVCE00Layer                            */
 /************************************************************************/
-class OGRAVCE00Layer : public OGRAVCLayer
+class OGRAVCE00Layer final: public OGRAVCLayer
 {
     AVCE00Section       *psSection;
     AVCE00ReadE00Ptr    psRead;
     OGRAVCE00Layer      *poArcLayer;
     int                 nFeatureCount;
     bool                bNeedReset;
+    bool                bLastWasSequential = false;
     int                 nNextFID;
 
     AVCE00Section       *psTableSection;
@@ -204,7 +205,7 @@ class OGRAVCE00Layer : public OGRAVCLayer
 /*                         OGRAVCE00DataSource                          */
 /************************************************************************/
 
-class OGRAVCE00DataSource : public OGRAVCDataSource
+class OGRAVCE00DataSource final: public OGRAVCDataSource
 {
     int nLayers;
     char *pszName;

@@ -524,6 +524,7 @@ char** VSISwiftFSHandler::GetFileList( const char *pszDirname,
         int nRetryCount = 0;
         const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
                                     CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+        // coverity[tainted_data]
         double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
                                     CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
         do

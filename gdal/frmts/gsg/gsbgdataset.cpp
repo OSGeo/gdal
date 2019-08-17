@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
 
 class GSBGRasterBand;
 
-class GSBGDataset : public GDALPamDataset
+class GSBGDataset final: public GDALPamDataset
 {
     friend class GSBGRasterBand;
 
@@ -94,7 +94,7 @@ const size_t GSBGDataset::nHEADER_SIZE = 56;
 /* ==================================================================== */
 /************************************************************************/
 
-class GSBGRasterBand : public GDALPamRasterBand
+class GSBGRasterBand final: public GDALPamRasterBand
 {
     friend class GSBGDataset;
 

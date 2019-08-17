@@ -501,6 +501,8 @@ class CPL_DLL CPLStringList
     CPLStringList &operator=(const CPLStringList& oOther);
     /** Assignment operator */
     CPLStringList &operator=(CSLConstList papszListIn);
+    /** Move assignment operator */
+    CPLStringList &operator=(CPLStringList&& oOther);
 
     /** Return string at specified index */
     char * operator[](int i);

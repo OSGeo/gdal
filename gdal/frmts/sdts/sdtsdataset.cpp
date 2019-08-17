@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
 
 class SDTSRasterBand;
 
-class SDTSDataset : public GDALPamDataset
+class SDTSDataset final: public GDALPamDataset
 {
     friend class SDTSRasterBand;
 
@@ -70,7 +70,7 @@ class SDTSDataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * ) override;
 };
 
-class SDTSRasterBand : public GDALPamRasterBand
+class SDTSRasterBand final: public GDALPamRasterBand
 {
     friend class SDTSDataset;
 

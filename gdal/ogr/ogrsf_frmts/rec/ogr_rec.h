@@ -46,7 +46,7 @@ CPL_C_END
 /*                             OGRRECLayer                              */
 /************************************************************************/
 
-class OGRRECLayer : public OGRLayer
+class OGRRECLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
@@ -82,7 +82,7 @@ class OGRRECLayer : public OGRLayer
 /*                           OGRRECDataSource                           */
 /************************************************************************/
 
-class OGRRECDataSource : public OGRDataSource
+class OGRRECDataSource final: public OGRDataSource
 {
     char                *pszName;
 

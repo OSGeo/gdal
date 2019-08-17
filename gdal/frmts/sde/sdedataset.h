@@ -3,7 +3,7 @@
 
 #include "gdal_sde.h"
 
-class SDEDataset : public GDALDataset
+class SDEDataset final: public GDALDataset
 {
     friend class SDERasterBand;
 

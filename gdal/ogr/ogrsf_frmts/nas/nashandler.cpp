@@ -469,6 +469,13 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
     poState->PushPath( m_osElementName );
 
     m_nDepth ++;
+
+    if( poState->osPath.size() > 512 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too long path. Stop parsing");
+        m_poReader->StopParsing();
+    }
 }
 
 /************************************************************************/

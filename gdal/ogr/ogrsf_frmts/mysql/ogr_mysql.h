@@ -72,7 +72,7 @@
 
 class OGRMySQLDataSource;
 
-class OGRMySQLLayer : public OGRLayer
+class OGRMySQLLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;

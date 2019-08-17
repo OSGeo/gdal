@@ -259,6 +259,7 @@ GMLFeature *NASReader::NextFeature()
         }
 
         while( m_poCompleteFeature == nullptr
+               && !m_bStopParsing
                && m_poSAXReader->parseNext( m_oToFill ) ) {}
 
         poReturn = m_poCompleteFeature;
@@ -266,6 +267,7 @@ GMLFeature *NASReader::NextFeature()
     }
     catch (const XMLException &toCatch)
     {
+        m_bStopParsing = true;
         CPLDebug( "NAS",
                   "Error during NextFeature()! Message:\n%s",
                   transcode( toCatch.getMessage() ).c_str() );
@@ -642,8 +644,16 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
 /* -------------------------------------------------------------------- */
     if( !poClass->IsSchemaLocked() )
     {
-        poClass->GetProperty(iProperty)->AnalysePropertyValue(
-            poFeature->GetProperty(iProperty));
+        auto poClassProperty = poClass->GetProperty(iProperty);
+        if( poClassProperty )
+        {
+            poClassProperty->AnalysePropertyValue(
+                poFeature->GetProperty(iProperty));
+        }
+        else
+        {
+            CPLAssert(false);
+        }
     }
 }
 

@@ -126,7 +126,7 @@ static unsigned GetCmdCount(unsigned int nCmdCountCombined)
 /*                          OGRMVTLayerBase                             */
 /************************************************************************/
 
-class OGRMVTLayerBase: public OGRLayer
+class OGRMVTLayerBase CPL_NON_FINAL: public OGRLayer
 {
         virtual OGRFeature         *GetNextRawFeature() = 0;
 
@@ -152,7 +152,7 @@ class OGRMVTLayerBase: public OGRLayer
 
 class OGRMVTDataset;
 
-class OGRMVTLayer : public OGRMVTLayerBase
+class OGRMVTLayer final: public OGRMVTLayerBase
 {
     OGRMVTDataset       *m_poDS;
     const GByte               *m_pabyDataStart;
@@ -3382,7 +3382,7 @@ class OGRMVTWriterDataset final: public GDALDataset
 /*                           OGRMVTWriterLayer                          */
 /************************************************************************/
 
-class OGRMVTWriterLayer: public OGRLayer
+class OGRMVTWriterLayer final: public OGRLayer
 {
         friend class OGRMVTWriterDataset;
 

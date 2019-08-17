@@ -70,7 +70,7 @@ def test_overviewds_2():
     expected_gt = (src_gt[0], src_gt[1] * 2, src_gt[2], src_gt[3], src_gt[4], src_gt[5] * 2)
     gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(expected_gt[i] - gt[i]) <= 1e-5
+        assert expected_gt[i] == pytest.approx(gt[i], abs=1e-5)
     assert ds.GetGCPCount() == 0 and ds.GetGCPProjection() == src_ds.GetGCPProjection() and not ds.GetGCPs()
     expected_data = src_ds.ReadRaster(0, 0, 20, 20, 10, 10)
     got_data = ds.ReadRaster(0, 0, 10, 10)
@@ -132,7 +132,7 @@ def test_overviewds_3():
     (_, pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
 
     for i in range(3):
-        assert abs(ref_pnt[i] - pnt[i]) <= 1e-5
+        assert ref_pnt[i] == pytest.approx(pnt[i], abs=1e-5)
     ds = None
 
 ###############################################################################
@@ -176,7 +176,7 @@ def test_overviewds_4():
     (_, pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
 
     for i in range(3):
-        assert abs(ref_pnt[i] - pnt[i]) <= 1e-5
+        assert ref_pnt[i] == pytest.approx(pnt[i], abs=1e-5)
 
     ds = None
 
@@ -210,9 +210,9 @@ def test_overviewds_5():
     for key in geoloc_md:
         assert ds.GetMetadataItem(key, 'GEOLOCATION') == got_md[key]
         if key == 'PIXEL_OFFSET' or key == 'LINE_OFFSET':
-            assert abs(float(got_md[key]) - myfloat(geoloc_md[key]) * 2) <= 1e-1
+            assert float(got_md[key]) == pytest.approx(myfloat(geoloc_md[key]) * 2, abs=1e-1)
         elif key == 'PIXEL_STEP' or key == 'LINE_STEP':
-            assert abs(float(got_md[key]) - myfloat(geoloc_md[key]) / 2) <= 1e-1
+            assert float(got_md[key]) == pytest.approx(myfloat(geoloc_md[key]) / 2, abs=1e-1)
         elif got_md[key] != geoloc_md[key]:
             print(got_md[key])
             print(geoloc_md[key])
@@ -224,7 +224,7 @@ def test_overviewds_5():
     (_, pnt) = tr.TransformPoint(1, ref_pnt[0], ref_pnt[1])
 
     for i in range(3):
-        assert abs(pnt[i] - expected_xyz[i]) <= 0.5
+        assert pnt[i] == pytest.approx(expected_xyz[i], abs=0.5)
     ds = None
 
 ###############################################################################

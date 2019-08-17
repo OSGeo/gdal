@@ -535,6 +535,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
         CPLFree(pabyMask);
 
     CPLFree( panLastLineCounts );
+    GDALNearblackOptionsFree(psOptionsToFree);
 
     return hDstDS;
 }

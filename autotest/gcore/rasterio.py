@@ -297,7 +297,7 @@ def test_rasterio_7():
 
 def rasterio_8_progress_callback(pct, message, user_data):
     # pylint: disable=unused-argument
-    if abs(pct - (user_data[0] + 0.05)) > 1e-5:
+    if pct != pytest.approx((user_data[0] + 0.05), abs=1e-5):
         print('Expected %f, got %f' % (user_data[0] + 0.05, pct))
         user_data[1] = False
     user_data[0] = pct
@@ -336,7 +336,7 @@ def test_rasterio_8():
                                           callback=rasterio_8_progress_callback,
                                           callback_data=tab)
     assert len(data) == 400, 'did not read expected band data via ReadRaster()'
-    assert abs(tab[0] - 1) <= 1e-5 and tab[1]
+    assert tab[0] == pytest.approx(1, abs=1e-5) and tab[1]
 
     # Test interruption
     tab = [0]
@@ -352,7 +352,7 @@ def test_rasterio_8():
                                           callback=rasterio_8_progress_callback,
                                           callback_data=tab)
     assert data is not None, 'did not read expected band data via ReadRaster()'
-    assert abs(tab[0] - 1) <= 1e-5 and tab[1]
+    assert tab[0] == pytest.approx(1, abs=1e-5) and tab[1]
 
     # Same with interruption
     tab = [0]
@@ -367,7 +367,7 @@ def test_rasterio_8():
                                           callback=rasterio_8_progress_callback,
                                           callback_data=tab)
     assert data is not None, 'did not read expected band data via ReadRaster()'
-    assert abs(tab[0] - 1) <= 1e-5 and tab[1]
+    assert tab[0] == pytest.approx(1, abs=1e-5) and tab[1]
 
     # Same with interruption
     tab = [0]
@@ -382,7 +382,7 @@ def test_rasterio_8():
                          callback=rasterio_8_progress_callback,
                          callback_data=tab)
     assert len(data) == 400, 'did not read expected dataset data via ReadRaster()'
-    assert abs(tab[0] - 1) <= 1e-5 and tab[1]
+    assert tab[0] == pytest.approx(1, abs=1e-5) and tab[1]
 
     ds = None
 
@@ -392,7 +392,7 @@ def test_rasterio_8():
     data = ds.ReadRaster(resample_alg=gdal.GRIORA_NearestNeighbour,
                          callback=rasterio_8_progress_callback_2,
                          callback_data=last_pct)
-    assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
+    assert not (data is None or last_pct[0] != pytest.approx(1.0, abs=1e-5))
 
     # Same with interruption
     tab = [0]
@@ -408,7 +408,7 @@ def test_rasterio_8():
     data = ds.ReadRaster(resample_alg=gdal.GRIORA_NearestNeighbour,
                          callback=rasterio_8_progress_callback_2,
                          callback_data=last_pct)
-    assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
+    assert not (data is None or last_pct[0] != pytest.approx(1.0, abs=1e-5))
 
     # Same with interruption
     tab = [0]
@@ -454,7 +454,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_Int16)
     assert cs == 1211
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
     # Same but query with GDT_Float32. Check that we do not get floating-point
     # values, since the band type is Byte
@@ -477,7 +477,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data, 10, 10)
     assert cs == 1154
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
     # Test RasterBand.ReadRaster, with Bilinear and UInt16 data type
     src_ds_uint16 = gdal.Open('data/uint16.tif')
@@ -492,7 +492,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_UInt16)
     assert cs == 1211
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
     # Test RasterBand.ReadRaster, with Bilinear on Complex, thus using warp API
     tab = [0, None]
@@ -507,7 +507,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data, 10, 10, data_type=gdal.GDT_CInt16)
     assert cs == 1211
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
     # Test interruption
     tab = [0, 0.5]
@@ -532,7 +532,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data, 10, 10)
     assert cs == 1089
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
     # Test RasterBand.ReadRaster, with Cubic, and downsampling
     tab = [0, None]
@@ -545,7 +545,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data, 10, 10)
     assert cs == 1059
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
     # Test RasterBand.ReadRaster, with Cubic, and downsampling with >=8x8 source samples used for a dest sample
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize=5,
@@ -574,7 +574,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data, 40, 40)
     assert cs == 19556
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
     # Test Dataset.ReadRaster, with Cubic and supersampling
     tab = [0, None]
@@ -587,7 +587,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data, 40, 40)
     assert cs == 19041
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
     # Test Dataset.ReadRaster on a multi band file, with INTERLEAVE=PIXEL
     ds = gdal.Open('data/rgbsmall_cmyk.tif')
@@ -603,7 +603,7 @@ def test_rasterio_9():
     cs = rasterio_9_checksum(data[25 * 25:2 * 25 * 25], 25, 25)
     assert cs == 6248
 
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
     ds = None
 
     # Test Band.ReadRaster on a RGBA with parts fully opaque, and fully transparent and with huge upscaling
@@ -617,7 +617,7 @@ def test_rasterio_9():
     assert data is not None
     cs = rasterio_9_checksum(data, 162 * 16, 150 * 16)
     assert cs == 30836
-    assert abs(tab[0] - 1.0) <= 1e-5
+    assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
 ###############################################################################
 # Test error when getting a block

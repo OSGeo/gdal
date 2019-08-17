@@ -38,7 +38,7 @@ class KEAOverview;
 class KEAMaskBand;
 
 // Provides the implementation of a GDAL raster band
-class KEARasterBand: public GDALPamRasterBand
+class KEARasterBand CPL_NON_FINAL: public GDALPamRasterBand
 {
 private:
     int                 *m_pnRefCount = nullptr; // reference count of m_pImageIO

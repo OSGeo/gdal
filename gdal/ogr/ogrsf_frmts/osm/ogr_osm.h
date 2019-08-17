@@ -78,7 +78,7 @@ class OGROSMComputedAttribute
 
 class OGROSMDataSource;
 
-class OGROSMLayer : public OGRLayer
+class OGROSMLayer final: public OGRLayer
 {
     friend class OGROSMDataSource;
 
@@ -282,7 +282,7 @@ typedef struct
 } CollisionBucket;
 #endif
 
-class OGROSMDataSource : public OGRDataSource
+class OGROSMDataSource final: public OGRDataSource
 {
     friend class OGROSMLayer;
 

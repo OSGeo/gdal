@@ -1610,7 +1610,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
 /*                               MEMGroup                               */
 /************************************************************************/
 
-class MEMGroup: public GDALGroup
+class MEMGroup final: public GDALGroup
 {
     std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
@@ -1723,7 +1723,7 @@ public:
 #pragma warning (disable:4250) // warning C4250: 'MEMMDArray': inherits 'MEMAbstractMDArray::MEMAbstractMDArray::IRead' via dominance
 #endif //_MSC_VER
 
-class MEMMDArray: public MEMAbstractMDArray, public GDALMDArray
+class MEMMDArray final: public MEMAbstractMDArray, public GDALMDArray
 {
     std::map<CPLString, std::shared_ptr<GDALAttribute>> m_oMapAttributes{};
     std::string m_osUnit{};
@@ -1802,7 +1802,7 @@ public:
 /*                               MEMAttribute                           */
 /************************************************************************/
 
-class MEMAttribute: public MEMAbstractMDArray, public GDALAttribute
+class MEMAttribute final: public MEMAbstractMDArray, public GDALAttribute
 {
 protected:
     MEMAttribute(const std::string& osParentName,
@@ -1830,7 +1830,7 @@ public:
 /*                               MEMDimension                           */
 /************************************************************************/
 
-class MEMDimension: public GDALDimension
+class MEMDimension final: public GDALDimension
 {
     std::weak_ptr<GDALMDArray> m_poIndexingVariable{};
 

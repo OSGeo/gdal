@@ -48,7 +48,7 @@ static unsigned char *ParseXPM( const char *pszInput,
 /* ==================================================================== */
 /************************************************************************/
 
-class XPMDataset : public GDALPamDataset
+class XPMDataset final: public GDALPamDataset
 {
   public:
                  XPMDataset() {}

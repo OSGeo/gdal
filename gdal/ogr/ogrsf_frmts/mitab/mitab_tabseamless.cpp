@@ -532,7 +532,7 @@ int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
  **********************************************************************/
 GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
 {
-    if (m_poIndexTable == nullptr)
+    if (m_poIndexTable == nullptr || m_poCurBaseTable == nullptr)
         return -1; // File is not opened yet
 
     if (nPrevId == -1 || m_nCurBaseTableId != ExtractBaseTableId(nPrevId))

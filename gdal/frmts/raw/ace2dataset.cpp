@@ -91,7 +91,7 @@ static const char * const apszCategoryConfidence[] =
 /* ==================================================================== */
 /************************************************************************/
 
-class ACE2Dataset : public GDALPamDataset
+class ACE2Dataset final: public GDALPamDataset
 {
     friend class ACE2RasterBand;
 
@@ -117,7 +117,7 @@ class ACE2Dataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ACE2RasterBand : public RawRasterBand
+class ACE2RasterBand final: public RawRasterBand
 {
   public:
     ACE2RasterBand( VSILFILE* fpRaw,

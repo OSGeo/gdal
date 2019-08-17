@@ -47,7 +47,7 @@ CPLString OGRCARTOEscapeLiteralCopy(const char* pszStr);
 /*                      OGRCartoGeomFieldDefn                         */
 /************************************************************************/
 
-class OGRCartoGeomFieldDefn: public OGRGeomFieldDefn
+class OGRCartoGeomFieldDefn final: public OGRGeomFieldDefn
 {
     public:
         int nSRID;
@@ -63,7 +63,7 @@ class OGRCartoGeomFieldDefn: public OGRGeomFieldDefn
 /************************************************************************/
 class OGRCARTODataSource;
 
-class OGRCARTOLayer : public OGRLayer
+class OGRCARTOLayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRCARTODataSource* poDS;
@@ -118,7 +118,7 @@ typedef enum
 /*                        OGRCARTOTableLayer                          */
 /************************************************************************/
 
-class OGRCARTOTableLayer : public OGRCARTOLayer
+class OGRCARTOTableLayer final: public OGRCARTOLayer
 {
     CPLString           osName;
     CPLString           osQuery;
@@ -214,7 +214,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
 /*                       OGRCARTOResultLayer                            */
 /************************************************************************/
 
-class OGRCARTOResultLayer : public OGRCARTOLayer
+class OGRCARTOResultLayer final: public OGRCARTOLayer
 {
     OGRFeature          *poFirstFeature;
 
@@ -235,7 +235,7 @@ class OGRCARTOResultLayer : public OGRCARTOLayer
 /*                           OGRCARTODataSource                         */
 /************************************************************************/
 
-class OGRCARTODataSource : public OGRDataSource
+class OGRCARTODataSource final: public OGRDataSource
 {
     char*               pszName;
     char*               pszAccount;

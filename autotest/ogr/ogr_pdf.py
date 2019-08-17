@@ -166,7 +166,7 @@ def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
         if feat.GetField('intfield') != 1:
             feat.DumpReadable()
             pytest.fail()
-        if abs(feat.GetFieldAsDouble('realfield') - 2.34) > 1e-10:
+        if feat.GetFieldAsDouble('realfield') != pytest.approx(2.34, abs=1e-10):
             feat.DumpReadable()
             pytest.fail()
 

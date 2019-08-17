@@ -82,7 +82,7 @@ public:
 /*                            OGRIngresLayer                             */
 /************************************************************************/
 
-class OGRIngresLayer : public OGRLayer
+class OGRIngresLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -137,7 +137,7 @@ class OGRIngresLayer : public OGRLayer
 /*                          OGRIngresTableLayer                          */
 /************************************************************************/
 
-class OGRIngresTableLayer : public OGRIngresLayer
+class OGRIngresTableLayer final: public OGRIngresLayer
 {
     int                 bUpdateAccess;
 
@@ -193,7 +193,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
 /*                         OGRIngresResultLayer                          */
 /************************************************************************/
 
-class OGRIngresResultLayer : public OGRIngresLayer
+class OGRIngresResultLayer final: public OGRIngresLayer
 {
     void                BuildFullQueryStatement();
 
@@ -217,7 +217,7 @@ class OGRIngresResultLayer : public OGRIngresLayer
 /*                          OGRIngresDataSource                          */
 /************************************************************************/
 
-class OGRIngresDataSource : public OGRDataSource
+class OGRIngresDataSource final: public OGRDataSource
 {
     OGRIngresLayer    **papoLayers = nullptr;
     int                 nLayers = 0;
@@ -284,7 +284,7 @@ class OGRIngresDataSource : public OGRDataSource
 /*                            OGRIngresDriver                            */
 /************************************************************************/
 
-class OGRIngresDriver : public OGRSFDriver
+class OGRIngresDriver final: public OGRSFDriver
 {
     char         **ParseWrappedName( const char * );
 

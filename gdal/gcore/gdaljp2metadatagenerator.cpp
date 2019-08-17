@@ -55,6 +55,16 @@ CPL_CVSID("$Id$")
 #undef NULL
 #define NULL nullptr
 
+// Simplified version of the macro proposed by libxml2
+// The reason is when running against filegdbAPI which includes it own copy
+// of libxml2, and the check 'ctxt->valueNr < ctxt->valueFrame + (x)'
+// done by libxml2 CHECK_ARITY() thus points to garbage
+#undef CHECK_ARITY
+#define CHECK_ARITY(x)                                                  \
+    if (ctxt == NULL) return;                                           \
+    if (nargs != (x))                                                   \
+        XP_ERROR(XPATH_INVALID_ARITY);
+
 /************************************************************************/
 /*                            GDALGMLJP2Expr                            */
 /************************************************************************/

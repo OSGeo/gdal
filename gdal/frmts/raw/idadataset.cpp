@@ -172,7 +172,7 @@ class IDADataset final: public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class IDARasterBand : public RawRasterBand
+class IDARasterBand final: public RawRasterBand
 {
     friend class IDADataset;
 

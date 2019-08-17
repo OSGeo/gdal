@@ -1750,8 +1750,6 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         int bNorth = 0;
         const int nZone = poSRS->GetUTMZone( &bNorth );
 
-        int nProjection = 0;
-
         if( nDatum == Datum_North_American_Datum_1983 && nZone >= 3
             && nZone <= 22 && bNorth && nUOMLengthCode == 9001 )
         {
@@ -1777,11 +1775,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         }
         else
         {
-            if( bNorth )
-                nProjection = 16000 + nZone;
-            else
-                nProjection = 16100 + nZone;
-
+            const int nProjection = nZone + (bNorth ? 16000 : 16100);
             GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
                        KvUserDefined );
 

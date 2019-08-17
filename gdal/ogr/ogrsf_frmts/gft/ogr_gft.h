@@ -40,7 +40,7 @@
 /************************************************************************/
 class OGRGFTDataSource;
 
-class OGRGFTLayer : public OGRLayer
+class OGRGFTLayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRGFTDataSource* poDS;
@@ -100,7 +100,7 @@ protected:
 /*                         OGRGFTTableLayer                             */
 /************************************************************************/
 
-class OGRGFTTableLayer : public OGRGFTLayer
+class OGRGFTTableLayer final: public OGRGFTLayer
 {
     CPLString         osTableName;
     CPLString         osTableId;
@@ -168,7 +168,7 @@ class OGRGFTTableLayer : public OGRGFTLayer
 /*                        OGRGFTResultLayer                             */
 /************************************************************************/
 
-class OGRGFTResultLayer : public OGRGFTLayer
+class OGRGFTResultLayer final: public OGRGFTLayer
 {
     CPLString   osSQL;
     int         bGotAllRows;
@@ -189,7 +189,7 @@ class OGRGFTResultLayer : public OGRGFTLayer
 /*                           OGRGFTDataSource                           */
 /************************************************************************/
 
-class OGRGFTDataSource : public OGRDataSource
+class OGRGFTDataSource final: public OGRDataSource
 {
     char*               pszName;
 
@@ -248,7 +248,7 @@ class OGRGFTDataSource : public OGRDataSource
 /*                             OGRGFTDriver                             */
 /************************************************************************/
 
-class OGRGFTDriver : public OGRSFDriver
+class OGRGFTDriver final: public OGRSFDriver
 {
   public:
                 virtual ~OGRGFTDriver();

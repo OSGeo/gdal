@@ -273,7 +273,7 @@ public:
 /*                             OGRMSSQLSpatialLayer                     */
 /************************************************************************/
 
-class OGRMSSQLSpatialLayer : public OGRLayer
+class OGRMSSQLSpatialLayer CPL_NON_FINAL: public OGRLayer
 {
     protected:
     OGRFeatureDefn     *poFeatureDefn = nullptr;
@@ -612,10 +612,10 @@ public:
 };
 
 /************************************************************************/
-/*                             OGRODBCDriver                            */
+/*                        OGRMSSQLSpatialDriver                         */
 /************************************************************************/
 
-class OGRMSSQLSpatialDriver : public OGRSFDriver
+class OGRMSSQLSpatialDriver final: public OGRSFDriver
 {
   public:
     virtual ~OGRMSSQLSpatialDriver();

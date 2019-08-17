@@ -53,7 +53,7 @@ enum { DDS_COLOR_TYPE_RGB,
 /* ==================================================================== */
 /************************************************************************/
 
-class DDSDataset : public GDALPamDataset
+class DDSDataset final: public GDALPamDataset
 {
 public:
     static GDALDataset* CreateCopy(const char * pszFilename,

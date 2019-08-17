@@ -75,7 +75,7 @@ CPLString GetCompressionSoftwareName(){
 }
 #endif
 
-class GDALECWCompressor : public CNCSFile {
+class GDALECWCompressor final: public CNCSFile {
 
 public:
     GDALECWCompressor();
@@ -1584,7 +1584,7 @@ class IRasterIORequest
 };
 #endif
 
-class ECWWriteDataset : public GDALDataset
+class ECWWriteDataset final: public GDALDataset
 {
     friend class ECWWriteRasterBand;
 
@@ -1648,7 +1648,7 @@ class ECWWriteDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ECWWriteRasterBand : public GDALRasterBand
+class ECWWriteRasterBand final: public GDALRasterBand
 {
     friend class ECWWriteDataset;
 

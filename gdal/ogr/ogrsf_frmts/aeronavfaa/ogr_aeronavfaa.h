@@ -52,7 +52,7 @@ typedef struct
 /*                         OGRAeronavFAALayer                           */
 /************************************************************************/
 
-class OGRAeronavFAALayer : public OGRLayer
+class OGRAeronavFAALayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRFeatureDefn*    poFeatureDefn;
@@ -83,7 +83,7 @@ protected:
 /*                       OGRAeronavFAADOFLayer                          */
 /************************************************************************/
 
-class OGRAeronavFAADOFLayer : public OGRAeronavFAALayer
+class OGRAeronavFAADOFLayer final: public OGRAeronavFAALayer
 {
   private:
     static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
@@ -99,7 +99,7 @@ class OGRAeronavFAADOFLayer : public OGRAeronavFAALayer
 /*                     OGRAeronavFAANAVAIDLayer                         */
 /************************************************************************/
 
-class OGRAeronavFAANAVAIDLayer : public OGRAeronavFAALayer
+class OGRAeronavFAANAVAIDLayer final: public OGRAeronavFAALayer
 {
   private:
     static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
@@ -115,7 +115,7 @@ class OGRAeronavFAANAVAIDLayer : public OGRAeronavFAALayer
 /*                     OGRAeronavFAARouteLayer                          */
 /************************************************************************/
 
-class OGRAeronavFAARouteLayer : public OGRAeronavFAALayer
+class OGRAeronavFAARouteLayer final: public OGRAeronavFAALayer
 {
   private:
     int       bIsDPOrSTARS;
@@ -137,7 +137,7 @@ class OGRAeronavFAARouteLayer : public OGRAeronavFAALayer
 /*                     OGRAeronavFAAIAPLayer                            */
 /************************************************************************/
 
-class OGRAeronavFAAIAPLayer : public OGRAeronavFAALayer
+class OGRAeronavFAAIAPLayer final: public OGRAeronavFAALayer
 {
   private:
     CPLString osCityName;
@@ -159,7 +159,7 @@ class OGRAeronavFAAIAPLayer : public OGRAeronavFAALayer
 /*                        OGRAeronavFAADataSource                       */
 /************************************************************************/
 
-class OGRAeronavFAADataSource : public OGRDataSource
+class OGRAeronavFAADataSource final: public OGRDataSource
 {
     char*               pszName;
 

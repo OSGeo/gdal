@@ -217,7 +217,9 @@ void CPLPushFileFinder( CPLFileFinder pfnFinder )
 CPLFileFinder CPLPopFileFinderInternal( FindFileTLS* pTLSData )
 
 {
-    if( pTLSData == nullptr || pTLSData->nFileFinders == 0 )
+    if( pTLSData == nullptr )
+        return nullptr;
+    if( pTLSData->nFileFinders == 0 )
         return nullptr;
 
     CPLFileFinder pfnReturn = pTLSData->papfnFinders[--pTLSData->nFileFinders];

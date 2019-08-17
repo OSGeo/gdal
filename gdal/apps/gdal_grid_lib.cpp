@@ -524,6 +524,9 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 
     // Try to grow the work buffer up to 16 MB if it is smaller
     GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
+    if( nXSize == 0 || nYSize == 0 || nBlockXSize == 0 || nBlockYSize == 0 )
+        return CE_Failure;
+
     const int nDesiredBufferSize = 16*1024*1024;
     if( nBlockXSize < nXSize && nBlockYSize < nYSize &&
         nBlockXSize < nDesiredBufferSize / (nBlockYSize * nDataTypeSize) )

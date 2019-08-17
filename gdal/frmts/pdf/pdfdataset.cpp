@@ -2783,21 +2783,27 @@ int GDALPDFParseStreamContent(const char* pszContent,
                                 double dfHeight = Get(poHeight);
                                 double dfScaleX = adfVals[0];
                                 double dfScaleY = adfVals[3];
-                                double dfDPI_X = ROUND_TO_INT_IF_CLOSE(dfWidth / dfScaleX * DEFAULT_DPI, 1e-3);
-                                double dfDPI_Y = ROUND_TO_INT_IF_CLOSE(dfHeight / dfScaleY * DEFAULT_DPI, 1e-3);
-                                //CPLDebug("PDF", "Image %s, width = %.16g, height = %.16g, scaleX = %.16g, scaleY = %.16g --> DPI_X = %.16g, DPI_Y = %.16g",
-                                //                osCurrentImage.c_str(), dfWidth, dfHeight, dfScaleX, dfScaleY, dfDPI_X, dfDPI_Y);
-                                if (dfDPI_X > dfDPI) dfDPI = dfDPI_X;
-                                if (dfDPI_Y > dfDPI) dfDPI = dfDPI_Y;
+                                if( dfWidth > 0 && dfHeight > 0 &&
+                                    dfScaleX > 0 && dfScaleY > 0 &&
+                                    dfWidth / dfScaleX * DEFAULT_DPI < INT_MAX &&
+                                    dfHeight / dfScaleY * DEFAULT_DPI < INT_MAX )
+                                {
+                                    double dfDPI_X = ROUND_TO_INT_IF_CLOSE(dfWidth / dfScaleX * DEFAULT_DPI, 1e-3);
+                                    double dfDPI_Y = ROUND_TO_INT_IF_CLOSE(dfHeight / dfScaleY * DEFAULT_DPI, 1e-3);
+                                    //CPLDebug("PDF", "Image %s, width = %.16g, height = %.16g, scaleX = %.16g, scaleY = %.16g --> DPI_X = %.16g, DPI_Y = %.16g",
+                                    //                osCurrentImage.c_str(), dfWidth, dfHeight, dfScaleX, dfScaleY, dfDPI_X, dfDPI_Y);
+                                    if (dfDPI_X > dfDPI) dfDPI = dfDPI_X;
+                                    if (dfDPI_Y > dfDPI) dfDPI = dfDPI_Y;
 
-                                memcpy(&(sTile.adfCM), adfVals, 6 * sizeof(double));
-                                sTile.poImage = poImage;
-                                sTile.dfWidth = dfWidth;
-                                sTile.dfHeight = dfHeight;
-                                asTiles.push_back(sTile);
+                                    memcpy(&(sTile.adfCM), adfVals, 6 * sizeof(double));
+                                    sTile.poImage = poImage;
+                                    sTile.dfWidth = dfWidth;
+                                    sTile.dfHeight = dfHeight;
+                                    asTiles.push_back(sTile);
 
-                                *pbDPISet = TRUE;
-                                *pdfDPI = dfDPI;
+                                    *pbDPISet = TRUE;
+                                    *pdfDPI = dfDPI;
+                                }
                             }
                         }
                         nState = STATE_INIT;
@@ -2955,6 +2961,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
     const char* pszDPI = GetOption(papszOpenOptions, "DPI", nullptr);
     if (pszDPI != nullptr)
     {
+        // coverity[tainted_data]
         dfDPI = CPLAtof(pszDPI);
     }
     else
@@ -3340,6 +3347,8 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
     for(int i=0;i<nLength;i++)
     {
         GDALPDFObject* poObj = poArray->Get(i);
+        if( poObj == nullptr )
+            continue;
         if (i == 0 && poObj->GetType() == PDFObjectType_String)
         {
             CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
@@ -4410,6 +4419,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszDPI = GetOption(poOpenInfo->papszOpenOptions, "DPI", nullptr);
         if (pszDPI != nullptr)
         {
+            // coverity[tainted_data]
             poDS->dfDPI = CPLAtof(pszDPI);
         }
     }
@@ -5311,6 +5321,12 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
                     pasGCPList[nGCPCount].dfGCPY = dfY;
                     nGCPCount ++;
                 }
+            }
+
+            if( nGCPCount == 0 )
+            {
+                CPLFree(pasGCPList);
+                pasGCPList = nullptr;
             }
         }
     }

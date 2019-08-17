@@ -227,7 +227,7 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nBytesRemainingInOut, i
     nBytesRemainingInOut = nBytesRemaining;
     return true;
   }
-  catch (std::bad_alloc&)
+  catch (std::exception&)
   {
     return false;
   }

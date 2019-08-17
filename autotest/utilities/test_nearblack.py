@@ -62,7 +62,7 @@ def test_nearblack_1():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'

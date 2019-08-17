@@ -34,8 +34,6 @@
 #include <string>
 #include <cassert>
 #include <cstring>
-#include <algorithm>
-#include <functional>
 
 using namespace PCIDSK;
 
@@ -74,12 +72,11 @@ void CLinkSegment::Load()
     }
     
     path = std::string(&seg_data.buffer[8]);
-    std::string::reverse_iterator first_non_space = 
-        std::find_if(path.rbegin(), path.rend(), 
-                     std::bind2nd(std::not_equal_to<char>(), ' '));
-
-    *(--first_non_space) = '\0';
-
+    // Remove trailing spaces
+    size_t nPos = path.size();
+    while( nPos > 0 && path[nPos-1] == ' ' )
+        nPos --;
+    path.resize(nPos);
     
     // We've now loaded the structure up with data. Mark it as being loaded 
     // properly.

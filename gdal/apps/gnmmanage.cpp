@@ -244,12 +244,14 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszFormat = papszArgv[++iArg];
         }
 
         else if( EQUAL(papszArgv[iArg],"-dsco") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             papszDSCO = CSLAddString(papszDSCO, papszArgv[++iArg] );
         }
 
@@ -261,6 +263,7 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg],"-t_srs") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszSRS = papszArgv[++iArg];
         }
 
@@ -268,12 +271,14 @@ MAIN_START(nArgc, papszArgv)
         {
             stOper = op_import;
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszInputDataset = papszArgv[++iArg];
         }
 
         else if( EQUAL(papszArgv[iArg],"-l") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszInputLayer = papszArgv[++iArg];
         }
 
@@ -281,24 +286,30 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(3);
             stOper = op_connect;
+            // coverity[tainted_data]
             nSrcFID = atoi(papszArgv[++iArg]);
+            // coverity[tainted_data]
             nTgtFID = atoi(papszArgv[++iArg]);
+            // coverity[tainted_data]
             nConFID = atoi(papszArgv[++iArg]);
         }
 
         else if( EQUAL(papszArgv[iArg],"-c") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             dfDirCost = CPLAtofM(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-ic") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             dfInvCost = CPLAtofM(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-dir") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             eDir = atoi(papszArgv[++iArg]);
         }
 
@@ -306,8 +317,11 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(3);
             stOper = op_disconnect;
+            // coverity[tainted_data]
             nSrcFID = atoi(papszArgv[++iArg]);
+            // coverity[tainted_data]
             nTgtFID = atoi(papszArgv[++iArg]);
+            // coverity[tainted_data]
             nConFID = atoi(papszArgv[++iArg]);
         }
 
@@ -315,6 +329,7 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             stOper = op_autoconnect;
+            // coverity[tainted_data]
             dfTolerance = CPLAtofM(papszArgv[++iArg]);
         }
 
@@ -322,6 +337,7 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             stOper = op_rule;
+            // coverity[tainted_data]
             pszRuleStr = papszArgv[++iArg];
         }
 
@@ -338,12 +354,14 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg],"-bl") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             anFIDsToBlock.push_back(atoi(papszArgv[++iArg]));
         }
 
         else if( EQUAL(papszArgv[iArg],"-unbl") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             anFIDsToUnblock.push_back(atoi(papszArgv[++iArg]));
         }
 

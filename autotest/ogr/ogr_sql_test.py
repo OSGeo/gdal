@@ -133,7 +133,7 @@ def test_ogr_sql_5():
     if feat['min_eas_id'] != 158:
         feat.DumpReadable()
         pytest.fail()
-    if abs(feat['avg_eas_id'] - 168.142857142857) > 1e-12:
+    if feat['avg_eas_id'] != pytest.approx(168.142857142857, abs=1e-12):
         feat.DumpReadable()
         pytest.fail()
     if feat['count_eas_id'] != 7:
@@ -1087,7 +1087,7 @@ def test_ogr_sql_38():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if abs(val - 1634833.39062) < 1e-5:
+    if val == pytest.approx(1634833.39062, abs=1e-5):
         return
     pytest.fail(val)
 
@@ -1104,7 +1104,7 @@ def test_ogr_sql_39():
 
     gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    if abs(val - 5268.813) < 1e-5:
+    if val == pytest.approx(5268.813, abs=1e-5):
         return
     pytest.fail(val)
 

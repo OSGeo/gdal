@@ -37,6 +37,7 @@ from osgeo import gdal
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # 16bit image.
@@ -238,7 +239,7 @@ def test_ehdr_13():
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     expected_stats = [74.0, 255.0, 126.765, 22.928470838675704]
     for i in range(4):
-        assert abs(stats[i] - expected_stats[i]) <= 0.0001, 'did not get expected statistics'
+        assert stats[i] == pytest.approx(expected_stats[i], abs=0.0001), 'did not get expected statistics'
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/byte.stx', 'rb')
@@ -246,14 +247,14 @@ def test_ehdr_13():
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open('/vsimem/byte.bil')
-    assert abs(ds.GetRasterBand(1).GetMinimum() - 74) <= 0.0001, \
+    assert ds.GetRasterBand(1).GetMinimum() == pytest.approx(74, abs=0.0001), \
         'did not get expected minimum'
-    assert abs(ds.GetRasterBand(1).GetMaximum() - 255) <= 0.0001, \
+    assert ds.GetRasterBand(1).GetMaximum() == pytest.approx(255, abs=0.0001), \
         'did not get expected maximum'
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     expected_stats = [74.0, 255.0, 126.765, 22.928470838675704]
     for i in range(4):
-        assert abs(stats[i] - expected_stats[i]) <= 0.0001, 'did not get expected statistics'
+        assert stats[i] == pytest.approx(expected_stats[i], abs=0.0001), 'did not get expected statistics'
     ds = None
 
     gdal.GetDriverByName('EHDR').Delete('/vsimem/byte.bil')

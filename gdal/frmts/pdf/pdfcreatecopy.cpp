@@ -4500,7 +4500,7 @@ static int GDALPDFGetJPEGQuality(char** papszOptions)
 /*                         GDALPDFClippingDataset                       */
 /************************************************************************/
 
-class GDALPDFClippingDataset: public GDALDataset
+class GDALPDFClippingDataset final: public GDALDataset
 {
         GDALDataset* poSrcDS;
         double adfGeoTransform[6];

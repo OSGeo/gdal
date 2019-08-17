@@ -34,7 +34,7 @@
 //     Intergraph GDALDataset
 //  ----------------------------------------------------------------------------
 
-class IntergraphDataset : public GDALPamDataset
+class IntergraphDataset final: public GDALPamDataset
 {
     friend class IntergraphRasterBand;
     friend class IntergraphRGBBand;

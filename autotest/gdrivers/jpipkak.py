@@ -54,7 +54,7 @@ def test_jpipkak_1():
 
     stats = target.GetStatistics(0, 1)
 
-    assert abs(stats[2] - 6791.121) <= 1.0 and abs(stats[3] - 3046.536) <= 1.0, \
+    assert stats[2] == pytest.approx(6791.121, abs=1.0) and stats[3] == pytest.approx(3046.536, abs=1.0), \
         'did not get expected mean/stddev'
 
 ###############################################################################
@@ -81,7 +81,7 @@ def test_jpipkak_2():
 
     stats = target.GetStatistics(0, 1)
 
-    assert abs(stats[2] - 43.429) <= 1.0 and abs(stats[3] - 18.526) <= 1.0, \
+    assert stats[2] == pytest.approx(43.429, abs=1.0) and stats[3] == pytest.approx(18.526, abs=1.0), \
         'did not get expected mean/stddev'
 
 ###############################################################################
@@ -103,7 +103,7 @@ def test_jpipkak_3():
 
     stats = target.GetStatistics(0, 1)
 
-    assert abs(stats[2] - 483.501) <= 1.0 and abs(stats[3] - 117.972) <= 1.0, \
+    assert stats[2] == pytest.approx(483.501, abs=1.0) and stats[3] == pytest.approx(117.972, abs=1.0), \
         'did not get expected mean/stddev'
 
 ###############################################################################
@@ -125,7 +125,7 @@ def test_jpipkak_4():
 
     stats = target.GetStatistics(0, 1)
 
-    assert abs(stats[2] - 5333.148) <= 1.0 and abs(stats[3] - 2522.023) <= 1.0, \
+    assert stats[2] == pytest.approx(5333.148, abs=1.0) and stats[3] == pytest.approx(2522.023, abs=1.0), \
         'did not get expected mean/stddev'
 
 ###############################################################################
@@ -147,7 +147,7 @@ def test_jpipkak_5():
 
     stats = target.GetStatistics(0, 1)
 
-    assert abs(stats[2] - 42.462) <= 1.0 and abs(stats[3] - 20.611) <= 1.0, \
+    assert stats[2] == pytest.approx(42.462, abs=1.0) and stats[3] == pytest.approx(20.611, abs=1.0), \
         'did not get expected mean/stddev'
 
 

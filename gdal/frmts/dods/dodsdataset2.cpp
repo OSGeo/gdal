@@ -178,7 +178,7 @@ static int GetDimension( string oCE, const char *pszDimName,
 /* ==================================================================== */
 /************************************************************************/
 
-class DODSDataset : public GDALDataset
+class DODSDataset final: public GDALDataset
 {
 private:
     AISConnect *poConnect;      // Virtual connection to the data source
@@ -237,7 +237,7 @@ private:
 /* ==================================================================== */
 /************************************************************************/
 
-class DODSRasterBand : public GDALRasterBand
+class DODSRasterBand final: public GDALRasterBand
 {
 private:
     string oVarName;

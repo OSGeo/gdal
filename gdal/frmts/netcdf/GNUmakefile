@@ -8,7 +8,8 @@ OBJ	=	netcdfdataset.o \
 		netcdfsg.o \
 		netcdflayersg.o \
 		netcdfsgwriterutil.o \
-		netcdfmultidim.o
+		netcdfmultidim.o \
+		netcdfvirtual.o
 
 XTRA_OPT =
 ifeq ($(NETCDF_HAS_NC4),yes)

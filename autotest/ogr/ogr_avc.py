@@ -144,14 +144,13 @@ def test_ogr_avc_5():
         if last_feature.GetFieldCount() != 5:
             f.DumpReadable()
             pytest.fail(filename)
-        if last_feature.GetField('ArcIds') != [-4, -5] or abs(last_feature.GetField('AREA') - 9939.059) > 1e-3:
+        if last_feature.GetField('ArcIds') != [-4, -5] or last_feature.GetField('AREA') != pytest.approx(9939.059, abs=1e-3):
             f.DumpReadable()
             pytest.fail(filename)
         if filename == 'data/testpolyavc/testpolyavc':
             expected_wkt = 'POLYGON ((340700.03125 4100199.5,340500.0 4100199.75,340599.96875 4100100.25,340700.03125 4100199.5))'
         else:
-            # Likely a bug in AVCE00 driver
-            expected_wkt = 'POLYGON ((340299.94 4100199.8,340099.88 4100200.0,340299.94 4100199.8))'
+            expected_wkt = 'POLYGON ((340700.03 4100199.5,340500.0 4100199.8,340599.97 4100100.2,340700.03 4100199.5))'
         if last_feature.GetGeometryRef().ExportToWkt() != expected_wkt:
             f.DumpReadable()
             pytest.fail(filename)

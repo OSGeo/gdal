@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "places",
+"features": [
+{ "type": "Feature", "properties": { "NAMES": "Somewhere" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [0, 5], [2, 0] ] ] } },
+{ "type": "Feature", "properties": { "NAMES": "Everywhere" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ ] ] } }
+]
+}

@@ -268,7 +268,7 @@ char **DIMAPDataset::GetFileList()
 /* ==================================================================== */
 /************************************************************************/
 
-class DIMAPRasterBand : public GDALPamRasterBand
+class DIMAPRasterBand final: public GDALPamRasterBand
 {
     friend class DIMAPDataset;
 

@@ -71,7 +71,7 @@ class FGdbDriver;
 /*                           FGdbBaseLayer                              */
 /************************************************************************/
 
-class FGdbBaseLayer : public OGRLayer
+class FGdbBaseLayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
 

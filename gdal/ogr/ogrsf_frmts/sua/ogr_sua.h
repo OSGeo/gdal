@@ -36,7 +36,7 @@
 /*                             OGRSUALayer                              */
 /************************************************************************/
 
-class OGRSUALayer : public OGRLayer
+class OGRSUALayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -66,7 +66,7 @@ class OGRSUALayer : public OGRLayer
 /*                           OGRSUADataSource                           */
 /************************************************************************/
 
-class OGRSUADataSource : public OGRDataSource
+class OGRSUADataSource final: public OGRDataSource
 {
     char*               pszName;
 

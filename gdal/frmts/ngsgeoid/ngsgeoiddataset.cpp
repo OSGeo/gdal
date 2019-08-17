@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
 
 class NGSGEOIDRasterBand;
 
-class NGSGEOIDDataset : public GDALPamDataset
+class NGSGEOIDDataset final: public GDALPamDataset
 {
     friend class NGSGEOIDRasterBand;
 
@@ -79,7 +79,7 @@ class NGSGEOIDDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class NGSGEOIDRasterBand : public GDALPamRasterBand
+class NGSGEOIDRasterBand final: public GDALPamRasterBand
 {
     friend class NGSGEOIDDataset;
 

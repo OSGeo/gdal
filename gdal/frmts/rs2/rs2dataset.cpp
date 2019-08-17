@@ -273,7 +273,7 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* or beta nought.                                                      */
 /************************************************************************/
 
-class RS2CalibRasterBand : public GDALPamRasterBand {
+class RS2CalibRasterBand final: public GDALPamRasterBand {
 private:
     // eCalibration m_eCalib;
     GDALDataset *m_poBandDataset;
