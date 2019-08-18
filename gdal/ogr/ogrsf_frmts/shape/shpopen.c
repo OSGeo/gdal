@@ -2929,8 +2929,10 @@ static int SHPGetPartVertexCount( const SHPObject * psObject, int iPart )
 /*                      SHPRewindIsInnerRing()                          */
 /************************************************************************/
 
+/* Return -1 in case of ambiguity */
 static int SHPRewindIsInnerRing( const SHPObject * psObject,
-                                 int iOpRing )
+                                 int iOpRing,
+                                 double dfTestX, double dfTestY )
 {
 /* -------------------------------------------------------------------- */
 /*      Determine if this ring is an inner ring or an outer ring        */
@@ -2940,15 +2942,6 @@ static int SHPRewindIsInnerRing( const SHPObject * psObject,
 /*      unordered sets of rings.                                        */
 /*                                                                      */
 /* -------------------------------------------------------------------- */
-
-    /* Use point in the middle of segment to avoid testing
-     * common points of rings.
-     */
-    const int iOpRingStart = psObject->panPartStart[iOpRing];
-    double dfTestX = ( psObject->padfX[iOpRingStart] +
-                       psObject->padfX[iOpRingStart + 1] ) / 2;
-    double dfTestY = ( psObject->padfY[iOpRingStart] +
-                       psObject->padfY[iOpRingStart + 1] ) / 2;
 
     int bInner = FALSE;
     int iCheckRing;
@@ -2994,9 +2987,14 @@ static int SHPRewindIsInnerRing( const SHPObject * psObject,
                         * ( psObject->padfX[iNext+nVertStartCheck] -
                             psObject->padfX[iEdge+nVertStartCheck] ) );
 
-                if (intersect  < dfTestX)
+                if (intersect < dfTestX)
                 {
                     bInner = !bInner;
+                }
+                else if( intersect == dfTestX )
+                {
+                    /* Potential shared edge */
+                    return -1;
                 }
             }
         }
@@ -3033,16 +3031,35 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
 /* -------------------------------------------------------------------- */
     for( iOpRing = 0; iOpRing < psObject->nParts; iOpRing++ )
     {
-        int      bInner, iVert, nVertCount, nVertStart;
+        int      bInner = FALSE;
+        int      iVert;
         double   dfSum;
 
-        nVertStart = psObject->panPartStart[iOpRing];
-        nVertCount = SHPGetPartVertexCount(psObject, iOpRing);
+        const int nVertStart = psObject->panPartStart[iOpRing];
+        const int nVertCount = SHPGetPartVertexCount(psObject, iOpRing);
 
         if (nVertCount < 2)
             continue;
 
-        bInner = SHPRewindIsInnerRing(psObject, iOpRing);
+        for( iVert = nVertStart; iVert + 1 < nVertStart + nVertCount; ++iVert )
+        {
+            /* Use point in the middle of segment to avoid testing
+            * common points of rings.
+            */
+            const double dfTestX = ( psObject->padfX[iVert] +
+                                     psObject->padfX[iVert + 1] ) / 2;
+            const double dfTestY = ( psObject->padfY[iVert] +
+                                     psObject->padfY[iVert + 1] ) / 2;
+
+            bInner = SHPRewindIsInnerRing(psObject, iOpRing, dfTestX, dfTestY);
+            if( bInner >= 0 )
+                break;
+        }
+        if( bInner < 0 )
+        {
+            /* Completely degenerate case. Do not bother touching order. */
+            continue;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Determine the current order of this ring so we will know if     */
