@@ -1092,6 +1092,7 @@ bool VSIFilesystemHandler::Sync( const char* pszSource, const char* pszTarget,
                     CPLFormFilename(osSourceWithoutSlash, *iter, nullptr) );
                 CPLString osSubTarget(
                     CPLFormFilename(osTargetDir, *iter, nullptr) );
+                // coverity[divide_by_zero]
                 void* pScaledProgress = GDALCreateScaledProgress(
                     double(iFile) / nFileCount, double(iFile + 1) / nFileCount,
                     pProgressFunc, pProgressData);

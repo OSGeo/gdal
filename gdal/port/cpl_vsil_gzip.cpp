@@ -1874,6 +1874,7 @@ VSIVirtualHandle* VSICreateGZipWritable( VSIVirtualHandle* poBaseHandle,
         nThreads = std::max(1, std::min(128, nThreads));
         if( nThreads > 1 )
         {
+            // coverity[tainted_data]
             return new VSIGZipWriteHandleMT( poBaseHandle,
                                                 nThreads,
                                                 nDeflateTypeIn,

@@ -908,11 +908,19 @@ def test_ogr_shape_23():
     wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0)), ((100 0,100 10,110 10,100 0)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry(type=ogr.wkbPolygon))
-    poly = ogr.CreateGeometryFromWkt('POLYGON((100 0,100 10,110 10,100 0))')
+    poly = ogr.CreateGeometryFromWkt('POLYGON((-100 0,-110 10,-100 10,-100 0))')
     poly.AddGeometry(ogr.Geometry(type=ogr.wkbLinearRing))
     geom.AddGeometry(poly)
 
     ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown)
+
+    #######################################################
+    # Test writing of a multipolygon with 2 parts touching by an edge (which is illegal simple features) (github #1787)
+    layer_name = 'multipolygon_two_parts_touching_one_edge'
+    wkt = 'MULTIPOLYGON (((1 1,1 2,2 2,2 1,1 1)),((2 1,2 2,3 2,3 1,2 1)))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+
+    ogr_shape_23_write_geom(layer_name, geom, geom, ogr.wkbUnknown)
 
 
 ###############################################################################
@@ -2377,8 +2385,8 @@ def test_ogr_shape_58():
                 'MULTILINESTRING ((0 1 2,3 4 5),(0 1 2,3 4 5))',
                 'POLYGON ((0 0,0 1,1 1,1 0,0 0))',
                 'POLYGON ((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2))',
-                'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((0 0,0 1,1 1,1 0,0 0)))',
-                'MULTIPOLYGON (((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)))']
+                'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((100 0,100 1,101 1,101 0,100 0)))',
+                'MULTIPOLYGON (((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)),((100 0 2,100 1 2,101 1 2,101 0 2,100 0 2)))']
 
     for wkt in wkt_list:
         geom = ogr.CreateGeometryFromWkt(wkt)
@@ -3638,10 +3646,10 @@ def test_ogr_shape_94():
              ["POLYGONM", ogr.wkbPolygonM, "POLYGON M ((0 0 2,0 1 2,1 1 2,1 0 2))"],
              ["POLYGONZ", ogr.wkbPolygon25D, "POLYGON Z ((0 0 2,0 1 2,1 1 2,1 0 2))"],
              ["POLYGONZM", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3))"],
-             ["POLYGON", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0)),((0 0,0 1,1 1,1 0)))"],
-             ["POLYGONM", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))"],
-             ["POLYGONZ", ogr.wkbMultiPolygon25D, "MULTIPOLYGON Z (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))"],
-             ["POLYGONZM", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)),((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)))"],
+             ["POLYGON", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0)),((100 0,100 1,101 1,101 0)))"],
+             ["POLYGONM", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 2,0 1 2,1 1 2,1 0 2)),((100 0 2,100 1 2,101 1 2,101 0 2)))"],
+             ["POLYGONZ", ogr.wkbMultiPolygon25D, "MULTIPOLYGON Z (((0 0 2,0 1 2,1 1 2,1 0 2)),((100 0 2,100 1 2,101 1 2,101 0 2)))"],
+             ["POLYGONZM", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)),((100 0 2 3,100 1 2 3,101 1 2 3,101 0 2 3)))"],
              ]
 
     for test in tests:

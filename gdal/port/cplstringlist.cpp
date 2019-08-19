@@ -129,6 +129,30 @@ CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
 /*                             operator=()                              */
 /************************************************************************/
 
+CPLStringList &CPLStringList::operator=( CPLStringList&& oOther )
+{
+    if( this != &oOther )
+    {
+        Clear();
+        papszList = oOther.papszList;
+        oOther.papszList = nullptr;
+        nCount = oOther.nCount;
+        oOther.nCount = 0;
+        nAllocation = oOther.nAllocation;
+        oOther.nAllocation = 0;
+        bOwnList = oOther.bOwnList;
+        oOther.bOwnList = false;
+        bIsSorted = oOther.bIsSorted;
+        oOther.bIsSorted = true;
+    }
+
+    return *this;
+}
+
+/************************************************************************/
+/*                             operator=()                              */
+/************************************************************************/
+
 CPLStringList &CPLStringList::operator=( CSLConstList papszListIn )
 {
     if( papszListIn != papszList )

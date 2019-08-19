@@ -175,6 +175,7 @@ class OGRAVCE00Layer final: public OGRAVCLayer
     OGRAVCE00Layer      *poArcLayer;
     int                 nFeatureCount;
     bool                bNeedReset;
+    bool                bLastWasSequential = false;
     int                 nNextFID;
 
     AVCE00Section       *psTableSection;

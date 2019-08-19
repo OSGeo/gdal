@@ -166,6 +166,8 @@ OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
 
     if( nFID == SERIAL_ACCESS_FID )
     {
+        bLastWasSequential = true;
+
         while( (pFeature = AVCE00ReadNextObjectE00(psRead)) != nullptr
                && psRead->hParseInfo->eFileType != AVCFileUnknown
                && !MatchesSpatialFilter( pFeature ) )
@@ -177,11 +179,13 @@ OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
     {
         bNeedReset = true;
 
-        if (nNextFID > nFID)
+        if (nNextFID > nFID || bLastWasSequential)
         {
+            bLastWasSequential = false;
             /* advance to the specified line number */
             if (AVCE00ReadGotoSectionE00(psRead, psSection, 0) != 0)
                 return nullptr;
+            nNextFID = 1;
         }
 
         do
