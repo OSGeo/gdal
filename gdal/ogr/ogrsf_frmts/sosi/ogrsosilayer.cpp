@@ -151,8 +151,26 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             char *pszPos = strstr(pszUTFLine, " ");
             if (pszPos != nullptr) {
                 osKey = CPLString(std::string(pszUTFLine,pszPos));
-                osValue = CPLString(pszPos+1);
-                oHeaders.insert(std::pair<CPLString,CPLString>(osKey,osValue));
+                // Check if this oskey is used before in this feature
+                if (oHeaders.count(osKey) > 0) {
+                	// get old osvalue so we can append the next value
+                    CPLString newAppendOsValue = oHeaders[osKey];
+
+                	// append split character
+                	// TODO should have been a parameter for this value and filed name
+                    newAppendOsValue.append(",");
+
+                    // append new value
+                    newAppendOsValue.append(CPLString(pszPos+1));
+
+                    // the new value
+                    oHeaders[osKey]= newAppendOsValue;
+
+                	//printf ("Append value for %s is %s \n", osKey.c_str(), newAppendOsValue.c_str());
+                } else {
+                	osValue = CPLString(pszPos+1);
+                	oHeaders.insert(std::pair<CPLString,CPLString>(osKey,osValue));
+                }
             }
             CPLFree(pszUTFLine);
         }
