@@ -129,7 +129,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
     short nName, nNumLines;
     long  nNumCoo;
     unsigned short nInfo;
-	// TODO make a parameter that can be sent from command line
+     // TODO make a parameter that can be sent from command line
     std::map<std::string,std::string> appendFieldsMap;
     appendFieldsMap.insert(std::pair<std::string,std::string>("BEITEBRUKERID",","));
 
@@ -156,10 +156,10 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             if (pszPos != nullptr) {                osKey = CPLString(std::string(pszUTFLine,pszPos));
                 // Check if this oskey is used before in this feature
                 if (oHeaders.count(osKey) > 0 && appendFieldsMap.count(osKey.c_str()) > 0) {
-                	// get old osvalue so we can append the next value
+                    // get old osvalue so we can append the next value
                     CPLString newAppendOsValue = oHeaders[osKey];
 
-                	// append split character
+                    // append split character
                     newAppendOsValue.append(appendFieldsMap[osKey]);
 
                     // append new value
@@ -168,10 +168,10 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                     // the new value
                     oHeaders[osKey]= newAppendOsValue;
 
-                	//printf ("Append value for %s is %s \n", osKey.c_str(), newAppendOsValue.c_str());
+                    //printf ("Append value for %s is %s \n", osKey.c_str(), newAppendOsValue.c_str());
                 } else {
-                	osValue = CPLString(pszPos+1);
-                	oHeaders.insert(std::pair<CPLString,CPLString>(osKey,osValue));
+                    osValue = CPLString(pszPos+1);
+                    oHeaders.insert(std::pair<CPLString,CPLString>(osKey,osValue));
                 }
             }
             CPLFree(pszUTFLine);
