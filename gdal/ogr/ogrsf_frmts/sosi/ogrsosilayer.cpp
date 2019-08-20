@@ -153,7 +153,8 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             while (pszLine[0] == '.') pszLine++; /* skipping the dots at the beginning of a SOSI line */
             char *pszUTFLine = CPLRecode(pszLine, poParent->pszEncoding, CPL_ENC_UTF8); /* switch to UTF encoding here */
             char *pszPos = strstr(pszUTFLine, " ");
-            if (pszPos != nullptr) {                osKey = CPLString(std::string(pszUTFLine,pszPos));
+            if (pszPos != nullptr) {
+                osKey = CPLString(std::string(pszUTFLine,pszPos));
                 // Check if this oskey is used before in this feature
                 if (oHeaders.count(osKey) > 0 && appendFieldsMap.count(osKey.c_str()) > 0) {
                     // get old osvalue so we can append the next value
