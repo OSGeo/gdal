@@ -4578,8 +4578,14 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		 * of data in the strip and trim this number back accordingly.
 		 */
 		strip--;
-		if (td->td_stripoffset_p[strip]+td->td_stripbytecount_p[strip] > filesize)
-			td->td_stripbytecount_p[strip] = filesize - td->td_stripoffset_p[strip];
+		if (td->td_stripoffset_p[strip]+td->td_stripbytecount_p[strip] > filesize) {
+                    if( td->td_stripoffset_p[strip] >= filesize ) {
+                        /* Not sure what we should in that case... */
+                        td->td_stripbytecount_p[strip] = 0;
+                    } else {
+                        td->td_stripbytecount_p[strip] = filesize - td->td_stripoffset_p[strip];
+                    }
+                }
 	} else if (isTiled(tif)) {
 		uint64 bytespertile = TIFFTileSize64(tif);
 
