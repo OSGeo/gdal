@@ -502,6 +502,9 @@ OGRErr CPL_DLL CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRExportToWktEx( OGRSpatialReferenceH, char ** ppszResult,
                                  const char* const* papszOptions );
 OGRErr CPL_DLL CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
+OGRErr CPL_DLL OSRExportToPROJJSON( OGRSpatialReferenceH hSRS,
+                                    char ** ppszReturn,
+                                    const char* const* papszOptions );
 OGRErr CPL_DLL CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH, char **);
 OGRErr CPL_DLL OSRExportToPCI( OGRSpatialReferenceH, char **, char **,
                                double ** );

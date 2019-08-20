@@ -1021,6 +1021,10 @@ public:
     return OSRExportToPrettyWkt( self, argout, simplify );
   }
 
+  OGRErr ExportToPROJJSON( char **argout, char **options = NULL ) {
+    return OSRExportToPROJJSON( self, argout, options );
+  }
+
   OGRErr ExportToProj4( char **argout ) {
     return OSRExportToProj4( self, argout );
   }
