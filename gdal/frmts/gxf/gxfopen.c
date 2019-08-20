@@ -447,6 +447,7 @@ void GXFClose( GXFHandle hGXF )
 /*      values have to be recognised outside this function.             */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static
 double GXFParseBase90( GXFInfo_t * psGXF, const char * pszText,
                        int bScale )
