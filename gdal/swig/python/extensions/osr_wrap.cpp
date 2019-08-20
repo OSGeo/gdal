@@ -4318,6 +4318,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToWkt(OSRSpatialReferenceShado
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToPrettyWkt(OSRSpatialReferenceShadow *self,char **argout,int simplify=0){
     return OSRExportToPrettyWkt( self, argout, simplify );
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToPROJJSON(OSRSpatialReferenceShadow *self,char **argout,char **options=NULL){
+    return OSRExportToPROJJSON( self, argout, options );
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToProj4(OSRSpatialReferenceShadow *self,char **argout){
     return OSRExportToProj4( self, argout );
   }
@@ -13957,6 +13960,107 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPROJJSON(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  char **arg3 = (char **) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  char *argout2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRErr result;
+  
+  {
+    /* %typemap(in,numinputs=0) (char **argout2) */
+    arg2 = &argout2;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O|O:SpatialReference_ExportToPROJJSON",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_ExportToPROJJSON" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  if (obj1) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj1, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_ExportToPROJJSON(arg1,arg2,arg3);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(argout) (char **argout) */
+    PyObject *o;
+    if ( ReturnSame(arg2) != NULL && *arg2 != NULL ) {
+      o = GDALPythonObjectFromCStr( *arg2 );
+    }
+    else {
+      o = Py_None;
+      Py_INCREF( o );
+    }
+    resultobj = t_output_helper(resultobj, o);
+  }
+  {
+    /* %typemap(freearg) (char **argout) */
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (char **argout) */
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_ExportToProj4(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -17173,6 +17277,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_ImportFromOzi", _wrap_SpatialReference_ImportFromOzi, METH_VARARGS, (char *)"SpatialReference_ImportFromOzi(SpatialReference self, char const *const * papszLines) -> OGRErr"},
 	 { (char *)"SpatialReference_ExportToWkt", _wrap_SpatialReference_ExportToWkt, METH_VARARGS, (char *)"SpatialReference_ExportToWkt(SpatialReference self, char ** options=None) -> OGRErr"},
 	 { (char *)"SpatialReference_ExportToPrettyWkt", _wrap_SpatialReference_ExportToPrettyWkt, METH_VARARGS, (char *)"SpatialReference_ExportToPrettyWkt(SpatialReference self, int simplify=0) -> OGRErr"},
+	 { (char *)"SpatialReference_ExportToPROJJSON", _wrap_SpatialReference_ExportToPROJJSON, METH_VARARGS, (char *)"SpatialReference_ExportToPROJJSON(SpatialReference self, char ** options=None) -> OGRErr"},
 	 { (char *)"SpatialReference_ExportToProj4", _wrap_SpatialReference_ExportToProj4, METH_VARARGS, (char *)"SpatialReference_ExportToProj4(SpatialReference self) -> OGRErr"},
 	 { (char *)"SpatialReference_ExportToPCI", _wrap_SpatialReference_ExportToPCI, METH_VARARGS, (char *)"SpatialReference_ExportToPCI(SpatialReference self) -> OGRErr"},
 	 { (char *)"SpatialReference_ExportToUSGS", _wrap_SpatialReference_ExportToUSGS, METH_VARARGS, (char *)"SpatialReference_ExportToUSGS(SpatialReference self) -> OGRErr"},

@@ -192,6 +192,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToWkt( char ** ) const;
     OGRErr      exportToWkt( char ** ppszWKT, const char* const* papszOptions ) const;
     OGRErr      exportToPrettyWkt( char **, int = FALSE) const;
+    // cppcheck-suppress functionStatic
+    OGRErr      exportToPROJJSON( char **, const char* const* papszOptions ) const;
     OGRErr      exportToProj4( char ** ) const;
     OGRErr      exportToPCI( char **, char **, double ** ) const;
     OGRErr      exportToUSGS( long *, long *, double **, long * ) const;
