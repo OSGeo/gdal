@@ -819,9 +819,13 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
             while( (byNext & 0x80) != 0 && !bErrorFlag)
             {
                 byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
-                /* Cast to unsigned to avoid int overflow. Even if the */
-                /* value is crazy, we validate it afterwards */
-                nRunCount = (int)((unsigned)nRunCount * 128 + (byNext & 0x7f));
+                if( nRunCount > (INT_MAX - (byNext & 0x7f)) / 128 )
+                {
+                    CPLError( CE_Failure, CPLE_FileIO,
+                              "Corrupted run count" );
+                    return FALSE;
+                }
+                nRunCount = nRunCount * 128 + (byNext & 0x7f);
             }
 
             /* Prevent over-run of line data */
