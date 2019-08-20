@@ -567,8 +567,14 @@ void CPCIDSKFile::InitializeFromHeader()
     {
         PCIDSKBuffer ih(1024);
         PCIDSKChannel *channel = nullptr;
+        if( ih_start_block == 0 ||
+            ih_start_block-1 > std::numeric_limits<uint64>::max() / 512 ||
+            (ih_start_block-1)*512 > std::numeric_limits<uint64>::max() - (channelnum-1)*1024 )
+        {
+            return ThrowPCIDSKException( "Integer overflow when computing ih_offset");
+        }
         uint64  ih_offset = (ih_start_block-1)*512 + (channelnum-1)*1024;
-        
+
         ReadFromFile( ih.buffer, ih_offset, 1024 );
 
         // fetch the filename, if there is one.
