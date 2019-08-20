@@ -3111,6 +3111,7 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
  * WGS84 or WGS72.
  * <li> "IGNF:xxxx", "ESRI:xxxx", etc. from definitions from the PROJ database;
+ * <li> PROJJSON (PROJ &gt;= 6.2)
  * </ol>
  *
  * It is expected that this method will be extended in the future to support
@@ -3247,6 +3248,25 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return SetWellKnownGeogCS( pszDefinition );
     }
 
+    // PROJJSON
+    if( pszDefinition[0] == '{' && strstr(pszDefinition, "\"type\"") &&
+        (strstr(pszDefinition, "GeodeticCRS") ||
+         strstr(pszDefinition, "GeographicCRS") ||
+         strstr(pszDefinition, "ProjectedCRS") ||
+         strstr(pszDefinition, "VerticalCRS") ||
+         strstr(pszDefinition, "BoundCRS") ||
+         strstr(pszDefinition, "CompoundCRS")) )
+    {
+        auto obj = proj_create(d->getPROJContext(), pszDefinition);
+        if( !obj )
+        {
+            return OGRERR_FAILURE;
+        }
+        Clear();
+        d->setPjCRS(obj);
+        return OGRERR_NONE;
+    }
+
     if( strstr(pszDefinition, "+proj") != nullptr
              || strstr(pszDefinition, "+init") != nullptr )
         return importFromProj4( pszDefinition );
@@ -3260,7 +3280,6 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     {
         return importFromEPSG(27700);
     }
-
 
     // Deal with IGNF:xxx, ESRI:xxx, etc from the PROJ database
     const char* pszDot = strchr(pszDefinition, ':');
