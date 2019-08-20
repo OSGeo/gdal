@@ -492,7 +492,14 @@ void CPCIDSKFile::InitializeFromHeader()
 
     segment_count = (segment_block_count * 512) / 32;
     segment_pointers.SetSize( segment_block_count * 512 );
-    segment_pointers_offset = atouint64(fh.Get(440,16)) * 512 - 512;
+    segment_pointers_offset = atouint64(fh.Get(440,16));
+    if( segment_pointers_offset == 0 ||
+        segment_pointers_offset-1 > std::numeric_limits<uint64>::max() / 512 )
+    {
+        return ThrowPCIDSKException(
+            "Invalid segment_pointers_offset: " PCIDSK_FRMT_UINT64, segment_pointers_offset );
+    }
+    segment_pointers_offset = segment_pointers_offset * 512 - 512;
     ReadFromFile( segment_pointers.buffer, segment_pointers_offset,
                   segment_block_count * 512 );
 
