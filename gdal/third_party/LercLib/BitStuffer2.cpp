@@ -23,6 +23,7 @@ Contributors:  Thomas Maurer
 
 #include <algorithm>
 #include <cassert>
+#include <limits>
 #include "Defines.h"
 #include "BitStuffer2.h"
 
@@ -358,11 +359,8 @@ void BitStuffer2::BitStuff_Before_Lerc2v3(Byte** ppByte, const vector<unsigned i
 bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, 
     vector<unsigned int>& dataVec, unsigned int numElements, int numBits)
 {
-  try
-  {
-    dataVec.resize(numElements, 0);    // init with 0
-  }
-  catch( const std::exception& )
+  if( numElements > std::numeric_limits<unsigned int>::max() / numBits ||
+      numElements * numBits > std::numeric_limits<unsigned int>::max() - 31 )
   {
     return false;
   }
@@ -373,6 +371,15 @@ bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesR
 
   if (nBytesRemaining < numBytes)
     return false;
+
+  try
+  {
+    dataVec.resize(numElements, 0);    // init with 0
+  }
+  catch( const std::exception& )
+  {
+    return false;
+  }
 
   unsigned int* srcPtr = arr;
   srcPtr += numUInts;
@@ -487,6 +494,21 @@ bool BitStuffer2::BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, vecto
   if (numElements == 0)
     return false;
 
+  if( numElements > std::numeric_limits<unsigned int>::max() / numBits ||
+      numElements * numBits > std::numeric_limits<unsigned int>::max() - 31 )
+  {
+    return false;
+  }
+
+  unsigned int numUInts = (numElements * numBits + 31) / 32;
+  unsigned int numBytes = numUInts * sizeof(unsigned int);
+
+  // copy the bytes from the incoming byte stream
+  int numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
+
+  if (nBytesRemaining < (size_t)numBytesUsed)
+    return false;
+
   try
   {
     dataVec.resize(numElements);
@@ -495,9 +517,6 @@ bool BitStuffer2::BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, vecto
   {
     return false;
   }
-
-  unsigned int numUInts = (numElements * numBits + 31) / 32;
-  unsigned int numBytes = numUInts * sizeof(unsigned int);
 
   try
   {
@@ -510,11 +529,7 @@ bool BitStuffer2::BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, vecto
 
   m_tmpBitStuffVec[numUInts - 1] = 0;    // set last uint to 0
 
-  // copy the bytes from the incoming byte stream
-  int numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
-
-  if (nBytesRemaining < (size_t)numBytesUsed || !memcpy(&m_tmpBitStuffVec[0], *ppByte, numBytesUsed))
-    return false;
+  memcpy(&m_tmpBitStuffVec[0], *ppByte, numBytesUsed);
 
   // do the un-stuffing
   unsigned int* srcPtr = &m_tmpBitStuffVec[0];
