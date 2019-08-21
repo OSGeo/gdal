@@ -47,6 +47,7 @@ The :program:`gdalsrsinfo` utility reports information about a given SRS from on
     - ``default``: proj4 and wkt (default option)
     - ``all``: all options available
     - ``wkt_all``: all wkt options available
+    - ``PROJJSON``: PROJJSON string (GDAL >= 3.1 and PROJ >= 6.2)
     - ``proj4``: PROJ.4 string
     - ``wkt1``: OGC WKT format (full)
     - ``wkt_simple``: OGC WKT 1 (simplified)
