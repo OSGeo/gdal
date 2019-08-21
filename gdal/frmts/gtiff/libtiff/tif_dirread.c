@@ -40,6 +40,21 @@
 
 #define FAILED_FII    ((uint32) -1)
 
+/*
+ * Largest 32-bit unsigned integer value.
+ */
+#define TIFF_UINT32_MAX 0xFFFFFFFFU
+
+/*
+ * Largest 64-bit unsigned integer value.
+ */
+#define TIFF_UINT64_MAX (((uint64)(TIFF_UINT32_MAX)) << 32 | TIFF_UINT32_MAX)
+
+/*
+ * Largest 64-bit signed integer value.
+ */
+#define TIFF_INT64_MAX ((int64)(TIFF_UINT64_MAX >> 1))
+
 #ifdef HAVE_IEEEFP
 # define TIFFCvtIEEEFloatToNative(tif, n, fp)
 # define TIFFCvtIEEEDoubleToNative(tif, n, dp)
@@ -3285,11 +3300,6 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryCheckRangeLongSlong(int32 value)
 		return(TIFFReadDirEntryErrOk);
 }
 
-/*
- * Largest 32-bit unsigned integer value.
- */
-#define TIFF_UINT32_MAX 0xFFFFFFFFU
-
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeLongLong8(uint64 value)
 {
@@ -3307,8 +3317,6 @@ TIFFReadDirEntryCheckRangeLongSlong8(int64 value)
 	else
 		return(TIFFReadDirEntryErrOk);
 }
-
-#undef TIFF_UINT32_MAX
 
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeSlongLong(uint32 value)
@@ -3375,11 +3383,6 @@ TIFFReadDirEntryCheckRangeLong8Slong8(int64 value)
 		return(TIFFReadDirEntryErrOk);
 }
 
-/*
- * Largest 64-bit signed integer value.
- */
-#define TIFF_INT64_MAX ((int64)(((uint64) ~0) >> 1))
-
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeSlong8Long8(uint64 value)
 {
@@ -3388,8 +3391,6 @@ TIFFReadDirEntryCheckRangeSlong8Long8(uint64 value)
 	else
 		return(TIFFReadDirEntryErrOk);
 }
-
-#undef TIFF_INT64_MAX
 
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryData(TIFF* tif, uint64 offset, tmsize_t size, void* dest)
@@ -4559,6 +4560,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 				if (datasize<=8)
 					datasize=0;
 			}
+			if( space > TIFF_UINT64_MAX - datasize )
+                            return -1;
 			space+=datasize;
 		}
 		if( filesize < space )
