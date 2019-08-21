@@ -370,11 +370,11 @@ namespace EFAL_GDAL_DRIVER
 
 		const char *pszPenPattern = nullptr;
 
-		int nPenId = 0;
 		// Set the Id of the Pen, use Pattern if necessary.
 		if (pszPenName &&
 			(strstr(pszPenName, "mapinfo-pen-") || strstr(pszPenName, "ogr-pen-")))
 		{
+			int nPenId;
 			const char* pszPenId = strstr(pszPenName, "mapinfo-pen-");
 			if (pszPenId != nullptr)
 			{

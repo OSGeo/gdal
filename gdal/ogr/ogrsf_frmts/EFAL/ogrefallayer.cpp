@@ -1,30 +1,16 @@
-/******************************************************************************
- *
- * Project:  EFAL Translator
- * Purpose:  Implements OGREFALLayer class
- * Author:   Pitney Bowes
- *
- ******************************************************************************
- * Copyright (c) 2019, Frank Warmerdam <warmerdam@pobox.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+/*****************************************************************************
+* Copyright 2016 Pitney Bowes Inc.
+* 
+* Licensed under the MIT License (the “License”); you may not use this file 
+* except in the compliance with the License.
+* You may obtain a copy of the License at https://opensource.org/licenses/MIT 
+
+* Unless required by applicable law or agreed to in writing, software 
+* distributed under the License is distributed on an “AS IS” WITHOUT 
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and 
+* limitations under the License.
+*****************************************************************************/
 
 
 #if defined(_WIN32) && !defined(unix)
@@ -130,7 +116,6 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenM
 		switch (atType)
 		{
 		case Ellis::ALLTYPE_TYPE::OT_CHAR:
-		case Ellis::ALLTYPE_TYPE::OT_FLSTRING:
 			poFieldDefn = new OGRFieldDefn(pszAlias, OFTString);
 			poFieldDefn->SetWidth(efallib->GetColumnWidth(hSession, hTable, i));
 			break;
@@ -254,6 +239,7 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, const char *pszLayerNameIn,
 	ymin(0),
 	xmax(0),
 	ymax(0),
+	bHasMap(false),
 	bInWriteMode(true),
 	pszFilename(CPLStrdup(pszFilenameIn)),
 	nLastFID(-1),
@@ -455,7 +441,6 @@ GIntBig OGREFALLayer::GetFeatureCount(int /*bForce*/)
 			count = (GIntBig)d;
 		}
 		efallib->DisposeCursor(hSession, hCountCursor);
-		hCountCursor = 0;
 	}
 	return count;
 }
@@ -640,7 +625,6 @@ OGRFeature* OGREFALLayer::Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFe
 				switch (efallib->GetCursorColumnType(hSession, hCursor, i))
 				{
 				case Ellis::ALLTYPE_TYPE::OT_CHAR:
-				case Ellis::ALLTYPE_TYPE::OT_FLSTRING:
 				{
 					char * szValue = nullptr;
 					szValue = CPLRecodeFromWChar(efallib->GetCursorValueString(hSession, hCursor, i), CPL_ENC_UCS2, CPL_ENC_UTF8);
@@ -922,7 +906,6 @@ OGRErr OGREFALLayer::ISetFeature(OGRFeature *poFeature)
 	if (ogrStyleString != nullptr)
 	{
 		const wchar_t * warname = L"@style";
-		const char * varname = "@style";
 
 		char* mbStyleString = OGRStyle2MapBasicStyle(ogrStyleString);
 		if (mbStyleString == nullptr)
@@ -933,11 +916,12 @@ OGRErr OGREFALLayer::ISetFeature(OGRFeature *poFeature)
 		}
 		else
 		{
+			const char * varname = "@style";
 			wchar_t * szwMBStyleString = CPLRecodeToWChar(mbStyleString, CPL_ENC_UTF8, CPL_ENC_UCS2);
 			efallib->CreateVariable(hSession, warname);
 			efallib->SetVariableValueStyle(hSession, warname, szwMBStyleString);
 			CPLFree(szwMBStyleString);
-			if (!first) command += ","; first = false;
+			if (!first) command += ",";
 			command += "MI_Style";
 			command += "=";
 			command += varname;
@@ -949,11 +933,10 @@ OGRErr OGREFALLayer::ISetFeature(OGRFeature *poFeature)
 	sprintf(szFID, "%ld", (long)poFeature->GetFID());
 	command += szFID;
 	command += "'";
-	long nrecs = 0;
 	if (err == OGRERR_NONE)
 	{
 		wchar_t * szwCommand = CPLRecodeToWChar(command, CPL_ENC_UTF8, CPL_ENC_UCS2);
-		nrecs = efallib->Update(hSession, szwCommand);
+		long nrecs = efallib->Update(hSession, szwCommand);
 		CPLFree(szwCommand);
 		err = (nrecs == 1) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
 	}
@@ -1004,7 +987,6 @@ OGRErr OGREFALLayer::CreateNewTable()
 				OGRFieldType ogrType = pFieldDefn->GetType();
 				unsigned long columnWidth = 0;
 				unsigned long columnDecimals = 0;
-				bool isIndexed = false;
 				Ellis::ALLTYPE_TYPE columnType = Ellis::ALLTYPE_TYPE::OT_NONE;
 
 				switch (ogrType)
@@ -1062,7 +1044,7 @@ OGRErr OGREFALLayer::CreateNewTable()
 				}
 				if (status == OGRERR_NONE)
 				{
-					efallib->AddColumn(hSession, hMetadata, columnName, columnType, isIndexed, columnWidth, columnDecimals, nullptr);
+					efallib->AddColumn(hSession, hMetadata, columnName, columnType, false, columnWidth, columnDecimals, nullptr);
 				}
 				CPLFree(columnName);
 			}
@@ -1285,7 +1267,6 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
 	if (ogrStyleString != nullptr)
 	{
 		const wchar_t * warname = L"@style";
-		const char * varname = "@style";
 		char* mbStyleString = OGRStyle2MapBasicStyle(ogrStyleString);
 		if (mbStyleString == nullptr || strlen(mbStyleString) == 0)
 		{
@@ -1295,11 +1276,12 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
 		}
 		else
 		{
+			const char * varname = "@style";
 			wchar_t * szwMBStyleString = CPLRecodeToWChar(mbStyleString, CPL_ENC_UTF8, CPL_ENC_UCS2);
 			efallib->CreateVariable(hSession, warname);
 			efallib->SetVariableValueStyle(hSession, warname, szwMBStyleString);
 			CPLFree(szwMBStyleString);
-			if (!first) { command += ","; values += ","; } first = false;
+			if (!first) { command += ","; values += ","; }
 			command += "MI_Style";
 			values += varname;
 		}
@@ -1310,11 +1292,10 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
 
 	//printf("%s\n", command.c_str());
 
-	long nrecs = 0;
 	if (err == OGRERR_NONE)
 	{
 		wchar_t * szwCommand = CPLRecodeToWChar(command, CPL_ENC_UTF8, CPL_ENC_UCS2);
-		nrecs = efallib->Insert(hSession, szwCommand);
+		long nrecs = efallib->Insert(hSession, szwCommand);
 		CPLFree(szwCommand);
 
 		if (nrecs == 1)
@@ -1379,11 +1360,10 @@ OGRErr OGREFALLayer::DeleteFeature(GIntBig nFID)
 	sprintf(szFID, "%ld", (long)nFID);
 	command += szFID;
 	command += "'";
-	long nrecs = 0;
 	if (err == OGRERR_NONE)
 	{
 		wchar_t * szwCommand = CPLRecodeToWChar(command, CPL_ENC_UTF8, CPL_ENC_UCS2);
-		nrecs = efallib->Delete(hSession, szwCommand);
+		long nrecs = efallib->Delete(hSession, szwCommand);
 		CPLFree(szwCommand);
 		err = (nrecs == 1) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
 	}

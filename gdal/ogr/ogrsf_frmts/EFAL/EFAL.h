@@ -1,30 +1,16 @@
-/******************************************************************************
- *
- * Project:  EFAL Translator
- * Purpose:  EFAL Library Header
- * Author:   Pitney Bowes
- *
- ******************************************************************************
- * Copyright (c) 2019, Frank Warmerdam <warmerdam@pobox.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+/*****************************************************************************
+* Copyright 2016 Pitney Bowes Inc.
+* 
+* Licensed under the MIT License (the “License”); you may not use this file 
+* except in the compliance with the License.
+* You may obtain a copy of the License at https://opensource.org/licenses/MIT 
+
+* Unless required by applicable law or agreed to in writing, software 
+* distributed under the License is distributed on an “AS IS” WITHOUT 
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and 
+* limitations under the License.
+*****************************************************************************/
 
 #ifndef EFAL_H
 #define EFAL_H
@@ -157,38 +143,11 @@ namespace Ellis
 		OT_SMALLINT = 4,
 		OT_DATE = 5,
 		OT_LOGICAL = 6,
-		/*OT_GRAPHIC      = 7, this does not exist anymore as oif 11/23/99 -REF */
 		OT_FLOAT = 8,
-		OT_MEMO = 9,
-		OT_PCHAR = 10,
-		OT_PEN = 11,
-		OT_BRUSH = 12,
 		OT_OBJECT = 13,
-		OT_SYMBOL = 14,
-		OT_FONT = 15,
-		OT_FLSTRING = 16,
 		OT_NULL = 17,
-		OT_KEY = 18, // Ellis replacement for ROWID - Holds onto an MIDataKey (not reusing ROWID in case it needs to be used for backward support)
-		//*** Alltypes that are used internally ***
-		OT_KEYWORD = 20,
-		OT_IDENT = 21,
-		OT_SUBEDIDENT = 22, // subscripted ident - e.g. states(2)
-		OT_PIDENT = 24,
-		//	OT_COMPUTEDCOL	= 25, // computed column (used in expression packets)
-		//	OT_BASECOLUMN	  = 26, // base table column (used in expression packets)
 		OT_BINARY = 27, // used as an index type
-		OT_ARRAY = 28, // array variables
-		OT_STRUCT = 29, // type (struct) variables
-		OT_PARAMETER = 30, // parameter referenced in subroutine
-		OT_SUBSELECT = 31,
-		OT_DEPSUBSELECT = 32, // dependent sub-select
-		OT_VARBYVAL = 33, // flag var refs in pkts; use value
-		OT_VARBYREF = 34, // flag var refs in pkts; use as parm
-		//	OT_ROWID        = 35, // constant type in pkts - cur row id
 		OT_STYLE = 36, //for style column which is a type of ALLSTYLE
-		OT_RASTER = 37,
-		OT_GRID = 38,
-		OT_WMS = 39,
 		OT_INTEGER64 = 40,
 		OT_TIMESPAN = 41,
 		OT_TIME = 42,
@@ -215,6 +174,11 @@ namespace Ellis
 	struct DRANGE {
 		double min, max;
 	};
+	enum CalloutLineType {
+		eNone = 0, //No callout line
+		eSimple = 1, //Indicates that the text uses a simple callout line (no pointer to its reference geometry).
+		eArrow = 2 //Indicates that the text uses an arrow that points to its reference geometry.
+	};
 }
 #ifdef EFAL_IN_GDAL
 	enum WKBGeometryType {
@@ -228,6 +192,7 @@ namespace Ellis
 		EFAL_wkbGeometryCollection = 7,
 		EFAL_wkbPolyhedralSurface = 15,
 		EFAL_wkbTIN = 16,
+		EFAL_ewkbLegacyText = 206,
 		EFAL_wkbPointZ = 1001,
 		EFAL_wkbLineStringZ = 1002,
 		EFAL_wkbPolygonZ = 1003,
@@ -271,6 +236,7 @@ namespace Ellis
 		wkbGeometryCollection = 7,
 		wkbPolyhedralSurface = 15,
 		wkbTIN = 16,
+		ewkbLegacyText = 206,
 		wkbPointZ = 1001,
 		wkbLineStringZ = 1002,
 		wkbPolygonZ = 1003,
@@ -375,6 +341,7 @@ namespace EFAL
 	EFALFUNCTION const wchar_t * GetTablePath(EFALHANDLE hSession, EFALHANDLE hTable);
 	EFALFUNCTION const wchar_t * GetTableGUID(EFALHANDLE hSession, EFALHANDLE hTable);
 	EFALFUNCTION Ellis::MICHARSET GetTableCharset(EFALHANDLE hSession, EFALHANDLE hTable);
+	EFALFUNCTION const wchar_t * GetTableType(EFALHANDLE hSession, EFALHANDLE hTable);
 	EFALFUNCTION bool HasRaster(EFALHANDLE hSession, EFALHANDLE hTable);
 	EFALFUNCTION bool HasGrid(EFALHANDLE hSession, EFALHANDLE hTable);
 	EFALFUNCTION bool IsSeamless(EFALHANDLE hSession, EFALHANDLE hTable);

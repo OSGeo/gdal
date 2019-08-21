@@ -1,30 +1,16 @@
-/******************************************************************************
- *
- * Project:  EFAL Translator
- * Purpose:  EFAL Library Header
- * Author:   Pitney Bowes
- *
- ******************************************************************************
- * Copyright (c) 2019, Frank Warmerdam <warmerdam@pobox.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+/*****************************************************************************
+* Copyright 2016 Pitney Bowes Inc.
+* 
+* Licensed under the MIT License (the “License”); you may not use this file 
+* except in the compliance with the License.
+* You may obtain a copy of the License at https://opensource.org/licenses/MIT 
+
+* Unless required by applicable law or agreed to in writing, software 
+* distributed under the License is distributed on an “AS IS” WITHOUT 
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and 
+* limitations under the License.
+*****************************************************************************/
 
 #ifndef EFALLIB_H
 #define EFALLIB_H
@@ -66,6 +52,7 @@ private:
 	typedef const wchar_t *(__cdecl *GetTablePathProc)(EFALHANDLE hSession, EFALHANDLE hTable);
 	typedef const wchar_t *(__cdecl *GetTableGUIDProc)(EFALHANDLE hSession, EFALHANDLE hTable);
 	typedef Ellis::MICHARSET(__cdecl *GetTableCharsetProc)(EFALHANDLE hSession, EFALHANDLE hTable);
+	typedef const wchar_t *(__cdecl *GetTableTypeProc)(EFALHANDLE hSession, EFALHANDLE hTable);
 	typedef bool(__cdecl *HasRasterProc)(EFALHANDLE hSession, EFALHANDLE hTable);
 	typedef bool(__cdecl *HasGridProc)(EFALHANDLE hSession, EFALHANDLE hTable);
 	typedef bool(__cdecl *IsSeamlessProc)(EFALHANDLE hSession, EFALHANDLE hTable);
@@ -210,6 +197,7 @@ private:
 	GetTablePathProc __GetTablePath = NULL;
 	GetTableGUIDProc __GetTableGUID = NULL;
 	GetTableCharsetProc __GetTableCharset = NULL;
+	GetTableTypeProc __GetTableType = NULL;
 	HasRasterProc __HasRaster = NULL;
 	HasGridProc __HasGrid = NULL;
 	IsSeamlessProc __IsSeamless = NULL;
@@ -325,7 +313,7 @@ private:
 	SetVariableValueDateProc __SetVariableValueDate = NULL;
 	SetVariableValueDateTimeProc __SetVariableValueDateTime = NULL;
 
-	EFALLIB(dynlib efalHandle) :
+	explicit EFALLIB(dynlib efalHandle) :
 		__efalHandle(efalHandle),
 		#if ELLIS_OS_IS_WINOS
 		__InitializeSession((InitializeSessionProc)dynlib_sym(efalHandle, "?InitializeSession@EFAL@@YA_KP6APEB_WPEB_W@Z@Z")),
@@ -356,6 +344,7 @@ private:
 		__GetTablePath((GetTablePathProc)dynlib_sym(efalHandle, "?GetTablePath@EFAL@@YAPEB_W_K0@Z")),
 		__GetTableGUID((GetTableGUIDProc)dynlib_sym(efalHandle, "?GetTableGUID@EFAL@@YAPEB_W_K0@Z")),
 		__GetTableCharset((GetTableCharsetProc)dynlib_sym(efalHandle, "?GetTableCharset@EFAL@@YA?AW4MICHARSET@Ellis@@_K0@Z")),
+		__GetTableType((GetTableTypeProc)dynlib_sym(efalHandle, "?GetTableType@EFAL@@YAPEB_W_K0@Z")),
 		__HasRaster((HasRasterProc)dynlib_sym(efalHandle, "?HasRaster@EFAL@@YA_N_K0@Z")),
 		__HasGrid((HasGridProc)dynlib_sym(efalHandle, "?HasGrid@EFAL@@YA_N_K0@Z")),
 		__IsSeamless((IsSeamlessProc)dynlib_sym(efalHandle, "?IsSeamless@EFAL@@YA_N_K0@Z")),
@@ -499,6 +488,7 @@ private:
 		__GetTablePath((GetTablePathProc)dynlib_sym(efalHandle, "_ZN4EFAL12GetTablePathEyy")),
 		__GetTableGUID((GetTableGUIDProc)dynlib_sym(efalHandle, "_ZN4EFAL12GetTableGUIDEyy")),
 		__GetTableCharset((GetTableCharsetProc)dynlib_sym(efalHandle, "_ZN4EFAL15GetTableCharsetEyy")),
+		__GetTableType((GetTableTypeProc)dynlib_sym(efalHandle, "_ZN4EFAL12GetTableTypeEyy")),
 		__HasRaster((HasRasterProc)dynlib_sym(efalHandle, "_ZN4EFAL9HasRasterEyy")),
 		__HasGrid((HasGridProc)dynlib_sym(efalHandle, "_ZN4EFAL7HasGridEyy")),
 		__IsSeamless((IsSeamlessProc)dynlib_sym(efalHandle, "_ZN4EFAL10IsSeamlessEyy")),
@@ -627,8 +617,7 @@ public:
 		dynlib handle = dynlib_open(path);
 		if (handle != nullptr)
 		{
-			EFALLIB * efallib = new EFALLIB(handle);
-			return efallib;
+			return new EFALLIB(handle);
 		}
 		return NULL;
 	}
@@ -929,6 +918,14 @@ public:
 		}
 		return Ellis::MICHARSET::CHARSET_NONE;
 	}
+	const wchar_t * GetTableType(EFALHANDLE hSession, EFALHANDLE hTable)
+	{
+		if (__GetTableType != nullptr)
+		{
+			return (__GetTableType)(hSession, hTable);
+		}
+		return nullptr;
+	}
 	bool HasRaster(EFALHANDLE hSession, EFALHANDLE hTable)
 	{
 		if (__HasRaster != nullptr)
@@ -1153,7 +1150,7 @@ public:
 		{
 			return (__GetZRange)(hSession, hTable, columnNbr);
 		}
-		Ellis::DRANGE dr; dr.max = dr.min = 0.0;
+		Ellis::DRANGE dr = {0.0};
 		return dr;
 	}
 	bool HasM(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
@@ -1178,7 +1175,7 @@ public:
 		{
 			return (__GetMRange)(hSession, hTable, columnNbr);
 		}
-		Ellis::DRANGE dr; dr.max = dr.min = 0.0;
+		Ellis::DRANGE dr = {0.0};
 		return dr;
 	}
 

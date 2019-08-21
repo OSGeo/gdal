@@ -1,30 +1,16 @@
-/******************************************************************************
- *
- * Project:  EFAL Translator
- * Purpose:  Implements OGREFALLayer class
- * Author:   Pitney Bowes
- *
- ******************************************************************************
- * Copyright (c) 2019, Frank Warmerdam <warmerdam@pobox.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+/*****************************************************************************
+* Copyright 2016 Pitney Bowes Inc.
+* 
+* Licensed under the MIT License (the “License”); you may not use this file 
+* except in the compliance with the License.
+* You may obtain a copy of the License at https://opensource.org/licenses/MIT 
+
+* Unless required by applicable law or agreed to in writing, software 
+* distributed under the License is distributed on an “AS IS” WITHOUT 
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and 
+* limitations under the License.
+*****************************************************************************/
 
 #if defined(_WIN32) && !defined(unix)
 	#pragma warning(disable:4251)
@@ -301,33 +287,6 @@ void EFALFeatureFont::SetFontFromStyleString(const char * pszStyleString)
 			pszBgColor++;
 		long nBgColor = strtol(pszBgColor, nullptr, 16);
 		SetForeground(nBgColor);
-	}
-
-	int style = 0;
-
-	if (poLabelStyle->Bold(bIsNull)) {
-		style |= TABFontStyle::TABFSBold;
-	}
-	if (poLabelStyle->Italic(bIsNull)) {
-		style |= TABFontStyle::TABFSItalic;
-	}
-	if (poLabelStyle->Underline(bIsNull)) {
-		style |= TABFontStyle::TABFSUnderline;
-	}
-	if (poLabelStyle->Strikeout(bIsNull)) {
-		style |= TABFontStyle::TABFSStrikeout;
-	}
-
-	poLabelStyle->ShadowColor(bIsNull);
-	if (!bIsNull)
-	{
-		style |= TABFontStyle::TABFSShadow;
-	}
-
-	poLabelStyle->OutlineColor(bIsNull);
-	if (!bIsNull)
-	{
-		style |= TABFontStyle::TABFSHalo;
 	}
 
 	delete poStyleMgr;
@@ -854,8 +813,6 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 				token = mystrtok(nullptr, seps, &next_token);
 
-				long bgcolor = 0;
-				unsigned char transparent = 1;
 				if (token == nullptr ||
 					stricmp(token, "Pen") == 0 ||
 					stricmp(token, "Font") == 0 ||
@@ -863,20 +820,18 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 				{
 					brush.SetBrushPattern((GByte)pattern);
 					brush.SetBrushFGColor((GInt32)forecolor);
-					brush.SetBrushBGColor((GInt32)bgcolor);
-					brush.SetBrushTransparent((GByte)transparent);
+					brush.SetBrushBGColor((GInt32)0);
+					brush.SetBrushTransparent((GByte)1);
 					hasBrush = true;
 					continue;
 				}
 				else
 				{
-					bgcolor = atol(token);
-					transparent = 0;
-
+					long bgcolor = atol(token);
 					brush.SetBrushPattern((GByte)pattern);
 					brush.SetBrushFGColor((GInt32)forecolor);
 					brush.SetBrushBGColor((GInt32)bgcolor);
-					brush.SetBrushTransparent((GByte)transparent);
+					brush.SetBrushTransparent((GByte)0);
 					hasBrush = true;
 
 					token = mystrtok(nullptr, seps, &next_token);
@@ -932,7 +887,6 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 
 				token = mystrtok(nullptr, seps, &next_token);
 
-				long bgcolor = 0;
 				if (token == nullptr ||
 					stricmp(token, "Pen") == 0 ||
 					stricmp(token, "Brush") == 0 ||
@@ -942,13 +896,13 @@ CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
 					font.SetFontStyle((short)style);
 					font.SetPointSize((short)size);
 					font.SetForeground(forecolor);
-					font.SetBackground(bgcolor);
+					font.SetBackground(0);
 					hasFont = true;
 					continue;
 				}
 				else
 				{
-					bgcolor = atol(token);
+					long bgcolor = atol(token);
 
 					font.SetFontName(fontName);
 					font.SetFontStyle((short)style);
