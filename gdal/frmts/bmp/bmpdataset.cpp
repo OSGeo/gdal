@@ -342,13 +342,15 @@ CPLErr BMPRasterBand::IReadBlock( int /* nBlockXOff */,
                                   void * pImage )
 {
     BMPDataset  *poGDS = (BMPDataset *) poDS;
-    GUInt32 iScanOffset = 0;
+    vsi_l_offset iScanOffset = 0;
 
     if ( poGDS->sInfoHeader.iHeight > 0 )
         iScanOffset = poGDS->sFileHeader.iOffBits +
-            ( poGDS->GetRasterYSize() - nBlockYOff - 1 ) * nScanSize;
+            ( poGDS->GetRasterYSize() - nBlockYOff - 1 ) *
+                static_cast<vsi_l_offset>(nScanSize);
     else
-        iScanOffset = poGDS->sFileHeader.iOffBits + nBlockYOff * nScanSize;
+        iScanOffset = poGDS->sFileHeader.iOffBits +
+            nBlockYOff * static_cast<vsi_l_offset>(nScanSize);
 
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
@@ -362,8 +364,8 @@ CPLErr BMPRasterBand::IReadBlock( int /* nBlockXOff */,
         else
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't seek to offset %ld in input file to read data.",
-                      static_cast<long>(iScanOffset) );
+                      "Can't seek to offset " CPL_FRMT_GUIB " in input file to read data.",
+                      iScanOffset );
             return CE_Failure;
         }
     }
@@ -378,8 +380,8 @@ CPLErr BMPRasterBand::IReadBlock( int /* nBlockXOff */,
         else
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't read from offset %ld in input file.",
-                      static_cast<long>(iScanOffset) );
+                      "Can't read from offset " CPL_FRMT_GUIB " in input file.",
+                      iScanOffset );
             return CE_Failure;
         }
     }
@@ -550,13 +552,14 @@ CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != nullptr );
 
-    GUInt32 iScanOffset = poGDS->sFileHeader.iOffBits +
-            ( poGDS->GetRasterYSize() - nBlockYOff - 1 ) * nScanSize;
+    vsi_l_offset iScanOffset = poGDS->sFileHeader.iOffBits +
+            ( poGDS->GetRasterYSize() - nBlockYOff - 1 ) *
+                static_cast<vsi_l_offset>(nScanSize);
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't seek to offset %ld in output file to write data.\n%s",
-                  (long) iScanOffset, VSIStrerror( errno ) );
+                  "Can't seek to offset " CPL_FRMT_GUIB " in output file to write data.\n%s",
+                  iScanOffset, VSIStrerror( errno ) );
         return CE_Failure;
     }
 
