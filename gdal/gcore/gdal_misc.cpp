@@ -3126,17 +3126,17 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 if( CPLFetchBool( papszMD, GDAL_DCAP_MULTIDIM_RASTER, false ) )
                 {
                     if( !osKind.empty() ) osKind += ',';
-                    osKind = "multidimensional raster";
+                    osKind += "multidimensional raster";
                 }
                 if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
                 {
                     if( !osKind.empty() ) osKind += ',';
-                    osKind = "vector";
+                    osKind += "vector";
                 }
                 if( CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
                 {
                     if( !osKind.empty() ) osKind += ',';
-                    osKind = "geography network";
+                    osKind += "geography network";
                 }
                 if( osKind.empty() )
                     osKind = "unknown kind";
