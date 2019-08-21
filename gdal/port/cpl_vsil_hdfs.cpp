@@ -5,7 +5,7 @@
  * Author:   James McClain, <jmcclain@azavea.com>
  *
  **********************************************************************
- * Copyright (c) 2010-2015, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2015, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2018, Azavea
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

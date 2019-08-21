@@ -596,6 +596,7 @@ bool GMLASReader::Init(const char* pszFilename,
         m_poSAXReader->setFeature (XMLUni::fgXercesSchema, true);
 
         // We want all errors to be reported
+        // coverity[unsafe_xml_parse_config]
         m_poSAXReader->setFeature (XMLUni::fgXercesValidationErrorAsFatal, false);
 
         CPLString osBaseDirname( CPLGetDirname(pszFilename) );
@@ -2938,7 +2939,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
             if( !bReprojectionOK )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Reprojection fom %s to %s failed",
+                         "Reprojection from %s to %s failed",
                          pszSRSName,
                          m_oMapGeomFieldDefnToSRSName[poGeomFieldDefn].c_str());
                 delete poGeom;

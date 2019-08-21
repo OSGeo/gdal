@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -1207,9 +1207,7 @@ def test_ogr_gml_35():
     ds = ogr.Open('tmp/GmlTopo-sample.xml')
     gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
 
-    with pytest.raises(OSError, message='did not expect tmp/GmlTopo-sample.sqlite'):
-        os.stat('tmp/GmlTopo-sample.sqlite')
-    
+    assert not os.path.exists('tmp/GmlTopo-sample.sqlite')
 
     assert gdal.GetLastErrorMsg() == '', 'did not expect error'
     assert ds.GetLayerCount() == 3, ('expected 3 layers, got %d' % ds.GetLayerCount())
@@ -1322,9 +1320,7 @@ def test_ogr_gml_38(resolver='HUGE'):
     gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', None)
 
     if resolver == 'HUGE':
-        with pytest.raises(OSError, message='did not expect tmp/sample_gml_face_hole_negative_no.sqlite'):
-            os.stat('tmp/sample_gml_face_hole_negative_no.sqlite')
-        
+        assert not os.path.exists('tmp/sample_gml_face_hole_negative_no.sqlite')
 
     assert gdal.GetLastErrorMsg() == '', 'did not expect error'
 

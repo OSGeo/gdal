@@ -2,10 +2,10 @@
  *
  * Project:  GDAL Epsilon driver
  * Purpose:  Implement GDAL Epsilon support using Epsilon library
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,7 +71,7 @@ typedef struct
 /* ==================================================================== */
 /************************************************************************/
 
-class EpsilonDataset : public GDALPamDataset
+class EpsilonDataset final: public GDALPamDataset
 {
     friend class EpsilonRasterBand;
 
@@ -116,7 +116,7 @@ class EpsilonDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class EpsilonRasterBand : public GDALPamRasterBand
+class EpsilonRasterBand final: public GDALPamRasterBand
 {
   public:
     EpsilonRasterBand( EpsilonDataset* poDS, int nBand );

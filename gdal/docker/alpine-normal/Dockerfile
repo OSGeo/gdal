@@ -5,7 +5,8 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-FROM alpine:latest as builder
+ARG ALPINE_VERSION=3.10
+FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 MAINTAINER Even Rouault <even.rouault@spatialys.com>
@@ -27,7 +28,7 @@ RUN apk add --no-cache \
     curl-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
-    py-numpy-dev python2-dev py2-numpy \
+    py-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
@@ -166,6 +167,26 @@ RUN if test "${KEA_VERSION}" != ""; then ( \
     && rm -rf chchrsc-kealib-${KEA_VERSION} \
     && cp -P /usr/lib/libkea*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && apk del cmake \
+    ); fi
+
+# Build openjpeg
+# ARG OPENJPEG_VERSION=2.3.1
+RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
+    apk add --no-cache cmake \
+    && wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
+    && rm -f v${OPENJPEG_VERSION}.tar.gz \
+    && cd openjpeg-${OPENJPEG_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+    && make -j$(nproc) \
+    && make install \
+    && rm -f /usr/lib/libopenjp2.so.2.3.0 \
+    && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf openjpeg-${OPENJPEG_VERSION} \
     && apk del cmake \
     ); fi
 
@@ -319,13 +340,13 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python2.7          /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/python3.7          /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python2.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \
@@ -336,7 +357,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
        ;do rm $i; done)
 
 # Build final image
-FROM alpine:latest as runner
+FROM alpine:${ALPINE_VERSION} as runner
 
 RUN date
 
@@ -346,16 +367,16 @@ RUN apk add --no-cache \
         sqlite-libs \
         libcurl \
         zlib zstd-libs\
-        libjpeg-turbo libpng openjpeg libwebp expat \
-        python2 py2-numpy ${POPPLER} pcre libpq libxml2 portablexdr \
+        libjpeg-turbo libpng libwebp expat \
+        python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
+    # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
+    # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
     # libpoppler-cpp.so is not used by GDAL. Only libpoppler.so*
     && rm -f /usr/lib/libpoppler-cpp.so* \
     # Only libwebp.so is used by GDAL
-    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* \
-    # Remove .py files since we have already the .pyc
-    && find /usr/lib/python2.7/site-packages -name "*.py" -exec rm {} \;
+    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/

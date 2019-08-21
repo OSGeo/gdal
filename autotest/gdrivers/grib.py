@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -116,7 +116,7 @@ def test_grib_read_units():
         print(md)
         return
     ds.GetRasterBand(1).ComputeStatistics(False)
-    if abs(ds.GetRasterBand(1).GetMinimum() - 13) > 1:
+    if ds.GetRasterBand(1).GetMinimum() != pytest.approx(13, abs=1):
         print(ds.GetRasterBand(1).GetMinimum())
         return
     ds = None
@@ -131,7 +131,7 @@ def test_grib_read_units():
         print(md)
         return
     ds.GetRasterBand(1).ComputeStatistics(False)
-    if abs(ds.GetRasterBand(1).GetMinimum() - 286) > 1:
+    if ds.GetRasterBand(1).GetMinimum() != pytest.approx(286, abs=1):
         print(ds.GetRasterBand(1).GetMinimum())
         return
     ds = None

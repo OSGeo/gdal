@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Leonardo de Paula Rosa Piga
- * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,7 +80,7 @@ typedef enum
 /************************************************************************/
 /*                           OGRGTMLayer                                */
 /************************************************************************/
-class OGRGTMLayer : public OGRLayer
+class OGRGTMLayer CPL_NON_FINAL: public OGRLayer
 {
 public:
     OGRGTMLayer();
@@ -112,7 +112,7 @@ protected:
 /************************************************************************/
 /*                           GTMWaypointLayer                           */
 /************************************************************************/
-class GTMWaypointLayer : public OGRGTMLayer
+class GTMWaypointLayer final: public OGRGTMLayer
 {
   public:
     GTMWaypointLayer( const char* pszName,
@@ -134,7 +134,7 @@ class GTMWaypointLayer : public OGRGTMLayer
 /************************************************************************/
 /*                           GTMTrackLayer                              */
 /************************************************************************/
-class GTMTrackLayer : public OGRGTMLayer
+class GTMTrackLayer final: public OGRGTMLayer
 {
   public:
     GTMTrackLayer( const char* pszName,
@@ -156,7 +156,7 @@ class GTMTrackLayer : public OGRGTMLayer
 /************************************************************************/
 /*                           OGRGTMDataSource                           */
 /************************************************************************/
-class OGRGTMDataSource : public OGRDataSource
+class OGRGTMDataSource final: public OGRDataSource
 {
 public:
 

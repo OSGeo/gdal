@@ -90,7 +90,7 @@ class OGRAmigoCloudFID
 /************************************************************************/
 class OGRAmigoCloudDataSource;
 
-class OGRAmigoCloudLayer : public OGRLayer
+class OGRAmigoCloudLayer CPL_NON_FINAL: public OGRLayer
 {
     protected:
         OGRAmigoCloudDataSource* poDS;

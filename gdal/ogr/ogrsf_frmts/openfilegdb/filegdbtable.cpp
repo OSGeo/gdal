@@ -2,10 +2,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements reading of FileGDB tables
- * Author:   Even Rouault, <even dot rouault at mines-dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -807,6 +807,7 @@ int FileGDBTable::Open(const char* pszFilename,
         pabyIter ++;
         nRemaining --;
         returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
+        // coverity[tainted_data,tainted_data_argument]
         std::string osName(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
@@ -816,6 +817,7 @@ int FileGDBTable::Open(const char* pszFilename,
         pabyIter ++;
         nRemaining --;
         returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
+        // coverity[tainted_data,tainted_data_argument]
         std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
@@ -3230,6 +3232,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             panPartStart[0] = 0;
             for( i = 1; i < nParts; ++i )
                 panPartStart[i] = panPartStart[i-1] + panPointCount[i-1];
+            // (CID 1404102)
+            // coverity[overrun-buffer-arg]
             OGRGeometry* poRet = OGRCreateFromMultiPatch(
                                             static_cast<int>(nParts),
                                             panPartStart,

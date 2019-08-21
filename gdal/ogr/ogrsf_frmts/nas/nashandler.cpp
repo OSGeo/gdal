@@ -6,7 +6,7 @@
  *
  **********************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -469,6 +469,13 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
     poState->PushPath( m_osElementName );
 
     m_nDepth ++;
+
+    if( poState->osPath.size() > 512 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too long path. Stop parsing");
+        m_poReader->StopParsing();
+    }
 }
 
 /************************************************************************/

@@ -3,11 +3,11 @@
  * Project:  GDAL
  * Purpose:  GDALGeorefPamDataset with helper to read georeferencing and other
  *           metadata from JP2Boxes
- * Author:   Even Rouault <even dot rouault at mines-paris dot org>
+ * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -102,6 +102,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
         pszGeorefSourcesOption :
         CPLGetConfigOption("GDAL_GEOREF_SOURCES", "PAM,INTERNAL,WORLDFILE");
     size_t nInternalIdx = osGeorefSources.ifind("INTERNAL");
+    // coverity[tainted_data]
     if( nInternalIdx != std::string::npos &&
         (nInternalIdx == 0 || osGeorefSources[nInternalIdx-1] == ',') &&
         (nInternalIdx + strlen("INTERNAL") == osGeorefSources.size() ||

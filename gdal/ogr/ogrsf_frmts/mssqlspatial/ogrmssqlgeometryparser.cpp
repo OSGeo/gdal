@@ -121,8 +121,6 @@ SegmentType (1 byte)
 #define ShapeType(iShape) (ReadByte(nShapePos + (iShape) * 9 + 8))
 #define SegmentType(iSegment) (ReadByte(nSegmentPos + (iSegment)))
 
-#define NextFigureOffset(iShape) (iShape + 1 < nNumShapes? FigureOffset((iShape) +1) : nNumFigures)
-
 #define FigureAttribute(iFigure) (ReadByte(nFigurePos + (iFigure) * 5))
 #define PointOffset(iFigure) (ReadInt32(nFigurePos + (iFigure) * 5 + 1))
 #define NextPointOffset(iFigure) (iFigure + 1 < nNumFigures? PointOffset((iFigure) +1) : nNumPoints)
@@ -161,6 +159,19 @@ OGRMSSQLGeometryParser::OGRMSSQLGeometryParser(int nGeomColumnType)
 
 OGRPoint* OGRMSSQLGeometryParser::ReadPoint(int iFigure)
 {
+    if (iFigure == -1)
+    {
+        /* creating an empty point */
+        OGRPoint* poPoint = new OGRPoint();
+        if (chProps & SP_HASZVALUES)
+            poPoint->setCoordinateDimension(3);
+
+        if (chProps & SP_HASMVALUES)
+            poPoint->setMeasured(TRUE);
+
+        return poPoint;
+    }
+
     if ( iFigure < nNumFigures )
     {
         int iPoint = PointOffset(iFigure);
@@ -275,7 +286,17 @@ OGRErr OGRMSSQLGeometryParser::ReadSimpleCurve(OGRSimpleCurve* poCurve, int iPoi
 OGRLineString* OGRMSSQLGeometryParser::ReadLineString(int iFigure)
 {
     OGRLineString* poLineString = new OGRLineString();
-    ReadSimpleCurve(poLineString, PointOffset(iFigure), NextPointOffset(iFigure));
+    if (iFigure == -1)
+    {
+        if (chProps & SP_HASZVALUES)
+            poLineString->setCoordinateDimension(3);
+
+        if (chProps & SP_HASMVALUES)
+            poLineString->setMeasured(TRUE);
+    }
+    else
+        ReadSimpleCurve(poLineString, PointOffset(iFigure), NextPointOffset(iFigure));
+
     return poLineString;
 }
 
@@ -297,7 +318,17 @@ OGRLinearRing* OGRMSSQLGeometryParser::ReadLinearRing(int iFigure)
 OGRCircularString* OGRMSSQLGeometryParser::ReadCircularString(int iFigure)
 {
     OGRCircularString* poCircularString = new OGRCircularString();
-    ReadSimpleCurve(poCircularString, PointOffset(iFigure), NextPointOffset(iFigure));
+    if (iFigure == -1)
+    {
+        if (chProps & SP_HASZVALUES)
+            poCircularString->setCoordinateDimension(3);
+
+        if (chProps & SP_HASMVALUES)
+            poCircularString->setMeasured(TRUE);
+    }
+    else
+        ReadSimpleCurve(poCircularString, PointOffset(iFigure), NextPointOffset(iFigure));
+
     return poCircularString;
 }
 
@@ -331,12 +362,28 @@ OGRMultiLineString* OGRMSSQLGeometryParser::ReadMultiLineString(int iShape)
 
 OGRPolygon* OGRMSSQLGeometryParser::ReadPolygon(int iShape)
 {
-    int iFigure;
-    int iNextFigure = NextFigureOffset(iShape);
-
+    int iFigure, iNextFigure;
+    
     OGRPolygon* poPoly = new OGRPolygon();
-    for (iFigure = FigureOffset(iShape); iFigure < iNextFigure; iFigure++)
+
+    if ((iFigure = FigureOffset(iShape)) == -1)
+        return poPoly;
+
+    /* find next shape that has a figure */
+    iNextFigure = -1;
+    while (++iShape < nNumShapes)
+    {
+        if ((iNextFigure = FigureOffset(iShape)) != -1)
+            break;
+    }
+    if (iNextFigure == -1)
+        iNextFigure = nNumFigures;
+
+    while (iFigure < iNextFigure)
+    {
         poPoly->addRingDirectly(ReadLinearRing(iFigure));
+        ++iFigure;
+    }
 
     poPoly->closeRings();
     return poPoly;
@@ -393,6 +440,18 @@ OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
 {
     int iPoint, iNextPoint, nPointsPrepared;
     OGRCompoundCurve* poCompoundCurve = new OGRCompoundCurve();
+
+    if (iFigure == -1)
+    {
+        if (chProps & SP_HASZVALUES)
+            poCompoundCurve->setCoordinateDimension(3);
+
+        if (chProps & SP_HASMVALUES)
+            poCompoundCurve->setMeasured(TRUE);
+
+        return poCompoundCurve;
+    }
+
     iPoint = PointOffset(iFigure);
     iNextPoint = NextPointOffset(iFigure) - 1;
 
@@ -440,16 +499,29 @@ OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
 
 OGRCurvePolygon* OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
 {
-    int iFigure;
-    int iNextFigure = NextFigureOffset(iShape);
+    int iFigure, iNextFigure;
 
     OGRCurvePolygon* poPoly = new OGRCurvePolygon();
-    for (iFigure = FigureOffset(iShape); iFigure < iNextFigure; iFigure++)
+
+    if ((iFigure = FigureOffset(iShape)) == -1)
+        return poPoly;
+
+    /* find next shape that has a figure */
+    iNextFigure = -1;
+    while (++iShape < nNumShapes)
+    {
+        if ((iNextFigure = FigureOffset(iShape)) != -1)
+            break;
+    }
+    if (iNextFigure == -1)
+        iNextFigure = nNumFigures;
+
+    while (iFigure < iNextFigure)
     {
         switch (FigureAttribute(iFigure))
         {
         case FA_LINE:
-            poPoly->addRingDirectly(ReadLinearRing(iFigure));
+            poPoly->addRingDirectly(ReadLineString(iFigure));
             break;
         case FA_ARC:
             poPoly->addRingDirectly(ReadCircularString(iFigure));
@@ -457,7 +529,8 @@ OGRCurvePolygon* OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
         case FA_CURVE:
             poPoly->addRingDirectly(ReadCompoundCurve(iFigure));
             break;
-        }      
+        }
+        ++iFigure;
     }
     poPoly->closeRings();
     return poPoly;

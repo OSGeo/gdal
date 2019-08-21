@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_translate testing
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -501,9 +501,7 @@ def test_gdal_translate_23():
 
     assert md['STATISTICS_MINIMUM'] == '74', 'STATISTICS_MINIMUM is wrong.'
 
-    with pytest.raises(OSError, message='did not expect .aux.xml file presence'):
-        os.stat('tmp/test_gdal_translate_23.tif.aux.xml')
-    
+    assert not os.path.exists('tmp/test_gdal_translate_23.tif.aux.xml')
 
     gdal.Unlink('../gcore/data/byte.tif.aux.xml')
 
@@ -701,18 +699,18 @@ def test_gdal_translate_32():
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte_rpc.tif tmp/test_gdal_translate_32.tif -srcwin 1 2 13 14 -outsize 150% 300%')
     ds = gdal.Open('tmp/test_gdal_translate_32.tif')
     md = ds.GetMetadata('RPC')
-    assert (abs(float(md['LINE_OFF']) - 47496) <= 1e-5 and \
-       abs(float(md['LINE_SCALE']) - 47502) <= 1e-5 and \
-       abs(float(md['SAMP_OFF']) - 19676.6923076923) <= 1e-5 and \
-       abs(float(md['SAMP_SCALE']) - 19678.1538461538) <= 1e-5)
+    assert (float(md['LINE_OFF']) == pytest.approx(47496, abs=1e-5) and \
+       float(md['LINE_SCALE']) == pytest.approx(47502, abs=1e-5) and \
+       float(md['SAMP_OFF']) == pytest.approx(19676.6923076923, abs=1e-5) and \
+       float(md['SAMP_SCALE']) == pytest.approx(19678.1538461538, abs=1e-5))
 
     gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte_rpc.tif tmp/test_gdal_translate_32.tif -srcwin -10 -5 20 20')
     ds = gdal.Open('tmp/test_gdal_translate_32.tif')
     md = ds.GetMetadata('RPC')
-    assert (abs(float(md['LINE_OFF']) - (15834 - -5)) <= 1e-5 and \
-       abs(float(md['LINE_SCALE']) - 15834) <= 1e-5 and \
-       abs(float(md['SAMP_OFF']) - (13464 - -10)) <= 1e-5 and \
-       abs(float(md['SAMP_SCALE']) - 13464) <= 1e-5)
+    assert (float(md['LINE_OFF']) == pytest.approx((15834 - -5), abs=1e-5) and \
+       float(md['LINE_SCALE']) == pytest.approx(15834, abs=1e-5) and \
+       float(md['SAMP_OFF']) == pytest.approx((13464 - -10), abs=1e-5) and \
+       float(md['SAMP_SCALE']) == pytest.approx(13464, abs=1e-5))
 
 ###############################################################################
 # Test -outsize option in auto mode

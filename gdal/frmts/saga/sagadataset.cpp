@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Volker Wichmann <wichmann@laserdata.at>
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,7 +61,7 @@ constexpr GByte SG_NODATA_GDT_Byte = 255;
 
 class SAGARasterBand;
 
-class SAGADataset : public GDALPamDataset
+class SAGADataset final: public GDALPamDataset
 {
     friend class SAGARasterBand;
 
@@ -109,7 +109,7 @@ class SAGADataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SAGARasterBand : public GDALPamRasterBand
+class SAGARasterBand final: public GDALPamRasterBand
 {
     friend class SAGADataset;
 

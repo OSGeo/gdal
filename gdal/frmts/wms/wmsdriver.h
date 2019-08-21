@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Adam Nowacki
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017, Dmitry Baryshnikov, <polimax@mail.ru>
  * Copyright (c) 2017, NextGIS, <info@nextgis.com>
  *
@@ -272,7 +272,7 @@ private:
 /*                            GDALWMSDataset                            */
 /************************************************************************/
 
-class GDALWMSDataset : public GDALPamDataset {
+class GDALWMSDataset final: public GDALPamDataset {
     friend class GDALWMSRasterBand;
 
 public:
@@ -461,7 +461,7 @@ protected:
 /*                            GDALWMSRasterBand                         */
 /************************************************************************/
 
-class GDALWMSRasterBand : public GDALPamRasterBand {
+class GDALWMSRasterBand final: public GDALPamRasterBand {
     friend class GDALWMSDataset;
     void    ComputeRequestInfo( GDALWMSImageRequestInfo &iri,
                                 GDALWMSTiledImageRequestInfo &tiri,

@@ -2,10 +2,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Client of geocoding service.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -316,6 +316,7 @@ OGRGeocodingSessionH OGRGeocodeCreateSession( char** papszOptions )
 
     const char* pszDelayBetweenQueries = OGRGeocodeGetParameter(papszOptions,
                                                                 "DELAY", "1.0");
+    // coverity[tainted_data]
     hSession->dfDelayBetweenQueries = CPLAtofM(pszDelayBetweenQueries);
 
     const char* pszQueryTemplateDefault = nullptr;

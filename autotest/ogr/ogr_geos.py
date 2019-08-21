@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -421,7 +421,7 @@ def test_ogr_geos_distance():
 
     distance = g1.Distance(g2)
 
-    assert abs(distance - 1) <= 0.00000000001, \
+    assert distance == pytest.approx(1, abs=0.00000000001), \
         ('Distance() result wrong, got %g.' % distance)
 
 ###############################################################################

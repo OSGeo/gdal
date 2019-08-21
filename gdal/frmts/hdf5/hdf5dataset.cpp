@@ -103,6 +103,8 @@ void GDALRegister_HDF5()
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
+
     poDriver->pfnOpen = HDF5Dataset::Open;
     poDriver->pfnIdentify = HDF5Dataset::Identify;
     poDriver->pfnUnloadDriver = HDF5DatasetDriverUnload;
@@ -201,8 +203,6 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
             return GDT_Unknown;
         else if( H5Tequal(H5T_NATIVE_ULLONG, TypeID) )
             return GDT_Unknown;
-        else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
-            return GDT_Unknown;
     }
     else  //Parse compound type to determine if data is complex
     {
@@ -216,6 +216,20 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
         const bool bTypeEqual = H5Tequal( ElemTypeID, Elem2TypeID) > 0;
         H5Tclose(Elem2TypeID);
         if ( !bTypeEqual )
+        {
+            H5Tclose(ElemTypeID);
+            return GDT_Unknown;
+        }
+
+        char* pszName1 = H5Tget_member_name(TypeID, 0);
+        const bool bIsReal = pszName1 && (pszName1[0] == 'r' ||pszName1[0] == 'R');
+        H5free_memory(pszName1);
+
+        char* pszName2 = H5Tget_member_name(TypeID, 1);
+        const bool bIsImaginary = pszName2 && (pszName2[0] == 'i' ||pszName2[0] == 'I');
+        H5free_memory(pszName2);
+
+        if( !bIsReal || !bIsImaginary)
         {
             H5Tclose(ElemTypeID);
             return GDT_Unknown;
@@ -345,6 +359,12 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
 int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
+    if( (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) &&
+        STARTS_WITH(poOpenInfo->pszFilename, "HDF5:") )
+    {
+        return TRUE;
+    }
+
     // Is it an HDF5 file?
     constexpr char achSignature[] = "\211HDF\r\n\032\n";
 
@@ -411,6 +431,11 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
 {
     if( !Identify(poOpenInfo) )
         return nullptr;
+
+    if( poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER )
+    {
+        return OpenMultiDim(poOpenInfo);
+    }
 
     // Create datasource.
     HDF5Dataset *const poDS = new HDF5Dataset();
@@ -842,11 +867,11 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
             H5Aread(hAttrID, hAttrNativeType, papszStrings);
 
             // Concatenate all values as one string separated by a space.
-            CPLString osVal = papszStrings[0];
+            CPLString osVal = papszStrings[0] ? papszStrings[0] : "{NULL}";
             for( hsize_t i = 1; i < nAttrElmts; i++ )
             {
                 osVal += " ";
-                osVal += papszStrings[i];
+                osVal += papszStrings[i] ? papszStrings[i] : "{NULL}";
             }
 
             szValue = static_cast<char *>(CPLMalloc(osVal.length() + 1));

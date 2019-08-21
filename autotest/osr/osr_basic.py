@@ -10,7 +10,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@
 import gdaltest
 from osgeo import osr
 import pytest
-
+from threading import Thread
 
 ###############################################################################
 # Create a UTM WGS84 coordinate system and check various items.
@@ -64,7 +64,7 @@ def test_osr_basic_1():
 
     for parm in parm_list:
         value = utm_srs.GetProjParm(parm[0], -1111)
-        assert abs(value - parm[1]) <= .00000000000010, ('got %g for %s instead of %g.'
+        assert value == pytest.approx(parm[1], abs=.00000000000010), ('got %g for %s instead of %g.'
                                  % (value, parm[0], parm[1]))
 
     auth_list = [('GEOGCS', '4326'),
@@ -266,7 +266,7 @@ def test_osr_basic_8():
 
     assert fe != 1000.0, 'false easting was unexpectedly not updated.'
 
-    assert abs(fe - 3280.840) <= 0.01, 'wrong updated false easting value.'
+    assert fe == pytest.approx(3280.840, abs=0.01), 'wrong updated false easting value.'
 
 ###############################################################################
 # Test the Validate() method.
@@ -585,6 +585,8 @@ def test_osr_basic_20():
     sr = osr.SpatialReference()
     sr.ImportFromEPSGA(4326)
 
+    assert sr.GetAxesCount() == 2
+
     assert sr.GetAxisName(None, 0) == 'Geodetic latitude'
 
     assert sr.GetAxisOrientation(None, 0) == osr.OAO_North
@@ -594,6 +596,21 @@ def test_osr_basic_20():
     assert sr.GetAxisOrientation('GEOGCS', 1) == osr.OAO_East
 
     assert sr.GetAngularUnitsName() == 'degree'
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:4326+5773')
+
+    assert sr.GetAxisName(None, 0) == 'Geodetic latitude'
+
+    assert sr.GetAxisOrientation(None, 0) == osr.OAO_North
+
+    assert sr.GetAxisName(None, 1) == 'Geodetic longitude'
+
+    assert sr.GetAxisOrientation(None, 1) == osr.OAO_East
+
+    assert sr.GetAxisName(None, 2) == 'Gravity-related height'
+
+    assert sr.GetAxisOrientation(None, 2) == osr.OAO_Up
 
 ###############################################################################
 # Test IsSame() with equivalent forms of Mercator_1SP and Mercator_2SP
@@ -1518,3 +1535,66 @@ def test_osr_get_name():
     assert sr.GetName() is None
     sr.SetWellKnownGeogCS('WGS84')
     assert sr.GetName() == 'WGS 84'
+
+
+def test_SetPROJSearchPath():
+
+    # OSRSetPROJSearchPaths() is only taken into priority over other methods
+    # starting with PROJ >= 6.1
+    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 1):
+        pytest.skip()
+
+    # Do the test in a new thread, so that SetPROJSearchPath() is taken
+    # into account
+    def threaded_function(arg):
+        sr = osr.SpatialReference()
+        with gdaltest.error_handler():
+            arg[0] = sr.ImportFromEPSG(32631)
+
+    try:
+        arg = [ -1 ]
+
+        thread = Thread(target = threaded_function, args = (arg, ))
+        thread.start()
+        thread.join()
+        assert arg[0] == 0
+
+        osr.SetPROJSearchPath('/i_do/not/exist')
+
+        thread = Thread(target = threaded_function, args = (arg, ))
+        thread.start()
+        thread.join()
+        assert arg[0] > 0
+    finally:
+        # Cancel search path (we can't call SetPROJSearchPath(None))
+        osr.SetPROJSearchPaths([])
+
+    sr = osr.SpatialReference()
+    assert sr.ImportFromEPSG(32631) == 0
+
+
+def test_osr_import_projjson():
+
+    sr = osr.SpatialReference()
+    projjson = '{"$schema":"https://proj.org/schemas/v0.1/projjson.schema.json","type":"GeographicCRS","name":"WGS 84","datum":{"type":"GeodeticReferenceFrame","name":"World Geodetic System 1984","ellipsoid":{"name":"WGS 84","semi_major_axis":6378137,"inverse_flattening":298.257223563}},"coordinate_system":{"subtype":"ellipsoidal","axis":[{"name":"Geodetic latitude","abbreviation":"Lat","direction":"north","unit":"degree"},{"name":"Geodetic longitude","abbreviation":"Lon","direction":"east","unit":"degree"}]},"area":"World","bbox":{"south_latitude":-90,"west_longitude":-180,"north_latitude":90,"east_longitude":180},"id":{"authority":"EPSG","code":4326}}'
+    with gdaltest.error_handler():
+        ret = sr.SetFromUserInput(projjson)
+        if osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2:
+            assert ret == 0
+
+    broken_projjson = projjson[0:-10]
+    with gdaltest.error_handler():
+        assert sr.SetFromUserInput(broken_projjson) != 0
+
+
+def test_osr_export_projjson():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+
+    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2):
+        with gdaltest.error_handler():
+            sr.ExportToPROJJSON()
+        pytest.skip()
+
+    assert sr.ExportToPROJJSON() != ''

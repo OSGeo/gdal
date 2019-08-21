@@ -42,7 +42,7 @@
 class MSGDataset;
 class ReflectanceCalculator;
 
-class MSGRasterBand : public GDALRasterBand
+class MSGRasterBand final: public GDALRasterBand
 {
   friend class MSGDataset;
 
@@ -65,7 +65,7 @@ class MSGRasterBand : public GDALRasterBand
 /************************************************************************/
 /*                      MSGDataset                                       */
 /************************************************************************/
-class MSGDataset : public GDALDataset
+class MSGDataset final: public GDALDataset
 {
   friend class MSGRasterBand;
 

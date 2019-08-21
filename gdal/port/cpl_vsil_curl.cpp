@@ -303,6 +303,7 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandler* poFSIn,
     poFS(poFSIn),
     m_nMaxRetry(atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)))),
+    // coverity[tainted_data]
     m_dfRetryDelay(CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)))),
     m_bUseHead(CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD",
@@ -862,6 +863,14 @@ retry:
         }
     }
 
+    if( ENABLE_DEBUG && szCurlErrBuf[0] != '\0' &&
+        sWriteFuncHeaderData.bDownloadHeaderOnly &&
+        EQUAL(szCurlErrBuf, "Failed writing header") )
+    {
+        // Not really an error since we voluntarily interrupted the download !
+        szCurlErrBuf[0] = 0;
+    }
+
     double dfSize = 0;
     if( oFileProp.eExists != EXIST_YES )
     {
@@ -945,7 +954,18 @@ retry:
         {
             oFileProp.eExists = EXIST_YES;
             if( dfSize < 0 )
+            {
+                if( osVerb == "HEAD" && !bRetryWithGet )
+                {
+                    CPLDebug("VSICURL", "HEAD did not provide file size. Retrying with GET");
+                    bRetryWithGet = true;
+                    CPLFree(sWriteFuncData.pBuffer);
+                    CPLFree(sWriteFuncHeaderData.pBuffer);
+                    curl_easy_cleanup(hCurlHandle);
+                    goto retry;
+                }
                 oFileProp.fileSize = 0;
+            }
             else
                 oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
         }
@@ -1029,7 +1049,7 @@ retry:
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1384,7 +1404,7 @@ retry:
         // Look if we should attempt a retry
         const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
             static_cast<int>(response_code), dfRetryDelay,
-            sWriteFuncHeaderData.pBuffer);
+            sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
         if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {
@@ -1600,10 +1620,9 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             // Ensure that we will request at least the number of blocks
             // to satisfy the remaining buffer size to read.
             const vsi_l_offset nEndOffsetToDownload =
-                ((iterOffset + nBufferRequestSize) / DOWNLOAD_CHUNK_SIZE) *
+                ((iterOffset + nBufferRequestSize + DOWNLOAD_CHUNK_SIZE - 1) / DOWNLOAD_CHUNK_SIZE) *
                 DOWNLOAD_CHUNK_SIZE;
             const int nMinBlocksToDownload =
-                1 +
                 static_cast<int>(
                     (nEndOffsetToDownload - nOffsetToDownload) /
                     DOWNLOAD_CHUNK_SIZE);
@@ -2775,6 +2794,14 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
     {
         char** papszExtensions =
             CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
+        const char *queryStart = strchr(pszFilename, '?');
+        char *pszFilenameWithoutQuery = nullptr;
+        if (queryStart != nullptr)
+        {
+            pszFilenameWithoutQuery = CPLStrdup(pszFilename);
+            pszFilenameWithoutQuery[queryStart - pszFilename]='\0';
+            pszFilename = pszFilenameWithoutQuery;
+        }
         const size_t nURLLen = strlen(pszFilename);
         bool bFound = false;
         for( int i = 0; papszExtensions[i] != nullptr; i++ )
@@ -2799,6 +2826,9 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
         }
 
         CSLDestroy(papszExtensions);
+        if( pszFilenameWithoutQuery ) {
+            CPLFree(pszFilenameWithoutQuery);
+        }
 
         return bFound;
     }

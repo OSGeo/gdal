@@ -11,7 +11,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Philippe Vachon
- * Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -246,7 +246,7 @@ class COASPRasterBand;
  *    herein is from harassing various Defence Scientists at DRDC Ottawa.
  */
 
-class COASPDataset : public GDALDataset
+class COASPDataset final: public GDALDataset
 {
         friend class COASPRasterBand;
         VSILFILE *fpHdr; /* File pointer for the header file */
@@ -278,7 +278,7 @@ public:
  * ================================================================ *
  ********************************************************************/
 
-class COASPRasterBand : public GDALRasterBand {
+class COASPRasterBand final: public GDALRasterBand {
     VSILFILE *fp;
     // int ePol;
   public:

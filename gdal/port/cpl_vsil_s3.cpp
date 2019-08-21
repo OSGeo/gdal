@@ -627,6 +627,7 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
         m_bUseChunked(bUseChunked),
         m_nMaxRetry(atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)))),
+        // coverity[tainted_data]
         m_dfRetryDelay(CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY))))
 {
@@ -769,6 +770,9 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
         MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
                      hCurlHandle);
@@ -784,7 +788,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -934,6 +938,9 @@ bool VSIS3WriteHandle::UploadPart()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                         VSICurlHandleWriteFunc);
 
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
         MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
                         hCurlHandle);
@@ -949,7 +956,7 @@ bool VSIS3WriteHandle::UploadPart()
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1092,6 +1099,9 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
         while( m_nChunkedBufferOff <  m_nChunkedBufferSize && !bRetry )
         {
             int still_running;
+
+            memset(&m_osCurlErrBuf[0], 0, m_osCurlErrBuf.size());
+
             while (curl_multi_perform(m_hCurlMulti, &still_running) ==
                                             CURLM_CALL_MULTI_PERFORM &&
                 m_nChunkedBufferOff <  m_nChunkedBufferSize)
@@ -1119,7 +1129,8 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                             const double dfNewRetryDelay =
                                 bCanRetry ? CPLHTTPGetNewRetryDelay(
                                 static_cast<int>(response_code), dfRetryDelay,
-                                m_sWriteFuncHeaderData.pBuffer) : 0.0;
+                                m_sWriteFuncHeaderData.pBuffer,
+                                m_osCurlErrBuf.c_str()) : 0.0;
 
                             curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
                             curl_easy_cleanup(m_hCurl);
@@ -1174,7 +1185,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                 const double dfNewRetryDelay =
                     bCanRetry ? CPLHTTPGetNewRetryDelay(
                     static_cast<int>(response_code), dfRetryDelay,
-                    m_sWriteFuncHeaderData.pBuffer) : 0.0;
+                    m_sWriteFuncHeaderData.pBuffer, m_osCurlErrBuf.c_str()) : 0.0;
                 curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
                 curl_easy_cleanup(m_hCurl);
                 m_hCurl = nullptr;
@@ -1362,6 +1373,9 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
         MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
                      hCurlHandle);
@@ -1377,7 +1391,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1526,6 +1540,10 @@ bool VSIS3WriteHandle::CompleteMultipart()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
         MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
                     hCurlHandle);
 
@@ -1538,7 +1556,7 @@ bool VSIS3WriteHandle::CompleteMultipart()
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1618,6 +1636,10 @@ bool VSIS3WriteHandle::AbortMultipart()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
         MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
                     hCurlHandle);
 
@@ -1630,7 +1652,7 @@ bool VSIS3WriteHandle::AbortMultipart()
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -2091,6 +2113,7 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
 
     const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    // coverity[tainted_data]
     double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
     int nRetryCount = 0;
@@ -2120,6 +2143,10 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
         MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
                      hCurlHandle);
 
@@ -2135,7 +2162,7 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -2422,6 +2449,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                     CPLFormFilename(osSourceWithoutSlash, *iter, nullptr) );
                 CPLString osSubTarget(
                     CPLFormFilename(osTargetDir, *iter, nullptr) );
+                // coverity[divide_by_zero]
                 void* pScaledProgress = GDALCreateScaledProgress(
                     double(iFile) / nFileCount, double(iFile + 1) / nFileCount,
                     pProgressFunc, pProgressData);

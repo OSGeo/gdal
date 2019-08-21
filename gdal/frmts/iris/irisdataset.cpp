@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2012, Roger Veciana <rveciana@gmail.com>
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ static double RAD2DEG = 180.0 / M_PI;
 
 class IRISRasterBand;
 
-class IRISDataset : public GDALPamDataset
+class IRISDataset final: public GDALPamDataset
 {
     friend class IRISRasterBand;
 
@@ -148,7 +148,7 @@ const char* const IRISDataset::aszProjections[] = {
 /* ==================================================================== */
 /************************************************************************/
 
-class IRISRasterBand : public GDALPamRasterBand
+class IRISRasterBand final: public GDALPamRasterBand
 {
     friend class IRISDataset;
 

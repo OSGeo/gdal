@@ -1383,16 +1383,19 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // bFormatExplicitlySet = TRUE;
+            // coverity[tainted_data]
             pszFormat = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg], "-dsco") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             papszDSCO = CSLAddString(papszDSCO, papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-lco") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             papszLCO = CSLAddString(papszLCO, papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg], "-create") )
@@ -1414,17 +1417,20 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-l") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszLineDataSource = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg], "-ln") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszLineLayerName = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg], "-lf") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS_PROJECT
+            // coverity[tainted_data]
             pszLineSepFieldName = papszArgv[++iArg];
 #else
             fprintf(stderr,
@@ -1435,12 +1441,14 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-p") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszPicketsDataSource = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg], "-pn") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS_PROJECT
+            // coverity[tainted_data]
             pszPicketsLayerName = papszArgv[++iArg];
 #else
             fprintf(stderr,
@@ -1452,6 +1460,7 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS_PROJECT
+            // coverity[tainted_data]
             pszPicketsMField = papszArgv[++iArg];
 #else
             fprintf(stderr,
@@ -1463,6 +1472,7 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS_PROJECT
+            // coverity[tainted_data]
             pszPicketsSepFieldName = papszArgv[++iArg];
 #else
             fprintf(stderr,
@@ -1473,27 +1483,32 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-r") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszPartsDataSource = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg], "-rn") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszPartsLayerName = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg], "-o") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszOutputDataSource = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg], "-on") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             pszOutputLayerName = CPLStrdup(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg], "-of") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS_PROJECT
+            // coverity[tainted_data]
             pszOutputSepFieldName = papszArgv[++iArg];
 #else
             fprintf(stderr,
@@ -1505,6 +1520,7 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS_PROJECT
+            // coverity[tainted_data]
             dfX = CPLAtofM(papszArgv[++iArg]);
 #else
             fprintf(stderr,
@@ -1516,6 +1532,7 @@ MAIN_START(nArgc, papszArgv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS_PROJECT
+            // coverity[tainted_data]
             dfY = CPLAtofM(papszArgv[++iArg]);
 #else
             fprintf(stderr,
@@ -1526,22 +1543,26 @@ MAIN_START(nArgc, papszArgv)
         else if( EQUAL(papszArgv[iArg], "-m") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             dfPos = CPLAtofM(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg], "-mb") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             dfPosBeg = CPLAtofM(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg], "-me") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            // coverity[tainted_data]
             dfPosEnd = CPLAtofM(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg], "-s") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS_PROJECT
+            // coverity[tainted_data]
             dfStep = CPLAtofM(papszArgv[++iArg]);
 #else
             fprintf(stderr,

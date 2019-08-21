@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  MG4Lidar Reading Driver testing.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -73,7 +73,7 @@ def test_mg4lidar_1():
     gt = ds.GetGeoTransform()
     ref_gt = (504489.919999999983702, 3.078227571115974, 0, 4795848.389999999664724, 0, -3.078259860787739)
     for i in range(6):
-        assert abs(gt[i] - ref_gt[i]) <= 1e-6, 'did not get expected geotransform'
+        assert gt[i] == pytest.approx(ref_gt[i], abs=1e-6), 'did not get expected geotransform'
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 13216:

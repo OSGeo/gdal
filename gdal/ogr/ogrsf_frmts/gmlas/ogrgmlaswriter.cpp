@@ -3072,7 +3072,7 @@ void GMLASWriter::PrintLine(VSILFILE* fp, const char *fmt, ...)
 /*                           GMLASFakeDataset                           */
 /************************************************************************/
 
-class GMLASFakeDataset : public GDALDataset
+class GMLASFakeDataset final: public GDALDataset
 {
     public:
         GMLASFakeDataset() {}

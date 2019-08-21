@@ -207,6 +207,9 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jpegls
 EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_tiledb
 !ENDIF
 
+!IFDEF RDB_ENABLED
+EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_rdb
+!ENDIF
 
 default:	o\gdalallregister.obj subdirs
 
@@ -253,8 +256,3 @@ plugins-install:
 		&& $(MAKE) /f makefile.vc plugin-install \
 		&& cd .. \
 		|| exit 1
-
-html-install:
-	copy *.html $(HTMLDIR)
-	-for %d in ( $(DIRLIST) ) do \
-		copy %d\frmt_*.html $(HTMLDIR)

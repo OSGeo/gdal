@@ -71,7 +71,9 @@ void CPL_DLL CSVDeaccess( const char * );
 const char CPL_DLL *CSVGetField( const char *, const char *, const char *,
                                  CSVCompareCriteria, const char * );
 
+#ifndef DOXYGEN_XML
 void CPL_DLL SetCSVFilenameHook( const char *(*)(const char *) );
+#endif
 
 CPL_C_END
 

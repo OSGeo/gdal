@@ -2,10 +2,10 @@
  * Purpose:  ASRP/USRP Reader
  * Author:   Frank Warmerdam (warmerdam@pobox.com)
  *
- * Derived from ADRG driver by Even Rouault, even.rouault at mines-paris.org.
+ * Derived from ADRG driver by Even Rouault, even.rouault at spatialys.com.
  *
  ******************************************************************************
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2009, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -41,7 +41,7 @@
 
 CPL_CVSID("$Id$")
 
-class SRPDataset : public GDALPamDataset
+class SRPDataset final: public GDALPamDataset
 {
     friend class SRPRasterBand;
 
@@ -105,7 +105,7 @@ class SRPDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SRPRasterBand : public GDALPamRasterBand
+class SRPRasterBand final: public GDALPamRasterBand
 {
     friend class SRPDataset;
 
@@ -580,7 +580,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
         {
             TILEINDEX = new int [NFL * NFC];
         }
-        catch( const std::bad_alloc& )
+        catch( const std::exception& )
         {
             return false;
         }

@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -32,6 +32,8 @@ import sys
 import shutil
 
 import pytest
+
+import webserver
 
 import gdaltest
 from osgeo import gdal, osr
@@ -435,7 +437,7 @@ def test_tiff_linearparmunits():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (1)'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting (1)'
 
     # Test the file with the old (broken) GDAL formulation.
 
@@ -446,7 +448,7 @@ def test_tiff_linearparmunits():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 609601.219202438) <= 0.001, 'did not get expected false easting (2)'
+    assert fe == pytest.approx(609601.219202438, abs=0.001), 'did not get expected false easting (2)'
 
     # Test the file when using an EPSG code.
 
@@ -457,7 +459,7 @@ def test_tiff_linearparmunits():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (3)'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting (3)'
 
 ###############################################################################
 # Check that the GTIFF_LINEAR_UNITS handling works properly (#3901)
@@ -476,7 +478,7 @@ def test_tiff_linearparmunits2():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 6561666.66667) <= 0.001, 'did not get expected false easting (1)'
+    assert fe == pytest.approx(6561666.66667, abs=0.001), 'did not get expected false easting (1)'
 
     # Test the file with the correct formulation that is marked as correct.
 
@@ -487,7 +489,7 @@ def test_tiff_linearparmunits2():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (2)'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting (2)'
 
     # Test the file with the old (broken) GDAL formulation.
 
@@ -498,7 +500,7 @@ def test_tiff_linearparmunits2():
     srs = osr.SpatialReference(wkt)
 
     fe = srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
-    assert abs(fe - 2000000.0) <= 0.001, 'did not get expected false easting (3)'
+    assert fe == pytest.approx(2000000.0, abs=0.001), 'did not get expected false easting (3)'
 
     gdal.SetConfigOption('GTIFF_LINEAR_UNITS', 'DEFAULT')
 
@@ -735,9 +737,7 @@ Definition Table
 
     gdal.GetDriverByName('GTiff').Delete('tmp/tiff_read_from_tab.tif')
 
-    with pytest.raises(OSError, message='did not expect to find .tab file at that point'):
-        os.stat('tmp/tiff_read_from_tab.tab')
-    
+    assert not os.path.exists('tmp/tiff_read_from_tab.tab')
 
     assert gt == (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0), \
         'did not get expected geotransform'
@@ -1025,35 +1025,69 @@ def test_tiff_read_online_1():
 # support
 
 
-def test_tiff_read_online_2():
+def test_tiff_read_vsicurl_multirange():
 
     if gdal.GetDriverByName('HTTP') is None:
         pytest.skip()
 
-    if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/gtiff/utm.tif') is None:
-        pytest.skip('cannot open URL')
+    webserver_process = None
+    webserver_port = 0
 
-    old_val = gdal.GetConfigOption('GTIFF_DIRECT_IO')
-    gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
-    gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', '.tif')
-    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
-    ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif')
-    gdal.SetConfigOption('GTIFF_DIRECT_IO', old_val)
-    gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', None)
-    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', None)
+    (webserver_process, webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if webserver_port == 0:
+        pytest.skip()
 
-    assert ds is not None, 'could not open dataset'
+    gdal.VSICurlClearCache()
 
-    # Read subsampled data
-    subsampled_data = ds.ReadRaster(0, 0, 512, 512, 128, 128)
-    ds = None
+    try:
+        filesize = 262976
+        handler = webserver.SequentialHandler()
+        handler.add('HEAD', '/utm.tif', 200, {'Content-Length': '%d' % filesize})
+        def method(request):
+            #sys.stderr.write('%s\n' % str(request.headers))
 
-    ds = gdal.GetDriverByName('MEM').Create('', 128, 128)
-    ds.WriteRaster(0, 0, 128, 128, subsampled_data)
-    cs = ds.GetRasterBand(1).Checksum()
-    ds = None
+            if request.headers['Range'].startswith('bytes='):
+                rng = request.headers['Range'][len('bytes='):]
+                assert len(rng.split('-')) == 2
+                start = int(rng.split('-')[0])
+                end = int(rng.split('-')[1])
 
-    assert cs == 54935, 'wrong checksum'
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(206)
+                request.send_header('Content-type', 'application/octet-stream')
+                request.send_header('Content-Range', 'bytes %d-%d/%d' % (start, end, filesize))
+                request.send_header('Content-Length', end - start + 1)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open('../gdrivers/data/utm.tif', 'rb') as f:
+                    f.seek(start, 0)
+                    request.wfile.write(f.read(end - start + 1))
+
+        for i in range(6):
+            handler.add('GET', '/utm.tif', custom_method=method)
+
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_options({ 'GTIFF_DIRECT_IO': 'YES',
+                                           'CPL_VSIL_CURL_ALLOWED_EXTENSIONS': '.tif',
+                                           'GDAL_DISABLE_READDIR_ON_OPEN': 'EMPTY_DIR' }):
+                ds = gdal.Open('/vsicurl/http://127.0.0.1:%d/utm.tif' % webserver_port)
+                assert ds is not None, 'could not open dataset'
+
+                # Read subsampled data
+                subsampled_data = ds.ReadRaster(0, 0, 512, 32, 128, 4)
+                ds = None
+
+                ds = gdal.GetDriverByName('MEM').Create('', 128, 4)
+                ds.WriteRaster(0, 0, 128, 4, subsampled_data)
+                cs = ds.GetRasterBand(1).Checksum()
+                ds = None
+
+                assert cs == 6429, 'wrong checksum'
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
 
 ###############################################################################
 # Test reading a TIFF made of a single-strip that is more than 2GB (#5403)
@@ -1541,9 +1575,7 @@ def test_tiff_read_md1():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_dg.tif.aux.xml'):
-        os.stat('data/md_dg.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_dg.tif.aux.xml')
 
     
 ###############################################################################
@@ -1577,9 +1609,7 @@ def test_tiff_read_md2():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_dg_2.tif.aux.xml'):
-        os.stat('data/md_dg_2.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_dg_2.tif.aux.xml')
 
     
 ###############################################################################
@@ -1613,9 +1643,7 @@ def test_tiff_read_md3():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_ge_rgb_0010000.tif.aux.xml'):
-        os.stat('data/md_ge_rgb_0010000.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_ge_rgb_0010000.tif.aux.xml')
 
     
 ###############################################################################
@@ -1649,9 +1677,7 @@ def test_tiff_read_md4():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_ov.tif.aux.xml'):
-        os.stat('data/md_ov.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_ov.tif.aux.xml')
 
     
 ###############################################################################
@@ -1685,9 +1711,7 @@ def test_tiff_read_md5():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_rdk1.tif.aux.xml'):
-        os.stat('data/md_rdk1.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_rdk1.tif.aux.xml')
 
     
 ###############################################################################
@@ -1721,9 +1745,7 @@ def test_tiff_read_md6():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_ls_b1.tif.aux.xml'):
-        os.stat('data/md_ls_b1.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_ls_b1.tif.aux.xml')
 
     
 ###############################################################################
@@ -1757,9 +1779,7 @@ def test_tiff_read_md7():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/spot/md_spot.tif.aux.xml'):
-        os.stat('data/spot/md_spot.tif.aux.xml')
-    
+    assert not os.path.exists('data/spot/md_spot.tif.aux.xml')
 
     
 ###############################################################################
@@ -1793,9 +1813,7 @@ def test_tiff_read_md8():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_re.tif.aux.xml'):
-        os.stat('data/md_re.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_re.tif.aux.xml')
 
     
 ###############################################################################
@@ -1828,9 +1846,7 @@ def test_tiff_read_md9():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/alos/IMG-md_alos.tif.aux.xml'):
-        os.stat('data/alos/IMG-md_alos.tif.aux.xml')
-    
+    assert not os.path.exists('data/alos/IMG-md_alos.tif.aux.xml')
 
     
 ###############################################################################
@@ -1864,9 +1880,7 @@ def test_tiff_read_md10():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_eros.tif.aux.xml'):
-        os.stat('data/md_eros.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_eros.tif.aux.xml')
 
     
 ###############################################################################
@@ -1900,9 +1914,7 @@ def test_tiff_read_md11():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_kompsat.tif.aux.xml'):
-        os.stat('data/md_kompsat.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_kompsat.tif.aux.xml')
 
     
 ###############################################################################
@@ -1935,9 +1947,7 @@ def test_tiff_read_md12():
 
     ds = None
 
-    with pytest.raises(OSError, message='Expected not generation of data/md_kompsat.tif.aux.xml'):
-        os.stat('data/md_kompsat.tif.aux.xml')
-    
+    assert not os.path.exists('data/md_kompsat.tif.aux.xml')
 
     # Test not valid DIMAP product [https://github.com/OSGeo/gdal/issues/431]
     shutil.copy('../gdrivers/data/dimap2/IMG_foo_R2C1.TIF', 'tmp/IMG_foo_temp.TIF')
@@ -2477,11 +2487,11 @@ def test_tiff_read_arcgis93_geodataxform_gcp():
     assert ds.GetGCPProjection().find('26712') >= 0
     assert ds.GetGCPCount() == 16
     gcp = ds.GetGCPs()[0]
-    assert (abs(gcp.GCPPixel - 565) <= 1e-5 and \
-       abs(gcp.GCPLine - 11041) <= 1e-5 and \
-       abs(gcp.GCPX - 500000) <= 1e-5 and \
-       abs(gcp.GCPY - 4705078.79016612) <= 1e-5 and \
-       abs(gcp.GCPZ - 0) <= 1e-5)
+    assert (gcp.GCPPixel == pytest.approx(565, abs=1e-5) and \
+       gcp.GCPLine == pytest.approx(11041, abs=1e-5) and \
+       gcp.GCPX == pytest.approx(500000, abs=1e-5) and \
+       gcp.GCPY == pytest.approx(4705078.79016612, abs=1e-5) and \
+       gcp.GCPZ == pytest.approx(0, abs=1e-5))
 
 ###############################################################################
 # Test reading file with block size > signed int 32 bit
@@ -2742,9 +2752,10 @@ def test_tiff_read_many_blocks_truncated():
         pytest.skip()
 
     ds = gdal.Open('data/many_blocks_truncated.tif')
+    gdal.ErrorReset()
     with gdaltest.error_handler():
         ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_2000000', 'TIFF')
-    assert gdal.GetLastErrorMsg() == 'File too short'
+    assert gdal.GetLastErrorMsg() != ''
 
 ###############################################################################
 # Test reading  images with nbits > 32
@@ -3117,8 +3128,8 @@ def test_tiff_read_overview_of_external_mask():
 def test_tiff_read_ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero():
 
     ds = gdal.Open('data/ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero.tif')
-    assert ds.GetRasterBand(1).GetScale() == 1
-    assert ds.GetRasterBand(1).GetOffset() == 0
+    assert not ds.GetRasterBand(1).GetScale()
+    assert not ds.GetRasterBand(1).GetOffset()
 
 
 ###############################################################################
@@ -3160,3 +3171,233 @@ def test_tiff_read_deflate_4GB():
     ref_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     ref_ds.GetRasterBand(1).Fill(127)
     assert data == ref_ds.ReadRaster()
+
+###############################################################################
+# Check that our use of TileByteCounts is minimal for COG (only for last tile)
+# and for interleaved mask that we also hardly use TileOffsets.
+
+def test_tiff_read_cog_strile_arrays_zeroified_when_possible():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    # The file has been produced with:
+    # gdal_translate ../autotest/gcore/data/rgba.tif -b 1 -b 2 -b 3 -mask 4 in.tif
+    # gdal_translate in.tif cog.tif -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW -co TILED=YES -co BLOCKXSIZE=16 -co BLOCKYSIZE=16 --config GDAL_TIFF_INTERNAL_MASK YES
+    # and then with an hex editor, zeroify all entries of TileByteCounts except the last tile for both IFDs
+    # and zeroify all entries of TileOffsets for 2nd IFD (mask) except the last tile.
+
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open('data/cog_strile_arrays_zeroified_when_possible.tif')
+        cs = ds.GetRasterBand(1).Checksum()
+        cs_mask = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    assert cs == 4873
+    assert cs_mask == 1222
+
+###############################################################################
+# Check that our reading of a COG with /vsicurl is efficient
+
+def test_tiff_read_cog_vsicurl():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if webserver_port == 0:
+        pytest.skip()
+
+    in_filename = 'tmp/test_tiff_read_cog_vsicurl_in.tif'
+    cog_filename = 'tmp/test_tiff_read_cog_vsicurl_out.tif'
+
+    try:
+        src_ds = gdal.GetDriverByName('GTIFF').Create(in_filename, 1024, 1024, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'SPARSE_OK=YES'])
+        src_ds.BuildOverviews('NEAR', [256])
+        gdal.GetDriverByName('GTIFF').CreateCopy(cog_filename, src_ds, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'COPY_SRC_OVERVIEWS=YES', 'COMPRESS=LZW'])
+
+        filesize = gdal.VSIStatL(cog_filename).size
+
+        handler = webserver.SequentialHandler()
+        handler.add('HEAD', '/cog.tif', 200, {'Content-Length': '%d' % filesize})
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=0-16383':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 0-16383/%d' % filesize)
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                request.wfile.write(open(cog_filename, 'rb').read(16384))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open('/vsicurl/http://localhost:%d/cog.tif' % webserver_port)
+        assert(ds)
+
+        handler = webserver.SequentialHandler()
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=32768-49151':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 32768-49151/%d' % filesize)
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open(cog_filename, 'rb') as f:
+                    f.seek(32768, 0)
+                    request.wfile.write(f.read(16384))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=180224-193497':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 180224-193497/%d' % filesize)
+                request.send_header('Content-Length', 13274)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open(cog_filename, 'rb') as f:
+                    f.seek(180224, 0)
+                    request.wfile.write(f.read(13274))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        with webserver.install_http_handler(handler):
+            ret = ds.ReadRaster(1024 - 32,1024 - 32,16,16)
+        assert ret
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+        gdal.GetDriverByName('GTIFF').Delete(in_filename)
+        gdal.GetDriverByName('GTIFF').Delete(cog_filename)
+
+###############################################################################
+# Check that our reading of a COG with /vsicurl is efficient
+
+def test_tiff_read_cog_with_mask_vsicurl():
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if webserver_port == 0:
+        pytest.skip()
+
+    in_filename = 'tmp/test_tiff_read_cog_with_mask_vsicurl_in.tif'
+    cog_filename = 'tmp/test_tiff_read_cog_with_mask_vsicurl_out.tif'
+
+    try:
+        src_ds = gdal.GetDriverByName('GTIFF').Create(in_filename, 1024, 1024, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'SPARSE_OK=YES'])
+        src_ds.BuildOverviews('NEAR', [256])
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            gdal.GetDriverByName('GTIFF').CreateCopy(cog_filename, src_ds, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'COPY_SRC_OVERVIEWS=YES', 'COMPRESS=LZW'])
+
+        filesize = gdal.VSIStatL(cog_filename).size
+
+        handler = webserver.SequentialHandler()
+        handler.add('HEAD', '/cog.tif', 200, {'Content-Length': '%d' % filesize})
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=0-16383':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 0-16383/%d' % filesize)
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                request.wfile.write(open(cog_filename, 'rb').read(16384))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open('/vsicurl/http://localhost:%d/cog.tif' % webserver_port)
+        assert(ds)
+
+        handler = webserver.SequentialHandler()
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=32768-49151':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 32768-49151/%d' % filesize)
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open(cog_filename, 'rb') as f:
+                    f.seek(32768, 0)
+                    request.wfile.write(f.read(16384))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        def method(request):
+            #sys.stderr.write('%s\n' % request.headers['Range'])
+            if request.headers['Range'] == 'bytes=294912-311295':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 294912-311295/%d' % filesize)
+                request.send_header('Content-Length', 32768)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                with open(cog_filename, 'rb') as f:
+                    f.seek(294912, 0)
+                    request.wfile.write(f.read(32768))
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        handler.add('GET', '/cog.tif', custom_method=method)
+        with webserver.install_http_handler(handler):
+            ret = ds.ReadRaster(1024 - 32,1024 - 32,16,16)
+        assert ret
+
+        ret = ds.GetRasterBand(1).GetMaskBand().ReadRaster(1024 - 32,1024 - 32,16,16)
+        assert ret
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+        gdal.GetDriverByName('GTIFF').Delete(in_filename)
+        gdal.GetDriverByName('GTIFF').Delete(cog_filename)

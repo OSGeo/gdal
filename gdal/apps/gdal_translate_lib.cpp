@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, 2002, Frank Warmerdam
- * Copyright (c) 2007-2015, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2015, Faza Mahamood
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -883,6 +883,36 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                   psOptions->pszFormat);
         GDALTranslateOptionsFree(psOptions);
         return nullptr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Make sure we cleanup if there is an existing dataset of this    */
+/*      name.  But even if that seems to fail we will continue since    */
+/*      it might just be a corrupt file or something.                   */
+/*      This is needed for                                              */
+/*      gdal_translate foo.tif foo.tif.ovr -outsize 50% 50%             */
+/* -------------------------------------------------------------------- */
+    if( !CPLFetchBool(psOptions->papszCreateOptions, "APPEND_SUBDATASET", false) )
+    {
+        // Someone issuing Create("foo.tif") on a
+        // memory driver doesn't expect files with those names to be deleted
+        // on a file system...
+        // This is somewhat messy. Ideally there should be a way for the
+        // driver to overload the default behaviour
+        if( !EQUAL(psOptions->pszFormat, "MEM") &&
+            !EQUAL(psOptions->pszFormat, "Memory") )
+        {
+            GDALDriver::FromHandle(hDriver)->QuietDelete( pszDest );
+        }
+        // Make sure to load early overviews, so that on the GTiff driver
+        // external .ovr is looked for before it might be created as the
+        // output dataset !
+        if( GDALGetRasterCount( hSrcDataset ) )
+        {
+            auto hBand = GDALGetRasterBand(hSrcDataset, 1);
+            if( hBand )
+                GDALGetOverviewCount(hBand);
+        }
     }
 
     char** papszDriverMD = GDALGetMetadata(hDriver, nullptr);

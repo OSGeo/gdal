@@ -10,7 +10,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -218,7 +218,7 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
 
 class SGIRasterBand;
 
-class SGIDataset : public GDALPamDataset
+class SGIDataset final: public GDALPamDataset
 {
     friend class SGIRasterBand;
 
@@ -246,7 +246,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class SGIRasterBand : public GDALPamRasterBand
+class SGIRasterBand final: public GDALPamRasterBand
 {
     friend class SGIDataset;
 

@@ -40,7 +40,7 @@ enum ph_format
 #define PH_DEM_EXT          "x-dem"
 #define PH_GEOREF_SHIFT_Y   (1.0)
 
-class PhPrfBand : public VRTSourcedRasterBand
+class PhPrfBand final : public VRTSourcedRasterBand
 {
     std::vector<GDALRasterBand*> osOverview;
 public:
@@ -80,7 +80,7 @@ public:
     }
 };
 
-class PhPrfDataset : public VRTDataset
+class PhPrfDataset final : public VRTDataset
 {
     std::vector<GDALDataset*>    osSubTiles;
 public:
@@ -113,7 +113,7 @@ PhPrfDataset::PhPrfDataset( GDALAccess _eAccess, int nSizeX, int nSizeY,
 
 PhPrfDataset::~PhPrfDataset()
 {
-    CloseDependentDatasets();
+    PhPrfDataset::CloseDependentDatasets();
 }
 
 bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType,

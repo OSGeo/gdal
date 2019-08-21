@@ -2,10 +2,10 @@
  *
  * Project:  E00 grid driver
  * Purpose:  GDALDataset driver for E00 grid dataset.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,7 +74,7 @@ http://wrri.nmsu.edu/publish/techrpt/tr322/GIS/dem.e00 (compressed)
 
 class E00GRIDRasterBand;
 
-class E00GRIDDataset : public GDALPamDataset
+class E00GRIDDataset final: public GDALPamDataset
 {
     friend class E00GRIDRasterBand;
 
@@ -126,7 +126,7 @@ class E00GRIDDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class E00GRIDRasterBand : public GDALPamRasterBand
+class E00GRIDRasterBand final: public GDALPamRasterBand
 {
     friend class E00GRIDDataset;
 

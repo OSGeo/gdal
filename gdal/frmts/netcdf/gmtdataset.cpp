@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,7 +56,7 @@ extern CPLMutex *hNCMutex; /* shared with netcdf. See netcdfdataset.cpp */
 
 class GMTRasterBand;
 
-class GMTDataset : public GDALPamDataset
+class GMTDataset final: public GDALPamDataset
 {
     int         z_id;
     double      adfGeoTransform[6];
@@ -83,7 +83,7 @@ class GMTDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GMTRasterBand : public GDALPamRasterBand
+class GMTRasterBand final: public GDALPamRasterBand
 {
     nc_type nc_datatype;
     int         nZId;

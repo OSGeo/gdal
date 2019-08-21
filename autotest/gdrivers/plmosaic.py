@@ -512,7 +512,7 @@ def test_plmosaic_17():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-20037508.34, 4.7773142671600004, 0.0, 20037508.34, 0.0, -4.7773142671600004)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8, ds.GetGeoTransform()
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8), ds.GetGeoTransform()
     assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == 'PIXEL', \
         ds.GetMetadata('IMAGE_STRUCTURE')
     assert ds.GetRasterBand(1).GetOverviewCount() == 15
@@ -844,7 +844,7 @@ def test_plmosaic_with_bbox():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-11134123.286585508, 4.77731426716, 0.0, 4872401.930333553, 0.0, -4.77731426716)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-8
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
 
     # Good GeoTIFF
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/455-1272/full', 4096, 4096, 4, options=['INTERLEAVE=BAND', 'SPARSE_OK=YES'])

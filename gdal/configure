@@ -636,6 +636,7 @@ HAVE_OPENSSL_CRYPTO
 USE_ONLY_CRYPTODLL_ALG
 HAVE_CRYPTOPP
 HAVE_ARMADILLO
+RDB_SETTING
 RASDAMAN_LIB
 RASDAMAN_INC
 RASDAMAN_ENABLED
@@ -1216,6 +1217,7 @@ with_mdb
 with_jvm_lib
 with_jvm_lib_add_rpath
 with_rasdaman
+with_rdb
 with_armadillo
 with_cryptopp
 with_crypto
@@ -2223,6 +2225,7 @@ Optional Packages:
   --with-jvm-lib=ARG        ARG is dlopen or points to Java libjvm path
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
+  --with-rdb=ARG    Include RDB support (ARG=no, yes or RDB SDK root path)
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
   --with-crypto=ARG       Include crypto (from openssl) support (ARG=yes, no or path)
@@ -2816,6 +2819,60 @@ fi
 
 } # ac_fn_c_check_header_mongrel
 
+# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
+# -------------------------------------------
+# Tests whether TYPE exists after having included INCLUDES, setting cache
+# variable VAR accordingly.
+ac_fn_c_check_type ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=no"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+if (sizeof ($2))
+	 return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+if (sizeof (($2)))
+	    return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  eval "$3=yes"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_type
+
 # ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
 # --------------------------------------------
 # Tries to find the compile-time value of EXPR in a program that includes
@@ -2998,60 +3055,6 @@ rm -f conftest.val
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_compute_int
-
-# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
-# -------------------------------------------
-# Tests whether TYPE exists after having included INCLUDES, setting cache
-# variable VAR accordingly.
-ac_fn_c_check_type ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  eval "$3=no"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-if (sizeof ($2))
-	 return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-if (sizeof (($2)))
-	    return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-else
-  eval "$3=yes"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_type
 
 # ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
 # ---------------------------------------------
@@ -20336,6 +20339,8 @@ fi
 	fi
 	rm -f conftest*
 
+SAVED_CFLAGS=$CFLAGS
+CFLAGS=`echo "$CFLAGS " | sed "s/-fsanitize=undefined //" | sed "s/-fsanitize=address //" | sed "s/-fsanitize=unsigned-integer-overflow //"`
 
   echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
 
@@ -20479,6 +20484,7 @@ fi
   SO_EXT=$SO_EXT
 
 
+CFLAGS=$SAVED_CFLAGS
 else
 with_libtool=yes
 fi
@@ -20997,21 +21003,15 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
  esac
 
 
+ac_fn_c_check_type "$LINENO" "long long" "ac_cv_type_long_long" "$ac_includes_default"
+if test "x$ac_cv_type_long_long" = xyes; then :
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for 64bit integer type" >&5
-$as_echo_n "checking for 64bit integer type... " >&6; }
+cat >>confdefs.h <<_ACEOF
+#define HAVE_LONG_LONG 1
+_ACEOF
 
-  echo 'int main() { return (int)(long long)(0); }' >> conftest.c
-  if test -z "`${CC} ${CFLAGS} -o conftest conftest.c 2>&1`" ; then
 
-$as_echo "#define HAVE_LONG_LONG 1" >>confdefs.h
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: long long" >&5
-$as_echo "long long" >&6; }
-  else
-    as_fn_error $? "long long not found" "$LINENO" 5
-  fi
-  rm -f conftest*
+fi
 
 
 
@@ -28715,7 +28715,7 @@ fi
     PG_LIB="${PQ_LIBS}"
     PG_INC="${PQ_CFLAGS}"
     SAVED_LIBS="${LIBS}"
-    LIBS="${PG_LIBS}"
+    LIBS="${PG_LIB}"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQconnectdb in -lpq" >&5
 $as_echo_n "checking for PQconnectdb in -lpq... " >&6; }
 if ${ac_cv_lib_pq_PQconnectdb+:} false; then :
@@ -41520,6 +41520,129 @@ RASDAMAN_LIB=$RASDAMAN_LIB
 
 
 
+# Check whether --with-rdb was given.
+if test "${with_rdb+set}" = set; then :
+  withval=$with_rdb;
+fi
+
+
+RDB_SETTING=no
+
+if test "$with_rdb" = "yes" -o "$with_rdb" = "" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rdb_library_name in -lrdb" >&5
+$as_echo_n "checking for rdb_library_name in -lrdb... " >&6; }
+if ${ac_cv_lib_rdb_rdb_library_name+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrdb  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rdb_library_name ();
+int
+main ()
+{
+return rdb_library_name ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rdb_rdb_library_name=yes
+else
+  ac_cv_lib_rdb_rdb_library_name=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rdb_rdb_library_name" >&5
+$as_echo "$ac_cv_lib_rdb_rdb_library_name" >&6; }
+if test "x$ac_cv_lib_rdb_rdb_library_name" = xyes; then :
+  RDB_SETTING=yes
+else
+  RDB_SETTING=no
+fi
+
+
+  if test "$RDB_SETTING" = "yes" ; then
+    LIBS="-lrdb $LIBS"
+  else
+    echo "librdb not found - RDB support disabled"
+  fi
+
+elif test "$with_rdb" != "no" -a "$with_rdb" != ""; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rdb_library_name in -lrdb" >&5
+$as_echo_n "checking for rdb_library_name in -lrdb... " >&6; }
+if ${ac_cv_lib_rdb_rdb_library_name+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrdb -L$with_rdb/library -lrdb $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rdb_library_name ();
+int
+main ()
+{
+return rdb_library_name ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rdb_rdb_library_name=yes
+else
+  ac_cv_lib_rdb_rdb_library_name=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rdb_rdb_library_name" >&5
+$as_echo "$ac_cv_lib_rdb_rdb_library_name" >&6; }
+if test "x$ac_cv_lib_rdb_rdb_library_name" = xyes; then :
+  RDB_SETTING=yes
+else
+  RDB_SETTING=no
+fi
+
+
+  if test "$RDB_SETTING" = "yes" ; then
+    LIBS="-L$with_rdb/library -lrdb $LIBS"
+    EXTRA_INCLUDES="-I$with_rdb/interface/cpp/ -I$with_rdb/interface/c/ $EXTRA_INCLUDES"
+  else
+    echo "librdb not found - RDB support disabled"
+  fi
+
+fi
+
+RDB_SETTING=$RDB_SETTING
+
+
+if test "$RDB_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="rdb $OPT_GDAL_FORMATS"
+fi
+
+
+
+
 # Check whether --with-armadillo was given.
 if test "${with_armadillo+set}" = set; then :
   withval=$with_armadillo;
@@ -44386,6 +44509,9 @@ echo "  SDE support:               ${SDE_ENABLED}"
 
 
 echo "  Rasdaman support:          ${RASDAMAN_ENABLED}"
+
+
+echo "  RDB support:               ${RDB_SETTING}"
 
 
 echo "  DODS support:              ${HAVE_DODS}"

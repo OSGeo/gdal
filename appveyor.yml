@@ -64,6 +64,11 @@ init:
 
 
 install:
+  - git clone https://github.com/microsoft/vcpkg
+  - cd vcpkg
+  - bootstrap-vcpkg.bat
+  - set PATH=%CD%;%PATH%
+  - cd ..
   - ps: |
       Install-PackageProvider NuGet -Force
       Import-PackageProvider NuGet -Force
@@ -71,7 +76,8 @@ install:
       Install-Module Pscx -AllowClobber
       Install-Module VSSetup -Scope CurrentUser
       # Install SWIG and VC for Python2.7 by Choco
-      cinst -y --no-progress swig vcpython27
+      cinst -y --no-progress --version 3.0.12 --force swig
+      cinst -y --no-progress vcpython27
       Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
       exec { pip install numpy }
       $env:SDK_ZIP="$env:SDK"+"-dev.zip"
@@ -147,7 +153,7 @@ install:
       $env:PATH="$env:APPVEYOR_BUILD_FOLDER;$env:PATH"
       $env:PROJ_INSTALL_DIR="$env:APPVEYOR_BUILD_FOLDER"+"\install-proj"
       $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:PROJ_INSTALL_DIR
-      exec { cmake -G $env:VS_FULL .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake }
+      exec { cmake -G $env:VS_FULL .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/projects/gdal/vcpkg/scripts/buildsystems/vcpkg.cmake }
       exec { cmake --build . --config Release --target install }
       cd $env:APPVEYOR_BUILD_FOLDER\install-proj\share\proj
       appveyor DownloadFile https://download.osgeo.org/proj/proj-datumgrid-1.8.zip

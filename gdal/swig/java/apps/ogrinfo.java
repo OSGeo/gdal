@@ -4,7 +4,7 @@
  * Name:     ogrinfo.java
  * Project:  GDAL SWIG Interface
  * Purpose:  Java port of ogrinfo application, simple client for viewing OGR driver data.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  * Port from ogrinfo.cpp by Frank Warmerdam
  *

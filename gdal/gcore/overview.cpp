@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2007-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -3137,6 +3137,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     GDALRasterBand* poMaskBand = nullptr;
     int nMaskFlags = 0;
     bool bUseNoDataMask = false;
+    bool bCanUseCascaded = true;
 
     if( !STARTS_WITH_CI(pszResampling, "NEAR") )
     {
@@ -3148,10 +3149,19 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             poMaskBand = poSrcBand;
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
         }
+        // Same as above for mask band. I'd wish we had a better way of conveying this !
+        else if( CPLTestBool(CPLGetConfigOption(
+                    "GDAL_REGENERATED_BAND_IS_MASK", "NO")) )
+        {
+            poMaskBand = poSrcBand;
+            nMaskFlags = GMF_PER_DATASET;
+        }
         else
         {
             poMaskBand = poSrcBand->GetMaskBand();
             nMaskFlags = poSrcBand->GetMaskFlags();
+            bCanUseCascaded = (nMaskFlags == GMF_NODATA ||
+                               nMaskFlags == GMF_ALL_VALID);
         }
 
         bUseNoDataMask = (nMaskFlags & GMF_ALL_VALID) == 0;
@@ -3172,7 +3182,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
          EQUAL(pszResampling, "BILINEAR")) && nOverviewCount > 1
-         && !(bUseNoDataMask && nMaskFlags != GMF_NODATA))
+         && bCanUseCascaded )
         return GDALRegenerateCascadingOverviews( poSrcBand,
                                                  nOverviewCount, papoOvrBands,
                                                  pszResampling,
@@ -3607,11 +3617,15 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     GDALDataType eWrkDataType =
         GDALGetOvrWorkDataType(pszResampling, eDataType);
 
+    // I'd wish we had a better way of conveying this !
+    const bool bIsMask = CPLTestBool(CPLGetConfigOption(
+                    "GDAL_REGENERATED_BAND_IS_MASK", "NO"));
+
     // If we have a nodata mask and we are doing something more complicated
     // than nearest neighbouring, we have to fetch to nodata mask.
     const bool bUseNoDataMask =
         !STARTS_WITH_CI(pszResampling, "NEAR") &&
-        (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0;
+        (bIsMask || (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0);
 
     int* const pabHasNoData = static_cast<int *>(
         VSI_MALLOC_VERBOSE(nBands * sizeof(int)) );
@@ -3849,7 +3863,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                         poSrcBand = papoSrcBands[0];
                     else
                         poSrcBand = papapoOverviewBands[0][iSrcOverview];
-                    eErr = poSrcBand->GetMaskBand()->RasterIO(
+                    auto poMaskBand = bIsMask ? poSrcBand : poSrcBand->GetMaskBand();
+                    eErr = poMaskBand->RasterIO(
                         GF_Read,
                         nChunkXOffQueried, nChunkYOffQueried,
                         nChunkXSizeQueried, nChunkYSizeQueried,

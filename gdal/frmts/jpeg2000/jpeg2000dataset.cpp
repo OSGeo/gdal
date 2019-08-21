@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -189,7 +189,7 @@ int jp2_encode_uuid(jas_image_t *image, jas_stream_t *out,
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEG2000Dataset : public GDALJP2AbstractDataset
+class JPEG2000Dataset final: public GDALJP2AbstractDataset
 {
     friend class JPEG2000RasterBand;
 
@@ -215,7 +215,7 @@ class JPEG2000Dataset : public GDALJP2AbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEG2000RasterBand : public GDALPamRasterBand
+class JPEG2000RasterBand final: public GDALPamRasterBand
 {
     friend class JPEG2000Dataset;
 

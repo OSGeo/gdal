@@ -8,7 +8,7 @@
  *
  **********************************************************************
  * Copyright (c) 2007,  Geoconcept and IGN
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2134,7 +2134,11 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
               {
                 OGRGeometryH hPolyRing = OGR_G_CreateGeometry(wkbPolygon);
                 int bRes;
-                OGR_G_AddGeometryDirectly(hPolyRing, ring);
+                if(OGR_G_AddGeometryDirectly(hPolyRing, ring) != OGRERR_NONE )
+                {
+                  OGR_G_DestroyGeometry(hPolyRing);
+                  goto onError;
+                }
                 bRes = OGR_G_Contains(outer,hPolyRing) ;
                 OGR_G_RemoveGeometry(hPolyRing, 0, FALSE);
                 OGR_G_DestroyGeometry(hPolyRing);

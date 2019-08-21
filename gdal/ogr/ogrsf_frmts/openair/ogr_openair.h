@@ -3,10 +3,10 @@
  *
  * Project:  OpenAir Translator
  * Purpose:  Definition of classes for OGR .sua driver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,7 @@ typedef struct
     int fillB;
 } OpenAirStyle;
 
-class OGROpenAirLayer : public OGRLayer
+class OGROpenAirLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -79,7 +79,7 @@ class OGROpenAirLayer : public OGRLayer
 /*                       OGROpenAirLabelLayer                           */
 /************************************************************************/
 
-class OGROpenAirLabelLayer : public OGRLayer
+class OGROpenAirLabelLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -112,7 +112,7 @@ class OGROpenAirLabelLayer : public OGRLayer
 /*                         OGROpenAirDataSource                         */
 /************************************************************************/
 
-class OGROpenAirDataSource : public OGRDataSource
+class OGROpenAirDataSource final: public OGRDataSource
 {
     char*               pszName;
 

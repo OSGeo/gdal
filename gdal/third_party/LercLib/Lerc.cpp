@@ -83,11 +83,7 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
   lercInfo.RawInit();
 
   // first try Lerc2
-
-  //unsigned int minNumBytesHeader = Lerc2::MinNumBytesNeededToReadHeader();
-
   struct Lerc2::HeaderInfo lerc2Info;
-  //if (minNumBytesHeader <= numBytesBlob && Lerc2::GetHeaderInfo(pLercBlob, lerc2Info))
   if (Lerc2::GetHeaderInfo(pLercBlob, numBytesBlob, lerc2Info))
   {
     lercInfo.version = lerc2Info.version;
@@ -105,12 +101,6 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
     if (lercInfo.blobSize > (int)numBytesBlob)    // truncated blob, we won't be able to read this band
       return ErrCode::BufferTooSmall;
 
-    //while (lercInfo.blobSize + minNumBytesHeader < numBytesBlob)    // means there could be another band
-    //{
-    //  struct Lerc2::HeaderInfo hdInfo;
-    //  if (!Lerc2::GetHeaderInfo(pLercBlob + lercInfo.blobSize, hdInfo))
-    //    return ErrCode::Ok;    // no other band, we are done
-
     struct Lerc2::HeaderInfo hdInfo;
     while (Lerc2::GetHeaderInfo(pLercBlob + lercInfo.blobSize, numBytesBlob - lercInfo.blobSize, hdInfo))
     {
@@ -124,7 +114,7 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
         return ErrCode::Failed;
       }
 
-      if( lercInfo.blobSize > std::numeric_limits<int>::max() - hdInfo.blobSize )
+      if (lercInfo.blobSize > std::numeric_limits<int>::max() - hdInfo.blobSize)
         return ErrCode::Failed;
 
       lercInfo.blobSize += hdInfo.blobSize;
@@ -162,9 +152,11 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
     Byte* ptr = const_cast<Byte*>(pLercBlob);
     ptr += 10 + 2 * sizeof(int);
 
-    int height = *((const int*)ptr);  ptr += sizeof(int);
-    int width  = *((const int*)ptr);  ptr += sizeof(int);
-    double maxZErrorInFile = *((const double*)ptr);
+    int height(0), width(0);
+    memcpy(&height, ptr, sizeof(int));  ptr += sizeof(int);
+    memcpy(&width,  ptr, sizeof(int));  ptr += sizeof(int);
+    double maxZErrorInFile(0);
+    memcpy(&maxZErrorInFile, ptr, sizeof(double));
 
     if (height > 20000 || width > 20000)    // guard against bogus numbers; size limitation for old Lerc1
       return ErrCode::Failed;
@@ -473,7 +465,7 @@ ErrCode Lerc::ConvertToDoubleTempl(const T* pDataIn, size_t nDataValues, double*
 
   for (size_t k = 0; k < nDataValues; k++)
     pDataOut[k] = pDataIn[k];
- 
+
   return ErrCode::Ok;
 }
 
@@ -481,7 +473,7 @@ ErrCode Lerc::ConvertToDoubleTempl(const T* pDataIn, size_t nDataValues, double*
 
 template<class T> ErrCode Lerc::CheckForNaN(const T* arr, int nDim, int nCols, int nRows, const BitMask* pBitMask)
 {
- if (!arr || nDim <= 0 || nCols <= 0 || nRows <= 0)
+  if (!arr || nDim <= 0 || nCols <= 0 || nRows <= 0)
     return ErrCode::WrongParam;
  
 #ifdef CHECK_FOR_NAN

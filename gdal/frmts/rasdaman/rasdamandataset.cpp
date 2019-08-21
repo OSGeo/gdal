@@ -5,7 +5,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2010, Constantin Jucovschi
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -102,7 +102,7 @@ typedef std::map<Subset, r_Ref<r_GMarray> > ArrayCache;
 class RasdamanRasterBand;
 static CPLString getQuery(const char *templateString, const char* x_lo, const char* x_hi, const char* y_lo, const char* y_hi);
 
-class RasdamanDataset : public GDALPamDataset
+class RasdamanDataset final: public GDALPamDataset
 {
   friend class RasdamanRasterBand;
 
@@ -295,7 +295,7 @@ void RasdamanDataset::clear_array_cache() {
 /* ==================================================================== */
 /************************************************************************/
 
-class RasdamanRasterBand : public GDALPamRasterBand
+class RasdamanRasterBand final: public GDALPamRasterBand
 {
   friend class RasdamanDataset;
 

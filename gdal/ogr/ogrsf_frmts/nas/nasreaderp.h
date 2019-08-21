@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Frank Warmerdam
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -180,6 +180,7 @@ private:
     void          CleanupParser();
 
     char         *m_pszFilteredClassName;
+    bool          m_bStopParsing = false;
 
 public:
                 NASReader();
@@ -236,7 +237,8 @@ public:
     void        SetFeaturePropertyDirectly( const char *pszElement,
                                     char *pszValue );
 
-    bool        HasStoppedParsing() override { return false; }
+    void        StopParsing() { m_bStopParsing = true; }
+    bool        HasStoppedParsing() override { return m_bStopParsing; }
 
     void        CheckForFID( const Attributes &attrs, char **ppszCurField );
     void        CheckForRelations( const char *pszElement,

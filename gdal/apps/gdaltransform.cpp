@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,6 +45,12 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #include "commonutils.h"
+
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 CPL_CVSID("$Id$")
 
@@ -218,9 +224,13 @@ MAIN_START(argc, argv)
                 CPLRealloc(pasGCPs, sizeof(GDAL_GCP) * nGCPCount));
             GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
 
+            // coverity[tainted_data]
             pasGCPs[nGCPCount-1].dfGCPPixel = CPLAtof(argv[++i]);
+            // coverity[tainted_data]
             pasGCPs[nGCPCount-1].dfGCPLine = CPLAtof(argv[++i]);
+            // coverity[tainted_data]
             pasGCPs[nGCPCount-1].dfGCPX = CPLAtof(argv[++i]);
+            // coverity[tainted_data]
             pasGCPs[nGCPCount-1].dfGCPY = CPLAtof(argv[++i]);
             if( argv[i+1] != nullptr &&
                 (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
@@ -228,7 +238,10 @@ MAIN_START(argc, argv)
                 // Check that last argument is really a number and not a
                 // filename looking like a number (see ticket #863).
                 if (endptr && *endptr == 0)
+                {
+                    // coverity[tainted_data]
                     pasGCPs[nGCPCount-1].dfGCPZ = CPLAtof(argv[++i]);
+                }
             }
 
             /* should set id and info? */
@@ -324,6 +337,22 @@ MAIN_START(argc, argv)
 /*      Read points from stdin, transform and write to stdout.          */
 /* -------------------------------------------------------------------- */
     double dfLastT = 0.0;
+    
+    if( !bCoordOnCommandLine )
+    {
+        // Is it an interactive terminal ?
+        if( isatty(static_cast<int>(fileno(stdin))) )
+        {
+            if( pszSrcFilename != nullptr )
+            {
+                fprintf(stderr, "Enter column line values separated by space, and press Return.\n");
+            }
+            else
+            {
+                fprintf(stderr, "Enter X Y [Z [T]] values separated by space, and press Return.\n");
+            }
+        }
+    }
 
     while( bCoordOnCommandLine || !feof(stdin) )
     {

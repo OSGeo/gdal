@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -137,7 +137,7 @@ class OGRPGGeomFieldDefn final: public OGRGeomFieldDefn
 /*                          OGRPGFeatureDefn                            */
 /************************************************************************/
 
-class OGRPGFeatureDefn: public OGRFeatureDefn
+class OGRPGFeatureDefn CPL_NON_FINAL: public OGRFeatureDefn
 {
     public:
         explicit OGRPGFeatureDefn( const char * pszName = nullptr ) :
@@ -162,7 +162,7 @@ class OGRPGFeatureDefn: public OGRFeatureDefn
 /*                            OGRPGLayer                                */
 /************************************************************************/
 
-class OGRPGLayer : public OGRLayer
+class OGRPGLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
     OGRPGFeatureDefn   *poFeatureDefn;

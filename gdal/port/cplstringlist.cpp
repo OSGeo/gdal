@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2011, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -120,6 +120,30 @@ CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
         // might surprise the client developer.
         MakeOurOwnCopy();
         bIsSorted = oOther.bIsSorted;
+    }
+
+    return *this;
+}
+
+/************************************************************************/
+/*                             operator=()                              */
+/************************************************************************/
+
+CPLStringList &CPLStringList::operator=( CPLStringList&& oOther )
+{
+    if( this != &oOther )
+    {
+        Clear();
+        papszList = oOther.papszList;
+        oOther.papszList = nullptr;
+        nCount = oOther.nCount;
+        oOther.nCount = 0;
+        nAllocation = oOther.nAllocation;
+        oOther.nAllocation = 0;
+        bOwnList = oOther.bOwnList;
+        oOther.bOwnList = false;
+        bIsSorted = oOther.bIsSorted;
+        oOther.bIsSorted = true;
     }
 
     return *this;

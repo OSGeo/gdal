@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -127,7 +127,7 @@ def test_jpeg_3():
     expected_gt = [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
     gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-6, 'did not get expected geotransform from PAM'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-6), 'did not get expected geotransform from PAM'
 
     ds = None
 
@@ -142,7 +142,7 @@ def test_jpeg_3():
     expected_gt = [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
     gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-6, \
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-6), \
             'did not get expected geotransform from .wld'
     ds = None
 
@@ -152,9 +152,7 @@ def test_jpeg_3():
 
     gdal.GetDriverByName('JPEG').Delete('tmp/byte.jpg')
 
-    with pytest.raises(OSError, message='did not expect to find .wld file at that point'):
-        os.stat('tmp/byte.wld')
-    
+    assert not os.path.exists('tmp/byte.wld')
 
     
 ###############################################################################
@@ -584,15 +582,15 @@ def test_jpeg_18():
 
     line0 = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
     data = struct.unpack('B' * width, line0)
-    assert abs(data[0] - 0) <= 10
+    assert data[0] == pytest.approx(0, abs=10)
     line1023 = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
     data = struct.unpack('B' * width, line1023)
-    assert abs(data[0] - 255) <= 10
+    assert data[0] == pytest.approx(255, abs=10)
     line0_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0, 0,
                                                                int(width / 4),
                                                                1)
     data = struct.unpack('B' * (int(width / 4)), line0_ovr1)
-    assert abs(data[0] - 0) <= 10
+    assert data[0] == pytest.approx(0, abs=10)
     line1023_bis = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
     assert line1023_bis != line0 and line1023 == line1023_bis
     line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
@@ -600,7 +598,7 @@ def test_jpeg_18():
     line255_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(
         0, int(height / 4) - 1, int(width / 4), 1)
     data = struct.unpack('B' * int(width / 4), line255_ovr1)
-    assert abs(data[0] - 255) <= 10
+    assert data[0] == pytest.approx(255, abs=10)
     line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
     assert line0 == line0_bis
     line0_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Philippe Vachon
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
 
 class GFFRasterBand;
 
-class GFFDataset : public GDALPamDataset
+class GFFDataset final: public GDALPamDataset
 {
     friend class GFFRasterBand;
     VSILFILE *fp;
@@ -103,7 +103,7 @@ GFFDataset::~GFFDataset()
  * Declaration and implementation of the GFFRasterBand Class         *
  *********************************************************************/
 
-class GFFRasterBand : public GDALPamRasterBand {
+class GFFRasterBand final: public GDALPamRasterBand {
     long nRasterBandMemory;
     int nSampleSize;
   public:

@@ -3,7 +3,7 @@ GDAL_ROOT	=	..
 
 XTRAOBJ =	$(SETARGV)
 
-EXTRAFLAGS =	-I..\frmts\vrt -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson -I..\ogr\ogrsf_frmts\generic $(GEOS_CFLAGS)
+EXTRAFLAGS =	-I..\frmts\vrt -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson -I..\ogr\ogrsf_frmts\generic $(GEOS_CFLAGS) $(PROJ_INCLUDE)
 
 !INCLUDE ..\nmake.opt
 
@@ -22,18 +22,29 @@ GNM_PROGRAMS =	gnmmanage.exe gnmanalyse.exe
 
 default:	gdal_translate.exe gdalinfo.exe gdalserver.exe gdaladdo.exe gdalwarp.exe \
 		nearblack.exe gdalmanage.exe gdalenhance.exe gdaltransform.exe\
-		gdaldem.exe gdallocationinfo.exe gdalsrsinfo.exe $(OGR_PROGRAMS) $(GNM_PROGRAMS)
+		gdaldem.exe gdallocationinfo.exe gdalsrsinfo.exe gdalmdiminfo.exe gdalmdimtranslate.exe $(OGR_PROGRAMS) $(GNM_PROGRAMS)
 
 all:	default multireadtest.exe \
 			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \
 			gdaltorture.exe gdal2ogr.exe test_ogrsf.exe
 OBJ = commonutils.obj gdalinfo_lib.obj gdal_translate_lib.obj gdalwarp_lib.obj ogr2ogr_lib.obj \
-	gdaldem_lib.obj nearblack_lib.obj gdal_grid_lib.obj gdal_rasterize_lib.obj gdalbuildvrt_lib.obj
+	gdaldem_lib.obj nearblack_lib.obj gdal_grid_lib.obj gdal_rasterize_lib.obj gdalbuildvrt_lib.obj \
+	gdalmdiminfo_lib.obj gdalmdimtranslate_lib.obj
 
 appslib: $(OBJ)
 
 gdalinfo.exe:	gdalinfo_bin.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) gdalinfo_bin.cpp $(XTRAOBJ) $(LIBS) \
+		/Fe$@ /link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+gdalmdiminfo.exe:	gdalmdiminfo_bin.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) gdalmdiminfo_bin.cpp $(XTRAOBJ) $(LIBS) \
+		/Fe$@ /link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+gdalmdimtranslate.exe:	gdalmdimtranslate_bin.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) gdalmdimtranslate_bin.cpp $(XTRAOBJ) $(LIBS) \
 		/Fe$@ /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 

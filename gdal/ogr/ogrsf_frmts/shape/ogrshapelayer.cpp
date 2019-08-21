@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,9 +59,6 @@
 
 CPL_CVSID("$Id$")
 
-static const char UNSUPPORTED_OP_READ_ONLY[] =
-    "%s : unsupported operation on a read-only datasource.";
-
 /************************************************************************/
 /*                           OGRShapeLayer()                            */
 /************************************************************************/
@@ -69,7 +66,7 @@ static const char UNSUPPORTED_OP_READ_ONLY[] =
 OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                               const char * pszFullNameIn,
                               SHPHandle hSHPIn, DBFHandle hDBFIn,
-                              OGRSpatialReference *poSRSIn, bool bSRSSetIn,
+                              const OGRSpatialReference *poSRSIn, bool bSRSSetIn,
                               bool bUpdate,
                               OGRwkbGeometryType eReqType,
                               char ** papszCreateOptions ) :
@@ -240,10 +237,9 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
             eType = eRequestedGeomType;
         }
 
-        OGRSpatialReference* poSRSClone = poSRSIn;
+        OGRSpatialReference* poSRSClone = poSRSIn ? poSRSIn->Clone() : nullptr;
         if( poSRSClone )
         {
-            poSRSClone = poSRSClone->Clone();
             poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
         OGRShapeGeomFieldDefn* poGeomFieldDefn =
@@ -253,10 +249,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         poFeatureDefn->SetGeomType(wkbNone);
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
     }
-    else if( bSRSSetIn && poSRSIn != nullptr )
-    {
-        poSRSIn->Release();
-    }
+
     SetDescription( poFeatureDefn->GetName() );
     bRewindOnWrite =
         CPLTestBool(CPLGetConfigOption( "SHAPE_REWIND_ON_WRITE", "YES" ));
@@ -933,22 +926,37 @@ OGRFeature *OGRShapeLayer::GetFeature( GIntBig nFeatureId )
 }
 
 /************************************************************************/
+/*                             StartUpdate()                            */
+/************************************************************************/
+
+bool OGRShapeLayer::StartUpdate( const char* pszOperation )
+{
+    if( !poDS->UncompressIfNeeded() )
+        return false;
+
+    if( !TouchLayer() )
+        return false;
+
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "%s : unsupported operation on a read-only datasource.",
+                  pszOperation);
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                             ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("SetFeature") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "SetFeature");
-        return OGRERR_FAILURE;
-    }
 
     GIntBig nFID = poFeature->GetFID();
     if( nFID < 0
@@ -1007,16 +1015,8 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
 
 {
-    if( !TouchLayer() || nFID > INT_MAX )
+    if( !StartUpdate("DeleteFeature") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteFeature");
-        return OGRERR_FAILURE;
-    }
 
     if( nFID < 0
         || (hSHP != nullptr && nFID >= hSHP->nRecords)
@@ -1057,16 +1057,8 @@ OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
 OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("CreateFeature") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "CreateFeature");
-        return OGRERR_FAILURE;
-    }
 
     if( hDBF != nullptr &&
         !VSI_SHP_WriteMoreDataOK(hDBF->fp, hDBF->nRecordLength) )
@@ -1644,8 +1636,6 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         if( hDBF == nullptr || DBFGetFieldCount( hDBF ) == 0 )
             return TRUE;
 
-        CPLClearRecodeWarningFlags();
-
         // Otherwise test that we can re-encode field names to UTF-8.
         const int nFieldCount = DBFGetFieldCount( hDBF );
         for( int i = 0; i < nFieldCount; i++ )
@@ -1656,14 +1646,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
             DBFGetFieldInfo( hDBF, i, szFieldName, &nWidth, &nPrecision );
 
-            CPLErrorReset();
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            char * const pszUTF8Field =
-                CPLRecode( szFieldName, osEncoding, CPL_ENC_UTF8);
-            CPLPopErrorHandler();
-            CPLFree( pszUTF8Field );
-
-            if( CPLGetLastErrorType() != 0 )
+            if(!CPLCanRecode(szFieldName, osEncoding, CPL_ENC_UTF8))
             {
                 return FALSE;
             }
@@ -1685,17 +1668,10 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("CreateField") )
         return OGRERR_FAILURE;
 
     CPLAssert( nullptr != poFieldDefn );
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY, "CreateField" );
-        return OGRERR_FAILURE;
-    }
 
     bool bDBFJustCreated = false;
     if( hDBF == nullptr )
@@ -1961,16 +1937,8 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
 OGRErr OGRShapeLayer::DeleteField( int iField )
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("DeleteField") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteField");
-        return OGRERR_FAILURE;
-    }
 
     if( iField < 0 || iField >= poFeatureDefn->GetFieldCount() )
     {
@@ -1997,16 +1965,8 @@ OGRErr OGRShapeLayer::DeleteField( int iField )
 
 OGRErr OGRShapeLayer::ReorderFields( int* panMap )
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("ReorderFields") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "ReorderFields");
-        return OGRERR_FAILURE;
-    }
 
     if( poFeatureDefn->GetFieldCount() == 0 )
         return OGRERR_NONE;
@@ -2030,16 +1990,8 @@ OGRErr OGRShapeLayer::ReorderFields( int* panMap )
 OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
                                       int nFlagsIn )
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("AlterFieldDefn") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "AlterFieldDefn");
-        return OGRERR_FAILURE;
-    }
 
     if( iField < 0 || iField >= poFeatureDefn->GetFieldCount() )
     {
@@ -2359,7 +2311,7 @@ OGRErr OGRShapeLayer::SyncToDisk()
 OGRErr OGRShapeLayer::DropSpatialIndex()
 
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("DropSpatialIndex") )
         return OGRERR_FAILURE;
 
     if( !CheckForQIX() && !CheckForSBN() )
@@ -2427,7 +2379,7 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
 OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("CreateSpatialIndex") )
         return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
@@ -2441,7 +2393,7 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 /* -------------------------------------------------------------------- */
 /*      Build a quadtree structure for this file.                       */
 /* -------------------------------------------------------------------- */
-    SyncToDisk();
+    OGRShapeLayer::SyncToDisk();
     SHPTree *psTree = SHPCreateTree( hSHP, 2, nMaxDepth, nullptr, nullptr );
 
     if( nullptr == psTree )
@@ -2476,51 +2428,6 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
     CheckForQIX();
 
     return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                            CopyInPlace()                             */
-/************************************************************************/
-
-static bool CopyInPlace( VSILFILE* fpTarget, const CPLString& osSourceFilename )
-{
-    VSILFILE* fpSource = VSIFOpenL(osSourceFilename, "rb");
-    if( fpSource == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Cannot open %s", osSourceFilename.c_str());
-        return false;
-    }
-
-    const size_t nBufferSize = 4096;
-    void* pBuffer = CPLMalloc(nBufferSize);
-    VSIFSeekL( fpTarget, 0, SEEK_SET );
-    bool bRet = true;
-    while( true )
-    {
-        size_t nRead = VSIFReadL( pBuffer, 1, nBufferSize, fpSource );
-        size_t nWritten = VSIFWriteL( pBuffer, 1, nRead, fpTarget );
-        if( nWritten != nRead )
-        {
-            bRet = false;
-            break;
-        }
-        if( nRead < nBufferSize )
-            break;
-    }
-
-    if( bRet )
-    {
-        bRet = VSIFTruncateL( fpTarget, VSIFTellL(fpTarget) ) == 0;
-        if( !bRet )
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "Truncation failed");
-        }
-    }
-
-    CPLFree(pBuffer);
-    VSIFCloseL(fpSource);
-    return bRet;
 }
 
 /************************************************************************/
@@ -2578,16 +2485,8 @@ OGRErr OGRShapeLayer::Repack()
         return OGRERR_NONE;
     }
 
-    if( !TouchLayer() )
+    if( !StartUpdate("Repack") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "Repack");
-        return OGRERR_FAILURE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of records to be dropped.                          */
@@ -2930,7 +2829,7 @@ OGRErr OGRShapeLayer::Repack()
     {
         if( hDBF != nullptr && !oTempFileDBF.empty() )
         {
-            if( !CopyInPlace( VSI_SHP_GetVSIL(hDBF->fp), oTempFileDBF ) )
+            if( !OGRShapeDataSource::CopyInPlace( VSI_SHP_GetVSIL(hDBF->fp), oTempFileDBF ) )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                         "An error occurred while copying the content of %s on top of %s. "
@@ -2959,7 +2858,7 @@ OGRErr OGRShapeLayer::Repack()
 
         if( hSHP != nullptr && !oTempFileSHP.empty() )
         {
-            if( !CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHP), oTempFileSHP ) )
+            if( !OGRShapeDataSource::CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHP), oTempFileSHP ) )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                         "An error occurred while copying the content of %s on top of %s. "
@@ -2981,7 +2880,7 @@ OGRErr OGRShapeLayer::Repack()
 
                 return OGRERR_FAILURE;
             }
-            if( !CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHX), oTempFileSHX ) )
+            if( !OGRShapeDataSource::CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHX), oTempFileSHX ) )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                         "An error occurred while copying the content of %s on top of %s. "
@@ -3152,16 +3051,8 @@ OGRErr OGRShapeLayer::Repack()
 OGRErr OGRShapeLayer::ResizeDBF()
 
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("ResizeDBF") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "ResizeDBF");
-        return OGRERR_FAILURE;
-    }
 
     if( hDBF == nullptr )
     {
@@ -3309,16 +3200,8 @@ void OGRShapeLayer::TruncateDBF()
 
 OGRErr OGRShapeLayer::RecomputeExtent()
 {
-    if( !TouchLayer() )
+    if( !StartUpdate("RecomputeExtent") )
         return OGRERR_FAILURE;
-
-    if( !bUpdateAccess )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "RecomputeExtent");
-        return OGRERR_FAILURE;
-    }
 
     if( hSHP == nullptr )
     {
@@ -3424,9 +3307,12 @@ bool OGRShapeLayer::ReopenFileDescriptors()
 {
     CPLDebug("SHAPE", "ReopenFileDescriptors(%s)", pszFullName);
 
+    const bool bRealUpdateAccess = bUpdateAccess &&
+        (!poDS->IsZip() || !poDS->GetTemporaryUnzipDir().empty());
+
     if( bHSHPWasNonNULL )
     {
-        hSHP = poDS->DS_SHPOpen( pszFullName, bUpdateAccess ? "r+" : "r" );
+        hSHP = poDS->DS_SHPOpen( pszFullName, bRealUpdateAccess ? "r+" : "r" );
 
         if( hSHP == nullptr )
         {
@@ -3437,7 +3323,7 @@ bool OGRShapeLayer::ReopenFileDescriptors()
 
     if( bHDBFWasNonNULL )
     {
-        hDBF = poDS->DS_DBFOpen( pszFullName, bUpdateAccess ? "r+" : "r" );
+        hDBF = poDS->DS_DBFOpen( pszFullName, bRealUpdateAccess ? "r+" : "r" );
 
         if( hDBF == nullptr )
         {
@@ -3542,4 +3428,21 @@ void OGRShapeLayer::AddToFileList( CPLStringList& oFileList )
             oFileList.AddString(pszSBXFilename);
         }
     }
+}
+
+/************************************************************************/
+/*                   UpdateFollowingDeOrRecompression()                 */
+/************************************************************************/
+
+void OGRShapeLayer::UpdateFollowingDeOrRecompression()
+{
+    CPLAssert( poDS->IsZip() );
+    CPLString osDSDir = poDS->GetTemporaryUnzipDir();
+    if( osDSDir.empty() )
+        osDSDir = poDS->GetVSIZipPrefixeDir();
+    char* pszNewFullName = CPLStrdup(
+        CPLFormFilename(osDSDir, CPLGetFilename(pszFullName), nullptr));
+    CPLFree(pszFullName);
+    pszFullName = pszNewFullName;
+    CloseUnderlyingLayer();
 }

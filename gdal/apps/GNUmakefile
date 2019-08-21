@@ -4,17 +4,19 @@
 
 include ../GDALmake.opt
 
-CPPFLAGS :=	-I$(GDAL_ROOT)/frmts/vrt $(CPPFLAGS) $(JSON_INCLUDE) -I$(GDAL_ROOT)/ogr/ogrsf_frmts/geojson -I$(GDAL_ROOT)/ogr/ogrsf_frmts/generic
+CPPFLAGS :=	-I$(GDAL_ROOT)/frmts/vrt $(CPPFLAGS) $(JSON_INCLUDE) $(PROJ_INCLUDE) -I$(GDAL_ROOT)/ogr/ogrsf_frmts/geojson -I$(GDAL_ROOT)/ogr/ogrsf_frmts/generic
 LNK_FLAGS :=	$(LDFLAGS)
 DEP_LIBS =	$(EXE_DEP_LIBS) $(XTRAOBJ)
 
 BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
 		gdaladdo$(EXE) gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
 		gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
-		gdallocationinfo$(EXE) gdalsrsinfo$(EXE)
+		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) gdalmdiminfo$(EXE) \
+		gdalmdimtranslate$(EXE)
 
 OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o \
-	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o gdal_rasterize_lib.o gdalbuildvrt_lib.o
+	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o gdal_rasterize_lib.o gdalbuildvrt_lib.o \
+	gdalmdiminfo_lib.o gdalmdimtranslate_lib.o
 
 BIN_LIST += 	gdal_contour$(EXE) \
 		gdaltindex$(EXE) \
@@ -78,7 +80,19 @@ gdal_rasterize_lib.$(OBJ_EXT): gdal_rasterize_lib.cpp
 gdalbuildvrt_lib.$(OBJ_EXT): gdalbuildvrt_lib.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
+gdalmdiminfo_lib.$(OBJ_EXT): gdalmdiminfo_lib.cpp
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+gdalmdimtranslate_lib.$(OBJ_EXT): gdalmdimtranslate_lib.cpp
+	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
 gdalinfo$(EXE):	gdalinfo_bin.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) $(CONFIG_LIB_UTILS) -o $@
+
+gdalmdiminfo$(EXE):	gdalmdiminfo_bin.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) $(CONFIG_LIB_UTILS) -o $@
+
+gdalmdimtranslate$(EXE):	gdalmdimtranslate_bin.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) $(CONFIG_LIB_UTILS) -o $@
 
 gdalserver$(EXE):	gdalserver.$(OBJ_EXT) $(DEP_LIBS)

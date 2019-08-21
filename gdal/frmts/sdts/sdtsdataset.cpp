@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
 
 class SDTSRasterBand;
 
-class SDTSDataset : public GDALPamDataset
+class SDTSDataset final: public GDALPamDataset
 {
     friend class SDTSRasterBand;
 
@@ -70,7 +70,7 @@ class SDTSDataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * ) override;
 };
 
-class SDTSRasterBand : public GDALPamRasterBand
+class SDTSRasterBand final: public GDALPamRasterBand
 {
     friend class SDTSDataset;
 

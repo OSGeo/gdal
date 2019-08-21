@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  SQLite SQL dialect testing.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -1512,7 +1512,7 @@ def test_ogr_sql_sqlite_25():
     geomA = ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))')
     val_ogr = geomA.GetArea()
 
-    assert abs(val_sql - val_ogr) <= 1e-5
+    assert val_sql == pytest.approx(val_ogr, abs=1e-5)
 
     assert val1_sql is None
 

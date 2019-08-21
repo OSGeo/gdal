@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Helper functions for testing CLI utilities
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -105,8 +105,22 @@ def get_gdalinfo_path():
 #
 
 
+def get_gdalmdiminfo_path():
+    return get_cli_utility_path('gdalmdiminfo')
+
+###############################################################################
+#
+
+
 def get_gdal_translate_path():
     return get_cli_utility_path('gdal_translate')
+
+###############################################################################
+#
+
+
+def get_gdalmdimtranslate_path():
+    return get_cli_utility_path('gdalmdimtranslate')
 
 ###############################################################################
 #

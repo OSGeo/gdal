@@ -4,7 +4,7 @@
  * Name:     OGRFeature.java
  * Project:  OGR Java Interface
  * Purpose:  A sample app for demonstrating the caveats with JNI and garbage collecting...
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 2009, Even Rouault

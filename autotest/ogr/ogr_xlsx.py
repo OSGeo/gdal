@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR XLSX driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -214,7 +214,7 @@ def test_ogr_xlsx_6():
     feat = lyr.GetNextFeature()
     assert feat.Bl_District_t == 'text6', 'Did not get expected value(1)'
 
-    assert abs(float(feat.GetField('Lat')) - 23.6247122) <= 0.00001, \
+    assert float(feat.GetField('Lat')) == pytest.approx(23.6247122, abs=0.00001), \
         'Did not get expected value(2)'
 
     gdal.SetConfigOption('OGR_XLSX_HEADERS', None)

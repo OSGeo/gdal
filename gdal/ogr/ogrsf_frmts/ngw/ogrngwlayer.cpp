@@ -708,7 +708,7 @@ OGRErr OGRNGWLayer::SetNextByIndex( GIntBig nIndex )
             else
             {
                 oNextPos = moFeatures.begin();
-                std::advance(oNextPos, nIndex);
+                std::advance(oNextPos, static_cast<size_t>(nIndex));
             }
         }
         else
@@ -743,7 +743,7 @@ OGRErr OGRNGWLayer::SetNextByIndex( GIntBig nIndex )
         else
         {
             oNextPos = moFeatures.begin();
-            std::advance(oNextPos, nIndex);
+            std::advance(oNextPos, static_cast<size_t>(nIndex));
         }
     }
     return OGRERR_NONE;

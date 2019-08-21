@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Ivan Lucena
- * Copyright (c) 2007-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files ( the "Software" ),
@@ -34,7 +34,7 @@
 //     Intergraph GDALDataset
 //  ----------------------------------------------------------------------------
 
-class IntergraphDataset : public GDALPamDataset
+class IntergraphDataset final: public GDALPamDataset
 {
     friend class IntergraphRasterBand;
     friend class IntergraphRGBBand;

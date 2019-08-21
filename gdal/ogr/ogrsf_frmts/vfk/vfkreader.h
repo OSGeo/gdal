@@ -83,8 +83,9 @@ public:
     explicit VFKProperty(CPLString const&);
     virtual ~VFKProperty();
 
-    VFKProperty(VFKProperty const& other);
-    VFKProperty& operator=(VFKProperty const& other);
+    VFKProperty(VFKProperty const& other) = default;
+    VFKProperty& operator=(VFKProperty const&) = default;
+    VFKProperty& operator=(VFKProperty&&) = default;
 
     bool                    IsNull()      const { return m_bIsNull; }
     int                     GetValueI()   const { return static_cast<int> (m_iValue); }

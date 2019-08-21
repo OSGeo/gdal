@@ -630,24 +630,55 @@ int IMapInfoFile::TestUtf8Capability() const
         return FALSE;
     }
 
-    CPLClearRecodeWarningFlags();
-    CPLErrorReset();
-
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    char* pszTest( CPLRecode( "test", GetEncoding(), CPL_ENC_UTF8 ) );
-    CPLPopErrorHandler();
-
-    if( pszTest == nullptr )
-    {
-        return FALSE;
-    }
-
-    CPLFree( pszTest );
-
-    if( CPLGetLastErrorType() != 0 )
-    {
-        return FALSE;
-    }
-
-    return TRUE;
+    return CPLCanRecode("test", GetEncoding(), CPL_ENC_UTF8);
 }
+
+CPLString IMapInfoFile::NormalizeFieldName(const char *pszName) const
+{
+    CPLString   osName(pszName);
+    if( strlen( GetEncoding() ) > 0 )
+        osName.Recode( CPL_ENC_UTF8, GetEncoding() );
+
+    char szNewFieldName[31+1]; /* 31 is the max characters for a field name*/
+    unsigned int nRenameNum = 1;
+
+    strncpy(szNewFieldName, osName.c_str(), sizeof(szNewFieldName)-1);
+    szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
+
+    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
+           nRenameNum < 10)
+    {
+        CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1u",
+                     osName.c_str(), nRenameNum );
+        nRenameNum ++;
+    }
+
+    while (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end() &&
+           nRenameNum < 100)
+    {
+        CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
+                     "%.29s%.2u", osName.c_str(), nRenameNum );
+        nRenameNum ++;
+    }
+
+    if (m_oSetFields.find(CPLString(szNewFieldName).toupper()) != m_oSetFields.end())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Too many field names like '%s' when truncated to 31 letters "
+                  "for MapInfo format.", pszName );
+    }
+
+    CPLString   osNewFieldName(szNewFieldName);
+    if( strlen( GetEncoding() ) > 0 )
+        osNewFieldName.Recode( GetEncoding(), CPL_ENC_UTF8 );
+
+    if( !EQUAL( pszName, osNewFieldName.c_str() ) )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Normalized/laundered field name: '%s' to '%s'",
+                  pszName, osNewFieldName.c_str() );
+    }
+
+    return osNewFieldName;
+}
+

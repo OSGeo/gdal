@@ -46,7 +46,7 @@ const static int MAGIC1_OFFSET = 28; /* Magic number 1: 0x43534152 */
 // #define COSAR_MAGIC  0x43534152  /* String CSAR */
 // #define FILLER_MAGIC 0x7F7F7F7F  /* Filler value, we'll use this for a test */
 
-class COSARDataset : public GDALDataset
+class COSARDataset final: public GDALDataset
 {
 public:
         COSARDataset() : fp(nullptr) { }
@@ -56,7 +56,7 @@ public:
         static GDALDataset *Open( GDALOpenInfo * );
 };
 
-class COSARRasterBand : public GDALRasterBand
+class COSARRasterBand final: public GDALRasterBand
 {
     unsigned long nRTNB;
 

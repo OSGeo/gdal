@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,7 @@ CPL_CVSID("$Id$")
 /*                     OGRCSVEditableLayerSynchronizer                  */
 /************************************************************************/
 
-class OGRCSVEditableLayerSynchronizer : public IOGREditableLayerSynchronizer
+class OGRCSVEditableLayerSynchronizer final: public IOGREditableLayerSynchronizer
 {
     OGRCSVLayer *m_poCSVLayer;
     char        **m_papszOpenOptions;
@@ -297,7 +297,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
 /*                        OGRCSVEditableLayer                           */
 /************************************************************************/
 
-class OGRCSVEditableLayer: public OGREditableLayer
+class OGRCSVEditableLayer final: public OGREditableLayer
 {
     std::set<CPLString> m_oSetFields;
 

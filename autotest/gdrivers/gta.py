@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GTA driver
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2011, Even Rouault <even dot rouault at mines dash paris dot org>
+# Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -97,7 +97,7 @@ def test_gta_2():
 
     expected_gt = src_ds.GetGeoTransform()
     for i in range(6):
-        assert abs(gt[i] - expected_gt[i]) <= 1e-6, 'did not get expected wkt'
+        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-6), 'did not get expected wkt'
 
     assert wkt == src_ds.GetProjectionRef(), 'did not get expected wkt'
 

@@ -9,7 +9,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ CPL_CVSID("$Id$")
 
 class SRTMHGTRasterBand;
 
-class SRTMHGTDataset : public GDALPamDataset
+class SRTMHGTDataset final: public GDALPamDataset
 {
     friend class SRTMHGTRasterBand;
 
@@ -81,7 +81,7 @@ class SRTMHGTDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SRTMHGTRasterBand : public GDALPamRasterBand
+class SRTMHGTRasterBand final: public GDALPamRasterBand
 {
     friend class SRTMHGTDataset;
 

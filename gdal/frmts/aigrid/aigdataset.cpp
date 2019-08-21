@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
 
 class AIGRasterBand;
 
-class AIGDataset : public GDALPamDataset
+class AIGDataset final: public GDALPamDataset
 {
     friend class AIGRasterBand;
 
@@ -87,7 +87,7 @@ class AIGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AIGRasterBand : public GDALPamRasterBand
+class AIGRasterBand final: public GDALPamRasterBand
 
 {
     friend class AIGDataset;

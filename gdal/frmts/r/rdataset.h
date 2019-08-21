@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,7 +59,7 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* ==================================================================== */
 /************************************************************************/
 
-class RDataset : public GDALPamDataset
+class RDataset final: public GDALPamDataset
 {
     friend class RRasterBand;
     VSILFILE   *fp;
@@ -90,7 +90,7 @@ class RDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RRasterBand : public GDALPamRasterBand
+class RRasterBand final: public GDALPamRasterBand
 {
     friend class RDataset;
 

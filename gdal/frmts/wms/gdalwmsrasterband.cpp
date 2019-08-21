@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Adam Nowacki
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017, Dmitry Baryshnikov, <polimax@mail.ru>
  * Copyright (c) 2017, NextGIS, <info@nextgis.com>
  *
@@ -268,22 +268,26 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
     int bx1 = x;
     int by1 = y;
 
+    bool bCancelHint = false;
     if ((m_parent_dataset->m_hint.m_valid) && (m_parent_dataset->m_hint.m_overview == m_overview)) {
         int tbx0 = m_parent_dataset->m_hint.m_x0 / nBlockXSize;
         int tby0 = m_parent_dataset->m_hint.m_y0 / nBlockYSize;
         int tbx1 = (m_parent_dataset->m_hint.m_x0 + m_parent_dataset->m_hint.m_sx - 1) / nBlockXSize;
         int tby1 = (m_parent_dataset->m_hint.m_y0 + m_parent_dataset->m_hint.m_sy - 1) / nBlockYSize;
-        if ((tbx0 <= bx0) && (tby0 <= by0) && (tbx1 >= bx1) && (tby1 >= by1)) {
-            bx0 = tbx0;
-            by0 = tby0;
-            bx1 = tbx1;
-            by1 = tby1;
+        if ((tbx0 <= x) && (tby0 <= y) && (tbx1 >= x) && (tby1 >= y)) {
+            // Avoid downloading a insane number of tiles at once.
+            // Limit to 30x30 tiles centered around block of interest.
+            bx0 = std::max(x - 15, tbx0);
+            by0 = std::max(y - 15, tby0);
+            bx1 = std::min(x + 15, tbx1);
+            by1 = std::min(y + 15, tby1);
+            bCancelHint = (bx0 == tbx0 && by0 == tby0 && bx1 == tbx1 && by1 == tby1);
         }
     }
 
     CPLErr eErr = ReadBlocks(x, y, buffer, bx0, by0, bx1, by1, 0);
 
-    if ((m_parent_dataset->m_hint.m_valid) && (m_parent_dataset->m_hint.m_overview == m_overview))
+    if (bCancelHint)
     {
         m_parent_dataset->m_hint.m_valid = false;
     }

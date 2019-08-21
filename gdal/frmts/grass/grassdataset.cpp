@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2007-2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,7 +59,7 @@ int Grass2CPLErrorHook( char * pszMessage, int bFatal )
 
 class GRASSRasterBand;
 
-class GRASSDataset : public GDALDataset
+class GRASSDataset final: public GDALDataset
 {
     friend class GRASSRasterBand;
 
@@ -86,7 +86,7 @@ class GRASSDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRASSRasterBand : public GDALRasterBand
+class GRASSRasterBand final: public GDALRasterBand
 {
     friend class GRASSDataset;
 

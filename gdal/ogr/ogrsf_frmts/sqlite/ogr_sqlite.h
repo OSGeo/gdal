@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -220,7 +220,7 @@ class IOGRSQLiteGetSpatialWhere
                                           OGRGeometry* poFilterGeom) = 0;
 };
 
-class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
+class OGRSQLiteLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpatialWhere
 {
   private:
     static OGRErr       createFromSpatialiteInternal(const GByte *pabyData,
@@ -345,7 +345,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 /*                         OGRSQLiteTableLayer                          */
 /************************************************************************/
 
-class OGRSQLiteTableLayer : public OGRSQLiteLayer
+class OGRSQLiteTableLayer final: public OGRSQLiteLayer
 {
     int                 bLaunderColumnNames;
     int                 bSpatialite2D;
@@ -487,7 +487,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 /*                         OGRSQLiteViewLayer                           */
 /************************************************************************/
 
-class OGRSQLiteViewLayer : public OGRSQLiteLayer
+class OGRSQLiteViewLayer final: public OGRSQLiteLayer
 {
     CPLString           osWHERE;
     CPLString           osQuery;
@@ -615,7 +615,7 @@ class OGRSQLiteSelectLayerCommonBehaviour
 /*                         OGRSQLiteSelectLayer                         */
 /************************************************************************/
 
-class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
+class OGRSQLiteSelectLayer CPL_NON_FINAL: public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 {
     OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 
@@ -693,7 +693,7 @@ class OGRSQLiteSingleFeatureLayer final : public OGRLayer
 /************************************************************************/
 
 /* Used by both OGRSQLiteDataSource and OGRGeoPackageDataSource */
-class OGRSQLiteBaseDataSource : public GDALPamDataset
+class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
 {
   protected:
     char               *m_pszFilename;

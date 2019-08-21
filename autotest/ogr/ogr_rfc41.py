@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test RFC41
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -681,7 +681,7 @@ def test_ogr_rfc41_7():
        feat.FIELD_4 != 'c' or \
        feat['p.eas_id'] != 168 or \
        feat.area_int != 215229 or \
-       abs(feat.area - 215229.266) > 1e-5 or \
+       feat.area != pytest.approx(215229.266, abs=1e-5) or \
        feat.geom1.GetGeometryType() != ogr.wkbPolygon or \
        feat.geom2 is not None or \
        feat.geom3.GetGeometryType() != ogr.wkbPoint or \

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2403,6 +2403,8 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
 {
     const int nSrcRasterXSize = GDALGetRasterXSize(psOptions->hSrcDS);
     const int nSrcRasterYSize = GDALGetRasterYSize(psOptions->hSrcDS);
+    if( nSrcRasterXSize == 0 || nSrcRasterYSize == 0 )
+        return;
 
     GDALWarpPrivateData* privateData = GetWarpPrivateData(this);
     if( privateData->nStepCount == 0 )
@@ -2430,7 +2432,7 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
             privateData->adfDstY.resize(nSampleMax);
             adfDstZ.resize(nSampleMax);
         }
-        catch( const std::bad_alloc& )
+        catch( const std::exception& )
         {
             return;
         }

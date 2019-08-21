@@ -139,7 +139,7 @@ static bool approx_equal(double a, double b)
 
 class TerragenRasterBand;
 
-class TerragenDataset : public GDALPamDataset
+class TerragenDataset final: public GDALPamDataset
 {
     friend class TerragenRasterBand;
 
@@ -210,7 +210,7 @@ class TerragenDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class TerragenRasterBand : public GDALPamRasterBand
+class TerragenRasterBand final: public GDALPamRasterBand
 {
     friend class TerragenDataset;
 
@@ -487,7 +487,6 @@ bool TerragenDataset::write_header()
                   "Couldn't write to Terragen file %s.\n"
                   "Is file system full?",
                   m_pszFilename );
-        VSIFCloseL( m_fp );
 
         return false;
     }
@@ -577,7 +576,6 @@ bool TerragenDataset::write_header()
                   "Couldn't write to Terragen file %s.\n"
                   "Is file system full?",
                   m_pszFilename );
-        VSIFCloseL( m_fp );
 
         return false;
     }
@@ -636,7 +634,6 @@ bool TerragenDataset::write_header()
                   "Couldn't write to Terragen file %s.\n"
                   "Cannot find adequate heightscale/baseheight combination.",
                   m_pszFilename );
-        VSIFCloseL( m_fp );
 
         return false;
     }

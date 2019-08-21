@@ -70,7 +70,7 @@ class GDALDAASBandDesc
 
 class GDALDAASRasterBand;
 
-class GDALDAASDataset: public GDALDataset
+class GDALDAASDataset final: public GDALDataset
 {
     public:
         enum class Format
@@ -179,7 +179,7 @@ class GDALDAASDataset: public GDALDataset
 /*                         GDALDAASRasterBand                            */
 /************************************************************************/
 
-class GDALDAASRasterBand: public GDALRasterBand
+class GDALDAASRasterBand final: public GDALRasterBand
 {
         friend class GDALDAASDataset;
 
@@ -292,7 +292,7 @@ GDALDAASDataset::~GDALDAASDataset()
         char** papszOptions = nullptr;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT",
                                     CPLSPrintf("%p", this));
-        CPLHTTPFetch( "", papszOptions);
+        CPLHTTPDestroyResult(CPLHTTPFetch( "", papszOptions));
         CSLDestroy(papszOptions);
     }
 
@@ -426,6 +426,8 @@ char** GDALDAASDataset::GetHTTPOptions()
 /* Add a small amount of random jitter to avoid cyclic server stampedes */
 static double DAASBackoffFactor(double base)
 {
+    // We don't need cryptographic quality randomness...
+    // coverity[dont_call]
     return base + rand() * 0.5 / RAND_MAX;
 }
 
@@ -438,6 +440,7 @@ CPLHTTPResult* DAAS_CPLHTTPFetch(const char* pszURL, char** papszOptions)
 {
     CPLHTTPResult* psResult;
     const int RETRY_COUNT = 4;
+    // coverity[tainted_data]
     double dfRetryDelay = CPLAtof(CPLGetConfigOption(
         "GDAL_DAAS_INITIAL_RETRY_DELAY", "1.0"));
     for(int i=0; i <= RETRY_COUNT; i++)
@@ -2510,9 +2513,29 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     std::shared_ptr<GDALDataset> ds =
                 std::shared_ptr<GDALDataset>(poTileDS);
     poTileDS->MarkSuppressOnClose();
-    if( !(poTileDS->GetRasterCount() == static_cast<int>(anRequestedBands.size()) &&
-          poTileDS->GetRasterXSize() == nRequestWidth &&
-          poTileDS->GetRasterYSize() == nRequestHeight) )
+
+    bool bExpectedImageCharacteristics =
+         (poTileDS->GetRasterXSize() == nRequestWidth &&
+          poTileDS->GetRasterYSize() == nRequestHeight);
+    if( bExpectedImageCharacteristics )
+    {
+        if( poTileDS->GetRasterCount() == static_cast<int>(anRequestedBands.size()) )
+        {
+            // ok
+        }
+        else if( eRequestFormat == GDALDAASDataset::Format::PNG &&
+                 anRequestedBands.size() == 1 &&
+                 poTileDS->GetRasterCount() == 4 )
+        {
+            // ok
+        }
+        else
+        {
+            bExpectedImageCharacteristics = false;
+        }
+    }
+
+    if( !bExpectedImageCharacteristics )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Got tile of size %dx%dx%d, whereas %dx%dx%d was expected",

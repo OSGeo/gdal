@@ -2,10 +2,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements SQLite VFS
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
 
  ******************************************************************************
- * Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -479,7 +479,9 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData)
 
     OGRSQLiteVFSAppDataStruct* pVFSAppData =
         (OGRSQLiteVFSAppDataStruct*) CPLCalloc(1, sizeof(OGRSQLiteVFSAppDataStruct));
-    snprintf(pVFSAppData->szVFSName, sizeof(pVFSAppData->szVFSName), "OGRSQLITEVFS_%p", pVFSAppData);
+    char szPtr[32];
+    snprintf(szPtr, sizeof(szPtr), "%p", pVFSAppData);
+    snprintf(pVFSAppData->szVFSName, sizeof(pVFSAppData->szVFSName), "OGRSQLITEVFS_%s", szPtr);
     pVFSAppData->pDefaultVFS = pDefaultVFS;
     pVFSAppData->pfn = pfn;
     pVFSAppData->pfnUserData = pfnUserData;

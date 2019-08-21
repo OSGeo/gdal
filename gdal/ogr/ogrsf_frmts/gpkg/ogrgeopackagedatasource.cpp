@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2013, Paul Ramsey <pramsey@boundlessgeo.com>
- * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1775,6 +1775,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                 {
                     SetDataType(GDT_Int16);
                 }
+                // coverity[tainted_data]
                 else if( dfOffset == -32767.0 && !osDataNull.empty() &&
                          CPLAtof(osDataNull) == 65535.0 )
                     // Given that we will map the nodata value to -32768
@@ -1787,6 +1788,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             // final integer result.
             if( m_eDT != GDT_Float32 )
             {
+                // coverity[tainted_data]
                 if( dfScale == 1.0 && dfOffset == -32768.0 &&
                     !osDataNull.empty() &&
                     CPLAtof(osDataNull) == 65535.0 )

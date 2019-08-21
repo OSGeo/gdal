@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for HDF5 driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -272,8 +272,8 @@ def test_hdf5_10():
     got_gcps = ds.GetGCPs()
     assert len(got_gcps) == 4
 
-    assert (abs(got_gcps[0].GCPPixel - 0) <= 1e-5 and abs(got_gcps[0].GCPLine - 0) <= 1e-5 and \
-       abs(got_gcps[0].GCPX - 12.2395902509238) <= 1e-5 and abs(got_gcps[0].GCPY - 44.7280047434954) <= 1e-5)
+    assert (got_gcps[0].GCPPixel == pytest.approx(0, abs=1e-5) and got_gcps[0].GCPLine == pytest.approx(0, abs=1e-5) and \
+       got_gcps[0].GCPX == pytest.approx(12.2395902509238, abs=1e-5) and got_gcps[0].GCPY == pytest.approx(44.7280047434954, abs=1e-5))
 
     ds = None
     assert not gdaltest.is_file_open('data/CSK_DGM.h5'), 'file still opened.'
@@ -297,7 +297,7 @@ def test_hdf5_11():
     got_gt = ds.GetGeoTransform()
     expected_gt = (275592.5, 2.5, 0.0, 4998152.5, 0.0, -2.5)
     for i in range(6):
-        assert abs(got_gt[i] - expected_gt[i]) <= 1e-5
+        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
 
     ds = None
 
@@ -335,8 +335,8 @@ def test_hdf5_13():
     got_gcps = ds.GetGCPs()
     assert len(got_gcps) == 3030
 
-    assert (abs(got_gcps[0].GCPPixel - 0.5) <= 1e-5 and abs(got_gcps[0].GCPLine - 0.5) <= 1e-5 and \
-       abs(got_gcps[0].GCPX - 33.1655693) <= 1e-5 and abs(got_gcps[0].GCPY - 39.3207207) <= 1e-5)
+    assert (got_gcps[0].GCPPixel == pytest.approx(0.5, abs=1e-5) and got_gcps[0].GCPLine == pytest.approx(0.5, abs=1e-5) and \
+       got_gcps[0].GCPX == pytest.approx(33.1655693, abs=1e-5) and got_gcps[0].GCPY == pytest.approx(39.3207207, abs=1e-5))
 
 ###############################################################################
 # Test complex data subsets
@@ -451,5 +451,25 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
     assert ds.GetRasterBand(1).Checksum() == checksum, 'Bad checksum. Expected %d, got %d' % (checksum, ds.GetRasterBand(1).Checksum())
 
 
+def test_hdf5_dimension_labels_with_null():
+    assert gdal.Open('data/dimension_labels_with_null.h5')
 
 
+def test_hdf5_recursive_groups():
+
+    # File generated with
+    # import h5py
+    # f = h5py.File('recursive_groups.h5','w')
+    # group = f.create_group("subgroup")
+    # group['link_to_root'] = f
+    # group['link_to_self'] = group
+    # group['soft_link_to_root'] = h5py.SoftLink('/')
+    # group['soft_link_to_self'] = h5py.SoftLink('/subgroup')
+    # group['soft_link_to_not_existing'] = h5py.SoftLink('/not_existing')
+    # group['hard_link_to_root'] = h5py.HardLink('/')
+    # group['ext_link_to_self_root'] = h5py.ExternalLink("recursive_groups.h5", "/")
+    # f.close()
+
+    ds = gdal.Open('data/recursive_groups.h5')
+    assert ds is not None
+    ds.GetSubDatasets()

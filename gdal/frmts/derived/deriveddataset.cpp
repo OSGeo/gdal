@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$")
 
-class DerivedDataset : public VRTDataset
+class DerivedDataset final: public VRTDataset
 {
     public:
         DerivedDataset( int nXSize, int nYSize );

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,8 @@
 #include "ogr_spatialref.h"
 
 #include "rmfdataset.h"
+
+#include "cpl_safemaths.hpp"
 
 CPL_CVSID("$Id$")
 
@@ -1264,11 +1266,22 @@ do {                                                                    \
         return nullptr;
     }
 
-    GUInt64 nMaxTileBits = 2ULL *
-                           static_cast<GUInt64>(poDS->sHeader.nTileWidth) *
-                           static_cast<GUInt64>(poDS->sHeader.nTileHeight) *
-                           static_cast<GUInt64>(poDS->sHeader.nBitDepth);
-    if(nMaxTileBits > static_cast<GUInt64>(std::numeric_limits<GUInt32>::max()))
+    bool bInvalidTileSize;
+    try
+    {
+        GUInt64 nMaxTileBits =
+            (CPLSM(static_cast<GUInt64>(2)) *
+             CPLSM(static_cast<GUInt64>(poDS->sHeader.nTileWidth)) *
+             CPLSM(static_cast<GUInt64>(poDS->sHeader.nTileHeight)) *
+             CPLSM(static_cast<GUInt64>(poDS->sHeader.nBitDepth))).v();
+        bInvalidTileSize = (
+            nMaxTileBits > static_cast<GUInt64>(std::numeric_limits<GUInt32>::max()));
+    }
+    catch( ... )
+    {
+        bInvalidTileSize = true;
+    }
+    if( bInvalidTileSize )
     {
         CPLError(CE_Warning, CPLE_IllegalArg,
                  "Invalid tile size. Width %lu, height %lu, bit depth %lu.",

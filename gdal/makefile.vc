@@ -43,7 +43,8 @@ BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 !ENDIF
 
 APPS_OBJ = apps\commonutils.obj apps\gdalinfo_lib.obj apps\gdal_translate_lib.obj apps\gdalwarp_lib.obj apps\ogr2ogr_lib.obj \
-	 apps\gdaldem_lib.obj apps\nearblack_lib.obj apps\gdal_grid_lib.obj apps\gdal_rasterize_lib.obj apps\gdalbuildvrt_lib.obj
+	 apps\gdaldem_lib.obj apps\nearblack_lib.obj apps\gdal_grid_lib.obj apps\gdal_rasterize_lib.obj apps\gdalbuildvrt_lib.obj \
+	 apps\gdalmdiminfo_lib.obj apps\gdalmdimtranslate_lib.obj
 
 LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj third_party\o\*.obj $(APPS_OBJ)
 
@@ -202,6 +203,12 @@ $(CLEAN_MAIN_BUILD_OUTPUT_CMDS)
 
 dll:	$(GDAL_DLL)
 
+# build using cygwin
+docs:
+!IFDEF HTMLDIR
+	make PYTHONHOME= -C doc html
+!ENDIF
+
 bindings:
 	-for %d in ( $(BINDINGS) ) do \
 		cd swig \
@@ -221,7 +228,7 @@ bindings_clean:
 		&& $(MAKE) /f  makefile.vc  clean \
 		&& cd ..   \
 		|| exit 1
-install: default
+install: default docs
 	-mkdir $(BINDIR)
 	-mkdir $(DATADIR)
 	if exist $(GDAL_DLL) $(INSTALL) $(GDAL_DLL) $(BINDIR)
@@ -234,16 +241,11 @@ install: default
 	$(INSTALL) LICENSE.TXT $(DATADIR)
 !IFDEF HTMLDIR
 	-mkdir $(HTMLDIR)
-	cd frmts
-	$(MAKE) /f makefile.vc html-install
-	cd ..
+	xcopy /S /Y doc\build\html $(HTMLDIR)
 !ENDIF
 !IFDEF INCLUDE_OGR_FRMTS
 	cd ogr\ogrsf_frmts
 	$(MAKE) /f makefile.vc plugins-install
-!IFDEF HTMLDIR
-	$(MAKE) /f makefile.vc html-install
-!ENDIF
 	cd ..\..
 !ENDIF
 

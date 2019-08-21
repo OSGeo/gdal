@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, 2003, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1912,12 +1912,12 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  *
  * For example, to build overview level 2, 4 and 8 on all bands the following
  * call could be made:
- * <pre>
+ * \code{.cpp}
  *   int       anOverviewList[3] = { 2, 4, 8 };
  *
  *   poDataset->BuildOverviews( "NEAREST", 3, anOverviewList, 0, nullptr,
  *                              GDALDummyProgress, nullptr );
- * </pre>
+ * \endcode
  *
  * @see GDALRegenerateOverviews()
  */
@@ -3177,7 +3177,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
 
     // If no driver kind is specified, assume all are to be probed.
     if( (nOpenFlags & GDAL_OF_KIND_MASK) == 0 )
-        nOpenFlags |= GDAL_OF_KIND_MASK;
+        nOpenFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
 
     GDALDriverManager *poDM = GetGDALDriverManager();
     // CPLLocaleC  oLocaleForcer;
@@ -3277,6 +3277,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         if( (nOpenFlags & GDAL_OF_VECTOR) != 0 &&
             (nOpenFlags & GDAL_OF_RASTER) == 0 &&
             poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr )
+            continue;
+        if( (nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0 &&
+            (nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) == nullptr )
             continue;
         if( poDriver->pfnOpen == nullptr &&
             poDriver->pfnOpenWithDriverArg == nullptr )
@@ -4250,23 +4254,9 @@ deprecated OGR_DS_CreateLayer().
 
 In GDAL 1.X, this method used to be in the OGRDataSource class.
 
-@param pszName the name for the new layer.  This should ideally not
-match any existing layer on the datasource.
-@param poSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.  The driver might only increase
-the reference counter of the object to take ownership, and not make a full copy,
-so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
-are done with the object.
-@param eGType the geometry type for the layer.  Use wkbUnknown if there
-are no constraints on the types geometry to be written.
-@param papszOptions a StringList of name=value options.  Options are driver
-specific.
+Example:
 
-@return NULL is returned on failure, or a new OGRLayer handle on success.
-
-<b>Example:</b>
-
-\code
+\code{.cpp}
 #include "gdal.h"
 #include "cpl_string.h"
 
@@ -4290,6 +4280,21 @@ specific.
             ...
         }
 \endcode
+
+@param pszName the name for the new layer.  This should ideally not
+match any existing layer on the datasource.
+@param poSpatialRef the coordinate system to use for the new layer, or NULL if
+no coordinate system is available.  The driver might only increase
+the reference counter of the object to take ownership, and not make a full copy,
+so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
+are done with the object.
+@param eGType the geometry type for the layer.  Use wkbUnknown if there
+are no constraints on the types geometry to be written.
+@param papszOptions a StringList of name=value options.  Options are driver
+specific.
+
+@return NULL is returned on failure, or a new OGRLayer handle on success.
+
 */
 
 OGRLayer *GDALDataset::CreateLayer( const char * pszName,
@@ -4334,6 +4339,33 @@ documentation.
 
 This method is the same as the C++ method GDALDataset::CreateLayer().
 
+Example:
+
+\code{.c}
+#include "gdal.h"
+#include "cpl_string.h"
+
+...
+
+        OGRLayerH  hLayer;
+        char     **papszOptions;
+
+        if( !GDALDatasetTestCapability( hDS, ODsCCreateLayer ) )
+        {
+        ...
+        }
+
+        papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
+        hLayer = GDALDatasetCreateLayer( hDS, "NewLayer", NULL, wkbUnknown,
+                                         papszOptions );
+        CSLDestroy( papszOptions );
+
+        if( hLayer == NULL )
+        {
+            ...
+        }
+\endcode
+
 @since GDAL 2.0
 
 @param hDS the dataset handle
@@ -4351,32 +4383,6 @@ specific.
 
 @return NULL is returned on failure, or a new OGRLayer handle on success.
 
-<b>Example:</b>
-
-\code
-#include "gdal.h"
-#include "cpl_string.h"
-
-...
-
-        OGRLayer *poLayer;
-        char     **papszOptions;
-
-        if( !poDS->TestCapability( ODsCCreateLayer ) )
-        {
-        ...
-        }
-
-        papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
-        poLayer = poDS->CreateLayer( "NewLayer", nullptr, wkbUnknown,
-                                     papszOptions );
-        CSLDestroy( papszOptions );
-
-        if( poLayer == NULL )
-        {
-            ...
-        }
-\endcode
 */
 
 OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
@@ -7330,6 +7336,8 @@ void GDALDataset::TemporarilyDropReadWriteLock()
 #endif
         for(int i = 0; i < nCount + 1; i++)
         {
+            // The mutex is recursive
+            // coverity[double_unlock]
             CPLReleaseMutex(m_poPrivate->hMutex);
         }
     }
@@ -7367,6 +7375,8 @@ void GDALDataset::ReacquireReadWriteLock()
             CPLReleaseMutex(m_poPrivate->hMutex);
         for(int i = 0; i < nCount - 1; i++)
         {
+            // The mutex is recursive
+            // coverity[double_lock]
             CPLAcquireMutex(m_poPrivate->hMutex, 1000.0);
         }
     }
@@ -7470,14 +7480,14 @@ bool GDALDataset::Features::Iterator::operator!= (const Iterator& it) const
 * FeatureLayerPair reference which is returned is reused.
 *
 * Typical use is:
-* <pre>
+* \code{.cpp}
 * for( auto&& oFeatureLayerPair: poDS->GetFeatures() )
 * {
 *       std::cout << "Feature of layer " <<
 *               oFeatureLayerPair.layer->GetName() << std::endl;
 *       oFeatureLayerPair.feature->DumpReadable();
 * }
-* </pre>
+* \endcode
 *
 * @see GetNextFeature()
 *
@@ -7621,12 +7631,12 @@ bool GDALDataset::Layers::Iterator::operator!= (const Iterator& it) const
 * This is a C++ iterator friendly version of GetLayer().
 *
 * Typical use is:
-* <pre>
+* \code{.cpp}
 * for( auto&& poLayer: poDS->GetLayers() )
 * {
 *       std::cout << "Layer  << poLayer->GetName() << std::endl;
 * }
-* </pre>
+* \endcode
 *
 * @see GetLayer()
 *
@@ -7811,12 +7821,12 @@ bool GDALDataset::Bands::Iterator::operator!= (const Iterator& it) const
 * This is a C++ iterator friendly version of GetRasterBand().
 *
 * Typical use is:
-* <pre>
+* \code{.cpp}
 * for( auto&& poBand: poDS->GetBands() )
 * {
 *       std::cout << "Band  << poBand->GetDescription() << std::endl;
 * }
-* </pre>
+* \endcode
 *
 * @see GetRasterBand()
 *
@@ -7922,4 +7932,23 @@ GDALRasterBand* GDALDataset::Bands::operator[](int iBand)
 GDALRasterBand* GDALDataset::Bands::operator[](size_t iBand)
 {
     return m_poSelf->GetRasterBand(1+static_cast<int>(iBand));
+}
+
+/************************************************************************/
+/*                           GetRootGroup()                             */
+/************************************************************************/
+
+/**
+ \brief Return the root GDALGroup of this dataset.
+
+ Only valid for multidimensional datasets.
+ 
+ This is the same as the C function GDALDatasetGetRootGroup().
+
+ @since GDAL 3.1
+*/
+
+std::shared_ptr<GDALGroup> GDALDataset::GetRootGroup() const
+{
+    return nullptr;
 }

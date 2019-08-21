@@ -3,10 +3,10 @@
  *
  * Project:  CARTO Translator
  * Purpose:  Definition of classes for OGR Carto driver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,7 @@ CPLString OGRCARTOEscapeLiteralCopy(const char* pszStr);
 /*                      OGRCartoGeomFieldDefn                         */
 /************************************************************************/
 
-class OGRCartoGeomFieldDefn: public OGRGeomFieldDefn
+class OGRCartoGeomFieldDefn final: public OGRGeomFieldDefn
 {
     public:
         int nSRID;
@@ -63,7 +63,7 @@ class OGRCartoGeomFieldDefn: public OGRGeomFieldDefn
 /************************************************************************/
 class OGRCARTODataSource;
 
-class OGRCARTOLayer : public OGRLayer
+class OGRCARTOLayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRCARTODataSource* poDS;
@@ -118,7 +118,7 @@ typedef enum
 /*                        OGRCARTOTableLayer                          */
 /************************************************************************/
 
-class OGRCARTOTableLayer : public OGRCARTOLayer
+class OGRCARTOTableLayer final: public OGRCARTOLayer
 {
     CPLString           osName;
     CPLString           osQuery;
@@ -214,7 +214,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
 /*                       OGRCARTOResultLayer                            */
 /************************************************************************/
 
-class OGRCARTOResultLayer : public OGRCARTOLayer
+class OGRCARTOResultLayer final: public OGRCARTOLayer
 {
     OGRFeature          *poFirstFeature;
 
@@ -235,7 +235,7 @@ class OGRCARTOResultLayer : public OGRCARTOLayer
 /*                           OGRCARTODataSource                         */
 /************************************************************************/
 
-class OGRCARTODataSource : public OGRDataSource
+class OGRCARTODataSource final: public OGRDataSource
 {
     char*               pszName;
     char*               pszAccount;

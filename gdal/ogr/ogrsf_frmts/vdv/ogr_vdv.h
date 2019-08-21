@@ -40,7 +40,7 @@ class OGRVDVDataSource;
 /*                        OGRIDFDataSource                              */
 /************************************************************************/
 
-class OGRIDFDataSource : public GDALDataset
+class OGRIDFDataSource final: public GDALDataset
 {
     CPLString           m_osFilename;
     VSILFILE*           m_fpL;
@@ -63,7 +63,7 @@ class OGRIDFDataSource : public GDALDataset
 /*                          OGRVDVLayer                                 */
 /************************************************************************/
 
-class OGRVDVLayer: public OGRLayer
+class OGRVDVLayer final: public OGRLayer
 {
     VSILFILE*           m_fpL;
     bool                m_bOwnFP;
@@ -133,7 +133,7 @@ class OGRVDV452Tables
 /*                          OGRVDVWriterLayer                           */
 /************************************************************************/
 
-class OGRVDVWriterLayer: public OGRLayer
+class OGRVDVWriterLayer final: public OGRLayer
 {
     OGRVDVDataSource*   m_poDS;
     OGRFeatureDefn*     m_poFeatureDefn;
@@ -175,7 +175,7 @@ class OGRVDVWriterLayer: public OGRLayer
 /*                        OGRVDVDataSource                              */
 /************************************************************************/
 
-class OGRVDVDataSource : public GDALDataset
+class OGRVDVDataSource final: public GDALDataset
 {
     CPLString           m_osFilename;
     VSILFILE*           m_fpL;

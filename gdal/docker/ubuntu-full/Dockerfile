@@ -23,7 +23,7 @@ RUN apt-get update -y \
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends \
        libcharls-dev libopenjp2-7-dev libcairo2-dev \
-       python-dev python-numpy \
+       python3-dev python3-numpy \
        libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
        curl libcurl4-gnutls-dev libxml2-dev libexpat-dev libxerces-c-dev \
        libnetcdf-dev libpoppler-dev libpoppler-private-dev \
@@ -111,6 +111,26 @@ RUN mkdir tiledb \
     && rm -rf tiledb \
     && for i in /build_thirdparty/usr/lib/x86_64-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+
+# Build openjpeg
+ARG OPENJPEG_VERSION=2.3.1
+RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
+    wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
+    && rm -f v${OPENJPEG_VERSION}.tar.gz \
+    && cd openjpeg-${OPENJPEG_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+    && make -j$(nproc) \
+    && make install \
+    && mkdir -p /build_thirdparty/usr/lib/x86_64-linux-gnu \
+    && rm -f /usr/lib/x86_64-linux-gnu/libopenjp2.so* \
+    && mv /usr/lib/libopenjp2.so* /usr/lib/x86_64-linux-gnu \
+    && cp -P /usr/lib/x86_64-linux-gnu/libopenjp2.so* /build_thirdparty/usr/lib/x86_64-linux-gnu \
+    && for i in /build_thirdparty/usr/lib/x86_64-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf openjpeg-${OPENJPEG_VERSION} \
+    ); fi
 
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends rsync ccache
@@ -212,13 +232,13 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python2.7          /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/python3            /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python2.7/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
@@ -233,8 +253,9 @@ RUN apt-get update; \
         curl unzip
 
 # GDAL dependencies
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libcharls1 libopenjp2-7 libcairo2 python-numpy \
+RUN apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        libcharls1 libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.6.2 libgeos-c1v5 \
         libcurl4 libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler73 libspatialite7 gpsbabel \
@@ -243,7 +264,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient20 libogdi3.2 libcfitsio5 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
-        libarmadillo8
+        libarmadillo8 libpython3.6
 
 # Order layers starting with less frequently varying ones
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED

@@ -132,7 +132,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            {
               rmin_dscaled = (float)floor(rmin_dscaled);
            }
-           if( rmax_dscaled - rmin_dscaled > INT_MAX )
+           if( (double)(rmax_dscaled - rmin_dscaled) > (double)INT_MAX )
            {
                 nbits = 31;
            }

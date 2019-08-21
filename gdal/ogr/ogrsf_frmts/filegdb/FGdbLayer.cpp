@@ -8,7 +8,7 @@
 ******************************************************************************
 * Copyright (c) 2010, Ragi Yaser Burhum
 * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
- * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -717,6 +717,7 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
                 // then skip to it
                 i = ((nNextOGRFID-1) / 1024) * 1024 + 1;
             }
+            // coverity[negative_shift]
             else if( !bDisableSparsePages && pabyBlockMap != nullptr && i <= nInMaxFID &&
                      TEST_BIT(pabyBlockMap, (i-1)/1024) == 0 )
             {
@@ -767,6 +768,7 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
             int iBlock = (nSrcFID-1) / 1024;
 
             // Check if the block is not empty
+            // coverity[negative_shift]
             if( TEST_BIT(pabyBlockMap, iBlock) )
             {
                 int nCountBlocksBefore;
@@ -774,13 +776,19 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
                 {
                     nCountBlocksBefore = nCountBlocksBeforeIBlockValue;
                     for(int j=nCountBlocksBeforeIBlockIdx;j<iBlock;j++)
+                    {
+                        // coverity[negative_shift]
                         nCountBlocksBefore += TEST_BIT(pabyBlockMap, j) != 0;
+                    }
                 }
                 else
                 {
                     nCountBlocksBefore = 0;
                     for(int j=0;j<iBlock;j++)
+                    {
+                        // coverity[negative_shift]
                         nCountBlocksBefore += TEST_BIT(pabyBlockMap, j) != 0;
+                    }
                 }
                 nCountBlocksBeforeIBlockIdx = iBlock;
                 nCountBlocksBeforeIBlockValue = nCountBlocksBefore;

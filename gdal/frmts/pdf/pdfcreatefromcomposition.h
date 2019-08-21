@@ -40,7 +40,7 @@
 #include <memory>
 #include <vector>
 
-class GDALPDFComposerWriter: public GDALPDFBaseWriter
+class GDALPDFComposerWriter final: public GDALPDFBaseWriter
 {
         CPLString m_osJPEG2000Driver{};
         struct TreeOfOCG
@@ -100,7 +100,7 @@ class GDALPDFComposerWriter: public GDALPDFBaseWriter
             virtual ~Action() = default;
         };
 
-        struct GotoPageAction: public Action
+        struct GotoPageAction final: public Action
         {
             GDALPDFObjectNum m_nPageDestId{};
             double m_dfX1 = 0;
@@ -109,13 +109,13 @@ class GDALPDFComposerWriter: public GDALPDFBaseWriter
             double m_dfY2 = 0;
         };
 
-        struct SetLayerStateAction: public Action
+        struct SetLayerStateAction final: public Action
         {
             std::set<GDALPDFObjectNum> m_anONLayers{};
             std::set<GDALPDFObjectNum> m_anOFFLayers{};
         };
 
-        struct JavascriptAction: public Action
+        struct JavascriptAction final: public Action
         {
             CPLString m_osScript{};
         };

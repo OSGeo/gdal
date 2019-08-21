@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class DIMAPDataset : public GDALPamDataset
+class DIMAPDataset final: public GDALPamDataset
 {
     CPLXMLNode *psProduct;
 
@@ -143,7 +143,7 @@ DIMAPDataset::DIMAPDataset() :
 DIMAPDataset::~DIMAPDataset()
 
 {
-    FlushCache();
+    DIMAPDataset::FlushCache();
 
     CPLDestroyXMLNode( psProduct );
 
@@ -160,7 +160,7 @@ DIMAPDataset::~DIMAPDataset()
 
     CSLDestroy(papszXMLDimapMetadata);
 
-    CloseDependentDatasets();
+    DIMAPDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -268,7 +268,7 @@ char **DIMAPDataset::GetFileList()
 /* ==================================================================== */
 /************************************************************************/
 
-class DIMAPRasterBand : public GDALPamRasterBand
+class DIMAPRasterBand final: public GDALPamRasterBand
 {
     friend class DIMAPDataset;
 

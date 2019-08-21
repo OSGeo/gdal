@@ -13,7 +13,7 @@
  * diminish Trent and Roberts contribution.
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class ISIS2Dataset : public RawDataset
+class ISIS2Dataset final: public RawDataset
 {
     VSILFILE     *fpImage;      // image data file.
     CPLString    osExternalCube;
@@ -388,23 +388,19 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********   Grab LINE_PROJECTION_OFFSET ************/
     double dfULYMap = 0.5;
-    double yulcenter = 0.0;
 
     value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
-        yulcenter = static_cast<float>( CPLAtof(value) );
-        yulcenter = ((yulcenter) * dfYDim);
+        const double yulcenter = static_cast<float>( CPLAtof(value) ) * dfYDim;
         dfULYMap = yulcenter - (dfYDim/2);
     }
 
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
     double dfULXMap = 0.5;
-    double xulcenter = 0.0;
 
     value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
-        xulcenter= static_cast<float>( CPLAtof(value) );
-        xulcenter = ((xulcenter) * dfXDim);
+        const double xulcenter = static_cast<float>( CPLAtof(value) ) * dfXDim;
         dfULXMap = xulcenter - (dfXDim/2);
     }
 

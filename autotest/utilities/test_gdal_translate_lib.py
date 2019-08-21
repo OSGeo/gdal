@@ -339,7 +339,7 @@ def test_gdal_translate_lib_102():
     ds2 = gdal.Translate('', ds, format='MEM', scaleParams=[[]], outputType=gdal.GDT_Byte)
     stats = ds2.GetRasterBand(1).ComputeStatistics(False)
     for i in range(4):
-        assert abs(stats[i] - expected_stats[i]) <= 1e-3
+        assert stats[i] == pytest.approx(expected_stats[i], abs=1e-3)
 
     
 ###############################################################################
@@ -455,7 +455,25 @@ def test_gdal_translate_lib_110():
 
     ds = None
 
-    
+###############################################################################
+# Test gdal_translate foo.tif foo.tif.ovr
+
+
+def test_gdal_translate_lib_generate_ovr():
+
+    gdal.FileFromMemBuffer('/vsimem/foo.tif',
+                           open('../gcore/data/byte.tif', 'rb').read())
+    gdal.GetDriverByName('GTiff').Create('/vsimem/foo.tif.ovr', 10, 10)
+    ds = gdal.Translate('/vsimem/foo.tif.ovr',
+                        '/vsimem/foo.tif',
+                        resampleAlg = gdal.GRA_Average,
+                        format = 'GTiff', width = 10, height = 10)
+    assert ds
+    assert ds.GetRasterBand(1).Checksum() == 1152, 'Bad checksum'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/foo.tif')
+
 ###############################################################################
 # Cleanup
 

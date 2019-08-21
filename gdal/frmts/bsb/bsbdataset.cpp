@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@ CPL_CVSID("$Id$")
 
 class BSBRasterBand;
 
-class BSBDataset : public GDALPamDataset
+class BSBDataset final: public GDALPamDataset
 {
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -93,7 +93,7 @@ class BSBDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BSBRasterBand : public GDALPamRasterBand
+class BSBRasterBand final: public GDALPamRasterBand
 {
     GDALColorTable      oCT;
 

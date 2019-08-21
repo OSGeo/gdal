@@ -1430,6 +1430,79 @@ Content-Type: application/json
     assert data == 'GHIJKL'.encode('ascii')
 
 ###############################################################################
+
+
+def test_daas_png_response_4_bands_for_a_one_band_request():
+
+    if gdaltest.daas_drv is None:
+        pytest.skip()
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    # Valid JSon but invalid height (string)
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
+                json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
+                    "width": 2,
+                    "height": 3,
+                    "pixelType": "Byte",
+                    "_links": {
+                        "getBuffer": {
+                            "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
+                        }
+                    },
+                    "bands": [
+                        {
+                            "name": "PAN",
+                            "description": "Panchromatic band",
+                            "colorInterpretation": "GRAY"
+                        }
+                    ]
+                }}}}}}))
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {'GDAL_DAAS_PERFORM_AUTH': 'No',
+             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
+            ds = gdal.OpenEx("DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" %
+                             gdaltest.webserver_port)
+    assert ds.RasterCount == 1
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 3, 4)
+    src_ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 3, 'A', buf_xsize=1, buf_ysize=1)
+    src_ds.GetRasterBand(2).WriteRaster(
+        0, 0, 2, 3, 'B', buf_xsize=1, buf_ysize=1)
+    src_ds.GetRasterBand(3).WriteRaster(
+        0, 0, 2, 3, 'C', buf_xsize=1, buf_ysize=1)
+    src_ds.GetRasterBand(4).WriteRaster(
+        0, 0, 2, 3, 'D', buf_xsize=1, buf_ysize=1)
+    tmpfile = '/vsimem/out.png'
+    gdal.GetDriverByName('PNG').CreateCopy(tmpfile, src_ds)
+    f = gdal.VSIFOpenL(tmpfile, 'rb')
+    png_content = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink(tmpfile)
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/getbuffer', 200,
+                {'Content-Type': 'multipart/form-data; boundary=bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7'},
+                """--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
+Content-Disposition: form-data; name="Data";
+Content-Type: image/png
+
+""".replace('\n', '\r\n').encode('ascii') + png_content + """
+--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
+Content-Disposition: form-data; name="Info";
+Content-Type: application/json
+
+{"properties":{"format":"application/octet-stream","width":2,"height":3}}
+--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""".replace('\n', '\r\n').encode('ascii'))
+
+    with webserver.install_http_handler(handler):
+        data = ds.GetRasterBand(1).ReadRaster()
+    assert data == 'AAAAAA'.encode('ascii')
+
+###############################################################################
 #
 
 

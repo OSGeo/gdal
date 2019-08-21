@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -528,7 +528,7 @@ def test_ogr_basic_12():
         f.SetField('fld', 1.230000000001)
         gdal.PopErrorHandler()
         assert gdal.GetLastErrorMsg() != ''
-        if abs(f.GetField('fld') - 1.23) < 1e-8:
+        if f.GetField('fld') == pytest.approx(1.23, abs=1e-8):
             f.DumpReadable()
             pytest.fail()
 

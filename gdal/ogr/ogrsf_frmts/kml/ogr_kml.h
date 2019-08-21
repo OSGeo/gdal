@@ -10,7 +10,7 @@
  ******************************************************************************
  * Copyright (c) 2006, Christopher Condit
  *               2007, Jens Oberender
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,7 @@ class OGRKMLDataSource;
 /*                            OGRKMLLayer                               */
 /************************************************************************/
 
-class OGRKMLLayer : public OGRLayer
+class OGRKMLLayer final: public OGRLayer
 {
   public:
     OGRKMLLayer( const char* pszName_,
@@ -101,7 +101,7 @@ class OGRKMLLayer : public OGRLayer
 /*                           OGRKMLDataSource                           */
 /************************************************************************/
 
-class OGRKMLDataSource : public OGRDataSource
+class OGRKMLDataSource final: public OGRDataSource
 {
   public:
     OGRKMLDataSource();

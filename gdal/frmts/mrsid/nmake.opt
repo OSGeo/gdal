@@ -32,7 +32,7 @@
 #      statically, the value of this macro should correspond to the run-time
 #      library linkage specified in OPTFLAGS, as follows:
 #         Release=/MT, Debug=/MTd, Release_md=/MD (default), Debug_md=/MDd
-#   MRSID_RVER=000 - Indicate the MrSID Raster SDK version you expect.  This 
+#   MRSID_RVER=000 - Indicate the MrSID Raster SDK version you expect.  This
 #      value will be validated against the actual SDK you are building to. By
 #      default the auto-detected version will be assumed correct.
 #   MRSID_LVER=000 - Indicate the MrSID Lidar SDK version you expect.  This
@@ -52,6 +52,14 @@ MRSID_CONFIG =     Release_md
 !ENDIF
 !IFNDEF MRSID_JP2
 MRSID_JP2 =        NO
+!ENDIF
+
+!IFNDEF MRSID_PLATFORM
+!IF "$(WIN64)" == "YES"
+MRSID_PLATFORM = Win64
+!ELSE
+MRSID_PLATFORM = Win32
+!ENDIF
 !ENDIF
 
 ###############################################################################
@@ -424,7 +432,6 @@ MRSID_INCLUDE =    -I"$(MRSID_LIDAR_DIR)\include" $(MRSID_INCLUDE)
 
 !ENDIF # end lidar includes
 
-
 #
 # MRSID_LIB
 #
@@ -438,12 +445,16 @@ MRSID_INCLUDE =    -I"$(MRSID_LIDAR_DIR)\include" $(MRSID_INCLUDE)
 !ERROR Cannot link dynamically against the MrSID Raster ESDK.  Try linking statically by setting MRSID_RDLLBUILD to NO.
 !ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\lti_dsdk.dll")
 MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\lti_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_PLATFORM)\lti_dsdk.dll")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_PLATFORM)\lti_dsdk.lib" $(MRSID_LIB)
 !ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\lti_dsdk_9.0.dll")
 MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\lti_dsdk.lib" $(MRSID_LIB)
 !ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\lti_dsdk_9.1.dll")
 MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\lti_dsdk.lib" $(MRSID_LIB)
 !ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\lti_dsdk_9.5.dll")
 MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\lti_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_PLATFORM)\lti_dsdk_9.5.dll")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_PLATFORM)\lti_dsdk.lib"
 !ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_dsdk_dll.dll")
 MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_dsdk_dll.lib" $(MRSID_LIB)
 !ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\Release_md\lti_dsdk_dll.dll")
@@ -470,6 +481,8 @@ MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_esdk.lib" $(MRSI
 !ENDIF
 !ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_dsdk.lib")
 MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_PLATFORM)\lti_dsdk.lib")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_PLATFORM)\lti_dsdk.lib" $(MRSID_LIB)
 !ELSE IF EXIST("$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_sdk.lib")
 # very old sdk indeed
 MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_CONFIG)\lti_sdk.lib" $(MRSID_LIB)
@@ -525,6 +538,8 @@ MRSID_LIB =        $(MRSID_LIB) advapi32.lib user32.lib
 # Find and validate the specific DLL and add it to MRSID_LIB
 !IF EXIST("$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk.dll")
 MRSID_LIB =        "$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_LIDAR_DIR)\lib\$(MRSID_PLATFORM)\lti_lidar_dsdk.dll")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_PLATFORM)\lti_lidar_dsdk.lib" $(MRSID_LIB)
 !ELSE IF EXIST("$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk_1.1.dll")
 MRSID_LIB =        "$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk.lib" $(MRSID_LIB)
 !ELSE IF $(MRSID_LVER)0 < 1110
@@ -539,6 +554,8 @@ MRSID_LIB =        "$(MRSID_LIDAR_DIR)\lib\lti_lidar_dsdk.lib" $(MRSID_LIB)
 # Find and validate the specific lidar static lib and add it to MRSID_LIB
 !IF EXIST("$(MRSID_LIDAR_DIR)\lib\$(MRSID_CONFIG)\lti_lidar_dsdk.lib")
 MRSID_LIB =        "$(MRSID_LIDAR_DIR)\lib\$(MRSID_CONFIG)\lti_lidar_dsdk.lib" $(MRSID_LIB)
+!ELSE IF EXIST("$(MRSID_LIDAR_DIR)\lib\$(MRSID_PLATFORM)\lti_lidar_dsdk.lib")
+MRSID_LIB =        "$(MRSID_RASTER_DIR)\lib\$(MRSID_PLATFORM)\lti_lidar_dsdk.lib" $(MRSID_LIB)
 !ELSE IF $(MRSID_LVER)0 >= 1110
 # v8+ dsdk can only be linked dynamically
 !ERROR Cannot link statically against this version of the MrSID Lidar DSDK ($(MRSID_LVER)).  Try linking dynamically by setting MRSID_LDLLBUILD to YES.

@@ -653,8 +653,10 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
     const bool bSingleBlock = bIsLastBlock &&
                 ( m_nCurOffset <= static_cast<vsi_l_offset>(m_nBufferSize) );
 
+    // coverity[tainted_data]
     const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    // coverity[tainted_data]
     double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
     int nRetryCount = 0;
@@ -723,6 +725,10 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
         MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poHandleHelper->GetURL()),
                      hCurlHandle);
 
@@ -753,7 +759,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer);
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {

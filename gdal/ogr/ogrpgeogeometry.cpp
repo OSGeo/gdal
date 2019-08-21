@@ -8,7 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
- * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1921,6 +1921,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                 dfStartAngle += 2 * M_PI;
             else if( dfEndAngle + M_PI < dfStartAngle )
                 dfEndAngle += 2 * M_PI;
+            // coverity[tainted_data]
             const double dfStepSizeRad =
                 CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4")) / 180.0 * M_PI;
             const double dfLengthTangentStart = (dfX1 - dfX0) * (dfX1 - dfX0) +

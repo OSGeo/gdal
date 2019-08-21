@@ -10,7 +10,7 @@
 *
 ******************************************************************************
 * Copyright( c ) 2006, Ivan Lucena
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files( the "Software" ),
@@ -496,7 +496,7 @@ class IdrisiRasterBand;
 //        Idrisi GDALDataset
 //  ----------------------------------------------------------------------------
 
-class IdrisiDataset : public GDALPamDataset
+class IdrisiDataset final: public GDALPamDataset
 {
     friend class IdrisiRasterBand;
 
@@ -553,7 +553,7 @@ public:
 //        Idrisi GDALPamRasterBand
 //  ----------------------------------------------------------------------------
 
-class IdrisiRasterBand : public GDALPamRasterBand
+class IdrisiRasterBand final: public GDALPamRasterBand
 {
     friend class IdrisiDataset;
 

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, Henrik Johansson <henrik@johome.net>
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,7 @@ CPL_C_END
 
 CPL_CVSID("$Id$")
 
-class BLXDataset : public GDALPamDataset
+class BLXDataset final: public GDALPamDataset
 {
     friend class BLXRasterBand;
 
@@ -62,7 +62,7 @@ class BLXDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
-class BLXRasterBand : public GDALPamRasterBand
+class BLXRasterBand final: public GDALPamRasterBand
 {
     int overviewLevel;
 

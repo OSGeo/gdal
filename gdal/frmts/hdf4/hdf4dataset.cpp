@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -791,6 +791,12 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    if( poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER )
+    {
+        poDS->OpenMultiDim(poOpenInfo->pszFilename);
+        return poDS;
+    }
+
 /* -------------------------------------------------------------------- */
 /*              Now read Global Attributes.                             */
 /* -------------------------------------------------------------------- */
@@ -1346,6 +1352,8 @@ void GDALRegister_HDF4()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hdf4.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdf" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
 
     poDriver->pfnOpen = HDF4Dataset::Open;
     poDriver->pfnIdentify = HDF4Dataset::Identify;

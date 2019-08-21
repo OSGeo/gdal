@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR PDS driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -76,7 +76,7 @@ def test_ogr_pds_2():
     ds = ogr.Open('data/virsvd_orb_11187_050618.lbl')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if abs(f['INCIDENCE_ANGLE'] - 3.56775538) > 1e-7 or abs(f['TEMP_2'] - 28.1240005493164) > 1e-7:
+    if f['INCIDENCE_ANGLE'] != pytest.approx(3.56775538, abs=1e-7) or f['TEMP_2'] != pytest.approx(28.1240005493164, abs=1e-7):
         f.DumpReadable()
         pytest.fail()
 

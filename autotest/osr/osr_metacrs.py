@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -89,6 +89,9 @@ class TestMetaCRS(object):
                           self.dst_srs.ExportToPrettyWkt()))
 
             pytest.fail(err_msg)
+
+        self.src_srs = None
+        self.dst_srs = None
 
     def parse_line(self):
         test_line = self.test_line

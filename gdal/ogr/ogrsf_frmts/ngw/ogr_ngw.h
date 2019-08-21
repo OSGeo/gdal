@@ -112,7 +112,7 @@ namespace NGWAPI {
 
 class OGRNGWDataset;
 
-class OGRNGWLayer : public OGRLayer
+class OGRNGWLayer final: public OGRLayer
 {
     std::string osResourceId;
     OGRNGWDataset *poDS;

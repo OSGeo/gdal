@@ -49,7 +49,7 @@ Process :
 3) Update the VERSION file.
 
 3.1) Update ./swig/python/setup.py version information.
-     And the version of libgdal in ./swig/python/README.txt
+     And the version of libgdal in ./swig/python/README.rst
 
 3.2) Update ./swig/include/perl/gdal_perl.i $VERSION and $GDAL_VERSION
 strings to current version. Update also $VERSION in
@@ -124,7 +124,7 @@ or your message manually approved, with an administrator of the list.
 
 15) Update the freegis.org entry for GDAL.
 
-16) Update doc/index.dox to advertize the new release and link to the release notes
+16) Update doc/source/about_no_title.rst and doc/source/download.rst to advertize the new release and link to the release notes
 
 17) Create a News page in Trac for the release (like
 http://trac.osgeo.org/gdal/wiki/Release/1.7.0-News) and reference it from

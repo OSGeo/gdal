@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -93,7 +93,7 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
 
 class GIFRasterBand;
 
-class GIFDataset : public GIFAbstractDataset
+class GIFDataset final: public GIFAbstractDataset
 {
     friend class GIFRasterBand;
 
@@ -115,7 +115,7 @@ class GIFDataset : public GIFAbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GIFRasterBand : public GIFAbstractRasterBand
+class GIFRasterBand final: public GIFAbstractRasterBand
 {
   public:
     GIFRasterBand( GIFDataset *, int, SavedImage *, int );

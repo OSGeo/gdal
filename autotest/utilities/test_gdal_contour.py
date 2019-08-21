@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_contour testing
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -115,7 +115,7 @@ def test_gdal_contour_1():
         envelope = feat.GetGeometryRef().GetEnvelope()
         assert feat.GetField('elev') == expected_height[i]
         for j in range(4):
-            if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
+            if expected_envelopes[i][j] != pytest.approx(envelope[j], abs=precision / 2 * 1.001):
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
                 pytest.fail('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))
@@ -170,7 +170,7 @@ def test_gdal_contour_2():
         envelope = feat.GetGeometryRef().GetEnvelope()
         assert feat.GetField('elev') == expected_height[i]
         for j in range(4):
-            if abs(expected_envelopes[i][j] - envelope[j]) > precision / 2 * 1.001:
+            if expected_envelopes[i][j] != pytest.approx(envelope[j], abs=precision / 2 * 1.001):
                 print('i=%d, wkt=%s' % (i, feat.GetGeometryRef().ExportToWkt()))
                 print(feat.GetGeometryRef().GetEnvelope())
                 pytest.fail('%f, %f' % (expected_envelopes[i][j] - envelope[j], precision / 2))

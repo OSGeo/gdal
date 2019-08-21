@@ -2,10 +2,10 @@
  *
  * Project:  JPEGLS driver based on CharLS library
  * Purpose:  JPEGLS driver based on CharLS library
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEGLSDataset : public GDALPamDataset
+class JPEGLSDataset final: public GDALPamDataset
 {
     friend class JPEGLSRasterBand;
 
@@ -74,7 +74,7 @@ class JPEGLSDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEGLSRasterBand : public GDALPamRasterBand
+class JPEGLSRasterBand final: public GDALPamRasterBand
 {
     friend class JPEGLSDataset;
 

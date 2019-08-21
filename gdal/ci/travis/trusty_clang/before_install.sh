@@ -7,7 +7,8 @@ sudo apt-get purge -y libgeos* libspatialite*
 sudo apt-get remove libpq* postgresql*
 find  /etc/apt/sources.list.d
 sudo mv /etc/apt/sources.list.d/pgdg* /tmp
-sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+sudo add-apt-repository -y ppa:ubuntugis/ppa
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-testing
 #sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update
 

@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  FGDB driver testing.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -400,9 +400,7 @@ def test_ogr_fgdb_5():
     assert ogrtest.fgdb_drv.DeleteDataSource("tmp/test.gdb") == 0, \
         'DeleteDataSource() failed'
 
-    with pytest.raises(OSError, message="tmp/test.gdb still existing"):
-        os.stat("tmp/test.gdb")
-    
+    assert not os.path.exists("tmp/test.gdb")
 
     
 ###############################################################################
@@ -682,7 +680,7 @@ def test_ogr_fgdb_11():
     feat = lyr.GetNextFeature()
     if feat.GetField('esriFieldTypeSmallInteger') != 12 or \
        feat.GetField('esriFieldTypeInteger') != 3456 or \
-       abs(feat.GetField('esriFieldTypeSingle') - 78.9) > 1e-2 or \
+       feat.GetField('esriFieldTypeSingle') != pytest.approx(78.9, abs=1e-2) or \
        feat.GetField('esriFieldTypeDouble') != 1.23 or \
        feat.GetField('esriFieldTypeDate') != '2012/12/31 12:34:56' or \
        feat.GetField('esriFieldTypeString') != 'astr' or \
@@ -1097,12 +1095,8 @@ def test_ogr_fgdb_19():
 
     assert ds.StartTransaction(force=True) == 0
 
-    try:
-        os.stat('tmp/test.gdb.ogredited')
-    except OSError:
-        pytest.fail()
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
+    assert os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
     
 
     ret = lyr.CreateField(ogr.FieldDefn('foobar', ogr.OFTString))
@@ -1167,13 +1161,8 @@ def test_ogr_fgdb_19():
     # Test that CommitTransaction() works
     assert ds.CommitTransaction() == 0
 
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogredited')
-    
-
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
-    
+    assert not os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
 
     lst = gdal.ReadDir('tmp/test.gdb')
     for filename in lst:
@@ -1216,13 +1205,8 @@ def test_ogr_fgdb_19():
 
     assert ds.RollbackTransaction() == 0
 
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogredited')
-    
-
-    with pytest.raises(OSError):
-        os.stat('tmp/test.gdb.ogrtmp')
-    
+    assert not os.path.exists('tmp/test.gdb.ogredited')
+    assert not os.path.exists('tmp/test.gdb.ogrtmp')
 
     assert lyr.GetFeatureCount() == old_count
 
@@ -1421,9 +1405,7 @@ def test_ogr_fgdb_19():
             ds = None
 
             if case == 'CASE4':
-                with pytest.raises(OSError, message=case):
-                    os.stat('tmp/test.gdb.ogredited')
-                
+                assert not os.path.exists('tmp/test.gdb.ogredited'), case
             else:
                 shutil.rmtree('tmp/test.gdb.ogredited')
 

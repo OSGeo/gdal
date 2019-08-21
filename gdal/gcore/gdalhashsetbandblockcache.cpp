@@ -112,7 +112,7 @@ GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(
 
 GDALHashSetBandBlockCache::~GDALHashSetBandBlockCache()
 {
-    FlushCache();
+    GDALHashSetBandBlockCache::FlushCache();
     CPLDestroyLock(hLock);
 }
 

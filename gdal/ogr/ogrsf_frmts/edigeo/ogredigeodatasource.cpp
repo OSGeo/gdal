@@ -2,10 +2,10 @@
  *
  * Project:  EDIGEO Translator
  * Purpose:  Implements OGREDIGEODataSource class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,6 +60,7 @@ OGREDIGEODataSource::OGREDIGEODataSource() :
     iSIZE(-1),
     iOBJ_LNK(-1),
     iOBJ_LNK_LAYER(-1),
+    // coverity[tainted_data]
     dfSizeFactor(CPLAtof(
         CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"))),
     bIncludeFontFamily(CPLTestBool(

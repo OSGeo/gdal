@@ -37,7 +37,7 @@
 /**********************************************************************/
 /*            OGCGeoconceptLayer Class                           */
 /**********************************************************************/
-class OGRGeoconceptLayer : public OGRLayer
+class OGRGeoconceptLayer final: public OGRLayer
 {
   private:
     OGRFeatureDefn      *_poFeatureDefn;

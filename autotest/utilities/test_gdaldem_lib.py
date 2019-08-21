@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdaldem testing
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2015, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2015, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,7 @@ def test_gdaldem_lib_hillshade():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
@@ -79,7 +79,7 @@ def test_gdaldem_lib_hillshade_float():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
@@ -105,7 +105,7 @@ def test_gdaldem_lib_hillshade_float_png():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
@@ -133,7 +133,7 @@ def test_gdaldem_lib_hillshade_combined():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
@@ -159,7 +159,7 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
@@ -185,7 +185,7 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
@@ -333,7 +333,7 @@ def test_gdaldem_lib_color_relief():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'

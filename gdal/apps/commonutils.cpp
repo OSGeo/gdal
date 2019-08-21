@@ -2,10 +2,10 @@
  *
  * Project:  GDAL Utilities
  * Purpose:  Common utility routines
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,6 +74,12 @@ std::vector<CPLString> GetOutputDriversFor(const char* pszDestFilename,
     std::vector<CPLString> aoDriverList;
 
     CPLString osExt = CPLGetExtension(pszDestFilename);
+    if( EQUAL(osExt, "zip") &&
+            (CPLString(pszDestFilename).endsWith(".shp.zip") ||
+             CPLString(pszDestFilename).endsWith(".SHP.ZIP")) )
+    {
+        osExt = "shp.zip";
+    }
     const int nDriverCount = GDALGetDriverCount();
     for( int i = 0; i < nDriverCount; i++ )
     {

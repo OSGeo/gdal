@@ -3,10 +3,10 @@
  *
  * Project:  XLS Translator
  * Purpose:  Definition of classes for OGR .xls driver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,7 +38,7 @@
 
 class OGRXLSDataSource;
 
-class OGRXLSLayer : public OGRLayer
+class OGRXLSLayer final: public OGRLayer
 {
     OGRXLSDataSource*  poDS;
     OGRFeatureDefn*    poFeatureDefn;
@@ -83,7 +83,7 @@ class OGRXLSLayer : public OGRLayer
 /*                           OGRXLSDataSource                           */
 /************************************************************************/
 
-class OGRXLSDataSource : public OGRDataSource
+class OGRXLSDataSource final: public OGRDataSource
 {
     char*               pszName;
 
@@ -117,7 +117,7 @@ class OGRXLSDataSource : public OGRDataSource
 /*                             OGRXLSDriver                             */
 /************************************************************************/
 
-class OGRXLSDriver : public OGRSFDriver
+class OGRXLSDriver final: public OGRSFDriver
 {
   public:
                 virtual ~OGRXLSDriver();

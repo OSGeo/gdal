@@ -217,7 +217,7 @@ class OGRXercesInputSource : public InputSource
     CPL_DISALLOW_COPY_ASSIGN(OGRXercesInputSource)
 
   public:
-    OGRXercesInputSource(VSILFILE* fp,
+    explicit OGRXercesInputSource(VSILFILE* fp,
                          MemoryManager* const manager =
                          XMLPlatformUtils::fgMemoryManager);
     ~OGRXercesInputSource() override;

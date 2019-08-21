@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -317,12 +317,12 @@ def test_jp2kak_17():
     gte = (42.999583333333369, 0.008271349862259, 0,
            34.000416666666631, 0, -0.008271349862259)
 
-    if (abs(gt[0] - gte[0]) > 0.0000001 or
-        abs(gt[3] - gte[3]) > 0.000001 or
-        abs(gt[1] - gte[1]) > 0.000000000005 or
-        abs(gt[2] - gte[2]) > 0.000000000005 or
-        abs(gt[4] - gte[4]) > 0.000000000005 or
-            abs(gt[5] - gte[5]) > 0.000000000005):
+    if (gt[0] != pytest.approx(gte[0], abs=0.0000001) or
+        gt[3] != pytest.approx(gte[3], abs=0.000001) or
+        gt[1] != pytest.approx(gte[1], abs=0.000000000005) or
+        gt[2] != pytest.approx(gte[2], abs=0.000000000005) or
+        gt[4] != pytest.approx(gte[4], abs=0.000000000005) or
+            gt[5] != pytest.approx(gte[5], abs=0.000000000005)):
         print('got: ', gt)
         gdal.SetConfigOption('GDAL_JP2K_ALT_OFFSETVECTOR_ORDER', 'NO')
         pytest.fail('did not get expected geotransform')

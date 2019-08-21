@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,9 +80,12 @@ class ENVIDataset final: public RawDataset
 
     CPLString   osStaFilename{};
 
+    std::vector<GDAL_GCP> m_asGCPs{};
+
     bool        ReadHeader( VSILFILE * );
     bool        ProcessMapinfo( const char * );
     void        ProcessRPCinfo( const char *, int, int);
+    void        ProcessGeoPoints( const char* );
     void        ProcessStatsFile();
     static int         byteSwapInt(int);
     static float       byteSwapFloat(float);
@@ -130,6 +133,8 @@ class ENVIDataset final: public RawDataset
                             const char *pszDomain = "" ) override;
     CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                     const OGRSpatialReference* poSRS ) override;
+    int    GetGCPCount() override;
+    const GDAL_GCP *GetGCPs() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo *, bool bFileSizeCheck );

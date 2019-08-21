@@ -40,6 +40,7 @@
 #include <cstring>
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <new>
 
 #include "cpl_conv.h"
@@ -451,24 +452,12 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  * See the GetLockedBlockRef() method for a way of accessing internally cached
  * block oriented data without an extra copy into an application buffer.
  *
- * @param nXBlockOff the horizontal block offset, with zero indicating
- * the left most block, 1 the next block and so forth.
- *
- * @param nYBlockOff the vertical block offset, with zero indicating
- * the top most block, 1 the next block and so forth.
- *
- * @param pImage the buffer into which the data will be read.  The buffer
- * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
- * of type GetRasterDataType().
- *
- * @return CE_None on success or CE_Failure on an error.
- *
  * The following code would efficiently compute a histogram of eight bit
  * raster data.  Note that the final block may be partial ... data beyond
  * the edge of the underlying raster band in these edge blocks is of an
  * undermined value.
  *
-<pre>
+\code{.cpp}
  CPLErr GetHistogram( GDALRasterBand *poBand, GUIntBig *panHistogram )
 
  {
@@ -507,8 +496,19 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
          }
      }
  }
-
-</pre>
+\endcode
+ *
+ * @param nXBlockOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth.
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the top most block, 1 the next block and so forth.
+ *
+ * @param pImage the buffer into which the data will be read.  The buffer
+ * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
+ * of type GetRasterDataType().
+ *
+ * @return CE_None on success or CE_Failure on an error.
  */
 
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
@@ -2893,12 +2893,12 @@ static inline void ComputeFloatNoDataValue( GDALDataType eDataType,
  * the following would be suitable.  The unusual bounds are to ensure that
  * bucket boundaries don't fall right on integer values causing possible errors
  * due to rounding after scaling.
-<pre>
+\code{.cpp}
     GUIntBig anHistogram[256];
 
     poBand->GetHistogram( -0.5, 255.5, 256, anHistogram, FALSE, FALSE,
                           GDALDummyProgress, nullptr );
-</pre>
+\endcode
  *
  * Note that setting bApproxOK will generally result in a subsampling of the
  * file, and will utilize overviews if available.  It should generally
@@ -7066,3 +7066,334 @@ void GDALRasterBand::InitRWLock()
  *
  * @return CE_None on success, or an error code on failure.
  */
+
+/************************************************************************/
+/*                     GDALMDArrayFromRasterBand                        */
+/************************************************************************/
+
+class GDALMDArrayFromRasterBand final: public GDALMDArray
+{
+    CPL_DISALLOW_COPY_ASSIGN(GDALMDArrayFromRasterBand)
+
+    GDALDataset* m_poDS;
+    GDALRasterBand* m_poBand;
+    GDALExtendedDataType m_dt;
+    std::vector<std::shared_ptr<GDALDimension>> m_dims{};
+    std::string m_osUnit;
+    std::vector<GByte> m_pabyNoData{};
+    std::shared_ptr<GDALMDArray> m_varX{};
+    std::shared_ptr<GDALMDArray> m_varY{};
+
+    bool ReadWrite(GDALRWFlag eRWFlag,
+                    const GUInt64* arrayStartIdx,
+                    const size_t* count,
+                    const GInt64* arrayStep,
+                    const GPtrDiff_t* bufferStride,
+                    const GDALExtendedDataType& bufferDataType,
+                    void* pBuffer) const;
+
+protected:
+    GDALMDArrayFromRasterBand(GDALDataset* poDS,
+                              GDALRasterBand* poBand):
+        GDALAbstractMDArray( std::string(),
+                             std::string(poDS->GetDescription()) +
+                                CPLSPrintf(" band %d", poBand->GetBand()) ),
+        GDALMDArray( std::string(),
+                     std::string(poDS->GetDescription()) +
+                        CPLSPrintf(" band %d", poBand->GetBand()) ),
+        m_poDS(poDS),
+        m_poBand(poBand),
+        m_dt(GDALExtendedDataType::Create(poBand->GetRasterDataType())),
+        m_osUnit( poBand->GetUnitType() )
+    {
+        m_poDS->Reference();
+
+        int bHasNoData = false;
+        double dfNoData = m_poBand->GetNoDataValue(&bHasNoData);
+        if( bHasNoData )
+        {
+            m_pabyNoData.resize(m_dt.GetSize());
+            GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                          &m_pabyNoData[0], m_dt.GetNumericDataType(), 0,
+                          1);
+        }
+
+        const int nXSize = poBand->GetXSize();
+        const int nYSize = poBand->GetYSize();
+
+        auto poSRS = m_poDS->GetSpatialRef();
+        std::string osTypeY;
+        std::string osTypeX;
+        std::string osDirectionY;
+        std::string osDirectionX;
+        if( poSRS && poSRS->GetAxesCount() == 2 )
+        {
+            const auto mapping = poSRS->GetDataAxisToSRSAxisMapping();
+            OGRAxisOrientation eOrientation1 = OAO_Other;
+            poSRS->GetAxis(nullptr, 0,  &eOrientation1 );
+            OGRAxisOrientation eOrientation2 = OAO_Other;
+            poSRS->GetAxis(nullptr, 1,  &eOrientation2 );
+            if( eOrientation1 == OAO_East && eOrientation2 == OAO_North )
+            {
+                if( mapping == std::vector<int>{1,2} )
+                {
+                    osTypeY = GDAL_DIM_TYPE_HORIZONTAL_Y;
+                    osDirectionY = "NORTH";
+                    osTypeX = GDAL_DIM_TYPE_HORIZONTAL_X;
+                    osDirectionX = "EAST";
+                }
+            }
+            else if( eOrientation1 == OAO_North && eOrientation2 == OAO_East )
+            {
+                if( mapping == std::vector<int>{2,1} )
+                {
+                    osTypeY = GDAL_DIM_TYPE_HORIZONTAL_Y;
+                    osDirectionY = "NORTH";
+                    osTypeX = GDAL_DIM_TYPE_HORIZONTAL_X;
+                    osDirectionX = "EAST";
+                }
+            }
+        }
+
+        m_dims = {
+            std::make_shared<GDALDimensionWeakIndexingVar>(
+                "/", "Y", osTypeY, osDirectionY, nYSize),
+            std::make_shared<GDALDimensionWeakIndexingVar>(
+                "/", "X", osTypeX, osDirectionX, nXSize)
+        };
+
+        double adfGeoTransform[6];
+        if( m_poDS->GetGeoTransform(adfGeoTransform) == CE_None &&
+            adfGeoTransform[2] == 0 && adfGeoTransform[4] == 0 )
+        {
+            m_varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+                "/", "X", m_dims[1],
+                adfGeoTransform[0],
+                adfGeoTransform[1], 0.5);
+            m_dims[1]->SetIndexingVariable(m_varX);
+
+            m_varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+                "/", "Y", m_dims[0],
+                adfGeoTransform[3],
+                adfGeoTransform[5], 0.5);
+            m_dims[0]->SetIndexingVariable(m_varY);
+        }
+    }
+
+    bool IRead(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer) const override
+    {
+        return ReadWrite(GF_Read, arrayStartIdx, count, arrayStep, bufferStride,
+                         bufferDataType, pDstBuffer);
+    }
+
+    bool IWrite(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      const void* pSrcBuffer) override
+    {
+        return ReadWrite(GF_Write, arrayStartIdx, count, arrayStep, bufferStride,
+                         bufferDataType, const_cast<void*>(pSrcBuffer));
+    }
+
+public:
+    ~GDALMDArrayFromRasterBand()
+    {
+        m_poDS->ReleaseRef();
+    }
+
+    static std::shared_ptr<GDALMDArray> Create(GDALDataset* poDS,
+                                               GDALRasterBand* poBand)
+    {
+        auto array(std::shared_ptr<GDALMDArrayFromRasterBand>(
+            new GDALMDArrayFromRasterBand(poDS, poBand)));
+        array->SetSelf(array);
+        return array;
+    }
+
+    bool IsWritable() const override { return m_poDS->GetAccess() == GA_Update; }
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
+
+    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
+
+    const std::string& GetUnit() const override { return m_osUnit; }
+
+    const void* GetRawNoDataValue() const override
+    { return m_pabyNoData.empty() ? nullptr: m_pabyNoData.data(); }
+
+    double GetOffset(bool* pbHasOffset) const override
+    {
+        int bHasOffset = false;
+        double dfRes = m_poBand->GetOffset(&bHasOffset);
+        if( pbHasOffset )
+            *pbHasOffset = CPL_TO_BOOL(bHasOffset);
+        return dfRes;
+    }
+
+    double GetScale(bool* pbHasScale) const override
+    {
+        int bHasScale = false;
+        double dfRes = m_poBand->GetScale(&bHasScale);
+        if( pbHasScale )
+            *pbHasScale = CPL_TO_BOOL(bHasScale);
+        return dfRes;
+    }
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override
+    {
+        auto poSRS = m_poDS->GetSpatialRef();
+        if( !poSRS )
+            return nullptr;
+        return std::shared_ptr<OGRSpatialReference>(poSRS->Clone());
+    }
+
+    std::vector<GUInt64> GetBlockSize() const override
+    {
+        int nBlockXSize = 0;
+        int nBlockYSize = 0;
+        m_poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        return std::vector<GUInt64>{ static_cast<GUInt64>(nBlockYSize),
+                                     static_cast<GUInt64>(nBlockXSize) };
+    }
+
+    class MDIAsAttribute: public GDALAttribute
+    {
+        std::vector<std::shared_ptr<GDALDimension>> m_dims{};
+        const GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();
+        std::string m_osValue;
+
+    public:
+        MDIAsAttribute(const std::string& name, const std::string& value):
+            GDALAbstractMDArray(std::string(), name),
+            GDALAttribute(std::string(), name),
+            m_osValue(value)
+        {
+        }
+
+        const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
+
+        const GDALExtendedDataType &GetDataType() const override { return m_dt; }
+
+        bool IRead(const GUInt64*, const size_t*,
+                   const GInt64*, const GPtrDiff_t*,
+                   const GDALExtendedDataType& bufferDataType,
+                   void* pDstBuffer) const override
+        {
+            const char* pszStr = m_osValue.c_str();
+            GDALExtendedDataType::CopyValue(&pszStr, m_dt,
+                                            pDstBuffer, bufferDataType);
+            return true;
+        }
+    };
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList) const override
+    {
+        std::vector<std::shared_ptr<GDALAttribute>> res;
+        auto papszMD = m_poBand->GetMetadata();
+        for( auto iter = papszMD; iter && iter[0]; ++iter )
+        {
+            char* pszKey = nullptr;
+            const char* pszValue = CPLParseNameValue(*iter, &pszKey);
+            if( pszKey && pszValue )
+            {
+                res.emplace_back(std::make_shared<MDIAsAttribute>(pszKey, pszValue));
+            }
+            CPLFree(pszKey);
+        }
+        return res;
+    }
+};
+
+/************************************************************************/
+/*                            ReadWrite()                               */
+/************************************************************************/
+
+bool GDALMDArrayFromRasterBand::ReadWrite(GDALRWFlag eRWFlag,
+                                          const GUInt64* arrayStartIdx,
+                                          const size_t* count,
+                                          const GInt64* arrayStep,
+                                          const GPtrDiff_t* bufferStride,
+                                          const GDALExtendedDataType& bufferDataType,
+                                          void* pBuffer) const
+{
+    if( bufferDataType.GetClass() != GEDTC_NUMERIC )
+        return false;
+    const auto eDT(bufferDataType.GetNumericDataType());
+    const auto nDTSize(GDALGetDataTypeSizeBytes(eDT));
+    constexpr int kX = 1;
+    constexpr int kY = 0;
+    const int nX = arrayStep[kX] > 0  ?
+        static_cast<int>(arrayStartIdx[kX]) :
+        static_cast<int>(arrayStartIdx[kX] - (count[kX]-1) * -arrayStep[kX]);
+    const int nY = arrayStep[kY] > 0  ?
+        static_cast<int>(arrayStartIdx[kY]) :
+        static_cast<int>(arrayStartIdx[kY] - (count[kY]-1) * -arrayStep[kY]);
+    const int nSizeX = static_cast<int>(count[kX] * ABS(arrayStep[kX]));
+    const int nSizeY = static_cast<int>(count[kY] * ABS(arrayStep[kY]));
+    GByte* pabyBuffer = static_cast<GByte*>(pBuffer);
+    int nStrideXSign = 1;
+    if( arrayStep[kX] < 0 )
+    {
+        pabyBuffer += (count[kX]-1) * bufferStride[kX] * nDTSize;
+        nStrideXSign = -1;
+    }
+    int nStrideYSign = 1;
+    if( arrayStep[kY] < 0 )
+    {
+        pabyBuffer += (count[kY]-1) * bufferStride[kY] * nDTSize;
+        nStrideYSign = -1;
+    }
+
+    return m_poBand->RasterIO(eRWFlag,
+            nX, nY, nSizeX, nSizeY,
+            pabyBuffer,
+            static_cast<int>(count[kX]),
+            static_cast<int>(count[kY]),
+            eDT,
+            static_cast<GSpacing>(nStrideXSign * bufferStride[kX] * nDTSize),
+            static_cast<GSpacing>(nStrideYSign * bufferStride[kY] * nDTSize),
+            nullptr) == CE_None;
+}
+
+/************************************************************************/
+/*                            AsMDArray()                               */
+/************************************************************************/
+
+/** Return a view of this raster band as a 2D multidimensional GDALMDArray.
+ *
+ * The band must be linked to a GDALDataset. If this dataset is not already
+ * marked as shared, it will be, so that the returned array holds a reference
+ * to it.
+ *
+ * If the dataset has a geotransform attached, the X and Y dimensions of the
+ * returned array will have an associated indexing variable.
+ *
+ * This is the same as the C function GDALRasterBandAsMDArray().
+ *
+ * The "reverse" method is GDALMDArray::AsClassicDataset().
+ *
+ * @return a new array, or nullptr.
+ *
+ * @since GDAL 3.1
+ */
+std::shared_ptr<GDALMDArray> GDALRasterBand::AsMDArray() const
+{
+    if( !poDS )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Band not attached to a dataset");
+        return nullptr;
+    }
+    if( !poDS->GetShared() )
+    {
+        poDS->MarkAsShared();
+    }
+    return GDALMDArrayFromRasterBand::Create(poDS,
+                                             const_cast<GDALRasterBand*>(this));
+}

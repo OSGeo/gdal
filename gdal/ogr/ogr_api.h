@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,6 +66,7 @@ typedef void *OGRGeometryH;
 #define DEFINED_OGRSpatialReferenceH
 /*! @endcond */
 
+#ifndef DOXYGEN_XML
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
 typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
@@ -74,6 +75,7 @@ typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
 typedef void *OGRSpatialReferenceH;
 /** Opaque type for a coordinate transformation object */
 typedef void *OGRCoordinateTransformationH;
+#endif
 #endif
 
 #endif /* DEFINED_OGRSpatialReferenceH */

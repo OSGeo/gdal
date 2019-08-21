@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -320,11 +320,11 @@ def test_numpy_rw_11():
 
         gdal.Unlink('/vsimem/' + type_tuple[0])
 
-        assert (not (type_tuple[0] == 'float32' and abs(ar2[0][0] - type_tuple[3]) > 1e-6) or \
+        assert (not (type_tuple[0] == 'float32' and ar2[0][0] != pytest.approx(type_tuple[3], abs=1e-6)) or \
            (type_tuple[0] != 'float32' and ar2[0][0] != type_tuple[3])), \
             'did not get expected result (1)'
 
-        assert (not (type_tuple[0] == 'float32' and abs(ar3[0][0] - type_tuple[3]) > 1e-6) or \
+        assert (not (type_tuple[0] == 'float32' and ar3[0][0] != pytest.approx(type_tuple[3], abs=1e-6)) or \
            (type_tuple[0] != 'float32' and ar3[0][0] != type_tuple[3])), \
             'did not get expected result (2)'
 
@@ -378,39 +378,39 @@ def test_numpy_rw_13():
 
     # Try reading into unsupported array type
     ar = numpy.empty([1, 2], dtype=numpy.int64)
-    with pytest.raises(Exception, message='expected "ValueError: array does not have '
-                             'corresponding GDAL data type"'):
+    with pytest.raises(Exception, match='array does not have '
+                             'corresponding GDAL data type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar)
     
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_ysize not consistent '
+                             'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
     
 
     # Same with 3 dimensions
     ar = numpy.empty([1, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_ysize not consistent '
+                             'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
     
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_xsize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_xsize not consistent '
+                             'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=1,
                                         buf_ysize=1)
     
 
     # Inconsistent data type
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_type not consistent '
-                             'with array type"'):
+    with pytest.raises(Exception, match='Specified buf_type not consistent '
+                             'with array type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar,
                                         buf_type=gdal.GDT_Int16)
     
@@ -450,41 +450,41 @@ def test_numpy_rw_13():
         ds.GetRasterBand(i + 1).WriteArray(ar[i])
 
     ar = numpy.empty([3, 1, 2], dtype=numpy.int64)
-    with pytest.raises(Exception, message='expected "ValueError: array does not have '
-                             'corresponding GDAL data type"'):
+    with pytest.raises(Exception, match='array does not have '
+                             'corresponding GDAL data type'):
         ds.ReadAsArray(buf_obj=ar)
     
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_ysize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_ysize not consistent '
+                             'with array shape'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=2, buf_ysize=2)
     
 
     # With 2 dimensions
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "ValueError: Array should have 3 '
-                             'dimensions"'):
+    with pytest.raises(Exception, match='Array should have 3 '
+                             'dimensions'):
         ds.ReadAsArray(buf_obj=ar)
     
 
     # Try call with inconsistent parameters
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_xsize not consistent '
-                             'with buffer shape"'):
+    with pytest.raises(Exception, match='Specified buf_xsize not consistent '
+                             'with array shape'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=1, buf_ysize=1)
     
 
     # Inconsistent data type
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Specified buf_type not consistent with array type"'):
+    with pytest.raises(Exception, match='Specified buf_type not consistent with array type'):
         ds.ReadAsArray(buf_obj=ar, buf_type=gdal.GDT_Int16)
     
 
     # Not enough space in first dimension
     ar = numpy.empty([2, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, message='expected "Array should have space for 3 bands"'):
+    with pytest.raises(Exception, match='Array should have space for 3 bands'):
         ds.ReadAsArray(buf_obj=ar)
     
 
@@ -513,7 +513,7 @@ def test_numpy_rw_13():
 
 def numpy_rw_14_progress_callback(pct, message, user_data):
     # pylint: disable=unused-argument
-    if abs(pct - user_data[0]) > 1e-5:
+    if pct != pytest.approx(user_data[0], abs=1e-5):
         print('Expected %f, got %f' % (user_data[0], pct))
         user_data[1] = False
     user_data[0] = user_data[0] + 0.05
@@ -557,7 +557,7 @@ def test_numpy_rw_14():
                                            callback=numpy_rw_14_progress_callback,
                                            callback_data=tab)
     assert data is not None
-    assert abs(tab[0] - 1.05) <= 1e-5 and tab[1]
+    assert tab[0] == pytest.approx(1.05, abs=1e-5) and tab[1]
 
     # Test interruption
     tab = [0]
@@ -572,7 +572,7 @@ def test_numpy_rw_14():
                           callback=numpy_rw_14_progress_callback,
                           callback_data=tab)
     assert data is not None
-    assert abs(tab[0] - 1.05) <= 1e-5 and tab[1]
+    assert tab[0] == pytest.approx(1.05, abs=1e-5) and tab[1]
 
     # Same with interruption
     tab = [0]
@@ -586,7 +586,7 @@ def test_numpy_rw_14():
     last_pct = [0]
     data = ds.ReadAsArray(callback=numpy_rw_14_progress_callback_2,
                           callback_data=last_pct)
-    assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
+    assert not (data is None or last_pct[0] != pytest.approx(1.0, abs=1e-5))
 
     last_pct = [0]
 
@@ -595,7 +595,7 @@ def test_numpy_rw_14():
     data = ds.ReadAsArray(buf_obj=array,
                           callback=numpy_rw_14_progress_callback_2,
                           callback_data=last_pct)
-    assert not (data is None or abs(last_pct[0] - 1.0) > 1e-5)
+    assert not (data is None or last_pct[0] != pytest.approx(1.0, abs=1e-5))
 
 ###############################################################################
 # Test NumPy GetGeoTransform/SetGeoTransform

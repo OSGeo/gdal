@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  nearblack testing
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -62,7 +62,7 @@ def test_nearblack_1():
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
     for i in range(6):
-        assert abs(src_gt[i] - dst_gt[i]) <= 1e-10, 'Bad geotransform'
+        assert src_gt[i] == pytest.approx(dst_gt[i], abs=1e-10), 'Bad geotransform'
 
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'

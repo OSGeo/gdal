@@ -2,10 +2,10 @@
  *
  * Project:  NGSGEOID driver
  * Purpose:  GDALDataset driver for NGSGEOID dataset.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
 
 class NGSGEOIDRasterBand;
 
-class NGSGEOIDDataset : public GDALPamDataset
+class NGSGEOIDDataset final: public GDALPamDataset
 {
     friend class NGSGEOIDRasterBand;
 
@@ -79,7 +79,7 @@ class NGSGEOIDDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class NGSGEOIDRasterBand : public GDALPamRasterBand
+class NGSGEOIDRasterBand final: public GDALPamRasterBand
 {
     friend class NGSGEOIDDataset;
 

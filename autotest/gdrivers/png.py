@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -78,7 +78,7 @@ def test_png_3():
 
     gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(gt[i] - gt_expected[i]) > 0.0001:
+        if gt[i] != pytest.approx(gt_expected[i], abs=0.0001):
             print('expected:', gt_expected)
             print('got:', gt)
             pytest.fail('Mixed locale world file read improperly.')

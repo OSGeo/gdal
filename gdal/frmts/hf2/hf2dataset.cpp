@@ -2,10 +2,10 @@
  *
  * Project:  HF2 driver
  * Purpose:  GDALDataset driver for HF2/HFZ dataset.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,7 @@ CPL_CVSID("$Id$")
 
 class HF2RasterBand;
 
-class HF2Dataset : public GDALPamDataset
+class HF2Dataset final: public GDALPamDataset
 {
     friend class HF2RasterBand;
 
@@ -83,7 +83,7 @@ class HF2Dataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HF2RasterBand : public GDALPamRasterBand
+class HF2RasterBand final: public GDALPamRasterBand
 {
     friend class HF2Dataset;
 

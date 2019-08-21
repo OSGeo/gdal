@@ -1267,7 +1267,7 @@ printf ("Nx = %ld, Ny = %ld\n", gdsMeta->Nx, gdsMeta->Ny);
  *     bms = The compressed part of the message dealing with "BMS". (Input)
  * gribLen = The total length of the GRIB1 message. (Input)
  *  curLoc = Current location in the GRIB1 message. (Output)
- *  bitmap = The extracted bitmap. (Output)
+ * pBitmap = Pointer to the extracted bitmap. (Output)
  *    NxNy = The total size of the grid. (Input)
  *
  * FILES/DATABASES: None
@@ -1284,12 +1284,14 @@ printf ("Nx = %ld, Ny = %ld\n", gdsMeta->Nx, gdsMeta->Ny);
  *****************************************************************************
  */
 static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
-                           uChar *bitmap, uInt4 NxNy)
+                           uChar **pBitmap, uInt4 NxNy)
 {
    uInt4 sectLen;       /* Length in bytes of the current section. */
    short int numeric;   /* Determine if this is a predefined bitmap */
    uChar bits;          /* Used to locate which bit we are currently using. */
    uInt4 i;             /* Helps traverse the bitmap. */
+
+   *pBitmap = nullptr;
 
    uInt4 bmsRemainingSize = gribLen - *curLoc;
    if( bmsRemainingSize < 6 )
@@ -1311,8 +1313,9 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
    bms += 3;
    /* Assert: *bms currently points to number of unused bits at end of BMS. */
    if (NxNy + *bms + 6 * 8 != sectLen * 8) {
-      errSprintf ("NxNy + # of unused bits %ld != # of available bits %ld\n",
-                  (sInt4) (NxNy + *bms), (sInt4) ((sectLen - 6) * 8));
+      errSprintf ("NxNy + # of unused bits != # of available bits\n");
+      // commented out to avoid unsigned integer overflow
+      // (sInt4) (NxNy + *bms), (sInt4) ((sectLen - 6) * 8));
       return -2;
    }
    bms++;
@@ -1327,6 +1330,13 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
    if( bmsRemainingSize < (NxNy+7) / 8 )
    {
       errSprintf ("Ran out of data in BMS (GRIB 1 Section 3)\n");
+      return -1;
+   }
+   *pBitmap = (uChar*) malloc(NxNy);
+   auto bitmap = *pBitmap;
+   if( bitmap== nullptr )
+   {
+      errSprintf ("Ran out of memory in allocating bitmap (GRIB 1 Section 3)\n");
       return -1;
    }
    bits = 0x80;
@@ -1611,8 +1621,15 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
 #endif
    }
 
-   if (!f_bms && (meta->gds.numPts * numBits + numUnusedBit) !=
-       (sectLen - 11) * 8) {
+   if (!f_bms && (
+       sectLen < 11 ||
+       (numBits > 0 && meta->gds.numPts > UINT_MAX / numBits) ||
+       (meta->gds.numPts * numBits > UINT_MAX - numUnusedBit))) {
+     printf ("numPts * (numBits in a Group) + # of unused bits != "
+              "# of available bits\n");
+   }
+   else if (!f_bms &&
+            (meta->gds.numPts * numBits + numUnusedBit) != (sectLen - 11) * 8) {
       printf ("numPts * (numBits in a Group) + # of unused bits %d != "
               "# of available bits %d\n",
               (sInt4) (meta->gds.numPts * numBits + numUnusedBit),
@@ -1667,14 +1684,24 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    f_convert = ((meta->gds.scan & 0xe0) != 0x40);
 
    if (f_bms) {
+      meta->gridAttrib.f_miss = 1;
+      meta->gridAttrib.missPri = UNDEFINED;
+   }
+   else
+   {
+      meta->gridAttrib.f_miss = 0;
+   }
+
+   if( !data )
+       return 0;
+
+   if (f_bms) {
 /*
 #ifdef DEBUG
       printf ("There is a bitmap?\n");
 #endif
 */
       /* Start unpacking the data, assuming there is a bitmap. */
-      meta->gridAttrib.f_miss = 1;
-      meta->gridAttrib.missPri = UNDEFINED;
       for (i = 0; i < meta->gds.numPts; i++) {
          /* Find the destination index. */
          if (f_convert) {
@@ -1756,7 +1783,6 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
 #endif
 
       /* Start unpacking the data, assuming there is NO bitmap. */
-      meta->gridAttrib.f_miss = 0;
       for (i = 0; i < meta->gds.numPts; i++) {
          if (numBits != 0) {
             /* Find the destination index. */
@@ -1868,7 +1894,7 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
    uInt4 curLoc;        /* Current location in the GRIB message. */
    char f_gds;          /* flag if there is a gds section. */
    char f_bms;          /* flag if there is a bms section. */
-   double *grib_Data;   /* A pointer to Grib_Data for ease of manipulation. */
+   double *grib_Data = nullptr;   /* A pointer to Grib_Data for ease of manipulation. */
    uChar *bitmap = nullptr; /* A char field (0=noData, 1=data) set up in BMS. */
    short int DSF;       /* Decimal Scale Factor for unpacking the data. */
    double unitM = 1;    /* M in y = Mx + B, for unit conversion. */
@@ -1946,8 +1972,10 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
       }
    }
 
-   /* Allocate memory for the grid. */
-   if (meta->gds.numPts > *grib_DataLen) {
+   if( Grib_Data )
+   {
+     /* Allocate memory for the grid. */
+     if (meta->gds.numPts > *grib_DataLen) {
       if( meta->gds.numPts > 100 * 1024 * 1024 )
       {
           vsi_l_offset curPos = VSIFTellL(fp);
@@ -1972,13 +2000,13 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
         *grib_DataLen = 0;
         return -1;
       }
+     }
+     grib_Data = *Grib_Data;
    }
-   grib_Data = *Grib_Data;
 
    /* Get the Bit Map Section. */
    if (f_bms) {
-      bitmap = (uChar *) malloc (meta->gds.numPts * sizeof (uChar));
-      if (ReadGrib1Sect3 (c_ipack + curLoc, gribLen, &curLoc, bitmap,
+      if (ReadGrib1Sect3 (c_ipack + curLoc, gribLen, &curLoc, &bitmap,
                           meta->gds.numPts) != 0) {
          free (bitmap);
          preErrSprintf ("Inside ReadGrib1Record\n");

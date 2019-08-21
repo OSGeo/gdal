@@ -268,7 +268,11 @@ dnl AC_COMPILER_PIC
 	fi
 	rm -f conftest*
 
+dnl Trick so that LD_SHARED test works with sanitizer flags with clang
+SAVED_CFLAGS=$CFLAGS
+CFLAGS=`echo "$CFLAGS " | sed "s/-fsanitize=undefined //" | sed "s/-fsanitize=address //" | sed "s/-fsanitize=unsigned-integer-overflow //"`
 AC_LD_SHARED
+CFLAGS=$SAVED_CFLAGS
 else
 with_libtool=yes
 fi
@@ -300,7 +304,7 @@ AC_SUBST(ENABLE_UFFD,$ENABLE_UFFD)
 AC_C_BIGENDIAN
 
 dnl Check for 64 bit file API
-AC_HAVE_LONG_LONG
+AC_CHECK_TYPES([long long])
 AC_UNIX_STDIO_64
 
 AC_CHECK_SIZEOF(int)
@@ -1576,7 +1580,7 @@ else
     PG_LIB="${PQ_LIBS}"
     PG_INC="${PQ_CFLAGS}"
     SAVED_LIBS="${LIBS}"
-    LIBS="${PG_LIBS}"
+    LIBS="${PG_LIB}"
     AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no)
     LIBS="${SAVED_LIBS}"
     if test "${HAVE_PG}" = "yes" ; then
@@ -5654,6 +5658,44 @@ AC_SUBST(RASDAMAN_INC,    $RASDAMAN_INC)
 AC_SUBST(RASDAMAN_LIB,    $RASDAMAN_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl RDB support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(rdb,[  --with-rdb[=ARG]    Include RDB support (ARG=no, yes or RDB SDK root path)],,)
+
+RDB_SETTING=no
+
+if test "$with_rdb" = "yes" -o "$with_rdb" = "" ; then
+
+  AC_CHECK_LIB(rdb,rdb_library_name,RDB_SETTING=yes,RDB_SETTING=no,)
+
+  if test "$RDB_SETTING" = "yes" ; then
+    LIBS="-lrdb $LIBS"
+  else
+    echo "librdb not found - RDB support disabled"
+  fi
+
+elif test "$with_rdb" != "no" -a "$with_rdb" != ""; then
+
+  AC_CHECK_LIB(rdb,rdb_library_name,RDB_SETTING=yes,RDB_SETTING=no,-L$with_rdb/library -lrdb)
+
+  if test "$RDB_SETTING" = "yes" ; then
+    LIBS="-L$with_rdb/library -lrdb $LIBS"
+    EXTRA_INCLUDES="-I$with_rdb/interface/cpp/ -I$with_rdb/interface/c/ $EXTRA_INCLUDES"
+  else
+    echo "librdb not found - RDB support disabled"
+  fi
+
+fi
+
+AC_SUBST(RDB_SETTING,$RDB_SETTING)
+
+if test "$RDB_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="rdb $OPT_GDAL_FORMATS"
+fi
+
+
+dnl ---------------------------------------------------------------------------
 dnl Armadillo support
 dnl ---------------------------------------------------------------------------
 
@@ -6009,6 +6051,7 @@ LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
 LOC_MSG([  SDE support:               ${SDE_ENABLED}])
 LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
+LOC_MSG([  RDB support:               ${RDB_SETTING}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  PCRE support:              ${HAVE_PCRE}])

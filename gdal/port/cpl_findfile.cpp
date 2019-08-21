@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -217,7 +217,9 @@ void CPLPushFileFinder( CPLFileFinder pfnFinder )
 CPLFileFinder CPLPopFileFinderInternal( FindFileTLS* pTLSData )
 
 {
-    if( pTLSData == nullptr || pTLSData->nFileFinders == 0 )
+    if( pTLSData == nullptr )
+        return nullptr;
+    if( pTLSData->nFileFinders == 0 )
         return nullptr;
 
     CPLFileFinder pfnReturn = pTLSData->papfnFinders[--pTLSData->nFileFinders];

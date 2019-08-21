@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam (warmerdam@pobox.com)
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2014, Kyle Shannon <kyle at pobox dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -77,7 +77,7 @@ typedef enum
 
 class AAIGRasterBand;
 
-class AAIGDataset : public GDALPamDataset
+class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
 {
     friend class AAIGRasterBand;
 
@@ -135,7 +135,7 @@ class AAIGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRASSASCIIDataset : public AAIGDataset
+class GRASSASCIIDataset final: public AAIGDataset
 {
     int ParseHeader(const char* pszHeader, const char* pszDataType) override;
 
@@ -153,7 +153,7 @@ class GRASSASCIIDataset : public AAIGDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AAIGRasterBand : public GDALPamRasterBand
+class AAIGRasterBand final: public GDALPamRasterBand
 {
     friend class AAIGDataset;
 

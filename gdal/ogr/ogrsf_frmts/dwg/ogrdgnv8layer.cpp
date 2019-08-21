@@ -174,7 +174,7 @@ OGRDGNV8Layer::OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
     oField.SetPrecision( 0 );
     m_poFeatureDefn->AddFieldDefn( &oField );
     
-    ResetReading();
+    OGRDGNV8Layer::ResetReading();
 }
 
 /************************************************************************/

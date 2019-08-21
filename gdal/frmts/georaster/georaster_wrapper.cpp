@@ -2280,7 +2280,8 @@ CPLList* AddToNoDataList( CPLXMLNode* phNode, int nNumber, CPLList* poList )
 
 void GeoRasterWrapper::LoadNoDataValues( void )
 {
-    CPLListDestroy( psNoDataList );
+    if( psNoDataList )
+        return;
 
     CPLXMLNode* phLayerInfo = CPLGetXMLNode( phMetadata, "layerInfo" );
 

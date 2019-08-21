@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2012, Jean-Claude Repetto
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class MAPDataset : public GDALDataset
+class MAPDataset final: public GDALDataset
 {
     GDALDataset *poImageDS;
 
@@ -81,7 +81,7 @@ class MAPDataset : public GDALDataset
 /*                         MAPWrapperRasterBand                         */
 /* ==================================================================== */
 /************************************************************************/
-class MAPWrapperRasterBand : public GDALProxyRasterBand
+class MAPWrapperRasterBand final: public GDALProxyRasterBand
 {
   GDALRasterBand* poBaseBand;
 

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Waypoint Information Technology
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -135,7 +135,7 @@ typedef struct
     RASTER_STYLE style;
 } NWT_GRID;
 
-int nwt_ParseHeader( NWT_GRID * pGrd, char *nwHeader );
+int nwt_ParseHeader( NWT_GRID * pGrd, const unsigned char *nwHeader );
 NWT_GRID *nwtOpenGrid( char *filename );
 void nwtCloseGrid( NWT_GRID * pGrd );
 void nwtPrintGridHeader( NWT_GRID * pGrd );

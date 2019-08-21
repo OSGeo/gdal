@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,11 +87,11 @@ template <class T>
 class LTIDLLReader : public T
 {
 public:
-   LTIDLLReader(const LTFileSpec& fileSpec,
+   explicit LTIDLLReader(const LTFileSpec& fileSpec,
                 bool useWorldFile = false) : T(fileSpec, useWorldFile) {}
-   LTIDLLReader(LTIOStreamInf &oStream,
+   explicit LTIDLLReader(LTIOStreamInf &oStream,
                 bool useWorldFile = false) : T(oStream, useWorldFile) {}
-   LTIDLLReader(LTIOStreamInf *poStream,
+   explicit LTIDLLReader(LTIOStreamInf *poStream,
                 LTIOStreamInf *poWorldFile = nullptr) : T(poStream, poWorldFile) {}
    virtual ~LTIDLLReader() {}
 };

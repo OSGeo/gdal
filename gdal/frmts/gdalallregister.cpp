@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,6 +72,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_gtiff
     GDALRegister_GTiff();
+    GDALRegister_COG();
 #endif
 
 #ifdef FRMT_nitf
@@ -403,6 +404,9 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_TileDB();
 #endif
 
+#ifdef FRMT_rdb
+    GDALRegister_RDB();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Put raw formats at the end of the list. These drivers support   */
 /*      various ASCII-header labeled formats, so the driver could be    */

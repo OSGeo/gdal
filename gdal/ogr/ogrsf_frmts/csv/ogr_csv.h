@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2004,  Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,7 +72,7 @@ void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS);
 /*                             OGRCSVLayer                              */
 /************************************************************************/
 
-class OGRCSVLayer : public OGRLayer
+class OGRCSVLayer final: public OGRLayer
 {
   public:
 
@@ -211,7 +211,7 @@ class OGRCSVLayer : public OGRLayer
 /*                           OGRCSVDataSource                           */
 /************************************************************************/
 
-class OGRCSVDataSource : public OGRDataSource
+class OGRCSVDataSource final: public OGRDataSource
 {
     char                *pszName;
 

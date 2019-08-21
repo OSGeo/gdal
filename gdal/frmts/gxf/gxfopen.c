@@ -8,7 +8,7 @@
  ******************************************************************************
  * Copyright (c) 1998, Global Geomatics
  * Copyright (c) 1998, Frank Warmerdam
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -447,6 +447,7 @@ void GXFClose( GXFHandle hGXF )
 /*      values have to be recognised outside this function.             */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static
 double GXFParseBase90( GXFInfo_t * psGXF, const char * pszText,
                        int bScale )

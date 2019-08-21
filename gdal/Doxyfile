@@ -383,7 +383,6 @@ INPUT                  = port \
                          frmts/gdalallregister.cpp \
                          alg \
                          frmts/vrt \
-                         doc \
                          apps \
                          ogr \
                          ogr/ogrsf_frmts \
@@ -456,7 +455,7 @@ EXAMPLE_RECURSIVE      = NO
 # directories that contain image that are included in the documentation (see
 # the \image command).
 
-IMAGE_PATH             = doc/grid
+IMAGE_PATH             = 
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
@@ -577,7 +576,7 @@ HTML_HEADER            =
 # each generated HTML page. If it is left blank doxygen will generate a
 # standard footer.
 
-HTML_FOOTER            = doc/gdal_footer.html
+HTML_FOOTER            =
 
 # Custom layout (see http://www.stack.nl/~dimitri/doxygen/manual/customize.html)
 LAYOUT_FILE 	       = DoxygenLayout.xml
@@ -954,7 +953,8 @@ PREDEFINED             = HAVE_DLFCN_H \
                          HAVE_RECENT_LIBXML2 \
                          HAVE_LONG_LONG=1 \
                          HAVE_SC_PHYS_PAGES=1 \
-                         final=
+                         final= \
+                         CPL_RESTRICT=
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.

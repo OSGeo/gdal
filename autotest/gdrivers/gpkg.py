@@ -221,7 +221,7 @@ def test_gpkg_1():
 
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
-        assert abs(expected_gt[i] - got_gt[i]) <= 1e-8
+        assert expected_gt[i] == pytest.approx(got_gt[i], abs=1e-8)
     got_wkt = out_ds.GetProjectionRef()
     assert expected_wkt == got_wkt
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
@@ -1304,9 +1304,9 @@ def test_gpkg_16():
     val3 = ord(out_ds.GetRasterBand(3).ReadRaster(0, 0, 1, 1))
     out_ds = None
 
-    assert abs(val1 - 255) <= 1
-    assert abs(val2 - 127) <= 1
-    assert abs(val3 - 0) <= 1
+    assert val1 == pytest.approx(255, abs=1)
+    assert val2 == pytest.approx(127, abs=1)
+    assert val3 == pytest.approx(0, abs=1)
     gdal.Unlink('/vsimem/tmp.gpkg')
 
 ###############################################################################
@@ -3022,8 +3022,8 @@ def test_gpkg_46():
     count = 0
     for f in sql_lyr:
         count += 1
-        if abs(f.GetField(1) - 40075016.6855785) > 1e-7 or \
-           abs(f.GetField(2) - 40075016.6855785) > 1e-7:
+        if f.GetField(1) != pytest.approx(40075016.6855785, abs=1e-7) or \
+           f.GetField(2) != pytest.approx(40075016.6855785, abs=1e-7):
             f.DumpReadable()
             ds.ReleaseResultSet(sql_lyr)
             gdal.Unlink('/vsimem/gpkg_46.gpkg')

@@ -4,7 +4,7 @@
  * Name:     cplvirtualmem.i
  * Project:  GDAL Python Interface
  * Purpose:  GDAL Core SWIG Interface declarations.
- * Author:   Even Rouault, <even dot rouault at mines-paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 2013, Even Rouault

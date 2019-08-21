@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for LCP driver.
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -59,7 +59,7 @@ def test_lcp_1():
     check_gt = (285807.932887174887583, 30, 0, 5379230.386217921040952, 0, -30)
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i] - check_gt[i]) > 1e-5:
+        if new_gt[i] != pytest.approx(check_gt[i], abs=1e-5):
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)
@@ -147,7 +147,7 @@ def test_lcp_2():
     check_gt = (-1328145, 30, 0, 2961735, 0, -30)
     new_gt = ds.GetGeoTransform()
     for i in range(6):
-        if abs(new_gt[i] - check_gt[i]) > 1e-5:
+        if new_gt[i] != pytest.approx(check_gt[i], abs=1e-5):
             print('')
             print('old = ', check_gt)
             print('new = ', new_gt)

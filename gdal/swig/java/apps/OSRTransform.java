@@ -4,7 +4,7 @@
  * Name:     OSRTransform.java
  * Project:  GDAL Java Interface
  * Purpose:  A sample app to make coordinate transformations.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  * Port from OSRTransform.cs by Tamas Szekeres
  *

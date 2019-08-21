@@ -29,7 +29,7 @@ chroot "$chroot" sh -c "cd $PWD && tar xzf r3.4.0.tar.gz && cd mongo-cxx-driver-
 sudo chroot "$chroot" sh -c "cd $PWD/mongo-cxx-driver-r3.4.0/build_cmake && make -j3 install"
 
 # Build libspatialite
-chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && cd sl && fossil open ../libspatialite.fossil && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr --disable-geos370 && CCACHE_CPP2=yes make -j3"
+chroot "$chroot" sh -c "cd $PWD && fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && cd sl && fossil open ../libspatialite.fossil && fossil update 90180e065d && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr --disable-geos370 && CCACHE_CPP2=yes make -j3"
 sudo chroot "$chroot" sh -c "cd $PWD && cd sl && make -j3 install"
 
 # Build librasterlite2
@@ -45,10 +45,10 @@ sudo chroot "$chroot" sh -c "cd $PWD/proj && make -j3 install && mv /usr/local/l
 chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes CC='ccache gcc' CXX='ccache g++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --with-fgdb=$PWD/FileGDB_API-64gcc51"
 # --enable-debug --with-podofo
 
-chroot "$chroot" sh -c "cd $PWD/gdal && make docs >docs_log.txt 2>&1"
+chroot "$chroot" sh -c "cd $PWD/gdal && make doxygen >docs_log.txt 2>&1"
 chroot "$chroot" sh -c "cd $PWD/gdal && if grep -i warning docs_log.txt | grep -v -e russian -e brazilian -e setlocale -e 'has become obsolete' -e 'To avoid this warning'; then echo 'Doxygen warnings found' && cat docs_log.txt && /bin/false; else echo 'No Doxygen warnings found'; fi"
-chroot "$chroot" sh -c "cd $PWD/gdal && make man >man_log.txt 2>&1"
-chroot "$chroot" sh -c "cd $PWD/gdal && if grep -i warning man_log.txt | grep -v -e setlocale -e 'has become obsolete' -e 'To avoid this warning'; then echo 'Doxygen warnings found' && cat docs_log.txt && /bin/false; else echo 'No Doxygen warnings found'; fi"
+#chroot "$chroot" sh -c "cd $PWD/gdal && make man >man_log.txt 2>&1"
+#chroot "$chroot" sh -c "cd $PWD/gdal && if grep -i warning man_log.txt | grep -v -e setlocale -e 'has become obsolete' -e 'To avoid this warning'; then echo 'Doxygen warnings found' && cat docs_log.txt && /bin/false; else echo 'No Doxygen warnings found'; fi"
 chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes make USER_DEFS=-Werror -j3"
 chroot "$chroot" sh -c "cd $PWD/gdal/apps && make USER_DEFS=-Werror -j3 test_ogrsf"
 sudo chroot "$chroot" sh -c "rm -f /usr/lib/libgdal.so*"

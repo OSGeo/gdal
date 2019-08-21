@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
@@ -158,7 +158,7 @@ public:
 class JPGRasterBand;
 class JPGMaskBand;
 
-class JPGDatasetCommon : public GDALPamDataset
+class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
 {
   protected:
     friend class JPGRasterBand;

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -85,7 +85,7 @@ NASReader::NASReader() :
 NASReader::~NASReader()
 
 {
-    ClearClasses();
+    NASReader::ClearClasses();
 
     CPLFree(m_pszFilename);
 
@@ -259,6 +259,7 @@ GMLFeature *NASReader::NextFeature()
         }
 
         while( m_poCompleteFeature == nullptr
+               && !m_bStopParsing
                && m_poSAXReader->parseNext( m_oToFill ) ) {}
 
         poReturn = m_poCompleteFeature;
@@ -266,6 +267,7 @@ GMLFeature *NASReader::NextFeature()
     }
     catch (const XMLException &toCatch)
     {
+        m_bStopParsing = true;
         CPLDebug( "NAS",
                   "Error during NextFeature()! Message:\n%s",
                   transcode( toCatch.getMessage() ).c_str() );
@@ -642,8 +644,17 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
 /* -------------------------------------------------------------------- */
     if( !poClass->IsSchemaLocked() )
     {
-        poClass->GetProperty(iProperty)->AnalysePropertyValue(
-            poFeature->GetProperty(iProperty));
+        auto poClassProperty = poClass->GetProperty(iProperty);
+        if( poClassProperty )
+        {
+            // coverity[dereference]
+            poClassProperty->AnalysePropertyValue(
+                poFeature->GetProperty(iProperty));
+        }
+        else
+        {
+            CPLAssert(false);
+        }
     }
 }
 

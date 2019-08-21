@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR PDF driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -166,7 +166,7 @@ def test_ogr_pdf_2(name='tmp/ogr_pdf_1.pdf', has_attributes=True):
         if feat.GetField('intfield') != 1:
             feat.DumpReadable()
             pytest.fail()
-        if abs(feat.GetFieldAsDouble('realfield') - 2.34) > 1e-10:
+        if feat.GetFieldAsDouble('realfield') != pytest.approx(2.34, abs=1e-10):
             feat.DumpReadable()
             pytest.fail()
 

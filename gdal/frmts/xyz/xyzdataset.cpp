@@ -2,10 +2,10 @@
  *
  * Project:  XYZ driver
  * Purpose:  GDALDataset driver for XYZ dataset.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ constexpr double RELATIVE_ERROR = 1e-3;
 
 class XYZRasterBand;
 
-class XYZDataset : public GDALPamDataset
+class XYZDataset final: public GDALPamDataset
 {
     friend class XYZRasterBand;
 
@@ -88,7 +88,7 @@ class XYZDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class XYZRasterBand : public GDALPamRasterBand
+class XYZRasterBand final: public GDALPamRasterBand
 {
     friend class XYZDataset;
 

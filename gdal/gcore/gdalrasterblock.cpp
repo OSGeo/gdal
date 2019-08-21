@@ -7,7 +7,7 @@
  *
  **********************************************************************
  * Copyright (c) 1998, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -259,7 +259,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                 // nUsablePhysicalRAM ) and CPLAtof(pszCacheMax). Example values for
                 // operands: CPLAtof( pszCacheMax ) = 2251799813685248,
                 // static_cast<double>(nUsablePhysicalRAM) = -9223372036854775808."
-                // coverity[overflow]
+                // coverity[overflow,tainted_data]
                 double dfCacheMax =
                     static_cast<double>(nUsablePhysicalRAM) *
                     CPLAtof(pszCacheMax) / 100.0;
@@ -452,17 +452,23 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
         if( poTarget == nullptr )
             return FALSE;
         if( bSleepsForBockCacheDebug )
+        {
+            // coverity[tainted_data]
             CPLSleep(CPLAtof(
                 CPLGetConfigOption(
                     "GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", "0")));
+        }
 
         poTarget->Detach_unlocked();
         poTarget->GetBand()->UnreferenceBlock(poTarget);
     }
 
     if( bSleepsForBockCacheDebug )
+    {
+        // coverity[tainted_data]
         CPLSleep(CPLAtof(
             CPLGetConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_RB_LOCK", "0")));
+    }
 
     if( poTarget->GetDirty() )
     {
@@ -973,10 +979,13 @@ CPLErr GDALRasterBlock::Internalize()
                 if( poTarget != nullptr )
                 {
                     if( bSleepsForBockCacheDebug )
+                    {
+                        // coverity[tainted_data]
                         CPLSleep(CPLAtof(
                             CPLGetConfigOption(
                                 "GDAL_RB_INTERNALIZE_SLEEP_AFTER_DROP_LOCK",
                                 "0")));
+                    }
 
                     GDALRasterBlock* _poPrevious = poTarget->poPrevious;
 
@@ -1135,8 +1144,11 @@ int GDALRasterBlock::TakeLock()
     const int nLockVal = AddLock();
     CPLAssert(nLockVal >= 0);
     if( bSleepsForBockCacheDebug )
+    {
+        // coverity[tainted_data]
         CPLSleep(CPLAtof(
             CPLGetConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0")));
+    }
     if( nLockVal == 0 )
     {
         // The block is being evicted by GDALRasterBlock::Internalize()

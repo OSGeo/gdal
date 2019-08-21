@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2010, Brian Case
- * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -649,7 +649,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
             if( !poOgrST )
                 continue;
 
-            if( poOgrST->GetType() == OGRSTCPen )
+            if( poOgrST->GetType() == OGRSTCPen &&
+                poOgrTmpST == nullptr )
             {
                 poOgrTmpST = poOgrST;
             }
@@ -685,7 +686,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
             if( !poOgrST )
                 continue;
 
-            if( poOgrST->GetType() == OGRSTCBrush )
+            if( poOgrST->GetType() == OGRSTCBrush &&
+                poOgrTmpST == nullptr )
             {
                 poOgrTmpST = poOgrST;
             }
@@ -721,7 +723,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
             if( !poOgrST )
                 continue;
 
-            if( poOgrST->GetType() == OGRSTCSymbol )
+            if( poOgrST->GetType() == OGRSTCSymbol &&
+                poOgrTmpST == nullptr )
             {
                 poOgrTmpST = poOgrST;
             }
@@ -757,7 +760,8 @@ void kml2stylestring( StylePtr poKmlStyle, OGRStyleMgr * poOgrSM )
             if( !poOgrST )
                 continue;
 
-            if( poOgrST->GetType() == OGRSTCLabel )
+            if( poOgrST->GetType() == OGRSTCLabel &&
+                poOgrTmpST == nullptr )
             {
                 poOgrTmpST = poOgrST;
             }

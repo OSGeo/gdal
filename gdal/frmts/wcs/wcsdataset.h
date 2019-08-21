@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017, Ari Jolma
  * Copyright (c) 2017, Finnish Environment Institute
  *
@@ -40,7 +40,7 @@
 
 class WCSRasterBand;
 
-class WCSDataset : public GDALPamDataset
+class WCSDataset CPL_NON_FINAL: public GDALPamDataset
 {
   friend class WCSRasterBand;
   friend class WCSDataset100;
@@ -149,7 +149,7 @@ class WCSDataset : public GDALPamDataset
     virtual char **GetMetadata( const char *pszDomain ) override;
 };
 
-class WCSDataset100 : public WCSDataset
+class WCSDataset100 final: public WCSDataset
 {
     std::vector<double> GetExtent(int nXOff, int nYOff,
                                   int nXSize, int nYSize,
@@ -169,7 +169,7 @@ class WCSDataset100 : public WCSDataset
     explicit WCSDataset100(const char *cache_dir) : WCSDataset(100, cache_dir) {}
 };
 
-class WCSDataset110 : public WCSDataset
+class WCSDataset110 CPL_NON_FINAL: public WCSDataset
 {
     std::vector<double> GetExtent(int nXOff, int nYOff,
                                   int nXSize, int nYSize,
@@ -189,7 +189,7 @@ class WCSDataset110 : public WCSDataset
     WCSDataset110(int version, const char *cache_dir) : WCSDataset(version, cache_dir) {}
 };
 
-class WCSDataset201 : public WCSDataset110
+class WCSDataset201 final: public WCSDataset110
 {
     std::vector<double> GetExtent(int nXOff, int nYOff,
                                   int nXSize, int nYSize,

@@ -140,6 +140,8 @@ class OGRElasticLayer final: public OGRLayer {
                                                 char chNestedAttributeSeparator,
                                                 std::vector<CPLString>& aosPath);
 
+    CPLString                             BuildMappingURL(bool bMappingApi);
+
     CPLString                             BuildJSonFromFeature(OGRFeature *poFeature);
 
     static CPLString                      BuildPathFromArray(const std::vector<CPLString>& aosPath);
@@ -250,7 +252,7 @@ public:
     int Create(const char *pszFilename,
                char **papszOptions);
 
-    CPLHTTPResult*      HTTPFetch(const char* pszURL, char** papszOptions);
+    CPLHTTPResult*      HTTPFetch(const char* pszURL, CSLConstList papszOptions);
 
     const char         *GetURL() { return m_osURL.c_str(); }
 

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frans van den Bergh <fvdbergh@csir.co.za>
- * Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,7 @@ class MSGNRasterBand;
 /* ==================================================================== */
 /************************************************************************/
 
-class MSGNDataset : public GDALDataset
+class MSGNDataset final: public GDALDataset
 {
     friend class MSGNRasterBand;
 
@@ -82,7 +82,7 @@ class MSGNDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class MSGNRasterBand : public GDALRasterBand
+class MSGNRasterBand final: public GDALRasterBand
 {
     friend class MSGNDataset;
 

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2010, SPADAC Inc. <harsh.govind@spadac.com>
- * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -572,7 +572,7 @@ int KmlSuperOverlayReadDataset::DetectTransparency( int rxsize, int rysize,
 /*                           CreateCopy()                               */
 /************************************************************************/
 
-class KmlSuperOverlayDummyDataset: public GDALDataset
+class KmlSuperOverlayDummyDataset final: public GDALDataset
 {
     public:
         KmlSuperOverlayDummyDataset() {}
@@ -1919,7 +1919,7 @@ class KmlSingleDocRasterDataset final: public GDALDataset
 /*                    KmlSingleDocRasterRasterBand                      */
 /************************************************************************/
 
-class KmlSingleDocRasterRasterBand: public GDALRasterBand
+class KmlSingleDocRasterRasterBand final: public GDALRasterBand
 {
     public:
         KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset* poDS,
@@ -2424,7 +2424,7 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
 /*                   KmlSingleOverlayRasterDataset                      */
 /************************************************************************/
 
-class KmlSingleOverlayRasterDataset: public VRTDataset
+class KmlSingleOverlayRasterDataset final: public VRTDataset
 {
     public:
                 KmlSingleOverlayRasterDataset(int nXSize, int nYSize) :

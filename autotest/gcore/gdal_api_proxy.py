@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GDAL API PROXY mechanism
-# Author:    Even Rouault, <even dot rouault at mines-paris dot org>
+# Author:    Even Rouault, <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -316,9 +316,9 @@ def _gdal_api_proxy_sub():
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
     assert minmax == (74.0, 255.0)
 
-    assert ds.GetRasterBand(1).GetOffset() == 0.0
+    assert ds.GetRasterBand(1).GetOffset() is None
 
-    assert ds.GetRasterBand(1).GetScale() == 1.0
+    assert ds.GetRasterBand(1).GetScale() is None
 
     ds.GetRasterBand(1).SetOffset(10.0)
     assert ds.GetRasterBand(1).GetOffset() == 10.0

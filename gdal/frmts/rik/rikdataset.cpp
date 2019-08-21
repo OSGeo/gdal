@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Daniel Wallner <daniel.wallner@bredband.net>
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -114,7 +114,7 @@ typedef struct
 
 class RIKRasterBand;
 
-class RIKDataset : public GDALPamDataset
+class RIKDataset final: public GDALPamDataset
 {
     friend class RIKRasterBand;
 
@@ -152,7 +152,7 @@ class RIKDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RIKRasterBand : public GDALPamRasterBand
+class RIKRasterBand final: public GDALPamRasterBand
 {
     friend class RIKDataset;
 
@@ -573,7 +573,11 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         uLong destLen = pixels;
         Byte *upsideDown = static_cast<Byte *>( CPLMalloc( pixels ) );
 
-        uncompress( upsideDown, &destLen, blockData, nBlockSize );
+        if( uncompress( upsideDown, &destLen, blockData, nBlockSize ) != Z_OK )
+        {
+            CPLDebug("RIK", "Deflate compression failed on block %u",
+                     nBlockIndex);
+        }
 
         for (GUInt32 i = 0; i < poRDS->nBlockYSize; i++)
         {

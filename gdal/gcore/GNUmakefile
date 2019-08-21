@@ -1,7 +1,7 @@
 
 include ../GDALmake.opt
 
-OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
+OBJ	=	gdalmultidim.o gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdalrasterband.o gdal_misc.o rasterio.o gdalrasterblock.o \
 		gdalcolortable.o gdalmajorobject.o overview.o \
 		gdaldefaultoverviews.o gdalpamdataset.o gdalpamrasterband.o \

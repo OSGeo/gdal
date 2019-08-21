@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2179,25 +2179,8 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
     if( m_bNoDataSet )
     {
-        if( CPLIsNan(m_dfNoDataValue) )
-            CPLSetXMLValue( psSrc, "NODATA", "nan");
-        else if( m_poRasterBand->GetRasterDataType() == GDT_Float32 &&
-                 m_dfNoDataValue == -std::numeric_limits<float>::max() )
-        {
-            // To avoid rounding out of the range of float
-            CPLSetXMLValue( psSrc, "NODATA", "-3.4028234663852886e+38");
-        }
-        else if( m_poRasterBand->GetRasterDataType() == GDT_Float32 &&
-                 m_dfNoDataValue == std::numeric_limits<float>::max() )
-        {
-            // To avoid rounding out of the range of float
-            CPLSetXMLValue( psSrc, "NODATA", "3.4028234663852886e+38");
-        }
-        else
-        {
-            CPLSetXMLValue( psSrc, "NODATA",
-                            CPLSPrintf("%.16g", m_dfNoDataValue) );
-        }
+        CPLSetXMLValue( psSrc, "NODATA", VRTSerializeNoData(
+            m_dfNoDataValue, m_poRasterBand->GetRasterDataType(), 16).c_str());
     }
 
     switch( m_eScalingType )

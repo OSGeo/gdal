@@ -5,7 +5,8 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-FROM alpine:latest as builder
+ARG ALPINE_VERSION=3.10
+FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 MAINTAINER Even Rouault <even.rouault@spatialys.com>
@@ -18,7 +19,27 @@ RUN apk add --no-cache \
     linux-headers \
     curl-dev \
     zlib-dev zstd-dev \
-    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev postgresql-dev
+    libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev postgresql-dev openjpeg-dev
+
+# Build openjpeg
+#ARG OPENJPEG_VERSION=2.3.1
+RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
+    apk add --no-cache cmake \
+    && wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
+    && rm -f v${OPENJPEG_VERSION}.tar.gz \
+    && cd openjpeg-${OPENJPEG_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+    && make -j$(nproc) \
+    && make install \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf openjpeg-${OPENJPEG_VERSION} \
+    && apk del cmake \
+    ); fi
 
 RUN apk add --no-cache rsync ccache
 
@@ -128,7 +149,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
        ;do rm $i; done)
 
 # Build final image
-FROM alpine:latest as runner
+FROM alpine:${ALPINE_VERSION} as runner
 
 RUN date
 
@@ -144,6 +165,8 @@ RUN apk add --no-cache \
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
 # Order layers starting with less frequently varying ones
+#COPY --from=builder  /build_thirdparty/usr/ /usr/
+
 COPY --from=builder  /build_projgrids/usr/ /usr/
 
 COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/

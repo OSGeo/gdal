@@ -242,8 +242,9 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
     // Does it look like an absolute path or we won't find the basename of 'in'
     if (slashPos == 0                               // Starts with slash
         || (slashPos == 2 && fn[1] == ':')          // Starts with disk letter column
-        || !(slashPos == fn.find_first_not_of('.')) // Does not start with dots and then slash
-        || EQUALN(in,"<MRF_META>",10)               // XML string input
+        // Does not start with dots then slash
+        || (slashPos != fn.npos && slashPos != fn.find_first_not_of('.')) 
+        || EQUALN(in,"<MRF_META>", 10)              // XML string input
         || in.find_first_of("\\/") == in.npos)      // We can't get a basename from 'in'
         return fn;
 
@@ -291,6 +292,7 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
 
 {
     GDALMRFRasterBand *bnd = nullptr;
+    CPLErrorReset();
     switch(pDS->current.comp)
     {
     case IL_PPNG: // Uses the PNG code, just has a palette in each PNG

@@ -3,10 +3,10 @@
  *
  * Project:  GFT Translator
  * Purpose:  Definition of classes for OGR Google Fusion Tables driver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@
 /************************************************************************/
 class OGRGFTDataSource;
 
-class OGRGFTLayer : public OGRLayer
+class OGRGFTLayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRGFTDataSource* poDS;
@@ -100,7 +100,7 @@ protected:
 /*                         OGRGFTTableLayer                             */
 /************************************************************************/
 
-class OGRGFTTableLayer : public OGRGFTLayer
+class OGRGFTTableLayer final: public OGRGFTLayer
 {
     CPLString         osTableName;
     CPLString         osTableId;
@@ -168,7 +168,7 @@ class OGRGFTTableLayer : public OGRGFTLayer
 /*                        OGRGFTResultLayer                             */
 /************************************************************************/
 
-class OGRGFTResultLayer : public OGRGFTLayer
+class OGRGFTResultLayer final: public OGRGFTLayer
 {
     CPLString   osSQL;
     int         bGotAllRows;
@@ -189,7 +189,7 @@ class OGRGFTResultLayer : public OGRGFTLayer
 /*                           OGRGFTDataSource                           */
 /************************************************************************/
 
-class OGRGFTDataSource : public OGRDataSource
+class OGRGFTDataSource final: public OGRDataSource
 {
     char*               pszName;
 
@@ -248,7 +248,7 @@ class OGRGFTDataSource : public OGRDataSource
 /*                             OGRGFTDriver                             */
 /************************************************************************/
 
-class OGRGFTDriver : public OGRSFDriver
+class OGRGFTDriver final: public OGRSFDriver
 {
   public:
                 virtual ~OGRGFTDriver();

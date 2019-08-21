@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  WFS driver testing.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -1796,7 +1796,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(with_and_without_st
     expected_extent = (-20037508.342789248, 20037508.342789248, -20037508.342789154, 20037508.342789147)
     got_extent = lyr.GetExtent()
     for i in range(4):
-        assert abs(expected_extent[i] - got_extent[i]) <= 1e-5
+        assert expected_extent[i] == pytest.approx(got_extent[i], abs=1e-5)
 
     
 ###############################################################################

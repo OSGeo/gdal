@@ -48,14 +48,6 @@
 
 CPL_CVSID("$Id$")
 
-#if defined(H5_VERSION_GE) // added in 1.8.7
-# if !H5_VERSION_GE(1,8,13)
-#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
-# endif
-#else
-#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
-#endif
-
 struct BAGRefinementGrid
 {
     unsigned nIndex = 0;
@@ -237,7 +229,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class BAGBaseBand: public GDALRasterBand
+class BAGBaseBand CPL_NON_FINAL: public GDALRasterBand
 {
     protected:
         bool        m_bHasNoData = false;
@@ -3305,6 +3297,26 @@ void BAGDataset::LoadMetadata()
 
     if( psGeo != nullptr )
     {
+        CPLString osResHeight, osResWidth;
+        for( const auto* psIter = psGeo->psChild; psIter; psIter = psIter->psNext )
+        {
+            if( strcmp(psIter->pszValue, "axisDimensionProperties") == 0 )
+            {
+                const char* pszDim = CPLGetXMLValue(
+                    psIter, "MD_Dimension.dimensionName.MD_DimensionNameTypeCode", nullptr);
+                const char* pszRes = CPLGetXMLValue(
+                    psIter, "MD_Dimension.resolution.Measure", nullptr);
+                if( pszDim && EQUAL(pszDim, "row") && pszRes )
+                {
+                    osResHeight = pszRes;
+                }
+                else if( pszDim && EQUAL(pszDim, "column") && pszRes )
+                {
+                    osResWidth = pszRes;
+                }
+            }
+        }
+
         char **papszCornerTokens = CSLTokenizeStringComplex(
             CPLGetXMLValue(psGeo, "cornerPoints.Point.coordinates", ""), " ,",
             FALSE, FALSE);
@@ -3316,11 +3328,49 @@ void BAGDataset::LoadMetadata()
             const double dfURX = CPLAtof(papszCornerTokens[2]);
             const double dfURY = CPLAtof(papszCornerTokens[3]);
 
-            adfGeoTransform[0] = dfLLX;
-            adfGeoTransform[1] = (dfURX - dfLLX) / (m_nLowResWidth - 1);
-            adfGeoTransform[3] = dfURY;
-            adfGeoTransform[5] = (dfLLY - dfURY) / (m_nLowResHeight - 1);
+            double dfResWidth = CPLAtof(osResWidth);
+            double dfResHeight = CPLAtof(osResHeight);
+            if( dfResWidth > 0 && dfResHeight > 0 )
+            {
+                if( fabs((dfURX - dfLLX) / dfResWidth - m_nLowResWidth) < 1e-2 &&
+                    fabs((dfURY - dfLLY) / dfResHeight - m_nLowResHeight) < 1e-2 )
+                {
+                    // Found with https://data.ngdc.noaa.gov/platforms/ocean/nos/coast/H12001-H14000/H12525/BAG/H12525_MB_4m_MLLW_1of2.bag
+                    // to address issue https://github.com/OSGeo/gdal/issues/1643
+                    CPLError(CE_Warning, CPLE_AppDefined, "cornerPoints not consistent with resolution given in metadata");
+                }
+                else if( fabs((dfURX - dfLLX) / dfResWidth - (m_nLowResWidth - 1)) < 1e-2 &&
+                         fabs((dfURY - dfLLY) / dfResHeight - (m_nLowResHeight - 1)) < 1e-2 )
+                {
+                    // pixel center convention. OK
+                }
+                else
+                {
+                    CPLDebug("BAG", "cornerPoints not consistent with resolution given in metadata");
+                    CPLDebug("BAG", "Metadata horizontal resolution: %f. "
+                                    "Computed resolution: %f. "
+                                    "Computed width: %f vs %d",
+                                    dfResWidth,
+                                    (dfURX - dfLLX) / (m_nLowResWidth - 1),
+                                    (dfURX - dfLLX) / dfResWidth,
+                                    m_nLowResWidth);
+                    CPLDebug("BAG", "Metadata vertical resolution: %f. "
+                                    "Computed resolution: %f. "
+                                    "Computed height: %f vs %d",
+                                    dfResHeight,
+                                    (dfURY - dfLLY) / (m_nLowResHeight - 1),
+                                    (dfURY - dfLLY) / dfResHeight,
+                                    m_nLowResHeight);
+                    CPLError(CE_Warning, CPLE_AppDefined, "cornerPoints not consistent with resolution given in metadata");
+                }
+            }
 
+            adfGeoTransform[0] = dfLLX;
+            adfGeoTransform[1] = dfResWidth;
+            adfGeoTransform[3] = dfLLY + dfResHeight * (m_nLowResHeight - 1);
+            adfGeoTransform[5] = dfResHeight * (-1);
+
+            // shift to pixel corner convention
             adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
             adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
 
@@ -3860,11 +3910,12 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
     }
     osOptions.SetNameValue("VAR_RES_UNIT", pszUnits);
 
-    // Center pixel convention
+    // get bounds as pixel center
     double dfMinX = adfGeoTransform[0] + adfGeoTransform[1] / 2;
     double dfMaxX = dfMinX + (poSrcDS->GetRasterXSize() - 1) * adfGeoTransform[1];
     double dfMaxY = adfGeoTransform[3] + adfGeoTransform[5] / 2;
     double dfMinY = dfMaxY + (poSrcDS->GetRasterYSize() - 1) * adfGeoTransform[5];
+    
     if( adfGeoTransform[5] > 0 )
     {
         std::swap(dfMinY, dfMaxY);

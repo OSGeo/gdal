@@ -65,6 +65,8 @@ def check_availability(url):
             return False
         limit = quota_json['limit']
         count = quota_json['count']
+        if limit is None or count is None:
+            return True
         return limit - count > 10
     except:
         return False
@@ -84,7 +86,7 @@ def test_ogr_ngw_1():
     if gdaltest.ngw_drv is None:
         pytest.skip()
 
-    gdaltest.ngw_test_server = 'http://dev.nextgis.com/sandbox'
+    gdaltest.ngw_test_server = 'https://sandbox.nextgis.com' # 'http://dev.nextgis.com/sandbox'
 
     if check_availability(gdaltest.ngw_test_server) == False:
         gdaltest.ngw_drv = None
@@ -161,7 +163,7 @@ def test_ogr_ngw_4():
         'Did not get expected datasource metadata item. test_int.d is equal {}, but should {}.'.format(md_item, '777')
 
     md_item = gdaltest.ngw_ds.GetMetadataItem('test_float.f', 'NGW')
-    assert abs(float(md_item) - 777.555) < 0.00001, \
+    assert float(md_item) == pytest.approx(777.555, abs=0.00001), \
         'Did not get expected datasource metadata item. test_float.f is equal {}, but should {}.'.format(md_item, '777.555')
 
     md_item = gdaltest.ngw_ds.GetMetadataItem('test_string', 'NGW')
@@ -299,7 +301,7 @@ def test_ogr_ngw_5():
             'Did not get expected layer metadata item. test_int.d is equal {}, but should {}.'.format(md_item, '777')
 
         md_item = lyr.GetMetadataItem('test_float.f', 'NGW')
-        assert abs(float(md_item) - 777.555) < 0.00001, \
+        assert float(md_item) == pytest.approx(777.555, abs=0.00001), \
             'Did not get expected layer metadata item. test_float.f is equal {}, but should {}.'.format(md_item, '777.555')
 
         md_item = lyr.GetMetadataItem('test_string', 'NGW')

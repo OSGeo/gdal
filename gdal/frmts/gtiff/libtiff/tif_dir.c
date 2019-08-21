@@ -46,8 +46,8 @@ setByteArray(void** vpp, void* vp, size_t nmemb, size_t elem_size)
 		*vpp = 0;
 	}
 	if (vp) {
-		tmsize_t bytes = (tmsize_t)(nmemb * elem_size);
-		if (elem_size && bytes / elem_size == nmemb)
+		tmsize_t bytes = _TIFFMultiplySSize(NULL, nmemb, elem_size, NULL);
+		if (bytes)
 			*vpp = (void*) _TIFFmalloc(bytes);
 		if (*vpp)
 			_TIFFmemcpy(*vpp, vp, bytes);
@@ -1018,12 +1018,12 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 		case TIFFTAG_STRIPOFFSETS:
 		case TIFFTAG_TILEOFFSETS:
 			_TIFFFillStriles( tif );
-			*va_arg(ap, uint64**) = td->td_stripoffset;
+			*va_arg(ap, uint64**) = td->td_stripoffset_p;
 			break;
 		case TIFFTAG_STRIPBYTECOUNTS:
 		case TIFFTAG_TILEBYTECOUNTS:
 			_TIFFFillStriles( tif );
-			*va_arg(ap, uint64**) = td->td_stripbytecount;
+			*va_arg(ap, uint64**) = td->td_stripbytecount_p;
 			break;
 		case TIFFTAG_MATTEING:
 			*va_arg(ap, uint16*) =
@@ -1282,8 +1282,9 @@ TIFFFreeDirectory(TIFF* tif)
 	CleanupField(td_transferfunction[0]);
 	CleanupField(td_transferfunction[1]);
 	CleanupField(td_transferfunction[2]);
-	CleanupField(td_stripoffset);
-	CleanupField(td_stripbytecount);
+	CleanupField(td_stripoffset_p);
+	CleanupField(td_stripbytecount_p);
+        td->td_stripoffsetbyteallocsize = 0;
 	TIFFClrFieldBit(tif, FIELD_YCBCRSUBSAMPLING);
 	TIFFClrFieldBit(tif, FIELD_YCBCRPOSITIONING);
 
@@ -1296,10 +1297,8 @@ TIFFFreeDirectory(TIFF* tif)
 	td->td_customValueCount = 0;
 	CleanupField(td_customValues);
 
-#if defined(DEFER_STRILE_LOAD)
         _TIFFmemset( &(td->td_stripoffset_entry), 0, sizeof(TIFFDirEntry));
         _TIFFmemset( &(td->td_stripbytecount_entry), 0, sizeof(TIFFDirEntry));
-#endif        
 }
 #undef CleanupField
 
@@ -1387,7 +1386,9 @@ TIFFDefaultDirectory(TIFF* tif)
 	td->td_tilewidth = 0;
 	td->td_tilelength = 0;
 	td->td_tiledepth = 1;
+#ifdef STRIPBYTECOUNTSORTED_UNUSED
 	td->td_stripbytecountsorted = 1; /* Our own arrays always sorted. */  
+#endif
 	td->td_resolutionunit = RESUNIT_INCH;
 	td->td_sampleformat = SAMPLEFORMAT_UINT;
 	td->td_imagedepth = 1;

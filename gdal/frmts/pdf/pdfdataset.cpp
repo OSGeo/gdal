@@ -2,7 +2,7 @@
  *
  * Project:  PDF driver
  * Purpose:  GDALDataset driver for PDF dataset.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  *
@@ -12,7 +12,7 @@
  * Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
  *
  ******************************************************************************
- * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2567,6 +2567,9 @@ static void PDFDatasetErrorFunctionCommon(const CPLString& osError)
     CPLError(CE_Failure, CPLE_AppDefined, "%s", osError.c_str());
 }
 
+static int g_nPopplerErrors = 0;
+constexpr int MAX_POPPLER_ERRORS = 1000;
+
 static void PDFDatasetErrorFunction(void* /* userData*/,
                                     ErrorCategory /* eErrCategory */,
                                     Goffset nPos,
@@ -2577,6 +2580,10 @@ static void PDFDatasetErrorFunction(void* /* userData*/,
 #endif
                                    )
 {
+    if( g_nPopplerErrors >= MAX_POPPLER_ERRORS )
+        return;
+
+    g_nPopplerErrors ++;
     CPLString osError;
 
     if (nPos >= 0)
@@ -2783,21 +2790,27 @@ int GDALPDFParseStreamContent(const char* pszContent,
                                 double dfHeight = Get(poHeight);
                                 double dfScaleX = adfVals[0];
                                 double dfScaleY = adfVals[3];
-                                double dfDPI_X = ROUND_TO_INT_IF_CLOSE(dfWidth / dfScaleX * DEFAULT_DPI, 1e-3);
-                                double dfDPI_Y = ROUND_TO_INT_IF_CLOSE(dfHeight / dfScaleY * DEFAULT_DPI, 1e-3);
-                                //CPLDebug("PDF", "Image %s, width = %.16g, height = %.16g, scaleX = %.16g, scaleY = %.16g --> DPI_X = %.16g, DPI_Y = %.16g",
-                                //                osCurrentImage.c_str(), dfWidth, dfHeight, dfScaleX, dfScaleY, dfDPI_X, dfDPI_Y);
-                                if (dfDPI_X > dfDPI) dfDPI = dfDPI_X;
-                                if (dfDPI_Y > dfDPI) dfDPI = dfDPI_Y;
+                                if( dfWidth > 0 && dfHeight > 0 &&
+                                    dfScaleX > 0 && dfScaleY > 0 &&
+                                    dfWidth / dfScaleX * DEFAULT_DPI < INT_MAX &&
+                                    dfHeight / dfScaleY * DEFAULT_DPI < INT_MAX )
+                                {
+                                    double dfDPI_X = ROUND_TO_INT_IF_CLOSE(dfWidth / dfScaleX * DEFAULT_DPI, 1e-3);
+                                    double dfDPI_Y = ROUND_TO_INT_IF_CLOSE(dfHeight / dfScaleY * DEFAULT_DPI, 1e-3);
+                                    //CPLDebug("PDF", "Image %s, width = %.16g, height = %.16g, scaleX = %.16g, scaleY = %.16g --> DPI_X = %.16g, DPI_Y = %.16g",
+                                    //                osCurrentImage.c_str(), dfWidth, dfHeight, dfScaleX, dfScaleY, dfDPI_X, dfDPI_Y);
+                                    if (dfDPI_X > dfDPI) dfDPI = dfDPI_X;
+                                    if (dfDPI_Y > dfDPI) dfDPI = dfDPI_Y;
 
-                                memcpy(&(sTile.adfCM), adfVals, 6 * sizeof(double));
-                                sTile.poImage = poImage;
-                                sTile.dfWidth = dfWidth;
-                                sTile.dfHeight = dfHeight;
-                                asTiles.push_back(sTile);
+                                    memcpy(&(sTile.adfCM), adfVals, 6 * sizeof(double));
+                                    sTile.poImage = poImage;
+                                    sTile.dfWidth = dfWidth;
+                                    sTile.dfHeight = dfHeight;
+                                    asTiles.push_back(sTile);
 
-                                *pbDPISet = TRUE;
-                                *pdfDPI = dfDPI;
+                                    *pbDPISet = TRUE;
+                                    *pdfDPI = dfDPI;
+                                }
                             }
                         }
                         nState = STATE_INIT;
@@ -2955,6 +2968,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
     const char* pszDPI = GetOption(papszOpenOptions, "DPI", nullptr);
     if (pszDPI != nullptr)
     {
+        // coverity[tainted_data]
         dfDPI = CPLAtof(pszDPI);
     }
     else
@@ -3340,6 +3354,8 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
     for(int i=0;i<nLength;i++)
     {
         GDALPDFObject* poObj = poArray->Get(i);
+        if( poObj == nullptr )
+            continue;
         if (i == 0 && poObj->GetType() == PDFObjectType_String)
         {
             CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
@@ -4082,6 +4098,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         if (pszUserPwd)
             poUserPwd = new GooString(pszUserPwd);
 
+        g_nPopplerErrors = 0;
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
         poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, std::move(oObj)), nullptr, poUserPwd);
 #else
@@ -4089,6 +4106,11 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, oObj.getObj()), nullptr, poUserPwd);
 #endif
         delete poUserPwd;
+        if( g_nPopplerErrors >= MAX_POPPLER_ERRORS )
+        {
+            PDFFreeDoc(poDocPoppler);
+            return nullptr;
+        }
 
         if ( !poDocPoppler->isOk() || poDocPoppler->getNumPages() == 0 )
         {
@@ -4410,6 +4432,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszDPI = GetOption(poOpenInfo->papszOpenOptions, "DPI", nullptr);
         if (pszDPI != nullptr)
         {
+            // coverity[tainted_data]
             poDS->dfDPI = CPLAtof(pszDPI);
         }
     }
@@ -5016,6 +5039,8 @@ static double Get(GDALPDFObject* poObj, int nIndice)
     {
         const char* pszStr = poObj->GetString().c_str();
         size_t nLen = strlen(pszStr);
+        if( nLen == 0 )
+            return 0;
         /* cf Military_Installations_2008.pdf that has values like "96 0 0.0W" */
         char chLast = pszStr[nLen-1];
         if (chLast == 'W' || chLast == 'E' || chLast == 'N' || chLast == 'S')
@@ -5311,6 +5336,12 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
                     pasGCPList[nGCPCount].dfGCPY = dfY;
                     nGCPCount ++;
                 }
+            }
+
+            if( nGCPCount == 0 )
+            {
+                CPLFree(pasGCPList);
+                pasGCPList = nullptr;
             }
         }
     }

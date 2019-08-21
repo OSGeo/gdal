@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2011, Antonio Valentino <antonio dot valentino at tiscali dot it>
-# Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -344,7 +344,7 @@ class TestEnvisatMERIS(EnvisatTestBase):
 
         for r, v in zip(ref, gcp_values):
             for i, ri in enumerate(r):
-                if abs(float(ri) - float(v[i])) > 1e-10:
+                if float(ri) != pytest.approx(float(v[i]), abs=1e-10):
                     print(r)
                     pytest.fail('Wrong GCP coordinates.')
 

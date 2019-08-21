@@ -7,7 +7,7 @@
  *
  **********************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -85,6 +85,13 @@ void  CPL_DLL CPLCleanupMasterMutex( void );
 
 CPLCond  CPL_DLL *CPLCreateCond( void );
 void  CPL_DLL  CPLCondWait( CPLCond *hCond, CPLMutex* hMutex );
+typedef enum
+{
+    COND_TIMED_WAIT_COND,
+    COND_TIMED_WAIT_TIME_OUT,
+    COND_TIMED_WAIT_OTHER
+} CPLCondTimedWaitReason;
+CPLCondTimedWaitReason CPL_DLL CPLCondTimedWait( CPLCond *hCond, CPLMutex* hMutex, double dfWaitInSeconds );
 void  CPL_DLL  CPLCondSignal( CPLCond *hCond );
 void  CPL_DLL  CPLCondBroadcast( CPLCond *hCond );
 void  CPL_DLL  CPLDestroyCond( CPLCond *hCond );

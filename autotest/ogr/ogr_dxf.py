@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -116,7 +116,7 @@ def test_ogr_dxf_2():
     assert area >= exp_area - 0.5 and area <= exp_area + 0.5, \
         ('envelope area not as expected, got %g.' % area)
 
-    assert abs(geom.GetX(0) - 73.25) <= 0.001 and abs(geom.GetY(0) - 139.75) <= 0.001, \
+    assert geom.GetX(0) == pytest.approx(73.25, abs=0.001) and geom.GetY(0) == pytest.approx(139.75, abs=0.001), \
         ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
 
@@ -137,7 +137,7 @@ def test_ogr_dxf_3():
     assert area >= exp_area - 0.5 and area <= exp_area + 0.5, \
         ('envelope area not as expected, got %g.' % area)
 
-    assert abs(geom.GetX(0) - 61.133) <= 0.01 and abs(geom.GetY(0) - 103.592) <= 0.01, \
+    assert geom.GetX(0) == pytest.approx(61.133, abs=0.01) and geom.GetY(0) == pytest.approx(103.592, abs=0.01), \
         ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
 
@@ -201,7 +201,7 @@ def test_ogr_dxf_7():
         print(envelope)
         pytest.fail('envelope area not as expected, got %g.' % area)
 
-    assert abs(geom.GetX(0) - 115.258) <= 0.01 and abs(geom.GetY(0) - 107.791) <= 0.01, \
+    assert geom.GetX(0) == pytest.approx(115.258, abs=0.01) and geom.GetY(0) == pytest.approx(107.791, abs=0.01), \
         ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
 
@@ -465,7 +465,7 @@ def test_ogr_dxf_13():
     assert geom.GetPointCount() == 146, \
         ('did not get expected number of points, got %d' % geom.GetPointCount())
 
-    assert abs(geom.GetX(0) - 251297.8179) <= 0.001 and abs(geom.GetY(0) - 412226.8286) <= 0.001, \
+    assert geom.GetX(0) == pytest.approx(251297.8179, abs=0.001) and geom.GetY(0) == pytest.approx(412226.8286, abs=0.001), \
         ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
 
@@ -511,7 +511,7 @@ def test_ogr_dxf_14():
     assert geom.GetPointCount() == 146, \
         ('did not get expected number of points, got %d' % geom.GetPointCount())
 
-    assert abs(geom.GetX(0) - 251297.8179) <= 0.001 and abs(geom.GetY(0) - 412226.8286) <= 0.001, \
+    assert geom.GetX(0) == pytest.approx(251297.8179, abs=0.001) and geom.GetY(0) == pytest.approx(412226.8286, abs=0.001), \
         ('first point (%g,%g) not expected location.'
                              % (geom.GetX(0), geom.GetY(0)))
 

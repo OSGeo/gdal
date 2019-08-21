@@ -50,7 +50,7 @@ void DeleteWKBGeometry(WKBGeometry &obj);
 
 class OGRWalkDataSource;
 
-class OGRWalkLayer : public OGRLayer
+class OGRWalkLayer CPL_NON_FINAL: public OGRLayer
 {
 protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -96,7 +96,7 @@ public:
 /*                           OGRWalkTableLayer                          */
 /************************************************************************/
 
-class OGRWalkTableLayer : public OGRWalkLayer
+class OGRWalkTableLayer final: public OGRWalkLayer
 {
     char                *pszQuery;
 
@@ -136,7 +136,7 @@ public:
 /*                          OGRWalkSelectLayer                          */
 /************************************************************************/
 
-class OGRWalkSelectLayer : public OGRWalkLayer
+class OGRWalkSelectLayer final: public OGRWalkLayer
 {
     char                *pszBaseStatement;
 
@@ -160,7 +160,7 @@ class OGRWalkSelectLayer : public OGRWalkLayer
 /*                          OGRWalkDataSource                           */
 /************************************************************************/
 
-class OGRWalkDataSource : public OGRDataSource
+class OGRWalkDataSource final: public OGRDataSource
 {
     char               *pszName;
     OGRWalkLayer        **papoLayers;
@@ -194,7 +194,7 @@ public:
 /*                            OGRWalkDriver                             */
 /************************************************************************/
 
-class OGRWalkDriver : public OGRODBCMDBDriver
+class OGRWalkDriver final: public OGRODBCMDBDriver
 {
 public:
                 ~OGRWalkDriver();

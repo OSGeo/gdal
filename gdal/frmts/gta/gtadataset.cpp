@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2010, 2011, Martin Lambers <marlam@marlam.de>
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -129,7 +129,7 @@ static CPLString PrintDoubles( const double *padfDoubles, int nCount )
 /* ==================================================================== */
 /************************************************************************/
 
-class GTAIO : public gta::custom_io
+class GTAIO final: public gta::custom_io
 {
   private:
     VSILFILE *fp;
@@ -214,7 +214,7 @@ class GTAIO : public gta::custom_io
 
 class GTARasterBand;
 
-class GTADataset : public GDALPamDataset
+class GTADataset final: public GDALPamDataset
 {
     friend class GTARasterBand;
 
@@ -278,7 +278,7 @@ class GTADataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GTARasterBand : public GDALPamRasterBand
+class GTARasterBand final: public GDALPamRasterBand
 {
     friend class GTADataset;
   private:

@@ -77,11 +77,14 @@ static void REAL8tBoolean(size_t nrCells, void *buf)
  * not yet converted: \
  */ \
  	PRECOND(sizeof(srcType) >= sizeof(destType)); /* upward loop OK */ \
-	for(i=0; i < (size_t)nr; i++)\
+	for(i=0; i < (size_t)nr; i++) {\
 		if (IS_MV_##srcType( ((srcType *)buf)+i) )\
 		    SET_MV_##destType( ((destType *)buf)+i);\
-		else\
-			((destType *)buf)[i] = (destType)(((srcType *)buf)[i]);\
+		else {\
+			destType CBTS_temp = (destType)(((srcType *)buf)[i]); \
+			((destType *)buf)[i] = CBTS_temp; \
+		} \
+	} \
 }
 
 #define CONV_SMALL_TO_BIG(nr, buf, destType, srcType)\
@@ -94,8 +97,10 @@ static void REAL8tBoolean(size_t nrCells, void *buf)
 	do { i--;\
 		if (IS_MV_##srcType( ((srcType *)buf)+i) )\
 		    SET_MV_##destType( ((destType *)buf)+i);\
-		else\
-			((destType *)buf)[i] = (destType)(((srcType *)buf)[i]);\
+		else {\
+			destType CSTB_temp = (destType)(((srcType *)buf)[i]); \
+			((destType *)buf)[i] = CSTB_temp; \
+		} \
 	}while ( i != 0);\
 }
 

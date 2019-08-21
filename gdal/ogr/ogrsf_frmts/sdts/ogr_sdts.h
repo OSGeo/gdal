@@ -40,7 +40,7 @@ class OGRSDTSDataSource;
 /*                             OGRSDTSLayer                             */
 /************************************************************************/
 
-class OGRSDTSLayer : public OGRLayer
+class OGRSDTSLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
@@ -68,7 +68,7 @@ class OGRSDTSLayer : public OGRLayer
 /*                          OGRSDTSDataSource                           */
 /************************************************************************/
 
-class OGRSDTSDataSource : public OGRDataSource
+class OGRSDTSDataSource final: public OGRDataSource
 {
     SDTSTransfer        *poTransfer;
     char                *pszName;

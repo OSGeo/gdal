@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -146,11 +146,12 @@ class CPL_DLL OGR_SRSNode
  * SRS using GetAttrValue(), but in special cases the underlying parse tree
  * (or OGR_SRSNode objects) can be accessed more directly.
  *
- * See <a href="osr_tutorial.html">the tutorial</a> for more information on
- * how to use this class.
+ * See <a href="https://gdal.org/tutorials/osr_api_tut.html">the tutorial
+ * </a> for more information on how to use this class.
  * 
- * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
- * for implementation details of WKT in OGR.
+ * Consult also the <a href="https://gdal.org/tutorials/wktproblems.html">
+ * OGC WKT Coordinate System Issues</a> page for implementation details of 
+ * WKT in OGR.
  */
 
 class CPL_DLL OGRSpatialReference
@@ -191,6 +192,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToWkt( char ** ) const;
     OGRErr      exportToWkt( char ** ppszWKT, const char* const* papszOptions ) const;
     OGRErr      exportToPrettyWkt( char **, int = FALSE) const;
+    // cppcheck-suppress functionStatic
+    OGRErr      exportToPROJJSON( char **, const char* const* papszOptions ) const;
     OGRErr      exportToProj4( char ** ) const;
     OGRErr      exportToPCI( char **, char **, double ** ) const;
     OGRErr      exportToUSGS( long *, long *, double **, long * ) const;
@@ -648,6 +651,10 @@ class CPL_DLL OGRSpatialReference
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin,
         const char* pszUnitsName, const char* pszCRSName = nullptr );
 
+/*! @cond Doxygen_Suppress */
+    void UpdateCoordinateSystemFromGeogCRS();
+/*! @endcond */
+
     static OGRSpatialReference* GetWGS84SRS();
 
     /** Convert a OGRSpatialReference* to a OGRSpatialReferenceH.
@@ -769,10 +776,12 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
 
 struct CPL_DLL OGRCoordinateTransformationOptions
 {
+/*! @cond Doxygen_Suppress */
 private:
     friend class OGRProjCT;
     struct Private;
     std::unique_ptr<Private> d;
+/*! @endcond */
 
 public:
     OGRCoordinateTransformationOptions();
@@ -784,6 +793,10 @@ public:
                            double dfNorthLatitudeDeg);
 
     bool SetCoordinateOperation(const char* pszCT, bool bReverseCT);
+/*! @cond Doxygen_Suppress */
+    void SetSourceCenterLong(double dfCenterLong);
+    void SetTargetCenterLong(double dfCenterLong);
+/*! @endcond */
 };
 
 

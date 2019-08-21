@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -122,7 +122,7 @@ def test_ogr_dods_3():
 
         assert feat.GetField('time') == -1936483200000, 'time wrong'
 
-        assert abs(feat.GetField('T_20') - expected[i]) <= 0.001, 'T_20 wrong'
+        assert feat.GetField('T_20') == pytest.approx(expected[i], abs=0.001), 'T_20 wrong'
 
         assert ogrtest.check_feature_geometry(feat, 'POINT (4.30000019 5.36999989)') == 0
 

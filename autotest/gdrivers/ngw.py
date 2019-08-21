@@ -64,6 +64,8 @@ def check_availability(url):
             return False
         limit = quota_json['limit']
         count = quota_json['count']
+        if limit is None or count is None:
+            return True
         return limit - count > 10
     except:
         return False
@@ -85,7 +87,7 @@ def test_ngw_1():
         gdaltest.ngw_drv = None
         pytest.skip()
 
-    gdaltest.ngw_test_server = 'http://dev.nextgis.com/sandbox'
+    gdaltest.ngw_test_server = 'https://sandbox.nextgis.com' # 'http://dev.nextgis.com/sandbox'
 
     if check_availability(gdaltest.ngw_test_server) == False:
         gdaltest.ngw_drv = None
@@ -198,12 +200,12 @@ def test_ngw_6():
 
     gt = gdaltest.ngw_ds.GetGeoTransform()
     # -20037508.34, 0.037322767712175846, 0.0, 20037508.34, 0.0, -0.037322767712175846
-    assert abs(gt[0] - -20037508.34) < 0.00001 \
-       or abs(gt[3] - 20037508.34) < 0.00001 \
-       or abs(gt[1] - 0.037322767712175846) < 0.00001 \
-       or abs(gt[2] - 0.0) < 0.00001 \
-       or abs(gt[5] - -0.037322767712175846) < 0.00001 \
-       or abs(gt[4] - 0.0) < 0.00001, 'Wrong geotransform. {}'.format(gt)
+    assert gt[0] == pytest.approx(-20037508.34, abs=0.00001) \
+       or gt[3] == pytest.approx(20037508.34, abs=0.00001) \
+       or gt[1] == pytest.approx(0.037322767712175846, abs=0.00001) \
+       or gt[2] == pytest.approx(0.0, abs=0.00001) \
+       or gt[5] == pytest.approx(-0.037322767712175846, abs=0.00001) \
+       or gt[4] == pytest.approx(0.0, abs=0.00001), 'Wrong geotransform. {}'.format(gt)
 
     assert gdaltest.ngw_ds.GetRasterBand(1).GetOverviewCount() > 0, 'No overviews!'
     assert gdaltest.ngw_ds.GetRasterBand(1).DataType == gdal.GDT_Byte, \

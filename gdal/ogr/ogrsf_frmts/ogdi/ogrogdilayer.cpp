@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Daniel Morissette
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,7 +55,7 @@ OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS,
 {
 
     // Select layer and feature family.
-    ResetReading();
+    OGROGDILayer::ResetReading();
 
     BuildFeatureDefn();
 }

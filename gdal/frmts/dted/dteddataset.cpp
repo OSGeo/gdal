@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 
 class DTEDRasterBand;
 
-class DTEDDataset : public GDALPamDataset
+class DTEDDataset final: public GDALPamDataset
 {
     friend class DTEDRasterBand;
 
@@ -77,7 +77,7 @@ class DTEDDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class DTEDRasterBand : public GDALPamRasterBand
+class DTEDRasterBand final: public GDALPamRasterBand
 {
     friend class DTEDDataset;
 

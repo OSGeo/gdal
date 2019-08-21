@@ -2,10 +2,10 @@
  *
  * Project:  PDF Translator
  * Purpose:  Implements OGRPDFDataSource class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,7 +55,8 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
     for(int i=0;i<poArray->GetLength();i++)
     {
         GDALPDFObject* poFeatureObj = poArray->Get(i);
-        if (poFeatureObj->GetType() != PDFObjectType_Dictionary)
+        if (poFeatureObj == nullptr ||
+            poFeatureObj->GetType() != PDFObjectType_Dictionary)
             continue;
 
         GDALPDFObject* poA = poFeatureObj->GetDictionary()->Get("A");
@@ -76,7 +77,7 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
         for(j = 0;j<poPArray->GetLength();j++)
         {
             GDALPDFObject* poKV = poPArray->Get(j);
-            if (poKV->GetType() == PDFObjectType_Dictionary)
+            if (poKV && poKV->GetType() == PDFObjectType_Dictionary)
             {
                 GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
                 GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
@@ -108,7 +109,7 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
         for(j = 0;j<poPArray->GetLength();j++)
         {
             GDALPDFObject* poKV = poPArray->Get(j);
-            if (poKV->GetType() == PDFObjectType_Dictionary)
+            if (poKV && poKV->GetType() == PDFObjectType_Dictionary)
             {
                 GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
                 GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
