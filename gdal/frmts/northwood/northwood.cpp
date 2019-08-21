@@ -192,6 +192,11 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 
     pGrd->cFormat += nwtHeader[1023];    // the msb for grd/grc was already set
 
+    if( nwtHeader[1023] < 0 )
+    {
+        return FALSE;
+    }
+
     // there are more types than this - need to build other types for testing
     if( pGrd->cFormat & 0x80 )
     {
