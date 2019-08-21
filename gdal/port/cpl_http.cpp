@@ -690,6 +690,13 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
             osURL += "&POSTFIELDS=";
             osURL += pszPost;
         }
+        const char* pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
+        if( pszHeaders != nullptr &&
+            CPLTestBool(CPLGetConfigOption("CPL_CURL_VSIMEM_PRINT_HEADERS", "FALSE")) )
+        {
+            osURL += "&HEADERS=";
+            osURL += pszHeaders;
+        }
         vsi_l_offset nLength = 0;
         CPLHTTPResult* psResult =
             static_cast<CPLHTTPResult *>(CPLCalloc(1, sizeof(CPLHTTPResult)));

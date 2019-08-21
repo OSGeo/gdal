@@ -52,6 +52,16 @@ The open options available are :
    nested objects and produce flatten OGR attributes. Defaults to YES.
 -  **FID**\ =string. Field name, with integer values, to use as FID.
    Defaults to 'ogc_fid'
+-  **FORWARD_HTTP_HEADERS_FROM_ENV**\ =string. (GDAL >= 3.1)
+   Can be used to specify HTTP headers,
+   typically for authentication purposes, that must be passed to ElasticSearch.
+   The value of string is a comma separated list of http_header_name=env_variable_name,
+   where http_header_name is the name of a HTTP header and env_variable_name
+   the name of the environment variable / configuration option from which th value
+   of the HTTP header should be retrieved. This is intended for a use case where
+   the OGR ElasticSearch driver is invoked from a web server that stores the HTTP
+   headers of incoming request into environment variables.
+   The ES_FORWARD_HTTP_HEADERS_FROM_ENV configuration option can also be used.
 
 ElasticSearch vs OGR concepts
 -----------------------------
