@@ -529,7 +529,10 @@ void VSIGZipHandle::check_header()
         len = static_cast<uInt>(get_byte());
         len += static_cast<uInt>(get_byte()) << 8;
         // len is garbage if EOF but the loop below will quit anyway.
-        while( len-- != 0 && get_byte() != EOF ) {}
+        while( len != 0 && get_byte() != EOF )
+        {
+            --len;
+        }
     }
 
     int c = 0;
