@@ -535,7 +535,7 @@ OGRErr OGRCurvePolygon::importFromWkt( const char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-std::string OGRCurvePolygon::exportToWkt(OGRWktOptions opts, OGRErr *err) const
+std::string OGRCurvePolygon::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
     return oCC.exportToWkt(this, opts, err);
 }

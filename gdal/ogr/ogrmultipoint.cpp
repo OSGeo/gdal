@@ -149,7 +149,7 @@ OGRMultiPoint::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 /*      equivalent.                                                     */
 /************************************************************************/
 
-std::string OGRMultiPoint::exportToWkt(OGRWktOptions opts, OGRErr *err) const
+std::string OGRMultiPoint::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
     std::string wkt = getGeometryName() + wktTypeString(opts.variant);
     if( IsEmpty() )

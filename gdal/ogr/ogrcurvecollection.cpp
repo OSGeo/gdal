@@ -294,17 +294,18 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
 /************************************************************************/
 
 std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
-    OGRWktOptions opts, OGRErr *err) const
+    const OGRWktOptions& opts, OGRErr *err) const
 {
     bool first = true;
     std::string wkt;
 
-    opts.variant = wkbVariantIso;
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
     for (int i = 0; i < nCurveCount; ++i)
     {
         OGRGeometry *geom = papoCurves[i];
 
-        std::string tempWkt = geom->exportToWkt(opts, err);
+        std::string tempWkt = geom->exportToWkt(optsModified, err);
         if (err && *err != OGRERR_NONE)
             return std::string();
 
@@ -331,7 +332,7 @@ std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
     if (err)
         *err = OGRERR_NONE;
     std::string leader = baseGeom->getGeometryName() +
-        baseGeom->wktTypeString(opts.variant);
+        baseGeom->wktTypeString(optsModified.variant);
     if (wkt.empty())
         return leader + "EMPTY";
     return leader + "(" + wkt + ")";

@@ -1736,10 +1736,16 @@ OGRErr OGRGeometry::importPreambleFromWkt( const char ** ppszInput,
 }
 //! @endcond
 
-/// Get a type string for WKT, padded with a space at the end.
-/// \param variant  OGR type variant
-/// \return  "Z " for 3D, "M " for measured, "ZM " for both, or the
-///    empty string.
+/************************************************************************/
+/*                           wktTypeString()                            */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/** Get a type string for WKT, padded with a space at the end.
+ *
+ * @param variant  OGR type variant
+ * @return  "Z " for 3D, "M " for measured, "ZM " for both, or the empty string.
+ */
 std::string OGRGeometry::wktTypeString(OGRwkbVariant variant) const
 {
     std::string s(" ");
@@ -1755,6 +1761,8 @@ std::string OGRGeometry::wktTypeString(OGRwkbVariant variant) const
         s += " ";
     return s;
 }
+//! @endcond
+
 
 /**
  * \fn OGRErr OGRGeometry::exportToWkt( char ** ppszDstText,

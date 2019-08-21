@@ -133,7 +133,7 @@ OGRMultiLineString::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-std::string OGRMultiLineString::exportToWkt(OGRWktOptions opts,
+std::string OGRMultiLineString::exportToWkt(const OGRWktOptions& opts,
                                             OGRErr *err) const
 
 {

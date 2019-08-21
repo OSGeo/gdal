@@ -95,7 +95,7 @@ std::string CPL_DLL OGRMakeWktCoordinateM( double, double, double, double, OGRBo
 
 void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
                       char chDecimalSep, int nPrecision = 15, char chConversionSpecifier = 'f' );
-std::string OGRFormatDouble(double val, OGRWktOptions opts);
+std::string OGRFormatDouble(double val, const OGRWktOptions& opts);
 
 /* -------------------------------------------------------------------- */
 /*      Date-time parsing and processing functions                      */

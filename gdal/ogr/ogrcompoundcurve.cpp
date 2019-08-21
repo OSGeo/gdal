@@ -208,7 +208,7 @@ OGRErr OGRCompoundCurve::importFromWkt( const char ** ppszInput )
 /************************************************************************/
 /*                            exportToWkt()                             */
 /************************************************************************/
-std::string OGRCompoundCurve::exportToWkt(OGRWktOptions opts,
+std::string OGRCompoundCurve::exportToWkt(const OGRWktOptions& opts,
                                           OGRErr *err) const
 {
     return oCC.exportToWkt(this, opts, err);

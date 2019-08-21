@@ -233,7 +233,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
 
 /// Simplified OGRFormatDouble that can be made to adhere to provided
 /// options.
-std::string OGRFormatDouble(double val, OGRWktOptions opts)
+std::string OGRFormatDouble(double val, const OGRWktOptions& opts)
 {
     // So to have identical cross platform representation.
     if( CPLIsInf(val) )
@@ -243,6 +243,7 @@ std::string OGRFormatDouble(double val, OGRWktOptions opts)
 
     std::ostringstream oss;
     oss.imbue(std::locale::classic());  // Make sure we output decimal points.
+    bool l_round(opts.round);
     if (opts.format == OGRWktFormat::F ||
         (opts.format == OGRWktFormat::Default && fabs(val) < 1))
         oss << std::fixed;
@@ -250,14 +251,14 @@ std::string OGRFormatDouble(double val, OGRWktOptions opts)
     {
         // Uppercase because OGC spec says capital 'E'.
         oss << std::uppercase;
-        opts.round = false;
+        l_round = false;
     }
     oss << std::setprecision(opts.precision);
     oss << val;
 
     std::string sval = oss.str();
 
-    if (opts.round)
+    if (l_round)
         sval = intelliround(sval);
     return removeTrailingZeros(sval);
 }

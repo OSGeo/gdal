@@ -560,7 +560,7 @@ OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
 /*      equivalent.                                                     */
 /************************************************************************/
 
-std::string OGRPoint::exportToWkt(OGRWktOptions opts, OGRErr *err) const
+std::string OGRPoint::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
     std::string wkt = getGeometryName() + wktTypeString(opts.variant);
     if( IsEmpty() )

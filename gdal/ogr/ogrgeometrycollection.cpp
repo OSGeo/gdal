@@ -802,7 +802,7 @@ OGRErr OGRGeometryCollection::importFromWkt( const char ** ppszInput )
 /*      equivalent.                                                     */
 /************************************************************************/
 
-std::string OGRGeometryCollection::exportToWkt(OGRWktOptions opts,
+std::string OGRGeometryCollection::exportToWkt(const OGRWktOptions& opts,
                                                OGRErr *err) const
 {
     return exportToWktInternal(opts, err);
@@ -810,7 +810,7 @@ std::string OGRGeometryCollection::exportToWkt(OGRWktOptions opts,
 
 
 //! @cond Doxygen_Suppress
-std::string OGRGeometryCollection::exportToWktInternal(OGRWktOptions opts,
+std::string OGRGeometryCollection::exportToWktInternal(const OGRWktOptions& opts,
     OGRErr *err, std::string exclude) const
 {
     bool first = true;

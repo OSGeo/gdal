@@ -88,6 +88,9 @@ public:
         round = defRound;
     }
 
+    /// Copy constructor
+    OGRWktOptions(const OGRWktOptions&) = default;
+
 private:
     static int getDefaultPrecision();
     static bool getDefaultRound();
@@ -433,7 +436,7 @@ class CPL_DLL OGRGeometry
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return  WKT string representing this geometry.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const = 0;
 
     // Non-standard.
@@ -885,7 +888,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return  WKT string representing this point.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry
@@ -1191,7 +1194,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return  WKT string representing this simple curve.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry interface.
@@ -1488,7 +1491,7 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return  WKT string representing this circular string.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry interface.
@@ -1596,7 +1599,7 @@ class CPL_DLL OGRCurveCollection
                                                           OGRCurve* poCurve ),
                     OGRwkbVariant eWkbVariant,
                     int& nBytesConsumedOut );
-    std::string     exportToWkt(const OGRGeometry *geom, OGRWktOptions opts,
+    std::string     exportToWkt(const OGRGeometry *geom, const OGRWktOptions& opts,
                                 OGRErr *err) const;
     OGRErr          exportToWkb( const OGRGeometry* poGeom, OGRwkbByteOrder,
                                  unsigned char *,
@@ -1708,7 +1711,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the compound curve.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry interface.
@@ -1911,7 +1914,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the curve polygon.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry
@@ -2056,7 +2059,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the polygon.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // ICurvePolygon.
@@ -2180,7 +2183,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     int         nGeomCount = 0;
     OGRGeometry **papoGeoms = nullptr;
 
-    std::string exportToWktInternal(OGRWktOptions opts, OGRErr *err,
+    std::string exportToWktInternal(const OGRWktOptions& opts, OGRErr *err,
         std::string exclude = std::string()) const;
     static OGRGeometryCollection* TransferMembersAndDestroy(
         OGRGeometryCollection* poSrc,
@@ -2246,7 +2249,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the geometry collection.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     virtual double get_Length() const;
@@ -2349,7 +2352,7 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the geometry collection.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IMultiSurface methods
@@ -2444,7 +2447,7 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the multipolygon.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // Non standard
@@ -2497,7 +2500,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRBoolean         isCompatibleSubType( OGRwkbGeometryType ) const;
     virtual const char*        getSubGeometryName() const;
     virtual OGRwkbGeometryType getSubGeometryType() const;
-    std::string exportToWktInternal (OGRWktOptions opts, OGRErr *err) const;
+    std::string exportToWktInternal (const OGRWktOptions& opts, OGRErr *err) const;
 
     virtual OGRPolyhedralSurfaceCastToMultiPolygon GetCasterToMultiPolygon()
         const;
@@ -2545,7 +2548,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the polyhedral surface.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry methods.
@@ -2725,7 +2728,7 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the multipoint.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry methods.
@@ -2810,7 +2813,7 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the multicurve.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry methods.
@@ -2889,7 +2892,7 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
     /// \return      WKT representation of the multilinestring.
-    virtual std::string exportToWkt(OGRWktOptions opts = OGRWktOptions(),
+    virtual std::string exportToWkt(const OGRWktOptions& opts = OGRWktOptions(),
                                     OGRErr *err = nullptr) const override;
 
     // Non standard

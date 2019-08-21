@@ -1836,7 +1836,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( const char ** ppszInput,
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 
-std::string OGRSimpleCurve::exportToWkt(OGRWktOptions opts, OGRErr *err) const
+std::string OGRSimpleCurve::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
     // LINEARRING or LINESTRING or CIRCULARSTRING
     std::string wkt = getGeometryName() + wktTypeString(opts.variant);

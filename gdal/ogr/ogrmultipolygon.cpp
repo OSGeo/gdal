@@ -130,7 +130,7 @@ OGRMultiPolygon::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-std::string OGRMultiPolygon::exportToWkt(OGRWktOptions opts, OGRErr *err) const
+std::string OGRMultiPolygon::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
     return exportToWktInternal(opts, err, "POLYGON");
 }

@@ -448,15 +448,16 @@ OGRErr OGRPolyhedralSurface::importFromWkt( const char ** ppszInput )
 /************************************************************************/
 
 
-std::string OGRPolyhedralSurface::exportToWkt(OGRWktOptions opts,
+std::string OGRPolyhedralSurface::exportToWkt(const OGRWktOptions& opts,
                                               OGRErr *err) const
 {
-    opts.variant = wkbVariantIso;
-    return exportToWktInternal(opts, err);
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    return exportToWktInternal(optsModified, err);
 }
 
 //! @cond Doxygen_Suppress
-std::string OGRPolyhedralSurface::exportToWktInternal(OGRWktOptions opts,
+std::string OGRPolyhedralSurface::exportToWktInternal(const OGRWktOptions& opts,
                                                       OGRErr *err) const
 {
     std::string wkt;

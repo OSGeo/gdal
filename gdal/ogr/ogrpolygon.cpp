@@ -618,7 +618,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( const char ** ppszInput,
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 
-std::string OGRPolygon::exportToWkt(OGRWktOptions opts,
+std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
                                     OGRErr *err) const
 {
     std::string wkt;

@@ -1471,7 +1471,7 @@ def test_ogr_geojson_35():
 
     gdal.Unlink('/vsimem/ogr_geojson_35.json')
 
-    assert not (data.find('-1.79') == -1 and data.find('E+308') == -1)
+    assert '-1.79' in data and 'e+308' in data
     for ident in range(2, 8):
         assert data.find('{ "type": "Feature", "id": %d, "properties": { }, "geometry": null }' % ident) != -1
 
