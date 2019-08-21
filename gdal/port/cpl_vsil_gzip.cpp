@@ -1128,10 +1128,10 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
 
 uLong VSIGZipHandle::getLong ()
 {
-    uLong x = static_cast<uLong>(get_byte());
+    uLong x = static_cast<uLong>(get_byte()) & 0xFF;
 
-    x += static_cast<uLong>(get_byte()) << 8;
-    x += static_cast<uLong>(get_byte()) << 16;
+    x += (static_cast<uLong>(get_byte()) & 0xFF) << 8;
+    x += (static_cast<uLong>(get_byte()) & 0xFF) << 16;
     const int c = get_byte();
     if( c == EOF )
     {
