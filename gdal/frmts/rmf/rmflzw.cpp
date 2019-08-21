@@ -76,6 +76,12 @@ typedef struct
 /*                           LZWUpdateTab()                             */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static GUInt32 UnsanitizedMul(GUInt32 a, GUInt32 b)
+{
+    return a * b;
+}
+
 static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, char bFoll)
 {
 /* -------------------------------------------------------------------- */
@@ -85,8 +91,8 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, char bFoll)
 /* It will NOT notice if the table is full. This must be handled        */
 /* elsewhere                                                            */
 /* -------------------------------------------------------------------- */
-    GUInt32 nLocal = (iPred + bFoll) | 0x0800;
-    nLocal = (nLocal*nLocal >> 6) & 0x0FFF;      // middle 12 bits of result
+    GUInt32 nLocal = CPLUnsanitizedAdd<GUInt32>(iPred, bFoll) | 0x0800;
+    nLocal = (UnsanitizedMul(nLocal, nLocal) >> 6) & 0x0FFF;      // middle 12 bits of result
 
     // If string is not used
     GUInt32 nNext = nLocal;
@@ -138,8 +144,8 @@ static LZWStringTab* LZWCreateTab()
 
 static GUInt32 LZWFindIndex(const LZWStringTab* poCodeTab, GUInt32 iPred, char bFoll)
 {
-    GUInt32 nLocal = (iPred + bFoll) | 0x0800;
-    nLocal = (nLocal*nLocal >> 6) & 0x0FFF;      // middle 12 bits of result
+    GUInt32 nLocal = CPLUnsanitizedAdd<GUInt32>(iPred, bFoll) | 0x0800;
+    nLocal = (UnsanitizedMul(nLocal, nLocal) >> 6) & 0x0FFF;      // middle 12 bits of result
 
     do
     {

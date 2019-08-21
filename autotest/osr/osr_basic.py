@@ -1571,3 +1571,30 @@ def test_SetPROJSearchPath():
 
     sr = osr.SpatialReference()
     assert sr.ImportFromEPSG(32631) == 0
+
+
+def test_osr_import_projjson():
+
+    sr = osr.SpatialReference()
+    projjson = '{"$schema":"https://proj.org/schemas/v0.1/projjson.schema.json","type":"GeographicCRS","name":"WGS 84","datum":{"type":"GeodeticReferenceFrame","name":"World Geodetic System 1984","ellipsoid":{"name":"WGS 84","semi_major_axis":6378137,"inverse_flattening":298.257223563}},"coordinate_system":{"subtype":"ellipsoidal","axis":[{"name":"Geodetic latitude","abbreviation":"Lat","direction":"north","unit":"degree"},{"name":"Geodetic longitude","abbreviation":"Lon","direction":"east","unit":"degree"}]},"area":"World","bbox":{"south_latitude":-90,"west_longitude":-180,"north_latitude":90,"east_longitude":180},"id":{"authority":"EPSG","code":4326}}'
+    with gdaltest.error_handler():
+        ret = sr.SetFromUserInput(projjson)
+        if osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2:
+            assert ret == 0
+
+    broken_projjson = projjson[0:-10]
+    with gdaltest.error_handler():
+        assert sr.SetFromUserInput(broken_projjson) != 0
+
+
+def test_osr_export_projjson():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+
+    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2):
+        with gdaltest.error_handler():
+            sr.ExportToPROJJSON()
+        pytest.skip()
+
+    assert sr.ExportToPROJJSON() != ''

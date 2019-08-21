@@ -1002,12 +1002,10 @@ bool GDALAbstractMDArray::CheckReadWriteParams(const GUInt64* arrayStartIdx,
             if( bOverflow )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "arrayStartIdx[%u] + (count[%u]-1) * arrayStep[%u] = "
-                        CPL_FRMT_GUIB " >= " CPL_FRMT_GUIB,
+                        "arrayStartIdx[%u] + (count[%u]-1) * arrayStep[%u] >= " CPL_FRMT_GUIB,
                         static_cast<unsigned>(i),
                         static_cast<unsigned>(i),
                         static_cast<unsigned>(i),
-                        static_cast<GUInt64>(arrayStartIdx[i] + (count[i] - 1) * arrayStep[i]),
                         static_cast<GUInt64>(dims[i]->GetSize()));
                 return false;
             }
@@ -3014,7 +3012,7 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
 
     bool bGotEllipsis = false;
     size_t nCurSrcDim = 0;
-    for( size_t i = 0; i < nTokens; i++, nCurSrcDim++ )
+    for( size_t i = 0; i < nTokens; i++ )
     {
         const char* pszIdxSpec = aosTokens[i];
         if( EQUAL(pszIdxSpec, "...") )
@@ -3033,7 +3031,7 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
                 newDims.push_back(srcDims[nCurSrcDim]);
                 mapDimIdxToParentDimIdx.push_back(nCurSrcDim);
             }
-            nCurSrcDim --;
+            continue;
         }
         else if( EQUAL(pszIdxSpec, "newaxis") ||
                     EQUAL(pszIdxSpec, "np.newaxis") )
@@ -3045,7 +3043,7 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
                 std::string(),
                 1));
             mapDimIdxToParentDimIdx.push_back(static_cast<size_t>(-1));
-            nCurSrcDim --;
+            continue;
         }
         else if( CPLGetValueType(pszIdxSpec) == CPL_VALUE_INTEGER )
         {
@@ -3122,10 +3120,11 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
             auto endIdx(CPLAtoGIntBig(pszEnd));
             if( endIdx < 0 )
             {
-                if( nDimSize < static_cast<GUInt64>(-endIdx) )
+                const auto positiveEndIdx = static_cast<GUInt64>(-endIdx);
+                if( nDimSize < positiveEndIdx )
                     endIdx = 0;
                 else
-                    endIdx = nDimSize + endIdx;
+                    endIdx = nDimSize - positiveEndIdx;
             }
             GUInt64 nEndIdx = endIdx;
             nEndIdx = EQUAL(pszEnd, "") ?
@@ -3174,6 +3173,8 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
             mapDimIdxToParentDimIdx.push_back(nCurSrcDim);
             parentRanges.emplace_back(range);
         }
+
+        nCurSrcDim++;
     }
     for( ; nCurSrcDim < srcDims.size(); nCurSrcDim++ )
     {

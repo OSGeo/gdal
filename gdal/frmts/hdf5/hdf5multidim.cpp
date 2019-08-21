@@ -1240,7 +1240,10 @@ bool HDF5Array::ReadSlow(const GUInt64* arrayStartIdx,
             }
             else
             {
-                anStart[i] = arrayStartIdx[i] + arrayStep[i] * (count[i]-1);
+                // Use double negation so that operations occur only on
+                // positive quantities to avoid an artificial negative signed
+                // integer to unsigned conversion.
+                anStart[i] = arrayStartIdx[i] - ((-arrayStep[i]) * (count[i]-1));
                 anStep[i] = -arrayStep[i];
             }
         }
@@ -1296,7 +1299,7 @@ lbl_return_to_caller_in_loop:
             if( anStackCount[iDim] == 0 )
                 break;
             pabyDstBufferStack[iDim] += bufferStride[iDim] * nBufferDataTypeSize;
-            anStart[iDim] += arrayStep[iDim];
+            anStart[iDim] = CPLUnsanitizedAdd<GUInt64>(anStart[iDim], arrayStep[iDim]);
         }
     }
     if( iDim > 0 )

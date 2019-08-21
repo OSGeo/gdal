@@ -1490,6 +1490,85 @@ OGRErr OSRExportToWktEx( OGRSpatialReferenceH hSRS,
     return ToPointer(hSRS)->exportToWkt( ppszReturn, papszOptions );
 }
 
+
+/************************************************************************/
+/*                       exportToPROJJSON()                             */
+/************************************************************************/
+
+/**
+ * Convert this SRS into a PROJJSON string.
+ *
+ * Note that the returned WKT string should be freed with
+ * CPLFree() when no longer needed.  It is the responsibility of the caller.
+ *
+ * @param ppszResult the resulting string is returned in this pointer.
+ * @param papszOptions NULL terminated list of options, or NULL. Currently
+ * supported options are
+ * <ul>
+ * <li>MULTILINE=YES/NO. Defaults to YES</li>
+ * <li>INDENTATION_WIDTH=number. Defauls to 2 (when multiline output is
+ * on).</li>
+ * <li>SCHEMA=string. URL to PROJJSON schema. Can be set to empty string to
+ * disable it.</li>
+ * </ul>
+ *
+ * @return OGRERR_NONE if successful.
+ * @since GDAL 3.1 and PROJ 6.2
+ */
+
+OGRErr OGRSpatialReference::exportToPROJJSON( char ** ppszResult,
+                                              CPL_UNUSED const char* const* papszOptions ) const
+{
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+    {
+        *ppszResult = nullptr;
+        return OGRERR_FAILURE;
+    }
+
+    const char* pszPROJJSON = proj_as_projjson(
+        d->getPROJContext(), d->m_pj_crs, papszOptions);
+
+    if( !pszPROJJSON )
+    {
+        *ppszResult = CPLStrdup("");
+        return OGRERR_FAILURE;
+    }
+
+    *ppszResult = CPLStrdup(pszPROJJSON);
+    return OGRERR_NONE;
+#else
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "exportToPROJJSON() requires PROJ 6.2 or later");
+    *ppszResult = nullptr;
+    return OGRERR_UNSUPPORTED_OPERATION;
+#endif
+}
+
+/************************************************************************/
+/*                          OSRExportToPROJJSON()                       */
+/************************************************************************/
+
+/**
+ * \brief Convert this SRS into PROJJSON format.
+ *
+ * This function is the same as OGRSpatialReference::exportToPROJJSON() const
+ *
+ * @since GDAL 3.1 and PROJ 6.2
+ */
+
+OGRErr OSRExportToPROJJSON( OGRSpatialReferenceH hSRS,
+                         char ** ppszReturn,
+                         const char* const* papszOptions )
+{
+    VALIDATE_POINTER1( hSRS, "OSRExportToPROJJSON", OGRERR_FAILURE );
+
+    *ppszReturn = nullptr;
+
+    return ToPointer(hSRS)->exportToPROJJSON( ppszReturn, papszOptions );
+}
+
 /************************************************************************/
 /*                           importFromWkt()                            */
 /************************************************************************/
@@ -3111,6 +3190,7 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
  * WGS84 or WGS72.
  * <li> "IGNF:xxxx", "ESRI:xxxx", etc. from definitions from the PROJ database;
+ * <li> PROJJSON (PROJ &gt;= 6.2)
  * </ol>
  *
  * It is expected that this method will be extended in the future to support
@@ -3247,6 +3327,25 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return SetWellKnownGeogCS( pszDefinition );
     }
 
+    // PROJJSON
+    if( pszDefinition[0] == '{' && strstr(pszDefinition, "\"type\"") &&
+        (strstr(pszDefinition, "GeodeticCRS") ||
+         strstr(pszDefinition, "GeographicCRS") ||
+         strstr(pszDefinition, "ProjectedCRS") ||
+         strstr(pszDefinition, "VerticalCRS") ||
+         strstr(pszDefinition, "BoundCRS") ||
+         strstr(pszDefinition, "CompoundCRS")) )
+    {
+        auto obj = proj_create(d->getPROJContext(), pszDefinition);
+        if( !obj )
+        {
+            return OGRERR_FAILURE;
+        }
+        Clear();
+        d->setPjCRS(obj);
+        return OGRERR_NONE;
+    }
+
     if( strstr(pszDefinition, "+proj") != nullptr
              || strstr(pszDefinition, "+init") != nullptr )
         return importFromProj4( pszDefinition );
@@ -3260,7 +3359,6 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     {
         return importFromEPSG(27700);
     }
-
 
     // Deal with IGNF:xxx, ESRI:xxx, etc from the PROJ database
     const char* pszDot = strchr(pszDefinition, ':');

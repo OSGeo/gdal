@@ -936,6 +936,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_ExportToPrettyWkt(self, *args)
 
 
+    def ExportToPROJJSON(self, *args):
+        """ExportToPROJJSON(SpatialReference self, char ** options=None) -> OGRErr"""
+        return _osr.SpatialReference_ExportToPROJJSON(self, *args)
+
+
     def ExportToProj4(self, *args):
         """ExportToProj4(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_ExportToProj4(self, *args)

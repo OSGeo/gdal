@@ -1014,7 +1014,8 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
    }
    meta->gds.Nx = is3[30];
    meta->gds.Ny = is3[34];
-   if (meta->gds.Nx * meta->gds.Ny != meta->gds.numPts) {
+   if ((meta->gds.Nx != 0 && meta->gds.Ny > UINT_MAX / meta->gds.Nx) ||
+       meta->gds.Nx * meta->gds.Ny != meta->gds.numPts) {
       errSprintf ("Nx * Ny != number of points?\n");
       return -2;
    }

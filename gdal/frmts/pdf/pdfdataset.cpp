@@ -5039,6 +5039,8 @@ static double Get(GDALPDFObject* poObj, int nIndice)
     {
         const char* pszStr = poObj->GetString().c_str();
         size_t nLen = strlen(pszStr);
+        if( nLen == 0 )
+            return 0;
         /* cf Military_Installations_2008.pdf that has values like "96 0 0.0W" */
         char chLast = pszStr[nLen-1];
         if (chLast == 'W' || chLast == 'E' || chLast == 'N' || chLast == 'S')
