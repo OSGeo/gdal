@@ -134,27 +134,31 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
     unsigned short nInfo;
 
     // Used to limit the number of limit the fields to be appended.
-    // Default is that duplicates will appended if no ogrSosiAppendFieldsMap parameter is sent.
+    // Default is that duplicates will appended if no appendFieldsMap parameter is sent.
     std::map<std::string,std::string> appendFieldsMap;
 
-	// Get ogrSosiAppendFieldsMap and update appendFieldsMap if present;
+	// Get appendFieldsMap and update appendFieldsMap if present;
     // The input must on this format
-    // -oo ogrSosiAppendFieldsMap="BEITEBRUKERID:,&FIELD2test: &FIELD3test:;"
-    // With the example abouve the field BEITEBRUKERID append character will be ':', for FIELD2test it will space and for FIELD3test it will be ;
-    const char * ogrSosiAppendFieldsMapInput = CSLFetchNameValue(poParent->GetOpenOptions(),"ogrSosiAppendFieldsMap");
-    if (ogrSosiAppendFieldsMapInput != NULL) {
-        char *ogrSosiAppendFieldsMapCopy = strdup(ogrSosiAppendFieldsMapInput);
-        char *filedsAndDelim = strtok(ogrSosiAppendFieldsMapCopy, "&");
-        // Keep printing tokens while one of the
-        // delimiters present in str[].
-        while (filedsAndDelim != NULL) {
-            std::string filedsAndDelimStr = filedsAndDelim;
-            std::size_t found = filedsAndDelimStr.find(":");
-            std::string appfieldName = filedsAndDelimStr.substr(0,found);
-            std::string appfieldDelimiter = filedsAndDelimStr.substr(found+1);
-            appendFieldsMap.insert(std::pair<std::string,std::string>(appfieldName,appfieldDelimiter));
-            filedsAndDelim = strtok(NULL, "&");
+
+    // -oo appendFieldsMap="BEITEBRUKERID:,&FIELD2test: &FIELD3test:;"
+    // With the example above the field BEITEBRUKERID append character will be ':', for FIELD2test it will space and for FIELD3test it will be ;
+
+    // -oo appendFieldsMap="BEITEBRUKERID&FIELD2test&FIELD3test"
+    // With the example above the append character will be ',' for fields in the list
+
+    const char * appendFieldsMapInput = CSLFetchNameValue(poParent->GetOpenOptions(),"appendFieldsMap");
+    CPLStringList aosTokens(CSLTokenizeString2(appendFieldsMapInput, "&", 0));
+    for( int i = 0; i < aosTokens.size(); i++ )
+    {
+        std::string filedsAndDelimStr = aosTokens[i];
+        std::size_t found = filedsAndDelimStr.find(":");
+        std::string appfieldName = filedsAndDelimStr;
+        std::string appfieldDelimiter = ",";
+        if (found < filedsAndDelimStr.length()) {
+            appfieldName = filedsAndDelimStr.substr(0,found);
+            appfieldDelimiter = filedsAndDelimStr.substr(found+1);
         }
+        appendFieldsMap.insert(std::pair<std::string,std::string>(appfieldName,appfieldDelimiter));
     }
 
 
@@ -193,7 +197,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                     // the new value
                     oHeaders[osKey]= newAppendOsValue;
 
-                    //printf ("Append value for %s is %s \n", osKey.c_str(), newAppendOsValue.c_str());
+                    // printf ("Append value for %s is %s \n", osKey.c_str(), newAppendOsValue.c_str());
                 } else {
                     osValue = CPLString(pszPos+1);
                     oHeaders.insert(std::pair<CPLString,CPLString>(osKey,osValue));
