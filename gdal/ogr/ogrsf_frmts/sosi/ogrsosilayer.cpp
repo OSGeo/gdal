@@ -30,6 +30,9 @@
 #include "ogr_sosi.h"
 #include <map>
 #include <memory>
+#include <stdio.h>
+#include <string.h>
+
 
 CPL_CVSID("$Id$")
 
@@ -129,9 +132,30 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
     short nName, nNumLines;
     long  nNumCoo;
     unsigned short nInfo;
-     // TODO make a parameter that can be sent from command line
+
+    // Used to limit the number of limit the fields to be appended.
+    // Default is that duplicates will appended if no ogrSosiAppendFieldsMap parameter is sent.
     std::map<std::string,std::string> appendFieldsMap;
-    appendFieldsMap.insert(std::pair<std::string,std::string>("BEITEBRUKERID",","));
+
+	// Get ogrSosiAppendFieldsMap and update appendFieldsMap if present;
+    // The input must on this format
+    // -oo ogrSosiAppendFieldsMap="BEITEBRUKERID:,&FIELD2test: &FIELD3test:;"
+    // With the example abouve the field BEITEBRUKERID append character will be ':', for FIELD2test it will space and for FIELD3test it will be ;
+    const char * ogrSosiAppendFieldsMapInput = CSLFetchNameValue(poParent->GetOpenOptions(),"ogrSosiAppendFieldsMap");
+    if (ogrSosiAppendFieldsMapInput != NULL) {
+        char *ogrSosiAppendFieldsMapCopy = strdup(ogrSosiAppendFieldsMapInput);
+        char *filedsAndDelim = strtok(ogrSosiAppendFieldsMapCopy, "&");
+        // Keep printing tokens while one of the
+        // delimiters present in str[].
+        while (filedsAndDelim != NULL) {
+            std::string filedsAndDelimStr = filedsAndDelim;
+            std::size_t found = filedsAndDelimStr.find(":");
+            std::string appfieldName = filedsAndDelimStr.substr(0,found);
+            std::string appfieldDelimiter = filedsAndDelimStr.substr(found+1);
+            appendFieldsMap.insert(std::pair<std::string,std::string>(appfieldName,appfieldDelimiter));
+            filedsAndDelim = strtok(NULL, "&");
+        }
+    }
 
 
     /* iterate through the SOSI groups*/
