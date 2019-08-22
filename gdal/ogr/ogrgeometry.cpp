@@ -84,6 +84,20 @@ static void OGRGEOSWarningHandler(const char *fmt, ...)
 #endif
 
 /************************************************************************/
+/*                            OGRWktOptions()                             */
+/************************************************************************/
+
+int OGRWktOptions::getDefaultPrecision()
+{
+    return atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
+}
+
+bool OGRWktOptions::getDefaultRound()
+{
+    return CPLTestBool(CPLGetConfigOption("OGR_WKT_ROUND", "TRUE"));
+}
+
+/************************************************************************/
 /*                            OGRGeometry()                             */
 /************************************************************************/
 
@@ -345,22 +359,25 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
     }
     else if( pszDisplayGeometry != nullptr && EQUAL(pszDisplayGeometry, "WKT") )
     {
-        char *pszWkt = nullptr;
-        if( exportToWkt( &pszWkt ) == OGRERR_NONE )
+        OGRErr err(OGRERR_NONE);
+        std::string wkt = exportToWkt(OGRWktOptions(), &err);
+        if( err == OGRERR_NONE )
         {
-            fprintf( fp, "%s%s\n", pszPrefix, pszWkt );
-            CPLFree( pszWkt );
+            fprintf( fp, "%s%s\n", pszPrefix, wkt.data() );
         }
     }
     else if( pszDisplayGeometry == nullptr ||
              CPLTestBool(pszDisplayGeometry) ||
              EQUAL(pszDisplayGeometry, "ISO_WKT") )
     {
-        char *pszWkt = nullptr;
-        if( exportToWkt( &pszWkt, wkbVariantIso ) == OGRERR_NONE )
+        OGRErr err(OGRERR_NONE);
+        OGRWktOptions opts;
+        
+        opts.variant = wkbVariantIso;
+        std::string wkt = exportToWkt(opts, &err);
+        if( err == OGRERR_NONE )
         {
-            fprintf( fp, "%s%s\n", pszPrefix, pszWkt );
-            CPLFree( pszWkt );
+            fprintf( fp, "%s%s\n", pszPrefix, wkt.data() );
         }
     }
 }
@@ -1719,9 +1736,37 @@ OGRErr OGRGeometry::importPreambleFromWkt( const char ** ppszInput,
 }
 //! @endcond
 
+/************************************************************************/
+/*                           wktTypeString()                            */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/** Get a type string for WKT, padded with a space at the end.
+ *
+ * @param variant  OGR type variant
+ * @return  "Z " for 3D, "M " for measured, "ZM " for both, or the empty string.
+ */
+std::string OGRGeometry::wktTypeString(OGRwkbVariant variant) const
+{
+    std::string s(" ");
+
+    if (variant == wkbVariantIso)
+    {
+        if (flags & OGR_G_3D)
+            s += "Z";
+        if (flags & OGR_G_MEASURED)
+            s += "M";
+    }
+    if (s.size() > 1)
+        s += " ";
+    return s;
+}
+//! @endcond
+
+
 /**
  * \fn OGRErr OGRGeometry::exportToWkt( char ** ppszDstText,
- * OGRwkbVariant eWkbVariant = wkbVariantOldOgc ) const;
+ * OGRwkbVariant variant = wkbVariantOldOgc ) const;
  *
  * \brief Convert a geometry into well known text format.
  *
@@ -1732,13 +1777,24 @@ OGRErr OGRGeometry::importPreambleFromWkt( const char ** ppszInput,
  * @param ppszDstText a text buffer is allocated by the program, and assigned
  *                    to the passed pointer. After use, *ppszDstText should be
  *                    freed with CPLFree().
- * @param eWkbVariant the specification that must be conformed too :
+ * @param variant the specification that must be conformed too :
  *                    - wbkVariantOgc for old-style 99-402 extended
  *                      dimension (Z) WKB types
  *                    - wbkVariantIso for SFSQL 1.2 and ISO SQL/MM Part 3
  *
  * @return Currently OGRERR_NONE is always returned.
  */
+OGRErr OGRGeometry::exportToWkt(char ** ppszDstText,
+                                OGRwkbVariant variant) const
+{
+    OGRWktOptions opts;
+    opts.variant = variant;
+    OGRErr err(OGRERR_NONE);
+
+    std::string wkt = exportToWkt(opts, &err);
+    *ppszDstText = CPLStrdup(wkt.data());
+    return err;
+}
 
 /************************************************************************/
 /*                         OGR_G_ExportToWkt()                          */
