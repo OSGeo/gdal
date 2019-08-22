@@ -11,7 +11,7 @@ This driver requires the FYBA library.
 Open options
 ------------
 
-Starting with GDAL 2.0, the following open options can be specified
+Starting with GDAL 3.1, the following open options can be specified
 (typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
 
 -  appendFieldsMap\ =(defaults is empty). 'Default is that all rows for equal field names will be appended in a feature, but with this parameter you select what field this should be valid for.'
