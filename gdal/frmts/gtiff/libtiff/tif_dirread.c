@@ -41,16 +41,6 @@
 #define FAILED_FII    ((uint32) -1)
 
 /*
- * Largest 32-bit unsigned integer value.
- */
-#define TIFF_UINT32_MAX 0xFFFFFFFFU
-
-/*
- * Largest 64-bit unsigned integer value.
- */
-#define TIFF_UINT64_MAX (((uint64)(TIFF_UINT32_MAX)) << 32 | TIFF_UINT32_MAX)
-
-/*
  * Largest 64-bit signed integer value.
  */
 #define TIFF_INT64_MAX ((int64)(TIFF_UINT64_MAX >> 1))

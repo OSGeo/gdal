@@ -35,27 +35,23 @@
 uint32
 _TIFFMultiply32(TIFF* tif, uint32 first, uint32 second, const char* where)
 {
-	uint32 bytes = first * second;
-
-	if (second && bytes / second != first) {
+	if (second && first > TIFF_UINT32_MAX / second) {
 		TIFFErrorExt(tif->tif_clientdata, where, "Integer overflow in %s", where);
-		bytes = 0;
+		return 0;
 	}
 
-	return bytes;
+	return first * second;
 }
 
 uint64
 _TIFFMultiply64(TIFF* tif, uint64 first, uint64 second, const char* where)
 {
-	uint64 bytes = first * second;
-
-	if (second && bytes / second != first) {
+	if (second && first > TIFF_UINT64_MAX / second) {
 		TIFFErrorExt(tif->tif_clientdata, where, "Integer overflow in %s", where);
-		bytes = 0;
+		return 0;
 	}
 
-	return bytes;
+	return first * second;
 }
 
 tmsize_t
