@@ -359,13 +359,9 @@ void BitStuffer2::BitStuff_Before_Lerc2v3(Byte** ppByte, const vector<unsigned i
 bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesRemaining, 
     vector<unsigned int>& dataVec, unsigned int numElements, int numBits)
 {
-  if( numElements > std::numeric_limits<unsigned int>::max() / numBits ||
-      numElements * numBits > std::numeric_limits<unsigned int>::max() - 31 )
-  {
+  if (numBits >= 32)
     return false;
-  }
-
-  unsigned int numUInts = (numElements * numBits + 31) / 32;
+  unsigned int numUInts = (unsigned int)((unsigned long long)numElements * numBits + 31) / 32;
   unsigned int numBytes = numUInts * sizeof(unsigned int);
   unsigned int* arr = (unsigned int*)(*ppByte);
 
@@ -493,14 +489,9 @@ bool BitStuffer2::BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, vecto
 {
   if (numElements == 0)
     return false;
-
-  if( numElements > std::numeric_limits<unsigned int>::max() / numBits ||
-      numElements * numBits > std::numeric_limits<unsigned int>::max() - 31 )
-  {
+  if (numBits >= 32)
     return false;
-  }
-
-  unsigned int numUInts = (numElements * numBits + 31) / 32;
+  unsigned int numUInts = (unsigned int)((unsigned long long)numElements * numBits + 31) / 32;
   unsigned int numBytes = numUInts * sizeof(unsigned int);
 
   // copy the bytes from the incoming byte stream
