@@ -137,7 +137,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
     // Default is that duplicates will appended if no appendFieldsMap parameter is sent.
     std::map<std::string,std::string> appendFieldsMap;
 
-	// Get appendFieldsMap and update appendFieldsMap if present;
+    // Get appendFieldsMap and update appendFieldsMap if present;
     // The input must on this format
 
     // -oo appendFieldsMap="BEITEBRUKERID:,&FIELD2test: &FIELD3test:;"
