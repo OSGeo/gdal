@@ -366,7 +366,7 @@ static int GRIB2SectJump (VSILFILE *fp,
       }
       return -1;
    }
-   if (VSIFReadL (&sectNum, sizeof (char), 1, fp) != 1) {
+   if (*secLen < 5 || VSIFReadL (&sectNum, sizeof (char), 1, fp) != 1) {
       if (*sect != -1) {
          errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
       } else {

@@ -55,7 +55,8 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
     for(int i=0;i<poArray->GetLength();i++)
     {
         GDALPDFObject* poFeatureObj = poArray->Get(i);
-        if (poFeatureObj->GetType() != PDFObjectType_Dictionary)
+        if (poFeatureObj == nullptr ||
+            poFeatureObj->GetType() != PDFObjectType_Dictionary)
             continue;
 
         GDALPDFObject* poA = poFeatureObj->GetDictionary()->Get("A");
@@ -76,7 +77,7 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
         for(j = 0;j<poPArray->GetLength();j++)
         {
             GDALPDFObject* poKV = poPArray->Get(j);
-            if (poKV->GetType() == PDFObjectType_Dictionary)
+            if (poKV && poKV->GetType() == PDFObjectType_Dictionary)
             {
                 GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
                 GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
@@ -108,7 +109,7 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
         for(j = 0;j<poPArray->GetLength();j++)
         {
             GDALPDFObject* poKV = poPArray->Get(j);
-            if (poKV->GetType() == PDFObjectType_Dictionary)
+            if (poKV && poKV->GetType() == PDFObjectType_Dictionary)
             {
                 GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
                 GDALPDFObject* poV = poKV->GetDictionary()->Get("V");

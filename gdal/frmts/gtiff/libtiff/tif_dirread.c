@@ -40,6 +40,21 @@
 
 #define FAILED_FII    ((uint32) -1)
 
+/*
+ * Largest 32-bit unsigned integer value.
+ */
+#define TIFF_UINT32_MAX 0xFFFFFFFFU
+
+/*
+ * Largest 64-bit unsigned integer value.
+ */
+#define TIFF_UINT64_MAX (((uint64)(TIFF_UINT32_MAX)) << 32 | TIFF_UINT32_MAX)
+
+/*
+ * Largest 64-bit signed integer value.
+ */
+#define TIFF_INT64_MAX ((int64)(TIFF_UINT64_MAX >> 1))
+
 #ifdef HAVE_IEEEFP
 # define TIFFCvtIEEEFloatToNative(tif, n, fp)
 # define TIFFCvtIEEEDoubleToNative(tif, n, dp)
@@ -3285,11 +3300,6 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryCheckRangeLongSlong(int32 value)
 		return(TIFFReadDirEntryErrOk);
 }
 
-/*
- * Largest 32-bit unsigned integer value.
- */
-#define TIFF_UINT32_MAX 0xFFFFFFFFU
-
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeLongLong8(uint64 value)
 {
@@ -3307,8 +3317,6 @@ TIFFReadDirEntryCheckRangeLongSlong8(int64 value)
 	else
 		return(TIFFReadDirEntryErrOk);
 }
-
-#undef TIFF_UINT32_MAX
 
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeSlongLong(uint32 value)
@@ -3375,11 +3383,6 @@ TIFFReadDirEntryCheckRangeLong8Slong8(int64 value)
 		return(TIFFReadDirEntryErrOk);
 }
 
-/*
- * Largest 64-bit signed integer value.
- */
-#define TIFF_INT64_MAX ((int64)(((uint64) ~0) >> 1))
-
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeSlong8Long8(uint64 value)
 {
@@ -3388,8 +3391,6 @@ TIFFReadDirEntryCheckRangeSlong8Long8(uint64 value)
 	else
 		return(TIFFReadDirEntryErrOk);
 }
-
-#undef TIFF_INT64_MAX
 
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryData(TIFF* tif, uint64 offset, tmsize_t size, void* dest)
@@ -4548,6 +4549,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 				    dp->tdir_type);
 				return -1;
 			}
+			if( dp->tdir_count > TIFF_UINT64_MAX / typewidth )
+                            return -1;
 			datasize=(uint64)typewidth*dp->tdir_count;
 			if (!(tif->tif_flags&TIFF_BIGTIFF))
 			{
@@ -4559,6 +4562,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 				if (datasize<=8)
 					datasize=0;
 			}
+			if( space > TIFF_UINT64_MAX - datasize )
+                            return -1;
 			space+=datasize;
 		}
 		if( filesize < space )
@@ -4578,8 +4583,14 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		 * of data in the strip and trim this number back accordingly.
 		 */
 		strip--;
-		if (td->td_stripoffset_p[strip]+td->td_stripbytecount_p[strip] > filesize)
-			td->td_stripbytecount_p[strip] = filesize - td->td_stripoffset_p[strip];
+		if (td->td_stripoffset_p[strip]+td->td_stripbytecount_p[strip] > filesize) {
+                    if( td->td_stripoffset_p[strip] >= filesize ) {
+                        /* Not sure what we should in that case... */
+                        td->td_stripbytecount_p[strip] = 0;
+                    } else {
+                        td->td_stripbytecount_p[strip] = filesize - td->td_stripoffset_p[strip];
+                    }
+                }
 	} else if (isTiled(tif)) {
 		uint64 bytespertile = TIFFTileSize64(tif);
 
@@ -5958,6 +5969,13 @@ static void TryChopUpUncompressedBigTiff( TIFF* tif )
     allocChoppedUpStripArrays(tif, nstrips, stripbytes, rowsperstrip);
 }
 
+
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static uint64 _TIFFUnsanitizedAddUInt64AndInt(uint64 a, int b)
+{
+    return a + b;
+}
+
 /* Read the value of [Strip|Tile]Offset or [Strip|Tile]ByteCount around
  * strip/tile of number strile. Also fetch the neighbouring values using a
  * 4096 byte page size.
@@ -6059,7 +6077,7 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
         iStartBefore = -strile;
     for( i = iStartBefore;
          (uint32)(strile + i) < arraySize &&
-         (uint64)(nOffset) + (i + 1) * sizeofvalint <= nOffsetEndPage;
+         _TIFFUnsanitizedAddUInt64AndInt(nOffset, (i + 1) * sizeofvalint) <= nOffsetEndPage;
          ++i )
     {
         if( sizeofval == sizeof(uint16) )

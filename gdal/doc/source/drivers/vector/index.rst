@@ -85,6 +85,7 @@ Vector drivers
    segy
    selafin
    shapefile
+   sosi
    sqlite
    sua
    svg

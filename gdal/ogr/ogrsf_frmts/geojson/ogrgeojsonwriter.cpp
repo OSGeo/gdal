@@ -1492,11 +1492,15 @@ static int OGR_json_double_with_precision_to_string( struct json_object *jso,
         static_cast<int>(reinterpret_cast<GUIntptr_t>(json_object_get_userdata(jso)));
 #endif
     char szBuffer[75] = {};
-    OGRFormatDouble( szBuffer, sizeof(szBuffer), json_object_get_double(jso), '.',
-                     (nPrecision < 0) ? 15 : nPrecision );
-    if( szBuffer[0] == 't' /*oobig */ )
+    const double dfVal =  json_object_get_double(jso);
+    if( fabs(dfVal) > 1e50 && !CPLIsInf(dfVal) )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", json_object_get_double(jso));
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", dfVal);
+    }
+    else
+    {
+        OGRFormatDouble( szBuffer, sizeof(szBuffer), dfVal, '.',
+                         (nPrecision < 0) ? 15 : nPrecision );
     }
     return printbuf_memappend(pb, szBuffer, static_cast<int>(strlen(szBuffer)));
 }

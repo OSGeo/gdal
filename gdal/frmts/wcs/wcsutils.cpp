@@ -66,8 +66,8 @@ int CompareNumbers(const CPLString &a, const CPLString &b)
     } else if (c > 0) {
         return 1;
     }
-    a_p = a.substr(a_dot+1, std::string::npos);
-    b_p = b.substr(b_dot+1, std::string::npos);
+    a_p = a.substr(CPLUnsanitizedAdd<size_t>(a_dot, 1), std::string::npos);
+    b_p = b.substr(CPLUnsanitizedAdd<size_t>(b_dot, 1), std::string::npos);
     d = (int)(a_p.length()) - (int)(b_p.length());
     if (d < 0) {
         for (int i = 0; i < -1*d; ++i) {

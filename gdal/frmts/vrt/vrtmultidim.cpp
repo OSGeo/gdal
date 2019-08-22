@@ -1307,6 +1307,17 @@ VRTMDArraySourceInlinedValues::~VRTMDArraySourceInlinedValues()
 /************************************************************************/
 /*                                   Read()                             */
 /************************************************************************/
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static inline void IncrPointer(const GByte*& ptr, GInt64 nInc, size_t nIncSize)
+{
+    ptr += nInc * nIncSize;
+}
+
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static inline void IncrPointer(GByte*& ptr, GPtrDiff_t nInc, size_t nIncSize)
+{
+    ptr += nInc * nIncSize;
+}
 
 bool VRTMDArraySourceInlinedValues::Read(const GUInt64* arrayStartIdx,
                       const size_t* count,
@@ -1328,7 +1339,10 @@ bool VRTMDArraySourceInlinedValues::Read(const GUInt64* arrayStartIdx,
         {
             // For negative step request, temporarily simulate a positive step
             // and fix up the start at the end of the loop.
-            start_i = start_i + (count[i]-1) * step_i;
+            // Use double negation so that operations occur only on
+            // positive quantities to avoid an artificial negative signed
+            // integer to unsigned conversion.
+            start_i = start_i - ((count[i]-1) * (-step_i));
             step_i = -step_i;
         }
 
@@ -1396,8 +1410,8 @@ lbl_return_to_caller:
             --anStackCount[iDim];
             if( anStackCount[iDim] == 0 )
                 break;
-            abyStackSrcPtr[iDim] += m_anInlinedArrayStrideInBytes[iDim] * arrayStep[iDim];
-            abyStackDstPtr[iDim] += bufferStride[iDim] * nBufferDataTypeSize;
+            IncrPointer(abyStackSrcPtr[iDim], arrayStep[iDim], m_anInlinedArrayStrideInBytes[iDim]);
+            IncrPointer(abyStackDstPtr[iDim], bufferStride[iDim], nBufferDataTypeSize);
         }
     }
     if (iDim > 0 )
@@ -1833,7 +1847,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64* arrayStartIdx,
         if( arrayStep[i] < 0 )
         {
             // For negative step request, temporarily simulate a positive step
-            start_i = start_i + (m_anCount[i]-1) * step_i;
+            start_i = start_i - (m_anCount[i]-1) * (-step_i);
             step_i = -step_i;
         }
         if( start_i + (count[i]-1) * step_i < m_anDstOffset[i] )
@@ -1852,7 +1866,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64* arrayStartIdx,
         if( arrayStep[i] < 0 )
         {
             // For negative step request, temporarily simulate a positive step
-            start_i = start_i + (m_anCount[i]-1) * step_i;
+            start_i = start_i - (m_anCount[i]-1) * (-step_i);
             step_i = -step_i;
         }
         if( start_i >= m_anDstOffset[i] + m_anCount[i] )
@@ -1970,7 +1984,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64* arrayStartIdx,
                 m_anCount[i] = (m_anSrcOffset[i]+1) / -step_i;
             // For negative step request, temporarily simulate a positive step
             // and fix up the start at the end of the loop.
-            start_i = start_i + (m_anCount[i]-1) * step_i;
+            start_i = start_i - (m_anCount[i]-1) * (-step_i);
             step_i = -step_i;
         }
         else
@@ -2014,7 +2028,10 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64* arrayStartIdx,
         nDstOffset += nRelStartDst * bufferStride[i] * nBufferDataTypeSize;
         anSrcArrayOffset[i] = m_anSrcOffset[i] +
                             (anReqDstStart[i] - m_anDstOffset[i]) * m_anStep[i];
-        anSrcArrayStep[i] = m_anStep[i] * arrayStep[i];
+        if( arrayStep[i] < 0 )
+            anSrcArrayStep[i] = -static_cast<GInt64>(m_anStep[i] * static_cast<GUInt64>(-arrayStep[i]));
+        else
+            anSrcArrayStep[i] = m_anStep[i] * arrayStep[i];
     }
     return poArray->Read(anSrcArrayOffset.data(),
                              anReqCount.data(),

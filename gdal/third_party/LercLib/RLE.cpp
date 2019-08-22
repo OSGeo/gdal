@@ -307,8 +307,8 @@ bool RLE::decompress(const Byte* arrRLE, size_t nBytesRemaining, Byte* arr, size
   short cnt = readCount(&srcPtr);
   while (cnt != -32768)
   {
-    size_t i = (cnt <= 0) ? -cnt : cnt;
-    size_t m = (cnt <= 0) ? 1 : i;  // <= not < to fail gracefully in case of corrupted blob for old version <= 2 which had no checksum
+    int i = (cnt <= 0) ? -cnt : cnt;
+    size_t m = (cnt <= 0) ? 1 : (size_t)i;  // <= not < to fail gracefully in case of corrupted blob for old version <= 2 which had no checksum
 
     if (nBytesRemaining < m + 2 || arrIdx + i > arrSize)
       return false;

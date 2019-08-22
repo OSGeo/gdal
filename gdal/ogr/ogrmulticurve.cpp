@@ -172,11 +172,11 @@ OGRErr OGRMultiCurve::importFromWkt( const char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr OGRMultiCurve::exportToWkt( char ** ppszDstText,
-                                   OGRwkbVariant /* eWkbVariant */ ) const
-
+std::string OGRMultiCurve::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
-    return exportToWktInternal( ppszDstText, wkbVariantIso, "LINESTRING" );
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    return exportToWktInternal(optsModified, err, "LINESTRING");
 }
 
 /************************************************************************/

@@ -1922,8 +1922,13 @@ bool netCDFVariable::IReadWriteGeneric(const size_t* arrayStartIdx,
             if( (--nIters) == 0 )
                 break;
             ptr += ptr_inc[nDimsMinus1];
-            array_idx[nDimsMinus1] = static_cast<size_t>(
-                array_idx[nDimsMinus1]+ arrayStep[nDimsMinus1]);
+            // CPLUnsanitizedAdd needed as arrayStep[] might be negative, and
+            // thus automatic conversion from negative to big unsigned might
+            // occur
+            array_idx[nDimsMinus1] =
+                CPLUnsanitizedAdd<size_t>(
+                    array_idx[nDimsMinus1],
+                    static_cast<GPtrDiff_t>(arrayStep[nDimsMinus1]));
         }
         return true;
     };
@@ -1943,7 +1948,11 @@ bool netCDFVariable::IReadWriteGeneric(const size_t* arrayStartIdx,
             if( (--nIters) == 0 )
                 break;
             stack_ptr[0] += ptr_inc[0];
-            array_idx[0] = static_cast<size_t>(array_idx[0] + arrayStep[0]);
+            // CPLUnsanitizedAdd needed as arrayStep[] might be negative, and
+            // thus automatic conversion from negative to big unsigned might
+            // occur
+            array_idx[0] = CPLUnsanitizedAdd<size_t>(
+                array_idx[0], static_cast<GPtrDiff_t>(arrayStep[0]));
         }
     }
     else if( m_nDims == 3)
@@ -1962,12 +1971,20 @@ bool netCDFVariable::IReadWriteGeneric(const size_t* arrayStartIdx,
                 if( (--nIters) == 0 )
                     break;
                 stack_ptr[1] += ptr_inc[1];
-                array_idx[1] = static_cast<size_t>(array_idx[1] + arrayStep[1]);
+                // CPLUnsanitizedAdd needed as arrayStep[] might be negative, and
+                // thus automatic conversion from negative to big unsigned might
+                // occur
+                array_idx[1] = CPLUnsanitizedAdd<size_t>(
+                    array_idx[1], static_cast<GPtrDiff_t>(arrayStep[1]));
             }
             if( (--stack_count_iters[0]) == 0 )
                 break;
             stack_ptr[0] += ptr_inc[0];
-            array_idx[0] = static_cast<size_t>(array_idx[0] + arrayStep[0]);
+            // CPLUnsanitizedAdd needed as arrayStep[] might be negative, and
+            // thus automatic conversion from negative to big unsigned might
+            // occur
+            array_idx[0] = CPLUnsanitizedAdd<size_t>(
+                array_idx[0], static_cast<GPtrDiff_t>(arrayStep[0]));
         }
     }
     else
@@ -1990,7 +2007,11 @@ lbl_start:
                 if( (--nIters) == 0 )
                     break;
                 stack_ptr[dimIdx] += ptr_inc[dimIdx];
-                array_idx[dimIdx] = static_cast<size_t>(array_idx[dimIdx] + arrayStep[dimIdx]);
+                // CPLUnsanitizedAdd needed as arrayStep[] might be negative, and
+                // thus automatic conversion from negative to big unsigned might
+                // occur
+                array_idx[dimIdx] = CPLUnsanitizedAdd<size_t>(
+                    array_idx[dimIdx], static_cast<GPtrDiff_t>(arrayStep[dimIdx]));
             }
             // If there was a test if( dimIdx > 0 ), that would be valid for nDims == 2
             goto lbl_return_to_caller;
@@ -2011,7 +2032,11 @@ lbl_return_to_caller:
                 if( (--stack_count_iters[dimIdx]) == 0 )
                     break;
                 stack_ptr[dimIdx] += ptr_inc[dimIdx];
-                array_idx[dimIdx] = static_cast<size_t>(array_idx[dimIdx] + arrayStep[dimIdx]);
+                // CPLUnsanitizedAdd needed as arrayStep[] might be negative, and
+                // thus automatic conversion from negative to big unsigned might
+                // occur
+                array_idx[dimIdx] = CPLUnsanitizedAdd<size_t>(
+                    array_idx[dimIdx], static_cast<GPtrDiff_t>(arrayStep[dimIdx]));
             }
             if( dimIdx > 0 )
                 goto lbl_return_to_caller;

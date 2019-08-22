@@ -7331,10 +7331,10 @@ bool GDALMDArrayFromRasterBand::ReadWrite(GDALRWFlag eRWFlag,
     constexpr int kY = 0;
     const int nX = arrayStep[kX] > 0  ?
         static_cast<int>(arrayStartIdx[kX]) :
-        static_cast<int>(arrayStartIdx[kX] + (count[kX]-1) * arrayStep[kX]);
+        static_cast<int>(arrayStartIdx[kX] - (count[kX]-1) * -arrayStep[kX]);
     const int nY = arrayStep[kY] > 0  ?
         static_cast<int>(arrayStartIdx[kY]) :
-        static_cast<int>(arrayStartIdx[kY] + (count[kY]-1) * arrayStep[kY]);
+        static_cast<int>(arrayStartIdx[kY] - (count[kY]-1) * -arrayStep[kY]);
     const int nSizeX = static_cast<int>(count[kX] * ABS(arrayStep[kX]));
     const int nSizeY = static_cast<int>(count[kY] * ABS(arrayStep[kY]));
     GByte* pabyBuffer = static_cast<GByte*>(pBuffer);

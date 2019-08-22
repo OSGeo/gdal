@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "ogr_p.h"
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -38,6 +39,8 @@
 #include <cstring>
 #include <cctype>
 #include <limits>
+#include <sstream>
+#include <iomanip>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -64,6 +67,137 @@ inline bool CPLIsDoubleAnInt(double d)
     return d == static_cast<double>(static_cast<int>(d));
 }
 
+namespace
+{
+
+// Remove trailing zeros except the last one.
+std::string removeTrailingZeros(std::string s)
+{
+    auto pos = s.find('.');
+    if (pos == std::string::npos)
+        return s;
+
+    // Remove zeros at the end.  We know this won't be npos because we
+    // have a decimal point.
+    auto nzpos = s.find_last_not_of('0');
+    s = s.substr(0, nzpos + 1);
+
+    // Make sure there is one 0 after the decimal point.
+    if (s.back() == '.')
+        s += '0';
+    return s;
+}
+
+// Round a string representing a number by 1 in the least significant digit.
+std::string roundup(std::string s)
+{
+    // Remove a negative sign if it exists to make processing
+    // more straigtforward.
+    bool negative(false);
+    if (s[0] == '-')
+    {
+        negative = true;
+        s = s.substr(1);
+    }
+
+    // Go from the back to the front.  If we increment a digit other than
+    // a '9', we're done.  If we increment a '9', set it to a '0' and move
+    // to the next (more significant) digit.  If we get to the front of the
+    // string, add a '1' to the front of the string.
+    for (int pos = static_cast<int>(s.size() - 1); pos >= 0; pos--)
+    {
+        if (s[pos] == '.')
+            continue;
+        s[pos]++;
+
+        // Incrementing past 9 gets you a colon in ASCII.
+        if (s[pos] != ':')
+            break;
+        else
+            s[pos] = '0';
+        if (pos == 0)
+            s = '1' + s;
+    }
+    if (negative)
+        s = '-' + s;
+    return s;
+}
+
+
+// This attempts to elimiate what is likely binary -> decimal representation
+// error or the result of low-order rounding with calculations.  The result
+// may be more visually pleasing and takes up fewer places.
+std::string intelliround(std::string& s)
+{
+    // If there is no decimal point, just return.
+    auto dotPos = s.find(".");
+    if (dotPos == std::string::npos)
+        return s;
+
+    // Don't mess with exponential formatting.
+    if (s.find_first_of("eE") != std::string::npos)
+        return s;
+    size_t iDotPos = static_cast<size_t>(dotPos);
+    size_t nCountBeforeDot = iDotPos - 1;
+    if (s[0] == '-')
+        nCountBeforeDot--;
+    size_t i = s.size();
+
+    // If we don't have ten characters, don't do anything.
+    if (i <= 10)
+        return s;
+
+    /* -------------------------------------------------------------------- */
+    /*      Trim trailing 00000x's as they are likely roundoff error.       */
+    /* -------------------------------------------------------------------- */
+    if (s[i-2] == '0' && s[i-3] == '0' && s[i-4] == '0' &&
+            s[i-5] == '0' && s[i-6] == '0')
+    {
+        s.resize(s.size() - 1);
+    }
+    // I don't understand this case exactly.  It's like saying if the
+    // value is large enough and there are sufficient sig digits before
+    // a bunch of zeros, remove the zeros and any digits at the end that
+    // may be nonzero.  Perhaps if we can't exactly explain in words what
+    // we're doing here, we shouldn't do it?  Perhaps it should
+    // be generalized?
+    // The value "12345.000000011" invokes this case, if anyone
+    // is interested.
+    else if (iDotPos < i - 8 &&
+            (nCountBeforeDot >= 4 || s[i-3] == '0') &&
+            (nCountBeforeDot >= 5 || s[i-4] == '0') &&
+            (nCountBeforeDot >= 6 || s[i-5] == '0') &&
+            (nCountBeforeDot >= 7 || s[i-6] == '0') &&
+            (nCountBeforeDot >= 8 || s[i-7] == '0') &&
+            s[i-8] == '0' && s[i-9] == '0')
+    {
+        s.resize(s.size() - 8);
+    }
+    /* -------------------------------------------------------------------- */
+    /*      Trim trailing 99999x's as they are likely roundoff error.       */
+    /* -------------------------------------------------------------------- */
+    else if (s[i-2] == '9' && s[i-3] == '9' && s[i-4] == '9' &&
+            s[i-5] == '9' && s[i-6] == '9' )
+    {
+        s.resize(i - 6);
+        s = roundup(s);
+    }
+    else if (iDotPos < i - 9 &&
+            (nCountBeforeDot >= 4 || s[i-3] == '9') &&
+            (nCountBeforeDot >= 5 || s[i-4] == '9') &&
+            (nCountBeforeDot >= 6 || s[i-5] == '9') &&
+            (nCountBeforeDot >= 7 || s[i-6] == '9') &&
+            (nCountBeforeDot >= 8 || s[i-7] == '9') &&
+            s[i-8] == '9' && s[i-9] == '9')
+    {
+        s.resize(i - 9);
+        s = roundup(s);
+    }
+    return s;
+}
+
+} // unnamed namespace
+
 /************************************************************************/
 /*                        OGRFormatDouble()                             */
 /************************************************************************/
@@ -72,146 +206,61 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
                       char chDecimalSep, int nPrecision,
                       char chConversionSpecifier )
 {
+    OGRWktOptions opts;
+
+    opts.precision = nPrecision;
+    opts.format =
+        (chConversionSpecifier == 'g' || chConversionSpecifier == 'G') ?
+        OGRWktFormat::G :
+        OGRWktFormat::F;
+
+    std::string s = OGRFormatDouble(dfVal, opts);
+    if (chDecimalSep != '\0' && chDecimalSep != '.')
+    {
+        auto pos = s.find('.');
+        if (pos != std::string::npos)
+            s.replace(pos, 1, std::string(1, chDecimalSep));
+    }
+    if (s.size() + 1 > static_cast<size_t>(nBufferLen))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Truncated double value %s to "
+            "%s.", s.data(), s.substr(0, nBufferLen - 1).data());
+        s.resize(nBufferLen - 1);
+    }
+    strcpy(pszBuffer, s.data());
+}
+
+
+/// Simplified OGRFormatDouble that can be made to adhere to provided
+/// options.
+std::string OGRFormatDouble(double val, const OGRWktOptions& opts)
+{
     // So to have identical cross platform representation.
-    if( CPLIsInf(dfVal) )
+    if( CPLIsInf(val) )
+        return (val > 0) ? "inf" : "-inf";
+    if( CPLIsNan(val) )
+        return "nan";
+
+    std::ostringstream oss;
+    oss.imbue(std::locale::classic());  // Make sure we output decimal points.
+    bool l_round(opts.round);
+    if (opts.format == OGRWktFormat::F ||
+        (opts.format == OGRWktFormat::Default && fabs(val) < 1))
+        oss << std::fixed;
+    else
     {
-        if( dfVal > 0 )
-            CPLsnprintf(pszBuffer, nBufferLen, "%s", "inf");
-        else
-            CPLsnprintf(pszBuffer, nBufferLen, "%s", "-inf");
-        return;
+        // Uppercase because OGC spec says capital 'E'.
+        oss << std::uppercase;
+        l_round = false;
     }
-    if( CPLIsNan(dfVal) )
-    {
-        CPLsnprintf(pszBuffer, nBufferLen, "%s", "nan");
-        return;
-    }
+    oss << std::setprecision(opts.precision);
+    oss << val;
 
-    char szFormat[16] = {};
-    snprintf(szFormat, sizeof(szFormat),
-             "%%.%d%c", nPrecision, chConversionSpecifier);
+    std::string sval = oss.str();
 
-    int ret = CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
-    // Windows CRT does not conform with C99 and returns -1 when buffer is
-    // truncated.
-    if( ret >= nBufferLen || ret == -1 )
-    {
-        CPLsnprintf(pszBuffer, nBufferLen, "%s", "too_big");
-        return;
-    }
-
-    if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
-        return;
-
-    const bool bRound =
-        CPLTestBool(CPLGetConfigOption("OGR_WKT_ROUND", "TRUE"));
-
-    int nTruncations = 0;
-    while( nPrecision > 0 )
-    {
-        int i = 0;
-        int nCountBeforeDot = 0;
-        int iDotPos = -1;
-        while( pszBuffer[i] != '\0' )
-        {
-            if( pszBuffer[i] == '.' && chDecimalSep != '\0' )
-            {
-                iDotPos = i;
-                pszBuffer[i] = chDecimalSep;
-            }
-            else if( iDotPos < 0 && pszBuffer[i] != '-' )
-                ++nCountBeforeDot;
-            ++i;
-        }
-        if( iDotPos < 0 )
-            break;
-
-    /* -------------------------------------------------------------------- */
-    /*      Trim trailing 00000x's as they are likely roundoff error.       */
-    /* -------------------------------------------------------------------- */
-        if( i > 10 && bRound )
-        {
-            if(  // && pszBuffer[i-1] == '1' &&
-                pszBuffer[i-2] == '0'
-                && pszBuffer[i-3] == '0'
-                && pszBuffer[i-4] == '0'
-                && pszBuffer[i-5] == '0'
-                && pszBuffer[i-6] == '0' )
-            {
-                pszBuffer[--i] = '\0';
-            }
-            else if( i - 8 > iDotPos &&  // pszBuffer[i-1] == '1'
-                     // && pszBuffer[i-2] == '0' &&
-                     (nCountBeforeDot >= 4 || pszBuffer[i-3] == '0')
-                     && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '0')
-                     && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '0')
-                     && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '0')
-                     && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '0')
-                     && pszBuffer[i-8] == '0'
-                     && pszBuffer[i-9] == '0')
-            {
-                i -= 8;
-                pszBuffer[i] = '\0';
-            }
-        }
-
-    /* -------------------------------------------------------------------- */
-    /*      Trim trailing zeros.                                            */
-    /* -------------------------------------------------------------------- */
-        while( i > 2 && pszBuffer[i-1] == '0' && pszBuffer[i-2] != '.' )
-        {
-            pszBuffer[--i] = '\0';
-        }
-
-        if( !bRound )
-            return;
-
-    /* -------------------------------------------------------------------- */
-    /*      Detect trailing 99999X's as they are likely roundoff error.     */
-    /* -------------------------------------------------------------------- */
-        if( i > 10 &&
-            nPrecision + nTruncations >= 15)
-        {
-            if(  //pszBuffer[i-1] == '9' &&
-                pszBuffer[i-2] == '9'
-                && pszBuffer[i-3] == '9'
-                && pszBuffer[i-4] == '9'
-                && pszBuffer[i-5] == '9'
-                && pszBuffer[i-6] == '9' )
-            {
-                --nPrecision;
-                ++nTruncations;
-                snprintf(szFormat, sizeof(szFormat),
-                         "%%.%d%c", nPrecision, chConversionSpecifier);
-                CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
-                if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
-                    return;
-                continue;
-            }
-            else if( i - 9 > iDotPos &&
-                     // pszBuffer[i-1] == '9' &&
-                     //pszBuffer[i-2] == '9' &&
-                    (nCountBeforeDot >= 4 || pszBuffer[i-3] == '9')
-                     && (nCountBeforeDot >= 5 || pszBuffer[i-4] == '9')
-                     && (nCountBeforeDot >= 6 || pszBuffer[i-5] == '9')
-                     && (nCountBeforeDot >= 7 || pszBuffer[i-6] == '9')
-                     && (nCountBeforeDot >= 8 || pszBuffer[i-7] == '9')
-                     && pszBuffer[i-8] == '9'
-                     && pszBuffer[i-9] == '9')
-            {
-                --nPrecision;
-                ++nTruncations;
-                snprintf(szFormat, sizeof(szFormat),
-                         "%%.%d%c", nPrecision, chConversionSpecifier);
-                CPLsnprintf(pszBuffer, nBufferLen, szFormat, dfVal);
-                if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
-                    return;
-                continue;
-            }
-        }
-
-        break;
-    }
+    if (l_round)
+        sval = intelliround(sval);
+    return removeTrailingZeros(sval);
 }
 
 /************************************************************************/
@@ -229,90 +278,56 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
                            int nDimension )
 
 {
-    const size_t bufSize = 75;
-    // Assumed max length of the target buffer.
-    const size_t maxTargetSize = 75;
-    const char chDecimalSep = '.';
-    static int nPrecision = -1;
-    if( nPrecision < 0 )
-        nPrecision = atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
+    std::string wkt = OGRMakeWktCoordinate(x, y, z, nDimension,
+        OGRWktOptions());
+    memcpy(pszTarget, wkt.data(), wkt.size() + 1);
+}
 
-    char szX[bufSize] = {};
-    char szY[bufSize] = {};
-    char szZ[bufSize] = {};
 
-    szZ[0] = '\0';
-
-    size_t nLenX = 0;
-    size_t nLenY = 0;
-
-    if( CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
+std::string OGRMakeWktCoordinate(double x, double y, double z, int nDimension,
+    OGRWktOptions opts)
+{
+    auto isInteger = [](const std::string s)
     {
-        snprintf( szX, bufSize, "%d", static_cast<int>(x) );
-        snprintf( szY, bufSize, "%d", static_cast<int>(y) );
+        return s.find_first_not_of("'0123456789") == std::string::npos;
+    };
+
+    std::string xval;
+    std::string yval;
+
+    // Why do we do this?  Seems especially strange since we're ADDING
+    // ".0" onto values in the case below.  The "&&" here also seems strange.
+    if( opts.format == OGRWktFormat::Default &&
+        CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
+    {
+        xval = std::to_string(static_cast<int>(x));
+        yval = std::to_string(static_cast<int>(y));
     }
     else
     {
-        OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision,
-                         fabs(x) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(x) && strchr(szX, '.') == nullptr &&
-            strchr(szX, 'e') == nullptr && strlen(szX) < bufSize - 2 )
-        {
-            strcat(szX, ".0");
-        }
-        OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision,
-                         fabs(y) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(y) && strchr(szY, '.') == nullptr &&
-            strchr(szY, 'e') == nullptr && strlen(szY) < bufSize - 2 )
-        {
-            strcat(szY, ".0");
-        }
+        xval = OGRFormatDouble(x, opts);
+        //ABELL - Why do we do special formatting?
+        if (isInteger(xval))
+            xval += ".0";
+
+        yval = OGRFormatDouble(y, opts);
+        if (isInteger(yval))
+            yval += ".0";
     }
+    std::string wkt = xval + " " + yval;
 
-    nLenX = strlen(szX);
-    nLenY = strlen(szY);
-
+    // Why do we always format Z with type G.
     if( nDimension == 3 )
     {
-        if( CPLIsDoubleAnInt(z) )
-        {
-            snprintf( szZ, bufSize, "%d", static_cast<int>(z) );
-        }
+        if(opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
+            wkt += " " + std::to_string(static_cast<int>(z));
         else
         {
-            OGRFormatDouble( szZ, bufSize, z, chDecimalSep, nPrecision, 'g' );
+            opts.format = OGRWktFormat::G;
+            wkt += " " + OGRFormatDouble(z, opts);
         }
     }
-
-    if( nLenX + 1 + nLenY + ((nDimension == 3) ? (1 + strlen(szZ)) : 0) >=
-        maxTargetSize )
-    {
-#ifdef DEBUG
-        CPLDebug( "OGR",
-                  "Yow!  Got this big result in OGRMakeWktCoordinate(): "
-                  "%s %s %s",
-                  szX, szY, szZ );
-#endif
-        if( nDimension == 3 )
-            strcpy( pszTarget, "0 0 0");
-        else
-            strcpy( pszTarget, "0 0");
-    }
-    else
-    {
-        memcpy( pszTarget, szX, nLenX );
-        pszTarget[nLenX] = ' ';
-        memcpy( pszTarget + nLenX + 1, szY, nLenY );
-        if( nDimension == 3 )
-        {
-            pszTarget[nLenX + 1 + nLenY] = ' ';
-            strcpy( pszTarget + nLenX + 1 + nLenY + 1, szZ );
-        }
-        else
-        {
-            pszTarget[nLenX + 1 + nLenY] = '\0';
-        }
-    }
+    return wkt;
 }
 
 /************************************************************************/
@@ -331,116 +346,57 @@ void OGRMakeWktCoordinateM( char *pszTarget,
                             OGRBoolean hasZ, OGRBoolean hasM )
 
 {
-    const size_t bufSize = 75;
-    // Assumed max length of the target buffer.
-    const size_t maxTargetSize = 75;
-    const char chDecimalSep = '.';
-    static int nPrecision = -1;
-    if( nPrecision < 0 )
-        nPrecision = atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
+    std::string wkt = OGRMakeWktCoordinateM(x, y, z, m, hasZ, hasM,
+        OGRWktOptions());
+    memcpy(pszTarget, wkt.data(), wkt.size() + 1);
+}
 
-    char szX[bufSize] = {};
-    char szY[bufSize] = {};
-    char szZ[bufSize] = {};
-    char szM[bufSize] = {};
-
-    size_t nLen = 0;
-    size_t nLenX = 0;
-    size_t nLenY = 0;
-
-    if( CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
+std::string OGRMakeWktCoordinateM(double x, double y, double z, double m,
+                                  OGRBoolean hasZ, OGRBoolean hasM,
+                                  OGRWktOptions opts)
+{
+    auto isInteger = [](const std::string s)
     {
-        snprintf( szX, bufSize, "%d", static_cast<int>(x) );
-        snprintf( szY, bufSize, "%d", static_cast<int>(y) );
+        return s.find_first_not_of("'0123456789") == std::string::npos;
+    };
+
+    std::string xval, yval;
+    if( opts.format == OGRWktFormat::Default &&
+        CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
+    {
+        xval = std::to_string(static_cast<int>(x));
+        yval = std::to_string(static_cast<int>(y));
     }
     else
     {
-        OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision,
-                         fabs(x) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(x) && strchr(szX, '.') == nullptr &&
-            strchr(szX, 'e') == nullptr && strlen(szX) < bufSize - 2 )
-        {
-            strcat(szX, ".0");
-        }
-        OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision,
-                         fabs(y) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(y) && strchr(szY, '.') == nullptr &&
-            strchr(szY, 'e') == nullptr && strlen(szY) < bufSize - 2 )
-        {
-            strcat(szY, ".0");
-        }
+        xval = OGRFormatDouble(x, opts);
+        if (isInteger(xval))
+            xval += ".0";
+
+        yval = OGRFormatDouble(y, opts);
+        if (isInteger(yval))
+            yval += ".0";
     }
+    std::string wkt = xval + " " + yval;
 
-    nLenX = strlen(szX);
-    nLenY = strlen(szY);
-    nLen = nLenX + nLenY + 1;
-
+    // For some reason we always format Z and M as G-type
+    opts.format = OGRWktFormat::G;
     if( hasZ )
     {
-        if( CPLIsDoubleAnInt(z) )
-        {
-            snprintf( szZ, bufSize, "%d", static_cast<int>(z) );
-        }
+        if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
+            wkt += " " + std::to_string(static_cast<int>(z));
         else
-        {
-            OGRFormatDouble( szZ, bufSize, z, chDecimalSep, nPrecision, 'g' );
-        }
-        nLen += strlen(szZ) + 1;
+            wkt += " " + OGRFormatDouble(z, opts);
     }
 
     if( hasM )
     {
-        if( CPLIsDoubleAnInt(m) )
-        {
-            snprintf( szM, bufSize, "%d", static_cast<int>(m) );
-        }
+        if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(m) )
+            wkt += " " + std::to_string(static_cast<int>(m));
         else
-        {
-            OGRFormatDouble( szM, bufSize, m, chDecimalSep, nPrecision, 'g' );
-        }
-        nLen += strlen(szM) + 1;
+            wkt += " " + OGRFormatDouble(m, opts);
     }
-
-    if( nLen >= maxTargetSize )
-    {
-#ifdef DEBUG
-        CPLDebug( "OGR",
-                  "Yow!  Got this big result in OGRMakeWktCoordinate(): "
-                  "%s %s %s %s",
-                  szX, szY, szZ, szM );
-#endif
-        if( hasZ && hasM )
-            strcpy( pszTarget, "0 0 0 0");
-        else if( hasZ || hasM )
-            strcpy( pszTarget, "0 0 0");
-        else
-            strcpy( pszTarget, "0 0");
-    }
-    else
-    {
-        char *target = pszTarget;
-        strcpy( target, szX );
-        target += nLenX;
-        *target = ' ';
-        ++target;
-        strcpy( target, szY );
-        target += nLenY;
-        if( hasZ )
-        {
-            *target = ' ';
-            ++target;
-            strcpy( target, szZ );
-            target += strlen(szZ);
-        }
-        if( hasM )
-        {
-            *target = ' ';
-            ++target;
-            strcpy( target, szM );
-            target += strlen(szM);
-        }
-        *target = '\0';
-    }
+    return wkt;
 }
 
 /************************************************************************/

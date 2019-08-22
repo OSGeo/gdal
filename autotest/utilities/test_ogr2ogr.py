@@ -1624,7 +1624,9 @@ def test_ogr2ogr_47():
     data = f.read()
     f.close()
 
-    assert not (data.find('>-3.0,40.65') == -1 and data.find('<3.0,40.65') == -1)
+    assert ('>-3.0,40.65' in data and '>3.0,40.65' in data) or \
+           ('>-3,40.65' in data and '>3.0,40.65' in data) or \
+           ('>-2.99999999999999,40.65' in data and '>2.99999999999999,40.65' in data), data
 
     os.unlink('tmp/test_ogr2ogr_47_dst.gml')
     os.unlink('tmp/test_ogr2ogr_47_dst.xsd')

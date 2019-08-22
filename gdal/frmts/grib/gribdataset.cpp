@@ -352,7 +352,8 @@ void GRIBRasterBand::FindPDSTemplate()
 
             CPLString osOctet;
             const int nTemplateFoundByteCount =
-                static_cast<int>(nSectSize - 9 - nCoordCount * 4);
+                nSectSize - 9U >= nCoordCount * 4U ?
+                    static_cast<int>(nSectSize - 9 - nCoordCount * 4) : 0;
             for( int i = 0; i < nTemplateFoundByteCount; i++ )
             {
                 char szByte[10] = { '\0' };

@@ -448,164 +448,47 @@ OGRErr OGRPolyhedralSurface::importFromWkt( const char ** ppszInput )
 /************************************************************************/
 
 
-OGRErr OGRPolyhedralSurface::exportToWkt ( char ** ppszDstText,
-                                           OGRwkbVariant ) const
+std::string OGRPolyhedralSurface::exportToWkt(const OGRWktOptions& opts,
+                                              OGRErr *err) const
 {
-    return exportToWktInternal(ppszDstText, wkbVariantIso, getSubGeometryName());
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    return exportToWktInternal(optsModified, err);
 }
 
 //! @cond Doxygen_Suppress
-OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
-                                                   OGRwkbVariant eWkbVariant,
-                                                   const char* pszSkipPrefix ) const
+std::string OGRPolyhedralSurface::exportToWktInternal(const OGRWktOptions& opts,
+                                                      OGRErr *err) const
 {
-    char        **papszGeoms;
-    int         iGeom;
-    size_t      nCumulativeLength = 0;
-    OGRErr      eErr;
-    bool bMustWriteComma = false;
+    std::string wkt;
+    bool first = true;
 
-/* -------------------------------------------------------------------- */
-/*      Build a list of strings containing the stuff for each Geom.     */
-/* -------------------------------------------------------------------- */
-    papszGeoms = (oMP.nGeomCount) ? static_cast<char**>(
-        CPLCalloc(sizeof(char *), oMP.nGeomCount)) : nullptr;
-
-    for( iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
+    for (int i = 0; i < oMP.nGeomCount; ++i)
     {
-        eErr = oMP.papoGeoms[iGeom]->exportToWkt( &(papszGeoms[iGeom]),
-                                                  eWkbVariant );
-        if( eErr != OGRERR_NONE )
-            goto error;
+        OGRGeometry *geom = oMP.papoGeoms[i];
 
-        size_t nSkip = 0;
-        if( pszSkipPrefix != nullptr &&
-            EQUALN(papszGeoms[iGeom], pszSkipPrefix, strlen(pszSkipPrefix)) &&
-            papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
-        {
-            nSkip = strlen(pszSkipPrefix) + 1;
-            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
-                nSkip += 3;
-            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
-                nSkip += 2;
-            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
-                nSkip += 2;
+        std::string tempWkt = geom->exportToWkt(opts, err);
+        if (err && *err != OGRERR_NONE)
+            return std::string();
+        auto pos = tempWkt.find('(');
 
-            /* skip empty subgeoms */
-            if( papszGeoms[iGeom][nSkip] != '(' )
-            {
-                CPLDebug( "OGR", "OGR%s::exportToWkt() - skipping %s.",
-                          getGeometryName(), papszGeoms[iGeom] );
-                CPLFree( papszGeoms[iGeom] );
-                papszGeoms[iGeom] = nullptr;
-                continue;
-            }
-        }
-        else if( eWkbVariant != wkbVariantIso )
-        {
-            char *substr;
-            if( (substr = strstr(papszGeoms[iGeom], " Z")) != nullptr )
-                memmove(substr, substr+strlen(" Z"),
-                        1 + strlen(substr+strlen(" Z")));
-        }
-
-        nCumulativeLength += strlen(papszGeoms[iGeom] + nSkip);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Return XXXXXXXXXXXXXXX EMPTY if we get no valid line string.    */
-/* -------------------------------------------------------------------- */
-    if( nCumulativeLength == 0 )
-    {
-        CPLFree( papszGeoms );
-        CPLString osEmpty;
-        if( eWkbVariant == wkbVariantIso )
-        {
-            if( Is3D() && IsMeasured() )
-                osEmpty.Printf("%s ZM EMPTY",getGeometryName());
-            else if( IsMeasured() )
-                osEmpty.Printf("%s M EMPTY",getGeometryName());
-            else if( Is3D() )
-                osEmpty.Printf("%s Z EMPTY",getGeometryName());
-            else
-                osEmpty.Printf("%s EMPTY",getGeometryName());
-        }
-        else
-            osEmpty.Printf("%s EMPTY",getGeometryName());
-        *ppszDstText = CPLStrdup(osEmpty);
-        return OGRERR_NONE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Allocate the right amount of space for the aggregated string    */
-/* -------------------------------------------------------------------- */
-    *ppszDstText = static_cast<char*>(VSI_MALLOC_VERBOSE(
-                                   nCumulativeLength + oMP.nGeomCount + 26));
-
-    if( *ppszDstText == nullptr )
-    {
-        eErr = OGRERR_NOT_ENOUGH_MEMORY;
-        goto error;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Build up the string, freeing temporary strings as we go.        */
-/* -------------------------------------------------------------------- */
-    strcpy( *ppszDstText, getGeometryName() );
-    if( eWkbVariant == wkbVariantIso )
-    {
-        if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-            strcat( *ppszDstText, " ZM" );
-        else if( flags & OGR_G_3D )
-            strcat( *ppszDstText, " Z" );
-        else if( flags & OGR_G_MEASURED )
-            strcat( *ppszDstText, " M" );
-    }
-    strcat( *ppszDstText, " (" );
-    nCumulativeLength = strlen(*ppszDstText);
-
-    for( iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
-    {
-        if( papszGeoms[iGeom] == nullptr )
+        // Skip empty geoms
+        if (pos == std::string::npos)
             continue;
+        if (!first)
+            wkt += std::string(",");
+        first = false;
 
-        if( bMustWriteComma )
-            (*ppszDstText)[nCumulativeLength++] = ',';
-        bMustWriteComma = true;
-
-        size_t nSkip = 0;
-        if( pszSkipPrefix != nullptr &&
-            EQUALN(papszGeoms[iGeom], pszSkipPrefix, strlen(pszSkipPrefix)) &&
-            papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
-        {
-            nSkip = strlen(pszSkipPrefix) + 1;
-            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
-                nSkip += 3;
-            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
-                nSkip += 2;
-            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
-                nSkip += 2;
-        }
-
-        size_t nGeomLength = strlen(papszGeoms[iGeom] + nSkip);
-        memcpy( *ppszDstText + nCumulativeLength, papszGeoms[iGeom] + nSkip,
-                nGeomLength );
-        nCumulativeLength += nGeomLength;
-        VSIFree( papszGeoms[iGeom] );
+        // Extract the '( ... )' part of the child geometry.
+        wkt += tempWkt.substr(pos);
     }
 
-    (*ppszDstText)[nCumulativeLength++] = ')';
-    (*ppszDstText)[nCumulativeLength] = '\0';
-
-    CPLFree( papszGeoms );
-
-    return OGRERR_NONE;
-
-error:
-    for( iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
-        CPLFree( papszGeoms[iGeom] );
-    CPLFree( papszGeoms );
-    return eErr;
+    if (err)
+        *err = OGRERR_NONE;
+    std::string leader = getGeometryName() + wktTypeString(opts.variant);
+    if (wkt.empty())
+        return leader + "EMPTY";
+    return leader + "(" + wkt + ")";
 }
 //! @endcond
 

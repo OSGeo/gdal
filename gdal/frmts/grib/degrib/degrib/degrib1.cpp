@@ -1313,8 +1313,9 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
    bms += 3;
    /* Assert: *bms currently points to number of unused bits at end of BMS. */
    if (NxNy + *bms + 6 * 8 != sectLen * 8) {
-      errSprintf ("NxNy + # of unused bits %ld != # of available bits %ld\n",
-                  (sInt4) (NxNy + *bms), (sInt4) ((sectLen - 6) * 8));
+      errSprintf ("NxNy + # of unused bits != # of available bits\n");
+      // commented out to avoid unsigned integer overflow
+      // (sInt4) (NxNy + *bms), (sInt4) ((sectLen - 6) * 8));
       return -2;
    }
    bms++;
@@ -1620,8 +1621,15 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
 #endif
    }
 
-   if (!f_bms && (meta->gds.numPts * numBits + numUnusedBit) !=
-       (sectLen - 11) * 8) {
+   if (!f_bms && (
+       sectLen < 11 ||
+       (numBits > 0 && meta->gds.numPts > UINT_MAX / numBits) ||
+       (meta->gds.numPts * numBits > UINT_MAX - numUnusedBit))) {
+     printf ("numPts * (numBits in a Group) + # of unused bits != "
+              "# of available bits\n");
+   }
+   else if (!f_bms &&
+            (meta->gds.numPts * numBits + numUnusedBit) != (sectLen - 11) * 8) {
       printf ("numPts * (numBits in a Group) + # of unused bits %d != "
               "# of available bits %d\n",
               (sInt4) (meta->gds.numPts * numBits + numUnusedBit),

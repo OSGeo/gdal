@@ -34,6 +34,8 @@
 
 #include "rmfdataset.h"
 
+#include "cpl_safemaths.hpp"
+
 CPL_CVSID("$Id$")
 
 constexpr int RMF_DEFAULT_BLOCKXSIZE = 256;
@@ -1264,11 +1266,22 @@ do {                                                                    \
         return nullptr;
     }
 
-    GUInt64 nMaxTileBits = 2ULL *
-                           static_cast<GUInt64>(poDS->sHeader.nTileWidth) *
-                           static_cast<GUInt64>(poDS->sHeader.nTileHeight) *
-                           static_cast<GUInt64>(poDS->sHeader.nBitDepth);
-    if(nMaxTileBits > static_cast<GUInt64>(std::numeric_limits<GUInt32>::max()))
+    bool bInvalidTileSize;
+    try
+    {
+        GUInt64 nMaxTileBits =
+            (CPLSM(static_cast<GUInt64>(2)) *
+             CPLSM(static_cast<GUInt64>(poDS->sHeader.nTileWidth)) *
+             CPLSM(static_cast<GUInt64>(poDS->sHeader.nTileHeight)) *
+             CPLSM(static_cast<GUInt64>(poDS->sHeader.nBitDepth))).v();
+        bInvalidTileSize = (
+            nMaxTileBits > static_cast<GUInt64>(std::numeric_limits<GUInt32>::max()));
+    }
+    catch( ... )
+    {
+        bInvalidTileSize = true;
+    }
+    if( bInvalidTileSize )
     {
         CPLError(CE_Warning, CPLE_IllegalArg,
                  "Invalid tile size. Width %lu, height %lu, bit depth %lu.",

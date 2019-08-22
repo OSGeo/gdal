@@ -293,108 +293,49 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
-                                        char ** ppszDstText ) const
-
+std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
+    const OGRWktOptions& opts, OGRErr *err) const
 {
-    if( nCurveCount == 0 )
+    bool first = true;
+    std::string wkt;
+
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    for (int i = 0; i < nCurveCount; ++i)
     {
-        CPLString osEmpty;
-        if( poGeom->Is3D() && poGeom->IsMeasured() )
-            osEmpty.Printf("%s ZM EMPTY", poGeom->getGeometryName());
-        else if( poGeom->IsMeasured() )
-            osEmpty.Printf("%s M EMPTY", poGeom->getGeometryName());
-        else if( poGeom->Is3D() )
-            osEmpty.Printf("%s Z EMPTY", poGeom->getGeometryName());
-        else
-            osEmpty.Printf("%s EMPTY", poGeom->getGeometryName());
-        *ppszDstText = CPLStrdup(osEmpty);
-        return OGRERR_NONE;
-    }
+        OGRGeometry *geom = papoCurves[i];
 
-/* -------------------------------------------------------------------- */
-/*      Build a list of strings containing the stuff for each Geom.     */
-/* -------------------------------------------------------------------- */
-    char **papszGeoms =
-        static_cast<char **>(CPLCalloc(sizeof(char *), nCurveCount));
-    OGRErr eErr = OGRERR_NONE;
-    size_t nCumulativeLength = 0;
+        std::string tempWkt = geom->exportToWkt(optsModified, err);
+        if (err && *err != OGRERR_NONE)
+            return std::string();
 
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
-    {
-        eErr = papoCurves[iGeom]->exportToWkt( &(papszGeoms[iGeom]),
-                                               wkbVariantIso );
-        if( eErr != OGRERR_NONE )
-            goto error;
-
-        nCumulativeLength += strlen(papszGeoms[iGeom]);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Allocate the right amount of space for the aggregated string    */
-/* -------------------------------------------------------------------- */
-    *ppszDstText = static_cast<char *>(
-        VSI_MALLOC_VERBOSE(nCumulativeLength + nCurveCount +
-                           strlen(poGeom->getGeometryName()) + 10));
-
-    if( *ppszDstText == nullptr )
-    {
-        eErr = OGRERR_NOT_ENOUGH_MEMORY;
-        goto error;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Build up the string, freeing temporary strings as we go.        */
-/* -------------------------------------------------------------------- */
-    strcpy( *ppszDstText, poGeom->getGeometryName() );
-    if( poGeom->Is3D() && poGeom->IsMeasured() )
-        strcat( *ppszDstText, " ZM" );
-    else if( poGeom->IsMeasured() )
-        strcat( *ppszDstText, " M" );
-    else if( poGeom->Is3D() )
-        strcat( *ppszDstText, " Z" );
-    strcat( *ppszDstText, " (" );
-    nCumulativeLength = strlen(*ppszDstText);
-
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
-    {
-        if( iGeom > 0 )
-            (*ppszDstText)[nCumulativeLength++] = ',';
-
-        // We must strip the explicit "LINESTRING " prefix.
-        size_t nSkip = 0;
-        if( !papoCurves[iGeom]->IsEmpty() &&
-            STARTS_WITH_CI(papszGeoms[iGeom], "LINESTRING ") )
+        // A curve collection has a list of linestrings (OGRCompoundCurve),
+        // which should have their leader removed, or a OGRCurvePolygon,
+        // which has leaders for each of its sub-geometries that aren't
+        // linestrings.
+        if (tempWkt.compare(0, strlen("LINESTRING"), "LINESTRING") == 0)
         {
-            nSkip = strlen("LINESTRING ");
-            if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "ZM ") )
-                nSkip += 3;
-            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "M ") )
-                nSkip += 2;
-            else if( STARTS_WITH_CI(papszGeoms[iGeom] + nSkip, "Z ") )
-                nSkip += 2;
+            auto pos = tempWkt.find('(');
+            if (pos != std::string::npos)
+                tempWkt = tempWkt.substr(pos);
         }
 
-        const size_t nGeomLength = strlen(papszGeoms[iGeom] + nSkip);
-        memcpy( *ppszDstText + nCumulativeLength,
-                papszGeoms[iGeom] + nSkip,
-                nGeomLength );
-        nCumulativeLength += nGeomLength;
-        VSIFree( papszGeoms[iGeom] );
+        if (tempWkt.find("EMPTY") != std::string::npos)
+            continue;
+
+        if (!first)
+            wkt += std::string(",");
+        first = false;
+        wkt += tempWkt;
     }
 
-    (*ppszDstText)[nCumulativeLength++] = ')';
-    (*ppszDstText)[nCumulativeLength] = '\0';
-
-    CPLFree( papszGeoms );
-
-    return OGRERR_NONE;
-
-error:
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
-        CPLFree( papszGeoms[iGeom] );
-    CPLFree( papszGeoms );
-    return eErr;
+    if (err)
+        *err = OGRERR_NONE;
+    std::string leader = baseGeom->getGeometryName() +
+        baseGeom->wktTypeString(optsModified.variant);
+    if (wkt.empty())
+        return leader + "EMPTY";
+    return leader + "(" + wkt + ")";
 }
 
 /************************************************************************/

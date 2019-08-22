@@ -203,17 +203,19 @@ OGRErr OGRCircularString::importFromWkt( const char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr
-OGRCircularString::exportToWkt( char ** ppszDstText,
-                                CPL_UNUSED OGRwkbVariant eWkbVariant ) const
-
+std::string OGRCircularString::exportToWkt(const OGRWktOptions& opts,
+                                           OGRErr *err) const
 {
     if( !IsValidFast() )
     {
-        return OGRERR_FAILURE;
+        if (err)
+            *err = OGRERR_FAILURE;
+        return std::string();
     }
 
-    return OGRSimpleCurve::exportToWkt(ppszDstText, wkbVariantIso);
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    return OGRSimpleCurve::exportToWkt(optsModified, err);
 }
 
 /************************************************************************/

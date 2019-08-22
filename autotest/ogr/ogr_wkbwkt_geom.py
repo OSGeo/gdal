@@ -119,7 +119,7 @@ def test_ogr_wkbwkt_geom_bigexponents():
     geom = ogr.Geometry(ogr.wkbPoint)
     geom.SetPoint(0, bigx, bigy)
 
-    expect = 'POINT (-1.79769313486e+308 -1.12345678901e+308 0)'
+    expect = 'POINT (-1.79769313486E+308 -1.12345678901E+308 0)'
     wkt = geom.ExportToWkt()
 
     assert str(wkt) == str(expect), 'trimming long float numbers failed.'

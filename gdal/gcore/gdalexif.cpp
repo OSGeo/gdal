@@ -625,27 +625,29 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
 /*      Print tags                                                      */
 /* -------------------------------------------------------------------- */
-        const int nDataWidth =
-            EXIF_TIFFDataWidth(static_cast<GDALEXIFTIFFDataType>(poTIFFDirEntry->tdir_type));
-        const int space = poTIFFDirEntry->tdir_count * nDataWidth;
-
-        /* Previous multiplication could overflow, hence this additional check */
         if( poTIFFDirEntry->tdir_count > static_cast<GUInt32>(MAXSTRINGLENGTH) )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Too many bytes in tag: %u, ignoring tag.",
                       poTIFFDirEntry->tdir_count );
+            continue;
         }
-        else if (nDataWidth == 0 || poTIFFDirEntry->tdir_type >= TIFF_IFD )
+
+        const int nDataWidth =
+            EXIF_TIFFDataWidth(static_cast<GDALEXIFTIFFDataType>(poTIFFDirEntry->tdir_type));
+        if (nDataWidth == 0 || poTIFFDirEntry->tdir_type >= TIFF_IFD )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Invalid or unhandled EXIF data type: %d, ignoring tag.",
                       poTIFFDirEntry->tdir_type );
+            continue;
         }
+
 /* -------------------------------------------------------------------- */
 /*      This is at most 4 byte data so we can read it from tdir_offset  */
 /* -------------------------------------------------------------------- */
-        else if (space >= 0 && space <= 4) {
+        const int space = poTIFFDirEntry->tdir_count * nDataWidth;
+        if (space >= 0 && space <= 4) {
 
             unsigned char data[4];
             memcpy(data, &poTIFFDirEntry->tdir_offset, 4);

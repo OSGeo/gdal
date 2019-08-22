@@ -87,12 +87,15 @@ const char CPL_DLL * OGRWktReadPointsM( const char * pszInput,
                                         int * pnReadPoints );
 
 void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
+std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int, OGRWktOptions opts );
 void CPL_DLL OGRMakeWktCoordinateM( char *, double, double, double, double, OGRBoolean, OGRBoolean );
+std::string CPL_DLL OGRMakeWktCoordinateM( double, double, double, double, OGRBoolean, OGRBoolean, OGRWktOptions opts );
 
 #endif
 
 void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
                       char chDecimalSep, int nPrecision = 15, char chConversionSpecifier = 'f' );
+std::string OGRFormatDouble(double val, const OGRWktOptions& opts);
 
 /* -------------------------------------------------------------------- */
 /*      Date-time parsing and processing functions                      */
