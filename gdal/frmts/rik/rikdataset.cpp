@@ -872,9 +872,9 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fpL );
 
         header.fSouth = header.fNorth -
-            header.iVertBlocks * header.iBlockHeight * header.iMPPNum;
+            static_cast<double>(header.iVertBlocks) * header.iBlockHeight * header.iMPPNum;
         header.fEast = header.fWest +
-            header.iHorBlocks * header.iBlockWidth * header.iMPPNum;
+            static_cast<double>(header.iHorBlocks) * header.iBlockWidth * header.iMPPNum;
 
         metersPerPixel = header.iMPPNum;
     }
