@@ -694,7 +694,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             }
 
             // Offset by the minimum value.
-            const int nDataValue = nRawValue + nDataMin;
+            const int nDataValue = CPLUnsanitizedAdd<int>(nRawValue, nDataMin);
 
             // Now apply to the output buffer in a type specific way.
             if( eDataType == EPT_u8 )
