@@ -2042,7 +2042,8 @@ OJPEGReadBufferFill(OJPEGState* sp)
 							sp->in_buffer_file_togo=bytecount;
 							if (sp->in_buffer_file_togo==0)
 								sp->in_buffer_file_pos=0;
-							else if (sp->in_buffer_file_pos+sp->in_buffer_file_togo>sp->file_size)
+							else if (sp->in_buffer_file_pos > TIFF_UINT64_MAX - sp->in_buffer_file_togo || 
+                                                                sp->in_buffer_file_pos+sp->in_buffer_file_togo>sp->file_size)
 								sp->in_buffer_file_togo=sp->file_size-sp->in_buffer_file_pos;
 						}
 					}
