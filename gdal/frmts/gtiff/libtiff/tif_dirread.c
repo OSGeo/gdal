@@ -6033,6 +6033,14 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
             TIFFSwabLong(&offset);
         nBaseOffset = offset;
     }
+    /* To avoid later unsigned integer overflows */
+    if( nBaseOffset > (uint64)TIFF_INT64_MAX )
+    {
+        TIFFErrorExt(tif->tif_clientdata, module,
+                 "Cannot read offset/size for strile %d", strile);
+        panVals[strile] = 0;
+        return 0;
+    }
     nOffset = nBaseOffset + sizeofval * strile;
     nOffsetStartPage =
         (nOffset / IO_CACHE_PAGE_SIZE) * IO_CACHE_PAGE_SIZE;
