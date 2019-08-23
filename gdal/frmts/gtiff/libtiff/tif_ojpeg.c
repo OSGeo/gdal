@@ -1254,10 +1254,10 @@ OJPEGWriteHeaderInfo(TIFF* tif)
 				*m++=sp->subsampling_convert_cbbuf+n*sp->subsampling_convert_clinelen;
 			for (n=0; n<sp->subsampling_convert_clines; n++)
 				*m++=sp->subsampling_convert_crbuf+n*sp->subsampling_convert_clinelen;
-			sp->subsampling_convert_clinelenout=((sp->strile_width+sp->subsampling_hor-1)/sp->subsampling_hor);
+			sp->subsampling_convert_clinelenout=sp->strile_width/sp->subsampling_hor + ((sp->strile_width % sp->subsampling_hor) != 0 ? 1 : 0);
 			sp->subsampling_convert_state=0;
 			sp->bytes_per_line=sp->subsampling_convert_clinelenout*(sp->subsampling_ver*sp->subsampling_hor+2);
-			sp->lines_per_strile=((sp->strile_length+sp->subsampling_ver-1)/sp->subsampling_ver);
+			sp->lines_per_strile=sp->strile_length/sp->subsampling_ver + ((sp->strile_length % sp->subsampling_ver) != 0 ? 1 : 0);
 			sp->subsampling_convert_log=1;
 		}
 	}
