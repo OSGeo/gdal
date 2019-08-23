@@ -259,14 +259,48 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 
     // Figure out where to start reading.
     // Write formulas such that unsigned int overflow doesn't occur
-    const GUIntBig nPixelOffsetToSubtract =
-        nPixelOffset >= 0
-        ? 0 : static_cast<GUIntBig>(-static_cast<GIntBig>(nPixelOffset)) * (nBlockXSize - 1);
-    const vsi_l_offset nReadStart = static_cast<vsi_l_offset>(
-        (nLineOffset >= 0 ?
-            nImgOffset + static_cast<GUIntBig>(nLineOffset) * iLine :
-            nImgOffset - static_cast<GUIntBig>(-static_cast<GIntBig>(nLineOffset)) * iLine )
-        - nPixelOffsetToSubtract);
+    bool bBadOffset = false;
+    vsi_l_offset nReadStart = nImgOffset;
+    if( nLineOffset >= 0 )
+    {
+        if( nImgOffset > std::numeric_limits<vsi_l_offset>::max() - static_cast<GUIntBig>(nLineOffset) * iLine )
+        {
+            bBadOffset = true;
+        }
+        else
+        {
+            nReadStart += static_cast<GUIntBig>(nLineOffset) * iLine;
+        }
+    }
+    else
+    {
+        if( nImgOffset < static_cast<GUIntBig>(-static_cast<GIntBig>(nLineOffset)) * iLine )
+        {
+            bBadOffset = true;
+        }
+        else
+        {
+            nReadStart -= static_cast<GUIntBig>(-static_cast<GIntBig>(nLineOffset)) * iLine;
+        }
+    }
+    if( bBadOffset )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                    "Failed to seek to scanline %d.", iLine);
+        return CE_Failure;
+    }
+    if( nPixelOffset < 0 )
+    {
+        const GUIntBig nPixelOffsetToSubtract =
+            static_cast<GUIntBig>(-static_cast<GIntBig>(nPixelOffset)) * (nBlockXSize - 1);
+        if( nReadStart < nPixelOffsetToSubtract )
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                        "Failed to seek to scanline %d.", iLine);
+            return CE_Failure;
+        }
+        nReadStart -= nPixelOffsetToSubtract;
+    }
     if( nReadStart > static_cast<vsi_l_offset>(GINTBIG_MAX) )
     {
         CPLError(CE_Failure, CPLE_FileIO,
