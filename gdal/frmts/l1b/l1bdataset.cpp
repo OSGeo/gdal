@@ -3332,6 +3332,8 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Compute number of lines dynamically, so we can read partially
     // downloaded files.
+    if( poDS->nDataStartOffset > sStat.st_size )
+        goto bad;
     poDS->nRasterYSize =
         static_cast<int>( (sStat.st_size - poDS->nDataStartOffset)
                           / poDS->nRecordSize);
