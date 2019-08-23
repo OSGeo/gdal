@@ -629,6 +629,11 @@ namespace Selafin {
         // Update the size of the header and calculate the number of time steps
         poHeader->setUpdated();
         int nPos=poHeader->getPosition(0);
+        if( static_cast<vsi_l_offset>(nPos) > poHeader->nFileSize )
+        {
+            delete poHeader;
+            return nullptr;
+        }
         vsi_l_offset nStepsBig = (poHeader->nFileSize-nPos)/(poHeader->getPosition(1)-nPos);
         if( nStepsBig > INT_MAX )
             poHeader->nSteps=INT_MAX;
