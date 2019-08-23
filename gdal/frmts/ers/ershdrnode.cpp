@@ -294,8 +294,11 @@ const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )
                     {
                         // strip off quotes.
                         osTempReturn = papszItemValue[i];
-                        osTempReturn =
-                            osTempReturn.substr( 1, osTempReturn.length()-2 );
+                        if( osTempReturn.length() < 2 )
+                            osTempReturn.clear();
+                        else
+                            osTempReturn =
+                                osTempReturn.substr( 1, osTempReturn.length()-2 );
                         return osTempReturn;
                     }
                     else
