@@ -1134,6 +1134,7 @@ static int SkipVarUInt(GByte*& pabyIter, GByte* pabyEnd, int nIter = 1)
 /*                      ReadVarIntAndAddNoCheck()                       */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
 {
     GUInt32 b;
