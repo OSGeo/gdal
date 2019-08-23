@@ -342,7 +342,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
         errno = ENOENT;
         return nullptr;
     }
-    if( nOff + nSize < nOff )
+    if( nOff > std::numeric_limits<vsi_l_offset>::max() - nSize )
     {
         return nullptr;
     }
