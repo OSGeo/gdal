@@ -36,6 +36,7 @@
 #if HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
@@ -130,7 +131,11 @@ int VSISubFileHandle::Seek( vsi_l_offset nOffset, int nWhence )
     bAtEOF = false;
 
     if( nWhence == SEEK_SET )
+    {
+        if( nOffset > std::numeric_limits<vsi_l_offset>::max() - nSubregionOffset )
+            return -1;
         nOffset += nSubregionOffset;
+    }
     else if( nWhence == SEEK_CUR )
     {
         // handle normally.

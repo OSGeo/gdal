@@ -267,6 +267,13 @@ CPLErr RawRasterBand::AccessLine( int iLine )
             nImgOffset + static_cast<GUIntBig>(nLineOffset) * iLine :
             nImgOffset - static_cast<GUIntBig>(-static_cast<GIntBig>(nLineOffset)) * iLine )
         - nPixelOffsetToSubtract);
+    if( nReadStart > static_cast<vsi_l_offset>(GINTBIG_MAX) )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                    "Failed to seek to scanline %d @ " CPL_FRMT_GUIB ".",
+                    iLine, nReadStart);
+        return CE_Failure;
+    }
 
     // Seek to the correct line.
     if( Seek(nReadStart, SEEK_SET) == -1 )
