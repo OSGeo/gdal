@@ -435,8 +435,10 @@ int VSISubFileFilesystemHandler::Stat( const char * pszFilename,
     {
         if( nSize != 0 )
             psStatBuf->st_size = nSize;
-        else
+        else if( static_cast<vsi_l_offset>(psStatBuf->st_size) >= nOff )
             psStatBuf->st_size -= nOff;
+        else
+            psStatBuf->st_size = 0;
     }
 
     return nResult;
