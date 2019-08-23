@@ -221,6 +221,16 @@ static void* CPLmemmem(const void *haystack, size_t haystacklen,
 #endif
 
 /************************************************************************/
+/*                       IsNumericFieldTerminator()                     */
+/************************************************************************/
+
+static bool IsNumericFieldTerminator(GByte byVal)
+{
+    // See https://github.com/Keruspe/tar-parser.rs/blob/master/tar.specs#L202
+    return byVal == '\0' || byVal == ' ';
+}
+
+/************************************************************************/
 /*                           GotoNextFile()                             */
 /************************************************************************/
 
@@ -333,11 +343,11 @@ int VSITarReader::GotoNextFile()
         if (VSIFReadL(abyHeader, 512, 1, fp) != 1)
             return FALSE;
 
-        if (!(abyHeader[100] == 0x80 || abyHeader[107] == '\0') || /* start/end of filemode */
-            !(abyHeader[108] == 0x80 || abyHeader[115] == '\0') || /* start/end of owner ID */
-            !(abyHeader[116] == 0x80 || abyHeader[123] == '\0') || /* start/end of group ID */
-            (abyHeader[135] != '\0' && abyHeader[135] != ' ') || /* end of file size */
-            (abyHeader[147] != '\0' && abyHeader[147] != ' ')) /* end of mtime */
+        if (!(abyHeader[100] == 0x80 || IsNumericFieldTerminator(abyHeader[107])) || /* start/end of filemode */
+            !(abyHeader[108] == 0x80 || IsNumericFieldTerminator(abyHeader[115])) || /* start/end of owner ID */
+            !(abyHeader[116] == 0x80 || IsNumericFieldTerminator(abyHeader[123])) || /* start/end of group ID */
+            !IsNumericFieldTerminator(abyHeader[135]) || /* end of file size */
+            !IsNumericFieldTerminator(abyHeader[147])) /* end of mtime */
         {
             return FALSE;
         }

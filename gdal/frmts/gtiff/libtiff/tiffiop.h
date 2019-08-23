@@ -80,6 +80,16 @@ extern int snprintf(char* str, size_t size, const char* format, ...);
 #define TIFF_SIZE_T_MAX ((size_t) ~ ((size_t)0))
 #define TIFF_TMSIZE_T_MAX (tmsize_t)(TIFF_SIZE_T_MAX >> 1)
 
+/*
+ * Largest 32-bit unsigned integer value.
+ */
+#define TIFF_UINT32_MAX 0xFFFFFFFFU
+
+/*
+ * Largest 64-bit unsigned integer value.
+ */
+#define TIFF_UINT64_MAX (((uint64)(TIFF_UINT32_MAX)) << 32 | TIFF_UINT32_MAX)
+
 typedef struct client_info {
     struct client_info *next;
     void *data;

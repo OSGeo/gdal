@@ -3422,12 +3422,12 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
 
     for (i=0; bOK && i<nOffsetRecs; i++)
     {
-        if( VSIFSeekL( psFile->fp, nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset,
-                    SEEK_SET ) != 0  )
+        vsi_l_offset nOffset = (vsi_l_offset)nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset;
+        if( VSIFSeekL( psFile->fp, nOffset, SEEK_SET ) != 0  )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                    "Failed to seek to %d.",
-                    nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset );
+                    "Failed to seek to " CPL_FRMT_GUIB ".",
+                    nOffset );
             CPLFree(colormapRecords);
             return;
         }

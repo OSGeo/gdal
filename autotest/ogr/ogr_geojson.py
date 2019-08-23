@@ -406,7 +406,7 @@ def test_ogr_geojson_9():
         rc = verify_geojson_copy(test[0], test[1], test[2])
         assert rc, ('Verification of copy of ' + test[0] + '.shp failed')
 
-    
+
 ##############################################################################
 # Test translation of data/gjpoint.shp to GZip compressed GeoJSON file
 
@@ -434,7 +434,7 @@ def test_ogr_geojson_10():
         rc = verify_geojson_copy(test[0], test[1], test[2])
         assert rc, ('Verification of copy of ' + test[0] + '.shp failed')
 
-    
+
 ###############################################################################
 
 
@@ -674,7 +674,7 @@ def test_ogr_geojson_17():
         feature.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test reading ESRI polygon file
 
@@ -779,7 +779,7 @@ def test_ogr_geojson_20():
 
         gdal.Unlink('/vsimem/testgj')
 
-    
+
 ###############################################################################
 # Test reading output of geocouch spatiallist
 
@@ -951,7 +951,7 @@ def test_ogr_geojson_24():
 
         ds = None
 
-    
+
 ###############################################################################
 # Test TopoJSON
 
@@ -1471,11 +1471,11 @@ def test_ogr_geojson_35():
 
     gdal.Unlink('/vsimem/ogr_geojson_35.json')
 
-    assert not (data.find('-1.79') == -1 and data.find('e+308') == -1)
+    assert '-1.79' in data and 'e+308' in data
     for ident in range(2, 8):
         assert data.find('{ "type": "Feature", "id": %d, "properties": { }, "geometry": null }' % ident) != -1
 
-    
+
 ###############################################################################
 # Test reading file with UTF-8 BOM (which is supposed to be illegal in JSON...) (#5630)
 
@@ -1566,7 +1566,7 @@ def test_ogr_geojson_38():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test id top-object level
 
@@ -1725,7 +1725,7 @@ def test_ogr_geojson_39():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test nested attributes
 
@@ -1777,7 +1777,7 @@ def test_ogr_geojson_40():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test ogr.CreateGeometryFromJson()
 
@@ -2014,7 +2014,7 @@ def test_ogr_geojson_44():
     with gdaltest.error_handler():
         ogr.Open("""{"type": "FeatureCollection", "features":[ null ]}""")
 
-    
+
 ###############################################################################
 # Test native data support
 
@@ -3502,7 +3502,7 @@ def test_ogr_geojson_read_fields_with_different_case():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test bugfix for https://github.com/OSGeo/gdal/issues/1068
 
@@ -3783,6 +3783,6 @@ def test_ogr_geojson_cleanup():
     for f in gdal.ReadDir('/vsimem/geojson'):
         gdal.Unlink('/vsimem/geojson/' + f)
 
-    
+
 
 

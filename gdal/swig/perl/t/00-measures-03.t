@@ -196,7 +196,7 @@ for (my $i = 0; $i < @data; $i+=2) {
                 $exp =~ s/3/0/;
                 $exp =~ s/4/-0/;
             }
-            $wkt =~ s/-[\d\.e\+]+/-0/; # "no data" M to "-0"
+            $wkt =~ s/-[\d\.E\+]+/-0/; # "no data" M to "-0"
             ok($wkt eq $exp, "$driver with option SHPT=$shpt$dim retrieve feature: expected: $exp got: $wkt");
         }
     }
