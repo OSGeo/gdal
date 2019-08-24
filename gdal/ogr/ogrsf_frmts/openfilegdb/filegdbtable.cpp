@@ -1954,8 +1954,8 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
 
     psOutFeatureEnvelope->MinX = vxmin / poGeomField->dfXYScale + poGeomField->dfXOrigin;
     psOutFeatureEnvelope->MinY = vymin / poGeomField->dfXYScale + poGeomField->dfYOrigin;
-    psOutFeatureEnvelope->MaxX = (vxmin + vdx) / poGeomField->dfXYScale + poGeomField->dfXOrigin;
-    psOutFeatureEnvelope->MaxY = (vymin + vdy) / poGeomField->dfXYScale + poGeomField->dfYOrigin;
+    psOutFeatureEnvelope->MaxX = CPLUnsanitizedAdd<GUIntBig>(vxmin, vdx) / poGeomField->dfXYScale + poGeomField->dfXOrigin;
+    psOutFeatureEnvelope->MaxY = CPLUnsanitizedAdd<GUIntBig>(vymin, vdy) / poGeomField->dfXYScale + poGeomField->dfYOrigin;
 
     return TRUE;
 }
@@ -2051,10 +2051,10 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
     if( vymin > nFilterYMax )
         return FALSE;
     ReadVarUInt64NoCheck(pabyCur, vdx);
-    if( vxmin + vdx < nFilterXMin )
+    if( CPLUnsanitizedAdd<GUIntBig>(vxmin, vdx) < nFilterXMin )
         return FALSE;
     ReadVarUInt64NoCheck(pabyCur, vdy);
-    return vymin + vdy >= nFilterYMin;
+    return CPLUnsanitizedAdd<GUIntBig>(vymin, vdy) >= nFilterYMin;
 }
 
 /************************************************************************/
