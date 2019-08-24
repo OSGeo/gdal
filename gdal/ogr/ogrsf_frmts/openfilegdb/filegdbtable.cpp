@@ -778,6 +778,8 @@ int FileGDBTable::Open(const char* pszFilename,
     returnErrorIf(VSIFReadL( abyHeader, 14, 1, fpTable ) != 1 );
     nFieldDescLength = GetUInt32(abyHeader, 0);
 
+    returnErrorIf(nOffsetFieldDesc >
+                    std::numeric_limits<GUIntBig>::max() - nFieldDescLength);
     nOffsetHeaderEnd = nOffsetFieldDesc + nFieldDescLength;
 
     returnErrorIf(nFieldDescLength > 10 * 1024 * 1024 || nFieldDescLength < 10 );
