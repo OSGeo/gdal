@@ -30,12 +30,12 @@ Examples
 
    ::
 
-      ogr2ogr -t_srs EPSG:4258 test_duplicate_fields.sos polygons -oo appendFieldsMap="BEITEBRUKERID&OPPHAV"
+      ogr2ogr -t_srs EPSG:4258  test_poly.shp test_duplicate_fields.sos polygons -oo appendFieldsMap="BEITEBRUKERID&OPPHAV"
 
 -  This example will convert a sosi file to a shape a file where for BEITEBRUKERID and OPPHAV will be appended with a semicolon and comma between 
 
    ::
 
-      ogr2ogr -t_srs EPSG:4258 test_duplicate_fields.sos polygons -oo appendFieldsMap="BEITEBRUKERID:;&OPPHAV:,"
+      ogr2ogr -t_srs EPSG:4258  test_poly.shp test_duplicate_fields.sos polygons -oo appendFieldsMap="BEITEBRUKERID:;&OPPHAV:,"
 
    
