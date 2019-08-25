@@ -1481,7 +1481,13 @@ void PDFDataset::ExploreContents(GDALPDFObject* poObj,
     {
         GDALPDFArray* poArray = poObj->GetArray();
         for(int i=0;i<poArray->GetLength();i++)
-            ExploreContents(poArray->Get(i), poResources);
+        {
+            GDALPDFObject* poSubObj = poArray->Get(i);
+            if( poSubObj )
+            {
+                ExploreContents(poSubObj, poResources);
+            }
+        }
     }
 
     if (poObj->GetType() != PDFObjectType_Dictionary)
@@ -1557,7 +1563,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
         for(int i=0;i<poArray->GetLength();i++)
         {
             GDALPDFObject* poObj = poArray->Get(i);
-            if( poObj->GetType() != PDFObjectType_Dictionary)
+            if( poObj == nullptr || poObj->GetType() != PDFObjectType_Dictionary)
                 break;
             GDALPDFStream* poStream = poObj->GetStream();
             if (!poStream)
