@@ -1610,6 +1610,13 @@ def test_ogr_sql_sqlite_26():
                     print(geomB_wkt)
                     print(geom_geos.ExportToWkt())
                     pytest.fail('fail with %s' % op_str)
+            elif geom_sql.IsEmpty() and geom_geos.IsEmpty():
+                # geom_sql might be a POLYGON made of an empty ring
+                # while geom_geos is a POLYGON without a ring
+                #import struct
+                #print struct.unpack('B' * len(geom_sql.ExportToWkb()), geom_sql.ExportToWkb())
+                #print struct.unpack('B' * len(geom_geos.ExportToWkb()), geom_geos.ExportToWkb())
+                pass
             else:
                 assert geom_sql.Equals(geom_geos) != 0, ('fail with %s: %s %s %s %s' % (op_str, geomA_wkt, geomB_wkt, geom_sql.ExportToWkt(), geom_geos.ExportToWkt()))
 

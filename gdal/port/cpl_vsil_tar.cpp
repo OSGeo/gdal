@@ -364,7 +364,17 @@ int VSITarReader::GotoNextFile()
         for(int i=0;i<11;i++)
         {
             if( abyHeader[124+i] != ' ' )
+            {
+                if( nNextFileSize > static_cast<GUIntBig>(GINTBIG_MAX / 8) ||
+                    abyHeader[124+i] < '0' ||
+                    abyHeader[124+i] >= '8' )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Invalid file size for %s", osNextFileName.c_str());
+                    return FALSE;
+                }
                 nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');
+            }
         }
         if( nNextFileSize > GINTBIG_MAX )
         {
@@ -377,7 +387,18 @@ int VSITarReader::GotoNextFile()
         for(int i=0;i<11;i++)
         {
             if( abyHeader[136+i] != ' ' )
+            {
+                if( nModifiedTime > GINTBIG_MAX / 8 ||
+                    abyHeader[136+i] < '0' ||
+                    abyHeader[136+i] >= '8' ||
+                    nModifiedTime * 8 > GINTBIG_MAX - (abyHeader[136+i] - '0') )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Invalid mtime for %s", osNextFileName.c_str());
+                    return FALSE;
+                }
                 nModifiedTime = nModifiedTime * 8 + (abyHeader[136+i] - '0');
+            }
         }
 
         if( abyHeader[156] == 'L' && nNextFileSize > 0 && nNextFileSize < 32768 )

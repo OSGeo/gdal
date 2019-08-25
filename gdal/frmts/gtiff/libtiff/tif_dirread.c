@@ -41,16 +41,6 @@
 #define FAILED_FII    ((uint32) -1)
 
 /*
- * Largest 32-bit unsigned integer value.
- */
-#define TIFF_UINT32_MAX 0xFFFFFFFFU
-
-/*
- * Largest 64-bit unsigned integer value.
- */
-#define TIFF_UINT64_MAX (((uint64)(TIFF_UINT32_MAX)) << 32 | TIFF_UINT32_MAX)
-
-/*
  * Largest 64-bit signed integer value.
  */
 #define TIFF_INT64_MAX ((int64)(TIFF_UINT64_MAX >> 1))
@@ -4600,7 +4590,11 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		uint64 rowbytes = TIFFScanlineSize64(tif);
 		uint32 rowsperstrip = td->td_imagelength/td->td_stripsperimage;
 		for (strip = 0; strip < td->td_nstrips; strip++)
-			td->td_stripbytecount_p[strip] = rowbytes * rowsperstrip;
+                {
+                    if( rowbytes > 0 && rowsperstrip > TIFF_UINT64_MAX / rowbytes )
+                        return -1;
+                    td->td_stripbytecount_p[strip] = rowbytes * rowsperstrip;
+                }
 	}
 	TIFFSetFieldBit(tif, FIELD_STRIPBYTECOUNTS);
 	if (!TIFFFieldSet(tif, FIELD_ROWSPERSTRIP))
@@ -6038,6 +6032,14 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
         if( bSwab )
             TIFFSwabLong(&offset);
         nBaseOffset = offset;
+    }
+    /* To avoid later unsigned integer overflows */
+    if( nBaseOffset > (uint64)TIFF_INT64_MAX )
+    {
+        TIFFErrorExt(tif->tif_clientdata, module,
+                 "Cannot read offset/size for strile %d", strile);
+        panVals[strile] = 0;
+        return 0;
     }
     nOffset = nBaseOffset + sizeofval * strile;
     nOffsetStartPage =

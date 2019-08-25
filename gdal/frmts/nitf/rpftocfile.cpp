@@ -463,6 +463,12 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         else
         {
             /* Trick so that frames are numbered north to south */
+            if( entry->nVertFrames-1 < frameRow )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Invalid nVertFrames vs frameRow");
+                RPFTOCFree(toc);
+                return nullptr;
+            }
             frameRow = (unsigned short)((entry->nVertFrames-1) - frameRow);
         }
 

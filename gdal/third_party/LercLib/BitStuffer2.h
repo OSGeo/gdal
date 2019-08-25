@@ -126,7 +126,7 @@ inline bool BitStuffer2::DecodeUInt(const Byte** ppByte, size_t& nBytesRemaining
 
 inline unsigned int BitStuffer2::NumTailBytesNotNeeded(unsigned int numElem, int numBits)
 {
-  int numBitsTail = (numElem * numBits) & 31;
+  int numBitsTail = ((unsigned long long)numElem * numBits) & 31;
   int numBytesTail = (numBitsTail + 7) >> 3;
   return (numBytesTail > 0) ? 4 - numBytesTail : 0;
 }

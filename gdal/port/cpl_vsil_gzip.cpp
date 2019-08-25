@@ -526,8 +526,8 @@ void VSIGZipHandle::check_header()
     if( (flags & EXTRA_FIELD) != 0 )
     {
         // Skip the extra field.
-        len = static_cast<uInt>(get_byte());
-        len += static_cast<uInt>(get_byte()) << 8;
+        len = static_cast<uInt>(get_byte()) & 0xFF;
+        len += (static_cast<uInt>(get_byte()) & 0xFF) << 8;
         // len is garbage if EOF but the loop below will quit anyway.
         while( len != 0 && get_byte() != EOF )
         {

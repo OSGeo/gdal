@@ -1467,6 +1467,10 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
     }
 
     idxSize = IdxSize(full, int(scale));
+    if( idxSize == 0 )
+    {
+        return CE_Failure;
+    }
 
     // If not set by the bands, get a pageSizeBytes buffer
     if (GetPBufferSize() == 0)

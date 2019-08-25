@@ -1164,7 +1164,7 @@ static OGRFeature *TranslateStrategiNode( CPL_UNUSED NTFFileReader *poReader,
     // NUM_LINKS
     int         nNumLinks = atoi(papoGroup[0]->GetField( 15, 18 ));
 
-    if( nNumLinks > MAX_LINK )
+    if( nNumLinks < 0 || nNumLinks > MAX_LINK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MAX_LINK exceeded in ntf_estlayers.cpp." );

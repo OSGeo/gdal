@@ -224,13 +224,15 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     sscanf(_sec_header.northLineSelectedRectangle.value, "%u", &_lines);
     sscanf(_sec_header.southLineSelectedRectangle.value, "%u", &lines);
     _line_start = lines;
-    _lines -= lines - 1;
+    if( _lines >= lines - 1 )
+        _lines -= lines - 1;
 
     unsigned int cols;
     sscanf(_sec_header.westColumnSelectedRectangle.value, "%u", &_columns);
     sscanf(_sec_header.eastColumnSelectedRectangle.value, "%u", &cols);
     _col_start = cols;
-    _columns -= cols - 1;
+    if( _columns >= cols - 1 )
+        _columns -= cols - 1;
 
 #ifdef DEBUG
     printf("lines = %u, cols = %u\n", _lines, _columns);/*ok*/

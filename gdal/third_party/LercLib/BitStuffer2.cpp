@@ -361,8 +361,12 @@ bool BitStuffer2::BitUnStuff_Before_Lerc2v3(const Byte** ppByte, size_t& nBytesR
 {
   if (numBits >= 32)
     return false;
-  unsigned int numUInts = (unsigned int)((unsigned long long)numElements * numBits + 31) / 32;
-  unsigned int numBytes = numUInts * sizeof(unsigned int);
+  const unsigned int numUInts = (unsigned int)(((unsigned long long)numElements * numBits + 31) / 32);
+  const unsigned long long numBytesLL = (unsigned long long)numUInts * sizeof(unsigned int);
+  /* Can trigger only on 32-bit */
+  if( numBytesLL / sizeof(unsigned int) != numUInts )
+      return false;
+  const size_t numBytes = (size_t)numBytesLL;
   unsigned int* arr = (unsigned int*)(*ppByte);
 
   if (nBytesRemaining < numBytes)
@@ -476,7 +480,7 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
   }
 
   // copy the bytes to the outgoing byte stream
-  int numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
+  size_t numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
   memcpy(*ppByte, &m_tmpBitStuffVec[0], numBytesUsed);
 
   *ppByte += numBytesUsed;
@@ -491,13 +495,17 @@ bool BitStuffer2::BitUnStuff(const Byte** ppByte, size_t& nBytesRemaining, vecto
     return false;
   if (numBits >= 32)
     return false;
-  unsigned int numUInts = (unsigned int)((unsigned long long)numElements * numBits + 31) / 32;
-  unsigned int numBytes = numUInts * sizeof(unsigned int);
+  const unsigned int numUInts = (unsigned int)(((unsigned long long)numElements * numBits + 31) / 32);
+  const unsigned long long numBytesLL = (unsigned long long)numUInts * sizeof(unsigned int);
+  /* Can trigger only on 32-bit */
+  if( numBytesLL / sizeof(unsigned int) != numUInts )
+      return false;
+  const size_t numBytes = (size_t)numBytesLL;
 
   // copy the bytes from the incoming byte stream
-  int numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
+  const size_t numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
 
-  if (nBytesRemaining < (size_t)numBytesUsed)
+  if (nBytesRemaining < numBytesUsed)
     return false;
 
   try

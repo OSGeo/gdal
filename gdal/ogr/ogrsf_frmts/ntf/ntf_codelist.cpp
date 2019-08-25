@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <algorithm>
 #include <stdarg.h>
 #include "ntf.h"
 #include "cpl_conv.h"
@@ -38,7 +39,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 NTFCodeList::NTFCodeList( NTFRecord * poRecord ) :
-    nNumCode(atoi(poRecord->GetField(20,22))),
+    nNumCode(std::max(0, atoi(poRecord->GetField(20,22)))),
     papszCodeVal(static_cast<char **>(CPLMalloc(sizeof(char*) * nNumCode))),
     papszCodeDes(static_cast<char **>(CPLMalloc(sizeof(char*) * nNumCode)))
 {

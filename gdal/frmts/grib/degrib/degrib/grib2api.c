@@ -547,6 +547,8 @@ static int TransferFloat(float *fld, sInt4 ngrdpts, sInt4 ibitmap,
       if (ibitmap) {
          for (i = 0; i < ngrdpts; i++) {
             ScanIndex2XY(i, &x, &y, *scan, nx, ny);
+            if (x <= 0 || y <= 0 )
+                return 1;
             /* ScanIndex returns value as if scan was 0100(0000) */
             curIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * (uInt4)nx;
             if (curIndex >= (uInt4)nd2x3)
@@ -565,6 +567,8 @@ static int TransferFloat(float *fld, sInt4 ngrdpts, sInt4 ibitmap,
       } else {
          for (i = 0; i < ngrdpts; i++) {
             ScanIndex2XY(i, &x, &y, *scan, nx, ny);
+            if (x <= 0 || y <= 0 )
+                return 1;
             /* ScanIndex returns value as if scan was 0100(0000) */
             curIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * (uInt4)nx;
             if( curIndex >= (uInt4)nd2x3 )
