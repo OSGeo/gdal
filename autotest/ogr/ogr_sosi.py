@@ -55,4 +55,17 @@ def test_ogr_sosi_1():
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 
+# test that -oo appendFieldsMap 
+def test_ogr_sosi_2():
+
+    if ogr.GetDriverByName('SOSI') is None:
+        pytest.skip()
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_duplicate_fields.sos -oo appendFieldsMap="BEITEBRUKERID&OPPHAV"')
+
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
