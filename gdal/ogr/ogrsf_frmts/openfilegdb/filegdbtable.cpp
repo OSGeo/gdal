@@ -2728,15 +2728,15 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             ReadVarUInt64NoCheck(pabyCur, y);
 
             const double dfX =
-                (x - 1) / poGeomField->GetXYScale() + poGeomField->GetXOrigin();
+                CPLUnsanitizedAdd<GUIntBig>(x, -1) / poGeomField->GetXYScale() + poGeomField->GetXOrigin();
             const double dfY =
-                (y - 1) / poGeomField->GetXYScale() + poGeomField->GetYOrigin();
+                CPLUnsanitizedAdd<GUIntBig>(y, -1) / poGeomField->GetXYScale() + poGeomField->GetYOrigin();
             double dfZ = 0.0;
             if( bHasZ )
             {
                 ReadVarUInt64NoCheck(pabyCur, z);
                 const double dfZScale = SanitizeScale(poGeomField->GetZScale());
-                dfZ = (z - 1) / dfZScale + poGeomField->GetZOrigin();
+                dfZ = CPLUnsanitizedAdd<GUIntBig>(z, -1) / dfZScale + poGeomField->GetZOrigin();
                 if( bHasM )
                 {
                     GUIntBig m = 0;
@@ -2744,7 +2744,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                     const double dfMScale =
                         SanitizeScale(poGeomField->GetMScale());
                     const double dfM =
-                        (m - 1) / dfMScale + poGeomField->GetMOrigin();
+                        CPLUnsanitizedAdd<GUIntBig>(m, -1) / dfMScale + poGeomField->GetMOrigin();
                     return new OGRPoint(dfX, dfY, dfZ, dfM);
                 }
                 return new OGRPoint(dfX, dfY, dfZ);
@@ -2756,7 +2756,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 ReadVarUInt64NoCheck(pabyCur, m);
                 const double dfMScale = SanitizeScale(poGeomField->GetMScale());
                 const double dfM =
-                    (m - 1) / dfMScale + poGeomField->GetMOrigin();
+                    CPLUnsanitizedAdd<GUIntBig>(m, -1) / dfMScale + poGeomField->GetMOrigin();
                 poPoint->setM(dfM);
                 return poPoint;
             }
