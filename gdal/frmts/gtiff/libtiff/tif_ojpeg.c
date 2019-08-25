@@ -243,6 +243,7 @@ typedef enum {
 typedef struct {
 	TIFF* tif;
         int decoder_ok;
+        int error_in_raw_data_decoding;
 	#ifndef LIBJPEG_ENCAP_EXTERNAL
 	JMP_BUF exit_jmpbuf;
 	#endif
@@ -742,6 +743,7 @@ OJPEGPreDecodeSkipRaw(TIFF* tif)
 		}
 		m-=sp->subsampling_convert_clines-sp->subsampling_convert_state;
 		sp->subsampling_convert_state=0;
+                sp->error_in_raw_data_decoding=0;
 	}
 	while (m>=sp->subsampling_convert_clines)
 	{
@@ -792,6 +794,10 @@ OJPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
             TIFFErrorExt(tif->tif_clientdata,module,"Cannot decode: decoder not correctly initialized");
             return 0;
         }
+        if( sp->error_in_raw_data_decoding )
+        {
+            return 0;
+        }
 	if (sp->libjpeg_jpeg_query_style==0)
 	{
 		if (OJPEGDecodeRaw(tif,buf,cc)==0)
@@ -838,7 +844,10 @@ OJPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc)
 			int expected_bytes;
 			int i;
 			if (cinfo->MCUs_per_row == 0)
+			{
+				sp->error_in_raw_data_decoding = 1;
 				return 0;
+			}
 			for (i = 0; i < cinfo->comps_in_scan; ++i)
 			{
 				const jpeg_component_info* info = cinfo->cur_comp_info[i];
@@ -855,10 +864,14 @@ OJPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc)
 			if (jpeg_bytes != expected_bytes)
 			{
 				TIFFErrorExt(tif->tif_clientdata,module,"Inconsistent number of MCU in codestream");
+				sp->error_in_raw_data_decoding = 1;
 				return(0);
 			}
 			if (jpeg_read_raw_data_encap(sp,&(sp->libjpeg_jpeg_decompress_struct),sp->subsampling_convert_ycbcrimage,sp->subsampling_ver*8)==0)
+			{
+				sp->error_in_raw_data_decoding = 1;
 				return(0);
+			}
 		}
 		oy=sp->subsampling_convert_ybuf+sp->subsampling_convert_state*sp->subsampling_ver*sp->subsampling_convert_ylinelen;
 		ocb=sp->subsampling_convert_cbbuf+sp->subsampling_convert_state*sp->subsampling_convert_clinelen;
@@ -1256,6 +1269,7 @@ OJPEGWriteHeaderInfo(TIFF* tif)
 				*m++=sp->subsampling_convert_crbuf+n*sp->subsampling_convert_clinelen;
 			sp->subsampling_convert_clinelenout=sp->strile_width/sp->subsampling_hor + ((sp->strile_width % sp->subsampling_hor) != 0 ? 1 : 0);
 			sp->subsampling_convert_state=0;
+			sp->error_in_raw_data_decoding=0;
 			sp->bytes_per_line=sp->subsampling_convert_clinelenout*(sp->subsampling_ver*sp->subsampling_hor+2);
 			sp->lines_per_strile=sp->strile_length/sp->subsampling_ver + ((sp->strile_length % sp->subsampling_ver) != 0 ? 1 : 0);
 			sp->subsampling_convert_log=1;
