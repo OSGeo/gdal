@@ -1222,9 +1222,11 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
       } else
 #endif
       {
+         if( buffLen > UINT_MAX - gribLen )
+             break;
          increment = buffLen + gribLen;
       }
-      if( increment < buffLen || increment > (VSI_L_OFFSET_MAX - offset) )
+      if( /* increment < buffLen || */ increment > (VSI_L_OFFSET_MAX - offset) )
           break;
       offset += increment;
       }
