@@ -68,7 +68,8 @@ void CPCIDSK_ARRAY::Load()
     }
 
     PCIDSKBuffer& seg_header = this->GetHeader();
-    seg_data.SetSize(static_cast<int>(GetContentSize()));
+    seg_data.SetSize(!IsContentSizeValid() ? -1 : // will throw exception
+                     static_cast<int>(GetContentSize()));
     ReadFromFile(seg_data.buffer, 0, seg_data.buffer_size);
 
     if(!STARTS_WITH(seg_header.buffer+160, "64R     "))
