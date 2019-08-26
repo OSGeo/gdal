@@ -225,8 +225,11 @@ CPLErr HFABand::LoadOverviews()
             }
 
             char *pszPath = pszEnd + 2;
-            if( pszPath[strlen(pszPath)-1] == ')' )
-                pszPath[strlen(pszPath)-1] = '\0';
+            {
+                const int nPathLen = static_cast<int>(strlen(pszPath));
+                if( pszPath[nPathLen-1] == ')' )
+                    pszPath[nPathLen-1] = '\0';
+            }
 
             for( int i = 0; pszPath[i] != '\0'; i++ )
             {
@@ -694,7 +697,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             }
 
             // Offset by the minimum value.
-            const int nDataValue = nRawValue + nDataMin;
+            const int nDataValue = CPLUnsanitizedAdd<int>(nRawValue, nDataMin);
 
             // Now apply to the output buffer in a type specific way.
             if( eDataType == EPT_u8 )

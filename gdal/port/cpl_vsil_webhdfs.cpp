@@ -901,8 +901,8 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
 
     CPLString osURL(m_pszURL);
 
-    if( osURL.find("/webhdfs/v1") ==
-        osURL.size() - strlen("/webhdfs/v1") &&
+    if( osURL.size() > strlen("/webhdfs/v1") &&
+        osURL.find("/webhdfs/v1") == osURL.size() - strlen("/webhdfs/v1") &&
         std::count(osURL.begin(),
                    osURL.end(),'/') == 4 )
     {

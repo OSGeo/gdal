@@ -1378,7 +1378,7 @@ VRTSimpleSource::RasterIO( GDALDataType eBandDataType,
                                                     nBandDTSize * nOutXSize,
                                   eBandDataType, nBandDTSize,
                                   pabyOut +
-                                    static_cast<size_t>(iY) * nLineSpace,
+                                    static_cast<GPtrDiff_t>(iY * nLineSpace),
                                   eBufType,
                                   static_cast<int>(nPixelSpace),
                                   nOutXSize);
@@ -1745,8 +1745,8 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                                         static_cast<size_t>(iY) * nBandDTSize * nOutXSize,
                                     eBandDataType, nBandDTSize,
                                     pabyOut +
-                                        static_cast<size_t>(iY) * nLineSpace +
-                                        static_cast<size_t>(iBand) * nBandSpace,
+                                        static_cast<GPtrDiff_t>(iY * nLineSpace +
+                                                                iBand * nBandSpace),
                                     eBufType, static_cast<int>(nPixelSpace),
                                     nOutXSize);
                     }

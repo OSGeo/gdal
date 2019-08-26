@@ -218,6 +218,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Setup the bands.                                                */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
     RawRasterBand *poBand =
         new RawRasterBand( poDS, 1, poDS->fpImage,
                            160 + 4 + static_cast<vsi_l_offset>(nRasterXSize) *
@@ -235,7 +236,11 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
                            GDT_Float32, CPL_IS_LSB, RawRasterBand::OwnFP::NO );
     poBand->SetDescription( "Longitude Offset (radians)" );
     poDS->SetBand( 2, poBand );
-
+    if( CPLGetLastErrorType() != CE_None )
+    {
+        delete poDS;
+        return nullptr;
+    }
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */

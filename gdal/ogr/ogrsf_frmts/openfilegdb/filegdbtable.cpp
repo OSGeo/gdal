@@ -778,6 +778,8 @@ int FileGDBTable::Open(const char* pszFilename,
     returnErrorIf(VSIFReadL( abyHeader, 14, 1, fpTable ) != 1 );
     nFieldDescLength = GetUInt32(abyHeader, 0);
 
+    returnErrorIf(nOffsetFieldDesc >
+                    std::numeric_limits<GUIntBig>::max() - nFieldDescLength);
     nOffsetHeaderEnd = nOffsetFieldDesc + nFieldDescLength;
 
     returnErrorIf(nFieldDescLength > 10 * 1024 * 1024 || nFieldDescLength < 10 );
@@ -1134,6 +1136,7 @@ static int SkipVarUInt(GByte*& pabyIter, GByte* pabyEnd, int nIter = 1)
 /*                      ReadVarIntAndAddNoCheck()                       */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
 {
     GUInt32 b;
@@ -1953,8 +1956,8 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
 
     psOutFeatureEnvelope->MinX = vxmin / poGeomField->dfXYScale + poGeomField->dfXOrigin;
     psOutFeatureEnvelope->MinY = vymin / poGeomField->dfXYScale + poGeomField->dfYOrigin;
-    psOutFeatureEnvelope->MaxX = (vxmin + vdx) / poGeomField->dfXYScale + poGeomField->dfXOrigin;
-    psOutFeatureEnvelope->MaxY = (vymin + vdy) / poGeomField->dfXYScale + poGeomField->dfYOrigin;
+    psOutFeatureEnvelope->MaxX = CPLUnsanitizedAdd<GUIntBig>(vxmin, vdx) / poGeomField->dfXYScale + poGeomField->dfXOrigin;
+    psOutFeatureEnvelope->MaxY = CPLUnsanitizedAdd<GUIntBig>(vymin, vdy) / poGeomField->dfXYScale + poGeomField->dfYOrigin;
 
     return TRUE;
 }
@@ -2050,10 +2053,10 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField* psField)
     if( vymin > nFilterYMax )
         return FALSE;
     ReadVarUInt64NoCheck(pabyCur, vdx);
-    if( vxmin + vdx < nFilterXMin )
+    if( CPLUnsanitizedAdd<GUIntBig>(vxmin, vdx) < nFilterXMin )
         return FALSE;
     ReadVarUInt64NoCheck(pabyCur, vdy);
-    return vymin + vdy >= nFilterYMin;
+    return CPLUnsanitizedAdd<GUIntBig>(vymin, vdy) >= nFilterYMin;
 }
 
 /************************************************************************/
@@ -2725,15 +2728,15 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             ReadVarUInt64NoCheck(pabyCur, y);
 
             const double dfX =
-                (x - 1) / poGeomField->GetXYScale() + poGeomField->GetXOrigin();
+                CPLUnsanitizedAdd<GUIntBig>(x, -1) / poGeomField->GetXYScale() + poGeomField->GetXOrigin();
             const double dfY =
-                (y - 1) / poGeomField->GetXYScale() + poGeomField->GetYOrigin();
+                CPLUnsanitizedAdd<GUIntBig>(y, -1) / poGeomField->GetXYScale() + poGeomField->GetYOrigin();
             double dfZ = 0.0;
             if( bHasZ )
             {
                 ReadVarUInt64NoCheck(pabyCur, z);
                 const double dfZScale = SanitizeScale(poGeomField->GetZScale());
-                dfZ = (z - 1) / dfZScale + poGeomField->GetZOrigin();
+                dfZ = CPLUnsanitizedAdd<GUIntBig>(z, -1) / dfZScale + poGeomField->GetZOrigin();
                 if( bHasM )
                 {
                     GUIntBig m = 0;
@@ -2741,7 +2744,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                     const double dfMScale =
                         SanitizeScale(poGeomField->GetMScale());
                     const double dfM =
-                        (m - 1) / dfMScale + poGeomField->GetMOrigin();
+                        CPLUnsanitizedAdd<GUIntBig>(m, -1) / dfMScale + poGeomField->GetMOrigin();
                     return new OGRPoint(dfX, dfY, dfZ, dfM);
                 }
                 return new OGRPoint(dfX, dfY, dfZ);
@@ -2753,7 +2756,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 ReadVarUInt64NoCheck(pabyCur, m);
                 const double dfMScale = SanitizeScale(poGeomField->GetMScale());
                 const double dfM =
-                    (m - 1) / dfMScale + poGeomField->GetMOrigin();
+                    CPLUnsanitizedAdd<GUIntBig>(m, -1) / dfMScale + poGeomField->GetMOrigin();
                 poPoint->setM(dfM);
                 return poPoint;
             }

@@ -32,6 +32,7 @@
 #include "northwood.h"
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 CPL_CVSID("$Id$")
@@ -205,8 +206,18 @@ int nwt_ParseHeader( NWT_GRID * pGrd, const unsigned char *nwtHeader )
 
     if( pGrd->cFormat & 0x80 )        // if is GRC load the Dictionary
     {
+        vsi_l_offset nPixels = static_cast<vsi_l_offset>(pGrd->nXSide) * pGrd->nYSide;
+        unsigned int nBytesPerPixel = pGrd->nBitsPerPixel/8;
+        if( nPixels > 0 &&
+            (nBytesPerPixel > std::numeric_limits<vsi_l_offset>::max() / nPixels ||
+             nPixels * nBytesPerPixel > std::numeric_limits<vsi_l_offset>::max() - 1024 ) )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Invalid file dimension / bits per pixel" );
+            return FALSE;
+        }
         VSIFSeekL( pGrd->fp,
-                   1024 + (static_cast<vsi_l_offset>(pGrd->nXSide) * pGrd->nYSide) * (pGrd->nBitsPerPixel/8),
+                   1024 + nPixels * nBytesPerPixel,
                    SEEK_SET );
 
         if( !VSIFReadL( &usTmp, 2, 1, pGrd->fp) )

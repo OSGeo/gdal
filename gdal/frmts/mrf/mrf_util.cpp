@@ -43,6 +43,7 @@
 #include "marfa.h"
 #include <zlib.h>
 #include <algorithm>
+#include <limits>
 
 CPL_CVSID("$Id$")
 
@@ -179,6 +180,11 @@ GIntBig IdxSize(const ILImage &full, const int scale) {
         img.size.y = pcount(img.size.y, scale);
         img.pagecount = pcount(img.size, img.pagesize);
         sz += img.pagecount.l;
+    }
+    if( sz > std::numeric_limits<GIntBig>::max() / static_cast<int>(sizeof(ILIdx)) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "IdxSize: integer overflow");
+        return 0;
     }
     return sz*sizeof(ILIdx);
 }

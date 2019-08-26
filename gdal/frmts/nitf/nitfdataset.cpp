@@ -3486,6 +3486,9 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 /* -------------------------------------------------------------------- */
     int iNextBlock = 1;
     GIntBig iSegOffset = 2;
+    if( psFile->pasSegmentInfo[psImage->iSegment].nSegmentSize <
+        nJPEGStart - psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart )
+        return CE_Failure;
     GIntBig iSegSize = psFile->pasSegmentInfo[psImage->iSegment].nSegmentSize
         - (nJPEGStart - psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart);
     GByte abyBlock[512];

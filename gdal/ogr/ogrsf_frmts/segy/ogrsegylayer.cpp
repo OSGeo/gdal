@@ -359,7 +359,7 @@ static float GetIBMFloat(const GByte* pabyData)
     int nVal = 0;
     memcpy(&nVal, pabyData, 4);
     CPL_MSBPTR32(&nVal);
-    const int nSign = 1 - 2 * (((unsigned)nVal >> 31) & 0x01);
+    const int nSign = 1 - 2 * (int)(((unsigned)nVal >> 31) & 0x01);
     const int nExp = (nVal >> 24) & 0x7f;
     const int nMant = nVal & 0xffffff;
 

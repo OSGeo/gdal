@@ -947,7 +947,12 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
         stCommonEntityData.bGraphicsPresented = objectBuffer.ReadBIT();
         if( stCommonEntityData.bGraphicsPresented )
         {
-            size_t nGraphicsDataSize = static_cast<size_t>(objectBuffer.ReadRAWLONG());
+            const auto rawLong = objectBuffer.ReadRAWLONG();
+            if( rawLong < 0 )
+                return nullptr;
+            size_t nGraphicsDataSize = static_cast<size_t>(rawLong);
+            if( nGraphicsDataSize > std::numeric_limits<size_t>::max() / 8 )
+                return nullptr;
             // Skip read graphics data
             buffer.Seek(nGraphicsDataSize * 8);
         }
