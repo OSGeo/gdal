@@ -1277,7 +1277,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
             }
 
-            if( VSIFSeekL( poDS->fp, BFH_SIZE + poDS->sInfoHeader.iSize, SEEK_SET ) != 0 ||
+            if( VSIFSeekL( poDS->fp, BFH_SIZE + static_cast<vsi_l_offset>(poDS->sInfoHeader.iSize), SEEK_SET ) != 0 ||
                 VSIFReadL( poDS->pabyColorTable, poDS->nColorElems,
                            nColorTableSize, poDS->fp ) != (size_t)nColorTableSize )
             {
