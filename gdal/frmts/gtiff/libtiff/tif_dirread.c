@@ -4788,12 +4788,13 @@ TIFFFetchDirectory(TIFF* tif, uint64 diroff, TIFFDirEntry** pdir,
 		}
 	} else {
 		tmsize_t m;
-		tmsize_t off = (tmsize_t) tif->tif_diroff;
-		if ((uint64)off!=tif->tif_diroff)
+		tmsize_t off;
+		if (tif->tif_diroff > (uint64)TIFF_INT64_MAX)
 		{
 			TIFFErrorExt(tif->tif_clientdata,module,"Can not read TIFF directory count");
 			return(0);
 		}
+		off = (tmsize_t) tif->tif_diroff;
 
 		/*
 		 * Check for integer overflow when validating the dir_off,
