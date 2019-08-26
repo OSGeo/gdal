@@ -30,7 +30,7 @@
 ###############################################################################
 
 from osgeo import ogr
-
+from osgeo import gdal
 
 import gdaltest
 import pytest
@@ -54,18 +54,44 @@ def test_ogr_sosi_1():
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
+###############################################################################
+# test using no appendFieldsMap
 
-# test that -oo appendFieldsMap 
 def test_ogr_sosi_2():
+	ds = gdal.OpenEx('data/test_duplicate_fields.sos',open_options=[])
+	lyr = ds.GetLayer(0)
+	assert lyr.GetFeatureCount() == 17
+	lyr = ds.GetLayer(1)
+	assert lyr.GetFeatureCount() == 1
+	f = lyr.GetNextFeature()
+	print(f)
+	assert f['REINBEITEBRUKERID'] == 'YD'
 
-    if ogr.GetDriverByName('SOSI') is None:
-        pytest.skip()
 
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
+###############################################################################
+# test using simple open_options appendFieldsMap 
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_duplicate_fields.sos -oo appendFieldsMap="BEITEBRUKERID&OPPHAV"')
+def test_ogr_sosi_3():
+	ds = gdal.OpenEx('data/test_duplicate_fields.sos',open_options=['appendFieldsMap=BEITEBRUKERID&OPPHAV'])
+	lyr = ds.GetLayer(0)
+	assert lyr.GetFeatureCount() == 17
+	lyr = ds.GetLayer(1)
+	assert lyr.GetFeatureCount() == 1
+	f = lyr.GetNextFeature()
+	print(f)
+	assert f['REINBEITEBRUKERID'] == 'YD,YG'
+    
 
-    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+###############################################################################
+# test using simple open_options appendFieldsMap with semicolumns 
 
+def test_ogr_sosi_4():
+	ds = gdal.OpenEx('data/test_duplicate_fields.sos',open_options=['appendFieldsMap=BEITEBRUKERID:;&OPPHAV:;'])
+	lyr = ds.GetLayer(0)
+	assert lyr.GetFeatureCount() == 17
+	lyr = ds.GetLayer(1)
+	assert lyr.GetFeatureCount() == 1
+	f = lyr.GetNextFeature()
+	print(f)
+	assert f['REINBEITEBRUKERID'] == 'YD;YG'
+    
