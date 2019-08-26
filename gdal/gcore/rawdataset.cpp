@@ -47,6 +47,7 @@
 #include "cpl_string.h"
 #include "cpl_virtualmem.h"
 #include "cpl_vsi.h"
+#include "cpl_safemaths.hpp"
 #include "gdal.h"
 #include "gdal_priv.h"
 
@@ -1290,10 +1291,20 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
          (pszCheck && CPLTestBool(pszCheck))) &&
         !(pszCheck && !CPLTestBool(pszCheck)) )
     {
-        vsi_l_offset nExpectedFileSize =
-            nHeaderSize + nBandOffset * (nBands - 1) +
-            (nYSize-1) * static_cast<vsi_l_offset>(nLineOffset) +
-            (nXSize-1) * static_cast<vsi_l_offset>(nPixelOffset);
+        vsi_l_offset nExpectedFileSize;
+        try
+        {
+            nExpectedFileSize =
+                (CPLSM(static_cast<GUInt64>(nHeaderSize)) +
+                CPLSM(static_cast<GUInt64>(nBandOffset)) * CPLSM(static_cast<GUInt64>(nBands - 1)) +
+                (nLineOffset >= 0 ? CPLSM(static_cast<GUInt64>(nYSize-1)) * CPLSM(static_cast<GUInt64>(nLineOffset)) : CPLSM(static_cast<GUInt64>(0))) +
+                (nPixelOffset >= 0 ? CPLSM(static_cast<GUInt64>(nXSize-1)) * CPLSM(static_cast<GUInt64>(nPixelOffset)) : CPLSM(static_cast<GUInt64>(0)))).v();
+        }
+        catch( ... )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Image file is too small");
+            return false;
+        }
         CPL_IGNORE_RET_VAL( VSIFSeekL(fp, 0, SEEK_END) );
         vsi_l_offset nFileSize = VSIFTellL(fp);
         // Do not strictly compare against nExpectedFileSize, but use an arbitrary
