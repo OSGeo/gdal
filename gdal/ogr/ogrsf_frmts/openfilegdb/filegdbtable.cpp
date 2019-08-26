@@ -1223,11 +1223,11 @@ vsi_l_offset FileGDBTable::GetOffsetInTableForRow(int iRow)
         nCountBlocksBeforeIBlockIdx = iBlock;
         nCountBlocksBeforeIBlockValue = nCountBlocksBefore;
         int iCorrectedRow = nCountBlocksBefore * 1024 + (iRow % 1024);
-        VSIFSeekL(fpTableX, 16 + nTablxOffsetSize * iCorrectedRow, SEEK_SET);
+        VSIFSeekL(fpTableX, 16 + static_cast<vsi_l_offset>(nTablxOffsetSize) * iCorrectedRow, SEEK_SET);
     }
     else
     {
-        VSIFSeekL(fpTableX, 16 + nTablxOffsetSize * iRow, SEEK_SET);
+        VSIFSeekL(fpTableX, 16 + static_cast<vsi_l_offset>(nTablxOffsetSize) * iRow, SEEK_SET);
     }
 
     GByte abyBuffer[6];
