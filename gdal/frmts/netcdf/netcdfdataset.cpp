@@ -3639,7 +3639,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                             xMinMax[0] = xMinMax[0] * satelliteHeight * 0.000001;
                             xMinMax[1] = xMinMax[1] * satelliteHeight * 0.000001;
                         }
-                        else if( EQUAL( szUnits, "rad" ) )
+                        else if( EQUAL( szUnits, "rad" ) || EQUAL( szUnits, "radian" ) )
                         {
                             xMinMax[0] = xMinMax[0] * satelliteHeight;
                             xMinMax[1] = xMinMax[1] * satelliteHeight;
@@ -3657,7 +3657,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                             yMinMax[0] = yMinMax[0] * satelliteHeight * 0.000001;
                             yMinMax[1] = yMinMax[1] * satelliteHeight * 0.000001;
                         }
-                        else if( EQUAL( szUnits, "rad" ) )
+                        else if( EQUAL( szUnits, "rad" ) || EQUAL( szUnits, "radian" ) )
                         {
                             yMinMax[0] = yMinMax[0] * satelliteHeight;
                             yMinMax[1] = yMinMax[1] * satelliteHeight;
