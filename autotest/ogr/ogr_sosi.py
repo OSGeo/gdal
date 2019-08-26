@@ -58,13 +58,16 @@ def test_ogr_sosi_1():
 # test using no appendFieldsMap
 
 def test_ogr_sosi_2():
+
+    if ogr.GetDriverByName('SOSI') is None:
+        pytest.skip()
+
 	ds = gdal.OpenEx('data/test_duplicate_fields.sos',open_options=[])
 	lyr = ds.GetLayer(0)
 	assert lyr.GetFeatureCount() == 17
 	lyr = ds.GetLayer(1)
 	assert lyr.GetFeatureCount() == 1
 	f = lyr.GetNextFeature()
-	print(f)
 	assert f['REINBEITEBRUKERID'] == 'YD'
 
 
@@ -72,13 +75,16 @@ def test_ogr_sosi_2():
 # test using simple open_options appendFieldsMap 
 
 def test_ogr_sosi_3():
+
+    if ogr.GetDriverByName('SOSI') is None:
+        pytest.skip()
+
 	ds = gdal.OpenEx('data/test_duplicate_fields.sos',open_options=['appendFieldsMap=BEITEBRUKERID&OPPHAV'])
 	lyr = ds.GetLayer(0)
 	assert lyr.GetFeatureCount() == 17
 	lyr = ds.GetLayer(1)
 	assert lyr.GetFeatureCount() == 1
 	f = lyr.GetNextFeature()
-	print(f)
 	assert f['REINBEITEBRUKERID'] == 'YD,YG'
     
 
@@ -86,12 +92,15 @@ def test_ogr_sosi_3():
 # test using simple open_options appendFieldsMap with semicolumns 
 
 def test_ogr_sosi_4():
+
+    if ogr.GetDriverByName('SOSI') is None:
+        pytest.skip()
+        
 	ds = gdal.OpenEx('data/test_duplicate_fields.sos',open_options=['appendFieldsMap=BEITEBRUKERID:;&OPPHAV:;'])
 	lyr = ds.GetLayer(0)
 	assert lyr.GetFeatureCount() == 17
 	lyr = ds.GetLayer(1)
 	assert lyr.GetFeatureCount() == 1
 	f = lyr.GetNextFeature()
-	print(f)
 	assert f['REINBEITEBRUKERID'] == 'YD;YG'
     
