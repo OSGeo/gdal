@@ -1891,9 +1891,9 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
         {
             GUIntBig x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
-            x --;
+            x = CPLUnsanitizedAdd<GUIntBig>(x, -1);
             ReadVarUInt64NoCheck(pabyCur, y);
-            y --;
+            y = CPLUnsanitizedAdd<GUIntBig>(y, -1);
             psOutFeatureEnvelope->MinX = x / poGeomField->dfXYScale + poGeomField->dfXOrigin;
             psOutFeatureEnvelope->MinY = y / poGeomField->dfXYScale + poGeomField->dfYOrigin;
             psOutFeatureEnvelope->MaxX = psOutFeatureEnvelope->MinX;
