@@ -754,6 +754,14 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 
         CPLString osDSName;
 
+        if( psFile->pasSegmentInfo[iSegment].nSegmentSize <
+                nJPEGStart - psFile->pasSegmentInfo[iSegment].nSegmentStart )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Corrupted segment size" );
+            delete poDS;
+            return nullptr;
+        }
+
         osDSName.Printf( "JPEG_SUBFILE:Q%d," CPL_FRMT_GUIB ","
                          CPL_FRMT_GUIB ",%s",
                          poDS->nQLevel, nJPEGStart,

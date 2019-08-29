@@ -1223,11 +1223,11 @@ vsi_l_offset FileGDBTable::GetOffsetInTableForRow(int iRow)
         nCountBlocksBeforeIBlockIdx = iBlock;
         nCountBlocksBeforeIBlockValue = nCountBlocksBefore;
         int iCorrectedRow = nCountBlocksBefore * 1024 + (iRow % 1024);
-        VSIFSeekL(fpTableX, 16 + nTablxOffsetSize * iCorrectedRow, SEEK_SET);
+        VSIFSeekL(fpTableX, 16 + static_cast<vsi_l_offset>(nTablxOffsetSize) * iCorrectedRow, SEEK_SET);
     }
     else
     {
-        VSIFSeekL(fpTableX, 16 + nTablxOffsetSize * iRow, SEEK_SET);
+        VSIFSeekL(fpTableX, 16 + static_cast<vsi_l_offset>(nTablxOffsetSize) * iRow, SEEK_SET);
     }
 
     GByte abyBuffer[6];
@@ -1891,9 +1891,9 @@ int FileGDBTable::GetFeatureExtent(const OGRField* psField,
         {
             GUIntBig x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
-            x --;
+            x = CPLUnsanitizedAdd<GUIntBig>(x, -1);
             ReadVarUInt64NoCheck(pabyCur, y);
-            y --;
+            y = CPLUnsanitizedAdd<GUIntBig>(y, -1);
             psOutFeatureEnvelope->MinX = x / poGeomField->dfXYScale + poGeomField->dfXOrigin;
             psOutFeatureEnvelope->MinY = y / poGeomField->dfXYScale + poGeomField->dfYOrigin;
             psOutFeatureEnvelope->MaxX = psOutFeatureEnvelope->MinX;

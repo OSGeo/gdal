@@ -173,6 +173,26 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
       }
       break;
 
+      case 101:
+        // Embedded objects mark the end of meaningful DXF data
+        // See http://docs.autodesk.com/ACDMAC/2016/ENU/ObjectARX_Dev_Guide/files/GUID-C953866F-A335-4FFD-AE8C-256A76065552.htm
+      {
+          char szLineBuf[257];
+          // Eat the rest of this entity
+          while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 &&
+              nCode > 0 );
+
+          if( nCode < 0 )
+          {
+              // Let the entity reader function discover this error for itself
+              return;
+          }
+
+          if( nCode == 0 )
+              poDS->UnreadValue();
+      }
+      break;
+
       case 60:
         poFeature->oStyleProperties["Hidden"] = pszValue;
         break;
@@ -1163,6 +1183,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     if(nPolylineFlag & 0x01)
         smoothPolyline.Close();
 
+    smoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
     poFeature->ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
@@ -1434,6 +1455,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
     if(nPolylineFlag & 0x01)
         smoothPolyline.Close();
 
+    smoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
 
     if( (nPolylineFlag & 8) == 0 )
@@ -1725,7 +1747,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                   dfRadius, dfRadius, 0.0,
                                                   0.0, 360.0,
-                                                  0.0 )->toLineString();
+                                                  0.0, poDS->InlineBlocks() )->toLineString();
 
     const int nPoints = poCircle->getNumPoints();
 
@@ -1940,13 +1962,15 @@ OGRDXFFeature *OGRDXFLayer::TranslateELLIPSE()
 
     if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
     {
+        // Only honor OGR_DXF_MAX_GAP if this geometry isn't at risk of
+        // being enlarged or shrunk as part of a block insertion.
         OGRGeometry *poEllipse =
             OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                     dfPrimaryRadius,
                                                     dfSecondaryRadius,
                                                     dfRotation,
                                                     dfStartAngle, dfEndAngle,
-                                                    0.0 );
+                                                    0.0, poDS->InlineBlocks() );
 
         if( !bHaveZ )
             poEllipse->flattenTo2D();
@@ -2044,7 +2068,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateARC()
             OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                     dfRadius, dfRadius, 0.0,
                                                     dfStartAngle, dfEndAngle,
-                                                    0.0 );
+                                                    0.0, poDS->InlineBlocks() );
         if( !bHaveZ )
             poArc->flattenTo2D();
 

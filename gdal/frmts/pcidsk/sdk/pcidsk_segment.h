@@ -56,6 +56,7 @@ namespace PCIDSK
         virtual std::string GetName() = 0;
         virtual std::string GetDescription() = 0;
         virtual int         GetSegmentNumber() = 0;
+        virtual bool        IsContentSizeValid() const = 0;
         virtual uint64      GetContentSize() = 0;
         virtual bool        IsAtEOF() = 0;
 

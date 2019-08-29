@@ -897,7 +897,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         }
 
         // Offset by the minimum value.
-        nDataValue += nDataMin;
+        nDataValue = CPLUnsanitizedAdd<int>(nDataValue, nDataMin);
 
         // Now apply to the output buffer in a type specific way.
         if( nRepeatCount > INT_MAX - nPixelsOutput ||

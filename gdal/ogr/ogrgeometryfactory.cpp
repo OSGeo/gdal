@@ -3871,6 +3871,15 @@ static double OGRGF_GetDefaultStepSize()
 }
 
 /************************************************************************/
+/*                              DISTANCE()                              */
+/************************************************************************/
+
+static inline double DISTANCE(double x1, double y1, double x2, double y2)
+{
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
+
+/************************************************************************/
 /*                        approximateArcAngles()                        */
 /************************************************************************/
 
@@ -3884,6 +3893,11 @@ static double OGRGF_GetDefaultStepSize()
  * used.  This is currently 4 degrees unless the user has overridden the
  * value with the OGR_ARC_STEPSIZE configuration variable.
  *
+ * If the OGR_ARC_MAX_GAP configuration variable is set, the straight-line
+ * distance between adjacent pairs of interpolated points will be limited to
+ * the specified distance. If the distance between a pair of points exceeds
+ * this maximum, additional points are interpolated between the two points.
+ *
  * @see CPLSetConfigOption()
  *
  * @param dfCenterX center X
@@ -3896,6 +3910,7 @@ static double OGRGF_GetDefaultStepSize()
  * @param dfEndAngle angle to last point on arc (clockwise of X-positive)
  * @param dfMaxAngleStepSizeDegrees the largest step in degrees along the
  * arc, zero to use the default setting.
+ * @param bUseMaxGap Optional: whether to honor OGR_ARC_MAX_GAP.
  *
  * @return OGRLineString geometry representing an approximation of the arc.
  *
@@ -3906,7 +3921,7 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
     double dfCenterX, double dfCenterY, double dfZ,
     double dfPrimaryRadius, double dfSecondaryRadius, double dfRotation,
     double dfStartAngle, double dfEndAngle,
-    double dfMaxAngleStepSizeDegrees )
+    double dfMaxAngleStepSizeDegrees, const bool bUseMaxGap /* = false */ )
 
 {
     OGRLineString *poLine = new OGRLineString();
@@ -3917,6 +3932,13 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
     {
         dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
     }
+
+    // Determine maximum interpolation gap. This is the largest straight-line
+    // distance allowed between pairs of interpolated points. Default zero,
+    // meaning no gap.
+    const double dfMaxInterpolationGap = bUseMaxGap ?
+        CPLAtofM(CPLGetConfigOption("OGR_ARC_MAX_GAP", "0")) :
+        0.0;
 
     // Is this a full circle?
     const bool bIsFullCircle = fabs( dfEndAngle - dfStartAngle ) == 360.0;
@@ -3939,6 +3961,9 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
 /* -------------------------------------------------------------------- */
 /*      Compute the interpolated points.                                */
 /* -------------------------------------------------------------------- */
+    double dfLastX = 0.0;
+    double dfLastY = 0.0;
+    int nTotalAddPoints = 0;
     for( int iPoint = 0; iPoint < nVertexCount; iPoint++ )
     {
         const double dfAngleOnEllipse =
@@ -3947,6 +3972,50 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
         // Compute position on the unrotated ellipse.
         const double dfEllipseX = cos(dfAngleOnEllipse) * dfPrimaryRadius;
         const double dfEllipseY = sin(dfAngleOnEllipse) * dfSecondaryRadius;
+
+        // Is this point too far from the previous point?
+        if( iPoint && dfMaxInterpolationGap != 0.0 )
+        {
+            const double dfDistFromLast =
+                DISTANCE(dfLastX, dfLastY, dfEllipseX, dfEllipseY);
+
+            if( dfDistFromLast > dfMaxInterpolationGap )
+            {
+                const int nAddPoints =
+                    static_cast<int>( dfDistFromLast / dfMaxInterpolationGap );
+                const double dfAddSlice = dfSlice / (nAddPoints + 1);
+
+                // Interpolate additional points
+                for( int iAddPoint = 0; iAddPoint < nAddPoints; iAddPoint++ )
+                {
+                    const double dfAddAngleOnEllipse = (dfStartAngle +
+                        (iPoint - 1) * dfSlice +
+                        (iAddPoint + 1) * dfAddSlice) * (M_PI / 180.0);
+
+                    poLine->setPoint( iPoint + nTotalAddPoints + iAddPoint,
+                        cos(dfAddAngleOnEllipse) * dfPrimaryRadius,
+                        sin(dfAddAngleOnEllipse) * dfSecondaryRadius,
+                        dfZ );
+                }
+
+                nTotalAddPoints += nAddPoints;
+            }
+        }
+
+        poLine->setPoint( iPoint + nTotalAddPoints,
+            dfEllipseX, dfEllipseY, dfZ );
+        dfLastX = dfEllipseX;
+        dfLastY = dfEllipseY;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Rotate and translate the ellipse.                               */
+/* -------------------------------------------------------------------- */
+    nVertexCount = poLine->getNumPoints();
+    for( int iPoint = 0; iPoint < nVertexCount; iPoint++ )
+    {
+        const double dfEllipseX = poLine->getX( iPoint );
+        const double dfEllipseY = poLine->getY( iPoint );
 
         // Rotate this position around the center of the ellipse.
         const double dfArcX = dfCenterX
@@ -4618,11 +4687,6 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
 /************************************************************************/
 /*                         GetCurveParmeters()                          */
 /************************************************************************/
-
-static inline double DISTANCE(double x1, double y1, double x2, double y2)
-{
-    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-}
 
 /**
  * \brief Returns the parameter of an arc circle.

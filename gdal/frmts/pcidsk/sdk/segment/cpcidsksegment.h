@@ -71,6 +71,7 @@ namespace PCIDSK
         std::string GetName() override { return segment_name; }
         std::string GetDescription() override;
         int         GetSegmentNumber() override { return segment; }
+        bool        IsContentSizeValid() const override { return data_size >= 1024; }
         uint64      GetContentSize() override { return data_size - 1024; }
         bool        IsAtEOF() override;
 

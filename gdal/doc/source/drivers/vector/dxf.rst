@@ -147,10 +147,14 @@ styles.
 
 The approximation of arcs, ellipses, circles and rounded polylines as
 linestrings is done by splitting the arcs into subarcs of no more than a
-threshold angle. This angle is the OGR_ARC_STEPSIZE. This defaults to
-four degrees, but may be overridden by setting the configuration
-variable OGR_ARC_STEPSIZE. For splines, the interpolated polyline
-contains eight vertices for each control point.
+threshold angle. This angle is set using the OGR_ARC_STEPSIZE
+configuration option. This defaults to 4 degrees. You can also set the
+OGR_ARC_MAX_GAP configuration option to enforce a maximum distance
+between adjacent points on the interpolated curve. Setting this option
+to 0 (the default) means no maximum distance applies.
+
+For splines, the interpolated polyline contains eight vertices for each
+control point.
 
 Object coordinate systems (OCS), also known as "extrusions", are
 supported for all entities to which they apply as per the DXF

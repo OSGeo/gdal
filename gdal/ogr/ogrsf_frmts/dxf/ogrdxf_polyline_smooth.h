@@ -101,10 +101,11 @@ private:
     mutable bool                         m_blinestringstarted;
     bool                                 m_bClosed;
     int                                  m_dim;
+    bool                                 m_bUseMaxGapWhenTessellatingArcs;
 
 public:
     DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),
-                          m_dim(2) { }
+                          m_dim(2), m_bUseMaxGapWhenTessellatingArcs(false) { }
 
     OGRGeometry* Tesselate() const;  // TODO: Spelling.
 
@@ -123,10 +124,13 @@ public:
 
     void setCoordinateDimension( int n ) { m_dim = n; }
 
+    void SetUseMaxGapWhenTessellatingArcs( bool bVal )
+    { m_bUseMaxGapWhenTessellatingArcs = bVal; }
+
 private:
-    static void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
+    void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
                  double radius, double len, double saggita,
-                 OGRLineString*, double dfZ = 0.0);
+                 OGRLineString*, double dfZ = 0.0) const;
 
     void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
                   OGRLineString*) const;
