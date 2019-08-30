@@ -36,6 +36,7 @@ import gdaltest
 from osgeo import gdal
 from osgeo import osr
 import pytest
+import math
 
 ###############################################################################
 # Test simple Geotransform based transformer.
@@ -739,13 +740,14 @@ def test_transformer_no_reverse_method():
 ###############################################################################
 # Test precision of GCP based transformer with thin plate splines and lots of GCPs (2115).
 
-def test_transformer_3():
+def test_transformer_tps_precision():
 
     ds = gdal.Open('data/gcps_2115.vrt')
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
     assert tr, 'tps transformation could not be computed'
     
     success = True
+    maxDiffResult = 0.0
     for gcp in ds.GetGCPs():
         (s, result) = tr.TransformPoint(0, gcp.GCPPixel, gcp.GCPLine)
         success &= s
