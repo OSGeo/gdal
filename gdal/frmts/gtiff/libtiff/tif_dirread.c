@@ -5745,9 +5745,21 @@ static void allocChoppedUpStripArrays(TIFF* tif, uint32 nstrips,
     TIFFDirectory *td = &tif->tif_dir;
     uint64 bytecount;
     uint64 offset;
+    uint64 last_offset;
+    uint64 last_bytecount;
     uint32 i;
     uint64 *newcounts;
     uint64 *newoffsets;
+
+    offset = TIFFGetStrileOffset(tif, 0);
+    last_offset = TIFFGetStrileOffset(tif, td->td_nstrips-1);
+    last_bytecount = TIFFGetStrileByteCount(tif, td->td_nstrips-1);
+    if( last_offset > TIFF_UINT64_MAX - last_bytecount ||
+        last_offset + last_bytecount < offset )
+    {
+        return;
+    }
+    bytecount = last_offset + last_bytecount - offset;
 
     newcounts = (uint64*) _TIFFCheckMalloc(tif, nstrips, sizeof (uint64),
                             "for chopped \"StripByteCounts\" array");
@@ -5769,9 +5781,6 @@ static void allocChoppedUpStripArrays(TIFF* tif, uint32 nstrips,
      * Fill the strip information arrays with new bytecounts and offsets
      * that reflect the broken-up format.
      */
-    offset = TIFFGetStrileOffset(tif, 0);
-    bytecount = TIFFGetStrileOffset(tif, td->td_nstrips-1) +
-                TIFFGetStrileByteCount(tif, td->td_nstrips-1) - offset;
     for (i = 0; i < nstrips; i++)
     {
         if (stripbytes > bytecount)
@@ -5953,12 +5962,16 @@ static void TryChopUpUncompressedBigTiff( TIFF* tif )
     /* If we are going to allocate a lot of memory, make sure that the */
     /* file is as big as needed */
     if( tif->tif_mode == O_RDONLY &&
-        nstrips > 1000000 &&
-        (TIFFGetStrileOffset(tif, td->td_nstrips-1) > TIFFGetFileSize(tif) ||
-         TIFFGetStrileOffset(tif, td->td_nstrips-1) +
-         TIFFGetStrileByteCount(tif, td->td_nstrips-1) > TIFFGetFileSize(tif)) )
+        nstrips > 1000000 )
     {
-        return;
+        uint64 last_offset = TIFFGetStrileOffset(tif, td->td_nstrips-1);
+        uint64 filesize = TIFFGetFileSize(tif);
+        uint64 last_bytecount = TIFFGetStrileByteCount(tif, td->td_nstrips-1);
+        if( last_offset > filesize ||
+            last_bytecount > filesize - last_offset )
+        {
+            return;
+        }
     }
 
     allocChoppedUpStripArrays(tif, nstrips, stripbytes, rowsperstrip);
