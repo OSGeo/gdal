@@ -598,6 +598,8 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
             continue;
         }
 
+        vsi_l_offset nTagValueOffset = poTIFFDirEntry->tdir_offset;
+
 /* -------------------------------------------------------------------- */
 /*      For UserComment we need to ignore the language binding and      */
 /*      just return the actual contents.                                */
@@ -609,7 +611,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
             if( poTIFFDirEntry->tdir_count >= 8 )
             {
                 poTIFFDirEntry->tdir_count -= 8;
-                poTIFFDirEntry->tdir_offset += 8;
+                nTagValueOffset += 8;
             }
         }
 
@@ -694,7 +696,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
             unsigned char *data = static_cast<unsigned char *>(VSIMalloc(space));
 
             if (data) {
-                CPL_IGNORE_RET_VAL(VSIFSeekL(fp,static_cast<vsi_l_offset>(poTIFFDirEntry->tdir_offset)+nTIFFHEADER,SEEK_SET));
+                CPL_IGNORE_RET_VAL(VSIFSeekL(fp,nTagValueOffset+nTIFFHEADER,SEEK_SET));
                 CPL_IGNORE_RET_VAL(VSIFReadL(data, 1, space, fp));
 
                 if (bSwabflag) {
