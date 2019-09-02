@@ -175,12 +175,13 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
         auto r1 = oMapPixelLineToIdx.emplace(afPL, iGCP);
         if( !r1.second )
         {
-            if( afXY == r1.first->first )
+            int i = r1.first->second;
+            if( afXY.first == pasGCPList[i].dfGCPX &&
+                afXY.second == pasGCPList[i].dfGCPY )
             {
                 continue;
             }
             bOK = false;
-            int i = r1.first->second;
             CPLError(CE_Failure, CPLE_AppDefined,
                      "GCP %d and %d have same (pixel,line)=(%f,%f), "
                      "but different (X,Y): (%f,%f) vs (%f,%f)",

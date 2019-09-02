@@ -45,6 +45,7 @@
 #include "armadillo_headers.h"
 #endif
 
+#include <cstdio>
 #include <cassert>
 
 CPL_CVSID("$Id$")
@@ -60,8 +61,6 @@ namespace
         if(eps < 0) return false;
         int const m = A.getNumRows();
         int const n = RHS.getNumCols();
-        // std::abs(double &) is ambiguous
-        GDALMatrix const & cA = const_cast<GDALMatrix const &>(A);
         // row permutations
         std::vector<int> perm(m);
         for(int iRow = 0; iRow < m; ++iRow)
@@ -71,13 +70,13 @@ namespace
         {
             // determine pivot element
             int iMax = step;
-            double dMax = std::abs(cA(step, step));
+            double dMax = std::abs(A(step, step));
             for(int i = step + 1; i < m; ++i)
             {
-                if(std::abs(cA(i, step)) > dMax)
+                if(std::abs(A(i, step)) > dMax)
                 {
                     iMax = i;
-                    dMax = std::abs(cA(i, step));
+                    dMax = std::abs(A(i, step));
                 }
             }
             if(dMax <= eps)
