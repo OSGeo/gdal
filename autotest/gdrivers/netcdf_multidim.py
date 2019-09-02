@@ -568,9 +568,6 @@ def test_netcdf_multidim_create_nc3(netcdf_setup):  # noqa
         assert dim_x.GetName() == 'X'
         assert dim_x.GetSize() == 2
 
-        with gdaltest.error_handler():
-            assert not rg.CreateDimension('too_small', None, None, 0)
-
         dim_y_unlimited = rg.CreateDimension('Y', None, None, 123, ['UNLIMITED=YES'])
         assert dim_y_unlimited
         assert dim_y_unlimited.GetSize() == 123
@@ -1163,3 +1160,39 @@ def test_netcdf_multidim_create_several_arrays_with_srs(netcdf_setup):  # noqa
     read()
 
     gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_multidim_create_dim_zero(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    tmpfilename = 'tmp/test_netcdf_multidim_create_dim_zero_in.nc'
+
+    def create():
+        drv = gdal.GetDriverByName('netCDF')
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+        dim_zero = rg.CreateDimension('dim_zero', None, None, 0)
+        assert dim_zero
+        ar = rg.CreateMDArray('ar', [dim_zero],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        assert ar
+
+    create()
+
+    tmpfilename2 = 'tmp/test_netcdf_multidim_create_dim_zero_out.nc'
+
+    def copy():
+        out_ds = gdal.MultiDimTranslate(tmpfilename2, tmpfilename, format = 'netCDF')
+        assert out_ds
+        rg = out_ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray('ar')
+        assert ar
+
+    copy()
+
+    assert gdal.MultiDimInfo(tmpfilename2, detailed = True)
+
+    gdal.Unlink(tmpfilename)
+    gdal.Unlink(tmpfilename2)

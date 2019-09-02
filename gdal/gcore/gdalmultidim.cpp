@@ -1434,6 +1434,8 @@ std::vector<size_t> GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunk
             nChunkSize *= sizeDimI;
         }
     }
+    if( nChunkSize == 0 )
+        return anChunkSize;
 
     // If the product of all anChunkSize[i] does not fit on size_t, then
     // set lowest anChunkSize[i] to 1.
@@ -2731,7 +2733,8 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset* poSrcDS,
             nCurCost += copyFunc.nTotalBytesThisArray;
             return false;
         }
-        if( !const_cast<GDALMDArray*>(poSrcArray)->
+        if( copyFunc.nTotalBytesThisArray != 0 &&
+            !const_cast<GDALMDArray*>(poSrcArray)->
                 ProcessPerChunk(arrayStartIdx.data(), count.data(),
                                 anChunkSizes.data(),
                                 CopyFunc::f, &copyFunc) &&

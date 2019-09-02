@@ -585,8 +585,6 @@ def test_mem_md_invalid_dims():
     rg = ds.GetRootGroup()
     assert rg.CreateDimension("dim1", None, None, 1)
     with gdaltest.error_handler():
-        # size 0
-        assert not rg.CreateDimension("dim0", None, None, 0)
         # empty name
         assert not rg.CreateDimension("", None, None, 1)
         # existing dim
