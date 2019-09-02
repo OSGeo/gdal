@@ -177,7 +177,7 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
         {
             int i = r1.first->second;
             if( afXY.first == pasGCPList[i].dfGCPX &&
-                afXY.second == pasGCPList[i].dfGCPY ) )
+                afXY.second == pasGCPList[i].dfGCPY )
             {
                 continue;
             }
