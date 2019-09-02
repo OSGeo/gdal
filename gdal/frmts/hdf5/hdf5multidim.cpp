@@ -2067,29 +2067,16 @@ std::shared_ptr<GDALMDArray> HDF5Dimension::GetIndexingVariable() const
 
 GDALDataset *HDF5Dataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 {
-    const char* pszFilename;
-    hid_t hHDF5;
-    if( STARTS_WITH(poOpenInfo->pszFilename, "HDF5_FAMILY:") )
-    {
-        pszFilename = poOpenInfo->pszFilename + strlen("HDF5_FAMILY:");
-        hid_t new_fapl = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_family(new_fapl, (hsize_t) 0, H5P_DEFAULT);
-        hHDF5 = H5Fopen(pszFilename, H5F_ACC_RDONLY, new_fapl);
-        H5Pclose(new_fapl);
-    }
-    else
-    {
-        pszFilename =
-            STARTS_WITH(poOpenInfo->pszFilename, "HDF5:") ?
-                poOpenInfo->pszFilename + strlen("HDF5:") :
-                poOpenInfo->pszFilename;
+    const char* pszFilename =
+        STARTS_WITH(poOpenInfo->pszFilename, "HDF5:") ?
+            poOpenInfo->pszFilename + strlen("HDF5:") :
+            poOpenInfo->pszFilename;
 
-        // Try opening the dataset.
-        hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
-        hHDF5 = H5Fopen(pszFilename, H5F_ACC_RDONLY, fapl);
-        H5Pclose(fapl);
-    }
+    // Try opening the dataset.
+    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
+    auto hHDF5 = H5Fopen(pszFilename, H5F_ACC_RDONLY, fapl);
+    H5Pclose(fapl);
 
     if( hHDF5 < 0 )
     {
