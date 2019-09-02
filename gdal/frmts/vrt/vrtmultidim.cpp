@@ -168,7 +168,7 @@ bool VRTGroup::XMLInit(const std::shared_ptr<VRTGroup>& poRoot,
         else if ( psIter->eType == CXT_Element &&
                   strcmp(psIter->pszValue, "Dimension") == 0 )
         {
-            auto poDim = VRTDimension::Create(poThisGroup, GetFullName(), psIter);
+            auto poDim = VRTDimension::Create(poThisGroup, poThisGroup->GetFullName(), psIter);
             if( !poDim )
             {
                 m_bDirty = false;
@@ -179,7 +179,7 @@ bool VRTGroup::XMLInit(const std::shared_ptr<VRTGroup>& poRoot,
         else if ( psIter->eType == CXT_Element &&
                   strcmp(psIter->pszValue, "Attribute") == 0 )
         {
-            auto poAttr = VRTAttribute::Create(GetFullName(), psIter);
+            auto poAttr = VRTAttribute::Create(poThisGroup->GetFullName(), psIter);
             if( !poAttr )
             {
                 m_bDirty = false;
@@ -191,7 +191,7 @@ bool VRTGroup::XMLInit(const std::shared_ptr<VRTGroup>& poRoot,
                   strcmp(psIter->pszValue, "Array") == 0 )
         {
             auto poArray = VRTMDArray::Create(
-                poThisGroup, GetFullName(), psIter);
+                poThisGroup, poThisGroup->GetFullName(), psIter);
             if( !poArray )
             {
                 m_bDirty = false;
