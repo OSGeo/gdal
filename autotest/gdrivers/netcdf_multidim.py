@@ -1196,3 +1196,37 @@ def test_netcdf_multidim_create_dim_zero(netcdf_setup):  # noqa
 
     gdal.Unlink(tmpfilename)
     gdal.Unlink(tmpfilename2)
+
+
+def test_netcdf_multidim_dims_with_same_name_different_size(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.OpenEx("""<VRTDataset>
+    <Group name="/">
+        <Array name="X">
+            <DataType>Float64</DataType>
+            <Dimension name="dim0" size="2"/>
+        </Array>
+        <Array name="Y">
+            <DataType>Float64</DataType>
+            <Dimension name="dim0" size="3"/>
+        </Array>
+    </Group>
+</VRTDataset>""", gdal.OF_MULTIDIM_RASTER)
+
+    tmpfilename = 'tmp/test_netcdf_multidim_dims_with_same_name_different_size.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds)
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar_x = rg.OpenMDArray('X')
+        assert ar_x.GetDimensions()[0].GetSize() == 2
+        ar_y = rg.OpenMDArray('Y')
+        assert ar_y.GetDimensions()[0].GetSize() == 3
+
+    check()
+
+    gdal.Unlink(tmpfilename)

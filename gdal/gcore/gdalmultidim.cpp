@@ -535,27 +535,44 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
             {
                 auto dstDim = poDstRootGroup->OpenDimensionFromFullname(
                                                         dim->GetFullName());
-                if( dstDim )
+                if( dstDim && dstDim->GetSize() == dim->GetSize() )
                 {
                     dstArrayDims.emplace_back(dstDim);
                 }
                 else
                 {
                     auto oIter = mapExistingDstDims.find(dim->GetName());
-                    if( oIter == mapExistingDstDims.end() )
+                    if( oIter != mapExistingDstDims.end() &&
+                        oIter->second->GetSize() == dim->GetSize() )
                     {
-                        dstDim = CreateDimension(dim->GetName(),
+                        dstArrayDims.emplace_back(oIter->second);
+                    }
+                    else
+                    {
+                        std::string newDimName;
+                        if( oIter == mapExistingDstDims.end() )
+                        {
+                            newDimName = dim->GetName();
+                        }
+                        else
+                        {
+                            std::string newDimNamePrefix(name + '_' + dim->GetName());
+                            newDimName = newDimNamePrefix;
+                            int nIterCount = 2;
+                            while( mapExistingDstDims.find(newDimName) != mapExistingDstDims.end() )
+                            {
+                                newDimName = newDimNamePrefix + CPLSPrintf("_%d", nIterCount);
+                                nIterCount ++;
+                            }
+                        }
+                        dstDim = CreateDimension(newDimName,
                                                         dim->GetType(),
                                                         dim->GetDirection(),
                                                         dim->GetSize());
                         if( !dstDim )
                             return false;
-                        mapExistingDstDims[dim->GetName()] = dstDim;
+                        mapExistingDstDims[newDimName] = dstDim;
                         dstArrayDims.emplace_back(dstDim);
-                    }
-                    else
-                    {
-                        dstArrayDims.emplace_back(oIter->second);
                     }
                 }
             }
@@ -621,6 +638,8 @@ const GDALGroup* GDALGroup::GetInnerMostGroup(
                                         std::shared_ptr<GDALGroup>& curGroupHolder,
                                         std::string& osLastPart) const
 {
+    if( osPathOrArrayOrDim.empty() || osPathOrArrayOrDim[0] != '/' )
+        return nullptr;
     const GDALGroup* poCurGroup = this;
     CPLStringList aosTokens(CSLTokenizeString2(
         osPathOrArrayOrDim.c_str(), "/", 0));

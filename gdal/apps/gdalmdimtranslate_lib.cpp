@@ -369,6 +369,7 @@ struct DimensionDesc
     GUInt64 nStartIdx = 0;
     GUInt64 nStep = 1;
     GUInt64 nSize = 0;
+    GUInt64 nOriSize = 0;
     bool    bSlice = false;
 };
 
@@ -381,13 +382,17 @@ static const DimensionDesc* GetDimensionDesc(DimensionRemapper& oDimRemapper,
                             const GDALMultiDimTranslateOptions *psOptions,
                             const std::shared_ptr<GDALDimension>& poDim)
 {
-    auto oIter = oDimRemapper.oMap.find(poDim->GetFullName());
-    if( oIter != oDimRemapper.oMap.end() )
+    std::string osKey(poDim->GetFullName());
+    osKey += CPLSPrintf("_" CPL_FRMT_GUIB, static_cast<GUIntBig>(poDim->GetSize()));
+    auto oIter = oDimRemapper.oMap.find(osKey);
+    if( oIter != oDimRemapper.oMap.end() &&
+        oIter->second.nOriSize == poDim->GetSize() )
     {
         return &(oIter->second);
     }
     DimensionDesc desc;
     desc.nSize = poDim->GetSize();
+    desc.nOriSize = desc.nSize;
 
     CPLString osRadix(poDim->GetName());
     osRadix += '(';
@@ -601,8 +606,8 @@ static const DimensionDesc* GetDimensionDesc(DimensionRemapper& oDimRemapper,
         }
     }
 
-    oDimRemapper.oMap[poDim->GetFullName()] = desc;
-    return &oDimRemapper.oMap[poDim->GetFullName()];
+    oDimRemapper.oMap[osKey] = desc;
+    return &oDimRemapper.oMap[osKey];
 }
 
 /************************************************************************/
@@ -733,7 +738,8 @@ static bool TranslateArray(DimensionRemapper& oDimRemapper,
                            const std::shared_ptr<GDALGroup>& poDstRootGroup,
                            std::shared_ptr<GDALGroup>& poDstGroup,
                            GDALDataset* poSrcDS,
-                           std::map<std::string, std::shared_ptr<GDALDimension>>& mapExistingDstDims,
+                           std::map<std::string, std::shared_ptr<GDALDimension>>& mapSrcToDstDims,
+                           std::map<std::string, std::shared_ptr<GDALDimension>>& mapDstDimFullNames,
                            const GDALMultiDimTranslateOptions *psOptions)
 {
     std::string srcArrayName;
@@ -759,7 +765,7 @@ static bool TranslateArray(DimensionRemapper& oDimRemapper,
         if( !srcArrayName.empty() && srcArrayName[0] == '/' )
             srcArray = poSrcRootGroup->OpenMDArrayFromFullname(srcArrayName);
         else
-            srcArray = poSrcGroup->OpenMDArrayFromFullname(srcArrayName);
+            srcArray = poSrcGroup->OpenMDArray(srcArrayName);
         if( !srcArray )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -784,6 +790,7 @@ static bool TranslateArray(DimensionRemapper& oDimRemapper,
             return false;
     }
     const auto& srcArrayDims(tmpArray->GetDimensions());
+    std::map<std::shared_ptr<GDALDimension>, std::shared_ptr<GDALDimension>> oMapSubsetDimToSrcDim;
 
     std::vector<GDALMDArray::ViewSpec> viewSpecs;
     if( !viewExpr.empty() )
@@ -842,6 +849,20 @@ static bool TranslateArray(DimensionRemapper& oDimRemapper,
             tmpArray = tmpArray->GetView(viewExpr, false, viewSpecs);
             if( !tmpArray )
                 return false;
+            size_t j = 0;
+            const auto& tmpArrayDims(tmpArray->GetDimensions());
+            for( size_t i = 0; i < srcArrayDims.size(); ++i )
+            {
+                const auto& srcDim(srcArrayDims[i]);
+                const auto poDimDesc = GetDimensionDesc(oDimRemapper, psOptions, srcDim);
+                if( poDimDesc == nullptr )
+                    return false;
+                if( poDimDesc->bSlice )
+                    continue;
+                CPLAssert( j < tmpArrayDims.size() );
+                oMapSubsetDimToSrcDim[tmpArrayDims[j]] = srcDim;
+                j++;
+            }
         }
         else
         {
@@ -872,13 +893,16 @@ static bool TranslateArray(DimensionRemapper& oDimRemapper,
     for( size_t i = 0; i < tmpArrayDims.size(); ++i )
     {
         const auto& srcDim(tmpArrayDims[i]);
+        std::string srcDimFullName(srcDim->GetFullName());
 
         std::shared_ptr<GDALDimension> dstDim;
         {
             CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
             CPLErrorStateBackuper oErrorStateBackuper;
-            dstDim = poDstRootGroup->OpenDimensionFromFullname(
-                                                        srcDim->GetFullName());
+            if( !srcDimFullName.empty() && srcDimFullName[0] == '/' )
+            {
+                dstDim = poDstRootGroup->OpenDimensionFromFullname(srcDimFullName);
+            }
         }
         if( dstDim )
         {
@@ -886,152 +910,180 @@ static bool TranslateArray(DimensionRemapper& oDimRemapper,
             continue;
         }
 
-        auto oIter = mapExistingDstDims.find(srcDim->GetName());
-        if( oIter == mapExistingDstDims.end() ||
-            oIter->second->GetSize() != srcDim->GetSize() )
+        auto oIter = mapSrcToDstDims.find(srcDimFullName);
+        if( oIter != mapSrcToDstDims.end() )
         {
-            std::string newDimName(srcDim->GetName());
-            int nIncr = 2;
-            while( oIter != mapExistingDstDims.end() &&
-                   oIter->second->GetSize() == srcDim->GetSize() )
+            dstArrayDims.emplace_back(oIter->second);
+            continue;
+        }
+        auto oIterRealSrcDim = oMapSubsetDimToSrcDim.find(srcDim);
+        if( oIterRealSrcDim != oMapSubsetDimToSrcDim.end() )
+        {
+            srcDimFullName = oIterRealSrcDim->second->GetFullName();
+            oIter = mapSrcToDstDims.find(srcDimFullName);
+            if( oIter != mapSrcToDstDims.end() )
             {
-                newDimName += CPLSPrintf("_%d", nIncr);
-                nIncr++;
-                oIter = mapExistingDstDims.find(newDimName);
+                dstArrayDims.emplace_back(oIter->second);
+                continue;
             }
+        }
 
-            auto srcDimForGetDimensionDesc(srcDim);
-            if( idxSliceSpec >= 0 )
+        auto srcDimForGetDimensionDesc(srcDim);
+        if( idxSliceSpec >= 0 )
+        {
+            const auto& viewSpec(viewSpecs[idxSliceSpec]);
+            auto iParentDim = viewSpec.m_mapDimIdxToParentDimIdx[i];
+            if( iParentDim != static_cast<size_t>(-1) )
+                srcDimForGetDimensionDesc = srcArrayDims[iParentDim];
+        }
+
+        const auto poDimDesc = GetDimensionDesc(
+            oDimRemapper, psOptions, srcDimForGetDimensionDesc);
+        if( poDimDesc == nullptr )
+            return false;
+
+        std::string newDimNameFullName(srcDimFullName);
+        std::string newDimName(srcDim->GetName());
+        int nIncr = 2;
+        std::string osDstGroupFullName(poDstGroup->GetFullName());
+        if( osDstGroupFullName == "/" )
+            osDstGroupFullName.clear();
+        auto oIter2 = mapDstDimFullNames.find(osDstGroupFullName + '/' + srcDim->GetName());
+        while( oIter2 != mapDstDimFullNames.end() &&
+               oIter2->second->GetSize() != poDimDesc->nSize )
+        {
+            newDimName = srcDim->GetName() + CPLSPrintf("_%d", nIncr);
+            newDimNameFullName =
+                osDstGroupFullName + '/' + srcDim->GetName() + CPLSPrintf("_%d", nIncr);
+            nIncr++;
+            oIter2 = mapDstDimFullNames.find(newDimNameFullName);
+        }
+        if ( oIter2 != mapDstDimFullNames.end() &&
+             oIter2->second->GetSize() == poDimDesc->nSize )
+        {
+            dstArrayDims.emplace_back(oIter2->second);
+            continue;
+        }
+
+        dstDim = poDstGroup->CreateDimension(newDimName,
+                                        srcDim->GetType(),
+                                        srcDim->GetDirection(),
+                                        poDimDesc->nSize);
+        if( !dstDim )
+            return false;
+        if( !srcDimFullName.empty() && srcDimFullName[0] == '/' )
+        {
+            mapSrcToDstDims[srcDimFullName] = dstDim;
+        }
+        mapDstDimFullNames[dstDim->GetFullName()] = dstDim;
+        dstArrayDims.emplace_back(dstDim);
+
+        std::shared_ptr<GDALMDArray> srcIndexVar;
+        GDALMDArray::Range range;
+        range.m_nStartIdx = 0;
+        range.m_nIncr = 1;
+        std::string indexingVarSpec;
+        if( idxSliceSpec >= 0 )
+        {
+            const auto& viewSpec(viewSpecs[idxSliceSpec]);
+            auto iParentDim = viewSpec.m_mapDimIdxToParentDimIdx[i];
+            if( iParentDim != static_cast<size_t>(-1) &&
+                (srcIndexVar = srcArrayDims[iParentDim]->
+                                GetIndexingVariable()) != nullptr &&
+                srcIndexVar->GetDimensionCount() == 1 &&
+                srcIndexVar->GetFullName() != srcArray->GetFullName() )
             {
-                const auto& viewSpec(viewSpecs[idxSliceSpec]);
-                auto iParentDim = viewSpec.m_mapDimIdxToParentDimIdx[i];
-                if( iParentDim != static_cast<size_t>(-1) )
-                    srcDimForGetDimensionDesc = srcArrayDims[iParentDim];
-            }
-
-            const auto poDimDesc = GetDimensionDesc(
-                oDimRemapper, psOptions, srcDimForGetDimensionDesc);
-            if( poDimDesc == nullptr )
-                return false;
-
-            dstDim = poDstGroup->CreateDimension(newDimName,
-                                            srcDim->GetType(),
-                                            srcDim->GetDirection(),
-                                            poDimDesc->nSize);
-            if( !dstDim )
-                return false;
-            mapExistingDstDims[dstDim->GetName()] = dstDim;
-            dstArrayDims.emplace_back(dstDim);
-
-            std::shared_ptr<GDALMDArray> srcIndexVar;
-            GDALMDArray::Range range;
-            range.m_nStartIdx = 0;
-            range.m_nIncr = 1;
-            std::string indexingVarSpec;
-            if( idxSliceSpec >= 0 )
-            {
-                const auto& viewSpec(viewSpecs[idxSliceSpec]);
-                auto iParentDim = viewSpec.m_mapDimIdxToParentDimIdx[i];
-                if( iParentDim != static_cast<size_t>(-1) &&
-                    (srcIndexVar = srcArrayDims[iParentDim]->
-                                    GetIndexingVariable()) != nullptr &&
-                    srcIndexVar->GetDimensionCount() == 1 &&
-                    srcIndexVar->GetFullName() != srcArray->GetFullName() )
+                CPLAssert(iParentDim < viewSpec.m_parentRanges.size());
+                range = viewSpec.m_parentRanges[iParentDim];
+                indexingVarSpec = "name=" + srcIndexVar->GetFullName();
+                indexingVarSpec += ",dstname=" + newDimName;
+                if( psOptions->aosSubset.empty() &&
+                    psOptions->aosScaleFactor.empty() )
                 {
-                    CPLAssert(iParentDim < viewSpec.m_parentRanges.size());
-                    range = viewSpec.m_parentRanges[iParentDim];
-                    indexingVarSpec = "name=" + srcIndexVar->GetFullName();
-                    indexingVarSpec += ",dstname=" + newDimName;
-                    if( psOptions->aosSubset.empty() &&
-                        psOptions->aosScaleFactor.empty() )
+                    if( range.m_nStartIdx != 0 ||
+                        range.m_nIncr != 1 ||
+                        srcArrayDims[iParentDim]->GetSize() != srcDim->GetSize() )
                     {
-                        if( range.m_nStartIdx != 0 ||
-                            range.m_nIncr != 1 ||
-                            srcArrayDims[iParentDim]->GetSize() != srcDim->GetSize() )
+                        indexingVarSpec +=",view=[";
+                        if( range.m_nIncr > 0 || range.m_nStartIdx != srcDim->GetSize() - 1 )
                         {
-                            indexingVarSpec +=",view=[";
-                            if( range.m_nIncr > 0 || range.m_nStartIdx != srcDim->GetSize() - 1 )
-                            {
-                                indexingVarSpec += CPLSPrintf(CPL_FRMT_GUIB, range.m_nStartIdx);
-                            }
-                            indexingVarSpec += ':';
-                            if( range.m_nIncr > 0 )
-                            {
-                                const auto nEndIdx = range.m_nStartIdx + range.m_nIncr * srcDim->GetSize();
-                                indexingVarSpec += CPLSPrintf(CPL_FRMT_GUIB, nEndIdx);
-                            }
-                            else if( range.m_nStartIdx > -range.m_nIncr * srcDim->GetSize() )
-                            {
-                                const auto nEndIdx = range.m_nStartIdx + range.m_nIncr * srcDim->GetSize();
-                                indexingVarSpec += CPLSPrintf(CPL_FRMT_GUIB, nEndIdx-1);
-                            }
-                            indexingVarSpec += ':';
-                            indexingVarSpec += CPLSPrintf(CPL_FRMT_GIB, range.m_nIncr);
-                            indexingVarSpec += ']';
+                            indexingVarSpec += CPLSPrintf(CPL_FRMT_GUIB, range.m_nStartIdx);
                         }
+                        indexingVarSpec += ':';
+                        if( range.m_nIncr > 0 )
+                        {
+                            const auto nEndIdx = range.m_nStartIdx + range.m_nIncr * srcDim->GetSize();
+                            indexingVarSpec += CPLSPrintf(CPL_FRMT_GUIB, nEndIdx);
+                        }
+                        else if( range.m_nStartIdx > -range.m_nIncr * srcDim->GetSize() )
+                        {
+                            const auto nEndIdx = range.m_nStartIdx + range.m_nIncr * srcDim->GetSize();
+                            indexingVarSpec += CPLSPrintf(CPL_FRMT_GUIB, nEndIdx-1);
+                        }
+                        indexingVarSpec += ':';
+                        indexingVarSpec += CPLSPrintf(CPL_FRMT_GIB, range.m_nIncr);
+                        indexingVarSpec += ']';
                     }
+                }
+            }
+        }
+        else
+        {
+            srcIndexVar = srcDim->GetIndexingVariable();
+            if( srcIndexVar )
+            {
+                indexingVarSpec = srcIndexVar->GetFullName();
+            }
+        }
+        if( srcIndexVar &&
+            srcIndexVar->GetFullName() != srcArray->GetFullName() )
+        {
+            if( poSrcRootGroup )
+            {
+                if( !TranslateArray(oDimRemapper,
+                                indexingVarSpec,
+                                poSrcRootGroup,
+                                poSrcGroup,
+                                poDstRootGroup,
+                                poDstGroup, poSrcDS,
+                                mapSrcToDstDims,
+                                mapDstDimFullNames,
+                                psOptions) )
+                {
+                    return false;
                 }
             }
             else
             {
-                srcIndexVar = srcDim->GetIndexingVariable();
-                if( srcIndexVar )
+                double adfGT[6];
+                if( poSrcDS->GetGeoTransform(adfGT) == CE_None &&
+                    adfGT[2] == 0.0 && adfGT[4] == 0.0 )
                 {
-                    indexingVarSpec = srcIndexVar->GetFullName();
-                }
-            }
-            if( srcIndexVar &&
-                srcIndexVar->GetFullName() != srcArray->GetFullName() )
-            {
-                if( poSrcRootGroup )
-                {
-                    if( !TranslateArray(oDimRemapper,
-                                   indexingVarSpec,
-                                   poSrcRootGroup,
-                                   poSrcGroup,
-                                   poDstRootGroup,
-                                   poDstGroup, poSrcDS,
-                                   mapExistingDstDims, psOptions) )
+                    auto var = std::dynamic_pointer_cast<VRTMDArray>(
+                        poDstGroup->CreateMDArray(
+                            newDimName, { dstDim },
+                            GDALExtendedDataType::Create(GDT_Float64) ));
+                    if( var )
                     {
-                        return false;
+                        const double dfStart = srcIndexVar->GetName() == "X" ?
+                            adfGT[0] + (range.m_nStartIdx + 0.5) * adfGT[1]:
+                            adfGT[3] + (range.m_nStartIdx + 0.5) * adfGT[5];
+                        const double dfIncr = (srcIndexVar->GetName() == "X" ?
+                            adfGT[1] : adfGT[5]) * range.m_nIncr;
+                        std::unique_ptr<VRTMDArraySourceRegularlySpaced> poSource(
+                            new VRTMDArraySourceRegularlySpaced(dfStart, dfIncr));
+                        var->AddSource(std::move(poSource));
                     }
                 }
-                else
-                {
-                    double adfGT[6];
-                    if( poSrcDS->GetGeoTransform(adfGT) == CE_None &&
-                        adfGT[2] == 0.0 && adfGT[4] == 0.0 )
-                    {
-                        auto var = std::dynamic_pointer_cast<VRTMDArray>(
-                            poDstGroup->CreateMDArray(
-                                newDimName, { dstDim },
-                                GDALExtendedDataType::Create(GDT_Float64) ));
-                        if( var )
-                        {
-                            const double dfStart = srcIndexVar->GetName() == "X" ?
-                                adfGT[0] + (range.m_nStartIdx + 0.5) * adfGT[1]:
-                                adfGT[3] + (range.m_nStartIdx + 0.5) * adfGT[5];
-                            const double dfIncr = (srcIndexVar->GetName() == "X" ?
-                                adfGT[1] : adfGT[5]) * range.m_nIncr;
-                            std::unique_ptr<VRTMDArraySourceRegularlySpaced> poSource(
-                                new VRTMDArraySourceRegularlySpaced(dfStart, dfIncr));
-                            var->AddSource(std::move(poSource));
-                        }
-                    }
-                }
-
-                CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
-                CPLErrorStateBackuper oErrorStateBackuper;
-                auto poDstIndexingVar(poDstGroup->OpenMDArray(newDimName));
-                if( poDstIndexingVar )
-                    dstDim->SetIndexingVariable(poDstIndexingVar);
             }
 
+            CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper;
+            auto poDstIndexingVar(poDstGroup->OpenMDArray(newDimName));
+            if( poDstIndexingVar )
+                dstDim->SetIndexingVariable(poDstIndexingVar);
         }
-        else
-        {
-            dstArrayDims.emplace_back(oIter->second);
-        }
+
     }
     if( outputType.GetClass() == GEDTC_NUMERIC &&
         outputType.GetNumericDataType() == GDT_Unknown )
@@ -1180,15 +1232,16 @@ static bool CopyGroup(DimensionRemapper& oDimRemapper,
                       const std::shared_ptr<GDALGroup>& poSrcRootGroup,
                       const std::shared_ptr<GDALGroup>& poSrcGroup,
                       GDALDataset* poSrcDS,
+                      std::map<std::string, std::shared_ptr<GDALDimension>>& mapSrcToDstDims,
+                      std::map<std::string, std::shared_ptr<GDALDimension>>& mapDstDimFullNames,
                       const GDALMultiDimTranslateOptions *psOptions,
                       bool bRecursive)
 {
     const auto srcDims = poSrcGroup->GetDimensions();
-    std::map<std::string, std::shared_ptr<GDALDimension>> mapExistingDstDims;
     std::map<std::string, std::string> mapSrcVariableNameToIndexedDimName;
     for( const auto& dim: srcDims )
     {
-        const auto poDimDesc =  GetDimensionDesc(oDimRemapper, psOptions, dim);
+        const auto poDimDesc = GetDimensionDesc(oDimRemapper, psOptions, dim);
         if( poDimDesc == nullptr )
             return false;
         if( poDimDesc->bSlice )
@@ -1199,11 +1252,12 @@ static bool CopyGroup(DimensionRemapper& oDimRemapper,
                                                     poDimDesc->nSize);
         if( !dstDim )
             return false;
-        mapExistingDstDims[dim->GetName()] = dstDim;
+        mapSrcToDstDims[dim->GetFullName()] = dstDim;
+        mapDstDimFullNames[dstDim->GetFullName()] = dstDim;
         auto poIndexingVarSrc(dim->GetIndexingVariable());
         if( poIndexingVarSrc )
         {
-            mapSrcVariableNameToIndexedDimName[poIndexingVarSrc->GetName()] = dim->GetName();
+            mapSrcVariableNameToIndexedDimName[poIndexingVarSrc->GetName()] = dim->GetFullName();
         }
     }
 
@@ -1232,7 +1286,8 @@ static bool CopyGroup(DimensionRemapper& oDimRemapper,
                             poSrcRootGroup, poSrcGroup,
                             poDstRootGroup, poDstGroup,
                             poSrcDS,
-                            mapExistingDstDims,
+                            mapSrcToDstDims,
+                            mapDstDimFullNames,
                             psOptions) )
         {
             return false;
@@ -1247,8 +1302,8 @@ static bool CopyGroup(DimensionRemapper& oDimRemapper,
         auto oIterDimName = mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
         if( oIterDimName != mapSrcVariableNameToIndexedDimName.end() )
         {
-            auto oCorrespondingDimIter = mapExistingDstDims.find(oIterDimName->second);
-            if( oCorrespondingDimIter != mapExistingDstDims.end() )
+            auto oCorrespondingDimIter = mapSrcToDstDims.find(oIterDimName->second);
+            if( oCorrespondingDimIter != mapSrcToDstDims.end() )
             {
                 CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
                 CPLErrorStateBackuper oErrorStateBackuper;
@@ -1275,6 +1330,8 @@ static bool CopyGroup(DimensionRemapper& oDimRemapper,
             if( !CopyGroup(oDimRemapper,
                            poDstRootGroup, dstSubGroup,
                            poSrcRootGroup, srcSubGroup, poSrcDS,
+                           mapSrcToDstDims,
+                           mapDstDimFullNames,
                            psOptions, true) )
             {
                 return false;
@@ -1360,6 +1417,8 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup>& poDstRootGroup,
     }
 
     DimensionRemapper oDimRemapper;
+    std::map<std::string, std::shared_ptr<GDALDimension>> mapSrcToDstDims;
+    std::map<std::string, std::shared_ptr<GDALDimension>> mapDstDimFullNames;
     if( !psOptions->aosGroup.empty() )
     {
         if( poSrcRootGroup == nullptr )
@@ -1385,6 +1444,8 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup>& poDstRootGroup,
                              poSrcRootGroup,
                              poSrcGroup,
                              poSrcDS,
+                             mapSrcToDstDims,
+                             mapDstDimFullNames,
                              psOptions,
                              bRecursive);
         }
@@ -1408,6 +1469,8 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup>& poDstRootGroup,
                     !CopyGroup(oDimRemapper,
                                poDstRootGroup, dstSubGroup,
                                poSrcRootGroup, poSrcGroup, poSrcDS,
+                               mapSrcToDstDims,
+                               mapDstDimFullNames,
                                psOptions, bRecursive) )
                 {
                     return false;
@@ -1417,7 +1480,6 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup>& poDstRootGroup,
     }
     else if( !psOptions->aosArraySpec.empty() )
     {
-        std::map<std::string, std::shared_ptr<GDALDimension>> mapExistingDstDims;
         for( const auto& arraySpec: psOptions->aosArraySpec )
         {
             if( !TranslateArray(oDimRemapper,
@@ -1427,7 +1489,8 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup>& poDstRootGroup,
                                 poDstRootGroup,
                                 poDstRootGroup,
                                 poSrcDS,
-                                mapExistingDstDims,
+                                mapSrcToDstDims,
+                                mapDstDimFullNames,
                                 psOptions) )
             {
                 return false;
@@ -1442,6 +1505,8 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup>& poDstRootGroup,
                          poSrcRootGroup,
                          poSrcRootGroup,
                          poSrcDS,
+                         mapSrcToDstDims,
+                         mapDstDimFullNames,
                          psOptions,
                          true);
     }
