@@ -364,6 +364,10 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
     {
         return TRUE;
     }
+    if( STARTS_WITH(poOpenInfo->pszFilename, "HDF5_FAMILY:") )
+    {
+        return TRUE;
+    }
 
     // Is it an HDF5 file?
     constexpr char achSignature[] = "\211HDF\r\n\032\n";
@@ -443,10 +447,20 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->SetDescription(poOpenInfo->pszFilename);
 
     // Try opening the dataset.
-    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
-    poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, fapl);
-    H5Pclose(fapl);
+    if( STARTS_WITH(poOpenInfo->pszFilename, "HDF5_FAMILY:") )
+    {
+        hid_t new_fapl = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_family(new_fapl, (hsize_t) 0, H5P_DEFAULT);
+        poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename + strlen("HDF5_FAMILY:"), H5F_ACC_RDONLY, new_fapl);
+        H5Pclose(new_fapl);
+    }
+    else
+    {
+        hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
+        poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, fapl);
+        H5Pclose(fapl);
+    }
 
     if( poDS->hHDF5 < 0 )
     {

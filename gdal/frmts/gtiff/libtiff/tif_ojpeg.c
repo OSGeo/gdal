@@ -679,7 +679,7 @@ OJPEGPreDecode(TIFF* tif, uint16 s)
 		if (OJPEGReadSecondarySos(tif,s)==0)
 			return(0);
 	}
-	if isTiled(tif)
+	if (isTiled(tif))
 		m=tif->tif_curtile;
 	else
 		m=tif->tif_curstrip;
@@ -1084,7 +1084,7 @@ OJPEGReadHeaderInfo(TIFF* tif)
 	assert(sp->readheader_done==0);
 	sp->image_width=tif->tif_dir.td_imagewidth;
 	sp->image_length=tif->tif_dir.td_imagelength;
-	if isTiled(tif)
+	if (isTiled(tif))
 	{
 		sp->strile_width=tif->tif_dir.td_tilewidth;
 		sp->strile_length=tif->tif_dir.td_tilelength;
@@ -1241,7 +1241,13 @@ OJPEGWriteHeaderInfo(TIFF* tif)
 			sp->subsampling_convert_ybuflen=sp->subsampling_convert_ylinelen*sp->subsampling_convert_ylines;
 			sp->subsampling_convert_cbuflen=sp->subsampling_convert_clinelen*sp->subsampling_convert_clines;
 			sp->subsampling_convert_ycbcrbuflen=sp->subsampling_convert_ybuflen+2*sp->subsampling_convert_cbuflen;
-			sp->subsampling_convert_ycbcrbuf=_TIFFmalloc(sp->subsampling_convert_ycbcrbuflen);
+                        /* The calloc is not normally necessary, except in some edge/broken cases */
+                        /* for example for a tiled image of height 1 with a tile height of 1 and subsampling_hor=subsampling_ver=2 */
+                        /* In that case, libjpeg will only fill the 8 first lines of the 16 lines */
+                        /* See https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=16844 */
+                        /* Even if this case is allowed (?), its handling is broken because OJPEGPreDecode() should also likely */
+                        /* reset subsampling_convert_state to 0 when changing tile. */
+			sp->subsampling_convert_ycbcrbuf=_TIFFcalloc(1, sp->subsampling_convert_ycbcrbuflen);
 			if (sp->subsampling_convert_ycbcrbuf==0)
 			{
 				TIFFErrorExt(tif->tif_clientdata,module,"Out of memory");
