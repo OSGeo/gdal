@@ -35,6 +35,7 @@
 #include "hdf5dataset.h"
 #include "hdf5vfl.h"
 
+#include <algorithm>
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -425,6 +426,49 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                         GDAL_HDF5Open()                              */
+/************************************************************************/
+hid_t GDAL_HDF5Open(const std::string& osFilename )
+{
+    hid_t hHDF5;
+    // Heuristics to able datasets split over several files, using the 'family'
+    // driver. If passed the first file, and it contains a single 0, or
+    // ends up with 0.h5 or 0.hdf5, replace the 0 with %d and try the family driver.
+    if( std::count(osFilename.begin(), osFilename.end(), '0') == 1 ||
+        osFilename.find("0.h5") != std::string::npos ||
+        osFilename.find("0.hdf5") != std::string::npos )
+    {
+        const auto zero_pos = osFilename.rfind('0');
+        const auto osNewName = osFilename.substr(0, zero_pos) + "%d" + osFilename.substr(zero_pos+1);
+        hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_family(fapl, H5F_FAMILY_DEFAULT, H5P_DEFAULT);
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
+        H5E_BEGIN_TRY {
+            hHDF5 = H5Fopen(osNewName.c_str(), H5F_ACC_RDONLY, fapl);
+        } H5E_END_TRY;
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic pop
+#endif
+        H5Pclose(fapl);
+        if( hHDF5 >= 0 )
+        {
+            CPLDebug("HDF5", "Actually opening %s with 'family' driver",
+                     osNewName.c_str());
+            return hHDF5;
+        }
+    }
+
+    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
+    hHDF5 = H5Fopen(osFilename.c_str(), H5F_ACC_RDONLY, fapl);
+    H5Pclose(fapl);
+    return hHDF5;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
@@ -443,11 +487,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->SetDescription(poOpenInfo->pszFilename);
 
     // Try opening the dataset.
-    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
-    poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, fapl);
-    H5Pclose(fapl);
-
+    poDS->hHDF5 = GDAL_HDF5Open(poOpenInfo->pszFilename);
     if( poDS->hHDF5 < 0 )
     {
         delete poDS;
@@ -480,7 +520,8 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
         CPLString osDSName =
             CSLFetchNameValue(poDS->papszSubDatasets, "SUBDATASET_1_NAME");
         delete poDS;
-        return (GDALDataset *)GDALOpen(osDSName, poOpenInfo->eAccess);
+        return GDALDataset::Open(osDSName, poOpenInfo->nOpenFlags, nullptr,
+                                 poOpenInfo->papszOpenOptions, nullptr);
     }
     else
     {

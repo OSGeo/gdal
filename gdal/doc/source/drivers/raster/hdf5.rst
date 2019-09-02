@@ -197,6 +197,14 @@ Metadata
 
 No Metadata are read at this time from the HDF5 files.
 
+Multi-file support
+------------------
+
+Starting with GDAL 3.1, the driver supports opening datasets split over
+several files using the 'family' HDF5 file driver. For that, GDAL must be
+provided with the filename of the first part, containing in it a single '0'
+(zero) character, or ending with 0.h5 or 0.hdf5
+
 Driver building
 ---------------
 

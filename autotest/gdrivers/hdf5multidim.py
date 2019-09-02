@@ -424,7 +424,7 @@ def test_hdf5_netcdf_dimensions():
     assert dims[0].GetIndexingVariable().GetName() == 'time'
 
 
-def test_hdf5_netcdf_dimensions_complex_case():
+def test_hdf5_multidim_netcdf_dimensions_complex_case():
 
     ds = gdal.OpenEx('HDF5:data/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
@@ -493,7 +493,7 @@ def test_hdf5_netcdf_dimensions_complex_case():
     assert not dims[0].GetIndexingVariable()
 
 
-def test_hdf5_dimension_labels_with_null():
+def test_hdf5_multidim_dimension_labels_with_null():
 
     ds = gdal.OpenEx('data/dimension_labels_with_null.h5', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
@@ -510,3 +510,8 @@ def test_hdf5_dimension_labels_with_null():
     assert dims[0].GetName() == 'dim0'
     assert dims[1].GetName() == 'dim1'
     assert dims[2].GetName() == 'x'
+
+
+def test_hdf5_multidim_family_driver():
+
+    assert gdal.OpenEx('data/test_family_0.h5', gdal.OF_MULTIDIM_RASTER)
