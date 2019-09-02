@@ -141,7 +141,7 @@ install:
       $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
       #
       cd $env:APPVEYOR_BUILD_FOLDER
-      exec { git clone --depth=1 https://github.com/OSGeo/proj.4 proj }
+      exec { git clone --depth=1 -b 6.2 https://github.com/OSGeo/proj.4 proj }
       cd proj
       exec { mkdir build }
       cd build
