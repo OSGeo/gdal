@@ -1218,6 +1218,15 @@ void basis( int c, double t, int npts, double x[], double N[] );
 void rbspline2( int npts,int k,int p1,double b[],double h[],
     bool bCalculateKnots, double x[], double p[] );
 
+namespace {
+    inline void setRow(GDALMatrix & m, int row, DXFTriple const & t)
+    {
+        m(row, 0) = t.dfX;
+        m(row, 1) = t.dfY;
+        m(row, 2) = t.dfZ;
+    }
+}
+
 /************************************************************************/
 /*                      GetBSplineControlPoints()                       */
 /*                                                                      */
@@ -1276,32 +1285,31 @@ static std::vector<DXFTriple> GetBSplineControlPoints(
     // matrix made up of values of the basis functions at each parameter
     // value, with two additional rows for the endpoint tangent information.
     // Each row relates to a different parameter.
-    std::vector<double> adfN( (nPoints + 2) * (nPoints + 2), 0.0 );
-
-#define ACCESS_adfN(row,col) adfN[(row) * (nPoints + 2) + (col)]
 
     // Set up D as a matrix consisting initially of the data points
-    std::vector<double> adfD( (nPoints + 2) * 3, 0.0 );
+    GDALMatrix D(nPoints + 2, 3);
 
-    aoDataPoints[0].ToArray( &adfD[0] );
+    setRow(D, 0, aoDataPoints[0]);
     for( int iIndex = 1; iIndex < nPoints - 1; iIndex++ )
-        aoDataPoints[iIndex].ToArray( &adfD[(iIndex + 1) * 3] );
-    aoDataPoints[nPoints - 1].ToArray( &adfD[(nPoints + 1) * 3] );
+        setRow(D, iIndex + 1, aoDataPoints[iIndex]);
+    setRow(D, nPoints + 1, aoDataPoints[nPoints - 1]);
+
 
     const double dfStartMultiplier = adfKnots[nDegree + 1] / nDegree;
     oStartTangent *= dfStartMultiplier;
-    oStartTangent.ToArray( &adfD[3] );
+    setRow(D, 1, oStartTangent);
 
     const double dfEndMultiplier = ( 1.0 - adfKnots[nPoints + 1] ) / nDegree;
     oEndTangent *= dfEndMultiplier;
-    oEndTangent.ToArray( &adfD[nPoints * 3] );
+    setRow(D, nPoints, oEndTangent);
 
+    GDALMatrix N(nPoints + 2, nPoints + 2);
     // First control point will be the first data point
-    ACCESS_adfN(0,0) = 1.0;
+    N(0,0) = 1.0;
 
     // Start tangent determines the second control point
-    ACCESS_adfN(1,0) = -1.0;
-    ACCESS_adfN(1,1) = 1.0;
+    N(1,0) = -1.0;
+    N(1,1) = 1.0;
 
     // Fill the middle rows of the matrix with basis function values. We
     // have to use a temporary vector, because intronurbs' basis function
@@ -1311,27 +1319,27 @@ static std::vector<DXFTriple> GetBSplineControlPoints(
     {
         basis( nDegree + 1, adfParameters[iRow - 1], nPoints + 2,
             const_cast<double *>( &adfKnots[0] ) - 1, &adfTempRow[0] - 1 );
-        std::copy_n( adfTempRow.begin(), nPoints + 2,
-            adfN.begin() + iRow * (nPoints + 2) );
+        for(int iCol = 0; iCol < nPoints + 2; ++iCol)
+            N(iRow, iCol) = adfTempRow[iCol];
     }
 
     // End tangent determines the second-last control point
-    ACCESS_adfN(nPoints,nPoints) = -1.0;
-    ACCESS_adfN(nPoints,nPoints + 1) = 1.0;
+    N(nPoints,nPoints) = -1.0;
+    N(nPoints,nPoints + 1) = 1.0;
 
     // Last control point will be the last data point
-    ACCESS_adfN(nPoints + 1,nPoints + 1) = 1.0;
+    N(nPoints + 1,nPoints + 1) = 1.0;
 
     // Solve the linear system
-    std::vector<double> adfP( (nPoints + 2) * 3 );
-    GDALLinearSystemSolve( nPoints + 2, 3, &adfN[0], &adfD[0], &adfP[0] );
+    GDALMatrix P(nPoints + 2, 3);
+    GDALLinearSystemSolve( N, D, P );
 
     std::vector<DXFTriple> aoControlPoints( nPoints + 2 );
     for( int iRow = 0; iRow < nPoints + 2; iRow++ )
     {
-        aoControlPoints[iRow].dfX = adfP[iRow * 3];
-        aoControlPoints[iRow].dfY = adfP[iRow * 3 + 1];
-        aoControlPoints[iRow].dfZ = adfP[iRow * 3 + 2];
+        aoControlPoints[iRow].dfX = P(iRow, 0);
+        aoControlPoints[iRow].dfY = P(iRow, 1);
+        aoControlPoints[iRow].dfZ = P(iRow, 2);
     }
 
     return aoControlPoints;

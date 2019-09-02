@@ -53,9 +53,6 @@ CPL_CVSID("$Id$")
 //// vizGeorefSpline2D
 //////////////////////////////////////////////////////////////////////////////
 
-#define A(r,c) _AA[ _nof_eqs * (r) + (c) ]
-#define Ainv(r,c) _Ainv[ _nof_eqs * (r) + (c) ]
-
 // #define VIZ_GEOREF_SPLINE_DEBUG 0
 
 bool VizGeorefSpline2D::grow_points()
@@ -559,19 +556,7 @@ int VizGeorefSpline2D::solve()
         return 0;
     }
 
-    double* _AA = static_cast<double *>(
-        VSI_CALLOC_VERBOSE(_nof_eqs * _nof_eqs, sizeof(double)));
-
-    if( _AA == nullptr )
-    {
-        return 0;
-    }
-
-    // Calc the values of the matrix A.
-    for( int r = 0; r < 3; r++ )
-        for( int c = 0; c < 3; c++ )
-            A(r, c) = 0.0;
-
+    GDALMatrix A(_nof_eqs, _nof_eqs);
     x_mean = 0;
     y_mean = 0;
     for( int c = 0; c < _nof_points; c++ )
@@ -614,28 +599,21 @@ int VizGeorefSpline2D::solve()
 
 #endif
 
-    double* adfRHS = static_cast<double*>(VSICalloc( _nof_eqs * _nof_vars, sizeof(double) ));
+    GDALMatrix RHS(_nof_eqs, _nof_vars);
     for( int iRHS = 0; iRHS < _nof_vars; iRHS++ )
         for( int iRow = 0; iRow < _nof_eqs; iRow++ )
-            adfRHS[iRow * _nof_vars + iRHS] = rhs[iRHS][iRow];
+            RHS(iRow, iRHS) = rhs[iRHS][iRow];
 
-    double* adfCoef = static_cast<double*>(VSICalloc( _nof_eqs * _nof_vars, sizeof(double) ));
+    GDALMatrix Coef(_nof_eqs, _nof_vars);
 
-    if( !GDALLinearSystemSolve( _nof_eqs, _nof_vars, _AA, adfRHS, adfCoef ) )
+    if( !GDALLinearSystemSolve(A, RHS, Coef ) )
     {
-        VSIFree(adfRHS);
-        VSIFree(adfCoef);
-        VSIFree(_AA);
         return 0;
     }
 
     for( int iRHS = 0; iRHS < _nof_vars; iRHS++ )
         for( int iRow = 0; iRow < _nof_eqs; iRow++ )
-            coef[iRHS][iRow] = adfCoef[iRow * _nof_vars + iRHS];
-
-    VSIFree(adfRHS);
-    VSIFree(adfCoef);
-    VSIFree(_AA);
+            coef[iRHS][iRow] = Coef(iRow, iRHS);
 
     return 4;
 }

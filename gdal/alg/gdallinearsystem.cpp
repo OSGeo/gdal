@@ -10,6 +10,7 @@
  ******************************************************************************
  * Copyright (c) 2004, VIZRT Inc.
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2019, Martin Franzke <martin dot franzke at telekom dot de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,220 +46,125 @@
 #endif
 
 #include <cstdio>
-#include <vector>
 #include <algorithm>
+#include <cassert>
 
 CPL_CVSID("$Id$")
 
-static int matrixInvert( int N, const double input[], double output[] );
+#ifndef HAVE_ARMADILLO
+namespace
+{
+    // LU decomposition of the quadratic matrix A
+    // see https://en.wikipedia.org/wiki/LU_decomposition#C_code_examples
+    bool solve( GDALMatrix & A, GDALMatrix & RHS, GDALMatrix & X, double eps )
+    {
+        assert(A.getNumRows() == A.getNumCols());
+        if(eps < 0) return false;
+        int const m = A.getNumRows();
+        int const n = RHS.getNumCols();
+        // row permutations
+        std::vector<int> perm(m);
+        for(int iRow = 0; iRow < m; ++iRow)
+            perm[iRow] = iRow;
 
+        for(int step = 0; step < m - 1; ++step)
+        {
+            // determine pivot element
+            int iMax = step;
+            double dMax = std::abs(A(step, step));
+            for(int i = step + 1; i < m; ++i)
+            {
+                if(std::abs(A(i, step)) > dMax)
+                {
+                    iMax = i;
+                    dMax = std::abs(A(i, step));
+                }
+            }
+            if(dMax <= eps)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "GDALLinearSystemSolve: matrix not invertible" );
+                return false;
+            }
+            // swap rows
+            if(iMax != step)
+            {
+                std::swap(perm[iMax], perm[step]);
+                for(int iCol = 0; iCol < m; ++iCol)
+                {
+                    std::swap(A(iMax, iCol), A(step, iCol));
+                }
+            }
+            for(int iRow = step + 1; iRow < m; ++iRow)
+            {
+                A(iRow, step) /= A(step, step);
+            }
+            for(int iCol = step + 1; iCol < m; ++iCol)
+            {
+                for(int iRow = step + 1; iRow < m; ++iRow)
+                {
+                    A(iRow, iCol) -= A(iRow, step) * A(step, iCol);
+                }
+            }
+        }
+
+        // LUP solve;
+        for(int iCol = 0; iCol < n; ++iCol)
+        {
+            for (int iRow = 0; iRow < m; ++iRow)
+            {
+                X(iRow, iCol) = RHS(perm[iRow], iCol);
+                for (int k = 0; k < iRow; ++k)
+                {
+                    X(iRow, iCol) -= A(iRow, k) * X(k, iCol);
+                }
+            }
+            for (int iRow = m - 1; iRow >= 0; --iRow)
+            {
+                for (int k = iRow + 1; k < m; ++k)
+                {
+                    X(iRow, iCol) -= A(iRow, k) * X(k, iCol);
+                }
+                X(iRow, iCol) /= A(iRow, iRow);
+            }
+        }
+        return true;
+    }
+}
+#endif
 /************************************************************************/
 /*                       GDALLinearSystemSolve()                        */
 /*                                                                      */
-/*   Solves the linear system adfA*adfOut = adfRHS for adfOut, where    */
-/*   adfA is a square matrix.  The matrices are given as flat 1D        */
-/*   arrays with the entries in row-major order.                        */
-/*   nDim is the number of rows and columns in adfA, and nRHS is the    */
-/*   number of right-hand sides (columns) in adfRHS.                    */
+/*   Solves the linear system A*X_i = RHS_i for each column i           */
+/*   where A is a square matrix.                                        */
 /************************************************************************/
-
-bool GDALLinearSystemSolve( const int nDim, const int nRHS,
-    const double adfA[], const double adfRHS[], double adfOut[] )
+bool GDALLinearSystemSolve( GDALMatrix  & A, GDALMatrix  & RHS, GDALMatrix & X )
 {
-#ifdef HAVE_ARMADILLO
+    assert(A.getNumRows() == RHS.getNumRows());
+    assert(A.getNumCols() == X.getNumRows());
+    assert(RHS.getNumCols() == X.getNumCols());
     try
     {
-        arma::mat matA( const_cast<double*>( adfA ), nDim, nDim, false );
-        arma::inplace_trans( matA );
-        arma::mat matRHS( const_cast<double*>( adfRHS ), nRHS, nDim, false );
-        arma::inplace_trans( matRHS );
-
-        arma::mat matOut;
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-
+#ifdef HAVE_ARMADILLO
+        arma::mat matA( A.data(), A.getNumRows(), A.getNumCols(), false, true );
+        arma::mat matRHS(RHS.data(), RHS.getNumRows(), RHS.getNumCols(), false, true );
+        arma::mat matOut(X.data(), X.getNumRows(), X.getNumCols(), false, true);
 #if ARMA_VERSION_MAJOR > 6 || (ARMA_VERSION_MAJOR == 6 && ARMA_VERSION_MINOR >= 500 )
         // Perhaps available in earlier versions, but didn't check
-        if( arma::solve( matOut, matA, matRHS, arma::solve_opts::equilibrate +
-            arma::solve_opts::no_approx ) )
+        return arma::solve( matOut, matA, matRHS,
+          arma::solve_opts::equilibrate + arma::solve_opts::no_approx);
 #else
-        if( arma::solve( matOut, matA, matRHS ) )
+        return arma::solve( matOut, matA, matRHS );
 #endif
 
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
-#pragma GCC diagnostic pop
+#else //HAVE_ARMADILLO
+        return solve(A, RHS, X, 0);
 #endif
-        {
-            for( int iEq = 0; iEq < nDim; iEq++ )
-                for( int iRHS = 0; iRHS < nRHS; iRHS++ )
-                    adfOut[iEq * nRHS + iRHS] = matOut.at(iEq, iRHS);
-
-            return true;
-        }
     }
-    catch(...) {}
-
-#endif
-    double* adfAInverse = new double[nDim * nDim];
-
-    if( !matrixInvert( nDim, adfA, adfAInverse ) )
-    {
-        // I guess adfA is singular
-        delete[] adfAInverse;
+    catch(std::exception const & e) {
+        CPLError( CE_Failure, CPLE_AppDefined,
+        "GDALLinearSystemSolve: %s", e.what() );
         return false;
     }
-
-    // calculate the coefficients
-    for( int iRHS = 0; iRHS < nRHS; iRHS++ )
-    {
-        for( int iEq = 0; iEq < nDim; iEq++ )
-        {
-            adfOut[iEq * nRHS + iRHS] = 0.0;
-            for( int iVar = 0; iVar < nDim; iVar++ )
-            {
-                adfOut[iEq * nRHS + iRHS] +=
-                    adfAInverse[iEq * nDim + iVar] *
-                    adfRHS[iVar * nRHS + iRHS];
-            }
-        }
-    }
-
-    delete[] adfAInverse;
-    return true;
-}
-
-static int matrixInvert( int N, const double input[], double output[] )
-{
-    // Receives an array of dimension NxN as input.  This is passed as a one-
-    // dimensional array of N-squared size.  It produces the inverse of the
-    // input matrix, returned as output, also of size N-squared.  The Gauss-
-    // Jordan Elimination method is used.  (Adapted from a BASIC routine in
-    // "Basic Scientific Subroutines Vol. 1", courtesy of Scott Edwards.)
-
-    // Array elements 0...N-1 are for the first row, N...2N-1 are for the
-    // second row, etc.
-
-    // We need to have a temporary array of size N x 2N.  We'll refer to the
-    // "left" and "right" halves of this array.
-
-#if DEBUG_VERBOSE
-    fprintf(stderr, "Matrix Inversion input matrix (N=%d)\n", N);/*ok*/
-    for( int row = 0; row < N; row++ )
-    {
-        for( int col = 0; col < N; col++ )
-        {
-            fprintf(stderr, "%5.2f ", input[row*N + col]);/*ok*/
-        }
-        fprintf(stderr, "\n");/*ok*/
-    }
-#endif
-
-    const int tempSize = 2 * N * N;
-    double* temp = new double[tempSize];
-
-    if( temp == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "matrixInvert(): ERROR - memory allocation failed.");
-        return false;
-    }
-
-    // First create a double-width matrix with the input array on the left
-    // and the identity matrix on the right.
-
-    for( int row = 0; row < N; row++ )
-    {
-        for( int col = 0; col<N; col++ )
-        {
-            // Our index into the temp array is X2 because it's twice as wide
-            // as the input matrix.
-
-            temp[ 2*row*N + col ] = input[ row*N+col ];  // left = input matrix
-            temp[ 2*row*N + col + N ] = 0.0;            // right = 0
-        }
-        temp[ 2*row*N + row + N ] = 1.0;  // 1 on the diagonal of RHS
-    }
-
-    // Now perform row-oriented operations to convert the left hand side
-    // of temp to the identity matrix.  The inverse of input will then be
-    // on the right.
-
-    int max = 0;
-    int k = 0;
-    for( k = 0; k < N; k++ )
-    {
-        if( k + 1 < N )  // If not on the last row.
-        {
-            max = k;
-            for( int row = k + 1; row < N; row++ )  // Find the maximum element.
-            {
-                if( fabs( temp[row*2*N + k] ) > fabs( temp[max*2*N + k] ) )
-                {
-                    max = row;
-                }
-            }
-
-            if( max != k )  // Swap all the elements in the two rows.
-            {
-                for( int col = k; col < 2 * N; col++ )
-                {
-                    std::swap(temp[k*2*N + col], temp[max*2*N + col]);
-                }
-            }
-        }
-
-        const double ftemp = temp[k*2*N + k];
-        if( ftemp == 0.0 )  // Matrix cannot be inverted.
-        {
-            delete[] temp;
-            return false;
-        }
-
-        for( int col = k; col < 2 * N; col++ )
-        {
-            temp[k*2*N + col] /= ftemp;
-        }
-
-        const int i2 = k * 2 * N;
-        for( int row = 0; row < N; row++ )
-        {
-            if( row != k )
-            {
-                const int i1 = row * 2 * N;
-                const double ftemp2 = temp[ i1 + k ];
-                for( int col = k; col < 2*N; col++ )
-                {
-                    temp[i1 + col] -= ftemp2 * temp[i2 + col];
-                }
-            }
-        }
-    }
-
-    // Retrieve inverse from the right side of temp.
-    for( int row = 0; row < N; row++ )
-    {
-        for( int col = 0; col < N; col++ )
-        {
-            output[row*N + col] = temp[row*2*N + col + N ];
-        }
-    }
-    delete [] temp;
-
-#if DEBUG_VERBOSE
-    fprintf(stderr, "Matrix Inversion result matrix:\n");/*ok*/
-    for( int row = 0; row < N; row++ )
-    {
-        for( int col = 0; col < N; col++ )
-        {
-            fprintf(stderr, "%5.2f ", output[row*N + col]);/*ok*/
-        }
-        fprintf(stderr, "\n");/*ok*/
-    }
-#endif
-
-    return true;
 }
 
 /*! @endcond */
