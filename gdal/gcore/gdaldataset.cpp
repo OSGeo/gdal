@@ -3040,6 +3040,82 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
 }
 
 /************************************************************************/
+/*                         AntiRecursionStruct                          */
+/************************************************************************/
+
+namespace {
+// Prevent infinite recursion.
+struct AntiRecursionStruct
+{
+    struct DatasetContext
+    {
+        std::string osFilename;
+        int         nOpenFlags;
+        int         nSizeAllowedDrivers;
+
+        DatasetContext(const std::string& osFilenameIn,
+                        int nOpenFlagsIn,
+                        int nSizeAllowedDriversIn) :
+            osFilename(osFilenameIn),
+            nOpenFlags(nOpenFlagsIn),
+            nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
+    };
+
+    struct DatasetContextCompare {
+        bool operator() (const DatasetContext& lhs, const DatasetContext& rhs) const {
+            return lhs.osFilename < rhs.osFilename ||
+                    (lhs.osFilename == rhs.osFilename &&
+                    (lhs.nOpenFlags < rhs.nOpenFlags ||
+                        (lhs.nOpenFlags == rhs.nOpenFlags &&
+                        lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
+        }
+    };
+
+    std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
+    int nRecLevel = 0;
+};
+} // namespace
+
+#ifdef WIN32
+// Currently thread_local and C++ objects don't work well with DLL on Windows
+static void FreeAntiRecursion( void* pData )
+{
+    delete static_cast<AntiRecursionStruct*>(pData);
+}
+
+static AntiRecursionStruct& GetAntiRecursion()
+{
+    static AntiRecursionStruct dummy;
+    int bMemoryErrorOccured = false;
+    void* pData = CPLGetTLSEx(CTLS_GDALOPEN_ANTIRECURSION, &bMemoryErrorOccured);
+    if( bMemoryErrorOccured )
+    {
+        return dummy;
+    }
+    if( pData == nullptr)
+    {
+        auto pAntiRecursion = new AntiRecursionStruct();
+        CPLSetTLSWithFreeFuncEx( CTLS_GDALOPEN_ANTIRECURSION,
+                                 pAntiRecursion,
+                                 FreeAntiRecursion, &bMemoryErrorOccured );
+        if( bMemoryErrorOccured )
+        {
+            delete pAntiRecursion;
+            return dummy;
+        }
+        return *pAntiRecursion;
+    }
+    return *static_cast<AntiRecursionStruct*>(pData);
+}
+#else
+static thread_local AntiRecursionStruct g_tls_antiRecursion;
+static AntiRecursionStruct& GetAntiRecursion()
+{
+    return g_tls_antiRecursion;
+}
+#endif
+
+/************************************************************************/
 /*                             GDALOpenEx()                             */
 /************************************************************************/
 
@@ -3192,37 +3268,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
                            const_cast<char **>(papszSiblingFiles));
     oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
-    // Prevent infinite recursion.
-    struct AntiRecursionStruct
-    {
-        struct DatasetContext
-        {
-            std::string osFilename;
-            int         nOpenFlags;
-            int         nSizeAllowedDrivers;
-
-            DatasetContext(const std::string& osFilenameIn,
-                           int nOpenFlagsIn,
-                           int nSizeAllowedDriversIn) :
-                osFilename(osFilenameIn),
-                nOpenFlags(nOpenFlagsIn),
-                nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
-        };
-
-        struct DatasetContextCompare {
-            bool operator() (const DatasetContext& lhs, const DatasetContext& rhs) const {
-                return lhs.osFilename < rhs.osFilename ||
-                       (lhs.osFilename == rhs.osFilename &&
-                        (lhs.nOpenFlags < rhs.nOpenFlags ||
-                         (lhs.nOpenFlags == rhs.nOpenFlags &&
-                          lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
-            }
-        };
-
-        std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
-        int nRecLevel = 0;
-    };
-    static thread_local AntiRecursionStruct sAntiRecursion;
+    AntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
     if( sAntiRecursion.nRecLevel == 100 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
