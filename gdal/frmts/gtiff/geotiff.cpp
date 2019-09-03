@@ -19577,17 +19577,14 @@ CPLString GTiffGetCompressValues(bool& bHasLZW,
         }
     }
 #ifdef HAVE_LERC
-    if( !bForCOG )
+    osCompressValues +=
+                    "       <Value>LERC</Value>";
+    osCompressValues +=
+                    "       <Value>LERC_DEFLATE</Value>";
+    if( bHasZSTD )
     {
         osCompressValues +=
-                        "       <Value>LERC</Value>";
-        osCompressValues +=
-                        "       <Value>LERC_DEFLATE</Value>";
-        if( bHasZSTD )
-        {
-            osCompressValues +=
-                        "       <Value>LERC_ZSTD</Value>";
-        }
+                    "       <Value>LERC_ZSTD</Value>";
     }
 #endif
     _TIFFfree( codecs );

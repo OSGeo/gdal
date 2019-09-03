@@ -35,7 +35,7 @@ General creation options
 
 -  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512.
 
--  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP]**: Set the compression to use.
+-  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**: Set the compression to use.
 
    * ``JPEG`` should generally only be used with
      Byte data (8 bit per channel). But if GDAL is built with internal libtiff and
@@ -52,11 +52,20 @@ General creation options
    * ``ZSTD`` is available when using internal libtiff and if GDAL built against 
      libzstd >=1.0, or if built against external libtiff with zstd support.
 
--  **LEVEL=integer_value**: DEFLATE/ZSTD compression level. A lower number will
+   * ``LERC`` is available when sing internal libtiff.
+
+   * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
+
+-  **LEVEL=integer_value**: DEFLATE/ZSTD/LERC_DEFLATE/LERC_ZSTD compression level.
+   A lower number will
    result in faster compression but less efficient compression rate.
    1 is the fastest. For DEFLATE, 9 is the slowest/higher compression rate
    (the default is 6)
    For ZSTD, 22 is the slowest/higher compression rate (the default is 9)
+
+-  **MAX_Z_ERROR=threshold**: Set the maximum error threshold on values
+   for LERC/LERC_DEFLATE/LERC_ZSTD compression. The default is 0
+   (lossless).
 
 -  **QUALITY=integer_value**: JPEG/WEBP quality setting. A value of 100 is best
    quality (least compression), and 1 is worst quality (best compression).
