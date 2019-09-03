@@ -447,6 +447,16 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                 }
             }
         }
+        if (bValidRangeValid && adfValidRange[0] > adfValidRange[1])
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "netCDFDataset::valid_range: min > max:\n"
+                "  min: %lf\n  max: %lf\n", adfValidRange[0], adfValidRange[1]);
+            bValidRangeValid = false;
+            adfValidRange[0] = 0.0;
+            adfValidRange[1] = 0.0;
+        }
     }
 
     // Special For Byte Bands: check for signed/unsigned byte.
@@ -11584,5 +11594,3 @@ bool NCDFIsUserDefinedType(int ncid, int type)
     return false;
 #endif
 }
-
-
