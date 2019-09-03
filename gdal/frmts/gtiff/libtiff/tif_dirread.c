@@ -3551,9 +3551,17 @@ static int ByteCountLooksBad(TIFF* tif)
     filesize = TIFFGetFileSize(tif);
     if( offset <= filesize && bytecount > filesize - offset )
         return 1;
-    if( tif->tif_mode == O_RDONLY &&
-        bytecount < TIFFScanlineSize64(tif) * tif->tif_dir.td_imagelength)
-        return 1;
+    if( tif->tif_mode == O_RDONLY )
+    {
+        uint64 scanlinesize = TIFFScanlineSize64(tif);
+        if( tif->tif_dir.td_imagelength > 0 &&
+            scanlinesize > TIFF_UINT64_MAX / tif->tif_dir.td_imagelength )
+        {
+            return 1;
+        }
+        if( bytecount < scanlinesize * tif->tif_dir.td_imagelength)
+            return 1;
+    }
     return 0;
 }
 
@@ -4573,6 +4581,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		 * of data in the strip and trim this number back accordingly.
 		 */
 		strip--;
+                if (td->td_stripoffset_p[strip] > TIFF_UINT64_MAX - td->td_stripbytecount_p[strip])
+                    return -1;
 		if (td->td_stripoffset_p[strip]+td->td_stripbytecount_p[strip] > filesize) {
                     if( td->td_stripoffset_p[strip] >= filesize ) {
                         /* Not sure what we should in that case... */
