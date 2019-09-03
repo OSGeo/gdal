@@ -11553,10 +11553,10 @@ bool NCDFIsUserDefinedType(int ncid, int type)
     //Which is not a part of netcdf 4.1.1 installed on RH
     //In all later version, type >= NC_FIRSTUSERTYPEID works
 #if NETCDF_HAS_NC4
-#ifdef NC_FIRSTUSERTYPEID
+#  ifdef NC_FIRSTUSERTYPEID
     CPL_IGNORE_RET_VAL(ncid);
     return type >= NC_FIRSTUSERTYPEID;
-#else
+#  else
     int ntypes;
     int typeids[NC_MAX_VARS];
 
@@ -11578,9 +11578,11 @@ bool NCDFIsUserDefinedType(int ncid, int type)
             break;
         ncid = nParentGroupId;
     }
-#endif
-#endif
     return false;
+#  endif
+#else
+    return false;
+#endif
 }
 
 
