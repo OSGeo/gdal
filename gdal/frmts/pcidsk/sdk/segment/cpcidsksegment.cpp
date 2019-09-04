@@ -34,6 +34,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <vector>
 #include <string>
 
@@ -110,8 +111,19 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
     if( data_offset == 0 )
         data_offset = 0; // throw exception maybe ?
     else
+    {
+        if( data_offset-1 > std::numeric_limits<uint64>::max() / 512 )
+        {
+            return ThrowPCIDSKException("too large data_offset");
+        }
         data_offset = (data_offset-1) * 512;
-    data_size = atouint64(segptr.Get(23,9)) * 512;
+    }
+    data_size = atouint64(segptr.Get(23,9));
+    if( data_size > std::numeric_limits<uint64>::max() / 512 )
+    {
+        return ThrowPCIDSKException("too large data_size");
+    }
+    data_size *= 512;
 
     segptr.Get(4,8,segment_name);
 }
