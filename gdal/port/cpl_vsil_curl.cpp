@@ -2336,6 +2336,7 @@ VSICurlFilesystemHandler::VSICurlFilesystemHandler():
 /*                           CachedConnection                           */
 /************************************************************************/
 
+namespace {
 struct CachedConnection
 {
     CURLM          *hCurlMultiHandle = nullptr;
@@ -2343,9 +2344,47 @@ struct CachedConnection
 
     ~CachedConnection() { clear(); }
 };
+} // namespace
+
+#ifdef WIN32
+// Currently thread_local and C++ objects don't work well with DLL on Windows
+static void FreeCachedConnection( void* pData )
+{
+    delete static_cast<std::map<VSICurlFilesystemHandler*, CachedConnection>*>(pData);
+}
 
 // Per-thread and per-filesystem Curl connection cache.
-static thread_local std::map<VSICurlFilesystemHandler*, CachedConnection> cachedConnection;
+static std::map<VSICurlFilesystemHandler*, CachedConnection>& GetConnectionCache()
+{
+    static std::map<VSICurlFilesystemHandler*, CachedConnection> dummyCache;
+    int bMemoryErrorOccured = false;
+    void* pData = CPLGetTLSEx(CTLS_VSICURL_CACHEDCONNECTION, &bMemoryErrorOccured);
+    if( bMemoryErrorOccured )
+    {
+        return dummyCache;
+    }
+    if( pData == nullptr)
+    {
+        auto cachedConnection = new std::map<VSICurlFilesystemHandler*, CachedConnection>();
+        CPLSetTLSWithFreeFuncEx( CTLS_VSICURL_CACHEDCONNECTION,
+                                 cachedConnection,
+                                 FreeCachedConnection, &bMemoryErrorOccured );
+        if( bMemoryErrorOccured )
+        {
+            delete cachedConnection;
+            return dummyCache;
+        }
+        return *cachedConnection;
+    }
+    return *static_cast<std::map<VSICurlFilesystemHandler*, CachedConnection>*>(pData);
+}
+#else
+static thread_local std::map<VSICurlFilesystemHandler*, CachedConnection> g_tls_connectionCache;
+static std::map<VSICurlFilesystemHandler*, CachedConnection>& GetConnectionCache()
+{
+    return g_tls_connectionCache;
+}
+#endif
 
 /************************************************************************/
 /*                              clear()                                 */
@@ -2371,7 +2410,7 @@ VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
     VSICurlFilesystemHandler::ClearCache();
     if( !GDALIsInGlobalDestructor() )
     {
-        cachedConnection.erase(this);
+        GetConnectionCache().erase(this);
     }
 
     if( hMutex != nullptr )
@@ -2406,7 +2445,7 @@ bool VSICurlFilesystemHandler::AllowCachedDataFor(const char* pszFilename)
 
 CURLM* VSICurlFilesystemHandler::GetCurlMultiHandleFor(const CPLString& /*osURL*/)
 {
-    auto& conn = cachedConnection[this];
+    auto& conn = GetConnectionCache()[this];
     if( conn.hCurlMultiHandle == nullptr )
     {
         conn.hCurlMultiHandle = curl_multi_init();
@@ -2590,7 +2629,7 @@ void VSICurlFilesystemHandler::ClearCache()
 
     if( !GDALIsInGlobalDestructor() )
     {
-        cachedConnection[this].clear();
+        GetConnectionCache()[this].clear();
     }
 }
 
