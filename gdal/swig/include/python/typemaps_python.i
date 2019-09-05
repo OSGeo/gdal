@@ -2101,13 +2101,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
   /* %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)*/
   Py_buffer *buf=(Py_buffer*)malloc(sizeof(Py_buffer));
 
-  if (PyBuffer_FillInfo(buf,
-%#if SWIGVERSION >= 0x040000
-                        swig_obj[0],
-%#else
-                        obj0,
-%#endif
-                        *($1), *($2), *($4), PyBUF_ND)) {
+  if (PyBuffer_FillInfo(buf, $self, *($1), *($2), *($4), PyBUF_ND)) {
     // error, handle
   }
   if( *($3) == GDT_Byte )
