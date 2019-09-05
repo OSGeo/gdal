@@ -156,10 +156,16 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     const vsi_l_offset nLineOffset = nPixelOffset * nCols + nBB ;
     const vsi_l_offset nBandOffset = nLineOffset * nRows;
 
+    if( (nBands > 0 && nBandOffset > std::numeric_limits<vsi_l_offset>::max() / nBands) ||
+        nBandOffset * nBands > std::numeric_limits<vsi_l_offset>::max() - LabelSize )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too large keyword values");
+        return FALSE;
+    }
     const vsi_l_offset starteol = LabelSize + nBandOffset * nBands;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
+        CPLError(CE_Failure, CPLE_AppDefined, "Error seeking to EOL");
         return FALSE;
     }
     char* pszEOLHeader = static_cast<char*>(VSIMalloc(32));
@@ -194,7 +200,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
+        CPLError(CE_Failure, CPLE_AppDefined, "Error seeking to EOL");
         return FALSE;
     }
     char* pszChunkEOL = (char*) VSIMalloc(EOLabelSize+1);
