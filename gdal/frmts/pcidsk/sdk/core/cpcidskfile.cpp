@@ -460,6 +460,11 @@ void CPCIDSKFile::InitializeFromHeader()
     width = atoi(fh.Get(384,8));
     height = atoi(fh.Get(392,8));
     channel_count = atoi(fh.Get(376,8));
+    if( width < 0 || height < 0 || channel_count < 0 )
+    {
+        return ThrowPCIDSKException(
+            "Invalid width, height and/or channel_count" );
+    }
     file_size = fh.GetUInt64(16,16);
 
     uint64 ih_start_block = atouint64(fh.Get(336,16));
