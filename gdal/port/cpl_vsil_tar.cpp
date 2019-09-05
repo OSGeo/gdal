@@ -474,7 +474,8 @@ int VSITarReader::GotoFileOffset( VSIArchiveEntryFileOffset* pOffset )
         return TRUE;
     }
 #endif
-    if( VSIFSeekL(fp, pTarEntryOffset->m_nOffset - 512, SEEK_SET) < 0 )
+    if( pTarEntryOffset->m_nOffset < 512 ||
+        VSIFSeekL(fp, pTarEntryOffset->m_nOffset - 512, SEEK_SET) < 0 )
         return FALSE;
     return GotoNextFile();
 }
