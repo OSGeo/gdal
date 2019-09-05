@@ -447,6 +447,16 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                 }
             }
         }
+        if (bValidRangeValid && adfValidRange[0] > adfValidRange[1])
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "netCDFDataset::valid_range: min > max:\n"
+                "  min: %lf\n  max: %lf\n", adfValidRange[0], adfValidRange[1]);
+            bValidRangeValid = false;
+            adfValidRange[0] = 0.0;
+            adfValidRange[1] = 0.0;
+        }
     }
 
     // Special For Byte Bands: check for signed/unsigned byte.
@@ -11553,31 +11563,34 @@ bool NCDFIsUserDefinedType(int ncid, int type)
     //Which is not a part of netcdf 4.1.1 installed on RH
     //In all later version, type >= NC_FIRSTUSERTYPEID works
 #if NETCDF_HAS_NC4
+#  ifdef NC_FIRSTUSERTYPEID
+    CPL_IGNORE_RET_VAL(ncid);
+    return type >= NC_FIRSTUSERTYPEID;
+#  else
     int ntypes;
-    int typeids[NC_MAX_VARS];  // It's likely safe to assume there are
-    int rootid; //For nested datasets
+    int typeids[NC_MAX_VARS];
 
-    if (NCDFGetRootGroup(ncid, &rootid) != CE_None)
+    while( true )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Could not get root group information for user defined types");
-        return false;
+        int err = nc_inq_typeids(ncid, &ntypes, typeids);
+        if (err != NC_NOERR)
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Could not get user defined type information");
+
+        for (int i = 0; i < ntypes; ++i) {
+            if (type == typeids[i])
+                return true;
+        }
+
+        int nParentGroupId;
+        int status = nc_inq_grp_parent(ncid, &nParentGroupId);
+        if( status != NC_NOERR )
+            break;
+        ncid = nParentGroupId;
     }
-
-    int err = nc_inq_typeids(rootid, &ntypes, typeids);
-    if (err != NC_NOERR)
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Could not get user defined type information");
-
-    for (int i = 0; i < ntypes; ++i) {
-        if (type == typeids[i])
-            return true;
-    }
-
     return false;
+#  endif
 #else
     return false;
 #endif
 }
-
-

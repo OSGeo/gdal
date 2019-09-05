@@ -439,17 +439,20 @@ static void DumpArrayRec(std::shared_ptr<GDALMDArray> array,
                 dimSizes.back() <= psOptions->nLimitValuesByDim )
             {
                 const size_t nCount = static_cast<size_t>(dimSizes.back());
-                if( nCount != dimSizes.back() ||
-                    nDTSize > std::numeric_limits<size_t>::max() / nCount )
+                if( nCount > 0 )
                 {
-                    serializer.Add("[too many values]");
-                    break;
+                    if( nCount != dimSizes.back() ||
+                        nDTSize > std::numeric_limits<size_t>::max() / nCount )
+                    {
+                        serializer.Add("[too many values]");
+                        break;
+                    }
+                    std::vector<GByte> abyTmp(nDTSize * nCount);
+                    count.back() = nCount;
+                    if( !array->Read(startIdx.data(), count.data(), nullptr, nullptr, dt, &abyTmp[0]) )
+                        break;
+                    lambdaDumpValue(abyTmp, count.back());
                 }
-                std::vector<GByte> abyTmp(nDTSize * nCount);
-                count.back() = nCount;
-                if( !array->Read(startIdx.data(), count.data(), nullptr, nullptr, dt, &abyTmp[0]) )
-                    break;
-                lambdaDumpValue(abyTmp, count.back());
             }
             else
             {

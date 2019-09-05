@@ -2608,11 +2608,6 @@ std::shared_ptr<GDALDimension> MEMGroup::CreateDimension(const std::string& osNa
                                                          GUInt64 nSize,
                                                          CSLConstList)
 {
-    if( nSize == 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid size");
-        return nullptr;
-    }
     if( osName.empty() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,

@@ -475,11 +475,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->SetPhysicalFilename(osFilename);
 
     // Try opening the dataset.
-    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
-    poDS->hHDF5 = H5Fopen(osFilename, H5F_ACC_RDONLY, fapl);
-    H5Pclose(fapl);
-
+    poDS->hHDF5 = GDAL_HDF5Open(osFilename);
     if( poDS->hHDF5 < 0 )
     {
         delete poDS;

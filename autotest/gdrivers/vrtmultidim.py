@@ -1179,7 +1179,6 @@ def test_vrtmultidim_createmultidimensional():
     with gdaltest.error_handler():
         assert not rg.CreateDimension('', '', '', 1)
         assert not rg.CreateDimension('dim', '', '', 1)
-        assert not rg.CreateDimension('dim_size_0', '', '', 0)
 
     assert rg.CreateAttribute('attr', [1], gdal.ExtendedDataType.CreateString())
     with gdaltest.error_handler():

@@ -67,13 +67,26 @@ static void OGRSOSIDriverUnload(CPL_UNUSED GDALDriver* poDriver) {
 }
 
 /************************************************************************/
+/*                           Identify()                                 */
+/************************************************************************/
+
+static int OGRSOSIDriverIdentify( GDALOpenInfo* poOpenInfo )
+{
+    if( poOpenInfo->fpL == nullptr ||
+        strstr((const char*)poOpenInfo->pabyHeader, ".HODE") == nullptr )
+        return FALSE;
+
+    // TODO: add better identification
+    return -1;
+}
+
+/************************************************************************/
 /*                              Open()                                  */
 /************************************************************************/
 
 static GDALDataset *OGRSOSIDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    if( poOpenInfo->fpL == nullptr ||
-        strstr((const char*)poOpenInfo->pabyHeader, ".HODE") == nullptr )
+    if( OGRSOSIDriverIdentify(poOpenInfo) == FALSE )
         return nullptr;
 
     OGRSOSIInit();
@@ -127,6 +140,7 @@ void RegisterOGRSOSI() {
 
 
     poDriver->pfnOpen = OGRSOSIDriverOpen;
+    poDriver->pfnIdentify = OGRSOSIDriverIdentify;
 #ifdef WRITE_SUPPORT
     poDriver->pfnCreate = OGRSOSIDriverCreate;
 #endif

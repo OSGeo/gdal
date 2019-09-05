@@ -2073,11 +2073,7 @@ GDALDataset *HDF5Dataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             poOpenInfo->pszFilename;
 
     // Try opening the dataset.
-    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
-    auto hHDF5 = H5Fopen(pszFilename, H5F_ACC_RDONLY, fapl);
-    H5Pclose(fapl);
-
+    auto hHDF5 = GDAL_HDF5Open(pszFilename);
     if( hHDF5 < 0 )
     {
         return nullptr;

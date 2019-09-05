@@ -559,7 +559,7 @@ std::shared_ptr<GDALDimension> netCDFGroup::CreateDimension(const std::string& o
 {
     const bool bUnlimited = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "UNLIMITED", "FALSE"));
-    if( (!bUnlimited && nSize == 0) || static_cast<size_t>(nSize) != nSize )
+    if( static_cast<size_t>(nSize) != nSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid size");
         return nullptr;

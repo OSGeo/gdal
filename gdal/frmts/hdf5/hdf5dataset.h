@@ -60,6 +60,8 @@ herr_t HDF5CreateGroupObjs(hid_t, const char *, void *);
 hid_t HDF5GetFileDriver();
 void HDF5UnloadFileDriver();
 
+hid_t GDAL_HDF5Open(const std::string& osFilename );
+
 #if defined(H5_VERSION_GE) // added in 1.8.7
 # if !H5_VERSION_GE(1,8,13)
 #ifndef _WIN32

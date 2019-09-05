@@ -473,3 +473,8 @@ def test_hdf5_recursive_groups():
     ds = gdal.Open('data/recursive_groups.h5')
     assert ds is not None
     ds.GetSubDatasets()
+
+
+def test_hdf5_family_driver():
+
+    assert gdal.Open('data/test_family_0.h5')

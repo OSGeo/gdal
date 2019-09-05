@@ -647,9 +647,15 @@ CPLErr GRIBRasterBand::LoadData()
             // all bands that have been accessed.
             if (poGDS->nCachedBytes > poGDS->nCachedBytesThreshold)
             {
+                GUIntBig nMinCacheSize = 1 + static_cast<GUIntBig>(poGDS->nRasterXSize) *
+                    poGDS->nRasterYSize * poGDS->nBands * GDALGetDataTypeSizeBytes(eDataType) / 1024 / 1024;
                 CPLDebug("GRIB",
                          "Maximum band cache size reached for this dataset. "
-                         "Caching only one band at a time from now");
+                         "Caching only one band at a time from now, which can "
+                         "negatively affect performance. Consider "
+                         "increasing GRIB_CACHEMAX to a higher value (in MB), "
+                         "at least " CPL_FRMT_GUIB " in that instance",
+                         nMinCacheSize);
                 for(int i = 0; i < poGDS->nBands; i++)
                 {
                     reinterpret_cast<GRIBRasterBand *>(
