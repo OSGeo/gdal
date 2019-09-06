@@ -116,8 +116,8 @@ OGRGPXDataSource::~OGRGPXDataSource()
                     VSIFWriteL(szMetadata, 1, strlen(szMetadata), fpOutput);
                 }
             }
-            VSIFCloseL( fpOutput);
         }
+        VSIFCloseL( fpOutput);
     }
 
     for( int i = 0; i < nLayers; i++ )
