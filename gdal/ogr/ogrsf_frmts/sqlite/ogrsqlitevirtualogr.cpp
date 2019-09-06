@@ -2590,7 +2590,7 @@ int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg, void * _pApi)
 {
     const sqlite3_api_routines * pApi = (const sqlite3_api_routines * )_pApi;
 #ifndef WIN32
-    if( pApi->create_module == nullptr )
+    if( ( pApi == nullptr ) || ( pApi->create_module == nullptr ) )
     {
         pApi = &OGRSQLITE_static_routines;
     }
