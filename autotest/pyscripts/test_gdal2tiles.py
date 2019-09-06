@@ -103,6 +103,43 @@ def test_gdal2tiles_py_zoom_option():
     assert ds is not None, 'did not get kml'
 
 
+def test_gdal2tiles_py_resampling_option():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    resampling_list = [
+        'average', 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
+        'antialias', 'mode', 'max', 'min', 'med', 'q1', 'q3']
+    try:
+        from PIL import Image
+        import numpy
+        import osgeo.gdal_array as gdalarray
+        del Image, numpy, gdalarray
+    except ImportError:
+        # 'antialias' resampling is not available
+        resampling_list.remove('antialias')
+
+    out_dir = 'tmp/out_gdal2tiles_smallworld'
+
+    for resample in resampling_list:
+
+        shutil.rmtree(out_dir, ignore_errors=True)
+
+        test_py_scripts.run_py_script_as_external_script(
+            script_path,
+            'gdal2tiles',
+            '-q --resampling={0} {1} {2}'.format(
+                resample, '../gdrivers/data/small_world.tif', out_dir))
+
+        # very basic check
+        ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
+        if ds is None:
+            pytest.fail('resample option {0!r} failed'.format(resample))
+        ds = None
+
+
 def test_does_not_error_when_source_bounds_close_to_tiles_bound():
     """
     Case where the border coordinate of the input file is inside a tile T but the first pixel is
