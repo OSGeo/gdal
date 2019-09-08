@@ -64,7 +64,9 @@ except ImportError:
 
 __version__ = "$Id$"
 
-resampling_list = ('average', 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos', 'antialias')
+resampling_list = (
+    'average', 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
+    'antialias', 'mode', 'max', 'min', 'med', 'q1', 'q3')
 profile_list = ('mercator', 'geodetic', 'raster')
 webviewer_list = ('all', 'google', 'openlayers', 'leaflet', 'none')
 
@@ -644,6 +646,24 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
 
         elif options.resampling == 'lanczos':
             gdal_resampling = gdal.GRA_Lanczos
+
+        elif options.resampling == 'mode':
+            gdal_resampling = gdal.GRA_Mode
+
+        elif options.resampling == 'max':
+            gdal_resampling = gdal.GRA_Max
+
+        elif options.resampling == 'min':
+            gdal_resampling = gdal.GRA_Min
+
+        elif options.resampling == 'med':
+            gdal_resampling = gdal.GRA_Med
+
+        elif options.resampling == 'q1':
+            gdal_resampling = gdal.GRA_Q1
+
+        elif options.resampling == 'q3':
+            gdal_resampling = gdal.GRA_Q3
 
         # Other algorithms are implemented by gdal.ReprojectImage().
         dsquery.SetGeoTransform((0.0, tile_size / float(querysize), 0.0, 0.0, 0.0,
