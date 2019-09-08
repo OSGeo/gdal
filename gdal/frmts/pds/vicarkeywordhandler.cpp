@@ -156,10 +156,11 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     const vsi_l_offset nLineOffset = nPixelOffset * nCols + nBB ;
     const vsi_l_offset nBandOffset = nLineOffset * nRows;
 
-    if( (nBands > 0 && nBandOffset > std::numeric_limits<vsi_l_offset>::max() / nBands) ||
+    if( nBands <= 0 ||
+        nBandOffset > std::numeric_limits<vsi_l_offset>::max() / nBands ||
         nBandOffset * nBands > std::numeric_limits<vsi_l_offset>::max() - LabelSize )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too large keyword values");
+        CPLError(CE_Failure, CPLE_AppDefined, "Too large/invalid keyword values");
         return FALSE;
     }
     const vsi_l_offset starteol = LabelSize + nBandOffset * nBands;
