@@ -2789,7 +2789,7 @@ AC_SUBST(HAVE_HDF5,$HAVE_HDF5)
 AC_SUBST(HDF5_INCLUDE,$HDF5_INCLUDE)
 
 if test "$HAVE_HDF5" != "no" ; then
-  OPT_GDAL_FORMATS="hdf5 $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="hdf5 hdf5r $OPT_GDAL_FORMATS"
 fi
 
 dnl ---------------------------------------------------------------------------

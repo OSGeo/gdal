@@ -108,6 +108,8 @@ void CPL_DLL GDALRegister_RMF(void);
 void CPL_DLL GDALRegister_BAG(void);
 void CPL_DLL GDALRegister_HDF5(void);
 void CPL_DLL GDALRegister_HDF5Image(void);
+void CPL_DLL GDALRegister_HDF5R(void);
+void CPL_DLL GDALRegister_HDF5Rsubds(void);
 void CPL_DLL GDALRegister_MSGN(void);
 void CPL_DLL GDALRegister_MSG(void);
 void CPL_DLL GDALRegister_RIK(void);
