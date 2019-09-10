@@ -113,7 +113,7 @@ git checkout master
 With git log, identify the sha1sum of the commit you want to backport
 git checkout 2.2 (if you want to backport to 2.2)
 git pull origin 2.2
-(git checkout -b branh_name: if you intend to submit the backport as a pull request)
+(git checkout -b branch_name: if you intend to submit the backport as a pull request)
 git cherry-pick the_sha1_sum
 git push ...
 ```
