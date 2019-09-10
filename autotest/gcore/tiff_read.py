@@ -3137,3 +3137,15 @@ def test_tiff_read_ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero():
     ds = gdal.Open('data/ModelTiepointTag_z_non_zero_but_ModelPixelScaleTag_z_zero.tif')
     assert ds.GetRasterBand(1).GetScale() == 1
     assert ds.GetRasterBand(1).GetOffset() == 0
+
+###############################################################################
+# Check that GetMetadataDomainList() works properly
+
+
+def test_tiff_GetMetadataDomainList():
+
+    ds = gdal.Open('data/byte.tif')
+    mdd1_set = set([x for x in ds.GetMetadataDomainList()])
+    assert mdd1_set == set(['', 'DERIVED_SUBDATASETS', 'IMAGE_STRUCTURE'])
+    mdd2_set = set([x for x in ds.GetMetadataDomainList()])
+    assert mdd1_set == mdd2_set

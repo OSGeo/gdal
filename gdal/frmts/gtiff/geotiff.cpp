@@ -18597,8 +18597,11 @@ void GTiffDataset::LoadEXIFMetadata()
                              nExifOffset, nInterOffset, nGPSOffset );
     }
 
-    oGTiffMDMD.SetMetadata( papszMetadata, "EXIF" );
-    CSLDestroy( papszMetadata );
+    if( papszMetadata )
+    {
+        oGTiffMDMD.SetMetadata( papszMetadata, "EXIF" );
+        CSLDestroy( papszMetadata );
+    }
 }
 
 /************************************************************************/
