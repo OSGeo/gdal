@@ -155,7 +155,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                nBlockXSize * nResFactor,
                                nBlockYSize * nResFactor,
                                nBlockXSize, nBlockYSize,
-                               band_count, &nBand, &psResult );
+                               band_count, &nBand, nullptr, &psResult );
     if( eErr != CE_None )
         return eErr;
 

@@ -101,6 +101,7 @@ class WCSDataset CPL_NON_FINAL: public GDALPamDataset
                              int nXSize, int nYSize,
                              int nBufXSize, int nBufYSize,
                              int nBandCount, int *panBandList,
+                             GDALRasterIOExtraArg *psExtraArg,
                              CPLHTTPResult **ppsResult );
 
     virtual CPLString   DescribeCoverageRequest() {return "";}
