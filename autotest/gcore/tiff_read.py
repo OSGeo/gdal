@@ -3401,3 +3401,15 @@ def test_tiff_read_cog_with_mask_vsicurl():
 
         gdal.GetDriverByName('GTIFF').Delete(in_filename)
         gdal.GetDriverByName('GTIFF').Delete(cog_filename)
+
+###############################################################################
+# Check that GetMetadataDomainList() works properly
+
+
+def test_tiff_GetMetadataDomainList():
+
+    ds = gdal.Open('data/byte.tif')
+    mdd1_set = set([x for x in ds.GetMetadataDomainList()])
+    assert mdd1_set == set(['', 'DERIVED_SUBDATASETS', 'IMAGE_STRUCTURE'])
+    mdd2_set = set([x for x in ds.GetMetadataDomainList()])
+    assert mdd1_set == mdd2_set
