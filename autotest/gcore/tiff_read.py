@@ -3179,3 +3179,16 @@ def test_tiff_read_deflate_4GB():
     ref_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     ref_ds.GetRasterBand(1).Fill(127)
     assert data == ref_ds.ReadRaster()
+
+
+###############################################################################
+# Check that GetMetadataDomainList() works properly
+
+
+def test_tiff_GetMetadataDomainList():
+
+    ds = gdal.Open('data/byte.tif')
+    mdd1_set = set([x for x in ds.GetMetadataDomainList()])
+    assert mdd1_set == set(['', 'DERIVED_SUBDATASETS', 'IMAGE_STRUCTURE'])
+    mdd2_set = set([x for x in ds.GetMetadataDomainList()])
+    assert mdd1_set == mdd2_set
