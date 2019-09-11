@@ -1684,8 +1684,8 @@ int GDALPDFWriter::WriteImagery(GDALDataset* poDS,
     /* Does the source image has a color table ? */
     int nColorTableId = WriteColorTable(poDS);
 
-    int nXBlocks = (nWidth + nBlockXSize - 1) / nBlockXSize;
-    int nYBlocks = (nHeight + nBlockYSize - 1) / nBlockYSize;
+    int nXBlocks = DIV_ROUND_UP(nWidth, nBlockXSize);
+    int nYBlocks = DIV_ROUND_UP(nHeight, nBlockYSize);
     int nBlocks = nXBlocks * nYBlocks;
     int nBlockXOff, nBlockYOff;
     for(nBlockYOff = 0; nBlockYOff < nYBlocks; nBlockYOff ++)
@@ -1799,8 +1799,8 @@ int GDALPDFWriter::WriteClippedImagery(
     /* Does the source image has a color table ? */
     int nColorTableId = WriteColorTable(poDS);
 
-    int nXBlocks = (nWidth + nBlockXSize - 1) / nBlockXSize;
-    int nYBlocks = (nHeight + nBlockYSize - 1) / nBlockYSize;
+    int nXBlocks = DIV_ROUND_UP(nWidth, nBlockXSize);
+    int nYBlocks = DIV_ROUND_UP(nHeight, nBlockYSize);
     int nBlocks = nXBlocks * nYBlocks;
     int nBlockXOff, nBlockYOff;
     for(nBlockYOff = 0; nBlockYOff < nYBlocks; nBlockYOff ++)
@@ -4594,7 +4594,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if( pszValue != nullptr )
     {
         nBlockXSize = atoi( pszValue );
-        if (nBlockXSize < 0 || nBlockXSize >= nWidth)
+        if (nBlockXSize <= 0 || nBlockXSize >= nWidth)
             nBlockXSize = nWidth;
     }
 
@@ -4602,7 +4602,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if( pszValue != nullptr )
     {
         nBlockYSize = atoi( pszValue );
-        if (nBlockYSize < 0 || nBlockYSize >= nHeight)
+        if (nBlockYSize <= 0 || nBlockYSize >= nHeight)
             nBlockYSize = nHeight;
     }
 
