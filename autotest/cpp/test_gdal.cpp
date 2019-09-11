@@ -177,6 +177,27 @@ namespace tut
         ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Float32), GDT_CFloat32);
         ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt16), GDT_CFloat32);
         ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt32), GDT_CFloat64);
+
+        ENSURE_EQUALS(GDALFindDataType(0, false /* signed */, false /* floating */, false /* complex */), GDT_Byte);
+        ENSURE_EQUALS(GDALFindDataType(0, true /* signed */, false /* floating */, false /* complex */), GDT_Int16);
+        ENSURE_EQUALS(GDALFindDataType(0, false /* signed */, false /* floating */, true /* complex */), GDT_CInt32);
+        ENSURE_EQUALS(GDALFindDataType(0, true /* signed */, false /* floating */, true /* complex */), GDT_CInt16);
+        ENSURE_EQUALS(GDALFindDataType(0, false /* signed */, true /* floating */, false /* complex */), GDT_Float32);
+        ENSURE_EQUALS(GDALFindDataType(0, true /* signed */, true /* floating */, false /* complex */), GDT_Float32);
+        ENSURE_EQUALS(GDALFindDataType(0, false /* signed */, true /* floating */, true /* complex */), GDT_CFloat32);
+        ENSURE_EQUALS(GDALFindDataType(0, true /* signed */, true /* floating */, true /* complex */), GDT_CFloat32);
+
+        ENSURE_EQUALS(GDALFindDataType(8, false /* signed */, false /* floating */, false /* complex */), GDT_Byte);
+        ENSURE_EQUALS(GDALFindDataType(8, true /* signed */, false /* floating */, false /* complex */), GDT_Int16);
+
+        ENSURE_EQUALS(GDALFindDataType(16, false /* signed */, false /* floating */, false /* complex */), GDT_UInt16);
+        ENSURE_EQUALS(GDALFindDataType(16, true /* signed */, false /* floating */, false /* complex */), GDT_Int16);
+
+        ENSURE_EQUALS(GDALFindDataType(32, false /* signed */, false /* floating */, false /* complex */), GDT_UInt32);
+        ENSURE_EQUALS(GDALFindDataType(32, true /* signed */, false /* floating */, false /* complex */), GDT_Int32);
+
+        ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, true /* floating */, false /* complex */), GDT_Float64);
+        ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, true /* floating */, true /* complex */), GDT_CFloat64);
     }
 
 #undef ENSURE

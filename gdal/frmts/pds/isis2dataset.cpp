@@ -314,12 +314,17 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********   Grab Qube record bytes  **********/
     const int record_bytes = atoi(poDS->GetKeyword("RECORD_BYTES"));
+    if( record_bytes < 0 )
+    {
+        delete poDS;
+        return nullptr;
+    }
 
     GUIntBig nSkipBytes = 0;
     if (nQube > 0 && bByteLocation )
         nSkipBytes = (nQube - 1);
     else if( nQube > 0 )
-        nSkipBytes = (nQube - 1) * record_bytes;
+        nSkipBytes = static_cast<GUIntBig>(nQube - 1) * record_bytes;
     else
         nSkipBytes = 0;
 
