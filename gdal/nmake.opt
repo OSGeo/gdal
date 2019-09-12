@@ -54,7 +54,7 @@ MSVC_VER=1900
 # But the paths *should* be absolute (relative paths mess up in submakefiles).
 
 !IFNDEF GDAL_HOME
-GDAL_HOME = "C:\warmerda\bld"
+GDAL_HOME = "D:\Work\gdal_artifact"
 !ENDIF
 !IFNDEF BINDIR
 BINDIR = "$(GDAL_HOME)\bin"
@@ -79,12 +79,12 @@ DATADIR = "$(GDAL_HOME)\data"
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now).
 !IFNDEF PYDIR 
-PYDIR   =	"C:\Software\Python24"
+PYDIR   =	"C:\Program Files\Python3X"
 !ENDIF
 
 # Set the location of your SWIG installation
 !IFNDEF SWIG
-SWIG = swig.exe
+SWIG = "C:\Program Files\swigwin-3.0.12\swig.exe"
 !ENDIF
 
 # SWIG Java settings
@@ -236,8 +236,8 @@ INCLUDE_GNM_FRMTS = YES
 #SETARGV =	"D:\Software\VStudio\VC98\lib\wsetargv.obj"
 
 # PROJ stuff (required dependency: PROJ >= 6)
-#PROJ_INCLUDE = -Id:\install-proj\local\include
-#PROJ_LIBRARY = d:\install-proj\local\lib\proj_6_0.lib
+PROJ_INCLUDE = -IC:\OSGeo4W64\apps\proj-dev\include
+PROJ_LIBRARY = C:\OSGeo4W64\apps\proj-dev\lib\proj_6_0.lib
 
 # Uncomment to build with libiconv library to support extended character
 # recoding capabilities. GDAL's internal stub implementation supports
