@@ -5,9 +5,7 @@ MapInfo EFAL
 
 .. shortname:: EFAL
 
-This driver supports the MapInfo TAB file format. This Driver supports
-the MapInfo (Native) as well as the new MapInfo Extended (NATIVEX)
-formats.
+This driver supports the MapInfo TAB file format including the MapInfo (Native) and the new MapInfo Extended (NATIVEX) formats.
 
 Driver capabilities
 -------------------
@@ -38,29 +36,24 @@ and creating data in these formats. The MITAB library does not support
 the newer MapInfo Extended (NativeX) format which allows for larger file
 sizes, unicode character encodings, and other internal enhancements.
 
-EFAL is a new SDK provided by Pitney Bowes. It will eventually be made
-available for download from Pitney Bowes and will probably be versioned
-consistently with MapInfo Pro releases. The EFAL SDK enables access to
-the MapInfo SQL data access engine and provides the ability to open,
-create, query, and modify data in MapInfo TAB and MapInfo Enhanced TAB
-file formats. This includes MapInfo Seamless tables. EFAL is a
-thread-safe SDK. The SDK includes detailed documentation on the API. The
-SDK must be used to build the GDAL driver. The SDK DLLs and related
-files must also be distributed for the driver to execute.
+EFAL is a new thread-safe SDK provided by Pitney Bowes. You can download the SDK from 
+https://www.pitneybowes.com/us/campaign/sdkrequest.html.
+The EFAL SDK enables access to the MapInfo SQL data access engine.
+It also provides the ability to open, create, query, and modify data 
+in MapInfo TAB and MapInfo Enhanced TAB file formats including the MapInfo Seamless tables. 
+The SDK includes detailed documentation on the API. The SDK DLLs and related
+files must be available on your machine for the driver to execute.
 
-The EFAL driver for GDAL is currently only supported for Windows
-operating systems. Pitney Bowes plans to port the EFAL library to
-non-Windows platforms.
+The EFAL driver for GDAL is supported on 64-bit Windows, Ubuntu, AmazonLinux, OracleLinux and CentOS.
 
 This driver supports the following capabilities:
 
 Opening and querying of MapInfo Native and NativeX TAB files
 
--  The EFAL API uses WKB as the interchange format for geometries. Due
-   to this, currently, the API does not support some legacy MapInfo
-   geometry types; most notably TEXT geometry types. Arc and Ellipse
-   types are also not currently supported. RECT and Rounded RECT types
-   are returned as polygons.
+-  The EFAL API uses WKB as the interchange format for geometries.
+   -  Arc and Ellipse types are also not currently supported. 
+   -  RECT and Rounded RECT types are returned as polygons.
+   -  Legacy Text type is returned as custom WKB geometry.
 -  Coordinate systems are supported using the MITAB capabilities through
    the importFromMICoordSys and exportToMICoordSys methods on the
    OGRSpatialReference class. Due to this, the MITAB driver must be
@@ -86,8 +79,7 @@ Creation of new MapInfo Native and NativeX TAB tables (layers)
 
 -  Can specify Native or NativeX
 -  Character encoding options including UTF-8 and UTF-16 for NativeX
--  Feature property types: Integer Integer64 Real String Date DateTime
-   Time
+-  Feature property types: Integer Integer64 Real String Date DateTime Time
 -  Blocksize options
 
 --------------
@@ -97,7 +89,7 @@ Creation of new MapInfo Native and NativeX TAB tables (layers)
 Differences with MITAB
 ----------------------
 
--  No MID/MIF support
+-  No MID/MIF support.
 -  Table (layer) schema lists geometry column as having name "OBJ"
    whereas MITAB does not.
 -  EFAL reports geometry type for table level whereas MITAB reports it
@@ -152,7 +144,7 @@ These options apply to the dataset creation options (-dcco)
 Issues and Limitations
 ----------------------
 
--  Driver does not support gdal virtual filesystem.
+-  Driver does not support GDAL virtual filesystem.
 
 --------------
 
@@ -166,10 +158,10 @@ Building
 
 The EFAL driver will build as part of the GDAL even if the EFAL SDK is
 not found or not on the machine. This will allow GDAL to always be
-EFAL-ready. A new header file (EFALLIB.h) was created to dynamically
-load the EFAL DLL if found and calls GetProcAddress for each of the
+EFAL-ready. A new header file (EFALLIB.h) is created to dynamically
+load the EFAL DLL if found, and calls GetProcAddress for each of the
 function entry points. To build GDAL for x64 architecture, for example,
-from a command prompt run the following:
+from a command prompt, run the following:
 
 ::
 
@@ -179,16 +171,41 @@ from a command prompt run the following:
   prompt this will be automatic but will cause issues with 32 bit
   builds.
 
-Runtime
-~~~~~~~
+EFAL SDK Runtime
+~~~~~~~~~~~~~~~~
 
+The EFAL driver needs the EFAL SDK to be installed on the machine to work with GDAL.
+
+Download the EFAL SDK by navigating to "https://www.pitneybowes.com/us/campaign/sdkrequest.html"
+and fill up the SDK request form to receive the download link on your e-mail.
+Once the SDK package is downloaded, unzip the package on your machine at the desired location.
+
+Structure of EFAL SDK package includes three main folders:
+
+-  data --> Sample data folder.
+-  export --> Binaries folder.
+   -  Common --> Common files used across platforms.
+   -  ua64 --> 64 bit Binaries for AmazonLinux.
+   -  uc64 --> 64 bit Binaries for CentOS.
+   -  uo64 --> 64 bit Binaries for OracleLinux.
+   -  uu64 --> 64 bit Binaries for Ubuntu.
+   -  ux64 --> 64 bit Binaries for Windows.
+   -  uw32 --> 32 bit Binaries for Windows.
+-  Solution --> Samples folder.
+
+Choose the binaries for the desired platform from the "export" folder and copy all files from the "export/Common" folder into the binaries folder. For example:
+
+::
+	To use binaries for Ubuntu, copy all the files from the "export/Common" folder to the "export/uu64". 
+	Create the system environment variable EFAL_SDK_DIR pointing to the "export/uu64" directory.
+	
 When using GDAL with this driver, the location of the EFAL runtime must
 be available on the system path. For example
 
 ::
 
    SET PATH=%PATH%;%EFAL_SDK_DIR%
-
+   
 Usage examples
 ~~~~~~~~~~~~~~
 
