@@ -823,11 +823,12 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     int nSkipBytes = 0;
     try
     {
-        if( osQube.find("<BYTES>") != CPLString::npos )
-            nSkipBytes = (CPLSM(nQube) - CPLSM(1)).v();
-        else if (nQube > 0 )
+        if (nQube > 0 )
         {
-            nSkipBytes = (CPLSM(nQube - 1) * CPLSM(record_bytes)).v();
+            if( osQube.find("<BYTES>") != CPLString::npos )
+                nSkipBytes = (CPLSM(nQube) - CPLSM(1)).v();
+            else
+                nSkipBytes = (CPLSM(nQube - 1) * CPLSM(record_bytes)).v();
         }
         else if( nDetachedOffset > 0 )
         {
@@ -848,6 +849,8 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     const int nLinePrefixBytes
         = atoi(GetKeyword(osPrefix+"IMAGE.LINE_PREFIX_BYTES",""));
+    if( nLinePrefixBytes < 0 )
+        return false;
     nSkipBytes += nLinePrefixBytes;
 
     /***********   Grab SAMPLE_TYPE *****************/
