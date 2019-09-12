@@ -221,3 +221,9 @@ Creating a spatial index
    ::
 
       ogrinfo -sql "create spatial index on rivers" "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes"
+
+Connecting with username/password
+
+   ::
+   
+      ogrinfo -al   MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=no;UID=user;PWD=pwd
