@@ -827,15 +827,17 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             case OGRFieldType::OFTDate:
             case OGRFieldType::OFTTime:
             case OGRFieldType::OFTDateTime: {
-                const char *str = OGRGetXMLDateTime(field);
+                char *str = OGRGetXMLDateTime(field);
                 size_t len = strlen(str);
                 if (len >= std::numeric_limits<uint32_t>::max()) {
                     CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: String too long");
+                    CPLFree(str);
                     return OGRERR_FAILURE;
                 }
                 uint32_t l = static_cast<uint32_t>(len);
                 std::copy(reinterpret_cast<const uint8_t *>(&l), reinterpret_cast<const uint8_t *>(&l + 1), std::back_inserter(properties));
                 std::copy(str, str + l, std::back_inserter(properties));
+                CPLFree(str);
                 break;
             }
             case OGRFieldType::OFTString: {
