@@ -61,7 +61,7 @@ struct OSRPJContextHolder
     unsigned searchPathGenerationCounter = 0;
     PJ_CONTEXT* context = nullptr;
 
-    OSRPJContextHolder();
+    OSRPJContextHolder() = default;
     ~OSRPJContextHolder();
 
     void init();
@@ -71,12 +71,6 @@ private:
     OSRPJContextHolder(const OSRPJContextHolder&) = delete;
     OSRPJContextHolder& operator=(const OSRPJContextHolder&) = delete;
 };
-
-
-OSRPJContextHolder::OSRPJContextHolder()
-{
-    init();
-}
 
 void OSRPJContextHolder::init()
 {
