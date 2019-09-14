@@ -141,7 +141,7 @@ void PackedRTree::init(const uint16_t nodeSize)
     if (_numItems == 0)
         throw std::invalid_argument("Cannot create empty tree");
     _nodeSize = std::min(std::max(nodeSize, static_cast<uint16_t>(2)), static_cast<uint16_t>(65535));
-    if (_numItems > std::numeric_limits<uint64_t>::max() - (_nodeSize - 1))
+    if (_numItems > std::numeric_limits<uint64_t>::max() - ((_numItems / _nodeSize) * 2))
         throw new std::overflow_error("Number of items too large");
     _levelBounds = generateLevelBounds(_numItems, _nodeSize);
     _numNodes = _levelBounds.back();
@@ -310,7 +310,7 @@ uint64_t PackedRTree::size() const { return _numNodes * sizeof(Rect) + (_numNonL
 uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
 {
     const uint16_t nodeSizeMin = std::min(std::max(nodeSize, static_cast<uint16_t>(2)), static_cast<uint16_t>(65535));
-    if (numItems > std::numeric_limits<uint64_t>::max() - (nodeSizeMin - 1))
+    if (numItems > std::numeric_limits<uint64_t>::max() - ((numItems / nodeSizeMin) * 2))
         throw new std::overflow_error("Number of items too large");
     uint64_t n = numItems;
     uint64_t numNodes = n;
