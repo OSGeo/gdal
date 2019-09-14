@@ -81,11 +81,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
 
     m_eGType = getOGRwkbGeometryType();
 
-    const char *pszName = nullptr;
-    if (m_poHeader->name()) {
-        pszName = m_poHeader->name()->c_str();
-        CPLDebug("FlatGeobuf", "header name: %s", pszName);
-    }
+    const char *pszName = m_poHeader->name() ? m_poHeader->name()->c_str() : "unknown";
     m_poFeatureDefn = new OGRFeatureDefn(pszName);
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(wkbNone);
