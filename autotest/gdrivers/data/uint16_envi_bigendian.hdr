@@ -1,0 +1,15 @@
+ENVI
+description = {
+uint16_envi_bigendian.dat}
+samples = 20
+lines   = 20
+bands   = 1
+header offset = 0
+file type = ENVI Standard
+data type = 12
+interleave = bsq
+byte order = 1
+map info = {UTM, 1, 1, 440720, 3751320, 60, 60, 11, North,North America 1927}
+coordinate system string = {PROJCS["NAD_1927_UTM_Zone_11N",GEOGCS["GCS_North_American_1927",DATUM["D_North_American_1927",SPHEROID["Clarke_1866",6378206.4,294.978698213898]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-117.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]}
+band names = {
+Band 1}
