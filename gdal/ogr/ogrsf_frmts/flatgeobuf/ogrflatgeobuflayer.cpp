@@ -430,9 +430,9 @@ GIntBig OGRFlatGeobufLayer::GetFeatureCount(int bForce) {
     }
 }
 
-static std::nullptr_t CPLErrorInvalidProperties() {
+static OGRErr CPLErrorInvalidProperties() {
     CPLError(CE_Failure, CPLE_AppDefined, "Properties buffer has invalid size");
-    return nullptr;
+    return OGRERR_CORRUPT_DATA;
 }
 
 OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
@@ -468,166 +468,171 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
         }
 
         OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
-
-        GIntBig fid;
-        if (m_processedSpatialIndex && !m_ignoreSpatialFilter) {
-            auto i = m_foundFeatureIndices[static_cast<size_t>(m_featuresPos)];
-            m_offset = m_offsetInit + m_featureOffsets[i];
-            fid = i;
-        } else if (m_featuresPos > 0) {
-            m_offset += m_featureSize + sizeof(uoffset_t);
-            fid = m_featuresPos;
-        } else {
-            fid = m_featuresPos;
-        }
-        poFeature->SetFID(fid);
-
-        VSIFSeekL(m_poFp, m_offset, SEEK_SET);
-        VSIFReadL(&m_featureSize, sizeof(uoffset_t), 1, m_poFp);
-        CPL_LSBPTR32(&m_featureSize);
-        if (m_featureBufSize == 0) {
-            m_featureBufSize = std::max(1024U * 32U, m_featureSize);
-            CPLDebug("FlatGeobuf", "GetNextFeature: m_featureBufSize: %d", m_featureBufSize);
-            m_featureBuf = static_cast<GByte *>(VSIMalloc(m_featureBufSize));
-        } else if (m_featureBufSize < m_featureSize) {
-            m_featureBufSize = std::max(m_featureBufSize * 2, m_featureSize);
-            CPLDebug("FlatGeobuf", "GetNextFeature: m_featureBufSize: %d", m_featureBufSize);
-            auto featureBuf = static_cast<GByte *>(VSIRealloc(m_featureBuf, m_featureBufSize));
-            if (featureBuf == nullptr) {
-                CPLError(CE_Failure, CPLE_AppDefined, "Failed to reallocate buffer");
-                return nullptr;
-            }
-            m_featureBuf = featureBuf;
-        }
-        VSIFReadL(m_featureBuf, 1, m_featureSize, m_poFp);
-
-        if (bVerifyBuffers) {
-            const uint8_t * vBuf = const_cast<const uint8_t *>(reinterpret_cast<uint8_t *>(m_featureBuf));
-            Verifier v(vBuf, m_featureSize);
-            auto ok = VerifyFeatureBuffer(v);
-            if (!ok) {
-                CPLError(CE_Failure, CPLE_AppDefined, "Buffer verification failed");
-                CPLDebug("FlatGeobuf", "m_offset: %lu", static_cast<long unsigned int>(m_offset));
-                CPLDebug("FlatGeobuf", "m_featuresPos: %lu", static_cast<long unsigned int>(m_featuresPos));
-                CPLDebug("FlatGeobuf", "featureSize: %d", m_featureSize);
-                return nullptr;
-            }
-        }
-
-        auto feature = GetRoot<Feature>(m_featureBuf);
-
         OGRGeometry *ogrGeometry = nullptr;
-        if (!m_poFeatureDefn->IsGeometryIgnored()) {
-            ogrGeometry = readGeometry(feature);
-            if (ogrGeometry == nullptr) {
-                CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
-                return nullptr;
-            }
-            if (m_poSRS != nullptr)
-                ogrGeometry->assignSpatialReference(m_poSRS);
-            poFeature->SetGeometryDirectly(ogrGeometry);
-        }
-        #ifdef DEBUG
-            //char *wkt;
-            //ogrGeometry->exportToWkt(&wkt);
-            //CPLDebug("FlatGeobuf", "readGeometry as wkt: %s", wkt);
-        #endif
-        auto properties = feature->properties();
-        if (properties != nullptr) {
-            auto data = properties->data();
-            auto size = properties->size();
-            //CPLDebug("FlatGeobuf", "properties->size: %d", size);
-            uoffset_t offset = 0;
-            // size must be at least large enough to contain
-            // a single column index and smallest value type
-            if (size > 0 && size < (sizeof(uint16_t) + sizeof(uint8_t)))
-                return CPLErrorInvalidProperties();
-            while (offset < (size - 1)) {
-                if (offset + sizeof(uint16_t) > size)
-                    return CPLErrorInvalidProperties();
-                uint16_t i = *((uint16_t *)(data + offset));
-                offset += sizeof(uint16_t);
-                //CPLDebug("FlatGeobuf", "i: %d", i);
-                auto columns = m_poHeader->columns();
-                if (columns == nullptr) {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Unexpected undefined columns");
-                    return nullptr;
-                }
-                if (i >= columns->size()) {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Column index out of range");
-                    return nullptr;
-                }
-                auto column = columns->Get(i);
-                auto type = column->type();
-                auto isIgnored = poFeature->GetFieldDefnRef(i)->IsIgnored();
-                auto ogrField = poFeature->GetRawFieldRef(i);
-                switch (type) {
-                    case ColumnType::Int:
-                        if (offset + sizeof(int32_t) > size)
-                            return CPLErrorInvalidProperties();
-                        if (!isIgnored)
-                            ogrField->Integer = *((int32_t *)(data + offset));
-                        offset += sizeof(int32_t);
-                        break;
-                    case ColumnType::Long:
-                        if (offset + sizeof(int64_t) > size)
-                            return CPLErrorInvalidProperties();
-                        if (!isIgnored)
-                            ogrField->Integer64 = *((int64_t *)(data + offset));
-                        offset += sizeof(int64_t);
-                        break;
-                    case ColumnType::Double:
-                        if (offset + sizeof(double) > size)
-                            return CPLErrorInvalidProperties();
-                        if (!isIgnored)
-                            ogrField->Real = *((double *)(data + offset));
-                        offset += sizeof(double);
-                        break;
-                    case ColumnType::DateTime: {
-                        if (offset + sizeof(uint32_t) > size)
-                            return CPLErrorInvalidProperties();
-                        uint32_t len = *((uint32_t *)(data + offset));
-                        offset += sizeof(uint32_t);
-                        if (offset + len > size)
-                            return CPLErrorInvalidProperties();
-                        char *str = (char *) VSIMalloc(len + 1);
-                        memcpy(str, data + offset, len);
-                        offset += len;
-                        str[len] = '\0';
-                        if (!isIgnored)
-                            OGRParseDate(str, ogrField, 0);
-                        break;
-                    }
-                    case ColumnType::String: {
-                        if (offset + sizeof(uint32_t) > size)
-                            return CPLErrorInvalidProperties();
-                        uint32_t len = *((uint32_t *)(data + offset));
-                        offset += sizeof(uint32_t);
-                        if (offset + len > size)
-                            return CPLErrorInvalidProperties();
-                        uint8_t *str = (uint8_t *) VSIMalloc(len + 1);
-                        memcpy(str, data + offset, len);
-                        offset += len;
-                        str[len] = '\0';
-                        if (!isIgnored)
-                            ogrField->String = (char *) str;
-                        break;
-                    }
-                    default:
-                        CPLError(CE_Failure, CPLE_AppDefined, "GetNextFeature: Unknown column->type: %d", (int) type);
-                }
-            }
+        if (parseFeature(poFeature, ogrGeometry) != OGRERR_NONE) {
+            delete poFeature;
+            return nullptr;
         }
 
         m_featuresPos++;
 
         if ((m_poFilterGeom == nullptr || m_ignoreSpatialFilter || FilterGeometry(ogrGeometry)) &&
-            (m_poAttrQuery == nullptr || m_ignoreAttributeFilter || m_poAttrQuery->Evaluate(poFeature))) {
+            (m_poAttrQuery == nullptr || m_ignoreAttributeFilter || m_poAttrQuery->Evaluate(poFeature)))
             return poFeature;
-        } else {
-            delete poFeature;
+
+        return nullptr;
+    }
+}
+
+OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry *ogrGeometry) {
+    GIntBig fid;
+    if (m_processedSpatialIndex && !m_ignoreSpatialFilter) {
+        auto i = m_foundFeatureIndices[static_cast<size_t>(m_featuresPos)];
+        m_offset = m_offsetInit + m_featureOffsets[i];
+        fid = i;
+    } else if (m_featuresPos > 0) {
+        m_offset += m_featureSize + sizeof(uoffset_t);
+        fid = m_featuresPos;
+    } else {
+        fid = m_featuresPos;
+    }
+    poFeature->SetFID(fid);
+
+    VSIFSeekL(m_poFp, m_offset, SEEK_SET);
+    VSIFReadL(&m_featureSize, sizeof(uoffset_t), 1, m_poFp);
+    CPL_LSBPTR32(&m_featureSize);
+    if (m_featureBufSize == 0) {
+        m_featureBufSize = std::max(1024U * 32U, m_featureSize);
+        CPLDebug("FlatGeobuf", "GetNextFeature: m_featureBufSize: %d", m_featureBufSize);
+        m_featureBuf = static_cast<GByte *>(VSIMalloc(m_featureBufSize));
+    } else if (m_featureBufSize < m_featureSize) {
+        m_featureBufSize = std::max(m_featureBufSize * 2, m_featureSize);
+        CPLDebug("FlatGeobuf", "GetNextFeature: m_featureBufSize: %d", m_featureBufSize);
+        auto featureBuf = static_cast<GByte *>(VSIRealloc(m_featureBuf, m_featureBufSize));
+        if (featureBuf == nullptr) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to reallocate buffer");
+            return OGRERR_NOT_ENOUGH_MEMORY;
+        }
+        m_featureBuf = featureBuf;
+    }
+    VSIFReadL(m_featureBuf, 1, m_featureSize, m_poFp);
+
+    if (bVerifyBuffers) {
+        const uint8_t * vBuf = const_cast<const uint8_t *>(reinterpret_cast<uint8_t *>(m_featureBuf));
+        Verifier v(vBuf, m_featureSize);
+        auto ok = VerifyFeatureBuffer(v);
+        if (!ok) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Buffer verification failed");
+            CPLDebug("FlatGeobuf", "m_offset: %lu", static_cast<long unsigned int>(m_offset));
+            CPLDebug("FlatGeobuf", "m_featuresPos: %lu", static_cast<long unsigned int>(m_featuresPos));
+            CPLDebug("FlatGeobuf", "featureSize: %d", m_featureSize);
+            return OGRERR_CORRUPT_DATA;
         }
     }
+
+    auto feature = GetRoot<Feature>(m_featureBuf);
+    if (!m_poFeatureDefn->IsGeometryIgnored()) {
+        ogrGeometry = readGeometry(feature);
+        if (ogrGeometry == nullptr) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
+            return OGRERR_CORRUPT_DATA;
+        }
+        if (m_poSRS != nullptr)
+            ogrGeometry->assignSpatialReference(m_poSRS);
+        poFeature->SetGeometryDirectly(ogrGeometry);
+    }
+    #ifdef DEBUG
+        //char *wkt;
+        //ogrGeometry->exportToWkt(&wkt);
+        //CPLDebug("FlatGeobuf", "readGeometry as wkt: %s", wkt);
+    #endif
+    auto properties = feature->properties();
+    if (properties != nullptr) {
+        auto data = properties->data();
+        auto size = properties->size();
+        //CPLDebug("FlatGeobuf", "properties->size: %d", size);
+        uoffset_t offset = 0;
+        // size must be at least large enough to contain
+        // a single column index and smallest value type
+        if (size > 0 && size < (sizeof(uint16_t) + sizeof(uint8_t)))
+            return CPLErrorInvalidProperties();
+        while (offset < (size - 1)) {
+            if (offset + sizeof(uint16_t) > size)
+                return CPLErrorInvalidProperties();
+            uint16_t i = *((uint16_t *)(data + offset));
+            offset += sizeof(uint16_t);
+            //CPLDebug("FlatGeobuf", "i: %d", i);
+            auto columns = m_poHeader->columns();
+            if (columns == nullptr) {
+                CPLError(CE_Failure, CPLE_AppDefined, "Unexpected undefined columns");
+                return OGRERR_CORRUPT_DATA;
+            }
+            if (i >= columns->size()) {
+                CPLError(CE_Failure, CPLE_AppDefined, "Column index out of range");
+                return OGRERR_CORRUPT_DATA;
+            }
+            auto column = columns->Get(i);
+            auto type = column->type();
+            auto isIgnored = poFeature->GetFieldDefnRef(i)->IsIgnored();
+            auto ogrField = poFeature->GetRawFieldRef(i);
+            switch (type) {
+                case ColumnType::Int:
+                    if (offset + sizeof(int32_t) > size)
+                        return CPLErrorInvalidProperties();
+                    if (!isIgnored)
+                        ogrField->Integer = *((int32_t *)(data + offset));
+                    offset += sizeof(int32_t);
+                    break;
+                case ColumnType::Long:
+                    if (offset + sizeof(int64_t) > size)
+                        return CPLErrorInvalidProperties();
+                    if (!isIgnored)
+                        ogrField->Integer64 = *((int64_t *)(data + offset));
+                    offset += sizeof(int64_t);
+                    break;
+                case ColumnType::Double:
+                    if (offset + sizeof(double) > size)
+                        return CPLErrorInvalidProperties();
+                    if (!isIgnored)
+                        ogrField->Real = *((double *)(data + offset));
+                    offset += sizeof(double);
+                    break;
+                case ColumnType::DateTime: {
+                    if (offset + sizeof(uint32_t) > size)
+                        return CPLErrorInvalidProperties();
+                    uint32_t len = *((uint32_t *)(data + offset));
+                    offset += sizeof(uint32_t);
+                    if (offset + len > size)
+                        return CPLErrorInvalidProperties();
+                    char *str = (char *) VSIMalloc(len + 1);
+                    memcpy(str, data + offset, len);
+                    offset += len;
+                    str[len] = '\0';
+                    if (!isIgnored)
+                        OGRParseDate(str, ogrField, 0);
+                    break;
+                }
+                case ColumnType::String: {
+                    if (offset + sizeof(uint32_t) > size)
+                        return CPLErrorInvalidProperties();
+                    uint32_t len = *((uint32_t *)(data + offset));
+                    offset += sizeof(uint32_t);
+                    if (offset + len > size)
+                        return CPLErrorInvalidProperties();
+                    uint8_t *str = (uint8_t *) VSIMalloc(len + 1);
+                    memcpy(str, data + offset, len);
+                    offset += len;
+                    str[len] = '\0';
+                    if (!isIgnored)
+                        ogrField->String = (char *) str;
+                    break;
+                }
+                default:
+                    CPLError(CE_Failure, CPLE_AppDefined, "GetNextFeature: Unknown column->type: %d", (int) type);
+            }
+        }
+    }
+    return OGRERR_NONE;
 }
 
 OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, uint32_t offset)
