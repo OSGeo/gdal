@@ -175,6 +175,7 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
             CPLDebug("FlatGeobuf", "Add treeSize to offset (%lu)", static_cast<long unsigned int>(treeSize));
         } catch (const std::exception& e) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to calculate tree size: %s", e.what());
+            VSIFree(buf);
             return nullptr;
         }
         offset += featuresCount * 8;
