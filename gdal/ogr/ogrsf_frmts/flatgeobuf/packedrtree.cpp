@@ -138,6 +138,8 @@ void hilbertSort(std::vector<Rect> &items)
 
 void PackedRTree::init(const uint16_t nodeSize)
 {
+    if (nodeSize < 2)
+        throw std::invalid_argument("Node size must be at least 2");
     if (_numItems == 0)
         throw std::invalid_argument("Cannot create empty tree");
     _nodeSize = std::min(std::max(nodeSize, static_cast<uint16_t>(2)), static_cast<uint16_t>(65535));
@@ -150,10 +152,12 @@ void PackedRTree::init(const uint16_t nodeSize)
 }
 
 std::vector<uint64_t> PackedRTree::generateLevelBounds(const uint64_t numItems, const uint16_t nodeSize) {
+    if (nodeSize < 2)
+        throw std::invalid_argument("Node size must be at least 2");
     if (numItems == 0)
-        throw std::invalid_argument("Cannot generate levels for an empty tree");
+        throw std::invalid_argument("Number of items must be greater than 0");
     if (numItems > std::numeric_limits<uint64_t>::max() - ((numItems / nodeSize) * 2))
-        throw new std::overflow_error("Number of items too large");
+        throw std::overflow_error("Number of items too large");
     std::vector<uint64_t> levelBounds;
     uint64_t n = numItems;
     uint64_t numNodes = n;
@@ -309,11 +313,13 @@ uint64_t PackedRTree::size() const { return _numNodes * sizeof(Rect) + (_numNonL
 
 uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
 {
+    if (nodeSize < 2)
+        throw std::invalid_argument("Node size must be at least 2");
     if (numItems == 0)
-        return 0;
+        throw std::invalid_argument("Number of items must be greater than 0");
     const uint16_t nodeSizeMin = std::min(std::max(nodeSize, static_cast<uint16_t>(2)), static_cast<uint16_t>(65535));
     if (numItems > std::numeric_limits<uint64_t>::max() - ((numItems / nodeSizeMin) * 2))
-        throw new std::overflow_error("Number of items too large");
+        throw std::overflow_error("Number of items too large");
     uint64_t n = numItems;
     uint64_t numNodes = n;
     do {
