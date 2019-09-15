@@ -169,9 +169,14 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
     auto featuresCount = header->features_count();
     auto index_node_size = header->index_node_size();
     if (index_node_size > 0) {
-        auto treeSize = PackedRTree::size(featuresCount);
-        offset += treeSize;
-        CPLDebug("FlatGeobuf", "Add treeSize to offset (%lu)", static_cast<long unsigned int>(treeSize));
+        try {
+            auto treeSize = PackedRTree::size(featuresCount);
+            offset += treeSize;
+            CPLDebug("FlatGeobuf", "Add treeSize to offset (%lu)", static_cast<long unsigned int>(treeSize));
+        } catch (const std::exception& e) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to calculate tree size: %s", e.what());
+            return nullptr;
+        }
         offset += featuresCount * 8;
         CPLDebug("FlatGeobuf", "Add featuresCount * 8 to offset (%lu)", static_cast<long unsigned int>(featuresCount * 8));
     }
