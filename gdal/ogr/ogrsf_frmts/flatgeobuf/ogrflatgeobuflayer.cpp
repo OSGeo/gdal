@@ -469,7 +469,8 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
 
         OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
         OGRGeometry *ogrGeometry = nullptr;
-        if (parseFeature(poFeature, ogrGeometry) != OGRERR_NONE) {
+        if (parseFeature(poFeature, &ogrGeometry) != OGRERR_NONE) {
+            CPLDebug("FlatGeobuf", "GetNextFeature: fatal error when parsing feature");
             delete poFeature;
             return nullptr;
         }
@@ -484,7 +485,7 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
     }
 }
 
-OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry *ogrGeometry) {
+OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogrGeometry) {
     GIntBig fid;
     if (m_processedSpatialIndex && !m_ignoreSpatialFilter) {
         auto i = m_foundFeatureIndices[static_cast<size_t>(m_featuresPos)];
@@ -532,14 +533,14 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry *ogrG
 
     auto feature = GetRoot<Feature>(m_featureBuf);
     if (!m_poFeatureDefn->IsGeometryIgnored()) {
-        ogrGeometry = readGeometry(feature);
+        *ogrGeometry = readGeometry(feature);
         if (ogrGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
         }
         if (m_poSRS != nullptr)
-            ogrGeometry->assignSpatialReference(m_poSRS);
-        poFeature->SetGeometryDirectly(ogrGeometry);
+            (*ogrGeometry)->assignSpatialReference(m_poSRS);
+        poFeature->SetGeometryDirectly(*ogrGeometry);
     }
     #ifdef DEBUG
         //char *wkt;

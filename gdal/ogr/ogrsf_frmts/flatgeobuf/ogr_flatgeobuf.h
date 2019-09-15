@@ -100,7 +100,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         // deserialize
         void ensurePadfBuffers(size_t count);
-        OGRErr parseFeature(OGRFeature *poFeature, OGRGeometry *ogrGeometry);
+        OGRErr parseFeature(OGRFeature *poFeature, OGRGeometry **ogrGeometry);
         OGRPoint *readPoint(const Feature *feature, uint32_t offset = 0);
         OGRMultiPoint *readMultiPoint(const Feature *feature, uint32_t len);
         OGRLineString *readLineString(const Feature *feature, uint32_t len, uint32_t offset = 0);
