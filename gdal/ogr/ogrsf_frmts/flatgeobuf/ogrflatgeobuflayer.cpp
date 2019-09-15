@@ -305,9 +305,14 @@ void OGRFlatGeobufLayer::Create() {
         CPLDebug("FlatGeobuf", "Sorting items for Packed R-tree");
         hilbertSort(m_featureItems);
         CPLDebug("FlatGeobuf", "Creating Packed R-tree");
-        PackedRTree tree(m_featureItems, extent);
-        CPLDebug("FlatGeobuf", "PackedRTree extent %f, %f, %f, %f", extentVector[0], extentVector[1], extentVector[2], extentVector[3]);
-        tree.streamWrite([this, &c] (uint8_t *data, size_t size) { c = VSIFWriteL(data, 1, size, m_poFp); });
+        try {
+            PackedRTree tree(m_featureItems, extent);
+            CPLDebug("FlatGeobuf", "PackedRTree extent %f, %f, %f, %f", extentVector[0], extentVector[1], extentVector[2], extentVector[3]);
+            tree.streamWrite([this, &c] (uint8_t *data, size_t size) { c = VSIFWriteL(data, 1, size, m_poFp); });
+        } catch (const std::exception& e) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Create: %s", e.what());
+            return;
+        }
         CPLDebug("FlatGeobuf", "Wrote tree (%lu bytes)", static_cast<long unsigned int>(c));
         offset += c;
     }
@@ -398,24 +403,29 @@ void OGRFlatGeobufLayer::processSpatialIndex() {
         VSIFReadL(&headerSize, sizeof(uoffset_t), 1, m_poFp);
         CPL_LSBPTR32(&headerSize);
         auto featuresCount = m_poHeader->features_count();
-        auto treeSize = PackedRTree::size(featuresCount);
-        OGREnvelope env;
-        m_poFilterGeom->getEnvelope(&env);
-        Rect r { env.MinX, env.MinY, env.MaxX, env.MaxY };
-        CPLDebug("FlatGeobuf", "Spatial index search on %f,%f,%f,%f", env.MinX, env.MinY, env.MaxX, env.MaxY);
-        auto readNode = [this, headerSize] (uint8_t *buf, size_t i, size_t s) {
-            VSIFSeekL(m_poFp, sizeof(magicbytes) + sizeof(uoffset_t) + headerSize + i, SEEK_SET);
-            VSIFReadL(buf, 1, s, m_poFp);
-        };
-        m_foundFeatureIndices = PackedRTree::streamSearch(featuresCount, 16, r, readNode);
-        m_featuresCount = m_foundFeatureIndices.size();
-        if (m_featuresCount == 0) {
-            CPLDebug("FlatGeobuf", "No found features in spatial index search");
+        try {
+            auto treeSize = PackedRTree::size(featuresCount);
+            OGREnvelope env;
+            m_poFilterGeom->getEnvelope(&env);
+            Rect r { env.MinX, env.MinY, env.MaxX, env.MaxY };
+            CPLDebug("FlatGeobuf", "Spatial index search on %f,%f,%f,%f", env.MinX, env.MinY, env.MaxX, env.MaxY);
+            auto readNode = [this, headerSize] (uint8_t *buf, size_t i, size_t s) {
+                VSIFSeekL(m_poFp, sizeof(magicbytes) + sizeof(uoffset_t) + headerSize + i, SEEK_SET);
+                VSIFReadL(buf, 1, s, m_poFp);
+            };
+            m_foundFeatureIndices = PackedRTree::streamSearch(featuresCount, 16, r, readNode);
+            m_featuresCount = m_foundFeatureIndices.size();
+            if (m_featuresCount == 0) {
+                CPLDebug("FlatGeobuf", "No found features in spatial index search");
+                return;
+            }
+            CPLDebug("FlatGeobuf", "%lu features found in spatial index search", static_cast<long unsigned int>(m_featuresCount));
+            m_featureOffsets = static_cast<uint64_t *>(VSI_MALLOC_VERBOSE(static_cast<size_t>(featuresCount * 8)));
+            VSIFSeekL(m_poFp, sizeof(magicbytes) + sizeof(uoffset_t) + headerSize + treeSize, SEEK_SET);
+        } catch (const std::exception& e) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Create: %s", e.what());
             return;
         }
-        CPLDebug("FlatGeobuf", "%lu features found in spatial index search", static_cast<long unsigned int>(m_featuresCount));
-        m_featureOffsets = static_cast<uint64_t *>(VSI_MALLOC_VERBOSE(static_cast<size_t>(featuresCount * 8)));
-        VSIFSeekL(m_poFp, sizeof(magicbytes) + sizeof(uoffset_t) + headerSize + treeSize, SEEK_SET);
         VSIFReadL(m_featureOffsets, 8, static_cast<size_t>(featuresCount), m_poFp);
     } else {
         CPLDebug("FlatGeobuf", "processSpatialIndex noop");
