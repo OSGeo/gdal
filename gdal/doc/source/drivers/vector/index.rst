@@ -31,6 +31,7 @@ Vector drivers
    elasticsearch
    esrijson
    filegdb
+   flatgeobuf
    fme
    geoconcept
    geojson
