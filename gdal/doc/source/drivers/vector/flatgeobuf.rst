@@ -7,6 +7,11 @@ FlatGeobuf
 
 .. shortname:: ``FlatGeobuf``
 
+This driver implements read/write support for access to features encoded
+in `FlatGeobuf <https://github.com/bjornharrtell/flatgeobuf>`__ format, a
+performant binary encoding for geographic data based on flatbuffers that
+can hold a collection of Simple Features.
+
 Driver capabilities
 -------------------
 
@@ -24,25 +29,17 @@ Open options
     trade off. Defaults to YES.
 
 Dataset Creation Options
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 None
 
 Layer Creation Options
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 -  **SPATIAL_INDEX=**\ *YES/NO*: Set the YES to create a
    spatial index. Defaults to YES.
 
-VSI Virtual File System API support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The driver supports reading from files managed by VSI Virtual File
-System API, which include "regular" files, as well as files in the
-/vsizip/, /vsigzip/ , /vsicurl/ domains.
-
-
 See Also
-~~~~~~~~
+--------
 
 -  `FlatGeobuf at GitHub <https://github.com/bjornharrtell/flatgeobuf>`__
