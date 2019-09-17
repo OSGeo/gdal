@@ -39,6 +39,18 @@ Layer Creation Options
 -  **SPATIAL_INDEX=**\ *YES/NO*: Set the YES to create a
    spatial index. Defaults to YES.
 
+Examples
+--------
+
+-  Simple translation of a single shapefile into a FlatGeobuf file. The file
+   'filename.fgb' will be created with the features from abc.shp and attributes
+   from abc.dbf. The file ``filename.fgb`` must **not** already exist,
+   as it will be created.
+
+   ::
+
+      % ogr2ogr -f FlatGeobuf filename.fgb abc.shp
+
 See Also
 --------
 
