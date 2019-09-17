@@ -2292,17 +2292,18 @@ def test_ogr_geojson_47():
 
     assert 'something' in data
 
-    # Test appending to feature collection with "bbox"
-    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_47.json', """{ "type": "FeatureCollection", "bbox": [0,0,0,0], "features": [ { "type": "Feature", "geometry": { "type": "Point", "coordinates": [0,0]} } ]}""")
-    ds = ogr.Open('/vsimem/ogr_geojson_47.json', update=1)
-    lyr = ds.GetLayer(0)
-    f = ogr.Feature(lyr.GetLayerDefn())
-    lyr.CreateFeature(f)
-    ds = None
-    ds = ogr.Open('/vsimem/ogr_geojson_47.json')
-    lyr = ds.GetLayer(0)
-    assert lyr.GetFeatureCount() == 2
-    ds = None
+    with gdaltest.config_option('OGR_GEOJSON_REWRITE_IN_PLACE', 'YES'):
+        # Test appending to feature collection with "bbox"
+        gdal.FileFromMemBuffer('/vsimem/ogr_geojson_47.json', """{ "type": "FeatureCollection", "bbox": [0,0,0,0], "features": [ { "type": "Feature", "geometry": { "type": "Point", "coordinates": [0,0]} } ]}""")
+        ds = ogr.Open('/vsimem/ogr_geojson_47.json', update=1)
+        lyr = ds.GetLayer(0)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+        ds = None
+        ds = ogr.Open('/vsimem/ogr_geojson_47.json')
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_47.json', 'rb')
     if fp is not None:
