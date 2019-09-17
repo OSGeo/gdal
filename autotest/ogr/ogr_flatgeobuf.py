@@ -180,7 +180,7 @@ def test_ogr_flatgeobuf_2():
     c = fgb_lyr.SetSpatialFilterRect(479586.0,4764618.6,479808.2,4764797.8)
     c = fgb_lyr.GetFeatureCount()
     if ogrtest.have_geos():
-        assert c == 0
+        assert c == 4
     else:
         assert c == 5
 
@@ -189,19 +189,19 @@ def test_ogr_flatgeobuf_2():
     # check that ResetReading does not affect subsequent enumeration or filtering
     num = len(list([x for x in fgb_lyr]))
     if ogrtest.have_geos():
-        assert num == 0
+        assert num == 4
     else:
         assert num == 5
     fgb_lyr.ResetReading()
     c = fgb_lyr.GetFeatureCount()
     if ogrtest.have_geos():
-        assert c == 0
+        assert c == 4
     else:
         assert c == 5
     fgb_lyr.ResetReading()
     num = len(list([x for x in fgb_lyr]))
     if ogrtest.have_geos():
-        assert num == 0
+        assert num == 4
     else:
         assert num == 5
 
