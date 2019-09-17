@@ -1075,22 +1075,65 @@ void OGRGeoJSONDataSource::FlushCache()
                 }
                 if( bOK )
                 {
-                    CPLString osBackup(pszName_);
-                    osBackup += ".bak";
-                    if( VSIRename(pszName_, osBackup) < 0 )
+                    const bool bOverwrite =
+                        CPLTestBool(CPLGetConfigOption("OGR_GEOJSON_REWRITE_IN_PLACE",
+#ifdef WIN32
+                                                       "YES"
+#else
+                                                       "NO"
+#endif
+                                                        ));
+                    if( bOverwrite )
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "Cannot create backup copy");
-                    }
-                    else if( VSIRename(osNewFilename, pszName_) < 0 )
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "Cannot rename %s to %s",
-                                osNewFilename.c_str(), pszName_);
+                        VSILFILE* fpTarget = nullptr;
+                        for( int attempt = 0; attempt < 10; attempt++ )
+                        {
+                            fpTarget = VSIFOpenL(pszName_, "rb+");
+                            if( fpTarget )
+                                break;
+                            CPLSleep(0.1);
+                        }
+                        if( !fpTarget )
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Cannot rewrite %s", pszName_);
+                        }
+                        else
+                        {
+                            const bool bCopyOK = CPL_TO_BOOL(
+                                VSIOverwriteFile(fpTarget, osNewFilename));
+                            VSIFCloseL(fpTarget);
+                            if( bCopyOK )
+                            {
+                                VSIUnlink(osNewFilename);
+                            }
+                            else
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Cannot rewrite %s with content of %s",
+                                         pszName_, osNewFilename.c_str());
+                            }
+                        }
                     }
                     else
                     {
-                        VSIUnlink(osBackup);
+                        CPLString osBackup(pszName_);
+                        osBackup += ".bak";
+                        if( VSIRename(pszName_, osBackup) < 0 )
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "Cannot create backup copy");
+                        }
+                        else if( VSIRename(osNewFilename, pszName_) < 0 )
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "Cannot rename %s to %s",
+                                    osNewFilename.c_str(), pszName_);
+                        }
+                        else
+                        {
+                            VSIUnlink(osBackup);
+                        }
                     }
                 }
             }
