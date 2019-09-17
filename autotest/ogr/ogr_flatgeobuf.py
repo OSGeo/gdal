@@ -177,19 +177,33 @@ def test_ogr_flatgeobuf_2():
     c = fgb_lyr.SetSpatialFilterRect(878315.531250, 4762880.500000, 881645.312500, 4765610.500000)
     c = fgb_lyr.GetFeatureCount()
     assert c == 0
-    c = fgb_lyr.SetSpatialFilterRect(479315.531250, 4764880.500000, 480645.312500, 4765610.500000)
+    c = fgb_lyr.SetSpatialFilterRect(479586.0,4764618.6,479808.2,4764797.8)
     c = fgb_lyr.GetFeatureCount()
-    assert c == 6
+    if ogrtest.have_geos():
+        assert c == 0
+    else:
+        assert c == 5
+
+
 
     # check that ResetReading does not affect subsequent enumeration or filtering
     num = len(list([x for x in fgb_lyr]))
-    assert num == 6
+    if ogrtest.have_geos():
+        assert num == 0
+    else:
+        assert num == 5
     fgb_lyr.ResetReading()
     c = fgb_lyr.GetFeatureCount()
-    assert c == 6
+    if ogrtest.have_geos():
+        assert c == 0
+    else:
+        assert c == 5
     fgb_lyr.ResetReading()
     num = len(list([x for x in fgb_lyr]))
-    assert num == 6
+    if ogrtest.have_geos():
+        assert num == 0
+    else:
+        assert num == 5
 
 # Run test_ogrsf
 def test_ogr_flatgeobuf_8():
