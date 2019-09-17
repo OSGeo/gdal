@@ -544,7 +544,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
     auto feature = GetRoot<Feature>(m_featureBuf);
     if (!m_poFeatureDefn->IsGeometryIgnored()) {
         *ogrGeometry = readGeometry(feature);
-        if (ogrGeometry == nullptr) {
+        if (*ogrGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
         }
