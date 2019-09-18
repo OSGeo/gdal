@@ -84,7 +84,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         uint64_t m_offsetInit = 0;
         uint64_t *m_featureOffsets = nullptr;
         std::vector<uint64_t> m_foundFeatureIndices;
-        bool m_processedSpatialIndex = false;
+        bool m_queriedSpatialIndex = false;
         bool m_ignoreSpatialFilter = false;
         bool m_ignoreAttributeFilter = false;
 
@@ -113,7 +113,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         static OGRFieldType toOGRFieldType(ColumnType type);
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
         void readColumns();
-        void processSpatialIndex();
+        OGRErr querySpatialIndex();
 
         // serialize
         void Create();
