@@ -519,8 +519,8 @@ void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
         return;
     }
 
-    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs ||
-           !poJob->bSuccess )
+    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs &&
+            poJob->bSuccess )
     {
         int nBlockXOff = poJob->oPairs[nPair].first;
         int nBlockYOff = poJob->oPairs[nPair].second;
