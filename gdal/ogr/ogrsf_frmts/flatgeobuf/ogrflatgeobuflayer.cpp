@@ -465,16 +465,16 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
                 return nullptr;
             }
             //m_poFp = (VSILFILE*) VSICreateCachedFile ( (VSIVirtualHandle*) m_poFp);
+        }
 
-            processSpatialIndex();
-            if (m_featuresCount == 0) {
-                CPLDebug("FlatGeobuf", "GetNextFeature: no features found in spatial index search");
-                if (m_poFp != nullptr) {
-                    VSIFCloseL(m_poFp);
-                    m_poFp = nullptr;
-                }
-                return nullptr;
+        processSpatialIndex();
+        if (m_featuresCount == 0) {
+            CPLDebug("FlatGeobuf", "GetNextFeature: no features found in spatial index search");
+            if (m_poFp != nullptr) {
+                VSIFCloseL(m_poFp);
+                m_poFp = nullptr;
             }
+            return nullptr;
         }
 
         OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
@@ -490,8 +490,6 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
         if ((m_poFilterGeom == nullptr || m_ignoreSpatialFilter || FilterGeometry(ogrGeometry)) &&
             (m_poAttrQuery == nullptr || m_ignoreAttributeFilter || m_poAttrQuery->Evaluate(poFeature)))
             return poFeature;
-
-        return nullptr;
     }
 }
 
@@ -544,7 +542,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
     auto feature = GetRoot<Feature>(m_featureBuf);
     if (!m_poFeatureDefn->IsGeometryIgnored()) {
         *ogrGeometry = readGeometry(feature);
-        if (ogrGeometry == nullptr) {
+        if (*ogrGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
         }

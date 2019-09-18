@@ -164,6 +164,47 @@ def test_ogr_flatgeobuf_1():
         return
     pytest.fail()
 
+def test_ogr_flatgeobuf_2():
+    fgb_ds = ogr.Open('data/testfgb/poly.fgb')
+    fgb_lyr = fgb_ds.GetLayer(0)
+
+    # test expected spatial filter feature count consistency
+    c = fgb_lyr.GetFeatureCount()
+    assert c == 10
+    c = fgb_lyr.SetSpatialFilterRect(478315.531250, 4762880.500000, 481645.312500, 4765610.500000)
+    c = fgb_lyr.GetFeatureCount()
+    assert c == 10
+    c = fgb_lyr.SetSpatialFilterRect(878315.531250, 4762880.500000, 881645.312500, 4765610.500000)
+    c = fgb_lyr.GetFeatureCount()
+    assert c == 0
+    c = fgb_lyr.SetSpatialFilterRect(479586.0,4764618.6,479808.2,4764797.8)
+    c = fgb_lyr.GetFeatureCount()
+    if ogrtest.have_geos():
+        assert c == 4
+    else:
+        assert c == 5
+
+
+
+    # check that ResetReading does not affect subsequent enumeration or filtering
+    num = len(list([x for x in fgb_lyr]))
+    if ogrtest.have_geos():
+        assert num == 4
+    else:
+        assert num == 5
+    fgb_lyr.ResetReading()
+    c = fgb_lyr.GetFeatureCount()
+    if ogrtest.have_geos():
+        assert c == 4
+    else:
+        assert c == 5
+    fgb_lyr.ResetReading()
+    num = len(list([x for x in fgb_lyr]))
+    if ogrtest.have_geos():
+        assert num == 4
+    else:
+        assert num == 5
+
 # Run test_ogrsf
 def test_ogr_flatgeobuf_8():
 
