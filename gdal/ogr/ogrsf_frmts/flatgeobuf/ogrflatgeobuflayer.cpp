@@ -539,6 +539,10 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
     if (VSIFReadL(&m_featureSize, sizeof(uoffset_t), 1, m_poFp) != 1)
         return CPLErrorIO();
     CPL_LSBPTR32(&m_featureSize);
+    if (m_featureSize > feature_max_buffer_size) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature size too large (>= 2GB)");
+        return OGRERR_CORRUPT_DATA;
+    }
     if (m_featureBufSize == 0) {
         m_featureBufSize = std::max(1024U * 32U, m_featureSize);
         CPLDebug("FlatGeobuf", "GetNextFeature: m_featureBufSize: %d", m_featureBufSize);

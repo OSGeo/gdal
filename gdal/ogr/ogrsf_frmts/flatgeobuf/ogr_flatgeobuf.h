@@ -42,6 +42,9 @@ class OGRFlatGeobufDataset;
 
 static constexpr const uint8_t magicbytes[8] = { 0x66, 0x67, 0x62, 0x00, 0x66, 0x67, 0x62, 0x00 };
 
+static constexpr const uint32_t header_max_buffer_size = 1048576 - 1;
+static constexpr const uint32_t feature_max_buffer_size = 1073741824 - 1;
+
 struct FeatureItem : Item {
     flatbuffers::DetachedBuffer buf;
     uint8_t *data;
