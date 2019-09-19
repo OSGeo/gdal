@@ -131,6 +131,8 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
 
     VSILFILE *fp = poOpenInfo->fpL;
 
+    auto bVerifyBuffers = CPLFetchBool( poOpenInfo->papszOpenOptions, "VERIFY_BUFFERS", true );
+
     if (fp == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined, "Unable to get handle to open file");
         return nullptr;
@@ -165,12 +167,14 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
         VSIFree(buf);
         return nullptr;
     }
-    flatbuffers::Verifier v(buf, headerSize);
-    auto ok = VerifyHeaderBuffer(v);
-    if (!ok) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
-        VSIFree(buf);
-        return nullptr;
+    if (bVerifyBuffers) {
+        flatbuffers::Verifier v(buf, headerSize);
+        auto ok = VerifyHeaderBuffer(v);
+        if (!ok) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
+            VSIFree(buf);
+            return nullptr;
+        }
     }
     auto header = GetHeader(buf);
     offset += 4 + headerSize;
@@ -203,9 +207,10 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
     auto poDS = new OGRFlatGeobufDataset();
     poDS->SetDescription(osFilename);
 
-    poDS->m_apoLayers.push_back(
-        std::unique_ptr<OGRLayer>(new OGRFlatGeobufLayer(header, buf, osFilename, offset))
-    );
+    auto poLayer = new OGRFlatGeobufLayer(header, buf, osFilename, offset);
+    poLayer->VerifyBuffers(bVerifyBuffers);
+
+    poDS->m_apoLayers.push_back(std::unique_ptr<OGRLayer>(poLayer));
 
     return poDS;
 }
@@ -337,9 +342,6 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
 
     poLayer->CreateSpatialIndexAtClose(
         CPLFetchBool( papszOptions, "SPATIAL_INDEX", true ) );
-
-    poLayer->VerifyBuffers(
-        CPLFetchBool( papszOptions, "VERIFY_BUFFERS", true ) );
 
     m_apoLayers.push_back(
         std::unique_ptr<OGRLayer>(poLayer)
