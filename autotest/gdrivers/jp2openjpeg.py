@@ -3094,6 +3094,22 @@ def test_jp2openjpeg_external_overviews_multiple_band():
     assert cs == [6233, 7706, 26085]
 
 ###############################################################################
+# Test accessing overview levels when the dimensions of the full resolution
+# image are not a multiple of 2^numresolutions
+
+
+def test_jp2openjpeg_odd_dimensions():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/513x513.jp2')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    assert cs == 29642
+
+###############################################################################
 
 
 def test_jp2openjpeg_cleanup():
