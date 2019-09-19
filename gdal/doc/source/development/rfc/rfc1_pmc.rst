@@ -84,5 +84,4 @@ Committee.
 
 Daniel Morissette, Frank Warmerdam, Andrey Kiselev and Howard Butler are
 declared to be the founding Project Management Committee. The current
-membership list can be found on the `Governance And
-Community <./GovernanceAndCommunity>`__ page.
+membership list can be found on the :ref:`psc` page.

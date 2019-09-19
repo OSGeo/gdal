@@ -55,3 +55,54 @@ Conference
 
 `FOSS4G 2019 <https://2019.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held in Bucharest, Romania, August 26th - August 30th, 2019.
 
+
+Governance and Community Participation
+--------------------------------------
+
+OSGeo Project Membership
+++++++++++++++++++++++++
+
+Originally, GDAL has been lead by Frank Warmerdam, the original author of much
+of GDAL/OGR, though with contributions and input from a variety of people.
+As of February 2006 GDAL/OGR became a founding project of the
+`Open Source Geospatial Foundation (OSGeo) <https://www.osgeo.org/>`_
+and began a transition to a more community oriented governance
+model - in keeping with OSGeo expectations.
+
+Membership as an OSGeo project provides assurances that a variety of best practices
+are being employed by the GDAL/OGR project, and that users and contributors can be
+assured of responsible project operation and continuity of the project. In particular:
+
+- A consensus oriented Project Management Committee will be in charge of the project.
+- Project source code and contributions will be vetted to ensure code is properly
+  made available, protecting contributors and users of GDAL/OGR.
+- Part of the systems infrastructure used by the project is provided by the foundation,
+  with responsible backup and redundancy to minimize disruptions.
+
+.. _psc:
+
+Project Steering Committe
++++++++++++++++++++++++++
+
+As of April 2006 (following the GDAL/OGR 1.3.2 release) the project has been
+placed in the hands of a Project Steering Committee. This project steering
+committee operates under the rules of _rfc1, and is overall responsible for
+decisions related to the GDAL/OGR project. The current members are:
+
+- Frank Warmerdam
+- Daniel Morissette
+- Howard Butler
+- Tamas Szekeres
+- Even Rouault (chair)
+- Jukka Rahkonen
+- Kurt Schwehr
+- Norman Barker
+- Sean Gillies
+- Mateusz Łoskot
+
+Past members:
+
+- Andrey Kiselev (retired in 2019)
+
+Note that discussion of proposals to the PSC take place on gdal-dev, and input
+from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is available for review.
