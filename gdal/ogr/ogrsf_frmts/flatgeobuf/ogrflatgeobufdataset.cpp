@@ -152,7 +152,7 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
     CPL_LSBPTR32(&headerSize);
     CPLDebug("FlatGeobuf", "headerSize (%d)", headerSize);
     if (headerSize > header_max_buffer_size) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (>= 1MB)");
+        CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (> 1MB)");
         return nullptr;
     }
     GByte* buf = static_cast<GByte*>(VSIMalloc(headerSize));
