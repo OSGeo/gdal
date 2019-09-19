@@ -2152,8 +2152,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
            (nW > 128 || nH > 128) &&
            (poDS->bUseSetDecodeArea || ((nTileW % 2) == 0 && (nTileH % 2) == 0)))
     {
-        nW /= 2;
-        nH /= 2;
+        // This must be this exact formula per the JPEG2000 standard
+        nW = (nW + 1) / 2;
+        nH = (nH + 1) / 2;
 
         poDS->papoOverviewDS = (JP2OpenJPEGDataset**) CPLRealloc(
                     poDS->papoOverviewDS,
