@@ -59,8 +59,12 @@ Windows builds are available via `Conda Forge`_ (64-bit only). See the
 
 .. _`Conda Forge`: https://anaconda.org/conda-forge/gdal
 
+Alternatively, [Tamas Szekeres](https://github.com/szekerest) provides packages
+with daily builds of latest stable releases as well as maintenance and
+development branches on his `GISInternals`_ site.
 
-Debian
+.. _`GISInternals`: https://www.gisinternals.com
+
 ................................................................................
 
 Debian packages are now available on `Debian Unstable`_.
