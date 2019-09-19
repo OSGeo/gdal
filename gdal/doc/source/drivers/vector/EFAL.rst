@@ -205,7 +205,10 @@ be available on the system path. For example
 ::
 
    SET PATH=%PATH%;%EFAL_SDK_DIR%
-   
+
+| **NOTE:** Please refer to "https://www.pitneybowes.com/us/campaign/sdkrequest.html" for terms of
+  usage of EFAL SDK.
+  
 Usage examples
 ~~~~~~~~~~~~~~
 
