@@ -886,7 +886,7 @@ CPLErr RRASTERDataset::_SetProjection( const char *pszSRS )
     if( GetAccess() != GA_Update )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Cannot set prejection on a read-only dataset");
+                 "Cannot set projection on a read-only dataset");
         return CE_Failure;
     }
 
