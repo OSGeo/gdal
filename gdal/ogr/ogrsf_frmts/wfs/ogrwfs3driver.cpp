@@ -50,6 +50,7 @@ class OGRWFS3Dataset final: public GDALDataset
         friend class OGRWFS3Layer;
 
         CPLString                              m_osRootURL;
+        CPLString                              m_osUserQueryParams;
         CPLString                              m_osUserPwd;
         int                                    m_nPageSize = 10;
         std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
@@ -176,7 +177,20 @@ bool OGRWFS3Dataset::Download(
         papszOptions = CSLSetNameValue(papszOptions,
                                        "USERPWD", m_osUserPwd.c_str());
     }
-    CPLHTTPResult* psResult = CPLHTTPFetch(osURL, papszOptions);
+    CPLString osURLWithQueryParameters(osURL);
+    if( !m_osUserQueryParams.empty() )
+    {
+        if( osURL.find('?') == std::string::npos )
+        {
+            osURLWithQueryParameters += '?';
+        }
+        else
+        {
+            osURLWithQueryParameters += '&';
+        }
+        osURLWithQueryParameters += m_osUserQueryParams;
+    }
+    CPLHTTPResult* psResult = CPLHTTPFetch(osURLWithQueryParameters, papszOptions);
     CSLDestroy(papszOptions);
     if( !psResult )
         return false;
@@ -313,6 +327,12 @@ bool OGRWFS3Dataset::Open(GDALOpenInfo* poOpenInfo)
     m_osRootURL =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "URL",
             poOpenInfo->pszFilename + strlen("WFS3:"));
+    auto nPosQuotationMark = m_osRootURL.find('?');
+    if( nPosQuotationMark != std::string::npos )
+    {
+        m_osUserQueryParams = m_osRootURL.substr(nPosQuotationMark + 1);
+        m_osRootURL.resize(nPosQuotationMark);
+    }
     m_nPageSize = atoi( CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                             "PAGE_SIZE",CPLSPrintf("%d", m_nPageSize)) );
     m_osUserPwd =
