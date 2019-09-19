@@ -108,6 +108,7 @@ Raster drivers
    mff
    mff2
    mg4lidar
+   mrr
    mrsid
    msg
    msgn

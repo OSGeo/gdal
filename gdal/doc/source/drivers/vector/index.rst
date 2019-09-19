@@ -28,6 +28,7 @@ Vector drivers
    dxf
    eeda
    edigeo
+   EFAL
    elasticsearch
    esrijson
    filegdb
@@ -57,7 +58,6 @@ Vector drivers
    libkml
    mdb
    memory
-   EFAL
    mitab
    mongodb
    mongodbv3
