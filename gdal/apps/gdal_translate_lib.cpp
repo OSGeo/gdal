@@ -1160,12 +1160,24 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     // For gdal_translate_fuzzer
     if( psOptions->nLimitOutSize > 0 )
     {
-        vsi_l_offset nRawOutSize = static_cast<vsi_l_offset>(nOXSize) * nOYSize *
-                                psOptions->nBandCount;
+        vsi_l_offset nRawOutSize = static_cast<vsi_l_offset>(nOXSize) * nOYSize;
         if( psOptions->nBandCount )
         {
-            nRawOutSize *= GDALGetDataTypeSizeBytes(
+            if( nRawOutSize > std::numeric_limits<vsi_l_offset>::max() / psOptions->nBandCount )
+            {
+                GDALTranslateOptionsFree(psOptions);
+                return nullptr;
+            }
+            nRawOutSize *= psOptions->nBandCount;
+            const int nDTSize = GDALGetDataTypeSizeBytes(
                 static_cast<GDALDataset *>(hSrcDataset)->GetRasterBand(1)->GetRasterDataType() );
+            if( nDTSize > 0 &&
+                nRawOutSize > std::numeric_limits<vsi_l_offset>::max() / nDTSize )
+            {
+                GDALTranslateOptionsFree(psOptions);
+                return nullptr;
+            }
+            nRawOutSize *= nDTSize;
         }
         if( nRawOutSize > static_cast<vsi_l_offset>(psOptions->nLimitOutSize) )
         {

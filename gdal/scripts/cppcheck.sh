@@ -90,6 +90,10 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "frmts/sde" -e  "ogr/ogrsf_frmts/sde" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
+# I don't want to care about flatbuffers
+grep -v -e "ogr/ogrsf_frmts/flatgeobuf/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
 if grep "null pointer" ${LOG_FILE} ; then
     echo "Null pointer check failed"
     ret_code=1

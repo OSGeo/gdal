@@ -380,3 +380,29 @@ def test_envi_gcp():
     assert gcp.GCPY == 4
 
     gdal.GetDriverByName('ENVI').Delete(filename)
+
+###############################################################################
+# Test updating big endian ordered (#1796)
+
+
+def test_envi_bigendian():
+
+    ds = gdal.Open('data/uint16_envi_bigendian.dat')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+
+    for ext in ('dat', 'hdr'):
+        filename = 'uint16_envi_bigendian.' + ext
+        gdal.FileFromMemBuffer('/vsimem/' + filename,
+                            open('data/' + filename, 'rb').read())
+
+    filename = '/vsimem/uint16_envi_bigendian.dat'
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.SetGeoTransform([0, 2, 0, 0, 0, -2])
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+
+    gdal.GetDriverByName('ENVI').Delete(filename)

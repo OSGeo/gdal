@@ -3701,7 +3701,7 @@ static void NITFLoadLocationTable( NITFImage *psImage )
         }
     }
 
-    if( nHeaderOffset != 0 )
+    if( nHeaderOffset > 11 )
     {
         char achHeaderChunk[1000];
 

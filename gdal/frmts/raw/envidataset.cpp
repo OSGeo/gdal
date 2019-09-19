@@ -337,12 +337,6 @@ void ENVIDataset::FlushCache()
         return;
 
     // Rewrite out the header.
-#ifdef CPL_LSB
-    const int iBigEndian = 0;
-#else
-    const int iBigEndian = 1;
-#endif
-
     bool bOK = VSIFPrintfL(fp, "ENVI\n") >= 0;
     if ("" != sDescription)
         bOK &= VSIFPrintfL(fp, "description = {\n%s}\n",
@@ -377,7 +371,13 @@ void ENVIDataset::FlushCache()
         break;
     }
     bOK &= VSIFPrintfL(fp, "interleave = %s\n", pszInterleaving) >= 0;
-    bOK &= VSIFPrintfL(fp, "byte order = %d\n", iBigEndian) >= 0;
+
+    const char* pszByteOrder = m_aosHeader["byte_order"];
+    if( pszByteOrder )
+    {
+        // Supposed to be required
+        bOK &= VSIFPrintfL(fp, "byte order = %s\n", pszByteOrder) >= 0;
+    }
 
     // Write class and color information.
     catNames = band->GetCategoryNames();

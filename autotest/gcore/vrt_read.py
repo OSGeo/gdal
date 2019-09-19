@@ -1232,6 +1232,7 @@ def test_vrt_no_explicit_dataAxisToSRSAxisMapping():
     </VRTDataset>"""
     ds = gdal.Open(vrt_text)
     assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2,1]
+    ds = None
 
 
 def test_vrt_explicit_dataAxisToSRSAxisMapping_1_2():
@@ -1250,6 +1251,7 @@ def test_vrt_explicit_dataAxisToSRSAxisMapping_1_2():
     </VRTDataset>"""
     ds = gdal.Open(vrt_text)
     assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1,2]
+    ds = None
 
 
 def test_vrt_shared_no_proxy_pool():
