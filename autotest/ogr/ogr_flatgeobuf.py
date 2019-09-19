@@ -95,7 +95,7 @@ def verify_flatgeobuf_copy(name, fids, names):
     return True
 
 
-def copy_shape_to_flatgeobuf(name, wkbType, compress=None):
+def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
     if gdaltest.flatgeobuf_drv is None:
         return False
 
@@ -117,7 +117,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None):
 
     ######################################################
     # Create layer
-    lyr = ds.CreateLayer(name, None, wkbType)
+    lyr = ds.CreateLayer(name, None, wkbType, options)
     if lyr is None:
         return False
 
@@ -233,6 +233,15 @@ def test_ogr_flatgeobuf_9():
         test = gdaltest.tests[i]
 
         rc = copy_shape_to_flatgeobuf(test[0], test[3])
+        assert rc, ('Failed making copy of ' + test[0] + '.shp')
+
+        rc = verify_flatgeobuf_copy(test[0], test[1], test[2])
+        assert rc, ('Verification of copy of ' + test[0] + '.shp failed')
+
+    for i in range(len(gdaltest.tests)):
+        test = gdaltest.tests[i]
+
+        rc = copy_shape_to_flatgeobuf(test[0], test[3], None, ['SPATIAL_INDEX=NO'])
         assert rc, ('Failed making copy of ' + test[0] + '.shp')
 
         rc = verify_flatgeobuf_copy(test[0], test[1], test[2])
