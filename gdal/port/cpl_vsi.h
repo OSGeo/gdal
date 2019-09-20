@@ -187,6 +187,8 @@ int CPL_DLL     VSIIngestFile( VSILFILE* fp,
                                vsi_l_offset* pnSize,
                                GIntBig nMaxSize ) CPL_WARN_UNUSED_RESULT;
 
+int CPL_DLL     VSIOverwriteFile( VSILFILE* fpTarget, const char* pszSourceFilename ) CPL_WARN_UNUSED_RESULT;
+
 #if defined(VSI_STAT64_T)
 /** Type for VSIStatL() */
 typedef struct VSI_STAT64_T VSIStatBufL;

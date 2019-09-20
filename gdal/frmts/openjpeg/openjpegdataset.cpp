@@ -529,8 +529,8 @@ void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
         return;
     }
 
-    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs ||
-           !poJob->bSuccess )
+    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs &&
+            poJob->bSuccess )
     {
         int nBlockXOff = poJob->oPairs[nPair].first;
         int nBlockYOff = poJob->oPairs[nPair].second;
@@ -2162,8 +2162,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
            (nW > 128 || nH > 128) &&
            (poDS->bUseSetDecodeArea || ((nTileW % 2) == 0 && (nTileH % 2) == 0)))
     {
-        nW /= 2;
-        nH /= 2;
+        // This must be this exact formula per the JPEG2000 standard
+        nW = (nW + 1) / 2;
+        nH = (nH + 1) / 2;
 
         poDS->papoOverviewDS = (JP2OpenJPEGDataset**) CPLRealloc(
                     poDS->papoOverviewDS,

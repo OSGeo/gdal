@@ -458,6 +458,22 @@ def test_jp2kak_22():
 
     gdal.Unlink('/vsimem/jp2kak_22.jp2')
 
+###############################################################################
+# Test accessing overview levels when the dimensions of the full resolution
+# image are not a multiple of 2^numresolutions
+
+
+def test_jp2kak_odd_dimensions():
+
+    if gdaltest.jp2kak_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/513x513.jp2')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    assert cs == 29642
+
 
 ###############################################################################
 # Cleanup.

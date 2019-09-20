@@ -131,6 +131,8 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
 
     VSILFILE *fp = poOpenInfo->fpL;
 
+    auto bVerifyBuffers = CPLFetchBool( poOpenInfo->papszOpenOptions, "VERIFY_BUFFERS", true );
+
     if (fp == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined, "Unable to get handle to open file");
         return nullptr;
@@ -140,9 +142,15 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
 
     uint64_t offset = sizeof(magicbytes);
     CPLDebug("FlatGeobuf", "Start at offset (%lu)", static_cast<long unsigned int>(offset));
-    VSIFSeekL(fp, offset, SEEK_SET);
+    if (VSIFSeekL(fp, offset, SEEK_SET) == -1) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unable to get seek in file");
+        return nullptr;        
+    }
     uint32_t headerSize;
-    VSIFReadL(&headerSize, 4, 1, fp);
+    if (VSIFReadL(&headerSize, 4, 1, fp) != 1) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to read header size");
+        return nullptr;
+    }
     CPL_LSBPTR32(&headerSize);
     CPLDebug("FlatGeobuf", "headerSize (%d)", headerSize);
     if (headerSize > 1024 * 1014) {
@@ -154,19 +162,31 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined, "Failed to allocate memory for header");
         return nullptr;
     }
-    VSIFReadL(buf, 1, headerSize, fp);
-    flatbuffers::Verifier v(buf, headerSize);
-    auto ok = VerifyHeaderBuffer(v);
-    if (!ok) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
+    if (VSIFReadL(buf, 1, headerSize, fp) != headerSize) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to read header");
         VSIFree(buf);
         return nullptr;
+    }
+    if (bVerifyBuffers) {
+        flatbuffers::Verifier v(buf, headerSize);
+        auto ok = VerifyHeaderBuffer(v);
+        if (!ok) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
+            VSIFree(buf);
+            return nullptr;
+        }
     }
     auto header = GetHeader(buf);
     offset += 4 + headerSize;
     CPLDebug("FlatGeobuf", "Add headerSize to offset (%d)", 4 + headerSize);
 
     auto featuresCount = header->features_count();
+
+    if (featuresCount > std::numeric_limits<size_t>::max() / 8) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too many features for this architecture");
+        return nullptr;
+    }
+
     auto index_node_size = header->index_node_size();
     if (index_node_size > 0) {
         try {
@@ -187,9 +207,10 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
     auto poDS = new OGRFlatGeobufDataset();
     poDS->SetDescription(osFilename);
 
-    poDS->m_apoLayers.push_back(
-        std::unique_ptr<OGRLayer>(new OGRFlatGeobufLayer(header, buf, osFilename, offset))
-    );
+    auto poLayer = new OGRFlatGeobufLayer(header, buf, osFilename, offset);
+    poLayer->VerifyBuffers(bVerifyBuffers);
+
+    poDS->m_apoLayers.push_back(std::unique_ptr<OGRLayer>(poLayer));
 
     return poDS;
 }
@@ -321,9 +342,6 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
 
     poLayer->CreateSpatialIndexAtClose(
         CPLFetchBool( papszOptions, "SPATIAL_INDEX", true ) );
-
-    poLayer->VerifyBuffers(
-        CPLFetchBool( papszOptions, "VERIFY_BUFFERS", true ) );
 
     m_apoLayers.push_back(
         std::unique_ptr<OGRLayer>(poLayer)

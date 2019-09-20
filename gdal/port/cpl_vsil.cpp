@@ -2211,6 +2211,63 @@ int VSIIngestFile( VSILFILE* fp,
     return TRUE;
 }
 
+
+/************************************************************************/
+/*                         VSIOverwriteFile()                           */
+/************************************************************************/
+
+/**
+ * \brief Overwrite an existing file with content from another one
+ *
+ * @param fpTarget file handle opened with VSIFOpenL() with "rb+" flag.
+ * @param pszSourceFilename source filename
+ *
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 3.1
+ */
+
+int VSIOverwriteFile( VSILFILE* fpTarget, const char* pszSourceFilename )
+{
+    VSILFILE* fpSource = VSIFOpenL(pszSourceFilename, "rb");
+    if( fpSource == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Cannot open %s", pszSourceFilename);
+        return false;
+    }
+
+    const size_t nBufferSize = 4096;
+    void* pBuffer = CPLMalloc(nBufferSize);
+    VSIFSeekL( fpTarget, 0, SEEK_SET );
+    bool bRet = true;
+    while( true )
+    {
+        size_t nRead = VSIFReadL( pBuffer, 1, nBufferSize, fpSource );
+        size_t nWritten = VSIFWriteL( pBuffer, 1, nRead, fpTarget );
+        if( nWritten != nRead )
+        {
+            bRet = false;
+            break;
+        }
+        if( nRead < nBufferSize )
+            break;
+    }
+
+    if( bRet )
+    {
+        bRet = VSIFTruncateL( fpTarget, VSIFTellL(fpTarget) ) == 0;
+        if( !bRet )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Truncation failed");
+        }
+    }
+
+    CPLFree(pBuffer);
+    VSIFCloseL(fpSource);
+    return bRet;
+}
+
 /************************************************************************/
 /*                        VSIFGetNativeFileDescriptorL()                */
 /************************************************************************/

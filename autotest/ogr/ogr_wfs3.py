@@ -129,7 +129,7 @@ def test_ogr_wfs3_errors():
 ###############################################################################
 
 
-def test_ogr_wfs3_empty_layer():
+def test_ogr_wfs3_empty_layer_and_user_query_parameters():
     if gdaltest.wfs3_drv is None:
         pytest.skip()
 
@@ -137,18 +137,18 @@ def test_ogr_wfs3_empty_layer():
         pytest.skip()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/collections', 200,
+    handler.add('GET', '/wfs3/collections?FOO=BAR', 200,
                 {'Content-Type': 'application/json'},
                 '{ "collections" : [ { "name": "foo" }] }')
     with webserver.install_http_handler(handler):
-        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3?FOO=BAR' % gdaltest.webserver_port)
     assert ds is not None
     assert ds.GetLayerCount() == 1
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'foo'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10&FOO=BAR', 200,
                 {'Content-Type': 'application/geo+json'},
                 '{ "type": "FeatureCollection", "features": [] }')
     with webserver.install_http_handler(handler):

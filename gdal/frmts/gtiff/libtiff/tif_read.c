@@ -60,6 +60,22 @@ static int TIFFReadAndRealloc( TIFF* tif, tmsize_t size,
 #endif
         tmsize_t already_read = 0;
 
+
+#if SIZEOF_SIZE_T != 8
+        /* On 32 bit processes, if the request is large enough, check against */
+        /* file size */
+        if( size > 1000 * 1000 * 1000 )
+        {
+            uint64 filesize = TIFFGetFileSize(tif);
+            if( (uint64)size >= filesize )
+            {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                             "Chunk size requested is larger than file size.");
+                return 0;
+            }
+        }
+#endif
+
         /* On 64 bit processes, read first a maximum of 1 MB, then 10 MB, etc */
         /* so as to avoid allocating too much memory in case the file is too */
         /* short. We could ask for the file size, but this might be */
