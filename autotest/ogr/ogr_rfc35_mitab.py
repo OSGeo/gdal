@@ -158,7 +158,7 @@ def Check(lyr, expected_order):
 
 def test_ogr_rfc35_mitab_2():
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    ds = ogr.GetDriverByName('MapInfo File').Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
 
     assert lyr.TestCapability(ogr.OLCReorderFields) == 1
@@ -240,7 +240,7 @@ def test_ogr_rfc35_mitab_2():
 
 def test_ogr_rfc35_mitab_3():
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    ds = ogr.GetDriverByName('MapInfo File').Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
 
     fd = ogr.FieldDefn("baz25", ogr.OFTString)
@@ -286,7 +286,8 @@ def test_ogr_rfc35_mitab_3():
 
 def test_ogr_rfc35_mitab_4():
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    driver = ogr.GetDriverByName('MapInfo File')
+    ds = driver.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -330,7 +331,7 @@ def test_ogr_rfc35_mitab_4():
     ds = None
 
     if False:  # pylint: disable=using-constant-test
-        ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+        ds = driver.Open('tmp/rfc35_test.tab', update=1)
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
 
@@ -349,7 +350,7 @@ def test_ogr_rfc35_mitab_4():
         # Check that the file size has decreased after column shrinking
         CheckFileSize('tmp/rfc35_test.tab')
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    ds = driver.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -366,7 +367,7 @@ def test_ogr_rfc35_mitab_4():
 
     ds = None
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    ds = driver.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -404,7 +405,7 @@ def test_ogr_rfc35_mitab_4():
 
     ds = None
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    ds = driver.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -422,7 +423,8 @@ def test_ogr_rfc35_mitab_4():
 
 def test_ogr_rfc35_mitab_5():
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    driver = ogr.GetDriverByName('MapInfo File')
+    ds = driver.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -452,7 +454,7 @@ def test_ogr_rfc35_mitab_5():
         gdaltest.post_reason(ret)
         return ret
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    ds = driver.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -474,7 +476,7 @@ def test_ogr_rfc35_mitab_5():
 
     ds = None
 
-    ds = ogr.Open('tmp/rfc35_test.tab', update=1)
+    ds = driver.Open('tmp/rfc35_test.tab', update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 

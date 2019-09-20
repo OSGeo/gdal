@@ -862,6 +862,59 @@ def test_ogr_efal_24():
     
     ds = None
 
+#####################################################################################
+# Testing the driver field alteration capability.
+
+
+def test_ogr_efal_25():
+    setup_mapinfo_test()
+    if gdaltest.mapinfo_drv is None:
+        pytest.skip()
+
+    ds = ogr.GetDriverByName('MapInfo EFAL').CreateDataSource('tmp/rfcefal_test.tab')
+    lyr = ds.CreateLayer('rfcefal_test')
+
+    fd = ogr.FieldDefn('foo5', ogr.OFTString)
+    fd.SetWidth(5)
+    lyr.CreateField(fd)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'foo0')
+    lyr.CreateFeature(feat)
+    feat = None
+
+    fd = ogr.FieldDefn('bar10', ogr.OFTString)
+    fd.SetWidth(10)
+    lyr.CreateField(fd)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'foo1')
+    feat.SetField(1, 'bar1')
+    lyr.CreateFeature(feat)
+    feat = None
+
+    fd = ogr.FieldDefn('baz15', ogr.OFTString)
+    fd.SetWidth(15)
+    lyr.CreateField(fd)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'foo2')
+    feat.SetField(1, 'bar2_01234')
+    feat.SetField(2, 'baz2_0123456789')
+    lyr.CreateFeature(feat)
+    feat = None
+
+    fd = ogr.FieldDefn('baw20', ogr.OFTString)
+    fd.SetWidth(20)
+    lyr.CreateField(fd)
+    
+    assert lyr.TestCapability(ogr.OLCReorderFields) == 0
+    assert lyr.TestCapability(ogr.OLCDeleteField) == 0
+    assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 0
+    
+    lyr = None
+    ds = None
+
 def test_ogr_efal_cleanup():
     gdaltest.mapinfo_ds = None
     if gdaltest.mapinfo_drv is not None:
