@@ -1543,7 +1543,7 @@ def test_ogr_geojson_38():
         pytest.skip()
 
     # Test read support
-    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+    ds = gdal.OpenEx("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "properties": { "dt": "2014-11-20 12:34:56+0100", "dt2": "2014\/11\/20", "date":"2014\/11\/20", "time":"12:34:56", "no_dt": "2014-11-20 12:34:56+0100", "no_dt2": "2014-11-20 12:34:56+0100" }, "geometry": null },
 { "type": "Feature", "properties": { "dt": "2014\/11\/20", "dt2": "2014\/11\/20T12:34:56Z", "date":"2014-11-20", "time":"12:34:56", "no_dt": "foo", "no_dt2": 1 }, "geometry": null }
 ] }""")
@@ -1566,6 +1566,16 @@ def test_ogr_geojson_38():
         f.DumpReadable()
         pytest.fail()
 
+    tmpfilename = '/vsimem/out.json'
+    gdal.VectorTranslate(tmpfilename, ds, options = '-lco NATIVE_DATA=dummy') # dummy NATIVE_DATA so that input values are not copied directly
+
+    fp = gdal.VSIFOpenL(tmpfilename, 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink(tmpfilename)
+
+    assert '"dt": "2014-11-20T12:34:56+01:00", "dt2": "2014-11-20T00:00:00", "date": "2014-11-20", "time": "12:34:56"' in data, data
 
 ###############################################################################
 # Test id top-object level

@@ -939,6 +939,18 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
                     json_object_new_string(papszStringList[i]));
             }
         }
+        else if( OFTDateTime == eType || OFTDate == eType )
+        {
+            char* pszDT = OGRGetXMLDateTime(poFeature->GetRawFieldRef(nField));
+            if( eType == OFTDate )
+            {
+                char* pszT = strchr(pszDT, 'T');
+                if( pszT )
+                    *pszT = 0;
+            }
+            poObjProp = json_object_new_string(pszDT);
+            CPLFree(pszDT);
+        }
         else
         {
             poObjProp = json_object_new_string(
