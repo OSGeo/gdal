@@ -35,6 +35,7 @@
 #include <cstdlib>
 
 #include <algorithm>
+#include <complex>
 #include <limits>
 #include <vector>
 
@@ -2635,7 +2636,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                             pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
                         dfTotalR += dfR;
                         dfTotalI += dfI;
-                        dfTotalM += sqrt( dfR*dfR + dfI*dfI );
+                        dfTotalM += std::hypot(dfR, dfI);
                         ++nCount;
                     }
                 }
@@ -2652,12 +2653,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfTotalR/nCount);
                     pafDstScanline[iDstPixel*2+1] =
                         static_cast<float>(dfTotalI/nCount);
-
-                    const double dfM =
-                        std::sqrt( pafDstScanline[iDstPixel*2]
-                                  * pafDstScanline[iDstPixel*2]
-                              + pafDstScanline[iDstPixel*2+1]
-                                  * pafDstScanline[iDstPixel*2+1] );
+                    const double dfM = std::hypot(pafDstScanline[iDstPixel*2],
+                                                  pafDstScanline[iDstPixel*2+1]);
                     const double dfDesiredM = dfTotalM / nCount;
                     double dfRatio = 1.0;
                     if( dfM != 0.0 )
@@ -4010,9 +4007,8 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
             if( bComplex )
             {
                 // Compute the magnitude of the complex value.
-                fValue =
-                    std::sqrt(pafData[iPixel*2  ] * pafData[iPixel*2  ]
-                         + pafData[iPixel*2+1] * pafData[iPixel*2+1]);
+                fValue = std::hypot(pafData[iPixel*2],
+                                    pafData[iPixel*2+1]);
             }
             else
             {
