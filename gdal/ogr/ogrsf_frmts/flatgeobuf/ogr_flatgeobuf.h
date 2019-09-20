@@ -113,7 +113,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         static OGRFieldType toOGRFieldType(ColumnType type);
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
         void readColumns();
-        OGRErr querySpatialIndex();
+        OGRErr readIndex();
 
         // serialize
         void Create();
