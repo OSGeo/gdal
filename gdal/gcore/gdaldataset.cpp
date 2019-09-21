@@ -7998,3 +7998,24 @@ std::shared_ptr<GDALGroup> GDALDataset::GetRootGroup() const
 {
     return nullptr;
 }
+
+
+/************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+/**
+ \brief Return the layout of a dataset that can be considered as a raw binary format.
+
+ @param sLayout Structure that will be set if the dataset is a raw binary one.
+ @return true if the dataset is a raw binary one.
+ @since GDAL 3.1
+*/
+
+//! @cond Doxygen_Suppress
+bool GDALDataset::GetRawBinaryLayout(RawBinaryLayout& sLayout)
+{
+    CPL_IGNORE_RET_VAL(sLayout);
+    return false;
+}
+//! @endcond

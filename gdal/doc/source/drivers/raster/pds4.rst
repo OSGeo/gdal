@@ -111,6 +111,13 @@ The following dataset creation options are available:
       Element_Array.unit. If not provided, the unit of the source band
       in case of copying from another raster will be used (if present on
       the source band).
+   -  **CREATE_LABEL_ONLY**\ =YES/NO. (GDAL >= 3.1) If set to YES, and used
+      in a gdal_translate / CreateCopy() context where the source dataset is
+      a ENVI, GeoTIFF, ISIS3, VICAR, FITS or PDS3 dataset, whose layout is
+      compatible of a raw binary format, as supported by PDS4, then only the
+      label XML file will be generated, and it will reference the raw binary
+      file of the source dataset. The IMAGE_FILENAME, IMAGE_FORMAT and
+      INTERLEAVE creation options are ignored in that situation.
 
 -  Raster and vector:
 
@@ -376,6 +383,13 @@ Appending a new image (subdataset) to an existing PDS4 dataset.
    $ gdal_translate new_image.tif existing_output.xml -of PDS4 \
                          -co APPEND_SUBDATASET=YES \
                          -co ARRAY_IDENTIFIER=my_new_image
+
+
+Adding a PDS4 label to an existing ISIS3 dataset. (GDAL >= 3.1)
+
+::
+
+   $ gdal_translate dataset.cub dataset.xml -of PDS4 -co CREATE_LABEL_ONLY=YES
 
 PDS4 vector examples
 --------------------

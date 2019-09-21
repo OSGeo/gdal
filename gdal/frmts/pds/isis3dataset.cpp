@@ -175,6 +175,8 @@ class ISIS3Dataset final: public RawDataset
     CPLStringList m_aosAdditionalFiles;
     CPLString     m_osFromFilename; // creation only
 
+    RawBinaryLayout m_sLayout{};
+
     const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
 
@@ -212,6 +214,8 @@ public:
     virtual char **GetMetadata( const char* pszDomain = "" ) override;
     virtual CPLErr SetMetadata( char** papszMD, const char* pszDomain = "" )
                                                                      override;
+
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -1593,6 +1597,18 @@ int ISIS3Dataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool ISIS3Dataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
+{
+    if( m_sLayout.osRawFilename.empty() )
+        return false;
+    sLayout = m_sLayout;
+    return true;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -2174,6 +2190,16 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
             return nullptr;
         }
         nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+
+        poDS->m_sLayout.osRawFilename = osQubeFile;
+        if( nBands > 1 )
+            poDS->m_sLayout.eInterleaving = RawBinaryLayout::Interleaving::BSQ;
+        poDS->m_sLayout.eDataType = eDataType;
+        poDS->m_sLayout.bLittleEndianOrder = bIsLSB;
+        poDS->m_sLayout.nImageOffset = nSkipBytes;
+        poDS->m_sLayout.nPixelOffset = nPixelOffset;
+        poDS->m_sLayout.nLineOffset = nLineOffset;
+        poDS->m_sLayout.nBandOffset = static_cast<GIntBig>(nBandOffset);
     }
     /* else Tiled or external */
 

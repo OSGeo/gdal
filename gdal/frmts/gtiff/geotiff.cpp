@@ -626,6 +626,8 @@ private:
 
     virtual CPLErr          CreateMaskBand( int nFlags ) override;
 
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
+
     // Only needed by createcopy and close code.
     static void     WriteRPC( GDALDataset *, TIFF *, int, GTiffProfile, 
                               const char *, char **,
@@ -19224,6 +19226,121 @@ CPLErr GTiffRasterBand::CreateMaskBand( int nFlagsIn )
     }
 
     return GDALPamRasterBand::CreateMaskBand(nFlagsIn);
+}
+
+/************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
+{
+    if( eAccess == GA_Update )
+    {
+        FlushCache();
+        Crystalize();
+    }
+
+    if( m_nCompression != COMPRESSION_NONE )
+        return false;
+    if( !CPLIsPowerOfTwo(m_nBitsPerSample) || m_nBitsPerSample < 8 )
+        return false;
+    const auto eDT = GetRasterBand(1)->GetRasterDataType();
+    if( GDALDataTypeIsComplex( eDT ) )
+        return false;
+
+    toff_t *panByteCounts = nullptr;
+    toff_t *panOffsets = nullptr;
+    const bool bIsTiled = CPL_TO_BOOL( TIFFIsTiled(m_hTIFF) );
+
+    if( !(( bIsTiled
+            && TIFFGetField( m_hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts )
+            && TIFFGetField( m_hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets ) )
+            || ( !bIsTiled
+            && TIFFGetField( m_hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts )
+            && TIFFGetField( m_hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets ) )) )
+    {
+        return false;
+    }
+
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+    vsi_l_offset        nImgOffset = panOffsets[0];
+    GIntBig             nPixelOffset = ( m_nPlanarConfig == PLANARCONFIG_CONTIG ) ? nDTSize * nBands : nDTSize;
+    GIntBig             nLineOffset = nPixelOffset * nRasterXSize;
+    GIntBig             nBandOffset = ( m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1 ) ? nDTSize : 0;
+    RawBinaryLayout::Interleaving eInterleaving =
+        (nBands == 1) ?                             RawBinaryLayout::Interleaving::UNKNOWN :
+        (m_nPlanarConfig == PLANARCONFIG_CONTIG ) ? RawBinaryLayout::Interleaving::BIP :
+                                                    RawBinaryLayout::Interleaving::BSQ;
+    if( bIsTiled )
+    {
+        // Only a single block tiled file with same dimension as the raster
+        // might be acceptable
+        if( m_nBlockXSize != nRasterXSize || m_nBlockYSize != nRasterYSize )
+            return false;
+        if( nBands > 1 && m_nPlanarConfig != PLANARCONFIG_CONTIG )
+        {
+            nBandOffset = static_cast<GIntBig>(panOffsets[1]) - static_cast<GIntBig>(panOffsets[0]);
+            for( int i = 2; i < nBands; i++ )
+            {
+                if( static_cast<GIntBig>(panOffsets[i]) - static_cast<GIntBig>(panOffsets[i - 1]) != nBandOffset )
+                    return false;
+            }
+        }
+    }
+    else
+    {
+        const int nStrips = DIV_ROUND_UP(nRasterYSize, m_nRowsPerStrip);
+        if( nBands == 1 || m_nPlanarConfig == PLANARCONFIG_CONTIG )
+        {
+            vsi_l_offset nLastStripEnd = panOffsets[0] + panByteCounts[0];
+            for( int iStrip = 1; iStrip < nStrips; iStrip++ )
+            {
+                if( nLastStripEnd != panOffsets[iStrip] )
+                    return false;
+                nLastStripEnd = panOffsets[iStrip] + panByteCounts[iStrip];
+            }
+        }
+        else
+        {
+            // Note: we could potentially have BIL order with m_nRowsPerStrip == 1
+            // and if strips are ordered strip_line_1_band_1, ..., strip_line_1_band_N, strip_line2_band1, ... strip_line2_band_N, etc....
+            // but that'd be faily exotic !
+            // So only detect BSQ layout here
+            nBandOffset = static_cast<GIntBig>(panOffsets[nStrips]) - static_cast<GIntBig>(panOffsets[0]);
+            for( int i = 0; i < nBands; i++ )
+            {
+                uint32 iStripOffset = nStrips * i;
+                vsi_l_offset nLastStripEnd = panOffsets[iStripOffset] + panByteCounts[iStripOffset];
+                for( int iStrip = 1; iStrip < nStrips; iStrip++ )
+                {
+                    if( nLastStripEnd != panOffsets[iStripOffset + iStrip] )
+                        return false;
+                    nLastStripEnd = panOffsets[iStripOffset + iStrip] + panByteCounts[iStripOffset + iStrip];
+                }
+                if( i >= 2 &&
+                     static_cast<GIntBig>(panOffsets[iStripOffset]) -
+                        static_cast<GIntBig>(panOffsets[iStripOffset - nStrips]) != nBandOffset )
+                {
+                    return false;
+                }
+            }
+        }
+    }
+
+    sLayout.osRawFilename = m_pszFilename;
+    sLayout.eInterleaving = eInterleaving;
+    sLayout.eDataType = eDT;
+#ifdef CPL_LSB
+    sLayout.bLittleEndianOrder = !TIFFIsByteSwapped(m_hTIFF);
+#else
+    sLayout.bLittleEndianOrder = TIFFIsByteSwapped(m_hTIFF);
+#endif
+    sLayout.nImageOffset = nImgOffset;
+    sLayout.nPixelOffset = nPixelOffset;
+    sLayout.nLineOffset = nLineOffset;
+    sLayout.nBandOffset = nBandOffset;
+
+    return true;
 }
 
 /************************************************************************/

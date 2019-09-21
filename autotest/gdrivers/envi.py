@@ -406,3 +406,17 @@ def test_envi_bigendian():
     ds = None
 
     gdal.GetDriverByName('ENVI').Delete(filename)
+
+###############################################################################
+# Test different interleaving
+
+
+def test_envi_interleaving():
+
+    for filename in ('data/envi_rgbsmall_bip.img', 'data/envi_rgbsmall_bil.img', 'data/envi_rgbsmall_bsq.img'):
+        ds = gdal.Open(filename)
+        assert ds, filename
+        assert ds.GetRasterBand(1).Checksum() == 20718, filename
+        assert ds.GetRasterBand(2).Checksum() == 20669, filename
+        assert ds.GetRasterBand(3).Checksum() == 20895, filename
+        ds = None

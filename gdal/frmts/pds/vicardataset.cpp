@@ -77,6 +77,8 @@ public:
 
     virtual char **GetFileList() override;
 
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
+
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -174,6 +176,18 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
         strstr(pszHeader, "NL") != nullptr &&
         strstr(pszHeader, "NS") != nullptr &&
         strstr(pszHeader, "NB") != nullptr;
+}
+
+/************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool VICARDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
+{
+    if( !RawDataset::GetRawBinaryLayout(sLayout) )
+        return false;
+    sLayout.osRawFilename = GetDescription();
+    return true;
 }
 
 /************************************************************************/

@@ -78,6 +78,7 @@ class PDSDataset final: public RawDataset
     CPLString   osTempResult;
 
     CPLString   osExternalCube;
+    CPLString   m_osImageFilename;
 
     void        ParseSRS();
     int         ParseCompressedImage();
@@ -117,6 +118,8 @@ public:
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg) override;
+
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -635,6 +638,18 @@ void PDSDataset::ParseSRS()
 }
 
 /************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool PDSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
+{
+    if( !RawDataset::GetRawBinaryLayout(sLayout) )
+        return false;
+    sLayout.osRawFilename = m_osImageFilename;
+    return true;
+}
+
+/************************************************************************/
 /*                        PDSConvertFromHex()                           */
 /************************************************************************/
 
@@ -682,7 +697,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     CPLString osImageKeyword = "IMAGE";
     CPLString osQube = GetKeyword( osPrefix + "^" + osImageKeyword, "" );
-    CPLString osTargetFile = GetDescription();
+    m_osImageFilename = GetDescription();
 
     if (EQUAL(osQube,"")) {
         osImageKeyword = "SPECTRAL_QUBE";
@@ -719,13 +734,13 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         CleanString( osFilename );
         if( !osFilenamePrefix.empty() )
         {
-            osTargetFile = osFilenamePrefix + osFilename;
+            m_osImageFilename = osFilenamePrefix + osFilename;
         }
         else
         {
             CPLString osTPath = CPLGetPath(GetDescription());
-            osTargetFile = CPLFormCIFilename( osTPath, osFilename, nullptr );
-            osExternalCube = osTargetFile;
+            m_osImageFilename = CPLFormCIFilename( osTPath, osFilename, nullptr );
+            osExternalCube = m_osImageFilename;
         }
     }
 
@@ -1024,24 +1039,24 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     if( eAccess == GA_ReadOnly )
     {
-        fpImage = VSIFOpenL( osTargetFile, "rb" );
+        fpImage = VSIFOpenL( m_osImageFilename, "rb" );
         if( fpImage == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                     "Failed to open %s.\n%s",
-                    osTargetFile.c_str(),
+                    m_osImageFilename.c_str(),
                     VSIStrerror( errno ) );
             return FALSE;
         }
     }
     else
     {
-        fpImage = VSIFOpenL( osTargetFile, "r+b" );
+        fpImage = VSIFOpenL( m_osImageFilename, "r+b" );
         if( fpImage == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                     "Failed to open %s with write permission.\n%s",
-                    osTargetFile.c_str(),
+                    m_osImageFilename.c_str(),
                     VSIStrerror( errno ) );
             return FALSE;
         }
