@@ -686,20 +686,20 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
 
 OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, uint32_t offset)
 {
-    auto xy = feature->xy()->data();
+    auto aXy = feature->xy()->data();
     if (m_hasZ) {
-        auto z = feature->z()->data();
+        auto aZ = feature->z()->data();
         if (m_hasM) {
-            auto m = feature->m()->data();
-            return new OGRPoint { xy[offset + 0], xy[offset + 1], z[offset], m[offset] };
+            auto aM = feature->m()->data();
+            return new OGRPoint { aXy[offset + 0], aXy[offset + 1], aZ[offset], aM[offset] };
         } else {
-            return new OGRPoint { xy[offset + 0], xy[offset + 1], z[offset] };
+            return new OGRPoint { aXy[offset + 0], aXy[offset + 1], aZ[offset] };
         }
     } else if (m_hasM) {
-        auto m = feature->m()->data();
-        return new OGRPoint { xy[offset + 0], xy[offset + 1], 0.0, m[offset] };
+        auto aM = feature->m()->data();
+        return new OGRPoint { aXy[offset + 0], aXy[offset + 1], 0.0, aM[offset] };
     } else {
-        return new OGRPoint { xy[offset + 0], xy[offset + 1] };
+        return new OGRPoint { aXy[offset + 0], aXy[offset + 1] };
     }
 }
 
@@ -713,16 +713,8 @@ OGRMultiPoint *OGRFlatGeobufLayer::readMultiPoint(const Feature *feature, uint32
 
 OGRLineString *OGRFlatGeobufLayer::readLineString(const Feature *feature, uint32_t len, uint32_t offset)
 {
-    auto xy = feature->xy()->data();
     auto ls = new OGRLineString();
-    if (m_hasZ) {
-        if (m_hasM)
-            ls->setPoints(len, (OGRRawPoint *) xy + offset, feature->z()->data(), feature->m()->data());
-        else
-            ls->setPoints(len, (OGRRawPoint *) xy + offset, feature->z()->data());
-    } else {
-        ls->setPoints(len, (OGRRawPoint *) xy + offset);
-    }
+    readSimpleCurve(feature, len, offset, ls);
     return ls;
 }
 
@@ -741,17 +733,25 @@ OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *featu
 
 OGRLinearRing *OGRFlatGeobufLayer::readLinearRing(const Feature *feature, uint32_t len, uint32_t offset)
 {
-    auto xy = feature->xy()->data();
     auto lr = new OGRLinearRing();
-    if (m_hasZ) {
-        if (m_hasM)
-            lr->setPoints(len, (OGRRawPoint *) xy + offset, feature->z()->data(), feature->m()->data());
-        else
-            lr->setPoints(len, (OGRRawPoint *) xy + offset, feature->z()->data());
-    } else {
-        lr->setPoints(len, (OGRRawPoint *) xy + offset);
-    }
+    readSimpleCurve(feature, len, offset, lr);
     return lr;
+}
+
+void OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, uint32_t len, uint32_t offset, OGRSimpleCurve *sc)
+{
+    auto xy = feature->xy()->data();
+    if (m_hasZ) {
+        auto aZ = feature->z()->data();
+        if (m_hasM) {
+            auto aM = feature->m()->data();
+            sc->setPoints(len, (OGRRawPoint *) xy + offset, aZ, aM);
+        } else {
+            sc->setPoints(len, (OGRRawPoint *) xy + offset, aZ);
+        }
+    } else {
+        sc->setPoints(len, (OGRRawPoint *) xy + offset);
+    }
 }
 
 OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, uint32_t len, uint32_t offset)
@@ -797,8 +797,13 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, ui
 OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
 {
     auto pXy = feature->xy();
-    if (pXy == nullptr)
-        return nullptr;
+    auto pZ = feature->z();
+    auto pM = feature->m();
+    VALIDATE_POINTER1(pXy, "readGeometry", nullptr);
+    if (m_hasZ)
+        VALIDATE_POINTER1(pZ, "readGeometry", nullptr);
+    if (m_hasM)
+        VALIDATE_POINTER1(pM, "readGeometry", nullptr);
     auto xySize = pXy->size();
     switch (m_geometryType) {
         case GeometryType::Point:
