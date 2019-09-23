@@ -40,7 +40,10 @@ using namespace FlatGeobuf;
 
 class OGRFlatGeobufDataset;
 
-static constexpr const uint8_t magicbytes[8] = { 0x66, 0x67, 0x62, 0x00, 0x66, 0x67, 0x62, 0x00 };
+static constexpr uint8_t magicbytes[8] = { 0x66, 0x67, 0x62, 0x00, 0x66, 0x67, 0x62, 0x00 };
+
+static constexpr uint32_t header_max_buffer_size = 1048576;
+static constexpr uint32_t feature_max_buffer_size = 2147483648 - 1;
 
 struct FeatureItem : Item {
     flatbuffers::DetachedBuffer buf;
@@ -113,7 +116,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         static OGRFieldType toOGRFieldType(ColumnType type);
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
         void readColumns();
-        OGRErr querySpatialIndex();
+        OGRErr readIndex();
 
         // serialize
         void Create();

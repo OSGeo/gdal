@@ -28,6 +28,8 @@
 
 #include "ogr_flatgeobuf.h"
 
+#include <memory>
+
 #include "header_generated.h"
 
 static int OGRFlatGeobufDriverIdentify(GDALOpenInfo* poOpenInfo){
@@ -153,30 +155,28 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     CPL_LSBPTR32(&headerSize);
     CPLDebug("FlatGeobuf", "headerSize (%d)", headerSize);
-    if (headerSize > 1024 * 1014) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Header size abnormally large (>=1MB)");
+    if (headerSize > header_max_buffer_size) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (> 1MB)");
         return nullptr;
     }
-    GByte* buf = static_cast<GByte*>(VSIMalloc(headerSize));
+    std::unique_ptr<GByte, CPLFreeReleaser> buf(static_cast<GByte*>(VSIMalloc(headerSize)));
     if (buf == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined, "Failed to allocate memory for header");
         return nullptr;
     }
-    if (VSIFReadL(buf, 1, headerSize, fp) != headerSize) {
+    if (VSIFReadL(buf.get(), 1, headerSize, fp) != headerSize) {
         CPLError(CE_Failure, CPLE_AppDefined, "Failed to read header");
-        VSIFree(buf);
         return nullptr;
     }
     if (bVerifyBuffers) {
-        flatbuffers::Verifier v(buf, headerSize);
+        flatbuffers::Verifier v(buf.get(), headerSize);
         auto ok = VerifyHeaderBuffer(v);
         if (!ok) {
             CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
-            VSIFree(buf);
             return nullptr;
         }
     }
-    auto header = GetHeader(buf);
+    auto header = GetHeader(buf.get());
     offset += 4 + headerSize;
     CPLDebug("FlatGeobuf", "Add headerSize to offset (%d)", 4 + headerSize);
 
@@ -195,19 +195,18 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
             CPLDebug("FlatGeobuf", "Add treeSize to offset (%lu)", static_cast<long unsigned int>(treeSize));
         } catch (const std::exception& e) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to calculate tree size: %s", e.what());
-            VSIFree(buf);
             return nullptr;
         }
-        offset += featuresCount * 8;
-        CPLDebug("FlatGeobuf", "Add featuresCount * 8 to offset (%lu)", static_cast<long unsigned int>(featuresCount * 8));
     }
+    offset += featuresCount * 8;
+    CPLDebug("FlatGeobuf", "Add featuresCount * 8 to offset (%lu)", static_cast<long unsigned int>(featuresCount * 8));
 
     CPLDebug("FlatGeobuf", "Features start at offset (%lu)", static_cast<long unsigned int>(offset));
 
     auto poDS = new OGRFlatGeobufDataset();
     poDS->SetDescription(osFilename);
 
-    auto poLayer = new OGRFlatGeobufLayer(header, buf, osFilename, offset);
+    auto poLayer = new OGRFlatGeobufLayer(header, buf.release(), osFilename, offset);
     poLayer->VerifyBuffers(bVerifyBuffers);
 
     poDS->m_apoLayers.push_back(std::unique_ptr<OGRLayer>(poLayer));

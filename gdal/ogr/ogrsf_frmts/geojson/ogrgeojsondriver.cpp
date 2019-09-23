@@ -668,7 +668,7 @@ void RegisterOGRGeoJSON()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String IntegerList "
-                               "Integer64List RealList StringList" );
+                               "Integer64List RealList StringList Date DateTime" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean" );
 
     poDriver->pfnOpen = OGRGeoJSONDriverOpen;
