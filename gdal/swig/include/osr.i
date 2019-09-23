@@ -1080,6 +1080,12 @@ public:
     return OSRConvertToOtherProjection(self, other_projection, options);
   }
 
+%clear const char* name;
+  OGRErr PromoteTo3D( const char* name = NULL ) {
+    return OSRPromoteTo3D(self, name);
+  }
+%apply Pointer NONNULL {const char* name};
+
 } /* %extend */
 };
 

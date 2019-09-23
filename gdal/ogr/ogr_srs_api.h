@@ -573,6 +573,8 @@ OGRErr CPL_DLL OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
                                  const char *pszName,
                                  OGRSpatialReferenceH hHorizSRS,
                                  OGRSpatialReferenceH hVertSRS );
+OGRErr CPL_DLL OSRPromoteTo3D( OGRSpatialReferenceH hSRS, const char* pszName );
+
 OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
                       const char * pszDatumName,

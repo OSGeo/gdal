@@ -10963,3 +10963,51 @@ void OGRSpatialReference::UpdateCoordinateSystemFromGeogCRS()
 }
 
 /*! @endcond */
+
+/************************************************************************/
+/*                             PromoteTo3D()                            */
+/************************************************************************/
+
+/** \brief "Promotes" a 2D CRS to a 3D CRS one.
+ *
+ * The new axis will be ellipsoidal height, oriented upwards, and with metre
+ * units.
+ *
+ * @param pszName New name for the CRS. If set to NULL, the previous name will be used.
+ * @return OGRERR_NONE if no error occurred.
+ * @since GDAL 3.1 and PROJ 7.0
+ */
+OGRErr OGRSpatialReference::PromoteTo3D(const char* pszName)
+{
+#if PROJ_VERSION_MAJOR < 7
+    CPL_IGNORE_RET_VAL(pszName);
+    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 7 required");
+    return OGRERR_UNSUPPORTED_OPERATION;
+#else
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+        return OGRERR_FAILURE;
+    auto newPj = proj_crs_promote_to_3D( d->getPROJContext(), pszName, d->m_pj_crs );
+    if( !newPj )
+        return OGRERR_FAILURE;
+    d->setPjCRS(newPj);
+    return OGRERR_NONE;
+#endif
+}
+
+/************************************************************************/
+/*                             OSRPromoteTo3D()                         */
+/************************************************************************/
+
+/** \brief "Promotes" a 2D CRS to a 3D CRS one.
+ *
+ * See OGRSpatialReference::PromoteTo3D()
+ *
+ * @since GDAL 3.1 and PROJ 7.0
+ */
+OGRErr OSRPromoteTo3D( OGRSpatialReferenceH hSRS, const char* pszName  )
+{
+    VALIDATE_POINTER1( hSRS, "OSRPromoteTo3D", OGRERR_FAILURE );
+
+    return OGRSpatialReference::FromHandle(hSRS)->PromoteTo3D(pszName);
+}
