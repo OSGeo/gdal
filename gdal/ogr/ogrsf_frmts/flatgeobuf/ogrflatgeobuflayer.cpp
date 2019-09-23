@@ -686,20 +686,40 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
 
 OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, uint32_t offset)
 {
-    auto xy = feature->xy()->data();
+    auto xy = feature->xy();
+    if (offset + 1 >= xy->size()) {
+        CPLError(CE_Failure, CPLE_AppDefined, "xy-array array has invalid size");
+        return nullptr;
+    }
+    auto aXy = feature->xy()->data();
     if (m_hasZ) {
-        auto z = feature->z()->data();
+        auto z = feature->z();
+        if (offset >= z->size()) {
+            CPLError(CE_Failure, CPLE_AppDefined, "z-array array has invalid size");
+            return nullptr;
+        }
+        auto aZ = feature->z()->data();
         if (m_hasM) {
-            auto m = feature->m()->data();
-            return new OGRPoint { xy[offset + 0], xy[offset + 1], z[offset], m[offset] };
+            auto m = feature->m();
+            if (offset >= m->size()) {
+                CPLError(CE_Failure, CPLE_AppDefined, "m-array array has invalid size");
+                return nullptr;
+            }
+            auto aM = feature->m()->data();
+            return new OGRPoint { aXy[offset + 0], aXy[offset + 1], aZ[offset], aM[offset] };
         } else {
-            return new OGRPoint { xy[offset + 0], xy[offset + 1], z[offset] };
+            return new OGRPoint { aXy[offset + 0], aXy[offset + 1], aZ[offset] };
         }
     } else if (m_hasM) {
-        auto m = feature->m()->data();
-        return new OGRPoint { xy[offset + 0], xy[offset + 1], 0.0, m[offset] };
+        auto m = feature->m();
+        if (offset >= m->size()) {
+            CPLError(CE_Failure, CPLE_AppDefined, "m-array array has invalid size");
+            return nullptr;
+        }
+        auto aM = feature->m()->data();
+        return new OGRPoint { aXy[offset + 0], aXy[offset + 1], 0.0, aM[offset] };
     } else {
-        return new OGRPoint { xy[offset + 0], xy[offset + 1] };
+        return new OGRPoint { aXy[offset + 0], aXy[offset + 1] };
     }
 }
 
