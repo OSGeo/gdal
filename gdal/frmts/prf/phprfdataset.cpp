@@ -134,7 +134,9 @@ bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType,
             return false;
         }
 
-        //! \todo What reason for nBlockXSize&nBlockYSize passed to AddSrcBandDescription
+        // Block sizes (nBlockXSize&nBlockYSize) passed as zeros.
+        // They will be loaded when RefUnderlyingRasterBand
+        // function is called on first open of tile's dataset 'poTileDataset'.
         poTileDataset->AddSrcBandDescription(poBand->GetRasterDataType(), 0, 0);
         GDALRasterBand* poTileBand = poTileDataset->GetRasterBand( nBand );
 
