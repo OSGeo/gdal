@@ -247,8 +247,3 @@ def test_ogr_flatgeobuf_9():
         rc = verify_flatgeobuf_copy(test[0], test[1], test[2])
         assert rc, ('Verification of copy of ' + test[0] + '.shp failed')
 
-def test_ogr_flatgeobuf_ossfuzz_17603():
-    fgb_ds = ogr.Open('data/fgb/clusterfuzz-testcase-minimized-fgb_fuzzer-5725251593306112.fgb')
-    fgb_lyr = fgb_ds.GetLayer(0)
-    num = len(list([x for x in fgb_lyr]))
-    assert num == 0
