@@ -48,8 +48,8 @@ command
 Binaries
 ------------------------------------------------------------------------------
 
-In this section we list a number of the binary distributions of GDAL.
-
+In this section we list a number of the binary distributions of GDAL
+all of which should have fully reproducible open source build recipes.
 
 Windows
 ................................................................................
@@ -58,7 +58,6 @@ Windows builds are available via `Conda Forge`_ (64-bit only). See the
 :ref:`conda` section for more detailed information.
 
 .. _`Conda Forge`: https://anaconda.org/conda-forge/gdal
-
 
 Debian
 ................................................................................
