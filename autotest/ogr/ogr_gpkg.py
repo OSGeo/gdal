@@ -1487,6 +1487,144 @@ def test_ogr_gpkg_20():
 
     gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
 
+
+def test_ogr_gpkg_srs_non_duplication_custom_crs():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""GEOGCS["my custom geogcs",
+    DATUM["my datum",
+        SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]""")
+    lyr = ds.CreateLayer('test', srs=srs)
+    assert lyr
+    lyr = ds.CreateLayer('test2', srs=srs)
+    assert lyr
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys")
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    assert fc == 4 # srs_id 0, 1, 4326 + custom one
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my custom geogcs'")
+    assert sql_lyr.GetFeatureCount() == 1
+    f = sql_lyr.GetNextFeature()
+    assert f['srs_id'] == 100000
+    assert f['organization'] == 'NONE'
+    assert f['organization_coordsys_id'] == 100000
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test now transitionning to definition_12_063 / WKT2 database structure...
+    srs_3d = osr.SpatialReference()
+    srs_3d.SetFromUserInput("""GEOGCRS["srs 3d",
+    DATUM["some datum",
+        ELLIPSOID["some ellipsoid",6378137,298.257223563,
+            LENGTHUNIT["metre",1]]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433]],
+    CS[ellipsoidal,3],
+        AXIS["geodetic latitude (Lat)",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["geodetic longitude (Lon)",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["ellipsoidal height (h)",up,
+            ORDER[3],
+            LENGTHUNIT["metre",1]]]""")
+    lyr = ds.CreateLayer('test_3d', srs=srs_3d)
+    assert lyr
+    lyr = ds.CreateLayer('test_3d_bis', srs=srs_3d)
+    assert lyr
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='srs 3d'")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test again with SRS that can be represented in WKT1
+    lyr = ds.CreateLayer('test3', srs=srs)
+    assert lyr
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my custom geogcs'")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+    gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
+
+
+def test_ogr_gpkg_srs_non_consistent_with_official_definition():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
+    test_fake_4267 = osr.SpatialReference()
+    test_fake_4267.SetFromUserInput("""GEOGCS["my geogcs 4267",
+    DATUM["my datum",
+        SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],
+    AUTHORITY["EPSG","4267"]]""")
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('test_fake_4267', srs=test_fake_4267)
+    assert gdal.GetLastErrorMsg() == 'Passed SRS uses EPSG:4267 identification, but its definition is not compatible with the official definition of the object. Registering it as a non-EPSG entry into the database.'
+    assert lyr
+
+    # EPSG:4326 already in the database
+    test_fake_4326 = osr.SpatialReference()
+    test_fake_4326.SetFromUserInput("""GEOGCS["my geogcs 4326",
+    DATUM["my datum",
+        SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],
+    AUTHORITY["EPSG","4326"]]""")
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('test_fake_4326', srs=test_fake_4326)
+    assert gdal.GetLastErrorMsg() == 'Passed SRS uses EPSG:4326 identification, but its definition is not compatible with the definition of that object already in the database. Registering it as a new entry into the database.'
+    assert lyr
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update = 1)
+    lyr = ds.GetLayer('test_fake_4267')
+    assert lyr.GetSpatialRef().ExportToWkt() == 'GEOGCS["my geogcs 4267",DATUM["my_datum",SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4267"]]'
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my geogcs 4267'")
+    assert sql_lyr.GetFeatureCount() == 1
+    f = sql_lyr.GetNextFeature()
+    assert f['srs_id'] == 100000
+    assert f['organization'] == 'NONE'
+    assert f['organization_coordsys_id'] == 100000
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayer('test_fake_4326')
+    assert lyr.GetSpatialRef().ExportToWkt() == 'GEOGCS["my geogcs 4326",DATUM["my_datum",SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my geogcs 4326'")
+    assert sql_lyr.GetFeatureCount() == 1
+    f = sql_lyr.GetNextFeature()
+    assert f['srs_id'] == 100001
+    assert f['organization'] == 'NONE'
+    assert f['organization_coordsys_id'] == 100001
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys")
+    fc_before = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    gdal.ErrorReset()
+    lyr = ds.CreateLayer('test_fake_4267_bis', srs=test_fake_4267)
+    assert gdal.GetLastErrorMsg() == ''
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys")
+    fc_after = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert fc_before == fc_after
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
+
+
 ###############################################################################
 # Test maximum width of text fields
 

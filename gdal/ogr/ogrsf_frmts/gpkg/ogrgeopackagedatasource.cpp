@@ -308,6 +308,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
     // Try to import first from EPSG code, and then from WKT
     if( !(pszOrganization && pszOrganizationCoordsysID
           && EQUAL(pszOrganization, "EPSG") &&
+          atoi(pszOrganizationCoordsysID) == iSrsId &&
           GDALGPKGImportFromEPSG(poSpatialRef, atoi(pszOrganizationCoordsysID))
           == OGRERR_NONE) &&
         poSpatialRef->SetFromUserInput(pszWkt) != OGRERR_NONE )
@@ -461,7 +462,7 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2()
 
 int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
 {
-    OGRSpatialReference *poSRS = oSRS.Clone();
+    std::unique_ptr<OGRSpatialReference> poSRS(oSRS.Clone());
 
     const char* pszAuthorityName = poSRS->GetAuthorityName( nullptr );
 
@@ -491,12 +492,31 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     int nAuthorityCode = 0;
     OGRErr err = OGRERR_NONE;
     bool bCanUseAuthorityCode = false;
+    const char* const apszIsSameOptions[] = {
+        "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
     if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 )
     {
-        // For the root authority name 'EPSG', the authority code
-        // should always be integral
-        nAuthorityCode = atoi( poSRS->GetAuthorityCode(nullptr) );
+        const char* pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+        if( pszAuthorityCode )
+        {
+            if( CPLGetValueType(pszAuthorityCode) == CPL_VALUE_INTEGER )
+            {
+                nAuthorityCode = atoi(pszAuthorityCode);
+            }
+            else
+            {
+                CPLDebug("GPKG",
+                         "SRS has %s:%s identification, but the code not "
+                         "being an integer value cannot be stored as such "
+                         "in the database.",
+                         pszAuthorityName, pszAuthorityCode);
+                pszAuthorityName = nullptr;
+            }
+        }
+    }
 
+    if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 )
+    {
         pszSQL = sqlite3_mprintf(
                          "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
                          "upper(organization) = upper('%q') AND "
@@ -509,57 +529,138 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         // Got a match? Return it!
         if ( OGRERR_NONE == err )
         {
-            delete poSRS;
-            return nSRSId;
+            auto poRefSRS = GetSpatialRef(nSRSId);
+            bool bOK = (
+                poRefSRS == nullptr || poSRS->IsSame(poRefSRS, apszIsSameOptions) ||
+                !CPLTestBool(CPLGetConfigOption("OGR_GPKG_CHECK_SRS", "YES")) );
+            if( poRefSRS )
+                poRefSRS->Release();
+            if( bOK )
+            {
+                return nSRSId;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Passed SRS uses %s:%d identification, but its "
+                         "definition is not compatible with the "
+                         "definition of that object already in the database. "
+                         "Registering it as a new entry into the database.",
+                         pszAuthorityName, nAuthorityCode);
+                pszAuthorityName = nullptr;
+                nAuthorityCode = 0;
+            }
         }
-
-        // No match, but maybe we can use the nAuthorityCode as the nSRSId?
-        pszSQL = sqlite3_mprintf(
-                         "SELECT Count(*) FROM gpkg_spatial_ref_sys WHERE "
-                         "srs_id = %d", nAuthorityCode );
-
-        // Yep, we can!
-        if ( SQLGetInteger(hDB, pszSQL, nullptr) == 0 )
-            bCanUseAuthorityCode = true;
-        sqlite3_free(pszSQL);
     }
 
     // Translate SRS to WKT.
-    char *pszWKT1 = nullptr;
-    char *pszWKT2 = nullptr;
+    CPLCharUniquePtr pszWKT1;
+    CPLCharUniquePtr pszWKT2;
     const char* const apszOptionsWkt1[] = { "FORMAT=WKT1_GDAL", nullptr };
     const char* const apszOptionsWkt2[] = { "FORMAT=WKT2_2015", nullptr };
     if( !(poSRS->IsGeographic() && poSRS->GetAxesCount() == 3) )
     {
-        poSRS->exportToWkt( &pszWKT1, apszOptionsWkt1 );
-        if( pszWKT1 && pszWKT1[0] == '\0' )
+        char* pszTmp = nullptr;
+        poSRS->exportToWkt( &pszTmp, apszOptionsWkt1 );
+        pszWKT1.reset(pszTmp);
+        if( pszWKT1 && pszWKT1.get()[0] == '\0' )
         {
-            CPLFree(pszWKT1);
-            pszWKT1 = nullptr;
+            pszWKT1.reset();
         }
     }
-    poSRS->exportToWkt( &pszWKT2, apszOptionsWkt2 );
-    if( pszWKT2 && pszWKT2[0] == '\0' )
     {
-        CPLFree(pszWKT2);
-        pszWKT2 = nullptr;
+        char* pszTmp = nullptr;
+        poSRS->exportToWkt( &pszTmp, apszOptionsWkt2 );
+        pszWKT2.reset(pszTmp);
+        if( pszWKT2 && pszWKT2.get()[0] == '\0' )
+        {
+            pszWKT2.reset();
+        }
     }
 
     if( !pszWKT1 && !pszWKT2 )
     {
-        delete poSRS;
-        CPLFree(pszWKT1);
-        CPLFree(pszWKT2);
         return DEFAULT_SRID;
+    }
+
+    // Search if there is already an existing entry with this WKT
+    if( m_bHasDefinition12_063 && pszWKT2 )
+    {
+        if( pszWKT1 )
+        {
+            pszSQL = sqlite3_mprintf(
+                    "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
+                    "definition = '%q' OR definition_12_063 = '%q'",
+                    pszWKT1.get(), pszWKT2.get() );
+        }
+        else
+        {
+            pszSQL = sqlite3_mprintf(
+                    "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
+                    "definition_12_063 = '%q'", pszWKT2.get() );
+        }
+    }
+    else if( pszWKT1 )
+    {
+        pszSQL = sqlite3_mprintf(
+                "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
+                "definition = '%q'", pszWKT1.get() );
+    }
+    else
+    {
+        pszSQL = nullptr;
+    }
+    if( pszSQL )
+    {
+        nSRSId = SQLGetInteger(hDB, pszSQL, &err);
+        sqlite3_free(pszSQL);
+        if ( OGRERR_NONE == err )
+        {
+            return nSRSId;
+        }
+    }
+
+    if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 )
+    {
+        bool bTryToReuseSRSId = true;
+        if( EQUAL( pszAuthorityName, "EPSG") )
+        {
+            OGRSpatialReference oSRS_EPSG;
+            if( GDALGPKGImportFromEPSG(&oSRS_EPSG, nAuthorityCode) == OGRERR_NONE )
+            {
+                if( !poSRS->IsSame(&oSRS_EPSG, apszIsSameOptions) &&
+                    CPLTestBool(CPLGetConfigOption("OGR_GPKG_CHECK_SRS", "YES")) )
+                {
+                    bTryToReuseSRSId = false;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                        "Passed SRS uses %s:%d identification, but its "
+                        "definition is not compatible with the "
+                        "official definition of the object. "
+                        "Registering it as a non-%s entry into the database.",
+                        pszAuthorityName, nAuthorityCode, pszAuthorityName);
+                    pszAuthorityName = nullptr;
+                    nAuthorityCode = 0;
+                }
+            }
+        }
+        if( bTryToReuseSRSId )
+        {
+            // No match, but maybe we can use the nAuthorityCode as the nSRSId?
+            pszSQL = sqlite3_mprintf(
+                            "SELECT Count(*) FROM gpkg_spatial_ref_sys WHERE "
+                            "srs_id = %d", nAuthorityCode );
+
+            // Yep, we can!
+            if ( SQLGetInteger(hDB, pszSQL, nullptr) == 0 )
+                bCanUseAuthorityCode = true;
+            sqlite3_free(pszSQL);
+        }
     }
 
     if( !m_bHasDefinition12_063 && pszWKT1 == nullptr && pszWKT2 != nullptr )
     {
         if( !ConvertGpkgSpatialRefSysToExtensionWkt2() )
         {
-            delete poSRS;
-            CPLFree(pszWKT1);
-            CPLFree(pszWKT2);
             return DEFAULT_SRID;
         }
     }
@@ -591,8 +692,8 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                 "definition, definition_12_063) VALUES "
                 "('%q', %d, upper('%q'), %d, '%q', '%q')",
                 GetSrsName(*poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
-                pszWKT1 ? pszWKT1 : "undefined",
-                pszWKT2 ? pszWKT2 : "undefined" );
+                pszWKT1 ? pszWKT1.get() : "undefined",
+                pszWKT2 ? pszWKT2.get() : "undefined" );
         }
         else
         {
@@ -602,8 +703,8 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                 "definition, definition_12_063) VALUES "
                 "('%q', %d, upper('%q'), %d, '%q', '%q')",
                 GetSrsName(*poSRS), nSRSId, "NONE", nSRSId,
-                pszWKT1 ? pszWKT1 : "undefined",
-                pszWKT2 ? pszWKT2 : "undefined" );
+                pszWKT1 ? pszWKT1.get() : "undefined",
+                pszWKT2 ? pszWKT2.get() : "undefined" );
         }
     }
     else
@@ -615,7 +716,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                 "(srs_name,srs_id,organization,organization_coordsys_id,"
                 "definition) VALUES ('%q', %d, upper('%q'), %d, '%q')",
                 GetSrsName(*poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
-                pszWKT1 ? pszWKT1 : "undefined" );
+                pszWKT1 ? pszWKT1.get() : "undefined" );
         }
         else
         {
@@ -624,7 +725,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                 "(srs_name,srs_id,organization,organization_coordsys_id,"
                 "definition) VALUES ('%q', %d, upper('%q'), %d, '%q')",
                 GetSrsName(*poSRS), nSRSId, "NONE", nSRSId,
-                pszWKT1 ? pszWKT1 : "undefined" );
+                pszWKT1 ? pszWKT1.get() : "undefined" );
         }
     }
 
@@ -632,10 +733,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     CPL_IGNORE_RET_VAL( SQLCommand(hDB, pszSQL) );
 
     // Free everything that was allocated.
-    CPLFree(pszWKT1);
-    CPLFree(pszWKT2);
     sqlite3_free(pszSQL);
-    delete poSRS;
 
     return nSRSId;
 }
