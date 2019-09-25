@@ -358,6 +358,8 @@ class CPL_DLL OGRSpatialReference
                                const OGRSpatialReference *poHorizSRS,
                                const OGRSpatialReference *poVertSRS );
 
+    OGRErr      PromoteTo3D( const char* pszName );
+
     OGRErr      SetFromUserInput( const char * );
 
     OGRErr      SetTOWGS84( double, double, double,

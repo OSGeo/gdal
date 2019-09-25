@@ -252,6 +252,11 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
     ~GDALProxyPoolDataset() override;
 
     void SetOpenOptions( char** papszOpenOptions );
+
+    // If size (nBlockXSize&nBlockYSize) parameters is zero
+    // they will be loaded when RefUnderlyingRasterBand function is called.
+    // But in this case we cannot use them in other non-virtual methods before
+    // RefUnderlyingRasterBand fist call.
     void AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize,
                                 int nBlockYSize );
 

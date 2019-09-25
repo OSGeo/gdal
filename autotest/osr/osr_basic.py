@@ -1598,3 +1598,17 @@ def test_osr_export_projjson():
         pytest.skip()
 
     assert sr.ExportToPROJJSON() != ''
+
+
+def test_osr_promote_to_3D():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+
+    if osr.GetPROJVersionMajor() < 7:
+        with gdaltest.error_handler():
+            sr.PromoteTo3D()
+        pytest.skip()
+
+    assert sr.PromoteTo3D() == 0
+    assert sr.GetAuthorityCode(None) == '4979'

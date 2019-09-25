@@ -1054,8 +1054,10 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
             return nullptr;
 
         for( int iRow = 0; iRow < GetRowCount(); iRow++ )
+        {
             nEntryCount =
-                std::max(nEntryCount, GetValueAsInt(iRow, iMaxCol) + 1);
+                std::max(nEntryCount, std::min(65535, GetValueAsInt(iRow, iMaxCol)) + 1);
+        }
 
         if( nEntryCount < 0 )
             return nullptr;

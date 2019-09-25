@@ -995,6 +995,11 @@ class SpatialReference(_object):
         """ConvertToOtherProjection(SpatialReference self, char const * other_projection, char ** options=None) -> SpatialReference"""
         return _osr.SpatialReference_ConvertToOtherProjection(self, *args)
 
+
+    def PromoteTo3D(self, *args):
+        """PromoteTo3D(SpatialReference self, char const * name=None) -> OGRErr"""
+        return _osr.SpatialReference_PromoteTo3D(self, *args)
+
 SpatialReference_swigregister = _osr.SpatialReference_swigregister
 SpatialReference_swigregister(SpatialReference)
 
