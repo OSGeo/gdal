@@ -26,19 +26,11 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
-import random
-import sys
-import shutil
-import time
-
-
 import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
-import test_cli_utilities
 import pytest
 
 def setup_mapinfo_test():

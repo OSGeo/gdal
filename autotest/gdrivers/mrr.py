@@ -31,8 +31,7 @@
 ###############################################################################
 
 from osgeo import gdal
-from osgeo import osr
-from array import *
+from array import array
 
 import gdaltest
 import pytest
@@ -270,7 +269,6 @@ def test_mrr_11_Statistics():
     tst.testOpen(check_gt=gt,
                  check_stat=(0.005, 4370.262, 483.008, 517.523),
                  check_approx_stat=(0.00549332052469254, 4370.26220703125, 483.008622016405, 517.523079384345))
-    dataset = None
 
 
 ###############################################################################
@@ -303,6 +301,7 @@ def test_mrr_13_ChecksumImagery():
                 [1.00, 253.00, 119.44, 78.74],
                 [0.00, 254.00, 130.78, 73.45],
                 [3.00, 253.00, 150.14, 65.81]]
+
     overviewCount = 9
 
     dataset = gdal.Open('data/MRR/RGBA_Imagery.mrr',gdal.GA_ReadOnly)
