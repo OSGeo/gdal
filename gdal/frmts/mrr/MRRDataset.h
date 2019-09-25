@@ -45,7 +45,7 @@ public:
 	MRRDataset				(const uint32_t& nDatasetHandle, const uint32_t& nInfoHandle);
 	~MRRDataset				();
 
-	CPLErr					GetGeoTransform(double * padfTransform);
+	CPLErr					GetGeoTransform(double * padfTransform) override;
 	const char *			GetProjectionRef();
 
 	//Static methods

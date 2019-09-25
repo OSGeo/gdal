@@ -45,10 +45,10 @@ private:
 	const SMIR_Statistics*			GetStats() const { return pStatistics; }
 	void							ReleaseStats();
 
-	virtual CPLErr					IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, 
-										GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg* psExtraArg);
+	CPLErr					IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, 
+										GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg* psExtraArg) override;
 
-	virtual CPLErr					IReadBlock(int, int, void *);
+	CPLErr					IReadBlock(int, int, void *) override;
 
 public:
 
@@ -57,20 +57,20 @@ public:
 	~MRRRasterBand ();
 
 	//Statistics related method
-	virtual double					GetMinimum(int *pbSuccess = NULL);
-	virtual double					GetMaximum(int *pbSuccess = NULL);
-	virtual CPLErr					ComputeRasterMinMax(int, double*);
-	virtual CPLErr					GetStatistics(int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev);
-	virtual CPLErr					ComputeStatistics(int bApproxOK, double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev, GDALProgressFunc, void *pProgressData);
-	virtual CPLErr					GetDefaultHistogram(double *pdfMin, double *pdfMax, int *pnBuckets, GUIntBig ** ppanHistogram, int bForce, GDALProgressFunc, void *pProgressData);
+	double					GetMinimum(int *pbSuccess = NULL) override;
+	double					GetMaximum(int *pbSuccess = NULL) override;
+	CPLErr					ComputeRasterMinMax(int, double*) override;
+	CPLErr					GetStatistics(int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev) override;
+	CPLErr					ComputeStatistics(int bApproxOK, double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev, GDALProgressFunc, void *pProgressData) override;
+	CPLErr					GetDefaultHistogram(double *pdfMin, double *pdfMax, int *pnBuckets, GUIntBig ** ppanHistogram, int bForce, GDALProgressFunc, void *pProgressData) override;
 
 	//Color table related methods
-	GDALColorInterp					GetColorInterpretation();
-	GDALColorTable*					GetColorTable();
-	virtual char**					GetCategoryNames();
+	GDALColorInterp					GetColorInterpretation() override;
+	GDALColorTable*					GetColorTable() override;
+	char**					GetCategoryNames() override;
 
 	//Overview related method
-	virtual int						HasArbitraryOverviews() { return vOverviewBands.size() != 0; }
-	virtual int						GetOverviewCount() { return (int)vOverviewBands.size(); }
-	virtual GDALRasterBand*			GetOverview(int);
+	int						HasArbitraryOverviews() override { return vOverviewBands.size() != 0; }
+	int						GetOverviewCount() override { return (int)vOverviewBands.size(); }
+	GDALRasterBand*			GetOverview(int) override;
 };

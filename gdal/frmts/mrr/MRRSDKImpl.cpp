@@ -24,7 +24,7 @@ SDKDynamicImpl* SDKDynamicImpl::m_pSDKImpl = nullptr;
 
 SDKDynamicImpl::SDKDynamicImpl()
 {
-	m_hMIRasterSDKInstance = NULL;
+	m_hMIRasterSDKInstance = nullptr;
 
 	ClearAll();
 }
@@ -45,7 +45,7 @@ SDKDynamicImpl& SDKDynamicImpl::Get()
 bool SDKDynamicImpl::Init()
 {
 	//If SDK is already loaded no need to load it again
-	if (m_hMIRasterSDKInstance != NULL)
+	if (m_hMIRasterSDKInstance != nullptr)
 		return true;
 
 	//Load APIRT.dll
@@ -109,7 +109,7 @@ bool SDKDynamicImpl::Release()
 #else
 	bool bRet = dlclose(m_hMIRasterSDKInstance);
 #endif
-	m_hMIRasterSDKInstance = NULL;
+	m_hMIRasterSDKInstance = nullptr;
 
 	ClearAll();
 

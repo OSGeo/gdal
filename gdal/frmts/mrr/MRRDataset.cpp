@@ -257,11 +257,11 @@ void MRRDataset::PopulateCategories(const uint32_t& nFieldIndex)
 				//Let's not leave any entry to null, mark them as ""
 				for (uint32_t nID = 0; nID < nRecordCount; nID++)
 				{
-					if (pszCategories[nID] == NULL)
+					if (pszCategories[nID] == nullptr)
 						pszCategories[nID] = CPLStrdup("");
 				}
 
-				pszCategories[nRecordCount + 1] = NULL;
+				pszCategories[nRecordCount + 1] = nullptr;
 			}
 		}
 	}

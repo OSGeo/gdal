@@ -1570,7 +1570,7 @@ struct SMIR_TableRecordEditInfo
 	uint32_t		newClassColor;					/* New color to be assigned.*/
 	wchar_t*		pszNewClassName;				/* New label  to be assigned.*/
 
-	SMIR_TableRecordEditInfo() : newClassColor(InvalidColor), pszNewClassName(0)
+	SMIR_TableRecordEditInfo() : newClassColor(InvalidColor), pszNewClassName(nullptr)
 	{}
 };
 
@@ -1899,7 +1899,7 @@ struct SMIR_LineOfSightOutputData
 	SMIR_LineOfSightPoint		**ppLineOfSightPoints;		/*!< If a valid pointer is passed, API returns array of sample points between source viewpoint and destination. Later this pointer should be passed to MIR_ReleaseData API to release memory. */
 	bool						bEndPointVisible;			/*!< Indicates whether end point is visible from source.*/
 
-	SMIR_LineOfSightOutputData() : nCount(0), ppLineOfSightPoints(0), bEndPointVisible(false) {}
+	SMIR_LineOfSightOutputData() : nCount(0), ppLineOfSightPoints(nullptr), bEndPointVisible(false) {}
 };
 
 
@@ -1912,7 +1912,7 @@ struct SMIR_CombineRasterBandInfo
 	SMIR_RasterInput			sRasterInputs;						/*!< Input raster detail like raster path, band id etc.*/
 	wchar_t*					pwsBandName;						/*!< New band name to be assigned.*/
 
-	SMIR_CombineRasterBandInfo() : sRasterInputs(), pwsBandName(0)
+	SMIR_CombineRasterBandInfo() : sRasterInputs(), pwsBandName(nullptr)
 	{
 	}
 };
@@ -1928,7 +1928,7 @@ struct SMIR_CombineRasterEventInfo
 	uint32_t					nBandCount;							/*!< size of the pCombineRasterBandInfo array.*/
 	SMIR_CombineRasterBandInfo*	pCombineRasterBandInfo;				/*!< Array of bands to be created in output raster.*/
 
-	SMIR_CombineRasterEventInfo() : nEventType(MIR_EET_Total), nBandCount(0), pCombineRasterBandInfo(0)
+	SMIR_CombineRasterEventInfo() : nEventType(MIR_EET_Total), nBandCount(0), pCombineRasterBandInfo(nullptr)
 	{
 	}
 };
@@ -1949,11 +1949,11 @@ struct SMIR_CombineRasterFieldInfo
 	uint32_t						nEventCount;						/*!< Size of the pCombineRasterEventInfo array.*/
 	SMIR_CombineRasterEventInfo*	pCombineRasterEventInfo;			/*!< Array that represents all the events to be created.*/
 
-	SMIR_CombineRasterFieldInfo() : pwsFieldName(0), cCompressionOptions(SMIR_CompressionOptions()), bValidFlagPerBand(true),
+	SMIR_CombineRasterFieldInfo() : pwsFieldName(nullptr), cCompressionOptions(SMIR_CompressionOptions()), bValidFlagPerBand(true),
 		nBandCount(0), 
-		pCombineRasterBandInfo(0), 
+		pCombineRasterBandInfo(nullptr), 
 		nEventCount(0), 
-		pCombineRasterEventInfo(0)
+		pCombineRasterEventInfo(nullptr)
 	{
 	}
 };

@@ -239,10 +239,10 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, const char *pszLayerNameIn,
 	ymin(0),
 	xmax(0),
 	ymax(0),
-	bHasMap(false),
 	bInWriteMode(true),
 	pszFilename(CPLStrdup(pszFilenameIn)),
 	nLastFID(-1),
+	bHasMap(false),
 	pSpatialReference(nullptr)
 {
 	poFeatureDefn = new OGRFeatureDefn(pszLayerNameIn);

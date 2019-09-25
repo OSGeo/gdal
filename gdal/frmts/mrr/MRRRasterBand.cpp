@@ -460,7 +460,7 @@ bool MRRRasterBand::StatisticsEnsureInitialized(bool bSummary, int bApproxOk, CP
 
 				for (; nApproxHighResolution >= 0; --nApproxHighResolution)
 				{
-					SMIR_LevelInfo *pLevelInfo = 0;
+					SMIR_LevelInfo *pLevelInfo = nullptr;
 					SDKDynamicImpl::Get().LevelInfo()(((MRRDataset *)poDS)->GetDSHandle(), nField, nEvent, nApproxHighResolution, &pLevelInfo);
 					auto nXSize = pLevelInfo->nCellBBoxXMax - pLevelInfo->nCellBBoxXMin;
 					auto nYSize = pLevelInfo->nCellBBoxYMax - pLevelInfo->nCellBBoxYMin;
@@ -647,6 +647,9 @@ GDALColorInterp MRRRasterBand::GetColorInterpretation()
 	case MIR_FieldType::MIR_FIELD_ImagePalette:
 	case MIR_FieldType::MIR_FIELD_Classified:
 		return GDALColorInterp::GCI_PaletteIndex;
+		
+	default:
+		return GDALColorInterp::GCI_Undefined;
 	}
 
 	return GDALColorInterp::GCI_Undefined;
