@@ -196,9 +196,9 @@ Structure of EFAL SDK package includes three main folders:
 Choose the binaries for the desired platform from the "export" folder and copy all files from the "export/Common" folder into the binaries folder. For example:
 
 ::
-	To use binaries for Ubuntu, copy all the files from the "export/Common" folder to the "export/uu64". 
-	Create the system environment variable EFAL_SDK_DIR pointing to the "export/uu64" directory.
-	
+    To use binaries for Ubuntu, copy all the files from the "export/Common" folder to the "export/uu64". 
+    Create the system environment variable EFAL_SDK_DIR pointing to the "export/uu64" directory.
+
 When using GDAL with this driver, the location of the EFAL runtime must
 be available on the system path. For example
 
