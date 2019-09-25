@@ -17,15 +17,15 @@ Driver capabilities
 Contents
 --------
 
-#. `Overview of GDAL/OGR Driver <#driver_overview>`__
+#. `Overview of GDAL/OGR Driver <#driver_overview_efal>`__
 #. `Differences with MITAB <#differences_with_mitab>`__
 #. `Options <#options>`__
-#. `Issues and Limitations <#issues>`__
-#. `Building GDAL <#building_gdal>`__
+#. `Issues and Limitations <#issues_efal>`__
+#. `Building GDAL <#building_gdal_efal>`__
 
 --------------
 
-.. _driver_overview:
+.. _driver_overview_efal:
 
 Overview of GDAL/OGR Driver
 ---------------------------
@@ -139,7 +139,7 @@ These options apply to the dataset creation options (-dcco)
 
 --------------
 
-.. _issues:
+.. _issues_efal:
 
 Issues and Limitations
 ----------------------
@@ -148,7 +148,7 @@ Issues and Limitations
 
 --------------
 
-.. _building_gdal:
+.. _building_gdal_efal:
 
 Building and Using GDAL
 -----------------------

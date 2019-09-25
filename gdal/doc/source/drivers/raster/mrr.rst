@@ -7,27 +7,20 @@ MRR --- Multi Resolution Raster
 
 This driver supports reading of MRR (Multiple Resolution Raster) files using the MapInfo Pro Advanced SDK, developed by Pitney Bowes. This driver does not provide support for creating, writing or editing MRR files. 
 
-Driver capabilities
--------------------
-
-.. supports_read::
-
-.. ReadMRR=YES  Read mrr.
-
 Contents
 --------
 
-#. `Overview of MRR Driver <#driver_overview>`__
-#. `Issues and Limitations <#issues>`__
-#. `Building GDAL <#building_gdal>`__
+#. `Overview of MRR Driver <#driver_overview_mrr>`__
+#. `Issues and Limitations <#issues_mrr>`__
+#. `Building GDAL <#building_gdal_mrr>`__
 
 
 --------------------------------
 
-.. _driver_overview:
+.. _driver_overview_mrr:
 
 Overview of MRR (Multiple Resolution Raster) Driver
---------------------------------
+---------------------------------------------------
 
 MRR unifies the storage of all types of raster data such as imagery, spectral imagery, continuous gridded data and thematic data. MRR extends the concept of a multi-banded raster to a “four dimensional” raster which may contain –
 
@@ -43,7 +36,7 @@ The MRR driver for GDAL is supported on 64-bit Windows, Ubuntu, AmazonLinux, Ora
 
 --------------
 
-.. _issues:
+.. _issues_mrr:
 
 Issues and Limitations
 ----------------------
@@ -55,10 +48,10 @@ Issues and Limitations
 
 --------------
 
-.. _building_gdal:
+.. _building_gdal_mrr:
 
 Building GDAL
------------------------
+-------------
 
 
 The MRR driver will build as part of the GDAL even if the MapInfo Pro Advanced SDK is
@@ -74,7 +67,7 @@ MRR-ready.
   builds.
   
 MapInfo Pro Advanced SDK (Runtime)
---------------------------------
+----------------------------------
   
 The MRR driver needs the MapInfo Pro Advanced SDK to be installed on the machine to work with GDAL.
 
@@ -98,9 +91,5 @@ The MapInfo Pro Advanced SDK zip file contains the following folders:
 -  Windows --> 64 bit Binaries for Windows.
    
 
-Choose the binaries for the desired platform from the "Raster GDAL" folder and copy all files into the folder containing GDAL binaries. 
-
-
-   
-
+Choose the binaries for the desired platform from the "Raster GDAL" folder and copy all files into the folder containing GDAL binaries.
 
