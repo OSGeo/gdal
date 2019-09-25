@@ -13,9 +13,17 @@ in terms of the standard `CFITSIO
 library <http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html>`__,
 which you must have on your system in order for FITS support to be
 enabled (see :ref:`notes on CFITSIO linking <notes-on-cfitsio-linking>`).
-Both reading and writing of FITS files is supported. Starting from version 3.0
+Both reading and writing of FITS files is supported.
+
+Starting from version 3.0
 georeferencing system support is implemented via the conversion of
 WCS (World Coordinate System) keywords.
+Only Latitude - Longitude systems (see the `FITS standard document
+<https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf#subsection.8.3>`_)
+have been implemented, those for which remote sensing processing is commonly used.
+As 3D Datum information is missing in FITS/WCS standard, Radii and target bodies
+are translated using the planetary extension proposed `here
+<https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018EA000388>`_. 
 
 Non-standard header keywords that are present in the FITS file will be
 copied to the dataset's metadata when the file is opened, for access via
