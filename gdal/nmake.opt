@@ -650,29 +650,15 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #
 # Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
 # Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
+# Copyright 2019 Even Rouault
 #
-# Pdfium can be built from the win_gdal_build branch at https://github.com/rouault/pdfium that
-# has the following patch to ensure /MD (MultiThreadedDLL) linking consistent with GDAL one.
-# Build script from PDFium is available at https://github.com/rouault/pdfium/tree/build
-#
-#diff --git a/build/standalone.gypi b/build/standalone.gypi
-#index ecf849b..0e567e4 100644
-#--- a/build/standalone.gypi
-#+++ b/build/standalone.gypi
-#@@ -100,7 +100,8 @@
-#               ['component=="shared_library"', {
-#                 'RuntimeLibrary': '2',  #/MD
-#               }, {
-#-                'RuntimeLibrary': '0',  #/MT
-#+                #'RuntimeLibrary': '0',  #/MT
-#+                 'RuntimeLibrary': '2',  #/MD
-#               }],
-#             ],
-#
+# Pdfium must be built from https://github.com/rouault/pdfium_build_gdal_3_1
+
 #PDFIUM_ENABLED = YES
-#PDFIUM_CFLAGS = -Ie:/pdfium/ -Ie:/pdfium/public
-#PDFIUM_LIB_DIR = e:/pdfium/build/Release/lib
-#PDFIUM_LIBS = $(PDFIUM_LIB_DIR)/pdfium.lib $(PDFIUM_LIB_DIR)/bigint.lib $(PDFIUM_LIB_DIR)/fdrm.lib $(PDFIUM_LIB_DIR)/formfiller.lib $(PDFIUM_LIB_DIR)/fpdfapi.lib $(PDFIUM_LIB_DIR)/fpdfdoc.lib $(PDFIUM_LIB_DIR)/fpdftext.lib $(PDFIUM_LIB_DIR)/freetype.lib $(PDFIUM_LIB_DIR)/fxcodec.lib $(PDFIUM_LIB_DIR)/fxcrt.lib $(PDFIUM_LIB_DIR)/fxedit.lib $(PDFIUM_LIB_DIR)/fxge.lib $(PDFIUM_LIB_DIR)/pdfwindow.lib $(PDFIUM_LIB_DIR)/fx_agg.lib $(PDFIUM_LIB_DIR)/fx_lcms2.lib $(PDFIUM_LIB_DIR)/fx_libjpeg.lib $(PDFIUM_LIB_DIR)/fx_libopenjpeg.lib $(PDFIUM_LIB_DIR)/fx_zlib.lib gdi32.lib kernel32.lib advapi32.lib
+#PDFIUM_CFLAGS = -IC:\dev\pdfium\install\include\pdfium
+#PDFIUM_LIB_DIR = C:\dev\pdfium\install\lib
+#PDFIUM_LIBS = $(PDFIUM_LIB_DIR)\pdfium.lib gdi32.lib kernel32.lib user32.lib
+
 
 # Build PDF driver as plugin
 #PDF_PLUGIN = NO

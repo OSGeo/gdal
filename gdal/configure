@@ -1205,8 +1205,6 @@ with_podofo
 with_podofo_lib
 with_podofo_extra_lib_for_test
 with_pdfium
-with_pdfium_lib
-with_pdfium_extra_lib_for_test
 with_gdal_ver
 with_macosx_framework
 with_perl
@@ -2215,8 +2213,6 @@ Optional Packages:
   --with-podofo-lib=ARG   podofo Link Flags (i.e. -L/xxx -lpodofo ...). Mainly for static libpodofo
   --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpodofo
   --with-pdfium=ARG    Include pdfium (for PDF) support (ARG=no(default), yes or pdfium install path)
-  --with-pdfium-lib=ARG   pdfium Link Flags (i.e. -L/xxx -lpdfium ...). Mainly for static libpdfium
-  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpdfium
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
   --with-perl           Enable perl bindings
@@ -40382,105 +40378,45 @@ $as_echo_n "checking for pdfium... " >&6; }
 
 if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
 
-
-# Check whether --with-pdfium-lib was given.
-if test "${with_pdfium_lib+set}" = set; then :
-  withval=$with_pdfium_lib;
-fi
-
-
     if test "$with_pdfium" = "yes" ; then
-        TEST_PDFIUM_INC="-I/usr/include -I/usr/include/pdfium"
+        PDFIUM_INC="-I/usr/include/pdfium"
         PDFIUM_LIB="-lpdfium"
         PDFIUM_LIBDIR="/usr"
     else
-        TEST_PDFIUM_INC="-I$with_pdfium -I$with_pdfium/include -I$with_pdfium/include/pdfium"
-        PDFIUM_LIB="-L$with_pdfium -L$with_pdfium/lib -lpdfium"
+        PDFIUM_INC="-I$with_pdfium/include/pdfium"
+        PDFIUM_LIB="-L$with_pdfium/lib -lpdfium"
         PDFIUM_LIBDIR="$with_pdfium"
     fi
+
+    PDFIUM_LIB="$PDFIUM_LIB -ljpeg -lpng -lz -llcms2 -lpthread"
 
     if test ! -z "`uname | grep Darwin`" ; then
         PDFIUM_LIB="-stdlib=libstdc++ $PDFIUM_LIB"
     fi
 
-    if test "x$with_pdfium_lib" = "x" ; then
-        rm -f testpdfium.*
-        echo '#include <fpdfview.h>' > testpdfium.cpp
-        echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
-        echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
-        TEST_CXX_FLAGS="-std=c++0x"
-        if test ! -z "`uname | grep Darwin`" ; then
-          TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
-        fi
-        if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
-            HAVE_PDFIUM=yes
-            CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
-            if test "$PDF_PLUGIN" = "no"; then
-                LIBS="${PDFIUM_LIB} ${LIBS}"
-            fi
-            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
-            PDFIUM_INC=$TEST_PDFIUM_INC
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-        fi
-        rm -f testpdfium.*
-        rm -f testpdfium
+    rm -f testpdfium.*
+    echo '#include "public/fpdfview.h"' > testpdfium.cpp
+    echo '#include "core/fpdfapi/page/cpdf_page.h"' >> testpdfium.cpp
+    echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
+    TEST_CXX_FLAGS=""
+    if test ! -z "`uname | grep Darwin`" ; then
+        TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
     fi
-
-    if test "$HAVE_PDFIUM" = "no"; then
-        if test "x$with_pdfium_lib" != "x" ; then
-            PDFIUM_LIB="$with_pdfium_lib"
-        else
-            # This may be a static libpdfium.a, so add dependent libraries.
-            PDFIUM_LIB="-L$PDFIUM_LIBDIR -L$PDFIUM_LIBDIR/lib/pdfium -lpdfium -lfpdfdoc -lfpdfapi -lfpdftext -lformfiller -lpdfwindow"
-            PDFIUM_LIB="$PDFIUM_LIB -lfxedit -lfpdfdoc -lfxcodec -lfx_libopenjpeg -lfx_lcms2 -lfx_libjpeg -lfx_zlib"
-            PDFIUM_LIB="$PDFIUM_LIB -lfdrm -lfxge -lfreetype -lfx_agg -lfxcrt -lbigint"
-            if test ! -z "`uname | grep Darwin`" ; then
-                PDFIUM_LIB="-framework AppKit -framework CoreFoundation $PDFIUM_LIB"
-            fi
+    if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
+        HAVE_PDFIUM=yes
+        CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
+        if test "$PDF_PLUGIN" = "no"; then
+            LIBS="${PDFIUM_LIB} ${LIBS}"
         fi
-
-
-# Check whether --with-pdfium-extra-lib-for-test was given.
-if test "${with_pdfium_extra_lib_for_test+set}" = set; then :
-  withval=$with_pdfium_extra_lib_for_test;
-fi
-
-
-        if test "x$with_pdfium_extra_lib_for_test" = "x" ; then
-            TEST_PDFIUM_LIB="$PDFIUM_LIB"
-        else
-            TEST_PDFIUM_LIB="$PDFIUM_LIB $with_pdfium_extra_lib_for_test"
-        fi
-
-        rm -f testpdfium.*
-        echo '#include <fpdfview.h>' > testpdfium.cpp
-        echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
-        echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
-        TEST_CXX_FLAGS="-std=c++0x"
-        if test ! -z "`uname | grep Darwin`" ; then
-          TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
-        fi
-        if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} >/dev/null 2>/dev/null; then
-            HAVE_PDFIUM=yes
-            CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
-            if test "$PDF_PLUGIN" = "no"; then
-                LIBS="${PDFIUM_LIB} ${LIBS}"
-            fi
-            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
-            PDFIUM_INC=$TEST_PDFIUM_INC
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+        PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-        fi
-        rm -f testpdfium.*
-        rm -f testpdfium
     fi
+    rm -f testpdfium.*
+    rm -f testpdfium
 
     if test "$HAVE_PDFIUM" = "no" -a "$with_pdfium" != ""; then
-        as_fn_error $? "pdfium requested but not found" "$LINENO" 5
+        as_fn_error $? "pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_1" "$LINENO" 5
     fi
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
