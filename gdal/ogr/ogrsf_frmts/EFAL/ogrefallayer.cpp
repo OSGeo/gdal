@@ -102,7 +102,7 @@ OGREFALLayer::OGREFALLayer(EFALHANDLE argSession, EFALHANDLE argTable, EfalOpenM
      * Create the field definitions
     */
     OGRFieldDefn *poFieldDefn = nullptr;
-    for (unsigned long i = 0; i < efallib->GetColumnCount(hSession, hTable); i++)
+    for (MI_UINT32 i = 0; i < efallib->GetColumnCount(hSession, hTable); i++)
     {
         poFieldDefn = nullptr;
         const wchar_t * pwszAlias = efallib->GetColumnName(hSession, hTable, i);
@@ -330,7 +330,7 @@ OGRErr OGREFALLayer::GetExtent(OGREnvelope *psExtent, int /*bForce*/)
     OGRErr status = CreateNewTable();
     if (status != OGRERR_NONE) return status;
 
-    for (unsigned long i = 0; i < efallib->GetColumnCount(hSession, hTable); i++)
+    for (MI_UINT32 i = 0; i < efallib->GetColumnCount(hSession, hTable); i++)
     {
         Ellis::ALLTYPE_TYPE atType = efallib->GetColumnType(hSession, hTable, i);
         if (atType == Ellis::ALLTYPE_TYPE::OT_OBJECT)
@@ -555,7 +555,7 @@ void OGREFALLayer::OGRGeometry2EFALGeometry(OGRGeometry* ogrGeometry, GByte** pb
 /************************************************************************/
 /*                    CursorIndex2FeatureIndex()                        */
 /************************************************************************/
-int OGREFALLayer::CursorIndex2FeatureIndex(EFALHANDLE hCursor, OGRFeatureDefn* pFeatureDefn, unsigned long idxCursor) const
+int OGREFALLayer::CursorIndex2FeatureIndex(EFALHANDLE hCursor, OGRFeatureDefn* pFeatureDefn, MI_UINT32 idxCursor) const
 {
     const wchar_t* szwColumnName = efallib->GetCursorColumnName(hSession, hCursor, idxCursor);
     char * szColumnName = CPLRecodeFromWChar(szwColumnName, CPL_ENC_UCS2, CPL_ENC_UTF8);
@@ -587,7 +587,7 @@ OGRFeature* OGREFALLayer::Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFe
         pFeature->SetFID(iFID);
     }
 
-    for (unsigned long i = 0, n = efallib->GetCursorColumnCount(hSession, hCursor); i < n; i++)
+    for (MI_UINT32 i = 0, n = efallib->GetCursorColumnCount(hSession, hCursor); i < n; i++)
     {
         if (efallib->GetCursorColumnType(hSession, hCursor, i) == Ellis::ALLTYPE_TYPE::OT_STYLE)
         {
@@ -637,10 +637,10 @@ OGRFeature* OGREFALLayer::Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFe
                     pFeature->SetField(idxFeature, efallib->GetCursorValueInt16(hSession, hCursor, i));
                     break;
                 case Ellis::ALLTYPE_TYPE::OT_INTEGER:
-                    pFeature->SetField(idxFeature, efallib->GetCursorValueInt32(hSession, hCursor, i));
+                    pFeature->SetField(idxFeature, (int)efallib->GetCursorValueInt32(hSession, hCursor, i));
                     break;
                 case Ellis::ALLTYPE_TYPE::OT_INTEGER64:
-                    pFeature->SetField(idxFeature, efallib->GetCursorValueInt64(hSession, hCursor, i));
+                    pFeature->SetField(idxFeature, (GIntBig)efallib->GetCursorValueInt64(hSession, hCursor, i));
                     break;
                 case Ellis::ALLTYPE_TYPE::OT_LOGICAL:
                     pFeature->SetField(idxFeature, (efallib->GetCursorValueBoolean(hSession, hCursor, i) ? "T" : "F"));
@@ -923,7 +923,7 @@ OGRErr OGREFALLayer::ISetFeature(OGRFeature *poFeature)
             const wchar_t * warname = L"@geom";
             const char * varname = "@geom";
             efallib->CreateVariable(hSession, warname);
-            efallib->SetVariableValueBinary(hSession, warname, (unsigned long)sz, (const char *)bytes);
+            efallib->SetVariableValueBinary(hSession, warname, (MI_UINT32)sz, (const char *)bytes);
             if (!first)
             {
                 command += ",";
@@ -977,7 +977,7 @@ OGRErr OGREFALLayer::ISetFeature(OGRFeature *poFeature)
         err = (nrecs == 1) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
     }
     // Now drop all of the variables
-    for (unsigned long n = efallib->GetVariableCount(hSession); n > 0; n--)
+    for (MI_UINT32 n = efallib->GetVariableCount(hSession); n > 0; n--)
     {
         efallib->DropVariable(hSession, efallib->GetVariableName(hSession, n - 1));
     }
@@ -1021,8 +1021,8 @@ OGRErr OGREFALLayer::CreateNewTable()
                 OGRFieldDefn* pFieldDefn = poFeatureDefn->GetFieldDefn(i);
                 wchar_t * columnName = CPLRecodeToWChar(pFieldDefn->GetNameRef(), CPL_ENC_UTF8, CPL_ENC_UCS2); // TODO: Is UCS2 the right thing throughout here or is UTF16 better???
                 OGRFieldType ogrType = pFieldDefn->GetType();
-                unsigned long columnWidth = 0;
-                unsigned long columnDecimals = 0;
+                MI_UINT32 columnWidth = 0;
+                MI_UINT32 columnDecimals = 0;
                 Ellis::ALLTYPE_TYPE columnType = Ellis::ALLTYPE_TYPE::OT_NONE;
 
                 switch (ogrType)
@@ -1047,8 +1047,8 @@ OGRErr OGREFALLayer::CreateNewTable()
                 case OGRFieldType::OFTReal:
                     if (pFieldDefn->GetWidth() > 0)
                     {
-                        columnWidth = pFieldDefn->GetWidth();
-                        columnDecimals = pFieldDefn->GetPrecision();
+                        columnWidth = (MI_UINT32)pFieldDefn->GetWidth();
+                        columnDecimals = (MI_UINT32)pFieldDefn->GetPrecision();
                         columnType = Ellis::ALLTYPE_TYPE::OT_DECIMAL;
                     }
                     else
@@ -1284,7 +1284,7 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
             const char * varname = "@geom";
             const wchar_t * pszwCSys = OGRSpatialRef2EFALCSys(GetSpatialRef());
             if (pszwCSys == nullptr) {
-                for (unsigned long i = 0; i < efallib->GetColumnCount(hSession, hTable); i++)
+                for (MI_UINT32 i = 0; i < efallib->GetColumnCount(hSession, hTable); i++)
                 {
                     Ellis::ALLTYPE_TYPE atType = efallib->GetColumnType(hSession, hTable, i);
                     if (atType == Ellis::ALLTYPE_TYPE::OT_OBJECT) {
@@ -1293,7 +1293,7 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
                 }
             }
             efallib->CreateVariable(hSession, warname);
-            efallib->SetVariableValueGeometry(hSession, warname, (unsigned long)sz, (const char *)bytes, pszwCSys);
+            efallib->SetVariableValueGeometry(hSession, warname, (MI_UINT32)sz, (const char *)bytes, pszwCSys);
             if (!first) { command += ","; values += ","; } first = false;
             command += "OBJ";
             values += varname;
@@ -1360,7 +1360,7 @@ OGRErr OGREFALLayer::ICreateFeature(OGRFeature *poFeature)
     }
     CPLFree(pszFeatureClassName);
     // Now drop all of the variables
-    for (unsigned long n = efallib->GetVariableCount(hSession); n > 0; n--)
+    for (MI_UINT32 n = efallib->GetVariableCount(hSession); n > 0; n--)
     {
         efallib->DropVariable(hSession, efallib->GetVariableName(hSession, n - 1));
     }

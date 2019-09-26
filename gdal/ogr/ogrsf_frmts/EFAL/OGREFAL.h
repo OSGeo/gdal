@@ -72,7 +72,7 @@ private:
     void                 BuildQuery(wchar_t * szQuery, size_t sz, bool count) const;
     void                 CloseSequentialCursor();
     OGRFeature*          Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFeatureDefn);
-    int                  CursorIndex2FeatureIndex(EFALHANDLE hCursor, OGRFeatureDefn* pFeatureDefn, unsigned long idxCursor) const;
+    int                  CursorIndex2FeatureIndex(EFALHANDLE hCursor, OGRFeatureDefn* pFeatureDefn, MI_UINT32 idxCursor) const;
     char*                OGRStyle2MapBasicStyle(const char * ogrStyle) const;
     OGRGeometry*         EFALGeometry2OGRGeometry(GByte* bytes, size_t sz);
     OGRSpatialReference* EFALCSys2OGRSpatialRef(const wchar_t* szCoordSys);

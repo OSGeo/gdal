@@ -374,6 +374,7 @@ namespace EFAL_GDAL_DRIVER
             const char* pszPenId = strstr(pszPenName, "mapinfo-pen-");
             if (pszPenId != nullptr)
             {
+                // cppcheck-suppress constArgument
                 nPenId = atoi(pszPenId + 12);
                 SetPenPattern((GByte)nPenId);
             }
@@ -382,6 +383,7 @@ namespace EFAL_GDAL_DRIVER
                 pszPenId = strstr(pszPenName, "ogr-pen-");
                 if (pszPenId != nullptr)
                 {
+                    // cppcheck-suppress constArgument
                     nPenId = atoi(pszPenId + 8);
                     if (nPenId == 0)
                         nPenId = 2;

@@ -22,10 +22,9 @@
 
 SDKDynamicImpl* SDKDynamicImpl::m_pSDKImpl = nullptr;
 
-SDKDynamicImpl::SDKDynamicImpl()
+// cppcheck-suppress uninitMemberVarPrivate
+SDKDynamicImpl::SDKDynamicImpl() : m_hMIRasterSDKInstance(nullptr)
 {
-    m_hMIRasterSDKInstance = nullptr;
-
     ClearAll();
 }
 

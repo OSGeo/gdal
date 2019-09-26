@@ -402,13 +402,13 @@ GDALDataset *MRRDataset::OpenMRR(GDALOpenInfo * poOpenInfo)
             }
             else if (nBandCount == 1)
             {
-                uint32_t nGDALBandIndex = 1;
                 uint32_t nMRRBandIndex = 0;
                 SMIR_BandInfo* pBandInfo = nullptr;
                 if (SDKDynamicImpl::Get().BandInfo()(nInfoHandle, nFieldIndex, nMRRBandIndex, &pBandInfo) == MIRSuccess)
                 {
                     auto nMIRDataType = pBandInfo->nDataType;
                     auto nGDALDataType = AdjustBandDataType(nMIRDataType);
+                    uint32_t nGDALBandIndex = 1;
 
                     poDS->SetBand(nGDALBandIndex, new MRRRasterBand(poDS, pFieldInfo->nType, nFieldIndex, nMRRBandIndex, 0, nMIRDataType,
                         nGDALDataType, (int)pRasterInfo->nGridSizeX, (int)pRasterInfo->nGridSizeY, nXBlockSize, nYBlockSize));
@@ -421,13 +421,14 @@ GDALDataset *MRRDataset::OpenMRR(GDALOpenInfo * poOpenInfo)
         //Mount 0th band, populate Colour table too.
         case MIR_FieldType::MIR_FIELD_ImagePalette:
         {
-            uint32_t nGDALBandIndex = 1;
             uint32_t nMRRBandIndex = 0;
             SMIR_BandInfo* pBandInfo = nullptr;
             if (SDKDynamicImpl::Get().BandInfo()(nInfoHandle, nFieldIndex, nMRRBandIndex, &pBandInfo) == MIRSuccess)
             {
                 auto nMIRDataType = pBandInfo->nDataType;
                 auto nGDALDataType = AdjustBandDataType(nMIRDataType);
+                uint32_t nGDALBandIndex = 1;
+
                 poDS->SetBand(nGDALBandIndex, new MRRRasterBand(poDS, pFieldInfo->nType, nFieldIndex, nMRRBandIndex, 0, nMIRDataType,
                     nGDALDataType, (int)pRasterInfo->nGridSizeX, (int)pRasterInfo->nGridSizeY, nXBlockSize, nYBlockSize));
                 nGDALBandIndex++;
@@ -544,8 +545,6 @@ void GDALDeregister_MRR(GDALDriver *)
 
 void GDALRegister_MRR()
 {
-    GDALDriver  *poDriver;
-
     if (!GDAL_CHECK_VERSION("MRR"))
         return;
 
@@ -554,7 +553,7 @@ void GDALRegister_MRR()
 
     if (GDALGetDriverByName("MRR") == nullptr)
     {
-        poDriver = new GDALDriver();
+        GDALDriver *poDriver = new GDALDriver();
 
         poDriver->SetDescription("MRR");
         poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");

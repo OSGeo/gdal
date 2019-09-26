@@ -770,6 +770,7 @@ extern "C"
             pBandIndices(nullptr)
         {}
 
+        // cppcheck-suppress noExplicitConstructor
         SMIR_FieldBandFilter(uint32_t ninField) :
             nMode(MIR_FieldBandFilterMode::FieldAndAllBands),
             nField(ninField),
@@ -787,6 +788,8 @@ extern "C"
         MIR_CompressionType nCompressionType;    /*!< Compression type to use. */
         int32_t nCompressionLevel;                        /*!< Compression level to use. */
 
+        // cppcheck-suppress uninitMemberVar
+        // cppcheck-suppress noExplicitConstructor
         SMIR_CompressionOptions(bool bInIsValid) :
             bIsValid(bInIsValid)
         {}
@@ -841,6 +844,8 @@ extern "C"
 
 
         // ToDo : This constructor need to be removed along with all of the constructor in APIDef.h for C parity.
+        // cppcheck-suppress uninitMemberVar
+        // cppcheck-suppress noExplicitConstructor
         SMIR_ClipExtent(bool bInIsValid) : bIsValid(bInIsValid)
         {}
     };
@@ -858,6 +863,7 @@ extern "C"
         SMIR_APIOptions() : cCreationOptions(), cFinalisationOptions(0, 0), cFieldBandFilter(), cClipExtent(false)
         {}
 
+        // cppcheck-suppress passedByValue
         SMIR_APIOptions(SMIR_CreationOptions creationOptions, SMIR_FinalisationOptions finalisationOptions, SMIR_FieldBandFilter fieldBandFilter, SMIR_ClipExtent clipExtent)
             : cCreationOptions(creationOptions), cFinalisationOptions(finalisationOptions), cFieldBandFilter(fieldBandFilter), cClipExtent(clipExtent)
         {}
@@ -873,6 +879,7 @@ extern "C"
         uint32_t                nBand;                                /*!< The zero based band index of input raster to be used.*/
         uint32_t                nEvent;                                /*!< The zero based event index of input raster to be used.*/
 
+        // cppcheck-suppress uninitMemberVar
         SMIR_RasterInput() : nField(0), nBand(0), nEvent(0)
         {}
     };
@@ -1570,6 +1577,7 @@ extern "C"
         uint32_t        newClassColor;                    /* New color to be assigned.*/
         wchar_t*        pszNewClassName;                /* New label  to be assigned.*/
 
+        // cppcheck-suppress uninitMemberVar
         SMIR_TableRecordEditInfo() : newClassColor(InvalidColor), pszNewClassName(nullptr)
         {}
     };
@@ -1928,6 +1936,7 @@ extern "C"
         uint32_t                    nBandCount;                            /*!< size of the pCombineRasterBandInfo array.*/
         SMIR_CombineRasterBandInfo*    pCombineRasterBandInfo;                /*!< Array of bands to be created in output raster.*/
 
+        // cppcheck-suppress uninitMemberVar
         SMIR_CombineRasterEventInfo() : nEventType(MIR_EET_Total), nBandCount(0), pCombineRasterBandInfo(nullptr)
         {
         }
@@ -1975,6 +1984,7 @@ extern "C"
 
 
         // ToDo : This constructor need to be removed along with all of the constructor in APIDef.h for C parity.
+        // cppcheck-suppress uninitMemberVar
         SMIR_ExportToTabOptions() : bIsValid(false)
         {}
     };
@@ -1995,7 +2005,7 @@ extern "C"
         bool            bIsValid;    /*!< Whether SMIR_ExportToTabOptions Option is valid. If not valid use defaults */
 
         // ToDo : This constructor need to be removed along with all of the constructor in APIDef.h for C parity.
-
+        // cppcheck-suppress uninitMemberVar
         SMIR_ExportGridOptions() : bIsValid(false)
         {
         }

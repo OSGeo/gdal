@@ -77,6 +77,7 @@ void FilterDataArray(const int& nXSize, const int& nYSize, uint8_t* pDataArray, 
                     break;
 
                 case MIR_DataType::MIR_REAL4:
+                    // cppcheck-suppress invalidPointerCast
                     ((float*)pDataArray)[nCellPos] = (float)dNoDataValue;
                     break;
 
@@ -84,6 +85,7 @@ void FilterDataArray(const int& nXSize, const int& nYSize, uint8_t* pDataArray, 
                 case MIR_DataType::MIR_UNSIGNED_INT64:
                 case MIR_DataType::MIR_REAL8:
                 case MIR_DataType::MIR_REAL_LONG:
+                    // cppcheck-suppress invalidPointerCast
                     ((double*)pDataArray)[nCellPos] = (double)dNoDataValue;
                     break;
 
@@ -101,6 +103,7 @@ void FilterDataArray(const int& nXSize, const int& nYSize, uint8_t* pDataArray, 
 
                     //8 bytes should be sufficient for rest of the types.
                 default:
+                    // cppcheck-suppress invalidPointerCast
                     ((double*)pDataArray)[nCellPos] = (double)dNoDataValue;
 
                 }
@@ -359,7 +362,7 @@ CPLErr MRRRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     void * pData,
     int nBufXSize, int nBufYSize,        //Destination size X and Y
     GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace,
+    GSpacing /*nPixelSpace*/, GSpacing /*nLineSpace*/,
     GDALRasterIOExtraArg* psExtraArg)
 {
     if (eRWFlag == GF_Write)
@@ -377,11 +380,13 @@ CPLErr MRRRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     int nMRRRYOffset = ((MRRDataset*)poDS)->nRasterYSize - nYOff - nYSize + (int)((MRRDataset*)poDS)->nCellAtGridOriginY;
     MIR_InterpolationMethod nInterpMethod = psExtraArg != nullptr ? GetInterpMethod(psExtraArg->eResampleAlg) : MIR_InterpolationMethod::Interp_Default;
 
+    /*
     if (nPixelSpace == 0)
         nPixelSpace = GDALGetDataTypeSize(eBufType) / 8;
 
     if (nLineSpace == 0)
         nLineSpace = nPixelSpace * nBufXSize;
+    */
 
     CPLDebug("MRRRasterBand",
         "RasterIO(nBand=%d,nlevel=%d,nXOff=%d,nYOff=%d,nXSize=%d,nYSize=%d -> %dx%d)",

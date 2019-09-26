@@ -108,7 +108,7 @@ class EFALFeaturePen : public EFAL_GDAL_DRIVER::ITABFeaturePen
 {
 public:
     EFALFeaturePen() : ITABFeaturePen() {}
-    ~EFALFeaturePen() {};
+    ~EFALFeaturePen() {}
 
     const char *GetMapBasicStyleClause();
 };
@@ -116,7 +116,7 @@ class EFALFeatureBrush : public EFAL_GDAL_DRIVER::ITABFeatureBrush
 {
 public:
     EFALFeatureBrush() : ITABFeatureBrush() {}
-    ~EFALFeatureBrush() {};
+    ~EFALFeatureBrush() {}
 
     const char *GetMapBasicStyleClause();
 };
@@ -131,21 +131,21 @@ protected:
 
 public:
     EFALFeatureSymbol();
-    ~EFALFeatureSymbol() {};
+    ~EFALFeatureSymbol() {}
 
     const char *GetSymbolStyleString();
     void        SetSymbolFromStyleString(const char *pszStyleString);
 
     const char *GetMapBasicStyleClause();
 
-    int         GetFontStyleTABValue() { return m_nFontStyle; };
-    void        SetFontStyleTABValue(int nStyle) { m_nFontStyle = (GInt16)nStyle; };
+    int         GetFontStyleTABValue() { return m_nFontStyle; }
+    void        SetFontStyleTABValue(int nStyle) { m_nFontStyle = (GInt16)nStyle; }
 
     SymbolType GetSymbolType() { return m_eSymbolType; }
     void SetSymbolType(SymbolType type) { m_eSymbolType = type; }
 
     // GetSymbolAngle(): Return angle in degrees counterclockwise
-    double      GetSymbolAngle() { return m_dAngle; };
+    double      GetSymbolAngle() { return m_dAngle; }
     void        SetSymbolAngle(double dAngle);
 
 
@@ -162,7 +162,7 @@ protected:
 public:
     EFALFeatureFont() : ITABFeatureFont(), m_nFontStyle(0), m_nPointSize(0), m_rgbForeground(0), m_rgbBackground(0)
     {}
-    ~EFALFeatureFont() {};
+    ~EFALFeatureFont() {}
 
     const char *GetFontStyleString();
     void        SetFontFromStyleString(const char *pszStyleString);
@@ -491,12 +491,14 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
         const char* ptr = nullptr;
         if ((ptr = strstr(pszSymbolId, "mapinfo-sym-")) != nullptr)
         {
+            // cppcheck-suppress constArgument
             const int nSymbolId = atoi(ptr + 12);
             SetSymbolNo((GByte)nSymbolId);
             SetSymbolType(SymbolType::VECTOR);
         }
         else if ((ptr = strstr(pszSymbolId, "font-sym-")) != nullptr)
         {
+            // cppcheck-suppress constArgument
             const int nSymbolId = atoi(ptr + 9);
             SetSymbolNo((GByte)nSymbolId);
             const char* fontName = poSymbolStyle->FontName(bIsNull);
@@ -513,6 +515,7 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
             if (ptr2 == nullptr)
             {
                 fontName = ptr + 4;
+                // cppcheck-suppress knownConditionTrueFalse
                 if (fontName != nullptr && strlen(fontName) > 0)
                 {
                     SetFontName(fontName);
@@ -1113,6 +1116,7 @@ char* OGREFALLayer::OGRStyle2MapBasicStyle(const char * ogrStyle) const
             if (mbStyle.length() > 0) mbStyle += " ";
             auto pszStyle = pen.GetMapBasicStyleClause();
             if (pszStyle != nullptr) {
+                // cppcheck-suppress nullPointerArithmeticRedundantCheck
                 mbStyle += pszStyle;
             }
         }
@@ -1128,6 +1132,7 @@ char* OGREFALLayer::OGRStyle2MapBasicStyle(const char * ogrStyle) const
             if (mbStyle.length() > 0) mbStyle += " ";
             auto pszStyle = brush.GetMapBasicStyleClause();
             if (pszStyle != nullptr) {
+                // cppcheck-suppress nullPointerArithmeticRedundantCheck
                 mbStyle += pszStyle;
             }
         }
@@ -1143,6 +1148,7 @@ char* OGREFALLayer::OGRStyle2MapBasicStyle(const char * ogrStyle) const
             if (mbStyle.length() > 0) mbStyle += " ";
             auto pszStyle = symbol.GetMapBasicStyleClause();
             if (pszStyle != nullptr) {
+                // cppcheck-suppress nullPointerArithmeticRedundantCheck
                 mbStyle += pszStyle;
             }
         }
@@ -1158,6 +1164,7 @@ char* OGREFALLayer::OGRStyle2MapBasicStyle(const char * ogrStyle) const
             if (mbStyle.length() > 0) mbStyle += " ";
             auto pszStyle = font.GetMapBasicStyleClause();
             if (pszStyle != nullptr) {
+                // cppcheck-suppress nullPointerArithmeticRedundantCheck
                 mbStyle += pszStyle;
             }
         }
