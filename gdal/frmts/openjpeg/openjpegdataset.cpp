@@ -210,6 +210,8 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
 
     int         bIs420 = FALSE;
 
+    int         nParentXSize = 0;
+    int         nParentYSize = 0;
     int         iLevel = 0;
     int         nOverviewCount = 0;
     JP2OpenJPEGDataset** papoOverviewDS = nullptr;
@@ -917,10 +919,10 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         /* The decode area must be expressed in grid reference, ie at full*/
         /* scale */
         if (!opj_set_decode_area(pCodec,psImage,
-                                 (nBlockXOff*nBlockXSize) << iLevel,
-                                 (nBlockYOff*nBlockYSize) << iLevel,
-                                 (nBlockXOff*nBlockXSize+nWidthToRead) << iLevel,
-                                 (nBlockYOff*nBlockYSize+nHeightToRead) << iLevel))
+                                 static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize) * nParentXSize / nRasterXSize),
+                                 static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize) * nParentYSize / nRasterYSize),
+                                 static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize+nWidthToRead) * nParentXSize / nRasterXSize),
+                                 static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize+nHeightToRead) * nParentYSize / nRasterYSize)))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decode_area() failed");
             eErr = CE_Failure;
@@ -2132,6 +2134,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int nW = poDS->nRasterXSize;
     int nH = poDS->nRasterYSize;
+    poDS->nParentXSize = poDS->nRasterXSize;
+    poDS->nParentYSize = poDS->nRasterYSize;
 
     /* Lower resolutions are not compatible with a color-table */
     if( poCT != nullptr )
@@ -2160,6 +2164,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->papoOverviewDS,
                     (poDS->nOverviewCount + 1) * sizeof(JP2OpenJPEGDataset*));
         JP2OpenJPEGDataset* poODS = new JP2OpenJPEGDataset();
+        poODS->nParentXSize = poDS->nRasterXSize;
+        poODS->nParentYSize = poDS->nRasterYSize;
         poODS->SetDescription( poOpenInfo->pszFilename );
         poODS->iLevel = poDS->nOverviewCount + 1;
         poODS->bSingleTiled = poDS->bSingleTiled;
