@@ -127,8 +127,12 @@ CPLErr GDALMultiDomainMetadata::SetMetadata( char **papszMetadata,
 
     // we want to mark name/value pair domains as being sorted for fast
     // access.
-    if( !STARTS_WITH_CI(pszDomain, "xml:") && !EQUAL(pszDomain, "SUBDATASETS") )
+    if( !STARTS_WITH_CI(pszDomain, "xml:") &&
+        !STARTS_WITH_CI(pszDomain, "json:") && 
+        !EQUAL(pszDomain, "SUBDATASETS") )
+    {
         papoMetadataLists[iDomain]->Sort();
+    }
 
     return CE_None;
 }
@@ -221,7 +225,7 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int /* bMerge */ )
 /* -------------------------------------------------------------------- */
 /*      XML format subdocuments.                                        */
 /* -------------------------------------------------------------------- */
-        if( EQUAL(pszFormat,"xml") )
+        if( EQUAL(pszFormat,"xml")  )
         {
             // Find first non-attribute child of current element.
             CPLXMLNode *psSubDoc = psMetadata->psChild;
@@ -232,6 +236,22 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int /* bMerge */ )
 
             poMDList->Clear();
             poMDList->AddStringDirectly( pszDoc );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      JSon format subdocuments.                                       */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(pszFormat,"json") )
+        {
+            // Find first text child of current element.
+            CPLXMLNode *psSubDoc = psMetadata->psChild;
+            while( psSubDoc != nullptr && psSubDoc->eType != CXT_Text )
+                psSubDoc = psSubDoc->psNext;
+            if( psSubDoc )
+            {
+                poMDList->Clear();
+                poMDList->AddString( psSubDoc->pszValue );
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -288,7 +308,7 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
                 CPLCreateXMLNode( psMD, CXT_Attribute, "domain" ),
                 CXT_Text, papszDomainList[iDomain] );
 
-        bool bFormatXML = false;
+        bool bFormatXMLOrJSon = false;
 
         if( STARTS_WITH_CI(papszDomainList[iDomain], "xml:")
             && CSLCount(papszMD) == 1 )
@@ -296,7 +316,7 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
             CPLXMLNode *psValueAsXML = CPLParseXMLString( papszMD[0] );
             if( psValueAsXML != nullptr )
             {
-                bFormatXML = true;
+                bFormatXMLOrJSon = true;
 
                 CPLCreateXMLNode(
                     CPLCreateXMLNode( psMD, CXT_Attribute, "format" ),
@@ -306,7 +326,18 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
             }
         }
 
-        if( !bFormatXML )
+        if( STARTS_WITH_CI(papszDomainList[iDomain], "json:")
+            && CSLCount(papszMD) == 1 )
+        {
+            bFormatXMLOrJSon = true;
+
+            CPLCreateXMLNode(
+                CPLCreateXMLNode( psMD, CXT_Attribute, "format" ),
+                CXT_Text, "json" );
+            CPLCreateXMLNode( psMD, CXT_Text, *papszMD );
+        }
+
+        if( !bFormatXMLOrJSon )
         {
             CPLXMLNode* psLastChild = nullptr;
             // To go after domain attribute.

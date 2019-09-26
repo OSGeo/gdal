@@ -17830,16 +17830,28 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      to write metadata that we could not write as a TIFF tag.        */
 /* -------------------------------------------------------------------- */
     if( !bHasWrittenMDInGeotiffTAG && !bStreaming )
+    {
         GTiffDataset::WriteMetadata(
             poDS, l_hTIFF, true, eProfile,
             pszFilename, papszOptions,
             true /* don't write RPC and IMD file again */ );
+    }
 
     if( !bStreaming )
         GTiffDataset::WriteRPC(
             poDS, l_hTIFF, true, eProfile,
             pszFilename, papszOptions,
             true /* write only in PAM AND if needed */ );
+
+    // Propagate ISIS3 metadata, but only as PAM metadata.
+    {
+        char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
+        if( papszISIS3MD )
+        {
+            poDS->SetMetadata( papszISIS3MD, "json:ISIS3");
+            poDS->PushMetadataToPam();
+        }
+    }
 
     poDS->m_bWriteCOGLayout = bCopySrcOverviews;
 
@@ -18687,7 +18699,12 @@ char **GTiffDataset::GetMetadataDomainList()
     const int nbBaseDomains = CSLCount(papszBaseList);
 
     for( int domainId = 0; domainId < nbBaseDomains; ++domainId )
-        papszDomainList = CSLAddString(papszDomainList,papszBaseList[domainId]);
+    {
+        if( CSLFindString(papszDomainList, papszBaseList[domainId]) < 0 )
+        {
+            papszDomainList = CSLAddString(papszDomainList,papszBaseList[domainId]);
+        }
+    }
 
     CSLDestroy(papszBaseList);
 
