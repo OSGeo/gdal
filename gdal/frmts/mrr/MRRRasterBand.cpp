@@ -522,12 +522,10 @@ CPLErr MRRRasterBand::ComputeRasterMinMax(int bApproxOK, double* adfMinMax)
     //Initialize if required
     StatisticsEnsureInitialized(true, bApproxOK);
 
-    double  dfMin = 0.0;
-    double  dfMax = 0.0;
-    int          bSuccessMin, bSuccessMax;
+    int    bSuccessMin, bSuccessMax;
 
-    dfMin = GetMinimum(&bSuccessMin);
-    dfMax = GetMaximum(&bSuccessMax);
+    double dfMin = GetMinimum(&bSuccessMin);
+    double dfMax = GetMaximum(&bSuccessMax);
 
     if (bSuccessMin && bSuccessMax)
     {

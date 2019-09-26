@@ -592,8 +592,8 @@ OGRFeature* OGREFALLayer::Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFe
         if (efallib->GetCursorColumnType(hSession, hCursor, i) == Ellis::ALLTYPE_TYPE::OT_STYLE)
         {
             const wchar_t* szwMBStyle = efallib->GetCursorValueStyle(hSession, hCursor, i);
-            CPLString szOGRStyle = MapBasicStyle2OGRStyle(szwMBStyle);
-            if (szOGRStyle != nullptr) {
+            if (szwMBStyle != nullptr) {
+                CPLString szOGRStyle = MapBasicStyle2OGRStyle(szwMBStyle);
                 pFeature->SetStyleString(szOGRStyle);
             }
         }
