@@ -219,6 +219,9 @@ def test_ogr_sql_sqlite_1():
                      "OGR_STYLE = 'cool_style'",
                      'intfield = 2 AND doublefield = 3.45',
                      'ROWID = 0',
+                     'intfield IS 2',
+                     'intfield IS NOT 10000',
+                     'intfield IS NOT NULL',
                      "\"from\" = 'from_val'"]:
             sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE " + cond, dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
@@ -232,6 +235,8 @@ def test_ogr_sql_sqlite_1():
                      "strfield = 'XXX'", "strfield > 'bas'", "strfield >= 'bas'", "strfield < 'bar'", "strfield <= 'baq'",
                      'intfield = 2 AND doublefield = 0',
                      'ROWID = 10000',
+                     'intfield IS 10000',
+                     'intfield IS NOT 2',
                      "\"from\" = 'other_val'"]:
             sql_lyr = ds.ExecuteSQL("SELECT * FROM my_layer WHERE " + cond, dialect='SQLite')
             feat = sql_lyr.GetNextFeature()
