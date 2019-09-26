@@ -410,7 +410,11 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(papszPrj[0], "GEOGCS")
         || STARTS_WITH_CI(papszPrj[0], "PROJCS")
-        || STARTS_WITH_CI(papszPrj[0], "LOCAL_CS") )
+        || STARTS_WITH_CI(papszPrj[0], "LOCAL_CS")
+        // Also accept COMPD_CS, even if it is unclear that it is valid
+        // traditional ESRI WKT. But people might use such PRJ file
+        // See https://github.com/OSGeo/gdal/issues/1881
+        || STARTS_WITH_CI(papszPrj[0], "COMPD_CS") )
     {
         char *pszWKT = CPLStrdup(papszPrj[0]);
         for( int i = 1; papszPrj[i] != nullptr; i++ )
@@ -422,8 +426,6 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         OGRErr eErr = importFromWkt( pszWKT );
         CPLFree( pszWKT );
 
-        if( eErr == OGRERR_NONE )
-            eErr = morphFromESRI();
         return eErr;
     }
 
