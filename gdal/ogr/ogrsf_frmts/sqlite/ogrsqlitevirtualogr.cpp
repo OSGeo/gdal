@@ -724,10 +724,10 @@ static bool OGR2SQLITE_IsHandledOp(int op)
 #ifdef SQLITE_INDEX_CONSTRAINT_NE
             /* SQLite >= 3.21 */
         case SQLITE_INDEX_CONSTRAINT_NE: return true;
-        case SQLITE_INDEX_CONSTRAINT_ISNOT: return true;
+        case SQLITE_INDEX_CONSTRAINT_ISNOT: return false; // OGR SQL only handles IS [NOT] NULL
         case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: return true;
         case SQLITE_INDEX_CONSTRAINT_ISNULL: return true;;
-        case SQLITE_INDEX_CONSTRAINT_IS: return true;
+        case SQLITE_INDEX_CONSTRAINT_IS: return false; // OGR SQL only handles IS [NOT] NULL
 #endif
         default: break;
     }
@@ -1069,10 +1069,10 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
 #ifdef SQLITE_INDEX_CONSTRAINT_NE
             /* SQLite >= 3.21 */
             case SQLITE_INDEX_CONSTRAINT_NE: osAttributeFilter += " <> "; break;
-            case SQLITE_INDEX_CONSTRAINT_ISNOT: osAttributeFilter += " IS NOT "; break;
+            //case SQLITE_INDEX_CONSTRAINT_ISNOT: osAttributeFilter += " IS NOT "; break;
             case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: osAttributeFilter += " IS NOT NULL"; bExpectRightOperator = false; break;
             case SQLITE_INDEX_CONSTRAINT_ISNULL: osAttributeFilter += " IS NULL"; bExpectRightOperator = false; break;
-            case SQLITE_INDEX_CONSTRAINT_IS: osAttributeFilter += " IS "; break;
+            //case SQLITE_INDEX_CONSTRAINT_IS: osAttributeFilter += " IS "; break;
 #endif
             default:
             {
