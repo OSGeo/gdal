@@ -12,10 +12,6 @@
 * limitations under the License.
 *****************************************************************************/
 
-#if defined(_WIN32) || defined(WIN32) || defined(WIN64)
-#pragma warning(disable:4251)
-#endif
-
 #include "cpl_port.h"
 
 #include <cerrno>

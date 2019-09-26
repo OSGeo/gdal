@@ -1150,7 +1150,7 @@ public:
         {
             return (__GetZRange)(hSession, hTable, columnNbr);
         }
-        Ellis::DRANGE dr = { 0.0d, 0.0d };
+        Ellis::DRANGE dr = { 0.0, 0.0 };
         return dr;
     }
     bool HasM(EFALHANDLE hSession, EFALHANDLE hTable, MI_UINT32 columnNbr)
@@ -1175,7 +1175,7 @@ public:
         {
             return (__GetMRange)(hSession, hTable, columnNbr);
         }
-        Ellis::DRANGE dr = { 0.0d, 0.0d };
+        Ellis::DRANGE dr = { 0.0, 0.0 };
         return dr;
     }
 

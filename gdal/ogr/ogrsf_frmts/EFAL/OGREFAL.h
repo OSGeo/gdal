@@ -73,15 +73,15 @@ private:
     void                 CloseSequentialCursor();
     OGRFeature*          Cursor2Feature(EFALHANDLE hCursor, OGRFeatureDefn* pFeatureDefn);
     int                  CursorIndex2FeatureIndex(EFALHANDLE hCursor, OGRFeatureDefn* pFeatureDefn, unsigned long idxCursor) const;
-    CPLString            MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const;
     char*                OGRStyle2MapBasicStyle(const char * ogrStyle) const;
     OGRGeometry*         EFALGeometry2OGRGeometry(GByte* bytes, size_t sz);
-    void                 OGRGeometry2EFALGeometry(OGRGeometry*, GByte** pbytes, size_t* psz) const;
     OGRSpatialReference* EFALCSys2OGRSpatialRef(const wchar_t* szCoordSys);
     const wchar_t*       OGRSpatialRef2EFALCSys(const OGRSpatialReference* poSpatialRef);
-    bool ExtractBoundsFromCSysString(const char * pszCoordSys, double &dXMin, double &dYMin, double &dXMax, double &dYMax);
     int                  GetTABType(OGRFieldDefn *poField, Ellis::ALLTYPE_TYPE* peTABType, int *pnWidth, int *pnPrecision);
     OGRErr               CreateNewTable();
+    static void          OGRGeometry2EFALGeometry(OGRGeometry*, GByte** pbytes, size_t* psz);
+    static bool          ExtractBoundsFromCSysString(const char * pszCoordSys, double &dXMin, double &dYMin, double &dXMax, double &dYMax);
+    static CPLString     MapBasicStyle2OGRStyle(const wchar_t * mbStyle);
 
 public:
     OGREFALLayer(EFALHANDLE hSession, EFALHANDLE hTable, EfalOpenMode eEfalOpenMode);

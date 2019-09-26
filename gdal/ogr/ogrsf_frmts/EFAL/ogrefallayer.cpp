@@ -13,10 +13,6 @@
 *****************************************************************************/
 
 
-#if defined(_WIN32) || defined(WIN32) || defined(WIN64)
-#pragma warning(disable:4251)
-#endif
-
 #include "cpl_port.h"
 #include "OGREFAL.h"
 #include "ogrgeopackageutility.h"
@@ -549,7 +545,7 @@ OGRGeometry* OGREFALLayer::EFALGeometry2OGRGeometry(GByte* bytes, size_t sz)
 /************************************************************************/
 /*                      OGRGeometry2EFALGeometry()                      */
 /************************************************************************/
-void OGREFALLayer::OGRGeometry2EFALGeometry(OGRGeometry* ogrGeometry, GByte** pbytes, size_t* psz) const
+void OGREFALLayer::OGRGeometry2EFALGeometry(OGRGeometry* ogrGeometry, GByte** pbytes, size_t* psz)
 {
     // EFAL does not use the iSrsId so we pass a Zero. Coordinate values are assumed to be in the csys of the table already.
     (*pbytes) = GPkgGeometryFromOGR(ogrGeometry, /*iSrsId*/0, psz);

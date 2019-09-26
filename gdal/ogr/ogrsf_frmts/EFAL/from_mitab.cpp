@@ -26,10 +26,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#if defined(_WIN32) || defined(WIN32) || defined(WIN64)
-#pragma warning(disable:4251)
-#endif
-
 #include "from_mitab.h"
 #include <algorithm>
 

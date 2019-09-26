@@ -12,10 +12,6 @@
 * limitations under the License.
 *****************************************************************************/
 
-#if defined(_WIN32) || defined(WIN32) || defined(WIN64)
-#pragma warning(disable:4251)
-#endif
-
 #include "cpl_port.h"
 #include "OGREFAL.h"
 #include "ogrgeopackageutility.h"
@@ -535,7 +531,7 @@ void EFALFeatureSymbol::SetSymbolFromStyleString(const char * pszStyleString)
                 SetSymbolType(SymbolType::EFF);
             }
         }
-        else if ((ptr = strstr(pszSymbolId, "ogr-sym-")) != nullptr)
+        else if (strstr(pszSymbolId, "ogr-sym-") != nullptr)
         {
             const int nSymbolId = atoi(pszSymbolId + 8);
             SetSymbolType(SymbolType::VECTOR);
@@ -689,7 +685,7 @@ const char *EFALFeatureBrush::GetMapBasicStyleClause()
 /************************************************************************/
 /*                      MapBasicStyle2OGRStyle()                        */
 /************************************************************************/
-CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle) const
+CPLString OGREFALLayer::MapBasicStyle2OGRStyle(const wchar_t * mbStyle)
 {
     if (mbStyle)
     {
