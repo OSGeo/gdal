@@ -654,8 +654,6 @@ GDALColorInterp MRRRasterBand::GetColorInterpretation()
     default:
         return GDALColorInterp::GCI_Undefined;
     }
-
-    return GDALColorInterp::GCI_Undefined;
 }
 
 GDALColorTable* MRRRasterBand::GetColorTable()
