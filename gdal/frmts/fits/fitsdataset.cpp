@@ -95,6 +95,8 @@ public:
   virtual CPLErr GetGeoTransform( double * ) override;
   virtual CPLErr SetGeoTransform( double * ) override;
 
+  bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
+
 };
 
 /************************************************************************/
@@ -430,6 +432,36 @@ FITSDataset::~FITSDataset() {
     // Close the FITS handle
     fits_close_file(hFITS, &status);
   }
+}
+
+
+/************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
+{
+    int status = 0;
+    if( fits_is_compressed_image( hFITS, &status) )
+        return false;
+    GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+    if( eDT == GDT_UInt16 || eDT == GDT_UInt32 )
+        return false; // are supported as native signed with offset
+
+    sLayout.osRawFilename = GetDescription();
+    OFF_T headerstart = 0;
+    OFF_T datastart = 0;
+    OFF_T dataend = 0;
+    fits_get_hduoff(hFITS, &headerstart, &datastart, &dataend, &status);
+    if( nBands > 1 )
+        sLayout.eInterleaving = RawBinaryLayout::Interleaving::BSQ;
+    sLayout.eDataType = eDT;
+    sLayout.bLittleEndianOrder = false;
+    sLayout.nImageOffset = static_cast<GIntBig>(datastart);
+    sLayout.nPixelOffset = GDALGetDataTypeSizeBytes(eDT);
+    sLayout.nLineOffset = sLayout.nPixelOffset * nRasterXSize;
+    sLayout.nBandOffset = sLayout.nLineOffset * nRasterYSize;
+    return true;
 }
 
 /************************************************************************/

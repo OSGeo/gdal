@@ -1,0 +1,17 @@
+ENVI
+description = {
+../gdrivers/data/envi_rgbsmall_bip.img}
+samples = 50
+lines   = 49
+bands   = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+byte order = 0
+map info = {Geographic Lat/Lon, 1, 1, -44.84032, -22.932584, 0.003432, 0.003432,WGS-84}
+coordinate system string = {GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]}
+band names = {
+Band 1,
+Band 2,
+Band 3}

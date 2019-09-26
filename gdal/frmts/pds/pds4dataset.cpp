@@ -40,6 +40,13 @@
 #include <vector>
 #include <algorithm>
 
+#define TIFF_GEOTIFF_STRING "TIFF/GeoTIFF"
+#define BIGTIFF_GEOTIFF_STRING "BigTIFF/GeoTIFF"
+#define PREEXISTING_BINARY_FILE \
+    "Binary file pre-existing PDS4 label. This comment is used by GDAL to " \
+    "avoid deleting the binary file when the label is deleted. Keep it to " \
+    "preserve this behaviour."
+
 extern "C" void GDALRegister_PDS4();
 
 /************************************************************************/
@@ -526,6 +533,18 @@ PDS4Dataset::~PDS4Dataset()
         VSIFCloseL(m_fpImage);
     CSLDestroy(m_papszCreationOptions);
     PDS4Dataset::CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool PDS4Dataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
+{
+    if( !RawDataset::GetRawBinaryLayout(sLayout) )
+        return false;
+    sLayout.osRawFilename = m_osImageFilename;
+    return true;
 }
 
 /************************************************************************/
@@ -1500,7 +1519,6 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
         }
 
         nFAOIdx ++;
-
         CPLXMLNode* psFile = CPLGetXMLNode(psIter, "File");
         if( psFile == nullptr )
         {
@@ -1510,6 +1528,17 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
         if( pszFilename == nullptr )
         {
             continue;
+        }
+
+        for( CPLXMLNode* psSubIter = psFile->psChild;
+                psSubIter != nullptr;
+                psSubIter = psSubIter->psNext )
+        {
+            if( psSubIter->eType == CXT_Comment &&
+                EQUAL(psSubIter->pszValue, PREEXISTING_BINARY_FILE) )
+            {
+                poDS->m_bCreatedFromExistingBinaryFile = true;
+            }
         }
 
         int nArrayIdx = 0;
@@ -1862,6 +1891,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
             poDS->nRasterYSize = nLines;
             poDS->m_osImageFilename = pszImageFullFilename;
             poDS->m_fpImage = fp;
+            poDS->m_bIsLSB = bLSBOrder;
 
             if( memcmp(szOrder, "BLS", 3) == 0 )
             {
@@ -2946,13 +2976,13 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
     const char* pszDataType =
         (eDT == GDT_Byte) ? "UnsignedByte" :
         (eDT == GDT_UInt16) ? "UnsignedLSB2" :
-        (eDT == GDT_Int16) ? "SignedLSB2" :
-        (eDT == GDT_UInt32) ? "UnsignedLSB4" :
-        (eDT == GDT_Int32) ? "SignedLSB4" :
-        (eDT == GDT_Float32) ? "IEEE754LSBSingle" :
-        (eDT == GDT_Float64) ? "IEEE754LSBDouble" :
-        (eDT == GDT_CFloat32) ? "ComplexLSB8" :
-        (eDT == GDT_CFloat64) ? "ComplexLSB16" :
+        (eDT == GDT_Int16) ? (m_bIsLSB ? "SignedLSB2" : "SignedMSB2") :
+        (eDT == GDT_UInt32) ? (m_bIsLSB ? "UnsignedLSB4": "UnsignedMSB4") :
+        (eDT == GDT_Int32) ? (m_bIsLSB ? "SignedLSB4" : "SignedMSB4") :
+        (eDT == GDT_Float32) ? (m_bIsLSB ? "IEEE754LSBSingle" : "IEEE754MSBSingle") :
+        (eDT == GDT_Float64) ? (m_bIsLSB ? "IEEE754LSBDouble" : "IEEE754MSBDouble") :
+        (eDT == GDT_CFloat32) ?  (m_bIsLSB ? "ComplexLSB8" : "ComplexMSB8") :
+        (eDT == GDT_CFloat64) ? (m_bIsLSB ? "ComplexLSB16" : "ComplexMSB16") :
                                 "should not happen";
     CPLCreateXMLElementAndValue(psElementArray,
                                 (osPrefix + "data_type").c_str(),
@@ -3435,11 +3465,15 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
             CPLXMLNode* psFAO = CPLCreateXMLNode(nullptr, CXT_Element,
                                 (osPrefix + "File_Area_Observational").c_str());
             psFAOPrev->psNext = psFAO;
+
             CPLXMLNode* psFile = CPLCreateXMLNode(psFAO, CXT_Element,
                                                 (osPrefix + "File").c_str());
             CPLCreateXMLElementAndValue(psFile, (osPrefix + "file_name").c_str(),
                                         CPLGetFilename(m_osImageFilename));
-
+            if( m_bCreatedFromExistingBinaryFile )
+            {
+                CPLCreateXMLNode(psFile, CXT_Comment, PREEXISTING_BINARY_FILE);
+            }
             CPLXMLNode* psDisciplineArea = CPLGetXMLNode(psProduct,
                 (osPrefix + "Observation_Area." + osPrefix + "Discipline_Area").c_str());
             const char* pszLocalIdentifier = CPLGetXMLValue(
@@ -3447,6 +3481,59 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                 "disp:Display_Settings.Local_Internal_Reference."
                                                 "local_identifier_reference",
                 "image");
+
+            if( m_poExternalDS && m_poExternalDS->GetDriver() &&
+                EQUAL(m_poExternalDS->GetDriver()->GetDescription(), "GTiff") )
+            {
+                VSILFILE* fpTemp = VSIFOpenL(m_poExternalDS->GetDescription(), "rb");
+                if( fpTemp )
+                {
+                    GByte abySignature[4] = {0};
+                    VSIFReadL(abySignature, 1, 4, fpTemp);
+                    VSIFCloseL(fpTemp);
+                    const bool bBigTIFF = abySignature[2] == 43 || abySignature[3] == 43;
+                    m_osHeaderParsingStandard = bBigTIFF ? BIGTIFF_GEOTIFF_STRING : TIFF_GEOTIFF_STRING;
+                    const char* pszOffset = m_poExternalDS->GetRasterBand(1)->
+                            GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF");
+                    if( pszOffset )
+                        m_nBaseOffset = CPLAtoGIntBig(pszOffset);
+                }
+            }
+
+            if( !m_osHeaderParsingStandard.empty() && m_nBaseOffset > 0 )
+            {
+                CPLXMLNode* psHeader = CPLCreateXMLNode(psFAO, CXT_Element,
+                                                (osPrefix + "Header").c_str());
+                CPLAddXMLAttributeAndValue(
+                    CPLCreateXMLElementAndValue(psHeader,
+                        (osPrefix + "offset").c_str(), "0"), "unit", "byte");
+                CPLAddXMLAttributeAndValue(
+                    CPLCreateXMLElementAndValue(psHeader,
+                        (osPrefix + "object_length").c_str(),
+                        CPLSPrintf(CPL_FRMT_GUIB,
+                                   static_cast<GUIntBig>(m_nBaseOffset))),
+                    "unit", "byte");
+                CPLCreateXMLElementAndValue(psHeader,
+                        (osPrefix + "parsing_standard_id").c_str(),
+                        m_osHeaderParsingStandard.c_str());
+                if( m_osHeaderParsingStandard == TIFF_GEOTIFF_STRING )
+                {
+                    CPLCreateXMLElementAndValue(psHeader,
+                        (osPrefix + "description").c_str(),
+                        "TIFF/GeoTIFF header. The TIFF/GeoTIFF format is used "
+                        "throughout the geospatial and science communities "
+                        "to share geographic image data. ");
+                }
+                else if( m_osHeaderParsingStandard == BIGTIFF_GEOTIFF_STRING )
+                {
+                    CPLCreateXMLElementAndValue(psHeader,
+                        (osPrefix + "description").c_str(),
+                        "BigTIFF/GeoTIFF header. The BigTIFF/GeoTIFF format is used "
+                        "throughout the geospatial and science communities "
+                        "to share geographic image data. ");
+                }
+            }
+
             WriteArray(osPrefix, psFAO, pszLocalIdentifier,
                     psTemplateSpecialConstants);
         }
@@ -3666,6 +3753,19 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char **papszOptions)
 {
+    return CreateInternal(pszFilename, nullptr, nXSize, nYSize, nBands,
+                          eType, papszOptions);
+}
+
+/************************************************************************/
+/*                           CreateInternal()                           */
+/************************************************************************/
+
+PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
+                                         GDALDataset* poSrcDS,
+                                         int nXSize, int nYSize, int nBands,
+                                         GDALDataType eType, char **papszOptions)
+{
     if( nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown )
     {
         // Vector file creation
@@ -3797,7 +3897,82 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
 
     GDALDataset* poExternalDS = nullptr;
     VSILFILE* fpImage = nullptr;
-    if( EQUAL(pszImageFormat, "GEOTIFF") )
+    vsi_l_offset nBaseOffset = 0;
+    bool bIsLSB = true;
+    CPLString osHeaderParsingStandard;
+    const bool bCreateLabelOnly = CPLFetchBool(papszOptions, "CREATE_LABEL_ONLY", false);
+    if( bCreateLabelOnly )
+    {
+        if( poSrcDS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CREATE_LABEL_ONLY is only compatible of CreateCopy() mode");
+            return nullptr;
+        }
+        RawBinaryLayout sLayout;
+        if( !poSrcDS->GetRawBinaryLayout(sLayout) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Source dataset is not compatible of a raw binary format");
+            return nullptr;
+        }
+        if( (nBands > 1 && sLayout.eInterleaving == RawBinaryLayout::Interleaving::UNKNOWN) ||
+            (nBands == 1 && !(sLayout.nPixelOffset == nItemSize &&
+                              sLayout.nLineOffset == sLayout.nPixelOffset * nXSize)) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Source dataset has an interleaving not handled in PDS4");
+            return nullptr;
+        }
+        fpImage = VSIFOpenL(sLayout.osRawFilename.c_str(), "rb");
+        if( fpImage == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot open raw image %s", sLayout.osRawFilename.c_str());
+            return nullptr;
+        }
+        osImageFilename = sLayout.osRawFilename;
+        if( nBands == 1 || sLayout.eInterleaving == RawBinaryLayout::Interleaving::BIP )
+            pszInterleave = "BIP";
+        else if( sLayout.eInterleaving == RawBinaryLayout::Interleaving::BIL )
+            pszInterleave = "BIL";
+        else
+            pszInterleave = "BSQ";
+        nBaseOffset = sLayout.nImageOffset;
+        nPixelOffset = static_cast<int>(sLayout.nPixelOffset);
+        nLineOffset = static_cast<int>(sLayout.nLineOffset);
+        nBandOffset = static_cast<vsi_l_offset>(sLayout.nBandOffset);
+        bIsLSB = sLayout.bLittleEndianOrder;
+        auto poSrcDriver = poSrcDS->GetDriver();
+        if( poSrcDriver)
+        {
+            auto pszDriverName = poSrcDriver->GetDescription();
+            if( EQUAL(pszDriverName, "GTiff") )
+            {
+                GByte abySignature[4] = {0};
+                VSIFReadL(abySignature, 1, 4, fpImage);
+                const bool bBigTIFF = abySignature[2] == 43 || abySignature[3] == 43;
+                osHeaderParsingStandard = bBigTIFF ? BIGTIFF_GEOTIFF_STRING : TIFF_GEOTIFF_STRING;
+            }
+            else if( EQUAL(pszDriverName, "ISIS3") )
+            {
+                osHeaderParsingStandard = "ISIS3";
+            }
+            else if( EQUAL(pszDriverName, "VICAR") )
+            {
+                osHeaderParsingStandard = "VICAR2";
+            }
+            else if( EQUAL(pszDriverName, "PDS") )
+            {
+                osHeaderParsingStandard = "PDS3";
+            }
+            else if( EQUAL(pszDriverName, "FITS") )
+            {
+                osHeaderParsingStandard = "FITS 3.0";
+            }
+        }
+    }
+    else if( EQUAL(pszImageFormat, "GEOTIFF") )
     {
         if( EQUAL(pszInterleave, "BIL") )
         {
@@ -3885,6 +4060,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         if( bAppend )
         {
             VSIFSeekL(fpImage, 0, SEEK_END);
+            nBaseOffset = VSIFTellL(fpImage);
         }
     }
 
@@ -3892,8 +4068,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
     poDS->SetDescription(pszFilename);
     poDS->m_bMustInitImageFile = true;
     poDS->m_fpImage = fpImage;
-    if( fpImage && bAppend )
-        poDS->m_nBaseOffset = VSIFTellL(fpImage);
+    poDS->m_nBaseOffset = nBaseOffset;
     poDS->m_poExternalDS = poExternalDS;
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
@@ -3904,6 +4079,9 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
     poDS->m_osInterleave = pszInterleave;
     poDS->m_papszCreationOptions = CSLDuplicate(papszOptions);
     poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
+    poDS->m_bIsLSB = bIsLSB;
+    poDS->m_osHeaderParsingStandard = osHeaderParsingStandard;
+    poDS->m_bCreatedFromExistingBinaryFile = bCreateLabelOnly;
 
     if( EQUAL(pszInterleave, "BIP") )
     {
@@ -3934,9 +4112,9 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
                                         nLineOffset,
                                         eType,
 #ifdef CPL_LSB
-                                        TRUE
+                                        poDS->m_bIsLSB
 #else
-                                        FALSE // force LSB order
+                                        !(poDS->m_bIsLSB)
 #endif
             );
             poDS->SetBand(i+1, poBand);
@@ -4080,8 +4258,8 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
     const int nYSize = poSrcDS->GetRasterYSize();
     const int nBands = poSrcDS->GetRasterCount();
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    PDS4Dataset *poDS = reinterpret_cast<PDS4Dataset*>(
-        Create( pszFilename, nXSize, nYSize, nBands, eType, papszOptions ));
+    PDS4Dataset *poDS = CreateInternal(
+        pszFilename, poSrcDS, nXSize, nYSize, nBands, eType, papszOptions );
     if( poDS == nullptr )
         return nullptr;
 
@@ -4137,18 +4315,83 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
         // completely
         poDS->m_bMustInitImageFile = false;
     }
-    CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDS,
-                                           nullptr, pfnProgress, pProgressData );
-    poDS->FlushCache();
-    if( eErr != CE_None )
+
+    if( !CPLFetchBool(papszOptions, "CREATE_LABEL_ONLY", false) )
     {
-        delete poDS;
-        return nullptr;
+        CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDS,
+                                           nullptr, pfnProgress, pProgressData );
+        poDS->FlushCache();
+        if( eErr != CE_None )
+        {
+            delete poDS;
+            return nullptr;
+        }
     }
 
     return poDS;
 }
 
+/************************************************************************/
+/*                             Delete()                                 */
+/************************************************************************/
+
+CPLErr PDS4Dataset::Delete( const char * pszFilename )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Collect file list.                                              */
+/* -------------------------------------------------------------------- */
+    auto poDS = std::unique_ptr<PDS4Dataset>(
+        dynamic_cast<PDS4Dataset*>(GDALDataset::Open(pszFilename)));
+    if( poDS == nullptr )
+    {
+        if( CPLGetLastErrorNo() == 0 )
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Unable to open %s to obtain file list.", pszFilename );
+
+        return CE_Failure;
+    }
+
+    char **papszFileList = poDS->GetFileList();
+    CPLString osImageFilename = poDS->m_osImageFilename;
+    bool bCreatedFromExistingBinaryFile = poDS->m_bCreatedFromExistingBinaryFile;
+
+    poDS.reset();
+
+    if( CSLCount( papszFileList ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unable to determine files associated with %s, "
+                  "delete fails.", pszFilename );
+        CSLDestroy( papszFileList );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Delete all files.                                               */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
+    for( int i = 0; papszFileList[i] != nullptr; ++i )
+    {
+        if( bCreatedFromExistingBinaryFile &&
+            EQUAL(papszFileList[i], osImageFilename) )
+        {
+            continue;
+        }
+        if( VSIUnlink( papszFileList[i] ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Deleting %s failed:\n%s",
+                      papszFileList[i],
+                      VSIStrerror(errno) );
+            eErr = CE_Failure;
+        }
+    }
+
+    CSLDestroy( papszFileList );
+
+    return eErr;
+}
 
 /************************************************************************/
 /*                         GDALRegister_PDS4()                          */
@@ -4197,6 +4440,8 @@ void GDALRegister_PDS4()
                     "'Image filename'/>"
 "  <Option name='IMAGE_EXTENSION' type='string' scope='raster' description="
                     "'Extension of the binary raw/geotiff file'/>"
+"  <Option name='CREATE_LABEL_ONLY' scope='raster' type='boolean' description="
+                    "'whether to create only the XML label when converting from an existing raw format.' default='NO' />"
 "  <Option name='IMAGE_FORMAT' type='string-select' scope='raster' "
                     "description='Format of the image file' default='RAW'>"
 "     <Value>RAW</Value>"
@@ -4288,6 +4533,7 @@ void GDALRegister_PDS4()
     poDriver->pfnIdentify = PDS4Dataset::Identify;
     poDriver->pfnCreate = PDS4Dataset::Create;
     poDriver->pfnCreateCopy = PDS4Dataset::CreateCopy;
+    poDriver->pfnDelete = PDS4Dataset::Delete;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

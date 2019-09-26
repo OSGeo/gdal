@@ -60,6 +60,8 @@ class CPL_DLL RawDataset : public GDALPamDataset
                  RawDataset();
          virtual ~RawDataset() = 0;
 
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawDataset)
 };

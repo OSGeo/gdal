@@ -1329,3 +1329,86 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
 
     return true;
 }
+
+/************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
+{
+    vsi_l_offset nImgOffset = 0;
+    GIntBig nBandOffset = 0;
+    int nPixelOffset = 0;
+    int nLineOffset = 0;
+    int bNativeOrder = 0;
+    GDALDataType eDT = GDT_Unknown;
+    for( int i = 1; i <= nBands; i++ )
+    {
+        auto poBand = dynamic_cast<RawRasterBand*>(GetRasterBand(i));
+        if( poBand == nullptr )
+            return false;
+        if( i == 1 )
+        {
+            nImgOffset = poBand->nImgOffset;
+            nPixelOffset = poBand->nPixelOffset;
+            nLineOffset = poBand->nLineOffset;
+            bNativeOrder = poBand->bNativeOrder;
+            eDT = poBand->GetRasterDataType();
+        }
+        else if( nPixelOffset != poBand->nPixelOffset ||
+                 nLineOffset != poBand->nLineOffset ||
+                 bNativeOrder != poBand->bNativeOrder ||
+                 eDT != poBand->GetRasterDataType() )
+        {
+            return false;
+        }
+        else if( i == 2 )
+        {
+            nBandOffset = static_cast<GIntBig>(poBand->nImgOffset) -
+                                static_cast<GIntBig>(nImgOffset);
+        }
+        else if( nBandOffset * (i - 1) !=
+                    static_cast<GIntBig>(poBand->nImgOffset) -
+                        static_cast<GIntBig>(nImgOffset) )
+        {
+            return false;
+        }
+    }
+
+    sLayout.eInterleaving = RawBinaryLayout::Interleaving::UNKNOWN;
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+    if( nBands > 1 )
+    {
+        if( nPixelOffset == nBands * nDTSize &&
+            nLineOffset == nPixelOffset * nRasterXSize &&
+            nBandOffset == nDTSize )
+        {
+            sLayout.eInterleaving = RawBinaryLayout::Interleaving::BIP;
+        }
+        else if( nPixelOffset == nDTSize &&
+                 nLineOffset == nDTSize * nBands * nRasterXSize &&
+                 nBandOffset == nDTSize * nRasterXSize )
+        {
+            sLayout.eInterleaving = RawBinaryLayout::Interleaving::BIL;
+        }
+        else if( nPixelOffset == nDTSize &&
+                 nLineOffset == nDTSize * nRasterXSize &&
+                 nBandOffset == nLineOffset * nRasterYSize )
+        {
+            sLayout.eInterleaving = RawBinaryLayout::Interleaving::BSQ;
+        }
+    }
+
+    sLayout.eDataType = eDT;
+#ifdef CPL_LSB
+    sLayout.bLittleEndianOrder = CPL_TO_BOOL(bNativeOrder);
+#else
+    sLayout.bLittleEndianOrder = CPL_TO_BOOL(!bNativeOrder);
+#endif
+    sLayout.nImageOffset = nImgOffset;
+    sLayout.nPixelOffset = nPixelOffset;
+    sLayout.nLineOffset = nLineOffset;
+    sLayout.nBandOffset = nBandOffset;
+
+    return true;
+}

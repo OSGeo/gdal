@@ -1073,4 +1073,285 @@ namespace tut
 #endif
     }
 
+    // Test GDALDataset::GetRawBinaryLayout() implementations
+    template<> template<> void object::test<19>()
+    {
+        // ENVI
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bip.img"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BIP) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 0U );
+            ensure_equals( sLayout.nPixelOffset, 3 );
+            ensure_equals( sLayout.nLineOffset, 3 * 50 );
+            ensure_equals( sLayout.nBandOffset, 1 );
+        }
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bil.img"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BIL) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 0U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 3 * 50 );
+            ensure_equals( sLayout.nBandOffset, 50 );
+        }
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bsq.img"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BSQ) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 0U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 50 );
+            ensure_equals( sLayout.nBandOffset, 50 * 49 );
+        }
+
+        // GTiff
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GCORE_DATA_DIR "byte.tif"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 8U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 20 );
+            ensure_equals( sLayout.nBandOffset, 0 );
+        }
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            // Compressed
+            ensure( !poDS->GetRawBinaryLayout(sLayout) );
+        }
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GCORE_DATA_DIR "stefan_full_rgba.tif"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BIP) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 278U );
+            ensure_equals( sLayout.nPixelOffset, 4 );
+            ensure_equals( sLayout.nLineOffset, 162 * 4 );
+            ensure_equals( sLayout.nBandOffset, 1 );
+        }
+        {
+            GDALDatasetUniquePtr poSrcDS(
+                GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
+            ensure( poSrcDS != nullptr );
+            auto tmpFilename = "/vsimem/tmp.tif";
+            auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
+            const char* options [] = { "INTERLEAVE=BAND", nullptr };
+            auto poDS(GDALDatasetUniquePtr(poDrv->CreateCopy(
+                tmpFilename, poSrcDS.get(), false, const_cast<char**>(options), nullptr, nullptr)));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BSQ) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure( sLayout.nImageOffset >= 396U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 50 );
+            ensure_equals( sLayout.nBandOffset, 50 * 50 );
+            poDS.reset();
+            VSIUnlink(tmpFilename);
+        }
+        {
+            GDALDatasetUniquePtr poSrcDS(
+                GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
+            ensure( poSrcDS != nullptr );
+            auto tmpFilename = "/vsimem/tmp.tif";
+            const char* options [] = { "-srcwin", "0", "0", "48", "32",
+                                       "-co", "TILED=YES",
+                                       "-co", "BLOCKXSIZE=48",
+                                       "-co", "BLOCKYSIZE=32", nullptr };
+            auto psOptions = GDALTranslateOptionsNew( const_cast<char**>(options), nullptr );
+            auto poDS(GDALDatasetUniquePtr(GDALDataset::FromHandle(GDALTranslate(
+                tmpFilename, GDALDataset::ToHandle(poSrcDS.get()), psOptions, nullptr))));
+            GDALTranslateOptionsFree(psOptions);
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BIP) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure( sLayout.nImageOffset >= 390U );
+            ensure_equals( sLayout.nPixelOffset, 3 );
+            ensure_equals( sLayout.nLineOffset, 48 * 3);
+            ensure_equals( sLayout.nBandOffset, 1 );
+            poDS.reset();
+            VSIUnlink(tmpFilename);
+        }
+        {
+            GDALDatasetUniquePtr poSrcDS(
+                GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
+            ensure( poSrcDS != nullptr );
+            auto tmpFilename = "/vsimem/tmp.tif";
+            const char* options [] = { "-srcwin", "0", "0", "48", "32",
+                                       "-co", "TILED=YES",
+                                       "-co", "BLOCKXSIZE=48",
+                                       "-co", "BLOCKYSIZE=32",
+                                       "-co", "INTERLEAVE=BAND", nullptr };
+            auto psOptions = GDALTranslateOptionsNew( const_cast<char**>(options), nullptr );
+            auto poDS(GDALDatasetUniquePtr(GDALDataset::FromHandle(GDALTranslate(
+                tmpFilename, GDALDataset::ToHandle(poSrcDS.get()), psOptions, nullptr))));
+            GDALTranslateOptionsFree(psOptions);
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BSQ) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure( sLayout.nImageOffset >= 408U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 48);
+            ensure_equals( sLayout.nBandOffset, 48 * 32 );
+            poDS.reset();
+            VSIUnlink(tmpFilename);
+        }
+
+        // ISIS3
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GDRIVERS_DATA_DIR "isis3_detached.lbl"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure( sLayout.osRawFilename.find("isis3_detached.cub") != std::string::npos );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 0U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 317 );
+            // ensure_equals( sLayout.nBandOffset, 9510 ); // doesn't matter on single band
+        }
+
+        // VICAR
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GDRIVERS_DATA_DIR "test_vicar_truncated.bin"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( !sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 9680U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 400 );
+            ensure_equals( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+        }
+
+        // FITS
+        {
+            GDALDatasetUniquePtr poSrcDS(
+                GDALDataset::Open(GCORE_DATA_DIR "int16.tif"));
+            ensure( poSrcDS != nullptr );
+            CPLString tmpFilename(CPLGenerateTempFilename(nullptr));
+            tmpFilename += ".fits";
+            auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("FITS"));
+            if( poDrv )
+            {
+                auto poDS(GDALDatasetUniquePtr(poDrv->CreateCopy(
+                    tmpFilename, poSrcDS.get(), false, nullptr, nullptr, nullptr)));
+                ensure( poDS != nullptr );
+                poDS.reset();
+                poDS.reset(GDALDataset::Open(tmpFilename));
+                ensure( poDS != nullptr );
+                GDALDataset::RawBinaryLayout sLayout;
+                ensure( poDS->GetRawBinaryLayout(sLayout) );
+                ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+                ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
+                ensure_equals( sLayout.eDataType, GDT_Int16 );
+                ensure( !sLayout.bLittleEndianOrder );
+                ensure_equals( sLayout.nImageOffset, 2880U );
+                ensure_equals( sLayout.nPixelOffset, 2 );
+                ensure_equals( sLayout.nLineOffset, 2 * 20 );
+                ensure_equals( sLayout.nBandOffset, 2 * 20 * 20 );
+                poDS.reset();
+                VSIUnlink(tmpFilename);
+            }
+        }
+
+        // PDS 3
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GDRIVERS_DATA_DIR "mc02_truncated.img"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 3840U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 3840 );
+            ensure_equals( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+        }
+
+        // PDS 4
+        {
+            GDALDatasetUniquePtr poDS(
+                GDALDataset::Open(GDRIVERS_DATA_DIR "byte_pds4.xml"));
+            ensure( poDS != nullptr );
+            GDALDataset::RawBinaryLayout sLayout;
+            ensure( poDS->GetRawBinaryLayout(sLayout) );
+            ensure( sLayout.osRawFilename.find("byte_pds4.img") != std::string::npos );
+            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                           static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
+            ensure_equals( sLayout.eDataType, GDT_Byte );
+            ensure( !sLayout.bLittleEndianOrder );
+            ensure_equals( sLayout.nImageOffset, 0U );
+            ensure_equals( sLayout.nPixelOffset, 1 );
+            ensure_equals( sLayout.nLineOffset, 20 );
+            ensure_equals( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+        }
+    }
+
 } // namespace tut

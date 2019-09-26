@@ -319,6 +319,7 @@ class PDS4Dataset final: public RawDataset
     CPLString       m_osXMLFilename{};
     CPLString       m_osImageFilename{};
     CPLString       m_osUnits{};
+    bool            m_bCreatedFromExistingBinaryFile = false;
 
     std::vector<std::unique_ptr<PDS4EditableLayer>> m_apoLayers{};
 
@@ -328,6 +329,8 @@ class PDS4Dataset final: public RawDataset
     bool            m_bDirtyHeader = false;
     bool            m_bCreateHeader = false;
     bool            m_bStripFileAreaObservationalFromTemplate = false;
+    bool            m_bIsLSB = true;
+    CPLString       m_osHeaderParsingStandard{};
     CPLString       m_osInterleave{};
     char          **m_papszCreationOptions = nullptr;
     CPLString       m_osXMLPDS4{};
@@ -360,6 +363,11 @@ class PDS4Dataset final: public RawDataset
     bool            OpenTableDelimited(const char* pszFilename,
                                        const CPLXMLNode* psTable);
 
+    static PDS4Dataset *CreateInternal(const char *pszFilename,
+                                       GDALDataset* poSrcDS,
+                                       int nXSize, int nYSize, int nBands,
+                                       GDALDataType eType, char **papszOptions);
+
 public:
     PDS4Dataset();
     virtual ~PDS4Dataset();
@@ -390,6 +398,8 @@ public:
                                 char ** papszOptions ) override;
     int       TestCapability( const char * pszCap ) override;
 
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
+
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -401,6 +411,7 @@ public:
                                        GDALProgressFunc pfnProgress,
                                        void * pProgressData );
     static int Identify(GDALOpenInfo *);
+    static CPLErr              Delete( const char * pszName );
 
     const char* const* GetOpenOptions() const { return papszOpenOptions; }
 
