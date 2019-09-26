@@ -1609,6 +1609,63 @@ bool ISIS3Dataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 }
 
 /************************************************************************/
+/*                           GetValueAndUnits()                         */
+/************************************************************************/
+
+static void GetValueAndUnits(const CPLJSONObject& obj,
+                             std::vector<double>& adfValues,
+                             std::vector<std::string>& aosUnits,
+                             int nExpectedVals)
+{
+    if( obj.GetType() == CPLJSONObject::Integer ||
+        obj.GetType() == CPLJSONObject::Double )
+    {
+        adfValues.push_back(obj.ToDouble());
+    }
+    else if( obj.GetType() == CPLJSONObject::Object )
+    {
+        auto oValue = obj.GetObj("value");
+        auto oUnit = obj.GetObj("unit");
+        if( oValue.IsValid() &&
+            (oValue.GetType() == CPLJSONObject::Integer ||
+                oValue.GetType() == CPLJSONObject::Double ||
+                oValue.GetType() == CPLJSONObject::Array) &&
+            oUnit.IsValid() && oUnit.GetType() == CPLJSONObject::String )
+        {
+            if( oValue.GetType() == CPLJSONObject::Array )
+            {
+                GetValueAndUnits(oValue, adfValues, aosUnits, nExpectedVals);
+            }
+            else
+            {
+                adfValues.push_back(oValue.ToDouble());
+            }
+            aosUnits.push_back(oUnit.ToString());
+        }
+    }
+    else if( obj.GetType() == CPLJSONObject::Array )
+    {
+        auto oArray = obj.ToArray();
+        if( oArray.Size() == nExpectedVals )
+        {
+            for( int i = 0; i < nExpectedVals; i++ )
+            {
+                if( oArray[i].GetType() == CPLJSONObject::Integer ||
+                    oArray[i].GetType() == CPLJSONObject::Double )
+                {
+                    adfValues.push_back(oArray[i].ToDouble());
+                }
+                else
+                {
+                    adfValues.clear();
+                    return;
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -2204,6 +2261,117 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     /* else Tiled or external */
 
 /* -------------------------------------------------------------------- */
+/*      Extract BandBin info.                                           */
+/* -------------------------------------------------------------------- */
+    std::vector<std::string> aosBandNames;
+    std::vector<std::string> aosBandUnits;
+    std::vector<double> adfWavelengths;
+    std::vector<std::string> aosWavelengthsUnit;
+    std::vector<double> adfBandwidth;
+    std::vector<std::string> aosBandwidthUnit;
+    const auto oBandBin = poDS->m_oJSonLabel.GetObj( "IsisCube/BandBin" );
+    if( oBandBin.IsValid() && oBandBin.GetType() == CPLJSONObject::Object )
+    {
+        for( const auto& child: oBandBin.GetChildren() )
+        {
+            if( CPLString(child.GetName()).ifind("name") != std::string::npos )
+            {
+                // Use "name" in priority
+                if( EQUAL(child.GetName().c_str(), "name") )
+                {
+                    aosBandNames.clear();
+                }
+                else if( !aosBandNames.empty() )
+                {
+                    continue;
+                }
+
+                if( child.GetType() == CPLJSONObject::String && nBands == 1 )
+                {
+                    aosBandNames.push_back(child.ToString());
+                }
+                else if( child.GetType() == CPLJSONObject::Array )
+                {
+                    auto oArray = child.ToArray();
+                    if( oArray.Size() == nBands )
+                    {
+                        for( int i = 0; i < nBands; i++ )
+                        {
+                            if( oArray[i].GetType() == CPLJSONObject::String )
+                            {
+                                aosBandNames.push_back(oArray[i].ToString());
+                            }
+                            else
+                            {
+                                aosBandNames.clear();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            else if( EQUAL(child.GetName().c_str(), "BandSuffixUnit") &&
+                     child.GetType() == CPLJSONObject::Array )
+            {
+                auto oArray = child.ToArray();
+                if( oArray.Size() == nBands )
+                {
+                    for( int i = 0; i < nBands; i++ )
+                    {
+                        if( oArray[i].GetType() == CPLJSONObject::String )
+                        {
+                            aosBandUnits.push_back(oArray[i].ToString());
+                        }
+                        else
+                        {
+                            aosBandUnits.clear();
+                            break;
+                        }
+                    }
+                }
+            }
+            else if( EQUAL(child.GetName().c_str(), "BandBinCenter") ||
+                     EQUAL(child.GetName().c_str(), "Center") )
+            {
+                GetValueAndUnits(child, adfWavelengths, aosWavelengthsUnit,
+                                 nBands);
+            }
+            else if( EQUAL(child.GetName().c_str(), "BandBinUnit") &&
+                     child.GetType() == CPLJSONObject::String )
+            {
+                CPLString unit(child.ToString());
+                if( STARTS_WITH_CI(unit, "micromet") ||
+                    EQUAL(unit, "um") ||
+                    STARTS_WITH_CI(unit, "nanomet") ||
+                    EQUAL(unit, "nm")  )
+                {
+                    aosWavelengthsUnit.push_back(child.ToString());
+                }
+            }
+            else if( EQUAL(child.GetName().c_str(), "Width") )
+            {
+                GetValueAndUnits(child, adfBandwidth, aosBandwidthUnit,
+                                 nBands);
+            }
+        }
+
+        if( !adfWavelengths.empty() && aosWavelengthsUnit.size() == 1 )
+        {
+            for( int i = 1; i < nBands; i++ )
+            {
+                aosWavelengthsUnit.push_back(aosWavelengthsUnit[0]);
+            }
+        }
+        if( !adfBandwidth.empty() && aosBandwidthUnit.size() == 1 )
+        {
+            for( int i = 1; i < nBands; i++ )
+            {
+                aosBandwidthUnit.push_back(aosBandwidthUnit[0]);
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_LSB
@@ -2257,6 +2425,27 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetBand( i+1, poBand );
 
             poISISBand->SetMaskBand( new ISISMaskBand(poISISBand) );
+        }
+
+        if( i < static_cast<int>(aosBandNames.size()) )
+        {
+            poBand->SetDescription(aosBandNames[i].c_str());
+        }
+        if( i < static_cast<int>(adfWavelengths.size()) &&
+            i < static_cast<int>(aosWavelengthsUnit.size()) )
+        {
+            poBand->SetMetadataItem("WAVELENGTH", CPLSPrintf("%f", adfWavelengths[i]));
+            poBand->SetMetadataItem("WAVELENGTH_UNIT", aosWavelengthsUnit[i].c_str());
+            if( i < static_cast<int>(adfBandwidth.size()) &&
+                i < static_cast<int>(aosBandwidthUnit.size()) )
+            {
+                poBand->SetMetadataItem("BANDWIDTH", CPLSPrintf("%f", adfBandwidth[i]));
+                poBand->SetMetadataItem("BANDWIDTH_UNIT", aosBandwidthUnit[i].c_str());
+            }
+        }
+        if( i < static_cast<int>(aosBandUnits.size()) )
+        {
+            poBand->SetUnitType(aosBandUnits[i].c_str());
         }
 
         poBand->SetNoDataValue( dfNoData );

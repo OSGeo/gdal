@@ -1439,3 +1439,102 @@ def test_isis3_parse_list_and_write_quote_string_in_list():
     assert 'Name         = ("band 1", "band 2", "band 3")' in data, data
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/temp.lbl')
 
+
+###############################################################################
+#
+
+def test_isis3_bandbin_single_band():
+
+    gdal.FileFromMemBuffer('/vsimem/test.lbl', """Object = IsisCube
+  Object = Core
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = Real
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = BandBin
+    FilterName   = "ignored"
+    Name         = "My band name"
+    Center       = 700 <NANOMETERS>
+    Width        = 300 <NANOMETERS>
+  End_Group
+
+End_Object
+End""")
+
+    ds = gdal.Open('/vsimem/test.lbl')
+    assert ds
+    band = ds.GetRasterBand(1)
+    assert band.GetDescription() == 'My band name'
+    assert band.GetMetadata() == {
+        'BANDWIDTH': '300.000000',
+        'BANDWIDTH_UNIT': 'NANOMETERS',
+        'WAVELENGTH': '700.000000',
+        'WAVELENGTH_UNIT': 'NANOMETERS'
+    }
+    ds = None
+    gdal.Unlink('/vsimem/test.lbl')
+
+
+###############################################################################
+#
+
+def test_isis3_bandbin_multiple_bands():
+
+    gdal.FileFromMemBuffer('/vsimem/test.lbl', """Object = IsisCube
+  Object = Core
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 2
+    End_Group
+    Group = Pixels
+      Type       = Real
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = BandBin
+    BandSuffixName   = ("first band", "second band")
+    BandSuffixUnit   = (DEGREE, DEGREE)
+    BandBinCenter    = (1.0348, 1.3128)
+    BandBinUnit      = MICROMETER
+    Width            = (0.5, 0.6) <um>
+  End_Group
+
+End_Object
+End""")
+
+    ds = gdal.Open('/vsimem/test.lbl')
+    assert ds
+    band = ds.GetRasterBand(1)
+    assert band.GetDescription() == 'first band'
+    assert band.GetUnitType() == 'DEGREE'
+    assert band.GetMetadata() == {
+        'BANDWIDTH': '0.500000',
+        'BANDWIDTH_UNIT': 'um',
+        'WAVELENGTH': '1.034800',
+        'WAVELENGTH_UNIT': 'MICROMETER'
+    }
+    band = ds.GetRasterBand(2)
+    assert band.GetDescription() == 'second band'
+    assert band.GetMetadata() == {
+        'BANDWIDTH': '0.600000',
+        'BANDWIDTH_UNIT': 'um',
+        'WAVELENGTH': '1.312800',
+        'WAVELENGTH_UNIT': 'MICROMETER'
+    }
+    ds = None
+    gdal.Unlink('/vsimem/test.lbl')
