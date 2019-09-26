@@ -3109,6 +3109,18 @@ def test_jp2openjpeg_odd_dimensions():
 
     assert cs == 29642
 
+###############################################################################
+
+
+def test_jp2openjpeg_odd_dimensions_overviews():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        pytest.skip()
+
+    # Only try the rest with openjpeg >= 2.3 to avoid potential memory issues
+    if gdaltest.jp2openjpeg_drv.GetMetadataItem('DMD_CREATIONOPTIONLIST').find('CODEBLOCK_STYLE') < 0:
+        pytest.skip()
+
     # Check that we don't request outside of the full resolution coordinates
     ds = gdal.Open('data/single_block_32769_16385.jp2')
     assert ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,2049,1025)
