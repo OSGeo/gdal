@@ -1858,15 +1858,21 @@ def test_pdf_composition_pdf_content(poppler_or_pdfium_or_podofo):
     assert out_ds
     assert gdal.GetLastErrorMsg() == ''
 
+    # Poppler output
     f = open('data/test_pdf_composition_pdf_content.pdf', 'rb')
     data_ref = f.read()
+    f.close()
+
+    # PDFium output
+    f = open('data/test_pdf_composition_pdf_content_pdfium.pdf', 'rb')
+    data_ref_pdfium = f.read()
     f.close()
 
     f = open(out_filename, 'rb')
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, 'content does not match reference content'
+    assert data_got in (data_ref, data_ref_pdfium), 'content does not match reference content'
 
     gdal.Unlink(out_filename)
 
