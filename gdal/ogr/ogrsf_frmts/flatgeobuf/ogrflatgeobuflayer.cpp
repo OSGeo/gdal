@@ -38,9 +38,13 @@
 using namespace flatbuffers;
 using namespace FlatGeobuf;
 
+static nullptr CPLErrorInvalidPointer() {
+    CPLError(CE_Failure, CPLE_AppDefined, "Possible data corruption - unexpected nullptr");
+    return nullptr;
+}
 
 static OGRErr CPLErrorInvalidProperties() {
-    CPLError(CE_Failure, CPLE_AppDefined, "Properties buffer has invalid size");
+    CPLError(CE_Failure, CPLE_AppDefined, "Possible data corruption - properties buffer has invalid size");
     return OGRERR_CORRUPT_DATA;
 }
 
@@ -799,11 +803,12 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
     auto pXy = feature->xy();
     auto pZ = feature->z();
     auto pM = feature->m();
-    VALIDATE_POINTER1(pXy, "readGeometry", nullptr);
-    if (m_hasZ)
-        VALIDATE_POINTER1(pZ, "readGeometry", nullptr);
-    if (m_hasM)
-        VALIDATE_POINTER1(pM, "readGeometry", nullptr);
+    if (pXy == nullptr)
+        return CPLErrorInvalidPointer();
+    if (m_hasZ && pZ == nullptr)
+        return CPLErrorInvalidPointer();
+    if (m_hasM && pM == nullptr)
+        return CPLErrorInvalidPointer();
     auto xySize = pXy->size();
     switch (m_geometryType) {
         case GeometryType::Point:
