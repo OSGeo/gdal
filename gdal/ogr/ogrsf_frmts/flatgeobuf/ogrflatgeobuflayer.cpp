@@ -801,13 +801,11 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, ui
 OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
 {
     auto pXy = feature->xy();
-    auto pZ = feature->z();
-    auto pM = feature->m();
     if (pXy == nullptr)
         return CPLErrorInvalidPointer();
-    if (m_hasZ && pZ == nullptr)
+    if (m_hasZ && feature->z() == nullptr)
         return CPLErrorInvalidPointer();
-    if (m_hasM && pM == nullptr)
+    if (m_hasM && feature->m() == nullptr)
         return CPLErrorInvalidPointer();
     auto xySize = pXy->size();
     switch (m_geometryType) {
