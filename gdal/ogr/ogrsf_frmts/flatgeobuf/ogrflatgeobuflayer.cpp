@@ -38,7 +38,7 @@
 using namespace flatbuffers;
 using namespace FlatGeobuf;
 
-static nullptr CPLErrorInvalidPointer() {
+static OGRGeometry *CPLErrorInvalidPointer() {
     CPLError(CE_Failure, CPLE_AppDefined, "Possible data corruption - unexpected nullptr");
     return nullptr;
 }
