@@ -106,6 +106,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         OGRErr parseFeature(OGRFeature *poFeature, OGRGeometry **ogrGeometry);
         OGRPoint *readPoint(const Feature *feature, uint32_t offset = 0);
         OGRMultiPoint *readMultiPoint(const Feature *feature, uint32_t len);
+        void readSimpleCurve(const Feature *feature, uint32_t len, uint32_t offset, OGRSimpleCurve *c);
         OGRLineString *readLineString(const Feature *feature, uint32_t len, uint32_t offset = 0);
         OGRMultiLineString *readMultiLineString(const Feature *feature);
         OGRLinearRing *readLinearRing(const Feature *feature, uint32_t len, uint32_t offset = 0);

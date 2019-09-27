@@ -33,6 +33,7 @@
 import os
 
 from osgeo import ogr
+from osgeo import gdal
 
 import gdaltest
 import ogrtest
@@ -204,6 +205,44 @@ def test_ogr_flatgeobuf_2():
         assert num == 4
     else:
         assert num == 5
+
+def wktRoundtrip(expected):
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    g = ogr.CreateGeometryFromWkt(expected)
+    lyr = ds.CreateLayer('test', None, g.GetGeometryType(), [])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    lyr.CreateFeature(f)
+    ds = None
+
+    fgb_ds = ogr.Open('/vsimem/test.fgb')
+    fgb_lyr = fgb_ds.GetLayer(0)
+    f = fgb_lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    actual = g.ExportToWkt()
+    gdal.Unlink('/vsimem/test.fgb')
+    assert actual == expected
+
+def test_ogr_flatgeobuf_3():
+    if gdaltest.flatgeobuf_drv is None:
+        pytest.skip()
+    wktRoundtrip('POINT (1 1)')
+    wktRoundtrip('POINT (1.1234 1.4321)')
+    wktRoundtrip('POINT (1.12345678901234 1.4321)') # max precision 15 decimals
+    #wktRoundtrip('POINT (1.123456789012341 1.4321)') # 16 decimals, will not pass
+    wktRoundtrip('POINT (1.2 -2.1)')
+    wktRoundtrip('MULTIPOINT (10 40,40 30,20 20,30 10)')
+    wktRoundtrip('LINESTRING (1.2 -2.1,2.4 -4.8)')
+    wktRoundtrip('MULTILINESTRING ((10 10,20 20,10 40),(40 40,30 30,40 20,30 10),(50 50,60 60,50 90))')
+    wktRoundtrip('MULTILINESTRING ((1.2 -2.1,2.4 -4.8))')
+    wktRoundtrip('POLYGON ((30 10,40 40,20 40,10 20,30 10))')
+    wktRoundtrip('POLYGON ((35 10,45 45,15 40,10 20,35 10),(20 30,35 35,30 20,20 30))')
+    wktRoundtrip('MULTIPOLYGON (((30 20,45 40,10 40,30 20)),((15 5,40 10,10 20,5 10,15 5)))')
+    wktRoundtrip('MULTIPOLYGON (((40 40,20 45,45 30,40 40)),((20 35,10 30,10 10,30 5,45 20,20 35),(30 20,20 15,20 25,30 20)))')
+    wktRoundtrip('MULTIPOLYGON (((30 20,45 40,10 40,30 20)))')
+    wktRoundtrip('MULTIPOLYGON (((35 10,45 45,15 40,10 20,35 10),(20 30,35 35,30 20,20 30)))')
+
+    #wktRoundtrip('POINT ZM (1 2 3 4)')
 
 # Run test_ogrsf
 def test_ogr_flatgeobuf_8():
