@@ -572,16 +572,7 @@ void OGRShapeDataSource::AddLayer( OGRShapeLayer* poLayer )
 
 static CPLString LaunderLayerName(const char* pszLayerName)
 {
-    std::string osRet(pszLayerName);
-    for( char& ch: osRet )
-    {
-        // https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
-        if( ch == '<' || ch == '>' || ch == ':' || ch == '"' ||
-            ch == '/' || ch == '\\' || ch== '?' || ch == '*' )
-        {
-            ch = '_';
-        }
-    }
+    std::string osRet(CPLLaunderForFilename(pszLayerName, nullptr));
     if( osRet != pszLayerName )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
