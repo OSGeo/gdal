@@ -5002,11 +5002,9 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
     if test "$with_pdfium" = "yes" ; then
         PDFIUM_INC="-I/usr/include/pdfium"
         PDFIUM_LIB="-lpdfium"
-        PDFIUM_LIBDIR="/usr"
     else
         PDFIUM_INC="-I$with_pdfium/include/pdfium"
         PDFIUM_LIB="-L$with_pdfium/lib -lpdfium"
-        PDFIUM_LIBDIR="$with_pdfium"
     fi
 
     PDFIUM_LIB="$PDFIUM_LIB -ljpeg -lpng -lz -llcms2 -lpthread"
