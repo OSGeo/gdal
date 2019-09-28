@@ -220,7 +220,11 @@ def wktRoundtrip(expected):
     f = fgb_lyr.GetNextFeature()
     g = f.GetGeometryRef()
     actual = g.ExportToWkt()
-    gdal.Unlink('/vsimem/test.fgb')
+    fgb_ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
+
     assert actual == expected
 
 def test_ogr_flatgeobuf_3():
@@ -286,3 +290,25 @@ def test_ogr_flatgeobuf_9():
         rc = verify_flatgeobuf_copy(test[0], test[1], test[2])
         assert rc, ('Verification of copy of ' + test[0] + '.shp failed')
 
+
+# Test support for multiple layers in a directory
+
+
+def test_ogr_flatgeobuf_directory():
+    if gdaltest.flatgeobuf_drv is None:
+        pytest.skip()
+
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/multi_layer')
+    with gdaltest.error_handler(): # name will be laundered
+        ds.CreateLayer('foo<', geom_type = ogr.wkbPoint)
+    ds.CreateLayer('bar', geom_type = ogr.wkbPoint)
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/multi_layer')
+    assert set(ds.GetFileList()) == set(['/vsimem/multi_layer/bar.fgb', '/vsimem/multi_layer/foo_.fgb'])
+    assert ds.GetLayer('foo<')
+    assert ds.GetLayer('bar')
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/multi_layer')
+    assert not gdal.VSIStatL('/vsimem/multi_layer')
