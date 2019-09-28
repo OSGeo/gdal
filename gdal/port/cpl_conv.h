@@ -170,6 +170,8 @@ int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLExpandTilde( const char *pszFilename ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLGetHomeDir(void) CPL_WARN_UNUSED_RESULT;
+const char CPL_DLL *CPLLaunderForFilename(const char* pszName,
+                                          const char* pszOutputPath ) CPL_WARN_UNUSED_RESULT;
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
