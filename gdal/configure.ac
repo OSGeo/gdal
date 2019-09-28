@@ -5007,7 +5007,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         PDFIUM_LIB="-L$with_pdfium/lib -lpdfium"
     fi
 
-    PDFIUM_LIB="$PDFIUM_LIB -ljpeg -lpng -lz -llcms2 -lpthread"
+    PDFIUM_LIB="$PDFIUM_LIB -ljpeg -lpng -lz -llcms2 -lpthread -lm -lstdc++"
 
     if test ! -z "`uname | grep Darwin`" ; then
         PDFIUM_LIB="-stdlib=libstdc++ $PDFIUM_LIB"
