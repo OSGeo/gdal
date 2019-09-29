@@ -265,7 +265,12 @@ class GDALPDFOutputDev : public SplashOutputDev
 
         virtual void drawImage(GfxState *state, Object *ref, Stream *str,
                                int width, int height, GfxImageColorMap *colorMap,
-                               GBool interpolate, int *maskColors, GBool inlineImg) override
+                               GBool interpolate,
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 82
+                               const
+#endif
+                               int *maskColors,
+                               GBool inlineImg) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::drawImage(state, ref, str,
