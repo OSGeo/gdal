@@ -844,8 +844,10 @@ static double GetAngularValue(CPLXMLNode* psParent, const char* pszElementName,
 /*                          ReadGeoreferencing()                       */
 /************************************************************************/
 
-// See https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd
-// and https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.sch
+// See https://pds.nasa.gov/datastandards/schema/released/cart/v1/PDS4_CART_1B10_1931.xsd,
+//     https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd,
+//     https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd
+// and the corresponding .sch files
 void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
 {
     CPLXMLNode* psCart = CPLGetXMLNode(psProduct,
@@ -1171,23 +1173,37 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                                                      "");
         bool bIsOgraphic = EQUAL(pszLatitudeType, "Planetographic");
 
-        double dfSemiMajor = GetLinearValue(psGeodeticModel,
-                                            "semi_major_radius");
-        // according to the spec, it seems the semi_minor_radius is
-        // considered in the equatorial plane, which is rather unusual
-        // for WKT, we want to use the polar_radius as the actual semi minor
-        // axis
-        double dfSemiMinorPDS4 = GetLinearValue(psGeodeticModel,
-                                            "semi_minor_radius");
-        if( dfSemiMajor != dfSemiMinorPDS4 )
+        const bool bUseLDD1930RadiusNames =
+            CPLGetXMLNode(psGeodeticModel, "a_axis_radius") != nullptr;
+
+        // Before PDS CART schema pre-1.B.10.0 (pre LDD version 1.9.3.0),
+        // the confusing semi_major_radius, semi_minor_radius and polar_radius
+        // were used but did not follow the recommended
+        // FGDC names. Using both "semi" and "radius" in the same keyword,
+        // which both mean half, does not make sense.
+        const char* pszAAxis = bUseLDD1930RadiusNames ?
+                                    "a_axis_radius" : "semi_major_radius";
+        const char* pszBAxis = bUseLDD1930RadiusNames ?
+                                    "b_axis_radius" : "semi_minor_radius";
+        const char* pszCAxis = bUseLDD1930RadiusNames ?
+                                    "c_axis_radius" : "polar_radius";
+
+        const double dfSemiMajor = GetLinearValue(psGeodeticModel, pszAAxis);
+
+        // a_axis_radius and b_axis_radius should be the same in most cases
+        // unless a triaxial body is being defined. This should be extremely
+        // rare (and not used) since the IAU generally defines a best-fit sphere
+        // for triaxial bodies: https://astrogeology.usgs.gov/groups/IAU-WGCCRE
+        const double dfBValue = GetLinearValue(psGeodeticModel, pszBAxis);
+        if( dfSemiMajor != dfBValue )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "semi_minor_radius = %f m, different from "
-                     "semi_major_radius = %f, will be ignored",
-                     dfSemiMinorPDS4, dfSemiMajor);
+                    "%s = %f m, different from "
+                    "%s = %f, will be ignored",
+                    pszBAxis, dfBValue, pszAAxis, dfSemiMajor);
         }
-        double dfPolarRadius = GetLinearValue(psGeodeticModel,
-                                              "polar_radius");
+
+        const double dfPolarRadius = GetLinearValue(psGeodeticModel, pszCAxis);
         // Use the polar_radius as the actual semi minor
         const double dfSemiMinor = dfPolarRadius;
 
@@ -2037,12 +2053,23 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
 }
 
 /************************************************************************/
+/*                         IsCARTVersionGTE()                           */
+/************************************************************************/
+
+// Returns true is pszCur >= pszRef
+// Must be things like 1900, 1B00, 1B10_1931 ...
+static bool IsCARTVersionGTE(const char* pszCur, const char* pszRef)
+{
+    return strcmp(pszCur, pszRef) >= 0;
+}
+
+/************************************************************************/
 /*                         WriteGeoreferencing()                        */
 /************************************************************************/
 
 void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                                       const char* pszWKT,
-                                      bool bCart1B00OrLater)
+                                      const char* pszCARTVersion)
 {
     bool bHasBoundingBox = false;
     double adfX[4] = {0};
@@ -2406,7 +2433,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         }
 
         CPLXMLNode* psCR = nullptr;
-        if( m_bGotTransform || !bCart1B00OrLater )
+        if( m_bGotTransform || !IsCARTVersionGTE(pszCARTVersion, "1B00") )
         {
             CPLXMLNode* psPCI = CPLCreateXMLNode(psPlanar, CXT_Element,
                             (osPrefix + "Planar_Coordinate_Information").c_str());
@@ -2536,7 +2563,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
     {
         CPLXMLNode* psGeographic = CPLCreateXMLNode(psHCSD, CXT_Element,
                     (osPrefix + "Geographic").c_str());
-        if( !bCart1B00OrLater )
+        if( !IsCARTVersionGTE(pszCARTVersion, "1B00") )
         {
             CPLAddXMLAttributeAndValue(
                         CPLCreateXMLElementAndValue(psGeographic,
@@ -2593,22 +2620,25 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         CSLDestroy(papszTokens);
     }
 
+    const bool bUseLDD1930RadiusNames =
+        IsCARTVersionGTE(pszCARTVersion, "1B10_1930");
+
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
-                (osPrefix + "semi_major_radius").c_str(),
+                (osPrefix + (bUseLDD1930RadiusNames ? "a_axis_radius" : "semi_major_radius")).c_str(),
                 CPLSPrintf("%.18g", dfSemiMajor)),
         "unit", "m");
-    // No, this is not a bug. The PDS4 semi_minor_radius is the minor radius
+    // No, this is not a bug. The PDS4  b_axis_radius/semi_minor_radius is the minor radius
     // on the equatorial plane. Which in WKT doesn't really exist, so reuse
     // the WKT semi major
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
-                (osPrefix + "semi_minor_radius").c_str(),
+                (osPrefix + (bUseLDD1930RadiusNames ? "b_axis_radius" : "semi_minor_radius")).c_str(),
                 CPLSPrintf("%.18g", dfSemiMajor)),
         "unit", "m");
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
-                (osPrefix + "polar_radius").c_str(),
+                (osPrefix + (bUseLDD1930RadiusNames ? "c_axis_radius" : "polar_radius")).c_str(),
                 CPLSPrintf("%.18g", dfSemiMinor)),
         "unit", "m");
     const char* pszLongitudeDirection =
@@ -3199,8 +3229,7 @@ void PDS4Dataset::WriteVectorLayers(CPLXMLNode* psProduct)
 /************************************************************************/
 
 void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
-                               bool bCartNeedsInternalReference,
-                               bool bCart1B00OrLater)
+                               const char* pszCARTVersion)
 {
     CPLString osPrefix;
     if( STARTS_WITH(psProduct->pszValue, "pds:") )
@@ -3326,16 +3355,23 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                         psSchemaLoc->psChild->pszValue != nullptr )
                     {
                         CPLString osCartSchema;
-                        if( strstr(psSchemaLoc->psChild->pszValue, "PDS4_PDS_1B00.xsd") )
+                        if( strstr(psSchemaLoc->psChild->pszValue, "PDS4_PDS_1800.xsd")  )
                         {
+                            // GDAL 2.4
+                            osCartSchema = "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd";
+                            pszCARTVersion = "1700";
+                        }
+                        else if( strstr(psSchemaLoc->psChild->pszValue, "PDS4_PDS_1B00.xsd") )
+                        {
+                            // GDAL 3.0
                             osCartSchema = "https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd";
-                            bCartNeedsInternalReference = true;
-                            bCart1B00OrLater = true;
+                            pszCARTVersion = "1B00";
                         }
                         else
                         {
-                            osCartSchema = "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd";
-                            bCartNeedsInternalReference = false;
+                            // GDAL 3.1
+                            osCartSchema = "https://pds.nasa.gov/datastandards/schema/released/cart/v1/PDS4_CART_1B10_1931.xsd";
+                            pszCARTVersion = "1B10_1931";
                         }
                         CPLString osNewVal(psSchemaLoc->psChild->pszValue);
                         osNewVal += " http://pds.nasa.gov/pds4/cart/v1 " + osCartSchema;
@@ -3353,7 +3389,7 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                 }
             }
 
-            if( bCartNeedsInternalReference )
+            if( IsCARTVersionGTE(pszCARTVersion, "1900") )
             {
                 const char* pszLocalIdentifier = CPLGetXMLValue(
                     psDisciplineArea,
@@ -3371,7 +3407,7 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                             "cartography_parameters_to_image_object");
             }
 
-            WriteGeoreferencing(psCart, osWKT, bCart1B00OrLater);
+            WriteGeoreferencing(psCart, osWKT, pszCARTVersion);
         }
     }
     else
@@ -3605,8 +3641,7 @@ void PDS4Dataset::WriteHeader()
 
     if( m_bCreateHeader )
     {
-        bool bCartNeedsInternalReference = false;
-        bool bCart1B00OrLater = false;
+        CPLString osCARTVersion("1B10_1931");
         char* pszXML = CPLSerializeXMLTree(psRoot);
         if( pszXML )
         {
@@ -3616,14 +3651,11 @@ void PDS4Dataset::WriteHeader()
                 const char* pszCartSchema = strstr(pszIter, "PDS4_CART_");
                 if( pszCartSchema )
                 {
-                    if( strlen(pszCartSchema) >= strlen("PDS4_CART_xxxx.xsd") &&
-                        EQUALN(pszCartSchema + strlen("PDS4_CART_xxxx."), "xsd", 3) )
+                    const char* pszXSDExtension = strstr(pszCartSchema, ".xsd");
+                    if( pszXSDExtension && pszXSDExtension - pszCartSchema <= 20 )
                     {
-                        CPLString osVersion(pszCartSchema + strlen("PDS4_CART_"), 4);
-                        bCartNeedsInternalReference =
-                            strtol(osVersion, nullptr, 16) >= strtol("1900", nullptr, 16);
-                        bCart1B00OrLater =
-                            strtol(osVersion, nullptr, 16) >= strtol("1B00", nullptr, 16);
+                        osCARTVersion = pszCartSchema + strlen("PDS4_CART_");
+                        osCARTVersion.resize(pszXSDExtension - pszCartSchema - strlen("PDS4_CART_"));
                         break;
                     }
                     else
@@ -3640,7 +3672,7 @@ void PDS4Dataset::WriteHeader()
             CPLFree(pszXML);
         }
 
-        CreateHeader(psProduct, bCartNeedsInternalReference, bCart1B00OrLater);
+        CreateHeader(psProduct, osCARTVersion.c_str());
     }
 
     WriteVectorLayers(psProduct);
