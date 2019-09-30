@@ -169,17 +169,22 @@ bool OGRFlatGeobufLayer::translateOGRwkbGeometryType()
 
 OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
 {
+    OGRwkbGeometryType ogrType = OGRwkbGeometryType::wkbUnknown;
     switch (m_geometryType) {
-        case GeometryType::Point: return OGRwkbGeometryType::wkbPoint;
-        case GeometryType::MultiPoint: return OGRwkbGeometryType::wkbMultiPoint;
-        case GeometryType::LineString: return OGRwkbGeometryType::wkbLineString;
-        case GeometryType::MultiLineString: return OGRwkbGeometryType::wkbMultiLineString;
-        case GeometryType::Polygon: return OGRwkbGeometryType::wkbPolygon;
-        case GeometryType::MultiPolygon: return OGRwkbGeometryType::wkbMultiPolygon;
+        case GeometryType::Point: ogrType = OGRwkbGeometryType::wkbPoint; break;
+        case GeometryType::MultiPoint: ogrType = OGRwkbGeometryType::wkbMultiPoint; break;
+        case GeometryType::LineString: ogrType = OGRwkbGeometryType::wkbLineString; break;
+        case GeometryType::MultiLineString: ogrType = OGRwkbGeometryType::wkbMultiLineString; break;
+        case GeometryType::Polygon: ogrType = OGRwkbGeometryType::wkbPolygon; break;
+        case GeometryType::MultiPolygon: ogrType = OGRwkbGeometryType::wkbMultiPolygon; break;
         default:
             CPLError(CE_Failure, CPLE_NotSupported, "toOGRwkbGeometryType: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
     }
-    return OGRwkbGeometryType::wkbUnknown;
+    if (m_hasZ)
+        ogrType = wkbSetZ(ogrType);
+    if (m_hasM)
+        ogrType = wkbSetM(ogrType);
+    return ogrType;
 }
 
 ColumnType OGRFlatGeobufLayer::toColumnType(OGRFieldType type, OGRFieldSubType /* subType */)
@@ -749,9 +754,9 @@ void OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, uint32_t len, u
         auto aZ = feature->z()->data();
         if (m_hasM) {
             auto aM = feature->m()->data();
-            sc->setPoints(len, (OGRRawPoint *) xy + offset, aZ, aM);
+            sc->setPoints(len, (OGRRawPoint *) xy + offset, aZ + offset, aM + offset);
         } else {
-            sc->setPoints(len, (OGRRawPoint *) xy + offset, aZ);
+            sc->setPoints(len, (OGRRawPoint *) xy + offset, aZ + offset);
         }
     } else {
         sc->setPoints(len, (OGRRawPoint *) xy + offset);
@@ -763,7 +768,7 @@ OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, uint32_t len
     auto ends = feature->ends();
     auto p = new OGRPolygon();
     if (ends == nullptr || ends->size() < 2) {
-        p->addRingDirectly(readLinearRing(feature, len >> 1));
+        p->addRingDirectly(readLinearRing(feature, len / 2));
     } else {
         for (uint32_t i = 0; i < ends->size(); i++) {
             auto e = ends->Get(i);
@@ -814,7 +819,7 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
         case GeometryType::MultiPoint:
             return readMultiPoint(feature, xySize);
         case GeometryType::LineString:
-            return readLineString(feature, xySize >> 1);
+            return readLineString(feature, xySize / 2);
         case GeometryType::MultiLineString:
             return readMultiLineString(feature);
         case GeometryType::Polygon:
