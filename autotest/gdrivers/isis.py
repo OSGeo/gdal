@@ -1538,3 +1538,152 @@ End""")
     }
     ds = None
     gdal.Unlink('/vsimem/test.lbl')
+
+
+###############################################################################
+# Test that when converting from ISIS3 to other formats (PAM-enabled), the
+# json:ISIS3 metadata domain is preserved.
+
+def test_isis3_preserve_label_across_format():
+
+    gdal.FileFromMemBuffer('/vsimem/multiband.lbl', """Object = IsisCube
+  Object = Core
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 2
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = BandBin
+    BandSuffixName   = ("first band", "second band")
+    BandSuffixUnit   = (DEGREE, DEGREE)
+    BandBinCenter    = (1.0, 2.0)
+    BandBinUnit      = MICROMETER
+    Width            = (0.5, 1.0) <um>
+  End_Group
+
+End_Object
+End""")
+    src_ds = gdal.Open('/vsimem/multiband.lbl')
+
+    # Copy ISIS3 to GeoTIFF
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds)
+
+    # Check GeoTIFF
+    ds = gdal.Open('/vsimem/out.tif')
+    assert len(ds.GetMetadataDomainList()) == 3
+    assert set(ds.GetMetadataDomainList()) == set(['IMAGE_STRUCTURE', 'json:ISIS3', 'DERIVED_SUBDATASETS'])
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert lbl
+    ds = None
+    assert gdal.VSIStatL('/vsimem/out.tif.aux.xml')
+
+    # Check that the label is in PAM, and not internal to GTiff
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'NO'):
+        ds = gdal.Open('/vsimem/out.tif')
+        assert not ds.GetMetadata_List('json:ISIS3')
+
+    # Copy back from GeoTIFF to ISIS3
+    src_ds_gtiff = gdal.Open('/vsimem/out.tif')
+    gdal.GetDriverByName('ISIS3').CreateCopy('/vsimem/out.cub', src_ds_gtiff)
+    assert not gdal.VSIStatL('/vsimem/out.cub.aux.xml')
+    ds = gdal.Open('/vsimem/out.cub')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    # Check label preservation
+    assert 'BandBin' in lbl
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/out.tif')
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.cub')
+
+    # Copy ISIS3 to PDS4
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PDS4').CreateCopy('/vsimem/out.xml', src_ds)
+    ds = gdal.Open('/vsimem/out.xml')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert lbl
+    ds = None
+    assert gdal.VSIStatL('/vsimem/out.xml.aux.xml')
+    gdal.GetDriverByName('PDS4').Delete('/vsimem/out.xml')
+
+    # Copy ISIS3 to PNG
+    gdal.GetDriverByName('PNG').CreateCopy('/vsimem/out.png', src_ds)
+    ds = gdal.Open('/vsimem/out.png')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert lbl
+    ds = None
+    assert gdal.VSIStatL('/vsimem/out.png.aux.xml')
+    gdal.GetDriverByName('PNG').Delete('/vsimem/out.png')
+
+    # Check GeoTIFF with non pure copy mode (test gdal_translate_lib)
+    gdal.Translate('/vsimem/out.tif', src_ds, options = '-mo FOO=BAR')
+    ds = gdal.Open('/vsimem/out.tif')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert lbl
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/out.tif')
+
+    # Test converting a subset of bands
+    gdal.Translate('/vsimem/out.tif', src_ds, options = '-b 2 -mo FOO=BAR')
+    ds = gdal.Open('/vsimem/out.tif')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    lbl = json.loads(lbl)
+
+    assert lbl['IsisCube']['BandBin'] == json.loads("""{
+      "_type":"group",
+      "BandBinUnit":"MICROMETER",
+      "Width":{
+        "unit":"um",
+        "value":[
+          1.000000
+        ]
+      },
+      "BandSuffixName":[
+        "second band"
+      ],
+      "BandSuffixUnit":[
+        "DEGREE"
+      ],
+      "BandBinCenter":[
+        2.000000
+      ]
+    }""")
+
+    assert 'OriginalBandBin' in lbl['IsisCube']
+    assert lbl['IsisCube']['OriginalBandBin'] == json.loads("""{
+      "_type":"group",
+      "BandSuffixName":[
+        "first band",
+        "second band"
+      ],
+      "BandSuffixUnit":[
+        "DEGREE",
+        "DEGREE"
+      ],
+      "BandBinCenter":[
+        1.000000,
+        2.000000
+      ],
+      "BandBinUnit":"MICROMETER",
+      "Width":{
+        "value":[
+          0.500000,
+          1.000000
+        ],
+        "unit":"um"
+      }
+    }""")
+
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/out.tif')
+
+    src_ds = None
+    gdal.Unlink('/vsimem/multiband.lbl')

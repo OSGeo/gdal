@@ -4326,6 +4326,12 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
             delete poDS;
             return nullptr;
         }
+
+        char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
+        if( papszISIS3MD )
+        {
+            poDS->SetMetadata( papszISIS3MD, "json:ISIS3");
+        }
     }
 
     return poDS;
