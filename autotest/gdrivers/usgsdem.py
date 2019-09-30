@@ -225,6 +225,21 @@ def test_usgsdem_with_spaces_after_byte_864():
     return tst.testOpen()
 
 ###############################################################################
+# Test truncated version of https://s3.amazonaws.com/data.tnris.org/8ea19b45-7a66-4e95-9833-f9e89611d106/resources/fema06-140cm-coastal_2995441_dem.zip
+# downloaded from https://data.tnris.org/collection/8ea19b45-7a66-4e95-9833-f9e89611d106
+
+
+def test_usgsdem_with_header_of_918_bytes():
+
+    tst = gdaltest.GDALTest('USGSDEM', 'fema06-140cm_2995441b_truncated.dem', 1, 0)
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS('NAD83')
+    srs.SetUTM(15)
+    with gdaltest.error_handler():
+        return tst.testOpen(check_prj=srs.ExportToWkt(),
+                            check_gt=(248500.0, 1.4, 0.0, 3252508.7, 0.0, -1.4))
+
+###############################################################################
 # Cleanup
 
 
