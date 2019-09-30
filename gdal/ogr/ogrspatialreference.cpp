@@ -1603,25 +1603,41 @@ OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput )
 
     Clear();
 
+    bool canCache = false;
+    auto tlsCache = OSRGetProjTLSCache();
+    std::string osWkt;
     if( **ppszInput )
     {
-        const char* const options[] = { "STRICT=NO", nullptr };
-        PROJ_STRING_LIST warnings = nullptr;
-        PROJ_STRING_LIST errors = nullptr;
-        d->setPjCRS(proj_create_from_wkt(
-            d->getPROJContext(), *ppszInput, options, &warnings, &errors));
-        for( auto iter = warnings; iter && *iter; ++iter ) {
-            d->m_wktImportWarnings.push_back(*iter);
+        osWkt = *ppszInput;
+        auto cachedObj = tlsCache->GetPJForWKT(osWkt);
+        if( cachedObj )
+        {
+            d->setPjCRS(cachedObj);
         }
-        for( auto iter = errors; iter && *iter; ++iter ) {
-            d->m_wktImportErrors.push_back(*iter);
-            if( !d->m_pj_crs )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "%s", *iter);
+        else
+        {
+            const char* const options[] = { "STRICT=NO", nullptr };
+            PROJ_STRING_LIST warnings = nullptr;
+            PROJ_STRING_LIST errors = nullptr;
+            d->setPjCRS(proj_create_from_wkt(
+                d->getPROJContext(), *ppszInput, options, &warnings, &errors));
+            for( auto iter = warnings; iter && *iter; ++iter ) {
+                d->m_wktImportWarnings.push_back(*iter);
             }
+            for( auto iter = errors; iter && *iter; ++iter ) {
+                d->m_wktImportErrors.push_back(*iter);
+                if( !d->m_pj_crs )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s", *iter);
+                }
+            }
+            if( warnings == nullptr && errors == nullptr )
+            {
+                canCache = true;
+            }
+            proj_string_list_destroy(warnings);
+            proj_string_list_destroy(errors);
         }
-        proj_string_list_destroy(warnings);
-        proj_string_list_destroy(errors);
     }
     if( !d->m_pj_crs )
         return OGRERR_CORRUPT_DATA;
@@ -1642,6 +1658,11 @@ OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput )
     {
         Clear();
         return OGRERR_CORRUPT_DATA;
+    }
+
+    if( canCache )
+    {
+        tlsCache->CachePJForWKT(osWkt, d->m_pj_crs);
     }
 
     if( strstr(*ppszInput, "CENTER_LONG") ) {
@@ -10062,6 +10083,19 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 {
     Clear();
 
+    const bool bUseNonDeprecated = CPLTestBool(
+                CPLGetConfigOption("OSR_USE_NON_DEPRECATED", "YES"));
+    auto tlsCache = bUseNonDeprecated ? OSRGetProjTLSCache() : nullptr;
+    if( tlsCache )
+    {
+        auto cachedObj = tlsCache->GetPJForEPSGCode(nCode);
+        if( cachedObj )
+        {
+            d->setPjCRS(cachedObj);
+            return OGRERR_NONE;
+        }
+    }
+
     CPLString osCode;
     osCode.Printf("%d", nCode);
     auto obj = proj_create_from_database(d->getPROJContext(),
@@ -10077,8 +10111,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
     if( proj_is_deprecated(obj) ) {
         auto list = proj_get_non_deprecated(d->getPROJContext(), obj);
-        if( list && CPLTestBool(
-                CPLGetConfigOption("OSR_USE_NON_DEPRECATED", "YES")) ) {
+        if( list && bUseNonDeprecated ) {
             const auto count = proj_list_get_count(list);
             if( count == 1 ) {
                 auto nonDeprecated =
@@ -10101,6 +10134,12 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
     }
 
     d->setPjCRS(obj);
+
+    if( tlsCache )
+    {
+        tlsCache->CachePJForEPSGCode(nCode, obj);
+    }
+
     return OGRERR_NONE;
 }
 
