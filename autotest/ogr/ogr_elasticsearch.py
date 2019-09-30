@@ -2280,6 +2280,67 @@ def test_ogr_elasticsearch_authentication():
     assert ds is not None
 
 ###############################################################################
+# Test FORWARD_HTTP_HEADERS_FROM_ENV
+
+
+def test_ogr_elasticsearch_http_headers_from_env():
+    if ogrtest.elasticsearch_drv is None:
+        pytest.skip()
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch&HEADERS=Bar: value_of_bar\nFoo: value_of_foo\n",
+                           """{"version":{"number":"5.0.0"}}""")
+
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_cat/indices?h=i&HEADERS=Bar: value_of_bar\nFoo: value_of_foo\n""", '')
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?scroll=1m&size=100&POSTFIELDS={ 'FOO' : 'BAR' }&HEADERS=Content-Type: application/json; charset=UTF-8\nBar: value_of_bar\nFoo: value_of_foo\n""", """{
+        "hits":
+        {
+            "hits":[
+            {
+                "_index": "some_layer",
+                "_type": "some_type",
+                "_source": {
+                    "some_field": 5
+                },
+            }
+            ]
+        }
+    }""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/some_layer/_mapping/some_type?pretty&HEADERS=Bar: value_of_bar\nFoo: value_of_foo\n""", """
+    {
+        "some_layer":
+        {
+            "mappings":
+            {
+                "some_type":
+                {
+                    "properties":
+                    {
+                        "some_field": { "type": "string"}
+                    }
+                }
+            }
+        }
+    }
+    """)
+
+    with gdaltest.config_options({ 'CPL_CURL_VSIMEM_PRINT_HEADERS': 'YES',
+                                   'FOO': 'value_of_foo',
+                                   'BAR': 'value_of_bar' }):
+        ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
+                        open_options=['FORWARD_HTTP_HEADERS_FROM_ENV=Foo=FOO,Bar=BAR,Baz=I_AM_NOT_SET'])
+        assert ds is not None
+        sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect='ES')
+        f = sql_lyr.GetNextFeature()
+        assert f['some_field'] == '5'
+        ds.ReleaseResultSet(sql_lyr)
+
+
+###############################################################################
 # Cleanup
 
 
