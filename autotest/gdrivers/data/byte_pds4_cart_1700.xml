@@ -42,10 +42,10 @@
       <cart:Cartography>
         <cart:Spatial_Domain>
           <cart:Bounding_Coordinates>
-            <cart:west_bounding_coordinate unit="deg">-117.640846184838466</cart:west_bounding_coordinate>
-            <cart:east_bounding_coordinate unit="deg">-117.628433273895808</cart:east_bounding_coordinate>
-            <cart:north_bounding_coordinate unit="deg">33.9026884702547235</cart:north_bounding_coordinate>
-            <cart:south_bounding_coordinate unit="deg">33.8912612930438613</cart:south_bounding_coordinate>
+            <cart:west_bounding_coordinate unit="deg">-117.64116862079689</cart:west_bounding_coordinate>
+            <cart:east_bounding_coordinate unit="deg">-117.62811083784672</cart:east_bounding_coordinate>
+            <cart:north_bounding_coordinate unit="deg">33.9024195619210573</cart:north_bounding_coordinate>
+            <cart:south_bounding_coordinate unit="deg">33.8915301685906627</cart:south_bounding_coordinate>
           </cart:Bounding_Coordinates>
         </cart:Spatial_Domain>
         <cart:Spatial_Reference_Information>
@@ -69,8 +69,8 @@
                 </cart:Coordinate_Representation>
               </cart:Planar_Coordinate_Information>
               <cart:Geo_Transformation>
-                <cart:upperleft_corner_x unit="m">-59250</cart:upperleft_corner_x>
-                <cart:upperleft_corner_y unit="m">3751290</cart:upperleft_corner_y>
+                <cart:upperleft_corner_x unit="m">-59280</cart:upperleft_corner_x>
+                <cart:upperleft_corner_y unit="m">3751320</cart:upperleft_corner_y>
               </cart:Geo_Transformation>
             </cart:Planar>
             <cart:Geodetic_Model>
@@ -88,10 +88,9 @@
   </Observation_Area>
   <File_Area_Observational>
     <File>
-      <file_name>byte_pds4.img</file_name>
+      <file_name>byte_pds4_cart_1700.img</file_name>
     </File>
     <Array_3D>
-      <local_identifier>first_sds</local_identifier>
       <offset unit="byte">0</offset>
       <axes>3</axes>
       <axis_index_order>Last Index Fastest</axis_index_order>
@@ -105,7 +104,7 @@
       </Axis_Array>
       <Axis_Array>
         <axis_name>Line</axis_name>
-        <elements>10</elements>
+        <elements>20</elements>
         <sequence_number>2</sequence_number>
       </Axis_Array>
       <Axis_Array>
@@ -123,59 +122,6 @@
         <mean>126.765</mean>
         <standard_deviation>22.928470838676</standard_deviation>
       </Object_Statistics>
-    </Array_3D>
-    <Array_3D>
-      <local_identifier>second_sds</local_identifier>
-      <offset unit="byte">200</offset>
-      <axes>3</axes>
-      <axis_index_order>Last Index Fastest</axis_index_order>
-      <Element_Array>
-        <data_type>UnsignedByte</data_type>
-      </Element_Array>
-      <Axis_Array>
-        <axis_name>Band</axis_name>
-        <elements>1</elements>
-        <sequence_number>1</sequence_number>
-      </Axis_Array>
-      <Axis_Array>
-        <axis_name>Line</axis_name>
-        <elements>10</elements>
-        <sequence_number>2</sequence_number>
-      </Axis_Array>
-      <Axis_Array>
-        <axis_name>Sample</axis_name>
-        <elements>20</elements>
-        <sequence_number>3</sequence_number>
-      </Axis_Array>
-    </Array_3D>
-  </File_Area_Observational>
-  <File_Area_Observational>
-    <File>
-      <file_name>byte_pds4.img</file_name>
-    </File>
-    <Array_3D>
-      <local_identifier>third_sds</local_identifier>
-      <offset unit="byte">100</offset>
-      <axes>3</axes>
-      <axis_index_order>Last Index Fastest</axis_index_order>
-      <Element_Array>
-        <data_type>UnsignedByte</data_type>
-      </Element_Array>
-      <Axis_Array>
-        <axis_name>Band</axis_name>
-        <elements>1</elements>
-        <sequence_number>1</sequence_number>
-      </Axis_Array>
-      <Axis_Array>
-        <axis_name>Line</axis_name>
-        <elements>15</elements>
-        <sequence_number>2</sequence_number>
-      </Axis_Array>
-      <Axis_Array>
-        <axis_name>Sample</axis_name>
-        <elements>20</elements>
-        <sequence_number>3</sequence_number>
-      </Axis_Array>
     </Array_3D>
   </File_Area_Observational>
 </Product_Observational>

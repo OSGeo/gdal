@@ -1338,11 +1338,11 @@ namespace tut
         // PDS 4
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "byte_pds4.xml"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "byte_pds4_cart_1700.xml"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure( sLayout.osRawFilename.find("byte_pds4.img") != std::string::npos );
+            ensure( sLayout.osRawFilename.find("byte_pds4_cart_1700.img") != std::string::npos );
             ensure_equals( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
             ensure_equals( sLayout.eDataType, GDT_Byte );

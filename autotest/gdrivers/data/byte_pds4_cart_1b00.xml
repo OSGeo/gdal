@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
-<?xml-model href="https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
-<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1" xmlns:pds="http://pds.nasa.gov/pds4/pds/v1" xmlns:cart="http://pds.nasa.gov/pds4/cart/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
-    http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd
-    http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd">
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1B00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1" xmlns:pds="http://pds.nasa.gov/pds4/pds/v1" xmlns:disp="http://pds.nasa.gov/pds4/disp/v1" xmlns:cart="http://pds.nasa.gov/pds4/cart/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+    http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd
+    http://pds.nasa.gov/pds4/disp/v1 https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1B00.xsd
+    http://pds.nasa.gov/pds4/cart/v1 https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd">
   <Identification_Area>
     <logical_identifier>${LOGICAL_IDENTIFIER}</logical_identifier>
     <version_id>1.0</version_id>
-    <title>${TITLE}</title>
-    <information_model_version>1.8.0.0</information_model_version>
+    <title>byte_pds4_cart_1b00.xml</title>
+    <information_model_version>1.B.0.0</information_model_version>
     <product_class>Product_Observational</product_class>
   </Identification_Area>
   <Observation_Area>
@@ -39,13 +41,29 @@
       </Internal_Reference>
     </Target_Identification>
     <Discipline_Area>
+      <disp:Display_Settings>
+        <Local_Internal_Reference>
+          <local_identifier_reference>image</local_identifier_reference>
+          <local_reference_type>display_settings_to_array</local_reference_type>
+        </Local_Internal_Reference>
+        <disp:Display_Direction>
+          <disp:horizontal_display_axis>Sample</disp:horizontal_display_axis>
+          <disp:horizontal_display_direction>Left to Right</disp:horizontal_display_direction>
+          <disp:vertical_display_axis>Line</disp:vertical_display_axis>
+          <disp:vertical_display_direction>Top to Bottom</disp:vertical_display_direction>
+        </disp:Display_Direction>
+      </disp:Display_Settings>
       <cart:Cartography>
+        <Local_Internal_Reference>
+          <local_identifier_reference>image</local_identifier_reference>
+          <local_reference_type>cartography_parameters_to_image_object</local_reference_type>
+        </Local_Internal_Reference>
         <cart:Spatial_Domain>
           <cart:Bounding_Coordinates>
-            <cart:west_bounding_coordinate unit="deg">-117.640846184838466</cart:west_bounding_coordinate>
-            <cart:east_bounding_coordinate unit="deg">-117.628433273895808</cart:east_bounding_coordinate>
-            <cart:north_bounding_coordinate unit="deg">33.9026884702547235</cart:north_bounding_coordinate>
-            <cart:south_bounding_coordinate unit="deg">33.8912612930438613</cart:south_bounding_coordinate>
+            <cart:west_bounding_coordinate unit="deg">-117.64116862079689</cart:west_bounding_coordinate>
+            <cart:east_bounding_coordinate unit="deg">-117.62811083784672</cart:east_bounding_coordinate>
+            <cart:north_bounding_coordinate unit="deg">33.9024195619210573</cart:north_bounding_coordinate>
+            <cart:south_bounding_coordinate unit="deg">33.8915301685906627</cart:south_bounding_coordinate>
           </cart:Bounding_Coordinates>
         </cart:Spatial_Domain>
         <cart:Spatial_Reference_Information>
@@ -63,22 +81,22 @@
                 <cart:planar_coordinate_encoding_method>Coordinate Pair</cart:planar_coordinate_encoding_method>
                 <cart:Coordinate_Representation>
                   <cart:pixel_resolution_x unit="m/pixel">60</cart:pixel_resolution_x>
-                  <cart:pixel_resolution_y unit="km/pixel">0.060</cart:pixel_resolution_y>
+                  <cart:pixel_resolution_y unit="m/pixel">60</cart:pixel_resolution_y>
                   <cart:pixel_scale_x unit="pixel/deg">1855.34503419624093</cart:pixel_scale_x>
                   <cart:pixel_scale_y unit="pixel/deg">1855.34503419624093</cart:pixel_scale_y>
                 </cart:Coordinate_Representation>
               </cart:Planar_Coordinate_Information>
               <cart:Geo_Transformation>
-                <cart:upperleft_corner_x unit="m">-59250</cart:upperleft_corner_x>
-                <cart:upperleft_corner_y unit="m">3751290</cart:upperleft_corner_y>
+                <cart:upperleft_corner_x unit="m">-59280</cart:upperleft_corner_x>
+                <cart:upperleft_corner_y unit="m">3751320</cart:upperleft_corner_y>
               </cart:Geo_Transformation>
             </cart:Planar>
             <cart:Geodetic_Model>
               <cart:latitude_type>Planetocentric</cart:latitude_type>
               <cart:spheroid_name>North_American_Datum_1927</cart:spheroid_name>
-              <cart:semi_major_radius unit="km">6378.2064</cart:semi_major_radius>
-              <cart:semi_minor_radius unit="m">6378206.4</cart:semi_minor_radius>
-              <cart:polar_radius unit="m">6356583.8</cart:polar_radius>
+              <cart:semi_major_radius unit="m">6378206.40000000037</cart:semi_major_radius>
+              <cart:semi_minor_radius unit="m">6378206.40000000037</cart:semi_minor_radius>
+              <cart:polar_radius unit="m">6356583.79999999981</cart:polar_radius>
               <cart:longitude_direction>Positive East</cart:longitude_direction>
             </cart:Geodetic_Model>
           </cart:Horizontal_Coordinate_System_Definition>
@@ -88,9 +106,10 @@
   </Observation_Area>
   <File_Area_Observational>
     <File>
-      <file_name>byte_pds4.img</file_name>
+      <file_name>byte_pds4_cart_1b00.img</file_name>
     </File>
-    <Array_3D>
+    <Array_3D_Image>
+      <local_identifier>image</local_identifier>
       <offset unit="byte">0</offset>
       <axes>3</axes>
       <axis_index_order>Last Index Fastest</axis_index_order>
@@ -112,16 +131,6 @@
         <elements>20</elements>
         <sequence_number>3</sequence_number>
       </Axis_Array>
-      <Special_Constants>
-        <saturated_constant>255</saturated_constant>
-        <missing_constant>74</missing_constant>
-      </Special_Constants>
-      <Object_Statistics>
-        <maximum>74</maximum>
-        <minimum>255</minimum>
-        <mean>126.765</mean>
-        <standard_deviation>22.928470838676</standard_deviation>
-      </Object_Statistics>
-    </Array_3D>
+    </Array_3D_Image>
   </File_Area_Observational>
 </Product_Observational>
