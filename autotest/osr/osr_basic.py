@@ -386,6 +386,7 @@ def test_osr_basic_12():
 def test_osr_basic_13():
 
     srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4328)
     with gdaltest.config_option('OSR_USE_NON_DEPRECATED', 'NO'):
         srs.ImportFromEPSG(4328)
 

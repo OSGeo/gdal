@@ -31,10 +31,33 @@
 
 #include "proj.h"
 
+#include "cpl_mem_cache.h"
+
+#include <memory>
+
 /*! @cond Doxygen_Suppress */
 
 PJ_CONTEXT* OSRGetProjTLSContext();
 void OSRCleanupTLSContext();
+
+class OSRProjTLSCache
+{
+        lru11::Cache<int, std::shared_ptr<PJ>> m_oCacheEPSG{};
+        lru11::Cache<std::string, std::shared_ptr<PJ>> m_oCacheWKT{};
+
+    public:
+        OSRProjTLSCache() = default;
+
+        void clear();
+
+        PJ* GetPJForEPSGCode(int nCode);
+        void CachePJForEPSGCode(int nCode, PJ* pj);
+
+        PJ* GetPJForWKT(const std::string& wkt);
+        void CachePJForWKT(const std::string& wkt, PJ* pj);
+};
+
+OSRProjTLSCache* OSRGetProjTLSCache();
 
 /*! @endcond Doxygen_Suppress */
 
