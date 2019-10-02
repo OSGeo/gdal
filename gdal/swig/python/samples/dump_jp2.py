@@ -200,7 +200,10 @@ def main():
                 return 1
     else:
         s = gdal.GetJPEG2000StructureAsString(filename, ['ALL=YES'])
-        print(s)
+        if sys.version_info >= (3,0,0):
+            print(s)
+        else:
+            print(s.encode('UTF-8'))
 
     return 0
 
