@@ -384,14 +384,17 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                 oSRS.SetLocalCS( szPCSName );
 
                 // Handle units
+                if( psDefn->UOMLength != KvUserDefined )
+                {
 #if LIBGEOTIFF_VERSION >= 1600
-                GTIFGetUOMLengthInfoEx( projContext,
+                    GTIFGetUOMLengthInfoEx( projContext,
 #else
-                GTIFGetUOMLengthInfo(
+                    GTIFGetUOMLengthInfo(
 #endif
-                    psDefn->UOMLength, &pszUnitsName, nullptr );
+                        psDefn->UOMLength, &pszUnitsName, nullptr );
+                }
 
-                if( pszUnitsName != nullptr && psDefn->UOMLength != KvUserDefined )
+                if( pszUnitsName != nullptr )
                 {
                     char szUOMLength[12];
                     snprintf(szUOMLength, sizeof(szUOMLength),
@@ -428,14 +431,17 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
         char *pszUnitsName = nullptr;
 
+        if( psDefn->UOMLength != KvUserDefined )
+        {
 #if LIBGEOTIFF_VERSION >= 1600
-        GTIFGetUOMLengthInfoEx( projContext,
+            GTIFGetUOMLengthInfoEx( projContext,
 #else
-        GTIFGetUOMLengthInfo(
+            GTIFGetUOMLengthInfo(
 #endif
-            psDefn->UOMLength, &pszUnitsName, nullptr );
+                psDefn->UOMLength, &pszUnitsName, nullptr );
+        }
 
-        if( pszUnitsName != nullptr && psDefn->UOMLength != KvUserDefined )
+        if( pszUnitsName != nullptr )
         {
             char szUOMLength[12];
                     snprintf(szUOMLength, sizeof(szUOMLength),
@@ -852,14 +858,17 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     {
         char *pszUnitsName = nullptr;
 
+        if( psDefn->UOMLength != KvUserDefined )
+        {
 #if LIBGEOTIFF_VERSION >= 1600
-        GTIFGetUOMLengthInfoEx( projContext,
+            GTIFGetUOMLengthInfoEx( projContext,
 #else
-        GTIFGetUOMLengthInfo(
+            GTIFGetUOMLengthInfo(
 #endif
-            psDefn->UOMLength, &pszUnitsName, nullptr );
+                psDefn->UOMLength, &pszUnitsName, nullptr );
+        }
 
-        if( pszUnitsName != nullptr && psDefn->UOMLength != KvUserDefined )
+        if( pszUnitsName != nullptr )
         {
             char szUOMLength[12];
             snprintf(szUOMLength, sizeof(szUOMLength),
