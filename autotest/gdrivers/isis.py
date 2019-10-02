@@ -1687,3 +1687,32 @@ End""")
 
     src_ds = None
     gdal.Unlink('/vsimem/multiband.lbl')
+
+
+def test_isis3_point_perspective_read():
+
+    ds = gdal.Open('data/isis3_pointperspective.cub')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=nsper +lat_0=-10 +lon_0=-90 +h=31603810 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs'
+
+
+def test_isis3_point_perspective_write():
+
+    if osr.GetPROJVersionMajor() < 7:
+        pytest.skip()
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 3000000, 0)
+    sr.SetVerticalPerspective(1, 2, 0, 1000, 0, 0)
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
+    ds.SetSpatialRef(sr)
+    ds.SetGeoTransform([-10, 1, 0, 40, 0, -1])
+    ds = None
+    ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    print(lbl)
+    assert '"CenterLatitude":1.0' in lbl
+    assert '"CenterLongitude":2.0' in lbl
+    assert '"Distance":3001.0' in lbl
+    ds = None
+
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
