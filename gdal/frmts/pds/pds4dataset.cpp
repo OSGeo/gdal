@@ -1152,23 +1152,37 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                                                      "");
         bool bIsOgraphic = EQUAL(pszLatitudeType, "Planetographic");
 
-        double dfSemiMajor = GetLinearValue(psGeodeticModel,
-                                            "semi_major_radius");
-        // according to the spec, it seems the semi_minor_radius is
-        // considered in the equatorial plane, which is rather unusual
-        // for WKT, we want to use the polar_radius as the actual semi minor
-        // axis
-        double dfSemiMinorPDS4 = GetLinearValue(psGeodeticModel,
-                                            "semi_minor_radius");
-        if( dfSemiMajor != dfSemiMinorPDS4 )
+        const bool bUseLDD1930RadiusNames =
+            CPLGetXMLNode(psGeodeticModel, "a_axis_radius") != nullptr;
+
+        // Before PDS CART schema pre-1.B.10.0 (pre LDD version 1.9.3.0),
+        // the confusing semi_major_radius, semi_minor_radius and polar_radius
+        // were used but did not follow the recommended
+        // FGDC names. Using both "semi" and "radius" in the same keyword,
+        // which both mean half, does not make sense.
+        const char* pszAAxis = bUseLDD1930RadiusNames ?
+                                    "a_axis_radius" : "semi_major_radius";
+        const char* pszBAxis = bUseLDD1930RadiusNames ?
+                                    "b_axis_radius" : "semi_minor_radius";
+        const char* pszCAxis = bUseLDD1930RadiusNames ?
+                                    "c_axis_radius" : "polar_radius";
+
+        const double dfSemiMajor = GetLinearValue(psGeodeticModel, pszAAxis);
+
+        // a_axis_radius and b_axis_radius should be the same in most cases
+        // unless a triaxial body is being defined. This should be extremely
+        // rare (and not used) since the IAU generally defines a best-fit sphere
+        // for triaxial bodies: https://astrogeology.usgs.gov/groups/IAU-WGCCRE
+        const double dfBValue = GetLinearValue(psGeodeticModel, pszBAxis);
+        if( dfSemiMajor != dfBValue )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "semi_minor_radius = %f m, different from "
-                     "semi_major_radius = %f, will be ignored",
-                     dfSemiMinorPDS4, dfSemiMajor);
+                    "%s = %f m, different from "
+                    "%s = %f, will be ignored",
+                    pszBAxis, dfBValue, pszAAxis, dfSemiMajor);
         }
-        double dfPolarRadius = GetLinearValue(psGeodeticModel,
-                                              "polar_radius");
+
+        const double dfPolarRadius = GetLinearValue(psGeodeticModel, pszCAxis);
         // Use the polar_radius as the actual semi minor
         const double dfSemiMinor = dfPolarRadius;
 
