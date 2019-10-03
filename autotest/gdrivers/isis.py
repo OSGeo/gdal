@@ -1709,10 +1709,46 @@ def test_isis3_point_perspective_write():
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
-    print(lbl)
     assert '"CenterLatitude":1.0' in lbl
     assert '"CenterLongitude":2.0' in lbl
     assert '"Distance":3001.0' in lbl
+    ds = None
+
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
+
+
+def test_isis3_oblique_cylindrical_read():
+
+    ds = gdal.Open('data/isis3_obliquecylindrical.cub')
+    srs = ds.GetSpatialRef()
+    assert srs.ExportToProj4() == '+proj=ob_tran +o_proj=eqc +o_lon_p=-90 +o_lat_p=180 +lon_0=0 +R=3396190 +units=m +no_defs'
+
+    pixel = ds.RasterXSize / 2.0
+    line = ds.RasterYSize / 2.0
+    gt = ds.GetGeoTransform()
+    x = gt[0] + pixel * gt[1] + line * gt[2]
+    y = gt[3] + pixel * gt[4] + line * gt[5]
+    geog_srs = srs.CloneGeogCS()
+    ct = osr.CoordinateTransformation(srs, geog_srs)
+    lon, lat, _ = ct.TransformPoint(x, y)
+    assert lon == pytest.approx(90.0)
+    assert lat == pytest.approx(-45.0, 1e-2)
+
+
+def test_isis3_oblique_cylindrical_write():
+
+    src_ds = gdal.Open('data/isis3_obliquecylindrical.cub')
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', src_ds.RasterXSize, src_ds.RasterYSize)
+    ds.SetSpatialRef(src_ds.GetSpatialRef())
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert '"PoleLongitude":0.0' in lbl
+    assert '"PoleLatitude":0.0' in lbl
+    assert '"PoleRotation":90.0' in lbl
     ds = None
 
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')

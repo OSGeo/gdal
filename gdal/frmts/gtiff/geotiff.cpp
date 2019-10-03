@@ -11128,7 +11128,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
                 CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
                 m_oSRS.exportToWkt(&pszProjection);
             }
-            if( pszProjection && pszProjection[0] )
+            if( pszProjection && pszProjection[0] &&
+                strstr(pszProjection, "custom_proj4") == nullptr )
             {
                 GTIFSetFromOGISDefnEx( psGTIF, pszProjection,
                                        m_eGeoTIFFKeysFlavor,
@@ -17584,7 +17585,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
                 eErr = l_poSRS->exportToWkt(&pszWKT);
             }
-            if( eErr == OGRERR_NONE )
+            if( eErr == OGRERR_NONE && strstr(pszWKT, "custom_proj4") == nullptr )
             {
                 GTIFSetFromOGISDefnEx( psGTIF, pszWKT,
                                     GetGTIFFKeysFlavor(papszOptions),
