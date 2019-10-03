@@ -1880,6 +1880,13 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     /**** This is the planets name i.e. Mars ***/
     const char *target_name = poDS->GetKeyword("IsisCube.Mapping.TargetName");
 
+#ifdef notdef
+    const double dfLongitudeMulFactor =
+        EQUAL(poDS->GetKeyword( "IsisCube.Mapping.LongitudeDirection", "PositiveEast"), "PositiveEast") ? 1 : -1;
+#else
+    const double dfLongitudeMulFactor = 1;
+#endif
+
     /***********   Grab MAP_PROJECTION_TYPE ************/
      const char *map_proj_name =
         poDS->GetKeyword( "IsisCube.Mapping.ProjectionName");
@@ -1898,7 +1905,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********   Grab CENTER_LON ************/
     const double center_lon =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLongitude"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLongitude")) * dfLongitudeMulFactor;
 
     /***********   Grab 1st std parallel ************/
     const double first_std_parallel =
@@ -1929,7 +1936,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     //  Equirectangular
     //  LambertConformal
     //  Mercator
-    //  ObliqueCylindrical //Todo
+    //  ObliqueCylindrical
     //  Orthographic
     //  PolarStereographic
     //  SimpleCylindrical
@@ -1959,11 +1966,28 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     } else if (EQUAL( map_proj_name, "LambertConformal" )) {
         oSRS.SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "PointPerspective" )) {
-        CPLString oProj4String;
         // Distance parameter is the distance to the center of the body, and is given in km
         const double distance = CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.Distance")) * 1000.0;
         const double height_above_ground = distance - semi_major;
         oSRS.SetVerticalPerspective(center_lat, center_lon, 0, height_above_ground, 0, 0);
+    } else if (EQUAL( map_proj_name, "ObliqueCylindrical" )) {
+        const double poleLatitude = CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PoleLatitude"));
+        const double poleLongitude = CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PoleLongitude")) * dfLongitudeMulFactor;
+        const double poleRotation = CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PoleRotation"));
+        CPLString oProj4String;
+        // ISIS3 rotated pole doesn't use the same conventions than PROJ ob_tran
+        // Compare the sign difference in https://github.com/USGS-Astrogeology/ISIS3/blob/3.8.0/isis/src/base/objs/ObliqueCylindrical/ObliqueCylindrical.cpp#L244
+        // and https://github.com/OSGeo/PROJ/blob/6.2/src/projections/ob_tran.cpp#L34
+        // They can be compensated by modifying the poleLatitude to 180-poleLatitude
+        // There's also a sign difference for the poleRotation parameter
+        // The existence of those different conventions is acknowledged in
+        // https://pds-imaging.jpl.nasa.gov/documentation/Cassini_BIDRSIS.PDF in the middle of page 10
+        oProj4String.Printf(
+            "+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g +o_lat_p=%.18g +lon_0=%.18g",
+            -poleRotation,
+            180-poleLatitude,
+            poleLongitude);
+        oSRS.SetFromUserInput(oProj4String);
     } else {
         CPLDebug( "ISIS3",
                   "Dataset projection %s is not supported. Continuing...",
@@ -2914,6 +2938,40 @@ void ISIS3Dataset::BuildLabel()
                         (oSRS.GetNormProjParm("Viewpoint height", 0.0) + oSRS.GetSemiMajor()) / 1000.0 );
             }
 
+            else if( EQUAL(pszProjection, "custom_proj4") )
+            {
+                const char* pszProj4 = oSRS.GetExtension("PROJCS", "PROJ4", nullptr);
+                if( pszProj4 && strstr(pszProj4, "+proj=ob_tran" ) &&
+                    strstr(pszProj4, "+o_proj=eqc") )
+                {
+                    const auto FetchParam = [](const char* pszProj4Str, const char* pszKey)
+                    {
+                        CPLString needle;
+                        needle.Printf("+%s=", pszKey);
+                        const char* pszVal = strstr(pszProj4Str, needle.c_str());
+                        if( pszVal )
+                            return CPLAtof(pszVal+needle.size());
+                        return 0.0;
+                    };
+
+                    double dfLonP = FetchParam(pszProj4, "o_lon_p");
+                    double dfLatP = FetchParam(pszProj4, "o_lat_p");
+                    double dfLon0 = FetchParam(pszProj4, "lon_0");
+                    double dfPoleRotation = -dfLonP;
+                    double dfPoleLatitude = 180 - dfLatP;
+                    double dfPoleLongitude = dfLon0;
+                    oMapping.Add( "ProjectionName", "ObliqueCylindrical" );
+                    oMapping.Add( "PoleLatitude", dfPoleLatitude );
+                    oMapping.Add( "PoleLongitude", FixLong(dfPoleLongitude) );
+                    oMapping.Add( "PoleRotation", dfPoleRotation );
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "Projection %s not supported",
+                            pszProjection);
+                }
+            }
             else
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
