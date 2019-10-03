@@ -811,6 +811,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_SetVDG(self, *args, **kwargs)
 
 
+    def SetVerticalPerspective(self, *args, **kwargs):
+        """SetVerticalPerspective(SpatialReference self, double topoOriginLat, double topoOriginLon, double topoOriginHeight, double viewPointHeight, double fe, double fn) -> OGRErr"""
+        return _osr.SpatialReference_SetVerticalPerspective(self, *args, **kwargs)
+
+
     def SetWellKnownGeogCS(self, *args):
         """SetWellKnownGeogCS(SpatialReference self, char const * name) -> OGRErr"""
         return _osr.SpatialReference_SetWellKnownGeogCS(self, *args)

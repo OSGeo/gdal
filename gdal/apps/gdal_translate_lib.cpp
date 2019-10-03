@@ -691,7 +691,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         char* pszSRS = nullptr;
-        oOutputSRS.exportToWkt( &pszSRS );
+        {
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            if( oOutputSRS.exportToWkt( &pszSRS ) != OGRERR_NONE )
+            {
+                CPLFree(pszSRS);
+                pszSRS = nullptr;
+                const char* const apszOptions[] = { "FORMAT=WKT2", nullptr };
+                oOutputSRS.exportToWkt( &pszSRS, apszOptions );
+            }
+        }
         CPLFree( psOptions->pszOutputSRS );
         psOptions->pszOutputSRS = CPLStrdup( pszSRS );
         CPLFree( pszSRS );
