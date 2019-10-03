@@ -604,6 +604,7 @@ def test_tiff_srs_write_vertical_perspective():
     ds.SetSpatialRef(sr)
     assert gdal.GetLastErrorMsg() == ''
     ds = None
+    assert gdal.VSIStatL('/vsimem/src.tif.aux.xml')
 
     src_ds = gdal.Open('/vsimem/src.tif')
     # First is PROJ 7
@@ -611,6 +612,7 @@ def test_tiff_srs_write_vertical_perspective():
     gdal.ErrorReset()
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/dst.tif', src_ds)
     assert gdal.GetLastErrorMsg() == ''
+    assert gdal.VSIStatL('/vsimem/dst.tif.aux.xml')
 
     ds = gdal.Open('/vsimem/dst.tif')
     assert ds.GetSpatialRef().ExportToProj4() == src_ds.GetSpatialRef().ExportToProj4()
@@ -620,3 +622,20 @@ def test_tiff_srs_write_vertical_perspective():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/src.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/dst.tif')
+
+
+def test_tiff_srs_write_ob_tran_eqc():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4( '+proj=ob_tran +o_proj=eqc +o_lon_p=-90 +o_lat_p=180 +lon_0=0 +R=3396190 +units=m +no_defs' )
+    ds.SetSpatialRef(sr)
+    ds = None
+
+    assert gdal.VSIStatL('/vsimem/src.tif.aux.xml')
+
+    ds = gdal.Open('/vsimem/src.tif')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=ob_tran +o_proj=eqc +o_lon_p=-90 +o_lat_p=180 +lon_0=0 +R=3396190 +units=m +no_defs'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/src.tif')
