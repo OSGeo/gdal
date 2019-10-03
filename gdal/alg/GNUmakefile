@@ -10,7 +10,7 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsievefilter.o gdalwarpkernel_opencl.o polygonize.o \
 		contour.o gdaltransformgeolocs.o gdallinearsystem.o \
 		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o \
-		gdalpansharpen.o gdalapplyverticalshiftgrid.o
+		gdalpansharpen.o gdalapplyverticalshiftgrid.o viewshed.o
 
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
