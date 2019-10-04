@@ -92,6 +92,7 @@ struct OGRSpatialReference::Private
     CPLString           m_osAreaName{};
 
     bool                m_bNodesChanged = false;
+    bool                m_bNodesWKT2 = false;
     OGR_SRSNode        *m_poRoot = nullptr;
 
     double              dfFromGreenwich = 0.0;
@@ -274,9 +275,22 @@ void OGRSpatialReference::Private::refreshRootFromProjObj()
         }
         aosOptions.SetNameValue("STRICT", "NO");
 
-        const char* pszWKT = proj_as_wkt(getPROJContext(),
-            m_pj_crs, m_bMorphToESRI ? PJ_WKT1_ESRI : PJ_WKT1_GDAL,
-            aosOptions.List());
+        const char* pszWKT;
+        {
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            pszWKT = proj_as_wkt(getPROJContext(),
+                m_pj_crs, m_bMorphToESRI ? PJ_WKT1_ESRI : PJ_WKT1_GDAL,
+                aosOptions.List());
+            m_bNodesWKT2 = false;
+        }
+        if( !m_bMorphToESRI && pszWKT == nullptr )
+        {
+             pszWKT = proj_as_wkt(getPROJContext(), m_pj_crs, PJ_WKT2_2018,
+                                  aosOptions.List());
+             m_bNodesWKT2 = true;
+        }
+        CPLPopErrorHandler();
         if( pszWKT )
         {
             auto root = new OGR_SRSNode();
@@ -1077,7 +1091,13 @@ const char *OGRSpatialReference::GetAttrValue( const char * pszNodeName,
 {
     const OGR_SRSNode *poNode = GetAttrNode( pszNodeName );
     if( poNode == nullptr )
+    {
+        if( d->m_bNodesWKT2 && EQUAL(pszNodeName, "PROJECTION") )
+        {
+            return GetAttrValue("METHOD", iAttr);
+        }
         return nullptr;
+    }
 
     if( iAttr < 0 || iAttr >= poNode->GetChildCount() )
         return nullptr;
@@ -4864,7 +4884,7 @@ int OGRSpatialReference::FindProjParm( const char *pszParameter,
         const OGR_SRSNode *poParameter = poPROJCS->GetChild(iChild);
 
         if( EQUAL(poParameter->GetValue(), "PARAMETER")
-            && poParameter->GetChildCount() == 2
+            && poParameter->GetChildCount() >= 2
             && EQUAL(poPROJCS->GetChild(iChild)->GetChild(0)->GetValue(),
                      pszParameter) )
         {
@@ -4924,7 +4944,7 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Find the desired parameter.                                     */
 /* -------------------------------------------------------------------- */
-    const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+    const OGR_SRSNode *poPROJCS = GetAttrNode( d->m_bNodesWKT2 ? "CONVERSION" : "PROJCS" );
     if( poPROJCS == nullptr )
     {
         if( pnErr != nullptr )
@@ -7258,6 +7278,61 @@ OGRErr OSRSetSCH( OGRSpatialReferenceH hSRS,
 
     return ToPointer(hSRS)->SetSCH(
         dfPegLat, dfPegLong, dfPegHeading, dfPegHgt );
+}
+
+
+/************************************************************************/
+/*                         SetVerticalPerspective()                     */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetVerticalPerspective( double dfTopoOriginLat,
+                                                    double dfTopoOriginLon,
+                                                    double dfTopoOriginHeight,
+                                                    double dfViewPointHeight,
+                                                    double dfFalseEasting,
+                                                    double dfFalseNorthing )
+{
+#if PROJ_VERSION_MAJOR >= 7
+    return d->replaceConversionAndUnref(
+        proj_create_conversion_vertical_perspective(
+            d->getPROJContext(),
+            dfTopoOriginLat, dfTopoOriginLon,
+            dfTopoOriginHeight, dfViewPointHeight,
+            dfFalseEasting, dfFalseNorthing,
+            nullptr, 0, nullptr, 0));
+#else
+    CPL_IGNORE_RET_VAL(dfTopoOriginHeight); // ignored by PROJ
+
+    OGRSpatialReference oSRS;
+    CPLString oProj4String;
+    oProj4String.Printf(
+        "+proj=nsper +lat_0=%.18g +lon_0=%.18g +h=%.18g +x_0=%.18g +y_0=%.18g",
+         dfTopoOriginLat, dfTopoOriginLon, dfViewPointHeight,
+         dfFalseEasting, dfFalseNorthing);
+    oSRS.SetFromUserInput(oProj4String);
+    return d->replaceConversionAndUnref(
+        proj_crs_get_coordoperation(d->getPROJContext(), oSRS.d->m_pj_crs));
+#endif
+}
+
+/************************************************************************/
+/*                       OSRSetVerticalPerspective()                    */
+/************************************************************************/
+
+OGRErr OSRSetVerticalPerspective( OGRSpatialReferenceH hSRS,
+                                  double dfTopoOriginLat,
+                                  double dfTopoOriginLon,
+                                  double dfTopoOriginHeight,
+                                  double dfViewPointHeight,
+                                  double dfFalseEasting,
+                                  double dfFalseNorthing )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetVerticalPerspective", OGRERR_FAILURE );
+
+    return ToPointer(hSRS)->SetVerticalPerspective(
+        dfTopoOriginLat, dfTopoOriginLon, dfTopoOriginHeight,
+        dfViewPointHeight, dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/

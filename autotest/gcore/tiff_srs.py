@@ -592,3 +592,50 @@ def test_tiff_srs_read_epsg32631_4979_geotiff1_1():
     sr = ds.GetSpatialRef()
     # PROJ 6.0 didn't include the ID of the base CRS
     assert sr.ExportToWkt().replace(',ID["EPSG",4979]','') == 'PROJCRS["WGS 84 / UTM zone 31N",BASEGEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4979]],CONVERSION["UTM zone 31N",METHOD["Transverse Mercator",ID["EPSG",9807]],PARAMETER["Latitude of natural origin",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",3,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9996,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",500000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",0,LENGTHUNIT["metre",1],ID["EPSG",8807]],ID["EPSG",16031]],CS[Cartesian,3],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1]],AXIS["ellipsoidal height (h)",up,ORDER[3],LENGTHUNIT["metre",1]]]'.replace(',ID["EPSG",4979]','')
+
+
+def test_tiff_srs_write_vertical_perspective():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 3000000, 0)
+    sr.SetVerticalPerspective(1, 2, 0, 1000, 0, 0)
+    gdal.ErrorReset()
+    ds.SetSpatialRef(sr)
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+    assert gdal.VSIStatL('/vsimem/src.tif.aux.xml')
+
+    src_ds = gdal.Open('/vsimem/src.tif')
+    # First is PROJ 7
+    assert src_ds.GetSpatialRef().ExportToProj4() in ('+proj=nsper +lat_0=1 +lon_0=2 +h=1000 +x_0=0 +y_0=0 +R=3000000 +units=m +no_defs', '+proj=nsper +R=3000000 +lat_0=1 +lon_0=2 +h=1000 +x_0=0 +y_0=0 +wktext +no_defs')
+    gdal.ErrorReset()
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/dst.tif', src_ds)
+    assert gdal.GetLastErrorMsg() == ''
+    assert gdal.VSIStatL('/vsimem/dst.tif.aux.xml')
+
+    ds = gdal.Open('/vsimem/dst.tif')
+    assert ds.GetSpatialRef().ExportToProj4() == src_ds.GetSpatialRef().ExportToProj4()
+
+    src_ds = None
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/src.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/dst.tif')
+
+
+def test_tiff_srs_write_ob_tran_eqc():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4( '+proj=ob_tran +o_proj=eqc +o_lon_p=-90 +o_lat_p=180 +lon_0=0 +R=3396190 +units=m +no_defs' )
+    ds.SetSpatialRef(sr)
+    ds = None
+
+    assert gdal.VSIStatL('/vsimem/src.tif.aux.xml')
+
+    ds = gdal.Open('/vsimem/src.tif')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=ob_tran +o_proj=eqc +o_lon_p=-90 +o_lat_p=180 +lon_0=0 +R=3396190 +units=m +no_defs'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/src.tif')

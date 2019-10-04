@@ -1,0 +1,43 @@
+Object = IsisCube
+  Object = Core
+    Format      = Tile
+    TileSamples = 1067
+    TileLines   = 1067
+
+    Group = Dimensions
+      Samples = 3201
+      Lines   = 2134
+      Bands   = 1
+    End_Group
+
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = Mapping
+    ProjectionName     = ObliqueCylindrical
+    TargetName         = Mars
+    EquatorialRadius   = 3396190.0 <meters>
+    PolarRadius        = 3376200.0 <meters>
+    LatitudeType       = Planetocentric
+    LongitudeDirection = PositiveEast
+    LongitudeDomain    = 180
+    MinimumLatitude    = -90.0
+    MaximumLatitude    = 90.0
+    MinimumLongitude   = -180.0
+    MaximumLongitude   = 180.0
+    UpperLeftCornerX   = -10670000.0 <meters>
+    UpperLeftCornerY   = 5335000.0 <meters>
+    PixelResolution    = 5000.0 <meters/pixel>
+    Scale              = 11.854939504661 <pixels/degree>
+    PoleLatitude       = 0.0
+    PoleLongitude      = 0.0
+    PoleRotation       = 90.0
+  End_Group
+End_Object
+
+End

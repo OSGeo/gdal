@@ -151,7 +151,7 @@ class ISIS3Dataset final: public RawDataset
     bool        m_bHasSrcNoData; // creation only
     double      m_dfSrcNoData; // creation only
 
-    CPLString   m_osProjection;
+    OGRSpatialReference m_oSRS;
 
     // creation only variables
     CPLString   m_osComment;
@@ -199,14 +199,8 @@ public:
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr SetGeoTransform( double * padfTransform ) override;
 
-    virtual const char *_GetProjectionRef(void) override;
-    virtual CPLErr _SetProjection( const char* pszProjection ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual char **GetFileList() override;
 
@@ -1441,29 +1435,32 @@ char **ISIS3Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char *ISIS3Dataset::_GetProjectionRef()
+const OGRSpatialReference* ISIS3Dataset::GetSpatialRef() const
 
 {
-    if( !m_osProjection.empty() )
-        return m_osProjection;
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
 
-    return GDALPamDataset::_GetProjectionRef();
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::_SetProjection( const char* pszProjection )
+CPLErr ISIS3Dataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 {
     if( eAccess == GA_ReadOnly )
-        return GDALPamDataset::_SetProjection( pszProjection );
-    m_osProjection = pszProjection ? pszProjection : "";
+        return GDALPamDataset::SetSpatialRef( poSRS );
+    if( poSRS )
+        m_oSRS = *poSRS;
+    else
+        m_oSRS.Clear();
     if( m_poExternalDS )
-        m_poExternalDS->SetProjection(pszProjection);
+        m_poExternalDS->SetSpatialRef(poSRS);
     InvalidateLabel();
     return CE_None;
 }
@@ -1883,6 +1880,13 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     /**** This is the planets name i.e. Mars ***/
     const char *target_name = poDS->GetKeyword("IsisCube.Mapping.TargetName");
 
+#ifdef notdef
+    const double dfLongitudeMulFactor =
+        EQUAL(poDS->GetKeyword( "IsisCube.Mapping.LongitudeDirection", "PositiveEast"), "PositiveEast") ? 1 : -1;
+#else
+    const double dfLongitudeMulFactor = 1;
+#endif
+
     /***********   Grab MAP_PROJECTION_TYPE ************/
      const char *map_proj_name =
         poDS->GetKeyword( "IsisCube.Mapping.ProjectionName");
@@ -1901,7 +1905,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********   Grab CENTER_LON ************/
     const double center_lon =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLongitude"));
+        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLongitude")) * dfLongitudeMulFactor;
 
     /***********   Grab 1st std parallel ************/
     const double first_std_parallel =
@@ -1932,7 +1936,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     //  Equirectangular
     //  LambertConformal
     //  Mercator
-    //  ObliqueCylindrical //Todo
+    //  ObliqueCylindrical
     //  Orthographic
     //  PolarStereographic
     //  SimpleCylindrical
@@ -1948,19 +1952,42 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ((EQUAL( map_proj_name, "Equirectangular" )) ||
         (EQUAL( map_proj_name, "SimpleCylindrical" )) )  {
-        oSRS.OGRSpatialReference::SetEquirectangular2 ( 0.0, center_lon, center_lat, 0, 0 );
+        oSRS.SetEquirectangular2 ( 0.0, center_lon, center_lat, 0, 0 );
     } else if (EQUAL( map_proj_name, "Orthographic" )) {
-        oSRS.OGRSpatialReference::SetOrthographic ( center_lat, center_lon, 0, 0 );
+        oSRS.SetOrthographic ( center_lat, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "Sinusoidal" )) {
-        oSRS.OGRSpatialReference::SetSinusoidal ( center_lon, 0, 0 );
+        oSRS.SetSinusoidal ( center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "Mercator" )) {
-        oSRS.OGRSpatialReference::SetMercator ( center_lat, center_lon, scaleFactor, 0, 0 );
+        oSRS.SetMercator ( center_lat, center_lon, scaleFactor, 0, 0 );
     } else if (EQUAL( map_proj_name, "PolarStereographic" )) {
-        oSRS.OGRSpatialReference::SetPS ( center_lat, center_lon, scaleFactor, 0, 0 );
+        oSRS.SetPS ( center_lat, center_lon, scaleFactor, 0, 0 );
     } else if (EQUAL( map_proj_name, "TransverseMercator" )) {
-        oSRS.OGRSpatialReference::SetTM ( center_lat, center_lon, scaleFactor, 0, 0 );
+        oSRS.SetTM ( center_lat, center_lon, scaleFactor, 0, 0 );
     } else if (EQUAL( map_proj_name, "LambertConformal" )) {
-        oSRS.OGRSpatialReference::SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
+        oSRS.SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
+    } else if (EQUAL( map_proj_name, "PointPerspective" )) {
+        // Distance parameter is the distance to the center of the body, and is given in km
+        const double distance = CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.Distance")) * 1000.0;
+        const double height_above_ground = distance - semi_major;
+        oSRS.SetVerticalPerspective(center_lat, center_lon, 0, height_above_ground, 0, 0);
+    } else if (EQUAL( map_proj_name, "ObliqueCylindrical" )) {
+        const double poleLatitude = CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PoleLatitude"));
+        const double poleLongitude = CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PoleLongitude")) * dfLongitudeMulFactor;
+        const double poleRotation = CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PoleRotation"));
+        CPLString oProj4String;
+        // ISIS3 rotated pole doesn't use the same conventions than PROJ ob_tran
+        // Compare the sign difference in https://github.com/USGS-Astrogeology/ISIS3/blob/3.8.0/isis/src/base/objs/ObliqueCylindrical/ObliqueCylindrical.cpp#L244
+        // and https://github.com/OSGeo/PROJ/blob/6.2/src/projections/ob_tran.cpp#L34
+        // They can be compensated by modifying the poleLatitude to 180-poleLatitude
+        // There's also a sign difference for the poleRotation parameter
+        // The existence of those different conventions is acknowledged in
+        // https://pds-imaging.jpl.nasa.gov/documentation/Cassini_BIDRSIS.PDF in the middle of page 10
+        oProj4String.Printf(
+            "+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g +o_lat_p=%.18g +lon_0=%.18g",
+            -poleRotation,
+            180-poleLatitude,
+            poleLongitude);
+        oSRS.SetFromUserInput(oProj4String);
     } else {
         CPLDebug( "ISIS3",
                   "Dataset projection %s is not supported. Continuing...",
@@ -2015,7 +2042,8 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         else if ( (EQUAL( map_proj_name, "SimpleCylindrical" )) ||
                   (EQUAL( map_proj_name, "Orthographic" )) ||
                   (EQUAL( map_proj_name, "Stereographic" )) ||
-                  (EQUAL( map_proj_name, "Sinusoidal" )) ) {
+                  (EQUAL( map_proj_name, "Sinusoidal" )) ||
+                  (EQUAL( map_proj_name, "PointPerspective" )) ) {
             // ISIS uses the spherical equation for these projections
             // so force a sphere.
             oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
@@ -2053,10 +2081,8 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         // translate back into a projection string.
-        char *pszResult = nullptr;
-        oSRS.exportToWkt( &pszResult );
-        poDS->m_osProjection = pszResult;
-        CPLFree( pszResult );
+        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
 /* END ISIS3 Label Read */
@@ -2480,10 +2506,8 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
         {
             poDS->m_aosAdditionalFiles.AddString( pszPrjFile );
-            char *pszResult = nullptr;
-            oSRS2.exportToWkt( &pszResult );
-            poDS->m_osProjection = pszResult;
-            CPLFree( pszResult );
+            poDS->m_oSRS = oSRS2;
+            poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
 
         CSLDestroy( papszLines );
@@ -2670,7 +2694,7 @@ void ISIS3Dataset::BuildLabel()
     oPixels.Set( "Base", GetRasterBand(1)->GetOffset() );
     oPixels.Set( "Multiplier", GetRasterBand(1)->GetScale() );
 
-    OGRSpatialReference oSRS;
+    const OGRSpatialReference& oSRS = m_oSRS;
 
     if( !m_bUseSrcMapping )
     {
@@ -2688,11 +2712,10 @@ void ISIS3Dataset::BuildLabel()
         if( !m_osLongitudeDirection.empty() )
             oMapping.Set( "LongitudeDirection", m_osLongitudeDirection );
     }
-    else if( !m_bUseSrcMapping && !m_osProjection.empty() )
+    else if( !m_bUseSrcMapping && !m_oSRS.IsEmpty() )
     {
         oMapping.Add( "_type", "group" );
 
-        oSRS.SetFromUserInput(m_osProjection);
         if( oSRS.IsProjected() || oSRS.IsGeographic() )
         {
             const char* pszDatum = oSRS.GetAttrValue("DATUM");
@@ -2903,6 +2926,52 @@ void ISIS3Dataset::BuildLabel()
                         oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0) );
             }
 
+            else if( EQUAL(pszProjection, "Vertical Perspective") ) // PROJ 7 required
+            {
+                oMapping.Add( "ProjectionName", "PointPerspective" );
+                oMapping.Add( "CenterLongitude", FixLong(
+                        oSRS.GetNormProjParm("Longitude of topocentric origin", 0.0)) );
+                oMapping.Add( "CenterLatitude",
+                        oSRS.GetNormProjParm("Latitude of topocentric origin", 0.0) );
+                // ISIS3 value is the distance from center of ellipsoid, in km
+                oMapping.Add( "Distance",
+                        (oSRS.GetNormProjParm("Viewpoint height", 0.0) + oSRS.GetSemiMajor()) / 1000.0 );
+            }
+
+            else if( EQUAL(pszProjection, "custom_proj4") )
+            {
+                const char* pszProj4 = oSRS.GetExtension("PROJCS", "PROJ4", nullptr);
+                if( pszProj4 && strstr(pszProj4, "+proj=ob_tran" ) &&
+                    strstr(pszProj4, "+o_proj=eqc") )
+                {
+                    const auto FetchParam = [](const char* pszProj4Str, const char* pszKey)
+                    {
+                        CPLString needle;
+                        needle.Printf("+%s=", pszKey);
+                        const char* pszVal = strstr(pszProj4Str, needle.c_str());
+                        if( pszVal )
+                            return CPLAtof(pszVal+needle.size());
+                        return 0.0;
+                    };
+
+                    double dfLonP = FetchParam(pszProj4, "o_lon_p");
+                    double dfLatP = FetchParam(pszProj4, "o_lat_p");
+                    double dfLon0 = FetchParam(pszProj4, "lon_0");
+                    double dfPoleRotation = -dfLonP;
+                    double dfPoleLatitude = 180 - dfLatP;
+                    double dfPoleLongitude = dfLon0;
+                    oMapping.Add( "ProjectionName", "ObliqueCylindrical" );
+                    oMapping.Add( "PoleLatitude", dfPoleLatitude );
+                    oMapping.Add( "PoleLongitude", FixLong(dfPoleLongitude) );
+                    oMapping.Add( "PoleRotation", dfPoleRotation );
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "Projection %s not supported",
+                            pszProjection);
+                }
+            }
             else
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
@@ -2939,7 +3008,7 @@ void ISIS3Dataset::BuildLabel()
         oMapping.Add( "_type", "group" );
 
         const double dfDegToMeter = oSRS.GetSemiMajor() * M_PI / 180.0;
-        if( !m_osProjection.empty() && oSRS.IsProjected() )
+        if( !m_oSRS.IsEmpty() && oSRS.IsProjected() )
         {
             const double dfLinearUnits = oSRS.GetLinearUnits();
             // Maybe we should deal differently with non meter units ?
@@ -2952,7 +3021,7 @@ void ISIS3Dataset::BuildLabel()
             oMapping.Add( "Scale/value", dfScale );
             oMapping.Add( "Scale/unit", "pixels/degree" );
         }
-        else if( !m_osProjection.empty() && oSRS.IsGeographic() )
+        else if( !m_oSRS.IsEmpty() && oSRS.IsGeographic() )
         {
             const double dfScale = 1.0 / m_adfGeoTransform[1];
             const double dfRes = m_adfGeoTransform[1] * dfDegToMeter;
@@ -4207,10 +4276,10 @@ GDALDataset* ISIS3Dataset::CreateCopy( const char *pszFilename,
         poDS->SetGeoTransform( adfGeoTransform );
     }
 
-    if( poSrcDS->GetProjectionRef() != nullptr
-        && strlen(poSrcDS->GetProjectionRef()) > 0 )
+    auto poSrcSRS = poSrcDS->GetSpatialRef();
+    if( poSrcSRS )
     {
-        poDS->SetProjection( poSrcDS->GetProjectionRef() );
+        poDS->SetSpatialRef( poSrcSRS );
     }
 
     for(int i=1;i<=nBands;i++)

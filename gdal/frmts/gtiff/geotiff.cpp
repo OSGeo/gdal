@@ -11123,11 +11123,22 @@ void GTiffDataset::WriteGeoTIFFInfo()
         if( bHasProjection )
         {
             char* pszProjection = nullptr;
-            m_oSRS.exportToWkt(&pszProjection);
-            if( pszProjection && pszProjection[0] )
+            {
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                m_oSRS.exportToWkt(&pszProjection);
+            }
+            if( pszProjection && pszProjection[0] &&
+                strstr(pszProjection, "custom_proj4") == nullptr )
+            {
                 GTIFSetFromOGISDefnEx( psGTIF, pszProjection,
                                        m_eGeoTIFFKeysFlavor,
                                        m_eGeoTIFFVersion );
+            }
+            else
+            {
+                GDALPamDataset::SetSpatialRef(&m_oSRS);
+            }
             CPLFree(pszProjection);
         }
 
@@ -17560,6 +17571,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Write the projection information, if possible.                  */
 /* -------------------------------------------------------------------- */
     const bool bHasProjection = l_poSRS != nullptr;
+    bool bExportSRSToPAM = false;
     if( (bHasProjection || bPixelIsPoint) && bGeoTIFF )
     {
         GTIF *psGTIF = GTiffDatasetGTIFNew( l_hTIFF );
@@ -17567,10 +17579,22 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( bHasProjection )
         {
             char* pszWKT = nullptr;
-            l_poSRS->exportToWkt(&pszWKT);
-            GTIFSetFromOGISDefnEx( psGTIF, pszWKT,
-                                   GetGTIFFKeysFlavor(papszOptions),
-                                   GetGeoTIFFVersion(papszOptions) );
+            OGRErr eErr;
+            {
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                eErr = l_poSRS->exportToWkt(&pszWKT);
+            }
+            if( eErr == OGRERR_NONE && strstr(pszWKT, "custom_proj4") == nullptr )
+            {
+                GTIFSetFromOGISDefnEx( psGTIF, pszWKT,
+                                    GetGTIFFKeysFlavor(papszOptions),
+                                    GetGeoTIFFVersion(papszOptions) );
+            }
+            else
+            {
+                bExportSRSToPAM = true;
+            }
             CPLFree(pszWKT);
         }
 
@@ -17759,7 +17783,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         osOldGTIFF_REPORT_COMPD_CSVal.empty() ? nullptr :
         osOldGTIFF_REPORT_COMPD_CSVal.c_str());
 
-    if( !bGeoTIFF && (poDS->GetPamFlags() & GPF_DISABLED) == 0 )
+    if( (!bGeoTIFF || bExportSRSToPAM) && (poDS->GetPamFlags() & GPF_DISABLED) == 0 )
     {
         // Copy georeferencing info to PAM if the profile is not GeoTIFF
         poDS->GDALPamDataset::SetSpatialRef(poDS->GetSpatialRef());

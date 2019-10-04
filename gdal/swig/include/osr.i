@@ -885,6 +885,17 @@ public:
     return OSRSetVDG( self, clong, fe, fn );
   }
 
+%feature( "kwargs" ) SetVerticalPerspective;
+  OGRErr SetVerticalPerspective( double topoOriginLat,
+                                 double topoOriginLon,
+                                 double topoOriginHeight,
+                                 double viewPointHeight,
+                                 double fe, double fn )
+  {
+    return OSRSetVerticalPerspective( self,
+        topoOriginLat, topoOriginLon, topoOriginHeight, viewPointHeight, fe, fn );
+  }
+
   OGRErr SetWellKnownGeogCS( const char *name ) {
     return OSRSetWellKnownGeogCS( self, name );
   }

@@ -723,7 +723,7 @@ TIFFReadRawStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 {
 	static const char module[] = "TIFFReadRawStrip";
 	TIFFDirectory *td = &tif->tif_dir;
-	uint64 bytecount;
+	uint64 bytecount64;
 	tmsize_t bytecountm;
 
 	if (!TIFFCheckRead(tif, 0))
@@ -741,13 +741,14 @@ TIFFReadRawStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 		    "Compression scheme does not support access to raw uncompressed data");
 		return ((tmsize_t)(-1));
 	}
-	bytecount = TIFFGetStrileByteCount(tif, strip);
-        bytecountm = _TIFFCastUInt64ToSSize(tif, bytecount, module);
-	if (bytecountm == 0) {
+	bytecount64 = TIFFGetStrileByteCount(tif, strip);
+	if (size != (tmsize_t)(-1) && (uint64)size <= bytecount64)
+		bytecountm = size;
+	else
+		bytecountm = _TIFFCastUInt64ToSSize(tif, bytecount64, module);
+	if( bytecountm == 0 ) {
 		return ((tmsize_t)(-1));
 	}
-	if (size != (tmsize_t)(-1) && size < bytecountm)
-		bytecountm = size;
 	return (TIFFReadRawStrip1(tif, strip, buf, bytecountm, module));
 }
 
@@ -1185,10 +1186,11 @@ TIFFReadRawTile(TIFF* tif, uint32 tile, void* buf, tmsize_t size)
 		return ((tmsize_t)(-1));
 	}
 	bytecount64 = TIFFGetStrileByteCount(tif, tile);
-	if (size != (tmsize_t)(-1) && (uint64)size < bytecount64)
-		bytecount64 = (uint64)size;
-	bytecountm = _TIFFCastUInt64ToSSize(tif, bytecount64, module);
-        if( bytecountm == 0 ) {
+	if (size != (tmsize_t)(-1) && (uint64)size <= bytecount64)
+		bytecountm = size;
+	else
+		bytecountm = _TIFFCastUInt64ToSSize(tif, bytecount64, module);
+	if( bytecountm == 0 ) {
 		return ((tmsize_t)(-1));
 	}
 	return (TIFFReadRawTile1(tif, tile, buf, bytecountm, module));

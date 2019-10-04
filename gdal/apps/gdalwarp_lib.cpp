@@ -290,22 +290,36 @@ static double GetAverageSegmentLength(OGRGeometryH hGeom)
 /* option to determine the source SRS.                                  */
 /************************************************************************/
 
-static const char* GetSrcDSProjection( GDALDatasetH hDS,
+static CPLString GetSrcDSProjection( GDALDatasetH hDS,
                                        char** papszTO )
 {
     const char *pszProjection = CSLFetchNameValue( papszTO, "SRC_SRS" );
     if( pszProjection != nullptr || hDS == nullptr )
     {
-        return pszProjection;
+        return pszProjection ? pszProjection : "";
     }
 
     const char *pszMethod = CSLFetchNameValue( papszTO, "METHOD" );
     char** papszMD = nullptr;
-    if( GDALGetProjectionRef( hDS ) != nullptr
-        && strlen(GDALGetProjectionRef( hDS )) > 0
+    const OGRSpatialReferenceH hSRS = GDALGetSpatialRef( hDS );
+    if( hSRS
         && (pszMethod == nullptr || EQUAL(pszMethod,"GEOTRANSFORM")) )
     {
-        pszProjection = GDALGetProjectionRef( hDS );
+        char* pszWKT = nullptr;
+        {
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            if( OSRExportToWkt(hSRS, &pszWKT) != OGRERR_NONE )
+            {
+                CPLFree(pszWKT);
+                pszWKT = nullptr;
+                const char* const apszOptions[] = { "FORMAT=WKT2", nullptr };
+                OSRExportToWktEx(hSRS, &pszWKT, apszOptions );
+            }
+        }
+        CPLString osWKT = pszWKT ? pszWKT : "";
+        CPLFree(pszWKT);
+        return osWKT;
     }
     else if( GDALGetGCPProjection( hDS ) != nullptr
              && strlen(GDALGetGCPProjection( hDS )) > 0
@@ -324,7 +338,7 @@ static const char* GetSrcDSProjection( GDALDatasetH hDS,
     {
         pszProjection = CSLFetchNameValue( papszMD, "SRS" );
     }
-    return pszProjection;
+    return pszProjection ? pszProjection : "";
 }
 
 /************************************************************************/
@@ -348,15 +362,15 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
     OGRSpatialReferenceH hSrcSRS = nullptr;
     OGRSpatialReferenceH hDstSRS = nullptr;
 
-    const char *pszThisSourceSRS =
+    const CPLString osThisSourceSRS =
         GetSrcDSProjection(
             nSrcCount > 0 ? pahSrcDS[0] : nullptr,
             papszTO);
-    if( pszThisSourceSRS != nullptr && pszThisSourceSRS[0] != '\0' )
+    if( !osThisSourceSRS.empty() )
     {
         hSrcSRS = OSRNewSpatialReference(nullptr);
         OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
-        if( OSRSetFromUserInput( hSrcSRS, pszThisSourceSRS ) != OGRERR_NONE )
+        if( OSRSetFromUserInput( hSrcSRS, osThisSourceSRS ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot compute bounding box of cutline.");
@@ -553,22 +567,29 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
 {
     bErrorOccurredOut = false;
     // Check if we must do vertical shift grid transform
-    const char* pszSrcWKT = CSLFetchNameValueDef(
-                                    psOptions->papszTO, "SRC_SRS",
-                                    GDALGetProjectionRef(hWrkSrcDS) );
+    OGRSpatialReference oSRSSrc;
+    OGRSpatialReference oSRSDst;
+    const char* pszSrcWKT = CSLFetchNameValue(psOptions->papszTO, "SRC_SRS");
+    if( pszSrcWKT )
+        oSRSSrc.SetFromUserInput( pszSrcWKT );
+    else
+    {
+        auto hSRS = GDALGetSpatialRef(hWrkSrcDS);
+        if( hSRS )
+            oSRSSrc = *(OGRSpatialReference::FromHandle(hSRS));
+    }
+
     const char* pszDstWKT = CSLFetchNameValue( psOptions->papszTO, "DST_SRS" );
+    if( pszDstWKT )
+        oSRSDst.SetFromUserInput( pszDstWKT );
+
     double adfGT[6] = {};
     if( GDALGetRasterCount(hWrkSrcDS) == 1 &&
         GDALGetGeoTransform(hWrkSrcDS, adfGT) == CE_None &&
-        pszSrcWKT != nullptr && pszSrcWKT[0] != '\0' &&
-        pszDstWKT != nullptr )
+        !oSRSSrc.IsEmpty() && !oSRSDst.IsEmpty() )
     {
-        OGRSpatialReference oSRSSrc;
-        OGRSpatialReference oSRSDst;
-        if( oSRSSrc.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
-            oSRSDst.SetFromUserInput( pszDstWKT ) == OGRERR_NONE &&
-            (oSRSSrc.IsCompound() || Is3DGeogcs(oSRSSrc) ||
-             oSRSDst.IsCompound() || Is3DGeogcs(oSRSDst)) )
+        if( (oSRSSrc.IsCompound() || Is3DGeogcs(oSRSSrc)) ||
+            (oSRSDst.IsCompound() || Is3DGeogcs(oSRSDst)) )
         {
             const char *pszSrcProj4Geoids =
                 oSRSSrc.GetExtension( "VERT_DATUM", "PROJ4_GRIDS" );
@@ -3004,12 +3025,11 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 /* -------------------------------------------------------------------- */
         if( iSrc == 0 && osThisTargetSRS.empty() )
         {
-            const char* pszThisSourceSRS = GetSrcDSProjection(
-                                                    pahSrcDS[iSrc], papszTO );
-            if( pszThisSourceSRS != nullptr && pszThisSourceSRS[0] != '\0' )
+            const auto osThisSourceSRS = GetSrcDSProjection( pahSrcDS[iSrc], papszTO );
+            if( !osThisSourceSRS.empty() )
             {
-                osThisTargetSRS = pszThisSourceSRS;
-                aoTOList.SetNameValue("DST_SRS", pszThisSourceSRS);
+                osThisTargetSRS = osThisSourceSRS;
+                aoTOList.SetNameValue("DST_SRS", osThisSourceSRS);
             }
         }
 
@@ -3518,12 +3538,12 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
 /*      one.                                                            */
 /* -------------------------------------------------------------------- */
     OGRSpatialReferenceH  hRasterSRS = nullptr;
-    const char *pszProjection = GetSrcDSProjection( hSrcDS, papszTO_In);
-    if( pszProjection != nullptr )
+    const CPLString osProjection = GetSrcDSProjection( hSrcDS, papszTO_In);
+    if( !osProjection.empty() )
     {
         hRasterSRS = OSRNewSpatialReference(nullptr);
         OSRSetAxisMappingStrategy(hRasterSRS, OAMS_TRADITIONAL_GIS_ORDER);
-        if( OSRSetFromUserInput( hRasterSRS, pszProjection ) != OGRERR_NONE )
+        if( OSRSetFromUserInput( hRasterSRS, osProjection ) != OGRERR_NONE )
         {
             OSRDestroySpatialReference(hRasterSRS);
             hRasterSRS = nullptr;
