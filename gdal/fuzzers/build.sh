@@ -37,6 +37,7 @@ fi
 
 # build poppler
 cd poppler
+patch -p1 < ../gdal/fuzzers/poppler_0ea5a06b494b2d8b41f85b25f6d365a97220dc86.patch
 mkdir -p build
 cd build
 POPPLER_CFLAGS="$CFLAGS"

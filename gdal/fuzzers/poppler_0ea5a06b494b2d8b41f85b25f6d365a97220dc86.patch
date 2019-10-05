@@ -1,0 +1,26 @@
+commit 0ea5a06b494b2d8b41f85b25f6d365a97220dc86
+Author: Even Rouault <even.rouault@spatialys.com>
+Date:   Sat Oct 5 14:29:38 2019 +0200
+
+    Do not override user-defined CMAKE_C[XX]_FLAGS for clang
+    
+    337585e3d881c2c2c9099888b09902119dc05bf8 unconditionnaly
+    overrides any potential user-defined CMAKE_C[XX]_FLAGS.
+    This for example breaks the GDAL oss-fuzz builds which build Poppler
+    from source (see https://github.com/OSGeo/gdal/blob/master/gdal/fuzzers/build.sh#L54)
+
+diff --git a/cmake/modules/PopplerMacros.cmake b/cmake/modules/PopplerMacros.cmake
+index 5ccbc4e..5a62359 100644
+--- a/cmake/modules/PopplerMacros.cmake
++++ b/cmake/modules/PopplerMacros.cmake
+@@ -166,8 +166,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+   set(DEFAULT_COMPILE_WARNINGS "${_warn}")
+   set(DEFAULT_COMPILE_WARNINGS_EXTRA "${_warn} ${_warnx}")
+ 
+-  set(CMAKE_CXX_FLAGS                "-fno-exceptions -fno-check-new -fno-common -D_DEFAULT_SOURCE")
+-  set(CMAKE_C_FLAGS                  "-std=c99 -D_DEFAULT_SOURCE")
++  set(CMAKE_CXX_FLAGS                "-fno-exceptions -fno-check-new -fno-common -D_DEFAULT_SOURCE ${CMAKE_CXX_FLAGS}")
++  set(CMAKE_C_FLAGS                  "-std=c99 -D_DEFAULT_SOURCE ${CMAKE_C_FLAGS}")
+ endif()
+ 
+ if(CMAKE_C_COMPILER MATCHES "icc")
