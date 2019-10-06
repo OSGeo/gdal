@@ -32,6 +32,7 @@
 #include "cpl_http.h"
 #include "swq.h"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include <set>
@@ -106,6 +107,7 @@ class OGROAPIFLayer final: public OGRLayer
 {
         OGROAPIFDataset* m_poDS = nullptr;
         OGRFeatureDefn* m_poFeatureDefn = nullptr;
+        bool            m_bIsGeographicCRS = false;
         CPLString       m_osURL;
         CPLString       m_osPath;
         OGREnvelope     m_oExtent;
@@ -830,6 +832,7 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
         poSRS->Release();
     }
+    m_bIsGeographicCRS = true;
 
     // We might check in the links, but the spec mandates that construct of URL
     m_osURL = m_poDS->m_osRootURL + "/collections/" + osName + "/items";
@@ -865,6 +868,7 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poSRS->Release();
+    m_bIsGeographicCRS = true;
 
     size_t nPos = osURL.rfind('/');
     if( nPos != std::string::npos )
@@ -989,12 +993,26 @@ CPLString OGROAPIFLayer::AddFilters(const CPLString& osURL)
     CPLString osURLNew(osURL);
     if( m_poFilterGeom )
     {
-        osURLNew = CPLURLAddKVP(osURLNew, "bbox",
-            CPLSPrintf("%.18g,%.18g,%.18g,%.18g",
-                       m_sFilterEnvelope.MinX,
-                       m_sFilterEnvelope.MinY,
-                       m_sFilterEnvelope.MaxX,
-                       m_sFilterEnvelope.MaxY));
+        double dfMinX = m_sFilterEnvelope.MinX;
+        double dfMinY = m_sFilterEnvelope.MinY;
+        double dfMaxX = m_sFilterEnvelope.MaxX;
+        double dfMaxY = m_sFilterEnvelope.MaxY;
+        bool bAddBBoxFilter = true;
+        if( m_bIsGeographicCRS )
+        {
+            dfMinX = std::max(dfMinX, -180.0);
+            dfMinY = std::max(dfMinY, -90.0);
+            dfMaxX = std::min(dfMaxX, 180.0);
+            dfMaxY = std::min(dfMaxY, 90.0);
+            bAddBBoxFilter = dfMinX > -180.0 || dfMinY > -90.0 ||
+                             dfMaxX < 180.0 || dfMaxY < 90.0;
+        }
+        if( bAddBBoxFilter )
+        {
+            osURLNew = CPLURLAddKVP(osURLNew, "bbox",
+                CPLSPrintf("%.18g,%.18g,%.18g,%.18g",
+                        dfMinX,dfMinY,dfMaxX,dfMaxY));
+        }
     }
     if( !m_osAttributeFilter.empty() )
     {
