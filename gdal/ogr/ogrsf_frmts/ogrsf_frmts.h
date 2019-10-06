@@ -486,7 +486,7 @@ void CPL_DLL RegisterOGRSUA();
 void CPL_DLL RegisterOGROpenAir();
 void CPL_DLL RegisterOGRPDS();
 void CPL_DLL RegisterOGRWFS();
-void CPL_DLL RegisterOGRWFS3();
+void CPL_DLL RegisterOGROAPIF();
 void CPL_DLL RegisterOGRSOSI();
 void CPL_DLL RegisterOGRHTF();
 void CPL_DLL RegisterOGRAeronavFAA();

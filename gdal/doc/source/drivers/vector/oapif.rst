@@ -1,17 +1,19 @@
-.. _vector.wfs3:
+.. _vector.oapif:
 
-WFS3 - OGC WFS 3.0 service (experimental)
-=========================================
+OGC API - Features
+==================
 
 .. versionadded:: 2.3
 
-.. shortname:: WFS3
+.. shortname:: OAPIF
 
-**NOTE: THIS IS BASED ON A DRAFT VERSION OF THE WFS 3.0 SPECIFICATION**
-
-This driver can connect to a OGC WFS 3.0 service. It assumes that the
+This driver can connect to a OGC API - Features service. It assumes that the
 service supports OpenAPI 3.0/JSON/GeoJSON encoding for respectively API
 description, feature collection metadata and feature collection data.
+
+.. note::
+
+    In versions prior to GDAL 3.1, this driver was called the WFS3 driver.
 
 Driver capabilities
 -------------------
@@ -21,15 +23,15 @@ Driver capabilities
 Dataset name syntax
 -------------------
 
-The syntax to open a WFS datasource is :
-*WFS3:http://path/to/WFS/endpoint*
+The syntax to open a OGC API - Features datasource is :
+*OAPIF:http://path/to/OAPIF/endpoint*
 
 where endpoint is the landing page or a the path to collections/{id}.
 
 Layer schema
 ------------
 
-OGR needs a fixed schema per layer, but WFS 3.0 Core doesn't impose
+OGR needs a fixed schema per layer, but OGC API - Features Core doesn't impose
 fixed schema. So the driver will retrieve the first page of features (10
 features) and establish a schema from this.
 
@@ -37,7 +39,7 @@ Filtering
 ---------
 
 The driver will forward any spatial filter set with SetSpatialFilter()
-to the server. In WFS 3.0 Core, only a subset of attributes allowed by
+to the server. In OGC API - Features Core, only a subset of attributes allowed by
 the server can be queried for equalities, potentially combined with a
 AND logical operator. More complex requests will be partly or completely
 evaluated on client-side.
@@ -49,8 +51,8 @@ Open options
 
 The following options are available:
 
--  **URL**\ =url: URL to the WFS server landing page, or to a given collection.
-   Required when using the "WFS3:" string as the connection string.
+-  **URL**\ =url: URL to the OGC API - Features server landing page, or to a given collection.
+   Required when using the "OAPIF:" string as the connection string.
 -  **PAGE_SIZE**\ =integer: Number of features to retrieve per request.
    Defaults to 10. Minimum is 1, maximum 10000.
 -  **USERPWD**: May be supplied with *userid:password* to pass a userid
@@ -59,23 +61,23 @@ The following options are available:
 Examples
 --------
 
--  Listing the types of a WFS server :
+-  Listing the types of a OGC API - Features server :
 
    ::
 
-      $ ogrinfo WFS3:https://www.ldproxy.nrw.de/rest/services/kataster
+      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster
 
-      INFO: Open of `WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn'
-            using driver `WFS3' successful.
+      INFO: Open of `OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster'
+            using driver `OAPIF' successful.
       1: flurstueck (Multi Polygon)
       2: gebaeudebauwerk (Multi Polygon)
       3: verwaltungseinheit (Multi Polygon)
 
--  Listing the summary information of a WFS layer :
+-  Listing the summary information of a OGC API - Features layer :
 
    ::
 
-      $ ogrinfo -al -so WFS3:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck
+      $ ogrinfo -al -so OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck
 
       Layer name: flurstueck
       Metadata:
@@ -114,7 +116,7 @@ Examples
    ::
 
 
-      $ ogrinfo WFS3:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -where "gemarkung = 'Wünnenberg'"
+      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -where "gemarkung = 'Wünnenberg'"
       Layer name: flurstueck
       Metadata:
         TITLE=Flurstück
@@ -141,7 +143,7 @@ Examples
 
    ::
 
-      $ ogrinfo WFS3:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -spat 8.7 51.4 8.8 51.5
+      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -spat 8.7 51.4 8.8 51.5
 
       Layer name: flurstueck
       Metadata:
@@ -167,6 +169,6 @@ Examples
 See Also
 --------
 
--  `OGC WFS 3.0 Standard
-   (DRAFT) <https://rawgit.com/opengeospatial/WFS_FES/master/docs/17-069.html>`__
+-  `OGC API - Features - Part 1: Core Standard
+   (DRAFT) <http://docs.opengeospatial.org/DRAFTS/17-069r3.html>`__
 -  :ref:`WFS (1.0,1.1,2.0) driver documentation <vector.wfs>`

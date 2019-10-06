@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  WFS Translator
+ * Project:  OGR
  * Purpose:  Implements OGC API - Features (previously known as WFS3)
  * Author:   Even Rouault, even dot rouault at spatialys dot com
  *
@@ -36,9 +36,9 @@
 #include <vector>
 #include <set>
 
-// g++ -Wshadow -Wextra -std=c++11 -fPIC -g -Wall ogr/ogrsf_frmts/wfs/ogrwfs3*.cpp -shared -o ogr_WFS3.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gml -Iogr/ogrsf_frmts/wfs -L. -lgdal
+// g++ -Wshadow -Wextra -std=c++11 -fPIC -g -Wall ogr/ogrsf_frmts/wfs/ogroapif*.cpp -shared -o ogr_OAPIF.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gml -Iogr/ogrsf_frmts/wfs -L. -lgdal
 
-extern "C" void RegisterOGRWFS3();
+extern "C" void RegisterOGROAPIF();
 
 #define MEDIA_TYPE_OAPI_3_0      "application/vnd.oai.openapi+json;version=3.0"
 #define MEDIA_TYPE_OAPI_3_0_ALT  "application/openapi+json;version=3.0"
@@ -47,13 +47,13 @@ extern "C" void RegisterOGRWFS3();
 #define MEDIA_TYPE_XML           "text/xml"
 
 /************************************************************************/
-/*                           OGRWFS3Dataset                             */
+/*                           OGROAPIFDataset                             */
 /************************************************************************/
-class OGRWFS3Layer;
+class OGROAPIFLayer;
 
-class OGRWFS3Dataset final: public GDALDataset
+class OGROAPIFDataset final: public GDALDataset
 {
-        friend class OGRWFS3Layer;
+        friend class OGROAPIFLayer;
 
         CPLString                              m_osRootURL;
         CPLString                              m_osUserQueryParams;
@@ -84,8 +84,8 @@ class OGRWFS3Dataset final: public GDALDataset
         bool LoadJSONCollections(const CPLString& osResultIn);
 
     public:
-        OGRWFS3Dataset() {}
-        ~OGRWFS3Dataset() {}
+        OGROAPIFDataset() {}
+        ~OGROAPIFDataset() {}
 
         int GetLayerCount() override
                             { return static_cast<int>(m_apoLayers.size()); }
@@ -99,12 +99,12 @@ class OGRWFS3Dataset final: public GDALDataset
 };
 
 /************************************************************************/
-/*                            OGRWFS3Layer                              */
+/*                            OGROAPIFLayer                              */
 /************************************************************************/
 
-class OGRWFS3Layer final: public OGRLayer
+class OGROAPIFLayer final: public OGRLayer
 {
-        OGRWFS3Dataset* m_poDS = nullptr;
+        OGROAPIFDataset* m_poDS = nullptr;
         OGRFeatureDefn* m_poFeatureDefn = nullptr;
         CPLString       m_osURL;
         CPLString       m_osPath;
@@ -131,16 +131,16 @@ class OGRWFS3Layer final: public OGRLayer
         void            GetQueriableAttributes();
 
     public:
-        OGRWFS3Layer(OGRWFS3Dataset* poDS,
+        OGROAPIFLayer(OGROAPIFDataset* poDS,
                      const CPLString& osName,
                      const CPLJSONArray& oBBOX,
                      const CPLJSONArray& oCRS);
-        OGRWFS3Layer(OGRWFS3Dataset* poDS,
+        OGROAPIFLayer(OGROAPIFDataset* poDS,
                      const CPLString& osName,
                      const CPLString& osTitle,
                      const CPLString& osURL,
                      const OGREnvelope& oEnvelope);
-       ~OGRWFS3Layer();
+       ~OGROAPIFLayer();
 
        const char*     GetName() override { return GetDescription(); }
        OGRFeatureDefn* GetLayerDefn() override;
@@ -198,7 +198,7 @@ static bool CheckContentType(const char* pszGotContentType,
 // If source URL is https://user:pwd@server.com/bla
 // and link only contains https://server.com/bla, then insert
 // into it user:pwd
-CPLString OGRWFS3Dataset::ReinjectAuthInURL(const CPLString& osURL) const
+CPLString OGROAPIFDataset::ReinjectAuthInURL(const CPLString& osURL) const
 {
     CPLString osRet(osURL);
     const auto nArobaseInURLPos = m_osRootURL.find('@');
@@ -230,7 +230,7 @@ CPLString OGRWFS3Dataset::ReinjectAuthInURL(const CPLString& osURL) const
 /*                              Download()                              */
 /************************************************************************/
 
-bool OGRWFS3Dataset::Download(
+bool OGROAPIFDataset::Download(
             const CPLString& osURL,
             const char* pszAccept,
             CPLString& osResult,
@@ -241,7 +241,7 @@ bool OGRWFS3Dataset::Download(
     VSIStatBufL sStatBuf;
     if( VSIStatL(osURL, &sStatBuf) == 0 )
     {
-        CPLDebug("WFS3", "Reading %s", osURL.c_str());
+        CPLDebug("OAPIF", "Reading %s", osURL.c_str());
         GByte* pabyRet = nullptr;
         if( VSIIngestFile( nullptr, osURL, &pabyRet, nullptr, -1) )
         {
@@ -364,7 +364,7 @@ bool OGRWFS3Dataset::Download(
 /*                           DownloadJSon()                             */
 /************************************************************************/
 
-bool OGRWFS3Dataset::DownloadJSon(const CPLString& osURL,
+bool OGROAPIFDataset::DownloadJSon(const CPLString& osURL,
                                   CPLJSONDocument& oDoc,
                                   const char* pszAccept,
                                   CPLStringList* paosHeaders)
@@ -380,7 +380,7 @@ bool OGRWFS3Dataset::DownloadJSon(const CPLString& osURL,
 /*                        GetLandingPageDoc()                           */
 /************************************************************************/
 
-const CPLJSONDocument& OGRWFS3Dataset::GetLandingPageDoc()
+const CPLJSONDocument& OGROAPIFDataset::GetLandingPageDoc()
 {
     if( m_bLandingPageDocLoaded )
         return m_oLandingPageDoc;
@@ -394,7 +394,7 @@ const CPLJSONDocument& OGRWFS3Dataset::GetLandingPageDoc()
 /*                            GetAPIDoc()                               */
 /************************************************************************/
 
-const CPLJSONDocument& OGRWFS3Dataset::GetAPIDoc()
+const CPLJSONDocument& OGROAPIFDataset::GetAPIDoc()
 {
     if( m_bAPIDocLoaded )
         return m_oAPIDoc;
@@ -484,7 +484,7 @@ const CPLJSONDocument& OGRWFS3Dataset::GetAPIDoc()
 /*                         LoadJSONCollection()                         */
 /************************************************************************/
 
-bool OGRWFS3Dataset::LoadJSONCollection(const CPLJSONObject& oCollection)
+bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
 {
     if( oCollection.GetType() != CPLJSONObject::Type::Object )
         return false;
@@ -506,8 +506,8 @@ bool OGRWFS3Dataset::LoadJSONCollection(const CPLJSONObject& oCollection)
         oBBOX = oCollection.GetArray("extent/spatial");
 #endif
     CPLJSONArray oCRS = oCollection.GetArray("crs");
-    std::unique_ptr<OGRWFS3Layer> poLayer( new
-        OGRWFS3Layer(this, osName, oBBOX, oCRS) );
+    std::unique_ptr<OGROAPIFLayer> poLayer( new
+        OGROAPIFLayer(this, osName, oBBOX, oCRS) );
     if( !osTitle.empty() )
         poLayer->SetMetadataItem("TITLE", osTitle.c_str());
     if( !osDescription.empty() )
@@ -544,7 +544,7 @@ bool OGRWFS3Dataset::LoadJSONCollection(const CPLJSONObject& oCollection)
 /*                         LoadJSONCollections()                        */
 /************************************************************************/
 
-bool OGRWFS3Dataset::LoadJSONCollections(const CPLString& osResultIn)
+bool OGROAPIFDataset::LoadJSONCollections(const CPLString& osResultIn)
 {
     CPLString osResult(osResultIn);
     while(!osResult.empty())
@@ -617,7 +617,7 @@ bool OGRWFS3Dataset::LoadJSONCollections(const CPLString& osResultIn)
 /*                              Open()                                  */
 /************************************************************************/
 
-bool OGRWFS3Dataset::Open(GDALOpenInfo* poOpenInfo)
+bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
 {
     m_osRootURL =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "URL",
@@ -726,8 +726,8 @@ bool OGRWFS3Dataset::Open(GDALOpenInfo* poOpenInfo)
                 }
                 if( !osHref.empty() )
                 {
-                    m_apoLayers.push_back( std::unique_ptr<OGRWFS3Layer>( new
-                        OGRWFS3Layer(
+                    m_apoLayers.push_back( std::unique_ptr<OGROAPIFLayer>( new
+                        OGROAPIFLayer(
                             this, osName, osTitle, osHref, oEnvelope) ) );
                 }
             }
@@ -741,7 +741,7 @@ bool OGRWFS3Dataset::Open(GDALOpenInfo* poOpenInfo)
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer* OGRWFS3Dataset::GetLayer(int nIndex)
+OGRLayer* OGROAPIFDataset::GetLayer(int nIndex)
 {
     if( nIndex < 0 || nIndex >= GetLayerCount() )
         return nullptr;
@@ -752,7 +752,7 @@ OGRLayer* OGRWFS3Dataset::GetLayer(int nIndex)
 /*                             Identify()                               */
 /************************************************************************/
 
-static int OGRWFS3DriverIdentify( GDALOpenInfo* poOpenInfo )
+static int OGROAPIFDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     return STARTS_WITH_CI(poOpenInfo->pszFilename, "WFS3:") ||
@@ -760,10 +760,10 @@ static int OGRWFS3DriverIdentify( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
-/*                           OGRWFS3Layer()                             */
+/*                           OGROAPIFLayer()                             */
 /************************************************************************/
 
-OGRWFS3Layer::OGRWFS3Layer(OGRWFS3Dataset* poDS,
+OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                            const CPLString& osName,
                            const CPLJSONArray& oBBOX,
                            const CPLJSONArray& oCRS) :
@@ -835,14 +835,14 @@ OGRWFS3Layer::OGRWFS3Layer(OGRWFS3Dataset* poDS,
     m_osURL = m_poDS->m_osRootURL + "/collections/" + osName + "/items";
     m_osPath = "/collections/" + osName + "/items";
 
-    OGRWFS3Layer::ResetReading();
+    OGROAPIFLayer::ResetReading();
 }
 
 /************************************************************************/
-/*                           OGRWFS3Layer()                             */
+/*                           OGROAPIFLayer()                             */
 /************************************************************************/
 
-OGRWFS3Layer::OGRWFS3Layer(OGRWFS3Dataset* poDS,
+OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                            const CPLString& osName,
                            const CPLString& osTitle,
                            const CPLString& osURL,
@@ -870,14 +870,14 @@ OGRWFS3Layer::OGRWFS3Layer(OGRWFS3Dataset* poDS,
     if( nPos != std::string::npos )
         m_osPath = osURL.substr(nPos);
 
-    OGRWFS3Layer::ResetReading();
+    OGROAPIFLayer::ResetReading();
 }
 
 /************************************************************************/
-/*                          ~OGRWFS3Layer()                             */
+/*                          ~OGROAPIFLayer()                             */
 /************************************************************************/
 
-OGRWFS3Layer::~OGRWFS3Layer()
+OGROAPIFLayer::~OGROAPIFLayer()
 {
     m_poFeatureDefn->Release();
 }
@@ -886,7 +886,7 @@ OGRWFS3Layer::~OGRWFS3Layer()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn* OGRWFS3Layer::GetLayerDefn()
+OGRFeatureDefn* OGROAPIFLayer::GetLayerDefn()
 {
     if( !m_bFeatureDefnEstablished )
         EstablishFeatureDefn();
@@ -897,7 +897,7 @@ OGRFeatureDefn* OGRWFS3Layer::GetLayerDefn()
 /*                        EstablishFeatureDefn()                        */
 /************************************************************************/
 
-void OGRWFS3Layer::EstablishFeatureDefn()
+void OGROAPIFLayer::EstablishFeatureDefn()
 {
     CPLAssert(!m_bFeatureDefnEstablished);
     m_bFeatureDefnEstablished = true;
@@ -909,7 +909,7 @@ void OGRWFS3Layer::EstablishFeatureDefn()
     if( !m_poDS->DownloadJSon(osURL, oDoc) )
         return;
 
-    CPLString osTmpFilename(CPLSPrintf("/vsimem/wfs3_%p.json", this));
+    CPLString osTmpFilename(CPLSPrintf("/vsimem/oapif_%p.json", this));
     oDoc.Save(osTmpFilename);
     std::unique_ptr<GDALDataset> poDS(
       reinterpret_cast<GDALDataset*>(
@@ -959,7 +959,7 @@ void OGRWFS3Layer::EstablishFeatureDefn()
 /*                           ResetReading()                             */
 /************************************************************************/
 
-void OGRWFS3Layer::ResetReading()
+void OGROAPIFLayer::ResetReading()
 {
     m_poUnderlyingDS.reset();
     m_poUnderlyingLayer = nullptr;
@@ -984,7 +984,7 @@ void OGRWFS3Layer::ResetReading()
 /*                           AddFilters()                               */
 /************************************************************************/
 
-CPLString OGRWFS3Layer::AddFilters(const CPLString& osURL)
+CPLString OGROAPIFLayer::AddFilters(const CPLString& osURL)
 {
     CPLString osURLNew(osURL);
     if( m_poFilterGeom )
@@ -1011,7 +1011,7 @@ CPLString OGRWFS3Layer::AddFilters(const CPLString& osURL)
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
-OGRFeature* OGRWFS3Layer::GetNextRawFeature()
+OGRFeature* OGROAPIFLayer::GetNextRawFeature()
 {
     if( !m_bFeatureDefnEstablished )
         EstablishFeatureDefn();
@@ -1036,7 +1036,7 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
                 return nullptr;
             }
 
-            CPLString osTmpFilename(CPLSPrintf("/vsimem/wfs3_%p.json", this));
+            CPLString osTmpFilename(CPLSPrintf("/vsimem/oapif_%p.json", this));
             oDoc.Save(osTmpFilename);
             m_poUnderlyingDS = std::unique_ptr<GDALDataset>(
             reinterpret_cast<GDALDataset*>(
@@ -1102,7 +1102,7 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
                 {
                     for( int i = 0; i < aosHeaders.size(); i++ )
                     {
-                        CPLDebug("WFS3", "%s", aosHeaders[i]);
+                        CPLDebug("OAPIF", "%s", aosHeaders[i]);
                         if( STARTS_WITH_CI(aosHeaders[i], "Link=") &&
                             strstr(aosHeaders[i], "rel=\"next\"") &&
                             strstr(aosHeaders[i], "type=\"" MEDIA_TYPE_GEOJSON "\"") )
@@ -1161,7 +1161,7 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
 /*                            GetFeature()                              */
 /************************************************************************/
 
-OGRFeature* OGRWFS3Layer::GetFeature(GIntBig nFID)
+OGRFeature* OGROAPIFLayer::GetFeature(GIntBig nFID)
 {
     if( !m_bFeatureDefnEstablished )
         EstablishFeatureDefn();
@@ -1180,7 +1180,7 @@ OGRFeature* OGRWFS3Layer::GetFeature(GIntBig nFID)
 /*                         GetNextFeature()                             */
 /************************************************************************/
 
-OGRFeature* OGRWFS3Layer::GetNextFeature()
+OGRFeature* OGROAPIFLayer::GetNextFeature()
 {
     while( true )
     {
@@ -1206,7 +1206,7 @@ OGRFeature* OGRWFS3Layer::GetNextFeature()
 /*                      SupportsResultTypeHits()                        */
 /************************************************************************/
 
-bool OGRWFS3Layer::SupportsResultTypeHits()
+bool OGROAPIFLayer::SupportsResultTypeHits()
 {
     CPLJSONDocument oDoc = m_poDS->GetAPIDoc();
     if( oDoc.GetRoot().GetString("openapi").empty() )
@@ -1252,7 +1252,7 @@ bool OGRWFS3Layer::SupportsResultTypeHits()
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGRWFS3Layer::GetFeatureCount(int bForce)
+GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
 {
     if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
     {
@@ -1311,7 +1311,7 @@ GIntBig OGRWFS3Layer::GetFeatureCount(int bForce)
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRWFS3Layer::GetExtent(OGREnvelope* psEnvelope, int bForce)
+OGRErr OGROAPIFLayer::GetExtent(OGREnvelope* psEnvelope, int bForce)
 {
     if( m_oExtent.IsInit() )
     {
@@ -1325,7 +1325,7 @@ OGRErr OGRWFS3Layer::GetExtent(OGREnvelope* psEnvelope, int bForce)
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRWFS3Layer::SetSpatialFilter(  OGRGeometry *poGeomIn )
+void OGROAPIFLayer::SetSpatialFilter(  OGRGeometry *poGeomIn )
 {
     InstallFilter( poGeomIn );
 
@@ -1378,7 +1378,7 @@ static CPLString SerializeDateTime(int nDateComponents,
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-CPLString OGRWFS3Layer::BuildFilter(const swq_expr_node* poNode)
+CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node* poNode)
 {
     if( poNode->eNodeType == SNT_OPERATION &&
         poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2 )
@@ -1550,7 +1550,7 @@ CPLString OGRWFS3Layer::BuildFilter(const swq_expr_node* poNode)
 /*                        GetQueriableAttributes()                      */
 /************************************************************************/
 
-void OGRWFS3Layer::GetQueriableAttributes()
+void OGROAPIFLayer::GetQueriableAttributes()
 {
     if( m_bGotQueriableAttributes )
         return;
@@ -1586,7 +1586,7 @@ void OGRWFS3Layer::GetQueriableAttributes()
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRWFS3Layer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGROAPIFLayer::SetAttributeFilter( const char *pszQuery )
 
 {
     if( !m_bFeatureDefnEstablished )
@@ -1608,12 +1608,12 @@ OGRErr OGRWFS3Layer::SetAttributeFilter( const char *pszQuery )
         m_osAttributeFilter = BuildFilter(poNode);
         if( m_osAttributeFilter.empty() )
         {
-            CPLDebug("WFS3",
+            CPLDebug("OAPIF",
                         "Full filter will be evaluated on client side.");
         }
         else if( m_bFilterMustBeClientSideEvaluated )
         {
-            CPLDebug("WFS3",
+            CPLDebug("OAPIF",
                 "Only part of the filter will be evaluated on server side.");
         }
     }
@@ -1627,7 +1627,7 @@ OGRErr OGRWFS3Layer::SetAttributeFilter( const char *pszQuery )
 /*                              TestCapability()                        */
 /************************************************************************/
 
-int OGRWFS3Layer::TestCapability(const char* pszCap)
+int OGROAPIFLayer::TestCapability(const char* pszCap)
 {
     if( EQUAL(pszCap, OLCFastFeatureCount) )
     {
@@ -1651,36 +1651,36 @@ int OGRWFS3Layer::TestCapability(const char* pszCap)
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGRWFS3DriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGROAPIFDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !OGRWFS3DriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update )
+    if( !OGROAPIFDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update )
         return nullptr;
-    std::unique_ptr<OGRWFS3Dataset> poDataset(new OGRWFS3Dataset());
+    std::unique_ptr<OGROAPIFDataset> poDataset(new OGROAPIFDataset());
     if( !poDataset->Open(poOpenInfo) )
         return nullptr;
     return poDataset.release();
 }
 
 /************************************************************************/
-/*                           RegisterOGRWFS3()                          */
+/*                           RegisterOGROAPIF()                         */
 /************************************************************************/
 
-void RegisterOGRWFS3()
+void RegisterOGROAPIF()
 
 {
-    if( GDALGetDriverByName( "WFS3" ) != nullptr )
+    if( GDALGetDriverByName( "OAPIF" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "WFS3" );
+    poDriver->SetDescription( "OAPIF" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "OGC WFS 3 client (Web Feature Service)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_wfs3.html" );
+                               "OGC API - Features" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/oapif.html" );
 
-    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WFS3:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "OAPIF:" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
@@ -1692,8 +1692,8 @@ void RegisterOGRWFS3()
         "description='Basic authentication as username:password'/>"
 "</OpenOptionList>" );
 
-    poDriver->pfnIdentify = OGRWFS3DriverIdentify;
-    poDriver->pfnOpen = OGRWFS3DriverOpen;
+    poDriver->pfnIdentify = OGROAPIFDriverIdentify;
+    poDriver->pfnOpen = OGROAPIFDriverOpen;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
