@@ -121,10 +121,32 @@ def test_ogr_wfs3_errors():
                 '{ "collections" : [ null, {} ] }')
     with webserver.install_http_handler(handler):
         ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+    assert ds is None
+
+###############################################################################
+
+
+def test_ogr_wfs3_collections_paging():
+    if gdaltest.wfs3_drv is None:
+        pytest.skip()
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections', 200,
+                {'Content-Type': 'application/json'},
+                """{ "collections" : [ { "id": "foo" } ],
+                   "links": [ { "rel": "next", "href": "http://localhost:%d/wfs3/collections?next=my_mark", "type": "application/json" } ]}""" % gdaltest.webserver_port)
+    handler.add('GET', '/wfs3/collections?next=my_mark', 200,
+                {'Content-Type': 'application/json'},
+                '{ "collections" : [ { "id": "bar" } ]}')
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     assert ds is not None
-    assert ds.GetLayerCount() == 0
-    assert ds.GetLayer(-1) is None
-    assert ds.GetLayer(0) is None
+    assert ds.GetLayerCount() == 2
+    assert ds.GetLayer(0).GetName() == 'foo'
+    assert ds.GetLayer(1).GetName() == 'bar'
 
 ###############################################################################
 
@@ -154,7 +176,36 @@ def test_ogr_wfs3_empty_layer_and_user_query_parameters():
     with webserver.install_http_handler(handler):
         assert lyr.GetLayerDefn().GetFieldCount() == 0
 
-    
+
+###############################################################################
+
+
+def test_ogr_wfs3_open_by_collection():
+    if gdaltest.wfs3_drv is None:
+        pytest.skip()
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo', 200,
+                {'Content-Type': 'application/json'},
+                '{ "id": "foo" }')
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3/collections/foo' % gdaltest.webserver_port)
+    assert ds is not None
+    assert ds.GetLayerCount() == 1
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'foo'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                '{ "type": "FeatureCollection", "features": [] }')
+    with webserver.install_http_handler(handler):
+        assert lyr.GetLayerDefn().GetFieldCount() == 0
+
+
 ###############################################################################
 
 
@@ -225,11 +276,72 @@ def test_ogr_wfs3_fc_links_next_geojson():
         f.DumpReadable()
         pytest.fail()
 
-    
 ###############################################################################
 
 
-def test_ogr_wfs3_fc_links_next_headers():
+def test_ogr_wfs3_id_is_integer():
+    if gdaltest.wfs3_drv is None:
+        pytest.skip()
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
+                '{ "collections" : [ { "name": "foo" }] }')
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "id": 100,
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "id": 100,
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f.GetFID() == 100
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items/100', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{
+                        "id": 100,
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetFeature(100)
+    assert f
+
+###############################################################################
+
+
+def NO_LONGER_USED_test_ogr_wfs3_fc_links_next_headers():
     if gdaltest.wfs3_drv is None:
         pytest.skip()
 
@@ -306,12 +418,32 @@ def test_ogr_wfs3_spatial_filter():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
+    # Deprecated API
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
                 """{ "collections" : [ {
                     "name": "foo",
                     "extent": {
                         "spatial": [ -10, 40, 15, 50 ]
+                    }
+                 }] }""")
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
+    assert lyr.GetExtent() == (-10.0, 15.0, 40.0, 50.0)
+
+    # Nominal API
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
+                """{ "collections" : [ {
+                    "id": "foo",
+                    "extent": {
+                        "spatial": {
+                            "bbox": [
+                                [ -10, 40, -100, 15, 50, 100 ]
+                            ]
+                        }
                     }
                  }] }""")
     with webserver.install_http_handler(handler):
@@ -382,18 +514,20 @@ def test_ogr_wfs3_get_feature_count():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
                 """{ "collections" : [ {
-                    "name": "foo",
-                    "extent": {
-                        "spatial": [ -10, 40, 15, 50 ]
-                    }
+                    "id": "foo"
                  }] }""")
     with webserver.install_http_handler(handler):
         ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200, {'Content-Type': 'application/json'}, '{}')
+    handler.add('GET', '/wfs3', 200, {'Content-Type': 'application/json'},
+                """{ "links" : [ { "rel": "service-desc",
+                                   "href" : "http://localhost:%d/wfs3/my_api",
+                                   "type": "application/vnd.oai.openapi+json;version=3.0" } ] }""" % gdaltest.webserver_port )
     # Fake openapi response
-    handler.add('GET', '/wfs3/api', 200, {'Content-Type': 'application/json'},
+    handler.add('GET', '/wfs3/my_api', 200, {'Content-Type': 'application/vnd.oai.openapi+json; charset=utf-8; version=3.0'},
                 """{
             "openapi": "3.0.0",
             "paths" : {
@@ -433,7 +567,34 @@ def test_ogr_wfs3_get_feature_count():
     with webserver.install_http_handler(handler):
         assert lyr.GetFeatureCount() == 1234
 
-    
+###############################################################################
+
+
+def test_ogr_wfs3_get_feature_count_from_numberMatched():
+    if gdaltest.wfs3_drv is None:
+        pytest.skip()
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections', 200, {'Content-Type': 'application/json'},
+                """{ "collections" : [ {
+                    "id": "foo"
+                 }] }""")
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                '{ "type": "FeatureCollection", "features": [], "numberMatched": 1234 }')
+    with webserver.install_http_handler(handler):
+        assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+        assert lyr.GetFeatureCount() == 1234
+
+
 ###############################################################################
 
 
@@ -458,16 +619,23 @@ def test_ogr_wfs3_attribute_filter():
                 {'Content-Type': 'application/geo+json'},
                 """{ "type": "FeatureCollection", "features": [
                     {
+                        "id": "my_id",
                         "type": "Feature",
                         "properties": {
                             "attr1": "",
                             "attr2": 0,
-                            "attr3": ""
+                            "attr3": "",
+                            "mydatetime": "2019-10-01T12:34:56Z"
                         }
                     }
                 ] }""")
     # Fake openapi response
-    handler.add('GET', '/wfs3/api', 200, {'Content-Type': 'application/json'},
+    handler.add('GET', '/wfs3', 200, {'Content-Type': 'application/json'},
+                """{ "links" : [ { "rel": "service-desc",
+                                   "href" : "http://localhost:%d/wfs3/my_api",
+                                   "type": "application/vnd.oai.openapi+json;version=3.0" } ] }""" % gdaltest.webserver_port )
+
+    handler.add('GET', '/wfs3/my_api', 200, {'Content-Type': 'application/json'},
                 """{
             "openapi": "3.0.0",
             "paths" : {
@@ -532,6 +700,100 @@ def test_ogr_wfs3_attribute_filter():
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
     assert f is not None
+
+
+    # Date =
+    lyr.ResetReading()
+    lyr.SetAttributeFilter("mydatetime = '2019-10-01T12:34:56Z'")
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10&datetime=2019-10-01T12:34:56Z', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "mydatetime": "2019-10-01T12:34:56Z"
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f is not None
+
+
+    # Date >=
+    lyr.ResetReading()
+    lyr.SetAttributeFilter("mydatetime >= '2019-10-01T12:34:56Z'")
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10&datetime=2019-10-01T12:34:56Z%2F..', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "mydatetime": "2019-10-01T12:34:56Z"
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f is not None
+
+
+    # Date <=
+    lyr.ResetReading()
+    lyr.SetAttributeFilter("mydatetime <= '2019-10-01T12:34:56Z'")
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10&datetime=..%2F2019-10-01T12:34:56Z', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "mydatetime": "2019-10-01T12:34:56Z"
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f is not None
+
+
+    # Date >= and <=
+    lyr.ResetReading()
+    lyr.SetAttributeFilter("mydatetime BETWEEN '2019-10-01T' AND '2019-10-02T'")
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items?limit=10&datetime=2019-10-01T%2F2019-10-02T', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "mydatetime": "2019-10-01T12:34:56Z"
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f is not None
+
+
+    # id
+    lyr.ResetReading()
+    lyr.SetAttributeFilter("id = 'my_id'")
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/collections/foo/items/my_id', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{
+                        "type": "Feature",
+                        "id": "my_id",
+                        "properties": {
+                        }
+                    }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f is not None
+
 
     lyr.ResetReading()
     lyr.SetAttributeFilter(None)
