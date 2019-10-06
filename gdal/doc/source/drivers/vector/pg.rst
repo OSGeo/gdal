@@ -268,6 +268,41 @@ Examples
               gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
               -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
 
+- Export a single Postgres table to GeoPackage:
+
+   ::
+
+     ogr2ogr \
+       -f GPKG output.gpkg \
+       PG:dbname="my_database" "my_table"
+
+- Export many Postgres tables to GeoPackage:
+
+   ::
+
+     ogr2ogr \
+       -f GPKG output.gpkg \
+       PG:'dbname=my_database tables=table_1,table_3'
+
+- Export a whole Postgres database to GeoPackage:
+
+   ::
+
+     ogr2ogr \
+       -f GPKG output.gpkg \
+       PG:dbname=my_database
+
+
+- Load a single layer GeoPackage into Postgres:
+
+   ::
+
+     ogr2ogr \
+       -f "PostgreSQL" PG:dbname="my_database" \
+       input.gpkg \
+       -nln "name_of_new_table"
+
+
 -  In this example we merge tiger line data from two different
    directories of tiger files into one table. Note that the second
    invocation uses -append and no OVERWRITE=yes.

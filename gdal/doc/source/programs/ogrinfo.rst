@@ -184,6 +184,40 @@ Example reporting all layers in an NTF file:
     # 3: BL2000_COLLECTIONS (None)
     # 4: FEATURE_CLASSES (None)
 
+Example of retrieving a summary (``-so``) of a layer without showing details about every single feature.
+
+.. code-block::
+
+    ogrinfo \
+      -so \
+      natural_earth_vector.gpkg \
+      ne_10m_admin_0_antarctic_claim_limit_lines
+
+      # INFO: Open of `natural_earth_vector.gpkg'
+      #      using driver `GPKG' successful.
+
+      # Layer name: ne_10m_admin_0_antarctic_claim_limit_lines
+      # Geometry: Line String
+      # Feature Count: 23
+      # Extent: (-150.000000, -90.000000) - (160.100000, -60.000000)
+      # Layer SRS WKT:
+      # GEOGCS["WGS 84",
+      #     DATUM["WGS_1984",
+      #         SPHEROID["WGS 84",6378137,298.257223563,
+      #             AUTHORITY["EPSG","7030"]],
+      #         AUTHORITY["EPSG","6326"]],
+      #     PRIMEM["Greenwich",0,
+      #         AUTHORITY["EPSG","8901"]],
+      #     UNIT["degree",0.0174532925199433,
+      #         AUTHORITY["EPSG","9122"]],
+      #     AUTHORITY["EPSG","4326"]]
+      # FID Column = fid
+      # Geometry Column = geom
+      # type: String (15.0)
+      # scalerank: Integer (0.0)
+      # featurecla: String (50.0)
+
+
 Example using an attribute query is used to restrict the output of the features
 in a layer:
 
