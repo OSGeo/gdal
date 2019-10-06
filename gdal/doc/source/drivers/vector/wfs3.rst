@@ -24,6 +24,8 @@ Dataset name syntax
 The syntax to open a WFS datasource is :
 *WFS3:http://path/to/WFS/endpoint*
 
+where endpoint is the landing page or a the path to collections/{id}.
+
 Layer schema
 ------------
 
@@ -47,8 +49,8 @@ Open options
 
 The following options are available:
 
--  **URL**\ =url: URL to the WFS server endpoint. Required when using
-   the "WFS:" string as the connection string.
+-  **URL**\ =url: URL to the WFS server landing page, or to a given collection.
+   Required when using the "WFS3:" string as the connection string.
 -  **PAGE_SIZE**\ =integer: Number of features to retrieve per request.
    Defaults to 10. Minimum is 1, maximum 10000.
 -  **USERPWD**: May be supplied with *userid:password* to pass a userid
