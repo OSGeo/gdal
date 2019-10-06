@@ -485,6 +485,67 @@ def test_ogr_opaif_spatial_filter():
         f = lyr.GetNextFeature()
     assert f is not None
 
+    # Test clamping of bounds
+    lyr.SetSpatialFilterRect(-200, 49, 200, 50)
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections/foo/items?limit=10&bbox=-180,49,180,50', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar",
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [ 2.5, 49.5 ]
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f is not None
+
+    lyr.SetSpatialFilterRect(2, -100, 3, 100)
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections/foo/items?limit=10&bbox=2,-90,3,90', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar",
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [ 2.5, 49.5 ]
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f is not None
+
+    lyr.SetSpatialFilterRect(-200, -100, 200, 100)
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar",
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [ 2.5, 49.5 ]
+                        }
+                    }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f is not None
+
     lyr.SetSpatialFilter(None)
     lyr.ResetReading()
     handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
