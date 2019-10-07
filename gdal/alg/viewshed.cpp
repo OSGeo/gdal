@@ -30,6 +30,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <array>
 
 #include <algorithm>
 
@@ -110,21 +111,21 @@ CPL_CVSID("$Id$")
 
 
 inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, double* padfZVal,
-    GByte* pabyResult, GByte byVisibleVal, GByte byInvisibleVal)
+    std::vector<GByte>& vResult, GByte byVisibleVal, GByte byInvisibleVal)
 {
     if (padfZVal[iPixel] + dfZTarget < dfZ)
     {
         padfZVal[iPixel] = dfZ;
-        pabyResult[iPixel] = byInvisibleVal;
+        vResult[iPixel] = byInvisibleVal;
     }
     else
-        pabyResult[iPixel] = byVisibleVal;
+        vResult[iPixel] = byVisibleVal;
 }
 
-int AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff)
+bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff)
 {
     if (dfDistance2 <= 0 && dfCurvCoeff == 0)
-        return TRUE;
+        return true;
 
     double dfX = adfGeoTransform[1] * iPixel + adfGeoTransform[2] * iLine;
     double dfY = adfGeoTransform[4] * iPixel + adfGeoTransform[5] * iLine;
@@ -135,9 +136,9 @@ int AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, do
         dfHeight -= dfCurvCoeff * dfR2 / EARTH_DIAMETER;
 
     if (dfDistance2 > 0 && dfR2 > dfDistance2)
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
 double CalcHeightLine(int i, double Za, double Zo)
@@ -309,14 +310,14 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
             /* copy srs */
             GDALSetSpatialRef(hDstDS, GDALGetSpatialRef(hSrcDS));
 
-            double adfDstGeoTransform[6];
+            std::array<double, 6> adfDstGeoTransform;
             adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
             adfDstGeoTransform[1] = adfGeoTransform[1];
             adfDstGeoTransform[2] = adfGeoTransform[2];
             adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[5] * nYStart;
             adfDstGeoTransform[4] = adfGeoTransform[4];
             adfDstGeoTransform[5] = adfGeoTransform[5];
-            GDALSetGeoTransform(hDstDS, adfDstGeoTransform);
+            GDALSetGeoTransform(hDstDS, adfDstGeoTransform.data());
 
             hTargetBand = GDALGetRasterBand(hDstDS, 1);
             if (hTargetBand == nullptr)
@@ -349,22 +350,46 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     pabyResult[nX] = byVisibleVal;
     if (nX > 0)
     {
-        AdjustHeightInRange(adfGeoTransform, 1, 0, padfFirstLineVal[nX - 1], dfDistance2, dfCurvCoeff);
+        AdjustHeightInRange(adfGeoTransform,
+                            1,
+                            0,
+                            padfFirstLineVal[nX - 1],
+                            dfDistance2,
+                            dfCurvCoeff);
         pabyResult[nX - 1] = byVisibleVal;
     }
     if (nX < nXSize - 1)
     {
-        AdjustHeightInRange(adfGeoTransform, 1, 0, padfFirstLineVal[nX + 1], dfDistance2, dfCurvCoeff);
+        AdjustHeightInRange(adfGeoTransform,
+                            1,
+                            0,
+                            padfFirstLineVal[nX + 1],
+                            dfDistance2,
+                            dfCurvCoeff);
         pabyResult[nX + 1] = byVisibleVal;
     }
 
     /* process left direction */
     for (iPixel = nX - 2; iPixel >= 0; iPixel--)
     {
-        if (AdjustHeightInRange(adfGeoTransform, nX - iPixel, 0, padfFirstLineVal[iPixel], dfDistance2, dfCurvCoeff))
+        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+                                            nX - iPixel,
+                                            0,
+                                            padfFirstLineVal[iPixel],
+                                            dfDistance2,
+                                            dfCurvCoeff);
+        if (adjusted)
         {
-            dfZ = CalcHeightLine(nX - iPixel, padfFirstLineVal[iPixel + 1], dfZObserver);
-            SetVisibility(iPixel, dfZ, dfTargetHeight, padfFirstLineVal, pabyResult, byVisibleVal, byInvisibleVal);
+            dfZ = CalcHeightLine(nX - iPixel,
+                                 padfFirstLineVal[iPixel + 1],
+                                 dfZObserver);
+            SetVisibility(  iPixel,
+                            dfZ,
+                            dfTargetHeight,
+                            padfFirstLineVal,
+                            vResult,
+                            byVisibleVal,
+                            byInvisibleVal);
         }
         else
         {
@@ -375,10 +400,24 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     /* process right direction */
     for (iPixel = nX + 2; iPixel < nXSize; iPixel++)
     {
-        if (AdjustHeightInRange(adfGeoTransform, iPixel - nX, 0, padfFirstLineVal[iPixel], dfDistance2, dfCurvCoeff))
+        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+                                            iPixel - nX,
+                                            0,
+                                            padfFirstLineVal[iPixel],
+                                            dfDistance2,
+                                            dfCurvCoeff);
+        if (adjusted)
         {
-            dfZ = CalcHeightLine(iPixel - nX, padfFirstLineVal[iPixel - 1], dfZObserver);
-            SetVisibility(iPixel, dfZ, dfTargetHeight, padfFirstLineVal, pabyResult, byVisibleVal, byInvisibleVal);
+            dfZ = CalcHeightLine(iPixel - nX,
+                                 padfFirstLineVal[iPixel - 1],
+                                 dfZObserver);
+            SetVisibility(iPixel,
+                          dfZ,
+                          dfTargetHeight,
+                          padfFirstLineVal,
+                          vResult,
+                          byVisibleVal,
+                          byInvisibleVal);
         }
         else
         {
@@ -411,10 +450,24 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
 
         /* set up initial point on the scanline */
-        if (AdjustHeightInRange(adfGeoTransform, 0, nY - iLine, padfThisLineVal[nX], dfDistance2, dfCurvCoeff))
+        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+                                            0,
+                                            nY - iLine,
+                                            padfThisLineVal[nX],
+                                            dfDistance2,
+                                            dfCurvCoeff);
+        if (adjusted)
         {
-            dfZ = CalcHeightLine(nY - iLine, padfLastLineVal[nX], dfZObserver);
-            SetVisibility(nX, dfZ, dfTargetHeight, padfThisLineVal, pabyResult, byVisibleVal, byInvisibleVal);
+            dfZ = CalcHeightLine(nY - iLine,
+                                 padfLastLineVal[nX],
+                                 dfZObserver);
+            SetVisibility(nX,
+                          dfZ,
+                          dfTargetHeight,
+                          padfThisLineVal,
+                          vResult,
+                          byVisibleVal,
+                          byInvisibleVal);
         }
         else
         {
@@ -427,23 +480,44 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process left direction */
         for (iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
-            if (AdjustHeightInRange(adfGeoTransform, nX - iPixel, nY - iLine, padfThisLineVal[iPixel], dfDistance2, dfCurvCoeff))
+            bool left_adjusted = AdjustHeightInRange(adfGeoTransform,
+                                                     nX - iPixel,
+                                                     nY - iLine,
+                                                     padfThisLineVal[iPixel],
+                                                     dfDistance2,
+                                                     dfCurvCoeff);
+            if (left_adjusted)
             {
                 if (eMode != GVM_Edge)
-                    dfZ = CalcHeightDiagonal(nX - iPixel, nY - iLine,
-                        padfThisLineVal[iPixel + 1], padfLastLineVal[iPixel], dfZObserver);
+                    dfZ = CalcHeightDiagonal(nX - iPixel,
+                                             nY - iLine,
+                                             padfThisLineVal[iPixel + 1],
+                                             padfLastLineVal[iPixel],
+                                             dfZObserver);
 
                 if (eMode != GVM_Diagonal)
                 {
                     double dfZ2 = nX - iPixel >= nY - iLine ?
-                        CalcHeightEdge(nY - iLine, nX - iPixel,
-                            padfLastLineVal[iPixel + 1], padfThisLineVal[iPixel + 1], dfZObserver) :
-                        CalcHeightEdge(nX - iPixel, nY - iLine,
-                            padfLastLineVal[iPixel + 1], padfLastLineVal[iPixel], dfZObserver);
+                        CalcHeightEdge(nY - iLine,
+                                       nX - iPixel,
+                                       padfLastLineVal[iPixel + 1],
+                                       padfThisLineVal[iPixel + 1],
+                                       dfZObserver) :
+                        CalcHeightEdge(nX - iPixel,
+                                       nY - iLine,
+                                       padfLastLineVal[iPixel + 1],
+                                       padfLastLineVal[iPixel],
+                                       dfZObserver);
                     dfZ = CalcHeight(dfZ, dfZ2, eMode);
                 }
 
-                SetVisibility(iPixel, dfZ, dfTargetHeight, padfThisLineVal, pabyResult, byVisibleVal, byInvisibleVal);
+                SetVisibility(iPixel,
+                              dfZ,
+                              dfTargetHeight,
+                              padfThisLineVal,
+                              vResult,
+                              byVisibleVal,
+                              byInvisibleVal);
             }
             else
             {
@@ -454,23 +528,44 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process right direction */
         for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
-            if (AdjustHeightInRange(adfGeoTransform, iPixel - nX, nY - iLine, padfThisLineVal[iPixel], dfDistance2, dfCurvCoeff))
+            bool right_adjusted = AdjustHeightInRange(adfGeoTransform,
+                                                      iPixel - nX,
+                                                      nY - iLine,
+                                                      padfThisLineVal[iPixel],
+                                                      dfDistance2,
+                                                      dfCurvCoeff);
+            if (right_adjusted)
             {
                 if (eMode != GVM_Edge)
-                    dfZ = CalcHeightDiagonal(iPixel - nX, nY - iLine,
-                        padfThisLineVal[iPixel - 1], padfLastLineVal[iPixel], dfZObserver);
+                    dfZ = CalcHeightDiagonal(iPixel - nX,
+                                             nY - iLine,
+                                             padfThisLineVal[iPixel - 1],
+                                             padfLastLineVal[iPixel],
+                                             dfZObserver);
 
                 if (eMode != GVM_Diagonal)
                 {
                     double dfZ2 = iPixel - nX >= nY - iLine ?
-                        CalcHeightEdge(nY - iLine, iPixel - nX,
-                            padfLastLineVal[iPixel - 1], padfThisLineVal[iPixel - 1], dfZObserver) :
-                        CalcHeightEdge(iPixel - nX, nY - iLine,
-                            padfLastLineVal[iPixel - 1], padfLastLineVal[iPixel], dfZObserver);
+                        CalcHeightEdge(nY - iLine,
+                                       iPixel - nX,
+                                       padfLastLineVal[iPixel - 1],
+                                       padfThisLineVal[iPixel - 1],
+                                       dfZObserver) :
+                        CalcHeightEdge(iPixel - nX,
+                                       nY - iLine,
+                                       padfLastLineVal[iPixel - 1],
+                                       padfLastLineVal[iPixel],
+                                       dfZObserver);
                     dfZ = CalcHeight(dfZ, dfZ2, eMode);
                 }
 
-                SetVisibility(iPixel, dfZ, dfTargetHeight, padfThisLineVal, pabyResult, byVisibleVal, byInvisibleVal);
+                SetVisibility(iPixel,
+                              dfZ,
+                              dfTargetHeight,
+                              padfThisLineVal,
+                              vResult,
+                              byVisibleVal,
+                              byInvisibleVal);
             }
             else
             {
@@ -513,10 +608,24 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
 
         /* set up initial point on the scanline */
-        if (AdjustHeightInRange(adfGeoTransform, 0, iLine - nY, padfThisLineVal[nX], dfDistance2, dfCurvCoeff))
+        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+                                            0,
+                                            iLine - nY,
+                                            padfThisLineVal[nX],
+                                            dfDistance2,
+                                            dfCurvCoeff);
+        if (adjusted)
         {
-            dfZ = CalcHeightLine(iLine - nY, padfLastLineVal[nX], dfZObserver);
-            SetVisibility(nX, dfZ, dfTargetHeight, padfThisLineVal, pabyResult, byVisibleVal, byInvisibleVal);
+            dfZ = CalcHeightLine(iLine - nY,
+                                 padfLastLineVal[nX],
+                                 dfZObserver);
+            SetVisibility(nX,
+                          dfZ,
+                          dfTargetHeight,
+                          padfThisLineVal,
+                          vResult,
+                          byVisibleVal,
+                          byInvisibleVal);
         }
         else
         {
@@ -527,7 +636,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process left direction */
         for (iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
-            if (AdjustHeightInRange(adfGeoTransform, nX - iPixel, iLine - nY, padfThisLineVal[iPixel], dfDistance2, dfCurvCoeff))
+            bool left_adjusted = AdjustHeightInRange(adfGeoTransform,
+                                                     nX - iPixel,
+                                                     iLine - nY,
+                                                     padfThisLineVal[iPixel],
+                                                     dfDistance2,
+                                                     dfCurvCoeff);
+            if (left_adjusted)
             {
                 if (eMode != GVM_Edge)
                     dfZ = CalcHeightDiagonal(nX - iPixel, iLine - nY,
@@ -536,14 +651,26 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
                 if (eMode != GVM_Diagonal)
                 {
                     double dfZ2 = nX - iPixel >= iLine - nY ?
-                        CalcHeightEdge(iLine - nY, nX - iPixel,
-                            padfLastLineVal[iPixel + 1], padfThisLineVal[iPixel + 1], dfZObserver) :
-                        CalcHeightEdge(nX - iPixel, iLine - nY,
-                            padfLastLineVal[iPixel + 1], padfLastLineVal[iPixel], dfZObserver);
+                        CalcHeightEdge(iLine - nY,
+                                       nX - iPixel,
+                                       padfLastLineVal[iPixel + 1],
+                                       padfThisLineVal[iPixel + 1],
+                                       dfZObserver) :
+                        CalcHeightEdge(nX - iPixel,
+                                       iLine - nY,
+                                       padfLastLineVal[iPixel + 1],
+                                       padfLastLineVal[iPixel],
+                                       dfZObserver);
                     dfZ = CalcHeight(dfZ, dfZ2, eMode);
                 }
 
-                SetVisibility(iPixel, dfZ, dfTargetHeight, padfThisLineVal, pabyResult, byVisibleVal, byInvisibleVal);
+                SetVisibility(iPixel,
+                              dfZ,
+                              dfTargetHeight,
+                              padfThisLineVal,
+                              vResult,
+                              byVisibleVal,
+                              byInvisibleVal);
             }
             else
             {
@@ -554,23 +681,44 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process right direction */
         for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
-            if (AdjustHeightInRange(adfGeoTransform, iPixel - nX, iLine - nY, padfThisLineVal[iPixel], dfDistance2, dfCurvCoeff))
+            bool right_adjusted = AdjustHeightInRange(adfGeoTransform,
+                                                      iPixel - nX,
+                                                      iLine - nY,
+                                                      padfThisLineVal[iPixel],
+                                                      dfDistance2,
+                                                      dfCurvCoeff);
+            if (right_adjusted)
             {
                 if (eMode != GVM_Edge)
-                    dfZ = CalcHeightDiagonal(iPixel - nX, iLine - nY,
-                        padfThisLineVal[iPixel - 1], padfLastLineVal[iPixel], dfZObserver);
+                    dfZ = CalcHeightDiagonal(iPixel - nX,
+                                             iLine - nY,
+                                             padfThisLineVal[iPixel - 1],
+                                             padfLastLineVal[iPixel],
+                                             dfZObserver);
 
                 if (eMode != GVM_Diagonal)
                 {
                     double dfZ2 = iPixel - nX >= iLine - nY ?
-                        CalcHeightEdge(iLine - nY, iPixel - nX,
-                            padfLastLineVal[iPixel - 1], padfThisLineVal[iPixel - 1], dfZObserver) :
-                        CalcHeightEdge(iPixel - nX, iLine - nY,
-                            padfLastLineVal[iPixel - 1], padfLastLineVal[iPixel], dfZObserver);
+                        CalcHeightEdge(iLine - nY,
+                                       iPixel - nX,
+                                       padfLastLineVal[iPixel - 1],
+                                       padfThisLineVal[iPixel - 1],
+                                       dfZObserver) :
+                        CalcHeightEdge(iPixel - nX,
+                                       iLine - nY,
+                                       padfLastLineVal[iPixel - 1],
+                                       padfLastLineVal[iPixel],
+                                       dfZObserver);
                     dfZ = CalcHeight(dfZ, dfZ2, eMode);
                 }
 
-                SetVisibility(iPixel, dfZ, dfTargetHeight, padfThisLineVal, pabyResult, byVisibleVal, byInvisibleVal);
+                SetVisibility(iPixel,
+                              dfZ,
+                              dfTargetHeight,
+                              padfThisLineVal,
+                              vResult,
+                              byVisibleVal,
+                              byInvisibleVal);
             }
             else
             {
