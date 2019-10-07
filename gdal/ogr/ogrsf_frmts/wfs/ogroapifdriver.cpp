@@ -1627,6 +1627,9 @@ void OGROAPIFLayer::GetQueriableAttributes()
 OGRErr OGROAPIFLayer::SetAttributeFilter( const char *pszQuery )
 
 {
+    if( m_poAttrQuery == nullptr && pszQuery == nullptr )
+        return OGRERR_NONE;
+
     if( !m_bFeatureDefnEstablished )
         EstablishFeatureDefn();
 
@@ -1669,7 +1672,6 @@ int OGROAPIFLayer::TestCapability(const char* pszCap)
 {
     if( EQUAL(pszCap, OLCFastFeatureCount) )
     {
-        GetLayerDefn();
         return m_nTotalFeatureCount >= 0 &&
                m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
     }

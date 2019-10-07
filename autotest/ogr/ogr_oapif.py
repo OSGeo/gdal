@@ -652,8 +652,9 @@ def test_ogr_opaif_get_feature_count_from_numberMatched():
                 {'Content-Type': 'application/geo+json'},
                 '{ "type": "FeatureCollection", "features": [], "numberMatched": 1234 }')
     with webserver.install_http_handler(handler):
-        assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+        assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0 # Cannot know yet
         assert lyr.GetFeatureCount() == 1234
+        assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
 
 
 ###############################################################################
@@ -674,6 +675,7 @@ def test_ogr_opaif_attribute_filter():
     with webserver.install_http_handler(handler):
         ds = ogr.Open('OAPIF:http://localhost:%d/oapif' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter(None) # should not cause network request
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
