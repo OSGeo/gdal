@@ -4,7 +4,7 @@
 
 include ../GDALmake.opt
 
-CPPFLAGS :=	-I$(GDAL_ROOT)/frmts/vrt $(CPPFLAGS) $(JSON_INCLUDE) $(PROJ_INCLUDE) -I$(GDAL_ROOT)/ogr/ogrsf_frmts/geojson -I$(GDAL_ROOT)/ogr/ogrsf_frmts/generic
+CPPFLAGS :=	-I$(GDAL_ROOT)/frmts/vrt $(CPPFLAGS) $(JSON_INCLUDE) $(PROJ_INCLUDE) -I$(GDAL_ROOT)/ogr/ogrsf_frmts/geojson -I$(GDAL_ROOT)/ogr/ogrsf_frmts/generic -g
 LNK_FLAGS :=	$(LDFLAGS)
 DEP_LIBS =	$(EXE_DEP_LIBS) $(XTRAOBJ)
 
