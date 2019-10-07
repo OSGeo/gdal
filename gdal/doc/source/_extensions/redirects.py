@@ -37,6 +37,10 @@ def gather_redirects():
     output.update({ 'frmt_various.html' : os.path.join('./drivers/raster', 'index') + '.html' })
     output.update({ 'gdal_vrttut.html' : os.path.join('./drivers/raster', 'vrt') + '.html' })
 
+    # Legacy WFS3 renamed as OAPIF
+    output.update({ 'drv_wfs3.html' : os.path.join('./drivers/vector', 'oapif') + '.html' })
+    output.update({ os.path.join('./drivers/vector', 'wfs3') + '.html' : 'oapif.html' })
+
     raster_tools = [
         'gdal2tiles',
         'gdaladdo',

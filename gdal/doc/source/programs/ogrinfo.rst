@@ -20,7 +20,7 @@ Synopsis
             [-sql statement|\@filename] [-dialect dialect] [-al] [-rl] [-so] [-fields={YES/NO}]
             [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [--formats] [[-oo NAME=VALUE] ...]
             [-nomd] [-listmdd] [-mdd domain|`all`]*
-            [-nocount] [-noextent] [-wkt_format WKT1|WKT2|...]
+            [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|...]
             <datasource_name> [<layer> [<layer> ...]]
 
 Description
@@ -132,6 +132,12 @@ source to stdout (the terminal).
 .. option:: -noextent
 
     Suppress spatial extent printing.
+
+.. option:: -nogeomtype
+
+    Suppress layer geometry type printing.
+
+    .. versionadded:: 3.1
 
 .. option:: --formats
 
