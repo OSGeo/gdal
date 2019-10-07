@@ -136,3 +136,13 @@ Options for generated HTML viewers a la Google Maps
 .. note::
 
     gdal2tiles.py is a Python script that needs to be run against Python GDAL binding.
+
+
+Examples
+--------
+
+Basic example:
+
+.. code-block::
+
+  gdal2tiles.py --zoom=2-5 input.tif output_folder

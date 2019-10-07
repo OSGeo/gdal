@@ -1,5 +1,5 @@
 
-OBJ	=	ogrwfsdriver.obj ogrwfsdatasource.obj ogrwfslayer.obj ogrwfsfilter.obj ogrwfsjoinlayer.obj ogrwfs3driver.obj
+OBJ	=	ogrwfsdriver.obj ogrwfsdatasource.obj ogrwfslayer.obj ogrwfsfilter.obj ogrwfsjoinlayer.obj ogroapifdriver.obj
 EXTRAFLAGS =	-I.. -I..\.. -I..\gml
 
 GDAL_ROOT	=	..\..\..

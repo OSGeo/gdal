@@ -388,6 +388,18 @@ Examples
 
       ogr2ogr -f CSV -dialect sqlite -sql "select AsGeoJSON(geometry) AS geom, * from input" output.csv input.shp
 
+- Convert a CSV into a GeoPackage. Specify the names of the coordinate columns and assign a coordinate reference system.
+
+   ::
+
+     ogr2ogr \
+       -f GPKG output.gpkg \
+       input.csv \
+       -oo X_POSSIBLE_NAMES=longitude \
+       -oo Y_POSSIBLE_NAMES=latitude \
+       -a_srs 'EPSG:4326'
+
+
 Particular datasources
 ----------------------
 

@@ -175,8 +175,20 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     CPLErr ret;
     // Bypass the GDAL caching if single band and block size is right
     int nBlockXSize = 0, nBlockYSize = 0;
-    if (img.pagesize.c == 1)
-        poTiff->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    poTiff->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+    // Allow for TIFF blocks to be larger than MRF page size, but not in
+    // huge proportion, to avoid later attempts at allocating a lot of memory
+    if( (nBlockXSize > 4096 && nBlockXSize > img.pagesize.x) ||
+         (nBlockYSize > 4096 && nBlockYSize > img.pagesize.y) )
+    {
+        CPLError(CE_Failure,CPLE_AppDefined,
+            "MRF: TIFF block size inconsistent with MRF parameters");
+        GDALClose(poTiff);
+        VSIUnlink(fname);
+        return CE_Failure;
+    }
+
     if (img.pagesize.c == 1 && nBlockXSize == img.pagesize.x && nBlockYSize == img.pagesize.y)
     {
         ret = poTiff->GetRasterBand(1)->ReadBlock(0, 0, dst.buffer);

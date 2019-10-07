@@ -653,6 +653,24 @@ def test_ogrinfo_sql_filename():
     assert 'OGRFeature(poly):0' in ret and 'OGRFeature(poly):9' in ret, \
         'wrong output'
 
+###############################################################################
+# Test -nogeomtype
 
 
+def test_ogrinfo_nogeomtype():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        pytest.skip()
 
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -nogeomtype ../ogr/data/poly.shp')
+    assert (err is None or err == ''), 'got error/warning'
+    expected_ret = """INFO: Open of `../ogr/data/poly.shp'
+      using driver `ESRI Shapefile' successful.
+1: poly
+"""
+    expected_lines = expected_ret.splitlines()
+    lines = ret.splitlines()
+    for i, exp_line in enumerate(expected_lines):
+        if exp_line != lines[i]:
+            if gdaltest.is_travis_branch('mingw'):
+                return 'expected_fail'
+            pytest.fail(ret)
