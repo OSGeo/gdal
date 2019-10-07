@@ -56,6 +56,7 @@ class OGROAPIFDataset final: public GDALDataset
 {
         friend class OGROAPIFLayer;
 
+        bool                                   m_bMustCleanPersistent = false;
         CPLString                              m_osRootURL;
         CPLString                              m_osUserQueryParams;
         CPLString                              m_osUserPwd;
@@ -85,8 +86,8 @@ class OGROAPIFDataset final: public GDALDataset
         bool LoadJSONCollections(const CPLString& osResultIn);
 
     public:
-        OGROAPIFDataset() {}
-        ~OGROAPIFDataset() {}
+        OGROAPIFDataset() = default;
+        ~OGROAPIFDataset();
 
         int GetLayerCount() override
                             { return static_cast<int>(m_apoLayers.size()); }
@@ -194,6 +195,22 @@ static bool CheckContentType(const char* pszGotContentType,
 }
 
 /************************************************************************/
+/*                         ~OGROAPIFDataset()                           */
+/************************************************************************/
+
+OGROAPIFDataset::~OGROAPIFDataset()
+{
+    if( m_bMustCleanPersistent )
+    {
+        char **papszOptions =
+            CSLSetNameValue(
+                nullptr, "CLOSE_PERSISTENT", CPLSPrintf("OAPIF:%p", this));
+        CPLHTTPDestroyResult(CPLHTTPFetch(m_osRootURL, papszOptions));
+        CSLDestroy(papszOptions);
+    }
+}
+
+/************************************************************************/
 /*                         ReinjectAuthInURL()                          */
 /************************************************************************/
 
@@ -260,6 +277,9 @@ bool OGROAPIFDataset::Download(
         papszOptions = CSLSetNameValue(papszOptions,
                                        "USERPWD", m_osUserPwd.c_str());
     }
+    m_bMustCleanPersistent = true;
+    papszOptions =
+        CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=OAPIF:%p", this));
     CPLString osURLWithQueryParameters(osURL);
     if( !m_osUserQueryParams.empty() )
     {
