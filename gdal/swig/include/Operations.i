@@ -594,7 +594,7 @@ int ViewshedGenerate( GDALRasterBandShadow *srcBand,
                         double outOfRangeVal,  double noDataVal, double dfCurvCoeff,
                         GDALViewshedMode mode, double maxDistance,
                         GDALProgressFunc callback = NULL, void* callback_data = NULL,
-                        CSLConstList = NULL)
+                        CSLConstList papszOptions = NULL)
 {
     CPLErr eErr;
 
@@ -614,7 +614,8 @@ int ViewshedGenerate( GDALRasterBandShadow *srcBand,
                                  mode,
                                  maxDistance,
                                  callback,
-                                 callback_data);
+                                 callback_data,
+                                 papszOptions);
 
     return eErr;
 }
