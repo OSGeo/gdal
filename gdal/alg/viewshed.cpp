@@ -47,64 +47,7 @@
 
 CPL_CVSID("$Id$")
 
-/************************************************************************/
-/*                        GDALViewShedGenerate()                         */
-/************************************************************************/
 
-/**
- * Create viewshed from raster DEM.
- *
- * This algorithm will generate contour vectors for the input raster band
- * on the requested set of contour levels.  The vector contours are written
- * to the passed in OGR vector layer.  Also, a NODATA value may be specified
- * to identify pixels that should not be considered in contour line generation.
- *
- * The gdal/apps/gdal_viewshed.cpp mainline can be used as an example of
- * how to use this function.
- *
- * ALGORITHM RULES
- *
- * @param hBand The band to read raster data from.  The whole band will be
- * processed.
- *
- * @param dfContourInterval The elevation interval between contours generated.
- *
- * @param dfContourBase The "base" relative to which contour intervals are
- * applied.  This is normally zero, but could be different.  To generate 10m
- * contours at 5, 15, 25, ... the ContourBase would be 5.
- *
- * @param  nFixedLevelCount The number of fixed levels. If this is greater than
- * zero, then fixed levels will be used, and ContourInterval and ContourBase
- * are ignored.
- *
- * @param padfFixedLevels The list of fixed contour levels at which contours
- * should be generated.  It will contain FixedLevelCount entries, and may be
- * NULL if fixed levels are disabled (FixedLevelCount = 0).
- *
- * @param bUseNoData If TRUE the dfNoDataValue will be used.
- *
- * @param dfNoDataValue The value to use as a "nodata" value. That is, a
- * pixel value which should be ignored in generating contours as if the value
- * of the pixel were not known.
- *
- * @param hLayer The layer to which new contour vectors will be written.
- * Each contour will have a LINESTRING geometry attached to it.   This
- * is really of type OGRLayerH, but void * is used to avoid pulling the
- * ogr_api.h file in here.
- *
- * @param iIDField If not -1 this will be used as a field index to indicate
- * where a unique id should be written for each feature (contour) written.
- *
- * @param iElevField If not -1 this will be used as a field index to indicate
- * where the elevation value of the contour should be written.
- *
- * @param pfnProgress A GDALProgressFunc that may be used to report progress
- * to the user, or to interrupt the algorithm.  May be NULL if not required.
- *
- * @param pProgressArg The callback data for the pfnProgress function.
- *
- * @return CE_None on success or CE_Failure if an error occurs.
- */
 
 #define EARTH_DIAMETER 12741994.0
 
@@ -178,6 +121,59 @@ double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
     else
         return dfZ;
 }
+
+
+/************************************************************************/
+/*                        GDALViewshedGenerate()                         */
+/************************************************************************/
+
+/**
+ * Create viewshed from raster DEM.
+ *
+ * This algorithm will generate contour vectors for the input raster band
+ * on the requested set of contour levels.  The vector contours are written
+ * to the passed in OGR vector layer.  Also, a NODATA value may be specified
+ * to identify pixels that should not be considered in contour line generation.
+ *
+ * The gdal/apps/gdal_viewshed.cpp mainline can be used as an example of
+ * how to use this function.
+ *
+ * ALGORITHM RULES
+ *
+ * @param hBand The band to read raster data from.  The whole band will be
+ * processed.
+ *
+ * @param pszTargetRasterName raster datasource name (created if given)
+ *
+ * @param dfObserverX observer X value (in SRS units)
+ *
+ * @param dfObserverY observer Y value (in SRS units)
+ *
+ * @param dfObserverHeight observer height
+ *
+ * @param dfTargetHeight target height. (default 0)
+ *
+ * @param  dfVisibleVal pixel value for visibility (default 0)
+ *
+ * @param dfInvisibleVal pixel value for invisibility (default 255)
+ *
+ * @param dfOutOfRangeVal Out of range value
+ *
+ * @param dfNoDataVal NODATA value to use
+ *
+ * @param dfCurvCoeff curvature coefficient
+ *
+ * @param eMode which GDALViewshedMode to use
+ *
+ * @param dfMaxDistance maximum distance range to compute viewshed
+ *
+ * @param pfnProgress A GDALProgressFunc that may be used to report progress
+ * to the user, or to interrupt the algorithm.  May be NULL if not required.
+ *
+ * @param pProgressArg The callback data for the pfnProgress function.
+ *
+ * @return CE_None on success or CE_Failure if an error occurs.
+ */
 
 CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterName,
                     double dfObserverX, double dfObserverY, double dfObserverHeight,
