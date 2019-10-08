@@ -25,7 +25,7 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalwarpoperation.obj gdalchecksum.obj gdal_rpc.obj gdalgeoloc.obj \
 	gdalgrid.obj gdalcutline.obj gdalproximity.obj rasterfill.obj \
 	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
-	contour.obj viewshed.obj gdallinearsystem.obj \
+	contour.obj gdallinearsystem.obj \
 	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj \
 	gdaltransformgeolocs.obj delaunay.obj gdalpansharpen.obj \
 	gdalapplyverticalshiftgrid.obj

@@ -570,57 +570,6 @@ int ContourGenerateEx( GDALRasterBandShadow *srcBand,
 %clear OGRLayerShadow* dstLayer;
 
 /************************************************************************/
-/*                          ViewshedGenerate()                           */
-/************************************************************************/
-
-%rename (ViewshedMode) GDALViewshedMode;
-typedef enum {
-	GVM_Diagonal = 1,
-    GVM_Edge = 2,
-    GVM_Max = 3,
-    GVM_Min = 4
-} GDALViewshedMode;
-
-
-#ifndef SWIGJAVA
-%feature( "kwargs" ) ViewshedGenerate;
-#endif
-%apply Pointer NONNULL {GDALRasterBandShadow *srcBand};
-%inline %{
-int ViewshedGenerate( GDALRasterBandShadow *srcBand,
-                        char* targetRasterName,
-                        double observerX, double observerY, double observerHeight,
-                        double targetHeight, double visibleVal, double invisibleVal,
-                        double outOfRangeVal,  double noDataVal, double dfCurvCoeff,
-                        GDALViewshedMode mode, double maxDistance,
-                        GDALProgressFunc callback = NULL, void* callback_data = NULL)
-{
-    CPLErr eErr;
-
-    CPLErrorReset();
-
-    eErr =  GDALViewshedGenerate( srcBand,
-                                 targetRasterName,
-                                 observerX,
-                                 observerY,
-                                 observerHeight,
-                                 targetHeight,
-                                 visibleVal,
-                                 invisibleVal,
-                                 outOfRangeVal,
-                                 noDataVal,
-                                 dfCurvCoeff,
-                                 mode,
-                                 maxDistance,
-                                 callback,
-                                 callback_data);
-
-    return eErr;
-}
-%}
-%clear GDALRasterBandShadow *srcBand;
-
-/************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
 /************************************************************************/
 
