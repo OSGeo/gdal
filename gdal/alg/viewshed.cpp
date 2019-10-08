@@ -48,9 +48,6 @@
 CPL_CVSID("$Id$")
 
 
-
-#define EARTH_DIAMETER 12741994.0
-
 inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, double* padfZVal,
     std::vector<GByte>& vResult, GByte byVisibleVal, GByte byInvisibleVal)
 {
@@ -63,7 +60,7 @@ inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, doubl
         vResult[iPixel] = byVisibleVal;
 }
 
-inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff)
+inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff, double dfSphereDiameter)
 {
     if (dfDistance2 <= 0 && dfCurvCoeff == 0)
         return true;
@@ -74,7 +71,7 @@ inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel
 
     /* calc adjustment */
     if (dfCurvCoeff != 0)
-        dfHeight -= dfCurvCoeff * dfR2 / EARTH_DIAMETER;
+        dfHeight -= dfCurvCoeff * dfR2 / dfSphereDiameter;
 
     if (dfDistance2 > 0 && dfR2 > dfDistance2)
         return false;
@@ -193,7 +190,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     GByte byOutOfRangeVal = dfOutOfRangeVal >= 0 ? static_cast<GByte>(dfOutOfRangeVal) : 0;
 
     /* set up geotransformation */
-    double adfGeoTransform[6];
+    std::array<double, 6> adfGeoTransform;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -202,10 +199,10 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     adfGeoTransform[5] = 1.0;
     GDALDatasetH hSrcDS = GDALGetBandDataset( hBand );
     if( hSrcDS != nullptr )
-        GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+        GDALGetGeoTransform( hSrcDS, adfGeoTransform.data());
 
     double adfInvGeoTransform[6];
-    if (!GDALInvGeoTransform(adfGeoTransform, adfInvGeoTransform))
+    if (!GDALInvGeoTransform(adfGeoTransform.data(), adfInvGeoTransform))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
         return CE_Failure;
@@ -228,10 +225,10 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
 
     CPLErr eErr = CE_None;
     /* calculate the area of interest */
-    int nXStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(floor(nX - adfInvGeoTransform[1] * dfMaxDistance))) : 0;
-    int nXStop = dfMaxDistance > 0? (std::min)(nXSize, static_cast<int>(ceil(nX + adfInvGeoTransform[1] * dfMaxDistance) + 1)) : nXSize;
-    int nYStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(floor(nY + adfInvGeoTransform[5] * dfMaxDistance))) : 0;
-    int nYStop = dfMaxDistance > 0 ? (std::min)(nYSize, static_cast<int>(ceil(nY - adfInvGeoTransform[5] * dfMaxDistance) + 1)) : nYSize;
+    int nXStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(std::floor(nX - adfInvGeoTransform[1] * dfMaxDistance))) : 0;
+    int nXStop = dfMaxDistance > 0? (std::min)(nXSize, static_cast<int>(std::ceil(nX + adfInvGeoTransform[1] * dfMaxDistance) + 1)) : nXSize;
+    int nYStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(std::floor(nY + adfInvGeoTransform[5] * dfMaxDistance))) : 0;
+    int nYStop = dfMaxDistance > 0? (std::min)(nYSize, static_cast<int>(std::ceil(nY - adfInvGeoTransform[5] * dfMaxDistance) + 1)) : nYSize;
 
     /* normalize horizontal index (0 - nXSize) */
     nXSize = nXStop - nXStart;
@@ -265,7 +262,8 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         vResult.data());
 
     GDALRasterBandH hTargetBand = nullptr;
-    GDALDatasetH hDstDS = nullptr;
+    std::unique_ptr<GDALDataset> hDstDS{};
+
     if (pszTargetRasterName != nullptr)
     {
         std::vector<CPLString> aoDrivers =
@@ -284,25 +282,26 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
                     "Several drivers matching %s extension. Using %s",
                     CPLGetExtension(pszTargetRasterName), aoDrivers[0].c_str());
             }
-            GDALDriverH hDriver = GDALGetDriverByName(aoDrivers[0].c_str());
-            if (hDriver == nullptr)
+
+            GDALDriverManager *hMgr = GetGDALDriverManager();
+            GDALDriver *hDriver = hMgr->GetDriverByName(aoDrivers[0].c_str());
+            if (!hDriver)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot get driver for %s", aoDrivers[0].c_str());
                 return CE_Failure;
             }
             /* create output raster */
-            hDstDS = GDALCreate(hDriver, pszTargetRasterName, nXSize, nYStop - nYStart, 1,
-                    GDT_Byte, nullptr);
-            if (hDstDS == nullptr)
+//             GDALDatasetH hDstDS = nullptr;
+            hDstDS = std::unique_ptr<GDALDataset>(hDriver->Create(pszTargetRasterName, nXSize, nYStop - nYStart, 1, GDT_Byte, nullptr));
+            if (!hDstDS)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot create dataset for %s", pszTargetRasterName);
                 return CE_Failure;
             }
-
             /* copy srs */
-            GDALSetSpatialRef(hDstDS, GDALGetSpatialRef(hSrcDS));
+            GDALSetSpatialRef(hDstDS.get(), GDALGetSpatialRef(hSrcDS));
 
             std::array<double, 6> adfDstGeoTransform;
             adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
@@ -311,9 +310,9 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
             adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[5] * nYStart;
             adfDstGeoTransform[4] = adfGeoTransform[4];
             adfDstGeoTransform[5] = adfGeoTransform[5];
-            GDALSetGeoTransform(hDstDS, adfDstGeoTransform.data());
+            GDALSetGeoTransform(hDstDS.get(), adfDstGeoTransform.data());
 
-            hTargetBand = GDALGetRasterBand(hDstDS, 1);
+            hTargetBand = GDALGetRasterBand(hDstDS.get(), 1);
             if (hTargetBand == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -340,38 +339,47 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     int iPixel, iLine;
     double dfDistance2 = dfMaxDistance * dfMaxDistance;
 
+    /* If we can't get a SemiMajor axis from the SRS, it will be
+     * SRS_WGS84_SEMIMAJOR
+    */
+    OGRErr eSphereError;
+    double dfSphereDiameter = OSRGetSemiMajor(GDALGetSpatialRef(hDstDS.get()), &eSphereError ) * 2.0;
+
     /* mark the observer point as visible */
     pabyResult[nX] = byVisibleVal;
     if (nX > 0)
     {
-        AdjustHeightInRange(adfGeoTransform,
+        AdjustHeightInRange(adfGeoTransform.data(),
                             1,
                             0,
                             padfFirstLineVal[nX - 1],
                             dfDistance2,
-                            dfCurvCoeff);
+                            dfCurvCoeff,
+                            dfSphereDiameter);
         pabyResult[nX - 1] = byVisibleVal;
     }
     if (nX < nXSize - 1)
     {
-        AdjustHeightInRange(adfGeoTransform,
+        AdjustHeightInRange(adfGeoTransform.data(),
                             1,
                             0,
                             padfFirstLineVal[nX + 1],
                             dfDistance2,
-                            dfCurvCoeff);
+                            dfCurvCoeff,
+                            dfSphereDiameter);
         pabyResult[nX + 1] = byVisibleVal;
     }
 
     /* process left direction */
     for (iPixel = nX - 2; iPixel >= 0; iPixel--)
     {
-        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+        bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             nX - iPixel,
                                             0,
                                             padfFirstLineVal[iPixel],
                                             dfDistance2,
-                                            dfCurvCoeff);
+                                            dfCurvCoeff,
+                                            dfSphereDiameter);
         if (adjusted)
         {
             dfZ = CalcHeightLine(nX - iPixel,
@@ -394,12 +402,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     /* process right direction */
     for (iPixel = nX + 2; iPixel < nXSize; iPixel++)
     {
-        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+        bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             iPixel - nX,
                                             0,
                                             padfFirstLineVal[iPixel],
                                             dfDistance2,
-                                            dfCurvCoeff);
+                                            dfCurvCoeff,
+                                            dfSphereDiameter);
         if (adjusted)
         {
             dfZ = CalcHeightLine(iPixel - nX,
@@ -444,12 +453,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
 
         /* set up initial point on the scanline */
-        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+        bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             0,
                                             nY - iLine,
                                             padfThisLineVal[nX],
                                             dfDistance2,
-                                            dfCurvCoeff);
+                                            dfCurvCoeff,
+                                            dfSphereDiameter);
         if (adjusted)
         {
             dfZ = CalcHeightLine(nY - iLine,
@@ -474,12 +484,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process left direction */
         for (iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
-            bool left_adjusted = AdjustHeightInRange(adfGeoTransform,
+            bool left_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                      nX - iPixel,
                                                      nY - iLine,
                                                      padfThisLineVal[iPixel],
                                                      dfDistance2,
-                                                     dfCurvCoeff);
+                                                     dfCurvCoeff,
+                                                     dfSphereDiameter);
             if (left_adjusted)
             {
                 if (eMode != GVM_Edge)
@@ -522,12 +533,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process right direction */
         for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
-            bool right_adjusted = AdjustHeightInRange(adfGeoTransform,
+            bool right_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                       iPixel - nX,
                                                       nY - iLine,
                                                       padfThisLineVal[iPixel],
                                                       dfDistance2,
-                                                      dfCurvCoeff);
+                                                      dfCurvCoeff,
+                                                      dfSphereDiameter);
             if (right_adjusted)
             {
                 if (eMode != GVM_Edge)
@@ -602,12 +614,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
 
         /* set up initial point on the scanline */
-        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+        bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             0,
                                             iLine - nY,
                                             padfThisLineVal[nX],
                                             dfDistance2,
-                                            dfCurvCoeff);
+                                            dfCurvCoeff,
+                                            dfSphereDiameter);
         if (adjusted)
         {
             dfZ = CalcHeightLine(iLine - nY,
@@ -630,12 +643,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process left direction */
         for (iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
-            bool left_adjusted = AdjustHeightInRange(adfGeoTransform,
+            bool left_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                      nX - iPixel,
                                                      iLine - nY,
                                                      padfThisLineVal[iPixel],
                                                      dfDistance2,
-                                                     dfCurvCoeff);
+                                                     dfCurvCoeff,
+                                                     dfSphereDiameter);
             if (left_adjusted)
             {
                 if (eMode != GVM_Edge)
@@ -675,12 +689,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process right direction */
         for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
-            bool right_adjusted = AdjustHeightInRange(adfGeoTransform,
+            bool right_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                       iPixel - nX,
                                                       iLine - nY,
                                                       padfThisLineVal[iPixel],
                                                       dfDistance2,
-                                                      dfCurvCoeff);
+                                                      dfCurvCoeff,
+                                                      dfSphereDiameter);
             if (right_adjusted)
             {
                 if (eMode != GVM_Edge)
@@ -742,9 +757,6 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
             return CE_Failure;
         }
     }
-
-    if (hDstDS != nullptr)
-        GDALClose(hDstDS);
 
 
     return CE_None;
