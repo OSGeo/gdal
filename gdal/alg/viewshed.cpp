@@ -52,11 +52,11 @@ CPL_CVSID("$Id$")
 #define EARTH_DIAMETER 12741994.0
 
 
-bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff);
-double CalcHeightLine(int i, double Za, double Zo);
-double CalcHeightDiagonal(int i, int j, double Za, double Zb, double Zo);
-double CalcHeightEdge(int i, int j, double Za, double Zb, double Zo);
-double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode);
+// bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff);
+// double CalcHeightLine(int i, double Za, double Zo);
+// double CalcHeightDiagonal(int i, int j, double Za, double Zb, double Zo);
+// double CalcHeightEdge(int i, int j, double Za, double Zb, double Zo);
+// double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode);
 
 inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, double* padfZVal,
     std::vector<GByte>& vResult, GByte byVisibleVal, GByte byInvisibleVal)
@@ -70,7 +70,7 @@ inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, doubl
         vResult[iPixel] = byVisibleVal;
 }
 
-bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff)
+inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff)
 {
     if (dfDistance2 <= 0 && dfCurvCoeff == 0)
         return true;
@@ -89,7 +89,7 @@ bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, d
     return true;
 }
 
-double CalcHeightLine(int i, double Za, double Zo)
+inline static double CalcHeightLine(int i, double Za, double Zo)
 {
     if (i == 1)
         return Za;
@@ -97,12 +97,12 @@ double CalcHeightLine(int i, double Za, double Zo)
         return (Za - Zo) / (i - 1) + Za;
 }
 
-double CalcHeightDiagonal(int i, int j, double Za, double Zb, double Zo)
+inline static double CalcHeightDiagonal(int i, int j, double Za, double Zb, double Zo)
 {
     return ((Za - Zo) * i + (Zb - Zo) * j) / (i + j - 1) + Zo;
 }
 
-double CalcHeightEdge(int i, int j, double Za, double Zb, double Zo)
+inline static double CalcHeightEdge(int i, int j, double Za, double Zb, double Zo)
 {
     if (i == j)
         return CalcHeightLine(i, Za, Zo);
@@ -110,7 +110,7 @@ double CalcHeightEdge(int i, int j, double Za, double Zb, double Zo)
         return ((Za - Zo) * i + (Zb - Zo) * (j - i)) / (j - 1) + Zo;
 }
 
-double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
+inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
 {
     if (eMode == GVM_Edge)
         return dfZ2;
