@@ -190,13 +190,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     GByte byOutOfRangeVal = dfOutOfRangeVal >= 0 ? static_cast<GByte>(dfOutOfRangeVal) : 0;
 
     /* set up geotransformation */
-    std::array<double, 6> adfGeoTransform;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
+    std::array<double, 6> adfGeoTransform {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
     GDALDatasetH hSrcDS = GDALGetBandDataset( hBand );
     if( hSrcDS != nullptr )
         GDALGetGeoTransform( hSrcDS, adfGeoTransform.data());
@@ -217,13 +211,17 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     int nXSize = GDALGetRasterBandXSize( hBand );
     int nYSize = GDALGetRasterBandYSize( hBand );
 
-    if (nX < 0 || nX > nXSize || nY < 0 || nY > nYSize)
+    if (nX < 0 ||
+        nX > nXSize ||
+        nY < 0 ||
+        nY > nYSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "The observer location falls outside of the DEM area");
         return CE_Failure;
     }
 
     CPLErr eErr = CE_None;
+
     /* calculate the area of interest */
     int nXStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(std::floor(nX - adfInvGeoTransform[1] * dfMaxDistance))) : 0;
     int nXStop = dfMaxDistance > 0? (std::min)(nXSize, static_cast<int>(std::ceil(nX + adfInvGeoTransform[1] * dfMaxDistance) + 1)) : nXSize;
@@ -252,14 +250,10 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         return CE_Failure;
     }
 
-    double *padfFirstLineVal = static_cast<double *>(
-        vFirstLineVal.data());
-    double *padfLastLineVal = static_cast<double *>(
-        vLastLineVal.data());
-    double *padfThisLineVal = static_cast<double *>(
-        vThisLineVal.data());
-    GByte *pabyResult = static_cast<GByte *>(
-        vResult.data());
+    double *padfFirstLineVal = vFirstLineVal.data();
+    double *padfLastLineVal = vLastLineVal.data();
+    double *padfThisLineVal = vThisLineVal.data();
+    GByte *pabyResult = vResult.data();
 
     GDALRasterBandH hTargetBand = nullptr;
     std::unique_ptr<GDALDataset> hDstDS{};
@@ -327,7 +321,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
 
     /* process first line */
     if (GDALRasterIO(hBand, GF_Read, nXStart, nY, nXSize, 1,
-        padfFirstLineVal, nXSize, 1, GDT_Float64, 0, 0) != CE_None)
+        padfFirstLineVal, nXSize, 1, GDT_Float64, 0, 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "RasterIO error when reading DEM");
@@ -432,7 +426,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     if (hTargetBand != nullptr)
     {
         if (GDALRasterIO(hTargetBand, GF_Write, 0, nY - nYStart, nXSize, 1,
-            pabyResult, nXSize, 1, GDT_Byte, 0, 0) != CE_None)
+            pabyResult, nXSize, 1, GDT_Byte, 0, 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when writing target raster");
@@ -441,11 +435,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     }
 
     /* scan upwards */
-    memcpy(padfLastLineVal, padfFirstLineVal, nXSize * sizeof(double));
+    std::copy(vFirstLineVal.begin(),
+              vFirstLineVal.begin() + nXSize,
+              std::back_inserter(vLastLineVal));
     for (iLine = nY - 1; iLine >= nYStart && eErr == CE_None; iLine--)
     {
         if (GDALRasterIO(hBand, GF_Read, nXStart, iLine, nXSize, 1,
-            padfThisLineVal, nXSize, 1, GDT_Float64, 0, 0) != CE_None)
+            padfThisLineVal, nXSize, 1, GDT_Float64, 0, 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when reading DEM");
@@ -584,7 +580,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         if (hTargetBand != nullptr)
         {
             if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
-                pabyResult, nXSize, 1, GDT_Byte, 0, 0) != CE_None)
+                pabyResult, nXSize, 1, GDT_Byte, 0, 0))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "RasterIO error when writing target raster");
@@ -606,7 +602,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     for(iLine = nY + 1; iLine < nYStop && eErr == CE_None; iLine++ )
     {
         if (GDALRasterIO( hBand, GF_Read, nXStart, iLine, nXStop - nXStart, 1,
-            padfThisLineVal, nXStop - nXStart, 1, GDT_Float64, 0, 0 ) != CE_None)
+            padfThisLineVal, nXStop - nXStart, 1, GDT_Float64, 0, 0 ))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when reading DEM");
@@ -740,7 +736,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         if (hTargetBand != nullptr)
         {
             if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
-                pabyResult, nXSize, 1, GDT_Byte, 0, 0) != CE_None)
+                pabyResult, nXSize, 1, GDT_Byte, 0, 0))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "RasterIO error when writing target raster");

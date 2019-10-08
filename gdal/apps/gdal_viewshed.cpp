@@ -86,17 +86,6 @@ MAIN_START(argc, argv)
     bool bQuiet = false;
     GDALProgressFunc pfnProgress = nullptr;
 
-    // Check that we are running against at least GDAL 1.4.
-    // Note to developers: if we use newer API, please change the requirement.
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1400)
-    {
-        fprintf(stderr,
-                "At least, GDAL >= 1.4.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n",
-                argv[0], GDAL_RELEASE_NAME);
-        exit(1);
-    }
-
     GDALAllRegister();
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
