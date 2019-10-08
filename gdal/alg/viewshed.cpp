@@ -109,6 +109,11 @@ CPL_CVSID("$Id$")
 #define EARTH_DIAMETER 12741994.0
 
 
+bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff);
+double CalcHeightLine(int i, double Za, double Zo);
+double CalcHeightDiagonal(int i, int j, double Za, double Zb, double Zo);
+double CalcHeightEdge(int i, int j, double Za, double Zb, double Zo);
+double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode);
 
 inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, double* padfZVal,
     std::vector<GByte>& vResult, GByte byVisibleVal, GByte byInvisibleVal)
