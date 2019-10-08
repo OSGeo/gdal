@@ -229,14 +229,13 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    CSLConstList extras;
     CPLErr eErr = GDALViewshedGenerate( hBand, pszDstFilename,
                          dfObserverX, dfObserverY,
                          dfObserverHeight, dfTargetHeight,
                          dfVisibleVal, dfInvisibleVal,
                          dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff,
                          GVM_Edge, dfMaxDistance,
-                         pfnProgress, nullptr, extras);
+                         pfnProgress, nullptr, nullptr);
 
     GDALClose( hSrcDS );
 

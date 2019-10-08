@@ -3989,6 +3989,14 @@ def ContourGenerate(*args, **kwargs):
 def ContourGenerateEx(*args, **kwargs):
     """ContourGenerateEx(Band srcBand, Layer dstLayer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.ContourGenerateEx(*args, **kwargs)
+GVM_Diagonal = _gdal.GVM_Diagonal
+GVM_Edge = _gdal.GVM_Edge
+GVM_Max = _gdal.GVM_Max
+GVM_Min = _gdal.GVM_Min
+
+def ViewshedGenerate(*args, **kwargs):
+    """ViewshedGenerate(Band srcBand, char * targetRasterName, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None, CSLConstList papszOptions=0) -> int"""
+    return _gdal.ViewshedGenerate(*args, **kwargs)
 
 def AutoCreateWarpedVRT(*args):
     """AutoCreateWarpedVRT(Dataset src_ds, char const * src_wkt=None, char const * dst_wkt=None, GDALResampleAlg eResampleAlg, double maxerror=0.0) -> Dataset"""
