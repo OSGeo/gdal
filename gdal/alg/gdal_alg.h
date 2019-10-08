@@ -360,7 +360,7 @@ GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterName,
                         double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
                         double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
                         GDALViewshedMode eMode, double dfMaxDistance,
-                        GDALProgressFunc pfnProgress, void *pProgressArg, CSLConstList papszExtraOptions);
+                        GDALProgressFunc pfnProgress, void *pProgressArg);
 
 /************************************************************************/
 /*      Rasterizer API - geometries burned into GDAL raster.            */

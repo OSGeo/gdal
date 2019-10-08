@@ -105,11 +105,17 @@ CPL_CVSID("$Id$")
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 
-#define EARTH_DIAMETER 12741994.0
+#define EARTH_DIAMETER 12741994.0;
+
+#ifndef round
+inline double round( double d )
+{
+    return floor( d + 0.5 );
+}
+#endif
 
 
-
-inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, double* padfZVal,
+void SetVisibility(int iPixel, double dfZ, double dfZTarget, double* padfZVal,
     GByte* pabyResult, GByte byVisibleVal, GByte byInvisibleVal)
 {
     if (padfZVal[iPixel] + dfZTarget < dfZ)
@@ -121,8 +127,8 @@ inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, doubl
         pabyResult[iPixel] = byVisibleVal;
 }
 
-int AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff)
-{
+int AdjustHeightInRange(double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff)
+{  
     if (dfDistance2 <= 0 && dfCurvCoeff == 0)
         return TRUE;
 
@@ -133,7 +139,7 @@ int AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, do
     /* calc adjustment */
     if (dfCurvCoeff != 0)
         dfHeight -= dfCurvCoeff * dfR2 / EARTH_DIAMETER;
-
+    
     if (dfDistance2 > 0 && dfR2 > dfDistance2)
         return FALSE;
 
@@ -166,9 +172,9 @@ double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
     if (eMode == GVM_Edge)
         return dfZ2;
     else if (eMode == GVM_Max)
-        return (std::max)(dfZ, dfZ2);
+        return std::max(dfZ, dfZ2);
     else if (eMode == GVM_Min)
-        return (std::min)(dfZ, dfZ2);
+        return std::min(dfZ, dfZ2);
     else
         return dfZ;
 }
@@ -178,7 +184,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
                     double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
                     double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
                     GDALViewshedMode eMode, double dfMaxDistance,
-                    GDALProgressFunc pfnProgress, void *pProgressArg, CSLConstList /*papszExtraOptions*/)
+                    GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
     VALIDATE_POINTER1( hBand, "GDALViewshedGenerate", CE_Failure );
@@ -219,8 +225,8 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     /* calculate observer position */
     double dfX, dfY;
     GDALApplyGeoTransform(adfInvGeoTransform, dfObserverX, dfObserverY, &dfX, &dfY);
-    int nX = static_cast<int>(std::round(dfX));
-    int nY = static_cast<int>(std::round(dfY));
+    int nX = static_cast<int>(round(dfX));
+    int nY = static_cast<int>(round(dfY));
 
     int nXSize = GDALGetRasterBandXSize( hBand );
     int nYSize = GDALGetRasterBandYSize( hBand );
@@ -229,45 +235,37 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     {
         CPLError(CE_Failure, CPLE_AppDefined, "The observer location falls outside of the DEM area");
         return CE_Failure;
-    }
+    } 
 
     CPLErr eErr = CE_None;
     /* calculate the area of interest */
-    int nXStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(floor(nX - adfInvGeoTransform[1] * dfMaxDistance))) : 0;
-    int nXStop = dfMaxDistance > 0? (std::min)(nXSize, static_cast<int>(ceil(nX + adfInvGeoTransform[1] * dfMaxDistance) + 1)) : nXSize;
-    int nYStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(floor(nY + adfInvGeoTransform[5] * dfMaxDistance))) : 0;
-    int nYStop = dfMaxDistance > 0 ? (std::min)(nYSize, static_cast<int>(ceil(nY - adfInvGeoTransform[5] * dfMaxDistance) + 1)) : nYSize;
+    int nXStart = dfMaxDistance > 0? std::max(0, static_cast<int>(floor(nX - adfInvGeoTransform[1] * dfMaxDistance))) : 0;
+    int nXStop = dfMaxDistance > 0? std::min(nXSize, static_cast<int>(ceil(nX + adfInvGeoTransform[1] * dfMaxDistance) + 1)) : nXSize;
+    int nYStart = dfMaxDistance > 0? std::max(0, static_cast<int>(floor(nY + adfInvGeoTransform[5] * dfMaxDistance))) : 0;
+    int nYStop = dfMaxDistance > 0 ? std::min(nYSize, static_cast<int>(ceil(nY - adfInvGeoTransform[5] * dfMaxDistance) + 1)) : nYSize;
 
     /* normalize horizontal index (0 - nXSize) */
     nXSize = nXStop - nXStart;
     nX -= nXStart;
 
-    std::vector<double> vFirstLineVal;
-    std::vector<double> vLastLineVal;
-    std::vector<double> vThisLineVal;
-    std::vector<GByte> vResult;
+    double *padfFirstLineVal = static_cast<double *>(
+        VSI_MALLOC2_VERBOSE(sizeof(double), nXSize));
+    double *padfLastLineVal = static_cast<double *>(
+        VSI_MALLOC2_VERBOSE(sizeof(double), nXSize));
+    double *padfThisLineVal = static_cast<double *>(
+        VSI_MALLOC2_VERBOSE(sizeof(double), nXSize));
+    GByte *pabyResult = static_cast<GByte *>(
+        VSI_MALLOC2_VERBOSE(sizeof(GByte), nXSize));
 
-    try
+    if (padfFirstLineVal == nullptr || padfLastLineVal == nullptr ||
+        padfThisLineVal == nullptr || pabyResult == nullptr)
     {
-        vFirstLineVal.resize(nXSize);
-        vLastLineVal.resize(nXSize);
-        vThisLineVal.resize(nXSize);
-        vResult.resize(nXSize);
-    } catch (...)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot allocate vectors for viewshed");
+        CPLFree(padfFirstLineVal);
+        CPLFree(padfLastLineVal);
+        CPLFree(padfThisLineVal);
+        CPLFree(pabyResult);
         return CE_Failure;
     }
-
-    double *padfFirstLineVal = static_cast<double *>(
-        vFirstLineVal.data());
-    double *padfLastLineVal = static_cast<double *>(
-        vLastLineVal.data());
-    double *padfThisLineVal = static_cast<double *>(
-        vThisLineVal.data());
-    GByte *pabyResult = static_cast<GByte *>(
-        vResult.data());
 
     GDALRasterBandH hTargetBand = nullptr;
     GDALDatasetH hDstDS = nullptr;
@@ -306,8 +304,9 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
                 return CE_Failure;
             }
 
-            /* copy srs */
-            GDALSetSpatialRef(hDstDS, GDALGetSpatialRef(hSrcDS));
+            const char *pszProjection = GDALGetProjectionRef(hSrcDS);
+            if (pszProjection != nullptr && strlen(pszProjection) > 0)
+                GDALSetProjection(hDstDS, pszProjection);
 
             double adfDstGeoTransform[6];
             adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
@@ -329,7 +328,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
             if (dfNoDataVal >= 0)
                 GDALSetRasterNoDataValue(hTargetBand, byNoDataVal);
         }
-    }
+    }  
 
     /* process first line */
     if (GDALRasterIO(hBand, GF_Read, nXStart, nY, nXSize, 1,
@@ -604,6 +603,10 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     if (hDstDS != nullptr)
         GDALClose(hDstDS);
 
+    CPLFree(padfFirstLineVal);
+    CPLFree(padfLastLineVal);
+    CPLFree(padfThisLineVal);
+    CPLFree(pabyResult);
 
     return CE_None;
 }
