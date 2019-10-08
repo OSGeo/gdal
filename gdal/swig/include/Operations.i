@@ -593,7 +593,8 @@ int ViewshedGenerate( GDALRasterBandShadow *srcBand,
                         double targetHeight, double visibleVal, double invisibleVal,
                         double outOfRangeVal,  double noDataVal, double dfCurvCoeff,
                         GDALViewshedMode mode, double maxDistance,
-                        GDALProgressFunc callback = NULL, void* callback_data = NULL)
+                        GDALProgressFunc callback = NULL, void* callback_data = NULL,
+                        CSLConstList = NULL)
 {
     CPLErr eErr;
 
