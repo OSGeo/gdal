@@ -3011,71 +3011,72 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_CPLErrorHandler swig_types[0]
 #define SWIGTYPE_p_CPLVirtualMemShadow swig_types[1]
 #define SWIGTYPE_p_CPLXMLNode swig_types[2]
-#define SWIGTYPE_p_DirEntry swig_types[3]
-#define SWIGTYPE_p_GByte swig_types[4]
-#define SWIGTYPE_p_GDALAsyncReaderShadow swig_types[5]
-#define SWIGTYPE_p_GDALAttributeHS swig_types[6]
-#define SWIGTYPE_p_GDALBuildVRTOptions swig_types[7]
-#define SWIGTYPE_p_GDALColorEntry swig_types[8]
-#define SWIGTYPE_p_GDALColorTableShadow swig_types[9]
-#define SWIGTYPE_p_GDALDEMProcessingOptions swig_types[10]
-#define SWIGTYPE_p_GDALDatasetShadow swig_types[11]
-#define SWIGTYPE_p_GDALDimensionHS swig_types[12]
-#define SWIGTYPE_p_GDALDriverShadow swig_types[13]
-#define SWIGTYPE_p_GDALEDTComponentHS swig_types[14]
-#define SWIGTYPE_p_GDALExtendedDataTypeClass swig_types[15]
-#define SWIGTYPE_p_GDALExtendedDataTypeHS swig_types[16]
-#define SWIGTYPE_p_GDALGridOptions swig_types[17]
-#define SWIGTYPE_p_GDALGroupHS swig_types[18]
-#define SWIGTYPE_p_GDALInfoOptions swig_types[19]
-#define SWIGTYPE_p_GDALMDArrayHS swig_types[20]
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[21]
-#define SWIGTYPE_p_GDALMultiDimInfoOptions swig_types[22]
-#define SWIGTYPE_p_GDALMultiDimTranslateOptions swig_types[23]
-#define SWIGTYPE_p_GDALNearblackOptions swig_types[24]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[25]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[26]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[27]
-#define SWIGTYPE_p_GDALRasterizeOptions swig_types[28]
-#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[29]
-#define SWIGTYPE_p_GDALTranslateOptions swig_types[30]
-#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[31]
-#define SWIGTYPE_p_GDALViewshedMode swig_types[32]
-#define SWIGTYPE_p_GDALWarpAppOptions swig_types[33]
-#define SWIGTYPE_p_GDAL_GCP swig_types[34]
-#define SWIGTYPE_p_GIntBig swig_types[35]
-#define SWIGTYPE_p_GUIntBig swig_types[36]
-#define SWIGTYPE_p_OGRFeatureShadow swig_types[37]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[38]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[39]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[40]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[41]
-#define SWIGTYPE_p_StatBuf swig_types[42]
-#define SWIGTYPE_p_VSIDIR swig_types[43]
-#define SWIGTYPE_p_VSILFILE swig_types[44]
-#define SWIGTYPE_p_char swig_types[45]
-#define SWIGTYPE_p_double swig_types[46]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[47]
-#define SWIGTYPE_p_int swig_types[48]
-#define SWIGTYPE_p_p_GByte swig_types[49]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[50]
-#define SWIGTYPE_p_p_GDALDimensionHS swig_types[51]
-#define SWIGTYPE_p_p_GDALEDTComponentHS swig_types[52]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[53]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[54]
-#define SWIGTYPE_p_p_GUIntBig swig_types[55]
-#define SWIGTYPE_p_p_OGRLayerShadow swig_types[56]
-#define SWIGTYPE_p_p_char swig_types[57]
-#define SWIGTYPE_p_p_double swig_types[58]
-#define SWIGTYPE_p_p_int swig_types[59]
-#define SWIGTYPE_p_p_p_GDALAttributeHS swig_types[60]
-#define SWIGTYPE_p_p_p_GDALDimensionHS swig_types[61]
-#define SWIGTYPE_p_p_p_GDALEDTComponentHS swig_types[62]
-#define SWIGTYPE_p_p_void swig_types[63]
-#define SWIGTYPE_p_size_t swig_types[64]
-#define SWIGTYPE_p_vsi_l_offset swig_types[65]
-static swig_type_info *swig_types[67];
-static swig_module_info swig_module = {swig_types, 66, 0, 0, 0, 0};
+#define SWIGTYPE_p_CSLConstList swig_types[3]
+#define SWIGTYPE_p_DirEntry swig_types[4]
+#define SWIGTYPE_p_GByte swig_types[5]
+#define SWIGTYPE_p_GDALAsyncReaderShadow swig_types[6]
+#define SWIGTYPE_p_GDALAttributeHS swig_types[7]
+#define SWIGTYPE_p_GDALBuildVRTOptions swig_types[8]
+#define SWIGTYPE_p_GDALColorEntry swig_types[9]
+#define SWIGTYPE_p_GDALColorTableShadow swig_types[10]
+#define SWIGTYPE_p_GDALDEMProcessingOptions swig_types[11]
+#define SWIGTYPE_p_GDALDatasetShadow swig_types[12]
+#define SWIGTYPE_p_GDALDimensionHS swig_types[13]
+#define SWIGTYPE_p_GDALDriverShadow swig_types[14]
+#define SWIGTYPE_p_GDALEDTComponentHS swig_types[15]
+#define SWIGTYPE_p_GDALExtendedDataTypeClass swig_types[16]
+#define SWIGTYPE_p_GDALExtendedDataTypeHS swig_types[17]
+#define SWIGTYPE_p_GDALGridOptions swig_types[18]
+#define SWIGTYPE_p_GDALGroupHS swig_types[19]
+#define SWIGTYPE_p_GDALInfoOptions swig_types[20]
+#define SWIGTYPE_p_GDALMDArrayHS swig_types[21]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[22]
+#define SWIGTYPE_p_GDALMultiDimInfoOptions swig_types[23]
+#define SWIGTYPE_p_GDALMultiDimTranslateOptions swig_types[24]
+#define SWIGTYPE_p_GDALNearblackOptions swig_types[25]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[26]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[27]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[28]
+#define SWIGTYPE_p_GDALRasterizeOptions swig_types[29]
+#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[30]
+#define SWIGTYPE_p_GDALTranslateOptions swig_types[31]
+#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[32]
+#define SWIGTYPE_p_GDALViewshedMode swig_types[33]
+#define SWIGTYPE_p_GDALWarpAppOptions swig_types[34]
+#define SWIGTYPE_p_GDAL_GCP swig_types[35]
+#define SWIGTYPE_p_GIntBig swig_types[36]
+#define SWIGTYPE_p_GUIntBig swig_types[37]
+#define SWIGTYPE_p_OGRFeatureShadow swig_types[38]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[39]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[40]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[41]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[42]
+#define SWIGTYPE_p_StatBuf swig_types[43]
+#define SWIGTYPE_p_VSIDIR swig_types[44]
+#define SWIGTYPE_p_VSILFILE swig_types[45]
+#define SWIGTYPE_p_char swig_types[46]
+#define SWIGTYPE_p_double swig_types[47]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[48]
+#define SWIGTYPE_p_int swig_types[49]
+#define SWIGTYPE_p_p_GByte swig_types[50]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[51]
+#define SWIGTYPE_p_p_GDALDimensionHS swig_types[52]
+#define SWIGTYPE_p_p_GDALEDTComponentHS swig_types[53]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[54]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[55]
+#define SWIGTYPE_p_p_GUIntBig swig_types[56]
+#define SWIGTYPE_p_p_OGRLayerShadow swig_types[57]
+#define SWIGTYPE_p_p_char swig_types[58]
+#define SWIGTYPE_p_p_double swig_types[59]
+#define SWIGTYPE_p_p_int swig_types[60]
+#define SWIGTYPE_p_p_p_GDALAttributeHS swig_types[61]
+#define SWIGTYPE_p_p_p_GDALDimensionHS swig_types[62]
+#define SWIGTYPE_p_p_p_GDALEDTComponentHS swig_types[63]
+#define SWIGTYPE_p_p_void swig_types[64]
+#define SWIGTYPE_p_size_t swig_types[65]
+#define SWIGTYPE_p_vsi_l_offset swig_types[66]
+static swig_type_info *swig_types[68];
+static swig_module_info swig_module = {swig_types, 67, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -7121,7 +7122,8 @@ int ViewshedGenerate( GDALRasterBandShadow *srcBand,
                         double targetHeight, double visibleVal, double invisibleVal,
                         double outOfRangeVal,  double noDataVal, double dfCurvCoeff,
                         GDALViewshedMode mode, double maxDistance,
-                        GDALProgressFunc callback = NULL, void* callback_data = NULL)
+                        GDALProgressFunc callback = NULL, void* callback_data = NULL,
+                        CSLConstList = NULL)
 {
     CPLErr eErr;
 
@@ -34725,6 +34727,7 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
   double arg13 ;
   GDALProgressFunc arg14 = (GDALProgressFunc) NULL ;
   void *arg15 = (void *) NULL ;
+  CSLConstList arg16 = (CSLConstList) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -34752,6 +34755,8 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
   int ecode12 = 0 ;
   double val13 ;
   int ecode13 = 0 ;
+  void *argp16 ;
+  int res16 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -34767,8 +34772,9 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
   PyObject * obj12 = 0 ;
   PyObject * obj13 = 0 ;
   PyObject * obj14 = 0 ;
+  PyObject * obj15 = 0 ;
   char *  kwnames[] = {
-    (char *) "srcBand",(char *) "targetRasterName",(char *) "observerX",(char *) "observerY",(char *) "observerHeight",(char *) "targetHeight",(char *) "visibleVal",(char *) "invisibleVal",(char *) "outOfRangeVal",(char *) "noDataVal",(char *) "dfCurvCoeff",(char *) "mode",(char *) "maxDistance",(char *) "callback",(char *) "callback_data", NULL 
+    (char *) "srcBand",(char *) "targetRasterName",(char *) "observerX",(char *) "observerY",(char *) "observerHeight",(char *) "targetHeight",(char *) "visibleVal",(char *) "invisibleVal",(char *) "outOfRangeVal",(char *) "noDataVal",(char *) "dfCurvCoeff",(char *) "mode",(char *) "maxDistance",(char *) "callback",(char *) "callback_data",(char *) "arg16", NULL 
   };
   int result;
   
@@ -34779,7 +34785,7 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg15 = psProgressInfo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOOOOOOO|OO:ViewshedGenerate",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12,&obj13,&obj14)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOOOOOOO|OOO:ViewshedGenerate",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12,&obj13,&obj14,&obj15)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ViewshedGenerate" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
@@ -34889,6 +34895,21 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
       psProgressInfo->psPyCallbackData = obj14 ;
     }
   }
+  if (obj15) {
+    {
+      res16 = SWIG_ConvertPtr(obj15, &argp16, SWIGTYPE_p_CSLConstList,  0  | 0);
+      if (!SWIG_IsOK(res16)) {
+        SWIG_exception_fail(SWIG_ArgError(res16), "in method '" "ViewshedGenerate" "', argument " "16"" of type '" "CSLConstList""'"); 
+      }  
+      if (!argp16) {
+        SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "ViewshedGenerate" "', argument " "16"" of type '" "CSLConstList""'");
+      } else {
+        CSLConstList * temp = reinterpret_cast< CSLConstList * >(argp16);
+        arg16 = *temp;
+        if (SWIG_IsNewObj(res16)) delete temp;
+      }
+    }
+  }
   {
     if (!arg1) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -34900,7 +34921,7 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (int)ViewshedGenerate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15);
+      result = (int)ViewshedGenerate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -41333,7 +41354,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"RegenerateOverview", (PyCFunction) _wrap_RegenerateOverview, METH_VARARGS | METH_KEYWORDS, (char *)"RegenerateOverview(Band srcBand, Band overviewBand, char const * resampling, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
 	 { (char *)"ContourGenerate", (PyCFunction) _wrap_ContourGenerate, METH_VARARGS | METH_KEYWORDS, (char *)"ContourGenerate(Band srcBand, double contourInterval, double contourBase, int fixedLevelCount, int useNoData, double noDataValue, Layer dstLayer, int idField, int elevField, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
 	 { (char *)"ContourGenerateEx", (PyCFunction) _wrap_ContourGenerateEx, METH_VARARGS | METH_KEYWORDS, (char *)"ContourGenerateEx(Band srcBand, Layer dstLayer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
-	 { (char *)"ViewshedGenerate", (PyCFunction) _wrap_ViewshedGenerate, METH_VARARGS | METH_KEYWORDS, (char *)"ViewshedGenerate(Band srcBand, char * targetRasterName, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
+	 { (char *)"ViewshedGenerate", (PyCFunction) _wrap_ViewshedGenerate, METH_VARARGS | METH_KEYWORDS, (char *)"ViewshedGenerate(Band srcBand, char * targetRasterName, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None, CSLConstList arg16=0) -> int"},
 	 { (char *)"AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT, METH_VARARGS, (char *)"AutoCreateWarpedVRT(Dataset src_ds, char const * src_wkt=None, char const * dst_wkt=None, GDALResampleAlg eResampleAlg, double maxerror=0.0) -> Dataset"},
 	 { (char *)"CreatePansharpenedVRT", _wrap_CreatePansharpenedVRT, METH_VARARGS, (char *)"CreatePansharpenedVRT(char const * pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"},
 	 { (char *)"delete_GDALTransformerInfoShadow", _wrap_delete_GDALTransformerInfoShadow, METH_VARARGS, (char *)"delete_GDALTransformerInfoShadow(GDALTransformerInfoShadow self)"},
@@ -41446,6 +41467,7 @@ static void *_p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow(void *x, int *SWI
 static swig_type_info _swigt__p_CPLErrorHandler = {"_p_CPLErrorHandler", "CPLErrorHandler *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CPLVirtualMemShadow = {"_p_CPLVirtualMemShadow", "CPLVirtualMemShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_CSLConstList = {"_p_CSLConstList", "CSLConstList *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_DirEntry = {"_p_DirEntry", "DirEntry *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GByte = {"_p_GByte", "GByte *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALAsyncReaderShadow = {"_p_GDALAsyncReaderShadow", "GDALAsyncReaderShadow *", 0, 0, (void*)0, 0};
@@ -41514,6 +41536,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLErrorHandler,
   &_swigt__p_CPLVirtualMemShadow,
   &_swigt__p_CPLXMLNode,
+  &_swigt__p_CSLConstList,
   &_swigt__p_DirEntry,
   &_swigt__p_GByte,
   &_swigt__p_GDALAsyncReaderShadow,
@@ -41582,6 +41605,7 @@ static swig_type_info *swig_type_initial[] = {
 static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandler, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_CPLVirtualMemShadow[] = {  {&_swigt__p_CPLVirtualMemShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_CPLXMLNode[] = {  {&_swigt__p_CPLXMLNode, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_CSLConstList[] = {  {&_swigt__p_CSLConstList, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_DirEntry[] = {  {&_swigt__p_DirEntry, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GByte[] = {  {&_swigt__p_GByte, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALAsyncReaderShadow[] = {  {&_swigt__p_GDALAsyncReaderShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -41650,6 +41674,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLErrorHandler,
   _swigc__p_CPLVirtualMemShadow,
   _swigc__p_CPLXMLNode,
+  _swigc__p_CSLConstList,
   _swigc__p_DirEntry,
   _swigc__p_GByte,
   _swigc__p_GDALAsyncReaderShadow,
