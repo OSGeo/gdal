@@ -42,6 +42,7 @@
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
 #include "ogr_api.h"
+#include "ogr_spatialref.h"
 #include "ogr_core.h"
 #include "commonutils.h"
 
@@ -256,7 +257,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     GByte *pabyResult = vResult.data();
 
     GDALRasterBandH hTargetBand = nullptr;
-    std::unique_ptr<GDALDataset> hDstDS{};
+    std::unique_ptr<GDALDataset> poDstDS{};
 
     if (pszTargetRasterName != nullptr)
     {
@@ -285,17 +286,17 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
                     "Cannot get driver for %s", aoDrivers[0].c_str());
                 return CE_Failure;
             }
+
             /* create output raster */
-//             GDALDatasetH hDstDS = nullptr;
-            hDstDS = std::unique_ptr<GDALDataset>(hDriver->Create(pszTargetRasterName, nXSize, nYStop - nYStart, 1, GDT_Byte, nullptr));
-            if (!hDstDS)
+            poDstDS = std::unique_ptr<GDALDataset>(hDriver->Create(pszTargetRasterName, nXSize, nYStop - nYStart, 1, GDT_Byte, nullptr));
+            if (!poDstDS)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot create dataset for %s", pszTargetRasterName);
                 return CE_Failure;
             }
             /* copy srs */
-            GDALSetSpatialRef(hDstDS.get(), GDALGetSpatialRef(hSrcDS));
+            poDstDS->SetSpatialRef(GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
 
             std::array<double, 6> adfDstGeoTransform;
             adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
@@ -304,9 +305,9 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
             adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[5] * nYStart;
             adfDstGeoTransform[4] = adfGeoTransform[4];
             adfDstGeoTransform[5] = adfGeoTransform[5];
-            GDALSetGeoTransform(hDstDS.get(), adfDstGeoTransform.data());
+            poDstDS->SetGeoTransform(adfDstGeoTransform.data());
 
-            hTargetBand = GDALGetRasterBand(hDstDS.get(), 1);
+            hTargetBand = poDstDS->GetRasterBand(1);
             if (hTargetBand == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -336,8 +337,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     /* If we can't get a SemiMajor axis from the SRS, it will be
      * SRS_WGS84_SEMIMAJOR
     */
-    OGRErr eSphereError;
-    double dfSphereDiameter = OSRGetSemiMajor(GDALGetSpatialRef(hDstDS.get()), &eSphereError ) * 2.0;
+    double dfSphereDiameter(SRS_WGS84_SEMIMAJOR * 2.0);
+    const OGRSpatialReference* poDstSRS = poDstDS->GetSpatialRef();
+    if (poDstSRS)
+    {
+        dfSphereDiameter = poDstSRS->GetSemiMajor() * 2.0;
+        CPLDebug( "GDALViewshedGenerate", "Fetched SemiMajor '%.4f' axis from spatial reference", dfSphereDiameter);
+    }
 
     /* mark the observer point as visible */
     pabyResult[nX] = byVisibleVal;
