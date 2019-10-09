@@ -31,7 +31,7 @@
 #include <cmath>
 #include <cstring>
 #include <array>
-
+#include <limits>
 #include <algorithm>
 
 #include "cpl_conv.h"
@@ -71,7 +71,7 @@ inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel
     double dfR2 = dfX * dfX + dfY * dfY;
 
     /* calc adjustment */
-    if (dfCurvCoeff != 0)
+    if (dfCurvCoeff != 0 && dfSphereDiameter != std::numeric_limits<double>::infinity())
         dfHeight -= dfCurvCoeff * dfR2 / dfSphereDiameter;
 
     if (dfDistance2 > 0 && dfR2 > dfDistance2)
@@ -337,12 +337,12 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     /* If we can't get a SemiMajor axis from the SRS, it will be
      * SRS_WGS84_SEMIMAJOR
     */
-    double dfSphereDiameter(SRS_WGS84_SEMIMAJOR * 2.0);
+    double dfSphereDiameter(std::numeric_limits<double>::infinity());
     const OGRSpatialReference* poDstSRS = poDstDS->GetSpatialRef();
     if (poDstSRS)
     {
         dfSphereDiameter = poDstSRS->GetSemiMajor() * 2.0;
-        CPLDebug( "GDALViewshedGenerate", "Fetched SemiMajor '%.4f' axis from spatial reference", dfSphereDiameter);
+        CPLDebug( "GDALViewshedGenerate", "Fetched SemiMajor diameter '%.4f' from spatial reference", dfSphereDiameter);
     }
 
     /* mark the observer point as visible */
