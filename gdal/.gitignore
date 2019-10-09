@@ -53,6 +53,7 @@ apps/gdal_contour
 apps/gdal_grid
 apps/gdal_rasterize
 apps/gdal_translate
+apps/gdal_viewshed
 apps/gdaladdo
 apps/gdalbuildvrt
 apps/gdaldem
