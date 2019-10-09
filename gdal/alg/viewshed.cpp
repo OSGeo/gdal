@@ -434,8 +434,8 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
 
     /* scan upwards */
     std::copy(vFirstLineVal.begin(),
-              vFirstLineVal.begin() + nXSize,
-              std::back_inserter(vLastLineVal));
+              vFirstLineVal.end(),
+              vLastLineVal.begin());
     for (iLine = nY - 1; iLine >= nYStart && eErr == CE_None; iLine--)
     {
         if (GDALRasterIO(hBand, GF_Read, nXStart, iLine, nXSize, 1,
