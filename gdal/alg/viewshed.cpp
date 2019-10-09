@@ -169,10 +169,10 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  *
  * @param papszExtraOptions Future extra options. Must be set to NULL currently.
  *
- * @return CE_None on success or CE_Failure if an error occurs.
+ * @return not NULL output dataset on success (to be closed with GDALClose()) or NULL if an error occurs.
  */
 
-CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
+GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
                             const char* pszDriverName,
                             const char* pszTargetRasterName,
                             CSLConstList papszCreationOptions,
@@ -183,8 +183,8 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
                     GDALProgressFunc pfnProgress, void *pProgressArg, CSLConstList papszExtraOptions)
 
 {
-    VALIDATE_POINTER1( hBand, "GDALViewshedGenerate", CE_Failure );
-    VALIDATE_POINTER1( pszTargetRasterName, "GDALViewshedGenerate", CE_Failure );
+    VALIDATE_POINTER1( hBand, "GDALViewshedGenerate", nullptr );
+    VALIDATE_POINTER1( pszTargetRasterName, "GDALViewshedGenerate", nullptr );
 
     CPL_IGNORE_RET_VAL(papszExtraOptions);
 
@@ -194,7 +194,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
     if( !pfnProgress( 0.0, "", pProgressArg ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
+        return nullptr;
     }
 
     GByte byNoDataVal = dfNoDataVal >= 0 ? static_cast<GByte>(dfNoDataVal) : 0;
@@ -212,7 +212,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
     if (!GDALInvGeoTransform(adfGeoTransform.data(), adfInvGeoTransform))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
-        return CE_Failure;
+        return nullptr;
     }
 
     /* calculate observer position */
@@ -230,7 +230,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
         nY > nYSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "The observer location falls outside of the DEM area");
-        return CE_Failure;
+        return nullptr;
     }
 
     CPLErr eErr = CE_None;
@@ -260,7 +260,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot allocate vectors for viewshed");
-        return CE_Failure;
+        return nullptr;
     }
 
     double *padfFirstLineVal = vFirstLineVal.data();
@@ -273,7 +273,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
     if (!hDriver)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot get driver");
-        return CE_Failure;
+        return nullptr;
     }
 
     /* create output raster */
@@ -282,7 +282,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Cannot create dataset for %s", pszTargetRasterName);
-        return CE_Failure;
+        return nullptr;
     }
     /* copy srs */
     poDstDS->SetSpatialRef(GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
@@ -301,7 +301,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Cannot get band for %s", pszTargetRasterName);
-        return CE_Failure;
+        return nullptr;
     }
 
     if (dfNoDataVal >= 0)
@@ -313,7 +313,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "RasterIO error when reading DEM");
-        return CE_Failure;
+        return nullptr;
     }
 
     double dfZObserver = dfObserverHeight + padfFirstLineVal[nX];
@@ -429,7 +429,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "RasterIO error when writing target raster");
-        return CE_Failure;
+        return nullptr;
     }
 
     /* scan upwards */
@@ -443,7 +443,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when reading DEM");
-            return CE_Failure;
+            return nullptr;
         }
 
         /* set up initial point on the scanline */
@@ -580,7 +580,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when writing target raster");
-            return CE_Failure;
+            return nullptr;
         }
 
         std::swap(padfLastLineVal, padfThisLineVal);
@@ -589,7 +589,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
                 "", pProgressArg))
         {
             CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
-            return CE_Failure;
+            return nullptr;
         }
     }
     /* scan downwards */
@@ -601,7 +601,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when reading DEM");
-            return CE_Failure;
+            return nullptr;
         }
 
         /* set up initial point on the scanline */
@@ -733,7 +733,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when writing target raster");
-            return CE_Failure;
+            return nullptr;
         }
 
         std::swap(padfLastLineVal, padfThisLineVal);
@@ -742,9 +742,9 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
                          "", pProgressArg) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            return CE_Failure;
+            return nullptr;
         }
     }
 
-    return CE_None;
+    return GDALDataset::FromHandle(poDstDS.release());
 }

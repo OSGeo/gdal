@@ -582,12 +582,13 @@ typedef enum {
 } GDALViewshedMode;
 
 
+%newobject ViewshedGenerate;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) ViewshedGenerate;
 #endif
 %apply Pointer NONNULL {GDALRasterBandShadow *srcBand};
 %inline %{
-int ViewshedGenerate( GDALRasterBandShadow *srcBand,
+GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
                         const char* driverName,
                         const char* targetRasterName,
                         char** creationOptions,
@@ -598,11 +599,7 @@ int ViewshedGenerate( GDALRasterBandShadow *srcBand,
                         GDALProgressFunc callback = NULL, void* callback_data = NULL,
                         char** papszOptions = NULL)
 {
-    CPLErr eErr;
-
-    CPLErrorReset();
-
-    eErr =  GDALViewshedGenerate( srcBand,
+    GDALDatasetShadow* ds = GDALViewshedGenerate( srcBand,
                                  driverName,
                                  targetRasterName,
                                  creationOptions,
@@ -620,8 +617,10 @@ int ViewshedGenerate( GDALRasterBandShadow *srcBand,
                                  callback,
                                  callback_data,
                                  papszOptions);
-
-    return eErr;
+  if (ds == 0) {
+    /*throw CPLGetLastErrorMsg(); causes a SWIG_exception later*/
+  }
+  return ds;
 }
 %}
 %clear GDALRasterBandShadow *srcBand;

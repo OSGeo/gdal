@@ -354,7 +354,7 @@ typedef enum {
     GVM_Min = 4
 } GDALViewshedMode;
 
-CPLErr CPL_DLL
+GDALDatasetH CPL_DLL
 GDALViewshedGenerate(GDALRasterBandH hBand,
                      const char* pszDriverName,
                      const char* pszTargetRasterName,

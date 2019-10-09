@@ -232,7 +232,7 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = GDALViewshedGenerate( hBand,
+    GDALDatasetH hDstDS = GDALViewshedGenerate( hBand,
                          pszDriverName ? pszDriverName : osFormat.c_str(),
                          pszDstFilename, papszCreateOptions,
                          dfObserverX, dfObserverY,
@@ -241,14 +241,15 @@ MAIN_START(argc, argv)
                          dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff,
                          GVM_Edge, dfMaxDistance,
                          pfnProgress, nullptr, nullptr);
-
+    bool bSuccess = hDstDS != nullptr;
     GDALClose( hSrcDS );
+    GDALClose( hDstDS );
 
     CSLDestroy( argv );
     CSLDestroy( papszCreateOptions);
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
-    return (eErr == CE_None) ? 0 : 1;
+    return bSuccess ? 0 : 1;
 }
 MAIN_END
