@@ -163,6 +163,8 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  *
  * @param pProgressArg The callback data for the pfnProgress function.
  *
+ * @param papszExtraOptions Creation options for the datasource (if pszTargetRasterName is given)
+ *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 
