@@ -36,11 +36,9 @@ raster elevation model (DEM).
 
 .. program:: gdal_viewshed
 
-   Compute visibility raster band for an input raster.
-
 .. versionadded:: 3.1.0
 
-.. include:: options/ot.rst
+.. include:: options/co.rst
 
 .. option:: -b <band>
 
