@@ -171,7 +171,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
                     double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
                     double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
                     GDALViewshedMode eMode, double dfMaxDistance,
-                    GDALProgressFunc pfnProgress, void *pProgressArg, CSLConstList /*papszExtraOptions*/)
+                    GDALProgressFunc pfnProgress, void *pProgressArg, CSLConstList papszExtraOptions)
 
 {
     VALIDATE_POINTER1( hBand, "GDALViewshedGenerate", CE_Failure );
@@ -288,7 +288,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
             }
 
             /* create output raster */
-            poDstDS = std::unique_ptr<GDALDataset>(hDriver->Create(pszTargetRasterName, nXSize, nYStop - nYStart, 1, GDT_Byte, nullptr));
+            poDstDS = std::unique_ptr<GDALDataset>(hDriver->Create(pszTargetRasterName, nXSize, nYStop - nYStart, 1, GDT_Byte, (char**)papszExtraOptions));
             if (!poDstDS)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -341,8 +341,15 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     const OGRSpatialReference* poDstSRS = poDstDS->GetSpatialRef();
     if (poDstSRS)
     {
-        dfSphereDiameter = poDstSRS->GetSemiMajor() * 2.0;
-        CPLDebug( "GDALViewshedGenerate", "Fetched SemiMajor diameter '%.4f' from spatial reference", dfSphereDiameter);
+        OGRErr eSRSerr;
+        double dfSemiMajor = poDstSRS->GetSemiMajor(&eSRSerr);
+
+        /* If we fetched the axis from the SRS, use it */
+        if (eSRSerr != OGRERR_FAILURE)
+            dfSphereDiameter = dfSemiMajor * 2.0;
+        else
+            CPLDebug( "GDALViewshedGenerate", "Unable to fetch SemiMajor axis from spatial reference");
+
     }
 
     /* mark the observer point as visible */

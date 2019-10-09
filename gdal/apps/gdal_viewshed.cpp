@@ -44,13 +44,15 @@ static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
-        "Usage: gdal_viewshed [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
-        "                    [-snodata n] [-f <formatname>] [-tr <target_raster_filename>]\n"
-        "                    [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]\n"
-        "                    [-ox <observer_x> -oy <observer_y>]\n"
-        "                    [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
-        "                    [-nln <outlayername>] [-q]\n"
-        "                    <src_filename> <dst_filename>\n" );
+       "gdal_viewshed [-b <band>] [-inodata]\n"
+       "              [-snodata n] [-f <formatname>]\n"
+       "              [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]\n"
+       "              [-ox <observer_x>] [-oy <observer_y>]\n"
+       "              [-vv <visibility>] [-iv <invisibility>]\n"
+       "              [-ov <out_of_range>] [-cc <curvature_coef>]\n"
+       "              [[-co NAME=VALUE] ...]\n"
+       "              [-q]\n"
+       "              <src_filename> <dst_filename>\n");
 
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -85,6 +87,7 @@ MAIN_START(argc, argv)
     const char *pszDstFilename = nullptr;
     bool bQuiet = false;
     GDALProgressFunc pfnProgress = nullptr;
+    char** papszCreateOptions = nullptr;
 
     GDALAllRegister();
 
@@ -135,10 +138,15 @@ MAIN_START(argc, argv)
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfOutOfRangeVal = CPLAtof(argv[++i]);
         }
-        else if (EQUAL(argv[i], "-nv"))
+        else if( EQUAL(argv[i],"-co"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfNoDataVal = CPLAtof(argv[++i]);
+            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+        }
+        else if (EQUAL(argv[i], "-a_nodata"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            dfNoDataVal = CPLAtofM(argv[++i]);;
         }
         else if (EQUAL(argv[i], "-tz"))
         {
@@ -158,7 +166,7 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-b") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nBandIn = atoi(argv[++i]);
+            nBandIn = CPLAtofM(argv[++i]);
         }
         else if ( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
@@ -214,11 +222,12 @@ MAIN_START(argc, argv)
                          dfVisibleVal, dfInvisibleVal,
                          dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff,
                          GVM_Edge, dfMaxDistance,
-                         pfnProgress, nullptr, nullptr);
+                         pfnProgress, nullptr, papszCreateOptions);
 
     GDALClose( hSrcDS );
 
     CSLDestroy( argv );
+    CSLDestroy( papszCreateOptions);
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
