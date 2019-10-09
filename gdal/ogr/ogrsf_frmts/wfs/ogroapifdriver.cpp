@@ -956,12 +956,6 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     GIntBig nFeatures = oRoot.GetLong("numberMatched", -1);
     if( nFeatures >= 0 )
         m_nTotalFeatureCount = nFeatures;
-#ifndef REMOVE_HACK
-    // Just for https://stac.boundlessgeo.io/stac
-    nFeatures = oRoot.GetLong("search:meta/matched", -1);
-    if( nFeatures >= 0 )
-        m_nTotalFeatureCount = nFeatures;
-#endif
 
     auto oFeatures = oRoot.GetArray("features");
     if( oFeatures.IsValid() && oFeatures.Size() > 0 )
