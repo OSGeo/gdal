@@ -191,7 +191,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     GByte byOutOfRangeVal = dfOutOfRangeVal >= 0 ? static_cast<GByte>(dfOutOfRangeVal) : 0;
 
     /* set up geotransformation */
-    std::array<double, 6> adfGeoTransform {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    std::array<double, 6> adfGeoTransform {{0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
     GDALDatasetH hSrcDS = GDALGetBandDataset( hBand );
     if( hSrcDS != nullptr )
         GDALGetGeoTransform( hSrcDS, adfGeoTransform.data());
