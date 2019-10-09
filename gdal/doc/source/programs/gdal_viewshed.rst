@@ -32,6 +32,8 @@ Description
 The :program:`gdal_viewshed` generates a 0-1 visibility raster band from the input
 raster elevation model (DEM).
 
+
+
 .. program:: gdal_viewshed
 
    Compute visibility raster band for an input raster.
@@ -93,10 +95,18 @@ Functionality of this utility can be done from C with :cpp:func:`GDALViewshedGen
 Example
 -------
 
+Compute the visibility of an elevation raster data source with defaults
+
+
+.. figure:: ../../images/gdal_viewshed.png
+
+   A computed visibility for two separate `-ox` and `-oy` points on a DEM.
 
 .. code-block::
 
     gdal_viewshed -md 500 -x "-10147017".0 -y "5108065" source.tif destination.tif
+
+
 
 
 .. [Wang2000] Generating Viewsheds without Using Sightlines. Wang, Jianjun,
