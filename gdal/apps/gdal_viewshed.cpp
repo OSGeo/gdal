@@ -83,6 +83,7 @@ MAIN_START(argc, argv)
     double dfOutOfRangeVal = -1.0;
     double dfNoDataVal = 0.0;
     double dfCurvCoeff = 0.0;
+    const char *pszDriverName = nullptr;
     const char *pszSrcFilename = nullptr;
     const char *pszDstFilename = nullptr;
     bool bQuiet = false;
@@ -108,6 +109,11 @@ MAIN_START(argc, argv)
         }
         else if( EQUAL(argv[i], "--help") )
             Usage();
+        else if( EQUAL(argv[i],"-f") || EQUAL(argv[i],"-of") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszDriverName = argv[++i];
+        }
         else if( EQUAL(argv[i],"-ox") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -166,7 +172,7 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-b") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nBandIn = CPLAtofM(argv[++i]);
+            nBandIn = atoi(argv[++i]);
         }
         else if ( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
@@ -216,13 +222,14 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = GDALViewshedGenerate( hBand, pszDstFilename,
+    CPLErr eErr = GDALViewshedGenerate( hBand,
+                         pszDriverName, pszDstFilename, papszCreateOptions,
                          dfObserverX, dfObserverY,
                          dfObserverHeight, dfTargetHeight,
                          dfVisibleVal, dfInvisibleVal,
                          dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff,
                          GVM_Edge, dfMaxDistance,
-                         pfnProgress, nullptr, papszCreateOptions);
+                         pfnProgress, nullptr, nullptr);
 
     GDALClose( hSrcDS );
 

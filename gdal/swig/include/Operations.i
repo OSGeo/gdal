@@ -588,20 +588,24 @@ typedef enum {
 %apply Pointer NONNULL {GDALRasterBandShadow *srcBand};
 %inline %{
 int ViewshedGenerate( GDALRasterBandShadow *srcBand,
-                        char* targetRasterName,
+                        const char* driverName,
+                        const char* targetRasterName,
+                        char** creationOptions,
                         double observerX, double observerY, double observerHeight,
                         double targetHeight, double visibleVal, double invisibleVal,
                         double outOfRangeVal,  double noDataVal, double dfCurvCoeff,
                         GDALViewshedMode mode, double maxDistance,
                         GDALProgressFunc callback = NULL, void* callback_data = NULL,
-                        CSLConstList papszOptions = NULL)
+                        char** papszOptions = NULL)
 {
     CPLErr eErr;
 
     CPLErrorReset();
 
     eErr =  GDALViewshedGenerate( srcBand,
+                                 driverName,
                                  targetRasterName,
+                                 creationOptions,
                                  observerX,
                                  observerY,
                                  observerHeight,

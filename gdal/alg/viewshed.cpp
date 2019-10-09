@@ -134,7 +134,11 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  * @param hBand The band to read raster data from.  The whole band will be
  * processed.
  *
- * @param pszTargetRasterName raster datasource name (created if given)
+ * @param pszDriverName Driver name (GTiff if set to NULL)
+ *
+ * @param pszTargetRasterName target raster datasource name. Must not be NULL
+ *
+ * @param papszCreationOptions creation options.
  *
  * @param dfObserverX observer X value (in SRS units)
  *
@@ -163,12 +167,15 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  *
  * @param pProgressArg The callback data for the pfnProgress function.
  *
- * @param papszExtraOptions Creation options for the datasource (if pszTargetRasterName is given)
+ * @param papszExtraOptions Future extra options. Must be set to NULL currently.
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 
-CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterName,
+CPLErr GDALViewshedGenerate(GDALRasterBandH hBand,
+                            const char* pszDriverName,
+                            const char* pszTargetRasterName,
+                            CSLConstList papszCreationOptions,
                     double dfObserverX, double dfObserverY, double dfObserverHeight,
                     double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
                     double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
@@ -177,6 +184,9 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
 
 {
     VALIDATE_POINTER1( hBand, "GDALViewshedGenerate", CE_Failure );
+    VALIDATE_POINTER1( pszTargetRasterName, "GDALViewshedGenerate", CE_Failure );
+
+    CPL_IGNORE_RET_VAL(papszExtraOptions);
 
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
@@ -258,69 +268,44 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     double *padfThisLineVal = vThisLineVal.data();
     GByte *pabyResult = vResult.data();
 
-    GDALRasterBandH hTargetBand = nullptr;
-    std::unique_ptr<GDALDataset> poDstDS{};
-
-    if (pszTargetRasterName != nullptr)
+    GDALDriverManager *hMgr = GetGDALDriverManager();
+    GDALDriver *hDriver = hMgr->GetDriverByName(pszDriverName ? pszDriverName : "GTiff");
+    if (!hDriver)
     {
-        std::vector<CPLString> aoDrivers =
-            GetOutputDriversFor(pszTargetRasterName, GDAL_OF_RASTER);
-        if (aoDrivers.empty())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot guess driver for %s", pszTargetRasterName);
-            return CE_Failure;
-        }
-        else
-        {
-            if (aoDrivers.size() > 1)
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                    "Several drivers matching %s extension. Using %s",
-                    CPLGetExtension(pszTargetRasterName), aoDrivers[0].c_str());
-            }
-
-            GDALDriverManager *hMgr = GetGDALDriverManager();
-            GDALDriver *hDriver = hMgr->GetDriverByName(aoDrivers[0].c_str());
-            if (!hDriver)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot get driver for %s", aoDrivers[0].c_str());
-                return CE_Failure;
-            }
-
-            /* create output raster */
-            poDstDS = std::unique_ptr<GDALDataset>(hDriver->Create(pszTargetRasterName, nXSize, nYStop - nYStart, 1, GDT_Byte, (char**)papszExtraOptions));
-            if (!poDstDS)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot create dataset for %s", pszTargetRasterName);
-                return CE_Failure;
-            }
-            /* copy srs */
-            poDstDS->SetSpatialRef(GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
-
-            std::array<double, 6> adfDstGeoTransform;
-            adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
-            adfDstGeoTransform[1] = adfGeoTransform[1];
-            adfDstGeoTransform[2] = adfGeoTransform[2];
-            adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[5] * nYStart;
-            adfDstGeoTransform[4] = adfGeoTransform[4];
-            adfDstGeoTransform[5] = adfGeoTransform[5];
-            poDstDS->SetGeoTransform(adfDstGeoTransform.data());
-
-            hTargetBand = poDstDS->GetRasterBand(1);
-            if (hTargetBand == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot get band for %s", pszTargetRasterName);
-                return CE_Failure;
-            }
-
-            if (dfNoDataVal >= 0)
-                GDALSetRasterNoDataValue(hTargetBand, byNoDataVal);
-        }
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot get driver");
+        return CE_Failure;
     }
+
+    /* create output raster */
+    auto poDstDS = std::unique_ptr<GDALDataset>(hDriver->Create(pszTargetRasterName, nXSize, nYStop - nYStart, 1, GDT_Byte, const_cast<char**>(papszCreationOptions)));
+    if (!poDstDS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Cannot create dataset for %s", pszTargetRasterName);
+        return CE_Failure;
+    }
+    /* copy srs */
+    poDstDS->SetSpatialRef(GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
+
+    std::array<double, 6> adfDstGeoTransform;
+    adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
+    adfDstGeoTransform[1] = adfGeoTransform[1];
+    adfDstGeoTransform[2] = adfGeoTransform[2];
+    adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[5] * nYStart;
+    adfDstGeoTransform[4] = adfGeoTransform[4];
+    adfDstGeoTransform[5] = adfGeoTransform[5];
+    poDstDS->SetGeoTransform(adfDstGeoTransform.data());
+
+    auto hTargetBand = poDstDS->GetRasterBand(1);
+    if (hTargetBand == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Cannot get band for %s", pszTargetRasterName);
+        return CE_Failure;
+    }
+
+    if (dfNoDataVal >= 0)
+        GDALSetRasterNoDataValue(hTargetBand, byNoDataVal);
 
     /* process first line */
     if (GDALRasterIO(hBand, GF_Read, nXStart, nY, nXSize, 1,
@@ -438,15 +423,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
     }
     /* write result line */
-    if (hTargetBand != nullptr)
+
+    if (GDALRasterIO(hTargetBand, GF_Write, 0, nY - nYStart, nXSize, 1,
+        pabyResult, nXSize, 1, GDT_Byte, 0, 0))
     {
-        if (GDALRasterIO(hTargetBand, GF_Write, 0, nY - nYStart, nXSize, 1,
-            pabyResult, nXSize, 1, GDT_Byte, 0, 0))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "RasterIO error when writing target raster");
-            return CE_Failure;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "RasterIO error when writing target raster");
+        return CE_Failure;
     }
 
     /* scan upwards */
@@ -592,15 +575,12 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
 
         /* write result line */
-        if (hTargetBand != nullptr)
+        if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
+            pabyResult, nXSize, 1, GDT_Byte, 0, 0))
         {
-            if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
-                pabyResult, nXSize, 1, GDT_Byte, 0, 0))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "RasterIO error when writing target raster");
-                return CE_Failure;
-            }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "RasterIO error when writing target raster");
+            return CE_Failure;
         }
 
         std::swap(padfLastLineVal, padfThisLineVal);
@@ -748,15 +728,12 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
 
         /* write result line */
-        if (hTargetBand != nullptr)
+        if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
+            pabyResult, nXSize, 1, GDT_Byte, 0, 0))
         {
-            if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
-                pabyResult, nXSize, 1, GDT_Byte, 0, 0))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "RasterIO error when writing target raster");
-                return CE_Failure;
-            }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "RasterIO error when writing target raster");
+            return CE_Failure;
         }
 
         std::swap(padfLastLineVal, padfThisLineVal);
@@ -768,7 +745,6 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
             return CE_Failure;
         }
     }
-
 
     return CE_None;
 }

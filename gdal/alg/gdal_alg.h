@@ -355,7 +355,10 @@ typedef enum {
 } GDALViewshedMode;
 
 CPLErr CPL_DLL
-GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterName,
+GDALViewshedGenerate(GDALRasterBandH hBand,
+                     const char* pszDriverName,
+                     const char* pszTargetRasterName,
+                     CSLConstList papszCreationOptions,
                      double dfObserverX, double dfObserverY, double dfObserverHeight,
                      double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
                      double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
