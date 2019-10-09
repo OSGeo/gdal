@@ -203,6 +203,16 @@ MAIN_START(argc, argv)
     if (!bQuiet)
         pfnProgress = GDALTermProgress;
 
+    CPLString osFormat;
+    if( pszDriverName == nullptr  )
+    {
+        osFormat = GetOutputDriverForRaster(pszDstFilename);
+        if( osFormat.empty() )
+        {
+            exit( 2 );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Open source raster file.                                        */
 /* -------------------------------------------------------------------- */
@@ -223,7 +233,8 @@ MAIN_START(argc, argv)
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
     CPLErr eErr = GDALViewshedGenerate( hBand,
-                         pszDriverName, pszDstFilename, papszCreateOptions,
+                         pszDriverName ? pszDriverName : osFormat.c_str(),
+                         pszDstFilename, papszCreateOptions,
                          dfObserverX, dfObserverY,
                          dfObserverHeight, dfTargetHeight,
                          dfVisibleVal, dfInvisibleVal,
