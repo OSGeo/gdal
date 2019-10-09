@@ -68,6 +68,7 @@ Vector drivers
    netcdf
    ngw
    ntf
+   oapif
    oci
    odbc
    ods
@@ -99,7 +100,6 @@ Vector drivers
    vrt
    walk
    wasp
-   wfs3
    wfs
    xls
    xlsx

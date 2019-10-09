@@ -37,6 +37,7 @@
 #include "ogr_p.h"
 #include "cpl_http.h"
 
+#include <map>
 #include <memory>
 #include <set>
 #include <vector>
@@ -228,6 +229,7 @@ class OGRElasticDataSource final: public GDALDataset {
     std::vector<std::unique_ptr<OGRElasticLayer>> m_apoLayers;
     bool                m_bAllLayersListed = false;
     std::map<OGRLayer*, OGRLayer*> m_oMapResultSet;
+    std::map<std::string, std::string> m_oMapHeadersFromEnv{};
 
     bool                CheckVersion();
     int                 GetLayerIndex( const char* pszName );

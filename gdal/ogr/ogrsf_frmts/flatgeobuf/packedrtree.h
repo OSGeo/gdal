@@ -13,15 +13,15 @@ struct Rect {
     double minY;
     double maxX;
     double maxY;
-    double width() { return maxX - minX; }
-    double height() { return maxY - minY; }
-    static Rect sum(Rect a, Rect b) {
+    double width() const { return maxX - minX; }
+    double height() const { return maxY - minY; }
+    static Rect sum(Rect a, const Rect& b) {
         a.expand(b);
         return a;
     }
     static Rect createInvertedInfiniteRect();
-    void expand(Rect r);
-    bool intersects(Rect r) const;
+    void expand(const Rect& r);
+    bool intersects(const Rect& r) const;
     std::vector<double> toVector();
 };
 
@@ -32,11 +32,11 @@ struct Item {
 std::ostream& operator << (std::ostream& os, Rect const& value);
 
 uint32_t hilbert(uint32_t x, uint32_t y);
-uint32_t hilbert(Rect r, uint32_t hilbertMax, Rect extent);
+uint32_t hilbert(const Rect& r, uint32_t hilbertMax, const Rect& extent);
 void hilbertSort(std::vector<std::shared_ptr<Item>> &items);
 void hilbertSort(std::vector<Rect> &items);
-Rect calcExtent(std::vector<std::shared_ptr<Item>> &rectitems);
-Rect calcExtent(std::vector<Rect> &rects);
+Rect calcExtent(const std::vector<std::shared_ptr<Item>> &rectitems);
+Rect calcExtent(const std::vector<Rect> &rects);
 
 /**
  * Packed R-Tree
@@ -57,12 +57,12 @@ class PackedRTree {
     void generateNodes();
     void fromData(const void *data);
 public:
-    PackedRTree(std::vector<std::shared_ptr<Item>> &items, Rect extent, const uint16_t nodeSize = 16);
-    PackedRTree(std::vector<Rect> &rects, Rect extent, const uint16_t nodeSize = 16);
+    PackedRTree(const std::vector<std::shared_ptr<Item>> &items, const Rect& extent, const uint16_t nodeSize = 16);
+    PackedRTree(const std::vector<Rect> &rects, const Rect& extent, const uint16_t nodeSize = 16);
     PackedRTree(const void *data, const uint64_t numItems, const uint16_t nodeSize = 16);
     std::vector<uint64_t> search(double minX, double minY, double maxX, double maxY) const;
     static std::vector<uint64_t> streamSearch(
-        const uint64_t numItems, const uint16_t nodeSize, Rect r,
+        const uint64_t numItems, const uint16_t nodeSize, const Rect& r,
         const std::function<void(uint8_t *, size_t, size_t)> &readNode);
     uint64_t size() const;
     static uint64_t size(const uint64_t numItems, const uint16_t nodeSize = 16);

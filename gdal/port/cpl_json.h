@@ -196,10 +196,11 @@ public:
     CPLJSONDocument& operator=(const CPLJSONDocument &other);
 /*! @endcond */
 
-    bool Save(const std::string &osPath);
-    std::string SaveAsString();
+    bool Save(const std::string &osPath) const;
+    std::string SaveAsString() const;
 
     CPLJSONObject GetRoot();
+    const CPLJSONObject GetRoot() const;
     bool Load(const std::string &osPath);
     bool LoadMemory(const std::string &osStr);
     bool LoadMemory(const GByte *pabyData, int nLength = -1);
@@ -211,7 +212,7 @@ public:
                  void *pProgressArg = nullptr);
 
 private:
-    JSONObjectH m_poRootJsonObject;
+    mutable JSONObjectH m_poRootJsonObject;
 };
 
 CPL_C_END

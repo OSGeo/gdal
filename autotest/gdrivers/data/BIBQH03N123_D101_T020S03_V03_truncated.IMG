@@ -1,0 +1,103 @@
+PDS_VERSION_ID                 = PDS3
+
+/* FILE FORMAT AND LENGTH */
+
+RECORD_TYPE                    = FIXED_LENGTH
+RECORD_BYTES                   = 7552
+FILE_RECORDS                   = 10753
+LABEL_RECORDS                  = 1
+
+/* POINTERS TO START RECORDS OF OBJECTS IN FILE */
+
+^IMAGE                         = 2
+
+/* IMAGE DESCRIPTION */
+
+DATA_SET_ID                    = "CO-SSA-RADAR-5-BIDR-V1.0"
+DATA_SET_NAME                  = "CASSINI ORBITER SSA RADAR 5 BIDR V1.0"
+PRODUCER_INSTITUTION_NAME      = "U.S.G.S. FLAGSTAFF"
+PRODUCER_ID                    = USGS
+PRODUCER_FULL_NAME             = "RANDOLPH L. KIRK"
+PRODUCT_ID                     = "BIBQH03N123_D101_T020S03_V03"
+PRODUCT_VERSION_ID             = 03
+INSTRUMENT_HOST_NAME           = "CASSINI ORBITER"
+INSTRUMENT_HOST_ID             = CO
+INSTRUMENT_NAME                = "CASSINI RADAR"
+INSTRUMENT_ID                  = RADAR
+TARGET_NAME                    = TITAN
+START_TIME                     = 2006-298T14:14:54.911
+STOP_TIME                      = 2006-298T14:38:48.512
+SPACECRAFT_CLOCK_START_COUNT   = 1540478820
+SPACECRAFT_CLOCK_STOP_COUNT    = 1540480254
+PRODUCT_CREATION_TIME          = 2012-335T16:57:45.000
+SOURCE_PRODUCT_ID = "LBDR_06_D101_V03"
+MISSION_PHASE_NAME             = TOUR
+MISSION_NAME                   = "CASSINI-HUYGENS"
+SOFTWARE_VERSION_ID            = "V1.0"
+
+/* DESCRIPTION OF OBJECTS CONTAINED IN FILE */
+
+OBJECT                         = IMAGE
+  LINES                        = 10752
+  LINE_SAMPLES                 = 7552
+  SAMPLE_TYPE                  = "UNSIGNED_INTEGER"
+  SAMPLE_BITS                  = 8
+  CHECKSUM                     = 1075649908
+  SCALING_FACTOR               = 1.0000012E-01
+  OFFSET                       = -2.0100010E+01
+  MISSING_CONSTANT             = 0
+  NOTE                         = "The data values in this file are Synthetic
+    Aperture Radar (SAR) normalized backscatter cross-section values in
+    logarithmic form. The observed values have been corrected for
+    incidence-angle effects and converted to decibels (db).  The raw
+    backscatter values have been multiplied by the function f(I), where I is
+    the incidence angle and f(I) = 0.2907/(f1(I)+f2(I)+f3(I)), for
+    f1(I)=2.8126*(cos(I)^4+893.9677*sin(I)^2)^(-1.5),
+    f2(I)=0.5824*(cos(I)^4+34.1366*sin(I)^2)^(-1.5), and
+    f3(I)=0.3767*cos(I)^1.9782. The corresponding decibel value is db = 10
+    log10 (cross-section * f(I)). The scaling between raw data number and db
+    is specified by the SCALING_FACTOR and OFFSET."
+END_OBJECT                     = IMAGE
+
+OBJECT                         = IMAGE_MAP_PROJECTION
+  ^DATA_SET_MAP_PROJECTION     = "DSMAP.CAT"
+  MAP_PROJECTION_TYPE          = "OBLIQUE CYLINDRICAL"
+  FIRST_STANDARD_PARALLEL      = "N/A"
+  SECOND_STANDARD_PARALLEL     = "N/A"
+  A_AXIS_RADIUS                = 2575.000000<KM>
+  B_AXIS_RADIUS                = 2575.000000<KM>
+  C_AXIS_RADIUS                = 2575.000000<KM>
+  POSITIVE_LONGITUDE_DIRECTION = WEST
+/* NOTE: CENTER_LATITUDE and CENTER_LONGITUDE describe    */
+/* the location of the center of projection, which is not */
+/* necessarily equal to the location of the center point  */
+/* of the file.                                           */
+  CENTER_LATITUDE              = 0.000000<DEG>
+  CENTER_LONGITUDE             = 0.000000<DEG>
+  REFERENCE_LATITUDE           = 6.161968<DEG>
+  REFERENCE_LONGITUDE          = 44.186613<DEG>
+  LINE_FIRST_PIXEL             = 1
+  LINE_LAST_PIXEL              = 10752
+  SAMPLE_FIRST_PIXEL           = 1
+  SAMPLE_LAST_PIXEL            = 7552
+  MAP_PROJECTION_ROTATION      = 90.0
+  MAP_RESOLUTION               = 128.0<PIX/DEG>
+  MAP_SCALE                    = 0.35111116<KM/PIX>
+  MAXIMUM_LATITUDE             = 32.37062573<DEG>
+  MINIMUM_LATITUDE             = -31.41702033<DEG>
+  EASTERNMOST_LONGITUDE        = 75.792673220<DEG>
+  WESTERNMOST_LONGITUDE        = 169.8235459<DEG>
+  LINE_PROJECTION_OFFSET       = 15230.50000000
+  SAMPLE_PROJECTION_OFFSET     = 7295.50000000
+  OBLIQUE_PROJ_POLE_LATITUDE   = 59.625468<DEG>
+  OBLIQUE_PROJ_POLE_LONGITUDE  = 303.571748<DEG>
+  OBLIQUE_PROJ_POLE_ROTATION   = 257.744003<DEG>
+  OBLIQUE_PROJ_X_AXIS_VECTOR   = (0.71293054,-0.69297063,0.10733943)
+  OBLIQUE_PROJ_Y_AXIS_VECTOR   = (0.64307507,0.58505893,-0.49412600)
+  OBLIQUE_PROJ_Z_AXIS_VECTOR   = (0.27961491,0.42130482,0.86273852)
+  LOOK_DIRECTION               = RIGHT
+  COORDINATE_SYSTEM_NAME       = "PLANETOGRAPHIC"
+  COORDINATE_SYSTEM_TYPE       = "BODY-FIXED ROTATING"
+END_OBJECT                     = IMAGE_MAP_PROJECTION
+END
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      

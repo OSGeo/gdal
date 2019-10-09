@@ -390,6 +390,26 @@ and optimize it.
 
    ogrinfo db.sqlite -sql "VACUUM"
 
+
+Example
+-------
+
+- Convert a non-spatial SQLite table into a GeoPackage:
+
+.. code-block::
+
+  ogr2ogr \
+    -f "GPKG" output.gpkg \
+    input.sqlite \
+    -sql \
+    "SELECT
+       *,
+       MakePoint(longitude, latitude, 4326) AS geometry
+     FROM
+       my_table" \
+    -nln "location" \
+    -s_srs "EPSG:4326"
+
 Credits
 -------
 

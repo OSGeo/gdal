@@ -1,0 +1,6 @@
+gdal_fuzzer
+gdal_translate_fuzzer
+gdal_vector_translate_fuzzer
+gdal_vrt_fuzzer
+gtiff_mmap_fuzzer
+osr_set_from_user_input_fuzzer

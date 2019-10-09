@@ -4988,6 +4988,7 @@ dnl Support for open-source PDFium library
 dnl
 dnl Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
 dnl Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
+dnl Copyright 2019 Even Rouault
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(pdfium,[  --with-pdfium[=ARG]    Include pdfium (for PDF) support (ARG=no(default), yes or pdfium install path)],,)
@@ -4998,94 +4999,42 @@ AC_MSG_CHECKING([for pdfium])
 
 if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
 
-    AC_ARG_WITH(pdfium-lib,
-      [  --with-pdfium-lib=ARG   pdfium Link Flags (i.e. -L/xxx -lpdfium ...). Mainly for static libpdfium],,,)
-
     if test "$with_pdfium" = "yes" ; then
-        TEST_PDFIUM_INC="-I/usr/include -I/usr/include/pdfium"
+        PDFIUM_INC="-I/usr/include/pdfium"
         PDFIUM_LIB="-lpdfium"
-        PDFIUM_LIBDIR="/usr"
     else
-        TEST_PDFIUM_INC="-I$with_pdfium -I$with_pdfium/include -I$with_pdfium/include/pdfium"
-        PDFIUM_LIB="-L$with_pdfium -L$with_pdfium/lib -lpdfium"
-        PDFIUM_LIBDIR="$with_pdfium"
+        PDFIUM_INC="-I$with_pdfium/include/pdfium"
+        PDFIUM_LIB="-L$with_pdfium/lib -lpdfium"
     fi
+
+    PDFIUM_LIB="$PDFIUM_LIB -ljpeg -lpng -lz -llcms2 -lpthread -lm -lstdc++"
 
     if test ! -z "`uname | grep Darwin`" ; then
         PDFIUM_LIB="-stdlib=libstdc++ $PDFIUM_LIB"
     fi
 
-    if test "x$with_pdfium_lib" = "x" ; then
-        rm -f testpdfium.*
-        echo '#include <fpdfview.h>' > testpdfium.cpp
-        echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
-        echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
-        TEST_CXX_FLAGS="-std=c++0x"
-        if test ! -z "`uname | grep Darwin`" ; then
-          TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
-        fi
-        if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
-            HAVE_PDFIUM=yes
-            CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
-            if test "$PDF_PLUGIN" = "no"; then
-                LIBS="${PDFIUM_LIB} ${LIBS}"
-            fi
-            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
-            PDFIUM_INC=$TEST_PDFIUM_INC
-            AC_MSG_RESULT([yes])
-        fi
-        rm -f testpdfium.*
-        rm -f testpdfium
+    rm -f testpdfium.*
+    echo '#include "public/fpdfview.h"' > testpdfium.cpp
+    echo '#include "core/fpdfapi/page/cpdf_page.h"' >> testpdfium.cpp
+    echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
+    TEST_CXX_FLAGS=""
+    if test ! -z "`uname | grep Darwin`" ; then
+        TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
     fi
-
-    if test "$HAVE_PDFIUM" = "no"; then
-        if test "x$with_pdfium_lib" != "x" ; then
-            PDFIUM_LIB="$with_pdfium_lib"
-        else
-            # This may be a static libpdfium.a, so add dependent libraries.
-            PDFIUM_LIB="-L$PDFIUM_LIBDIR -L$PDFIUM_LIBDIR/lib/pdfium -lpdfium -lfpdfdoc -lfpdfapi -lfpdftext -lformfiller -lpdfwindow"
-            PDFIUM_LIB="$PDFIUM_LIB -lfxedit -lfpdfdoc -lfxcodec -lfx_libopenjpeg -lfx_lcms2 -lfx_libjpeg -lfx_zlib"
-            PDFIUM_LIB="$PDFIUM_LIB -lfdrm -lfxge -lfreetype -lfx_agg -lfxcrt -lbigint"
-            if test ! -z "`uname | grep Darwin`" ; then
-                PDFIUM_LIB="-framework AppKit -framework CoreFoundation $PDFIUM_LIB"
-            fi
+    if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
+        HAVE_PDFIUM=yes
+        CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
+        if test "$PDF_PLUGIN" = "no"; then
+            LIBS="${PDFIUM_LIB} ${LIBS}"
         fi
-
-        AC_ARG_WITH(pdfium-extra-lib-for-test,
-          [  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -ljpeg ...). Mainly for static libpdfium],,,)
-
-        if test "x$with_pdfium_extra_lib_for_test" = "x" ; then
-            TEST_PDFIUM_LIB="$PDFIUM_LIB"
-        else
-            TEST_PDFIUM_LIB="$PDFIUM_LIB $with_pdfium_extra_lib_for_test"
-        fi
-
-        rm -f testpdfium.*
-        echo '#include <fpdfview.h>' > testpdfium.cpp
-        echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
-        echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
-        TEST_CXX_FLAGS="-std=c++0x"
-        if test ! -z "`uname | grep Darwin`" ; then
-          TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
-        fi
-        if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} >/dev/null 2>/dev/null; then
-            HAVE_PDFIUM=yes
-            CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
-            if test "$PDF_PLUGIN" = "no"; then
-                LIBS="${PDFIUM_LIB} ${LIBS}"
-            fi
-            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
-            PDFIUM_INC=$TEST_PDFIUM_INC
-            AC_MSG_RESULT([yes])
-        else
-            AC_MSG_RESULT([no])
-        fi
-        rm -f testpdfium.*
-        rm -f testpdfium
+        PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
+        AC_MSG_RESULT([yes])
     fi
+    rm -f testpdfium.*
+    rm -f testpdfium
 
     if test "$HAVE_PDFIUM" = "no" -a "$with_pdfium" != ""; then
-        AC_MSG_ERROR([pdfium requested but not found])
+        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_1])
     fi
 else
     AC_MSG_RESULT([disabled])

@@ -64,7 +64,8 @@ GMLASFieldType GMLASField::GetTypeFromString( const CPLString& osType )
         osType == szXS_TOKEN ||
         osType == szXS_NMTOKEN ||
         osType == szXS_NCNAME ||
-        osType == szXS_QNAME )
+        osType == szXS_QNAME ||
+        osType == szXS_IDREF )
     {
         // token has special processing by XML processor: all leading/trailing
         // white space is removed

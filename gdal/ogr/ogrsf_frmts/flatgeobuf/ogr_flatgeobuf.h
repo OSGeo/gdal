@@ -106,6 +106,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         OGRErr parseFeature(OGRFeature *poFeature, OGRGeometry **ogrGeometry);
         OGRPoint *readPoint(const Feature *feature, uint32_t offset = 0);
         OGRMultiPoint *readMultiPoint(const Feature *feature, uint32_t len);
+        void readSimpleCurve(const Feature *feature, uint32_t len, uint32_t offset, OGRSimpleCurve *c);
         OGRLineString *readLineString(const Feature *feature, uint32_t len, uint32_t offset = 0);
         OGRMultiLineString *readMultiLineString(const Feature *feature);
         OGRLinearRing *readLinearRing(const Feature *feature, uint32_t len, uint32_t offset = 0);
@@ -146,17 +147,21 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         void CreateSpatialIndexAtClose( int bFlag ) { bCreateSpatialIndexAtClose = CPL_TO_BOOL(bFlag); }
         void VerifyBuffers( int bFlag ) { bVerifyBuffers = CPL_TO_BOOL(bFlag); }
+
+        const std::string& GetFilename() const { return m_osFilename; }
 };
 
 class OGRFlatGeobufDataset final: public GDALDataset
 {
     private:
-        std::string m_osName;
-        std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
-        bool m_create = false;
+        std::vector<std::unique_ptr<OGRFlatGeobufLayer>> m_apoLayers;
+        bool m_bCreate = false;
+        bool m_bIsDir = false;
+
+        bool OpenFile(const char* pszFilename, VSILFILE* fp, bool bVerifyBuffers);
+
     public:
-        explicit OGRFlatGeobufDataset();
-        explicit OGRFlatGeobufDataset(const char *pszName);
+        explicit OGRFlatGeobufDataset(const char *pszName, bool bIsDir, bool bCreate);
         ~OGRFlatGeobufDataset();
 
         static GDALDataset *Open(GDALOpenInfo*);
@@ -174,6 +179,7 @@ class OGRFlatGeobufDataset final: public GDALDataset
                                      char **papszOptions = nullptr ) override;
 
         virtual int GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
+        char** GetFileList() override;
 };
 
 #endif /* ndef OGR_FLATGEOBUF_H_INCLUDED */

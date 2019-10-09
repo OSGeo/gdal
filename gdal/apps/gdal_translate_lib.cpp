@@ -42,6 +42,7 @@
 #include "commonutils.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_json.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
@@ -507,6 +508,85 @@ static GDALDatasetH GDALTranslateFlush(GDALDatasetH hOutDS)
 }
 
 /************************************************************************/
+/*                    EditISIS3MetadataForBandChange()                  */
+/************************************************************************/
+
+static CPLJSONObject Clone(const CPLJSONObject& obj)
+{
+    auto serialized = obj.Format(CPLJSONObject::Plain);
+    CPLJSONDocument oJSONDocument;
+    const GByte *pabyData = reinterpret_cast<const GByte *>(serialized.c_str());
+    oJSONDocument.LoadMemory( pabyData );
+    return oJSONDocument.GetRoot();
+}
+
+static void ReworkArray(CPLJSONObject& container, const CPLJSONObject& obj,
+                        int nSrcBandCount,
+                        const GDALTranslateOptions *psOptions)
+{
+    auto oArray = obj.ToArray();
+    if( oArray.Size() == nSrcBandCount )
+    {
+        CPLJSONArray oNewArray;
+        for( int i = 0; i < psOptions->nBandCount; i++ )
+        {
+            const int iSrcIdx = psOptions->panBandList[i]-1;
+            oNewArray.Add(oArray[iSrcIdx]);
+        }
+        const auto childName(obj.GetName());
+        container.Delete(childName);
+        container.Add(childName, oNewArray);
+    }
+}
+
+static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
+                                                int nSrcBandCount,
+                                                const GDALTranslateOptions *psOptions)
+{
+    CPLJSONDocument oJSONDocument;
+    const GByte *pabyData = reinterpret_cast<const GByte *>(pszJSON);
+    if( !oJSONDocument.LoadMemory( pabyData ) )
+    {
+        return CPLString();
+    }
+
+    auto oRoot = oJSONDocument.GetRoot();
+    if( !oRoot.IsValid() )
+    {
+        return CPLString();
+    }
+
+    auto oBandBin = oRoot.GetObj( "IsisCube/BandBin" );
+    if( oBandBin.IsValid() && oBandBin.GetType() == CPLJSONObject::Object )
+    {
+        // Backup original BandBin object
+        oRoot.GetObj("IsisCube").Add("OriginalBandBin", Clone(oBandBin));
+
+        // Iterate over BandBin members and reorder/resize its arrays that
+        // have the same number of elements than the number of bands of the
+        // source dataset.
+        for( auto& child: oBandBin.GetChildren() )
+        {
+            if( child.GetType() == CPLJSONObject::Array )
+            {
+                ReworkArray(oBandBin, child, nSrcBandCount, psOptions);
+            }
+            else if( child.GetType() == CPLJSONObject::Object )
+            {
+                auto oValue = child.GetObj("value");
+                auto oUnit = child.GetObj("unit");
+                if( oValue.GetType() == CPLJSONObject::Array )
+                {
+                    ReworkArray(child, oValue, nSrcBandCount, psOptions);
+                }
+            }
+        }
+    }
+
+    return oRoot.Format(CPLJSONObject::Pretty);
+}
+
+/************************************************************************/
 /*                             GDALTranslate()                          */
 /************************************************************************/
 
@@ -611,7 +691,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         char* pszSRS = nullptr;
-        oOutputSRS.exportToWkt( &pszSRS );
+        {
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            if( oOutputSRS.exportToWkt( &pszSRS ) != OGRERR_NONE )
+            {
+                CPLFree(pszSRS);
+                pszSRS = nullptr;
+                const char* const apszOptions[] = { "FORMAT=WKT2", nullptr };
+                oOutputSRS.exportToWkt( &pszSRS, apszOptions );
+            }
+        }
         CPLFree( psOptions->pszOutputSRS );
         psOptions->pszOutputSRS = CPLStrdup( pszSRS );
         CPLFree( pszSRS );
@@ -1349,14 +1439,28 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if (pszInterleave)
         poVDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
 
-    /* ISIS3 -> ISIS3 special case */
-    if( EQUAL(psOptions->pszFormat, "ISIS3") )
+    /* ISIS3 metadata preservation */
+    char** papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
+    if( papszMD_ISIS3 != nullptr)
     {
-        char** papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
-        if( papszMD_ISIS3 != nullptr)
+        if( !bAllBandsInOrder )
+        {
+            CPLString osJSON = EditISIS3MetadataForBandChange(
+                papszMD_ISIS3[0], GDALGetRasterCount( hSrcDataset ), psOptions);
+            if( !osJSON.empty() )
+            {
+                char* apszMD[] = { &osJSON[0], nullptr };
+                poVDS->SetMetadata( apszMD, "json:ISIS3" );
+            }
+        }
+        else
+        {
             poVDS->SetMetadata( papszMD_ISIS3, "json:ISIS3" );
+        }
     }
-    else if( EQUAL(psOptions->pszFormat, "PDS4") )
+
+    // PDS4 -> PDS4 special case
+    if( EQUAL(psOptions->pszFormat, "PDS4") )
     {
         char** papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
         if( papszMD_PDS4 != nullptr)

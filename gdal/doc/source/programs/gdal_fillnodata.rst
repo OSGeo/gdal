@@ -26,7 +26,7 @@ Description
 nodata areas) by interpolating from valid pixels around the edges of the area.
 
 Additional details on the algorithm are available in the
-:c:func:`GDALFillNodata` docs.
+:cpp:func:`GDALFillNodata` docs.
 
 .. option:: -q
 

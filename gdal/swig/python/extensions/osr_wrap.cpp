@@ -4228,6 +4228,10 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetTMSO(OSRSpatialReferenceShadow *s
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetVDG(OSRSpatialReferenceShadow *self,double clong,double fe,double fn){
     return OSRSetVDG( self, clong, fe, fn );
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetVerticalPerspective(OSRSpatialReferenceShadow *self,double topoOriginLat,double topoOriginLon,double topoOriginHeight,double viewPointHeight,double fe,double fn){
+    return OSRSetVerticalPerspective( self,
+        topoOriginLat, topoOriginLon, topoOriginHeight, viewPointHeight, fe, fn );
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetWellKnownGeogCS(OSRSpatialReferenceShadow *self,char const *name){
     return OSRSetWellKnownGeogCS( self, name );
   }
@@ -11920,6 +11924,115 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_SetVerticalPerspective(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "topoOriginLat",(char *) "topoOriginLon",(char *) "topoOriginHeight",(char *) "viewPointHeight",(char *) "fe",(char *) "fn", NULL 
+  };
+  OGRErr result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOO:SpatialReference_SetVerticalPerspective",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetVerticalPerspective" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetVerticalPerspective" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetVerticalPerspective" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetVerticalPerspective" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetVerticalPerspective" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetVerticalPerspective" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "SpatialReference_SetVerticalPerspective" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_SetVerticalPerspective(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_SetWellKnownGeogCS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -17321,6 +17434,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_SetTMG", (PyCFunction) _wrap_SpatialReference_SetTMG, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetTMG(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetTMSO", (PyCFunction) _wrap_SpatialReference_SetTMSO, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetTMSO(SpatialReference self, double clat, double clong, double scale, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetVDG", (PyCFunction) _wrap_SpatialReference_SetVDG, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetVDG(SpatialReference self, double clong, double fe, double fn) -> OGRErr"},
+	 { (char *)"SpatialReference_SetVerticalPerspective", (PyCFunction) _wrap_SpatialReference_SetVerticalPerspective, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetVerticalPerspective(SpatialReference self, double topoOriginLat, double topoOriginLon, double topoOriginHeight, double viewPointHeight, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetWellKnownGeogCS", _wrap_SpatialReference_SetWellKnownGeogCS, METH_VARARGS, (char *)"SpatialReference_SetWellKnownGeogCS(SpatialReference self, char const * name) -> OGRErr"},
 	 { (char *)"SpatialReference_SetFromUserInput", _wrap_SpatialReference_SetFromUserInput, METH_VARARGS, (char *)"SpatialReference_SetFromUserInput(SpatialReference self, char const * name) -> OGRErr"},
 	 { (char *)"SpatialReference_CopyGeogCSFrom", _wrap_SpatialReference_CopyGeogCSFrom, METH_VARARGS, (char *)"SpatialReference_CopyGeogCSFrom(SpatialReference self, SpatialReference rhs) -> OGRErr"},

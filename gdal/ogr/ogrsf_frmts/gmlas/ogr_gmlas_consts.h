@@ -273,6 +273,7 @@ namespace GMLASConstants
     STRING_CONST(szXS_NCNAME, "NCName");
     STRING_CONST(szXS_QNAME, "QName");
     STRING_CONST(szXS_ID, "ID");
+    STRING_CONST(szXS_IDREF, "IDREF");
     STRING_CONST(szXS_BOOLEAN, "boolean");
     STRING_CONST(szXS_BYTE, "byte");
     STRING_CONST(szXS_SHORT, "short");

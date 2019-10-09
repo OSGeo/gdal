@@ -945,6 +945,15 @@ OGRErr CPL_DLL OSRSetSCH( OGRSpatialReferenceH hSRS,
                               double dfPegLat, double dfPegLong,
                               double dfPegHeading, double dfPegHgt);
 
+/** Vertical Perspective / Near-sided Perspective */
+OGRErr CPL_DLL OSRSetVerticalPerspective( OGRSpatialReferenceH hSRS,
+                                          double dfTopoOriginLat,
+                                          double dfTopoOriginLon,
+                                          double dfTopoOriginHeight,
+                                          double dfViewPointHeight,
+                                          double dfFalseEasting,
+                                          double dfFalseNorthing);
+
 double CPL_DLL OSRCalcInvFlattening( double dfSemiMajor, double dfSemiMinor );
 double CPL_DLL OSRCalcSemiMinorFromInvFlattening( double dfSemiMajor, double dfInvFlattening );
 

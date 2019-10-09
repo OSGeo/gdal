@@ -4,7 +4,7 @@
 
 include ../GDALmake.opt
 
-CPPFLAGS :=	-I$(GDAL_ROOT)/frmts/vrt $(CPPFLAGS) $(JSON_INCLUDE) $(PROJ_INCLUDE) -I$(GDAL_ROOT)/ogr/ogrsf_frmts/geojson -I$(GDAL_ROOT)/ogr/ogrsf_frmts/generic
+CPPFLAGS :=	-I$(GDAL_ROOT)/frmts/vrt $(CPPFLAGS) $(JSON_INCLUDE) $(PROJ_INCLUDE) -I$(GDAL_ROOT)/ogr/ogrsf_frmts/geojson -I$(GDAL_ROOT)/ogr/ogrsf_frmts/generic -g
 LNK_FLAGS :=	$(LDFLAGS)
 DEP_LIBS =	$(EXE_DEP_LIBS) $(XTRAOBJ)
 
@@ -12,7 +12,7 @@ BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
 		gdaladdo$(EXE) gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
 		gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
 		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) gdalmdiminfo$(EXE) \
-		gdalmdimtranslate$(EXE)
+		gdalmdimtranslate$(EXE) gdal_viewshed$(EXE)
 
 OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o \
 	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o gdal_rasterize_lib.o gdalbuildvrt_lib.o \
@@ -189,6 +189,9 @@ gnmmanage$(EXE):	gnmmanage.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gnmanalyse$(EXE):	gnmanalyse.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+gdal_viewshed$(EXE):	gdal_viewshed.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 clean:

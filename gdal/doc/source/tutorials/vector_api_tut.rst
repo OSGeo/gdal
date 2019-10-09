@@ -81,8 +81,8 @@ In C :
     }
 
 A GDALDataset can potentially have many layers associated with it.  The
-number of layers available can be queried with :c:func:`GDALDataset::GetLayerCount`
-and individual layers fetched by index using :c:func:`GDALDataset::GetLayer`.
+number of layers available can be queried with :cpp:func:`GDALDataset::GetLayerCount`
+and individual layers fetched by index using :cpp:func:`GDALDataset::GetLayer`.
 However, we will just fetch the layer by name.
 
 In C++ :
@@ -122,7 +122,7 @@ With GDAL 2.3 and C:
 
 If using older GDAL versions, while it isn't strictly necessary in this
 circumstance since we are starting fresh with the layer, it is often wise
-to call :c:func:`OGRLayer::ResetReading` to ensure we are starting at the beginning of
+to call :cpp:func:`OGRLayer::ResetReading` to ensure we are starting at the beginning of
 the layer.  We iterate through all the features in the layer using
 OGRLayer::GetNextFeature().  It will return NULL when we run out of features.
 
@@ -240,7 +240,7 @@ In C :
 
 There are a few more field types than those explicitly handled above, but
 a reasonable representation of them can be fetched with the
-:c:func:`OGRFeature::GetFieldAsString` method.  In fact we could shorten the above
+:cpp:func:`OGRFeature::GetFieldAsString` method.  In fact we could shorten the above
 by using GetFieldAsString() for all the types.
 
 Next we want to extract the geometry from the feature, and write out the point
@@ -289,7 +289,7 @@ In C :
         printf( "no point geometry\n" );
     }
 
-The :c:func:`wkbFlatten` macro is used above to convert the type for a wkbPoint25D
+The :cpp:func:`wkbFlatten` macro is used above to convert the type for a wkbPoint25D
 (a point with a z coordinate) into the base 2D geometry type code (wkbPoint).
 For each 2D geometry type there is a corresponding 2.5D type code.  The 2D
 and 2.5D geometry cases are handled by the same C++ class, so our code will

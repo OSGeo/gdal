@@ -31,6 +31,7 @@
 
 import os
 from osgeo import gdal
+from osgeo import osr
 
 
 import gdaltest
@@ -316,3 +317,45 @@ def test_pds_band_storage_type_line_interleaved():
 
 
 
+def test_pds_oblique_cylindrical_read():
+
+    # This dataset is a champion in its category. It features:
+    # - POSITIVE_LONGITUDE_DIRECTION = WEST
+    # - MAP_PROJECTION_ROTATION      = 90.0
+    # - oblique cylindrical projection
+
+    # https://pds-imaging.jpl.nasa.gov/data/cassini/cassini_orbiter/CORADR_0101_V03/DATA/BIDR/BIBQH03N123_D101_T020S03_V03.LBL
+    ds = gdal.Open('data/BIBQH03N123_D101_T020S03_V03_truncated.IMG')
+    srs = ds.GetSpatialRef()
+    assert srs.ExportToProj4() == '+proj=ob_tran +R=2575000 +o_proj=eqc +o_lon_p=-257.744003 +o_lat_p=120.374532 +lon_0=-303.571748 +wktext +no_defs'
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx((-5347774.07796, 0, 351.11116, -2561707.02336, 351.11116, 0))
+
+    geog_srs = srs.CloneGeogCS()
+    ct = osr.CoordinateTransformation(srs, geog_srs)
+
+    def to_lon_lat(pixel, line):
+        x = gt[0] + pixel * gt[1] + line * gt[2]
+        y = gt[3] + pixel * gt[4] + line * gt[5]
+        lon, lat, _ = ct.TransformPoint(x, y)
+        return lon, lat
+
+    # Check consistency of the corners of the image with the long,lat bounds
+    # in the metadata
+
+    # MAXIMUM_LATITUDE             = 32.37062573<DEG>
+    # MINIMUM_LATITUDE             = -31.41702033<DEG>
+    # EASTERNMOST_LONGITUDE        = 75.792673220<DEG>
+    # WESTERNMOST_LONGITUDE        = 169.8235459<DEG>
+
+    _, lat = to_lon_lat(0, 0)
+    assert lat == pytest.approx(-31.097321393323572) # MINIMUM_LATITUDE
+
+    lon, _ = to_lon_lat(ds.RasterXSize, 0)
+    assert lon == pytest.approx(-169.8290961385244) # WESTERNMOST_LONGITUDE * -1
+
+    _, lat = to_lon_lat(0, ds.RasterYSize)
+    assert lat == pytest.approx(-31.421452666874025) # MINIMUM_LATITUDE
+
+    lon, _ = to_lon_lat(ds.RasterXSize, ds.RasterYSize)
+    assert lon == pytest.approx(-75.787124149033) # EASTERNMOST_LONGITUDE * -1

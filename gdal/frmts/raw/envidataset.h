@@ -136,6 +136,8 @@ class ENVIDataset final: public RawDataset
     int    GetGCPCount() override;
     const GDAL_GCP *GetGCPs() override;
 
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo *, bool bFileSizeCheck );
     static GDALDataset *Create( const char *pszFilename,

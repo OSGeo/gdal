@@ -546,6 +546,30 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                          char **papszOptions);
     virtual void EndAsyncReader(GDALAsyncReader *);
 
+//! @cond Doxygen_Suppress
+    struct RawBinaryLayout
+    {
+        enum class Interleaving
+        {
+            UNKNOWN,
+            BIP,
+            BIL,
+            BSQ
+        };
+        std::string         osRawFilename{};
+        Interleaving        eInterleaving = Interleaving::UNKNOWN;
+        GDALDataType        eDataType = GDT_Unknown;
+        bool                bLittleEndianOrder = false;
+
+        vsi_l_offset        nImageOffset = 0;
+        GIntBig             nPixelOffset = 0;
+        GIntBig             nLineOffset = 0;
+        GIntBig             nBandOffset = 0;
+    };
+
+    virtual bool GetRawBinaryLayout(RawBinaryLayout&);
+//! @endcond
+
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
                           int, int *, GSpacing, GSpacing, GSpacing,

@@ -334,6 +334,13 @@ a temporary file.
 Examples
 --------
 
+- Basic transformation:
+
+::
+
+  gdalwarp -t_srs EPSG:4326 input.tif output.tif
+
+
 - For instance, an eight bit spot scene stored in GeoTIFF with
   control points mapping the corners to lat/long could be warped to a UTM
   projection with a command like this:

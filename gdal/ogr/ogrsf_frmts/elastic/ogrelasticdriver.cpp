@@ -143,6 +143,7 @@ void RegisterOGRElastic() {
 "  <Option name='BULK_INSERT' type='boolean' description='Whether to use bulk insert for feature creation' default='YES'/>"
 "  <Option name='BULK_SIZE' type='integer' description='Size in bytes of the buffer for bulk upload' default='1000000'/>"
 "  <Option name='FID' type='string' description='Field name, with integer values, to use as FID' default='ogc_fid'/>"
+"  <Option name='FORWARD_HTTP_HEADERS_FROM_ENV' type='string' description='Comma separated list of http_header_name=env_variable_name'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,

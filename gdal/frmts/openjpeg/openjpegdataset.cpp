@@ -128,12 +128,13 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
     JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
-    int nRet = static_cast<int>(VSIFReadL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
+    OPJ_SIZE_T nRet = static_cast<OPJ_SIZE_T>(VSIFReadL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
 #ifdef DEBUG_IO
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Read(%d) = %d", (int)nBytes, nRet);
+    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Read(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
+             static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
 #endif
     if (nRet == 0)
-        nRet = -1;
+        nRet = static_cast<OPJ_SIZE_T>(-1);
 
     return nRet;
 }
@@ -146,11 +147,12 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
     JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
-    int nRet = static_cast<int>(VSIFWriteL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
+    OPJ_SIZE_T nRet = static_cast<OPJ_SIZE_T>(VSIFWriteL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp));
 #ifdef DEBUG_IO
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Write(%d) = %d", (int)nBytes, nRet);
+    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Write(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
+             static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
 #endif
-    if( static_cast<OPJ_SIZE_T>(nRet) != nBytes )
+    if( nRet != nBytes )
         return static_cast<OPJ_SIZE_T>(-1);
     return nRet;
 }
@@ -163,7 +165,8 @@ static OPJ_BOOL JP2OpenJPEGDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
 {
     JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
 #ifdef DEBUG_IO
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(%d)", (int)nBytes);
+    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(" CPL_FRMT_GUIB ")",
+             static_cast<GUIntBig>(nBytes));
 #endif
     return VSIFSeekL(psJP2OpenJPEGFile->fp, psJP2OpenJPEGFile->nBaseOffset +nBytes,
                      SEEK_SET) == 0;
@@ -179,8 +182,8 @@ static OPJ_OFF_T JP2OpenJPEGDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
     vsi_l_offset nOffset = VSIFTellL(psJP2OpenJPEGFile->fp);
     nOffset += nBytes;
 #ifdef DEBUG_IO
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Skip(%d -> " CPL_FRMT_GUIB ")",
-             (int)nBytes, (GUIntBig)nOffset);
+    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Skip(" CPL_FRMT_GUIB " -> " CPL_FRMT_GUIB ")",
+             static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nOffset));
 #endif
     VSIFSeekL(psJP2OpenJPEGFile->fp, nOffset, SEEK_SET);
     return nBytes;
@@ -210,6 +213,8 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
 
     int         bIs420 = FALSE;
 
+    int         nParentXSize = 0;
+    int         nParentYSize = 0;
     int         iLevel = 0;
     int         nOverviewCount = 0;
     JP2OpenJPEGDataset** papoOverviewDS = nullptr;
@@ -927,10 +932,10 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         /* The decode area must be expressed in grid reference, ie at full*/
         /* scale */
         if (!opj_set_decode_area(pCodec,psImage,
-                                 (nBlockXOff*nBlockXSize) << iLevel,
-                                 (nBlockYOff*nBlockYSize) << iLevel,
-                                 (nBlockXOff*nBlockXSize+nWidthToRead) << iLevel,
-                                 (nBlockYOff*nBlockYSize+nHeightToRead) << iLevel))
+                                 static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize) * nParentXSize / nRasterXSize),
+                                 static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize) * nParentYSize / nRasterYSize),
+                                 static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize+nWidthToRead) * nParentXSize / nRasterXSize),
+                                 static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize+nHeightToRead) * nParentYSize / nRasterYSize)))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decode_area() failed");
             eErr = CE_Failure;
@@ -2142,6 +2147,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int nW = poDS->nRasterXSize;
     int nH = poDS->nRasterYSize;
+    poDS->nParentXSize = poDS->nRasterXSize;
+    poDS->nParentYSize = poDS->nRasterYSize;
 
     /* Lower resolutions are not compatible with a color-table */
     if( poCT != nullptr )
@@ -2170,6 +2177,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->papoOverviewDS,
                     (poDS->nOverviewCount + 1) * sizeof(JP2OpenJPEGDataset*));
         JP2OpenJPEGDataset* poODS = new JP2OpenJPEGDataset();
+        poODS->nParentXSize = poDS->nRasterXSize;
+        poODS->nParentYSize = poDS->nRasterYSize;
         poODS->SetDescription( poOpenInfo->pszFilename );
         poODS->iLevel = poDS->nOverviewCount + 1;
         poODS->bSingleTiled = poDS->bSingleTiled;

@@ -1439,3 +1439,316 @@ def test_isis3_parse_list_and_write_quote_string_in_list():
     assert 'Name         = ("band 1", "band 2", "band 3")' in data, data
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/temp.lbl')
 
+
+###############################################################################
+#
+
+def test_isis3_bandbin_single_band():
+
+    gdal.FileFromMemBuffer('/vsimem/test.lbl', """Object = IsisCube
+  Object = Core
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = Real
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = BandBin
+    FilterName   = "ignored"
+    Name         = "My band name"
+    Center       = 700 <NANOMETERS>
+    Width        = 300 <NANOMETERS>
+  End_Group
+
+End_Object
+End""")
+
+    ds = gdal.Open('/vsimem/test.lbl')
+    assert ds
+    band = ds.GetRasterBand(1)
+    assert band.GetDescription() == 'My band name'
+    assert band.GetMetadata() == {
+        'BANDWIDTH': '300.000000',
+        'BANDWIDTH_UNIT': 'NANOMETERS',
+        'WAVELENGTH': '700.000000',
+        'WAVELENGTH_UNIT': 'NANOMETERS'
+    }
+    ds = None
+    gdal.Unlink('/vsimem/test.lbl')
+
+
+###############################################################################
+#
+
+def test_isis3_bandbin_multiple_bands():
+
+    gdal.FileFromMemBuffer('/vsimem/test.lbl', """Object = IsisCube
+  Object = Core
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 2
+    End_Group
+    Group = Pixels
+      Type       = Real
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = BandBin
+    BandSuffixName   = ("first band", "second band")
+    BandSuffixUnit   = (DEGREE, DEGREE)
+    BandBinCenter    = (1.0348, 1.3128)
+    BandBinUnit      = MICROMETER
+    Width            = (0.5, 0.6) <um>
+  End_Group
+
+End_Object
+End""")
+
+    ds = gdal.Open('/vsimem/test.lbl')
+    assert ds
+    band = ds.GetRasterBand(1)
+    assert band.GetDescription() == 'first band'
+    assert band.GetUnitType() == 'DEGREE'
+    assert band.GetMetadata() == {
+        'BANDWIDTH': '0.500000',
+        'BANDWIDTH_UNIT': 'um',
+        'WAVELENGTH': '1.034800',
+        'WAVELENGTH_UNIT': 'MICROMETER'
+    }
+    band = ds.GetRasterBand(2)
+    assert band.GetDescription() == 'second band'
+    assert band.GetMetadata() == {
+        'BANDWIDTH': '0.600000',
+        'BANDWIDTH_UNIT': 'um',
+        'WAVELENGTH': '1.312800',
+        'WAVELENGTH_UNIT': 'MICROMETER'
+    }
+    ds = None
+    gdal.Unlink('/vsimem/test.lbl')
+
+
+###############################################################################
+# Test that when converting from ISIS3 to other formats (PAM-enabled), the
+# json:ISIS3 metadata domain is preserved.
+
+def test_isis3_preserve_label_across_format():
+
+    gdal.FileFromMemBuffer('/vsimem/multiband.lbl', """Object = IsisCube
+  Object = Core
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 2
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = BandBin
+    BandSuffixName   = ("first band", "second band")
+    BandSuffixUnit   = (DEGREE, DEGREE)
+    BandBinCenter    = (1.0, 2.0)
+    BandBinUnit      = MICROMETER
+    Width            = (0.5, 1.0) <um>
+  End_Group
+
+End_Object
+End""")
+    src_ds = gdal.Open('/vsimem/multiband.lbl')
+
+    # Copy ISIS3 to GeoTIFF
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds)
+
+    # Check GeoTIFF
+    ds = gdal.Open('/vsimem/out.tif')
+    assert len(ds.GetMetadataDomainList()) == 3
+    assert set(ds.GetMetadataDomainList()) == set(['IMAGE_STRUCTURE', 'json:ISIS3', 'DERIVED_SUBDATASETS'])
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert lbl
+    ds = None
+    assert gdal.VSIStatL('/vsimem/out.tif.aux.xml')
+
+    # Check that the label is in PAM, and not internal to GTiff
+    with gdaltest.config_option('GDAL_PAM_ENABLED', 'NO'):
+        ds = gdal.Open('/vsimem/out.tif')
+        assert not ds.GetMetadata_List('json:ISIS3')
+
+    # Copy back from GeoTIFF to ISIS3
+    src_ds_gtiff = gdal.Open('/vsimem/out.tif')
+    gdal.GetDriverByName('ISIS3').CreateCopy('/vsimem/out.cub', src_ds_gtiff)
+    assert not gdal.VSIStatL('/vsimem/out.cub.aux.xml')
+    ds = gdal.Open('/vsimem/out.cub')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    # Check label preservation
+    assert 'BandBin' in lbl
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/out.tif')
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.cub')
+
+    # Copy ISIS3 to PDS4
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PDS4').CreateCopy('/vsimem/out.xml', src_ds)
+    ds = gdal.Open('/vsimem/out.xml')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert lbl
+    ds = None
+    assert gdal.VSIStatL('/vsimem/out.xml.aux.xml')
+    gdal.GetDriverByName('PDS4').Delete('/vsimem/out.xml')
+
+    # Copy ISIS3 to PNG
+    gdal.GetDriverByName('PNG').CreateCopy('/vsimem/out.png', src_ds)
+    ds = gdal.Open('/vsimem/out.png')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert lbl
+    ds = None
+    assert gdal.VSIStatL('/vsimem/out.png.aux.xml')
+    gdal.GetDriverByName('PNG').Delete('/vsimem/out.png')
+
+    # Check GeoTIFF with non pure copy mode (test gdal_translate_lib)
+    gdal.Translate('/vsimem/out.tif', src_ds, options = '-mo FOO=BAR')
+    ds = gdal.Open('/vsimem/out.tif')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert lbl
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/out.tif')
+
+    # Test converting a subset of bands
+    gdal.Translate('/vsimem/out.tif', src_ds, options = '-b 2 -mo FOO=BAR')
+    ds = gdal.Open('/vsimem/out.tif')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    lbl = json.loads(lbl)
+
+    assert lbl['IsisCube']['BandBin'] == json.loads("""{
+      "_type":"group",
+      "BandBinUnit":"MICROMETER",
+      "Width":{
+        "unit":"um",
+        "value":[
+          1.000000
+        ]
+      },
+      "BandSuffixName":[
+        "second band"
+      ],
+      "BandSuffixUnit":[
+        "DEGREE"
+      ],
+      "BandBinCenter":[
+        2.000000
+      ]
+    }""")
+
+    assert 'OriginalBandBin' in lbl['IsisCube']
+    assert lbl['IsisCube']['OriginalBandBin'] == json.loads("""{
+      "_type":"group",
+      "BandSuffixName":[
+        "first band",
+        "second band"
+      ],
+      "BandSuffixUnit":[
+        "DEGREE",
+        "DEGREE"
+      ],
+      "BandBinCenter":[
+        1.000000,
+        2.000000
+      ],
+      "BandBinUnit":"MICROMETER",
+      "Width":{
+        "value":[
+          0.500000,
+          1.000000
+        ],
+        "unit":"um"
+      }
+    }""")
+
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/out.tif')
+
+    src_ds = None
+    gdal.Unlink('/vsimem/multiband.lbl')
+
+
+def test_isis3_point_perspective_read():
+
+    ds = gdal.Open('data/isis3_pointperspective.cub')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=nsper +lat_0=-10 +lon_0=-90 +h=31603810 +x_0=0 +y_0=0 +R=3396190 +units=m +no_defs'
+
+
+def test_isis3_point_perspective_write():
+
+    if osr.GetPROJVersionMajor() < 7:
+        pytest.skip()
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 3000000, 0)
+    sr.SetVerticalPerspective(1, 2, 0, 1000, 0, 0)
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
+    ds.SetSpatialRef(sr)
+    ds.SetGeoTransform([-10, 1, 0, 40, 0, -1])
+    ds = None
+    ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert '"CenterLatitude":1.0' in lbl
+    assert '"CenterLongitude":2.0' in lbl
+    assert '"Distance":3001.0' in lbl
+    ds = None
+
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
+
+
+def test_isis3_oblique_cylindrical_read():
+
+    ds = gdal.Open('data/isis3_obliquecylindrical.cub')
+    srs = ds.GetSpatialRef()
+    assert srs.ExportToProj4() == '+proj=ob_tran +o_proj=eqc +o_lon_p=-90 +o_lat_p=180 +lon_0=0 +R=3396190 +units=m +no_defs'
+
+    pixel = ds.RasterXSize / 2.0
+    line = ds.RasterYSize / 2.0
+    gt = ds.GetGeoTransform()
+    x = gt[0] + pixel * gt[1] + line * gt[2]
+    y = gt[3] + pixel * gt[4] + line * gt[5]
+    geog_srs = srs.CloneGeogCS()
+    ct = osr.CoordinateTransformation(srs, geog_srs)
+    lon, lat, _ = ct.TransformPoint(x, y)
+    assert lon == pytest.approx(90.0)
+    assert lat == pytest.approx(-45.0, 1e-2)
+
+
+def test_isis3_oblique_cylindrical_write():
+
+    src_ds = gdal.Open('data/isis3_obliquecylindrical.cub')
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', src_ds.RasterXSize, src_ds.RasterYSize)
+    ds.SetSpatialRef(src_ds.GetSpatialRef())
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    assert '"PoleLongitude":0.0' in lbl
+    assert '"PoleLatitude":0.0' in lbl
+    assert '"PoleRotation":90.0' in lbl
+    ds = None
+
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')

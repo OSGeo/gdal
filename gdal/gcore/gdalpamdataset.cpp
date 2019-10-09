@@ -195,7 +195,17 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
     if( psPam->poSRS && !psPam->poSRS->IsEmpty() )
     {
         char* pszWKT = nullptr;
-        psPam->poSRS->exportToWkt(&pszWKT);
+        {
+            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            if( psPam->poSRS->exportToWkt(&pszWKT) != OGRERR_NONE )
+            {
+                CPLFree(pszWKT);
+                pszWKT = nullptr;
+                const char* const apszOptions[] = { "FORMAT=WKT2", nullptr };
+                psPam->poSRS->exportToWkt(&pszWKT, apszOptions);
+            }
+        }
         CPLXMLNode* psSRSNode = CPLCreateXMLElementAndValue( psDSTree, "SRS", pszWKT );
         CPLFree(pszWKT);
         const auto& mapping = psPam->poSRS->GetDataAxisToSRSAxisMapping();
@@ -986,21 +996,16 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
 /* -------------------------------------------------------------------- */
     if( nCloneFlags & GCIF_METADATA )
     {
-        if( poSrcDS->GetMetadata() != nullptr )
+        for( const char* pszMDD: { "", "RPC", "json:ISIS3" } )
         {
-            if( !bOnlyIfMissing
-                || CSLCount(GetMetadata()) != CSLCount(poSrcDS->GetMetadata()) )
+            auto papszSrcMD = poSrcDS->GetMetadata(pszMDD);
+            if(papszSrcMD  != nullptr )
             {
-                SetMetadata( poSrcDS->GetMetadata() );
-            }
-        }
-        if( poSrcDS->GetMetadata("RPC") != nullptr )
-        {
-            if( !bOnlyIfMissing
-                || CSLCount(GetMetadata("RPC"))
-                   != CSLCount(poSrcDS->GetMetadata("RPC")) )
-            {
-                SetMetadata( poSrcDS->GetMetadata("RPC"), "RPC" );
+                if( !bOnlyIfMissing
+                    || CSLCount(GetMetadata(pszMDD)) != CSLCount(papszSrcMD) )
+                {
+                    SetMetadata( papszSrcMD, pszMDD );
+                }
             }
         }
     }

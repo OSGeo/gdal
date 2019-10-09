@@ -21,6 +21,17 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Multi layer support
+-------------------
+
+A single .fgb file only contains one single layer. For multiple layer support,
+it is possible to put several .fgb files in a directory, and use that directory
+name as the connection string.
+
+On creation, passing a filenam without a .fgb suffix will instruct the driver
+to create a directory of that name, and create layers as .fgb files in that
+directory.
+
 Open options
 ------------
 
@@ -50,6 +61,12 @@ Examples
    ::
 
       % ogr2ogr -f FlatGeobuf filename.fgb abc.shp
+
+-  Conversion of a Geopackage file with multiple layers:
+
+    ::
+
+      % ogr2ogr -f FlatGeobuf my_fgb_dataset input.gpkg
 
 See Also
 --------

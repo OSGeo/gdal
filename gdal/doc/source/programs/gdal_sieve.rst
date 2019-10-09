@@ -30,4 +30,4 @@ The input dataset is read as integer data which means that floating point
 values are rounded to integers. Re-scaling source data may be necessary in
 some cases (e.g. 32-bit floating point data with min=0 and max=1).
 
-Additional details on the algorithm are available in the :c:func:`GDALSieveFilter` docs.
+Additional details on the algorithm are available in the :cpp:func:`GDALSieveFilter` docs.

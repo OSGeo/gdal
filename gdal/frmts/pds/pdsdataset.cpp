@@ -78,6 +78,7 @@ class PDSDataset final: public RawDataset
     CPLString   osTempResult;
 
     CPLString   osExternalCube;
+    CPLString   m_osImageFilename;
 
     void        ParseSRS();
     int         ParseCompressedImage();
@@ -117,6 +118,8 @@ public:
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg) override;
+
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -429,6 +432,9 @@ void PDSDataset::ParseSRS()
     if (EQUAL( value, "PLANETOCENTRIC" ))
         bIsGeographic = FALSE;
 
+    const double dfLongitudeMulFactor =
+        EQUAL(GetKeyword( "IMAGE_MAP_PROJECTION.POSITIVE_LONGITUDE_DIRECTION", "EAST"), "EAST") ? 1 : -1;
+
 /**   Set oSRS projection and parameters --- all PDS supported types added if apparently supported in oSRS
       "AITOFF",  ** Not supported in GDAL??
       "ALBERS",
@@ -494,8 +500,26 @@ void PDSDataset::ParseSRS()
     } else if (EQUAL( map_proj_name, "GNOMONIC" )) {
         oSRS.SetGnomonic ( center_lat, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "OBLIQUE_CYLINDRICAL" )) {
-        // hope Swiss Oblique Cylindrical is the same
-        oSRS.SetSOC ( center_lat, center_lon, 0, 0 );
+        const double poleLatitude =
+            CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_POLE_LATITUDE"));
+        const double poleLongitude =
+            CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_POLE_LONGITUDE")) * dfLongitudeMulFactor;
+        const double poleRotation =
+            CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.OBLIQUE_PROJ_POLE_ROTATION"));
+        CPLString oProj4String;
+        // ISIS3 rotated pole doesn't use the same conventions than PROJ ob_tran
+        // Compare the sign difference in https://github.com/USGS-Astrogeology/ISIS3/blob/3.8.0/isis/src/base/objs/ObliqueCylindrical/ObliqueCylindrical.cpp#L244
+        // and https://github.com/OSGeo/PROJ/blob/6.2/src/projections/ob_tran.cpp#L34
+        // They can be compensated by modifying the poleLatitude to 180-poleLatitude
+        // There's also a sign difference for the poleRotation parameter
+        // The existence of those different conventions is acknowledged in
+        // https://pds-imaging.jpl.nasa.gov/documentation/Cassini_BIDRSIS.PDF in the middle of page 10
+        oProj4String.Printf(
+            "+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g +o_lat_p=%.18g +lon_0=%.18g",
+            -poleRotation,
+            180-poleLatitude,
+            poleLongitude);
+        oSRS.SetFromUserInput(oProj4String);
     } else {
         CPLDebug( "PDS",
                   "Dataset projection %s is not supported. Continuing...",
@@ -621,6 +645,26 @@ void PDSDataset::ParseSRS()
         adfGeoTransform[3] = dfULYMap;
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = dfYDim;
+
+        const double rotation =
+            CPLAtof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.MAP_PROJECTION_ROTATION"));
+        if( rotation != 0 )
+        {
+            const double sin_rot = rotation == 90 ? 1.0 : sin(rotation / 180 * M_PI);
+            const double cos_rot = rotation == 90 ? 0.0 : cos(rotation / 180 * M_PI);
+            const double gt_1 = cos_rot * adfGeoTransform[1] - sin_rot * adfGeoTransform[4];
+            const double gt_2 = cos_rot * adfGeoTransform[2] - sin_rot * adfGeoTransform[5];
+            const double gt_0 = cos_rot * adfGeoTransform[0] - sin_rot * adfGeoTransform[3];
+            const double gt_4 = sin_rot * adfGeoTransform[1] + cos_rot * adfGeoTransform[4];
+            const double gt_5 = sin_rot * adfGeoTransform[2] + cos_rot * adfGeoTransform[5];
+            const double gt_3 = sin_rot * adfGeoTransform[0] + cos_rot * adfGeoTransform[3];
+            adfGeoTransform[1] = gt_1;
+            adfGeoTransform[2] = gt_2;
+            adfGeoTransform[0] = gt_0;
+            adfGeoTransform[4] = gt_4;
+            adfGeoTransform[5] = gt_5;
+            adfGeoTransform[3] = gt_3;
+        }
     }
 
     if( !bGotTransform )
@@ -632,6 +676,18 @@ void PDSDataset::ParseSRS()
         bGotTransform =
             GDALReadWorldFile( pszFilename, "wld",
                                adfGeoTransform );
+}
+
+/************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool PDSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
+{
+    if( !RawDataset::GetRawBinaryLayout(sLayout) )
+        return false;
+    sLayout.osRawFilename = m_osImageFilename;
+    return true;
 }
 
 /************************************************************************/
@@ -682,7 +738,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     CPLString osImageKeyword = "IMAGE";
     CPLString osQube = GetKeyword( osPrefix + "^" + osImageKeyword, "" );
-    CPLString osTargetFile = GetDescription();
+    m_osImageFilename = GetDescription();
 
     if (EQUAL(osQube,"")) {
         osImageKeyword = "SPECTRAL_QUBE";
@@ -719,13 +775,13 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         CleanString( osFilename );
         if( !osFilenamePrefix.empty() )
         {
-            osTargetFile = osFilenamePrefix + osFilename;
+            m_osImageFilename = osFilenamePrefix + osFilename;
         }
         else
         {
             CPLString osTPath = CPLGetPath(GetDescription());
-            osTargetFile = CPLFormCIFilename( osTPath, osFilename, nullptr );
-            osExternalCube = osTargetFile;
+            m_osImageFilename = CPLFormCIFilename( osTPath, osFilename, nullptr );
+            osExternalCube = m_osImageFilename;
         }
     }
 
@@ -1024,24 +1080,24 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     if( eAccess == GA_ReadOnly )
     {
-        fpImage = VSIFOpenL( osTargetFile, "rb" );
+        fpImage = VSIFOpenL( m_osImageFilename, "rb" );
         if( fpImage == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                     "Failed to open %s.\n%s",
-                    osTargetFile.c_str(),
+                    m_osImageFilename.c_str(),
                     VSIStrerror( errno ) );
             return FALSE;
         }
     }
     else
     {
-        fpImage = VSIFOpenL( osTargetFile, "r+b" );
+        fpImage = VSIFOpenL( m_osImageFilename, "r+b" );
         if( fpImage == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                     "Failed to open %s with write permission.\n%s",
-                    osTargetFile.c_str(),
+                    m_osImageFilename.c_str(),
                     VSIStrerror( errno ) );
             return FALSE;
         }
