@@ -148,6 +148,8 @@ Environment variables
    geometries: YES - wrap geometries with OGRGeometryCollection type
 -  **ATTRIBUTES_SKIP** - controls translation of attributes: YES - skip
    all attributes
+-  **OGR_GEOJSON_MAX_OBJ_SIZE** - (GDAL >= 3.0.2) size in MBytes of the maximum
+   accepted single feature, default value is 200MB
 
 Open options
 ------------
