@@ -507,7 +507,7 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
 
     poDATFile->MarkRecordAsExisting();
 
-    //int nStatus = 0;
+    int nStatus = 0;
     for( int iField = 0, nStatus = 0;
          nStatus == 0 && iField < numFields;
          iField++ )
