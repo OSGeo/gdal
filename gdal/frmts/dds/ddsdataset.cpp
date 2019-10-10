@@ -31,10 +31,7 @@
  *
  */
 
-/* stdio.h needed before including crnlib.h, since the later needs NULL to be defined */
-#include <stdio.h>
-#include "crnlib.h"
-#include "dds_defs.h"
+#include "crunch_headers.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
@@ -85,7 +82,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
                  "or 4 (rgba) bands.\n",
                  nBands);
 
-        return NULL;
+        return nullptr;
     }
 
     if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
@@ -98,7 +95,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
                   (bStrict) ? "" : "Defaulting to Byte" );
 
         if (bStrict)
-            return NULL;
+            return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -115,12 +112,12 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
     VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
-    if (fpImage == NULL)
+    if (fpImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Unable to create dds file %s.\n",
                  pszFilename);
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -155,7 +152,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Illegal FORMAT value '%s', should be DXT1, DXT1A, DXT3, DXT5 or ETC1",
                       pszFormat );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -179,7 +176,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Illegal QUALITY value '%s', should be SUPERFAST, FAST, NORMAL, BETTER or UBER.",
                       pszQuality );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -242,7 +239,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     void *pCompressed_data = CPLMalloc(total_compressed_size);
     GByte* pabyScanlines = (GByte *) CPLMalloc(nBands * nXSize * cDXTBlockSize);
     crn_uint32 *pixels = (crn_uint32*) CPLMalloc(sizeof(crn_uint32)*cDXTBlockSize * cDXTBlockSize);
-    crn_uint32 *src_image = NULL;
+    crn_uint32 *src_image = nullptr;
     if (nColorType == DDS_COLOR_TYPE_RGB)
         src_image = (crn_uint32*) CPLMalloc(sizeof(crn_uint32)*nXSize*cDXTBlockSize);
 
@@ -253,14 +250,14 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
         eErr = poSrcDS->RasterIO(GF_Read, 0, iLine*cDXTBlockSize, nXSize, size_y,
                                  pabyScanlines, nXSize, size_y, GDT_Byte,
-                                 nBands, NULL,
+                                 nBands, nullptr,
                                  nBands,
                                  nBands * nXSize, 1, nullptr);
 
         if (eErr != CE_None)
             break;
 
-        crn_uint32 *pSrc_image = NULL;
+        crn_uint32 *pSrc_image = nullptr;
         if (nColorType == DDS_COLOR_TYPE_RGB_ALPHA)
             pSrc_image = (crn_uint32*)pabyScanlines;
         else if (nColorType == DDS_COLOR_TYPE_RGB)
@@ -301,7 +298,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
         if (eErr == CE_None
             && !pfnProgress( (iLine+1) / (double) nYNumBlocks,
-                             NULL, pProgressData))
+                             nullptr, pProgressData))
         {
             eErr = CE_Failure;
             CPLError(CE_Failure, CPLE_UserInterrupt,
@@ -314,12 +311,12 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     CPLFree(pCompressed_data);
     CPLFree(pabyScanlines);
     crn_free_block_compressor(pContext);
-    pContext = NULL;
+    pContext = nullptr;
 
     VSIFCloseL(fpImage);
 
     if (eErr != CE_None)
-        return NULL;
+        return nullptr;
 
     DDSDataset *poDsDummy = new DDSDataset();
 
@@ -332,7 +329,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
 void GDALRegister_DDS()
 {
-    if( GDALGetDriverByName( "DDS" ) != NULL )
+    if( GDALGetDriverByName( "DDS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
