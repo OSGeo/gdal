@@ -65,7 +65,7 @@
 #include "ogrsf_frmts.h"
 #include "ogrsqliteexecutesql.h"
 #include "osm_parser.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "sqlite3.h"
 
 #undef SQLITE_STATIC

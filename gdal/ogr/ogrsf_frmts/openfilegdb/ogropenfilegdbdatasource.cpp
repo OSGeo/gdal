@@ -49,7 +49,7 @@
 #include "ogr_geometry.h"
 #include "ogr_mem.h"
 #include "ogrsf_frmts.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 CPL_CVSID("$Id$")
 

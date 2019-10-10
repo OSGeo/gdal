@@ -75,7 +75,7 @@ will be added to ogr_p.h
 ::
 
    CPL_C_START
-   #include "swq.h"
+   #include "ogr_swq.h"
    CPL_C_END
 
    #define SPF_FID 0

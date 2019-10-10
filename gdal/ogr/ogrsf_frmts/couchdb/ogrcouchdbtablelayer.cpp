@@ -29,7 +29,7 @@
 #include "ogr_couchdb.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 #include <algorithm>
 

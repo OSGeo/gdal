@@ -30,7 +30,7 @@
 
 #include "cpl_port.h"
 #include "ogr_feature.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 #include <cstddef>
 #include <cstdlib>

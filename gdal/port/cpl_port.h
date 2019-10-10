@@ -360,6 +360,9 @@ typedef unsigned int  GUIntptr_t;
 #  endif
 #endif
 
+// Marker for unstable API
+#define CPL_UNSTABLE_API CPL_DLL
+
 #endif
 
 /*! @cond Doxygen_Suppress */

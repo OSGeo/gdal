@@ -33,7 +33,7 @@
 #include "cpl_http.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "../geojson/ogrgeojsonwriter.h"
 #include "../geojson/ogrgeojsonreader.h"
 #include "../geojson/ogrgeojsonutils.h"
