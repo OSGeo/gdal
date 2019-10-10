@@ -2900,11 +2900,7 @@ else
     if test "$NETCDF_SETTING" = "yes" ; then
       EXTRA_INCLUDES="-I$NETCDF_INCLUDEDIR $EXTRA_INCLUDES"
       NETCDF_ROOT=$NETCDF_PREFIX
-      if test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
-        LIBS="$LIBS $NETCDF_LIBS"
-      else
-        LIBS="$NETCDF_LIBS $LIBS"
-      fi
+      LIBS="$NETCDF_LIBS $LIBS"
     fi
 
 dnl previous behaviour without nc-config
@@ -4541,7 +4537,7 @@ HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
 
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
-  LIBS="${LIBS} ${GEOS_LIBS}"
+  LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
 fi
 
