@@ -354,13 +354,17 @@ typedef enum {
     GVM_Min = 4
 } GDALViewshedMode;
 
-CPLErr CPL_DLL
-GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterName,
-                        double dfObserverX, double dfObserverY, double dfObserverHeight,
-                        double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
-                        double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
-                        GDALViewshedMode eMode, double dfMaxDistance,
-                        GDALProgressFunc pfnProgress, void *pProgressArg, CSLConstList papszExtraOptions);
+GDALDatasetH CPL_DLL
+GDALViewshedGenerate(GDALRasterBandH hBand,
+                     const char* pszDriverName,
+                     const char* pszTargetRasterName,
+                     CSLConstList papszCreationOptions,
+                     double dfObserverX, double dfObserverY, double dfObserverHeight,
+                     double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
+                     double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
+                     GDALViewshedMode eMode, double dfMaxDistance,
+                     GDALProgressFunc pfnProgress, void *pProgressArg,
+                     CSLConstList papszExtraOptions);
 
 /************************************************************************/
 /*      Rasterizer API - geometries burned into GDAL raster.            */

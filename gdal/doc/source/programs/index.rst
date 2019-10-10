@@ -42,6 +42,7 @@ Raster programs
    gdal-config
    gdalmanage
    gdalcompare
+   gdal_viewshed
 
 - :ref:`Common options <raster_common_options>`
 - :ref:`gdalinfo`: Lists information about a raster dataset.
@@ -74,6 +75,7 @@ Raster programs
 - :ref:`gdal-config`: Determines various information about a GDAL installation.
 - :ref:`gdalmanage`: Identify, delete, rename and copy raster data files.
 - :ref:`gdalcompare`: Compare two images.
+- :ref:`gdal_viewshed`: Compute a visibility mask for a raster.
 
 Multidimensional Raster programs
 --------------------------------

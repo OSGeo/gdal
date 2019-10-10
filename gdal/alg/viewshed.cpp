@@ -31,7 +31,7 @@
 #include <cmath>
 #include <cstring>
 #include <array>
-
+#include <limits>
 #include <algorithm>
 
 #include "cpl_conv.h"
@@ -42,14 +42,12 @@
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
 #include "ogr_api.h"
+#include "ogr_spatialref.h"
 #include "ogr_core.h"
 #include "commonutils.h"
 
 CPL_CVSID("$Id$")
 
-
-
-#define EARTH_DIAMETER 12741994.0
 
 inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, double* padfZVal,
     std::vector<GByte>& vResult, GByte byVisibleVal, GByte byInvisibleVal)
@@ -63,7 +61,7 @@ inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, doubl
         vResult[iPixel] = byVisibleVal;
 }
 
-inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff)
+inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff, double dfSphereDiameter)
 {
     if (dfDistance2 <= 0 && dfCurvCoeff == 0)
         return true;
@@ -73,8 +71,8 @@ inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel
     double dfR2 = dfX * dfX + dfY * dfY;
 
     /* calc adjustment */
-    if (dfCurvCoeff != 0)
-        dfHeight -= dfCurvCoeff * dfR2 / EARTH_DIAMETER;
+    if (dfCurvCoeff != 0 && dfSphereDiameter != std::numeric_limits<double>::infinity())
+        dfHeight -= dfCurvCoeff * dfR2 / dfSphereDiameter;
 
     if (dfDistance2 > 0 && dfR2 > dfDistance2)
         return false;
@@ -136,7 +134,11 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  * @param hBand The band to read raster data from.  The whole band will be
  * processed.
  *
- * @param pszTargetRasterName raster datasource name (created if given)
+ * @param pszDriverName Driver name (GTiff if set to NULL)
+ *
+ * @param pszTargetRasterName target raster datasource name. Must not be NULL
+ *
+ * @param papszCreationOptions creation options.
  *
  * @param dfObserverX observer X value (in SRS units)
  *
@@ -165,18 +167,26 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  *
  * @param pProgressArg The callback data for the pfnProgress function.
  *
- * @return CE_None on success or CE_Failure if an error occurs.
+ * @param papszExtraOptions Future extra options. Must be set to NULL currently.
+ *
+ * @return not NULL output dataset on success (to be closed with GDALClose()) or NULL if an error occurs.
  */
 
-CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterName,
+GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
+                            const char* pszDriverName,
+                            const char* pszTargetRasterName,
+                            CSLConstList papszCreationOptions,
                     double dfObserverX, double dfObserverY, double dfObserverHeight,
                     double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
                     double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
                     GDALViewshedMode eMode, double dfMaxDistance,
-                    GDALProgressFunc pfnProgress, void *pProgressArg, CSLConstList /*papszExtraOptions*/)
+                    GDALProgressFunc pfnProgress, void *pProgressArg, CSLConstList papszExtraOptions)
 
 {
-    VALIDATE_POINTER1( hBand, "GDALViewshedGenerate", CE_Failure );
+    VALIDATE_POINTER1( hBand, "GDALViewshedGenerate", nullptr );
+    VALIDATE_POINTER1( pszTargetRasterName, "GDALViewshedGenerate", nullptr );
+
+    CPL_IGNORE_RET_VAL(papszExtraOptions);
 
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
@@ -184,7 +194,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     if( !pfnProgress( 0.0, "", pProgressArg ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
+        return nullptr;
     }
 
     GByte byNoDataVal = dfNoDataVal >= 0 ? static_cast<GByte>(dfNoDataVal) : 0;
@@ -193,22 +203,16 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     GByte byOutOfRangeVal = dfOutOfRangeVal >= 0 ? static_cast<GByte>(dfOutOfRangeVal) : 0;
 
     /* set up geotransformation */
-    double adfGeoTransform[6];
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
+    std::array<double, 6> adfGeoTransform {{0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
     GDALDatasetH hSrcDS = GDALGetBandDataset( hBand );
     if( hSrcDS != nullptr )
-        GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+        GDALGetGeoTransform( hSrcDS, adfGeoTransform.data());
 
     double adfInvGeoTransform[6];
-    if (!GDALInvGeoTransform(adfGeoTransform, adfInvGeoTransform))
+    if (!GDALInvGeoTransform(adfGeoTransform.data(), adfInvGeoTransform))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
-        return CE_Failure;
+        return nullptr;
     }
 
     /* calculate observer position */
@@ -220,18 +224,22 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     int nXSize = GDALGetRasterBandXSize( hBand );
     int nYSize = GDALGetRasterBandYSize( hBand );
 
-    if (nX < 0 || nX > nXSize || nY < 0 || nY > nYSize)
+    if (nX < 0 ||
+        nX > nXSize ||
+        nY < 0 ||
+        nY > nYSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "The observer location falls outside of the DEM area");
-        return CE_Failure;
+        return nullptr;
     }
 
     CPLErr eErr = CE_None;
+
     /* calculate the area of interest */
-    int nXStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(floor(nX - adfInvGeoTransform[1] * dfMaxDistance))) : 0;
-    int nXStop = dfMaxDistance > 0? (std::min)(nXSize, static_cast<int>(ceil(nX + adfInvGeoTransform[1] * dfMaxDistance) + 1)) : nXSize;
-    int nYStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(floor(nY + adfInvGeoTransform[5] * dfMaxDistance))) : 0;
-    int nYStop = dfMaxDistance > 0 ? (std::min)(nYSize, static_cast<int>(ceil(nY - adfInvGeoTransform[5] * dfMaxDistance) + 1)) : nYSize;
+    int nXStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(std::floor(nX - adfInvGeoTransform[1] * dfMaxDistance))) : 0;
+    int nXStop = dfMaxDistance > 0? (std::min)(nXSize, static_cast<int>(std::ceil(nX + adfInvGeoTransform[1] * dfMaxDistance) + 1)) : nXSize;
+    int nYStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(std::floor(nY + adfInvGeoTransform[5] * dfMaxDistance))) : 0;
+    int nYStop = dfMaxDistance > 0? (std::min)(nYSize, static_cast<int>(std::ceil(nY - adfInvGeoTransform[5] * dfMaxDistance) + 1)) : nYSize;
 
     /* normalize horizontal index (0 - nXSize) */
     nXSize = nXStop - nXStart;
@@ -252,87 +260,60 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot allocate vectors for viewshed");
-        return CE_Failure;
+        return nullptr;
     }
 
-    double *padfFirstLineVal = static_cast<double *>(
-        vFirstLineVal.data());
-    double *padfLastLineVal = static_cast<double *>(
-        vLastLineVal.data());
-    double *padfThisLineVal = static_cast<double *>(
-        vThisLineVal.data());
-    GByte *pabyResult = static_cast<GByte *>(
-        vResult.data());
+    double *padfFirstLineVal = vFirstLineVal.data();
+    double *padfLastLineVal = vLastLineVal.data();
+    double *padfThisLineVal = vThisLineVal.data();
+    GByte *pabyResult = vResult.data();
 
-    GDALRasterBandH hTargetBand = nullptr;
-    GDALDatasetH hDstDS = nullptr;
-    if (pszTargetRasterName != nullptr)
+    GDALDriverManager *hMgr = GetGDALDriverManager();
+    GDALDriver *hDriver = hMgr->GetDriverByName(pszDriverName ? pszDriverName : "GTiff");
+    if (!hDriver)
     {
-        std::vector<CPLString> aoDrivers =
-            GetOutputDriversFor(pszTargetRasterName, GDAL_OF_RASTER);
-        if (aoDrivers.empty())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "Cannot guess driver for %s", pszTargetRasterName);
-            return CE_Failure;
-        }
-        else
-        {
-            if (aoDrivers.size() > 1)
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                    "Several drivers matching %s extension. Using %s",
-                    CPLGetExtension(pszTargetRasterName), aoDrivers[0].c_str());
-            }
-            GDALDriverH hDriver = GDALGetDriverByName(aoDrivers[0].c_str());
-            if (hDriver == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot get driver for %s", aoDrivers[0].c_str());
-                return CE_Failure;
-            }
-            /* create output raster */
-            hDstDS = GDALCreate(hDriver, pszTargetRasterName, nXSize, nYStop - nYStart, 1,
-                    GDT_Byte, nullptr);
-            if (hDstDS == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot create dataset for %s", pszTargetRasterName);
-                return CE_Failure;
-            }
-
-            /* copy srs */
-            GDALSetSpatialRef(hDstDS, GDALGetSpatialRef(hSrcDS));
-
-            std::array<double, 6> adfDstGeoTransform;
-            adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
-            adfDstGeoTransform[1] = adfGeoTransform[1];
-            adfDstGeoTransform[2] = adfGeoTransform[2];
-            adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[5] * nYStart;
-            adfDstGeoTransform[4] = adfGeoTransform[4];
-            adfDstGeoTransform[5] = adfGeoTransform[5];
-            GDALSetGeoTransform(hDstDS, adfDstGeoTransform.data());
-
-            hTargetBand = GDALGetRasterBand(hDstDS, 1);
-            if (hTargetBand == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot get band for %s", pszTargetRasterName);
-                return CE_Failure;
-            }
-
-            if (dfNoDataVal >= 0)
-                GDALSetRasterNoDataValue(hTargetBand, byNoDataVal);
-        }
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot get driver");
+        return nullptr;
     }
+
+    /* create output raster */
+    auto poDstDS = std::unique_ptr<GDALDataset>(hDriver->Create(pszTargetRasterName, nXSize, nYStop - nYStart, 1, GDT_Byte, const_cast<char**>(papszCreationOptions)));
+    if (!poDstDS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Cannot create dataset for %s", pszTargetRasterName);
+        return nullptr;
+    }
+    /* copy srs */
+    poDstDS->SetSpatialRef(GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
+
+    std::array<double, 6> adfDstGeoTransform;
+    adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
+    adfDstGeoTransform[1] = adfGeoTransform[1];
+    adfDstGeoTransform[2] = adfGeoTransform[2];
+    adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[5] * nYStart;
+    adfDstGeoTransform[4] = adfGeoTransform[4];
+    adfDstGeoTransform[5] = adfGeoTransform[5];
+    poDstDS->SetGeoTransform(adfDstGeoTransform.data());
+
+    auto hTargetBand = poDstDS->GetRasterBand(1);
+    if (hTargetBand == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Cannot get band for %s", pszTargetRasterName);
+        return nullptr;
+    }
+
+    if (dfNoDataVal >= 0)
+        GDALSetRasterNoDataValue(hTargetBand, byNoDataVal);
 
     /* process first line */
     if (GDALRasterIO(hBand, GF_Read, nXStart, nY, nXSize, 1,
-        padfFirstLineVal, nXSize, 1, GDT_Float64, 0, 0) != CE_None)
+        padfFirstLineVal, nXSize, 1, GDT_Float64, 0, 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "RasterIO error when reading DEM");
-        return CE_Failure;
+        return nullptr;
     }
 
     double dfZObserver = dfObserverHeight + padfFirstLineVal[nX];
@@ -340,38 +321,59 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     int iPixel, iLine;
     double dfDistance2 = dfMaxDistance * dfMaxDistance;
 
+    /* If we can't get a SemiMajor axis from the SRS, it will be
+     * SRS_WGS84_SEMIMAJOR
+    */
+    double dfSphereDiameter(std::numeric_limits<double>::infinity());
+    const OGRSpatialReference* poDstSRS = poDstDS->GetSpatialRef();
+    if (poDstSRS)
+    {
+        OGRErr eSRSerr;
+        double dfSemiMajor = poDstSRS->GetSemiMajor(&eSRSerr);
+
+        /* If we fetched the axis from the SRS, use it */
+        if (eSRSerr != OGRERR_FAILURE)
+            dfSphereDiameter = dfSemiMajor * 2.0;
+        else
+            CPLDebug( "GDALViewshedGenerate", "Unable to fetch SemiMajor axis from spatial reference");
+
+    }
+
     /* mark the observer point as visible */
     pabyResult[nX] = byVisibleVal;
     if (nX > 0)
     {
-        AdjustHeightInRange(adfGeoTransform,
+        AdjustHeightInRange(adfGeoTransform.data(),
                             1,
                             0,
                             padfFirstLineVal[nX - 1],
                             dfDistance2,
-                            dfCurvCoeff);
+                            dfCurvCoeff,
+                            dfSphereDiameter);
         pabyResult[nX - 1] = byVisibleVal;
     }
     if (nX < nXSize - 1)
     {
-        AdjustHeightInRange(adfGeoTransform,
+        AdjustHeightInRange(adfGeoTransform.data(),
                             1,
                             0,
                             padfFirstLineVal[nX + 1],
                             dfDistance2,
-                            dfCurvCoeff);
+                            dfCurvCoeff,
+                            dfSphereDiameter);
         pabyResult[nX + 1] = byVisibleVal;
     }
 
     /* process left direction */
     for (iPixel = nX - 2; iPixel >= 0; iPixel--)
     {
-        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+        bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             nX - iPixel,
                                             0,
                                             padfFirstLineVal[iPixel],
                                             dfDistance2,
-                                            dfCurvCoeff);
+                                            dfCurvCoeff,
+                                            dfSphereDiameter);
         if (adjusted)
         {
             dfZ = CalcHeightLine(nX - iPixel,
@@ -394,12 +396,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     /* process right direction */
     for (iPixel = nX + 2; iPixel < nXSize; iPixel++)
     {
-        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+        bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             iPixel - nX,
                                             0,
                                             padfFirstLineVal[iPixel],
                                             dfDistance2,
-                                            dfCurvCoeff);
+                                            dfCurvCoeff,
+                                            dfSphereDiameter);
         if (adjusted)
         {
             dfZ = CalcHeightLine(iPixel - nX,
@@ -420,36 +423,37 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
     }
     /* write result line */
-    if (hTargetBand != nullptr)
+
+    if (GDALRasterIO(hTargetBand, GF_Write, 0, nY - nYStart, nXSize, 1,
+        pabyResult, nXSize, 1, GDT_Byte, 0, 0))
     {
-        if (GDALRasterIO(hTargetBand, GF_Write, 0, nY - nYStart, nXSize, 1,
-            pabyResult, nXSize, 1, GDT_Byte, 0, 0) != CE_None)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "RasterIO error when writing target raster");
-            return CE_Failure;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "RasterIO error when writing target raster");
+        return nullptr;
     }
 
     /* scan upwards */
-    memcpy(padfLastLineVal, padfFirstLineVal, nXSize * sizeof(double));
+    std::copy(vFirstLineVal.begin(),
+              vFirstLineVal.end(),
+              vLastLineVal.begin());
     for (iLine = nY - 1; iLine >= nYStart && eErr == CE_None; iLine--)
     {
         if (GDALRasterIO(hBand, GF_Read, nXStart, iLine, nXSize, 1,
-            padfThisLineVal, nXSize, 1, GDT_Float64, 0, 0) != CE_None)
+            padfThisLineVal, nXSize, 1, GDT_Float64, 0, 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when reading DEM");
-            return CE_Failure;
+            return nullptr;
         }
 
         /* set up initial point on the scanline */
-        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+        bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             0,
                                             nY - iLine,
                                             padfThisLineVal[nX],
                                             dfDistance2,
-                                            dfCurvCoeff);
+                                            dfCurvCoeff,
+                                            dfSphereDiameter);
         if (adjusted)
         {
             dfZ = CalcHeightLine(nY - iLine,
@@ -474,12 +478,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process left direction */
         for (iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
-            bool left_adjusted = AdjustHeightInRange(adfGeoTransform,
+            bool left_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                      nX - iPixel,
                                                      nY - iLine,
                                                      padfThisLineVal[iPixel],
                                                      dfDistance2,
-                                                     dfCurvCoeff);
+                                                     dfCurvCoeff,
+                                                     dfSphereDiameter);
             if (left_adjusted)
             {
                 if (eMode != GVM_Edge)
@@ -522,12 +527,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process right direction */
         for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
-            bool right_adjusted = AdjustHeightInRange(adfGeoTransform,
+            bool right_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                       iPixel - nX,
                                                       nY - iLine,
                                                       padfThisLineVal[iPixel],
                                                       dfDistance2,
-                                                      dfCurvCoeff);
+                                                      dfCurvCoeff,
+                                                      dfSphereDiameter);
             if (right_adjusted)
             {
                 if (eMode != GVM_Edge)
@@ -569,15 +575,12 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
 
         /* write result line */
-        if (hTargetBand != nullptr)
+        if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
+            pabyResult, nXSize, 1, GDT_Byte, 0, 0))
         {
-            if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
-                pabyResult, nXSize, 1, GDT_Byte, 0, 0) != CE_None)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "RasterIO error when writing target raster");
-                return CE_Failure;
-            }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "RasterIO error when writing target raster");
+            return nullptr;
         }
 
         std::swap(padfLastLineVal, padfThisLineVal);
@@ -586,7 +589,7 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
                 "", pProgressArg))
         {
             CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
-            return CE_Failure;
+            return nullptr;
         }
     }
     /* scan downwards */
@@ -594,20 +597,21 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
     for(iLine = nY + 1; iLine < nYStop && eErr == CE_None; iLine++ )
     {
         if (GDALRasterIO( hBand, GF_Read, nXStart, iLine, nXStop - nXStart, 1,
-            padfThisLineVal, nXStop - nXStart, 1, GDT_Float64, 0, 0 ) != CE_None)
+            padfThisLineVal, nXStop - nXStart, 1, GDT_Float64, 0, 0 ))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "RasterIO error when reading DEM");
-            return CE_Failure;
+            return nullptr;
         }
 
         /* set up initial point on the scanline */
-        bool adjusted = AdjustHeightInRange(adfGeoTransform,
+        bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             0,
                                             iLine - nY,
                                             padfThisLineVal[nX],
                                             dfDistance2,
-                                            dfCurvCoeff);
+                                            dfCurvCoeff,
+                                            dfSphereDiameter);
         if (adjusted)
         {
             dfZ = CalcHeightLine(iLine - nY,
@@ -630,12 +634,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process left direction */
         for (iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
-            bool left_adjusted = AdjustHeightInRange(adfGeoTransform,
+            bool left_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                      nX - iPixel,
                                                      iLine - nY,
                                                      padfThisLineVal[iPixel],
                                                      dfDistance2,
-                                                     dfCurvCoeff);
+                                                     dfCurvCoeff,
+                                                     dfSphereDiameter);
             if (left_adjusted)
             {
                 if (eMode != GVM_Edge)
@@ -675,12 +680,13 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         /* process right direction */
         for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
-            bool right_adjusted = AdjustHeightInRange(adfGeoTransform,
+            bool right_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                       iPixel - nX,
                                                       iLine - nY,
                                                       padfThisLineVal[iPixel],
                                                       dfDistance2,
-                                                      dfCurvCoeff);
+                                                      dfCurvCoeff,
+                                                      dfSphereDiameter);
             if (right_adjusted)
             {
                 if (eMode != GVM_Edge)
@@ -722,15 +728,12 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
         }
 
         /* write result line */
-        if (hTargetBand != nullptr)
+        if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
+            pabyResult, nXSize, 1, GDT_Byte, 0, 0))
         {
-            if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - nYStart, nXSize, 1,
-                pabyResult, nXSize, 1, GDT_Byte, 0, 0) != CE_None)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "RasterIO error when writing target raster");
-                return CE_Failure;
-            }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "RasterIO error when writing target raster");
+            return nullptr;
         }
 
         std::swap(padfLastLineVal, padfThisLineVal);
@@ -739,13 +742,9 @@ CPLErr GDALViewshedGenerate(GDALRasterBandH hBand, const char* pszTargetRasterNa
                          "", pProgressArg) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            return CE_Failure;
+            return nullptr;
         }
     }
 
-    if (hDstDS != nullptr)
-        GDALClose(hDstDS);
-
-
-    return CE_None;
+    return GDALDataset::FromHandle(poDstDS.release());
 }

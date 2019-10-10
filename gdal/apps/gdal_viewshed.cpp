@@ -44,13 +44,15 @@ static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
-        "Usage: gdal_viewshed [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
-        "                    [-snodata n] [-f <formatname>] [-tr <target_raster_filename>]\n"
-        "                    [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]\n"
-        "                    [-ox <observer_x> -oy <observer_y>]\n"
-        "                    [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
-        "                    [-nln <outlayername>] [-q]\n"
-        "                    <src_filename> <dst_filename>\n" );
+       "gdal_viewshed [-b <band>] [-inodata]\n"
+       "              [-snodata n] [-f <formatname>]\n"
+       "              [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]\n"
+       "              [-ox <observer_x>] [-oy <observer_y>]\n"
+       "              [-vv <visibility>] [-iv <invisibility>]\n"
+       "              [-ov <out_of_range>] [-cc <curvature_coef>]\n"
+       "              [[-co NAME=VALUE] ...]\n"
+       "              [-q]\n"
+       "              <src_filename> <dst_filename>\n");
 
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -81,21 +83,12 @@ MAIN_START(argc, argv)
     double dfOutOfRangeVal = -1.0;
     double dfNoDataVal = 0.0;
     double dfCurvCoeff = 0.0;
+    const char *pszDriverName = nullptr;
     const char *pszSrcFilename = nullptr;
     const char *pszDstFilename = nullptr;
     bool bQuiet = false;
     GDALProgressFunc pfnProgress = nullptr;
-
-    // Check that we are running against at least GDAL 1.4.
-    // Note to developers: if we use newer API, please change the requirement.
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1400)
-    {
-        fprintf(stderr,
-                "At least, GDAL >= 1.4.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n",
-                argv[0], GDAL_RELEASE_NAME);
-        exit(1);
-    }
+    char** papszCreateOptions = nullptr;
 
     GDALAllRegister();
 
@@ -116,6 +109,11 @@ MAIN_START(argc, argv)
         }
         else if( EQUAL(argv[i], "--help") )
             Usage();
+        else if( EQUAL(argv[i],"-f") || EQUAL(argv[i],"-of") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszDriverName = argv[++i];
+        }
         else if( EQUAL(argv[i],"-ox") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -146,10 +144,15 @@ MAIN_START(argc, argv)
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfOutOfRangeVal = CPLAtof(argv[++i]);
         }
-        else if (EQUAL(argv[i], "-nv"))
+        else if( EQUAL(argv[i],"-co"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfNoDataVal = CPLAtof(argv[++i]);
+            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+        }
+        else if (EQUAL(argv[i], "-a_nodata"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            dfNoDataVal = CPLAtofM(argv[++i]);;
         }
         else if (EQUAL(argv[i], "-tz"))
         {
@@ -200,6 +203,16 @@ MAIN_START(argc, argv)
     if (!bQuiet)
         pfnProgress = GDALTermProgress;
 
+    CPLString osFormat;
+    if( pszDriverName == nullptr  )
+    {
+        osFormat = GetOutputDriverForRaster(pszDstFilename);
+        if( osFormat.empty() )
+        {
+            exit( 2 );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Open source raster file.                                        */
 /* -------------------------------------------------------------------- */
@@ -217,35 +230,26 @@ MAIN_START(argc, argv)
     }
 
 /* -------------------------------------------------------------------- */
-/*      Try to get a coordinate system from the raster.                 */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReferenceH hSRS = nullptr;
-
-    const char *pszWKT = GDALGetProjectionRef( hSrcDS );
-
-    if( pszWKT != nullptr && strlen(pszWKT) != 0 )
-        hSRS = OSRNewSpatialReference( pszWKT );
-
-/* -------------------------------------------------------------------- */
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = GDALViewshedGenerate( hBand, pszDstFilename,
+    GDALDatasetH hDstDS = GDALViewshedGenerate( hBand,
+                         pszDriverName ? pszDriverName : osFormat.c_str(),
+                         pszDstFilename, papszCreateOptions,
                          dfObserverX, dfObserverY,
                          dfObserverHeight, dfTargetHeight,
                          dfVisibleVal, dfInvisibleVal,
                          dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff,
                          GVM_Edge, dfMaxDistance,
                          pfnProgress, nullptr, nullptr);
-
+    bool bSuccess = hDstDS != nullptr;
     GDALClose( hSrcDS );
-
-    if (hSRS)
-        OSRDestroySpatialReference( hSRS );
+    GDALClose( hDstDS );
 
     CSLDestroy( argv );
+    CSLDestroy( papszCreateOptions);
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
-    return (eErr == CE_None) ? 0 : 1;
+    return bSuccess ? 0 : 1;
 }
 MAIN_END
