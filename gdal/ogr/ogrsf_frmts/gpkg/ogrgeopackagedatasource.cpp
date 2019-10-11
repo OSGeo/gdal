@@ -29,7 +29,7 @@
 
 #include "ogr_geopackage.h"
 #include "ogr_p.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "gdalwarper.h"
 #include "ogrgeopackageutility.h"
 #include "ogrsqliteutility.h"

@@ -33,7 +33,7 @@
 #include "cpl_http.h"
 #include "gmlutils.h"
 #include "parsexsd.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "ogr_p.h"
 
 #include <algorithm>

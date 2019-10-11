@@ -50,7 +50,7 @@
 #include "ogr_srs_api.h"
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 CPL_CVSID("$Id$")
 

@@ -31,7 +31,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_attrind.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "ograpispy.h"
 
 CPL_CVSID("$Id$")

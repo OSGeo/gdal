@@ -103,10 +103,10 @@ Implementation
 To implement the addition the following changes should be made in the
 OGR codebase:
 
-1. In swq.h I'll have to add to 4 fields to swq_col_def to hold the
+1. In ogr_swq.h I'll have to add to 4 fields to swq_col_def to hold the
    field_alias the target_type, the field_length, and field_precision
 
-2. In swq.h SWQ_DATE, SWQ_TIME, SWQ_TIMESTAMP will be added to
+2. In ogr_swq.h SWQ_DATE, SWQ_TIME, SWQ_TIMESTAMP will be added to
    swq_field_type enum.
 
 3. In swq.c I'll have to change swq_select_preparse to take care of the

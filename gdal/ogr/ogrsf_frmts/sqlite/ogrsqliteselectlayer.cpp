@@ -48,7 +48,7 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 #include "sqlite3.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 CPL_CVSID("$Id$")
 

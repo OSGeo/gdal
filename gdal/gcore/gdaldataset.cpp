@@ -64,7 +64,7 @@
 #include "ograpispy.h"
 #include "ogrsf_frmts.h"
 #include "ogrunionlayer.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 #include "../frmts/derived/derivedlist.h"
 

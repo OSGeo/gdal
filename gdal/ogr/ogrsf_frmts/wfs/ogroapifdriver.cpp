@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 #include <algorithm>
 #include <memory>
