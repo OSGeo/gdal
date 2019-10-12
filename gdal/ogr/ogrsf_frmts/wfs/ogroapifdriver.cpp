@@ -725,7 +725,7 @@ static int OGROAPIFDriverIdentify( GDALOpenInfo* poOpenInfo )
 OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                            const CPLString& osName,
                            const CPLJSONArray& oBBOX,
-                           const CPLJSONArray& oCRS) :
+                           const CPLJSONArray& /* oCRS */) :
     m_poDS(poDS)
 {
     m_poFeatureDefn = new OGRFeatureDefn(osName);
@@ -765,30 +765,12 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
         }
     }
 
-    bool bAdvertizeWGS84 = false;
-    if( !oCRS.IsValid() || oCRS.Size() == 0 )
-    {
-        bAdvertizeWGS84 = true;
-    }
-    else
-    {
-        for( int i = 0; i < oCRS.Size(); i++ )
-        {
-            if( oCRS[i].ToString() == "http://www.opengis.net/def/crs/OGC/1.3/CRS84")
-            {
-                bAdvertizeWGS84 = true;
-                break;
-            }
-        }
-    }
-    if( bAdvertizeWGS84 )
-    {
-        OGRSpatialReference* poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        poSRS->Release();
-    }
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
+    poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    poSRS->Release();
+
     m_bIsGeographicCRS = true;
 
     // We might check in the links, but the spec mandates that construct of URL
