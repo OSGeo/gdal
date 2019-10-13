@@ -13,7 +13,8 @@ description, feature collection metadata and feature collection data.
 
 .. note::
 
-    In versions prior to GDAL 3.1, this driver was called the WFS3 driver.
+    In versions prior to GDAL 3.1, this driver was called the WFS3 driver, and
+    only supported draft versions of the specification.
 
 Driver capabilities
 -------------------
@@ -169,6 +170,6 @@ Examples
 See Also
 --------
 
--  `OGC API - Features - Part 1: Core Standard
-   (DRAFT) <http://docs.opengeospatial.org/DRAFTS/17-069r3.html>`__
+-  `"OGC API - Features - Part 1: Core" Standard
+   <http://docs.opengeospatial.org/is/17-069r3/17-069r3.html>`__
 -  :ref:`WFS (1.0,1.1,2.0) driver documentation <vector.wfs>`
