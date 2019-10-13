@@ -7164,7 +7164,7 @@ def test_tiff_write_too_many_tiles():
 
     src_ds = gdal.Open('<VRTDataset rasterXSize="100000000" rasterYSize="100000000"><VRTRasterBand dataType="Byte" band="1"/></VRTDataset>')
     with gdaltest.error_handler():
-        assert not gdaltest.tiff_drv.CreateCopy('/vsimem/tmp.tif', src_ds, options = ['TILED=YES'])
+        assert not gdaltest.gtiff_drv.CreateCopy('/vsimem/tmp.tif', src_ds, options = ['TILED=YES'])
     assert 'File too large regarding tile size' in gdal.GetLastErrorMsg()
 
 

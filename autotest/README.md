@@ -47,6 +47,39 @@ Practically, this means that you should avoid using:
 
 This will hopefully be addressed in the future. When writing new tests, please try to make them independent of each other.
 
+## Writing tests
+
+Tests are automatically discovered in all files under `autotest/`. Tests should be functions with names starting with `test_`.
+
+A few helpers are available in `conftest.py`. In particular, `require_driver` and `require_ogr_driver` skip tests when GDAL is not built with the given driver:
+
+```python
+import pytest
+import gdaltest
+import ogrtest
+
+@pytest.mark.require_driver('JPIPKAK')
+def test_jpipkak_driver_1():
+    # this test will only run if GDAL is built with the JPIPKAK driver.
+    # The driver itself becomes available on the gdaltest or ogrtest module
+    # (name is lowercased and spaces replaced with underscores)
+    assert gdaltest.jpipkak_drv
+
+@pytest.mark.require_ogr_driver('Mapinfo File')
+def test_mapinfo_file_1():
+    # (name is lowercased and spaces replaced with underscores)
+    assert ogrtest.mapinfo_file_drv
+```
+
+This can also be done for an entire test module by setting the `pytestmark` property.
+
+```python
+import pytest
+
+pytestmark = pytest.mark.require_driver('JPIPKAK')
+```
+
+For more information, see the [pytest docs](https://docs.pytest.org/en/latest/)
 
 ## Notes about availability of GDAL sample and test data
 
@@ -54,6 +87,8 @@ The GDAL Team makes every effort to assure that all sample data files
 available from GDAL download server (http://download.osgeo.org/gdal/data/) and
 test data files used in GDAL Autotest package (https://github.com/OSGeo/gdal/tree/master/autotest)
 are available as public and freely redistributable geodata.
+
+
 
 --
 
