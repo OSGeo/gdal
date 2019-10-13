@@ -788,14 +788,14 @@ OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, uint32_t len
 
 OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, uint32_t len)
 {
-    auto ends = feature->ends();
-    if (ends == nullptr)
-        return CPLErrorInvalidPointer();
     auto lengths = feature->lengths();
     auto mp = new OGRMultiPolygon();
     if (lengths == nullptr || lengths->size() < 2) {
         mp->addGeometryDirectly(readPolygon(feature, len));
     } else {
+        auto ends = feature->ends();
+        if (ends == nullptr)
+            return CPLErrorInvalidPointer();
         uint32_t offset = 0;
         uint32_t roffset = 0;
         for (uint32_t i = 0; i < lengths->size(); i++) {
