@@ -251,7 +251,7 @@ void OGRFlatGeobufLayer::readColumns()
 void OGRFlatGeobufLayer::Create() {
     CPLDebug("FlatGeobuf", "Request to create %lu features", static_cast<long unsigned int>(m_featuresCount));
 
-    if (m_featuresCount > std::numeric_limits<size_t>::max() / 8) {
+    if (m_featuresCount >= std::numeric_limits<size_t>::max() / 8) {
         CPLError(CE_Failure, CPLE_AppDefined, "Too many features for this architecture");
         return;
     }
@@ -822,7 +822,7 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
     if (m_hasM && feature->m() == nullptr)
         return CPLErrorInvalidPointer();
     auto xySize = pXy->size();
-    if (xySize > (std::numeric_limits<size_t>::max() / sizeof(OGRRawPoint)))
+    if (xySize >= (feature_max_buffer_size / sizeof(OGRRawPoint)))
         return CPLErrorInvalidLength();
     switch (m_geometryType) {
         case GeometryType::Point:
@@ -903,7 +903,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             case OGRFieldType::OFTDateTime: {
                 char *str = OGRGetXMLDateTime(field);
                 size_t len = strlen(str);
-                if (len >= std::numeric_limits<uint32_t>::max()) {
+                if (len >= feature_max_buffer_size) {
                     CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: String too long");
                     CPLFree(str);
                     return OGRERR_FAILURE;
@@ -916,7 +916,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             }
             case OGRFieldType::OFTString: {
                 size_t len = strlen(field->String);
-                if (len >= std::numeric_limits<uint32_t>::max()) {
+                if (len >= feature_max_buffer_size) {
                     CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: String too long");
                     return OGRERR_FAILURE;
                 }
