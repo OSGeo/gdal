@@ -39,12 +39,17 @@ using namespace flatbuffers;
 using namespace FlatGeobuf;
 
 static OGRGeometry *CPLErrorInvalidPointer() {
-    CPLError(CE_Failure, CPLE_AppDefined, "Possible data corruption - unexpected nullptr");
+    CPLError(CE_Failure, CPLE_AppDefined, "Unexpected nullptr - possible data corruption");
     return nullptr;
 }
 
-static OGRErr CPLErrorInvalidProperties() {
-    CPLError(CE_Failure, CPLE_AppDefined, "Possible data corruption - properties buffer has invalid size");
+static OGRGeometry *CPLErrorInvalidLength() {
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid length detected - possible data corruption");
+    return nullptr;
+}
+
+static OGRErr CPLErrorInvalidSize() {
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid size detected - possible data corruption");
     return OGRERR_CORRUPT_DATA;
 }
 
@@ -613,10 +618,10 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
         // size must be at least large enough to contain
         // a single column index and smallest value type
         if (size > 0 && size < (sizeof(uint16_t) + sizeof(uint8_t)))
-            return CPLErrorInvalidProperties();
+            return CPLErrorInvalidSize();
         while (offset < (size - 1)) {
             if (offset + sizeof(uint16_t) > size)
-                return CPLErrorInvalidProperties();
+                return CPLErrorInvalidSize();
             uint16_t i = *((uint16_t *)(data + offset));
             offset += sizeof(uint16_t);
             //CPLDebug("FlatGeobuf", "i: %d", i);
@@ -636,32 +641,32 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
             switch (type) {
                 case ColumnType::Int:
                     if (offset + sizeof(int32_t) > size)
-                        return CPLErrorInvalidProperties();
+                        return CPLErrorInvalidSize();
                     if (!isIgnored)
                         ogrField->Integer = *((int32_t *)(data + offset));
                     offset += sizeof(int32_t);
                     break;
                 case ColumnType::Long:
                     if (offset + sizeof(int64_t) > size)
-                        return CPLErrorInvalidProperties();
+                        return CPLErrorInvalidSize();
                     if (!isIgnored)
                         ogrField->Integer64 = *((int64_t *)(data + offset));
                     offset += sizeof(int64_t);
                     break;
                 case ColumnType::Double:
                     if (offset + sizeof(double) > size)
-                        return CPLErrorInvalidProperties();
+                        return CPLErrorInvalidSize();
                     if (!isIgnored)
                         ogrField->Real = *((double *)(data + offset));
                     offset += sizeof(double);
                     break;
                 case ColumnType::DateTime: {
                     if (offset + sizeof(uint32_t) > size)
-                        return CPLErrorInvalidProperties();
+                        return CPLErrorInvalidSize();
                     uint32_t len = *((uint32_t *)(data + offset));
                     offset += sizeof(uint32_t);
                     if (offset + len > size)
-                        return CPLErrorInvalidProperties();
+                        return CPLErrorInvalidSize();
                     char *str = (char *) VSIMalloc(len + 1);
                     memcpy(str, data + offset, len);
                     offset += len;
@@ -672,11 +677,11 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
                 }
                 case ColumnType::String: {
                     if (offset + sizeof(uint32_t) > size)
-                        return CPLErrorInvalidProperties();
+                        return CPLErrorInvalidSize();
                     uint32_t len = *((uint32_t *)(data + offset));
                     offset += sizeof(uint32_t);
                     if (offset + len > size)
-                        return CPLErrorInvalidProperties();
+                        return CPLErrorInvalidSize();
                     uint8_t *str = (uint8_t *) VSIMalloc(len + 1);
                     memcpy(str, data + offset, len);
                     offset += len;
@@ -730,6 +735,8 @@ OGRLineString *OGRFlatGeobufLayer::readLineString(const Feature *feature, uint32
 OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *feature)
 {
     auto ends = feature->ends();
+    if (ends == nullptr)
+        return (OGRMultiLineString *) CPLErrorInvalidPointer();
     auto mls = new OGRMultiLineString();
     uint32_t offset = 0;
     for (uint32_t i = 0; i < ends->size(); i++) {
@@ -782,6 +789,8 @@ OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, uint32_t len
 OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, uint32_t len)
 {
     auto ends = feature->ends();
+    if (ends == nullptr)
+        return (OGRMultiPolygon *) CPLErrorInvalidPointer();
     auto lengths = feature->lengths();
     auto mp = new OGRMultiPolygon();
     if (lengths == nullptr || lengths->size() < 2) {
@@ -813,6 +822,8 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
     if (m_hasM && feature->m() == nullptr)
         return CPLErrorInvalidPointer();
     auto xySize = pXy->size();
+    if (xySize > (std::numeric_limits<size_t>::max() / sizeof(OGRRawPoint)))
+        return CPLErrorInvalidLength();
     switch (m_geometryType) {
         case GeometryType::Point:
             return readPoint(feature);
