@@ -38,12 +38,12 @@
 using namespace flatbuffers;
 using namespace FlatGeobuf;
 
-static OGRGeometry *CPLErrorInvalidPointer() {
+static std::nullptr_t CPLErrorInvalidPointer() {
     CPLError(CE_Failure, CPLE_AppDefined, "Unexpected nullptr - possible data corruption");
     return nullptr;
 }
 
-static OGRGeometry *CPLErrorInvalidLength() {
+static std::nullptr_t CPLErrorInvalidLength() {
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid length detected - possible data corruption");
     return nullptr;
 }
@@ -736,7 +736,7 @@ OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *featu
 {
     auto ends = feature->ends();
     if (ends == nullptr)
-        return (OGRMultiLineString *) CPLErrorInvalidPointer();
+        return CPLErrorInvalidPointer();
     auto mls = new OGRMultiLineString();
     uint32_t offset = 0;
     for (uint32_t i = 0; i < ends->size(); i++) {
@@ -790,7 +790,7 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, ui
 {
     auto ends = feature->ends();
     if (ends == nullptr)
-        return (OGRMultiPolygon *) CPLErrorInvalidPointer();
+        return CPLErrorInvalidPointer();
     auto lengths = feature->lengths();
     auto mp = new OGRMultiPolygon();
     if (lengths == nullptr || lengths->size() < 2) {
