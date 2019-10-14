@@ -86,7 +86,7 @@ Project Steering Committe
 
 As of April 2006 (following the GDAL/OGR 1.3.2 release) the project has been
 placed in the hands of a Project Steering Committee. This project steering
-committee operates under the rules of _rfc1, and is overall responsible for
+committee operates under the rules of :ref:`rfc-1`, and is overall responsible for
 decisions related to the GDAL/OGR project. The current members are:
 
 - Frank Warmerdam
