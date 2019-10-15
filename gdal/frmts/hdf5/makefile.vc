@@ -8,7 +8,19 @@ OBJ		=	hdf5dataset.obj  hdf5imagedataset.obj \
 
 PLUGIN_DLL 	=	gdal_HDF5.dll
 
-EXTRAFLAGS 	= 	-I$(HDF5_DIR)\include -DWIN32 -D_HDF5USEDLL_ 
+EXTRAFLAGS = -I$(HDF5_DIR)\include -DWIN32 
+
+REM From the HDF docs...
+REM Users who want to build and run an application with HDF5 in Visual Studio
+REM without using CMake should consult the USING_HDF5_VS.txt file. Building
+REM applications with the dynamic/shared hdf5 libraries requires that the
+REM "H5_BUILT_AS_DYNAMIC_LIB" compile definition be used.
+
+!IF "$(HDF5_H5_IS_DLL)" == "YES"
+EXTRAFLAGS 	= 	$(EXTRAFLAGS) -DH5_BUILT_AS_DYNAMIC_LIB 
+!ELSE
+EXTRAFLAGS 	= 	$(EXTRAFLAGS) -D_HDF5USEDLL_
+!ENDIF 
 
 !IF "$(HDF5_PLUGIN)" == "YES"
 EXTRAFLAGS = $(EXTRAFLAGS) -DHDF5_PLUGIN
