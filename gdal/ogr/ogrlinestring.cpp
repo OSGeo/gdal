@@ -454,6 +454,15 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
 
     if( nNewPointCount > nPointCount )
     {
+        // Overflow of sizeof(OGRRawPoint) * nNewPointCount can only occur on
+        // 32 bit, but we don't really want to allocate 2 billion points even on
+        // 64 bit...
+        if( nNewPointCount > std::numeric_limits<int>::max() /
+                                    static_cast<int>(sizeof(OGRRawPoint)) )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Too big point count.");
+            return;
+        }
         OGRRawPoint* paoNewPoints = static_cast<OGRRawPoint *>(
             VSI_REALLOC_VERBOSE(paoPoints,
                                 sizeof(OGRRawPoint) * nNewPointCount));
