@@ -789,15 +789,17 @@ OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, uint32_t len
 OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, uint32_t len)
 {
     auto lengths = feature->lengths();
-    auto mp = new OGRMultiPolygon();
     if (lengths == nullptr || lengths->size() < 2) {
+        auto mp = new OGRMultiPolygon();
         mp->addGeometryDirectly(readPolygon(feature, len));
+        return mp;
     } else {
         auto ends = feature->ends();
         if (ends == nullptr)
             return CPLErrorInvalidPointer();
         uint32_t offset = 0;
         uint32_t roffset = 0;
+        auto mp = new OGRMultiPolygon();
         for (uint32_t i = 0; i < lengths->size(); i++) {
             auto p = new OGRPolygon();
             uint32_t ringCount = lengths->Get(i);
@@ -808,8 +810,8 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, ui
             }
             mp->addGeometryDirectly(p);
         }
+        return mp;
     }
-    return mp;
 }
 
 OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
