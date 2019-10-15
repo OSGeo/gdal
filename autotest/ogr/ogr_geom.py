@@ -817,18 +817,15 @@ def test_ogr_geom_linestring_limits():
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorType() != 0
 
-    if False:  # pylint: disable=using-constant-test
-        gdal.ErrorReset()
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
         geom.SetPoint(2147000000, 5, 6, 7)
-        gdal.PopErrorHandler()
-        assert gdal.GetLastErrorType() != 0
+    assert gdal.GetLastErrorType() != 0
 
-        gdal.ErrorReset()
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
         geom.SetPoint_2D(2147000000, 5, 6)
-        gdal.PopErrorHandler()
-        assert gdal.GetLastErrorType() != 0
+    assert gdal.GetLastErrorType() != 0
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0)')
     assert geom.Length() == 0
