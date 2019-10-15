@@ -456,6 +456,10 @@ KAKADU_7_5_OR_LATER = YES
 #HDF5_DIR =	c:\warmerda\supportlibs\hdf5\5-164-win
 #HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib 
 
+# Needed to define H5_BUILT_AS_DYNAMIC_LIB for windows compilation 
+# scenarios where it is not exported on the target (non-CMake builds)
+#HDF5_H5_IS_DLL = YES
+
 # Uncomment the following and update to enable KEA support.
 #KEA_PLUGIN = NO
 #KEA_CFLAGS = -Ic:\kea\include
