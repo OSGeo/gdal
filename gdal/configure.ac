@@ -3244,17 +3244,22 @@ else
 
   # ECW SDK 5.0 style and also for the case where license type is included in path i.e. specific license type is requested.
   elif test -r $with_ecw/lib/$ECW_ARCH/$ECW_CONF/libNCSEcw.a ; then
-    # Test if we must use the newabi version (SDK 5.4)
-    if test -r $with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF/libNCSEcw.a; then
+    # Test if we must use the newabi/cpp11abi version (SDK 5.4+)
+    if test -r $with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF/libNCSEcw.a || test -r $with_ecw/lib/cpp11abi/$ECW_ARCH/$ECW_CONF/libNCSEcw.a; then
+        if test -d $with_ecw/lib/newabi; then
+            ECW_ABIDIR=newabi
+        else
+            ECW_ABIDIR=cpp11abi
+        fi
         echo "#include <string>" > testnewabi.cpp
         echo "namespace NCS { class CString { public: static std::wstring Utf8Decode (const std::string &sUtf8); }; }" >> testnewabi.cpp
         echo "int main() { return static_cast<int>(NCS::CString::Utf8Decode(std::string()).size()); }" >> testnewabi.cpp
-        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
-            ECW_LIBDIR=$with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF
+        if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/lib/$ECW_ABIDIR/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
+            ECW_LIBDIR=$with_ecw/lib/$ECW_ABIDIR/$ECW_ARCH/$ECW_CONF
             ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
             with_ecw=$with_ecw/$ecw_license_type
             ECW_54="yes"
-            AC_MSG_RESULT([found Intergraph 5.4+ SDK with newabi in ${ECW_LIBDIR}.])
+            AC_MSG_RESULT([found Intergraph 5.4+ SDK with ${ECW_ABIDIR} in ${ECW_LIBDIR}.])
             rm -f testnewabi.*
             rm -f testnewabi
             break
@@ -3271,16 +3276,21 @@ else
   elif test -d $with_ecw; then
     for ecw_license_type in "Desktop_Read-Write" "Server_Read-Only_EndUser" "Server_Read-Only" "Server_Read-Write" "Desktop_Read-Only"
       do
-        # Test if we must use the newabi version (SDK 5.4)
-        if test -r $with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF/libNCSEcw.a; then
+        # Test if we must use the newabi/cpp11abi version (SDK 5.4+)
+        if test -r $with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF/libNCSEcw.a || test -r $with_ecw/$ecw_license_type/lib/cpp11abi/$ECW_ARCH/$ECW_CONF/libNCSEcw.a; then
+            if test -d $with_ecw/lib/newabi; then
+                ECW_ABIDIR=newabi
+            else
+                ECW_ABIDIR=cpp11abi
+            fi
             echo "#include <string>" > testnewabi.cpp
             echo "namespace NCS { class CString { public: static std::wstring Utf8Decode (const std::string &sUtf8); }; }" >> testnewabi.cpp
             echo "int main() { return static_cast<int>(NCS::CString::Utf8Decode(std::string()).size()); }" >> testnewabi.cpp
-            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
-                ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF
+            if test -z "`${CXX} ${CXXFLAGS} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/$ECW_ABIDIR/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
+                ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/$ECW_ABIDIR/$ECW_ARCH/$ECW_CONF
                 ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
                 with_ecw=$with_ecw/$ecw_license_type
-                AC_MSG_RESULT([found Intergraph 5.4+ SDK with newabi in ${ECW_LIBDIR}.])
+                AC_MSG_RESULT([found Intergraph 5.4+ SDK with ${ECW_ABIDIR} in ${ECW_LIBDIR}.])
                 ECW_54="yes"
                 rm -f testnewabi.*
                 rm -f testnewabi

@@ -89,7 +89,10 @@ public:
 
     virtual ~JP2UserBox();
 
-#if ECWSDK_VERSION >= 40
+#if ECWSDK_VERSION >= 55
+    CNCSError Parse(NCS::SDK::CFileBase &JP2File, const NCS::CIOStreamPtr &Stream) override;
+    CNCSError UnParse(NCS::SDK::CFileBase &JP2File, const NCS::CIOStreamPtr &Stream) override;
+#elif ECWSDK_VERSION >= 40
     virtual CNCSError Parse(NCS::SDK::CFileBase &JP2File,
                              NCS::CIOStream &Stream) override;
     virtual CNCSError UnParse(NCS::SDK::CFileBase &JP2File,
@@ -116,9 +119,10 @@ public:
 /************************************************************************/
 
 class VSIIOStream final: public CNCSJPCIOStream
-
 {
-  private:
+#if ECWSDK_VERSION >= 54
+    NCS_DELETE_ALL_COPY_AND_MOVE(VSIIOStream)
+#endif
     char     *m_Filename;
   public:
 
@@ -131,12 +135,13 @@ class VSIIOStream final: public CNCSJPCIOStream
 
     int      nCOMState;
     int      nCOMLength;
-    GByte    abyCOMType[2];
+    GByte    abyCOMType[2]{};
 
     /* To fix ‘virtual bool NCS::CIOStream::Read(INT64, void*, UINT32)’ was hidden' with SDK 5 */
     using CNCSJPCIOStream::Read;
 
-    VSIIOStream() : m_Filename(nullptr){
+    VSIIOStream() : m_Filename(nullptr)
+    {
         nFileViewCount = 0;
         startOfJPData = 0;
         lengthOfJPData = -1;
@@ -152,13 +157,13 @@ class VSIIOStream final: public CNCSJPCIOStream
         abyCOMType[1] = 0;
     }
     virtual ~VSIIOStream() {
-        Close();
+        VSIIOStream::Close();
         if (m_Filename!=nullptr){
             CPLFree(m_Filename);
         }
     }
 
-    virtual CNCSError Close() override {
+    CNCSError Close() override {
         CNCSError oErr = CNCSJPCIOStream::Close();
         if( fpVSIL != nullptr )
         {
@@ -169,18 +174,17 @@ class VSIIOStream final: public CNCSJPCIOStream
     }
 
 #if ECWSDK_VERSION >= 40
-    virtual VSIIOStream *Clone() override {
+    VSIIOStream *Clone() override {
         CPLDebug( "ECW", "VSIIOStream::Clone()" );
         VSILFILE *fpNewVSIL = VSIFOpenL( m_Filename, "rb" );
         if (fpNewVSIL == nullptr)
         {
             return nullptr;
-        }else
-        {
-            VSIIOStream *pDst = new VSIIOStream();
-            pDst->Access(fpNewVSIL, bWritable, bSeekable, m_Filename, startOfJPData, lengthOfJPData);
-            return pDst;
         }
+        
+        VSIIOStream *pDst = new VSIIOStream();
+        pDst->Access(fpNewVSIL, bWritable, bSeekable, m_Filename, startOfJPData, lengthOfJPData);
+        return pDst;
     }
 #endif /* ECWSDK_VERSION >= 4 */
 
@@ -199,9 +203,10 @@ class VSIIOStream final: public CNCSJPCIOStream
         // if it does not have a path to a real directory, we will
         // substitute something.
         CPLString osFilenameUsed = pszFilename;
+#if ECWSDK_VERSION < 55
         CPLString osPath = CPLGetPath( pszFilename );
         struct stat sStatBuf;
-        if( osPath != "" && stat( osPath, &sStatBuf ) != 0 )
+        if( !osPath.empty() && stat( osPath, &sStatBuf ) != 0 )
         {
             osFilenameUsed = CPLGenerateTempFilename( nullptr );
             // try to preserve the extension.
@@ -212,6 +217,8 @@ class VSIIOStream final: public CNCSJPCIOStream
             }
             CPLDebug( "ECW", "Using filename '%s' for temporary directory determination purposes.", osFilenameUsed.c_str() );
         }
+#endif
+
 #ifdef WIN32
         if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
         {
@@ -662,7 +669,7 @@ class ECWRasterBand final: public GDALPamRasterBand
                                int nBufXSize, int nBufYSize,
                                GDALDataType eDT, char **papszOptions ) override;
 #if ECWSDK_VERSION >= 50
-    void GetBandIndexAndCountForStatistics(int &bandIndex, int &bandCount);
+    void GetBandIndexAndCountForStatistics(int &bandIndex, int &bandCount) const;
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                     int *pnBuckets, GUIntBig ** ppanHistogram,
                                     int bForce,
