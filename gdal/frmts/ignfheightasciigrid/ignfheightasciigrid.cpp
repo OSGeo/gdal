@@ -202,7 +202,9 @@ int IGNFHeightASCIIGridDataset::IdentifyMNT(GDALOpenInfo* poOpenInfo)
         else if( ch == static_cast<GByte>('\xC3') &&
             i + 1 < poOpenInfo->nHeaderBytes &&
             (pabyHeader[i+1] == static_cast<GByte>('\xA9') || // eacute in UTF-8
-             pabyHeader[i+1] == static_cast<GByte>('\xA8'))) // egrave in UTF-8
+             pabyHeader[i+1] == static_cast<GByte>('\xA8') || // egrave in UTF-8
+             pabyHeader[i+1] == static_cast<GByte>('\xAF')  // i trema in UTF-8
+             ))
         {
             i++;
         }
@@ -432,6 +434,7 @@ bool IGNFHeightASCIIGridDataset::ParseHeaderMNT(GDALOpenInfo* poOpenInfo,
     osDesc.replaceAll("\xE9", "e");
     osDesc.replaceAll("\xC3\xA9", "e");
     osDesc.replaceAll("\xC3\xA8", "e");
+    osDesc.replaceAll("\xC3\xAF", "i");
     osDesc.replaceAll("\xEF", "i");
 
     return true;
