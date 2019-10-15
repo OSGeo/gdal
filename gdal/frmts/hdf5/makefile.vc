@@ -10,11 +10,11 @@ PLUGIN_DLL 	=	gdal_HDF5.dll
 
 EXTRAFLAGS = -I$(HDF5_DIR)\include -DWIN32 
 
-REM From the HDF docs...
-REM Users who want to build and run an application with HDF5 in Visual Studio
-REM without using CMake should consult the USING_HDF5_VS.txt file. Building
-REM applications with the dynamic/shared hdf5 libraries requires that the
-REM "H5_BUILT_AS_DYNAMIC_LIB" compile definition be used.
+# From the HDF docs...
+# Users who want to build and run an application with HDF5 in Visual Studio
+# without using CMake should consult the USING_HDF5_VS.txt file. Building
+# applications with the dynamic/shared hdf5 libraries requires that the
+# "H5_BUILT_AS_DYNAMIC_LIB" compile definition be used.
 
 !IF "$(HDF5_H5_IS_DLL)" == "YES"
 EXTRAFLAGS 	= 	$(EXTRAFLAGS) -DH5_BUILT_AS_DYNAMIC_LIB 
