@@ -35,6 +35,8 @@ CPL_CVSID("$Id$")
 
 #ifdef HAVE_PDF_READ_SUPPORT
 
+constexpr int BEZIER_STEPS = 10;
+
 /************************************************************************/
 /*                        OpenVectorLayers()                            */
 /************************************************************************/
@@ -434,16 +436,16 @@ void PDFDataset::PDFCoordsToSRSCoords(double x, double y,
 
 static OGRPoint* PDFGetCircleCenter(OGRLineString* poLS)
 {
-    if (poLS == nullptr || poLS->getNumPoints() != 5)
+    if (poLS == nullptr || poLS->getNumPoints() != 1 + 4 * BEZIER_STEPS)
         return nullptr;
 
-    if (poLS->getY(0) == poLS->getY(2) &&
-        poLS->getX(1) == poLS->getX(3) &&
-        fabs((poLS->getX(0) + poLS->getX(2)) / 2 - poLS->getX(1)) < EPSILON &&
-        fabs((poLS->getY(1) + poLS->getY(3)) / 2 - poLS->getY(0)) < EPSILON)
+    if (poLS->getY(0 * BEZIER_STEPS) == poLS->getY(2 * BEZIER_STEPS) &&
+        poLS->getX(1 * BEZIER_STEPS) == poLS->getX(3 * BEZIER_STEPS) &&
+        fabs((poLS->getX(0 * BEZIER_STEPS) + poLS->getX(2 * BEZIER_STEPS)) / 2 - poLS->getX(1 * BEZIER_STEPS)) < EPSILON &&
+        fabs((poLS->getY(1 * BEZIER_STEPS) + poLS->getY(3 * BEZIER_STEPS)) / 2 - poLS->getY(0 * BEZIER_STEPS)) < EPSILON)
     {
-        return new OGRPoint((poLS->getX(0) + poLS->getX(2)) / 2,
-                            (poLS->getY(1) + poLS->getY(3)) / 2);
+        return new OGRPoint((poLS->getX(0 * BEZIER_STEPS) + poLS->getX(2 * BEZIER_STEPS)) / 2,
+                            (poLS->getY(1 * BEZIER_STEPS) + poLS->getY(3 * BEZIER_STEPS)) / 2);
     }
     return nullptr;
 }
@@ -564,6 +566,42 @@ int PDFDataset::UnstackTokens(const char* pszToken,
         adfCoords[i] = CPLAtof(aszTokenStack[nTokenStackSize+i]);
     }
     return TRUE;
+}
+
+/************************************************************************/
+/*                           AddBezierCurve()                           */
+/************************************************************************/
+
+static void AddBezierCurve(std::vector<double>& oCoords,
+                           const double* x0_y0,
+                           const double* x1_y1,
+                           const double* x2_y2,
+                           const double* x3_y3)
+{
+    double x0 = x0_y0[0];
+    double y0 = x0_y0[1];
+    double x1 = x1_y1[0];
+    double y1 = x1_y1[1];
+    double x2 = x2_y2[0];
+    double y2 = x2_y2[1];
+    double x3 = x3_y3[0];
+    double y3 = x3_y3[1];
+    for( int i = 1; i < BEZIER_STEPS; i++ )
+    {
+        const double t = static_cast<double>(i) / BEZIER_STEPS;
+        const double t2 = t * t;
+        const double t3 = t2 * t;
+        const double oneMinust = 1 - t;
+        const double oneMinust2 = oneMinust * oneMinust;
+        const double oneMinust3 = oneMinust2 * oneMinust;
+        const double three_t_oneMinust = 3 * t * oneMinust;
+        const double x = oneMinust3 * x0 + three_t_oneMinust * (oneMinust * x1 + t * x2) + t3 * x3;
+        const double y = oneMinust3 * y0 + three_t_oneMinust * (oneMinust * y1 + t * y2) + t3 * y3;
+        oCoords.push_back(x);
+        oCoords.push_back(y);
+    }
+    oCoords.push_back(x3);
+    oCoords.push_back(y3);
 }
 
 /************************************************************************/
@@ -957,11 +995,16 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                         return nullptr;
                     }
 
+                    oGS.ApplyMatrix(adfCoords + 0);
+                    oGS.ApplyMatrix(adfCoords + 2);
                     oGS.ApplyMatrix(adfCoords + 4);
-                    oCoords.push_back(adfCoords[4]);
-                    oCoords.push_back(adfCoords[5]);
+                    AddBezierCurve(oCoords,
+                                   oCoords.empty() ? &adfCoords[0] : &oCoords[oCoords.size()-2],
+                                   &adfCoords[0],
+                                   &adfCoords[2],
+                                   &adfCoords[4]);
                 }
-                else if (EQUAL1(szToken, "v") || EQUAL1(szToken, "y")) /* Bezier curve */
+                else if (EQUAL1(szToken, "v")) /* Bezier curve */
                 {
                     double adfCoords[4];
                     if (!UnstackTokens(szToken, 4, aszTokenStack, nTokenStackSize, adfCoords))
@@ -970,9 +1013,30 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                         return nullptr;
                     }
 
+                    oGS.ApplyMatrix(adfCoords + 0);
                     oGS.ApplyMatrix(adfCoords + 2);
-                    oCoords.push_back(adfCoords[2]);
-                    oCoords.push_back(adfCoords[3]);
+                    AddBezierCurve(oCoords,
+                                   oCoords.empty() ? &adfCoords[0] : &oCoords[oCoords.size()-2],
+                                   oCoords.empty() ? &adfCoords[0] : &oCoords[oCoords.size()-2],
+                                   &adfCoords[0],
+                                   &adfCoords[2]);
+                }
+                else if (EQUAL1(szToken, "y")) /* Bezier curve */
+                {
+                    double adfCoords[4];
+                    if (!UnstackTokens(szToken, 4, aszTokenStack, nTokenStackSize, adfCoords))
+                    {
+                        CPLDebug("PDF", "Should not happen at line %d", __LINE__);
+                        return nullptr;
+                    }
+
+                    oGS.ApplyMatrix(adfCoords + 0);
+                    oGS.ApplyMatrix(adfCoords + 2);
+                    AddBezierCurve(oCoords,
+                                   oCoords.empty() ? &adfCoords[0] : &oCoords[oCoords.size()-2],
+                                   &adfCoords[0],
+                                   &adfCoords[2],
+                                   &adfCoords[2]);
                 }
                 else if (EQUAL2(szToken, "re")) /* Rectangle */
                 {
@@ -1272,7 +1336,7 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
 
         // Recognize points as written by GDAL (ogr-sym-2 : circle (not filled))
         OGRGeometry* poCenter = nullptr;
-        if (poCenter == nullptr && poLS != nullptr && poLS->getNumPoints() == 5)
+        if (poCenter == nullptr && poLS != nullptr && poLS->getNumPoints() == 1 + BEZIER_STEPS * 4 )
         {
             poCenter = PDFGetCircleCenter(poLS);
         }
@@ -1339,6 +1403,15 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
         {
             if (oCoords[i] == NEW_SUBPATH && oCoords[i+1] == NEW_SUBPATH)
             {
+                if (poLS && poLS->getNumPoints() >= 3)
+                {
+                    OGRPolygon* poPoly =  new OGRPolygon();
+                    poPoly->addRingDirectly(poLS);
+                    poLS = nullptr;
+
+                    papoPoly = (OGRGeometry**) CPLRealloc(papoPoly, (nPolys + 1) * sizeof(OGRGeometry*));
+                    papoPoly[nPolys ++] = poPoly;
+                }
                 delete poLS;
                 poLS = new OGRLinearRing();
             }
@@ -1351,16 +1424,21 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
 
                     OGRPoint* poCenter = nullptr;
 
+                   if (nPolys == 0 &&
+                        poLS &&
+                        poLS->getNumPoints() == 1 + BEZIER_STEPS * 4 )
+                   {
+                        // Recognize points as written by GDAL (ogr-sym-3 : circle (filled))
+                        poCenter = PDFGetCircleCenter(poLS);
+                   }
+
                     if (nPolys == 0 &&
+                        poCenter == nullptr &&
                         poLS &&
                         poLS->getNumPoints() == 5)
                     {
-                        // Recognize points as written by GDAL (ogr-sym-3 : circle (filled))
-                        poCenter = PDFGetCircleCenter(poLS);
-
                         // Recognize points as written by GDAL (ogr-sym-5: square (filled))
-                        if (poCenter == nullptr)
-                            poCenter = PDFGetSquareCenter(poLS);
+                        poCenter = PDFGetSquareCenter(poLS);
 
                         /* ESRI points */
                         if (poCenter == nullptr &&
