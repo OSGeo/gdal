@@ -1693,25 +1693,10 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
         if (poProperties != nullptr &&
             poProperties->GetType() == PDFObjectType_Dictionary)
         {
-            char** papszLayersWithRef = osLayerWithRefList.List();
-            char** papszIter = papszLayersWithRef;
             std::map< std::pair<int, int>, OGRPDFLayer *> oMapNumGenToLayer;
-            while(papszIter && *papszIter)
+            for(const auto& oLayerWithref: aoLayerWithRef )
             {
-                char** papszTokens = CSLTokenizeString(*papszIter);
-
-                if( CSLCount(papszTokens) != 3 ) {
-                    CSLDestroy(papszTokens);
-                    CPLDebug("PDF", "Ignore '%s', unparsable.", *papszIter);
-                    papszIter ++;
-                    continue;
-                }
-
-                const char* pszLayerName = papszTokens[0];
-                int nNum = atoi(papszTokens[1]);
-                int nGen = atoi(papszTokens[2]);
-
-                CPLString osSanitizedName(PDFSanitizeLayerName(pszLayerName));
+                CPLString osSanitizedName(PDFSanitizeLayerName(oLayerWithref.osName));
 
                 OGRPDFLayer* poLayer = (OGRPDFLayer*) GetLayerByName(osSanitizedName.c_str());
                 if (poLayer == nullptr)
@@ -1729,10 +1714,7 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
                     nLayers ++;
                 }
 
-                oMapNumGenToLayer[ std::pair<int,int>(nNum, nGen) ] = poLayer;
-
-                CSLDestroy(papszTokens);
-                papszIter ++;
+                oMapNumGenToLayer[ std::pair<int,int>(oLayerWithref.nOCGNum.toInt(), oLayerWithref.nOCGGen) ] = poLayer;
             }
 
             std::map<CPLString, GDALPDFObject*>& oMap =
