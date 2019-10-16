@@ -139,6 +139,9 @@ Configuration options
 -  *GDAL_PDF_LAYERS_OFF* = list of layers (comma separated) to turn OFF.
    The layer names can be obtained by querying the LAYERS metadata
    domain (Poppler and PDFium).
+-  "GDAL_PDF_LAUNDER_LAYER_NAMES* = YES/NO: (GDAL >= 3.1) Can be set to NO
+   to avoid the layer names reported in the LAYERS metadata domain or as OGR
+   layers for the vector part to be "laundered".
 
 Open Options
 ~~~~~~~~~~~~

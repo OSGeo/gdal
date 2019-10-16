@@ -3579,8 +3579,8 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
                 {
                     AddLayer(osCurLayer.c_str());
                     oLayerOCGListPoppler.push_back(std::make_pair(osCurLayer, ocg));
-                    osLayerWithRefList.AddString(
-                        CPLSPrintf("%s %d %d", osCurLayer.c_str(), r.num, r.gen));
+                    aoLayerWithRef.emplace_back(
+                        osCurLayer.c_str(), poObj->GetRefNum(), r.gen);
                 }
             }
         }
@@ -3848,8 +3848,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray* poArray,
                 //CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
                 AddLayer(osCurLayer.c_str());
-                osLayerWithRefList.AddString(
-                    CPLSPrintf("%s %d %d", osCurLayer.c_str(), poObj->GetRefNum().toInt(), poObj->GetRefGen()));
+                aoLayerWithRef.emplace_back(osCurLayer, poObj->GetRefNum(), poObj->GetRefGen());
                 oMapLayerNameToOCGNumGenPdfium[osCurLayer] =
                     std::pair<int,int>(poObj->GetRefNum().toInt(), poObj->GetRefGen());
             }
@@ -4129,11 +4128,10 @@ void PDFDataset::FindLayersGeneric(GDALPDFDictionary* poPageDict)
                     poName != nullptr &&
                     poName->GetType() == PDFObjectType_String )
                 {
-                    osLayerWithRefList.AddString(
-                        CPLSPrintf("%s %d %d",
-                                    PDFSanitizeLayerName(poName->GetString()).c_str(),
-                                    poObj->GetRefNum().toInt(),
-                                    poObj->GetRefGen()));
+                    aoLayerWithRef.emplace_back(
+                        PDFSanitizeLayerName(poName->GetString()).c_str(),
+                        poObj->GetRefNum(),
+                        poObj->GetRefGen());
                 }
             }
         }
@@ -7103,6 +7101,9 @@ static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver * poDriver)
 
 CPLString PDFSanitizeLayerName(const char* pszName)
 {
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_PDF_LAUNDER_LAYER_NAMES", "YES")) )
+        return pszName;
+
     CPLString osName;
     for(int i=0; pszName[i] != '\0'; i++)
     {
