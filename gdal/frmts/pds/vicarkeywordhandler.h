@@ -28,6 +28,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#ifndef VICARKEYWORDHANDLER_H
+#define VICARKEYWORDHANDLER_H
+
 class VICARKeywordHandler
 {
     char     **papszKeywordList;
@@ -51,3 +55,5 @@ public:
     const char *GetKeyword( const char *pszPath, const char *pszDefault );
     char **GetKeywordList();
 };
+
+#endif // VICARKEYWORDHANDLER_H

@@ -32,76 +32,14 @@ constexpr int NULL1 = 0;
 constexpr int NULL2 = -32768;
 constexpr double NULL3 = -32768.0;
 
-#include "cpl_string.h"
-#include "gdal_frmts.h"
-#include "ogr_spatialref.h"
-#include "rawdataset.h"
+#include "cpl_port.h"
+#include "cpl_safemaths.hpp"
+#include "vicardataset.h"
 #include "vicarkeywordhandler.h"
 
 #include <string>
 
 CPL_CVSID("$Id$")
-
-/************************************************************************/
-/* ==================================================================== */
-/*                             VICARDataset                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class VICARDataset final: public RawDataset
-{
-    VSILFILE    *fpImage;
-
-    GByte       abyHeader[10000];
-    CPLString   osExternalCube;
-
-    VICARKeywordHandler  oKeywords;
-
-    int         bGotTransform;
-    double      adfGeoTransform[6];
-
-    CPLString   osProjection;
-
-    const char *GetKeyword( const char *pszPath,
-                            const char *pszDefault = "");
-
-public:
-    VICARDataset();
-    virtual ~VICARDataset();
-
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-
-    virtual char **GetFileList() override;
-
-    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
-
-    static int          Identify( GDALOpenInfo * );
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
-};
-
-/************************************************************************/
-/*                            VICARDataset()                            */
-/************************************************************************/
-
-VICARDataset::VICARDataset() :
-    fpImage(nullptr),
-    bGotTransform(FALSE)
-{
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-    memset( abyHeader, 0, sizeof(abyHeader) );
-}
 
 /************************************************************************/
 /*                            ~VICARDataset()                            */
@@ -113,21 +51,6 @@ VICARDataset::~VICARDataset()
     FlushCache();
     if( fpImage != nullptr )
         VSIFCloseL( fpImage );
-}
-
-/************************************************************************/
-/*                            GetFileList()                             */
-/************************************************************************/
-
-char **VICARDataset::GetFileList()
-
-{
-    char **papszFileList = GDALPamDataset::GetFileList();
-
-    if( !osExternalCube.empty() )
-        papszFileList = CSLAddString( papszFileList, osExternalCube );
-
-    return papszFileList;
 }
 
 /************************************************************************/
@@ -152,7 +75,7 @@ CPLErr VICARDataset::GetGeoTransform( double * padfTransform )
 {
     if( bGotTransform )
     {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+        memcpy( padfTransform, &adfGeoTransform[0], sizeof(double) * 6 );
         return CE_None;
     }
 
@@ -202,45 +125,18 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
-    VSILFILE *fpQube = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
-
     VICARDataset *poDS = new VICARDataset();
-    if( ! poDS->oKeywords.Ingest( fpQube, poOpenInfo->pabyHeader ) ) {
-        VSIFCloseL( fpQube );
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
+    if( ! poDS->oKeywords.Ingest( poDS->fpImage, poOpenInfo->pabyHeader ) ) {
         delete poDS;
         return nullptr;
-    }
-
-    VSIFCloseL( fpQube );
-
-    /***** CHECK ENDIANNESS **************/
-
-    const char *value = poDS->GetKeyword( "INTFMT" );
-    if (!EQUAL(value,"LOW") ) {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s layout not supported. Abort\n\n", value);
-        delete poDS;
-        return nullptr;
-    }
-    value = poDS->GetKeyword( "REALFMT" );
-    if (!EQUAL(value,"RIEEE") ) {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s layout not supported. Abort\n\n", value);
-        delete poDS;
-        return nullptr;
-    }
-
-    char chByteOrder = 'M';
-    value = poDS->GetKeyword( "BREALFMT" );
-    if (EQUAL(value,"VAX") ) {
-        chByteOrder = 'I';
     }
 
     /************ CHECK INSTRUMENT/DATA *****************/
 
     bool bIsDTM = false;
-    value = poDS->GetKeyword( "DTM.DTM_OFFSET" );
+    const char* value = poDS->GetKeyword( "DTM.DTM_OFFSET" );
     if (!EQUAL(value,"") ) {
         bIsDTM = true;
     }
@@ -253,50 +149,11 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     else if ( EQUAL(poDS->GetKeyword("INSTRUMENT_ID"),"FC2") )
         bInstKnown = true;
 
-    /***********   Grab layout type (BSQ, BIP, BIL) ************/
+    /************ Grab dimensions *****************/
 
-    char szLayout[10] = "BSQ"; //default to band seq.
-    value = poDS->GetKeyword( "ORG" );
-    if (!EQUAL(value,"BSQ") )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s layout not supported. Abort\n\n", value);
-        delete poDS;
-        return nullptr;
-    }
-
-    strcpy(szLayout,"BSQ");
     const int nCols = atoi(poDS->GetKeyword("NS"));
     const int nRows = atoi(poDS->GetKeyword("NL"));
     const int nBands = atoi(poDS->GetKeyword("NB"));
-
-    /***********   Grab record bytes  **********/
-    GDALDataType eDataType = GDT_Byte;
-    double dfNoData = 0.0;
-    if (EQUAL( poDS->GetKeyword( "FORMAT" ), "BYTE" )) {
-        eDataType = GDT_Byte;
-        dfNoData = NULL1;
-    }
-    else if (EQUAL( poDS->GetKeyword( "FORMAT" ), "HALF" )) {
-        eDataType = GDT_Int16;
-        dfNoData = NULL2;
-        chByteOrder = 'I';
-    }
-    else if (EQUAL( poDS->GetKeyword( "FORMAT" ), "FULL" )) {
-        eDataType = GDT_UInt32;
-        dfNoData = 0;
-    }
-    else if (EQUAL( poDS->GetKeyword( "FORMAT" ), "REAL" )) {
-        eDataType = GDT_Float32;
-        dfNoData = NULL3;
-        chByteOrder = 'I';
-    }
-    else {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Could not find known VICAR label entries!\n");
-        delete poDS;
-        return nullptr;
-    }
 
     if( !GDALCheckDatasetDimensions(nCols, nRows) ||
         !GDALCheckBandCount(nBands, false) )
@@ -308,6 +165,65 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return nullptr;
     }
+
+    const GDALDataType eDataType = GetDataTypeFromFormat(poDS->GetKeyword( "FORMAT" ));
+    if( eDataType == GDT_Unknown )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Could not find known VICAR label entries!\n");
+        delete poDS;
+        return nullptr;
+    }
+    double dfNoData = 0.0;
+    if (eDataType == GDT_Byte) {
+        dfNoData = NULL1;
+    }
+    else if (eDataType == GDT_Int16) {
+        dfNoData = NULL2;
+    }
+    else if (eDataType == GDT_Float32) {
+        dfNoData = NULL3;
+    }
+
+    /***** CHECK ENDIANNESS **************/
+
+    bool bIsLSB = true;
+    if( GDALDataTypeIsInteger(eDataType) )
+    {
+        value = poDS->GetKeyword( "INTFMT", "LOW" );
+        if (EQUAL(value,"LOW") ) {
+            bIsLSB = true;
+        }
+        else if( EQUAL(value, "HIGH") ) {
+            bIsLSB = false;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "INTFMT=%s layout not supported.", value);
+            delete poDS;
+            return nullptr;
+        }
+    }
+    else
+    {
+        value = poDS->GetKeyword( "REALFMT", "VAX" );
+        if (EQUAL(value,"RIEEE") ) {
+            bIsLSB = true;
+        }
+        else if (EQUAL(value,"IEEE") ) {
+            bIsLSB = false;
+        }
+        else
+        {
+            // TODO: add support for VAX
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "REALFMT=%s layout not supported.", value);
+            delete poDS;
+            return nullptr;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -563,34 +479,10 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = dfYDim;
     }
 
-    const CPLString osQubeFile = poOpenInfo->pszFilename;
     if( !poDS->bGotTransform )
-        poDS->bGotTransform =
-            GDALReadWorldFile( osQubeFile, "psw",
-                               poDS->adfGeoTransform );
-
-    if( !poDS->bGotTransform )
-        poDS->bGotTransform =
-            GDALReadWorldFile( osQubeFile, "wld",
-                               poDS->adfGeoTransform );
-
-/* -------------------------------------------------------------------- */
-/*      Open target binary file.                                        */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( osQubeFile, "r" );
-    else
-        poDS->fpImage = VSIFOpenL( osQubeFile, "r+" );
-
-    if( poDS->fpImage == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open %s with write permission.\n%s",
-                  osQubeFile.c_str(),
-                  VSIStrerror( errno ) );
-        delete poDS;
-        return nullptr;
-    }
+        poDS->bGotTransform = CPL_TO_BOOL(
+                GDALReadWorldFile( poOpenInfo->pszFilename, "wld",
+                               &poDS->adfGeoTransform[0] ));
 
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -598,19 +490,63 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offsets.                                        */
 /* -------------------------------------------------------------------- */
 
-    const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
-    const int nPixelOffset = nItemSize;
-    const int nNBB = atoi(poDS->GetKeyword("NBB"));
-    if( nPixelOffset > INT_MAX / nCols || nNBB < 0 ||
-        nPixelOffset * nCols > INT_MAX - nNBB )
+    const GUInt64 nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    value = poDS->GetKeyword( "ORG", "BSQ" );
+    // number of bytes of binary prefix before each record
+    const GUInt64 nNBB = atoi(poDS->GetKeyword("NBB"));
+    GUInt64 nPixelOffset;
+    GUInt64 nLineOffset;
+    GUInt64 nBandOffset;
+    const GUInt64 nCols64 = nCols;
+    const GUInt64 nRows64 = nRows;
+    const GUInt64 nBands64 = nBands;
+    try
+    {
+        if (EQUAL(value,"BIP") )
+        {
+            nPixelOffset = (CPLSM(nItemSize) * CPLSM(nBands64)).v();
+            nBandOffset = nItemSize;
+            nLineOffset = (CPLSM(nNBB) + CPLSM(nPixelOffset) * CPLSM(nCols64)).v();
+        }
+        else if (EQUAL(value,"BIL") )
+        {
+            nPixelOffset = nItemSize;
+            nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols64)).v();
+            nLineOffset = (CPLSM(nNBB) + CPLSM(nBandOffset) * CPLSM(nBands64)).v();
+        }
+        else if (EQUAL(value,"BSQ") )
+        {
+            nPixelOffset = nItemSize;
+            nLineOffset = (CPLSM(nNBB) + CPLSM(nPixelOffset) * CPLSM(nCols64)).v();
+            nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows64)).v();
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "ORG=%s layout not supported.", value);
+            delete poDS;
+            return nullptr;
+        }
+    }
+    catch( const CPLSafeIntOverflow& )
     {
         delete poDS;
         return nullptr;
     }
-    const int nLineOffset = nPixelOffset * nCols + nNBB;
-    const vsi_l_offset nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
 
-    int nSkipBytes = atoi(poDS->GetKeyword("LBLSIZE"));
+    const GUInt64 nLabelSize = atoi(poDS->GetKeyword("LBLSIZE"));
+    const GUInt64 nRecordSize = atoi(poDS->GetKeyword("RECSIZE"));
+    const GUInt64 nNLB = atoi(poDS->GetKeyword("NLB"));
+    GUInt64 nSkipBytes;
+    try
+    {
+        nSkipBytes = (CPLSM(nLabelSize) + CPLSM(nRecordSize) * CPLSM(nNLB) + CPLSM(nNBB)).v();
+    }
+    catch( const CPLSafeIntOverflow& )
+    {
+        delete poDS;
+        return nullptr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -618,14 +554,18 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     for( int i = 0; i < nBands; i++ )
     {
         GDALRasterBand *poBand
-            = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i,
-                                 nPixelOffset, nLineOffset, eDataType,
+            = new RawRasterBand( poDS, i+1, poDS->fpImage,
+                                 static_cast<vsi_l_offset>(
+                                                nSkipBytes + nBandOffset * i),
+                                 static_cast<int>(nPixelOffset),
+                                 static_cast<int>(nLineOffset),
+                                 eDataType,
 #ifdef CPL_LSB
-                                   chByteOrder == 'I' || chByteOrder == 'L',
+                                 bIsLSB,
 #else
-                                   chByteOrder == 'M',
+                                 !bIsLSB,
 #endif
-                                   RawRasterBand::OwnFP::NO );
+                                 RawRasterBand::OwnFP::NO );
 
         poDS->SetBand( i+1, poBand );
         //only set NoData if instrument is supported
@@ -800,6 +740,33 @@ const char *VICARDataset::GetKeyword( const char *pszPath,
 
 {
     return oKeywords.GetKeyword( pszPath, pszDefault );
+}
+
+/************************************************************************/
+/*                        GetDataTypeFromFormat()                       */
+/************************************************************************/
+
+GDALDataType VICARDataset::GetDataTypeFromFormat(const char* pszFormat)
+{
+    if (EQUAL( pszFormat, "BYTE" ))
+        return GDT_Byte;
+
+    if (EQUAL( pszFormat, "HALF" ) || EQUAL( pszFormat, "WORD") )
+        return GDT_Int16;
+
+    if (EQUAL( pszFormat, "FULL" ) || EQUAL( pszFormat, "LONG") )
+        return GDT_Int32;
+
+    if (EQUAL( pszFormat, "REAL" ))
+        return GDT_Float32;
+
+    if (EQUAL( pszFormat, "DOUB" ))
+        return GDT_Float64;
+
+    if (EQUAL( pszFormat, "COMP" ) || EQUAL( pszFormat, "COMPLEX" ))
+        return GDT_CFloat32;
+
+    return GDT_Unknown;
 }
 
 /************************************************************************/

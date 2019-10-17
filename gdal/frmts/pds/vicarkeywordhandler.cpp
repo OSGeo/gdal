@@ -31,6 +31,7 @@
 
 #include "cpl_string.h"
 #include "vicarkeywordhandler.h"
+#include "vicardataset.h"
 
 #include <algorithm>
 
@@ -131,20 +132,9 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /*      There is a EOL!   e.G.  h4231_0000.nd4.06                       */
 /* -------------------------------------------------------------------- */
 
-    vsi_l_offset nPixelOffset=0;
     const char* pszFormat = CSLFetchNameValueDef(papszKeywordList,"FORMAT","");
-    if (EQUAL( pszFormat, "BYTE" )) {
-        nPixelOffset = 1;
-    }
-    else if (EQUAL( pszFormat, "HALF" )) {
-        nPixelOffset = 2;
-    }
-    else if (EQUAL( pszFormat, "FULL" )) {
-        nPixelOffset = 4;
-    }
-    else if (EQUAL( pszFormat, "REAL" )) {
-        nPixelOffset = 4;
-    }
+    vsi_l_offset nPixelOffset= GDALGetDataTypeSizeBytes(
+                            VICARDataset::GetDataTypeFromFormat(pszFormat));
     if( nPixelOffset == 0 )
         return FALSE;
 

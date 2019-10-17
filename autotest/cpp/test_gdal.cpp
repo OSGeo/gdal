@@ -1278,7 +1278,7 @@ namespace tut
             ensure_equals( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
             ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( !sLayout.bLittleEndianOrder );
+            ensure( sLayout.bLittleEndianOrder );
             ensure_equals( sLayout.nImageOffset, 9680U );
             ensure_equals( sLayout.nPixelOffset, 1 );
             ensure_equals( sLayout.nLineOffset, 400 );

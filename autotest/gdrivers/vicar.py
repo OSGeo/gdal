@@ -73,6 +73,26 @@ def test_vicar_1():
     for key in expected_md:
         assert md[key] == expected_md[key]
 
-    
 
+read_datatypes_lists = [
+    ('vicar_byte', gdal.GDT_Byte, 129),
+    ('vicar_int16', gdal.GDT_Int16, 129),
+    ('vicar_int32', gdal.GDT_Int32, 129),
+    ('vicar_float32_bsq', gdal.GDT_Float32, 123),
+    ('vicar_float32_bil', gdal.GDT_Float32, 123),
+    ('vicar_float32_bip', gdal.GDT_Float32, 123),
+    ('vicar_float64', gdal.GDT_Float64, 129),
+    ('vicar_cfloat32', gdal.GDT_CFloat32, 148),
+]
 
+@pytest.mark.parametrize(
+    'filename,dt,checksum',
+    read_datatypes_lists,
+    ids=[tup[0] for tup in read_datatypes_lists],
+)
+def test_vicar_read_datatypes(filename, dt, checksum):
+
+    ds = gdal.Open('data/%s.vic' % filename)
+    b = ds.GetRasterBand(1)
+    assert b.DataType == dt
+    assert b.Checksum() == checksum
