@@ -115,7 +115,7 @@ public:
 
     GDALDataset *m_poSrcDS;
 
-    VSIIOStream m_OStream;
+    std::shared_ptr<VSIIOStream> m_OStream;
     int m_nPercentComplete;
 
     int m_bCancelled;
@@ -143,7 +143,7 @@ private:
 /************************************************************************/
 
 GDALECWCompressor::GDALECWCompressor() :
-    eWorkDT(GDT_Unknown)
+    m_OStream(std::make_shared<VSIIOStream>()), eWorkDT(GDT_Unknown)
 {
     m_poSrcDS = nullptr;
     m_nPercentComplete = -1;
@@ -186,7 +186,7 @@ CPLErr GDALECWCompressor::CloseDown()
 
 {
     Close( true );
-    m_OStream.Close();
+    m_OStream->Close();
 
     return CE_None;
 }
@@ -1008,7 +1008,7 @@ CPLErr GDALECWCompressor::Initialize(
             return CE_Failure;
         }
 
-        m_OStream.Access( fpVSIL, TRUE, (BOOLEAN) bSeekable, pszFilename,
+        m_OStream->Access( fpVSIL, TRUE, (BOOLEAN) bSeekable, pszFilename,
                           0, -1 );
     }
     else
@@ -1114,8 +1114,13 @@ CPLErr GDALECWCompressor::Initialize(
                 oError = GetCNCSError(Open( (char *) pszFilename, false, true ));
             }
         }
-        else
-            oError = CNCSJP2FileView::Open( &(m_OStream) );
+        else {
+#if ECWSDK_VERSION>=55
+            oError = CNCSJP2FileView::Open(m_OStream);
+#else
+            oError = CNCSJP2FileView::Open(m_OStream.get());
+#endif
+        }
     }
 
     if( oError.GetErrorNumber() == NCS_SUCCESS )
