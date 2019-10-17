@@ -1,7 +1,7 @@
 /******************************************************************************
  *
- * Project:  Microstation DGN Access Library
- * Purpose:  Functions for translating DGN floats into IEEE floats.
+ * Project:  CPL
+ * Purpose:  Convert between VAX and IEEE floating point formats
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -26,20 +26,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "dgnlibp.h"
+#include "cpl_port.h"
+#include "cpl_vax.h"
 
 CPL_CVSID("$Id$")
 
+namespace {
 typedef struct dbl {
     GUInt32 hi;
     GUInt32 lo;
 } double64_t;
+}
 
 /************************************************************************/
-/*                           DGN2IEEEDouble()                           */
+/*                          CPLVaxToIEEEDouble()                        */
 /************************************************************************/
 
-void    DGN2IEEEDouble(void * dbl)
+void    CPLVaxToIEEEDouble(void * dbl)
 
 {
     double64_t  dt;
@@ -51,8 +54,8 @@ void    DGN2IEEEDouble(void * dbl)
 /*      Arrange the VAX double so that it may be accessed by a          */
 /*      double64_t structure, (two GUInt32s).                           */
 /* -------------------------------------------------------------------- */
-    unsigned char *src =  (unsigned char *) dbl;
-    unsigned char *dest = (unsigned char *) &dt;
+    unsigned char *src =  static_cast<unsigned char *>(dbl);
+    unsigned char *dest = reinterpret_cast<unsigned char *>(&dt);
 #ifdef CPL_LSB
     dest[2] = src[0];
     dest[3] = src[1];
@@ -102,14 +105,14 @@ void    DGN2IEEEDouble(void * dbl)
 /* -------------------------------------------------------------------- */
     dt.hi = dt.hi >> 3;
     dt.hi = dt.hi & 0x000fffff;
-    dt.hi = dt.hi | ((GUInt32)exponent << 20) | sign;
+    dt.hi = dt.hi | (static_cast<GUInt32>(exponent) << 20) | sign;
 
 #ifdef CPL_LSB
 /* -------------------------------------------------------------------- */
 /*      Change the number to a byte swapped format                      */
 /* -------------------------------------------------------------------- */
-    src = (unsigned char *) &dt;
-    dest = (unsigned char *) dbl;
+    src = reinterpret_cast<unsigned char *>(&dt);
+    dest = static_cast<unsigned char *>(dbl);
 
     memcpy(dest + 0, src + 4, 4);
     memcpy(dest + 4, src + 0, 4);
@@ -119,18 +122,18 @@ void    DGN2IEEEDouble(void * dbl)
 }
 
 /************************************************************************/
-/*                           IEEE2DGNDouble()                           */
+/*                         CPLIEEEToVaxDouble()                         */
 /************************************************************************/
 
-void    IEEE2DGNDouble(void * dbl)
+void    CPLIEEEToVaxDouble(void * dbl)
 
 {
     double64_t dt;
 
 #ifdef CPL_LSB
     {
-    GByte* src  = (GByte *) dbl;
-    GByte* dest = (GByte *) &dt;
+    GByte* src  = static_cast<GByte *>(dbl);
+    GByte* dest = reinterpret_cast<GByte *>(&dt);
 
     dest[0] = src[4];
     dest[1] = src[5];
@@ -160,7 +163,7 @@ void    IEEE2DGNDouble(void * dbl)
 /* -------------------------------------------------------------------- */
     if (exponent > 255)
     {
-        GByte* dest = (GByte *) dbl;
+        GByte* dest = static_cast<GByte *>(dbl);
 
         if (sign)
             dest[1] = 0xff;
@@ -184,7 +187,7 @@ void    IEEE2DGNDouble(void * dbl)
     else if ((exponent < 0 ) ||
              (exponent == 0 && sign == 0))
     {
-        GByte* dest = (GByte *) dbl;
+        GByte* dest = static_cast<GByte *>(dbl);
 
         dest[0] = 0x00;
         dest[1] = 0x00;
@@ -213,8 +216,8 @@ void    IEEE2DGNDouble(void * dbl)
 /* -------------------------------------------------------------------- */
 /*      Convert the double back to VAX format                           */
 /* -------------------------------------------------------------------- */
-    GByte* src = (GByte *) &dt;
-    GByte* dest = (GByte *) dbl;
+    GByte* src = reinterpret_cast<GByte *>(&dt);
+    GByte* dest = static_cast<GByte *>(dbl);
 
 #ifdef CPL_LSB
     memcpy(dest + 2, src + 0, 2);

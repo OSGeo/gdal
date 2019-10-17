@@ -2,7 +2,7 @@
 
 include ../../../GDALmake.opt
 
-MIN_OBJ	=	dgnopen.o dgnread.o dgnfloat.o dgnhelp.o dgnwrite.o dgnstroke.o
+MIN_OBJ	=	dgnopen.o dgnread.o dgnhelp.o dgnwrite.o dgnstroke.o
 OBJ =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o $(MIN_OBJ)
 
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
@@ -13,7 +13,7 @@ WEB_DIR =	$(HOME)/dgnlib-web
 DIST_REV =	1.11
 DIST_DIR =	dgnlib-$(DIST_REV)
 DIST_FILE = 	dgnlib-$(DIST_REV).zip
-DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
+DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h \
 		dgnstroke.cpp dgnwrite.cpp dgnhelp.cpp \
 		dgnwritetest.cpp dgndump.cpp \
 		\

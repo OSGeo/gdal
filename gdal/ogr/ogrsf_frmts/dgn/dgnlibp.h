@@ -32,6 +32,7 @@
 #define DGNLIBP_H_INCLUDED
 
 #include "cpl_vsi.h"
+#include "cpl_vax.h"
 #include "dgnlib.h"
 
 typedef struct {
@@ -96,8 +97,8 @@ int DGNParseCore( DGNInfo *, DGNElemCore * );
 void DGNTransformPoint( DGNInfo *, DGNPoint * );
 void DGNInverseTransformPoint( DGNInfo *, DGNPoint * );
 void DGNInverseTransformPointToInt( DGNInfo *, DGNPoint *, unsigned char * );
-void DGN2IEEEDouble( void * );
-void IEEE2DGNDouble( void * );
+#define DGN2IEEEDouble CPLVaxToIEEEDouble
+#define IEEE2DGNDouble CPLIEEEToVaxDouble
 void DGNBuildIndex( DGNInfo * );
 void DGNRad50ToAscii( unsigned short rad50, char *str );
 void DGNAsciiToRad50( const char *str, unsigned short *rad50 );

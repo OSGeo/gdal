@@ -72,6 +72,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_json.obj \
 		cpl_md5.obj \
 		cpl_swift.obj \
+		cpl_vax.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
