@@ -76,6 +76,13 @@ public:
                                 GDALDataType eType, char ** papszParmList );
 
     static GDALDataType GetDataTypeFromFormat(const char* pszFormat);
+    static bool         GetSpacings(const VICARKeywordHandler& keywords,
+                                    GUInt64& nPixelOffset,
+                                    GUInt64& nLineOffset,
+                                    GUInt64& nBandOffset,
+                                    GUInt64& nImageOffsetWithoutNBB,
+                                    GUInt64& nNBB,
+                                    GUInt64& nImageSize);
 };
 
 #endif // VICARDATASET_H

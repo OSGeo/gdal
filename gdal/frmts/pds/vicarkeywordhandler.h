@@ -39,8 +39,6 @@ class VICARKeywordHandler
     CPLString osHeaderText;
     const char *pszHeaderNext;
 
-    int     LabelSize;
-
     void    SkipWhite();
     int     ReadWord( CPLString &osWord );
     int     ReadPair( CPLString &osName, CPLString &osValue );
@@ -52,8 +50,7 @@ public:
 
     int     Ingest( VSILFILE *fp, GByte *pabyHeader );
 
-    const char *GetKeyword( const char *pszPath, const char *pszDefault );
-    char **GetKeywordList();
+    const char *GetKeyword( const char *pszPath, const char *pszDefault ) const;
 };
 
 #endif // VICARKEYWORDHANDLER_H

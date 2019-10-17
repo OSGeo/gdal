@@ -490,59 +490,14 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offsets.                                        */
 /* -------------------------------------------------------------------- */
 
-    const GUInt64 nItemSize = GDALGetDataTypeSizeBytes(eDataType);
-    value = poDS->GetKeyword( "ORG", "BSQ" );
-    // number of bytes of binary prefix before each record
-    const GUInt64 nNBB = atoi(poDS->GetKeyword("NBB"));
     GUInt64 nPixelOffset;
     GUInt64 nLineOffset;
     GUInt64 nBandOffset;
-    const GUInt64 nCols64 = nCols;
-    const GUInt64 nRows64 = nRows;
-    const GUInt64 nBands64 = nBands;
-    try
-    {
-        if (EQUAL(value,"BIP") )
-        {
-            nPixelOffset = (CPLSM(nItemSize) * CPLSM(nBands64)).v();
-            nBandOffset = nItemSize;
-            nLineOffset = (CPLSM(nNBB) + CPLSM(nPixelOffset) * CPLSM(nCols64)).v();
-        }
-        else if (EQUAL(value,"BIL") )
-        {
-            nPixelOffset = nItemSize;
-            nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols64)).v();
-            nLineOffset = (CPLSM(nNBB) + CPLSM(nBandOffset) * CPLSM(nBands64)).v();
-        }
-        else if (EQUAL(value,"BSQ") )
-        {
-            nPixelOffset = nItemSize;
-            nLineOffset = (CPLSM(nNBB) + CPLSM(nPixelOffset) * CPLSM(nCols64)).v();
-            nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows64)).v();
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                      "ORG=%s layout not supported.", value);
-            delete poDS;
-            return nullptr;
-        }
-    }
-    catch( const CPLSafeIntOverflow& )
-    {
-        delete poDS;
-        return nullptr;
-    }
-
-    const GUInt64 nLabelSize = atoi(poDS->GetKeyword("LBLSIZE"));
-    const GUInt64 nRecordSize = atoi(poDS->GetKeyword("RECSIZE"));
-    const GUInt64 nNLB = atoi(poDS->GetKeyword("NLB"));
-    GUInt64 nSkipBytes;
-    try
-    {
-        nSkipBytes = (CPLSM(nLabelSize) + CPLSM(nRecordSize) * CPLSM(nNLB) + CPLSM(nNBB)).v();
-    }
-    catch( const CPLSafeIntOverflow& )
+    GUInt64 nImageOffsetWithoutNBB;
+    GUInt64 nNBB;
+    GUInt64 nImageSize;
+    if( !GetSpacings(poDS->oKeywords, nPixelOffset, nLineOffset, nBandOffset,
+                     nImageOffsetWithoutNBB, nNBB, nImageSize) )
     {
         delete poDS;
         return nullptr;
@@ -556,7 +511,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         GDALRasterBand *poBand
             = new RawRasterBand( poDS, i+1, poDS->fpImage,
                                  static_cast<vsi_l_offset>(
-                                                nSkipBytes + nBandOffset * i),
+                                    nImageOffsetWithoutNBB + nNBB + nBandOffset * i),
                                  static_cast<int>(nPixelOffset),
                                  static_cast<int>(nLineOffset),
                                  eDataType,
@@ -767,6 +722,78 @@ GDALDataType VICARDataset::GetDataTypeFromFormat(const char* pszFormat)
         return GDT_CFloat32;
 
     return GDT_Unknown;
+}
+
+/************************************************************************/
+/*                             GetSpacings()                            */
+/************************************************************************/
+
+bool VICARDataset::GetSpacings(const VICARKeywordHandler& keywords,
+                              GUInt64& nPixelOffset,
+                              GUInt64& nLineOffset,
+                              GUInt64& nBandOffset,
+                              GUInt64& nImageOffsetWithoutNBB,
+                              GUInt64& nNBB,
+                              GUInt64& nImageSize)
+{
+    const GDALDataType eDataType = GetDataTypeFromFormat(keywords.GetKeyword( "FORMAT", "" ));
+    if( eDataType == GDT_Unknown )
+        return false;
+    const GUInt64 nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    const char* value = keywords.GetKeyword( "ORG", "BSQ" );
+    // number of bytes of binary prefix before each record
+    nNBB = atoi(keywords.GetKeyword("NBB", ""));
+    const GUInt64 nCols64 = atoi(keywords.GetKeyword("NS", ""));
+    const GUInt64 nRows64 = atoi(keywords.GetKeyword("NL", ""));
+    const GUInt64 nBands64 = atoi(keywords.GetKeyword("NB", ""));
+    try
+    {
+        if (EQUAL(value,"BIP") )
+        {
+            nPixelOffset = (CPLSM(nItemSize) * CPLSM(nBands64)).v();
+            nBandOffset = nItemSize;
+            nLineOffset = (CPLSM(nNBB) + CPLSM(nPixelOffset) * CPLSM(nCols64)).v();
+            nImageSize = nLineOffset * nRows64;
+        }
+        else if (EQUAL(value,"BIL") )
+        {
+            nPixelOffset = nItemSize;
+            nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols64)).v();
+            nLineOffset = (CPLSM(nNBB) + CPLSM(nBandOffset) * CPLSM(nBands64)).v();
+            nImageSize = nLineOffset * nRows64;
+        }
+        else if (EQUAL(value,"BSQ") )
+        {
+            nPixelOffset = nItemSize;
+            nLineOffset = (CPLSM(nNBB) + CPLSM(nPixelOffset) * CPLSM(nCols64)).v();
+            nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows64)).v();
+            nImageSize = nBandOffset * nBands64;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "ORG=%s layout not supported.", value);
+            return false;
+        }
+    }
+    catch( const CPLSafeIntOverflow& )
+    {
+        return false;
+    }
+
+    const GUInt64 nLabelSize = atoi(keywords.GetKeyword("LBLSIZE", ""));
+    const GUInt64 nRecordSize = atoi(keywords.GetKeyword("RECSIZE", ""));
+    const GUInt64 nNLB = atoi(keywords.GetKeyword("NLB", ""));
+    try
+    {
+        nImageOffsetWithoutNBB = (CPLSM(nLabelSize) + CPLSM(nRecordSize) * CPLSM(nNLB) + CPLSM(nNBB)).v();
+        nImageOffsetWithoutNBB -= nNBB;
+    }
+    catch( const CPLSafeIntOverflow& )
+    {
+        return false;
+    }
+    return true;
 }
 
 /************************************************************************/

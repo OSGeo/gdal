@@ -49,8 +49,7 @@ CPL_CVSID("$Id$")
 
 VICARKeywordHandler::VICARKeywordHandler() :
     papszKeywordList(nullptr),
-    pszHeaderNext(nullptr),
-    LabelSize(0)
+    pszHeaderNext(nullptr)
 {}
 
 /************************************************************************/
@@ -94,7 +93,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 
     std::string keyval;
     keyval.assign(pch1, static_cast<size_t>(pch2 - pch1));
-    LabelSize = atoi( keyval.c_str() );
+    int LabelSize = atoi( keyval.c_str() );
     if( LabelSize <= 0 || LabelSize > 10 * 1024 * 124 )
         return FALSE;
 
@@ -132,28 +131,17 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /*      There is a EOL!   e.G.  h4231_0000.nd4.06                       */
 /* -------------------------------------------------------------------- */
 
-    const char* pszFormat = CSLFetchNameValueDef(papszKeywordList,"FORMAT","");
-    vsi_l_offset nPixelOffset= GDALGetDataTypeSizeBytes(
-                            VICARDataset::GetDataTypeFromFormat(pszFormat));
-    if( nPixelOffset == 0 )
+    GUInt64 nPixelOffset;
+    GUInt64 nLineOffset;
+    GUInt64 nBandOffset;
+    GUInt64 nImageOffsetWithoutNBB;
+    GUInt64 nNBB;
+    GUInt64 nImageSize;
+    if( !VICARDataset::GetSpacings(*this, nPixelOffset, nLineOffset, nBandOffset,
+                                   nImageOffsetWithoutNBB, nNBB, nImageSize) )
         return FALSE;
 
-    const vsi_l_offset nCols = atoi( CSLFetchNameValueDef( papszKeywordList, "NS", "" ) );
-    const vsi_l_offset nRows = atoi( CSLFetchNameValueDef( papszKeywordList, "NL", "" ) );
-    const int nBands = atoi( CSLFetchNameValueDef( papszKeywordList, "NB", "" ) );
-    const int nBB = atoi( CSLFetchNameValueDef( papszKeywordList, "NBB", "" ) );
-
-    const vsi_l_offset nLineOffset = nPixelOffset * nCols + nBB ;
-    const vsi_l_offset nBandOffset = nLineOffset * nRows;
-
-    if( nBands <= 0 ||
-        nBandOffset > std::numeric_limits<vsi_l_offset>::max() / nBands ||
-        nBandOffset * nBands > std::numeric_limits<vsi_l_offset>::max() - LabelSize )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too large/invalid keyword values");
-        return FALSE;
-    }
-    const vsi_l_offset starteol = LabelSize + nBandOffset * nBands;
+    const vsi_l_offset starteol = nImageOffsetWithoutNBB + nImageSize;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking to EOL");
@@ -184,6 +172,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
     }
     keyval.assign(pch1, static_cast<size_t>(pch2 - pch1));
+    const auto nSkipEOLLBLSize = static_cast<size_t>(pch2 - pszEOLHeader);
     VSIFree(pszEOLHeader);
 
     int EOLabelSize = atoi( keyval.c_str() );
@@ -199,8 +188,10 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
     nBytesRead = static_cast<int>(VSIFReadL( pszChunkEOL, 1, EOLabelSize, fp ));
     pszChunkEOL[nBytesRead] = '\0';
-    osHeaderText += pszChunkEOL ;
+    osHeaderText += pszChunkEOL + nSkipEOLLBLSize;
     VSIFree(pszChunkEOL);
+    CSLDestroy(papszKeywordList);
+    papszKeywordList = nullptr;
     pszHeaderNext = osHeaderText.c_str();
     return ReadGroup( "" );
 }
@@ -372,7 +363,7 @@ void VICARKeywordHandler::SkipWhite()
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *VICARKeywordHandler::GetKeyword( const char *pszPath, const char *pszDefault )
+const char *VICARKeywordHandler::GetKeyword( const char *pszPath, const char *pszDefault ) const
 
 {
     const char *pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
@@ -381,13 +372,4 @@ const char *VICARKeywordHandler::GetKeyword( const char *pszPath, const char *ps
         return pszDefault;
 
     return pszResult;
-}
-
-/************************************************************************/
-/*                             GetKeywordList()                         */
-/************************************************************************/
-
-char **VICARKeywordHandler::GetKeywordList()
-{
-    return papszKeywordList;
 }
