@@ -106,7 +106,7 @@ typedef swq_field_type (*swq_op_checker)( swq_expr_node *op,
 
 class swq_custom_func_registrar;
 
-class swq_expr_node {
+class CPL_UNSTABLE_API swq_expr_node {
 
     CPL_DISALLOW_COPY_ASSIGN(swq_expr_node)
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher,
@@ -173,13 +173,13 @@ typedef struct {
     swq_op_checker   pfnChecker;
 } swq_operation;
 
-class swq_op_registrar {
+class CPL_UNSTABLE_API swq_op_registrar {
 public:
     static const swq_operation *GetOperator( const char * );
     static const swq_operation *GetOperator( swq_op eOperation );
 };
 
-class swq_custom_func_registrar
+class CPL_UNSTABLE_API swq_custom_func_registrar
 {
     public:
         virtual ~swq_custom_func_registrar() {}
@@ -192,7 +192,7 @@ typedef struct {
     char       *table_alias;
 } swq_table_def;
 
-class swq_field_list {
+class CPL_UNSTABLE_API swq_field_list {
 public:
     int count;
     char **names;
@@ -204,7 +204,7 @@ public:
     swq_table_def *table_defs;
 };
 
-class swq_parse_context {
+class CPL_UNSTABLE_API swq_parse_context {
 public:
     swq_parse_context() : nStartToken(0), pszInput(nullptr), pszNext(nullptr),
                           pszLastValid(nullptr), bAcceptCustomFuncs(FALSE),
@@ -225,38 +225,38 @@ public:
 ** the list of fields in the target 'table', used to render where into
 ** field numbers instead of names.
 */
-int swqparse( swq_parse_context *context );
-int swqlex( swq_expr_node **ppNode, swq_parse_context *context );
-void swqerror( swq_parse_context *context, const char *msg );
+int CPL_UNSTABLE_API swqparse( swq_parse_context *context );
+int CPL_UNSTABLE_API swqlex( swq_expr_node **ppNode, swq_parse_context *context );
+void CPL_UNSTABLE_API swqerror( swq_parse_context *context, const char *msg );
 
-int swq_identify_field( const char* table_name,
-                        const char *token, swq_field_list *field_list,
-                        swq_field_type *this_type, int *table_id );
+int CPL_UNSTABLE_API swq_identify_field( const char* table_name,
+                                         const char *token, swq_field_list *field_list,
+                                         swq_field_type *this_type, int *table_id );
 
-CPLErr swq_expr_compile( const char *where_clause,
-                         int field_count,
-                         char **field_list,
-                         swq_field_type *field_types,
-                         int bCheck,
-                         swq_custom_func_registrar* poCustomFuncRegistrar,
-                         swq_expr_node **expr_root );
+CPLErr CPL_UNSTABLE_API swq_expr_compile( const char *where_clause,
+                                          int field_count,
+                                          char **field_list,
+                                          swq_field_type *field_types,
+                                          int bCheck,
+                                          swq_custom_func_registrar* poCustomFuncRegistrar,
+                                          swq_expr_node **expr_root );
 
-CPLErr swq_expr_compile2( const char *where_clause,
-                          swq_field_list *field_list,
-                          int bCheck,
-                          swq_custom_func_registrar* poCustomFuncRegistrar,
-                          swq_expr_node **expr_root );
+CPLErr CPL_UNSTABLE_API swq_expr_compile2( const char *where_clause,
+                                           swq_field_list *field_list,
+                                           int bCheck,
+                                           swq_custom_func_registrar* poCustomFuncRegistrar,
+                                           swq_expr_node **expr_root );
 
 /*
 ** Evaluation related.
 */
-int swq_test_like( const char *input, const char *pattern );
+int CPL_UNSTABLE_API swq_test_like( const char *input, const char *pattern );
 
-swq_expr_node *SWQGeneralEvaluator( swq_expr_node *, swq_expr_node **);
-swq_field_type SWQGeneralChecker( swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison );
-swq_expr_node *SWQCastEvaluator( swq_expr_node *, swq_expr_node **);
-swq_field_type SWQCastChecker( swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison );
-const char*    SWQFieldTypeToString( swq_field_type field_type );
+swq_expr_node CPL_UNSTABLE_API *SWQGeneralEvaluator( swq_expr_node *, swq_expr_node **);
+swq_field_type CPL_UNSTABLE_API SWQGeneralChecker( swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison );
+swq_expr_node CPL_UNSTABLE_API *SWQCastEvaluator( swq_expr_node *, swq_expr_node **);
+swq_field_type CPL_UNSTABLE_API SWQCastChecker( swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison );
+const char CPL_UNSTABLE_API    *SWQFieldTypeToString( swq_field_type field_type );
 
 /****************************************************************************/
 
@@ -294,7 +294,7 @@ typedef struct {
     swq_expr_node *expr;
 } swq_col_def;
 
-class swq_summary {
+class CPL_UNSTABLE_API swq_summary {
 public:
     struct Comparator
     {
@@ -330,7 +330,7 @@ typedef struct {
     swq_expr_node  *poExpr;
 } swq_join_def;
 
-class swq_select_parse_options
+class CPL_UNSTABLE_API swq_select_parse_options
 {
 public:
     swq_custom_func_registrar* poCustomFuncRegistrar;
@@ -348,7 +348,7 @@ public:
                                                 bAllowDistinctOnMultipleFields(FALSE) {}
 };
 
-class swq_select
+class CPL_UNSTABLE_API swq_select
 {
     void        postpreparse();
 
@@ -404,17 +404,18 @@ public:
     void        Dump( FILE * );
 };
 
-CPLErr swq_select_parse( swq_select *select_info,
-                         swq_field_list *field_list,
-                         int parse_flags );
+CPLErr CPL_UNSTABLE_API swq_select_parse( swq_select *select_info,
+                                          swq_field_list *field_list,
+                                          int parse_flags );
 
-const char *swq_select_summarize( swq_select *select_info,
-                                  int dest_column,
-                                  const char *value );
+const char CPL_UNSTABLE_API *swq_select_summarize( swq_select *select_info,
+                                                   int dest_column,
+                                                   const char *value );
 
-int swq_is_reserved_keyword(const char* pszStr);
+int CPL_UNSTABLE_API swq_is_reserved_keyword(const char* pszStr);
 
-char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey);
+char CPL_UNSTABLE_API *OGRHStoreGetValue(const char* pszHStore, 
+                                         const char* pszSearchedKey);
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

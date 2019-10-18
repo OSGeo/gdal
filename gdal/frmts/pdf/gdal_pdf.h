@@ -295,7 +295,19 @@ private:
 
     CPLStringList osLayerList;
 
-    CPLStringList osLayerWithRefList;
+    struct LayerWithRef
+    {
+        CPLString        osName{};
+        GDALPDFObjectNum nOCGNum{};
+        int              nOCGGen = 0;
+
+        LayerWithRef(const CPLString& osNameIn,
+                     const GDALPDFObjectNum& nOCGNumIn,
+                     int nOCGGenIn) :
+            osName(osNameIn), nOCGNum(nOCGNumIn), nOCGGen(nOCGGenIn) {}
+    };
+    std::vector<LayerWithRef> aoLayerWithRef;
+
     CPLString     FindLayerOCG(GDALPDFDictionary* poPageDict,
                                const char* pszLayerName);
     void          FindLayersGeneric(GDALPDFDictionary* poPageDict);

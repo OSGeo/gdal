@@ -36,7 +36,7 @@
 #include "cpl_http.h"
 #include "ogr_geojson.h"
 #include "ogrgeojsonreader.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include <map>
 #include <set>
 #include <vector>

@@ -28,7 +28,7 @@
 
 #include "ogr_couchdb.h"
 #include "ogrgeojsonreader.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 CPL_CVSID("$Id$")
 

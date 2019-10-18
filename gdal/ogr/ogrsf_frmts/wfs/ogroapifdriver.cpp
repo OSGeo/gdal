@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 #include <algorithm>
 #include <memory>
@@ -138,11 +138,7 @@ class OGROAPIFLayer final: public OGRLayer
                      const CPLString& osName,
                      const CPLJSONArray& oBBOX,
                      const CPLJSONArray& oCRS);
-        OGROAPIFLayer(OGROAPIFDataset* poDS,
-                     const CPLString& osName,
-                     const CPLString& osTitle,
-                     const CPLString& osURL,
-                     const OGREnvelope& oEnvelope);
+
        ~OGROAPIFLayer();
 
        const char*     GetName() override { return GetDescription(); }
@@ -686,11 +682,8 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
         return LoadJSONCollection(oRoot);
     }
 
-    // FIXME: json would be preferable in first position, but
-    // http://www.pvretano.com/cubewerx/cubeserv/default/wfs/3.0.0/foundation doesn't like it
     if( !Download(m_osRootURL + "/collections",
-            MEDIA_TYPE_XML ", " MEDIA_TYPE_JSON,
-            osResult, osContentType) )
+            MEDIA_TYPE_JSON, osResult, osContentType) )
     {
         return false;
     }
@@ -698,62 +691,6 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
     if( osContentType.find("json") != std::string::npos )
     {
         return LoadJSONCollections(osResult);
-    }
-    else if( osContentType.find("xml") != std::string::npos )
-    {
-        CPLXMLNode* psDoc = CPLParseXMLString(osResult);
-        if( !psDoc )
-            return false;
-        CPLXMLTreeCloser oCloser(psDoc);
-        CPLStripXMLNamespace(psDoc, nullptr, true);
-        CPLXMLNode* psCollections = CPLGetXMLNode(psDoc, "=Collections");
-        if( !psCollections )
-            return false;
-        for( CPLXMLNode* psIter = psCollections->psChild;
-                                            psIter; psIter = psIter->psNext )
-        {
-            if( psIter->eType == CXT_Element &&
-                strcmp(psIter->pszValue, "Collection") == 0 )
-            {
-                CPLString osHref;
-                OGREnvelope oEnvelope;
-                for( CPLXMLNode* psCollIter = psIter->psChild;
-                                psCollIter; psCollIter = psCollIter->psNext )
-                {
-                    if( psCollIter->eType == CXT_Element &&
-                        strcmp(psCollIter->pszValue, "link") == 0 )
-                    {
-                        CPLString osRel(CPLGetXMLValue(psCollIter, "rel", ""));
-                        if( osRel == "collection" )
-                        {
-                            osHref = CPLGetXMLValue(psCollIter, "href", "");
-                            break;
-                        }
-                    }
-                }
-                CPLString osName(CPLGetXMLValue(psIter, "Name", ""));
-                CPLString osTitle(CPLGetXMLValue(psIter, "Title", ""));
-                CPLString osLC(CPLGetXMLValue(psIter,
-                                        "WGS84BoundingBox.LowerCorner", ""));
-                CPLString osUC(CPLGetXMLValue(psIter,
-                                        "WGS84BoundingBox.UpperCorner", ""));
-                CPLStringList aosLC(CSLTokenizeString2(osLC, " ", 0));
-                CPLStringList aosUC(CSLTokenizeString2(osUC, " ", 0));
-                if( aosLC.size() == 2 && aosUC.size() == 2 )
-                {
-                    oEnvelope.MinX = CPLAtof(aosLC[0]);
-                    oEnvelope.MinY = CPLAtof(aosLC[1]);
-                    oEnvelope.MaxX = CPLAtof(aosUC[0]);
-                    oEnvelope.MaxY = CPLAtof(aosUC[1]);
-                }
-                if( !osHref.empty() )
-                {
-                    m_apoLayers.push_back( std::unique_ptr<OGROAPIFLayer>( new
-                        OGROAPIFLayer(
-                            this, osName, osTitle, osHref, oEnvelope) ) );
-                }
-            }
-        }
     }
 
     return true;
@@ -788,7 +725,7 @@ static int OGROAPIFDriverIdentify( GDALOpenInfo* poOpenInfo )
 OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                            const CPLString& osName,
                            const CPLJSONArray& oBBOX,
-                           const CPLJSONArray& oCRS) :
+                           const CPLJSONArray& /* oCRS */) :
     m_poDS(poDS)
 {
     m_poFeatureDefn = new OGRFeatureDefn(osName);
@@ -828,71 +765,17 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
         }
     }
 
-    bool bAdvertizeWGS84 = false;
-    if( !oCRS.IsValid() || oCRS.Size() == 0 )
-    {
-        bAdvertizeWGS84 = true;
-    }
-    else
-    {
-        for( int i = 0; i < oCRS.Size(); i++ )
-        {
-            if( oCRS[i].ToString() == "http://www.opengis.net/def/crs/OGC/1.3/CRS84")
-            {
-                bAdvertizeWGS84 = true;
-                break;
-            }
-        }
-    }
-    if( bAdvertizeWGS84 )
-    {
-        OGRSpatialReference* poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        poSRS->Release();
-    }
-    m_bIsGeographicCRS = true;
-
-    // We might check in the links, but the spec mandates that construct of URL
-    m_osURL = m_poDS->m_osRootURL + "/collections/" + osName + "/items";
-    m_osPath = "/collections/" + osName + "/items";
-
-    OGROAPIFLayer::ResetReading();
-}
-
-/************************************************************************/
-/*                           OGROAPIFLayer()                             */
-/************************************************************************/
-
-OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
-                           const CPLString& osName,
-                           const CPLString& osTitle,
-                           const CPLString& osURL,
-                           const OGREnvelope& oEnvelope) :
-    m_poDS(poDS),
-    m_osURL(osURL)
-{
-    m_poFeatureDefn = new OGRFeatureDefn(osName);
-    m_poFeatureDefn->Reference();
-    SetDescription(osName);
-    if( !osTitle.empty() )
-        SetMetadataItem("TITLE", osTitle.c_str());
-    if( oEnvelope.IsInit() )
-    {
-        m_oExtent = oEnvelope;
-    }
-
     OGRSpatialReference* poSRS = new OGRSpatialReference();
     poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poSRS->Release();
+
     m_bIsGeographicCRS = true;
 
-    size_t nPos = osURL.rfind('/');
-    if( nPos != std::string::npos )
-        m_osPath = osURL.substr(nPos);
+    // We might check in the links, but the spec mandates that construct of URL
+    m_osURL = m_poDS->m_osRootURL + "/collections/" + osName + "/items";
+    m_osPath = "/collections/" + osName + "/items";
 
     OGROAPIFLayer::ResetReading();
 }

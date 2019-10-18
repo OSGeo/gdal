@@ -32,7 +32,7 @@
 
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "cpl_quad_tree.h"
 
 #include <vector>

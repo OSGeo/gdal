@@ -42,6 +42,14 @@ MSVC_VER=1900
 !ENDIF
 
 ###############################################################################
+# Allow setting of parallel compilation number of processors with CPU_COUNT 
+# variable
+
+!IFNDEF CPU_COUNT
+CPU_COUNT=%NUMBER_OF_PROCESSORS%
+!ENDIF
+
+###############################################################################
 # Optional use of Visual Leak Detector (VLD) by Dan Moulding, available at
 # http://vld.codeplex.com/
 # Uncomment this line to use VLD in debug configuration only:
@@ -134,9 +142,9 @@ CXX_PDB_FLAGS=
 
 !IFNDEF OPTFLAGS
 !IF "$(DEBUG)" == "0"
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MD /EHsc /Ox /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP$(CPU_COUNT) /MD /EHsc /Ox /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MD /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP$(CPU_COUNT) /MD /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
 !ENDIF
 !ENDIF  # OPTFLAGS
 
@@ -334,13 +342,34 @@ JPEG12_SUPPORTED = 1
 # NCSEcw4.lib, and add -DHAVE_COMPRESS to ECWFLAGS.  The ECWDIR setting will
 # also need some adjustment. 
 
-# Uncomment the following and update to enable ECW read support with the 5.0 SDK
-#ECWDIR  =  "c:\Intergraph\ecwsdk5"
-#ECWFLAGS = -DECWSDK_VERSION=50 \
-#       -I$(ECWDIR)\include \
-#       -I$(ECWDIR)\include/NCSECW/api -I$(ECWDIR)\include/NCSECW/jp2 \
-#       -I$(ECWDIR)\include/NCSECW/ecw
-#ECWLIB  =  $(ECWDIR)\lib\vc90\win32\NCSEcw.lib
+# Uncomment the following and update to enable ECW read support with the 5.0+ SDK
+#!IF $(MSVC_VER) < 1910
+#ECW_PLATFORM_TOOLSET_DIR = vc140
+#!ELSE
+#ECW_PLATFORM_TOOLSET_DIR = vc141
+#!ENDIF
+
+#!IF "$(DEBUG)" == "1"
+#ECW_LIB_DEBUG_SUFFIX = d
+#!ENDIF
+
+#!IF "$(WIN64)" == "1"
+#ECW_PLATFORM_DIR = x64
+#!ELSE
+#ECW_PLATFORM_DIR = Win32
+#!ENDIF
+
+#ECWDIR = "C:/Hexagon/ERDAS ECW JPEG 2000 SDK 5.4.0/Desktop Read-Only"
+#ECWDIR = "C:/Hexagon/ERDAS ECW JPEG 2000 SDK 5.5.0/Desktop Read-Only"
+#ECW_MAJOR_MINOR_VERSION = 55
+
+#ECW_INCLUDES = -I$(ECWDIR)/include \
+#       -I$(ECWDIR)/include/NCSEcw/API -I$(ECWDIR)/include/NCSEcw/JP2 \
+#       -I$(ECWDIR)/include/NCSEcw/ECW
+
+#ECW_ENABLE_COMPRESSION = -DHAVE_COMPRESS
+#ECWFLAGS = -DECWSDK_VERSION=$(ECW_MAJOR_MINOR_VERSION) $(ECW_ENABLE_COMPRESSION) $(ECW_INCLUDES)
+#ECWLIB = $(ECWDIR)\lib\$(ECW_PLATFORM_TOOLSET_DIR)\$(ECW_PLATFORM_DIR)\NCSEcw$(ECW_LIB_LINK_SUFFIX).lib
 
 # To build ECW support as a plugin uncomment the following, and make sure
 # to do "nmake /f makefile.vc plugin" in gdal/frmts/ecw and copy the two
@@ -456,6 +485,10 @@ KAKADU_7_5_OR_LATER = YES
 #HDF5_PLUGIN = NO
 #HDF5_DIR =	c:\warmerda\supportlibs\hdf5\5-164-win
 #HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib 
+
+# Needed to define H5_BUILT_AS_DYNAMIC_LIB for windows compilation 
+# scenarios where it is not exported on the target (non-CMake builds)
+#HDF5_H5_IS_DLL = YES
 
 # Uncomment the following and update to enable KEA support.
 #KEA_PLUGIN = NO

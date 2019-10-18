@@ -318,8 +318,9 @@ uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
     if (numItems == 0)
         throw std::invalid_argument("Number of items must be greater than 0");
     const uint16_t nodeSizeMin = std::min(std::max(nodeSize, static_cast<uint16_t>(2)), static_cast<uint16_t>(65535));
-    if (numItems > std::numeric_limits<uint64_t>::max() - ((numItems / nodeSizeMin) * 2))
-        throw std::overflow_error("Number of items too large");
+    // limit so that resulting size in bytes can be represented by uint64_t
+    if (numItems > static_cast<uint64_t>(1) << 56)
+        throw std::overflow_error("Number of items must be less than 2^56");
     uint64_t n = numItems;
     uint64_t numNodes = n;
     do {

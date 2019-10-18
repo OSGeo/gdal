@@ -32,7 +32,7 @@
 #define OGR_GENSQL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "cpl_hash_set.h"
 #include "cpl_string.h"
 

@@ -33,7 +33,7 @@
 #include "cpl_csv.h"
 #include "cpl_http.h"
 #include "ogrgeojsonreader.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 CPL_CVSID("$Id$")
 

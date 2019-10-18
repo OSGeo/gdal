@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "eeda.h"
 
 #include <algorithm>

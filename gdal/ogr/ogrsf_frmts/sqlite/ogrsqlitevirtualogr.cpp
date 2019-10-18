@@ -52,7 +52,7 @@
 #include "ogrsqlite3ext.h"
 #include "ogrsqlitesqlfunctions.h"
 #include "ogrsqliteutility.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "sqlite3.h"
 
 /************************************************************************/

@@ -316,7 +316,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
             if( strlen(pszTS) != 1 || (pszTS[0] >= '0' && pszTS[0] <= '9') )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Wrong value for tes attribute");
+                         "Wrong value for ts attribute");
                 return false;
             }
             chTS = pszTS[0];

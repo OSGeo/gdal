@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 #include <cstdio>
 #include <cstring>

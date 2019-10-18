@@ -31,7 +31,7 @@
 
 // gdal headers
 #include "ogrsf_frmts.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
 #include <map>
 #include <set>
