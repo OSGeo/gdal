@@ -1227,10 +1227,10 @@ CPLErr GDALRasterBand::RasterIOResampled(
                             {
                                 GDALCopyWords(
                                     &fNoDataValue, GDT_Float32, 0,
-                                    static_cast<GByte*>(pData) +
-                                    nLineSpace * (j + nDstYOff) +
-                                    nDstXOff * nPixelSpace,
-                                    eBufType, static_cast<int>(nPixelSpace),
+                                    static_cast<GByte*>(pDataMem) +
+                                    nLSMem * (j + nDstYOff) +
+                                    nDstXOff * nPSMem,
+                                    eDTMem, static_cast<int>(nPSMem),
                                     nDstXCount);
                             }
                             bSkipResample = true;
