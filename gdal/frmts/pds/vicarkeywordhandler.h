@@ -32,6 +32,8 @@
 #ifndef VICARKEYWORDHANDLER_H
 #define VICARKEYWORDHANDLER_H
 
+#include "cpl_json.h"
+
 class VICARKeywordHandler
 {
     char     **papszKeywordList;
@@ -39,18 +41,22 @@ class VICARKeywordHandler
     CPLString osHeaderText;
     const char *pszHeaderNext;
 
+    CPLJSONObject oJSon;
+
     void    SkipWhite();
-    int     ReadWord( CPLString &osWord );
-    int     ReadPair( CPLString &osName, CPLString &osValue );
-    int     ReadGroup( const char *pszPathPrefix );
+    bool    ReadName( CPLString &osWord );
+    bool    ReadValue( CPLString &osWord, bool bInList, bool& bIsString );
+    bool    ReadPair( CPLString &osName, CPLString &osValue, CPLJSONObject& oCur );
+    bool    Parse();
 
 public:
     VICARKeywordHandler();
     ~VICARKeywordHandler();
 
-    int     Ingest( VSILFILE *fp, GByte *pabyHeader );
+    bool    Ingest( VSILFILE *fp, GByte *pabyHeader );
 
     const char *GetKeyword( const char *pszPath, const char *pszDefault ) const;
+    const CPLJSONObject& GetJsonObject() const { return oJSon; }
 };
 
 #endif // VICARKEYWORDHANDLER_H

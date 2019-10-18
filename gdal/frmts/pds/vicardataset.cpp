@@ -114,6 +114,39 @@ bool VICARDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 }
 
 /************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **VICARDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(
+        nullptr, FALSE, "", "json:VICAR", nullptr);
+}
+
+/************************************************************************/
+/*                             GetMetadata()                            */
+/************************************************************************/
+
+char **VICARDataset::GetMetadata( const char* pszDomain )
+{
+    if( pszDomain != nullptr && EQUAL( pszDomain, "json:VICAR" ) )
+    {
+        if( m_aosVICARMD.empty() )
+        {
+            /*if( eAccess == GA_Update && !m_oJSonLabel.IsValid() )
+            {
+                BuildLabel();
+            }*/
+            CPLAssert( m_oJSonLabel.IsValid() );
+            const CPLString osJson = m_oJSonLabel.Format(CPLJSONObject::Pretty);
+            m_aosVICARMD.InsertString(0, osJson.c_str());
+        }
+        return m_aosVICARMD.List();
+    }
+    return GDALPamDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -487,6 +520,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                                &poDS->adfGeoTransform[0] ));
 
     poDS->eAccess = poOpenInfo->eAccess;
+    poDS->m_oJSonLabel = poDS->oKeywords.GetJsonObject();
 
 /* -------------------------------------------------------------------- */
 /*      Compute the line offsets.                                        */

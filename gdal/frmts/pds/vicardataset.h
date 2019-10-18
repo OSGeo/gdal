@@ -49,6 +49,9 @@ class VICARDataset final: public RawDataset
 
     VICARKeywordHandler  oKeywords;
 
+    CPLJSONObject m_oJSonLabel;
+    CPLStringList m_aosVICARMD;
+
     bool        bGotTransform = false;
     std::array<double, 6> adfGeoTransform = {{0.0,1.0,0,0.0,0.0,1.0}};
 
@@ -68,6 +71,9 @@ public:
     }
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
+
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char* pszDomain = "" ) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );

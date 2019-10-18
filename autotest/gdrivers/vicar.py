@@ -30,7 +30,7 @@
 ###############################################################################
 
 from osgeo import gdal
-
+import json
 
 import gdaltest
 import pytest
@@ -73,6 +73,15 @@ def test_vicar_1():
     for key in expected_md:
         assert md[key] == expected_md[key]
 
+    assert ds.GetMetadataDomainList() == ['', 'json:VICAR']
+    lbl = ds.GetMetadata_List('json:VICAR')[0]
+    lbl = json.loads(lbl)
+    assert lbl['LBLSIZE'] == 9680
+    assert lbl['FORMAT'] == 'BYTE'
+    assert lbl['PROPERTY']['M94_ORBIT']['ASCENDING_NODE_LONGITUDE'] == 118.46
+    assert lbl['PROPERTY']['M94_ORBIT']['SPACECRAFT_ORIENTATION'] == [0.0, -1.0, 0.0]
+    assert lbl['TASK']['HRCONVER']['SPICE_FILE_NAME'] == ['foo']
+    assert lbl['TASK']['HRORTHO']['EXTORI_FILE_NAME'] == "extori'_file_name"
 
 read_datatypes_lists = [
     ('vicar_byte', gdal.GDT_Byte, 129),
