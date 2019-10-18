@@ -49,7 +49,7 @@
 
 #include <vector>
 #include <assert.h>
-#include "../zlib/zlib.h"
+#include "zlib.h"
 
 CPL_CVSID("$Id$")
 
