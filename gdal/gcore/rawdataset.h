@@ -79,6 +79,15 @@ class CPL_DLL RawDataset : public GDALPamDataset
  */
 class CPL_DLL RawRasterBand : public GDALPamRasterBand
 {
+public:
+
+    enum class ByteOrder
+    {
+        ORDER_LITTLE_ENDIAN,
+        ORDER_BIG_ENDIAN,
+        ORDER_VAX // only valid for Float32, Float64, CFloat32 and CFloat64
+    };
+
 protected:
     friend class RawDataset;
 
@@ -88,7 +97,7 @@ protected:
     int         nPixelOffset{};
     int         nLineOffset{};
     int         nLineSize{};
-    int         bNativeOrder{};
+    ByteOrder   eByteOrder{};
 
     int         nLoadedScanline{};
     void        *pLineBuffer{};
@@ -134,10 +143,25 @@ public:
                                 GDALDataType eDataType, int bNativeOrder,
                                 OwnFP bOwnsFP );
 
+                 RawRasterBand( GDALDataset *poDS, int nBand, VSILFILE* fpRaw,
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType,
+                                ByteOrder eByteOrder,
+                                OwnFP bOwnsFP );
+
                  RawRasterBand( VSILFILE* fpRaw,
                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder,
+                                int nXSize, int nYSize,
+                                OwnFP bOwnsFP );
+
+                 RawRasterBand( VSILFILE* fpRaw,
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType,
+                                ByteOrder eByteOrder,
                                 int nXSize, int nYSize,
                                 OwnFP bOwnsFP );
 
@@ -172,12 +196,15 @@ public:
     vsi_l_offset GetImgOffset() const { return nImgOffset; }
     int          GetPixelOffset() const { return nPixelOffset; }
     int          GetLineOffset() const { return nLineOffset; }
-    int          GetNativeOrder() const { return bNativeOrder; }
+    ByteOrder    GetByteOrder() const { return eByteOrder; }
     VSILFILE    *GetFPL() const { return fpRawL; }
     int          GetOwnsFP() const { return bOwnsFP; }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawRasterBand)
+
+    bool         NeedsByteOrderChange() const;
+    void         DoByteSwap(void* pBuffer, size_t nValues, bool bDiskToCPU) const;
 };
 
 #ifdef GDAL_COMPILATION

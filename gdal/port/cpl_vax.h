@@ -32,4 +32,7 @@
 void CPLVaxToIEEEDouble( void * );
 void CPLIEEEToVaxDouble( void * );
 
+void CPLVaxToIEEEFloat( void * );
+void CPLIEEEToVaxFloat( void * );
+
 #endif // CPL_VAX_H

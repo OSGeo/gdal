@@ -187,15 +187,15 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***** CHECK ENDIANNESS **************/
 
-    bool bIsLSB = true;
+    RawRasterBand::ByteOrder eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
     if( GDALDataTypeIsInteger(eDataType) )
     {
         value = poDS->GetKeyword( "INTFMT", "LOW" );
         if (EQUAL(value,"LOW") ) {
-            bIsLSB = true;
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
         }
         else if( EQUAL(value, "HIGH") ) {
-            bIsLSB = false;
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
         }
         else
         {
@@ -209,14 +209,16 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         value = poDS->GetKeyword( "REALFMT", "VAX" );
         if (EQUAL(value,"RIEEE") ) {
-            bIsLSB = true;
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
         }
         else if (EQUAL(value,"IEEE") ) {
-            bIsLSB = false;
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+        }
+        else if (EQUAL(value,"VAX") ) {
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_VAX;
         }
         else
         {
-            // TODO: add support for VAX
             CPLError( CE_Failure, CPLE_NotSupported,
                     "REALFMT=%s layout not supported.", value);
             delete poDS;
@@ -515,11 +517,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                                  static_cast<int>(nPixelOffset),
                                  static_cast<int>(nLineOffset),
                                  eDataType,
-#ifdef CPL_LSB
-                                 bIsLSB,
-#else
-                                 !bIsLSB,
-#endif
+                                 eByteOrder,
                                  RawRasterBand::OwnFP::NO );
 
         poDS->SetBand( i+1, poBand );

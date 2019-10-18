@@ -77,12 +77,17 @@ def test_vicar_1():
 read_datatypes_lists = [
     ('vicar_byte', gdal.GDT_Byte, 129),
     ('vicar_int16', gdal.GDT_Int16, 129),
+    ('vicar_bigendian_int16', gdal.GDT_Int16, 129),
     ('vicar_int32', gdal.GDT_Int32, 129),
     ('vicar_float32_bsq', gdal.GDT_Float32, 123),
     ('vicar_float32_bil', gdal.GDT_Float32, 123),
     ('vicar_float32_bip', gdal.GDT_Float32, 123),
+    ('vicar_bigendian_float32', gdal.GDT_Float32, 129),
     ('vicar_float64', gdal.GDT_Float64, 129),
     ('vicar_cfloat32', gdal.GDT_CFloat32, 148),
+    ('vicar_vax_float32', gdal.GDT_Float32, 129),
+    ('vicar_vax_float64', gdal.GDT_Float64, 129),
+    ('vicar_vax_cfloat32', gdal.GDT_CFloat32, 226),
 ]
 
 @pytest.mark.parametrize(
@@ -96,3 +101,14 @@ def test_vicar_read_datatypes(filename, dt, checksum):
     b = ds.GetRasterBand(1)
     assert b.DataType == dt
     assert b.Checksum() == checksum
+    b = None
+    ds = None
+
+    gdal.FileFromMemBuffer('/vsimem/test.vic', open('data/%s.vic' % filename, 'rb').read())
+    ds = gdal.Open('/vsimem/test.vic', gdal.GA_Update)
+    ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ds.ReadRaster())
+    ds = None
+    ds = gdal.Open('/vsimem/test.vic')
+    assert ds.GetRasterBand(1).Checksum() == checksum
+    ds = None
+    gdal.Unlink('/vsimem/test.vic')
