@@ -847,6 +847,13 @@ cellsize     0
 
 def test_rasterio_nodata():
 
+	try:
+		from osgeo import gdalnumeric
+		gdalnumeric.zeros
+		import numpy
+	except (ImportError, AttributeError):
+		pytest.skip()
+
         ndv = 123
         btype = [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_Int32, gdal.GDT_Float32, gdal.GDT_Float64 ]
 
