@@ -116,14 +116,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /* -------------------------------------------------------------------- */
 /*      Now check for the Vicar End-of-Dataset Label...                 */
 /* -------------------------------------------------------------------- */
-    const char *pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
-
-    if( pszResult == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT DEFINED!");
-        return FALSE;
-    }
-
+    const char *pszResult = CSLFetchNameValueDef( papszKeywordList, "EOL", "1" );
     if( !EQUAL(pszResult,"1") )
         return TRUE;
 
