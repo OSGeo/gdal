@@ -845,6 +845,31 @@ cellsize     0
 
 ###############################################################################
 
+def test_rasterio_nodata():
+
+	try:
+		from osgeo import gdalnumeric
+		gdalnumeric.zeros
+	except (ImportError, AttributeError):
+		pytest.skip()
+
+	ndv = 123
+	btype = [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_Int32, gdal.GDT_Float32, gdal.GDT_Float64 ]
+
+	### create a MEM dataset
+	for src_type in btype:
+		mem_ds = gdal.GetDriverByName('MEM').Create('', 10, 9, 1, src_type)
+		mem_ds.GetRasterBand(1).SetNoDataValue(ndv)
+		mem_ds.GetRasterBand(1).Fill(ndv)
+
+		for dst_type in btype:
+			if ( dst_type > src_type ):
+				### read to a buffer of a wider type (and resample)
+				data = mem_ds.GetRasterBand(1).ReadAsArray(0, 0, 10, 9, 4, 3, resample_alg=gdal.GRIORA_Bilinear, buf_type=dst_type)
+				assert int(data[0,0]) == ndv, 'did not read expected band data via ReadAsArray() - src type -> dst type: ' + str( src_type ) + ' -> ' + str( dst_type )
+
+
+###############################################################################
 
 def test_rasterio_lanczos_nodata():
 
