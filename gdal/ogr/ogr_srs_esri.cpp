@@ -416,17 +416,12 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         // See https://github.com/OSGeo/gdal/issues/1881
         || STARTS_WITH_CI(papszPrj[0], "COMPD_CS") )
     {
-        char *pszWKT = CPLStrdup(papszPrj[0]);
+        std::string osWKT(papszPrj[0]);
         for( int i = 1; papszPrj[i] != nullptr; i++ )
         {
-            pszWKT = static_cast<char *>(
-                CPLRealloc(pszWKT, strlen(pszWKT)+strlen(papszPrj[i]) + 1));
-            strcat( pszWKT, papszPrj[i] );
+            osWKT += papszPrj[i];
         }
-        OGRErr eErr = importFromWkt( pszWKT );
-        CPLFree( pszWKT );
-
-        return eErr;
+        return importFromWkt( osWKT.c_str() );
     }
 
 /* -------------------------------------------------------------------- */
