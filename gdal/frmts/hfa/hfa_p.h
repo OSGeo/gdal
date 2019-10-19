@@ -36,6 +36,7 @@
 #include "hfa.h"
 
 #include <cstdio>
+#include <memory>
 #include <vector>
 #include <set>
 
@@ -396,8 +397,7 @@ class HFAType
   public:
     int         nBytes;
 
-    int         nFields;
-    HFAField    **papoFields;
+    std::vector<std::unique_ptr<HFAField>> apoFields;
 
     char        *pszTypeName;
 
