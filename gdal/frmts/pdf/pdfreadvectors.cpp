@@ -728,6 +728,54 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 bPushToken = TRUE;
             }
         }
+        else if( bInString && ch == '\\' )
+        {
+            const auto nextCh = pszContent[1];
+            if( nextCh == 'n' )
+            {
+                ADD_CHAR(szToken, '\n');
+                pszContent ++;
+            }
+            else if( nextCh == 'r' )
+            {
+                ADD_CHAR(szToken, '\r');
+                pszContent ++;
+            }
+            else if( nextCh == 't' )
+            {
+                ADD_CHAR(szToken, '\t');
+                pszContent ++;
+            }
+            else if( nextCh == 'b' )
+            {
+                ADD_CHAR(szToken, '\b');
+                pszContent ++;
+            }
+            else if( nextCh == '(' || nextCh == ')' || nextCh == '\\' )
+            {
+                ADD_CHAR(szToken, nextCh);
+                pszContent ++;
+            }
+            else if( nextCh >= '0' && nextCh <= '7' &&
+                     pszContent[2] >= '0' && pszContent[2] <= '7' &&
+                     pszContent[3] >= '0' && pszContent[3] <= '7' )
+            {
+                ADD_CHAR(szToken,
+                         ((nextCh - '\0') * 64 + (pszContent[2] - '\0') * 8 + pszContent[3] - '\0'));
+                pszContent += 3;
+            }
+            else if( nextCh == '\n' )
+            {
+                if( pszContent[2] == '\r' )
+                    pszContent += 2;
+                else
+                    pszContent ++;
+            }
+            else if( nextCh == '\r' )
+            {
+                pszContent ++;
+            }
+        }
         else if (ch == '<' && pszContent[1] == '<' && nTokenSize == 0)
         {
             int nDictDepth = 0;
