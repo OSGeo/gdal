@@ -30,6 +30,7 @@
 ###############################################################################
 
 from osgeo import gdal
+from osgeo import ogr
 import json
 
 import gdaltest
@@ -107,6 +108,8 @@ read_datatypes_lists = [
 def test_vicar_read_datatypes(filename, dt, checksum):
 
     ds = gdal.Open('data/%s.vic' % filename)
+    assert ds.GetLayerCount() == 0
+    assert not ds.GetLayer(0)
     b = ds.GetRasterBand(1)
     assert b.DataType == dt
     assert b.Checksum() == checksum
@@ -121,3 +124,22 @@ def test_vicar_read_datatypes(filename, dt, checksum):
     assert ds.GetRasterBand(1).Checksum() == checksum
     ds = None
     gdal.Unlink('/vsimem/test.vic')
+
+
+def test_vicar_read_binary_prefix():
+
+    ds = gdal.OpenEx('data/vicar_binary_prefix.vic')
+    assert ds.GetLayerCount() == 1
+    lyr = ds.GetLayer(0)
+    assert lyr
+    assert not lyr.TestCapability('')
+    f = lyr.GetNextFeature()
+    assert f
+    assert json.loads(f.ExportToJson()) == {"geometry": None, "type": "Feature", "properties": {"short": -32768, "int": -2147483648, "unsigned_char": 255, "float": 1.25, "double": 3.25, "unsigned_int": 4294967295, "unsigned_short": 65535}, "id": 0}
+    assert not lyr.GetNextFeature()
+    lyr.ResetReading()
+    assert lyr.GetNextFeature()
+    ds = None
+
+    assert ogr.Open('data/vicar_binary_prefix.vic')
+    assert not ogr.Open('data/vicar_byte.vic')

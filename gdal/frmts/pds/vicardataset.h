@@ -33,6 +33,7 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
 #include "rawdataset.h"
 #include "vicarkeywordhandler.h"
 #include <array>
@@ -57,6 +58,8 @@ class VICARDataset final: public RawDataset
 
     CPLString   osProjection;
 
+    std::unique_ptr<OGRLayer> m_poLayer;
+
     const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
 
@@ -74,6 +77,10 @@ public:
 
     char **GetMetadataDomainList() override;
     char **GetMetadata( const char* pszDomain = "" ) override;
+
+    int GetLayerCount() override { return m_poLayer ? 1 : 0; }
+    OGRLayer* GetLayer(int i) override {
+        return (m_poLayer && i == 0) ? m_poLayer.get() : nullptr; }
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );

@@ -34,12 +34,346 @@ constexpr double NULL3 = -32768.0;
 
 #include "cpl_port.h"
 #include "cpl_safemaths.hpp"
+#include "cpl_vax.h"
 #include "vicardataset.h"
 #include "vicarkeywordhandler.h"
 
 #include <string>
 
 CPL_CVSID("$Id$")
+
+/************************************************************************/
+/*                     OGRVICARBinaryPrefixesLayer                      */
+/************************************************************************/
+
+class OGRVICARBinaryPrefixesLayer final: public OGRLayer
+{
+        VSILFILE* m_fp = nullptr;
+        OGRFeatureDefn* m_poFeatureDefn = nullptr;
+        int m_iRecord = 0;
+        int m_nRecords = 0;
+        vsi_l_offset m_nFileOffset = 0;
+        vsi_l_offset m_nStride = 0;
+        bool m_bError = false;
+        bool m_bByteSwapIntegers = false;
+        RawRasterBand::ByteOrder m_eBREALByteOrder;
+
+        enum Type
+        {
+            FIELD_UNKNOWN,
+            FIELD_UNSIGNED_CHAR,
+            FIELD_UNSIGNED_SHORT,
+            FIELD_UNSIGNED_INT,
+            FIELD_SHORT,
+            FIELD_INT,
+            FIELD_FLOAT,
+            FIELD_DOUBLE,
+        };
+        static Type GetTypeFromString(const char* pszStr);
+
+        struct Field
+        {
+            int nOffset;
+            Type eType;
+        };
+        std::vector<Field> m_aoFields;
+        std::vector<GByte> m_abyRecord;
+
+        OGRFeature* GetNextRawFeature();
+
+    public:
+        OGRVICARBinaryPrefixesLayer(VSILFILE* fp, int nRecords,
+                                    const CPLJSONObject& oDef,
+                                    vsi_l_offset nFileOffset,
+                                    vsi_l_offset nStride,
+                                    RawRasterBand::ByteOrder eBINTByteOrder,
+                                    RawRasterBand::ByteOrder eBREALByteOrder);
+        ~OGRVICARBinaryPrefixesLayer();
+
+        bool HasError() const { return m_bError; }
+
+        void ResetReading() override { m_iRecord = 0; }
+        OGRFeatureDefn* GetLayerDefn() override { return m_poFeatureDefn; }
+        OGRFeature* GetNextFeature() override;
+        int TestCapability(const char*) override { return false; }
+};
+
+/************************************************************************/
+/*                       GetTypeFromString()                            */
+/************************************************************************/
+
+OGRVICARBinaryPrefixesLayer::Type
+            OGRVICARBinaryPrefixesLayer::GetTypeFromString(const char* pszStr)
+{
+    if( EQUAL(pszStr, "unsigned char") || EQUAL(pszStr, "unsigned byte") )
+        return FIELD_UNSIGNED_CHAR;
+    if( EQUAL(pszStr, "unsigned short") )
+        return FIELD_UNSIGNED_SHORT;
+    if( EQUAL(pszStr, "unsigned int") )
+        return FIELD_UNSIGNED_INT;
+    if( EQUAL(pszStr, "short") )
+        return FIELD_SHORT;
+    if( EQUAL(pszStr, "int") )
+        return FIELD_INT;
+    if( EQUAL(pszStr, "float") )
+        return FIELD_FLOAT;
+    if( EQUAL(pszStr, "double") )
+        return FIELD_DOUBLE;
+    return FIELD_UNKNOWN;
+}
+
+/************************************************************************/
+/*                     OGRVICARBinaryPrefixesLayer()                    */
+/************************************************************************/
+
+OGRVICARBinaryPrefixesLayer::OGRVICARBinaryPrefixesLayer(
+                                    VSILFILE* fp,
+                                    int nRecords,
+                                    const CPLJSONObject& oDef,
+                                    vsi_l_offset nFileOffset,
+                                    vsi_l_offset nStride,
+                                    RawRasterBand::ByteOrder eBINTByteOrder,
+                                    RawRasterBand::ByteOrder eBREALByteOrder):
+    m_fp(fp),
+    m_nRecords(nRecords),
+    m_nFileOffset(nFileOffset),
+    m_nStride(nStride),
+#ifdef CPL_LSB
+    m_bByteSwapIntegers(eBINTByteOrder != RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN),
+#else
+    m_bByteSwapIntegers(eBINTByteOrder != RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN),
+#endif
+    m_eBREALByteOrder(eBREALByteOrder)
+{
+    m_poFeatureDefn = new OGRFeatureDefn("binary_prefixes");
+    SetDescription(m_poFeatureDefn->GetName());
+    m_poFeatureDefn->Reference();
+    m_poFeatureDefn->SetGeomType(wkbNone);
+    int nRecordSize = oDef.GetInteger("size");
+    const auto oFields = oDef.GetObj("fields");
+    if( oFields.IsValid() && oFields.GetType() == CPLJSONObject::Type::Array )
+    {
+        auto oFieldsArray = oFields.ToArray();
+        int nOffset = 0;
+        for( int i = 0; i < oFieldsArray.Size(); i++ )
+        {
+            auto oField = oFieldsArray[i];
+            if( oField.GetType() == CPLJSONObject::Type::Object )
+            {
+                auto osName = oField.GetString("name");
+                auto osType = oField.GetString("type");
+                auto bHidden = oField.GetBool("hidden");
+                auto eType = GetTypeFromString(osType.c_str());
+                if( eType == FIELD_UNKNOWN )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Field %s of type %s not supported",
+                             osName.c_str(), osType.c_str());
+                    m_bError = true;
+                    return;
+                }
+                else if( !osName.empty() )
+                {
+                    OGRFieldType eFieldType(OFTMaxType);
+                    Field f;
+                    f.nOffset = nOffset;
+                    f.eType = eType;
+                    switch(eType)
+                    {
+                        case FIELD_UNSIGNED_CHAR: nOffset += 1; eFieldType = OFTInteger; break;
+                        case FIELD_UNSIGNED_SHORT: nOffset += 2; eFieldType = OFTInteger; break;
+                        case FIELD_UNSIGNED_INT: nOffset += 4; eFieldType = OFTInteger64; break;
+                        case FIELD_SHORT: nOffset += 2; eFieldType = OFTInteger; break;
+                        case FIELD_INT: nOffset += 4; eFieldType = OFTInteger; break;
+                        case FIELD_FLOAT: nOffset += 4; eFieldType = OFTReal; break;
+                        case FIELD_DOUBLE: nOffset += 8; eFieldType = OFTReal; break;
+                        default: CPLAssert(false); break;
+                    }
+                    if( nOffset > nRecordSize )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Field definitions not consistent with declared record size");
+                        m_bError = true;
+                        return;
+                    }
+                    if( !bHidden )
+                    {
+                        m_aoFields.push_back(f);
+                        OGRFieldDefn oFieldDefn(osName.c_str(), eFieldType);
+                        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                    }
+                }
+                else
+                {
+                    m_bError = true;
+                }
+            }
+            else
+            {
+                m_bError = true;
+            }
+            if( m_bError )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Error while reading binary prefix definition");
+                return;
+            }
+        }
+    }
+    m_abyRecord.resize(nRecordSize);
+}
+
+/************************************************************************/
+/*                    ~OGRVICARBinaryPrefixesLayer()                    */
+/************************************************************************/
+
+OGRVICARBinaryPrefixesLayer::~OGRVICARBinaryPrefixesLayer()
+{
+    m_poFeatureDefn->Release();
+}
+
+/************************************************************************/
+/*                         GetNextRawFeature()                          */
+/************************************************************************/
+
+OGRFeature* OGRVICARBinaryPrefixesLayer::GetNextRawFeature()
+{
+    if( m_iRecord >= m_nRecords )
+        return nullptr;
+
+    if( VSIFSeekL(m_fp, m_nFileOffset + m_iRecord * m_nStride, SEEK_SET) != 0 ||
+        VSIFReadL(&m_abyRecord[0], m_abyRecord.size(), 1, m_fp) != 1 )
+    {
+        return nullptr;
+    }
+
+    OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
+    for( int i = 0; i < poFeature->GetFieldCount(); i++ )
+    {
+        int nOffset = m_aoFields[i].nOffset;
+        switch( m_aoFields[i].eType )
+        {
+            case FIELD_UNSIGNED_CHAR:
+                poFeature->SetField(i, m_abyRecord[nOffset]);
+                break;
+            case FIELD_UNSIGNED_SHORT:
+            {
+                unsigned short v;
+                memcpy(&v, &m_abyRecord[nOffset], sizeof(v));
+                if( m_bByteSwapIntegers )
+                {
+                    CPL_SWAP16PTR(&v);
+                }
+                poFeature->SetField(i, v);
+                break;
+            }
+            case FIELD_UNSIGNED_INT:
+            {
+                unsigned int v;
+                memcpy(&v, &m_abyRecord[nOffset], sizeof(v));
+                if( m_bByteSwapIntegers )
+                {
+                    CPL_SWAP32PTR(&v);
+                }
+                poFeature->SetField(i, static_cast<GIntBig>(v));
+                break;
+            }
+            case FIELD_SHORT:
+            {
+                short v;
+                memcpy(&v, &m_abyRecord[nOffset], sizeof(v));
+                if( m_bByteSwapIntegers )
+                {
+                    CPL_SWAP16PTR(&v);
+                }
+                poFeature->SetField(i, v);
+                break;
+            }
+            case FIELD_INT:
+            {
+                int v;
+                memcpy(&v, &m_abyRecord[nOffset], sizeof(v));
+                if( m_bByteSwapIntegers )
+                {
+                    CPL_SWAP32PTR(&v);
+                }
+                poFeature->SetField(i, v);
+                break;
+            }
+            case FIELD_FLOAT:
+            {
+                float v;
+                memcpy(&v, &m_abyRecord[nOffset], sizeof(v));
+                if( m_eBREALByteOrder == RawRasterBand::ByteOrder::ORDER_VAX )
+                {
+                    CPLVaxToIEEEFloat(&v);
+                }
+                else if( m_eBREALByteOrder !=
+#ifdef CPL_LSB
+                            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
+#else
+                            RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN
+#endif
+                       )
+                {
+                    CPL_SWAP32PTR(&v);
+                }
+                poFeature->SetField(i, v);
+                break;
+            }
+            case FIELD_DOUBLE:
+            {
+                double v;
+                memcpy(&v, &m_abyRecord[nOffset], sizeof(v));
+                if( m_eBREALByteOrder == RawRasterBand::ByteOrder::ORDER_VAX )
+                {
+                    CPLVaxToIEEEDouble(&v);
+                }
+                else if( m_eBREALByteOrder !=
+#ifdef CPL_LSB
+                            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
+#else
+                            RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN
+#endif
+                       )
+                {
+                    CPL_SWAP64PTR(&v);
+                }
+                poFeature->SetField(i, v);
+                break;
+            }
+            default:
+                CPLAssert(false);
+        }
+    }
+    poFeature->SetFID(m_iRecord);
+    m_iRecord++;
+    return poFeature;
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature *OGRVICARBinaryPrefixesLayer::GetNextFeature()
+{
+    while( true )
+    {
+        auto poFeature = GetNextRawFeature();
+        if (poFeature == nullptr)
+            return nullptr;
+
+        if((m_poFilterGeom == nullptr
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
+        && (m_poAttrQuery == nullptr
+            || m_poAttrQuery->Evaluate( poFeature )) )
+        {
+            return poFeature;
+        }
+        else
+            delete poFeature;
+    }
+}
 
 /************************************************************************/
 /*                            ~VICARDataset()                            */
@@ -92,7 +426,20 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader == nullptr )
         return FALSE;
 
-    char *pszHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+    const char *pszHeader = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+    {
+        // If opening in vector-only mode, then check when have NBB != 0
+        const char* pszNBB = strstr(pszHeader, "NBB");
+        if( pszNBB == nullptr )
+            return false;
+        const char* pszEqualSign = strchr(pszNBB, '=');
+        if( pszEqualSign == nullptr )
+            return false;
+        if( atoi(pszEqualSign+1) == 0 )
+            return false;
+    }
     return
         strstr(pszHeader, "LBLSIZE") != nullptr &&
         strstr(pszHeader, "FORMAT") != nullptr &&
@@ -413,9 +760,11 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRS.SetBonne ( first_std_parallel, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "GNOMONIC" )) {
         oSRS.SetGnomonic ( center_lat, center_lon, 0, 0 );
+#ifdef FIXME
     } else if (EQUAL( map_proj_name, "OBLIQUE_CYLINDRICAL" )) {
         // hope Swiss Oblique Cylindrical is the same
         oSRS.SetSOC ( center_lat, center_lon, 0, 0 );
+#endif
     } else {
         CPLDebug( "VICAR",
                   "Dataset projection %s is not supported. Continuing...",
@@ -537,6 +886,77 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poDS;
         return nullptr;
+    }
+
+    if( nNBB != 0 )
+    {
+        const char* pszBLType = poDS->GetKeyword("BLTYPE", nullptr);
+        const char* pszVicarConf = CPLFindFile("gdal", "vicar.json");
+        const GUInt64 nRecordSize = atoi(poDS->GetKeyword("RECSIZE", ""));
+        if( pszBLType && pszVicarConf && nRecordSize > 0 )
+        {
+
+            RawRasterBand::ByteOrder eBINTByteOrder =
+                RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+            value = poDS->GetKeyword( "BINTFMT", "LOW" );
+            if (EQUAL(value,"LOW") ) {
+                eBINTByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+            }
+            else if( EQUAL(value, "HIGH") ) {
+                eBINTByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_NotSupported,
+                        "BINTFMT=%s layout not supported.", value);
+            }
+
+            RawRasterBand::ByteOrder eBREALByteOrder =
+                RawRasterBand::ByteOrder::ORDER_VAX;
+            value = poDS->GetKeyword( "BREALFMT", "VAX" );
+            if (EQUAL(value,"RIEEE") ) {
+                eBREALByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+            }
+            else if (EQUAL(value,"IEEE") ) {
+                eBREALByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+            }
+            else if (EQUAL(value,"VAX") ) {
+                eBREALByteOrder = RawRasterBand::ByteOrder::ORDER_VAX;
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_NotSupported,
+                        "BREALFMT=%s layout not supported.", value);
+            }
+
+            CPLJSONDocument oDoc;
+            if( oDoc.Load(pszVicarConf) )
+            {
+                const auto oRoot = oDoc.GetRoot();
+                if( oRoot.GetType() == CPLJSONObject::Type::Object )
+                {
+                    auto oDef = oRoot.GetObj(pszBLType);
+                    if( oDef.IsValid() &&
+                        oDef.GetType() == CPLJSONObject::Type::Object &&
+                        static_cast<GUInt64>(oDef.GetInteger("size")) == nNBB )
+                    {
+                        auto poLayer = std::unique_ptr<OGRVICARBinaryPrefixesLayer>(
+                            new OGRVICARBinaryPrefixesLayer(
+                                poDS->fpImage,
+                                static_cast<int>(nImageSize / nRecordSize),
+                                oDef,
+                                nImageOffsetWithoutNBB,
+                                nRecordSize,
+                                eBINTByteOrder,
+                                eBREALByteOrder));
+                        if( !poLayer->HasError() )
+                        {
+                            poDS->m_poLayer = std::move(poLayer);
+                        }
+                    }
+                }
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -842,6 +1262,7 @@ void GDALRegister_VICAR()
 
     poDriver->SetDescription( "VICAR" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MIPL VICAR file" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_vicar.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

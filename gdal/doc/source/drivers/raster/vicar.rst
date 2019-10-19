@@ -6,7 +6,7 @@ VICAR -- VICAR
 
 .. shortname:: VICAR
 
-See `VICAR documentation <https://www-mipl.jpl.nasa.gov/external/vicar.htm>`_
+See `VICAR documentation <https://www-mipl.jpl.nasa.gov/vicar.html>`_
 
 NOTE: Implemented as ``gdal/frmts/pds/vicardataset.cpp``.
 
@@ -119,3 +119,47 @@ or
 ::
 
    $ gdalinfo -json ../autotest/gdrivers/data/test_vicar_truncated.bin -mdd all
+
+Binary prefixes
+---------------
+
+Starting with GDAL 3.1, if the VICAR label declares a non-zero binary prefix
+length (`NBB` label item), then GDAL will look in the `vicar.json` configuration file if
+there is an entry corresponding to the `BLTYPE` label item (currently only
+M94_HRSC is defined), and if there is a match, a OGR vector layer will be
+available on the dataset, with a feature for each image record.
+
+For example:
+
+::
+
+    $ ogrinfo h0038_0000.bl2.16 -al -q
+
+    Layer name: binary_prefixes
+    OGRFeature(binary_prefixes):0
+        EphTime (Real) = 127988268.646895
+        Exposure (Real) = 40.1072692871094
+        COT (Integer) = 28275
+        FEETemp (Integer) = 28508
+        FPMTemp (Integer) = 29192
+        OBTemp (Integer) = 28295
+        FERT (Integer) = 27001
+        LERT (Integer) = 28435
+        CmpDataLen (Integer) = 146
+        FrameCount (Integer) = 486
+        Pischel (Integer) = 5
+        ActPixel (Integer) = 5120
+        RSHits (Integer) = 0
+        DceInput (Integer) = 0
+        DceOutput (Integer) = 4
+        FrameErr1 (Integer) = 0
+        FrameErr2 (Integer) = 0
+        Gob1 (Integer) = 0
+        Gob2 (Integer) = 0
+        Gob3 (Integer) = 0
+        DSS (Integer) = 97
+        DecmpErr1 (Integer) = 0
+        DecmpErr2 (Integer) = 0
+        DecmpErr3 (Integer) = 0
+        FillerFlag (Integer) = 5
+
