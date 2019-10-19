@@ -327,7 +327,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
             return true;
         }
 
-        int iCoord;
+        int iCoord = 0;
         const OGRwkbGeometryType eType = wkbFlatten(poGeometry->getGeometryType());
         OGRSimpleCurve *poCurve =
             (eType == wkbLineString || eType == wkbCircularString) ?
