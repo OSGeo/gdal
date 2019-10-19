@@ -11,6 +11,7 @@ OBJ	=	gdal_fuzzer.o \
 		get_jpeg2000_structure_fuzzer.o \
 		gdal_translate_fuzzer.o \
 		gdal_vector_translate_fuzzer.o \
+		gml_geom_import_fuzzer.o \
 		fuzzingengine.o
 
 CPPFLAGS	:=	$(CPPFLAGS) -I../ogr/ogrsf_frmts/sqlite
@@ -53,6 +54,9 @@ mitab_tab_fuzzer$(EXE): ogr_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 
 gtiff_mmap_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@ -DREGISTER_FUNC=GDALRegister_GTiff -DGTIFF_USE_MMAP
+
+gml_geom_import_fuzzer$(EXE): gml_geom_import_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gml_geom_import_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 dummyfuzzers: fuzzingengine.o
 	$(AR) r libFuzzingEngine.a fuzzingengine.o
