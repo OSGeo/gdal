@@ -31,6 +31,8 @@
 #include "sdts_al.h"
 #include "cpl_string.h"
 
+#include <set>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -205,7 +207,8 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
     poModule->Rewind();
 
     DDFRecord *poRecord = nullptr;
-    char **papszModnList = nullptr;
+    CPLStringList aosModnList;
+    std::set<std::string> aoSetModNames;
     while( (poRecord = poModule->ReadRecord()) != nullptr )
     {
         for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
@@ -226,8 +229,11 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
                     strncpy( szName, pszModName, 4 );
                     szName[4] = '\0';
 
-                    if( CSLFindString( papszModnList, szName ) == -1 )
-                        papszModnList = CSLAddString( papszModnList, szName );
+                    if( aoSetModNames.find(szName) == aoSetModNames.end() )
+                    {
+                        aoSetModNames.insert( szName );
+                        aosModnList.AddString( szName );
+                    }
                 }
             }
         }
@@ -235,5 +241,5 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
 
     poModule->Rewind();
 
-    return papszModnList;
+    return aosModnList.StealList();
 }
