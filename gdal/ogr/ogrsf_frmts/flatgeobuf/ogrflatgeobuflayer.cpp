@@ -839,12 +839,14 @@ OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, const flatbu
         for (uint32_t i = 0; i < pEnds->size(); i++) {
             auto e = pEnds->Get(i);
             auto lr = readLinearRing(feature, pXy, e - offset, offset);
-            if (lr == nullptr) {
-                delete p;
-                return nullptr;
-            }
-            p->addRingDirectly(lr);
             offset = e;
+            if (lr == nullptr)
+                continue;
+            p->addRingDirectly(lr);
+        }
+        if (p->IsEmpty()) {
+            delete p;
+            return nullptr;
         }
     }
     return p;
@@ -855,7 +857,13 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, co
     auto pLengths = feature->lengths();
     if (pLengths == nullptr || pLengths->size() < 2) {
         auto mp = new OGRMultiPolygon();
-        mp->addGeometryDirectly(readPolygon(feature, pXy, len));
+        auto p = readPolygon(feature, pXy, len);
+        if (p == nullptr) {
+            delete p;
+            delete mp;
+            return CPLErrorInvalidLength();
+        }
+        mp->addGeometryDirectly(p);
         return mp;
     } else {
         auto pEnds = feature->ends();
@@ -868,9 +876,22 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, co
             auto p = new OGRPolygon();
             uint32_t ringCount = pLengths->Get(i);
             for (uint32_t j = 0; j < ringCount; j++) {
+                if (roffset >= pEnds->size()) {
+                    delete p;
+                    delete mp;
+                    return CPLErrorInvalidLength();
+                }
                 uint32_t e = pEnds->Get(roffset++);
-                p->addRingDirectly(readLinearRing(feature, pXy, e - offset, offset));
+                auto lr = readLinearRing(feature, pXy, e - offset, offset);
                 offset = e;
+                if (lr == nullptr)
+                    continue;
+                p->addRingDirectly(lr);
+            }
+            if (p->IsEmpty()) {
+                delete p;
+                delete mp;
+                return CPLErrorInvalidLength();
             }
             mp->addGeometryDirectly(p);
         }
