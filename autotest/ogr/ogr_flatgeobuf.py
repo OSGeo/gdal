@@ -248,6 +248,8 @@ def test_ogr_flatgeobuf_3():
 
     wktRoundtrip('POINT Z (1 2 3)')
     wktRoundtrip('POINT ZM (1 2 3 4)')
+    wktRoundtrip('MULTIPOINT Z ((10 40 1),(40 30 2),(20 20 3),(30 10 4))')
+    wktRoundtrip('MULTIPOINT ZM ((10 40 1 4),(40 30 2 3),(20 20 3 2),(30 10 4 1))')
     wktRoundtrip('LINESTRING Z (1 2 3,2 3 4)')
     wktRoundtrip('LINESTRING ZM (1 2 3 4,2 3 4 5)')
     wktRoundtrip('POLYGON Z ((30 10 1,40 40 2,20 40 3,10 20 4,30 10 5))')
