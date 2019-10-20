@@ -698,11 +698,11 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
     return OGRERR_NONE;
 }
 
-OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t offset)
+OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t offset)
 {
     auto offsetXy = offset * 2;
-    auto aXy = pXy->data();
-    if (offsetXy >= pXy->size())
+    auto aXy = pXy.data();
+    if (offsetXy >= pXy.size())
         return CPLErrorInvalidLength();
     if (m_hasZ) {
         auto pZ = feature->z();
@@ -735,7 +735,7 @@ OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffer
     }
 }
 
-OGRMultiPoint *OGRFlatGeobufLayer::readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t len)
+OGRMultiPoint *OGRFlatGeobufLayer::readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len)
 {
     if (len >= feature_max_buffer_size)
         return CPLErrorInvalidLength();
@@ -752,7 +752,7 @@ OGRMultiPoint *OGRFlatGeobufLayer::readMultiPoint(const Feature *feature, const 
     return mp;
 }
 
-OGRLineString *OGRFlatGeobufLayer::readLineString(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t len, uint32_t offset)
+OGRLineString *OGRFlatGeobufLayer::readLineString(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset)
 {
     auto ls = new OGRLineString();
     if (readSimpleCurve(feature, pXy, len, offset, ls) != OGRERR_NONE) {
@@ -762,7 +762,7 @@ OGRLineString *OGRFlatGeobufLayer::readLineString(const Feature *feature, const 
     return ls;
 }
 
-OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *feature, const flatbuffers::Vector<double> *pXy)
+OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *feature, const flatbuffers::Vector<double> &pXy)
 {
     auto pEnds = feature->ends();
     if (pEnds == nullptr)
@@ -782,7 +782,7 @@ OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *featu
     return mls;
 }
 
-OGRLinearRing *OGRFlatGeobufLayer::readLinearRing(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t len, uint32_t offset)
+OGRLinearRing *OGRFlatGeobufLayer::readLinearRing(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset)
 {
     auto lr = new OGRLinearRing();
     if (readSimpleCurve(feature, pXy, len, offset, lr) != OGRERR_NONE) {
@@ -792,14 +792,14 @@ OGRLinearRing *OGRFlatGeobufLayer::readLinearRing(const Feature *feature, const 
     return lr;
 }
 
-OGRErr OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t len, uint32_t offset, OGRSimpleCurve *sc)
+OGRErr OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset, OGRSimpleCurve *sc)
 {
     if (offset > feature_max_buffer_size || len > feature_max_buffer_size - offset)
         return CPLErrorInvalidSize();
     const uint32_t offsetLen = len + offset;
-    if (offsetLen > pXy->size() / 2)
+    if (offsetLen > pXy.size() / 2)
         return CPLErrorInvalidSize();
-    auto aXy = pXy->data();
+    auto aXy = pXy.data();
     if (m_hasZ) {
         auto pZ = feature->z();
         if (pZ == nullptr)
@@ -824,7 +824,7 @@ OGRErr OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, const flatbuf
     return OGRERR_NONE;
 }
 
-OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t len, uint32_t offset)
+OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset)
 {
     auto pEnds = feature->ends();
     auto p = new OGRPolygon();
@@ -852,7 +852,7 @@ OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, const flatbu
     return p;
 }
 
-OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t len)
+OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len)
 {
     auto pLengths = feature->lengths();
     if (pLengths == nullptr || pLengths->size() < 2) {
@@ -913,17 +913,17 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
         return CPLErrorInvalidLength();
     switch (m_geometryType) {
         case GeometryType::Point:
-            return readPoint(feature, pXy);
+            return readPoint(feature, *pXy);
         case GeometryType::MultiPoint:
-            return readMultiPoint(feature, pXy, xySize / 2);
+            return readMultiPoint(feature, *pXy, xySize / 2);
         case GeometryType::LineString:
-            return readLineString(feature, pXy, xySize / 2);
+            return readLineString(feature, *pXy, xySize / 2);
         case GeometryType::MultiLineString:
-            return readMultiLineString(feature, pXy);
+            return readMultiLineString(feature, *pXy);
         case GeometryType::Polygon:
-            return readPolygon(feature, pXy, xySize);
+            return readPolygon(feature, *pXy, xySize);
         case GeometryType::MultiPolygon:
-            return readMultiPolygon(feature, pXy, xySize);
+            return readMultiPolygon(feature, *pXy, xySize);
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
     }
