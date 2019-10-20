@@ -785,18 +785,19 @@ OGRFeature *  OGRBNALayer::GetFeature( GIntBig nFID )
     if (bWriter || nFID < 0 || !CPL_INT64_FITS_ON_INT32(nFID))
         return nullptr;
 
+    const int nFID32 = static_cast<int>(nFID);
     if (nFID >= nFeatures)
         return nullptr;
 
-    if( VSIFSeekL( fpBNA, offsetAndLineFeaturesTable[nFID].offset, SEEK_SET ) < 0 )
+    if( VSIFSeekL( fpBNA, offsetAndLineFeaturesTable[nFID32].offset, SEEK_SET ) < 0 )
         return nullptr;
 
-    curLine = offsetAndLineFeaturesTable[nFID].line;
+    curLine = offsetAndLineFeaturesTable[nFID32].line;
     int ok = FALSE;
     BNARecord* record
         = BNA_GetNextRecord(fpBNA, &ok, &curLine, TRUE, bnaFeatureType);
 
-    OGRFeature *poFeature = BuildFeatureFromBNARecord(record, (int)nFID);
+    OGRFeature *poFeature = BuildFeatureFromBNARecord(record, nFID32);
 
     BNA_FreeRecord(record);
 
