@@ -165,33 +165,13 @@ int OGRBNADataSource::Open( const char * pszFilename )
         static const OGRwkbGeometryType wkbGeomTypes[]
             = { wkbPoint, wkbMultiPolygon, wkbLineString, wkbPolygon };
 
-#if defined(BNA_FAST_DS_OPEN)
-        BNARecord* record = BNA_GetNextRecord(fp, &ok, &curLine, FALSE, BNA_READ_NONE);
-        BNA_FreeRecord(record);
-
-        if (ok)
-        {
-            nLayers = 4;
-
-            papoLayers = static_cast<OGRBNALayer **>(
-                CPLMalloc(nLayers * sizeof(OGRBNALayer*)));
-            for( i = 0; i < 4; i++ )
-                papoLayers[i] = new OGRBNALayer(
-                    pszFilename,
-                    layerRadixName[i],
-                    static_cast<BNAFeatureType>( i ),
-                    wkbGeomTypes[i], FALSE, this );
-        }
-#else
-        int nFeatures[4] = { 0, 0, 0, 0 };
-        OffsetAndLine* offsetAndLineFeaturesTable[4] = { nullptr, nullptr, nullptr, nullptr };
+        std::vector<OffsetAndLine> offsetAndLineFeaturesTable[4];
         int nIDs[4] = {0, 0, 0, 0};
-        bool partialIndexTable = true;
 
         BNARecord* record = nullptr;
         while(1)
         {
-            int offset = static_cast<int>( VSIFTellL(fp) );
+            vsi_l_offset offset = VSIFTellL(fp);
             int line = curLine;
             record =  BNA_GetNextRecord(fp, &ok, &curLine, FALSE, BNA_READ_NONE);
             if (ok == FALSE)
@@ -205,33 +185,32 @@ int OGRBNADataSource::Open( const char * pszFilename )
             {
                 /* end of file */
                 ok = TRUE;
-
-                /* and we have finally build the whole index table */
-                partialIndexTable = false;
                 break;
             }
 
             if (record->nIDs > nIDs[record->featureType])
                 nIDs[record->featureType] = record->nIDs;
 
-            nFeatures[record->featureType]++;
-            offsetAndLineFeaturesTable[record->featureType] =
-              static_cast<OffsetAndLine *>( CPLRealloc(
-                  offsetAndLineFeaturesTable[record->featureType],
-                  nFeatures[record->featureType] * sizeof(OffsetAndLine) ) );
-            offsetAndLineFeaturesTable[record->featureType][nFeatures[record->featureType]-1].offset = offset;
-            offsetAndLineFeaturesTable[record->featureType][nFeatures[record->featureType]-1].line = line;
+            OffsetAndLine oal;
+            oal.offset = offset;
+            oal.line = line;
+            offsetAndLineFeaturesTable[record->featureType].emplace_back(oal);
 
             BNA_FreeRecord(record);
         }
 
-        nLayers = (nFeatures[0] != 0) + (nFeatures[1] != 0) + (nFeatures[2] != 0) + (nFeatures[3] != 0);
+        nLayers = 0;
+        for( int i = 0; i < 4; i++ )
+        {
+            if( !offsetAndLineFeaturesTable[i].empty() )
+                nLayers++;
+        }
         papoLayers = static_cast<OGRBNALayer **>(
             CPLMalloc(nLayers * sizeof(OGRBNALayer*)) );
         int iLayer = 0;
         for( int i = 0; i < 4; i++ )
         {
-            if (nFeatures[i])
+            if (!offsetAndLineFeaturesTable[i].empty())
             {
                 papoLayers[iLayer] = new OGRBNALayer( pszFilename,
                                                       layerRadixName[i],
@@ -240,13 +219,12 @@ int OGRBNADataSource::Open( const char * pszFilename )
                                                       FALSE,
                                                       this,
                                                       nIDs[i]);
-                papoLayers[iLayer]->SetFeatureIndexTable(nFeatures[i],
-                                                        offsetAndLineFeaturesTable[i],
-                                                        partialIndexTable);
+                papoLayers[iLayer]->SetFeatureIndexTable(
+                                    std::move(offsetAndLineFeaturesTable[i]));
                 iLayer++;
             }
         }
-#endif
+
         VSIFCloseL(fp);
     }
 

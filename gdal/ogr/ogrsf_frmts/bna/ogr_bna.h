@@ -34,6 +34,8 @@
 
 #include "ogrbnaparser.h"
 
+#include <vector>
+
 class OGRBNADataSource;
 
 /************************************************************************/
@@ -42,7 +44,7 @@ class OGRBNADataSource;
 
 typedef struct
 {
-  int   offset;
+  vsi_l_offset   offset;
   int   line;
 } OffsetAndLine;
 
@@ -60,13 +62,11 @@ class OGRBNALayer final: public OGRLayer
     int                nNextFID;
     VSILFILE*          fpBNA;
     int                nFeatures;
-    bool               partialIndexTable;
-    OffsetAndLine*     offsetAndLineFeaturesTable;
+    std::vector<OffsetAndLine> offsetAndLineFeaturesTable;
 
     BNAFeatureType     bnaFeatureType;
 
     OGRFeature *       BuildFeatureFromBNARecord (BNARecord* record, long fid);
-    void               FastParseUntil ( int interestFID);
     void               WriteFeatureAttributes(VSILFILE* fp, OGRFeature *poFeature);
     void               WriteCoord(VSILFILE* fp, double dfX, double dfY);
 
@@ -80,9 +80,7 @@ class OGRBNALayer final: public OGRLayer
                                     int nIDs = NB_MAX_BNA_IDS);
                         ~OGRBNALayer();
 
-    void                SetFeatureIndexTable(int nFeatures,
-                                             OffsetAndLine* offsetAndLineFeaturesTable,
-                                             int partialIndexTable);
+    void                SetFeatureIndexTable(std::vector<OffsetAndLine>&& offsetAndLineFeaturesTable);
 
     void                ResetReading() override;
     OGRFeature *        GetNextFeature() override;
