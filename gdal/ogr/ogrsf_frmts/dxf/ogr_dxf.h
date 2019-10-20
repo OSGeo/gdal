@@ -66,9 +66,6 @@ public:
 class OGRDXFFeatureQueue
 {
         std::queue<OGRDXFFeature *> apoFeatures;
-        size_t                      nFeaturesSize = 0;
-
-        static size_t GetFeatureSize(OGRFeature* poFeature);
 
     public:
         OGRDXFFeatureQueue() {}
@@ -82,8 +79,6 @@ class OGRDXFFeatureQueue
         bool empty() const { return apoFeatures.empty(); }
 
         size_t size() const { return apoFeatures.size(); }
-
-        size_t GetFeaturesSize() const { return nFeaturesSize; }
 };
 
 /************************************************************************/
@@ -126,18 +121,15 @@ class OGRDXFBlocksLayer final: public OGRLayer
 class OGRDXFInsertTransformer final: public OGRCoordinateTransformation
 {
 public:
-    OGRDXFInsertTransformer() :
-        dfXOffset(0),dfYOffset(0),dfZOffset(0),
-        dfXScale(1.0),dfYScale(1.0),dfZScale(1.0),
-        dfAngle(0.0) {}
+    OGRDXFInsertTransformer() = default;
 
-    double dfXOffset;
-    double dfYOffset;
-    double dfZOffset;
-    double dfXScale;
-    double dfYScale;
-    double dfZScale;
-    double dfAngle;
+    double dfXOffset = 0.0;
+    double dfYOffset = 0.0;
+    double dfZOffset = 0.0;
+    double dfXScale = 1.0;
+    double dfYScale = 1.0;
+    double dfZScale = 1.0;
+    double dfAngle = 0.0;
 
     OGRDXFInsertTransformer GetOffsetTransformer()
     {
@@ -392,6 +384,23 @@ class OGRDXFLayer final: public OGRLayer
     std::set<CPLString> oIgnoredEntities;
 
     OGRDXFFeatureQueue  apoPendingFeatures;
+
+    struct InsertState
+    {
+        OGRDXFInsertTransformer m_oTransformer{};
+        CPLString               m_osBlockName{};
+        CPLStringList           m_aosAttribs{};
+        int                     m_nColumnCount = 0;
+        int                     m_nRowCount = 0;
+        int                     m_iCurCol = 0;
+        int                     m_iCurRow = 0;
+        double                  m_dfColumnSpacing = 0.0;
+        double                  m_dfRowSpacing = 0.0;
+        std::vector<std::unique_ptr<OGRDXFFeature>> m_apoAttribs{};
+        std::unique_ptr<OGRDXFFeature> m_poTemplateFeature{};
+    };
+    InsertState         m_oInsertState{};
+
     void                ClearPendingFeatures();
 
     void                TranslateGenericProperty( OGRDXFFeature *poFeature,
@@ -414,7 +423,7 @@ class OGRDXFLayer final: public OGRLayer
     OGRDXFFeature *     TranslateARC();
     OGRDXFFeature *     TranslateSPLINE();
     OGRDXFFeature *     Translate3DFACE();
-    OGRDXFFeature *     TranslateINSERT();
+    bool                TranslateINSERT();
     OGRDXFFeature *     TranslateMTEXT();
     OGRDXFFeature *     TranslateTEXT( const bool bIsAttribOrAttdef );
     OGRDXFFeature *     TranslateDIMENSION();
@@ -424,13 +433,7 @@ class OGRDXFLayer final: public OGRLayer
     OGRDXFFeature *     TranslateMLEADER();
     OGRDXFFeature *     TranslateASMEntity();
 
-    void                TranslateINSERTCore( OGRDXFFeature* const poTemplateFeature,
-                                             const CPLString& osBlockName,
-                                             OGRDXFInsertTransformer oTransformer,
-                                             const double dfExtraXOffset,
-                                             const double dfExtraYOffset,
-                                             char** const papszAttribs,
-                         const std::vector<std::unique_ptr<OGRDXFFeature>>& apoAttribs );
+    void                GenerateINSERTFeatures();
     OGRLineString *     InsertSplineWithChecks( const int nDegree,
                                                 std::vector<double>& adfControlPoints,
                                                 int nControlPoints,
