@@ -33,6 +33,7 @@
 import os
 
 from osgeo import ogr
+from osgeo import osr
 from osgeo import gdal
 
 import gdaltest
@@ -319,3 +320,59 @@ def test_ogr_flatgeobuf_directory():
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/multi_layer')
     assert not gdal.VSIStatL('/vsimem/multi_layer')
+
+
+def test_ogr_flatgeobuf_srs_epsg():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+    srs_got = lyr.GetSpatialRef()
+    assert srs_got.IsSame(srs)
+    assert srs_got.GetAuthorityName(None) == 'EPSG'
+    assert srs_got.GetAuthorityCode(None) == '32631'
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+
+def test_ogr_flatgeobuf_srs_other_authority():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("ESRI:8427")
+    ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+    srs_got = lyr.GetSpatialRef()
+    assert srs_got.IsSame(srs)
+    assert srs_got.GetAuthorityName(None) == 'ESRI'
+    assert srs_got.GetAuthorityCode(None) == '8427'
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+
+def test_ogr_flatgeobuf_srs_no_authority():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=longlat +ellps=clrk66")
+    ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+    srs_got = lyr.GetSpatialRef()
+    assert srs_got.IsSame(srs)
+    assert srs_got.GetAuthorityName(None) is None
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')

@@ -96,9 +96,13 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
         auto org = crs->org();
         auto code = crs->code();
         auto wkt = crs->wkt();
-        m_poSRS->SetAuthority(nullptr, org->c_str(), code);
-        if (org == nullptr && code != 0) {
+        if ((org == nullptr || EQUAL(org->c_str(), "EPSG")) && code != 0) {
             m_poSRS->importFromEPSG(code);
+        } else if( org && code != 0 ) {
+            CPLString osCode;
+            osCode.Printf("%s:%d", org->c_str(), code);
+            if( m_poSRS->SetFromUserInput(osCode.c_str()) != OGRERR_NONE )
+                m_poSRS->importFromWkt(wkt->c_str());
         } else if (wkt) {
             m_poSRS->importFromWkt(wkt->c_str());
         }
@@ -322,10 +326,8 @@ void OGRFlatGeobufLayer::Create() {
             CPLFree(pszWKT);
             pszWKT = nullptr;
         }
-        if (nAuthorityCode != 0) {
-            CPLDebug("FlatGeobuf", "Creating CRS with code %d", nAuthorityCode);
-            crs = CreateCrsDirect(fbb, pszAuthorityName, nAuthorityCode, m_poSRS->GetName(), nullptr, pszWKT);
-        }
+
+        crs = CreateCrsDirect(fbb, pszAuthorityName, nAuthorityCode, m_poSRS->GetName(), nullptr, pszWKT);
         CPLFree(pszWKT);
     }
 
