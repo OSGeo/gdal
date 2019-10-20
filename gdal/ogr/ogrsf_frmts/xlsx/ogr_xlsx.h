@@ -36,6 +36,7 @@
 #include "ogr_mem.h"
 
 #include <vector>
+#include <set>
 #include <string>
 #include <map>
 
@@ -161,6 +162,7 @@ class OGRXLSXDataSource final: public GDALDataset
     int                 nLayers;
     OGRLayer          **papoLayers;
     std::map<CPLString, CPLString> oMapRelsIdToTarget;
+    std::set<std::string> m_oSetSheetId;
 
     void                AnalyseSharedStrings(VSILFILE* fpSharedStrings);
     void                AnalyseWorkbook(VSILFILE* fpWorkbook);
