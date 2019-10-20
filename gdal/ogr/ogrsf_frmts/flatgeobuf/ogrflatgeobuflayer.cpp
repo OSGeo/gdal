@@ -767,20 +767,25 @@ OGRLinearRing *OGRFlatGeobufLayer::readLinearRing(const Feature *feature, uint32
 
 OGRErr OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, uint32_t len, uint32_t offset, OGRSimpleCurve *sc)
 {
-    if (len > std::numeric_limits<int>().max())
+    if (len > feature_max_buffer_size)
+        return CPLErrorInvalidSize();
+    if (offset > feature_max_buffer_size)
+        return CPLErrorInvalidSize();
+    uint32_t offsetLen = len + offset;
+    if (offsetLen > feature_max_buffer_size)
         return CPLErrorInvalidSize();
     auto xy = feature->xy();
-    if (len + offset > xy->size() / 2)
+    if (offsetLen > xy->size() / 2)
         return CPLErrorInvalidSize();
     auto aXy = xy->data();
     if (m_hasZ) {
         auto z = feature->z();
-        if (len + offset > z->size())
+        if (offsetLen > z->size())
             return CPLErrorInvalidSize();
         auto aZ = z->data();
         if (m_hasM) {
             auto m = feature->m();
-            if (len + offset > m->size())
+            if (offsetLen > m->size())
                 return CPLErrorInvalidSize();
             auto aM = m->data();
             sc->setPoints(len, (OGRRawPoint *) aXy + offset, aZ + offset, aM + offset);
