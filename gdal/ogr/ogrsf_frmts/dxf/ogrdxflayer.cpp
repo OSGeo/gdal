@@ -127,6 +127,8 @@ void OGRDXFLayer::ResetReading()
 {
     iNextFID = 0;
     ClearPendingFeatures();
+    m_oInsertState.m_nRowCount = 0;
+    m_oInsertState.m_nColumnCount = 0;
     poDS->RestartEntities();
 }
 
