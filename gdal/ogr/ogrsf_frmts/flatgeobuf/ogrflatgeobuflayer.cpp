@@ -740,8 +740,15 @@ OGRMultiPoint *OGRFlatGeobufLayer::readMultiPoint(const Feature *feature, const 
     if (len >= feature_max_buffer_size)
         return CPLErrorInvalidLength();
     auto mp = new OGRMultiPoint();
-    for (uint32_t i = 0; i < len; i++)
-        mp->addGeometryDirectly(readPoint(feature, pXy, i));
+    for (uint32_t i = 0; i < len; i++) {
+        auto p = readPoint(feature, pXy, i);
+        if (p == nullptr) {
+            delete mp;
+            return nullptr;
+        }
+        mp->addGeometryDirectly(p);
+    }
+        
     return mp;
 }
 
