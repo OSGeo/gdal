@@ -728,7 +728,10 @@ OGRMultiPoint *OGRFlatGeobufLayer::readMultiPoint(const Feature *feature, uint32
 OGRLineString *OGRFlatGeobufLayer::readLineString(const Feature *feature, uint32_t len, uint32_t offset)
 {
     auto ls = new OGRLineString();
-    readSimpleCurve(feature, len, offset, ls);
+    if (readSimpleCurve(feature, len, offset, ls) != OGRERR_NONE) {
+        delete ls;
+        return nullptr;
+    }
     return ls;
 }
 
@@ -741,7 +744,12 @@ OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *featu
     uint32_t offset = 0;
     for (uint32_t i = 0; i < ends->size(); i++) {
         auto e = ends->Get(i);
-        mls->addGeometryDirectly(readLineString(feature, e - offset, offset));
+        auto ls = readLineString(feature, e - offset, offset);
+        if (ls == nullptr) {
+            delete mls;
+            return nullptr;
+        }
+        mls->addGeometryDirectly(ls);
         offset = e;
     }
     return mls;
@@ -750,24 +758,39 @@ OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *featu
 OGRLinearRing *OGRFlatGeobufLayer::readLinearRing(const Feature *feature, uint32_t len, uint32_t offset)
 {
     auto lr = new OGRLinearRing();
-    readSimpleCurve(feature, len, offset, lr);
+    if (readSimpleCurve(feature, len, offset, lr) != OGRERR_NONE) {
+        delete lr;
+        return nullptr;
+    }
     return lr;
 }
 
-void OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, uint32_t len, uint32_t offset, OGRSimpleCurve *sc)
+OGRErr OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, uint32_t len, uint32_t offset, OGRSimpleCurve *sc)
 {
-    auto xy = feature->xy()->data();
+    if (len > std::numeric_limits<int>().max())
+        return CPLErrorInvalidSize();
+    auto xy = feature->xy();
+    if (len + offset > xy->size() / 2)
+        return CPLErrorInvalidSize();
+    auto aXy = xy->data();
     if (m_hasZ) {
-        auto aZ = feature->z()->data();
+        auto z = feature->z();
+        if (len + offset > z->size())
+            return CPLErrorInvalidSize();
+        auto aZ = z->data();
         if (m_hasM) {
-            auto aM = feature->m()->data();
-            sc->setPoints(len, (OGRRawPoint *) xy + offset, aZ + offset, aM + offset);
+            auto m = feature->m();
+            if (len + offset > m->size())
+                return CPLErrorInvalidSize();
+            auto aM = m->data();
+            sc->setPoints(len, (OGRRawPoint *) aXy + offset, aZ + offset, aM + offset);
         } else {
-            sc->setPoints(len, (OGRRawPoint *) xy + offset, aZ + offset);
+            sc->setPoints(len, (OGRRawPoint *) aXy + offset, aZ + offset);
         }
     } else {
-        sc->setPoints(len, (OGRRawPoint *) xy + offset);
+        sc->setPoints(len, (OGRRawPoint *) aXy + offset);
     }
+    return OGRERR_NONE;
 }
 
 OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, uint32_t len, uint32_t offset)
@@ -775,11 +798,21 @@ OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, uint32_t len
     auto ends = feature->ends();
     auto p = new OGRPolygon();
     if (ends == nullptr || ends->size() < 2) {
-        p->addRingDirectly(readLinearRing(feature, len / 2));
+        auto lr = readLinearRing(feature, len / 2);
+        if (lr == nullptr) {
+            delete p;
+            return nullptr;
+        }
+        p->addRingDirectly(lr);
     } else {
         for (uint32_t i = 0; i < ends->size(); i++) {
             auto e = ends->Get(i);
-            p->addRingDirectly(readLinearRing(feature, e - offset, offset));
+            auto lr = readLinearRing(feature, e - offset, offset);
+            if (lr == nullptr) {
+                delete p;
+                return nullptr;
+            }
+            p->addRingDirectly(lr);
             offset = e;
         }
     }
