@@ -700,36 +700,47 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
 
 OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t offset)
 {
+    auto offsetXy = offset * 2;
     auto aXy = pXy->data();
+    if (offsetXy >= pXy->size())
+        return CPLErrorInvalidLength();
     if (m_hasZ) {
         auto pZ = feature->z();
         if (pZ == nullptr)
             CPLErrorInvalidPointer();
+        if (offset >= pZ->size())
+            return CPLErrorInvalidLength();
         auto aZ = pZ->data();
         if (m_hasM) {
             auto pM = feature->m();
             if (pM == nullptr)
                 CPLErrorInvalidPointer();
+            if (offset >= pM->size())
+                return CPLErrorInvalidLength();
             auto aM = pM->data();
-            return new OGRPoint { aXy[offset + 0], aXy[offset + 1], aZ[offset], aM[offset] };
+            return new OGRPoint { aXy[offsetXy + 0], aXy[offsetXy + 1], aZ[offset], aM[offset] };
         } else {
-            return new OGRPoint { aXy[offset + 0], aXy[offset + 1], aZ[offset] };
+            return new OGRPoint { aXy[offsetXy + 0], aXy[offsetXy + 1], aZ[offset] };
         }
     } else if (m_hasM) {
         auto pM = feature->m();
         if (pM == nullptr)
             CPLErrorInvalidPointer();
+        if (offset >= pM->size())
+            return CPLErrorInvalidLength();
         auto aM = pM->data();
-        return new OGRPoint { aXy[offset + 0], aXy[offset + 1], 0.0, aM[offset] };
+        return new OGRPoint { aXy[offsetXy + 0], aXy[offsetXy + 1], 0.0, aM[offset] };
     } else {
-        return new OGRPoint { aXy[offset + 0], aXy[offset + 1] };
+        return new OGRPoint { aXy[offsetXy + 0], aXy[offsetXy + 1] };
     }
 }
 
 OGRMultiPoint *OGRFlatGeobufLayer::readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> *pXy, uint32_t len)
 {
+    if (len >= feature_max_buffer_size)
+        return CPLErrorInvalidLength();
     auto mp = new OGRMultiPoint();
-    for (uint32_t i = 0; i < len; i = i + 2)
+    for (uint32_t i = 0; i < len; i++)
         mp->addGeometryDirectly(readPoint(feature, pXy, i));
     return mp;
 }
@@ -876,7 +887,7 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Feature *feature)
         case GeometryType::Point:
             return readPoint(feature, pXy);
         case GeometryType::MultiPoint:
-            return readMultiPoint(feature, pXy, xySize);
+            return readMultiPoint(feature, pXy, xySize / 2);
         case GeometryType::LineString:
             return readLineString(feature, pXy, xySize / 2);
         case GeometryType::MultiLineString:
