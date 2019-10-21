@@ -448,7 +448,7 @@ of this VRT file GDAL must be compiled with SQLite and SpatiaLite.
    <OGRVRTDataSource>
        <OGRVRTLayer name="polygons">
            <SrcDataSource>polygons.shp</SrcDataSource>
-           </OGRVRTLayer>
+       </OGRVRTLayer>
        <OGRVRTLayer name="polygons_as_simplified">
            <SrcDataSource>polygons.shp</SrcDataSource>
            <SrcSQL dialect="sqlite">SELECT Simplify(geometry,10) from polygons</SrcSQL>
