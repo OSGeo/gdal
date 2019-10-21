@@ -1356,17 +1356,15 @@ void OGRSimpleCurve::reversePoints()
 {
     for( int i = 0; i < nPointCount/2; i++ )
     {
-        const OGRRawPoint sPointTemp = paoPoints[i];
-
-        paoPoints[i] = paoPoints[nPointCount-i-1];
-        paoPoints[nPointCount-i-1] = sPointTemp;
-
+        std::swap(paoPoints[i], paoPoints[nPointCount-i-1]);
         if( padfZ )
         {
-            const double dfZTemp = padfZ[i];
+            std::swap(padfZ[i], padfZ[nPointCount-i-1]);
+        }
 
-            padfZ[i] = padfZ[nPointCount-i-1];
-            padfZ[nPointCount-i-1] = dfZTemp;
+        if( padfM )
+        {
+            std::swap(padfM[i], padfM[nPointCount-i-1]);
         }
     }
 }
@@ -1442,6 +1440,15 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
                         sizeof(double) * nPointsToAdd );
             }
         }
+        if( poOtherLine->padfM != nullptr )
+        {
+            AddM();
+            if( padfM != nullptr )
+            {
+                memcpy( padfM + nOldPoints, poOtherLine->padfM + nStartVertex,
+                        sizeof(double) * nPointsToAdd );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1465,6 +1472,17 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
                 for( int i = 0; i < nPointsToAdd; i++ )
                 {
                     padfZ[i+nOldPoints] = poOtherLine->padfZ[nStartVertex-i];
+                }
+            }
+        }
+        if( poOtherLine->padfM != nullptr )
+        {
+            AddM();
+            if( padfM != nullptr )
+            {
+                for( int i = 0; i < nPointsToAdd; i++ )
+                {
+                    padfM[i+nOldPoints] = poOtherLine->padfM[nStartVertex-i];
                 }
             }
         }
