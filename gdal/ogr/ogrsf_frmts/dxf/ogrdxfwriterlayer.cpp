@@ -107,6 +107,11 @@ OGRErr OGRDXFWriterLayer::CreateField( OGRFieldDefn *poField,
     if( poFeatureDefn->GetFieldIndex(poField->GetNameRef()) >= 0
         && bApproxOK )
         return OGRERR_NONE;
+    if( EQUAL(poField->GetNameRef(), "OGR_STYLE") )
+    {
+        poFeatureDefn->AddFieldDefn(poField);
+        return OGRERR_NONE;
+    }
 
     CPLError( CE_Failure, CPLE_AppDefined,
               "DXF layer does not support arbitrary field creation, field '%s' not created.",
