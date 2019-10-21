@@ -123,9 +123,9 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
 
 /**
  * \brief Create a XYM point.
- * @param xIn x
- * @param yIn y
- * @param mIn m
+ * @param x x
+ * @param y y
+ * @param m m
  * @since GDAL 3.1
  */
 
