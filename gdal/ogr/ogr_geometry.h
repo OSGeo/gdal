@@ -867,6 +867,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     OGRPoint( double x, double y, double z );
     OGRPoint( double x, double y, double z, double m );
     OGRPoint( const OGRPoint& other );
+    static OGRPoint* createXYM( double x, double y, double m );
     ~OGRPoint() override;
 
     OGRPoint& operator=( const OGRPoint& other );

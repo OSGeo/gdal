@@ -739,7 +739,7 @@ OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffer
         if (offset >= pM->size())
             return CPLErrorInvalidLength();
         auto aM = pM->data();
-        return new OGRPoint { aXy[offsetXy + 0], aXy[offsetXy + 1], 0.0, aM[offset] };
+        return OGRPoint::createXYM( aXy[offsetXy + 0], aXy[offsetXy + 1], aM[offset] );
     } else {
         return new OGRPoint { aXy[offsetXy + 0], aXy[offsetXy + 1] };
     }
@@ -832,6 +832,16 @@ OGRErr OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, const flatbuf
         } else {
             sc->setPoints(len, (OGRRawPoint *) aXy + offset, aZ + offset);
         }
+    } else if (m_hasM) {
+        auto pM = feature->m();
+        if (pM == nullptr) {
+            CPLErrorInvalidPointer();
+            return OGRERR_CORRUPT_DATA;
+        }
+        if (offsetLen > pM->size())
+            return CPLErrorInvalidSize();
+        auto aM = pM->data();
+        sc->setPointsM(len, (OGRRawPoint *) aXy + offset, aM + offset);
     } else {
         sc->setPoints(len, (OGRRawPoint *) aXy + offset);
     }

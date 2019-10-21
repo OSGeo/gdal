@@ -252,14 +252,19 @@ def test_ogr_flatgeobuf_3():
     wktRoundtrip('MULTIPOLYGON (((35 10,45 45,15 40,10 20,35 10),(20 30,35 35,30 20,20 30)))')
 
     wktRoundtrip('POINT Z (1 2 3)')
+    wktRoundtrip('POINT M (1 2 3)')
     wktRoundtrip('POINT ZM (1 2 3 4)')
     wktRoundtrip('MULTIPOINT Z ((10 40 1),(40 30 2),(20 20 3),(30 10 4))')
+    wktRoundtrip('MULTIPOINT M ((10 40 1),(40 30 2),(20 20 3),(30 10 4))')
     wktRoundtrip('MULTIPOINT ZM ((10 40 1 4),(40 30 2 3),(20 20 3 2),(30 10 4 1))')
     wktRoundtrip('LINESTRING Z (1 2 3,2 3 4)')
+    wktRoundtrip('LINESTRING M (1 2 3,2 3 4)')
     wktRoundtrip('LINESTRING ZM (1 2 3 4,2 3 4 5)')
     wktRoundtrip('POLYGON Z ((30 10 1,40 40 2,20 40 3,10 20 4,30 10 5))')
+    wktRoundtrip('POLYGON M ((30 10 1,40 40 2,20 40 3,10 20 4,30 10 5))')
     wktRoundtrip('POLYGON ZM ((30 10 1 5,40 40 2 4,20 40 3 3,10 20 4 2,30 10 5 1))')
     wktRoundtrip('MULTIPOLYGON Z (((35 10 1,45 45 2,15 40 3,10 20 4,35 10 5),(20 30 1,35 35 2,30 20 3,20 30 4)))')
+    wktRoundtrip('MULTIPOLYGON M (((35 10 1,45 45 2,15 40 3,10 20 4,35 10 5),(20 30 1,35 35 2,30 20 3,20 30 4)))')
     wktRoundtrip('MULTIPOLYGON ZM (((35 10 1 5,45 45 2 4,15 40 3 3,10 20 4 2,35 10 1 1),(20 30 4 1,35 35 3 2,30 20 2 3,20 30 1 4)))')
 
 # Run test_ogrsf

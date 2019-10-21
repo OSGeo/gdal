@@ -118,6 +118,25 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
 }
 
 /************************************************************************/
+/*                             createXYM()                              */
+/************************************************************************/
+
+/**
+ * \brief Create a XYM point.
+ * @param xIn x
+ * @param yIn y
+ * @param mIn m
+ * @since GDAL 3.1
+ */
+
+OGRPoint* OGRPoint::createXYM( double x, double y, double m )
+{
+    auto p = new OGRPoint(x, y, 0, m);
+    p->flags &= ~OGR_G_3D;
+    return p;
+}
+
+/************************************************************************/
 /*                       OGRPoint( const OGRPoint& )                    */
 /************************************************************************/
 
