@@ -1255,11 +1255,8 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        getPoints( OGRRawPoint *, double * = nullptr ) const;
     void        getPoints( void* pabyX, int nXStride,
                            void* pabyY, int nYStride,
-                           void* pabyZ = nullptr, int nZStride = 0 ) const;
-    void        getPoints( void* pabyX, int nXStride,
-                           void* pabyY, int nYStride,
-                           void* pabyZ, int nZStride,
-                           void* pabyM, int nMStride ) const;
+                           void* pabyZ = nullptr, int nZStride = 0,
+                           void* pabyM = nullptr, int nMStride = 0 ) const;
 
     void        addSubLineString( const OGRLineString *,
                                   int nStartVertex = 0, int nEndVertex = -1 );
