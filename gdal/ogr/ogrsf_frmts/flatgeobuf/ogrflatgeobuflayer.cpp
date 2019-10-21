@@ -1048,8 +1048,8 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     //ogrGeometry->exportToWkt(&wkt);
     //CPLDebug("FlatGeobuf", "poNewFeature as wkt: %s", wkt);
 #endif
-    if (ogrGeometry == nullptr)
-        return 0;
+    if (ogrGeometry == nullptr || ogrGeometry->IsEmpty())
+        return OGRERR_NONE;
     if (ogrGeometry->getGeometryType() != m_eGType) {
         CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Mismatched geometry type");
         return OGRERR_FAILURE;
@@ -1136,22 +1136,28 @@ uint32_t OGRFlatGeobufLayer::writeLineString(OGRLineString *ls, GeometryContext 
         gc.z.resize(zLength + numPoints);
         padfZOut = gc.z.data() + zLength;
     }
-    ls->getPoints(reinterpret_cast<OGRRawPoint *>(gc.xy.data() + xyLength), padfZOut);
+    auto mLength = gc.m.size();
+    double *padfMOut = nullptr;
     if (m_hasM) {
-        for (int i = 0; i < ls->getNumPoints(); i++)
-            gc.m.push_back(ls->getM(i));
+        gc.m.resize(mLength + numPoints);
+        padfMOut = gc.m.data() + mLength;
     }
+    ls->getPoints(reinterpret_cast<double*>(reinterpret_cast<OGRRawPoint *>(gc.xy.data() + xyLength)), sizeof(OGRRawPoint),
+                  reinterpret_cast<double*>(reinterpret_cast<OGRRawPoint *>(gc.xy.data() + xyLength)) + 1, sizeof(OGRRawPoint),
+                  padfZOut, sizeof(double),
+                  padfMOut, sizeof(double));
     return numPoints;
 }
 
 void OGRFlatGeobufLayer::writeMultiLineString(OGRMultiLineString *mls, GeometryContext &gc)
 {
-    auto e = 0;
-    if (mls->getNumGeometries() > 1)
-        for (int i = 0; i < mls->getNumGeometries(); i++)
-            gc.ends.push_back(e += writeLineString(mls->getGeometryRef(i)->toLineString(), gc));
-    else
-        gc.ends.push_back(writeLineString(mls->getGeometryRef(0)->toLineString(), gc));
+    uint32_t e = 0;
+    const auto numGeometries = mls->getNumGeometries();
+    for (int i = 0; i < numGeometries; i++)
+    {
+        e += writeLineString(mls->getGeometryRef(i)->toLineString(), gc);
+        gc.ends.push_back(e);
+    }
 }
 
 uint32_t OGRFlatGeobufLayer::writePolygon(OGRPolygon *p, GeometryContext &gc, bool isMulti, uint32_t e)
@@ -1162,7 +1168,10 @@ uint32_t OGRFlatGeobufLayer::writePolygon(OGRPolygon *p, GeometryContext &gc, bo
     if (numInteriorRings > 0 || isMulti) {
         gc.ends.push_back(e);
         for (int i = 0; i < numInteriorRings; i++)
-            gc.ends.push_back(e += writeLineString(p->getInteriorRing(i), gc));
+        {
+            e += writeLineString(p->getInteriorRing(i), gc);
+            gc.ends.push_back(e);
+        }
     }
     return e;
 }
