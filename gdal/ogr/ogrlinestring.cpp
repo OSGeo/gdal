@@ -1274,38 +1274,10 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
                                 void* pabyY, int nYStride,
                                 void* pabyZ, int nZStride ) const
 {
-    if( pabyX != nullptr && nXStride == 0 )
-        return;
-    if( pabyY != nullptr && nYStride == 0 )
-        return;
-    if( pabyZ != nullptr && nZStride == 0 )
-        return;
-    if( nXStride == 2 * sizeof(double) &&
-        nYStride == 2 * sizeof(double) &&
-        static_cast<char *>(pabyY) ==
-        static_cast<char *>(pabyX) + sizeof(double) &&
-        (pabyZ == nullptr || nZStride == sizeof(double)) )
-    {
-        getPoints(static_cast<OGRRawPoint *>(pabyX),
-                  static_cast<double *>(pabyZ));
-        return;
-    }
-    for( int i = 0; i < nPointCount; i++ )
-    {
-        if( pabyX )
-            *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
-        if( pabyY )
-            *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
-    }
-
-    if( pabyZ )
-    {
-        for( int i = 0; i < nPointCount; i++ )
-        {
-            *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) =
-                padfZ ? padfZ[i] : 0.0;
-        }
-    }
+    return getPoints( pabyX, nXStride,
+                      pabyY, nYStride,
+                      pabyZ, nZStride,
+                      nullptr, 0);
 }
 
 /**
@@ -1343,24 +1315,56 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
         return;
     if( pabyM != nullptr && nMStride == 0 )
         return;
-    for( int i = 0; i < nPointCount; i++ )
+    if( nXStride == sizeof(OGRRawPoint) &&
+        nYStride == sizeof(OGRRawPoint) &&
+        static_cast<char *>(pabyY) ==
+        static_cast<char *>(pabyX) + sizeof(double) &&
+        (pabyZ == nullptr || nZStride == sizeof(double)) )
     {
-        if( pabyX ) *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
-        if( pabyY ) *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
+        getPoints(static_cast<OGRRawPoint *>(pabyX),
+                  static_cast<double *>(pabyZ));
     }
-
-    if( pabyZ )
+    else
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
+            if( pabyX ) *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
+            if( pabyY ) *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
+        }
+
+        if( pabyZ )
+        {
+            if( nZStride == sizeof(double) )
+            {
+                if( padfZ )
+                    memcpy( pabyZ, padfZ, sizeof(double) * nPointCount );
+                else
+                    memset( pabyZ, 0, sizeof(double) * nPointCount );
+            }
+            else
+            {
+                for( int i = 0; i < nPointCount; i++ )
+                {
+                    *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
+                }
+            }
         }
     }
     if( pabyM )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        if( nMStride == sizeof(double) )
         {
-            *reinterpret_cast<double*>(static_cast<char*>(pabyM) + i * nZStride) = (padfM) ? padfM[i] : 0.0;
+            if( padfM )
+                memcpy( pabyM, padfM, sizeof(double) * nPointCount );
+            else
+                memset( pabyM, 0, sizeof(double) * nPointCount );
+        }
+        else
+        {
+            for( int i = 0; i < nPointCount; i++ )
+            {
+                *reinterpret_cast<double*>(static_cast<char*>(pabyM) + i * nMStride) = (padfM) ? padfM[i] : 0.0;
+            }
         }
     }
 }
