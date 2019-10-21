@@ -707,14 +707,14 @@ OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffer
     if (m_hasZ) {
         auto pZ = feature->z();
         if (pZ == nullptr)
-            CPLErrorInvalidPointer();
+            return CPLErrorInvalidPointer();
         if (offset >= pZ->size())
             return CPLErrorInvalidLength();
         auto aZ = pZ->data();
         if (m_hasM) {
             auto pM = feature->m();
             if (pM == nullptr)
-                CPLErrorInvalidPointer();
+                return CPLErrorInvalidPointer();
             if (offset >= pM->size())
                 return CPLErrorInvalidLength();
             auto aM = pM->data();
@@ -725,7 +725,7 @@ OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffer
     } else if (m_hasM) {
         auto pM = feature->m();
         if (pM == nullptr)
-            CPLErrorInvalidPointer();
+            return CPLErrorInvalidPointer();
         if (offset >= pM->size())
             return CPLErrorInvalidLength();
         auto aM = pM->data();
@@ -802,15 +802,19 @@ OGRErr OGRFlatGeobufLayer::readSimpleCurve(const Feature *feature, const flatbuf
     auto aXy = pXy.data();
     if (m_hasZ) {
         auto pZ = feature->z();
-        if (pZ == nullptr)
+        if (pZ == nullptr) {
             CPLErrorInvalidPointer();
+            return OGRERR_CORRUPT_DATA;
+        }
         if (offsetLen > pZ->size())
             return CPLErrorInvalidSize();
         auto aZ = pZ->data();
         if (m_hasM) {
             auto pM = feature->m();
-            if (pM == nullptr)
+            if (pM == nullptr) {
                 CPLErrorInvalidPointer();
+                return OGRERR_CORRUPT_DATA;
+            }
             if (offsetLen > pM->size())
                 return CPLErrorInvalidSize();
             auto aM = pM->data();
