@@ -170,7 +170,11 @@ def test_ogr_flatgeobuf_2():
     fgb_ds = ogr.Open('data/testfgb/poly.fgb')
     fgb_lyr = fgb_ds.GetLayer(0)
 
+    assert fgb_lyr.TestCapability(ogr.OLCFastGetExtent)
+    assert fgb_lyr.GetExtent() == (478315.53125, 481645.3125, 4762880.5, 4765610.5)
+
     # test expected spatial filter feature count consistency
+    assert fgb_lyr.TestCapability(ogr.OLCFastFeatureCount)
     c = fgb_lyr.GetFeatureCount()
     assert c == 10
     c = fgb_lyr.SetSpatialFilterRect(478315.531250, 4762880.500000, 481645.312500, 4765610.500000)

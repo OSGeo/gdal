@@ -76,6 +76,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         bool m_hasT = false;
         bool m_hasTM = false;
         uint64_t m_featuresCount = 0;
+        OGREnvelope m_sExtent;
 
         OGRFeatureDefn *m_poFeatureDefn = nullptr;
         OGRSpatialReference *m_poSRS = nullptr;
@@ -144,6 +145,10 @@ class OGRFlatGeobufLayer final : public OGRLayer
         virtual void ResetReading() override;
         virtual OGRFeatureDefn *GetLayerDefn() override { return m_poFeatureDefn; }
         virtual GIntBig GetFeatureCount(int bForce) override;
+        virtual OGRErr GetExtent(OGREnvelope* psExtent, int bForce) override;
+        virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
+                                       int bForce ) override
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
         void CreateSpatialIndexAtClose( int bFlag ) { bCreateSpatialIndexAtClose = CPL_TO_BOOL(bFlag); }
         void VerifyBuffers( int bFlag ) { bVerifyBuffers = CPL_TO_BOOL(bFlag); }

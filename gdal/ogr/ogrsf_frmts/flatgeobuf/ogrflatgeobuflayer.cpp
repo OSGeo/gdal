@@ -85,6 +85,14 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
     m_hasZ = m_poHeader->hasZ();
     m_hasM = m_poHeader->hasM();
     m_hasT = m_poHeader->hasT();
+    auto envelope = m_poHeader->envelope();
+    if( envelope && envelope->size() == 4 )
+    {
+        m_sExtent.MinX = (*envelope)[0];
+        m_sExtent.MinY = (*envelope)[1];
+        m_sExtent.MaxX = (*envelope)[2];
+        m_sExtent.MaxY = (*envelope)[3];
+    }
 
     CPLDebug("FlatGeobuf", "m_hasZ: %d", m_hasZ);
     CPLDebug("FlatGeobuf", "m_hasM: %d", m_hasM);
@@ -1161,6 +1169,16 @@ void OGRFlatGeobufLayer::writeMultiPolygon(OGRMultiPolygon *mp, GeometryContext 
     }
 }
 
+OGRErr OGRFlatGeobufLayer::GetExtent(OGREnvelope* psExtent, int bForce)
+{
+    if( m_sExtent.IsInit() )
+    {
+        *psExtent = m_sExtent;
+        return OGRERR_NONE;
+    }
+    return OGRLayer::GetExtent(psExtent, bForce);
+}
+
 int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
 {
     if (EQUAL(pszCap, ODrCCreateDataSource))
@@ -1178,9 +1196,9 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return true;
     else if (EQUAL(pszCap, OLCFastFeatureCount))
-        return true;
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
     else if (EQUAL(pszCap, OLCFastGetExtent))
-        return true;
+        return m_sExtent.IsInit();
     else if (EQUAL(pszCap, OLCFastSpatialFilter))
         return true;
     else
