@@ -344,7 +344,7 @@ def test_ogr_flatgeobuf_srs_epsg():
 def test_ogr_flatgeobuf_srs_other_authority():
     ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
     srs = osr.SpatialReference()
-    srs.SetFromUserInput("ESRI:8427")
+    srs.SetFromUserInput("ESRI:104009")
     ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
     ds = None
 
@@ -353,7 +353,7 @@ def test_ogr_flatgeobuf_srs_other_authority():
     srs_got = lyr.GetSpatialRef()
     assert srs_got.IsSame(srs)
     assert srs_got.GetAuthorityName(None) == 'ESRI'
-    assert srs_got.GetAuthorityCode(None) == '8427'
+    assert srs_got.GetAuthorityCode(None) == '104009'
     ds = None
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
