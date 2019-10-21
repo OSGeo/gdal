@@ -104,14 +104,14 @@ class OGRFlatGeobufLayer final : public OGRLayer
         // deserialize
         void ensurePadfBuffers(size_t count);
         OGRErr parseFeature(OGRFeature *poFeature, OGRGeometry **ogrGeometry);
-        OGRPoint *readPoint(const Feature *feature, uint32_t offset = 0);
-        OGRMultiPoint *readMultiPoint(const Feature *feature, uint32_t len);
-        void readSimpleCurve(const Feature *feature, uint32_t len, uint32_t offset, OGRSimpleCurve *c);
-        OGRLineString *readLineString(const Feature *feature, uint32_t len, uint32_t offset = 0);
-        OGRMultiLineString *readMultiLineString(const Feature *feature);
-        OGRLinearRing *readLinearRing(const Feature *feature, uint32_t len, uint32_t offset = 0);
-        OGRPolygon *readPolygon(const Feature *feature, uint32_t len, uint32_t offset = 0);
-        OGRMultiPolygon *readMultiPolygon(const Feature *feature, uint32_t len);
+        OGRPoint *readPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t offset = 0);
+        OGRMultiPoint *readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len);
+        OGRErr readSimpleCurve(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset, OGRSimpleCurve *c);
+        OGRLineString *readLineString(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
+        OGRMultiLineString *readMultiLineString(const Feature *feature, const flatbuffers::Vector<double> &pXy);
+        OGRLinearRing *readLinearRing(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
+        OGRPolygon *readPolygon(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
+        OGRMultiPolygon *readMultiPolygon(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len);
         OGRGeometry *readGeometry(const Feature *feature);
         ColumnType toColumnType(OGRFieldType fieldType, OGRFieldSubType subType);
         static OGRFieldType toOGRFieldType(ColumnType type);
