@@ -1620,6 +1620,15 @@ OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput )
 {
     if( !ppszInput || !*ppszInput )
         return OGRERR_FAILURE;
+    if( strlen(*ppszInput) > 100 * 1000 &&
+        CPLTestBool(CPLGetConfigOption("OSR_IMPORT_FROM_WKT_LIMIT", "YES")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Suspiciously large input for importFromWkt(). Rejecting it. "
+                 "You can remove this limitation by definition the "
+                 "OSR_IMPORT_FROM_WKT_LIMIT configuration option to NO.");
+        return OGRERR_FAILURE;
+    }
 
     Clear();
 
