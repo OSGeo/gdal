@@ -497,7 +497,6 @@ zip -r $OUT/avcbin_fuzzer_seed_corpus.zip avcbin.tar >/dev/null
 rm avcbin.tar
 
 echo "Building avce00_fuzzer_seed_corpus.zip"
-rm -f $OUT/avce00_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/avce00_fuzzer_seed_corpus.zip
 zip -r $OUT/avce00_fuzzer_seed_corpus.zip ./*.e00 >/dev/null
@@ -514,6 +513,12 @@ rm -f $OUT/gml_fuzzer_seed_corpus.zip
 } > $CUR_DIR/archsites_gml.tar
 zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar >/dev/null
 rm archsites_gml.tar
+
+echo "Building fgb_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../../autotest/ogr/data/testfgb
+rm -f $OUT/fgb_fuzzer_seed_corpus.zip
+zip -r $OUT/fgb_fuzzer_seed_corpus.zip ./*.fgb >/dev/null
+cd $OLDPWD
 
 
 echo "Copying data to $OUT"

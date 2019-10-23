@@ -101,6 +101,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
     auto crs = m_poHeader->crs();
     if (crs != nullptr) {
         m_poSRS = new OGRSpatialReference();
+        m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         auto org = crs->org();
         auto code = crs->code();
         auto wkt = crs->wkt();
@@ -697,14 +698,16 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
                     uint32_t len = *((uint32_t *)(data + offset));
                     CPL_LSBPTR32(&len);
                     offset += sizeof(uint32_t);
-                    if (offset + len > size)
+                    if (len > size - offset || len > 32)
                         return CPLErrorInvalidSize();
-                    char *str = (char *) VSIMalloc(len + 1);
-                    memcpy(str, data + offset, len);
-                    offset += len;
-                    str[len] = '\0';
                     if (!isIgnored)
+                    {
+                        char str[32+1];
+                        memcpy(str, data + offset, len);
+                        str[len] = '\0';
                         OGRParseDate(str, ogrField, 0);
+                    }
+                    offset += len;
                     break;
                 }
                 case ColumnType::String: {
@@ -713,14 +716,20 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
                     uint32_t len = *((uint32_t *)(data + offset));
                     CPL_LSBPTR32(&len);
                     offset += sizeof(uint32_t);
-                    if (offset + len > size)
+                    if (len > size - offset)
                         return CPLErrorInvalidSize();
-                    uint8_t *str = (uint8_t *) VSIMalloc(len + 1);
-                    memcpy(str, data + offset, len);
+                    if (!isIgnored )
+                    {
+                        char *str = static_cast<char*>(VSI_MALLOC_VERBOSE(len + 1));
+                        if( str == nullptr )
+                        {
+                            return CPLErrorMemoryAllocation();
+                        }
+                        memcpy(str, data + offset, len);
+                        str[len] = '\0';
+                        ogrField->String = str;
+                    }
                     offset += len;
-                    str[len] = '\0';
-                    if (!isIgnored)
-                        ogrField->String = (char *) str;
                     break;
                 }
                 default:

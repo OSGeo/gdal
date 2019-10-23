@@ -356,6 +356,7 @@ def test_ogr_flatgeobuf_srs_other_authority():
     ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
     srs = osr.SpatialReference()
     srs.SetFromUserInput("ESRI:104009")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
     ds = None
 
@@ -387,3 +388,13 @@ def test_ogr_flatgeobuf_srs_no_authority():
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
     assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+def test_ogr_flatgeobuf_datatypes():
+    ds = ogr.Open('data/testfgb/testdatatypes.fgb')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['int'] == 1
+    assert f['int64'] == 1234567890123
+    assert f['double'] == 1.25
+    assert f['string'] == 'my string'
+    assert f['datetime'] == '2019/10/15 12:34:56.789+00'
