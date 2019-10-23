@@ -1147,7 +1147,7 @@ PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 
 	llen = sp->stride * td->td_imagewidth;
     /* Check against the number of elements (of size uint16) of sp->tbuf */
-    if( n > (tmsize_t)(td->td_rowsperstrip * llen) )
+    if( n > ((tmsize_t)td->td_rowsperstrip * llen) )
     {
         TIFFErrorExt(tif->tif_clientdata, module,
                      "Too many input bytes provided");

@@ -1563,7 +1563,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 					JSAMPLE *outptr = (JSAMPLE*)tmpbuf + clumpoffset;
 #else
 					JSAMPLE *outptr = (JSAMPLE*)buf + clumpoffset;
-					if (cc < (tmsize_t) (clumpoffset + samples_per_clump*(clumps_per_line-1) + hsamp)) {
+					if (cc < (clumpoffset + (tmsize_t)samples_per_clump*(clumps_per_line-1) + hsamp)) {
 						TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw",
 							     "application buffer not large enough for all data, possible subsampling issue");
 						return 0;
@@ -2123,7 +2123,7 @@ JPEGEncodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 	/* data is expected to be supplied in multiples of a clumpline */
 	/* a clumpline is equivalent to v_sampling desubsampled scanlines */
 	/* TODO: the following calculation of bytesperclumpline, should substitute calculation of sp->bytesperline, except that it is per v_sampling lines */
-	bytesperclumpline = (((sp->cinfo.c.image_width+sp->h_sampling-1)/sp->h_sampling)
+	bytesperclumpline = ((((tmsize_t)sp->cinfo.c.image_width+sp->h_sampling-1)/sp->h_sampling)
 			     *(sp->h_sampling*sp->v_sampling+2)*sp->cinfo.c.data_precision+7)
 			    /8;
 
