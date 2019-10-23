@@ -796,8 +796,15 @@ def test_jpeg_23():
     assert cs == got_cs
 
     # Pixel interleaved
+    ds = gdal.Open('data/albania.jpg')
     data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize,
                          buf_pixel_space=3, buf_band_space=1)
+    y = int(ds.RasterYSize/2)
+    data_bottom = ds.ReadRaster(0, y, ds.RasterXSize, ds.RasterYSize - y,
+                                buf_pixel_space=3, buf_band_space=1)
+    data_top = ds.ReadRaster(0, 0, ds.RasterXSize, y,
+                             buf_pixel_space=3, buf_band_space=1)
+    assert data == data_top + data_bottom
     tmp_ds = gdal.GetDriverByName('Mem').Create(
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data,
@@ -806,6 +813,7 @@ def test_jpeg_23():
     assert cs == got_cs
 
     # Pixel interleaved with padding
+    ds = gdal.Open('data/albania.jpg')
     data = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize,
                          buf_pixel_space=4, buf_band_space=1)
     tmp_ds = gdal.GetDriverByName('Mem').Create(
