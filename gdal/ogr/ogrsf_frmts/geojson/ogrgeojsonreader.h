@@ -292,11 +292,11 @@ private:
     bool ParseField( json_object* poObj );
     bool AddFeature( OGRFeature* poFeature );
 
-    OGRGeometry* ReadGeometry( json_object* poObj );
     OGRFeature* ReadFeature( json_object* poObj );
     OGRGeoJSONLayer* ReadFeatureCollection( json_object* poObj );
 };
 
+OGRGeometry* OGRESRIJSONReadGeometry( json_object* poObj );
 OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj );
 OGRwkbGeometryType OGRESRIJSONGetGeometryType( json_object* poObj );
 OGRPoint* OGRESRIJSONReadPoint( json_object* poObj);

@@ -5716,6 +5716,10 @@ def CreateGeometryFromJson(*args):
     """CreateGeometryFromJson(char const * input_string) -> Geometry"""
     return _ogr.CreateGeometryFromJson(*args)
 
+def CreateGeometryFromEsriJson(*args):
+    """CreateGeometryFromEsriJson(char const * input_string) -> Geometry"""
+    return _ogr.CreateGeometryFromEsriJson(*args)
+
 def BuildPolygonFromEdges(*args, **kwargs):
     """BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort=0, int bAutoClose=0, double dfTolerance=0) -> Geometry"""
     return _ogr.BuildPolygonFromEdges(*args, **kwargs)

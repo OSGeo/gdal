@@ -3760,6 +3760,22 @@ def test_ogr_geojson_update_in_loop():
 
 
 ###############################################################################
+# Test ogr.CreateGeometryFromEsriJson()
+
+
+def test_ogr_esrijson_create_geometry_from_esri_json():
+
+    if gdaltest.geojson_drv is None:
+        pytest.skip()
+
+    with gdaltest.error_handler():
+        assert not ogr.CreateGeometryFromEsriJson('error')
+
+    g = ogr.CreateGeometryFromEsriJson('{ "x": 2, "y": 49 }')
+    assert g.ExportToWkt() == 'POINT (2 49)'
+
+
+###############################################################################
 
 
 def test_ogr_geojson_cleanup():

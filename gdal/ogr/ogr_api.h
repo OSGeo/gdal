@@ -146,6 +146,8 @@ char   CPL_DLL *OGR_G_ExportToJson( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 char   CPL_DLL *OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions ) CPL_WARN_UNUSED_RESULT;
 /** Create a OGR geometry from a GeoJSON geometry object */
 OGRGeometryH CPL_DLL OGR_G_CreateGeometryFromJson( const char* ) CPL_WARN_UNUSED_RESULT;
+/** Create a OGR geometry from a ESRI JSON geometry object */
+OGRGeometryH CPL_DLL OGR_G_CreateGeometryFromEsriJson( const char* ) CPL_WARN_UNUSED_RESULT;
 
 void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH,
                                              OGRSpatialReferenceH );

@@ -292,10 +292,10 @@ bool OGRESRIJSONReader::AddFeature( OGRFeature* poFeature )
 }
 
 /************************************************************************/
-/*                           ReadGeometry()                             */
+/*                       OGRESRIJSONReadGeometry()                      */
 /************************************************************************/
 
-OGRGeometry* OGRESRIJSONReader::ReadGeometry( json_object* poObj )
+OGRGeometry* OGRESRIJSONReadGeometry( json_object* poObj )
 {
     OGRGeometry* poGeometry = nullptr;
 
@@ -310,6 +310,33 @@ OGRGeometry* OGRESRIJSONReader::ReadGeometry( json_object* poObj )
 
     return poGeometry;
 }
+
+
+/************************************************************************/
+/*                     OGR_G_CreateGeometryFromEsriJson()               */
+/************************************************************************/
+
+/** Create a OGR geometry from a ESRIJson geometry object */
+OGRGeometryH OGR_G_CreateGeometryFromEsriJson( const char* pszJson )
+{
+    if( nullptr == pszJson )
+    {
+        // Translation failed.
+        return nullptr;
+    }
+
+    json_object *poObj = nullptr;
+    if( !OGRJSonParse(pszJson, &poObj) )
+        return nullptr;
+
+    OGRGeometry* poGeometry = OGRESRIJSONReadGeometry( poObj );
+
+    // Release JSON tree.
+    json_object_put( poObj );
+
+    return OGRGeometry::ToHandle(poGeometry);
+}
+
 
 /************************************************************************/
 /*                           ReadFeature()                              */
@@ -390,7 +417,7 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
 
     if( nullptr != poObjGeom )
     {
-        OGRGeometry* poGeometry = ReadGeometry( poObjGeom );
+        OGRGeometry* poGeometry = OGRESRIJSONReadGeometry( poObjGeom );
         if( nullptr != poGeometry )
         {
             poFeature->SetGeometryDirectly( poGeometry );

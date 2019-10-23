@@ -5070,6 +5070,13 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
 
 
 
+  OGRGeometryShadow *CreateGeometryFromEsriJson( const char * input_string ) {
+    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateGeometryFromEsriJson(input_string);
+    return geom;
+  }
+
+
+
   OGRGeometryShadow* BuildPolygonFromEdges( OGRGeometryShadow*  hLineCollection,
                                             int bBestEffort = 0,
                                             int bAutoClose = 0,
@@ -21237,6 +21244,49 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CreateGeometryFromEsriJson(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CreateGeometryFromEsriJson",&obj0)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CreateGeometryFromEsriJson" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)CreateGeometryFromEsriJson((char const *)arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_BuildPolygonFromEdges(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -32328,6 +32378,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"CreateGeometryFromWkt", (PyCFunction) _wrap_CreateGeometryFromWkt, METH_VARARGS | METH_KEYWORDS, (char *)"CreateGeometryFromWkt(char ** val, SpatialReference reference=None) -> Geometry"},
 	 { (char *)"CreateGeometryFromGML", _wrap_CreateGeometryFromGML, METH_VARARGS, (char *)"CreateGeometryFromGML(char const * input_string) -> Geometry"},
 	 { (char *)"CreateGeometryFromJson", _wrap_CreateGeometryFromJson, METH_VARARGS, (char *)"CreateGeometryFromJson(char const * input_string) -> Geometry"},
+	 { (char *)"CreateGeometryFromEsriJson", _wrap_CreateGeometryFromEsriJson, METH_VARARGS, (char *)"CreateGeometryFromEsriJson(char const * input_string) -> Geometry"},
 	 { (char *)"BuildPolygonFromEdges", (PyCFunction) _wrap_BuildPolygonFromEdges, METH_VARARGS | METH_KEYWORDS, (char *)"BuildPolygonFromEdges(Geometry hLineCollection, int bBestEffort=0, int bAutoClose=0, double dfTolerance=0) -> Geometry"},
 	 { (char *)"ApproximateArcAngles", (PyCFunction) _wrap_ApproximateArcAngles, METH_VARARGS | METH_KEYWORDS, (char *)"ApproximateArcAngles(double dfCenterX, double dfCenterY, double dfZ, double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation, double dfStartAngle, double dfEndAngle, double dfMaxAngleStepSizeDegrees) -> Geometry"},
 	 { (char *)"ForceToPolygon", _wrap_ForceToPolygon, METH_VARARGS, (char *)"ForceToPolygon(Geometry geom_in) -> Geometry"},

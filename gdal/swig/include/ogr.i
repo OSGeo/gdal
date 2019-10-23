@@ -2456,6 +2456,15 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 
 %}
 
+%newobject CreateGeometryFromEsriJson;
+%inline %{
+  OGRGeometryShadow *CreateGeometryFromEsriJson( const char * input_string ) {
+    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateGeometryFromEsriJson(input_string);
+    return geom;
+  }
+
+%}
+
 %newobject BuildPolygonFromEdges;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) BuildPolygonFromEdges;
