@@ -1869,7 +1869,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                     }
                 }
             }
-            nLoadedScanline = -1;
+            nLoadedScanline = nRasterYSize;
         }
         else
         {
