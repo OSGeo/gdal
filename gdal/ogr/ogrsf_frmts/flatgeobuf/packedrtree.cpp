@@ -1,3 +1,9 @@
+#ifdef GDAL_COMPILATION
+#include "cpl_port.h"
+#else
+#define CPL_IS_LSB 1
+#endif
+
 #include "packedrtree.h"
 
 namespace FlatGeobuf
@@ -291,8 +297,23 @@ std::vector<uint64_t> PackedRTree::streamSearch(
         if (!isLeafNode) {
             auto offset = numNodes * sizeof(Rect) + (nodeIndex - numItems) * sizeof(uint32_t);
             readNode(nodeIndicesBuf, static_cast<size_t>(offset), static_cast<size_t>(length * sizeof(uint32_t)));
+#if !CPL_IS_LSB
+            for( size_t i = 0; i < static_cast<size_t>(length); i++ )
+            {
+                CPL_LSBPTR32(&nodeIndices[i]);
+            }
+#endif
         }
         readNode(nodeRectsBuf, static_cast<size_t>(nodeIndex * sizeof(Rect)), static_cast<size_t>(length * sizeof(Rect)));
+#if !CPL_IS_LSB
+        for( size_t i = 0; i < static_cast<size_t>(length); i++ )
+        {
+            CPL_LSBPTR64(&nodeRects[i].minX);
+            CPL_LSBPTR64(&nodeRects[i].minY);
+            CPL_LSBPTR64(&nodeRects[i].maxX);
+            CPL_LSBPTR64(&nodeRects[i].maxY);
+        }
+#endif
         // search through child nodes
         for (uint64_t pos = nodeIndex; pos < end; pos++) {
             uint64_t nodePos = pos - nodeIndex;
@@ -333,6 +354,21 @@ uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
 }
 
 void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writeData) {
+#if !CPL_IS_LSB
+    // Note: we should normally revert endianness after writing, but as we no longer
+    // use the data structures this is not needed.
+    for( size_t i = 0; i < _rects.size(); i++ )
+    {
+        CPL_LSBPTR64(&_rects[i].minX);
+        CPL_LSBPTR64(&_rects[i].minY);
+        CPL_LSBPTR64(&_rects[i].maxX);
+        CPL_LSBPTR64(&_rects[i].maxY);
+    }
+    for( size_t i = 0; i < _indices.size(); i++ )
+    {
+        CPL_LSBPTR32(&_indices[i]);
+    }
+#endif
     writeData(reinterpret_cast<uint8_t *>(_rects.data()), _rects.size() * sizeof(Rect));
     writeData(reinterpret_cast<uint8_t *>(_indices.data()), _indices.size() * sizeof(uint32_t));
     writeData(reinterpret_cast<uint8_t *>(_indices.data()), (_numNonLeafNodes % 2) * sizeof(uint32_t));
