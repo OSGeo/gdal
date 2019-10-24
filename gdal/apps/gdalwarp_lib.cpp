@@ -1496,6 +1496,13 @@ static void ProcessMetadata(int iSrc,
                 if( papszMD_PDS4 != nullptr)
                     GDALSetMetadata(hDstDS, papszMD_PDS4, "xml:PDS4");
             }
+            else if( psOptions->pszFormat != nullptr &&
+                        EQUAL(psOptions->pszFormat, "VICAR") )
+            {
+                char** papszMD_VICAR = GDALGetMetadata( hSrcDS, "json:VICAR");
+                if( papszMD_VICAR != nullptr)
+                    GDALSetMetadata(hDstDS, papszMD_VICAR, "json:VICAR");
+            }
 
             /* copy band-level metadata and other info */
             if ( GDALGetRasterCount( hSrcDS ) == GDALGetRasterCount( hDstDS ) )

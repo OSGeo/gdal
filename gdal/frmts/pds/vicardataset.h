@@ -46,9 +46,13 @@
 
 class VICARDataset final: public RawDataset
 {
+    friend class VICARRawRasterBand;
+
     VSILFILE    *fpImage = nullptr;
 
     VICARKeywordHandler  oKeywords;
+
+    int          m_nRecordSize = 0;
 
     CPLJSONObject m_oJSonLabel;
     CPLStringList m_aosVICARMD;
@@ -60,11 +64,23 @@ class VICARDataset final: public RawDataset
 
     std::unique_ptr<OGRLayer> m_poLayer;
 
+    bool          m_bIsLabelWritten = true; // creation only
+    bool          m_bUseSrcLabel = true; // creation only
+    bool          m_bInitToNodata = false; // creation only
+    CPLJSONObject m_oSrcJSonLabel; // creation only
+
     const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
+    void         WriteLabel();
+    void         BuildLabel();
+    void         InvalidateLabel();
+
+    static VICARDataset *CreateInternal( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszOptions );
 
 public:
-    VICARDataset() = default;
+    VICARDataset();
     virtual ~VICARDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
@@ -77,6 +93,7 @@ public:
 
     char **GetMetadataDomainList() override;
     char **GetMetadata( const char* pszDomain = "" ) override;
+    CPLErr SetMetadata( char** papszMD, const char* pszDomain = "" ) override;
 
     int GetLayerCount() override { return m_poLayer ? 1 : 0; }
     OGRLayer* GetLayer(int i) override {
@@ -86,7 +103,13 @@ public:
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
+                                GDALDataType eType, char ** papszOptions );
+    static GDALDataset* CreateCopy( const char *pszFilename,
+                                       GDALDataset *poSrcDS,
+                                       int bStrict,
+                                       char ** papszOptions,
+                                       GDALProgressFunc pfnProgress,
+                                       void * pProgressData );
 
     static GDALDataType GetDataTypeFromFormat(const char* pszFormat);
     static bool         GetSpacings(const VICARKeywordHandler& keywords,

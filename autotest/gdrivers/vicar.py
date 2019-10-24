@@ -143,3 +143,100 @@ def test_vicar_read_binary_prefix():
 
     assert ogr.Open('data/vicar_binary_prefix.vic')
     assert not ogr.Open('data/vicar_byte.vic')
+
+
+def test_vicar_create():
+
+    filename = '/vsimem/test.vic'
+    md = {
+        'LBLSIZE': 1234,
+        'BLTYPE': 'foo',
+        'PROPERTY':
+        {
+            'MYPROP':
+            {
+                'INT': 1,
+                'INT64': 1234567890123,
+                'REAL': 1.25,
+                'ARRAY_INT': [1,2],
+                'ARRAY_STRING': ['a','b'],
+                'STRING': "eh'eh"
+            },
+            'APPROX':
+            {
+                'NULL': None,
+                'BOOL_TRUE': True,
+                'BOOL_FALSE': False,
+                'OBJ': {"a": "b"}
+            }
+        },
+        'TASK':
+        {
+            'GEN':
+            {
+                'USER': 'even',
+                'DAT_TIM': 'Thu Sep 24 17:31:50 1992',
+                'OTHER_PROP': 'foo'
+            }
+        }
+    }
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    ds = gdal.GetDriverByName('VICAR').Create(
+        filename, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount, gdal.GDT_Byte)
+    ds.SetMetadata([json.dumps(md)], "json:VICAR")
+    ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.ReadRaster())
+    ds = None
+    assert not gdal.VSIStatL(filename + '.aux.xml')
+
+    ds = gdal.Open(filename)
+    assert [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)] == \
+        [src_ds.GetRasterBand(i+1).Checksum() for i in range(src_ds.RasterCount)]
+    lbl = ds.GetMetadata_List('json:VICAR')[0]
+    lbl = json.loads(lbl)
+    assert lbl['LBLSIZE'] == 600
+    assert lbl['BLTYPE'] == 'foo'
+    assert lbl['PROPERTY']['MYPROP'] == md['PROPERTY']['MYPROP']
+    assert lbl['PROPERTY']['APPROX'] == { 'NULL': 'NULL', 'BOOL_TRUE': 1, 'BOOL_FALSE': 0, 'OBJ': '{"a":"b"}' }
+    assert lbl['TASK'] == md['TASK']
+
+    filename2 = '/vsimem/test2.vic'
+    assert gdal.GetDriverByName('VICAR').CreateCopy(filename2, ds)
+    assert not gdal.VSIStatL(filename2 + '.aux.xml')
+    ds = None
+
+    ds = gdal.Open(filename2)
+    assert [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)] == \
+        [src_ds.GetRasterBand(i+1).Checksum() for i in range(src_ds.RasterCount)]
+    lbl = ds.GetMetadata_List('json:VICAR')[0]
+    lbl = json.loads(lbl)
+    assert lbl['LBLSIZE'] == 600
+    assert lbl['BLTYPE'] == 'foo'
+    assert lbl['PROPERTY']['MYPROP'] == md['PROPERTY']['MYPROP']
+    assert lbl['PROPERTY']['APPROX'] == { 'NULL': 'NULL', 'BOOL_TRUE': 1, 'BOOL_FALSE': 0, 'OBJ': '{"a":"b"}' }
+    assert lbl['TASK'] == md['TASK']
+    ds = None
+
+    gdal.GetDriverByName('VICAR').Delete(filename)
+    gdal.GetDriverByName('VICAR').Delete(filename2)
+
+create_datatypes_lists = [
+    'vicar_byte',
+    'vicar_int16',
+    'vicar_bigendian_float32',
+    'vicar_float64',
+    'vicar_cfloat32',
+]
+
+@pytest.mark.parametrize(
+    'filename',
+    create_datatypes_lists
+)
+def test_vicar_create_all_data_types(filename):
+    dstfilename = '/vsimem/test.vic'
+    src_ds = gdal.Open('data/' + filename + '.vic')
+    assert gdal.GetDriverByName('VICAR').CreateCopy(dstfilename, src_ds)
+    ds = gdal.Open(dstfilename)
+    assert ds.GetRasterBand(1).DataType == src_ds.GetRasterBand(1).DataType
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.GetDriverByName('VICAR').Delete(dstfilename)

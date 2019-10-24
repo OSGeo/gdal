@@ -17867,12 +17867,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             pszFilename, papszOptions,
             true /* write only in PAM AND if needed */ );
 
-    // Propagate ISIS3 metadata, but only as PAM metadata.
+    // Propagate ISIS3 or VICAR metadata, but only as PAM metadata.
+    for( const char* pszMDD: { "json:ISIS3", "json:VICAR" } )
     {
-        char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
-        if( papszISIS3MD )
+        char **papszMD = poSrcDS->GetMetadata(pszMDD);
+        if( papszMD )
         {
-            poDS->SetMetadata( papszISIS3MD, "json:ISIS3");
+            poDS->SetMetadata( papszMD, pszMDD);
             poDS->PushMetadataToPam();
         }
     }

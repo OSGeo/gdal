@@ -1467,6 +1467,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             poVDS->SetMetadata( papszMD_PDS4, "xml:PDS4" );
     }
 
+    // VICAR -> VICAR special case
+    if( EQUAL(psOptions->pszFormat, "VICAR") )
+    {
+        char** papszMD_VICAR = poSrcDS->GetMetadata("json:VICAR");
+        if( papszMD_VICAR != nullptr)
+            poVDS->SetMetadata( papszMD_VICAR, "json:VICAR" );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Transfer metadata that remains valid if the spatial             */
 /*      arrangement of the data is unaltered.                           */

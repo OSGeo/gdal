@@ -6,12 +6,12 @@ VICAR -- VICAR
 
 .. shortname:: VICAR
 
-See `VICAR documentation <https://www-mipl.jpl.nasa.gov/vicar.html>`_
-
-NOTE: Implemented as ``gdal/frmts/pds/vicardataset.cpp``.
-
 Driver capabilities
 -------------------
+
+.. supports_createcopy::
+
+.. supports_create::
 
 .. supports_georeferencing::
 
@@ -163,3 +163,27 @@ For example:
         DecmpErr3 (Integer) = 0
         FillerFlag (Integer) = 5
 
+
+Creation support
+----------------
+
+Starting with GDAL 3.1, the VICAR driver supports updating imagery of
+existing datasets, creating new datasets through the CreateCopy() and
+Create() interfaces.
+
+When using CreateCopy(), gdal_translate or gdalwarp, an effort is made
+to preserve as much as possible of the original label when doing VICAR
+to VICAR conversions. This can be disabled with the USE_SRC_LABEL=NO
+creation option.
+
+The available creation options are:
+
+-  **USE_SRC_LABEL**\ =YES/NO. Whether to use source label in VICAR to
+   VICAR conversions. Defaults to YES.
+
+See Also
+--------
+
+- Implemented as ``gdal/frmts/pds/vicardataset.cpp``.
+- `VICAR documentation <https://www-mipl.jpl.nasa.gov/vicar.html>`_
+- `VICAR file format <https://www-mipl.jpl.nasa.gov/external/VICAR_file_fmt.pdf>`_

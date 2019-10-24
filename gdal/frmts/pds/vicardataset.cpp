@@ -35,9 +35,11 @@ constexpr double NULL3 = -32768.0;
 #include "cpl_port.h"
 #include "cpl_safemaths.hpp"
 #include "cpl_vax.h"
+#include "cpl_vsi_error.h"
 #include "vicardataset.h"
 #include "vicarkeywordhandler.h"
 
+#include <limits>
 #include <string>
 
 CPL_CVSID("$Id$")
@@ -376,13 +378,117 @@ OGRFeature *OGRVICARBinaryPrefixesLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                            ~VICARDataset()                            */
+/*                         VICARRawRasterBand                           */
+/************************************************************************/
+
+class VICARRawRasterBand final: public RawRasterBand
+{
+    protected:
+        friend class VICARDataset;
+
+    public:
+                 VICARRawRasterBand(
+                                VICARDataset *poDSIn, int nBandIn, VSILFILE* fpRawIn,
+                                vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                                int nLineOffsetIn,
+                                GDALDataType eDataTypeIn,
+                                ByteOrder eByteOrderIn);
+
+        virtual CPLErr          IReadBlock( int, int, void * ) override;
+        virtual CPLErr          IWriteBlock( int, int, void * ) override;
+
+        virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
+                                void *, int, int, GDALDataType,
+                                GSpacing nPixelSpace, GSpacing nLineSpace,
+                                GDALRasterIOExtraArg* psExtraArg ) override;
+
+};
+
+/************************************************************************/
+/*                        VICARRawRasterBand()                          */
+/************************************************************************/
+
+VICARRawRasterBand::VICARRawRasterBand(
+                                VICARDataset *poDSIn, int nBandIn, VSILFILE* fpRawIn,
+                                vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                                int nLineOffsetIn,
+                                GDALDataType eDataTypeIn,
+                                ByteOrder eByteOrderIn):
+    RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
+                  eDataTypeIn, eByteOrderIn, RawRasterBand::OwnFP::NO)
+{
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr VICARRawRasterBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
+
+{
+    VICARDataset* poGDS = reinterpret_cast<VICARDataset*>(poDS);
+    if( !poGDS->m_bIsLabelWritten )
+        poGDS->WriteLabel();
+    return RawRasterBand::IReadBlock( nXBlock, nYBlock, pImage );
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr VICARRawRasterBand::IWriteBlock( int nXBlock, int nYBlock,
+                                        void *pImage )
+
+{
+    VICARDataset* poGDS = reinterpret_cast<VICARDataset*>(poDS);
+    if( !poGDS->m_bIsLabelWritten )
+        poGDS->WriteLabel();
+    return RawRasterBand::IWriteBlock( nXBlock, nYBlock, pImage );
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr VICARRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 GSpacing nPixelSpace, GSpacing nLineSpace,
+                                 GDALRasterIOExtraArg* psExtraArg )
+
+{
+    VICARDataset* poGDS = reinterpret_cast<VICARDataset*>(poDS);
+    if( !poGDS->m_bIsLabelWritten )
+        poGDS->WriteLabel();
+    return RawRasterBand::IRasterIO( eRWFlag,
+                                     nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize,
+                                     eBufType,
+                                     nPixelSpace, nLineSpace,
+                                     psExtraArg );
+}
+
+/************************************************************************/
+/*                            VICARDataset()                            */
+/************************************************************************/
+
+VICARDataset::VICARDataset()
+
+{
+    m_oJSonLabel.Deinit();
+}
+
+/************************************************************************/
+/*                           ~VICARDataset()                            */
 /************************************************************************/
 
 VICARDataset::~VICARDataset()
 
 {
-    FlushCache();
+    if( !m_bIsLabelWritten )
+        WriteLabel();
+    VICARDataset::FlushCache();
     if( fpImage != nullptr )
         VSIFCloseL( fpImage );
 }
@@ -480,10 +586,10 @@ char **VICARDataset::GetMetadata( const char* pszDomain )
     {
         if( m_aosVICARMD.empty() )
         {
-            /*if( eAccess == GA_Update && !m_oJSonLabel.IsValid() )
+            if( eAccess == GA_Update && !m_oJSonLabel.IsValid() )
             {
                 BuildLabel();
-            }*/
+            }
             CPLAssert( m_oJSonLabel.IsValid() );
             const CPLString osJson = m_oJSonLabel.Format(CPLJSONObject::Pretty);
             m_aosVICARMD.InsertString(0, osJson.c_str());
@@ -491,6 +597,351 @@ char **VICARDataset::GetMetadata( const char* pszDomain )
         return m_aosVICARMD.List();
     }
     return GDALPamDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                           InvalidateLabel()                          */
+/************************************************************************/
+
+void VICARDataset::InvalidateLabel()
+{
+    m_oJSonLabel.Deinit();
+    m_aosVICARMD.Clear();
+}
+
+/************************************************************************/
+/*                             SetMetadata()                            */
+/************************************************************************/
+
+CPLErr VICARDataset::SetMetadata( char** papszMD, const char* pszDomain )
+{
+    if( m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
+        EQUAL( pszDomain, "json:VICAR" ) )
+    {
+        m_oSrcJSonLabel.Deinit();
+        InvalidateLabel();
+        if( papszMD != nullptr && papszMD[0] != nullptr )
+        {
+            CPLJSONDocument oJSONDocument;
+            const GByte *pabyData = reinterpret_cast<const GByte *>(papszMD[0]);
+            if( !oJSONDocument.LoadMemory( pabyData ) )
+            {
+                return CE_Failure;
+            }
+
+            m_oSrcJSonLabel = oJSONDocument.GetRoot();
+            if( !m_oSrcJSonLabel.IsValid() )
+            {
+                return CE_Failure;
+            }
+        }
+        return CE_None;
+    }
+    return GDALPamDataset::SetMetadata(papszMD, pszDomain);
+}
+
+/************************************************************************/
+/*                         SerializeString()                            */
+/************************************************************************/
+
+static std::string SerializeString(const std::string& s)
+{
+    return '\'' + CPLString(s).replaceAll('\'', "''").replaceAll('\n', "\\n") + '\'';
+}
+
+/************************************************************************/
+/*                        WriteLabelItemValue()                         */
+/************************************************************************/
+
+static void WriteLabelItemValue(std::string& osLabel,
+                                const CPLJSONObject& obj)
+{
+    const auto eType(obj.GetType());
+    if( eType == CPLJSONObject::Type::Boolean )
+    {
+        osLabel += CPLSPrintf("%d", obj.ToBool() ? 1 : 0);
+    }
+    else if( eType == CPLJSONObject::Type::Integer )
+    {
+        osLabel += CPLSPrintf("%d", obj.ToInteger());
+    }
+    else if( eType == CPLJSONObject::Type::Long )
+    {
+        std::string osVal(CPLSPrintf("%.18g",
+                                     static_cast<double>(obj.ToLong())));
+        if( osVal.find('.') == std::string::npos )
+            osVal += ".0";
+        osLabel += osVal;
+    }
+    else if( eType == CPLJSONObject::Type::Double )
+    {
+        double dfVal = obj.ToDouble();
+        if( dfVal >= static_cast<double>(std::numeric_limits<GIntBig>::min()) &&
+            dfVal <= static_cast<double>(std::numeric_limits<GIntBig>::max()) &&
+            static_cast<double>(static_cast<GIntBig>(dfVal)) == dfVal )
+        {
+            std::string osVal(CPLSPrintf("%.18g", dfVal));
+            if( osVal.find('.') == std::string::npos )
+                osVal += ".0";
+            osLabel += osVal;
+        }
+        else
+        {
+            osLabel += CPLSPrintf("%g", dfVal);
+        }
+    }
+    else if ( eType == CPLJSONObject::Type::String )
+    {
+        osLabel += SerializeString(obj.ToString());
+    }
+    else if ( eType == CPLJSONObject::Type::Array )
+    {
+        const auto oArray = obj.ToArray();
+        osLabel += '(';
+        for( int i = 0; i < oArray.Size(); i++ )
+        {
+            if( i > 0 )
+                osLabel += ',';
+            WriteLabelItemValue(osLabel, oArray[i]);
+        }
+        osLabel += ')';
+    }
+    else if ( eType == CPLJSONObject::Type::Null )
+    {
+        osLabel += "'NULL'";
+    }
+    else
+    {
+        osLabel += SerializeString(obj.Format(CPLJSONObject::Plain));
+    }
+}
+
+/************************************************************************/
+/*                      SanitizeItemName()                              */
+/************************************************************************/
+
+static std::string SanitizeItemName(const std::string& osItemName)
+{
+    std::string osRet(osItemName);
+    if( osRet.size() > 32 )
+        osRet.resize(32);
+    if( osRet.empty() )
+        return "UNNAMED";
+    if( osRet[0] < 'A' || osRet[0] > 'Z' )
+        osRet[0] = 'X'; // item name must start with a letter
+    for( size_t i = 1; i < osRet.size(); i++ )
+    {
+        char ch = osRet[i];
+        if( ch >= 'a' && ch <= 'z' )
+            osRet[i] = ch - 'a' + 'A';
+        else if( !((ch >= 'A' && ch <= 'Z') ||
+                   (ch >= '0' && ch <= '9') ||
+                   ch == '_') )
+        {
+            osRet[i] = '_';
+        }
+    }
+    if( osRet != osItemName )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Lable item name %s has been sanitized to %s",
+                 osItemName.c_str(), osRet.c_str());
+    }
+    return osRet;
+}
+
+/************************************************************************/
+/*                        WriteLabelItem()                              */
+/************************************************************************/
+
+static void WriteLabelItem(std::string& osLabel,
+                           const CPLJSONObject& obj,
+                           const std::string& osItemName = std::string())
+{
+    osLabel += ' ';
+    osLabel += SanitizeItemName(osItemName.empty() ? obj.GetName() : osItemName);
+    osLabel += '=';
+    WriteLabelItemValue(osLabel, obj);
+}
+
+/************************************************************************/
+/*                           WriteLabel()                               */
+/************************************************************************/
+
+void VICARDataset::WriteLabel()
+{
+    m_bIsLabelWritten = true;
+
+    if( !m_oJSonLabel.IsValid() )
+        BuildLabel();
+
+    std::string osLabel;
+    auto children = m_oJSonLabel.GetChildren();
+    for( const auto& child: children )
+    {
+        const auto osName(child.GetName());
+        if( osName == "LBLSIZE" || osName == "PROPERTY" || osName == "TASK" )
+            continue;
+        std::string osNameSubst;
+        if( osName == "DAT_TIM" || osName == "USER" )
+        {
+            osNameSubst = osName + '_';
+        }
+        WriteLabelItem(osLabel, child, osNameSubst);
+    }
+
+    auto property = m_oJSonLabel.GetObj("PROPERTY");
+    if( property.IsValid() && property.GetType() == CPLJSONObject::Type::Object )
+    {
+        children = property.GetChildren();
+        for( const auto& child: children )
+        {
+            if( child.GetType() == CPLJSONObject::Type::Object )
+            {
+                osLabel += " PROPERTY=" + SerializeString(child.GetName());
+                auto childrenProperty = child.GetChildren();
+                for( const auto& childProperty: childrenProperty )
+                {
+                    const auto osName(child.GetName());
+                    std::string osNameSubst;
+                    if( osName == "LBLSIZE" || osName == "PROPERTY" ||
+                        osName == "TASK" || osName == "DAT_TIM" || osName == "USER" )
+                    {
+                        osNameSubst = osName + '_';
+                    }
+                    WriteLabelItem(osLabel, childProperty, osNameSubst);
+                }
+            }
+        }
+    }
+
+    auto task = m_oJSonLabel.GetObj("TASK");
+    if( task.IsValid() && task.GetType() == CPLJSONObject::Type::Object )
+    {
+        children = task.GetChildren();
+        for( const auto& child: children )
+        {
+            if( child.GetType() == CPLJSONObject::Type::Object )
+            {
+                osLabel += " TASK=" + SerializeString(child.GetName());
+                auto oUser = child.GetObj("USER");
+                if( oUser.IsValid() )
+                    WriteLabelItem(osLabel, oUser);
+                auto oDatTim = child.GetObj("DAT_TIM");
+                if( oDatTim.IsValid() )
+                    WriteLabelItem(osLabel, oDatTim);
+                auto childrenProperty = child.GetChildren();
+                for( const auto& childProperty: childrenProperty )
+                {
+                    const auto osName(child.GetName());
+                    if( osName == "USER" || osName == "DAT_TIM" )
+                        continue;
+                    std::string osNameSubst;
+                    if( osName == "LBLSIZE" || osName == "PROPERTY" ||
+                        osName == "TASK" )
+                    {
+                        osNameSubst = osName + '_';
+                    }
+                    WriteLabelItem(osLabel, childProperty, osNameSubst);
+                }
+            }
+        }
+    }
+
+    // Figure out label size, round it to the next multiple of RECSIZE
+    constexpr size_t MAX_LOG10_LBLSIZE = 10;
+    size_t nLabelSize = strlen("LBLSIZE=") + MAX_LOG10_LBLSIZE + osLabel.size();
+    nLabelSize =
+        (nLabelSize + m_nRecordSize - 1) / m_nRecordSize * m_nRecordSize;
+    std::string osLabelSize(CPLSPrintf("LBLSIZE=%d", static_cast<int>(nLabelSize)));
+    while( osLabelSize.size() < strlen("LBLSIZE=") + MAX_LOG10_LBLSIZE )
+        osLabelSize += ' ';
+    osLabel = osLabelSize + osLabel;
+    CPLAssert( osLabel.size() <= nLabelSize );
+
+    // Write label
+    VSIFSeekL(fpImage, 0, SEEK_SET);
+    VSIFWriteL(osLabel.data(), 1, osLabel.size(), fpImage);
+    const size_t nZeroPadding = nLabelSize - osLabel.size();
+    if( nZeroPadding )
+    {
+        VSIFWriteL(std::string(nZeroPadding, '\0').data(),
+                   1, nZeroPadding, fpImage);
+    }
+
+    if( m_bInitToNodata )
+    {
+        const int nDTSize = GDALGetDataTypeSizeBytes(GetRasterBand(1)->GetRasterDataType());
+        VSIFTruncateL( fpImage, VSIFTellL(fpImage) +
+            static_cast<vsi_l_offset>(nRasterXSize) * nRasterYSize * nBands * nDTSize );
+    }
+
+    // Patch band offsets to take into account label
+    for( int i = 0; i < nBands; i++ )
+    {
+        auto poBand = dynamic_cast<VICARRawRasterBand*>(GetRasterBand(i+1));
+        if( poBand )
+            poBand->nImgOffset += nLabelSize;
+    }
+}
+
+/************************************************************************/
+/*                           BuildLabel()                               */
+/************************************************************************/
+
+void VICARDataset::BuildLabel()
+{
+    CPLJSONObject oLabel = m_oSrcJSonLabel;
+    if( !oLabel.IsValid() )
+    {
+        oLabel = CPLJSONObject();
+    }
+
+    oLabel.Set("LBLSIZE", 0); // to be overriden later
+
+    if( !oLabel.GetObj("TYPE").IsValid() )
+        oLabel.Set("TYPE", "IMAGE");
+
+    const auto eType = GetRasterBand(1)->GetRasterDataType();
+    const char* pszFormat = "";
+    switch( eType )
+    {
+        case GDT_Byte: pszFormat = "BYTE"; break;
+        case GDT_Int16: pszFormat = "HALF"; break;
+        case GDT_Int32: pszFormat = "FULL"; break;
+        case GDT_Float32: pszFormat = "REAL"; break;
+        case GDT_Float64: pszFormat = "DOUB"; break;
+        case GDT_CFloat32: pszFormat = "COMP"; break;
+        default: CPLAssert(false); break;
+    }
+    oLabel.Set("FORMAT", pszFormat);
+
+    oLabel.Set("BUFSIZ", m_nRecordSize); // arbitrary value
+    oLabel.Set("DIM", 3);
+    oLabel.Set("EOL", 0);
+    oLabel.Set("RECSIZE", m_nRecordSize);
+    oLabel.Set("ORG", "BSQ");
+    oLabel.Set("NL", nRasterYSize);
+    oLabel.Set("NS", nRasterXSize);
+    oLabel.Set("NB", nBands);
+    oLabel.Set("N1", nRasterXSize);
+    oLabel.Set("N2", nRasterYSize);
+    oLabel.Set("N3", nBands);
+    oLabel.Set("N4", 0);
+    oLabel.Set("NBB", 0);
+    oLabel.Set("NLB", 0);
+    oLabel.Set("HOST", "X86-64-LINX");
+    oLabel.Set("INTFMT", "LOW");
+    oLabel.Set("REALFMT", "RIEEE");
+    oLabel.Set("BHOST", "X86-64-LINX");
+    oLabel.Set("BINTFMT", "LOW");
+    if( !oLabel.GetObj("BLTYPE").IsValid() )
+        oLabel.Set("BLTYPE", "");
+    oLabel.Set("COMPRESS", "NONE");
+    oLabel.Set("EOCI1", 0);
+    oLabel.Set("EOCI2", 0);
+
+    m_oJSonLabel = oLabel;
 }
 
 /************************************************************************/
@@ -541,7 +992,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s appears to be a VICAR file, but failed to find some "
                   "required keywords.",
-                  poDS->GetDescription() );
+                  poOpenInfo->pszFilename );
         delete poDS;
         return nullptr;
     }
@@ -888,12 +1339,13 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    poDS->m_nRecordSize = atoi(poDS->GetKeyword("RECSIZE", ""));
+
     if( nNBB != 0 )
     {
         const char* pszBLType = poDS->GetKeyword("BLTYPE", nullptr);
         const char* pszVicarConf = CPLFindFile("gdal", "vicar.json");
-        const GUInt64 nRecordSize = atoi(poDS->GetKeyword("RECSIZE", ""));
-        if( pszBLType && pszVicarConf && nRecordSize > 0 )
+        if( pszBLType && pszVicarConf && poDS->m_nRecordSize > 0 )
         {
 
             RawRasterBand::ByteOrder eBINTByteOrder =
@@ -943,10 +1395,10 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                         auto poLayer = std::unique_ptr<OGRVICARBinaryPrefixesLayer>(
                             new OGRVICARBinaryPrefixesLayer(
                                 poDS->fpImage,
-                                static_cast<int>(nImageSize / nRecordSize),
+                                static_cast<int>(nImageSize / poDS->m_nRecordSize),
                                 oDef,
                                 nImageOffsetWithoutNBB,
-                                nRecordSize,
+                                poDS->m_nRecordSize,
                                 eBINTByteOrder,
                                 eBREALByteOrder));
                         if( !poLayer->HasError() )
@@ -965,14 +1417,13 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     for( int i = 0; i < nBands; i++ )
     {
         GDALRasterBand *poBand
-            = new RawRasterBand( poDS, i+1, poDS->fpImage,
+            = new VICARRawRasterBand( poDS, i+1, poDS->fpImage,
                                  static_cast<vsi_l_offset>(
                                     nImageOffsetWithoutNBB + nNBB + nBandOffset * i),
                                  static_cast<int>(nPixelOffset),
                                  static_cast<int>(nLineOffset),
                                  eDataType,
-                                 eByteOrder,
-                                 RawRasterBand::OwnFP::NO );
+                                 eByteOrder );
 
         poDS->SetBand( i+1, poBand );
         //only set NoData if instrument is supported
@@ -1249,6 +1700,150 @@ bool VICARDataset::GetSpacings(const VICARKeywordHandler& keywords,
 }
 
 /************************************************************************/
+/*                           Create()                                   */
+/************************************************************************/
+
+GDALDataset *VICARDataset::Create(const char* pszFilename,
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType,
+                                  char** papszOptions)
+{
+    return CreateInternal(pszFilename, nXSize, nYSize, nBands, eType,
+                          papszOptions);
+}
+
+VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType,
+                                  char** papszOptions)
+{
+    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_Int32 &&
+        eType != GDT_Float32 && eType != GDT_Float64 && eType != GDT_CFloat32 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type");
+        return nullptr;
+    }
+
+    const int nPixelOffset = GDALGetDataTypeSizeBytes(eType);
+    if( nXSize == 0 || nYSize == 0  || nPixelOffset > INT_MAX / nXSize )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported raster dimensions");
+        return nullptr;
+    }
+    const int nLineOffset = nXSize * nPixelOffset;
+
+    if( nBands == 0 || nBands > 32767 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported band count");
+        return nullptr;
+    }
+
+    VSILFILE* fp = VSIFOpenExL(pszFilename, "wb+", true);
+    if( fp == nullptr )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Cannot create %s: %s",
+                  pszFilename, VSIGetLastErrorMsg() );
+        return nullptr;
+    }
+
+    VICARDataset* poDS = new VICARDataset();
+    poDS->fpImage = fp;
+    poDS->nRasterXSize = nXSize;
+    poDS->nRasterYSize = nYSize;
+    poDS->m_nRecordSize = nLineOffset;
+    poDS->m_bIsLabelWritten = false;
+    poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
+    poDS->m_bInitToNodata = true;
+    poDS->eAccess = GA_Update;
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    const vsi_l_offset nBandOffset =
+        static_cast<vsi_l_offset>(nLineOffset) * nYSize;
+    for( int i = 0; i < nBands; i++ )
+    {
+        GDALRasterBand *poBand = new VICARRawRasterBand(
+            poDS, i+1, poDS->fpImage,
+            i * nBandOffset, // will be set later to final value since we need to include the label size
+            nPixelOffset,
+            nLineOffset,
+            eType,
+            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN );
+        poDS->SetBand( i+1, poBand );
+    }
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                            CreateCopy()                              */
+/************************************************************************/
+
+GDALDataset* VICARDataset::CreateCopy( const char *pszFilename,
+                                       GDALDataset *poSrcDS,
+                                       int /*bStrict*/,
+                                       char ** papszOptions,
+                                       GDALProgressFunc pfnProgress,
+                                       void * pProgressData )
+{
+    if( poSrcDS->GetRasterCount() == 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported band count");
+        return nullptr;
+    }
+
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+    const int nBands = poSrcDS->GetRasterCount();
+    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    auto poDS = CreateInternal(
+        pszFilename, nXSize, nYSize, nBands, eType, papszOptions );
+    if( poDS == nullptr )
+        return nullptr;
+
+    double adfGeoTransform[6] = { 0.0 };
+    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
+        && (adfGeoTransform[0] != 0.0
+            || adfGeoTransform[1] != 1.0
+            || adfGeoTransform[2] != 0.0
+            || adfGeoTransform[3] != 0.0
+            || adfGeoTransform[4] != 0.0
+            || adfGeoTransform[5] != 1.0) )
+    {
+        poDS->SetGeoTransform( adfGeoTransform );
+    }
+
+    auto poSrcSRS = poSrcDS->GetSpatialRef();
+    if( poSrcSRS )
+    {
+        poDS->SetSpatialRef( poSrcSRS );
+    }
+
+    if( poDS->m_bUseSrcLabel )
+    {
+        char** papszMD_VICAR = poSrcDS->GetMetadata("json:VICAR");
+        if( papszMD_VICAR != nullptr )
+        {
+            poDS->SetMetadata( papszMD_VICAR, "json:VICAR" );
+        }
+    }
+
+    poDS->m_bInitToNodata = false;
+    CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDS,
+                                           nullptr, pfnProgress, pProgressData );
+    poDS->FlushCache();
+    if( eErr != CE_None )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
+    return poDS;
+}
+
+/************************************************************************/
 /*                         GDALRegister_VICAR()                         */
 /************************************************************************/
 
@@ -1266,9 +1861,20 @@ void GDALRegister_VICAR()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MIPL VICAR file" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_vicar.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 Int32 Float32 Float64 CFloat32" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"  <Option name='USE_SRC_LABEL' type='boolean'"
+    "description='Whether to use source label in VICAR to VICAR conversions' "
+    "default='YES'/>"
+"</CreationOptionList>"
+    );
 
     poDriver->pfnOpen = VICARDataset::Open;
     poDriver->pfnIdentify = VICARDataset::Identify;
+    poDriver->pfnCreate = VICARDataset::Create;
+    poDriver->pfnCreateCopy = VICARDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
