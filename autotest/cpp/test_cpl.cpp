@@ -2195,7 +2195,7 @@ namespace tut
             ensure_equals( oObj.GetBool("inexisting_bool", false), false );
             ensure_equals( oObj.GetObj("bool").GetType(), CPLJSONObject::Boolean );
             oObj.AddNull("null_field");
-            //ensure_equals( oObj.GetObj("null_field").GetType(), CPLJSONObject::Null );
+            ensure_equals( oObj.GetObj("null_field").GetType(), CPLJSONObject::Null );
             ensure_equals( oObj.GetObj("inexisting").GetType(), CPLJSONObject::Unknown );
             oObj.Set("string", std::string("my_string"));
             oObj.Set("const_char_star", nullptr);
