@@ -110,8 +110,11 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
         } else if( org && code != 0 ) {
             CPLString osCode;
             osCode.Printf("%s:%d", org->c_str(), code);
-            if( m_poSRS->SetFromUserInput(osCode.c_str()) != OGRERR_NONE )
+            if( m_poSRS->SetFromUserInput(osCode.c_str()) != OGRERR_NONE &&
+                wkt != nullptr )
+            {
                 m_poSRS->importFromWkt(wkt->c_str());
+            }
         } else if (wkt) {
             m_poSRS->importFromWkt(wkt->c_str());
         }
