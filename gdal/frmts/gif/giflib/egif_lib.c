@@ -25,6 +25,9 @@
 #    include <alloc.h>
 #  endif
 #else
+#  if defined(__MINGW32__)
+#    include <io.h> // Required for setmode()
+#  endif
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #  ifdef R6000

@@ -25,6 +25,9 @@
 #    include <alloc.h>
 #  endif /* _MSC_VER */
 #else
+#  if defined(__MINGW32__)
+#    include <io.h> // Required for setmode()
+#  endif
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #endif /* _MSC_VER || __MSDOS__ */
