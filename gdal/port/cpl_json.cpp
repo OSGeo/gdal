@@ -1106,7 +1106,8 @@ CPLJSONObject::Type CPLJSONObject::GetType() const
 {
     if(nullptr == m_poJsonObject)
         return CPLJSONObject::Unknown;
-    switch ( json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) )
+    auto jsonObj(TO_JSONOBJ(m_poJsonObject));
+    switch ( json_object_get_type( jsonObj ) )
     {
     case  json_type_null:
         return CPLJSONObject::Null;
@@ -1115,7 +1116,12 @@ CPLJSONObject::Type CPLJSONObject::GetType() const
     case json_type_double:
         return CPLJSONObject::Double;
     case json_type_int:
-        return CPLJSONObject::Integer;
+    {
+        if( CPL_INT64_FITS_ON_INT32( json_object_get_int64( jsonObj ) ) )
+            return CPLJSONObject::Integer;
+        else
+            return CPLJSONObject::Long;
+    }
     case json_type_object:
         return CPLJSONObject::Object;
     case json_type_array:
