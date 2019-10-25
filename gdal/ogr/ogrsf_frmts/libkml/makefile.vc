@@ -29,7 +29,7 @@ plugin: $(PLUGIN_DLL)
 
 $(PLUGIN_DLL):	$(OBJ)
 	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) /LTCG \
-		$(GDAL_ROOT)/gdal_i.lib $(LIBKML_LIBS)
+		$(GDALLIB) $(LIBKML_LIBS)
 
 plugin-install:
         -mkdir $(PLUGINDIR)

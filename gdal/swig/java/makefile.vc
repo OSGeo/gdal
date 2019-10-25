@@ -3,9 +3,9 @@ GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 !IF "$(DLLBUILD)" == "1"
-GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
+GDALLIB	=    $(GDAL_ROOT)\$(GDAL_LIB_NAME)
 !ELSE
-GDALLIB	=    $(GDAL_ROOT)\gdal.lib $(EXTERNAL_LIBS)
+GDALLIB	=    $(GDAL_ROOT)\$(GDAL_LIB_NAME) $(EXTERNAL_LIBS)
 !ENDIF
 
 JAVA_RUN = $(JAVA) -Djava.library.path=. -cp gdal.jar;build\apps

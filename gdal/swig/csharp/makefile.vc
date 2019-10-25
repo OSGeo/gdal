@@ -18,9 +18,9 @@ GDAL_ROOT	=	..\..
 !INCLUDE csharp.opt
 
 !IFDEF CSHARP_STATIC_LINKAGE
-GDALLIB	= $(GDAL_ROOT)\gdal.lib
+GDALLIB	= $(GDAL_ROOT)\$(GDAL_LIB_NAME)
 !ELSE
-GDALLIB	= $(GDAL_ROOT)\gdal_i.lib
+GDALLIB	= $(GDAL_ROOT)\$(GDAL_LIB_NAME)
 !ENDIF
 
 !IFDEF MONO
@@ -170,7 +170,7 @@ clean:
 	cd osr
 	$(MAKE) /f makefile.vc clean
 	cd ..
-	-del gdal.lib
+	-del $(GDAL_LIB_NAME)
 	-del *_wrap.dll
 	-del *_csharp.dll
 	-del *.obj

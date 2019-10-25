@@ -36,4 +36,4 @@ plugin:	gdal_GRIB.dll
 gdal_GRIB.dll: default
 	link /dll $(LDEBUG) /out:gdal_GRIB.dll \
 		$(OBJ) degrib\degrib\*.obj degrib\g2clib\*.obj \
-		$(GDAL_ROOT)/gdal_i.lib $(LINK_PNG) $(LINK_ZLIB)
+		$(GDALLIB) $(LINK_PNG) $(LINK_ZLIB)
