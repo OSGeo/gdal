@@ -1304,8 +1304,9 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->osProjection = pszResult;
         CPLFree( pszResult );
     }
+    if( bProjectionSet )
     {
-        poDS->bGotTransform = TRUE;
+        poDS->bGotTransform = true;
         poDS->adfGeoTransform[0] = dfULXMap;
         poDS->adfGeoTransform[1] = dfXDim;
         poDS->adfGeoTransform[2] = 0.0;
@@ -1574,7 +1575,10 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     if (EQUAL(poDS->GetKeyword( "EOL"), "1" ))
         poDS->SetMetadataItem( "END-OF-DATASET_LABEL", "PRESENT" );
     poDS->SetMetadataItem( "CONVERSION_DETAILS", "http://www.lpi.usra.edu/meetings/lpsc2014/pdf/1088.pdf" );
-    poDS->SetMetadataItem( "PIXEL-SHIFT-BUG", "CORRECTED" );
+    if( poDS->bGotTransform )
+    {
+        poDS->SetMetadataItem( "PIXEL-SHIFT-BUG", "CORRECTED" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
