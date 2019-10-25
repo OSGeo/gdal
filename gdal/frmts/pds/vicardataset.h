@@ -57,15 +57,19 @@ class VICARDataset final: public RawDataset
     CPLJSONObject m_oJSonLabel;
     CPLStringList m_aosVICARMD;
 
-    bool        bGotTransform = false;
-    std::array<double, 6> adfGeoTransform = {{0.0,1.0,0,0.0,0.0,1.0}};
+    bool        m_bGotTransform = false;
+    std::array<double, 6> m_adfGeoTransform = {{0.0,1.0,0,0.0,0.0,1.0}};
 
-    CPLString   osProjection;
+    OGRSpatialReference m_oSRS;
 
     std::unique_ptr<OGRLayer> m_poLayer;
 
+    CPLString   m_osLatitudeType; // creation only
+    CPLString   m_osLongitudeDirection; // creation only
+    CPLString   m_osTargetName; // creation only
     bool          m_bIsLabelWritten = true; // creation only
     bool          m_bUseSrcLabel = true; // creation only
+    bool          m_bUseSrcMap = false; // creation only
     bool          m_bInitToNodata = false; // creation only
     CPLJSONObject m_oSrcJSonLabel; // creation only
 
@@ -83,11 +87,11 @@ public:
     VICARDataset();
     virtual ~VICARDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    CPLErr SetGeoTransform( double * padfTransform ) override;
+
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 

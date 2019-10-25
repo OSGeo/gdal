@@ -291,3 +291,29 @@ def test_vicar_create_label_option_as_filename_error():
             filename, 1, 1, 1, gdal.GDT_Byte, options = ['LABEL=' + json_filename])
     gdal.Unlink(json_filename)
     gdal.Unlink(filename)
+
+
+def test_vicar_create_georeferencing():
+
+    src_ds = gdal.Open('data/test_vicar_truncated.bin')
+    filename = '/vsimem/test.vic'
+    ds = gdal.GetDriverByName('VICAR').Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
+    ds.SetSpatialRef(src_ds.GetSpatialRef())
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+
+    filename2 = '/vsimem/test2.vic'
+    assert gdal.GetDriverByName('VICAR').CreateCopy(filename2, ds)
+    ds = None
+
+    ds = gdal.Open(filename2)
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    ds = None
+
+    gdal.GetDriverByName('VICAR').Delete(filename)
+    gdal.GetDriverByName('VICAR').Delete(filename2)

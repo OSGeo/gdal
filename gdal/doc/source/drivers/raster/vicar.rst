@@ -178,6 +178,18 @@ creation option.
 
 The available creation options are:
 
+-  **COORDINATE_SYSTEM_NAME**\ =PLANETOCENTRIC/PLANETOGRAPHIC. Value of
+   MAP.COORDINATE_SYSTEM_NAME. Defaults to PLANETOCENTRIC. If specified, and
+   USE_SRC_MAP is in effect, this will be taken into account to
+   override the source COORDINATE_SYSTEM_NAME.
+-  **POSITIVE_LONGITUDE_DIRECTION**\ =EAST/WEST. Value of
+   MAP.override. Defaults to EAST. If specified,
+   and USE_SRC_MAP is in effect, this will be taken into account to
+   override the source POSITIVE_LONGITUDE_DIRECTION.
+-  **TARGET_NAME**\ =string. Value of MAP.TARGET_NAME. This is
+   normally deduced from the SRS datum name. If specified, and
+   USE_SRC_MAP is in effect, this will be taken into account to
+   override the source TARGET_NAME.
 -  **USE_SRC_LABEL**\ =YES/NO. Whether to use source label in VICAR to
    VICAR conversions. Defaults to YES.
 -  **LABEL**\ =string. Label to use, either as a JSON string or a filename

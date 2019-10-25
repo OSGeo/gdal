@@ -494,17 +494,34 @@ VICARDataset::~VICARDataset()
         VSIFCloseL( fpImage );
 }
 
+
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char *VICARDataset::_GetProjectionRef()
+const OGRSpatialReference* VICARDataset::GetSpatialRef() const
 
 {
-    if( !osProjection.empty() )
-        return osProjection;
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
 
-    return GDALPamDataset::_GetProjectionRef();
+    return GDALPamDataset::GetSpatialRef();
+}
+
+/************************************************************************/
+/*                           SetSpatialRef()                            */
+/************************************************************************/
+
+CPLErr VICARDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
+{
+    if( eAccess == GA_ReadOnly )
+        return GDALPamDataset::SetSpatialRef( poSRS );
+    if( poSRS )
+        m_oSRS = *poSRS;
+    else
+        m_oSRS.Clear();
+    InvalidateLabel();
+    return CE_None;
 }
 
 /************************************************************************/
@@ -514,13 +531,35 @@ const char *VICARDataset::_GetProjectionRef()
 CPLErr VICARDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if( bGotTransform )
+    if( m_bGotTransform )
     {
-        memcpy( padfTransform, &adfGeoTransform[0], sizeof(double) * 6 );
+        memcpy( padfTransform, &m_adfGeoTransform[0], sizeof(double) * 6 );
         return CE_None;
     }
 
     return GDALPamDataset::GetGeoTransform( padfTransform );
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr VICARDataset::SetGeoTransform( double * padfTransform )
+
+{
+    if( eAccess == GA_ReadOnly )
+        return GDALPamDataset::SetGeoTransform( padfTransform );
+    if( padfTransform[1] <= 0.0 || padfTransform[1] != -padfTransform[5] ||
+        padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only north-up geotransform with square pixels supported");
+        return CE_Failure;
+    }
+    m_bGotTransform = true;
+    memcpy( &m_adfGeoTransform[0], padfTransform, sizeof(double) * 6 );
+    InvalidateLabel();
+    return CE_None;
 }
 
 /************************************************************************/
@@ -688,7 +727,7 @@ static void WriteLabelItemValue(std::string& osLabel,
         }
         else
         {
-            osLabel += CPLSPrintf("%g", dfVal);
+            osLabel += CPLSPrintf("%.15g", dfVal);
         }
     }
     else if ( eType == CPLJSONObject::Type::String )
@@ -886,6 +925,30 @@ void VICARDataset::WriteLabel()
     }
 }
 
+/**
+ * Get or create CPLJSONObject.
+ * @param  oParent Parent CPLJSONObject.
+ * @param  osKey  Key name.
+ * @return         CPLJSONObject class instance.
+ */
+static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent,
+                                           const std::string &osKey)
+{
+    CPLJSONObject oChild = oParent[osKey];
+    if( oChild.IsValid() && oChild.GetType() != CPLJSONObject::Object )
+    {
+        oParent.Delete( osKey );
+        oChild.Deinit();
+    }
+
+    if( !oChild.IsValid() )
+    {
+        oChild = CPLJSONObject();
+        oParent.Add( osKey, oChild );
+    }
+    return oChild;
+}
+
 /************************************************************************/
 /*                           BuildLabel()                               */
 /************************************************************************/
@@ -941,6 +1004,146 @@ void VICARDataset::BuildLabel()
     oLabel.Set("COMPRESS", "NONE");
     oLabel.Set("EOCI1", 0);
     oLabel.Set("EOCI2", 0);
+
+    if( m_bUseSrcMap )
+    {
+        auto oMap = oLabel.GetObj("PROPERTY/MAP");
+        if( oMap.IsValid() &&
+            oMap.GetType() == CPLJSONObject::Object )
+        {
+            if( !m_osTargetName.empty() )
+                oMap.Set( "TARGET_NAME", m_osTargetName );
+            if( !m_osLatitudeType.empty() )
+                oMap.Set( "COORDINATE_SYSTEM_NAME", m_osLatitudeType );
+            if( !m_osLongitudeDirection.empty() )
+                oMap.Set( "POSITIVE_LONGITUDE_DIRECTION", m_osLongitudeDirection );
+        }
+    }
+    else
+    {
+        auto oProperty = oLabel.GetObj("PROPERTY");
+        if( oProperty.IsValid() )
+        {
+            oProperty.Delete( "MAP" );
+        }
+        if( !m_oSRS.IsEmpty() )
+        {
+            if( m_oSRS.IsProjected() || m_oSRS.IsGeographic() )
+            {
+                oProperty = GetOrCreateJSONObject(oLabel, "PROPERTY");
+                auto oMap = GetOrCreateJSONObject(oProperty, "MAP");
+
+                const char* pszDatum = m_oSRS.GetAttrValue("DATUM");
+                CPLString osTargetName( m_osTargetName );
+                if( osTargetName.empty() )
+                {
+                    if( pszDatum && STARTS_WITH(pszDatum, "D_") )
+                    {
+                        osTargetName = pszDatum + 2;
+                    }
+                    else if( pszDatum )
+                    {
+                        osTargetName = pszDatum;
+                    }
+                }
+                if( !osTargetName.empty() )
+                    oMap.Add( "TARGET_NAME", osTargetName );
+
+                oMap.Add( "A_AXIS_RADIUS", m_oSRS.GetSemiMajor() / 1000.0 );
+                oMap.Add( "B_AXIS_RADIUS", m_oSRS.GetSemiMajor() / 1000.0 );
+                oMap.Add( "C_AXIS_RADIUS", m_oSRS.GetSemiMinor() / 1000.0 );
+
+                if( !m_osLatitudeType.empty() )
+                    oMap.Add( "COORDINATE_SYSTEM_NAME", m_osLatitudeType );
+                else
+                    oMap.Add( "COORDINATE_SYSTEM_NAME", "PLANETOCENTRIC" );
+
+                if( !m_osLongitudeDirection.empty() )
+                    oMap.Add( "POSITIVE_LONGITUDE_DIRECTION", m_osLongitudeDirection );
+                else
+                    oMap.Add( "POSITIVE_LONGITUDE_DIRECTION", "EAST" );
+
+                const char* pszProjection = m_oSRS.GetAttrValue("PROJECTION");
+                if( pszProjection == nullptr )
+                {
+                    oMap.Add( "MAP_PROJECTION_TYPE", "SIMPLE_CYLINDRICAL" );
+                    oMap.Add( "CENTER_LONGITUDE", 0.0 );
+                    oMap.Add( "CENTER_LATITUDE", 0.0 );
+                }
+                else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
+                {
+                    oMap.Add( "MAP_PROJECTION_TYPE", "EQUIRECTANGULAR" );
+                    if( m_oSRS.GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 )
+                                                                        != 0.0 )
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                                "Ignoring %s. Only 0 value supported",
+                                SRS_PP_LATITUDE_OF_ORIGIN);
+                    }
+                    oMap.Add( "CENTER_LONGITUDE",
+                        m_oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0) );
+                    const double dfCenterLat =
+                        m_oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+                    oMap.Add( "CENTER_LATITUDE", dfCenterLat );
+                }
+                else if( EQUAL(pszProjection, SRS_PT_SINUSOIDAL) )
+                {
+                    oMap.Add( "MAP_PROJECTION_TYPE", "SINUSOIDAL" );
+                    oMap.Add( "CENTER_LONGITUDE",
+                        m_oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0) );
+                    oMap.Add( "CENTER_LATITUDE", 0.0 );
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                            "Projection %s not supported",
+                            pszProjection);
+                }
+
+
+                if( oMap["MAP_PROJECTION_TYPE"].IsValid() )
+                {
+                    if( m_oSRS.GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                                "Ignoring %s. Only 0 value supported",
+                                SRS_PP_FALSE_EASTING);
+                    }
+                    if( m_oSRS.GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) != 0.0 )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                "Ignoring %s. Only 0 value supported",
+                                SRS_PP_FALSE_NORTHING);
+                    }
+
+                    if( m_bGotTransform )
+                    {
+                        const double dfDegToMeter = m_oSRS.GetSemiMajor() * M_PI / 180.0;
+                        if( m_oSRS.IsProjected() )
+                        {
+                            const double dfLinearUnits = m_oSRS.GetLinearUnits();
+                            const double dfScale = m_adfGeoTransform[1] * dfLinearUnits;
+                            oMap.Add( "SAMPLE_PROJECTION_OFFSET", -m_adfGeoTransform[0] * dfLinearUnits / dfScale - 0.5 );
+                            oMap.Add( "LINE_PROJECTION_OFFSET", m_adfGeoTransform[3] * dfLinearUnits / dfScale - 0.5 );
+                            oMap.Add( "MAP_SCALE", dfScale / 1000.0 );
+                        }
+                        else if( m_oSRS.IsGeographic() )
+                        {
+                            const double dfScale = m_adfGeoTransform[1] * dfDegToMeter;
+                            oMap.Add( "SAMPLE_PROJECTION_OFFSET", -m_adfGeoTransform[0] * dfDegToMeter / dfScale - 0.5 );
+                            oMap.Add( "LINE_PROJECTION_OFFSET", m_adfGeoTransform[3] * dfDegToMeter / dfScale - 0.5 );
+                            oMap.Add( "MAP_SCALE", dfScale / 1000.0 );
+                        }
+                    }
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "SRS not supported");
+            }
+        }
+    }
 
     m_oJSonLabel = oLabel;
 }
@@ -1299,27 +1502,24 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        // translate back into a projection string.
-        char *pszResult = nullptr;
-        oSRS.exportToWkt( &pszResult );
-        poDS->osProjection = pszResult;
-        CPLFree( pszResult );
+        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     if( bProjectionSet )
     {
-        poDS->bGotTransform = true;
-        poDS->adfGeoTransform[0] = dfULXMap;
-        poDS->adfGeoTransform[1] = dfXDim;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = dfULYMap;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = dfYDim;
+        poDS->m_bGotTransform = true;
+        poDS->m_adfGeoTransform[0] = dfULXMap;
+        poDS->m_adfGeoTransform[1] = dfXDim;
+        poDS->m_adfGeoTransform[2] = 0.0;
+        poDS->m_adfGeoTransform[3] = dfULYMap;
+        poDS->m_adfGeoTransform[4] = 0.0;
+        poDS->m_adfGeoTransform[5] = dfYDim;
     }
 
-    if( !poDS->bGotTransform )
-        poDS->bGotTransform = CPL_TO_BOOL(
+    if( !poDS->m_bGotTransform )
+        poDS->m_bGotTransform = CPL_TO_BOOL(
                 GDALReadWorldFile( poOpenInfo->pszFilename, "wld",
-                               &poDS->adfGeoTransform[0] ));
+                               &poDS->m_adfGeoTransform[0] ));
 
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->m_oJSonLabel = poDS->oKeywords.GetJsonObject();
@@ -1777,6 +1977,13 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
     poDS->m_nRecordSize = nLineOffset;
     poDS->m_bIsLabelWritten = false;
     poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
+    poDS->m_bUseSrcMap = CPLFetchBool(papszOptions, "USE_SRC_MAP", false);
+    poDS->m_osLatitudeType = CSLFetchNameValueDef(papszOptions,
+                                                  "COORDINATE_SYSTEM_NAME", "");
+    poDS->m_osLongitudeDirection = CSLFetchNameValueDef(papszOptions,
+                                                  "POSITIVE_LONGITUDE_DIRECTION", "");
+    poDS->m_osTargetName = CSLFetchNameValueDef(papszOptions,
+                                                  "TARGET_NAME", "");
     poDS->m_bInitToNodata = true;
     poDS->m_oSrcJSonLabel = oSrcJSonLabel;
     poDS->eAccess = GA_Update;
@@ -1889,9 +2096,26 @@ void GDALRegister_VICAR()
                                "Byte Int16 Int32 Float32 Float64 CFloat32" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
+"  <Option name='COORDINATE_SYSTEM_NAME' type='string-select' "
+    "description='Value of MAP.COORDINATE_SYSTEM_NAME' default='PLANETOCENTRIC'>"
+"     <Value>PLANETOCENTRIC</Value>"
+"     <Value>PLANETOGRAPHIC</Value>"
+"  </Option>"
+"  <Option name='POSITIVE_LONGITUDE_DIRECTION' type='string-select' "
+    "description='Value of MAP.POSITIVE_LONGITUDE_DIRECTION' "
+    "default='EAST'>"
+"     <Value>EAST</Value>"
+"     <Value>WEST</Value>"
+"  </Option>"
+"  <Option name='TARGET_NAME' type='string' description='Value of "
+    "MAP.TARGET_NAME'/>"
 "  <Option name='USE_SRC_LABEL' type='boolean'"
     "description='Whether to use source label in VICAR to VICAR conversions' "
     "default='YES'/>"
+"  <Option name='USE_SRC_MAP' type='boolean'"
+    "description='Whether to use MAP property from source label in "
+                 "VICAR to VICAR conversions' "
+    "default='NO'/>"
 "  <Option name='LABEL' type='string'"
     "description='Label to use, either as a JSON string or a filename containing one'/>"
 "</CreationOptionList>"
