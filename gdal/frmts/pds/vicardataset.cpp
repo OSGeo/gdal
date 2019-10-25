@@ -1570,18 +1570,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      END Instrument-specific keywords as metadata.                   */
-/* -------------------------------------------------------------------- */
-
-    if (EQUAL(poDS->GetKeyword( "EOL"), "1" ))
-        poDS->SetMetadataItem( "END-OF-DATASET_LABEL", "PRESENT" );
-    poDS->SetMetadataItem( "CONVERSION_DETAILS", "http://www.lpi.usra.edu/meetings/lpsc2014/pdf/1088.pdf" );
-    if( poDS->bGotTransform )
-    {
-        poDS->SetMetadataItem( "PIXEL-SHIFT-BUG", "CORRECTED" );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->TryLoadXML();
