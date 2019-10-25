@@ -33,7 +33,7 @@ plugin:	 $(PLUGIN_DLL)
 
 $(PLUGIN_DLL):	$(OBJ)
 	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(DXF_OBJ) \
-		$(GDAL_ROOT)/gdal_i.lib $(TD_LIBS)
+		$(GDALLIB) $(TD_LIBS)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest \
 		-outputresource:$(PLUGIN_DLL);2
 

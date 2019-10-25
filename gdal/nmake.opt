@@ -113,17 +113,23 @@ CXX_ANALYZE_FLAGS=
 # Set DEBUG=1 to create a debug build
 !IFNDEF DEBUG
 DEBUG=0
+!IFNDEF POSTFIX
+POSTFIX=
+!ENDIF
 !ENDIF
 
 # Force PDB output for DEBUG mode
 !IF "$(DEBUG)" == "1"
 WITH_PDB=1
+!IFNDEF POSTFIX
+POSTFIX=_d
+!ENDIF
 !ELSE IF "$(DEBUG)" != "0"
 !ERROR DEBUG should be set to 0 or 1
 !ENDIF
 
 !IFNDEF GDAL_PDB
-GDAL_PDB = $(GDAL_ROOT)\gdal$(VERSION).pdb
+GDAL_PDB = $(GDAL_ROOT)\gdal$(VERSION)$(POSTFIX).pdb
 !ENDIF
 
 !IFDEF WITH_PDB
@@ -791,7 +797,9 @@ HAVE_LERC=1
 # Location of MS Data Access SDK (not really needed anymore I think)
 #MSDASDK =	D:\Software\MDAC_2.6
 
-GDAL_DLL =	gdal$(VERSION).dll
+!IFNDEF GDAL_DLL
+GDAL_DLL =	gdal$(VERSION)$(POSTFIX).dll
+!ENDIF
 
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\gcore \
 		-I$(GDAL_ROOT)\alg -I$(GDAL_ROOT)\ogr\ogrsf_frmts  -I$(GDAL_ROOT)\gnm -I$(GDAL_ROOT)\gnm\gnm_frmts -I$(GDAL_ROOT)\apps
@@ -827,12 +835,15 @@ INSTALL	=	xcopy /y /r /d /f /I
 
 CPLLIB	=    $(GDAL_ROOT)/port/cpl.lib
 
+!IFNDEF GDAL_LIB_NAME
 !IF "$(DLLBUILD)" == "1"
-GDALLIB	=    $(GDAL_ROOT)/gdal_i.lib
+GDAL_LIB_NAME = gdal_i$(POSTFIX).lib
 !ELSE
-GDALLIB	=    $(GDAL_ROOT)/gdal.lib
+GDAL_LIB_NAME = gdal$(POSTFIX).lib
+!ENDIF
 !ENDIF
 
+GDALLIB = $(GDAL_ROOT)\$(GDAL_LIB_NAME)
 !IFDEF ODBC_SUPPORTED
 # legacy_stdio_definitions.lib : https://connect.microsoft.com/VisualStudio/feedback/details/1134693/vs-2015-ctp-5-c-vsnwprintf-s-and-other-functions-are-not-exported-in-appcrt140-dll-breaking-linkage-of-static-libraries
 ODBCLIB = legacy_stdio_definitions.lib odbc32.lib odbccp32.lib user32.lib

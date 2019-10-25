@@ -28,7 +28,7 @@ plugin:	$(PLUGIN_DLL)
 
 $(PLUGIN_DLL):	$(OBJ)
 	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) \
-		$(GDAL_ROOT)/gdal_i.lib $(OCI_LIB)
+		$(GDALLIB) $(OCI_LIB)
 	if exist ogr_OCI.dll.manifest mt -manifest ogr_OCI.dll.manifest \
 		-outputresource:ogr_OCI.dll;2
 
