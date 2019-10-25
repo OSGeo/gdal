@@ -180,6 +180,8 @@ The available creation options are:
 
 -  **USE_SRC_LABEL**\ =YES/NO. Whether to use source label in VICAR to
    VICAR conversions. Defaults to YES.
+-  **LABEL**\ =string. Label to use, either as a JSON string or a filename
+   containing one. If defined, takes precedence over USE_SRC_LABEL.
 
 See Also
 --------

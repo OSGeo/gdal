@@ -477,6 +477,7 @@ VICARDataset::VICARDataset()
 
 {
     m_oJSonLabel.Deinit();
+    m_oSrcJSonLabel.Deinit();
 }
 
 /************************************************************************/
@@ -1742,6 +1743,36 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
         return nullptr;
     }
 
+    CPLJSONObject oSrcJSonLabel;
+    oSrcJSonLabel.Deinit();
+
+    const char* pszLabel = CSLFetchNameValue(papszOptions, "LABEL");
+    if( pszLabel )
+    {
+        CPLJSONDocument oJSONDocument;
+        if( pszLabel[0] == '{' )
+        {
+            const GByte *pabyData = reinterpret_cast<const GByte *>(pszLabel);
+            if( !oJSONDocument.LoadMemory( pabyData ) )
+            {
+                return nullptr;
+            }
+        }
+        else
+        {
+            if( !oJSONDocument.Load(pszLabel) )
+            {
+                return nullptr;
+            }
+        }
+
+        oSrcJSonLabel = oJSONDocument.GetRoot();
+        if( !oSrcJSonLabel.IsValid() )
+        {
+            return nullptr;
+        }
+    }
+
     VSILFILE* fp = VSIFOpenExL(pszFilename, "wb+", true);
     if( fp == nullptr )
     {
@@ -1759,6 +1790,7 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
     poDS->m_bIsLabelWritten = false;
     poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
     poDS->m_bInitToNodata = true;
+    poDS->m_oSrcJSonLabel = oSrcJSonLabel;
     poDS->eAccess = GA_Update;
 
 /* -------------------------------------------------------------------- */
@@ -1825,7 +1857,7 @@ GDALDataset* VICARDataset::CreateCopy( const char *pszFilename,
         poDS->SetSpatialRef( poSrcSRS );
     }
 
-    if( poDS->m_bUseSrcLabel )
+    if( poDS->m_bUseSrcLabel && !poDS->m_oSrcJSonLabel.IsValid() )
     {
         char** papszMD_VICAR = poSrcDS->GetMetadata("json:VICAR");
         if( papszMD_VICAR != nullptr )
@@ -1872,6 +1904,8 @@ void GDALRegister_VICAR()
 "  <Option name='USE_SRC_LABEL' type='boolean'"
     "description='Whether to use source label in VICAR to VICAR conversions' "
     "default='YES'/>"
+"  <Option name='LABEL' type='string'"
+    "description='Label to use, either as a JSON string or a filename containing one'/>"
 "</CreationOptionList>"
     );
 

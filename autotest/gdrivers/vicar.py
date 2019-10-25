@@ -240,3 +240,54 @@ def test_vicar_create_all_data_types(filename):
     assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.GetDriverByName('VICAR').Delete(dstfilename)
+
+
+def test_vicar_create_label_option_as_inline_value():
+
+    filename = '/vsimem/test.vic'
+    assert gdal.GetDriverByName('VICAR').Create(
+        filename, 1, 1, 1, gdal.GDT_Byte, options = ['LABEL={"BLTYPE":"foo"}'])
+    ds = gdal.Open(filename)
+    lbl = ds.GetMetadata_List('json:VICAR')[0]
+    lbl = json.loads(lbl)
+    assert lbl['BLTYPE'] == 'foo'
+    ds = None
+    gdal.GetDriverByName('VICAR').Delete(filename)
+
+
+def test_vicar_create_label_option_as_inline_value_error():
+
+    filename = '/vsimem/test.vic'
+    with gdaltest.error_handler():
+        assert not gdal.GetDriverByName('VICAR').Create(
+            filename, 1, 1, 1, gdal.GDT_Byte, options = ['LABEL={error'])
+    gdal.Unlink(filename)
+
+
+def test_vicar_create_label_option_as_filename():
+
+    filename = '/vsimem/test.vic'
+    json_filename = '/vsimem/test.json'
+    gdal.FileFromMemBuffer(json_filename, '{"BLTYPE":"foo"}')
+    assert gdal.GetDriverByName('VICAR').Create(
+        filename, 1, 1, 1, gdal.GDT_Byte, options = ['LABEL=' + json_filename])
+    gdal.Unlink(json_filename)
+    ds = gdal.Open(filename)
+    lbl = ds.GetMetadata_List('json:VICAR')[0]
+    lbl = json.loads(lbl)
+    assert lbl['BLTYPE'] == 'foo'
+    ds = None
+
+    gdal.GetDriverByName('VICAR').Delete(filename)
+
+
+def test_vicar_create_label_option_as_filename_error():
+
+    filename = '/vsimem/test.vic'
+    json_filename = '/vsimem/test.json'
+    gdal.FileFromMemBuffer(json_filename, 'error')
+    with gdaltest.error_handler():
+        assert not gdal.GetDriverByName('VICAR').Create(
+            filename, 1, 1, 1, gdal.GDT_Byte, options = ['LABEL=' + json_filename])
+    gdal.Unlink(json_filename)
+    gdal.Unlink(filename)
