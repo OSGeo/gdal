@@ -1770,8 +1770,8 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
             == OGRERR_NONE )
         {
             CPLCreateXMLElementAndValue( psTree, "Cutline", pszWKT );
-            CPLFree( pszWKT );
         }
+        CPLFree( pszWKT );
     }
 
     if( psWO->dfCutlineBlendDist != 0.0 )
