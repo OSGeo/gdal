@@ -344,24 +344,26 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     pabyResult[nX] = byVisibleVal;
     if (nX > 0)
     {
-        AdjustHeightInRange(adfGeoTransform.data(),
+        CPL_IGNORE_RET_VAL(
+            AdjustHeightInRange(adfGeoTransform.data(),
                             1,
                             0,
                             padfFirstLineVal[nX - 1],
                             dfDistance2,
                             dfCurvCoeff,
-                            dfSphereDiameter);
+                            dfSphereDiameter));
         pabyResult[nX - 1] = byVisibleVal;
     }
     if (nX < nXSize - 1)
     {
-        AdjustHeightInRange(adfGeoTransform.data(),
+        CPL_IGNORE_RET_VAL(
+            AdjustHeightInRange(adfGeoTransform.data(),
                             1,
                             0,
                             padfFirstLineVal[nX + 1],
                             dfDistance2,
                             dfCurvCoeff,
-                            dfSphereDiameter);
+                            dfSphereDiameter));
         pabyResult[nX + 1] = byVisibleVal;
     }
 
