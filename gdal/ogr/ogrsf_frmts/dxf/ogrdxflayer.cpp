@@ -3256,7 +3256,7 @@ bool OGRDXFLayer::TranslateINSERT()
 /*                       GenerateINSERTFeatures()                       */
 /************************************************************************/
 
-void OGRDXFLayer::GenerateINSERTFeatures()
+bool OGRDXFLayer::GenerateINSERTFeatures()
 {
     OGRDXFFeature* poFeature = m_oInsertState.m_poTemplateFeature->CloneDXFFeature();
 
@@ -3307,7 +3307,7 @@ void OGRDXFLayer::GenerateINSERTFeatures()
                      "Block %s does not exist",
                      m_oInsertState.m_osBlockName.c_str());
             delete poFeature;
-            return;
+            return false;
         }
 
         if( poFeature )
@@ -3340,6 +3340,7 @@ void OGRDXFLayer::GenerateINSERTFeatures()
             }
         }
     }
+    return true;
 }
 
 /************************************************************************/
@@ -3380,8 +3381,15 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
                     continue;
                 }
             }
-            GenerateINSERTFeatures();
-            m_oInsertState.m_iCurCol ++;
+            if( GenerateINSERTFeatures() )
+            {
+                m_oInsertState.m_iCurCol ++;
+            }
+            else
+            {
+                m_oInsertState.m_nRowCount = 0;
+                m_oInsertState.m_nColumnCount = 0;
+            }
             continue;
         }
 

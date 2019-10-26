@@ -433,7 +433,7 @@ class OGRDXFLayer final: public OGRLayer
     OGRDXFFeature *     TranslateMLEADER();
     OGRDXFFeature *     TranslateASMEntity();
 
-    void                GenerateINSERTFeatures();
+    bool                GenerateINSERTFeatures();
     OGRLineString *     InsertSplineWithChecks( const int nDegree,
                                                 std::vector<double>& adfControlPoints,
                                                 int nControlPoints,
