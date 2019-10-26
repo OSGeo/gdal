@@ -1387,13 +1387,13 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
         }
         else if( nPixelOffset == nDTSize &&
                  nLineOffset == nDTSize * nBands * nRasterXSize &&
-                 nBandOffset == nDTSize * nRasterXSize )
+                 nBandOffset == static_cast<GIntBig>(nDTSize) * nRasterXSize )
         {
             sLayout.eInterleaving = RawBinaryLayout::Interleaving::BIL;
         }
         else if( nPixelOffset == nDTSize &&
                  nLineOffset == nDTSize * nRasterXSize &&
-                 nBandOffset == nLineOffset * nRasterYSize )
+                 nBandOffset == static_cast<GIntBig>(nLineOffset) * nRasterYSize )
         {
             sLayout.eInterleaving = RawBinaryLayout::Interleaving::BSQ;
         }
