@@ -285,7 +285,8 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         return nullptr;
     }
     /* copy srs */
-    poDstDS->SetSpatialRef(GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
+    if (hSrcDS)
+        poDstDS->SetSpatialRef(GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
 
     std::array<double, 6> adfDstGeoTransform;
     adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
