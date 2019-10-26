@@ -32,6 +32,7 @@
 #include "cpl_vsi.h"
 #include "io_selafin.h"
 
+#include <algorithm>
 #include <ctime>
 
 CPL_CVSID("$Id$")
@@ -436,8 +437,8 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                 if (poHeader->panStartDate==nullptr) snprintf(szTemp,29,"%d",i); else {
                     struct tm sDate;
                     memset(&sDate, 0, sizeof(sDate));
-                    sDate.tm_year=poHeader->panStartDate[0]-1900;
-                    sDate.tm_mon=poHeader->panStartDate[1]-1;
+                    sDate.tm_year=std::max(poHeader->panStartDate[0], 0) - 1900;
+                    sDate.tm_mon=std::max(poHeader->panStartDate[1], 1) - 1;
                     sDate.tm_mday=poHeader->panStartDate[2];
                     sDate.tm_hour=poHeader->panStartDate[3];
                     sDate.tm_min=poHeader->panStartDate[4];
