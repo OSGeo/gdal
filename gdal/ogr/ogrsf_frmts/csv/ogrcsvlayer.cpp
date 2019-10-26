@@ -2395,6 +2395,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
             }
             else
             {
+                CPLFree(pszEscaped);
                 pszEscaped = CPLStrdup("");
             }
         }
