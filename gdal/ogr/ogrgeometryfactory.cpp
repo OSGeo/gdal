@@ -3936,6 +3936,7 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
     // Determine maximum interpolation gap. This is the largest straight-line
     // distance allowed between pairs of interpolated points. Default zero,
     // meaning no gap.
+    // coverity[tainted_data]
     const double dfMaxInterpolationGap = bUseMaxGap ?
         CPLAtofM(CPLGetConfigOption("OGR_ARC_MAX_GAP", "0")) :
         0.0;
