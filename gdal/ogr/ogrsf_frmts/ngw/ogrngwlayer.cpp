@@ -76,8 +76,8 @@ static std::string OGRGeometryToWKT( OGRGeometry *poGeom )
     if( poGeom->exportToWkt( &pszWkt ) == OGRERR_NONE )
     {
         osOut = pszWkt;
-        CPLFree(pszWkt);
     }
+    CPLFree(pszWkt);
 
     return osOut;
 }
