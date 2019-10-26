@@ -708,7 +708,10 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
                         char str[32+1];
                         memcpy(str, data + offset, len);
                         str[len] = '\0';
-                        OGRParseDate(str, ogrField, 0);
+                        if( !OGRParseDate(str, ogrField, 0) )
+                        {
+                            OGR_RawField_SetUnset(ogrField);
+                        }
                     }
                     offset += len;
                     break;
