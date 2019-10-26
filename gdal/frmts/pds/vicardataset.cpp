@@ -481,6 +481,7 @@ class VICARBASICRasterBand final: public GDALPamRasterBand
                              GDALDataType eType);
 
         virtual CPLErr          IReadBlock( int, int, void * ) override;
+        virtual CPLErr          IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -500,15 +501,15 @@ VICARBASICRasterBand::VICARBASICRasterBand(VICARDataset *poDSIn, int nBandIn,
 
 namespace
 {
-class DecodeException: public std::exception
+class DecodeEncodeException: public std::exception
 {
     public:
-        DecodeException() = default;
+        DecodeEncodeException() = default;
 };
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// Below grab1() and basic_decode() are adapted from Public Domain VICAR project
+/// Below functions are adapted from Public Domain VICAR project
 /// from https://github.com/nasa/VICAR/blob/master/vos/rtl/source/basic_compression.c
 //////////////////////////////////////////////////////////////////////////
 
@@ -540,7 +541,7 @@ static unsigned char grab1(int nbit,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Out of decoding buffer");
-        throw DecodeException();
+        throw DecodeEncodeException();
     }
 
     if (shift>0)
@@ -559,7 +560,7 @@ static unsigned char grab1(int nbit,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                         "Out of decoding buffer");
-            throw DecodeException();
+            throw DecodeEncodeException();
         }
 
         unsigned v2 = (buffer[buffer_pos]>>(8+shift)) & cod1mask[-shift];
@@ -656,6 +657,177 @@ static void basic_decode(const unsigned char* code,
     }
 }
 
+/*****************************************************/
+/* This function is a helper function for the BASIC  */
+/* encoding operation.  It puts the value in val into*/
+/* memory location pointed by pcode1+reg1 into nbit  */
+/* number of bits.                                   */
+/*****************************************************/
+static void emit1(unsigned char val, int nbit, unsigned char *reg1,
+                  int& bit1ptr,
+                  unsigned char* coded_buffer,
+                  size_t& coded_buffer_pos,
+                  size_t coded_buffer_size)
+{
+    int shift;
+
+    shift = 8-nbit-bit1ptr;
+    if (shift>0)
+    {
+        *reg1 = static_cast<unsigned char>(*reg1|(val<<shift));
+        bit1ptr += nbit;
+        return;
+    }
+    if (shift<0)
+    {
+        if( coded_buffer_pos >= coded_buffer_size )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Out of encoding buffer");
+            throw DecodeEncodeException();
+        }
+        coded_buffer[coded_buffer_pos] = static_cast<unsigned char>(*reg1|(val>>(-shift)));
+        coded_buffer_pos++;
+        *reg1 = static_cast<unsigned char>(val<<(8+shift));
+        bit1ptr = -shift;
+        return;
+    }
+    if( coded_buffer_pos >= coded_buffer_size )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Out of encoding buffer");
+        throw DecodeEncodeException();
+    }
+    coded_buffer[coded_buffer_pos] = static_cast<unsigned char>(*reg1|val);
+    coded_buffer_pos++;
+
+    *reg1 = 0;
+    bit1ptr = 0;
+}
+
+/*****************************************************/
+/* This function is meat of the BASIC encoding       */
+/* algorithm.  This function is called repeatedly by */
+/* the basic_encode function to compress the data    */
+/* according to its run length (run), last 2         */
+/* different values (vold and old), and the current  */
+/* value (val), into the memory location pointed by  */
+/* pcode1+reg1.                                      */
+/*****************************************************/
+static void basic_encrypt(int *run, int *old, int *vold, int val,
+                          unsigned char *reg1,
+                          int& bit1ptr,
+                          unsigned char* coded_buffer,
+                          size_t& coded_buffer_pos,
+                          size_t coded_buffer_size)
+{
+    if(*run<4)
+    {
+        if(abs(*old-*vold)<4)
+            emit1((unsigned char)(*old-*vold+3),3,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+        else
+        {
+            emit1((unsigned char)14,4,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+            emit1((unsigned char)(*old),8,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+        }
+
+        while(*run>1)
+        {
+            emit1((unsigned char)3,3,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+            (*run)--;
+        }
+
+        *vold = *old; *old = val;
+    }
+    else
+    {
+        emit1((unsigned char)15,4,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+        if (*run<19)
+        {
+                emit1((unsigned char)(*run-4),4,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+        }
+        else
+        {
+            emit1((unsigned char)15,4,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+            if(*run<274)
+            {
+                emit1((char)(*run-19),8,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+            }
+            else
+            {
+                emit1((unsigned char)255,8,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+
+                unsigned char part0 = static_cast<unsigned char>((*run-4) & 0xff);
+                unsigned char part1 = static_cast<unsigned char>(((*run-4) >> 8) & 0xff);
+                unsigned char part2 = static_cast<unsigned char>(((*run-4) >> 16) & 0xff);
+                emit1(part0, 8, reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+                emit1(part1, 8, reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+                emit1(part2, 8, reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+            }
+        }
+        if (abs(*old-*vold)<4)
+        {
+            emit1((unsigned char)(*old-*vold+3),3,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+        }
+        else
+        {
+            emit1((unsigned char)7,3,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+            emit1((unsigned char)(*old),8,reg1,bit1ptr,coded_buffer,coded_buffer_pos,coded_buffer_size);
+        }
+        *vold = *old; *old = val; *run = 1;
+    }
+}
+
+/*****************************************************/
+/* This function loops through the data given by     */
+/* unencodedBuf, keeping track of run length.  When  */
+/* the value of the data changes, it passes the run  */
+/* length, last 2 differing values, the current      */
+/* value, and the pointer in pcode1 buffer to encode */
+/* the data into, to basic_encrypt function.         */
+/*****************************************************/
+static void basic_encode(const unsigned char *unencodedBuf,
+                         unsigned char *coded_buffer,
+                         size_t coded_buffer_size,
+                         int ns, int wid, size_t *totBytes)
+{
+    int val = 0;
+    int bit1ptr=0;
+    const int ptop = ns*wid;
+    unsigned char reg1 = 0;
+    int run = 0;
+    int old = unencodedBuf[0];
+    int vold = 999999;
+
+    size_t coded_buffer_pos = 0;
+
+    for (int iw=0;iw<wid;iw++)
+    {
+        for (int ip=iw;ip<ptop;ip+=wid)
+        {
+            val = unencodedBuf[ip];
+
+            if (val==old) run++;
+            else
+                basic_encrypt(&run, &old, &vold, val, &reg1, bit1ptr, coded_buffer, coded_buffer_pos, coded_buffer_size);
+        }
+    }
+
+    /* purge of last code */
+    basic_encrypt(&run, &old, &vold, val, &reg1, bit1ptr, coded_buffer, coded_buffer_pos, coded_buffer_size);
+
+    if( coded_buffer_pos >= coded_buffer_size )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Out of encoding buffer");
+        throw DecodeEncodeException();
+    }
+    coded_buffer[coded_buffer_pos] = reg1;
+
+    *totBytes = coded_buffer_pos;
+    if(bit1ptr > 0) (*totBytes)++;
+}
+
 //////////////////////////////////////////////////////////////////////////
 /// End of VICAR code
 //////////////////////////////////////////////////////////////////////////
@@ -670,6 +842,14 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
     VICARDataset* poGDS = reinterpret_cast<VICARDataset*>(poDS);
 
     const int nRecord = (nBand - 1) * nRasterYSize + nYBlock;
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+
+    if( poGDS->eAccess == GA_Update &&
+        poGDS->m_anRecordOffsets[nRecord+1] == 0 )
+    {
+        memset( pImage, 0, static_cast<size_t>(nDTSize) * nRasterXSize );
+        return CE_None;
+    }
 
     // Find at which offset the compressed record is.
     // For BASIC compression, each compressed run is preceded by a uint32 value
@@ -725,9 +905,8 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
         nSize = static_cast<unsigned>(poGDS->m_anRecordOffsets[nRecord+1] -
                     poGDS->m_anRecordOffsets[nRecord]);
     }
-    const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     if( nSize > 100 * 1000 * 1000 ||
-        nSize / 4 > static_cast<unsigned>(nRasterXSize) * nDTSize )
+        (nSize > 1000 && (nSize - 11) / 4 > static_cast<unsigned>(nRasterXSize) * nDTSize) )
     {
         return CE_Failure;
     }
@@ -757,10 +936,97 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
                      static_cast<unsigned char*>(pImage),
                      nRasterXSize, nDTSize);
     }
-    catch( const DecodeException& )
+    catch( const DecodeEncodeException& )
     {
         return CE_Failure;
     }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr VICARBASICRasterBand::IWriteBlock( int /*nXBlock*/, int nYBlock,
+                                          void *pImage )
+
+{
+    VICARDataset* poGDS = reinterpret_cast<VICARDataset*>(poDS);
+    if( poGDS->eAccess == GA_ReadOnly )
+        return CE_Failure;
+    if( !poGDS->m_bIsLabelWritten )
+    {
+        poGDS->WriteLabel();
+        poGDS->m_nLabelSize = VSIFTellL(poGDS->fpImage);
+        poGDS->m_anRecordOffsets[0] = poGDS->m_nLabelSize;
+        if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC )
+        {
+            poGDS->m_anRecordOffsets[0] += sizeof(GUInt32);
+        }
+        else
+        {
+            poGDS->m_anRecordOffsets[0] +=
+                static_cast<vsi_l_offset>(sizeof(GUInt32)) * nRasterYSize;
+        }
+    }
+    if( nYBlock != poGDS->m_nLastRecordOffset )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Lines must be written in sequential order");
+        return CE_Failure;
+    }
+
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+    const size_t nMaxEncodedSize =
+        static_cast<size_t>(nRasterXSize) * nDTSize + static_cast<size_t>(nRasterXSize) * nDTSize / 2 + 11;
+    if( poGDS->m_abyCodedBuffer.size() < nMaxEncodedSize  )
+    {
+        try
+        {
+            poGDS->m_abyCodedBuffer.resize(nMaxEncodedSize);
+        }
+        catch( const std::exception& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what() );
+            return CE_Failure;
+        }
+    }
+
+    size_t nCodedSize = 0;
+    try
+    {
+        basic_encode(static_cast<unsigned char *>(pImage),
+                     &poGDS->m_abyCodedBuffer[0],
+                     poGDS->m_abyCodedBuffer.size(),
+                     nRasterXSize, nDTSize, &nCodedSize);
+    }
+    catch( const DecodeEncodeException& )
+    {
+        return CE_Failure;
+    }
+
+    if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC )
+    {
+        VSIFSeekL(poGDS->fpImage, poGDS->m_anRecordOffsets[nYBlock] - sizeof(GUInt32), SEEK_SET);
+        GUInt32 nSizeToWrite = static_cast<GUInt32>(nCodedSize + sizeof(GUInt32));
+        CPL_LSBPTR32(&nSizeToWrite);
+        VSIFWriteL(&nSizeToWrite, sizeof(GUInt32), 1, poGDS->fpImage);
+        VSIFWriteL(poGDS->m_abyCodedBuffer.data(), nCodedSize, 1, poGDS->fpImage);
+        poGDS->m_anRecordOffsets[nYBlock + 1] = poGDS->m_anRecordOffsets[nYBlock] + nCodedSize + sizeof(GUInt32);
+    }
+    else
+    {
+        VSIFSeekL(poGDS->fpImage, poGDS->m_nLabelSize + static_cast<vsi_l_offset>(nYBlock) * sizeof(GUInt32), SEEK_SET);
+        GUInt32 nSizeToWrite = static_cast<GUInt32>(nCodedSize);
+        CPL_LSBPTR32(&nSizeToWrite);
+        VSIFWriteL(&nSizeToWrite, sizeof(GUInt32), 1, poGDS->fpImage);
+        VSIFSeekL(poGDS->fpImage, poGDS->m_anRecordOffsets[nYBlock], SEEK_SET);
+        VSIFWriteL(poGDS->m_abyCodedBuffer.data(), nCodedSize, 1, poGDS->fpImage);
+        poGDS->m_anRecordOffsets[nYBlock + 1] = poGDS->m_anRecordOffsets[nYBlock] + nCodedSize;
+    }
+
+    poGDS->m_nLastRecordOffset ++;
 
     return CE_None;
 }
@@ -786,6 +1052,7 @@ VICARDataset::~VICARDataset()
     if( !m_bIsLabelWritten )
         WriteLabel();
     VICARDataset::FlushCache();
+    PatchLabel();
     if( fpImage != nullptr )
         VSIFCloseL( fpImage );
 }
@@ -1205,7 +1472,7 @@ void VICARDataset::WriteLabel()
                    1, nZeroPadding, fpImage);
     }
 
-    if( m_bInitToNodata )
+    if( m_bInitToNodata && m_eCompress == COMPRESS_NONE )
     {
         const int nDTSize = GDALGetDataTypeSizeBytes(GetRasterBand(1)->GetRasterDataType());
         VSIFTruncateL( fpImage, VSIFTellL(fpImage) +
@@ -1219,6 +1486,45 @@ void VICARDataset::WriteLabel()
         if( poBand )
             poBand->nImgOffset += nLabelSize;
     }
+}
+
+/************************************************************************/
+/*                           PatchLabel()                               */
+/************************************************************************/
+
+void VICARDataset::PatchLabel()
+{
+    if( eAccess == GA_ReadOnly || m_eCompress == COMPRESS_NONE )
+        return;
+
+    VSIFSeekL(fpImage, 0, SEEK_END);
+    const vsi_l_offset nFileSize = VSIFTellL(fpImage);
+    VSIFSeekL(fpImage, 0, SEEK_SET);
+    std::string osBuffer;
+    osBuffer.resize(1024);
+    size_t nRead = VSIFReadL(&osBuffer[0], 1, 1024, fpImage);
+
+    {
+        CPLString osEOCI1;
+        osEOCI1.Printf("%u", static_cast<unsigned>(nFileSize));
+        while( osEOCI1.size() < 10 )
+            osEOCI1 += ' ';
+        size_t nPos = osBuffer.find("EOCI1=");
+        CPLAssert(nPos <= nRead - (strlen("EOCI1=") + 10));
+        memcpy(&osBuffer[nPos + strlen("EOCI1=")], osEOCI1.data(), 10);
+    }
+
+    {
+        CPLString osEOCI2;
+        osEOCI2.Printf("%u", static_cast<unsigned>(nFileSize >> 32));
+        while( osEOCI2.size() < 10 )
+            osEOCI2 += ' ';
+        size_t nPos = osBuffer.find("EOCI2=");
+        CPLAssert(nPos <= nRead - (strlen("EOCI2=") + 10));
+        memcpy(&osBuffer[nPos + strlen("EOCI2=")], osEOCI2.data(), 10);
+    }
+    VSIFSeekL(fpImage, 0, SEEK_SET);
+    VSIFWriteL(&osBuffer[0], 1, nRead, fpImage);
 }
 
 /**
@@ -1297,9 +1603,21 @@ void VICARDataset::BuildLabel()
     oLabel.Set("BINTFMT", "LOW");
     if( !oLabel.GetObj("BLTYPE").IsValid() )
         oLabel.Set("BLTYPE", "");
-    oLabel.Set("COMPRESS", "NONE");
-    oLabel.Set("EOCI1", 0);
-    oLabel.Set("EOCI2", 0);
+    oLabel.Set("COMPRESS", m_eCompress == COMPRESS_BASIC ? "BASIC":
+                           m_eCompress == COMPRESS_BASIC2 ? "BASIC2": "NONE");
+    if( m_eCompress == COMPRESS_NONE )
+    {
+        oLabel.Set("EOCI1", 0);
+        oLabel.Set("EOCI2", 0);
+    }
+    else
+    {
+        // To be later patched. Those fake values must take 10 bytes
+        // (8 + 2 single quotes) so that they can be later replaced by a
+        // integer of maximum value 4294967295 (10 digits)
+        oLabel.Set("EOCI1", "XXXXXXXX");
+        oLabel.Set("EOCI2", "XXXXXXXX");
+    }
 
     if( m_bUseSrcMap )
     {
@@ -2306,6 +2624,63 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
         return nullptr;
     }
 
+    const char* pszCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
+    CompressMethod eCompress = COMPRESS_NONE;
+    if( EQUAL(pszCompress, "NONE") )
+    {
+        eCompress = COMPRESS_NONE;
+    }
+    else if( EQUAL(pszCompress, "BASIC") )
+    {
+        eCompress = COMPRESS_BASIC;
+    }
+    else if( EQUAL(pszCompress, "BASIC2") )
+    {
+        eCompress = COMPRESS_BASIC2;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported COMPRESS value");
+        return nullptr;
+    }
+    if( eCompress != COMPRESS_NONE &&
+        (!GDALDataTypeIsInteger(eType) || nBands != 1) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "BASIC/BASIC2 compression only supports one-band integer datasets");
+        return nullptr;
+    }
+
+    std::vector<vsi_l_offset> anRecordOffsets;
+    if( eCompress != COMPRESS_NONE )
+    {
+        const GUInt64 nMaxEncodedSize =
+            static_cast<GUInt64>(nXSize) * nPixelOffset + static_cast<GUInt64>(nXSize) * nPixelOffset / 2 + 11;
+        // To avoid potential later int overflows
+        if( nMaxEncodedSize > static_cast<GUInt64>(INT_MAX) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too large scanline");
+            return nullptr;
+        }
+        if( nYSize > 100 * 1000 * 1000 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too many records for compressed dataset");
+            return nullptr;
+        }
+        try
+        {
+            // + 1 to store implictly the size of the last record
+            anRecordOffsets.resize( nYSize + 1 );
+        }
+        catch( const std::exception& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what() );
+            return nullptr;
+        }
+    }
+
     CPLJSONObject oSrcJSonLabel;
     oSrcJSonLabel.Deinit();
 
@@ -2361,6 +2736,8 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
                                                   "TARGET_NAME", "");
     poDS->m_bInitToNodata = true;
     poDS->m_oSrcJSonLabel = oSrcJSonLabel;
+    poDS->m_eCompress = eCompress;
+    poDS->m_anRecordOffsets = std::move(anRecordOffsets);
     poDS->eAccess = GA_Update;
 
 /* -------------------------------------------------------------------- */
@@ -2370,13 +2747,21 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
         static_cast<vsi_l_offset>(nLineOffset) * nYSize;
     for( int i = 0; i < nBands; i++ )
     {
-        GDALRasterBand *poBand = new VICARRawRasterBand(
-            poDS, i+1, poDS->fpImage,
-            i * nBandOffset, // will be set later to final value since we need to include the label size
-            nPixelOffset,
-            nLineOffset,
-            eType,
-            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN );
+        GDALRasterBand *poBand;
+        if( eCompress != COMPRESS_NONE )
+        {
+            poBand = new VICARBASICRasterBand( poDS, i+1, eType );
+        }
+        else
+        {
+            poBand = new VICARRawRasterBand(
+                poDS, i+1, poDS->fpImage,
+                i * nBandOffset, // will be set later to final value since we need to include the label size
+                nPixelOffset,
+                nLineOffset,
+                eType,
+                RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN );
+        }
         poDS->SetBand( i+1, poBand );
     }
 
@@ -2493,6 +2878,12 @@ void GDALRegister_VICAR()
     "default='NO'/>"
 "  <Option name='LABEL' type='string'"
     "description='Label to use, either as a JSON string or a filename containing one'/>"
+"  <Option name='COMPRESS' type='string-select' "
+    "description='Compression method' default='NONE'>"
+"     <Value>NONE</Value>"
+"     <Value>BASIC</Value>"
+"     <Value>BASIC2</Value>"
+"  </Option>"
 "</CreationOptionList>"
     );
 

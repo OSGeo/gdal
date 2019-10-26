@@ -66,6 +66,7 @@ class VICARDataset final: public RawDataset
     int          m_nLastRecordOffset = 0;
     std::vector<vsi_l_offset> m_anRecordOffsets{}; // for BASIC/BASIC2
     std::vector<GByte> m_abyCodedBuffer{};
+    vsi_l_offset m_nLabelSize = 0;
 
     CPLJSONObject m_oJSonLabel;
     CPLStringList m_aosVICARMD;
@@ -89,6 +90,7 @@ class VICARDataset final: public RawDataset
     const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
     void         WriteLabel();
+    void         PatchLabel();
     void         BuildLabel();
     void         InvalidateLabel();
 

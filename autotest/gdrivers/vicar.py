@@ -339,3 +339,83 @@ def test_vicar_read_compressed_datasets(filename, dt, checksum):
     b = ds.GetRasterBand(1)
     assert b.DataType == dt
     assert b.Checksum() == checksum
+
+
+def test_vicar_write_basic():
+
+    src_ds = gdal.Open('data/vicar_byte_basic.vic')
+
+    filename= '/vsimem/test.vic'
+    assert gdal.GetDriverByName('VICAR').CreateCopy(filename, src_ds, options = ['COMPRESS=BASIC'])
+    ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('COMPRESS', 'IMAGE_STRUCTURE') == 'BASIC'
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    lbl = ds.GetMetadata_List('json:VICAR')[0]
+    lbl = json.loads(lbl)
+    assert lbl['EOCI1'] == 1160
+    assert lbl['EOCI2'] == 0
+    ds = None
+    gdal.GetDriverByName('VICAR').Delete(filename)
+
+
+def test_vicar_write_basic2():
+
+    src_ds = gdal.Open('data/vicar_byte_basic.vic')
+
+    filename= '/vsimem/test.vic'
+    assert gdal.GetDriverByName('VICAR').CreateCopy(filename, src_ds, options = ['COMPRESS=BASIC2'])
+    ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('COMPRESS', 'IMAGE_STRUCTURE') == 'BASIC2'
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    gdal.GetDriverByName('VICAR').Delete(filename)
+
+
+def test_vicar_write_basic2_int16():
+
+    src_ds = gdal.Open('data/vicar_int16_basic2.vic')
+
+    filename= '/vsimem/test.vic'
+    assert gdal.GetDriverByName('VICAR').CreateCopy(filename, src_ds, options = ['COMPRESS=BASIC2'])
+    ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('COMPRESS', 'IMAGE_STRUCTURE') == 'BASIC2'
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    gdal.GetDriverByName('VICAR').Delete(filename)
+
+
+def test_vicar_write_basic2_all_ones():
+
+    src_ds = gdal.Open('data/vicar_all_ones_basic2.vic')
+
+    filename= '/vsimem/test.vic'
+    assert gdal.GetDriverByName('VICAR').CreateCopy(filename, src_ds, options = ['COMPRESS=BASIC2'])
+    ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('COMPRESS', 'IMAGE_STRUCTURE') == 'BASIC2'
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.GetDriverByName('VICAR').Delete(filename)
+
+
+def test_vicar_write_compression_errors():
+    filename= '/vsimem/test.vic'
+    with gdaltest.error_handler():
+        # Only single-band supported
+        assert not gdal.GetDriverByName('VICAR').Create(filename, 1, 1, 2, options = ['COMPRESS=BASIC'])
+        # Unknown compression method
+        assert not gdal.GetDriverByName('VICAR').Create(filename, 1, 1, 1, options = ['COMPRESS=UNKNOWN'])
+        # Only integer data types supported
+        assert not gdal.GetDriverByName('VICAR').Create(filename, 1, 1, 1, gdal.GDT_Float32, options = ['COMPRESS=BASIC'])
+        # Too many lines
+        assert not gdal.GetDriverByName('VICAR').Create(filename, 1, 1000*1000*1000, 1, options = ['COMPRESS=BASIC'])
+        # Too many columns
+        assert not gdal.GetDriverByName('VICAR').Create(filename, 2000*1000*1000, 1, 1, options = ['COMPRESS=BASIC'])
+
+    ds = gdal.GetDriverByName('VICAR').Create(filename, 1, 2, 1, options = ['COMPRESS=BASIC'])
+    # Non sequential writing of lines
+    ds.WriteRaster(0, 1, 1, 1, 'x')
+    with gdaltest.error_handler():
+        ds.FlushCache()
+    assert gdal.GetLastErrorMsg() != ''
+    ds = None
+    gdal.Unlink(filename)

@@ -194,6 +194,9 @@ The available creation options are:
    VICAR conversions. Defaults to YES.
 -  **LABEL**\ =string. Label to use, either as a JSON string or a filename
    containing one. If defined, takes precedence over USE_SRC_LABEL.
+-  **COMPRESS**\= NONE/BASIC/BASIC2. Compression method. Default to NONE.
+   For maximum interoperability, do not use BASIC or BASIC2 which are not
+   well specified and not always available in VICAR capable applications.
 
 See Also
 --------
