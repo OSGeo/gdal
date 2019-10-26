@@ -6839,7 +6839,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRG
 {
 #ifdef HAVE_SFCGAL
     sfcgal_init();
-    char *buffer;
+    char *buffer = nullptr;
 
     // special cases - LinearRing, Circular String, Compound Curve, Curve Polygon
 
@@ -6850,11 +6850,14 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRG
         if (poLS->exportToWkt(&buffer) == OGRERR_NONE)
         {
             sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,strlen(buffer));
-            free(buffer);
+            CPLFree(buffer);
             return _geometry;
         }
         else
+        {
+            CPLFree(buffer);
             return nullptr;
+        }
     }
     else if (EQUAL(poGeom->getGeometryName(), "CIRCULARSTRING") ||
              EQUAL(poGeom->getGeometryName(), "COMPOUNDCURVE") )
@@ -6864,11 +6867,14 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRG
         if (poLS->exportToWkt(&buffer) == OGRERR_NONE)
         {
             sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,strlen(buffer));
-            free(buffer);
+            CPLFree(buffer);
             return _geometry;
         }
         else
+        {
+            CPLFree(buffer);
             return nullptr;
+        }
     }
     else if (EQUAL(poGeom->getGeometryName(), "CURVEPOLYGON"))
     {
@@ -6877,20 +6883,26 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRG
         if (poPolygon->exportToWkt(&buffer) == OGRERR_NONE)
         {
             sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,strlen(buffer));
-            free(buffer);
+            CPLFree(buffer);
             return _geometry;
         }
         else
+        {
+            CPLFree(buffer);
             return nullptr;
+        }
     }
     else if (poGeom->exportToWkt(&buffer) == OGRERR_NONE)
     {
         sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,strlen(buffer));
-        free(buffer);
+        CPLFree(buffer);
         return _geometry;
     }
     else
+    {
+        CPLFree(buffer);
         return nullptr;
+    }
 #else
     CPLError( CE_Failure, CPLE_NotSupported, "SFCGAL support not enabled." );
     return nullptr;
