@@ -37,7 +37,7 @@ namespace WCSUtils {
 
 void Swap(double &a, double &b);
 
-int CompareNumbers(const CPLString &a, const CPLString &b);
+int CompareNumbers(const std::string &a, const std::string &b);
 
 CPLString URLEncode(const CPLString &str);
 
