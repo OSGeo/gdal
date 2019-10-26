@@ -60,6 +60,12 @@ static void Usage(const char* pszErrorMsg = nullptr)
     exit( 1 );
 }
 
+static double CPLAtofTaintedSuppressed(const char* pszVal)
+{
+    // coverity[tainted_data]
+    return CPLAtof(pszVal);
+}
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -117,32 +123,32 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-ox") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfObserverX = CPLAtof(argv[++i]);
+            dfObserverX = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if (EQUAL(argv[i], "-oy"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfObserverY = CPLAtof(argv[++i]);
+            dfObserverY = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if( EQUAL(argv[i],"-oz") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfObserverHeight = CPLAtof(argv[++i]);
+            dfObserverHeight = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if (EQUAL(argv[i], "-vv"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfVisibleVal = CPLAtof(argv[++i]);
+            dfVisibleVal = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if (EQUAL(argv[i], "-iv"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfInvisibleVal = CPLAtof(argv[++i]);
+            dfInvisibleVal = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if (EQUAL(argv[i], "-ov"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfOutOfRangeVal = CPLAtof(argv[++i]);
+            dfOutOfRangeVal = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if( EQUAL(argv[i],"-co"))
         {
@@ -157,17 +163,17 @@ MAIN_START(argc, argv)
         else if (EQUAL(argv[i], "-tz"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfTargetHeight = CPLAtof(argv[++i]);
+            dfTargetHeight = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if (EQUAL(argv[i], "-md"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfMaxDistance = CPLAtof(argv[++i]);
+            dfMaxDistance = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if (EQUAL(argv[i], "-cc"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfCurvCoeff = CPLAtof(argv[++i]);
+            dfCurvCoeff = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if( EQUAL(argv[i],"-b") )
         {
