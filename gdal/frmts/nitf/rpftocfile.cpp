@@ -406,11 +406,13 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
     for( int i = 0; i < static_cast<int>( nFrameFileIndexRecords ); i++ )
     {
-        if( VSIFSeekL( fp, static_cast<vsi_l_offset>(frameFileIndexSubsectionPhysIndex) + frameFileIndexRecordLength * i, SEEK_SET ) != 0)
+        vsi_l_offset nFrameOffset = static_cast<vsi_l_offset>(
+            frameFileIndexSubsectionPhysIndex) + static_cast<vsi_l_offset>(frameFileIndexRecordLength) * i;
+        if( VSIFSeekL( fp, nFrameOffset, SEEK_SET ) != 0)
         {
             CPLError( CE_Failure, CPLE_NotSupported,
                     "Invalid TOC file. Unable to seek to frameFileIndexSubsectionPhysIndex(%d) at offset " CPL_FRMT_GUIB ".",
-                     i, static_cast<GUIntBig>(frameFileIndexSubsectionPhysIndex) + frameFileIndexRecordLength * i);
+                     i, static_cast<GUIntBig>(nFrameOffset));
             RPFTOCFree(toc);
             return nullptr;
         }
