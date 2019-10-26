@@ -176,7 +176,7 @@ void CPL_DLL CPL_STDCALL CPLDebug(const char *, CPL_FORMAT_STRING(const char *),
 
 void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int ) CPL_NO_RETURN;
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(CPPCHECK)
 /** Assert on an expression. Only enabled in DEBUG mode */
 #  define CPLAssert(expr)  ((expr) ? (void)(0) : _CPLAssert(#expr,__FILE__,__LINE__))
 /** Assert on an expression in DEBUG mode. Evaluate it also in non-DEBUG mode (useful to 'consume' a error return variable) */

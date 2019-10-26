@@ -1790,11 +1790,13 @@ static void ConvertNCStringsToCPLStrings(GByte* pBuffer,
         case GEDTC_STRING:
         {
             char* pszStr;
+            // cppcheck-suppress pointerSize
             memcpy(&pszStr, pBuffer, sizeof(char*));
             if( pszStr )
             {
                 char* pszNewStr = VSIStrdup(pszStr);
                 nc_free_string(1, &pszStr);
+                // cppcheck-suppress pointerSize
                 memcpy(pBuffer, &pszNewStr, sizeof(char*));
             }
             break;
@@ -1829,6 +1831,7 @@ static void FreeNCStrings(GByte* pBuffer, const GDALExtendedDataType& dt)
         case GEDTC_STRING:
         {
             char* pszStr;
+            // cppcheck-suppress pointerSize
             memcpy(&pszStr, pBuffer, sizeof(char*));
             if( pszStr )
             {

@@ -228,6 +228,7 @@ static void DumpValue(CPLJSonStreamingWriter& serializer,
         case GEDTC_STRING:
         {
             const char* pszStr;
+            // cppcheck-suppress pointerSize
             memcpy(&pszStr, values, sizeof(const char*));
             if( pszStr )
                 serializer.Add(pszStr);

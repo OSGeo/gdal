@@ -222,7 +222,7 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
 /************************************************************************/
 
 static void GDALCollectRingsFromGeometry(
-    OGRGeometry *poShape,
+    const OGRGeometry *poShape,
     std::vector<double> &aPointX, std::vector<double> &aPointY,
     std::vector<double> &aPointVariant,
     std::vector<int> &aPartSize, GDALBurnValueSrc eBurnValueSrc)
@@ -235,12 +235,8 @@ static void GDALCollectRingsFromGeometry(
 
     if( eFlatType == wkbPoint )
     {
-        OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poShape);
-        CPLAssert(poPoint != nullptr);
-        const size_t nNewCount = aPointX.size() + 1;
+        const auto poPoint = poShape->toPoint();
 
-        aPointX.reserve( nNewCount );
-        aPointY.reserve( nNewCount );
         aPointX.push_back( poPoint->getX() );
         aPointY.push_back( poPoint->getY() );
         aPartSize.push_back( 1 );
@@ -250,7 +246,6 @@ static void GDALCollectRingsFromGeometry(
             // switch( eBurnValueSrc )
             // {
             // case GBV_Z:*/
-            aPointVariant.reserve( nNewCount );
             aPointVariant.push_back( poPoint->getZ() );
             // break;
             // case GBV_M:
@@ -260,8 +255,7 @@ static void GDALCollectRingsFromGeometry(
     }
     else if( eFlatType == wkbLineString )
     {
-        OGRLineString *poLine = dynamic_cast<OGRLineString *>(poShape);
-        CPLAssert(poLine != nullptr);
+        const auto poLine = poShape->toLineString();
         const int nCount = poLine->getNumPoints();
         const size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
 
@@ -289,8 +283,7 @@ static void GDALCollectRingsFromGeometry(
     }
     else if( EQUAL(poShape->getGeometryName(), "LINEARRING") )
     {
-        OGRLinearRing *poRing = dynamic_cast<OGRLinearRing *>(poShape);
-        CPLAssert(poRing != nullptr);
+        const auto poRing = poShape->toLinearRing();
         const int nCount = poRing->getNumPoints();
         const size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
 
@@ -319,8 +312,7 @@ static void GDALCollectRingsFromGeometry(
     }
     else if( eFlatType == wkbPolygon )
     {
-        OGRPolygon *poPolygon = dynamic_cast<OGRPolygon *>(poShape);
-        CPLAssert(poPolygon != nullptr);
+        const auto poPolygon = poShape->toPolygon();
 
         GDALCollectRingsFromGeometry( poPolygon->getExteriorRing(),
                                       aPointX, aPointY, aPointVariant,
@@ -336,9 +328,7 @@ static void GDALCollectRingsFromGeometry(
              || eFlatType == wkbMultiPolygon
              || eFlatType == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC = dynamic_cast<OGRGeometryCollection *>(poShape);
-        CPLAssert(poGC != nullptr);
-
+        const auto poGC = poShape->toGeometryCollection();
         for( int i = 0; i < poGC->getNumGeometries(); i++ )
             GDALCollectRingsFromGeometry( poGC->getGeometryRef(i),
                                           aPointX, aPointY, aPointVariant,

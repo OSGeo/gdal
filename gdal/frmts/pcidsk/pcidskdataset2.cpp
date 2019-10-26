@@ -99,7 +99,7 @@ PCIDSK2Band::PCIDSK2Band( PCIDSKChannel *poChannelIn )
 
     if( poChannel->GetType() == CHN_BIT )
     {
-        SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
+        PCIDSK2Band::SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
 
         if( !STARTS_WITH_CI(poChannel->GetDescription().c_str(),
                     "Contents Not Specified") )

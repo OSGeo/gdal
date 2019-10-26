@@ -643,20 +643,18 @@ static bool ParseArraySpec(const std::string& arraySpec,
         if( !bInArray && arraySpec[i] == ',' )
         {
             tokens.emplace_back(std::move(curToken));
-            curToken.clear();
-        }
-        else if( arraySpec[i] == '[' )
-        {
-            bInArray = true;
-            curToken += arraySpec[i];
-        }
-        else if( arraySpec[i] == ']' )
-        {
-            bInArray = false;
-            curToken += arraySpec[i];
+            curToken = std::string();
         }
         else
         {
+            if( arraySpec[i] == '[' )
+            {
+                bInArray = true;
+            }
+            else if( arraySpec[i] == ']' )
+            {
+                bInArray = false;
+            }
             curToken += arraySpec[i];
         }
     }
