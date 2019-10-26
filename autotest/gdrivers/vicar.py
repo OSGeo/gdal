@@ -317,3 +317,25 @@ def test_vicar_create_georeferencing():
 
     gdal.GetDriverByName('VICAR').Delete(filename)
     gdal.GetDriverByName('VICAR').Delete(filename2)
+
+
+compressed_datasets_lists = [
+    ('vicar_byte_basic', gdal.GDT_Byte, 4672), # BASIC compression
+    ('vicar_byte_basic2', gdal.GDT_Byte, 4672), # BASIC2 compression
+    ('vicar_int16_basic2', gdal.GDT_Int16, 4672), # BASIC2 compression
+    ('vicar_all_ones_basic2', gdal.GDT_Byte, 34464), # BASIC2 compression
+]
+
+@pytest.mark.parametrize(
+    'filename,dt,checksum',
+    compressed_datasets_lists,
+    ids=[tup[0] for tup in compressed_datasets_lists],
+)
+def test_vicar_read_compressed_datasets(filename, dt, checksum):
+
+    ds = gdal.Open('data/%s.vic' % filename)
+    assert ds.GetLayerCount() == 0
+    assert not ds.GetLayer(0)
+    b = ds.GetRasterBand(1)
+    assert b.DataType == dt
+    assert b.Checksum() == checksum

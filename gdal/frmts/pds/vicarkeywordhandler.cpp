@@ -135,8 +135,17 @@ bool VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
                                    nImageOffsetWithoutNBB, nNBB, nImageSize) )
         return false;
 
-    const vsi_l_offset starteol = nImageOffsetWithoutNBB + nImageSize;
-    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
+    // Position of EOL in case of compressed data
+    const vsi_l_offset nEOCI1 = static_cast<vsi_l_offset>(
+        CPLAtoGIntBig(CSLFetchNameValueDef(papszKeywordList, "EOCI1", "0")));
+    const vsi_l_offset nEOCI2 = static_cast<vsi_l_offset>(
+        CPLAtoGIntBig(CSLFetchNameValueDef(papszKeywordList, "EOCI2", "0")));
+    const vsi_l_offset nEOCI = (nEOCI2 << 32) | nEOCI1;
+
+    const vsi_l_offset nStartEOL = nEOCI ? nEOCI :
+                                        nImageOffsetWithoutNBB + nImageSize;
+
+    if( VSIFSeekL( fp, nStartEOL, SEEK_SET ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking to EOL");
         return false;
@@ -177,7 +186,7 @@ bool VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     int EOLabelSize = atoi( keyval.c_str() );
     if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
         return false;
-    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
+    if( VSIFSeekL( fp, nStartEOL, SEEK_SET ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking to EOL");
         return false;

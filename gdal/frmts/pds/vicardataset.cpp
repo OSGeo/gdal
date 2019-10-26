@@ -39,6 +39,7 @@ constexpr double NULL3 = -32768.0;
 #include "vicardataset.h"
 #include "vicarkeywordhandler.h"
 
+#include <exception>
 #include <limits>
 #include <string>
 
@@ -467,6 +468,301 @@ CPLErr VICARRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                      eBufType,
                                      nPixelSpace, nLineSpace,
                                      psExtraArg );
+}
+
+/************************************************************************/
+/*                        VICARBASICRasterBand                          */
+/************************************************************************/
+
+class VICARBASICRasterBand final: public GDALPamRasterBand
+{
+    public:
+        VICARBASICRasterBand(VICARDataset *poDSIn, int nBandIn,
+                             GDALDataType eType);
+
+        virtual CPLErr          IReadBlock( int, int, void * ) override;
+};
+
+/************************************************************************/
+/*                        VICARBASICRasterBand()                        */
+/************************************************************************/
+
+VICARBASICRasterBand::VICARBASICRasterBand(VICARDataset *poDSIn, int nBandIn,
+                                           GDALDataType eType)
+{
+    poDS = poDSIn;
+    nBand = nBandIn;
+    nBlockXSize = poDSIn->GetRasterXSize();
+    nBlockYSize = 1;
+    eDataType = eType;
+}
+
+
+namespace
+{
+class DecodeException: public std::exception
+{
+    public:
+        DecodeException() = default;
+};
+}
+
+//////////////////////////////////////////////////////////////////////////
+/// Below grab1() and basic_decode() are adapted from Public Domain VICAR project
+/// from https://github.com/nasa/VICAR/blob/master/vos/rtl/source/basic_compression.c
+//////////////////////////////////////////////////////////////////////////
+
+/* masking array used in the algorithm to take out bits in memory */
+const unsigned int cod1mask[25] = {0x0,0x1,0x3,0x7,0xf,0x1f,
+                                   0x3f,0x7f,0xff,0x1ff,0x3ff,
+                                   0x7ff,0xfff,0x1fff,0x3fff,
+                                   0x7fff,0xffff,0x1ffff,
+                                   0x3ffff,0x7ffff,0xfffff,
+                                   0x1fffff,0x3fffff,0x7fffff,
+                                   0xffffff};
+
+/*****************************************************/
+/* This function is a helper function for the BASIC  */
+/* compression algorithm to get a specified number   */
+/* of bits from buffer, convert it to a number and   */
+/* return it.                                        */
+/*****************************************************/
+static unsigned char grab1(int nbit,
+                           const unsigned char* buffer,
+                           size_t buffer_size,
+                           size_t& buffer_pos,
+                           int& bit1ptr) /* bit position in the current byte of encrypted or decrypted buffer*/
+{
+    unsigned char val;
+    int shift = 8-nbit-(bit1ptr);
+
+    if( buffer_pos >= buffer_size )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Out of decoding buffer");
+        throw DecodeException();
+    }
+
+    if (shift>0)
+    {
+        val = (buffer[buffer_pos]>>shift) & cod1mask[nbit];
+        bit1ptr += nbit;
+
+        return val;
+    }
+    if (shift<0)
+    {
+        unsigned v1 = buffer[buffer_pos] & cod1mask[nbit+shift];
+        buffer_pos++;
+
+        if( buffer_pos >= buffer_size )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Out of decoding buffer");
+            throw DecodeException();
+        }
+
+        unsigned v2 = (buffer[buffer_pos]>>(8+shift)) & cod1mask[-shift];
+
+        val = static_cast<unsigned char>((v1<<(-shift))+v2);
+
+        bit1ptr = -shift;
+
+        return val;
+    }
+    val = buffer[buffer_pos] & cod1mask[nbit];
+    buffer_pos++;
+    bit1ptr = 0;
+
+    return val;
+}
+
+/*****************************************************/
+/* This function is the decoding algorithm for BASIC */
+/* compression.  The encoded buffer is passed into   */
+/* code and the decoded buffer is passed out in buf. */
+/*****************************************************/
+static void basic_decode(const unsigned char* code,
+                         size_t code_size,
+                         unsigned char* buf,
+                         int ns, int wid)
+{
+    unsigned char val = code[0];
+    int runInt = -3;
+    unsigned char runChar;
+    unsigned int nval = 999999;
+    static const int cmprtrns1[7] = { -3, -2, -1, 0, 1, 2, 3 };
+    size_t buffer_pos = 0;
+    int bit1ptr = 0;
+    unsigned int old = 0;
+    const int ptop = ns*wid;
+
+    for(int iw = 0; iw < wid; iw++)
+    {
+        for (int ip=iw;ip<ptop;ip+=wid)
+        {
+            if (runInt>(-3))
+            {
+                buf[ip] = static_cast<unsigned char>(nval);
+                runInt--;
+                continue; 
+            }
+            val = grab1(3, code, code_size, buffer_pos, bit1ptr);
+
+            if (val<7)
+            {
+                nval = CPLUnsanitizedAdd<unsigned>(old,cmprtrns1[val]);
+                buf[ip] = static_cast<unsigned char>(nval);
+                old = nval;
+                continue;
+            }
+            val = grab1(1, code, code_size, buffer_pos, bit1ptr);
+
+            if (val)
+            {
+                runChar = grab1(4, code, code_size, buffer_pos, bit1ptr);
+                if (runChar==15)
+                {
+                    runChar = grab1(8, code, code_size, buffer_pos, bit1ptr);
+
+                    if (runChar==255)
+                    {
+                        unsigned char part0 = grab1(8, code, code_size, buffer_pos, bit1ptr);
+                        unsigned char part1 = grab1(8, code, code_size, buffer_pos, bit1ptr);
+                        unsigned char part2 = grab1(8, code, code_size, buffer_pos, bit1ptr);
+                        runInt = part0 | (part1 << 8) | (part2 << 16);
+                    }
+                    else
+                        runInt = runChar + 15;
+                }
+                else
+                    runInt = runChar;
+
+                val = grab1(3, code, code_size, buffer_pos, bit1ptr);
+                if (val<7)
+                    nval = CPLUnsanitizedAdd<unsigned>(old,cmprtrns1[val]);
+                else
+                    nval = grab1(8, code, code_size, buffer_pos, bit1ptr);
+                buf[ip] = static_cast<unsigned char>(nval);
+                old = nval;
+            }
+            else
+            {
+                val = grab1(8, code, code_size, buffer_pos, bit1ptr);
+                buf[ip] = val;
+                old = val;
+            }
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////
+/// End of VICAR code
+//////////////////////////////////////////////////////////////////////////
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pImage )
+
+{
+    VICARDataset* poGDS = reinterpret_cast<VICARDataset*>(poDS);
+
+    const int nRecord = (nBand - 1) * nRasterYSize + nYBlock;
+
+    // Find at which offset the compressed record is.
+    // For BASIC compression, each compressed run is preceded by a uint32 value
+    // givin its size, including the size of this uint32 value
+    // For BASIC2 compression, the uint32 sizes of all records are put
+    // immediately after the label.
+    for( ; poGDS->m_nLastRecordOffset <= nRecord;
+                                poGDS->m_nLastRecordOffset++ )
+    {
+        CPLAssert( poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset+1] == 0 );
+
+        if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC )
+        {
+            VSIFSeekL( poGDS->fpImage,
+                        poGDS->m_anRecordOffsets[
+                        poGDS->m_nLastRecordOffset] - sizeof(GUInt32),
+                        SEEK_SET );
+        }
+        else
+        {
+            VSIFSeekL( poGDS->fpImage,
+                        poGDS->m_nImageOffsetWithoutNBB +
+                            static_cast<vsi_l_offset>(sizeof(GUInt32)) *
+                                poGDS->m_nLastRecordOffset,
+                        SEEK_SET );
+        }
+        GUInt32 nSize;
+        VSIFReadL( &nSize, 1, sizeof(nSize), poGDS->fpImage);
+        CPL_LSBPTR32(&nSize);
+        if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC)
+        {
+            if( nSize < sizeof(GUInt32) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Wrong size at record %d",
+                        poGDS->m_nLastRecordOffset);
+                return CE_Failure;
+            }
+        }
+
+        poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset+1] =
+            poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset] + nSize;
+    }
+
+    unsigned int nSize;
+    if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC )
+    {
+        nSize = static_cast<unsigned>(poGDS->m_anRecordOffsets[nRecord+1] -
+                    poGDS->m_anRecordOffsets[nRecord] - sizeof(GUInt32));
+    }
+    else
+    {
+        nSize = static_cast<unsigned>(poGDS->m_anRecordOffsets[nRecord+1] -
+                    poGDS->m_anRecordOffsets[nRecord]);
+    }
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+    if( nSize > 100 * 1000 * 1000 ||
+        nSize / 4 > static_cast<unsigned>(nRasterXSize) * nDTSize )
+    {
+        return CE_Failure;
+    }
+    if( poGDS->m_abyCodedBuffer.size() < nSize )
+    {
+        try
+        {
+            poGDS->m_abyCodedBuffer.resize(nSize);
+        }
+        catch( const std::exception& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what() );
+            return CE_Failure;
+        }
+    }
+    if( VSIFSeekL(poGDS->fpImage,
+                  poGDS->m_anRecordOffsets[nRecord], SEEK_SET) != 0 ||
+        VSIFReadL(&poGDS->m_abyCodedBuffer[0], nSize, 1, poGDS->fpImage) != 1 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot read record %d", nRecord);
+        return CE_Failure;
+    }
+
+    try
+    {
+        basic_decode(poGDS->m_abyCodedBuffer.data(), nSize,
+                     static_cast<unsigned char*>(pImage),
+                     nRasterXSize, nDTSize);
+    }
+    catch( const DecodeException& )
+    {
+        return CE_Failure;
+    }
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1613,19 +1909,98 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
+    poDS->m_nImageOffsetWithoutNBB =
+                        static_cast<vsi_l_offset>(nImageOffsetWithoutNBB);
+
+    CPLString osCompress = poDS->GetKeyword("COMPRESS", "NONE");
+    if( EQUAL(osCompress, "BASIC") || EQUAL(osCompress, "BASIC2") )
+    {
+        if( poOpenInfo->eAccess == GA_Update )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Update of compressed VICAR file not supported");
+            delete poDS;
+            return nullptr;
+        }
+        poDS->SetMetadataItem("COMPRESS", osCompress, "IMAGE_STRUCTURE");
+        poDS->m_eCompress = EQUAL(osCompress, "BASIC") ?
+                                    COMPRESS_BASIC : COMPRESS_BASIC2;
+        if( poDS->nRasterYSize > 100 * 1000 * 1000 / nBands )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too many records for compressed dataset");
+            delete poDS;
+            return nullptr;
+        }
+        if( !GDALDataTypeIsInteger(eDataType) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Data type incompatible of compression");
+            delete poDS;
+            return nullptr;
+        }
+        // To avoid potential issues in basic_decode()
+        const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+        if( nDTSize == 0 || poDS->nRasterXSize > INT_MAX / nDTSize )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too large scanline");
+            delete poDS;
+            return nullptr;
+        }
+        const int nRecords = poDS->nRasterYSize * nBands;
+        try
+        {
+            // + 1 to store implictly the size of the last record
+            poDS->m_anRecordOffsets.resize( nRecords + 1 );
+        }
+        catch( const std::exception& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what() );
+            delete poDS;
+            return nullptr;
+        }
+        if( poDS->m_eCompress == COMPRESS_BASIC )
+        {
+            poDS->m_anRecordOffsets[0] =
+                poDS->m_nImageOffsetWithoutNBB + sizeof(GUInt32);
+        }
+        else
+        {
+            poDS->m_anRecordOffsets[0] =
+                poDS->m_nImageOffsetWithoutNBB + sizeof(GUInt32) * nRecords;
+        }
+    }
+    else if( !EQUAL(osCompress, "NONE") )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "COMPRESS=%s not supported", osCompress.c_str());
+        delete poDS;
+        return nullptr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < nBands; i++ )
     {
-        GDALRasterBand *poBand
-            = new VICARRawRasterBand( poDS, i+1, poDS->fpImage,
+        GDALRasterBand *poBand;
+
+        if( poDS->m_eCompress == COMPRESS_BASIC ||
+            poDS->m_eCompress == COMPRESS_BASIC2 )
+        {
+            poBand = new VICARBASICRasterBand( poDS, i+1, eDataType );
+        }
+        else
+        {
+            poBand = new VICARRawRasterBand( poDS, i+1, poDS->fpImage,
                                  static_cast<vsi_l_offset>(
                                     nImageOffsetWithoutNBB + nNBB + nBandOffset * i),
                                  static_cast<int>(nPixelOffset),
                                  static_cast<int>(nLineOffset),
                                  eDataType,
                                  eByteOrder );
+        }
 
         poDS->SetBand( i+1, poBand );
         //only set NoData if instrument is supported

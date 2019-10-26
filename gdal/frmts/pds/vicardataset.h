@@ -47,12 +47,25 @@
 class VICARDataset final: public RawDataset
 {
     friend class VICARRawRasterBand;
+    friend class VICARBASICRasterBand;
 
     VSILFILE    *fpImage = nullptr;
 
     VICARKeywordHandler  oKeywords;
 
+    enum CompressMethod
+    {
+        COMPRESS_NONE,
+        COMPRESS_BASIC,
+        COMPRESS_BASIC2,
+    };
+    CompressMethod m_eCompress = COMPRESS_NONE;
+
     int          m_nRecordSize = 0;
+    vsi_l_offset m_nImageOffsetWithoutNBB = 0;
+    int          m_nLastRecordOffset = 0;
+    std::vector<vsi_l_offset> m_anRecordOffsets{}; // for BASIC/BASIC2
+    std::vector<GByte> m_abyCodedBuffer{};
 
     CPLJSONObject m_oJSonLabel;
     CPLStringList m_aosVICARMD;
