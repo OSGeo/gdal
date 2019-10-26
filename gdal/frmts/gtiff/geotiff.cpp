@@ -19305,7 +19305,7 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
     vsi_l_offset        nImgOffset = panOffsets[0];
-    GIntBig             nPixelOffset = ( m_nPlanarConfig == PLANARCONFIG_CONTIG ) ? nDTSize * nBands : nDTSize;
+    GIntBig             nPixelOffset = ( m_nPlanarConfig == PLANARCONFIG_CONTIG ) ? static_cast<GIntBig>(nDTSize) * nBands : nDTSize;
     GIntBig             nLineOffset = nPixelOffset * nRasterXSize;
     GIntBig             nBandOffset = ( m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1 ) ? nDTSize : 0;
     RawBinaryLayout::Interleaving eInterleaving =
