@@ -283,15 +283,14 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     memcpy(pszTarget, wkt.data(), wkt.size() + 1);
 }
 
+static bool isInteger(const std::string& s)
+{
+    return s.find_first_not_of("0123456789") == std::string::npos;
+}
 
 std::string OGRMakeWktCoordinate(double x, double y, double z, int nDimension,
     OGRWktOptions opts)
 {
-    auto isInteger = [](const std::string s)
-    {
-        return s.find_first_not_of("'0123456789") == std::string::npos;
-    };
-
     std::string xval;
     std::string yval;
 
@@ -355,11 +354,6 @@ std::string OGRMakeWktCoordinateM(double x, double y, double z, double m,
                                   OGRBoolean hasZ, OGRBoolean hasM,
                                   OGRWktOptions opts)
 {
-    auto isInteger = [](const std::string s)
-    {
-        return s.find_first_not_of("'0123456789") == std::string::npos;
-    };
-
     std::string xval, yval;
     if( opts.format == OGRWktFormat::Default &&
         CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
