@@ -4569,8 +4569,9 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
 
         psInfo->nFeaturesRead ++;
 
-        int nParts = 0;
         int nIters = 1;
+        std::unique_ptr<OGRGeometryCollection> poCollToExplode;
+        int iGeomCollToExplode = -1;
         if (bExplodeCollections)
         {
             OGRGeometry* poSrcGeometry;
@@ -4582,10 +4583,15 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             if (poSrcGeometry &&
                 OGR_GT_IsSubClassOf(poSrcGeometry->getGeometryType(), wkbGeometryCollection) )
             {
-                nParts = poSrcGeometry->toGeometryCollection()->getNumGeometries();
-                nIters = nParts;
-                if (nIters == 0)
-                    nIters = 1;
+                const int nParts = poSrcGeometry->toGeometryCollection()->getNumGeometries();
+                if( nParts > 0 )
+                {
+                    iGeomCollToExplode = psInfo->iRequestedSrcGeomField >= 0 ?
+                        psInfo->iRequestedSrcGeomField : 0;
+                    poCollToExplode.reset(
+                        poFeature->StealGeometry(iGeomCollToExplode)->toGeometryCollection());
+                    nIters = nParts;
+                }
             }
         }
 
@@ -4695,18 +4701,20 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
 
             for( int iGeom = 0; iGeom < nDstGeomFieldCount; iGeom ++ )
             {
-                OGRGeometry* poDstGeometry = poDstFeature->StealGeometry(iGeom);
-                if (poDstGeometry == nullptr)
-                    continue;
+                OGRGeometry* poDstGeometry;
 
-                if (nParts > 0)
+                if( poCollToExplode && iGeom == iGeomCollToExplode )
                 {
-                    /* For -explodecollections, extract the iPart(th) of the geometry */
-                    OGRGeometry* poPart = poDstGeometry->toGeometryCollection()->getGeometryRef(iPart);
-                    poDstGeometry->toGeometryCollection()->removeGeometry(iPart, FALSE);
-                    delete poDstGeometry;
+                    OGRGeometry* poPart = poCollToExplode->getGeometryRef(0);
+                    poCollToExplode->removeGeometry(0, FALSE);
                     poDstGeometry = poPart;
                     assert(poDstGeometry);
+                }
+                else
+                {
+                    poDstGeometry = poDstFeature->StealGeometry(iGeom);
+                    if (poDstGeometry == nullptr)
+                        continue;
                 }
 
                 if (iSrcZField != -1)
