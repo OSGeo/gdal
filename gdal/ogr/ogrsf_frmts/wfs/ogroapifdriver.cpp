@@ -224,12 +224,14 @@ CPLString OGROAPIFDataset::ReinjectAuthInURL(const CPLString& osURL) const
         osRet.find('@') == std::string::npos )
     {
         const auto nFirstSlashPos = m_osRootURL.find('/', strlen("https://"));
-        if( nFirstSlashPos != std::string::npos &&
+        if( nFirstSlashPos == std::string::npos ||
             nFirstSlashPos > nArobaseInURLPos )
         {
             auto osUserPwd = m_osRootURL.substr(strlen("https://"),
                             nArobaseInURLPos - strlen("https://"));
-            auto osServer = m_osRootURL.substr(nArobaseInURLPos + 1,
+            auto osServer = nFirstSlashPos == std::string::npos ?
+                m_osRootURL.substr(nArobaseInURLPos + 1):
+                m_osRootURL.substr(nArobaseInURLPos + 1,
                                             nFirstSlashPos - nArobaseInURLPos);
             if( STARTS_WITH(osRet, ("https://" + osServer).c_str()) )
             {
