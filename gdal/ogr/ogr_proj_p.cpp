@@ -109,9 +109,9 @@ static void FreeProjTLSContextHolder( void* pData )
 static OSRPJContextHolder& GetProjTLSContextHolder()
 {
     static OSRPJContextHolder dummy;
-    int bMemoryErrorOccured = false;
-    void* pData = CPLGetTLSEx(CTLS_PROJCONTEXTHOLDER, &bMemoryErrorOccured);
-    if( bMemoryErrorOccured )
+    int bMemoryErrorOccurred = false;
+    void* pData = CPLGetTLSEx(CTLS_PROJCONTEXTHOLDER, &bMemoryErrorOccurred);
+    if( bMemoryErrorOccurred )
     {
         return dummy;
     }
@@ -120,8 +120,8 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
         auto pHolder = new OSRPJContextHolder();
         CPLSetTLSWithFreeFuncEx( CTLS_PROJCONTEXTHOLDER,
                                  pHolder,
-                                 FreeProjTLSContextHolder, &bMemoryErrorOccured );
-        if( bMemoryErrorOccured )
+                                 FreeProjTLSContextHolder, &bMemoryErrorOccurred );
+        if( bMemoryErrorOccurred )
         {
             delete pHolder;
             return dummy;

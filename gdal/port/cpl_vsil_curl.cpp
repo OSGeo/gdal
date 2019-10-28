@@ -2388,9 +2388,9 @@ static void FreeCachedConnection( void* pData )
 static std::map<VSICurlFilesystemHandler*, CachedConnection>& GetConnectionCache()
 {
     static std::map<VSICurlFilesystemHandler*, CachedConnection> dummyCache;
-    int bMemoryErrorOccured = false;
-    void* pData = CPLGetTLSEx(CTLS_VSICURL_CACHEDCONNECTION, &bMemoryErrorOccured);
-    if( bMemoryErrorOccured )
+    int bMemoryErrorOccurred = false;
+    void* pData = CPLGetTLSEx(CTLS_VSICURL_CACHEDCONNECTION, &bMemoryErrorOccurred);
+    if( bMemoryErrorOccurred )
     {
         return dummyCache;
     }
@@ -2399,8 +2399,8 @@ static std::map<VSICurlFilesystemHandler*, CachedConnection>& GetConnectionCache
         auto cachedConnection = new std::map<VSICurlFilesystemHandler*, CachedConnection>();
         CPLSetTLSWithFreeFuncEx( CTLS_VSICURL_CACHEDCONNECTION,
                                  cachedConnection,
-                                 FreeCachedConnection, &bMemoryErrorOccured );
-        if( bMemoryErrorOccured )
+                                 FreeCachedConnection, &bMemoryErrorOccurred );
+        if( bMemoryErrorOccurred )
         {
             delete cachedConnection;
             return dummyCache;
