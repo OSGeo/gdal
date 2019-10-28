@@ -454,6 +454,15 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
 
     if( nNewPointCount > nPointCount )
     {
+        // Overflow of sizeof(OGRRawPoint) * nNewPointCount can only occur on
+        // 32 bit, but we don't really want to allocate 2 billion points even on
+        // 64 bit...
+        if( nNewPointCount > std::numeric_limits<int>::max() /
+                                    static_cast<int>(sizeof(OGRRawPoint)) )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Too big point count.");
+            return;
+        }
         OGRRawPoint* paoNewPoints = static_cast<OGRRawPoint *>(
             VSI_REALLOC_VERBOSE(paoPoints,
                                 sizeof(OGRRawPoint) * nNewPointCount));
@@ -1274,38 +1283,10 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
                                 void* pabyY, int nYStride,
                                 void* pabyZ, int nZStride ) const
 {
-    if( pabyX != nullptr && nXStride == 0 )
-        return;
-    if( pabyY != nullptr && nYStride == 0 )
-        return;
-    if( pabyZ != nullptr && nZStride == 0 )
-        return;
-    if( nXStride == 2 * sizeof(double) &&
-        nYStride == 2 * sizeof(double) &&
-        static_cast<char *>(pabyY) ==
-        static_cast<char *>(pabyX) + sizeof(double) &&
-        (pabyZ == nullptr || nZStride == sizeof(double)) )
-    {
-        getPoints(static_cast<OGRRawPoint *>(pabyX),
-                  static_cast<double *>(pabyZ));
-        return;
-    }
-    for( int i = 0; i < nPointCount; i++ )
-    {
-        if( pabyX )
-            *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
-        if( pabyY )
-            *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
-    }
-
-    if( pabyZ )
-    {
-        for( int i = 0; i < nPointCount; i++ )
-        {
-            *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) =
-                padfZ ? padfZ[i] : 0.0;
-        }
-    }
+    return getPoints( pabyX, nXStride,
+                      pabyY, nYStride,
+                      pabyZ, nZStride,
+                      nullptr, 0);
 }
 
 /**
@@ -1343,24 +1324,56 @@ void OGRSimpleCurve::getPoints( void* pabyX, int nXStride,
         return;
     if( pabyM != nullptr && nMStride == 0 )
         return;
-    for( int i = 0; i < nPointCount; i++ )
+    if( nXStride == sizeof(OGRRawPoint) &&
+        nYStride == sizeof(OGRRawPoint) &&
+        static_cast<char *>(pabyY) ==
+        static_cast<char *>(pabyX) + sizeof(double) &&
+        (pabyZ == nullptr || nZStride == sizeof(double)) )
     {
-        if( pabyX ) *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
-        if( pabyY ) *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
+        getPoints(static_cast<OGRRawPoint *>(pabyX),
+                  static_cast<double *>(pabyZ));
     }
-
-    if( pabyZ )
+    else
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
+            if( pabyX ) *reinterpret_cast<double*>(static_cast<char*>(pabyX) + i * nXStride) = paoPoints[i].x;
+            if( pabyY ) *reinterpret_cast<double*>(static_cast<char*>(pabyY) + i * nYStride) = paoPoints[i].y;
+        }
+
+        if( pabyZ )
+        {
+            if( nZStride == sizeof(double) )
+            {
+                if( padfZ )
+                    memcpy( pabyZ, padfZ, sizeof(double) * nPointCount );
+                else
+                    memset( pabyZ, 0, sizeof(double) * nPointCount );
+            }
+            else
+            {
+                for( int i = 0; i < nPointCount; i++ )
+                {
+                    *reinterpret_cast<double*>(static_cast<char*>(pabyZ) + i * nZStride) = (padfZ) ? padfZ[i] : 0.0;
+                }
+            }
         }
     }
     if( pabyM )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        if( nMStride == sizeof(double) )
         {
-            *reinterpret_cast<double*>(static_cast<char*>(pabyM) + i * nZStride) = (padfM) ? padfM[i] : 0.0;
+            if( padfM )
+                memcpy( pabyM, padfM, sizeof(double) * nPointCount );
+            else
+                memset( pabyM, 0, sizeof(double) * nPointCount );
+        }
+        else
+        {
+            for( int i = 0; i < nPointCount; i++ )
+            {
+                *reinterpret_cast<double*>(static_cast<char*>(pabyM) + i * nMStride) = (padfM) ? padfM[i] : 0.0;
+            }
         }
     }
 }
@@ -1381,17 +1394,15 @@ void OGRSimpleCurve::reversePoints()
 {
     for( int i = 0; i < nPointCount/2; i++ )
     {
-        const OGRRawPoint sPointTemp = paoPoints[i];
-
-        paoPoints[i] = paoPoints[nPointCount-i-1];
-        paoPoints[nPointCount-i-1] = sPointTemp;
-
+        std::swap(paoPoints[i], paoPoints[nPointCount-i-1]);
         if( padfZ )
         {
-            const double dfZTemp = padfZ[i];
+            std::swap(padfZ[i], padfZ[nPointCount-i-1]);
+        }
 
-            padfZ[i] = padfZ[nPointCount-i-1];
-            padfZ[nPointCount-i-1] = dfZTemp;
+        if( padfM )
+        {
+            std::swap(padfM[i], padfM[nPointCount-i-1]);
         }
     }
 }
@@ -1467,6 +1478,15 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
                         sizeof(double) * nPointsToAdd );
             }
         }
+        if( poOtherLine->padfM != nullptr )
+        {
+            AddM();
+            if( padfM != nullptr )
+            {
+                memcpy( padfM + nOldPoints, poOtherLine->padfM + nStartVertex,
+                        sizeof(double) * nPointsToAdd );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1490,6 +1510,17 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
                 for( int i = 0; i < nPointsToAdd; i++ )
                 {
                     padfZ[i+nOldPoints] = poOtherLine->padfZ[nStartVertex-i];
+                }
+            }
+        }
+        if( poOtherLine->padfM != nullptr )
+        {
+            AddM();
+            if( padfM != nullptr )
+            {
+                for( int i = 0; i < nPointsToAdd; i++ )
+                {
+                    padfM[i+nOldPoints] = poOtherLine->padfM[nStartVertex-i];
                 }
             }
         }

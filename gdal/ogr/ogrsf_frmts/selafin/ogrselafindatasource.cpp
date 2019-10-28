@@ -425,7 +425,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
         SelafinTypeDef eType=(j==0)?POINTS:ELEMENTS;
         for (int i=0;i<poHeader->nSteps;++i) {
             if (poRange.contains(eType,i)) {
-                char szTemp[30];
+                char szTemp[30] = {};
                 double dfTime = 0.0;
                 if( VSIFSeekL(fp, poHeader->getPosition(i)+4, SEEK_SET)!=0 ||
                     Selafin::read_float(fp, dfTime)==0 )
