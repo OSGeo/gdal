@@ -4494,6 +4494,7 @@ NITFDataset::NITFCreateCopy(
                     pszGEOPSB += 3; /* GRD */
                     pszGEOPSB += 80; /* GRN */
                     WRITE_STR_NOSZ(pszGEOPSB, "0000"); pszGEOPSB += 4; /* ZNA */
+                    CPL_IGNORE_RET_VAL(pszGEOPSB);
                     CPLAssert(pszGEOPSB == szGEOPSB + 443);
 
                     CPLString osGEOPSB("FILE_TRE=GEOPSB=");

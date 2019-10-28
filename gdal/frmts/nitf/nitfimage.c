@@ -2298,7 +2298,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
     // with 3 digits + 1 terminating byte
     char szTemp[12+2+1];
 #if defined(DEBUG) || defined(WIN32)
-    size_t nLen;
+    int nLen;
 #endif
 
     if( fabs(dfVal) > 9.999999e9 )
@@ -2310,7 +2310,8 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
 
     CPLsnprintf( szTemp, sizeof(szTemp), "%+.6E", dfVal);
 #if defined(DEBUG) || defined(WIN32)
-    nLen = strlen(szTemp);
+    nLen = (int)strlen(szTemp);
+    CPL_IGNORE_RET_VAL_INT(nLen);
 #endif
     CPLAssert( szTemp[9] == 'E' );
 #ifdef WIN32

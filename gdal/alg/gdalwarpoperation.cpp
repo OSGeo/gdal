@@ -2482,6 +2482,7 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
     int iPoint = 0;
 #ifdef DEBUG
     const size_t nSampleMax = (nStepCount + 2) * (nStepCount + 2);
+    CPL_IGNORE_RET_VAL(nSampleMax);
     CPLAssert( privateData->adfDstX.size() == nSampleMax );
     CPLAssert( privateData->adfDstY.size() == nSampleMax );
     CPLAssert( privateData->abSuccess.size() == nSampleMax );

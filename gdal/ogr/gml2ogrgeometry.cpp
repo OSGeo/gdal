@@ -3319,10 +3319,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                             poMS = new OGRMultiPolygon();
                         else
                             poMS = new OGRMultiSurface();
-#ifdef DEBUG
                         OGRErr eErr =
-#endif
                           poMS->addGeometryDirectly( poResultPoly );
+                        CPL_IGNORE_RET_VAL(eErr);
                         CPLAssert(eErr == OGRERR_NONE);
                         poResultPoly = poMS;
                     }
@@ -3334,10 +3333,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         poMS = OGRMultiPolygon::CastToMultiSurface(poMultiPoly);
                         poResultPoly = poMS;
                     }
-#ifdef DEBUG
                     OGRErr eErr =
-#endif
                       poMS->addGeometryDirectly( poGeom );
+                    CPL_IGNORE_RET_VAL(eErr);
                     CPLAssert(eErr == OGRERR_NONE);
                 }
             }
@@ -3361,17 +3359,15 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     if( poTIN == nullptr )
                     {
                         poTIN = new OGRTriangulatedSurface();
-#ifdef DEBUG
                         OGRErr eErr =
-#endif
                           poTIN->addGeometryDirectly( poResultTri );
+                        CPL_IGNORE_RET_VAL(eErr);
                         CPLAssert(eErr == OGRERR_NONE);
                         poResultTri = poTIN;
                     }
-#ifdef DEBUG
                     OGRErr eErr =
-#endif
                       poTIN->addGeometryDirectly( poGeom );
+                    CPL_IGNORE_RET_VAL(eErr);
                     CPLAssert(eErr == OGRERR_NONE);
                 }
             }

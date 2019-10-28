@@ -117,6 +117,7 @@ const char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowN
     const int nCols = poResult->nColCount;
 #ifdef DEBUG
     const int nRows = poResult->nRowCount;
+    CPL_IGNORE_RET_VAL(nRows);
 
     CPLAssert( iColNum >= 0 && iColNum < nCols );
     CPLAssert( iRowNum >= 0 && iRowNum < nRows );

@@ -8241,11 +8241,9 @@ void GTiffDataset::FillEmptyTiles()
 
                 vsi_l_offset nOffset = 0;
                 bool b = IsBlockAvailable( iBlock, &nOffset, &nRawSize);
-#ifdef DEBUG
-                CPLAssert(b);
-#else
                 CPL_IGNORE_RET_VAL(b);
-#endif
+                CPLAssert(b);
+
                 // When using compression, get back the compressed block
                 // so we can use the raw API to write it faster.
                 if( m_nCompression != COMPRESSION_NONE )
