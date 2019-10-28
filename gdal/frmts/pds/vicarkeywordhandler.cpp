@@ -31,6 +31,7 @@
 
 #include "cpl_string.h"
 #include "vicarkeywordhandler.h"
+#include "vicardataset.h"
 
 #include <algorithm>
 
@@ -48,9 +49,10 @@ CPL_CVSID("$Id$")
 
 VICARKeywordHandler::VICARKeywordHandler() :
     papszKeywordList(nullptr),
-    pszHeaderNext(nullptr),
-    LabelSize(0)
-{}
+    pszHeaderNext(nullptr)
+{
+    oJSon.Deinit();
+}
 
 /************************************************************************/
 /*                        ~VICARKeywordHandler()                        */
@@ -66,40 +68,39 @@ VICARKeywordHandler::~VICARKeywordHandler()
 /*                               Ingest()                               */
 /************************************************************************/
 
-int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
+bool VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on its own line.            */
+/*      Read in label at beginning of file.                             */
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
-        return FALSE;
+        return false;
 
     // Find LBLSIZE Entry
-    char* pszLBLSIZE = strstr(reinterpret_cast<char *>( pabyHeader ), "LBLSIZE");
-    int nOffset = 0;
+    const char* pszLBLSIZE = strstr(reinterpret_cast<char *>( pabyHeader ), "LBLSIZE");
+    if( !pszLBLSIZE )
+        return false;
 
-    if (pszLBLSIZE)
-        nOffset = static_cast<int>(pszLBLSIZE - (const char *)pabyHeader);
-
-    const char *pch1 = strstr(reinterpret_cast<char *>( pabyHeader + nOffset ), "=");
+    const char *pch1 = strchr(pszLBLSIZE, '=');
     if( pch1 == nullptr )
-        return FALSE;
-
+        return false;
     ++pch1;
-    const char *pch2 = strstr(pch1, " ");
+    while( isspace(static_cast<unsigned char>(*pch1)) )
+        ++pch1;
+    const char *pch2 = strchr(pch1, ' ');
     if( pch2 == nullptr )
-        return FALSE;
+        return false;
 
     std::string keyval;
     keyval.assign(pch1, static_cast<size_t>(pch2 - pch1));
-    LabelSize = atoi( keyval.c_str() );
+    int LabelSize = atoi( keyval.c_str() );
     if( LabelSize <= 0 || LabelSize > 10 * 1024 * 124 )
-        return FALSE;
+        return false;
 
     char* pszChunk = reinterpret_cast<char *>(  VSIMalloc( LabelSize + 1 ) );
     if( pszChunk == nullptr )
-        return FALSE;
+        return false;
     int nBytesRead = static_cast<int>(VSIFReadL( pszChunk, 1, LabelSize, fp ));
     pszChunk[nBytesRead] = '\0';
 
@@ -108,135 +109,151 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     pszHeaderNext = osHeaderText.c_str();
 
 /* -------------------------------------------------------------------- */
-/*      Process name/value pairs, keeping track of a "path stack".      */
+/*      Process name/value pairs                                        */
 /* -------------------------------------------------------------------- */
-    if( !ReadGroup("") )
-        return FALSE;
+    if( !Parse() )
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Now check for the Vicar End-of-Dataset Label...                 */
 /* -------------------------------------------------------------------- */
-    const char *pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
-
-    if( pszResult == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT DEFINED!");
-        return FALSE;
-    }
-
+    const char *pszResult = CSLFetchNameValueDef( papszKeywordList, "EOL", "0" );
     if( !EQUAL(pszResult,"1") )
-        return TRUE;
+        return true;
 
 /* -------------------------------------------------------------------- */
 /*      There is a EOL!   e.G.  h4231_0000.nd4.06                       */
 /* -------------------------------------------------------------------- */
 
-    vsi_l_offset nPixelOffset=0;
-    const char* pszFormat = CSLFetchNameValueDef(papszKeywordList,"FORMAT","");
-    if (EQUAL( pszFormat, "BYTE" )) {
-        nPixelOffset = 1;
-    }
-    else if (EQUAL( pszFormat, "HALF" )) {
-        nPixelOffset = 2;
-    }
-    else if (EQUAL( pszFormat, "FULL" )) {
-        nPixelOffset = 4;
-    }
-    else if (EQUAL( pszFormat, "REAL" )) {
-        nPixelOffset = 4;
-    }
-    if( nPixelOffset == 0 )
-        return FALSE;
+    GUInt64 nPixelOffset;
+    GUInt64 nLineOffset;
+    GUInt64 nBandOffset;
+    GUInt64 nImageOffsetWithoutNBB;
+    GUInt64 nNBB;
+    GUInt64 nImageSize;
+    if( !VICARDataset::GetSpacings(*this, nPixelOffset, nLineOffset, nBandOffset,
+                                   nImageOffsetWithoutNBB, nNBB, nImageSize) )
+        return false;
 
-    const vsi_l_offset nCols = atoi( CSLFetchNameValueDef( papszKeywordList, "NS", "" ) );
-    const vsi_l_offset nRows = atoi( CSLFetchNameValueDef( papszKeywordList, "NL", "" ) );
-    const int nBands = atoi( CSLFetchNameValueDef( papszKeywordList, "NB", "" ) );
-    const int nBB = atoi( CSLFetchNameValueDef( papszKeywordList, "NBB", "" ) );
+    // Position of EOL in case of compressed data
+    const vsi_l_offset nEOCI1 = static_cast<vsi_l_offset>(
+        CPLAtoGIntBig(CSLFetchNameValueDef(papszKeywordList, "EOCI1", "0")));
+    const vsi_l_offset nEOCI2 = static_cast<vsi_l_offset>(
+        CPLAtoGIntBig(CSLFetchNameValueDef(papszKeywordList, "EOCI2", "0")));
+    const vsi_l_offset nEOCI = (nEOCI2 << 32) | nEOCI1;
 
-    const vsi_l_offset nLineOffset = nPixelOffset * nCols + nBB ;
-    const vsi_l_offset nBandOffset = nLineOffset * nRows;
+    const vsi_l_offset nStartEOL = nEOCI ? nEOCI :
+                                        nImageOffsetWithoutNBB + nImageSize;
 
-    if( nBands <= 0 ||
-        nBandOffset > std::numeric_limits<vsi_l_offset>::max() / nBands ||
-        nBandOffset * nBands > std::numeric_limits<vsi_l_offset>::max() - LabelSize )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too large/invalid keyword values");
-        return FALSE;
-    }
-    const vsi_l_offset starteol = LabelSize + nBandOffset * nBands;
-    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
+    if( VSIFSeekL( fp, nStartEOL, SEEK_SET ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking to EOL");
-        return FALSE;
+        return false;
     }
     char* pszEOLHeader = static_cast<char*>(VSIMalloc(32));
     if( pszEOLHeader == nullptr )
-        return FALSE;
+        return false;
     nBytesRead = static_cast<int>(VSIFReadL( pszEOLHeader, 1, 31, fp ));
     pszEOLHeader[nBytesRead] = '\0';
     pszLBLSIZE=strstr(pszEOLHeader,"LBLSIZE");
-    nOffset=0;
-    if (pszLBLSIZE)
-        nOffset = static_cast<int>(pszLBLSIZE - (const char *)pszEOLHeader);
-    pch1 = strstr( reinterpret_cast<char *>( pszEOLHeader + nOffset ), "=" );
-    if( pch1 == nullptr || *pch1 == '\0' )
+    if( !pszLBLSIZE )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         VSIFree(pszEOLHeader);
-        return FALSE;
+        return false;
     }
-    pch1 ++;
-    pch2 = strstr( pch1, " " );
+    pch1 = strchr( pszLBLSIZE, '=' );
+    if( pch1 == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
+        VSIFree(pszEOLHeader);
+        return false;
+    }
+    ++pch1;
+    while( isspace(static_cast<unsigned char>(*pch1)) )
+        ++pch1;
+    pch2 = strchr( pch1, ' ' );
     if( pch2 == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         VSIFree(pszEOLHeader);
-        return FALSE;
+        return false;
     }
     keyval.assign(pch1, static_cast<size_t>(pch2 - pch1));
+    const auto nSkipEOLLBLSize = static_cast<size_t>(pch2 - pszEOLHeader);
     VSIFree(pszEOLHeader);
 
     int EOLabelSize = atoi( keyval.c_str() );
     if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
-        return FALSE;
-    if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
+        return false;
+    if( VSIFSeekL( fp, nStartEOL, SEEK_SET ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking to EOL");
-        return FALSE;
+        return false;
     }
     char* pszChunkEOL = (char*) VSIMalloc(EOLabelSize+1);
     if( pszChunkEOL == nullptr )
-        return FALSE;
+        return false;
     nBytesRead = static_cast<int>(VSIFReadL( pszChunkEOL, 1, EOLabelSize, fp ));
     pszChunkEOL[nBytesRead] = '\0';
-    osHeaderText += pszChunkEOL ;
+    osHeaderText += pszChunkEOL + nSkipEOLLBLSize;
     VSIFree(pszChunkEOL);
+    CSLDestroy(papszKeywordList);
+    papszKeywordList = nullptr;
     pszHeaderNext = osHeaderText.c_str();
-    return ReadGroup( "" );
+    return Parse();
 }
 
 /************************************************************************/
-/*                             ReadGroup()                              */
+/*                               Parse()                                */
 /************************************************************************/
 
-int VICARKeywordHandler::ReadGroup( CPL_UNUSED const char *pszPathPrefix ) {
-    CPLString osName, osValue, osProperty;
+#define SYNTHETIC_END_MARKER    "__END__"
 
-    for( ; true; ) {
-        if( !ReadPair( osName, osValue ) )
-            return FALSE;
+bool VICARKeywordHandler::Parse()
+{
+    CPLString osName, osValue, osGroupName;
+    CPLJSONObject oProperties;
+    CPLJSONObject oTasks;
+    CPLJSONObject oCurObj;
+    bool bHasProperties = false;
+    bool bHasTasks = false;
 
-        if( EQUAL(osName,"END") )
-            return TRUE;
+    oJSon = CPLJSONObject();
+    for( ; true; )
+    {
+        if( !ReadPair( osName, osValue, osGroupName.empty() ? oJSon : oCurObj ) )
+            return false;
 
-        if( EQUAL(osName,"PROPERTY") || EQUAL(osName,"HISTORY") || EQUAL(osName,"TASK"))
-            osProperty = osValue;
-        else {
-            if ( !EQUAL(osProperty,"") )
-                osName = osProperty + "." + osName;
+        if( EQUAL(osName, SYNTHETIC_END_MARKER) )
+            break;
+
+        if( EQUAL(osName,"PROPERTY") )
+        {
+            osGroupName = osValue;
+            oCurObj = CPLJSONObject();
+            bHasProperties = true;
+            oProperties.Add(osValue, oCurObj);
+        }
+        else if( EQUAL(osName,"TASK") )
+        {
+            osGroupName = osValue;
+            oCurObj = CPLJSONObject();
+            bHasTasks = true;
+            oTasks.Add(osValue, oCurObj);
+        }
+        else
+        {
+            if ( !osGroupName.empty() )
+                osName = osGroupName + "." + osName;
             papszKeywordList = CSLSetNameValue( papszKeywordList, osName, osValue );
         }
     }
+    if( bHasProperties )
+        oJSon.Add("PROPERTY", oProperties);
+    if( bHasTasks )
+        oJSon.Add("TASK", oTasks);
+    return true;
 }
 
 /************************************************************************/
@@ -247,88 +264,132 @@ int VICARKeywordHandler::ReadGroup( CPL_UNUSED const char *pszPathPrefix ) {
 /*      Returns TRUE on success.                                        */
 /************************************************************************/
 
-int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
+bool VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue, CPLJSONObject& oCur )
+{
+    osName.clear();
+    osValue.clear();
 
-    osName = "";
-    osValue = "";
-
-    if( !ReadWord( osName ) )
+    if( !ReadName( osName ) )
     {
         // VICAR has no NULL string termination
         if( *pszHeaderNext == '\0') {
-            osName="END";
-            return TRUE;
+            osName = SYNTHETIC_END_MARKER;
+            return true;
         }
-        return FALSE;
+        return false;
     }
 
-    SkipWhite();
-    if( *pszHeaderNext == '\0' )
-        return FALSE;
-
-    pszHeaderNext++;
-
-    SkipWhite();
-
-    if( *pszHeaderNext == '(' && pszHeaderNext[1] == '\'' )
+    bool bIsString = false;
+    if( *pszHeaderNext == '(' )
     {
         CPLString osWord;
-        while( ReadWord( osWord ) )
+        pszHeaderNext ++;
+        CPLJSONArray oArray;
+        oCur.Add( osName, oArray );
+        while( ReadValue( osWord, true, bIsString ) )
         {
+            if( !osValue.empty() )
+                osValue += ',';
             osValue += osWord;
-            if ( osWord.size() < 2 ) continue;
-            if( osWord.back() == ')' && osWord[osWord.size()-2] == '\'' ) break;
-        }
-    }
-
-    else if( *pszHeaderNext == '(' && *(pszHeaderNext-1) != '\'' )
-    {
-        CPLString osWord;
-
-        while( ReadWord( osWord ) )
-        {
-            SkipWhite();
-
-            osValue += osWord;
-            if( !osWord.empty() && osWord.back() == ')'  ) break;
+            if( bIsString )
+            {
+                oArray.Add( osWord );
+            }
+            else if( CPLGetValueType(osWord) == CPL_VALUE_INTEGER )
+            {
+                oArray.Add( atoi(osWord) );
+            }
+            else
+            {
+                oArray.Add( CPLAtof(osWord) );
+            }
+            if( *pszHeaderNext == ')' )
+            {
+                pszHeaderNext ++;
+                break;
+            }
+            pszHeaderNext ++;
         }
     }
     else
     {
-        if( !ReadWord( osValue ) )
-            return FALSE;
+        if( !ReadValue( osValue, false, bIsString ) )
+            return false;
+        if( !EQUAL(osName, "PROPERTY") && !EQUAL(osName, "TASK") )
+        {
+            if( bIsString )
+            {
+                oCur.Add( osName, osValue );
+            }
+            else if( CPLGetValueType(osValue) == CPL_VALUE_INTEGER )
+            {
+                oCur.Add( osName, atoi(osValue) );
+            }
+            else
+            {
+                oCur.Add( osName, CPLAtof(osValue) );
+            }
+        }
     }
 
-    SkipWhite();
-
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
-/*                              ReadWord()                              */
-/*  Returns TRUE on success                                             */
+/*                              ReadName()                              */
 /************************************************************************/
 
-int VICARKeywordHandler::ReadWord( CPLString &osWord )
+bool VICARKeywordHandler::ReadName( CPLString &osWord )
 
 {
-    osWord = "";
+    osWord.clear();
 
     SkipWhite();
 
     if( *pszHeaderNext == '\0')
-        return FALSE;
+        return false;
 
-    if( !( *pszHeaderNext != '='  && !isspace((unsigned char)*pszHeaderNext)) )
-        return FALSE;
+    while( *pszHeaderNext != '=' && !isspace((unsigned char)*pszHeaderNext) )
+    {
+        if( *pszHeaderNext == '\0' )
+            return false;
+        osWord += *pszHeaderNext;
+        pszHeaderNext++;
+    }
+
+    SkipWhite();
+
+    if( *pszHeaderNext != '=' )
+        return false;
+    pszHeaderNext++;
+
+    SkipWhite();
+
+    return true;
+}
+
+/************************************************************************/
+/*                              ReadWord()                              */
+/************************************************************************/
+
+bool VICARKeywordHandler::ReadValue( CPLString &osWord, bool bInList, bool& bIsString )
+
+{
+    osWord.clear();
+
+    SkipWhite();
+
+    if( *pszHeaderNext == '\0')
+        return false;
 
     if( *pszHeaderNext == '\'' )
     {
+        bIsString = true;
         pszHeaderNext++;
         while( true )
         {
             if( *pszHeaderNext == '\0' )
-                return FALSE;
+                return false;
             if( *(pszHeaderNext) == '\'' )
             {
                 if( *(pszHeaderNext+1) == '\'' )
@@ -343,23 +404,33 @@ int VICARKeywordHandler::ReadWord( CPLString &osWord )
             pszHeaderNext++;
         }
         pszHeaderNext++;
-        return TRUE;
     }
-
-    while( *pszHeaderNext != '=' && !isspace((unsigned char)*pszHeaderNext) )
+    else
     {
-        if( *pszHeaderNext == '\0' )
-            return FALSE;
-        osWord += *pszHeaderNext;
-        pszHeaderNext++;
+        while( !isspace((unsigned char)*pszHeaderNext) )
+        {
+            if( *pszHeaderNext == '\0' )
+                return !bInList;
+            if( bInList && (*pszHeaderNext == ',' || *pszHeaderNext == ')') )
+            {
+                return true;
+            }
+            osWord += *pszHeaderNext;
+            pszHeaderNext++;
+        }
+        bIsString = CPLGetValueType(osWord) == CPL_VALUE_STRING;
     }
 
-    return TRUE;
+    SkipWhite();
+    if( bInList && *pszHeaderNext != ',' && *pszHeaderNext != ')' )
+        return false;
+
+    return true;
 }
 
 /************************************************************************/
 /*                             SkipWhite()                              */
-/*  Skip white spaces and C style comments                              */
+/*  Skip white spaces                                                   */
 /************************************************************************/
 
 void VICARKeywordHandler::SkipWhite()
@@ -382,7 +453,7 @@ void VICARKeywordHandler::SkipWhite()
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *VICARKeywordHandler::GetKeyword( const char *pszPath, const char *pszDefault )
+const char *VICARKeywordHandler::GetKeyword( const char *pszPath, const char *pszDefault ) const
 
 {
     const char *pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
@@ -391,13 +462,4 @@ const char *VICARKeywordHandler::GetKeyword( const char *pszPath, const char *ps
         return pszDefault;
 
     return pszResult;
-}
-
-/************************************************************************/
-/*                             GetKeywordList()                         */
-/************************************************************************/
-
-char **VICARKeywordHandler::GetKeywordList()
-{
-    return papszKeywordList;
 }

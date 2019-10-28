@@ -257,18 +257,25 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Work out if we are in native mode or not.                       */
 /* -------------------------------------------------------------------- */
-    bool bNative = true;
+    RawRasterBand::ByteOrder eByteOrder =
+#if CPL_IS_LSB
+        RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+#else
+        RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+#endif
 
     if( pszByteOrder != nullptr )
     {
         if( EQUAL(pszByteOrder,"LSB") )
-            bNative = CPL_TO_BOOL(CPL_IS_LSB);
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
         else if( EQUAL(pszByteOrder,"MSB") )
-            bNative = !CPL_IS_LSB;
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+        else if( EQUAL(pszByteOrder,"VAX") )
+            eByteOrder = RawRasterBand::ByteOrder::ORDER_VAX;
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Illegal ByteOrder value '%s', should be LSB or MSB.",
+                      "Illegal ByteOrder value '%s', should be LSB, MSB or VAX.",
                       pszByteOrder );
             CPLCloseShared(fp);
             return CE_Failure;
@@ -281,7 +288,7 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
     m_poRawRaster = new RawRasterBand( reinterpret_cast<VSILFILE*>(fp),
                                        nImageOffset, nPixelOffset,
                                        nLineOffset, GetRasterDataType(),
-                                       bNative, GetXSize(), GetYSize(),
+                                       eByteOrder, GetXSize(), GetYSize(),
                                        RawRasterBand::OwnFP::NO );
 
 /* -------------------------------------------------------------------- */
@@ -461,14 +468,18 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
                                  CPLSPrintf( "%d",
                                              m_poRawRaster->GetLineOffset()) );
 
-#if CPL_IS_LSB == 1
-    if( m_poRawRaster->GetNativeOrder() )
-#else
-    if( !m_poRawRaster->GetNativeOrder() )
-#endif
-        CPLCreateXMLElementAndValue( psTree, "ByteOrder", "LSB" );
-    else
-        CPLCreateXMLElementAndValue( psTree, "ByteOrder", "MSB" );
+    switch( m_poRawRaster->GetByteOrder() )
+    {
+        case RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN:
+            CPLCreateXMLElementAndValue( psTree, "ByteOrder", "LSB" );
+            break;
+        case RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN:
+            CPLCreateXMLElementAndValue( psTree, "ByteOrder", "MSB" );
+            break;
+        case RawRasterBand::ByteOrder::ORDER_VAX:
+            CPLCreateXMLElementAndValue( psTree, "ByteOrder", "VAX" );
+            break;
+    }
 
     return psTree;
 }

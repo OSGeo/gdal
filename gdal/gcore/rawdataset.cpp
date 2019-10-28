@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_vax.h"
 #include "rawdataset.h"
 
 #include <climits>
@@ -60,13 +61,36 @@ CPL_CVSID("$Id$")
 RawRasterBand::RawRasterBand( GDALDataset *poDSIn, int nBandIn,
                               VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
                               int nPixelOffsetIn, int nLineOffsetIn,
-                              GDALDataType eDataTypeIn, int bNativeOrderIn,
+                              GDALDataType eDataTypeIn,
+                              int bNativeOrderIn,
+                              OwnFP bOwnsFPIn ) :
+    RawRasterBand(poDSIn, nBandIn, fpRawLIn,
+                  nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
+                  eDataTypeIn,
+#ifdef CPL_LSB
+                  bNativeOrderIn ? ByteOrder::ORDER_LITTLE_ENDIAN : ByteOrder::ORDER_BIG_ENDIAN,
+#else
+                  bNativeOrderIn ? ByteOrder::ORDER_BIG_ENDIAN : ByteOrder::ORDER_LITTLE_ENDIAN,
+#endif
+                  bOwnsFPIn)
+{
+}
+
+/************************************************************************/
+/*                           RawRasterBand()                            */
+/************************************************************************/
+
+RawRasterBand::RawRasterBand( GDALDataset *poDSIn, int nBandIn,
+                              VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
+                              int nPixelOffsetIn, int nLineOffsetIn,
+                              GDALDataType eDataTypeIn,
+                              ByteOrder eByteOrderIn,
                               OwnFP bOwnsFPIn ) :
     fpRawL(fpRawLIn),
     nImgOffset(nImgOffsetIn),
     nPixelOffset(nPixelOffsetIn),
     nLineOffset(nLineOffsetIn),
-    bNativeOrder(bNativeOrderIn),
+    eByteOrder(eByteOrderIn),
     bOwnsFP(bOwnsFPIn == OwnFP::YES)
 {
     poDS = poDSIn;
@@ -80,7 +104,7 @@ RawRasterBand::RawRasterBand( GDALDataset *poDSIn, int nBandIn,
              "              Off=%d,PixOff=%d,LineOff=%d,%s,%d)",
              poDS, nBand, fpRawL,
              static_cast<unsigned int>(nImgOffset), nPixelOffset, nLineOffset,
-             GDALGetDataTypeName(eDataType), bNativeOrder);
+             GDALGetDataTypeName(eDataType), static_cast<int>(eByteOrder));
 
     // Treat one scanline as the block size.
     nBlockXSize = poDS->GetRasterXSize();
@@ -99,12 +123,34 @@ RawRasterBand::RawRasterBand( VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
                               GDALDataType eDataTypeIn, int bNativeOrderIn,
                               int nXSize, int nYSize,
                               OwnFP bOwnsFPIn ) :
+    RawRasterBand(fpRawLIn, nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
+                  eDataTypeIn,
+#ifdef CPL_LSB
+                  bNativeOrderIn ? ByteOrder::ORDER_LITTLE_ENDIAN : ByteOrder::ORDER_BIG_ENDIAN,
+#else
+                  bNativeOrderIn ? ByteOrder::ORDER_BIG_ENDIAN : ByteOrder::ORDER_LITTLE_ENDIAN,
+#endif
+                  nXSize, nYSize,
+                  bOwnsFPIn)
+{
+}
+
+/************************************************************************/
+/*                           RawRasterBand()                            */
+/************************************************************************/
+
+RawRasterBand::RawRasterBand( VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
+                              int nPixelOffsetIn, int nLineOffsetIn,
+                              GDALDataType eDataTypeIn,
+                              ByteOrder eByteOrderIn,
+                              int nXSize, int nYSize,
+                              OwnFP bOwnsFPIn ) :
     fpRawL(fpRawLIn),
     nImgOffset(nImgOffsetIn),
     nPixelOffset(nPixelOffsetIn),
     nLineOffset(nLineOffsetIn),
     nLineSize(0),
-    bNativeOrder(bNativeOrderIn),
+    eByteOrder(eByteOrderIn),
     nLoadedScanline(0),
     pLineStart(nullptr),
     bDirty(FALSE),
@@ -121,7 +167,7 @@ RawRasterBand::RawRasterBand( VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
              "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)",
              static_cast<unsigned int>(nImgOffset),
              nPixelOffset, nLineOffset,
-             GDALGetDataTypeName(eDataType), bNativeOrder);
+             GDALGetDataTypeName(eDataType), static_cast<int>(eByteOrder));
 
     // Treat one scanline as the block size.
     nBlockXSize = nXSize;
@@ -302,6 +348,96 @@ CPLErr RawRasterBand::FlushCache()
 }
 
 /************************************************************************/
+/*                      NeedsByteOrderChange()                          */
+/************************************************************************/
+
+bool RawRasterBand::NeedsByteOrderChange() const
+{
+#ifdef CPL_LSB
+    return eDataType != GDT_Byte &&
+           eByteOrder != RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
+#else
+    return eDataType != GDT_Byte &&
+           eByteOrder != RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
+#endif
+}
+
+/************************************************************************/
+/*                          DoByteSwap()                                */
+/************************************************************************/
+
+void RawRasterBand::DoByteSwap(void* pBuffer, size_t nValues, bool bDiskToCPU) const
+{
+    if( eByteOrder != RawRasterBand::ByteOrder::ORDER_VAX )
+    {
+        if( GDALDataTypeIsComplex(eDataType) )
+        {
+            const int nWordSize = GDALGetDataTypeSize(eDataType) / 16;
+            GDALSwapWordsEx(pBuffer, nWordSize, nValues,
+                          std::abs(nPixelOffset));
+            GDALSwapWordsEx(
+                static_cast<GByte *>(pBuffer) + nWordSize,
+                nWordSize, nValues, std::abs(nPixelOffset));
+        }
+        else
+        {
+            GDALSwapWordsEx(pBuffer, GDALGetDataTypeSizeBytes(eDataType),
+                          nValues, std::abs(nPixelOffset));
+        }
+    }
+    else if( eDataType == GDT_Float32 ||  eDataType == GDT_CFloat32 )
+    {
+        GByte* pPtr = static_cast<GByte *>(pBuffer);
+        for( int k = 0; k < 2; k++ )
+        {
+            if( bDiskToCPU )
+            {
+                for( size_t i = 0; i < nValues; i++, pPtr += std::abs(nPixelOffset) )
+                {
+                    CPLVaxToIEEEFloat(pPtr);
+                }
+            }
+            else
+            {
+                for( size_t i = 0; i < nValues; i++, pPtr += std::abs(nPixelOffset) )
+                {
+                    CPLIEEEToVaxFloat(pPtr);
+                }
+            }
+            if( k == 0 && eDataType == GDT_CFloat32 )
+                pPtr = static_cast<GByte *>(pBuffer) + sizeof(float);
+            else
+                break;
+        }
+    }
+    else if( eDataType == GDT_Float64 || eDataType == GDT_CFloat64 )
+    {
+        GByte* pPtr = static_cast<GByte *>(pBuffer);
+        for( int k = 0; k < 2; k++ )
+        {
+            if( bDiskToCPU )
+            {
+                for( size_t i = 0; i < nValues; i++, pPtr += std::abs(nPixelOffset) )
+                {
+                    CPLVaxToIEEEDouble(pPtr);
+                }
+            }
+            else
+            {
+                for( size_t i = 0; i < nValues; i++, pPtr += std::abs(nPixelOffset) )
+                {
+                    CPLIEEEToVaxDouble(pPtr);
+                }
+            }
+            if( k == 0 && eDataType == GDT_CFloat64 )
+                pPtr = static_cast<GByte *>(pBuffer) + sizeof(double);
+            else
+                break;
+        }
+    }
+}
+
+/************************************************************************/
 /*                             AccessLine()                             */
 /************************************************************************/
 
@@ -374,22 +510,9 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     }
 
     // Byte swap the interesting data, if required.
-    if( !bNativeOrder && eDataType != GDT_Byte )
+    if( NeedsByteOrderChange() )
     {
-        if( GDALDataTypeIsComplex(eDataType) )
-        {
-            const int nWordSize = GDALGetDataTypeSize(eDataType) / 16;
-            GDALSwapWords(pLineBuffer, nWordSize, nBlockXSize,
-                          std::abs(nPixelOffset));
-            GDALSwapWords(
-                static_cast<GByte *>(pLineBuffer) + nWordSize,
-                nWordSize, nBlockXSize, std::abs(nPixelOffset));
-        }
-        else
-        {
-            GDALSwapWords(pLineBuffer, GDALGetDataTypeSizeBytes(eDataType),
-                          nBlockXSize, std::abs(nPixelOffset));
-        }
+        DoByteSwap(pLineBuffer, nBlockXSize, true);
     }
 
     nLoadedScanline = iLine;
@@ -447,21 +570,9 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 
 
     // Byte swap (if necessary) back into disk order before writing.
-    if( !bNativeOrder && eDataType != GDT_Byte )
+    if( NeedsByteOrderChange() )
     {
-        if( GDALDataTypeIsComplex(eDataType) )
-        {
-            const int nWordSize = GDALGetDataTypeSize(eDataType) / 16;
-            GDALSwapWords(pLineBuffer, nWordSize, nBlockXSize,
-                          std::abs(nPixelOffset));
-            GDALSwapWords(static_cast<GByte *>(pLineBuffer) + nWordSize,
-                          nWordSize, nBlockXSize, std::abs(nPixelOffset));
-        }
-        else
-        {
-            GDALSwapWords(pLineBuffer, GDALGetDataTypeSizeBytes(eDataType),
-                          nBlockXSize, std::abs(nPixelOffset));
-        }
+        DoByteSwap(pLineBuffer, nBlockXSize, false);
     }
 
     // Figure out where to start writing.
@@ -501,22 +612,9 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 
     // Byte swap (if necessary) back into machine order so the
     // buffer is still usable for reading purposes.
-    if( !bNativeOrder && eDataType != GDT_Byte )
+    if( NeedsByteOrderChange() )
     {
-        if( GDALDataTypeIsComplex(eDataType) )
-        {
-            const int nWordSize = GDALGetDataTypeSize(eDataType) / 16;
-            GDALSwapWords(pLineBuffer, nWordSize, nBlockXSize,
-                          std::abs(nPixelOffset));
-            GDALSwapWords(static_cast<GByte *>(pLineBuffer) +
-                          nWordSize, nWordSize, nBlockXSize,
-                          std::abs(nPixelOffset));
-        }
-        else
-        {
-            GDALSwapWords(pLineBuffer, GDALGetDataTypeSizeBytes(eDataType),
-                          nBlockXSize, std::abs(nPixelOffset));
-        }
+        DoByteSwap(pLineBuffer, nBlockXSize, true);
     }
 
     bDirty = TRUE;
@@ -548,21 +646,9 @@ CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
     }
 
     // Byte swap the interesting data, if required.
-    if( !bNativeOrder && eDataType != GDT_Byte )
+    if( NeedsByteOrderChange() )
     {
-        if( GDALDataTypeIsComplex(eDataType) )
-        {
-            const int nWordSize = GDALGetDataTypeSize(eDataType) / 16;
-            GDALSwapWordsEx(pData, nWordSize, nBlockSize / nPixelOffset,
-                            nPixelOffset);
-            GDALSwapWordsEx(static_cast<GByte *>(pData) + nWordSize,
-                            nWordSize, nBlockSize / nPixelOffset, nPixelOffset);
-        }
-        else
-        {
-            GDALSwapWordsEx(pData, GDALGetDataTypeSizeBytes(eDataType),
-                            nBlockSize / nPixelOffset, nPixelOffset);
-        }
+        DoByteSwap(pData, nBlockSize / nPixelOffset, true);
     }
 
     return CE_None;
@@ -802,19 +888,9 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
              && nLineSpace == nPixelSpace * nXSize )
         {
             // Byte swap the data buffer, if required.
-            if( !bNativeOrder && eDataType != GDT_Byte )
+            if( NeedsByteOrderChange() )
             {
-                if( GDALDataTypeIsComplex(eDataType) )
-                {
-                    const int nWordSize = GDALGetDataTypeSize(eDataType) / 16;
-                    GDALSwapWords(pData, nWordSize, nXSize, nPixelOffset);
-                    GDALSwapWords(static_cast<GByte *>(pData) + nWordSize,
-                                  nWordSize, nXSize, nPixelOffset);
-                }
-                else
-                {
-                    GDALSwapWords(pData, nBandDataSize, nXSize, nPixelOffset);
-                }
+                DoByteSwap(pData, nXSize, false);
             }
 
             // Seek to the correct block.
@@ -851,19 +927,9 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             // Byte swap (if necessary) back into machine order so the
             // buffer is still usable for reading purposes.
-            if( !bNativeOrder  && eDataType != GDT_Byte )
+            if( NeedsByteOrderChange() )
             {
-                if( GDALDataTypeIsComplex(eDataType) )
-                {
-                    const int nWordSize = GDALGetDataTypeSize(eDataType) / 16;
-                    GDALSwapWords(pData, nWordSize, nXSize, nPixelOffset);
-                    GDALSwapWords(static_cast<GByte *>(pData) + nWordSize,
-                                  nWordSize, nXSize, nPixelOffset);
-                }
-                else
-                {
-                    GDALSwapWords(pData, nBandDataSize, nXSize, nPixelOffset);
-                }
+                DoByteSwap(pData, nXSize, true);
             }
         }
         // 2. Case when we need deinterleave and/or subsample data.
@@ -926,7 +992,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 }
 
                 // Byte swap the data buffer, if required.
-                if( !bNativeOrder && eDataType != GDT_Byte )
+                if( NeedsByteOrderChange() )
                 {
                     if( GDALDataTypeIsComplex(eDataType) )
                     {
@@ -972,7 +1038,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                 // Byte swap (if necessary) back into machine order so the
                 // buffer is still usable for reading purposes.
-                if( !bNativeOrder && eDataType != GDT_Byte )
+                if( NeedsByteOrderChange() )
                 {
                     if( GDALDataTypeIsComplex(eDataType) )
                     {
@@ -1124,7 +1190,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
             papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");
     if( VSIFGetNativeFileDescriptorL(fpRawL) == nullptr ||
         !CPLIsVirtualMemFileMapAvailable() ||
-        (eDataType != GDT_Byte && !bNativeOrder) ||
+        NeedsByteOrderChange() ||
         static_cast<size_t>(nSize) != nSize ||
         nPixelOffset < 0 ||
         nLineOffset < 0 ||
@@ -1340,7 +1406,7 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
     GIntBig nBandOffset = 0;
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    int bNativeOrder = 0;
+    RawRasterBand::ByteOrder eByteOrder = RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
     GDALDataType eDT = GDT_Unknown;
     for( int i = 1; i <= nBands; i++ )
     {
@@ -1352,12 +1418,14 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
             nImgOffset = poBand->nImgOffset;
             nPixelOffset = poBand->nPixelOffset;
             nLineOffset = poBand->nLineOffset;
-            bNativeOrder = poBand->bNativeOrder;
+            eByteOrder = poBand->eByteOrder;
+            if( eByteOrder == RawRasterBand::ByteOrder::ORDER_VAX )
+                return false;
             eDT = poBand->GetRasterDataType();
         }
         else if( nPixelOffset != poBand->nPixelOffset ||
                  nLineOffset != poBand->nLineOffset ||
-                 bNativeOrder != poBand->bNativeOrder ||
+                 eByteOrder != poBand->eByteOrder ||
                  eDT != poBand->GetRasterDataType() )
         {
             return false;
@@ -1400,11 +1468,7 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
     }
 
     sLayout.eDataType = eDT;
-#ifdef CPL_LSB
-    sLayout.bLittleEndianOrder = CPL_TO_BOOL(bNativeOrder);
-#else
-    sLayout.bLittleEndianOrder = CPL_TO_BOOL(!bNativeOrder);
-#endif
+    sLayout.bLittleEndianOrder = eByteOrder == RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN;
     sLayout.nImageOffset = nImgOffset;
     sLayout.nPixelOffset = nPixelOffset;
     sLayout.nLineOffset = nLineOffset;

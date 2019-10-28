@@ -2181,7 +2181,7 @@ namespace tut
             oObj.Add("int64", GINT64_MAX);
             ensure_equals( oObj.GetLong("int64"), GINT64_MAX );
             ensure_equals( oObj.GetLong("inexisting_int64", GINT64_MIN), GINT64_MIN );
-            ensure_equals( oObj.GetObj("int64").GetType(), CPLJSONObject::Integer );
+            ensure_equals( oObj.GetObj("int64").GetType(), CPLJSONObject::Long );
             oObj.Add("double", 1.25);
             ensure_equals( oObj.GetDouble("double"), 1.25 );
             ensure_equals( oObj.GetDouble("inexisting_double", -987.0), -987.0 );
@@ -2195,7 +2195,7 @@ namespace tut
             ensure_equals( oObj.GetBool("inexisting_bool", false), false );
             ensure_equals( oObj.GetObj("bool").GetType(), CPLJSONObject::Boolean );
             oObj.AddNull("null_field");
-            //ensure_equals( oObj.GetObj("null_field").GetType(), CPLJSONObject::Null );
+            ensure_equals( oObj.GetObj("null_field").GetType(), CPLJSONObject::Null );
             ensure_equals( oObj.GetObj("inexisting").GetType(), CPLJSONObject::Unknown );
             oObj.Set("string", std::string("my_string"));
             oObj.Set("const_char_star", nullptr);

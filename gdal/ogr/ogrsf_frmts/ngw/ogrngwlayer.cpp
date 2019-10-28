@@ -100,7 +100,7 @@ static OGRFeature *JSONToFeature( const CPLJSONObject &featureJson,
             continue;
         }
         CPLJSONObject oJSONField = oFields[poFieldDefn->GetNameRef()];
-        if( oJSONField.IsValid() )
+        if( oJSONField.IsValid() && oJSONField.GetType() != CPLJSONObject::Type::Null )
         {
             switch( poFieldDefn->GetType() )
             {
@@ -167,7 +167,7 @@ static OGRFeature *JSONToFeature( const CPLJSONObject &featureJson,
     if( bStoreExtensionData )
     {
         CPLJSONObject oExtensions = featureJson.GetObj("extensions");
-        if( oExtensions.IsValid() )
+        if( oExtensions.IsValid() && oExtensions.GetType() != CPLJSONObject::Type::Null )
         {
             poFeature->SetNativeData(oExtensions.Format(CPLJSONObject::Plain).c_str());
             poFeature->SetNativeMediaType("application/json");

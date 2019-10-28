@@ -1,14 +1,11 @@
 /******************************************************************************
  *
- * Project:  VICAR Driver; JPL/MIPL VICAR Format
- * Purpose:  Implementation of VICARKeywordHandler - a class to read
- *           keyword data from VICAR data products.
- * Authors:  Sebastian Walter <sebastian dot walter at fu-berlin dot de>
+ * Project:  CPL
+ * Purpose:  Convert between VAX and IEEE floating point formats
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
- * NOTE: This driver code is loosely based on the ISIS and PDS drivers.
- * It is not intended to diminish the contribution of the authors.
  ******************************************************************************
- * Copyright (c) 2014, Sebastian Walter <sebastian dot walter at fu-berlin dot de>
+ * Copyright (c) 2000, Avenza Systems Inc, http://www.avenza.com/
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,34 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef VICARKEYWORDHANDLER_H
-#define VICARKEYWORDHANDLER_H
+#ifndef CPL_VAX_H
+#define CPL_VAX_H
 
-#include "cpl_json.h"
+void CPLVaxToIEEEDouble( void * );
+void CPLIEEEToVaxDouble( void * );
 
-class VICARKeywordHandler
-{
-    char     **papszKeywordList;
+void CPLVaxToIEEEFloat( void * );
+void CPLIEEEToVaxFloat( void * );
 
-    CPLString osHeaderText;
-    const char *pszHeaderNext;
-
-    CPLJSONObject oJSon;
-
-    void    SkipWhite();
-    bool    ReadName( CPLString &osWord );
-    bool    ReadValue( CPLString &osWord, bool bInList, bool& bIsString );
-    bool    ReadPair( CPLString &osName, CPLString &osValue, CPLJSONObject& oCur );
-    bool    Parse();
-
-public:
-    VICARKeywordHandler();
-    ~VICARKeywordHandler();
-
-    bool    Ingest( VSILFILE *fp, GByte *pabyHeader );
-
-    const char *GetKeyword( const char *pszPath, const char *pszDefault ) const;
-    const CPLJSONObject& GetJsonObject() const { return oJSon; }
-};
-
-#endif // VICARKEYWORDHANDLER_H
+#endif // CPL_VAX_H
