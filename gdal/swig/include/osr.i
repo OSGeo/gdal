@@ -924,6 +924,18 @@ public:
     return OSRGetTOWGS84( self, argout, 7 );
   }
 
+  OGRErr SetExtension( const char *pszTargetKey,
+                       const char *pszName,
+                       const char *pszValue) {
+    return OSRSetExtension( self, pszTargetKey, pszName, pszValue);
+  }
+
+  const char * GetExtension( const char *pszTargetKey,
+                             const char *pszName,
+                             const char *pszDefault) {
+    return OSRGetExtension( self, pszTargetKey, pszName, pszDefault);
+  }
+
   OGRErr SetLocalCS( const char *pszName ) {
     return OSRSetLocalCS( self, pszName );
   }
