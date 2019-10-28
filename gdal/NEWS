@@ -1,3 +1,154 @@
+= GDAL/OGR 3.0.2 Release Notes =
+
+The 3.0.2 release is a bug fix release.
+
+== Misc ==
+
+ * Replace a few catch of bad_alloc by exception to handle the case of 32 bit trying to allocate more than 4GB of memory and thus throwing a length_error exception. Found by OSS Fuzz
+ * Fix issues with thread_local and C++ objects that don't work well with DLL on Windows
+ * Fix build against Poppler 0.82
+
+== Port ==
+
+ * /vsicrypt/: fix memleak in error code path
+ * /vsitar/: accept space as end of field terminator
+
+== GDAL core ==
+
+ * fix non-neareset resampling over nodata blocks (#1941)
+
+== GDAL utilities ==
+
+ * gdalwarp: adjust nodata values, passed with -srcnodata/-dstnodata, and close to FLT_MAX to exactly it (#1724)
+ * Python scripts: GetOutputDriverFor(): fixes error when multiple drivers found ( #1719)
+
+== GDAL drivers ==
+
+BAG driver:
+ * calculate the northeast pixel corner rather than scaling the resolution, due to an incorrectly shifted northeast corner in some CARIS surveys (#1728)
+
+CTable2Dataset driver:
+ * SetGeoTransform(): fix read buffer overflow from stack
+
+DAAS driver:
+ * accept 4-band RGBA PNG response even when a single band is requested
+
+ENVI driver:
+ * preserve 'byte order' on update (#1796)
+
+FITS driver:
+ * fix memory leaks
+
+GTiff driver:
+ * fix memory leak with -co APPEND_SUBDATASET=YES
+ * ensure GDAL PROJ context is used for all libgeotiff functions (requires internal libgeotiff / libgeotiff 1.6)
+ * make sure that GetMetadataDomainList() doesn't return EXIF when there's no EXIF metadata (https://github.com/mapbox/rasterio/pull/1740#issuecomment-526660946)
+ * GTIFGetOGISDefn: avoid querying UOM length info when it is KvUserDefined to avoid an error to be emitted
+ * Internal libtiff: backport security related fixes
+
+HDF5 and netCDF drivers:
+ * fix crash when reading attributes of type string of variable length with NULL values
+
+IGNFHeightASCIIGrid driver:
+ * fix to read RASPM2018.mnt grid
+
+JP2KAK driver:
+ * fix issue with multi-threaded reads
+
+JP2OpenJPEG driver:
+ * fix error logic in multi-threaded code causing memory corruption
+ * fix reading overviews, when tiled API is used, and the dimensions of the full resolution image are not a multiple of 2^numresolutions (#1860)
+ * fix to return the proper number of bytes read when we read more than 2 GB at once (https://github.com/uclouvain/openjpeg/issues/1151)
+
+JPEG driver:
+ * fix further calls to RasterIO after reading full image at full resolution (#1947)
+
+MRF driver:
+ * do not hardcode GDAL internal zlib header
+
+netCDF driver:
+ * Allow "radian" value for the X/Y axis units
+
+PDF driver:
+ * PDF composer from XML: fix wrong use of SetupVectorGeoreferencing()
+ * fix nullptr dereferences on corrupted files (OSS Fuzz #16438, #16558, #16759)
+ * fix potential heap buffer overflow (OSS Fuzz #16546)
+ * avoid potential integer division by zero (OSS Fuzz #17129)
+
+PDS4 driver:
+ * support reading a_axis_radius and c_axis_radius (#1851)
+
+SAFE driver:
+ * avoid potential use-after-free (Coverity 1404037 and 1404140)
+
+Terragen driver:
+ * avoid potential use-after-free on error code path in write_header() (Coverity 1404060)
+
+USGSDEM driver:
+ * avoid int overflow. Fixes OSS Fuzz #15715
+ * fix reading FEMA generated Lidar datasets whose header is 918 bytes large
+
+VRT driver:
+ * avoid erroneous pixel request do be done with KernelFilteredSource
+
+== OGR core ==
+
+ * OGRExpatRealloc(): fix double-free when size to allocate is above the default 10MB threshold. OSS Fuzz #16178 / CVE-2019-17545
+ * OGR SQLite: do not propagate 'IS / IS NOT value' constructs to OGR SQL
+ * OGRSimpleCurve::setNumPoints(): avoid potential int overflow on 32 bit on big values of nNewPointCount. OSS Fuzz #18092
+ * OGRSimpleCurve::getPoints() with XYZM: fix wrong stride used for M array
+ * OGRSimpleCurve: fix reversePoints() and addSubLineString() to take into account M dimension
+
+== OGR drivers ==
+
+CAD driver:
+ * libopencad: CADBuffer: replace m_guard by m_nSize to avoid pointer wrap around on 32 bit platforms on corrupted files. OSS Fuzz #16388
+
+DGN driver:
+ * avoid size_t overflow / illegal memory access. OSS Fuzz #16393
+
+GeoJSON driver:
+ * fix update of file on Windows (https://github.com/qgis/QGIS/issues/28580)
+ * add a OGR_GEOJSON_MAX_OBJ_SIZE configuration option to be able to parse jumbo GeoJSON Features.
+
+GPX driver:
+ * fix memory leak when streaming to /vsistdout/
+
+LIBKML driver:
+ * make it accept /vsigzip/foo.kml.gz files (#1743)
+ * fix potential memory leak. (Coverity 1404148)
+
+MITAB driver:
+ * Update WindowsLatin2 definition (#1571)
+ * fix potential double-free (Coverity 1404224)
+ * avoid potential nullptr deref (Coverity 1404174)
+
+PDF driver:
+ * fix reading polygon with holes and Bezier curves (#1932)
+ * fix reading strings with escape sequences
+
+PostgreSQL driver:
+ * add support for PostgreSQL 12 (#1692)
+ * be more restrictive when deducing non-nullability of columns in SQL result layers (#1734)
+
+Selafin driver:
+ * temptative fix for stack read overflow of OSS Fuzz #18342
+
+S57 driver:
+ * s57objectclasses.csv: add missing TXTDSC attribute for DRYDOC class (#1723)
+
+XLSX driver:
+ * add support for .xlsm extension
+
+WFS3/OAPIF driver:
+ * correctly handle user query string parameters in connection URL (#1710)
+ * align with the final state of the OGC API - Features : Core 1.0 spec (#1878)
+
+== Python bindings ==
+
+ * add compatibility with SWIG 4.0 (#1702)
+ * Fix swig python wheel on darwin
+
 = GDAL/OGR 3.0.1 Release Notes =
 
 The 3.0.1 release is a bug fix release.
