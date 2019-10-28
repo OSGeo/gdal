@@ -1777,25 +1777,25 @@ public:
 
     /** Return type name.
      * 
-     * This is the same as the C funtion GDALExtendedDataTypeGetName()
+     * This is the same as the C function GDALExtendedDataTypeGetName()
      */
     const std::string&        GetName() const { return m_osName; }
 
     /** Return type class.
      * 
-     * This is the same as the C funtion GDALExtendedDataTypeGetClass()
+     * This is the same as the C function GDALExtendedDataTypeGetClass()
      */
     GDALExtendedDataTypeClass GetClass() const { return m_eClass; }
 
     /** Return numeric data type (only valid when GetClass() == GEDTC_NUMERIC)
      * 
-     * This is the same as the C funtion GDALExtendedDataTypeGetNumericDataType()
+     * This is the same as the C function GDALExtendedDataTypeGetNumericDataType()
      */
     GDALDataType              GetNumericDataType() const { return m_eNumericDT;  }
 
     /** Return the components of the data type (only valid when GetClass() == GEDTC_COMPOUND)
      * 
-     * This is the same as the C funtion GDALExtendedDataTypeGetComponents()
+     * This is the same as the C function GDALExtendedDataTypeGetComponents()
      */
     const std::vector<std::unique_ptr<GDALEDTComponent>>& GetComponents() const { return m_aoComponents; }
 
@@ -1803,7 +1803,7 @@ public:
      * 
      * For a string, this will be size of a char* pointer.
      * 
-     * This is the same as the C funtion GDALExtendedDataTypeGetSize()
+     * This is the same as the C function GDALExtendedDataTypeGetSize()
      */
     size_t                    GetSize() const { return m_nSize; }
 

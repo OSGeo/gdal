@@ -218,7 +218,7 @@ namespace nccfdriver
      * doesn't have fixed dim sizes, until defines are committed
      *
      * Also, virtual attributes only exist until the variable is committed. Use "real" attributes and "real" IDs
-     * for a variable after its been commited.
+     * for a variable after its been committed.
      *
      * ** Do not mix netCDF virtual dim and variable IDs with regular netCDF dim (a.k.a. "real")
      * ids and variable ids. They are NOT necessarily compatible, and must be translated first, to be

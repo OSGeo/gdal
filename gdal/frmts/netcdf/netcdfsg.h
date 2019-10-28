@@ -90,8 +90,8 @@ namespace nccfdriver
         std::vector<int> node_counts;    // node counts of each geometry in a container
         std::vector<int> pnode_counts;    // part node counts of each geometry in a container
         std::vector<bool> int_rings;    // list of parts that are interior rings
-        std::vector<size_t> bound_list;    // a quick list used to store the real beginning indicies of shapes
-        std::vector<size_t> pnc_bl;    // a quick list of indicies for part counts corresponding to a geometry
+        std::vector<size_t> bound_list;    // a quick list used to store the real beginning indices of shapes
+        std::vector<size_t> pnc_bl;    // a quick list of indices for part counts corresponding to a geometry
         std::vector<int> parts_count;    // a count of total parts in a single geometry instance
         std::vector<int> poly_count;    // count of polygons, for use only when interior rings are present
         std::unique_ptr<Point> pt_buffer;    // holds the current point

@@ -835,7 +835,7 @@ std::string OGRGeometryCollection::exportToWktInternal(const OGRWktOptions& opts
             tempWkt = tempWkt.substr(pos);
         }
 
-        // Also stange, we allow the inclusion of ISO-only geometries (see
+        // Also strange, we allow the inclusion of ISO-only geometries (see
         // OGRPolyhedralSurface) in a non-iso geometry collection.  In order
         // to facilitate this, we need to rip the ISO bit from the string.
         if (opts.variant != wkbVariantIso)

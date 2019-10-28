@@ -4393,7 +4393,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                 apData.push_back(static_cast<GByte *>(pBufferedData));
                 size_t nChunkSize = aOffsetSize[0].second;
                 size_t nAccOffset = 0;
-                // Try to merge contiguous or slighly overlapping ranges
+                // Try to merge contiguous or slightly overlapping ranges
                 for( size_t i = 0; i < aOffsetSize.size()-1; i++ )
                 {
                     if ( aOffsetSize[i].first < aOffsetSize[i+1].first &&

@@ -61,7 +61,7 @@ GDALIHasAttribute::~GDALIHasAttribute() = default;
  * GDALMDArrayGetAttribute().
  *
  * @param osName Attribute name
- * @return the attribute, or nullptr if it does not exist or an error occured.
+ * @return the attribute, or nullptr if it does not exist or an error occurred.
  */
 std::shared_ptr<GDALAttribute> GDALIHasAttribute::GetAttribute(
                                 const std::string& osName) const
