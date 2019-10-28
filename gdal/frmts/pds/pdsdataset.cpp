@@ -1052,7 +1052,9 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     int nLineOffset = nLinePrefixBytes;
 
     int nPixelOffset;
-    int nBandOffset;
+    vsi_l_offset nBandOffset;
+
+    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<GInt64>(x)); };
 
     try
     {
@@ -1066,18 +1068,19 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         {
             nPixelOffset = nItemSize;
             nLineOffset = (CPLSM(nLineOffset) + CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows)
-                + CPLSM(nSuffixLines) * (CPLSM(nCols) + CPLSM(nSuffixItems)) * CPLSM(nSuffixBytes)).v();
+            nBandOffset = static_cast<vsi_l_offset>((CPLSM64(nLineOffset) * CPLSM64(nRows)
+                + CPLSM64(nSuffixLines) * (CPLSM64(nCols) + CPLSM64(nSuffixItems)) * CPLSM64(nSuffixBytes)).v());
         }
         else /* assume BIL */
         {
             nPixelOffset = nItemSize;
             nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols)).v();
-            nLineOffset = (CPLSM(nLineOffset) + CPLSM(nBandOffset) * CPLSM(l_nBands)).v();
+            nLineOffset = (CPLSM(nLineOffset) + CPLSM(static_cast<int>(nBandOffset)) * CPLSM(l_nBands)).v();
         }
     }
     catch( const CPLSafeIntOverflow& )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
         return FALSE;
     }
 
