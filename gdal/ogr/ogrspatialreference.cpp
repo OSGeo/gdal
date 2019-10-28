@@ -8986,6 +8986,26 @@ const char *OGRSpatialReference::GetExtension( const char *pszTargetKey,
 }
 
 /************************************************************************/
+/*                           OSRGetExtension()                          */
+/************************************************************************/
+
+/**
+ * \brief Fetch extension value.
+ *
+ * This function is the same as OGRSpatialReference::GetExtension().
+ */
+const char *OSRGetExtension( OGRSpatialReferenceH hSRS,
+                             const char *pszTargetKey,
+                             const char *pszName,
+                             const char *pszDefault )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRGetExtension", nullptr );
+
+    return ToPointer(hSRS)->GetExtension( pszTargetKey, pszName, pszDefault);
+}
+
+/************************************************************************/
 /*                            SetExtension()                            */
 /************************************************************************/
 /**
@@ -9047,6 +9067,26 @@ OGRErr OGRSpatialReference::SetExtension( const char *pszTargetKey,
     poNode->AddChild( poAuthNode );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRSetExtension()                          */
+/************************************************************************/
+
+/**
+ * \brief Set extension value.
+ *
+ * This function is the same as OGRSpatialReference::SetExtension().
+ */
+OGRErr OSRSetExtension( OGRSpatialReferenceH hSRS,
+                        const char *pszTargetKey,
+                        const char *pszName,
+                        const char *pszValue )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetExtension", OGRERR_FAILURE );
+
+    return ToPointer(hSRS)->SetExtension( pszTargetKey, pszName, pszValue);
 }
 
 /************************************************************************/
