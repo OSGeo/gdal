@@ -9841,7 +9841,14 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*                          OSRExportToProj4()                          */
 /************************************************************************/
 /**
- * \brief Export coordinate system in PROJ format.
+ * \brief Export coordinate system in PROJ.4 legacy format.
+ *
+ * \warning Use of this function is discouraged. Its behaviour in GDAL &gt;= 3 /
+ * PROJ &gt;= 6 is significantly different from earlier versions. In particular
+ * +datum will only encode WGS84, NAD27 and NAD83, and +towgs84/+nadgrids terms
+ * will be missing most of the time. PROJ strings to encode CRS should be
+ * considered as a legacy solution. Using a AUTHORITY:CODE or WKT representation is the
+ * recommended way.
  *
  * This function is the same as OGRSpatialReference::exportToProj4().
  */
@@ -9861,7 +9868,14 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 
 /**
- * \brief Export coordinate system in PROJ format.
+ * \brief Export coordinate system in PROJ.4 legacy format.
+ *
+ * \warning Use of this function is discouraged. Its behaviour in GDAL &gt;= 3 /
+ * PROJ &gt;= 6 is significantly different from earlier versions. In particular
+ * +datum will only encode WGS84, NAD27 and NAD83, and +towgs84/+nadgrids terms
+ * will be missing most of the time. PROJ strings to encode CRS should be
+ * considered as a a legacy solution. Using a AUTHORITY:CODE or WKT representation is the
+ * recommended way.
  *
  * Converts the loaded coordinate reference system into PROJ format
  * to the extent possible.  The string returned in ppszProj4 should be
