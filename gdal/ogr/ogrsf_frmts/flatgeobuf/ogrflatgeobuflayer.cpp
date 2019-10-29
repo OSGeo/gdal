@@ -342,19 +342,22 @@ void OGRFlatGeobufLayer::WriteHeader(VSILFILE *poFp, uint64_t featuresCount, std
 }
 
 void OGRFlatGeobufLayer::Create() {
-    // check if something has been written, if not write empty layer and bail
-    if (m_writeOffset == 0) {
-        WriteHeader(m_poFpWrite, 0, nullptr);
-        return;
-    }
-
     // no spatial index requested, we are done
     if (!bCreateSpatialIndexAtClose)
         return;
 
-    // no features, we are done
-    if (m_featuresCount == 0) {
-        CPLDebug("FlatGeobuf", "Spatial index cannot be created without any features");
+    m_poFp = VSIFOpenL(m_osFilename.c_str(), "wb");
+    if (m_poFp == nullptr) {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                    "Failed to create %s:\n%s",
+                    m_osFilename.c_str(), VSIStrerror(errno));
+        return;
+    }
+
+    // check if something has been written, if not write empty layer and bail
+    if (m_writeOffset == 0 || m_featuresCount == 0) {
+        CPLDebug("FlatGeobuf", "Writing empty layer");
+        WriteHeader(m_poFp, 0, nullptr);
         return;
     }
 
@@ -372,14 +375,6 @@ void OGRFlatGeobufLayer::Create() {
 
     Rect extent = calcExtent(m_featureItems);
     auto extentVector = extent.toVector();
-
-    m_poFp = VSIFOpenL(m_osFilename.c_str(), "wb");
-    if (m_poFp == nullptr) {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                    "Failed to create %s:\n%s",
-                    m_osFilename.c_str(), VSIStrerror(errno));
-        return;
-    }
 
     WriteHeader(m_poFp, m_featuresCount, &extentVector);
 
