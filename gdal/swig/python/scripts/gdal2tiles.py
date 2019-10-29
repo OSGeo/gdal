@@ -1477,6 +1477,15 @@ class GDAL2Tiles(object):
                 "gdal2tiles temp.vrt" % self.input_file
             )
 
+        if input_dataset.GetRasterBand(1).DataType != gdal.GDT_Byte:
+            exit_with_error(
+                "Please convert this file to 8-bit and run gdal2tiles on the result.",
+                "To scale pixel values you can use:\n"
+                "gdal_translate -of VRT -ot Byte -scale %s temp.vrt\n"
+                "then run:\n"
+                "gdal2tiles temp.vrt" % self.input_file
+            )
+
         in_nodata = setup_no_data_values(input_dataset, self.options)
 
         if self.options.verbose:
@@ -2886,7 +2895,7 @@ def multi_threaded_tiling(input_file, output_folder, options):
 
     if options.verbose:
         print("Tiles details calc complete.")
-        
+
     if not options.verbose and not options.quiet:
         progress_bar = ProgressBar(len(tile_details))
         progress_bar.start()
