@@ -237,7 +237,7 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
 bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool bVerifyBuffers)
 {
     uint64_t offset = sizeof(magicbytes);
-    CPLDebug("FlatGeobuf", "Start at offset (%lu)", static_cast<long unsigned int>(offset));
+    CPLDebug("FlatGeobuf", "Start at offset: %lu", static_cast<long unsigned int>(offset));
     if (VSIFSeekL(fp, offset, SEEK_SET) == -1) {
         CPLError(CE_Failure, CPLE_AppDefined, "Unable to get seek in file");
         return false;
@@ -248,7 +248,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
         return false;
     }
     CPL_LSBPTR32(&headerSize);
-    CPLDebug("FlatGeobuf", "headerSize (%d)", headerSize);
+    CPLDebug("FlatGeobuf", "headerSize: %d", headerSize);
     if (headerSize > header_max_buffer_size) {
         CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (> 1MB)");
         return false;
@@ -292,8 +292,11 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
             return false;
         }
     }
-    offset += featuresCount * 8;
-    CPLDebug("FlatGeobuf", "Add featuresCount * 8 to offset (%lu)", static_cast<long unsigned int>(featuresCount * 8));
+
+    if (featuresCount > 0) {
+        offset += featuresCount * 8;
+        CPLDebug("FlatGeobuf", "Add featuresCount * 8 to offset (%lu)", static_cast<long unsigned int>(featuresCount * 8));
+    }
 
     CPLDebug("FlatGeobuf", "Features start at offset (%lu)", static_cast<long unsigned int>(offset));
 
@@ -430,10 +433,7 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
 
     // Create a layer.
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType));
-
-    poLayer->CreateSpatialIndexAtClose(
-        CPLFetchBool( papszOptions, "SPATIAL_INDEX", true ) );
+        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType, papszOptions));
 
     m_apoLayers.push_back(std::move(poLayer));
 
