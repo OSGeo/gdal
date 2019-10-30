@@ -29,6 +29,9 @@ The syntax to open a OGC API - Features datasource is :
 
 where endpoint is the landing page or a the path to collections/{id}.
 
+Alternative syntax by using the "URL" open option :
+*OAPIF: --oo URL=http://path/to/OAPIF/endpoint*
+
 Layer schema
 ------------
 
@@ -73,6 +76,8 @@ Examples
       1: flurstueck (Multi Polygon)
       2: gebaeudebauwerk (Multi Polygon)
       3: verwaltungseinheit (Multi Polygon)
+      
+
 
 -  Listing the summary information of a OGC API - Features layer :
 
@@ -139,7 +144,23 @@ Examples
         MULTIPOLYGON (((8.71191 51.491084,8.7123 51.491067,8.712385 51.491645,8.712014 51.491666,8.711993 51.491603,8.71196 51.491396,8.711953 51.491352,8.71191 51.491084)))
 
       [...]
+      
+-  How to include a query string that is supported by the API into the connection URL
 
+   ::
+
+      $ ogrinfo -q OAPIF:"https://www.ldproxy.nrw.de/rest/services/kataster?flur=008" flurstueck
+      Layer name: flurstueck
+      Metadata:
+        TITLE=Flurstück
+      OGRFeature(flurstueck):1
+      id (String) = DENW19AL0000genyFL
+      flstkennz (String) = 05297000800174______
+      land (String) = Nordrhein-Westfalen
+      gemarkung (String) = Wünnenberg
+      flur (String) = 008
+      ...
+      
 -  Spatial filtering
 
    ::
