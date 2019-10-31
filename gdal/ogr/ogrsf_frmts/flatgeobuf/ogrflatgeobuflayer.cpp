@@ -39,17 +39,17 @@ using namespace flatbuffers;
 using namespace FlatGeobuf;
 
 static std::nullptr_t CPLErrorInvalidPointer(const char *message) {
-    CPLError(CE_Failure, CPLE_AppDefined, "Unexpected nullptr %s");
+    CPLError(CE_Failure, CPLE_AppDefined, "Unexpected nullptr %s", message);
     return nullptr;
 }
 
 static std::nullptr_t CPLErrorInvalidLength(const char *message) {
-    CPLError(CE_Failure, CPLE_AppDefined, "Invalid length detected: %s");
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid length detected: %s", message);
     return nullptr;
 }
 
 static OGRErr CPLErrorInvalidSize(const char *message) {
-    CPLError(CE_Failure, CPLE_AppDefined, "Invalid size detected: %s");
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid size detected: %s", message);
     return OGRERR_CORRUPT_DATA;
 }
 
@@ -139,9 +139,13 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     const char *pszFilename,
     OGRSpatialReference *poSpatialRef,
     OGRwkbGeometryType eGType,
-    char **papszOptions)
+    VSILFILE *poFpWrite,
+    std::string oTempFile,
+    bool bCreateSpatialIndexAtClose)
 {
-    CPLDebug("FlatGeobuf", "Request to create layer %s", pszLayerName);
+    m_poFpWrite = poFpWrite;
+    m_oTempFile = oTempFile;
+    m_bCreateSpatialIndexAtClose = bCreateSpatialIndexAtClose;
 
     if (pszLayerName)
         m_osLayerName = pszLayerName;
@@ -150,11 +154,9 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     m_create = true;
     m_eGType = eGType;
     if (!translateOGRwkbGeometryType())
-        bCanCreate = false;
+        m_bCanCreate = false;
     if (poSpatialRef)
         m_poSRS = poSpatialRef->Clone();
-
-    bCreateSpatialIndexAtClose = CPLFetchBool( papszOptions, "SPATIAL_INDEX", true );
 
     CPLDebug("FlatGeobuf", "geometryType: %d, hasZ: %d, hasM: %d, hasT: %d", (int) m_geometryType, m_hasZ, m_hasM, m_hasT);
 
@@ -164,24 +166,6 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(eGType);
     m_poFeatureDefn->Reference();
-
-    if (bCreateSpatialIndexAtClose) {
-        CPLDebug("FlatGeobuf", "Spatial index requested will write to temp file and do second pass on close");
-        const CPLString osDirname(CPLGetPath(m_osFilename.c_str()));
-        const CPLString osBasename(CPLGetBasename(m_osFilename.c_str()));
-        m_oTempFile = CPLFormFilename(osDirname, osBasename, nullptr);
-        m_oTempFile += "_temp.fgb";
-        m_poFpWrite = VSIFOpenL(m_oTempFile.c_str(), "wb");
-    } else {
-        CPLDebug("FlatGeobuf", "No spatial index will write directly to output");
-        m_poFpWrite = VSIFOpenL(m_osFilename.c_str(), "wb");
-    }
-    if (m_poFpWrite == nullptr) {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                    "Failed to create %s:\n%s",
-                    m_osFilename.c_str(), VSIStrerror(errno));
-        return;
-    }
 }
 
 bool OGRFlatGeobufLayer::translateOGRwkbGeometryType()
@@ -343,7 +327,7 @@ void OGRFlatGeobufLayer::WriteHeader(VSILFILE *poFp, uint64_t featuresCount, std
 
 void OGRFlatGeobufLayer::Create() {
     // no spatial index requested, we are done
-    if (!bCreateSpatialIndexAtClose)
+    if (!m_bCreateSpatialIndexAtClose)
         return;
 
     m_poFp = VSIFOpenL(m_osFilename.c_str(), "wb");
@@ -405,12 +389,6 @@ void OGRFlatGeobufLayer::Create() {
     m_writeOffset += c * sizeof(uint64_t);
 
     CPLDebug("FlatGeobuf", "Writing feature buffers at offset %lu", static_cast<long unsigned int>(m_writeOffset));
-    VSIFCloseL(m_poFpWrite);
-    m_poFpWrite = VSIFOpenL(m_oTempFile.c_str(), "rb");
-    if (m_poFpWrite == nullptr) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open temp file");
-        return;
-    }
     c = 0;
     for (size_t i = 0; i < m_featuresCount; i++) {
         auto item = std::static_pointer_cast<FeatureItem>(m_featureItems[i]);
@@ -684,7 +662,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
         return CPLErrorIO("reading feature");
     m_offset += m_featureSize + sizeof(uoffset_t);
 
-    if (bVerifyBuffers) {
+    if (m_bVerifyBuffers) {
         const uint8_t * vBuf = const_cast<const uint8_t *>(reinterpret_cast<uint8_t *>(m_featureBuf));
         Verifier v(vBuf, m_featureSize);
         auto ok = VerifyFeatureBuffer(v);
@@ -842,7 +820,7 @@ OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffer
         if (m_hasM) {
             auto pM = feature->m();
             if (pM == nullptr)
-                return CPLErrorInvalidPointer("M data"));
+                return CPLErrorInvalidPointer("M data");
             if (offset >= pM->size())
                 return CPLErrorInvalidLength("M data");
             auto aM = pM->data();
@@ -1141,7 +1119,7 @@ OGRErr OGRFlatGeobufLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK *
 
 OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 {
-    if (!bCanCreate) {
+    if (!m_bCanCreate) {
         CPLError(CE_Failure, CPLE_AppDefined, "Source not valid for direct conversion");
         return OGRERR_FAILURE;
     }
@@ -1278,7 +1256,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     size_t c = VSIFWriteL(fbb.GetBufferPointer(), 1, fbb.GetSize(), m_poFpWrite);
     if (c == 0)
         return CPLErrorIO("writing feature");
-    if (bCreateSpatialIndexAtClose) {
+    if (m_bCreateSpatialIndexAtClose) {
         auto item = std::make_shared<FeatureItem>();
         item->size = static_cast<uint32_t>(fbb.GetSize());
         item->offset = m_writeOffset;

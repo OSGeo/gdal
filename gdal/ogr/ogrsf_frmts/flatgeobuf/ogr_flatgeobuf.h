@@ -97,9 +97,9 @@ class OGRFlatGeobufLayer final : public OGRLayer
         GByte *m_featureBuf = nullptr;
         uint32_t m_featureSize = 0;
         uint32_t m_featureBufSize = 0;
-        bool bCreateSpatialIndexAtClose = true;
-        bool bVerifyBuffers = true;
-        bool bCanCreate = true;
+        bool m_bCreateSpatialIndexAtClose = true;
+        bool m_bVerifyBuffers = true;
+        bool m_bCanCreate = true;
         VSILFILE *m_poFpWrite = nullptr;
         uint64_t m_writeOffset = 0;
         uint16_t m_indexNodeSize = 0;
@@ -138,7 +138,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         OGRwkbGeometryType getOGRwkbGeometryType();
     public:
         OGRFlatGeobufLayer(const Header *, GByte *headerBuf, const char *pszFilename, uint64_t offset);
-        OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, char **papszOptions);
+        OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, VSILFILE *poFpWrite, std::string oTempFile, bool bCreateSpatialIndexAtClose);
         virtual ~OGRFlatGeobufLayer();
 
         virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
@@ -155,7 +155,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
                                        int bForce ) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-        void VerifyBuffers( int bFlag ) { bVerifyBuffers = CPL_TO_BOOL(bFlag); }
+        void VerifyBuffers( int bFlag ) { m_bVerifyBuffers = CPL_TO_BOOL(bFlag); }
 
         const std::string& GetFilename() const { return m_osFilename; }
 };

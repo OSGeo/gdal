@@ -431,9 +431,31 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
         return nullptr;
     }
 
+    bool bCreateSpatialIndexAtClose = CPLFetchBool( papszOptions, "SPATIAL_INDEX", true );
+
+    VSILFILE *poFpWrite;
+    std::string oTempFile;
+    if (bCreateSpatialIndexAtClose) {
+        CPLDebug("FlatGeobuf", "Spatial index requested will write to temp file and do second pass on close");
+        const CPLString osDirname(CPLGetPath(osFilename.c_str()));
+        const CPLString osBasename(CPLGetBasename(osFilename.c_str()));
+        oTempFile = CPLFormFilename(osDirname, osBasename, nullptr);
+        oTempFile += "_temp.fgb";
+        poFpWrite = VSIFOpenL(oTempFile.c_str(), "w+b");
+    } else {
+        CPLDebug("FlatGeobuf", "No spatial index will write directly to output");
+        poFpWrite = VSIFOpenL(osFilename.c_str(), "w+b");
+    }
+    if (poFpWrite == nullptr) {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                    "Failed to create %s:\n%s",
+                    osFilename.c_str(), VSIStrerror(errno));
+        return nullptr;
+    }
+
     // Create a layer.
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType, papszOptions));
+        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType, poFpWrite, oTempFile, bCreateSpatialIndexAtClose));
 
     m_apoLayers.push_back(std::move(poLayer));
 
