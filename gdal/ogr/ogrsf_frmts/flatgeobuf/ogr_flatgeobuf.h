@@ -46,9 +46,8 @@ static constexpr uint32_t header_max_buffer_size = 1048576;
 static constexpr uint32_t feature_max_buffer_size = 2147483648 - 1;
 
 struct FeatureItem : Item {
-    flatbuffers::DetachedBuffer buf;
-    uint8_t *data;
     uint32_t size;
+    uint64_t offset;
 };
 
 struct GeometryContext {
@@ -98,12 +97,17 @@ class OGRFlatGeobufLayer final : public OGRLayer
         GByte *m_featureBuf = nullptr;
         uint32_t m_featureSize = 0;
         uint32_t m_featureBufSize = 0;
-        bool bCreateSpatialIndexAtClose = true;
-        bool bVerifyBuffers = true;
-        bool bCanCreate = true;
+        bool m_bCreateSpatialIndexAtClose = true;
+        bool m_bVerifyBuffers = true;
+        bool m_bCanCreate = true;
+        VSILFILE *m_poFpWrite = nullptr;
+        uint64_t m_writeOffset = 0;
+        uint16_t m_indexNodeSize = 0;
+        std::string m_oTempFile;
 
         // deserialize
         void ensurePadfBuffers(size_t count);
+        OGRErr ensureFeatureBuf();
         OGRErr parseFeature(OGRFeature *poFeature, OGRGeometry **ogrGeometry);
         OGRPoint *readPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t offset = 0);
         OGRMultiPoint *readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len);
@@ -122,6 +126,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         // serialize
         void Create();
+        void WriteHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector);
         void writePoint(OGRPoint *p, GeometryContext &gc);
         void writeMultiPoint(OGRMultiPoint *mp, GeometryContext &gc);
         uint32_t writeLineString(OGRLineString *ls, GeometryContext &gc);
@@ -133,7 +138,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         OGRwkbGeometryType getOGRwkbGeometryType();
     public:
         OGRFlatGeobufLayer(const Header *, GByte *headerBuf, const char *pszFilename, uint64_t offset);
-        OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType);
+        OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, VSILFILE *poFpWrite, std::string oTempFile, bool bCreateSpatialIndexAtClose);
         virtual ~OGRFlatGeobufLayer();
 
         virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
@@ -150,8 +155,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
                                        int bForce ) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-        void CreateSpatialIndexAtClose( int bFlag ) { bCreateSpatialIndexAtClose = CPL_TO_BOOL(bFlag); }
-        void VerifyBuffers( int bFlag ) { bVerifyBuffers = CPL_TO_BOOL(bFlag); }
+        void VerifyBuffers( int bFlag ) { m_bVerifyBuffers = CPL_TO_BOOL(bFlag); }
 
         const std::string& GetFilename() const { return m_osFilename; }
 };
