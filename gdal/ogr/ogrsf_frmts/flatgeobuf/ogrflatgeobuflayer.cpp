@@ -142,12 +142,13 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     VSILFILE *poFpWrite,
     std::string oTempFile,
     bool bCreateSpatialIndexAtClose) :
-    m_create(true),
     m_eGType(eGType),
     m_poFpWrite(poFpWrite),
-    m_oTempFile(oTempFile),
-    m_bCreateSpatialIndexAtClose(bCreateSpatialIndexAtClose)
+    m_oTempFile(oTempFile)
 {
+    m_create = true;
+    m_bCreateSpatialIndexAtClose = bCreateSpatialIndexAtClose;
+
     if (pszLayerName)
         m_osLayerName = pszLayerName;
     if (pszFilename)
