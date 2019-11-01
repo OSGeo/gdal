@@ -122,6 +122,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         static OGRFieldType toOGRFieldType(ColumnType type);
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
         void readColumns();
+        OGRErr openFile();
         OGRErr readIndex();
         OGRErr readFeatureOffset(uint64_t index, uint64_t &featureOffset);
 
