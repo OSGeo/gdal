@@ -84,8 +84,8 @@ class OGRFlatGeobufLayer final : public OGRLayer
         uint64_t m_featuresPos = 0;
         uint64_t m_featuresSize = 0;
         uint64_t m_offset = 0;
-        uint64_t m_offsetInit = 0;
-        uint64_t *m_featureOffsets = nullptr;
+        uint64_t m_offsetFeatures = 0;
+        uint64_t m_offsetIndices = 0;
         std::vector<uint64_t> m_foundFeatureIndices;
         bool m_queriedSpatialIndex = false;
         bool m_ignoreSpatialFilter = false;
@@ -123,6 +123,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
         void readColumns();
         OGRErr readIndex();
+        OGRErr readFeatureOffset(uint64_t index, uint64_t &featureOffset);
 
         // serialize
         void Create();
@@ -137,7 +138,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         bool translateOGRwkbGeometryType();
         OGRwkbGeometryType getOGRwkbGeometryType();
     public:
-        OGRFlatGeobufLayer(const Header *, GByte *headerBuf, const char *pszFilename, uint64_t offset);
+        OGRFlatGeobufLayer(const Header *, GByte *headerBuf, const char *pszFilename, uint64_t offset, uint64_t offsetIndices);
         OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, VSILFILE *poFpWrite, std::string oTempFile, bool bCreateSpatialIndexAtClose);
         virtual ~OGRFlatGeobufLayer();
 
