@@ -998,7 +998,7 @@ int HDF5RDataSet::setSubDataSetAttributes( void )
                        x[0], y[0], z[0], status[0] );
 
              // do the transform (in place) from source projection to lat-lon
-             rc = llXform->TransformEx( count, x, y, z, status );
+             rc = llXform->Transform( count, x, y, z, status );
 
              CPLDebug( HDF5R_DEBUG_STR, "GCP Transform from projection to lat-lon: %f %f %f %d",
                        x[0], y[0], z[0], status[0] );
@@ -1054,7 +1054,7 @@ int HDF5RDataSet::setSubDataSetAttributes( void )
                        x[0], y[0] );
 
              // do the transform (in place) from source projection to lat-lon
-             rc = llXform->TransformEx( count, x, y, nullptr, status );
+             rc = llXform->Transform( count, x, y, nullptr, status );
 
              CPLDebug( HDF5R_DEBUG_STR, "Transform from projection to lat-lon: %f %f %d",
                        x[0], y[0], status[0] );
@@ -1347,7 +1347,7 @@ int HDF5RDataSet::setSubDataSetAttributes( void )
                          if (rc)
                          {
                              // do the transform (in place) from source projection to lat-lon
-                             rc = llXform->TransformEx( arraySz, *x, *y, *z, *status );
+                             rc = llXform->Transform( arraySz, *x, *y, *z, *status );
 
                              // size info returned
                              *xGridSizeIn = xGridSz;
