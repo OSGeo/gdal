@@ -122,7 +122,6 @@ class OGRFlatGeobufLayer final : public OGRLayer
         static OGRFieldType toOGRFieldType(ColumnType type);
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
         void readColumns();
-        OGRErr openFile();
         OGRErr readIndex();
         OGRErr readFeatureOffset(uint64_t index, uint64_t &featureOffset);
 
@@ -139,7 +138,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         bool translateOGRwkbGeometryType();
         OGRwkbGeometryType getOGRwkbGeometryType();
     public:
-        OGRFlatGeobufLayer(const Header *, GByte *headerBuf, const char *pszFilename, uint64_t offset, uint64_t offsetIndices);
+        OGRFlatGeobufLayer(const Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset, uint64_t offsetIndices);
         OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, VSILFILE *poFpWrite, std::string oTempFile, bool bCreateSpatialIndexAtClose);
         virtual ~OGRFlatGeobufLayer();
 

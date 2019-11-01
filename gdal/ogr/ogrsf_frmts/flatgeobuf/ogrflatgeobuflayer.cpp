@@ -67,26 +67,23 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     const Header *poHeader,
     GByte *headerBuf,
     const char *pszFilename,
+    VSILFILE *poFp,
     uint64_t offset,
     uint64_t offsetIndices)
 {
-    CPLDebug("FlatGeobuf", "offset: %lu", static_cast<long unsigned int>(offset));
-
     m_poHeader = poHeader;
-    m_headerBuf = headerBuf;
-
     CPLAssert(poHeader);
+    m_headerBuf = headerBuf;
     CPLAssert(pszFilename);
-
     if (pszFilename)
         m_osFilename = pszFilename;
+    m_poFp = poFp;
     m_offsetFeatures = offset;
     m_offsetIndices = offsetIndices;
     m_offset = offset;
     m_create = false;
 
     m_featuresCount = m_poHeader->features_count();
-    CPLDebug("FlatGeobuf", "m_featuresCount: %lu", static_cast<long unsigned int>(m_featuresCount));
     m_geometryType = m_poHeader->geometry_type();
     m_hasZ = m_poHeader->hasZ();
     m_hasM = m_poHeader->hasM();
@@ -471,12 +468,7 @@ OGRFeature *OGRFlatGeobufLayer::GetFeature(GIntBig nFeatureId)
         m_ignoreSpatialFilter = true;
         m_ignoreAttributeFilter = true;
         uint64_t featureOffset;
-        auto err = openFile();
-        if (err != OGRERR_NONE) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected error opening file for feature id query");
-            return nullptr;
-        }
-        err = readFeatureOffset(nFeatureId, featureOffset);
+        auto err = readFeatureOffset(nFeatureId, featureOffset);
         if (err != OGRERR_NONE) {
             CPLError(CE_Failure, CPLE_AppDefined, "Unexpected error reading feature offset from id");
             return nullptr;
@@ -490,19 +482,6 @@ OGRFeature *OGRFlatGeobufLayer::GetFeature(GIntBig nFeatureId)
     }
 }
 
-OGRErr OGRFlatGeobufLayer::openFile() {
-    if (m_poFp == nullptr) {
-        CPLDebug("FlatGeobuf", "openFile: (will attempt to open file %s)", m_osFilename.c_str());
-        m_poFp = VSIFOpenL(m_osFilename.c_str(), "rb");
-        if (m_poFp == nullptr) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Failed to open file");
-            return OGRERR_FAILURE;
-        }
-        //m_poFp = (VSILFILE*) VSICreateCachedFile ( (VSIVirtualHandle*) m_poFp);
-    }
-    return OGRERR_NONE;
-}
-
 OGRErr OGRFlatGeobufLayer::readIndex()
 {
     if (m_queriedSpatialIndex || !m_poFilterGeom)
@@ -513,10 +492,6 @@ OGRErr OGRFlatGeobufLayer::readIndex()
     auto featuresCount = m_poHeader->features_count();
     if (indexNodeSize == 0)
         return OGRERR_NONE;
-
-    auto err = openFile();
-    if (err != OGRERR_NONE)
-        return err;
 
     if (VSIFSeekL(m_poFp, sizeof(magicbytes), SEEK_SET) == -1) // skip magic bytes
         return CPLErrorIO("seeking past magic bytes");
@@ -565,15 +540,8 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
     while( true ) {
         if (m_featuresCount > 0 && m_featuresPos >= m_featuresCount) {
             CPLDebug("FlatGeobuf", "GetNextFeature: iteration end at %lu", static_cast<long unsigned int>(m_featuresPos));
-            if (m_poFp != nullptr) {
-                VSIFCloseL(m_poFp);
-                m_poFp = nullptr;
-            }
             return nullptr;
         }
-
-        if (openFile() != OGRERR_NONE)
-            return nullptr;
 
         if (readIndex() != OGRERR_NONE) {
             ResetReading();
@@ -582,10 +550,6 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
 
         if (m_queriedSpatialIndex && m_featuresCount == 0) {
             CPLDebug("FlatGeobuf", "GetNextFeature: no features found");
-            if (m_poFp != nullptr) {
-                VSIFCloseL(m_poFp);
-                m_poFp = nullptr;
-            }
             return nullptr;
         }
 

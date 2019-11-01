@@ -213,17 +213,18 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
                 VSILFILE* fp = VSIFOpenL(osFilename, "rb");
                 if( fp )
                 {
-                    poDS->OpenFile(osFilename, fp, bVerifyBuffers);
-                    VSIFCloseL(fp);
+                    if (!poDS->OpenFile(osFilename, fp, bVerifyBuffers))
+                        VSIFCloseL(fp);
                 }
             }
         }
     }
     else
     {
-        if( poOpenInfo->fpL == nullptr ||
-            !poDS->OpenFile(poOpenInfo->pszFilename, poOpenInfo->fpL, bVerifyBuffers) )
-        {
+        if (poOpenInfo->fpL != nullptr) {
+            if (poDS->OpenFile(poOpenInfo->pszFilename, poOpenInfo->fpL, bVerifyBuffers))
+                poOpenInfo->fpL = nullptr;
+        } else {
             return nullptr;
         }
     }
@@ -305,7 +306,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     CPLDebug("FlatGeobuf", "Features start at offset (%lu)", static_cast<long unsigned int>(offset));
 
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, offset, offsetIndices));
+        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, fp, offset, offsetIndices));
     poLayer->VerifyBuffers(bVerifyBuffers);
 
     m_apoLayers.push_back(std::move(poLayer));
