@@ -1470,4 +1470,76 @@ namespace tut
                strcmp("2001-02-03T04:05:06.789-03:00", pszDateTime) == 0);
         CPLFree(pszDateTime);
     }
+
+    // Test OGRLinearRing::isPointOnRingBoundary()
+    template<>
+    template<>
+    void object::test<16>()
+    {
+        OGRPolygon oPoly;
+        const char* pszPoly = "POLYGON((10 9,11 10,10 11,9 10,10 9))";
+        oPoly.importFromWkt(&pszPoly);
+        auto poRing = oPoly.getExteriorRing();
+
+        // On first vertex
+        {
+            OGRPoint p(10, 9);
+            ensure(poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // On second vertex
+        {
+            OGRPoint p(11, 10);
+            ensure(poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // Middle of first segment
+        {
+            OGRPoint p(10.5, 9.5);
+            ensure(poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // "Before" first segment
+        {
+            OGRPoint p(10-1, 9-1);
+            ensure(!poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // "After" first segment
+        {
+            OGRPoint p(11+1, 10+1);
+            ensure(!poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // On third vertex
+        {
+            OGRPoint p(10, 11);
+            ensure(poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // Middle of second segment
+        {
+            OGRPoint p(10.5, 10.5);
+            ensure(poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // On fourth vertex
+        {
+            OGRPoint p(9, 10);
+            ensure(poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // Middle of third segment
+        {
+            OGRPoint p(9.5, 10.5);
+            ensure(poRing->isPointOnRingBoundary(&p, false));
+        }
+
+        // Middle of fourth segment
+        {
+            OGRPoint p(9.5, 9.5);
+            ensure(poRing->isPointOnRingBoundary(&p, false));
+        }
+    }
+
 } // namespace tut

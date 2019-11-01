@@ -1329,11 +1329,11 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
             wrk_jp2_src.open(&wrk_family);
             wrk_jp2_src.read_header();
 
-            oWCodeStream.create(&wrk_jp2_src);
+            oWCodeStream.create(&wrk_jp2_src, poThreadEnv);
         }
         else
         {
-            oWCodeStream.create(&subfile_src);
+            oWCodeStream.create(&subfile_src, poThreadEnv);
         }
 
         if( bFussy )
