@@ -149,26 +149,32 @@ def test_mem_2():
         for i in range(width * height):
             float_p[i] = 5.0
 
-        ds = gdal.Open(dsname)
-        if ds is None:
+        dsro = gdal.Open(dsname)
+        if dsro is None:
             free(p)
-            pytest.fail('opening MEM dataset failed.')
+            pytest.fail('opening MEM dataset failed in read only mode.')
 
-        chksum = ds.GetRasterBand(1).Checksum()
+        chksum = dsro.GetRasterBand(1).Checksum()
         if chksum != 750:
             print(chksum)
             free(p)
             pytest.fail('checksum failed.')
+        dsro = None
 
-        ds.GetRasterBand(1).Fill(100.0)
-        ds.FlushCache()
+        dsup = gdal.Open(dsname, gdal.GA_Update)
+        if dsup is None:
+            free(p)
+            pytest.fail('opening MEM dataset failed in update mode.')
+
+        dsup.GetRasterBand(1).Fill(100.0)
+        dsup.FlushCache()
 
         if float_p[0] != 100.0:
             print(float_p[0])
             free(p)
             pytest.fail('fill seems to have failed.')
 
-        ds = None
+        dsup = None
 
     free(p)
 
