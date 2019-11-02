@@ -178,6 +178,7 @@ S57Reader::S57Reader( const char * pszFilename ) :
     bAttrWarningIssued(false)
 {
     szUPDNUpdate[0] = '\0';
+    szISDTUpdate[0] = '\0';
 }
 
 /************************************************************************/
@@ -1227,8 +1228,11 @@ OGRFeature *S57Reader::ReadDSID()
 
         poFeature->SetField( "DSID_UADT",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "UADT", 0 ));
-        poFeature->SetField( "DSID_ISDT",
-                     poDSIDRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 ));
+        if( strlen(szISDTUpdate) > 0 )
+            poFeature->SetField( "DSID_ISDT", szISDTUpdate );
+        else
+            poFeature->SetField( "DSID_ISDT",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 ));        
         poFeature->SetField( "DSID_STED",
                      poDSIDRecord->GetFloatSubfield( "DSID", 0, "STED", 0 ));
         poFeature->SetField( "DSID_PRSP",
@@ -3269,6 +3273,10 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
                     = poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 );
                 if( pszUPDN != nullptr && strlen(pszUPDN) < sizeof(szUPDNUpdate) )
                     strcpy( szUPDNUpdate, pszUPDN );
+               const char* pszISDT
+                    = poRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 );
+                if( pszISDT != nullptr && strlen(pszISDT) < sizeof(szISDTUpdate) )
+                    strcpy( szISDTUpdate, pszISDT );                
             }
         }
 
