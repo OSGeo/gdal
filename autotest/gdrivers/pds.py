@@ -388,7 +388,7 @@ END
 
     assert ds.GetMetadataItem('NOTE') == '(#9933FF,#FFFF33)'
 
-    gdal.Unlink('/vsimem/pds_10')
+    gdal.Unlink('/vsimem/test')
 
 
 ###############################################################################
@@ -418,4 +418,4 @@ END
 
     assert ds.GetMetadataItem('NOTE') == '("a","b")'
 
-    gdal.Unlink('/vsimem/pds_10')
+    gdal.Unlink('/vsimem/test')
