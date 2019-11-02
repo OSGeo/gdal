@@ -213,17 +213,18 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
                 VSILFILE* fp = VSIFOpenL(osFilename, "rb");
                 if( fp )
                 {
-                    poDS->OpenFile(osFilename, fp, bVerifyBuffers);
-                    VSIFCloseL(fp);
+                    if (!poDS->OpenFile(osFilename, fp, bVerifyBuffers))
+                        VSIFCloseL(fp);
                 }
             }
         }
     }
     else
     {
-        if( poOpenInfo->fpL == nullptr ||
-            !poDS->OpenFile(poOpenInfo->pszFilename, poOpenInfo->fpL, bVerifyBuffers) )
-        {
+        if (poOpenInfo->fpL != nullptr) {
+            if (poDS->OpenFile(poOpenInfo->pszFilename, poOpenInfo->fpL, bVerifyBuffers))
+                poOpenInfo->fpL = nullptr;
+        } else {
             return nullptr;
         }
     }
@@ -272,7 +273,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     }
     auto header = GetHeader(buf.get());
     offset += 4 + headerSize;
-    CPLDebug("FlatGeobuf", "Add headerSize to offset (%d)", 4 + headerSize);
+    CPLDebug("FlatGeobuf", "Add header size + length prefix to offset (%d)", 4 + headerSize);
 
     auto featuresCount = header->features_count();
 
@@ -285,15 +286,19 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     if (index_node_size > 0) {
         try {
             auto treeSize = PackedRTree::size(featuresCount);
+            CPLDebug("FlatGeobuf", "Tree start at offset (%lu)", static_cast<long unsigned int>(offset));
             offset += treeSize;
-            CPLDebug("FlatGeobuf", "Add treeSize to offset (%lu)", static_cast<long unsigned int>(treeSize));
+            CPLDebug("FlatGeobuf", "Add tree size to offset (%lu)", static_cast<long unsigned int>(treeSize));
         } catch (const std::exception& e) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to calculate tree size: %s", e.what());
             return false;
         }
     }
 
+    uint64_t offsetIndices = 0;
     if (featuresCount > 0) {
+        CPLDebug("FlatGeobuf", "Feature indices start at offset (%lu)", static_cast<long unsigned int>(offset));
+        offsetIndices = offset;
         offset += featuresCount * 8;
         CPLDebug("FlatGeobuf", "Add featuresCount * 8 to offset (%lu)", static_cast<long unsigned int>(featuresCount * 8));
     }
@@ -301,7 +306,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     CPLDebug("FlatGeobuf", "Features start at offset (%lu)", static_cast<long unsigned int>(offset));
 
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, offset));
+        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, fp, offset, offsetIndices));
     poLayer->VerifyBuffers(bVerifyBuffers);
 
     m_apoLayers.push_back(std::move(poLayer));
