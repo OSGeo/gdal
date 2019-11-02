@@ -402,6 +402,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
         if( !EQUAL(pszLayerSRS, "NULL") )
         {
             OGRSpatialReference oSRS;
+            oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             if( oSRS.SetFromUserInput(pszLayerSRS) != OGRERR_NONE )
             {
@@ -529,6 +530,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
                 if( !EQUAL(pszSRS, "NULL") )
                 {
                     OGRSpatialReference oSRS;
+                    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
                     if( oSRS.SetFromUserInput(pszSRS) != OGRERR_NONE )
                     {
