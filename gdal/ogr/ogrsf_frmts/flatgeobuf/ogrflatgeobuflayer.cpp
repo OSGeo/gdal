@@ -537,6 +537,9 @@ GIntBig OGRFlatGeobufLayer::GetFeatureCount(int bForce)
 
 OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
 {
+    if (m_create)
+        return nullptr;
+
     while( true ) {
         if (m_featuresCount > 0 && m_featuresPos >= m_featuresCount) {
             CPLDebug("FlatGeobuf", "GetNextFeature: iteration end at %lu", static_cast<long unsigned int>(m_featuresPos));
