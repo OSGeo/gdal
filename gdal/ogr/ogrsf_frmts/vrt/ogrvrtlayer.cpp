@@ -232,6 +232,7 @@ bool OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn,
         if( !(EQUAL(pszLayerSRS, "NULL")) )
         {
             OGRSpatialReference oSRS;
+            oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             if( oSRS.SetFromUserInput(pszLayerSRS) != OGRERR_NONE )
             {
@@ -456,6 +457,7 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
         if( !(EQUAL(pszSRS,"NULL")) )
         {
             OGRSpatialReference oSRS;
+            oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             if( oSRS.SetFromUserInput(pszSRS) != OGRERR_NONE )
             {
