@@ -277,6 +277,7 @@ class CPL_DLL S57Reader
     DDFRecord           *poDSIDRecord;
     DDFRecord           *poDSPMRecord;
     char                szUPDNUpdate[10];
+    char                szISDTUpdate[10];
 
     char                **papszOptions;
 
