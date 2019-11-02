@@ -359,3 +359,63 @@ def test_pds_oblique_cylindrical_read():
 
     lon, _ = to_lon_lat(ds.RasterXSize, ds.RasterYSize)
     assert lon == pytest.approx(-75.787124149033) # EASTERNMOST_LONGITUDE * -1
+
+
+###############################################################################
+
+def test_pds_sharp_on_continuing_line():
+
+    gdal.FileFromMemBuffer('/vsimem/test',
+                           """PDS_VERSION_ID                       = "PDS3"
+
+NOTE = (#9933FF,
+        #FFFF33)
+
+^IMAGE                               = 1 <BYTES>
+OBJECT                               = IMAGE
+    BANDS                            = 1
+    BAND_STORAGE_TYPE                = "BAND SEQUENTIAL"
+    LINES                            = 1
+    LINE_SAMPLES                     = 1
+    SAMPLE_BITS                      = 8
+
+END_OBJECT                           = IMAGE
+
+END
+""")
+
+    ds = gdal.Open('/vsimem/test')
+
+    assert ds.GetMetadataItem('NOTE') == '(#9933FF,#FFFF33)'
+
+    gdal.Unlink('/vsimem/pds_10')
+
+
+###############################################################################
+
+def test_pds_sharp_comma_continuing_line():
+
+    gdal.FileFromMemBuffer('/vsimem/test',
+                           """PDS_VERSION_ID                       = "PDS3"
+
+NOTE = ("a"
+        ,"b")
+
+^IMAGE                               = 1 <BYTES>
+OBJECT                               = IMAGE
+    BANDS                            = 1
+    BAND_STORAGE_TYPE                = "BAND SEQUENTIAL"
+    LINES                            = 1
+    LINE_SAMPLES                     = 1
+    SAMPLE_BITS                      = 8
+
+END_OBJECT                           = IMAGE
+
+END
+""")
+
+    ds = gdal.Open('/vsimem/test')
+
+    assert ds.GetMetadataItem('NOTE') == '("a","b")'
+
+    gdal.Unlink('/vsimem/pds_10')
