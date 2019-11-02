@@ -184,7 +184,9 @@ bool VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     VSIFree(pszEOLHeader);
 
     int EOLabelSize = atoi( keyval.c_str() );
-    if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
+    if( EOLabelSize <= 0 ||
+        static_cast<size_t>(EOLabelSize) <= nSkipEOLLBLSize ||
+        EOLabelSize > 100 * 1024 * 1024 )
         return false;
     if( VSIFSeekL( fp, nStartEOL, SEEK_SET ) != 0 )
     {
