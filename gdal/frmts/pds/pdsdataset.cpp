@@ -80,6 +80,8 @@ class PDSDataset final: public RawDataset
     CPLString   osExternalCube;
     CPLString   m_osImageFilename;
 
+    CPLStringList m_aosPDSMD;
+
     void        ParseSRS();
     int         ParseCompressedImage();
     int         ParseImage( CPLString osPrefix, CPLString osFilenamePrefix );
@@ -120,6 +122,9 @@ public:
                               GDALRasterIOExtraArg* psExtraArg) override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
+
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char* pszDomain = "" ) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -1303,6 +1308,9 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFCloseL( fpQube );
         return nullptr;
     }
+    poDS->m_aosPDSMD.InsertString(
+        0,
+        poDS->oKeywords.GetJsonObject().Format(CPLJSONObject::Pretty).c_str());
     VSIFCloseL( fpQube );
 
 /* -------------------------------------------------------------------- */
@@ -1503,6 +1511,30 @@ void PDSDataset::CleanString( CPLString &osInput )
     osInput = pszWrk;
     CPLFree( pszWrk );
 }
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **PDSDataset::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(
+        nullptr, FALSE, "", "json:PDS", nullptr);
+}
+
+/************************************************************************/
+/*                             GetMetadata()                            */
+/************************************************************************/
+
+char **PDSDataset::GetMetadata( const char* pszDomain )
+{
+    if( pszDomain != nullptr && EQUAL( pszDomain, "json:PDS" ) )
+    {
+        return m_aosPDSMD.List();
+    }
+    return GDALPamDataset::GetMetadata(pszDomain);
+}
+
 /************************************************************************/
 /*                         GDALRegister_PDS()                           */
 /************************************************************************/
