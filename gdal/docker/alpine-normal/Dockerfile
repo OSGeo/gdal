@@ -376,7 +376,8 @@ RUN apk add --no-cache \
     # libpoppler-cpp.so is not used by GDAL. Only libpoppler.so*
     && rm -f /usr/lib/libpoppler-cpp.so* \
     # Only libwebp.so is used by GDAL
-    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
+    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* \
+    && ln -s /usr/bin/python3 /usr/bin/python
 
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/
