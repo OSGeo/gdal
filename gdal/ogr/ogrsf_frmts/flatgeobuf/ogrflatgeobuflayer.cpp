@@ -556,11 +556,10 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
             return nullptr;
         }
 
-        OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
+        auto poFeature = std::unique_ptr<OGRFeature>(new OGRFeature(m_poFeatureDefn));
         OGRGeometry *ogrGeometry = nullptr;
-        if (parseFeature(poFeature, &ogrGeometry) != OGRERR_NONE) {
+        if (parseFeature(poFeature.get(), &ogrGeometry) != OGRERR_NONE) {
             CPLError(CE_Failure, CPLE_AppDefined, "Fatal error parsing feature");
-            delete poFeature;
             ResetReading();
             return nullptr;
         }
@@ -573,8 +572,8 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
         m_featuresPos++;
 
         if ((m_poFilterGeom == nullptr || m_ignoreSpatialFilter || FilterGeometry(ogrGeometry)) &&
-            (m_poAttrQuery == nullptr || m_ignoreAttributeFilter || m_poAttrQuery->Evaluate(poFeature)))
-            return poFeature;
+            (m_poAttrQuery == nullptr || m_ignoreAttributeFilter || m_poAttrQuery->Evaluate(poFeature.get())))
+            return poFeature.release();
     }
 }
 
