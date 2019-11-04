@@ -2391,6 +2391,15 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
         }
 
+        else if( EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
+        {
+            pszPDS4ProjectionName = "Lambert Azimuthal Equal Area";
+            aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
+                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+            aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
+                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+        }
+
         else
         {
             CPLError(CE_Warning, CPLE_NotSupported,

@@ -295,6 +295,7 @@ def test_pds4_8():
                   '+proj=merc +lat_ts=2 +lon_0=3 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                   '+proj=merc +lon_0=3 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                   '+proj=ortho +lat_0=1 +lon_0=2 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=laea +lat_0=1 +lon_0=2 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                  ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
         sr = osr.SpatialReference()
