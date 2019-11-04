@@ -2542,21 +2542,21 @@ bool VICARDataset::GetSpacings(const VICARKeywordHandler& keywords,
             nPixelOffset = (CPLSM(nItemSize) * CPLSM(nBands64)).v();
             nBandOffset = nItemSize;
             nLineOffset = (CPLSM(nNBB) + CPLSM(nPixelOffset) * CPLSM(nCols64)).v();
-            nImageSize = nLineOffset * nRows64;
+            nImageSize = (CPLSM(nLineOffset) * CPLSM(nRows64)).v();
         }
         else if (EQUAL(value,"BIL") )
         {
             nPixelOffset = nItemSize;
             nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols64)).v();
             nLineOffset = (CPLSM(nNBB) + CPLSM(nBandOffset) * CPLSM(nBands64)).v();
-            nImageSize = nLineOffset * nRows64;
+            nImageSize = (CPLSM(nLineOffset) * CPLSM(nRows64)).v();
         }
         else if (EQUAL(value,"BSQ") )
         {
             nPixelOffset = nItemSize;
             nLineOffset = (CPLSM(nNBB) + CPLSM(nPixelOffset) * CPLSM(nCols64)).v();
             nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows64)).v();
-            nImageSize = nBandOffset * nBands64;
+            nImageSize = (CPLSM(nBandOffset) * CPLSM(nBands64)).v();
         }
         else
         {
