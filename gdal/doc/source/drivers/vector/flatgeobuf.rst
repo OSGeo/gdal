@@ -28,16 +28,16 @@ A single .fgb file only contains one single layer. For multiple layer support,
 it is possible to put several .fgb files in a directory, and use that directory
 name as the connection string.
 
-On creation, passing a filenam without a .fgb suffix will instruct the driver
+On creation, passing a filename without a .fgb suffix will instruct the driver
 to create a directory of that name, and create layers as .fgb files in that
 directory.
 
 Open options
 ------------
 
--  **VERIFY_BUFFERS=**\ *YES/NO*: Set the YES verify buffers when reading.
-    This can provide some protection for invalid/corrupt data with a performance
-    trade off. Defaults to YES.
+-  **VERIFY_BUFFERS=**\ *YES/NO*: Set to YES to verify buffers when reading.
+   This can provide some protection for invalid/corrupt data with a performance
+   trade off. Defaults to YES.
 
 Dataset Creation Options
 ------------------------
@@ -47,7 +47,7 @@ None
 Layer Creation Options
 ----------------------
 
--  **SPATIAL_INDEX=**\ *YES/NO*: Set the YES to create a
+-  **SPATIAL_INDEX=**\ *YES/NO*: Set to YES to create a
    spatial index. Defaults to YES.
 
 Examples
@@ -64,7 +64,7 @@ Examples
 
 -  Conversion of a Geopackage file with multiple layers:
 
-    ::
+   ::
 
       % ogr2ogr -f FlatGeobuf my_fgb_dataset input.gpkg
 
