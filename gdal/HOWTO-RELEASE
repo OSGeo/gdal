@@ -176,38 +176,18 @@ Perl module maintainer to make a CPAN release.
 
   % ln -sf X.Y.Z CURRENT
 
-12) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to
+12) Update Trac 
+a) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to
    refer to the latest available source.
-   Update http://trac.osgeo.org/gdal/wiki (Releases section)
-   Update http://trac.osgeo.org/gdal/wiki/NewsAndStatus
+b) Update http://trac.osgeo.org/gdal/wiki (Releases section)
+c) Update http://trac.osgeo.org/gdal/wiki/NewsAndStatus
 
-13) Announce release to :
-    - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org.
-    - bugfix release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org
+13) Update doc/source/about_no_title.rst and doc/source/download.rst to advertize the new release and link to the release notes
 
-   Example:
-    - bugfix release: https://lists.osgeo.org/pipermail/gdal-dev/2019-July/050543.html
-    - feature release: https://lists.osgeo.org/pipermail/gdal-dev/2019-May/050202.html
-
-Note: gdal-announce@ is moderated. Make sure that your email address is approved
-('mod' tick disabled in https://lists.osgeo.org/mailman/admin/gdal-announce/members),
-or your message manually approved, with an administrator of the list.
-
-14) Update doc/source/about_no_title.rst and doc/source/download.rst to advertize the new release and link to the release notes
-
-15) Update if needed the News page in Trac for the release (like
-http://trac.osgeo.org/gdal/wiki/Release/1.7.0-News) and reference it from
-http://trac.osgeo.org/gdal/ (Releases) and
-http://trac.osgeo.org/gdal/wiki/NewsAndStatus .
-
-16) Add pointers to the source releases at:
-
-  http://trac.osgeo.org/gdal/wiki/DownloadSource
-
-17) Update GitHub to close the release milestone. 
+14) Update GitHub to close the release milestone. 
     Then create a new milestone for the next release.
 
-18) Upload the new Python bindings to Pypi (requires upload rights to
+15) Upload the new Python bindings to Pypi (requires upload rights to
 the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 ( procedure taken from http://peterdowns.com/posts/first-time-with-pypi.html )
 
@@ -239,7 +219,7 @@ e) For trial :
 f) For real :
     twine upload dist/GDAL*.gz
 
-19) Build and bundle the java bindings.
+16) Build and bundle the java bindings.
 
 a) cd swig/java
 
@@ -251,7 +231,7 @@ c) Build the bindings:
 
      make
 
-22) Build maven artifacts. NOTE: This step only works on Linux and OSX since it
+17) Build maven artifacts. NOTE: This step only works on Linux and OSX since it
     requires a shell script to build javadocs.
 
     A quick one-liner for this step is:
@@ -298,7 +278,7 @@ b)  Sign maven artifacts with GPG. This step is required in order to deploy the
     that contains all the maven artifacts with signatures. This file is what
     will be uploaded to maven central. See the next step.
 
-20) Deploy maven artifacts to Maven central.
+18) Deploy maven artifacts to Maven central.
 
     NOTE: Before you can deploy to maven central you must set up an account
     in Sonatype JIRA. That can be done here:
@@ -343,3 +323,14 @@ e) Click the "Release" button and that is it! The release should be available in
    Maven Central shortly. You can verify this by going to search.maven.org and
    searching for "gdal".
 
+19) Announce release to :
+    - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org.
+    - bugfix release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org
+
+   Example:
+    - bugfix release: https://lists.osgeo.org/pipermail/gdal-dev/2019-July/050543.html
+    - feature release: https://lists.osgeo.org/pipermail/gdal-dev/2019-May/050202.html
+
+Note: gdal-announce@ is moderated. Make sure that your email address is approved
+('mod' tick disabled in https://lists.osgeo.org/mailman/admin/gdal-announce/members),
+or your message manually approved, with an administrator of the list.
