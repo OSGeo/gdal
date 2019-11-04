@@ -98,8 +98,6 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId,
 static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue );
 static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
 
-static double NCDFGetDefaultNoDataValue( int nVarType );
-
 // Replace this where used.
 static char **NCDFTokenizeArray( const char *pszValue );
 static void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
@@ -403,18 +401,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         }
     }
 
-    // If NoData was not found, use the default value.
-    nc_type vartype = NC_NAT;
-    if( !bGotNoData )
-    {
-        nc_inq_vartype(cdfid, nZId, &vartype);
-        dfNoData = NCDFGetDefaultNoDataValue(vartype);
-        // bGotNoData = true;
-        CPLDebug("GDAL_netCDF",
-                 "did not get nodata value for variable #%d, using default %f",
-                 nZId, dfNoData);
-    }
-
     // Look for valid_range or valid_min/valid_max.
 
     // First look for valid_range.
@@ -547,11 +533,14 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     CPLDebug("GDAL_netCDF", "netcdf type=%d gdal type=%d signedByte=%d",
              nc_datatype, eDataType, static_cast<int>(bSignedData));
 
-    // Set nodata value.
+    if( bGotNoData )
+    {
+        // Set nodata value.
 #ifdef NCDF_DEBUG
-    CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData);
+        CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData);
 #endif
-    netCDFRasterBand::SetNoDataValue(dfNoData);
+        netCDFRasterBand::SetNoDataValue(dfNoData);
+    }
 
     // Create Band Metadata.
     CreateBandMetadata(paDimIds, panExtraDimGroupIds, panExtraDimVarIds);
@@ -833,13 +822,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         if( bSignedData )
             SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
     }
-
-    // Set default nodata.
-    double dfNoData = NCDFGetDefaultNoDataValue(nc_datatype);
-#ifdef NCDF_DEBUG
-    CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) default", dfNoData);
-#endif
-    netCDFRasterBand::SetNoDataValue(dfNoData);
 
     SetBlockSize();
 }
@@ -10404,55 +10386,6 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
         CSLDestroy(papszValues);
 
     return CE_None;
-}
-
-/************************************************************************/
-/*                           GetDefaultNoDataValue()                    */
-/************************************************************************/
-
-double NCDFGetDefaultNoDataValue( int nVarType )
-
-{
-    double dfNoData = 0.0;
-
-    switch( nVarType )
-    {
-    case NC_BYTE:
-#ifdef NETCDF_HAS_NC4
-    case NC_UBYTE:
-#endif
-        // Don't do default fill-values for bytes, too risky.
-        dfNoData = 0.0;
-        break;
-    case NC_CHAR:
-        dfNoData = NC_FILL_CHAR;
-        break;
-    case NC_SHORT:
-        dfNoData = NC_FILL_SHORT;
-        break;
-    case NC_INT:
-        dfNoData = NC_FILL_INT;
-        break;
-    case NC_FLOAT:
-        dfNoData = NC_FILL_FLOAT;
-        break;
-    case NC_DOUBLE:
-        dfNoData = NC_FILL_DOUBLE;
-        break;
-#ifdef NETCDF_HAS_NC4
-    case NC_USHORT:
-        dfNoData = NC_FILL_USHORT;
-        break;
-    case NC_UINT:
-        dfNoData = NC_FILL_UINT;
-        break;
-#endif
-    default:
-        dfNoData = 0.0;
-        break;
-    }
-
-    return dfNoData;
 }
 
 static int NCDFDoesVarContainAttribVal( int nCdfId,
