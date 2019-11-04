@@ -48,8 +48,13 @@ def validate_xml(filename):
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
 
-    if not gdaltest.download_file('https://pds.nasa.gov/datastandards/schema/released/pds/v1/PDS4_PDS_1C00.xsd',
-                                  'pds.nasa.gov_datastandards_schema_released_pds_v1_PDS4_PDS_1C00.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1D00.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1D00.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd',
+                                  'pds.nasa.gov_pds4_cart_v1_PDS4_CART_1D00_1933.xsd',
                                   force_download=True):
         pytest.skip()
 
@@ -58,26 +63,20 @@ def validate_xml(filename):
                                   force_download=True):
         pytest.skip()
 
-
-    if not gdaltest.download_file('https://pds.nasa.gov/datastandards/schema/released/cart/v1/PDS4_CART_1B10_1931.xsd',
-                                  'pds.nasa.gov_datastandards_schema_released_cart_v1_PDS4_CART_1B10_1931.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B00.xsd',
                                   force_download=True):
         pytest.skip()
 
 
-    # Needed by PDS4_CART_1B10_1931
-    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B10.xsd',
-                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B10.xsd',
-                                  force_download=True):
-        pytest.skip()
-
+    # Needed by PDS4_CART_1D00_1933
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1B10_1700.xsd',
                                   'pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1B10_1700.xsd',
                                   force_download=True):
         pytest.skip()
 
-    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd',
-                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B00.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B10.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B10.xsd',
                                   force_download=True):
         pytest.skip()
 
@@ -153,7 +152,7 @@ def test_pds4_read_cart_1B00():
 # Perform simple read test on PDS4 dataset.
 
 
-def test_pds4_read_cart_1B10_1931():
+def test_pds4_read_cart_1D00_1933():
     srs = """PROJCS["Transverse Mercator Earth",
     GEOGCS["GCS_Earth",
         DATUM["D_North_American_Datum_1927",
@@ -169,7 +168,7 @@ def test_pds4_read_cart_1B10_1931():
 """
     gt = (-59280.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('PDS4', 'byte_pds4_cart_1b10_1931.xml', 1, 4672)
+    tst = gdaltest.GDALTest('PDS4', 'byte_pds4_cart_1d00_1933.xml', 1, 4672)
     return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
@@ -287,12 +286,15 @@ def test_pds4_8():
     for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                   '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_1SP
                   '+proj=lcc +lat_0=10 +lon_0=-112.5 +lat_1=9 +lat_2=11 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_2SP
-                  '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +gamma=12 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
-                  '+proj=omerc +lat_0=10 +lat_1=12 +lon_1=11 +lat_2=14 +lon_2=13 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
+                  '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +gamma=12 +k=1 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
+                  '+proj=omerc +lat_0=10 +lat_1=12 +lon_1=11 +lat_2=14 +lon_2=13 +k=1 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
                   '+proj=stere +lat_0=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Polar Stereographic
                   '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                   '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                   '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=merc +lat_ts=2 +lon_0=3 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=merc +lon_0=3 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                  '+proj=ortho +lat_0=1 +lon_0=2 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
                  ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
         sr = osr.SpatialReference()
