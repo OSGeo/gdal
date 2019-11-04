@@ -100,7 +100,7 @@ specification, are available :
    geometry
 -  ST_MaxY(geom *Geometry*) : returns the maximum Y coordinate of the
    geometry
--  ST_IsEmpty(geom *Geometry*) : returns 1 is the geometry is empty (but
+-  ST_IsEmpty(geom *Geometry*) : returns 1 if the geometry is empty (but
    not null), e.g. a POINT EMPTY geometry
 -  ST_GeometryType(geom *Geometry*) : returns the geometry type :
    'POINT', 'LINESTRING', 'POLYGON', 'MULTIPOLYGON', 'MULTILINESTRING',
@@ -116,7 +116,7 @@ Spatialite, are also available :
    creates a spatial index (RTree) on the specified table/geometry
    column
 -  DisableSpatialIndex(table_name *String*, geom_column_name *String*) :
-   drop an existing spatial index (RTree) on the specified
+   drops an existing spatial index (RTree) on the specified
    table/geometry column
 
 Link with Spatialite
@@ -144,11 +144,11 @@ Opening options
 The following open options are available:
 
 -  **LIST_ALL_TABLES**\ =AUTO/YES/NO: (GDAL >=2.2) Whether all tables,
-   including those non listed in gpkg_contents, should be listed.
-   Defaults to AUTO. If AUTO, all tables including those non linsted in
+   including those not listed in gpkg_contents, should be listed.
+   Defaults to AUTO. If AUTO, all tables including those not listed in
    gpkg_contents will be listed, except if the aspatial extension is
    found or a table is registered as 'attributes' in gpkg_contents. If
-   YES, all tables including those non linsted in gpkg_contents will be
+   YES, all tables including those not listed in gpkg_contents will be
    listed, in all cases. If NO, only tables registered as 'features',
    'attributes' or 'aspatial' will be listed.
 
@@ -183,7 +183,7 @@ Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
 -  **GEOMETRY_NAME**: Column to use for the geometry column. Default to
-   "geom". Note: option was called GEOMETRY_COLUMN in releases before
+   "geom". Note: This option was called GEOMETRY_COLUMN in releases before
    GDAL 2
 -  **GEOMETRY_NULLABLE**: (GDAL >=2.0) Whether the values of the
    geometry column can be NULL. Can be set to NO so that geometry is
@@ -226,9 +226,9 @@ Metadata
 --------
 
 (GDAL >=2.0) GDAL uses the standardized
-```gpkg_metadata`` <http://www.geopackage.org/spec/#_metadata_table>`__
+`gpkg_metadata <http://www.geopackage.org/spec/#_metadata_table>`__
 and
-```gpkg_metadata_reference`` <http://www.geopackage.org/spec/#_metadata_reference_table>`__
+`gpkg_metadata_reference <http://www.geopackage.org/spec/#_metadata_reference_table>`__
 tables to read and write metadata, on the dataset and layer objects.
 
 GDAL metadata, from the default metadata domain and possibly other
@@ -259,7 +259,7 @@ support non-spatial tables. This was added in GeoPackage 1.2 as the
 "attributes" data type.
 
 Starting with GDAL 2.0, the driver allows creating and reading
-non-spatial tables with the :ref:`vector.aspatial` extension.
+non-spatial tables with the :ref:`vector.aspatial`.
 
 Starting with GDAL 2.2, the driver will also, by default, list non
 spatial tables that are not registered through the gdal_aspatial
