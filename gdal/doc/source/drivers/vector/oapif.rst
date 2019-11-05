@@ -112,12 +112,12 @@ Examples
       lagebeztxt: String (0.0)
       tntxt: String (0.0)
 
--  Filtering on a property
+-  Filtering on a property (depending on if the server exposes filtering capabilities of the properties, part or totally of the filter might be evaluated on client side)
 
    ::
 
 
-      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -where "gemarkung = 'Wünnenberg'"
+      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -where "flur = '028'"
       Layer name: flurstueck
       Metadata:
         TITLE=Flurstück
