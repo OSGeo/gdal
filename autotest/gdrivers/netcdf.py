@@ -294,6 +294,11 @@ def test_netcdf_2():
 
     tst.testOpen(check_prj=wkt)
 
+    # Check that no nodata value is reported for a Byte dataset
+    ds = gdal.Open('tmp/netcdf2.nc')
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    ds = None
+
     # Test that in raster-only mode, update isn't supported (not sure what would be missing for that...)
     with gdaltest.error_handler():
         ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
@@ -4786,6 +4791,19 @@ def test_states_full_layer_buffer_restrict_correctness_single_datum():
         lftgeo = lft.GetGeometryRef()
         dftgeo = dft.GetGeometryRef()
         assert(lftgeo.Equal(dftgeo))
+
+def test_netcdf_uint16_netcdf4_without_fill():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    # This dataset was created with  nc_def_var_fill(cdfid, nZId, NC_NOFILL, NULL)
+    # Check that we don't report a nodata value
+    ds = gdal.Open('data/uint16_netcdf4_without_fill.nc')
+    assert not ds.GetRasterBand(1).GetNoDataValue()
 
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
