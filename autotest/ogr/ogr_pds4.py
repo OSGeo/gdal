@@ -45,8 +45,13 @@ def validate_xml(filename):
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
 
-    if not gdaltest.download_file('https://pds.nasa.gov/datastandards/schema/released/pds/v1/PDS4_PDS_1C00.xsd',
-                                  'pds.nasa.gov_datastandards_schema_released_pds_v1_PDS4_PDS_1C00.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1D00.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1D00.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd',
+                                  'pds.nasa.gov_pds4_cart_v1_PDS4_CART_1D00_1933.xsd',
                                   force_download=True):
         pytest.skip()
 
@@ -55,26 +60,20 @@ def validate_xml(filename):
                                   force_download=True):
         pytest.skip()
 
-
-    if not gdaltest.download_file('https://pds.nasa.gov/datastandards/schema/released/cart/v1/PDS4_CART_1B10_1931.xsd',
-                                  'pds.nasa.gov_datastandards_schema_released_cart_v1_PDS4_CART_1B10_1931.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B00.xsd',
                                   force_download=True):
         pytest.skip()
 
 
-    # Needed by PDS4_CART_1B10_1931
-    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B10.xsd',
-                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B10.xsd',
-                                  force_download=True):
-        pytest.skip()
-
+    # Needed by PDS4_CART_1D00_1933
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1B10_1700.xsd',
                                   'pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1B10_1700.xsd',
                                   force_download=True):
         pytest.skip()
 
-    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd',
-                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B00.xsd',
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B10.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B10.xsd',
                                   force_download=True):
         pytest.skip()
 
