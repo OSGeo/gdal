@@ -98,7 +98,7 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId,
 static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue );
 static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
 
-static double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType );
+static double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bGotNoData );
 
 // Replace this where used.
 static char **NCDFTokenizeArray( const char *pszValue );
@@ -417,11 +417,13 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 #endif
         )
         {
-            dfNoData = NCDFGetDefaultNoDataValue(cdfid, nZId, vartype);
-            bGotNoData = true;
-            CPLDebug("GDAL_netCDF",
-                    "did not get nodata value for variable #%d, using default %f",
-                    nZId, dfNoData);
+            dfNoData = NCDFGetDefaultNoDataValue(cdfid, nZId, vartype, bGotNoData);
+            if( bGotNoData )
+            {
+                CPLDebug("GDAL_netCDF",
+                        "did not get nodata value for variable #%d, using default %f",
+                        nZId, dfNoData);
+            }
         }
     }
 
@@ -855,7 +857,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         )
     {
         // Set default nodata.
-        double dfNoData = NCDFGetDefaultNoDataValue(cdfid, nZId, nc_datatype);
+        bool bIgnored = false;
+        double dfNoData = NCDFGetDefaultNoDataValue(cdfid, nZId, nc_datatype, bIgnored);
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) default", dfNoData);
 #endif
@@ -10431,9 +10434,10 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
 /*                           GetDefaultNoDataValue()                    */
 /************************************************************************/
 
-double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType )
+double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bGotNoData )
 
 {
+    int nNoFill = 0;
     double dfNoData = 0.0;
 
     switch( nVarType )
@@ -10450,8 +10454,14 @@ double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType )
     case NC_SHORT:
     {
         short nFillVal = 0;
-        if( nc_inq_var_fill( nCdfId, nVarId, nullptr, &nFillVal ) == NC_NOERR )
-            dfNoData = nFillVal;
+        if( nc_inq_var_fill( nCdfId, nVarId, &nNoFill, &nFillVal ) == NC_NOERR )
+        {
+            if( !nNoFill )
+            {
+                bGotNoData = true;
+                dfNoData = nFillVal;
+            }
+        }
         else
             dfNoData = NC_FILL_SHORT;
         break;
@@ -10459,8 +10469,14 @@ double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType )
     case NC_INT:
     {
         int nFillVal = 0;
-        if( nc_inq_var_fill( nCdfId, nVarId, nullptr, &nFillVal ) == NC_NOERR )
-            dfNoData = nFillVal;
+        if( nc_inq_var_fill( nCdfId, nVarId, &nNoFill, &nFillVal ) == NC_NOERR )
+        {
+            if( !nNoFill )
+            {
+                bGotNoData = true;
+                dfNoData = nFillVal;
+            }
+        }
         else
             dfNoData = NC_FILL_INT;
         break;
@@ -10468,17 +10484,26 @@ double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType )
     case NC_FLOAT:
     {
         float fFillVal = 0;
-        if( nc_inq_var_fill( nCdfId, nVarId, nullptr, &fFillVal ) == NC_NOERR )
-            dfNoData = fFillVal;
+        if( nc_inq_var_fill( nCdfId, nVarId, &nNoFill, &fFillVal ) == NC_NOERR )
+        {
+            if( !nNoFill )
+            {
+                bGotNoData = true;
+                dfNoData = fFillVal;
+            }
+        }
         else
             dfNoData = NC_FILL_FLOAT;
         break;
     }
     case NC_DOUBLE:
     {
-        if( nc_inq_var_fill( nCdfId, nVarId, nullptr, &dfNoData ) == NC_NOERR )
+        if( nc_inq_var_fill( nCdfId, nVarId, &nNoFill, &dfNoData ) == NC_NOERR )
         {
-            // do nothing
+            if( !nNoFill )
+            {
+                bGotNoData = true;
+            }
         }
         else
             dfNoData = NC_FILL_DOUBLE;
@@ -10488,8 +10513,14 @@ double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType )
     case NC_USHORT:
     {
         unsigned short nFillVal = 0;
-        if( nc_inq_var_fill( nCdfId, nVarId, nullptr, &nFillVal ) == NC_NOERR )
-            dfNoData = nFillVal;
+        if( nc_inq_var_fill( nCdfId, nVarId, &nNoFill, &nFillVal ) == NC_NOERR )
+        {
+            if( !nNoFill )
+            {
+                bGotNoData = true;
+                dfNoData = nFillVal;
+            }
+        }
         else
             dfNoData = NC_FILL_USHORT;
         break;
@@ -10497,8 +10528,14 @@ double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType )
     case NC_UINT:
     {
         unsigned int nFillVal = 0;
-        if( nc_inq_var_fill( nCdfId, nVarId, nullptr, &nFillVal ) == NC_NOERR )
-            dfNoData = nFillVal;
+        if( nc_inq_var_fill( nCdfId, nVarId, &nNoFill, &nFillVal ) == NC_NOERR )
+        {
+            if( !nNoFill )
+            {
+                bGotNoData = true;
+                dfNoData = nFillVal;
+            }
+        }
         else
             dfNoData = NC_FILL_UINT;
         break;

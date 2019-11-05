@@ -4792,6 +4792,19 @@ def test_states_full_layer_buffer_restrict_correctness_single_datum():
         dftgeo = dft.GetGeometryRef()
         assert(lftgeo.Equal(dftgeo))
 
+def test_netcdf_uint16_netcdf4_without_fill():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    # This dataset was created with  nc_def_var_fill(cdfid, nZId, NC_NOFILL, NULL)
+    # Check that we don't report a nodata value
+    ds = gdal.Open('data/uint16_netcdf4_without_fill.nc')
+    assert not ds.GetRasterBand(1).GetNoDataValue()
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
