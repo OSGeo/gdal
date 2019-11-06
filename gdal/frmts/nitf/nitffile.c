@@ -2150,6 +2150,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
             const char* pszLongName = CPLGetXMLValue(psIter, "longname", NULL);
             const char* pszLength = CPLGetXMLValue(psIter, "length", NULL);
+            const char* pszType = CPLGetXMLValue(psIter, "type", "string");
             int nLength = -1;
             if (pszLength != NULL)
                 nLength = atoi(pszLength);
@@ -2190,6 +2191,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             {
                 char* pszMDItemName;
                 char** papszTmp = NULL;
+                char* pszValue = NULL;
 
                 if (*pnTreOffset + nLength > nTRESize)
                 {
@@ -2204,27 +2206,68 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 pszMDItemName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, pszName));
 
-                NITFExtractMetadata( &papszTmp, pachTRE, *pnTreOffset,
-                                     nLength, pszMDItemName );
-                if (*pnMDSize + 1 >= *pnMDAlloc)
+                if (strcmp(pszType, "IEEE754") == 0)
                 {
-                    *pnMDAlloc = (*pnMDAlloc * 4 / 3) + 32;
-                    papszMD = (char**)CPLRealloc(papszMD, *pnMDAlloc * sizeof(char*));
+                    if( nLength == 4 )
+                    {
+                        const size_t nBufferSize = 128;
+                        float f;
+                        memcpy(&f, pachTRE + *pnTreOffset, 4);
+                        CPL_MSBPTR32(&f);
+                        pszValue = (char*)CPLMalloc(nBufferSize);
+                        CPLsnprintf(pszValue, nBufferSize, "%f", f);
+                        papszTmp = CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
+                    }
+                    else
+                    {
+                        /* TODO ? */
+                    }
                 }
-                papszMD[*pnMDSize] = papszTmp[0];
-                papszMD[(*pnMDSize) + 1] = NULL;
-                (*pnMDSize) ++;
-                papszTmp[0] = NULL;
-                CPLFree(papszTmp);
-
-                if (psOutXMLNode != NULL)
+                else if (strcmp(pszType, "UINT") == 0)
                 {
-                    const char* pszVal = strchr(papszMD[(*pnMDSize) - 1], '=') + 1;
+                    if( nLength == 4 )
+                    {
+                        const size_t nBufferSize = 11;
+                        unsigned int nVal;
+                        memcpy(&nVal, pachTRE + *pnTreOffset, 4);
+                        CPL_MSBPTR32(&nVal);
+                        pszValue = (char*)CPLMalloc(nBufferSize);
+                        CPLsnprintf(pszValue, nBufferSize, "%u", nVal);
+                        papszTmp = CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
+                    }
+                    else
+                    {
+                        /* TODO ? */
+                    }
+                }
+                else
+                {
+                    NITFExtractMetadata( &papszTmp, pachTRE, *pnTreOffset,
+                                        nLength, pszMDItemName );
+
+                    pszValue = CPLStrdup(strchr(papszTmp[0], '=') + 1);
+                }
+
+                if( papszTmp )
+                {
+                    if (*pnMDSize + 1 >= *pnMDAlloc)
+                    {
+                        *pnMDAlloc = (*pnMDAlloc * 4 / 3) + 32;
+                        papszMD = (char**)CPLRealloc(papszMD, *pnMDAlloc * sizeof(char*));
+                    }
+                    papszMD[*pnMDSize] = papszTmp[0];
+                    papszMD[(*pnMDSize) + 1] = NULL;
+                    (*pnMDSize) ++;
+                    papszTmp[0] = NULL;
+                    CSLDestroy(papszTmp);
+                }
+
+                if (pszValue != NULL && psOutXMLNode != NULL)
+                {
                     CPLXMLNode* psFieldNode;
                     CPLXMLNode* psNameNode;
                     CPLXMLNode* psValueNode;
 
-                    CPLAssert(pszVal != NULL);
                     psFieldNode =
                         CPLCreateXMLNode(psOutXMLNode, CXT_Element, "field");
                     psNameNode =
@@ -2233,10 +2276,11 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                         CPLCreateXMLNode(psFieldNode, CXT_Attribute, "value");
                     CPLCreateXMLNode(psNameNode, CXT_Text,
                        (pszName[0] || pszLongName == NULL) ? pszName : pszLongName);
-                    CPLCreateXMLNode(psValueNode, CXT_Text, pszVal);
+                    CPLCreateXMLNode(psValueNode, CXT_Text, pszValue);
                 }
 
                 CPLFree(pszMDItemName);
+                CPLFree(pszValue);
 
                 *pnTreOffset += nLength;
             }
