@@ -1673,7 +1673,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
     f = lyr.GetNextFeature()
     if f.gml_id != 'my_layer.1' or f.boolean != 1 or f.str != 'str' or f.short != 1 or \
-       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015-04-17T12:34:56Z' or \
+       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015/04/17 12:34:56+00' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
         pytest.fail()
@@ -3083,7 +3083,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
     f = lyr.GetNextFeature()
     if f.gml_id != 'my_layer.1' or f.boolean != 1 or f.str != 'str' or f.short != 1 or \
-       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015-04-17T12:34:56Z' or \
+       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015/04/17 12:34:56+00' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
         pytest.fail()

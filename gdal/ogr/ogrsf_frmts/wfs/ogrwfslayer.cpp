@@ -330,47 +330,17 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
     for( int iField = 0; iField < poGMLFeatureClass->GetPropertyCount(); iField++ )
     {
         GMLPropertyDefn *poProperty = poGMLFeatureClass->GetProperty( iField );
-        OGRFieldType eFType;
-
-        if( poProperty->GetType() == GMLPT_Untyped )
-            eFType = OFTString;
-        else if( poProperty->GetType() == GMLPT_String )
-            eFType = OFTString;
-        else if( poProperty->GetType() == GMLPT_Integer ||
-                 poProperty->GetType() == GMLPT_Boolean ||
-                 poProperty->GetType() == GMLPT_Short  )
-            eFType = OFTInteger;
-        else if( poProperty->GetType() == GMLPT_Integer64 )
-            eFType = OFTInteger64;
-        else if( poProperty->GetType() == GMLPT_Real ||
-                 poProperty->GetType() == GMLPT_Float )
-            eFType = OFTReal;
-        else if( poProperty->GetType() == GMLPT_StringList )
-            eFType = OFTStringList;
-        else if( poProperty->GetType() == GMLPT_IntegerList ||
-                 poProperty->GetType() == GMLPT_BooleanList )
-            eFType = OFTIntegerList;
-        else if( poProperty->GetType() == GMLPT_Integer64List )
-            eFType = OFTInteger64List;
-        else if( poProperty->GetType() == GMLPT_RealList )
-            eFType = OFTRealList;
-        else
-            eFType = OFTString;
+        OGRFieldSubType eSubType = OFSTNone;
+        const OGRFieldType eFType = GML_GetOGRFieldType(poProperty->GetType(), eSubType);
 
         OGRFieldDefn oField( poProperty->GetName(), eFType );
+        oField.SetSubType(eSubType);
         if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
             oField.SetName(poProperty->GetName()+4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth( poProperty->GetWidth() );
         if( poProperty->GetPrecision() > 0 )
             oField.SetPrecision( poProperty->GetPrecision() );
-        if( poProperty->GetType() == GMLPT_Boolean ||
-            poProperty->GetType() == GMLPT_BooleanList )
-            oField.SetSubType(OFSTBoolean);
-        else if( poProperty->GetType() == GMLPT_Short)
-            oField.SetSubType(OFSTInt16);
-        else if( poProperty->GetType() == GMLPT_Float)
-            oField.SetSubType(OFSTFloat32);
         if( !poDS->IsEmptyAsNull() )
             oField.SetNullable(poProperty->IsNullable());
 
