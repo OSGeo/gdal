@@ -519,8 +519,8 @@ OGRErr HDF5RSubDataSet::setNsperOgrSpatialRef(double lat, double lon, double alt
 	OGRSpatialReference oSRS;
 
 	CPLString oProj4String;
-	oProj4String.Printf( "+proj=nsper +wktext +lat_0=%.18g +lon_0=%.18g +h=%.18g "
-			"+x_0=0.0 +y_0=0.0 +ellps=WGS84 +units=m",
+	oProj4String.Printf( "+proj=nsper +lat_0=%.18g +lon_0=%.18g +h=%.18g "
+			"+x_0=0.0 +y_0=0.0",
 			lat, lon, altitude_m );
 
 	OGRErr rc = oSRS.SetFromUserInput( oProj4String.c_str() );
@@ -586,6 +586,7 @@ OGRCoordinateTransformation* HDF5RSubDataSet::buildGcpOgrXform( const std::strin
 	// Source (the HDF5-R GEO-location grid is always in WGS84 lat, lon
     OGRSpatialReference oSrcSRS;
     oSrcSRS.SetWellKnownGeogCS( "WGS84" );
+    oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     // Target supplied by caller
     OGRSpatialReference oTgtSRS;
