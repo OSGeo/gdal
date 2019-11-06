@@ -113,6 +113,165 @@
         <field name="RESERVED_3" length="13"/>
     </tre>
 
+    <!-- STDI-0002-1 Appendix X: BANDSB -->
+    <tre name="BANDSB" md_prefix="NITF_BANDSB_" location="image">
+        <field name="COUNT" length="5" type="integer"/>
+        <field name="RADIOMETRIC_QUANTITY" length="24" type="string"/>
+        <field name="RADIOMETRIC_QUANTITY_UNIT" length="1" type="string"/>
+        <field name="SCALE_FACTOR" length="4" type="float_raw"/>
+        <field name="ADDITIVE_FACTOR" length="4" type="float_raw"/>
+        <field name="ROW_GSD" length="7" type="real"/>
+        <field name="ROW_GSD_UNIT" length="1" type="string"/>
+        <field name="COL_GSD" length="7" type="real"/>
+        <field name="COL_GSD_UNIT" length="1" type="string"/>
+        <field name="SPT_RESP_ROW" length="7" type="real"/>
+        <field name="SPT_RESP_UNIT_ROW" length="1" type="string"/>
+        <field name="SPT_RESP_COL" length="7" type="real"/>
+        <field name="SPT_RESP_UNIT_COL" length="1" type="string"/>
+        <field name="DATA_FLD_1" length="48" type="string"/>
+        <field name="EXISTENCE_MASK" length="4" type="bitmask"/>
+        <if cond="EXISTENCE_MASK:31">
+            <field name="RADIOMETRIC_ADJUSTMENT_SURFACE" length="24" type="string"/>
+            <field name="ATMOSPHERIC_ADJUSTMENT_ALTITUDE" length="4" type="float_raw"/>
+        </if>
+        <if cond="EXISTENCE_MASK:30">
+            <field name="DIAMETER" length="7" type="real"/>
+        </if>
+        <if cond="EXISTENCE_MASK:29">
+            <field name="DATA_FLD_2" length="32" type="string"/>
+        </if>
+        <if cond="EXISTENCE_MASK:24">
+            <field name="WAVE_LENGTH_UNIT" length="1" type="string"/>
+        </if>
+        <loop counter="COUNT" name="BANDS" md_prefix="BAND_%05d_">
+            <if cond="EXISTENCE_MASK:28">
+                <field name="BANDID" length="50" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:27">
+                <field name="BAD_BAND" length="1" type="integer"/>
+            </if>
+            <if cond="EXISTENCE_MASK:26">
+                <field name="NIIRS" length="3" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:25">
+                <field name="FOCAL_LEN" length="5" type="integer"/>
+            </if>
+            <if cond="EXISTENCE_MASK:24">
+                <field name="CWAVE" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:23">
+                <field name="FWHM" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:22">
+                <field name="FWHM_UNC" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:21">
+                <field name="NOM_WAVE" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:20">
+                <field name="NOM_WAVE_UNC" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:19">
+                <field name="LBOUND" length="7" type="real"/>
+                <field name="UBOUND" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:18">
+                <field name="SCALE_FACTOR" length="4" type="float_raw"/>
+                <field name="ADDITIVE_FACTOR" length="4" type="float_raw"/>
+            </if>
+            <if cond="EXISTENCE_MASK:17">
+                <field name="START_TIME" length="16" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:16">
+                <field name="INT_TIME" length="6" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:15">
+                <field name="CALDRK" length="6" type="real"/>
+                <field name="CALIBRATION_SENSITIVITY" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:14">
+                <field name="ROW_GSD" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:13">
+                <field name="ROW_GSD_UNC" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:14">
+                <field name="ROW_GSD_UNIT" length="1" type="string"/>
+                <field name="COL_GSD" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:13">
+                <field name="COL_GSD_UNC" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:14">
+                <field name="COL_GSD_UNIT" length="1" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:12">
+                <field name="BKNOISE" length="5" type="real"/>
+                <field name="SCNNOISE" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:11">
+                <field name="SPT_RESP_FUNCTION_ROW" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:10">
+                <field name="SPT_RESP_UNC_ROW" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:11">
+                <field name="SPT_RESP_UNIT_ROW" length="1" type="string"/>
+                <field name="SPT_RESP_FUNCTION_COL" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:10">
+                <field name="SPT_RESP_UNC_COL" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:11">
+                <field name="SPT_RESP_UNIT_COL" length="1" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:9">
+                <field name="DATA_FLD_3" length="16" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:8">
+                <field name="DATA_FLD_4" length="24" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:7">
+                <field name="DATA_FLD_5" length="32" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:6">
+                <field name="DATA_FLD_6" length="48" type="string"/>
+            </if>
+        </loop>
+        <if cond="EXISTENCE_MASK:0">
+            <field name="NUM_AUX_B" length="2" type="integer"/>
+            <field name="NUM_AUX_C" length="2" type="integer"/>
+            <loop counter="NUM_AUX_B" name="BAND_AUX" md_prefix="BAND_AUX_%02d_">
+                <field name="BAPF" length="1" type="string"/>
+                <field name="UBAP" length="7" type="string"/>
+                <loop counter="COUNT" name="BAND" md_prefix="BAND_%05d">
+                    <if cond="BAPF=I">
+                        <field name="APN" length="10" type="integer"/>
+                    </if>
+                    <if cond="BAPF=R">
+                        <field name="APR" length="4" type="float_raw"/>
+                    </if>
+                    <if cond="BAPF=A">
+                        <field name="APA" length="20" type="string"/>
+                    </if>
+                </loop>
+            </loop>
+            <loop counter="NUM_AUX_C" name="CUBE_AUX" md_prefix="CUBE_AUX_%02d_">
+                <field name="CAPF" length="1" type="string"/>
+                <field name="UCAP" length="7" type="string"/>
+                <if cond="CAPF=I">
+                    <field name="APN" length="10" type="integer"/>
+                </if>
+                <if cond="CAPF=R">
+                    <field name="APR" length="4" type="float_raw"/>
+                </if>
+                <if cond="CAPF=A">
+                    <field name="APA" length="20" type="string"/>
+                </if>
+            </loop>
+        </if>
+    </tre>
+
     <tre name="BLOCKA" length="123" location="image">
         <field name="BLOCK_INSTANCE" length="2" type="integer" minval="1" maxval="99"/>
         <field name="N_GRAY" length="5" type="integer" minval="0" maxval="99999"/>
