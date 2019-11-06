@@ -37,6 +37,9 @@ const char* HDF5RDataSet::OpenOptionsXML =
         "   <Option name='GCP_MAX'"
         "             type='unsigned int' min='0' default='225'"
         "             description='Max GCPs from GeoLocationData, 0==no limit'/>"
+		"   <Option name='ATTR_WARN'"
+		"             type='unsigned int' min='0' max='1' default='1'"
+		"             description='missing hdf5r attribute warnings: 0==suppress, 1==show'/>"
         "   <Option name='NO_GCP'"
         "             type='unsigned int' min='0' max='1' default='0'"
         "             description='0==generate GCPs, 1==generate affine xform'/>"
@@ -49,6 +52,9 @@ const char* HDF5RDataSet::OpenOptionsXML =
         "   <Option name='SAT_LON'"
         "             type='float' min='-180.0' max='180.0'"
         "             description='Recalculate GEO grid using Geosync satellite at this longitude (degrees)' />"
+        "   <Option name='PROJ'"
+        "             type='string' "
+        "             description='Use the wgs84 (default) projection or nsper (near-side perspective' />"
         "</OpenOptionList>";
 
 const char* HDF5RDataSet::CreationOptionsXML =

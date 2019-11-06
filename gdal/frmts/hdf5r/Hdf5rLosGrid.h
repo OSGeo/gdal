@@ -42,9 +42,14 @@ public:
 
         /** Default Constructor **/
         Hdf5rLosData_t()
-        {
-            std::memset(this, 0, sizeof(Hdf5rLosData_t));
-        }
+        : ecf_X( 0.0 ),
+          ecf_Y( 0.0 ),
+          ecf_Z( 0.0 ),
+          map_X( 0.0 ),
+          map_Y( 0.0 ),
+          geoLoc(),
+          oth_( false )
+        {}
     };
 
     // std::vector of LOS data as a linear array

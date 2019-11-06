@@ -119,7 +119,8 @@ void Hdf5rReader::close()
 // Load attributes from the HDF5-R file into the map
 //******************************************************************************
 int Hdf5rReader::fillAttrMap( hid_t h5Hid,
-                              Hdf5rAttributeBase::H5AttrMap_t& fileAttrMap ) const
+                              Hdf5rAttributeBase::H5AttrMap_t& fileAttrMap,
+							  bool warnMissing ) const
 {
     int nAttrLoaded = 0;
     Hdf5rAttributeBase::H5AttrMap_t::iterator i = fileAttrMap.begin();
@@ -136,7 +137,7 @@ int Hdf5rReader::fillAttrMap( hid_t h5Hid,
 
             ++nAttrLoaded;
         }
-        else
+        else if (warnMissing)
             CPLError( CE_Warning, CPLE_AppDefined, "HDF5-R Attribute not present and ignored: %s",
                       fileAttr.name.c_str() );
 
@@ -579,7 +580,7 @@ const Hdf5rLosGrid_t* Hdf5rReader::getLosGrid( unsigned frameIndex,
                     //   [1]: row == scan line
                     //   [2]: column == pixels per scan line
                     hsize_t offsetIn[3] = { unsigned(frameIndex), 0, 0 };
-                    hsize_t countIn[3] = { 1, dimensions[1], dimensions[2] };
+                    hsize_t countIn[3] = { 1, hsize_t(yGridSz-1), hsize_t(xGridSz-1) };
                     CPLDebug( HDF5R_DEBUG_STR, "LOS hyperslab select dimensions: %lld %lld %lld",
                               countIn[0], countIn[1], countIn[2] );
                     if (H5Sselect_hyperslab( geoLocationSpaceHid_, H5S_SELECT_SET, offsetIn, nullptr, countIn, nullptr ) >= 0)
@@ -606,7 +607,7 @@ const Hdf5rLosGrid_t* Hdf5rReader::getLosGrid( unsigned frameIndex,
                         hsize_t memDims[2] = { hsize_t(yGridSz), hsize_t(xGridSz) };
                         hid_t memSpaceHid = H5Screate_simple( 2, memDims, nullptr );
                         hsize_t offsetOut[2] = { 0, 0 };
-                        hsize_t countOut[2] = { dimensions[1], dimensions[2] };
+                        hsize_t countOut[2] = { hsize_t(yGridSz-1), hsize_t(xGridSz-1) };
                         if (H5Sselect_hyperslab( memSpaceHid, H5S_SELECT_SET, offsetOut, nullptr, countOut, nullptr ) >= 0)
                         {
                             // read the LOS data for a single frame into the memory array

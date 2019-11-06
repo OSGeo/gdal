@@ -76,20 +76,36 @@ private:
                               char**& nvList ) const;
 
     /**
-     * Set the Orthographic projection parameters
-     * @param ecfReference Reference location in ECEF, usually a satellite
-     *                     ephemeris.
-     * @return true
+     * Set the projection parameters for WGS-84 lat-lon
+     * a.k. ESPG:4326.
+     * @return OGRerr (from ogr_core.h) OGRERR_NONE is the desired result
      */
-    bool setOrthographicOgrSpatialRef( const m3d::Vector& ecfReference );
+    OGRErr setWgs84OgrSpatialRef();
 
     /**
-     * Set the Orthographic projection parameters for WGS-84 lat-lon
-     * a.k. ESPG:4326.
-     * @return true
+     * Set the projection parameters for the NSPER (Near side perspective frame)
+     * @param lat  Geocentric latitude in degrees
+     * @param lon  Geocentric longitude in degrees
+     * @param altitude_m Altitude above the Earth in meters.
+     * @return OGRerr (from ogr_core.h) OGRERR_NONE is the desired result
      */
-    bool setWgs84OgrSpatialRef();
+    OGRErr setNsperOgrSpatialRef( double lat, double lon, double altitude_m );
 
+    /**
+     * Set the projection from user specification.
+     * @param userStr: User string in Proj format or WKT or GDAL short name
+     * @return OGRerr (from ogr_core.h) OGRERR_NONE is the desired result
+     */
+    OGRErr setUserOgrSpatialRef( const CPLString& userStr );
+
+    /**
+     * Build the OGR spatial reference transform given a Well Known Text
+     * reference system format.
+     * @param ogrWkt Well Known Text reference system
+     * @return The transform (use delete operator to clean up)
+     *         or nullptr if unable to build it.
+     */
+    OGRCoordinateTransformation* buildGcpOgrXform( const std::string ogrWkt );
 
     /**
      * Build the Ground Control Points from the GEO grid for the projection.
@@ -109,6 +125,23 @@ private:
     // pointer to GCP array and count of the number of elements
     GDAL_GCP    *pasGCPList_;
     int         nGCPCount_;
+
+    // flag indicating if open option GCP_MAX set on command line
+    // if so then suppress warning
+    bool userSetGcpMax_;
+
+    // Projection to use for GCP transformation
+    //   PROJ_WGS84: Default WGS84 lat, lon coordinates
+    //   PROJ_NSPER: Near-side perspective using the satPosEcf  attribute
+    //   PROJ_USER:  User specified projection in 'proj' format
+    enum projection_t { PROJ_WGS84, PROJ_NSPER, PROJ_USER } gcpProjection_ ;
+
+    // User specified projection string -- in effect if
+    //     gcpProjection_ == PROJ_USER
+    std::string userProjectionStr_;
+
+    // GCP Transform for specified projection -- if gcpProjection_ != PROJ_WGS84
+    OGRCoordinateTransformation* gcpXform_;
 
     // returns map X, Y for 40 deg N, 120 W
     std::pair<double, double> earthTest( const m3d::Vector& satellite );

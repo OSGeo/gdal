@@ -63,6 +63,18 @@ public:
     bool getImageDimensions( unsigned frameIndex, int* rows, int* cols );
 
     /**
+     * Set or change the number of rows which corresponds to the Y dimension.
+     * @param rows New number of rows, must be a positive integer.
+     */
+    void setRows( int rows ) {nImageRows_ = rows;}
+
+    /**
+     * Set or change the number of columns which corresponds to the X dimension.
+     * @param cols  New number of columns, must be a positive integer.
+     */
+    void setColumns( int cols ) {nImageColumns_ = cols;}
+
+    /**
      * Retrieves the line-of-sight grid and associated attributes and checks for
      * completeness.  The getFrameMetaData() and getImageDimensions() methods
      * must be called before calling this method.
@@ -110,16 +122,20 @@ public:
                                  const std::string& attrName,
                                  char** val );
 
-    int fillAttrMap( hid_t h5Hid, Hdf5rAttributeBase::H5AttrMap_t& attrMap ) const;
+    int fillAttrMap( hid_t h5Hid,
+    		         Hdf5rAttributeBase::H5AttrMap_t& attrMap,
+					 bool warnMissing ) const;
 
-    int fillFileAttrMap( Hdf5rFileAttributes::H5AttrMap_t& fileAttrMap ) const
+    int fillFileAttrMap( Hdf5rFileAttributes::H5AttrMap_t& fileAttrMap,
+    		             bool warnMissing ) const
     {
-        return fillAttrMap( rootGroupHid_, fileAttrMap );
+        return fillAttrMap( rootGroupHid_, fileAttrMap, warnMissing );
     }
 
-    int fillGeoLocAttrMap( Hdf5rAttributeBase::H5AttrMap_t& geoLocAttrMap ) const
+    int fillGeoLocAttrMap( Hdf5rAttributeBase::H5AttrMap_t& geoLocAttrMap,
+    		               bool warnMissing ) const
     {
-        return fillAttrMap( geoLocationDataHid_, geoLocAttrMap );
+        return fillAttrMap( geoLocationDataHid_, geoLocAttrMap, warnMissing );
     }
 
     /**

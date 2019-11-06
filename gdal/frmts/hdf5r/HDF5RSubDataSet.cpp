@@ -75,7 +75,11 @@ HDF5RSubDataSet::HDF5RSubDataSet()
 : scid_( -1 ),
   sca_( -1 ),
   pasGCPList_( nullptr ),
-  nGCPCount_( 0 )
+  nGCPCount_( 0 ),
+  userSetGcpMax_( true ),
+  gcpProjection_( PROJ_WGS84 ),
+  userProjectionStr_(),
+  gcpXform_( nullptr )
 {
 }
 
@@ -88,8 +92,12 @@ HDF5RSubDataSet::~HDF5RSubDataSet()
     {
         GDALDeinitGCPs(nGCPCount_, pasGCPList_ );
     }
+
     delete [] pasGCPList_;
     nGCPCount_ = 0;
+
+    delete gcpXform_;
+    gcpXform_ = nullptr;
 }
 
 //******************************************************************************
@@ -190,10 +198,18 @@ bool HDF5RSubDataSet::loadHdf5File( unsigned frameIndex,
     int32_t noGcp = FALSE;  // FALSE == set GCP's, TRUE == set affine xform
     openOptions->getValue( "NO_GCP", &noGcp );
 
-    int32_t gcpMax = 225 ;  // Max GCPs allowed, 0 or negative ==> no maximum
+    int32_t gcpMax = -225 ;  // Max GCPs allowed, 0 or negative ==> no maximum
     openOptions->getValue( "GCP_MAX", &gcpMax );
+    if (gcpMax < 0)
+    {
+    	gcpMax = -gcpMax;
+    	userSetGcpMax_ = false;
+    }
 
-    int32_t attrRw = TRUE; // FALSE == attributes from file
+    int32_t attrWarnMissing = 1; // Warn on missing HDF5-R attributes
+    openOptions->getValue( "ATTR_WARN", &attrWarnMissing );
+
+    int32_t attrRw = TRUE; // FALSE == attributes from fattrWarnMissing
                            // TRUE  == substitute single frame values
     openOptions->getValue( "ATTR_RW", &attrRw );
 
@@ -204,6 +220,19 @@ bool HDF5RSubDataSet::loadHdf5File( unsigned frameIndex,
     openOptions->getValue( "BLANK_OFF_EARTH", &blankOffEarth );
     hdf5rReader_->blankOffEarthOnRead( blankOffEarth );
 
+
+
+    // Set the requested GCP projection from the open option
+    // constructed default is WGS84 if not specified
+    openOptions->getValue( "PROJ", &userProjectionStr_ );
+    if (!userProjectionStr_.empty())
+    {
+        if (userProjectionStr_ == "nsper")
+        	gcpProjection_ = PROJ_NSPER;
+        else if (userProjectionStr_ != "wgs84" )
+        	gcpProjection_ = PROJ_USER;
+    }
+
     //--------------------------------------------------------------------------
     // Get image dimensions for selected frame and set GDAL raster size
     // if no image then we abandon reading the HDF5-R file
@@ -212,28 +241,18 @@ bool HDF5RSubDataSet::loadHdf5File( unsigned frameIndex,
                                           &nRasterYSize,   // rows
                                           &nRasterXSize )) // cols
     {
-        // Create the GDAL RasterBand -- data is not loaded until the
-        // IReadBlock method() is called, so no status to check here
-        SetBand( 1, new HDF5RRasterBand( this,             // pointer to the DataSet
-                                         1,                // band number starts at 1
-                                         frameIndex,
-                                         nRasterYSize,     // rows a.k.a lines
-                                         nRasterXSize ) ); // cols a.k.a detectors in line
-        CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() set nRasterYSize (rows): %d nRrasterXsize (cols): %d",
-                  nRasterYSize, nRasterXSize );
-
         //--------------------------------------------------------------------------
         // get file level attributes from the HDF5 file
         //--------------------------------------------------------------------------
         // get the HDF5-R file attribute map which contains default values
         Hdf5rFileAttributes* fileAttributes = new Hdf5rFileAttributes;
-        hdf5rReader_->fillFileAttrMap( fileAttributes->getAttrMap() );
+        hdf5rReader_->fillFileAttrMap( fileAttributes->getAttrMap(), attrWarnMissing );
 
         //--------------------------------------------------------------------------
         // get geoLocationData attributes from the HDF5 file
         //--------------------------------------------------------------------------
         Hdf5rGeoLocAttributes* geoLocAttributes = new Hdf5rGeoLocAttributes;
-        hdf5rReader_->fillGeoLocAttrMap( geoLocAttributes->getAttrMap() );
+        hdf5rReader_->fillGeoLocAttrMap( geoLocAttributes->getAttrMap(), attrWarnMissing );
 
         //--------------------------------------------------------------------------
         // get frame attributes from the HDF5-R file
@@ -243,6 +262,22 @@ bool HDF5RSubDataSet::loadHdf5File( unsigned frameIndex,
         {
             CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() frame Attributes: \n%s",
                       hdf5rFrameData->getFrameDataConstPtr()->toString().c_str() );
+        }
+
+        //--------------------------------------------------------------------------
+        // Frame attributes contain the true raster size for the number of lines
+        //--------------------------------------------------------------------------
+        int32_t numLines = hdf5rFrameData->getFrameDataConstPtr()->numLines;
+        int32_t numChannels = hdf5rFrameData->getFrameDataConstPtr()->numChannels;
+        if (numLines < nRasterYSize)
+        {
+        	nRasterYSize = numLines;
+        	hdf5rReader_->setRows( numLines );
+        }
+        if (numChannels < nRasterXSize)
+        {
+        	nRasterXSize = numChannels;
+        	hdf5rReader_->setColumns( numChannels );
         }
 
         //--------------------------------------------------------------------------
@@ -261,6 +296,18 @@ bool HDF5RSubDataSet::loadHdf5File( unsigned frameIndex,
             hdf5rReader_->getSummaryMetadata( errorInfoVect, seqInfoVect );
         }
 
+        //--------------------------------------------------------------------------
+        // Create the GDAL RasterBand -- data is not loaded until the
+        // IReadBlock method() is called, so no status to check here
+        //--------------------------------------------------------------------------
+        SetBand( 1, new HDF5RRasterBand( this,             // pointer to the DataSet
+                                         1,                // band number starts at 1
+                                         frameIndex,
+                                         nRasterYSize,     // rows a.k.a lines
+                                         nRasterXSize ) ); // cols a.k.a detectors in line
+        CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() set nRasterYSize (rows): %d nRrasterXsize (cols): %d",
+                  nRasterYSize, nRasterXSize );
+
         //----------------------------------------------------------------------
         //  get (and check) the LOS grid -- then build GCPs
         //----------------------------------------------------------------------
@@ -273,8 +320,28 @@ bool HDF5RSubDataSet::loadHdf5File( unsigned frameIndex,
         {
             CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() getLosGrid succeeded." );
 
-            // Set the OGR projection reference to WGS-84 lat-lon
-            setWgs84OgrSpatialRef();
+            // Set the OGR projection reference
+            if (gcpProjection_ == PROJ_WGS84)
+            {
+            	setWgs84OgrSpatialRef();
+            }
+            else
+            {
+            	if (gcpProjection_ == PROJ_NSPER)
+            	{
+            		std::pair<double, double> lat_lon = earth_.toGeocentricLatLon( satEcfMeters );
+            		setNsperOgrSpatialRef( lat_lon.first * Earth::radToDeg,
+            				lat_lon.second * Earth::radToDeg,
+							satEcfMeters.magnitude() - earth_.getEquatorialRadius());
+            	}
+            	else
+            	{
+            		setUserOgrSpatialRef( userProjectionStr_ );
+            	}
+
+            	// get the GCP transform from WGS84 to the specified frame
+            	gcpXform_ = buildGcpOgrXform( ogcWktProjectionInfo_ );
+            }
 
             //------------------------------------------------------------------
             // if a satellite longitude override was supplied with the SAT_LON
@@ -412,58 +479,129 @@ bool HDF5RSubDataSet::loadHdf5File( unsigned frameIndex,
 }
 
 //******************************************************************************
-// Build the WKT string for an Orthographic projection
+// Build the WKT string for WGS-84 lat-lon projection
 //******************************************************************************
-bool HDF5RSubDataSet::setOrthographicOgrSpatialRef( const m3d::Vector& ecfReference )
+OGRErr HDF5RSubDataSet::setWgs84OgrSpatialRef()
 {
-    // get the geodetic lat,lon reference location
-    std::vector<double> latLonAlt = earth_.toLatLonAlt( ecfReference );
-
-    // Set the transform reference location
-    earth_.setOrthoGraphicReference( ecfReference );
-
     // Set up the OGR Spatial Reference info
     // From http://www.gdal.org/osr_tutorial.html
     OGRSpatialReference oSRS;
-    oSRS.SetProjCS( "Orthographic" );
-    oSRS.SetWellKnownGeogCS( "WGS84" );
-    oSRS.SetOrthographic( latLonAlt[0] * Earth::radToDeg,
-                          latLonAlt[1] * Earth::radToDeg,
-                          0.0, 0.0 /*false northing and easting*/ );
-    oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+    OGRErr rc = oSRS.SetWellKnownGeogCS( "WGS84" );
 
-    // Extract the "Well Known Text" string and save in the Dataset attribute
-    // for use by the GetProjectionRef() method
-    char* wktStr;
-    oSRS.exportToWkt( &wktStr );
-    ogcWktProjectionInfo_ = wktStr; // to std::string (not a pointer copy)
-    CPLFree( wktStr );
+    if (rc == OGRERR_NONE)
+    {
+        // Extract the "Well Known Text" string and save in the Dataset attribute
+        // for use by the GetProjectionRef() method
+        char *wktStr;
+        oSRS.exportToWkt(&wktStr);
+        ogcWktProjectionInfo_ = wktStr; // to std::string (not a pointer copy)
+        CPLFree(wktStr);
+        CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() OGR string: %s",
+                  ogcWktProjectionInfo_.c_str() );
+    }
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "HDF5RSubDataSet::setWgs84OgrSpatialRef()"
+                  " failed to set WGS84 reference. OGRErr code: %d", rc );
+    }
 
-    CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() OGR string: %s", ogcWktProjectionInfo_.c_str() );
-
-    return true;
+    return rc;
 }
 
 //******************************************************************************
-// Build the WKT string for WGS-84 lat-lon projection
+// Set the WKT string for Near Side Perspective Projection
 //******************************************************************************
-bool HDF5RSubDataSet::setWgs84OgrSpatialRef()
+OGRErr HDF5RSubDataSet::setNsperOgrSpatialRef(double lat, double lon, double altitude_m)
 {
-    // Set up the OGR Spatial Reference info
-    // From http://www.gdal.org/osr_tutorial.html
-    OGRSpatialReference oSRS;
-    oSRS.SetWellKnownGeogCS( "WGS84" );
+	// Set up the OGR Spatial Reference info
+	// From http://www.gdal.org/osr_tutorial.html
+	OGRSpatialReference oSRS;
 
-    // Extract the "Well Known Text" string and save in the Dataset attribute
-    // for use by the GetProjectionRef() method
-    char* wktStr;
-    oSRS.exportToWkt( &wktStr );
-    ogcWktProjectionInfo_ = wktStr; // to std::string (not a pointer copy)
-    CPLFree( wktStr );
+	CPLString oProj4String;
+	oProj4String.Printf( "+proj=nsper +wktext +lat_0=%.18g +lon_0=%.18g +h=%.18g "
+			"+x_0=0.0 +y_0=0.0 +ellps=WGS84 +units=m",
+			lat, lon, altitude_m );
 
-    CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() OGR string: %s", ogcWktProjectionInfo_.c_str() );
+	OGRErr rc = oSRS.SetFromUserInput( oProj4String.c_str() );
 
-    return true;
+	if (rc == OGRERR_NONE)
+	{
+		char *pszWKT = NULL;
+		oSRS.exportToWkt( &pszWKT );
+		//printf( "NSPER WKT: %s\n", pszWKT );
+		ogcWktProjectionInfo_ = pszWKT;
+		CPLFree(pszWKT);
+
+		CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() NSPER OGR string: %s",
+				ogcWktProjectionInfo_.c_str() );
+	}
+	else
+	{
+		CPLError( CE_Warning, CPLE_AppDefined,
+				"HDF5RSubDataSet::setWgs84OgrSpatialRef()"
+				" failed to set NSPER reference. OGRErr code: %d", rc );
+	}
+
+	return rc;
+}
+
+//******************************************************************************
+// Set the WKT string from user Open Option input
+//******************************************************************************
+OGRErr HDF5RSubDataSet::setUserOgrSpatialRef(const CPLString& userStr)
+{
+	// Set up the OGR Spatial Reference info
+	// From http://www.gdal.org/osr_tutorial.html
+	OGRSpatialReference oSRS;
+
+	OGRErr rc = oSRS.SetFromUserInput( userStr.c_str() );
+
+	if (rc == OGRERR_NONE)
+	{
+		char *pszWKT = NULL;
+		oSRS.exportToWkt( &pszWKT );
+		//printf( "USER WKT: %s\n", pszWKT );
+		ogcWktProjectionInfo_ = pszWKT;
+		CPLFree(pszWKT);
+
+		CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::Open() USER OGR string: %s",
+				ogcWktProjectionInfo_.c_str() );
+	}
+	else
+	{
+		CPLError( CE_Warning, CPLE_AppDefined,
+				"HDF5RSubDataSet::setWgs84OgrSpatialRef()"
+				" failed to set USER reference. OGRErr code: %d", rc );
+	}
+
+	return rc;
+}
+
+//******************************************************************************
+// Get the OGR spatial reference transform from WGS84 to target frame
+//******************************************************************************
+OGRCoordinateTransformation* HDF5RSubDataSet::buildGcpOgrXform( const std::string ogrWkt )
+{
+	// Source (the HDF5-R GEO-location grid is always in WGS84 lat, lon
+    OGRSpatialReference oSrcSRS;
+    oSrcSRS.SetWellKnownGeogCS( "WGS84" );
+
+    // Target supplied by caller
+    OGRSpatialReference oTgtSRS;
+    oTgtSRS.SetFromUserInput( ogrWkt.c_str() );
+
+    OGRCoordinateTransformation* rc = OGRCreateCoordinateTransformation( &oSrcSRS,
+    		                                                             &oTgtSRS );
+    if (!rc)
+    {
+    	CPLError( CE_Warning, CPLE_AppDefined,
+    			"HDF5RSubDataSet::buildGcpOgrXform()"
+    			" failed to build transform from WGS84 to %s."
+    		    " Sticking with GCPs in the WGS84 reference", ogrWkt.c_str() );
+    }
+
+    return rc;
 }
 
 //******************************************************************************
@@ -558,16 +696,19 @@ bool HDF5RSubDataSet::loadGdalTiffTimeTag( const Hdf5rFrameData::FrameData_t* fr
         return false;
 
     // -------------------------- TIFFTAG_DATETIME -----------------------
-    // Convert time to the Unix broken down time format at midnight
-    struct tm tmstruct;
-    bzero( &tmstruct, sizeof(struct tm) );
-    tmstruct.tm_mday = frameData->day;
-    tmstruct.tm_year = frameData->year - 1900;
+    // Compute Unix Epoch time from year, day-of-year, and seconds-of-day,
+    // and the cumulative number of leap days
+    int dyear = frameData->year - 1970;
+    time_t utime = 86400 * (365 * dyear + (dyear-1)/4 + frameData->day)
+    		+ int( frameData->secondsOfDay );
+    CPLDebug( HDF5R_DEBUG_STR, "HDF5RSubDataSet::loadGdalTiffTimeTag"
+              "Unix epoch time: %ld", utime );
 
     // Use mktime to get unix time at start of day, then add seconds of
     // day and regenerate the broken down time
-    time_t utime = mktime( &tmstruct ) + int( frameData->secondsOfDay );
-    localtime_r( &utime, &tmstruct );
+    struct tm tmstruct;
+    bzero( &tmstruct, sizeof(struct tm) );
+    gmtime_r( &utime, &tmstruct );
 
     // build and set the TIFF time tag string
     std::ostringstream oss;
@@ -578,7 +719,7 @@ bool HDF5RSubDataSet::loadGdalTiffTimeTag( const Hdf5rFrameData::FrameData_t* fr
     << std::setw( 2 ) << tmstruct.tm_hour << ":"
     << std::setw( 2 ) << tmstruct.tm_min << ":"
     << std::setw( 2 ) << tmstruct.tm_sec;
-    nvList = CSLSetNameValue( nvList, "TIFFTAG_DATETIME",      oss.str().c_str() );
+    nvList = CSLSetNameValue( nvList, "TIFFTAG_DATETIME", oss.str().c_str() );
 
     return true;
 }
@@ -611,7 +752,8 @@ int HDF5RSubDataSet::buildGcpListFromLosGrid( const Hdf5rLosGrid_t& losGrid,
             factor1d = int(std::ceil( std::sqrt( double(szGcpList) / double(gcpMax) ) ));
             szGcpList = ((nPixels + factor1d - 1)/factor1d) * ((nLines + factor1d - 1)/factor1d);
 
-            CPLError( CE_Warning, CPLE_AppDefined,
+            if (!userSetGcpMax_)
+              CPLError( CE_Warning, CPLE_AppDefined,
                       "HDF5RSubDataSet::buildGcpListFromLosGrid: Limited the GCP count.\n"
                       "\t GCP_MAX=%d Input Count=%d Reduction factor=%d (each dimension)\n"
                       "\t Resulting count=%d from (rows=%d/%d=%d  * columns=%d/%d=%d)\n"
@@ -635,7 +777,7 @@ int HDF5RSubDataSet::buildGcpListFromLosGrid( const Hdf5rLosGrid_t& losGrid,
         GDALInitGCPs( szGcpList, pasGCPList_ );
 
         // iterate over lines incrementing by the 1D reduction factor
-        // do not include overhang grid point (the -1)
+        // do not include overhang grid point (the nlines-1)
         for (int iLine=0; iLine<nLines-1; iLine += factor1d)
         {
             // iterate over pixels
@@ -658,8 +800,16 @@ int HDF5RSubDataSet::buildGcpListFromLosGrid( const Hdf5rLosGrid_t& losGrid,
                         gcp.pszId = CPLStrdup( std::to_string( iGcp ).c_str() );
                         gcp.dfGCPPixel = double( iPixel * losGrid.getColStepSize() + 0.5 );
                         gcp.dfGCPLine  = double( iLine  * losGrid.getRowStepSize() + 0.5 );
-                        gcp.dfGCPX = losData.map_X;
-                        gcp.dfGCPY = losData.map_Y;
+
+                        double x = losData.map_X;
+                        double y = losData.map_Y;
+
+                        if (gcpXform_)
+                          gcpXform_->Transform( 1, &x, &y );
+
+                        gcp.dfGCPX = x;
+                        gcp.dfGCPY = y;
+
                         gcp.dfGCPZ = 0.0;
 
                         // debug print of first point

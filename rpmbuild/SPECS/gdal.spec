@@ -24,7 +24,7 @@
 %global proj_somaj 7
 
 # Tests can be of a different version
-%global testversion 2.2.4
+%global testversion 2.4.2
 %global run_tests 0
 
 %global bashcompletiondir %(pkg-config --variable=compatdir bash-completion)
@@ -61,8 +61,8 @@
 %endif
 
 Name:		gdal
-Version:	2.3.3
-Release:	3%{?dist}%{?bootstrap:.%{bootstrap}.bootstrap}
+Version:	3.0.2.hdf5r.1
+Release:	1%{?dist}%{?bootstrap:.%{bootstrap}.bootstrap}
 Summary:	GIS file format library
 Group:		System Environment/Libraries
 License:	MIT
@@ -282,25 +282,28 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 	--datadir=%{_datadir}/%{name}/ \
 	--includedir=%{_includedir}/%{name}/ \
 	--prefix=%{_prefix}	\
-	--with-hdf5		\
-	--without-jpeg12	\
-	--without-mdb		\
-	--with-netcdf		\
-	--without-msg		\
-	--with-png		\
-	--with-threads		\
+	--with-hdf5 \
+    --with-hdf4 \
+	--without-jpeg12 \
+	--without-mdb \
+	--with-netcdf \
+	--without-msg \
+	--with-png \
+	--with-threads \
 %if 0%{?rhel} > 6
-        --with-xerces		\
+    --with-xerces \
 %endif
-	--enable-shared		\
-	--with-libkml
+	--enable-shared	\
+	--with-libkml \
+    --with-proj \
+    --with-python
 
 POPPLER_OPTS="POPPLER_0_20_OR_LATER=yes POPPLER_0_23_OR_LATER=yes POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes"
 %if 0%{?fedora} > 26 || 0%{?rhel} > 7
 POPPLER_OPTS="$POPPLER_OPTS POPPLER_0_58_OR_LATER=yes"
 %endif
 
-make %{?_smp_mflags} $POPPLER_OPTS
+make -j8 %{?_smp_mflags} $POPPLER_OPTS
 
 make man
 make docs
@@ -464,9 +467,33 @@ popd
 %{_bindir}/testepsg
 %{_bindir}/gnmanalyse
 %{_bindir}/gnmmanage
+%{_bindir}/epsg_tr.py
+%{_bindir}/esri2wkt.py
+%{_bindir}/gcps2vec.py
+%{_bindir}/gcps2wld.py
+%{_bindir}/gdal2tiles.py
+%{_bindir}/gdal2xyz.py
+%{_bindir}/gdal_auth.py
+%{_bindir}/gdal_calc.py
+%{_bindir}/gdal_edit.py
+%{_bindir}/gdal_fillnodata.py
+%{_bindir}/gdal_merge.py
+%{_bindir}/gdal_pansharpen.py
+%{_bindir}/gdal_polygonize.py
+%{_bindir}/gdal_proximity.py
+%{_bindir}/gdal_retile.py
+%{_bindir}/gdal_sieve.py
+%{_bindir}/gdalchksum.py
+%{_bindir}/gdalcompare.py
+%{_bindir}/gdalident.py
+%{_bindir}/gdalimport.py
+%{_bindir}/gdalmove.py
+%{_bindir}/mkgraticule.py
+%{_bindir}/pct2rgb.py
+%{_bindir}/rgb2pct.py
 %{_mandir}/man1/gdal*.1*
 %exclude %{_libdir}/libgdal.so.*
-%exclude /usr/lib64/libgdal.so.20.4.3
+#%exclude /usr/lib64/libgdal.so.20.4.3
 %exclude %{_mandir}/man1/gdal-config.1*
 %exclude %{_mandir}/man1/gdal2tiles.1*
 %exclude %{_mandir}/man1/gdal_fillnodata.1*
@@ -480,11 +507,20 @@ popd
 %exclude /usr/share/gdal
 %exclude %{_bindir}/%{name}-config
 %exclude %{_bindir}/%{name}-config-%{cpuarch}
-#/usr%{bashcompletiondir}/gdal-bash-completion.sh
+/usr%{bashcompletiondir}/gdal-bash-completion.sh
 
 %files libs
 %doc LICENSE.TXT NEWS
 %{_libdir}/libgdal.so.*
+%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/PKG-INFO
+%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/SOURCES.txt
+%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/dependency_links.txt
+%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/not-zip-safe
+%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/top_level.txt
+%{_libdir}/python2.7/site-packages/gdal*
+%{_libdir}/python2.7/site-packages/osr*
+%{_libdir}/python2.7/site-packages/ogr*
+%{_libdir}/python2.7/site-packages/osgeo/*
 %{_datadir}/%{name}
 #TODO: Possibly remove files like .dxf, .dgn, ...
 %dir %{_libdir}/%{name}plugins
