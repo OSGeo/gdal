@@ -283,20 +283,20 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 	--includedir=%{_includedir}/%{name}/ \
 	--prefix=%{_prefix}	\
 	--with-hdf5 \
-    --with-hdf4 \
+        --with-hdf4 \
 	--without-jpeg12 \
 	--without-mdb \
 	--with-netcdf \
 	--without-msg \
 	--with-png \
 	--with-threads \
+        --with-proj=/home/nielson/build/PROJ6 \
 %if 0%{?rhel} > 6
-    --with-xerces \
+        --with-xerces \
 %endif
 	--enable-shared	\
 	--with-libkml \
-    --with-proj \
-    --with-python
+        --with-python
 
 POPPLER_OPTS="POPPLER_0_20_OR_LATER=yes POPPLER_0_23_OR_LATER=yes POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes"
 %if 0%{?fedora} > 26 || 0%{?rhel} > 7
@@ -512,11 +512,11 @@ popd
 %files libs
 %doc LICENSE.TXT NEWS
 %{_libdir}/libgdal.so.*
-%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/PKG-INFO
-%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/SOURCES.txt
-%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/dependency_links.txt
-%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/not-zip-safe
-%{_libdir}/python2.7/site-packages/GDAL-2.4.2-py2.7.egg-info/top_level.txt
+%{_libdir}/python2.7/site-packages/GDAL-3.0.2-py2.7.egg-info/PKG-INFO
+%{_libdir}/python2.7/site-packages/GDAL-3.0.2-py2.7.egg-info/SOURCES.txt
+%{_libdir}/python2.7/site-packages/GDAL-3.0.2-py2.7.egg-info/dependency_links.txt
+%{_libdir}/python2.7/site-packages/GDAL-3.0.2-py2.7.egg-info/not-zip-safe
+%{_libdir}/python2.7/site-packages/GDAL-3.0.2-py2.7.egg-info/top_level.txt
 %{_libdir}/python2.7/site-packages/gdal*
 %{_libdir}/python2.7/site-packages/osr*
 %{_libdir}/python2.7/site-packages/ogr*
