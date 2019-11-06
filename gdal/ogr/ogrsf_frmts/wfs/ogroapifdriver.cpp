@@ -125,6 +125,7 @@ class OGROAPIFLayer final: public OGRLayer
         bool            m_bFilterMustBeClientSideEvaluated = false;
         bool            m_bGotQueriableAttributes = false;
         std::set<CPLString> m_aoSetQueriableAttributes;
+        bool            m_bHasCQLText = false;
         GIntBig         m_nTotalFeatureCount = -1;
         bool            m_bHasIntIdMember = false;
         bool            m_bHasStringIdMember = false;
@@ -132,11 +133,13 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       m_osDescribedByURL{};
         CPLString       m_osDescribedByType{};
         bool            m_bDescribedByIsXML = false;
+        CPLString       m_osQueryablesURL{};
 
         void            EstablishFeatureDefn();
         OGRFeature     *GetNextRawFeature();
         CPLString       AddFilters(const CPLString& osURL);
         CPLString       BuildFilter(const swq_expr_node* poNode);
+        CPLString       BuildFilterCQLText(const swq_expr_node* poNode);
         bool            SupportsResultTypeHits();
         void            GetQueriableAttributes();
         void            GetSchema();
@@ -795,9 +798,10 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
             {
                 continue;
             }
-            if( oLink.GetString("rel") == "describedBy" )
+            const auto osRel(oLink.GetString("rel"));
+            const auto osURL = oLink.GetString("href");
+            if( osRel == "describedBy" )
             {
-                const auto osURL = oLink.GetString("href");
                 auto type = oLink.GetString("type");
                 if (type == MEDIA_TYPE_TEXT_XML ||
                     type == MEDIA_TYPE_APPLICATION_XML )
@@ -805,14 +809,18 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                     m_osDescribedByURL = osURL;
                     m_osDescribedByType = type;
                     m_bDescribedByIsXML = true;
-                    break;
                 }
-                else if( type == MEDIA_TYPE_JSON_SCHEMA )
+                else if( type == MEDIA_TYPE_JSON_SCHEMA &&
+                         m_osDescribedByURL.empty() )
                 {
                     m_osDescribedByURL = osURL;
                     m_osDescribedByType = type;
                     m_bDescribedByIsXML = false;
                 }
+            }
+            else if( osRel == "queryables" )
+            {
+                m_osQueryablesURL = m_poDS->ReinjectAuthInURL(osURL);
             }
         }
         if( !m_osDescribedByURL.empty() )
@@ -1423,7 +1431,7 @@ static CPLString SerializeDateTime(int nDateComponents,
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                            BuildFilter()                             */
 /************************************************************************/
 
 CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node* poNode)
@@ -1595,6 +1603,146 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node* poNode)
 }
 
 /************************************************************************/
+/*                       BuildFilterCQLText()                           */
+/************************************************************************/
+
+CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node* poNode)
+{
+    if( poNode->eNodeType == SNT_OPERATION &&
+        poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2 )
+    {
+        const auto leftExpr = poNode->papoSubExpr[0];
+        const auto rightExpr = poNode->papoSubExpr[1];
+
+         // For AND, we can deal with a failure in one of the branch
+        // since client-side will do that extra filtering
+        CPLString osFilter1 = BuildFilterCQLText(leftExpr);
+        CPLString osFilter2 = BuildFilterCQLText(rightExpr);
+        if( !osFilter1.empty() && !osFilter2.empty() )
+        {
+            return '(' + osFilter1 + ") AND (" + osFilter2 + ')';
+        }
+        else if( !osFilter1.empty() )
+            return osFilter1;
+        else
+            return osFilter2;
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_OR && poNode->nSubExprCount == 2 )
+    {
+        const auto leftExpr = poNode->papoSubExpr[0];
+        const auto rightExpr = poNode->papoSubExpr[1];
+
+        CPLString osFilter1 = BuildFilterCQLText(leftExpr);
+        CPLString osFilter2 = BuildFilterCQLText(rightExpr);
+        if( !osFilter1.empty() && !osFilter2.empty() )
+        {
+            return '(' + osFilter1 + ") OR (" + osFilter2 + ')';
+        }
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_NOT && poNode->nSubExprCount == 1 )
+    {
+        const auto childExpr = poNode->papoSubExpr[0];
+        CPLString osFilterChild = BuildFilterCQLText(childExpr);
+        if( !osFilterChild.empty() )
+        {
+            return "NOT (" + osFilterChild + ')';
+        }
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_ISNULL )
+    {
+        const auto childExpr = poNode->papoSubExpr[0];
+        CPLString osFilterChild = BuildFilterCQLText(childExpr);
+        if( !osFilterChild.empty() )
+        {
+            return '(' + osFilterChild + " IS NULL)";
+        }
+    }
+    else if (poNode->eNodeType == SNT_OPERATION &&
+             (poNode->nOperation == SWQ_EQ ||
+              poNode->nOperation == SWQ_NE ||
+              poNode->nOperation == SWQ_GT ||
+              poNode->nOperation == SWQ_GE ||
+              poNode->nOperation == SWQ_LT ||
+              poNode->nOperation == SWQ_LE ||
+              poNode->nOperation == SWQ_LIKE) &&
+             poNode->nSubExprCount == 2 &&
+             poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+             poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT )
+    {
+        const int nFieldIdx = poNode->papoSubExpr[0]->field_index;
+        const OGRFieldDefn* poFieldDefn = GetLayerDefn()->GetFieldDefn(nFieldIdx);
+        if( m_bHasStringIdMember &&
+            poNode->nOperation == SWQ_EQ &&
+            strcmp(poFieldDefn->GetNameRef(), "id") == 0 &&
+            poNode->papoSubExpr[1]->field_type == SWQ_STRING )
+        {
+            m_osGetID = poNode->papoSubExpr[1]->string_value;
+        }
+        else if( poFieldDefn &&
+                 m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
+                    m_aoSetQueriableAttributes.end() )
+        {
+            CPLString osRet(poFieldDefn->GetNameRef());
+            switch(poNode->nOperation )
+            {
+                case SWQ_EQ: osRet += " = "; break;
+                case SWQ_NE: osRet += " <> "; break;
+                case SWQ_GT: osRet += " > "; break;
+                case SWQ_GE: osRet += " >= "; break;
+                case SWQ_LT: osRet += " < "; break;
+                case SWQ_LE: osRet += " <= "; break;
+                case SWQ_LIKE: osRet += " LIKE "; break;
+                default: CPLAssert(false); break;
+            }
+            if( poNode->papoSubExpr[1]->field_type == SWQ_STRING )
+            {
+                osRet += '\'';
+                osRet += CPLString(poNode->papoSubExpr[1]->string_value).replaceAll('\'', "''");
+                osRet += '\'';
+                return osRet;
+            }
+            if( poNode->papoSubExpr[1]->field_type == SWQ_INTEGER ||
+                poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64 )
+            {
+                osRet += CPLSPrintf(CPL_FRMT_GIB,
+                                    poNode->papoSubExpr[1]->int_value);
+                return osRet;
+            }
+            if( poNode->papoSubExpr[1]->field_type == SWQ_FLOAT )
+            {
+                osRet += CPLSPrintf("%.16g",
+                                    poNode->papoSubExpr[1]->float_value);
+                return osRet;
+            }
+            if( poNode->papoSubExpr[1]->field_type == SWQ_TIMESTAMP )
+            {
+                int nDateComponents;
+                int nYear = 0, nMonth = 0, nDay = 0, nHour = 0, nMinute = 0, nSecond = 0;
+                if( (poFieldDefn->GetType() == OFTDate ||
+                     poFieldDefn->GetType() == OFTDateTime) &&
+                    (nDateComponents = OGRWF3ParseDateTime(
+                        poNode->papoSubExpr[1]->string_value,
+                        nYear, nMonth, nDay, nHour, nMinute, nSecond)) >= 3 )
+                {
+                    CPLString osDT(SerializeDateTime(nDateComponents,
+                                        nYear, nMonth, nDay, nHour, nMinute, nSecond));
+                    osRet += '\'';
+                    osRet += osDT;
+                    osRet += '\'';
+                    return osRet;
+                }
+            }
+        }
+    }
+
+    m_bFilterMustBeClientSideEvaluated = true;
+    return CPLString();
+}
+
+/************************************************************************/
 /*                        GetQueriableAttributes()                      */
 /************************************************************************/
 
@@ -1603,29 +1751,69 @@ void OGROAPIFLayer::GetQueriableAttributes()
     if( m_bGotQueriableAttributes )
         return;
     m_bGotQueriableAttributes = true;
-    CPLJSONDocument oDoc = m_poDS->GetAPIDoc();
-    if( oDoc.GetRoot().GetString("openapi").empty() )
+    CPLJSONDocument oAPIDoc = m_poDS->GetAPIDoc();
+    if( oAPIDoc.GetRoot().GetString("openapi").empty() )
         return;
 
-    CPLJSONArray oParameters = oDoc.GetRoot().GetObj("paths")
-                                  .GetObj(m_osPath)
+    CPLJSONObject oPaths = oAPIDoc.GetRoot().GetObj("paths");
+    CPLJSONArray oParameters = oPaths.GetObj(m_osPath)
                                   .GetObj("get")
                                   .GetArray("parameters");
     if( !oParameters.IsValid() )
-        return;
+    {
+        oParameters = oPaths.GetObj("/collections/{collectionId}/items")
+                                  .GetObj("get")
+                                  .GetArray("parameters");
+    }
     for( int i = 0; i < oParameters.Size(); i++ )
     {
         CPLJSONObject oParam = oParameters[i];
         CPLString osRef = oParam.GetString("$ref");
         if( !osRef.empty() && osRef.find("#/") == 0 )
         {
-            oParam = oDoc.GetRoot().GetObj(osRef.substr(2));
+            oParam = oAPIDoc.GetRoot().GetObj(osRef.substr(2));
         }
-        if( oParam.GetString("in") == "query" &&
-            GetLayerDefn()->GetFieldIndex(
-                                oParam.GetString("name").c_str()) >= 0 )
+        if( oParam.GetString("in") == "query" )
         {
-            m_aoSetQueriableAttributes.insert(oParam.GetString("name"));
+            const auto osName(oParam.GetString("name"));
+            if( osName == "filter-lang" )
+            {
+                const auto oEnums = oParam.GetObj("schema").GetArray("enum");
+                for( int j = 0; j < oEnums.Size(); j++ )
+                {
+                    m_bHasCQLText = oEnums[j].ToString() == "cql-text";
+                    if( m_bHasCQLText )
+                        CPLDebug("OAPIF", "CQL text detected");
+                }
+            }
+            else if( GetLayerDefn()->GetFieldIndex(osName.c_str()) >= 0 )
+            {
+                m_aoSetQueriableAttributes.insert(osName);
+            }
+        }
+    }
+
+    // HACK
+    if( CPLTestBool(CPLGetConfigOption("OGR_OAPIF_ALLOW_CQL_TEXT", "NO")) )
+        m_bHasCQLText = true;
+
+    if( m_bHasCQLText )
+    {
+        if( !m_osQueryablesURL.empty() )
+        {
+            CPLJSONDocument oDoc;
+            if( m_poDS->DownloadJSon(m_osQueryablesURL, oDoc) )
+            {
+                auto oQueryables = oDoc.GetRoot().GetArray("queryables");
+                for( int i = 0; i < oQueryables.Size(); i++ )
+                {
+                    const auto osId = oQueryables[i].GetString("id");
+                    if( !osId.empty() )
+                    {
+                        m_aoSetQueriableAttributes.insert(osId);
+                    }
+                }
+            }
         }
     }
 }
@@ -1656,7 +1844,23 @@ OGRErr OGROAPIFLayer::SetAttributeFilter( const char *pszQuery )
 
         poNode->ReplaceBetweenByGEAndLERecurse();
 
-        m_osAttributeFilter = BuildFilter(poNode);
+        if( m_bHasCQLText )
+        {
+            m_osAttributeFilter = BuildFilterCQLText(poNode);
+            if( !m_osAttributeFilter.empty() )
+            {
+                char* pszEscaped = CPLEscapeString(
+                    m_osAttributeFilter, -1, CPLES_URL);
+                m_osAttributeFilter = "filter=";
+                m_osAttributeFilter += pszEscaped;
+                m_osAttributeFilter += "&filter-lang=cql-text";
+                CPLFree(pszEscaped);
+            }
+        }
+        else
+        {
+            m_osAttributeFilter = BuildFilter(poNode);
+        }
         if( m_osAttributeFilter.empty() )
         {
             CPLDebug("OAPIF",
