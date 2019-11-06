@@ -34,7 +34,7 @@
 
 <tres>
     <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.2, Table P-11 -->
-    <tre name="ACCHZB" md_prefix="NITF_ACCHZB_" minlength="11" maxlength="99985">
+    <tre name="ACCHZB" md_prefix="NITF_ACCHZB_" minlength="11" maxlength="99985" location="image">
         <field name="NUM_ACHZ" length="2" type="integer" minval="1" maxval="99"/>
         <loop counter="NUM_ACHZ" md_prefix="ACHZ_%02d_">
             <field name="UNIAAH" length="3" type="string"/>
@@ -81,7 +81,7 @@
     </tre>
 
     <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.3, Table P-12 -->
-    <tre name="ACCVTB" md_prefix="NITF_ACCVTB_" minlength="11" maxlength="99985">
+    <tre name="ACCVTB" md_prefix="NITF_ACCVTB_" minlength="11" maxlength="99985" location="image">
         <field name="NUM_ACVT" length="2" type="integer" minval="1" maxval="99"/>
         <loop counter="NUM_ACVT" md_prefix="ACVT_%02d_">
             <field name="UNIAAV" length="3" type="string"/>
@@ -697,7 +697,7 @@
     </tre>
 
     <!-- STDI-0002-1-v5.0 Appendix E, Section E.3.9, Table E-16-->
-    <tre name="MSTGTA" md_prefix="NITF_MSTGTA_" length="101">
+    <tre name="MSTGTA" md_prefix="NITF_MSTGTA_" length="101" location="image">
         <field name="TGT_NUM" length="5" type="integer" minval="0" maxval="99999"/>
         <field name="TGT_ID" length="12" type="string"/>
         <field name="TGT_BE" length="15" type="string"/>
@@ -891,7 +891,7 @@
     </tre>
 
     <!-- STDI-0002-1-v5.0 Appendix C, Section C.3, Tables C-7,C-8,C-9 -->
-    <tre name="PIATGB" md_prefix="NITF_PIATGB_" length="117">
+    <tre name="PIATGB" md_prefix="NITF_PIATGB_" length="117" location="image">
       <field name="TGTUTM" length="15" type="string"/>
       <field name="PIATGAID" length="15" type="string"/>
       <field name="PIACTRY" length="2" type="string"/>
@@ -902,6 +902,57 @@
       <field name="PERCOVER" length="3" type="integer" minval="0" maxval="100"/>
       <field name="TGTLAT" length="10" type="string"/>
       <field name="TGTLON" length="11" type="string"/>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix AJ, Section AJ.6.3, Table AJ.6-8 -->
+    <tre name="PIXMTA" md_prefix="NITF_PIXMTA_" minlength="152" maxlength="99985" location="image">
+        <field name="NUMAIS" length="3" type="integer"/>
+        <if cond="NUMAIS!=ALL">
+            <if cond="NUMAIS!=000">
+                <loop counter="NUMAIS" md_prefix = "AIS_%03d_">
+                    <field name="AISDLVL" length="3" type="integer"/>
+                </loop>
+            </if>
+        </if>
+        <field name="ORIGIN_X" length="14" type="real"/>
+        <field name="ORIGIN_Y" length="14" type="real"/>
+        <field name="SCALE_X" length="14" type="real"/>
+        <field name="SCALE_Y" length="14" type="real"/>
+        <field name="SAMPLE_MODE" length="1" type="string"/>
+        <field name="NUMMETRICS" length="5" type="integer"/>
+        <field name="PERBAND" length="1" type="string"/>
+        <loop counter="NUMMETRICS" md_prefix="METRIC_%05d_">
+            <field name="DESCRIPTION" length="40" type="string"/>
+            <field name="UNIT" length="40" type="string"/>
+            <field name="FITTYPE" length="1" type="string"/>
+            <if cond="FITTYPE=P">
+                <field name="NUMCOEF" length="1" type="integer"/>
+                <loop counter="NUMCOEF" md_prefix="COEF_%01d_">
+                    <field name="COEF" length="15" type="real"/>
+                </loop>
+            </if>
+        </loop>
+        <field name="RESERVED_LEN" length="5" type="integer"/>
+        <if cond="RESERVED_LEN!=00000">
+            <field name="RESERVED" length_var="RESERVED_LEN"/>
+        </if>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix AA, Section AA.4.1, Table AA-1 -->
+    <tre name="PIXQLA" md_prefix="NITF_PIXQLA_" location="image">
+        <field name="NUMAIS" length="3" type="integer"/>
+        <if cond="NUMAIS!=ALL">
+            <if cond="NUMAIS!=000">
+                <loop counter="NUMAIS" md_prefix = "AIS_%03d_">
+                    <field name="AISDLVL" length="3" type="integer"/>
+                </loop>
+            </if>
+        </if>
+        <field name="NPIXQUAL" length="4" type="integer"/>
+        <field name="PQ_BIT_VALUE" length="1" type="integer"/>
+        <loop counter="NPIXQUAL" md_prefix="PIXQUAL_%04d_">
+            <field name="PQ_CONDITION" length="40" type="string"/>
+        </loop>
     </tre>
 
     <tre name="PRJPSB" minlength="113" maxlength="248" location="file">
