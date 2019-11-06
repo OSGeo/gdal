@@ -696,6 +696,23 @@
         <field name="TOTAL_TILES_ROWS" length="5" type="integer" minval="1" maxval="99999"/>
     </tre>
 
+    <!-- STDI-0002-1-v5.0 Appendix E, Section E.3.9, Table E-16-->
+    <tre name="MSTGTA" md_prefix="NITF_MSTGTA_" length="101">
+        <field name="TGT_NUM" length="5" type="integer" minval="0" maxval="99999"/>
+        <field name="TGT_ID" length="12" type="string"/>
+        <field name="TGT_BE" length="15" type="string"/>
+        <field name="TGT_PRI" length="3" type="integer" minval="1" maxval="999"/>
+        <field name="TGT_REQ" length="12" type="string"/>
+        <field name="TGT_LTIOV" length="12" type="string"/>
+        <field name="TGT_TYPE" length="1" type="integer"/>
+        <field name="TGT_COLL" length="1" type="integer"/>
+        <field name="TGT_CAT" length="5" type="integer" minval="10000" maxval="99999"/>
+        <field name="TGT_UTC" length="7" type="string"/>
+        <field name="TGT_ELEV" length="6" type="integer" minval="-1000" maxval="30000"/>
+        <field name="TGT_ELEV_UNIT" length="1" type="string"/>
+        <field name="TGT_LOC" length="21" type="string"/>
+    </tre>
+
     <!-- STDI-0002 Appendix E (ASDE 2.1/CN1), Section 3.10 and Table E-19 -->
     <tre name="MTIRPB" minlength="119" maxlength="42035">
         <field name="MTI_DP" length="2" type="string"/>
@@ -871,6 +888,20 @@
         <loop counter="ATEXTREP" md_prefix="ATEXT_%02d" name="ATEXT">
             <field name="" longname="ATEXT" length="255" type="string"/>
         </loop>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix C, Section C.3, Tables C-7,C-8,C-9 -->
+    <tre name="PIATGB" md_prefix="NITF_PIATGB_" length="117">
+      <field name="TGTUTM" length="15" type="string"/>
+      <field name="PIATGAID" length="15" type="string"/>
+      <field name="PIACTRY" length="2" type="string"/>
+      <field name="PIACAT" length="5" type="string"/>
+      <field name="TGTGEO" length="15" type="string"/>
+      <field name="DATUM" length="3" type="string"/>
+      <field name="TGTNAME" length="38" type="string"/>
+      <field name="PERCOVER" length="3" type="integer" minval="0" maxval="100"/>
+      <field name="TGTLAT" length="10" type="string"/>
+      <field name="TGTLON" length="11" type="string"/>
     </tre>
 
     <tre name="PRJPSB" minlength="113" maxlength="248" location="file">
