@@ -31,6 +31,7 @@
 #include "cpl_minixml.h"
 #include "cpl_http.h"
 #include "ogr_swq.h"
+#include "parsexsd.h"
 
 #include <algorithm>
 #include <memory>
@@ -45,7 +46,9 @@ extern "C" void RegisterOGROAPIF();
 #define MEDIA_TYPE_OAPI_3_0_ALT  "application/openapi+json;version=3.0"
 #define MEDIA_TYPE_JSON          "application/json"
 #define MEDIA_TYPE_GEOJSON       "application/geo+json"
-#define MEDIA_TYPE_XML           "text/xml"
+#define MEDIA_TYPE_TEXT_XML      "text/xml"
+#define MEDIA_TYPE_APPLICATION_XML "application/xml"
+#define MEDIA_TYPE_JSON_SCHEMA     "application/schema+json"
 
 /************************************************************************/
 /*                           OGROAPIFDataset                             */
@@ -125,6 +128,10 @@ class OGROAPIFLayer final: public OGRLayer
         GIntBig         m_nTotalFeatureCount = -1;
         bool            m_bHasIntIdMember = false;
         bool            m_bHasStringIdMember = false;
+        std::vector<std::unique_ptr<OGRFieldDefn>> m_apoFieldsFromSchema{};
+        CPLString       m_osDescribedByURL{};
+        CPLString       m_osDescribedByType{};
+        bool            m_bDescribedByIsXML = false;
 
         void            EstablishFeatureDefn();
         OGRFeature     *GetNextRawFeature();
@@ -132,12 +139,14 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       BuildFilter(const swq_expr_node* poNode);
         bool            SupportsResultTypeHits();
         void            GetQueriableAttributes();
+        void            GetSchema();
 
     public:
         OGROAPIFLayer(OGROAPIFDataset* poDS,
                      const CPLString& osName,
                      const CPLJSONArray& oBBOX,
-                     const CPLJSONArray& oCRS);
+                     const CPLJSONArray& oCRS,
+                     const CPLJSONArray& oLinks);
 
        ~OGROAPIFLayer();
 
@@ -329,7 +338,8 @@ bool OGROAPIFDataset::Download(
 
     if( strstr(pszAccept, "xml") &&
         psResult->pszContentType != nullptr &&
-        CheckContentType(psResult->pszContentType, MEDIA_TYPE_XML) )
+        (CheckContentType(psResult->pszContentType, MEDIA_TYPE_TEXT_XML) ||
+         CheckContentType(psResult->pszContentType, MEDIA_TYPE_APPLICATION_XML)) )
     {
         bFoundExpectedContentType = true;
     }
@@ -526,8 +536,9 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
         oBBOX = oCollection.GetArray("extent/spatial");
 #endif
     CPLJSONArray oCRS = oCollection.GetArray("crs");
+    const auto oLinks = oCollection.GetArray("links");
     std::unique_ptr<OGROAPIFLayer> poLayer( new
-        OGROAPIFLayer(this, osName, oBBOX, oCRS) );
+        OGROAPIFLayer(this, osName, oBBOX, oCRS, oLinks) );
     if( !osTitle.empty() )
         poLayer->SetMetadataItem("TITLE", osTitle.c_str());
     if( !osDescription.empty() )
@@ -727,7 +738,8 @@ static int OGROAPIFDriverIdentify( GDALOpenInfo* poOpenInfo )
 OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                            const CPLString& osName,
                            const CPLJSONArray& oBBOX,
-                           const CPLJSONArray& /* oCRS */) :
+                           const CPLJSONArray& /* oCRS */,
+                           const CPLJSONArray& oLinks) :
     m_poDS(poDS)
 {
     m_poFeatureDefn = new OGRFeatureDefn(osName);
@@ -773,6 +785,42 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poSRS->Release();
 
+    if( oLinks.IsValid() )
+    {
+        for( int i = 0; i < oLinks.Size(); i++ )
+        {
+            CPLJSONObject oLink = oLinks[i];
+            if( !oLink.IsValid() ||
+                oLink.GetType() != CPLJSONObject::Type::Object )
+            {
+                continue;
+            }
+            if( oLink.GetString("rel") == "describedBy" )
+            {
+                const auto osURL = oLink.GetString("href");
+                auto type = oLink.GetString("type");
+                if (type == MEDIA_TYPE_TEXT_XML ||
+                    type == MEDIA_TYPE_APPLICATION_XML )
+                {
+                    m_osDescribedByURL = osURL;
+                    m_osDescribedByType = type;
+                    m_bDescribedByIsXML = true;
+                    break;
+                }
+                else if( type == MEDIA_TYPE_JSON_SCHEMA )
+                {
+                    m_osDescribedByURL = osURL;
+                    m_osDescribedByType = type;
+                    m_bDescribedByIsXML = false;
+                }
+            }
+        }
+        if( !m_osDescribedByURL.empty() )
+        {
+            m_osDescribedByURL = m_poDS->ReinjectAuthInURL(m_osDescribedByURL);
+        }
+    }
+
     m_bIsGeographicCRS = true;
 
     // We might check in the links, but the spec mandates that construct of URL
@@ -789,6 +837,69 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
 OGROAPIFLayer::~OGROAPIFLayer()
 {
     m_poFeatureDefn->Release();
+}
+
+/************************************************************************/
+/*                            GetSchema()                               */
+/************************************************************************/
+
+void OGROAPIFLayer::GetSchema()
+{
+    if( m_osDescribedByURL.empty() )
+        return;
+
+    if( m_bDescribedByIsXML )
+    {
+        std::vector<GMLFeatureClass*> aosClasses;
+        bool bFullyUnderstood = false;
+        bool bHaveSchema = GMLParseXSD( m_osDescribedByURL, aosClasses,
+                                        bFullyUnderstood );
+        if (bHaveSchema && aosClasses.size() == 1)
+        {
+            const auto poGMLFeatureClass = aosClasses[0];
+            if( poGMLFeatureClass->GetGeometryPropertyCount() ==  1 )
+            {
+                m_poFeatureDefn->SetGeomType( static_cast<OGRwkbGeometryType>(
+                    poGMLFeatureClass->GetGeometryProperty(0)->GetType()) );
+            }
+
+            const int nPropertyCount = poGMLFeatureClass->GetPropertyCount();
+            // This is a hack for http://www.pvretano.com/cubewerx/cubeserv/default/wfs/3.0.0/framework/collections/UNINCORPORATED_PL/schema
+            // The GML representation has attributes starting all with "UNINCORPORATED_PL." whereas the GeoJSON output not
+            CPLString osPropertyNamePrefix(GetName());
+            osPropertyNamePrefix += '.';
+            bool bAllPrefixed = true;
+            for( int iField = 0; iField < nPropertyCount; iField++ )
+            {
+                const auto poProperty = poGMLFeatureClass->GetProperty( iField );
+                if( !STARTS_WITH(poProperty->GetName(), osPropertyNamePrefix.c_str()) )
+                {
+                    bAllPrefixed = false;
+                }
+            }
+            for( int iField = 0; iField < nPropertyCount; iField++ )
+            {
+                const auto poProperty = poGMLFeatureClass->GetProperty( iField );
+                OGRFieldSubType eSubType = OFSTNone;
+                const OGRFieldType eFType = GML_GetOGRFieldType(poProperty->GetType(), eSubType);
+
+                const char* pszName = poProperty->GetName() + (bAllPrefixed ? osPropertyNamePrefix.size() : 0);
+                std::unique_ptr<OGRFieldDefn> oField(new OGRFieldDefn( pszName, eFType ));
+                oField->SetSubType(eSubType);
+                m_apoFieldsFromSchema.emplace_back(std::move(oField));
+            }
+        }
+    }
+    else
+    {
+        CPLString osContentType;
+        CPLString osResult;
+        if( !m_poDS->Download(m_osDescribedByURL, m_osDescribedByType,
+                              osResult, osContentType) )
+        {
+            CPLDebug("OAPIF", "Could not download schema");
+        }
+    }
 }
 
 /************************************************************************/
@@ -811,6 +922,8 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     CPLAssert(!m_bFeatureDefnEstablished);
     m_bFeatureDefnEstablished = true;
 
+    GetSchema();
+
     CPLJSONDocument oDoc;
     CPLString osURL(m_osURL);
     osURL = CPLURLAddKVP(osURL, "limit",
@@ -831,10 +944,28 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     if( !poLayer )
         return;
     OGRFeatureDefn* poFeatureDefn = poLayer->GetLayerDefn();
-    m_poFeatureDefn->SetGeomType( poFeatureDefn->GetGeomType() );
-    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    if( m_poFeatureDefn->GetGeomType() == wkbUnknown )
     {
-        m_poFeatureDefn->AddFieldDefn( poFeatureDefn->GetFieldDefn(i) );
+        m_poFeatureDefn->SetGeomType( poFeatureDefn->GetGeomType() );
+    }
+    if( m_apoFieldsFromSchema.empty() )
+    {
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        {
+            m_poFeatureDefn->AddFieldDefn( poFeatureDefn->GetFieldDefn(i) );
+        }
+    }
+    else
+    {
+        if( poFeatureDefn->GetFieldCount() > 0 &&
+            strcmp(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "id") == 0 )
+        {
+            m_poFeatureDefn->AddFieldDefn( poFeatureDefn->GetFieldDefn(0) );
+        }
+        for( const auto& poField: m_apoFieldsFromSchema )
+        {
+            m_poFeatureDefn->AddFieldDefn( poField.get() );
+        }
     }
 
     const auto& oRoot = oDoc.GetRoot();
@@ -1194,7 +1325,7 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
         {
             CPLString osResult;
             CPLString osContentType;
-            if( m_poDS->Download(osURL, MEDIA_TYPE_XML, osResult, osContentType) )
+            if( m_poDS->Download(osURL, MEDIA_TYPE_TEXT_XML, osResult, osContentType) )
             {
                 CPLXMLNode* psDoc = CPLParseXMLString(osResult);
                 if( psDoc )
