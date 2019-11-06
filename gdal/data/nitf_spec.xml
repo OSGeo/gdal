@@ -33,6 +33,25 @@
 <!-- This file should validate against nitf_spec.xsd -->
 
 <tres>
+    <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.2, Table P-11 -->
+    <tre name="ACCHZB" md_prefix="NITF_ACCHZB_" minlength="11" maxlength="99985">
+        <field name="NUM_ACHZ" length="2" type="integer" minval="1" maxval="99"/>
+        <loop counter="NUM_ACHZ" md_prefix="ACHZ_%02d_">
+            <field name="UNIAAH" length="3" type="string"/>
+            <if cond="UNIAAH!=   ">
+                <field name="AAH" length="5" type="integer"/>
+            </if>
+            <field name="UNIAPH" length="3" type="string"/>
+            <if cond="UNIAPH!=   ">
+                <field name="APH" length="5" type="integer"/>
+            </if>
+            <field name="NUM_PTS" length="3" type="integer" minval="0" maxval="999"/>
+            <loop counter="NUM_PTS" md_prefix="POINT_%03d_">
+                <field name="LON" length="15" type="string"/>
+                <field name="LAT" length="15" type="string"/>
+            </loop>
+        </loop>
+    </tre>
 
     <tre name="ACCPOB" minlength="17" maxlength="99985" location="image">
         <field name="NUM_ACPO" length="2" type="integer" minval="1" maxval="99"/>
@@ -59,6 +78,26 @@
                 <field name="LAT" length="15" type="real"/>
             </loop>
         </loop>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.3, Table P-12 -->
+    <tre name="ACCVTB" md_prefix="NITF_ACCVTB_" minlength="11" maxlength="99985">
+        <field name="NUM_ACVT" length="2" type="integer" minval="1" maxval="99"/>
+        <loop counter="NUM_ACVT" md_prefix="ACVT_%02d_">
+            <field name="UNIAAV" length="3" type="string"/>
+            <if cond="UNIAAV!=   ">
+                <field name="AAV" length="5" type="integer"/>
+            </if>
+            <field name="UNIAPV" length="3" type="string"/>
+            <if cond="UNIAPV!=   ">
+                <field name="APV" length="5" type="integer"/>
+            </if>
+            <field name="NUM_PTS" length="3" type="integer" minval="0" maxval="999"/>
+            <loop counter="NUM_PTS" md_prefix="POINT_%03d_">
+                <field name="LON" length="15" type="string"/>
+                <field name="LAT" length="15" type="string"/>
+            </loop>
+         </loop>
     </tre>
 
     <tre name="ACFTB" length="207" location="image">
