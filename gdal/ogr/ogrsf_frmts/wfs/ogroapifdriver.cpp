@@ -347,6 +347,14 @@ bool OGROAPIFDataset::Download(
         bFoundExpectedContentType = true;
     }
 
+    if( strstr(pszAccept, MEDIA_TYPE_JSON_SCHEMA) &&
+        psResult->pszContentType != nullptr &&
+        (CheckContentType(psResult->pszContentType, MEDIA_TYPE_JSON) ||
+         CheckContentType(psResult->pszContentType, MEDIA_TYPE_JSON_SCHEMA)) )
+    {
+        bFoundExpectedContentType = true;
+    }
+
     for( const char* pszMediaType : { MEDIA_TYPE_JSON,
                                       MEDIA_TYPE_GEOJSON,
                                       MEDIA_TYPE_OAPI_3_0,
@@ -848,6 +856,152 @@ OGROAPIFLayer::~OGROAPIFLayer()
 }
 
 /************************************************************************/
+/*                            ResolveRefs()                             */
+/************************************************************************/
+
+static CPLJSONObject ResolveRefs(const CPLJSONObject& oRoot,
+                                 const CPLJSONObject& oObj)
+{
+     const auto osRef = oObj.GetString("$ref");
+    if( osRef.empty() )
+        return oObj;
+    if( STARTS_WITH(osRef.c_str(), "#/") )
+    {
+        return oRoot.GetObj(osRef.c_str() + 2);
+    }
+    CPLJSONObject oInvalid;
+    oInvalid.Deinit();
+    return oInvalid;
+}
+
+/************************************************************************/
+/*                      BuildExampleRecursively()                       */
+/************************************************************************/
+
+static bool BuildExampleRecursively(CPLJSONObject& oRes,
+                             const CPLJSONObject& oRoot,
+                             const CPLJSONObject& oObjIn)
+{
+    auto oResolvedObj = ResolveRefs(oRoot, oObjIn);
+    if( !oResolvedObj.IsValid() )
+        return false;
+    const auto osType = oResolvedObj.GetString("type");
+    if( osType == "object" )
+    {
+        const auto oAllOf = oResolvedObj.GetArray("allOf");
+        const auto oProperties = oResolvedObj.GetObj("properties");
+        if( oAllOf.IsValid() )
+        {
+            for( int i = 0; i < oAllOf.Size(); i++ )
+            {
+                CPLJSONObject oChildRes;
+                if( BuildExampleRecursively(oChildRes, oRoot, oAllOf[i]) &&
+                    oChildRes.GetType() == CPLJSONObject::Type::Object )
+                {
+                    auto oChildren = oChildRes.GetChildren();
+                    for( const auto& oChild: oChildren )
+                    {
+                        oRes.Add( oChild.GetName(), oChild );
+                    }
+                }
+            }
+        }
+        else if( oProperties.IsValid() )
+        {
+            auto oChildren = oProperties.GetChildren();
+            for( const auto& oChild: oChildren )
+            {
+                CPLJSONObject oChildRes;
+                if( BuildExampleRecursively(oChildRes, oRoot, oChild) )
+                {
+                    oRes.Add( oChild.GetName(), oChildRes );
+                }
+                else
+                {
+                    oRes.Add( oChild.GetName(), "unknown type" );
+                }
+            }
+        }
+        return true;
+    }
+    else if( osType == "array" )
+    {
+        CPLJSONArray oArray;
+        const auto oItems = oResolvedObj.GetObj("items");
+        if( oItems.IsValid() )
+        {
+            CPLJSONObject oChildRes;
+            if( BuildExampleRecursively(oChildRes, oRoot, oItems) )
+            {
+                oArray.Add(oChildRes);
+            }
+        }
+        oRes = oArray;
+        return true;
+    }
+    else if( osType == "string" )
+    {
+        CPLJSONObject oTemp;
+        const auto osFormat = oResolvedObj.GetString("format");
+        if( !osFormat.empty() )
+            oTemp.Set("_", osFormat);
+        else
+            oTemp.Set("_", "string");
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+    else if( osType == "number" )
+    {
+        CPLJSONObject oTemp;
+        oTemp.Set("_", 1.25);
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+    else if( osType == "integer" )
+    {
+        CPLJSONObject oTemp;
+        oTemp.Set("_", 1);
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+    else if( osType == "boolean" )
+    {
+        CPLJSONObject oTemp;
+        oTemp.Set("_", true);
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+    else if( osType == "null" )
+    {
+        CPLJSONObject oTemp;
+        oTemp.SetNull("_");
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*                     GetObjectExampleFromSchema()                     */
+/************************************************************************/
+
+static CPLJSONObject GetObjectExampleFromSchema(const std::string& osJSONSchema)
+{
+    CPLJSONDocument oDoc;
+    if( !oDoc.LoadMemory(osJSONSchema) )
+    {
+        CPLJSONObject oInvalid;
+        oInvalid.Deinit();
+        return oInvalid;
+    }
+    const auto& oRoot = oDoc.GetRoot();
+    CPLJSONObject oRes;
+    BuildExampleRecursively(oRes, oRoot, oRoot);
+    return oRes;
+}
+
+/************************************************************************/
 /*                            GetSchema()                               */
 /************************************************************************/
 
@@ -864,6 +1018,7 @@ void OGROAPIFLayer::GetSchema()
                                         bFullyUnderstood );
         if (bHaveSchema && aosClasses.size() == 1)
         {
+            CPLDebug("OAPIF", "Using XML schema");
             const auto poGMLFeatureClass = aosClasses[0];
             if( poGMLFeatureClass->GetGeometryPropertyCount() ==  1 )
             {
@@ -906,6 +1061,70 @@ void OGROAPIFLayer::GetSchema()
                               osResult, osContentType) )
         {
             CPLDebug("OAPIF", "Could not download schema");
+        }
+        else
+        {
+            const auto oExample = GetObjectExampleFromSchema(osResult);
+            //CPLDebug("OAPIF", "Example from schema: %s",
+            //         oExample.Format(CPLJSONObject::PrettyFormat::Pretty).c_str());
+            if( oExample.IsValid() && oExample.GetType() == CPLJSONObject::Type::Object )
+            {
+                const auto oProperties = oExample.GetObj("properties");
+                if( oProperties.IsValid() && oProperties.GetType() == CPLJSONObject::Type::Object )
+                {
+                    CPLDebug("OAPIF", "Using JSON schema");
+                    const auto oProps = oProperties.GetChildren();
+                    for( const auto& oProp: oProps )
+                    {
+                        OGRFieldType eType = OFTString;
+                        OGRFieldSubType eSubType = OFSTNone;
+                        const auto oType = oProp.GetType();
+                        if( oType == CPLJSONObject::Type::String )
+                        {
+                            if( oProp.ToString() == "date-time" )
+                            {
+                                eType = OFTDateTime;
+                            }
+                            else if( oProp.ToString() == "date" )
+                            {
+                                eType = OFTDate;
+                            }
+                        }
+                        else if( oType == CPLJSONObject::Type::Boolean )
+                        {
+                            eType = OFTInteger;
+                            eSubType = OFSTBoolean;
+                        }
+                        else if( oType == CPLJSONObject::Type::Double )
+                        {
+                            eType = OFTReal;
+                        }
+                        else if( oType == CPLJSONObject::Type::Integer )
+                        {
+                            eType = OFTInteger;
+                        }
+                        else if( oType == CPLJSONObject::Type::Long )
+                        {
+                            eType = OFTInteger64;
+                        }
+                        else if( oType == CPLJSONObject::Type::Array )
+                        {
+                            const auto oArray = oProp.ToArray();
+                            if( oArray.Size() > 0 )
+                            {
+                                if( oArray[0].GetType() == CPLJSONObject::Type::String )
+                                    eType = OFTStringList;
+                                else if( oArray[0].GetType() == CPLJSONObject::Type::Integer )
+                                    eType = OFTIntegerList;
+                            }
+                        }
+
+                        std::unique_ptr<OGRFieldDefn> oField(new OGRFieldDefn( oProp.GetName().c_str(), eType ));
+                        oField->SetSubType(eSubType);
+                        m_apoFieldsFromSchema.emplace_back(std::move(oField));
+                    }
+                }
+            }
         }
     }
 }
@@ -973,6 +1192,15 @@ void OGROAPIFLayer::EstablishFeatureDefn()
         for( const auto& poField: m_apoFieldsFromSchema )
         {
             m_poFeatureDefn->AddFieldDefn( poField.get() );
+        }
+        // In case there would be properties found in sample, but not in schema...
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        {
+            auto poFDefn = poFeatureDefn->GetFieldDefn(i);
+            if( m_poFeatureDefn->GetFieldIndex(poFDefn->GetNameRef()) < 0 )
+            {
+                m_poFeatureDefn->AddFieldDefn( poFDefn );
+            }
         }
     }
 

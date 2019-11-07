@@ -947,6 +947,63 @@ def test_ogr_opaif_schema_from_xml_schema():
 ###############################################################################
 
 
+def test_ogr_opaif_schema_from_json_schema():
+    if gdaltest.opaif_drv is None:
+        pytest.skip()
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
+                """{ "collections" : [ {
+                    "name": "foo",
+                    "links": [
+                        { "rel": "describedBy",
+                          "type": "application/schema+json",
+                          "href": "http://localhost:%d/oapif/collections/foo/jsonschema"
+                        }
+                    ]
+                 } ] }""" % gdaltest.webserver_port)
+
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('OAPIF:http://localhost:%d/oapif' % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections/foo/jsonschema', 200,
+                {'Content-Type': 'application/schema+json'},
+                open('data/oapif_json_schema_eo.jsonschema', 'rt').read())
+    handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "unexpected": 123
+                    }
+                }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetGeomType() == ogr.wkbUnknown
+    assert feat_defn.GetFieldCount() == 19
+
+    idx = feat_defn.GetFieldIndex("type")
+    assert idx >= 0
+    assert feat_defn.GetFieldDefn(idx).GetType() == ogr.OFTString
+
+    idx = feat_defn.GetFieldIndex("updated")
+    assert idx >= 0
+    assert feat_defn.GetFieldDefn(idx).GetType() == ogr.OFTDateTime
+
+    idx = feat_defn.GetFieldIndex("unexpected")
+    assert idx >= 0
+    assert feat_defn.GetFieldDefn(idx).GetType() == ogr.OFTInteger
+
+###############################################################################
+
+
 def test_ogr_opaif_cleanup():
 
     if gdaltest.opaif_drv is None:
