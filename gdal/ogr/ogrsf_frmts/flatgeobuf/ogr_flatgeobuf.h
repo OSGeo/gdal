@@ -82,7 +82,6 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         // iteration
         uint64_t m_featuresPos = 0;
-        uint64_t m_featuresSize = 0;
         uint64_t m_offset = 0;
         uint64_t m_offsetFeatures = 0;
         uint64_t m_offsetIndices = 0;
