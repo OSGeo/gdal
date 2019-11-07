@@ -177,7 +177,7 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
         return nullptr;
     }
 
-    auto bVerifyBuffers = CPLFetchBool( poOpenInfo->papszOpenOptions, "VERIFY_BUFFERS", true );
+    const auto bVerifyBuffers = CPLFetchBool( poOpenInfo->papszOpenOptions, "VERIFY_BUFFERS", true );
 
     auto poDS = std::unique_ptr<OGRFlatGeobufDataset>(
         new OGRFlatGeobufDataset(poOpenInfo->pszFilename,
@@ -265,27 +265,27 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     }
     if (bVerifyBuffers) {
         flatbuffers::Verifier v(buf.get(), headerSize);
-        auto ok = VerifyHeaderBuffer(v);
+        const auto ok = VerifyHeaderBuffer(v);
         if (!ok) {
             CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
             return false;
         }
     }
-    auto header = GetHeader(buf.get());
+    const auto header = GetHeader(buf.get());
     offset += 4 + headerSize;
     CPLDebug("FlatGeobuf", "Add header size + length prefix to offset (%d)", 4 + headerSize);
 
-    auto featuresCount = header->features_count();
+    const auto featuresCount = header->features_count();
 
     if (featuresCount > std::numeric_limits<size_t>::max() / 8) {
         CPLError(CE_Failure, CPLE_AppDefined, "Too many features for this architecture");
         return false;
     }
 
-    auto index_node_size = header->index_node_size();
+    const auto index_node_size = header->index_node_size();
     if (index_node_size > 0) {
         try {
-            auto treeSize = PackedRTree::size(featuresCount);
+            const auto treeSize = PackedRTree::size(featuresCount);
             CPLDebug("FlatGeobuf", "Tree start at offset (%lu)", static_cast<long unsigned int>(offset));
             offset += treeSize;
             CPLDebug("FlatGeobuf", "Add tree size to offset (%lu)", static_cast<long unsigned int>(treeSize));
