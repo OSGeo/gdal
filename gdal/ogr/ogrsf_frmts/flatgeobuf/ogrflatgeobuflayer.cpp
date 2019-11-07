@@ -521,7 +521,9 @@ OGRErr OGRFlatGeobufLayer::readIndex()
             uint64_t featureOffset;
             m_foundFeatureIndexOffsets.reserve(foundFeatureIndices.size());
             for (auto i : foundFeatureIndices) {
-                readFeatureOffset(i, featureOffset);
+                auto err = readFeatureOffset(i, featureOffset);
+                if (err != OGRERR_NONE)
+                    return err;
                 m_foundFeatureIndexOffsets.push_back(std::pair<uint64_t, uint64_t>(i, featureOffset));
             }
             std::sort(m_foundFeatureIndexOffsets.begin(), m_foundFeatureIndexOffsets.end(),
