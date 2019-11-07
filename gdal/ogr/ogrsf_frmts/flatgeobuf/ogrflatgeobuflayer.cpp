@@ -518,16 +518,18 @@ OGRErr OGRFlatGeobufLayer::readIndex()
             m_featuresCount = foundFeatureIndices.size();
             CPLDebug("FlatGeobuf", "%lu features found in spatial index search", static_cast<long unsigned int>(m_featuresCount));
 
+            // read feature offsets for the found indices
+            // zip and sort on offset as pairs in m_indexOffsets
             uint64_t featureOffset;
-            m_foundFeatureIndexOffsets.reserve(foundFeatureIndices.size());
+            m_indexOffsets.reserve(foundFeatureIndices.size());
             for (auto i : foundFeatureIndices) {
                 auto err = readFeatureOffset(i, featureOffset);
                 if (err != OGRERR_NONE)
                     return err;
-                m_foundFeatureIndexOffsets.push_back(IndexOffset { i, featureOffset });
+                m_indexOffsets.push_back({ i, featureOffset });
             }
-            std::sort(m_foundFeatureIndexOffsets.begin(), m_foundFeatureIndexOffsets.end(),
-                [&](IndexOffset i, IndexOffset j) { return i.offset < j.offset; }
+            std::sort(m_indexOffsets.begin(), m_indexOffsets.end(),
+                [&](auto i, auto j) { return i.offset < j.offset; }
             );
 
             m_queriedSpatialIndex = true;
@@ -609,7 +611,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     GIntBig fid;
     auto seek = false;
     if (m_queriedSpatialIndex && !m_ignoreSpatialFilter) {
-        auto indexOffset = m_foundFeatureIndexOffsets[m_featuresPos];
+        auto indexOffset = m_indexOffsets[m_featuresPos];
         m_offset = m_offsetFeatures + indexOffset.offset;
         fid = indexOffset.index;
         seek = true;
