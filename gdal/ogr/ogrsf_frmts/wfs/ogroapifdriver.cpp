@@ -1025,8 +1025,10 @@ void OGROAPIFLayer::GetSchema()
             const auto poGMLFeatureClass = aosClasses[0];
             if( poGMLFeatureClass->GetGeometryPropertyCount() ==  1 )
             {
-                m_poFeatureDefn->SetGeomType( static_cast<OGRwkbGeometryType>(
-                    poGMLFeatureClass->GetGeometryProperty(0)->GetType()) );
+                // Force linear type as we work with GeoJSON data
+                m_poFeatureDefn->SetGeomType(OGR_GT_GetLinear(
+                    static_cast<OGRwkbGeometryType>(
+                        poGMLFeatureClass->GetGeometryProperty(0)->GetType())));
             }
 
             const int nPropertyCount = poGMLFeatureClass->GetPropertyCount();
