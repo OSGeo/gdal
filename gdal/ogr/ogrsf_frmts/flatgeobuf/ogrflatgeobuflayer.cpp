@@ -609,9 +609,9 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     GIntBig fid;
     auto seek = false;
     if (m_queriedSpatialIndex && !m_ignoreSpatialFilter) {
-        auto pair = m_foundFeatureIndexOffsets[m_featuresPos];
-        m_offset = m_offsetFeatures + pair.offset;
-        fid = pair.index;
+        auto indexOffset = m_foundFeatureIndexOffsets[m_featuresPos];
+        m_offset = m_offsetFeatures + indexOffset.offset;
+        fid = indexOffset.index;
         seek = true;
     } else {
         fid = m_featuresPos;
