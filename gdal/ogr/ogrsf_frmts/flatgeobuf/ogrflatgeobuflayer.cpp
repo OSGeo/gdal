@@ -652,7 +652,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
         if (!ok) {
             CPLError(CE_Failure, CPLE_AppDefined, "Buffer verification failed");
             CPLDebug("FlatGeobuf", "m_offset: %lu", static_cast<long unsigned int>(m_offset));
-            CPLDebug("FlatGeobuf", "m_featuresPos: %zu", m_featuresPos);
+            CPLDebug("FlatGeobuf", "m_featuresPos: %lu", static_cast<long unsigned int>(m_featuresPos));
             CPLDebug("FlatGeobuf", "featureSize: %d", featureSize);
             return OGRERR_CORRUPT_DATA;
         }
