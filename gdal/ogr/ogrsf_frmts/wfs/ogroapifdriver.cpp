@@ -808,9 +808,9 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
             }
             const auto osRel(oLink.GetString("rel"));
             const auto osURL = oLink.GetString("href");
+            const auto type = oLink.GetString("type");
             if( osRel == "describedBy" )
             {
-                auto type = oLink.GetString("type");
                 if (type == MEDIA_TYPE_TEXT_XML ||
                     type == MEDIA_TYPE_APPLICATION_XML )
                 {
@@ -828,7 +828,10 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
             }
             else if( osRel == "queryables" )
             {
-                m_osQueryablesURL = m_poDS->ReinjectAuthInURL(osURL);
+                if( type == MEDIA_TYPE_JSON || m_osQueryablesURL.empty() )
+                {
+                    m_osQueryablesURL = m_poDS->ReinjectAuthInURL(osURL);
+                }
             }
         }
         if( !m_osDescribedByURL.empty() )
