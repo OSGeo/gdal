@@ -86,7 +86,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         uint64_t m_offset = 0;
         uint64_t m_offsetFeatures = 0;
         uint64_t m_offsetIndices = 0;
-        std::vector<uint64_t> m_foundFeatureIndices;
+        std::vector<std::pair<uint64_t, uint64_t>> m_foundFeatureIndexOffsets;
         bool m_queriedSpatialIndex = false;
         bool m_ignoreSpatialFilter = false;
         bool m_ignoreAttributeFilter = false;

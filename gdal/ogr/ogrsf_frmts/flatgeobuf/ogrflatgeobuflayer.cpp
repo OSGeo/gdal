@@ -514,9 +514,22 @@ OGRErr OGRFlatGeobufLayer::readIndex()
                 if (VSIFReadL(buf, 1, s, m_poFp) != s)
                     throw std::runtime_error("I/O read file");
             };
-            m_foundFeatureIndices = PackedRTree::streamSearch(featuresCount, indexNodeSize, r, readNode);
-            m_featuresCount = m_foundFeatureIndices.size();
+            auto foundFeatureIndices = PackedRTree::streamSearch(featuresCount, indexNodeSize, r, readNode);
+            m_featuresCount = foundFeatureIndices.size();
             CPLDebug("FlatGeobuf", "%lu features found in spatial index search", static_cast<long unsigned int>(m_featuresCount));
+
+            uint64_t featureOffset;
+            m_foundFeatureIndexOffsets.reserve(foundFeatureIndices.size());
+            for (auto i : foundFeatureIndices) {
+                readFeatureOffset(i, featureOffset);
+                m_foundFeatureIndexOffsets.push_back(std::pair<uint64_t, uint64_t>(i, featureOffset));
+            }
+            std::sort(m_foundFeatureIndexOffsets.begin(), m_foundFeatureIndexOffsets.end(),
+                [&](std::pair<uint64_t, uint64_t> i, std::pair<uint64_t, uint64_t> j) {
+                    return i.second < j.second;
+                }
+            );
+
             m_queriedSpatialIndex = true;
         }
     } catch (const std::exception &e) {
@@ -596,13 +609,9 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     GIntBig fid;
     auto seek = false;
     if (m_queriedSpatialIndex && !m_ignoreSpatialFilter) {
-        auto i = m_foundFeatureIndices[static_cast<size_t>(m_featuresPos)];
-        uint64_t featureOffset;
-        auto err = readFeatureOffset(i, featureOffset);
-        if (err != OGRERR_NONE)
-            return err;
-        m_offset = m_offsetFeatures + featureOffset;
-        fid = i;
+        auto pair = m_foundFeatureIndexOffsets[static_cast<size_t>(m_featuresPos)];
+        m_offset = m_offsetFeatures + pair.second;
+        fid = pair.first;
         seek = true;
     } else {
         fid = m_featuresPos;
