@@ -530,7 +530,7 @@ OGRErr OGRFlatGeobufLayer::readIndex()
                 m_indexOffsets.push_back({ i, featureOffset });
             }
             std::sort(m_indexOffsets.begin(), m_indexOffsets.end(),
-                [&](const auto i, const auto j) { return i.offset < j.offset; }
+                [&](const IndexOffset i, const IndexOffset j) { return i.offset < j.offset; }
             );
 
             m_queriedSpatialIndex = true;
