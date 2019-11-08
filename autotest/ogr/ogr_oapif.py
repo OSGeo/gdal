@@ -879,6 +879,131 @@ def test_ogr_opaif_attribute_filter():
 ###############################################################################
 
 
+def test_ogr_opaif_schema_from_xml_schema():
+    if gdaltest.opaif_drv is None:
+        pytest.skip()
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
+                """{ "collections" : [ {
+                    "name": "foo",
+                    "links": [
+                        { "rel": "describedBy",
+                          "type": "application/xml",
+                          "href": "http://localhost:%d/oapif/collections/foo/xmlschema"
+                        }
+                    ]
+                 } ] }""" % gdaltest.webserver_port)
+
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('OAPIF:http://localhost:%d/oapif' % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections/foo/xmlschema', 200, {'Content-Type': 'application/xml'},
+"""<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml" elementFormDefault="qualified" version="1.0">
+<xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengis.net/gml/2.1.2/feature.xsd"/>
+<xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:_FeatureCollection"/>
+<xs:complexType name="FeatureCollectionType">
+  <xs:complexContent>
+    <xs:extension base="gml:AbstractFeatureCollectionType">
+      <xs:attribute name="lockId" type="xs:string" use="optional"/>
+      <xs:attribute name="scope" type="xs:string" use="optional"/>
+    </xs:extension>
+  </xs:complexContent>
+</xs:complexType>
+<xs:element name="foo" type="ogr:foo_Type" substitutionGroup="gml:_Feature"/>
+<xs:complexType name="foo_Type">
+  <xs:complexContent>
+    <xs:extension base="gml:AbstractFeatureType">
+      <xs:sequence>
+        <xs:element name="geometryProperty" type="gml:PolygonPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>
+        <xs:element name="some_int" nillable="true" minOccurs="0" maxOccurs="1">
+          <xs:simpleType>
+            <xs:restriction base="xs:decimal">
+              <xs:totalDigits value="12"/>
+              <xs:fractionDigits value="3"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+      </xs:sequence>
+    </xs:extension>
+  </xs:complexContent>
+</xs:complexType>
+</xs:schema>""")
+    handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                '{ "type": "FeatureCollection", "features": [], "numberMatched": 1234 }')
+    with webserver.install_http_handler(handler):
+        feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetGeomType() == ogr.wkbPolygon
+    assert feat_defn.GetFieldCount() == 1
+    assert feat_defn.GetFieldDefn(0).GetName() == 'some_int'
+
+###############################################################################
+
+
+def test_ogr_opaif_schema_from_json_schema():
+    if gdaltest.opaif_drv is None:
+        pytest.skip()
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections', 200, {'Content-Type': 'application/json'},
+                """{ "collections" : [ {
+                    "name": "foo",
+                    "links": [
+                        { "rel": "describedBy",
+                          "type": "application/schema+json",
+                          "href": "http://localhost:%d/oapif/collections/foo/jsonschema"
+                        }
+                    ]
+                 } ] }""" % gdaltest.webserver_port)
+
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('OAPIF:http://localhost:%d/oapif' % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections/foo/jsonschema', 200,
+                {'Content-Type': 'application/schema+json'},
+                open('data/oapif_json_schema_eo.jsonschema', 'rt').read())
+    handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "unexpected": 123
+                    }
+                }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetGeomType() == ogr.wkbUnknown
+    assert feat_defn.GetFieldCount() == 19
+
+    idx = feat_defn.GetFieldIndex("type")
+    assert idx >= 0
+    assert feat_defn.GetFieldDefn(idx).GetType() == ogr.OFTString
+
+    idx = feat_defn.GetFieldIndex("updated")
+    assert idx >= 0
+    assert feat_defn.GetFieldDefn(idx).GetType() == ogr.OFTDateTime
+
+    idx = feat_defn.GetFieldIndex("unexpected")
+    assert idx >= 0
+    assert feat_defn.GetFieldDefn(idx).GetType() == ogr.OFTInteger
+
+###############################################################################
+
+
 def test_ogr_opaif_cleanup():
 
     if gdaltest.opaif_drv is None:
