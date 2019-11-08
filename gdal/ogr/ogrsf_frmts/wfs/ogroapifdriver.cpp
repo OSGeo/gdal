@@ -1892,13 +1892,15 @@ CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node* poNode)
         }
     }
     else if( poNode->eNodeType == SNT_OPERATION &&
-             poNode->nOperation == SWQ_ISNULL )
+             poNode->nOperation == SWQ_ISNULL &&
+             poNode->nSubExprCount == 1 &&
+             poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN )
     {
-        const auto childExpr = poNode->papoSubExpr[0];
-        CPLString osFilterChild = BuildFilterCQLText(childExpr);
-        if( !osFilterChild.empty() )
+        const int nFieldIdx = poNode->papoSubExpr[0]->field_index;
+        const OGRFieldDefn* poFieldDefn = GetLayerDefn()->GetFieldDefn(nFieldIdx);
+        if( poFieldDefn )
         {
-            return '(' + osFilterChild + " IS NULL)";
+            return CPLString("(") + poFieldDefn->GetNameRef() + " IS NULL)";
         }
     }
     else if (poNode->eNodeType == SNT_OPERATION &&
@@ -2022,9 +2024,11 @@ void OGROAPIFLayer::GetQueriableAttributes()
                 const auto oEnums = oParam.GetObj("schema").GetArray("enum");
                 for( int j = 0; j < oEnums.Size(); j++ )
                 {
-                    m_bHasCQLText = oEnums[j].ToString() == "cql-text";
-                    if( m_bHasCQLText )
+                    if( oEnums[j].ToString() == "cql-text" )
+                    {
+                        m_bHasCQLText = true;
                         CPLDebug("OAPIF", "CQL text detected");
+                    }
                 }
             }
             else if( GetLayerDefn()->GetFieldIndex(osName.c_str()) >= 0 )
