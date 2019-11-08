@@ -58,6 +58,8 @@ The following options are available:
    Defaults to 10. Minimum is 1, maximum 10000.
 -  **USERPWD**: May be supplied with *userid:password* to pass a userid
    and password to the remote server.
+-  **IGNORE_SCHEMA**\ = YES/NO. (GDAL >= 3.1) Set to YES to ignore the XML
+   Schema or JSON schema that may be offered by the server.
 
 Examples
 --------

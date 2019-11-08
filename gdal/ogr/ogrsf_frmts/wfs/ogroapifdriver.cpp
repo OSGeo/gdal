@@ -72,6 +72,8 @@ class OGROAPIFDataset final: public GDALDataset
         bool                                   m_bLandingPageDocLoaded = false;
         CPLJSONDocument                        m_oLandingPageDoc;
 
+        bool                                   m_bIgnoreSchema = false;
+
         bool                    Download(
             const CPLString& osURL,
             const char* pszAccept,
@@ -683,6 +685,9 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
         m_osRootURL.resize(nCollectionsPos);
     }
 
+    m_bIgnoreSchema = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "IGNORE_SCHEMA",
+                             "FALSE"));
     m_nPageSize = atoi( CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                             "PAGE_SIZE",CPLSPrintf("%d", m_nPageSize)) );
     m_osUserPwd =
@@ -1010,8 +1015,11 @@ static CPLJSONObject GetObjectExampleFromSchema(const std::string& osJSONSchema)
 
 void OGROAPIFLayer::GetSchema()
 {
-    if( m_osDescribedByURL.empty() )
+    if( m_osDescribedByURL.empty() || m_poDS->m_bIgnoreSchema )
         return;
+
+    CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oErrorStateBackuper;
 
     if( m_bDescribedByIsXML )
     {
@@ -2177,6 +2185,8 @@ void RegisterOGROAPIF()
         "description='Maximum number of features to retrieve in a single request'/>"
 "  <Option name='USERPWD' type='string' "
         "description='Basic authentication as username:password'/>"
+"  <Option name='IGNORE_SCHEMA' type='boolean' "
+        "description='Whether the XML Schema or JSON Schema should be ignored' default='NO'/>"
 "</OpenOptionList>" );
 
     poDriver->pfnIdentify = OGROAPIFDriverIdentify;
