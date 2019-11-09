@@ -677,6 +677,21 @@ def test_ogr_basic_dataset_slice():
     assert lyrs == ['lyr1', 'lyr3']
 
 
+def test_ogr_basic_feature_iterator():
+
+    lyr = gdaltest.ds.GetLayer(0)
+
+    count = 0
+    for f in lyr:
+        count += 1
+    assert count == 10
+
+    count = 0
+    for f in lyr:
+        count += 1
+    assert count == 10
+
+
 ###############################################################################
 # cleanup
 
