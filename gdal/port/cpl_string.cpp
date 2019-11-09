@@ -2154,7 +2154,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 || pszInput[iIn] == '+' || pszInput[iIn] == '!'
                 || pszInput[iIn] == '*' || pszInput[iIn] == '\''
                 || pszInput[iIn] == '(' || pszInput[iIn] == ')'
-                || pszInput[iIn] == '"' || pszInput[iIn] == ',' )
+                || pszInput[iIn] == ',' )
             {
                 pszOutput[iOut++] = pszInput[iIn];
             }
