@@ -719,9 +719,8 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                         return CPLErrorInvalidSize("int32 value");
                     if (!isIgnored)
                     {
-                        const auto nVal = *((int32_t *)(data + offset));
-                        CPL_LSBPTR32(&nVal);
-                        ogrField->Integer = nVal;
+                        memcpy(&ogrField->Integer, data + offset, sizeof(int32_t));
+                        CPL_LSBPTR32(&ogrField->Integer);
                     }
                     offset += sizeof(int32_t);
                     break;
@@ -730,9 +729,8 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                         return CPLErrorInvalidSize("int64 value");
                     if (!isIgnored)
                     {
-                        const auto nVal = *((int64_t *)(data + offset));
-                        CPL_LSBPTR64(&nVal);
-                        ogrField->Integer64 = nVal;
+                        memcpy(&ogrField->Integer64, data + offset, sizeof(int64_t));
+                        CPL_LSBPTR64(&ogrField->Integer64);
                     }
                     offset += sizeof(int64_t);
                     break;
@@ -741,16 +739,16 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                         return CPLErrorInvalidSize("double value");
                     if (!isIgnored)
                     {
-                        const auto dfVal = *((double *)(data + offset));
-                        CPL_LSBPTR64(&dfVal);
-                        ogrField->Real = dfVal;
+                        memcpy(&ogrField->Real, data + offset, sizeof(double));
+                        CPL_LSBPTR64(&ogrField->Real);
                     }
                     offset += sizeof(double);
                     break;
                 case ColumnType::DateTime: {
                     if (offset + sizeof(uint32_t) > size)
                         return CPLErrorInvalidSize("datetime length ");
-                    uint32_t len = *((uint32_t *)(data + offset));
+                    uint32_t len;
+                    memcpy(&len, data + offset, sizeof(int32_t));
                     CPL_LSBPTR32(&len);
                     offset += sizeof(uint32_t);
                     if (len > size - offset || len > 32)
@@ -771,7 +769,8 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                 case ColumnType::String: {
                     if (offset + sizeof(uint32_t) > size)
                         return CPLErrorInvalidSize("string length");
-                    uint32_t len = *((uint32_t *)(data + offset));
+                    uint32_t len;
+                    memcpy(&len, data + offset, sizeof(int32_t));
                     CPL_LSBPTR32(&len);
                     offset += sizeof(uint32_t);
                     if (len > size - offset)
