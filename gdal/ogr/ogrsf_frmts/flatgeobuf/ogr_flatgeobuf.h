@@ -45,11 +45,21 @@ static constexpr uint8_t magicbytes[8] = { 0x66, 0x67, 0x62, 0x00, 0x66, 0x67, 0
 static constexpr uint32_t header_max_buffer_size = 1048576;
 static constexpr uint32_t feature_max_buffer_size = 2147483648 - 1;
 
+// holds feature meta needed to build spatial index
 struct FeatureItem : Item {
     uint32_t size;
     uint64_t offset;
 };
 
+// used to associate a feature index with offset
+// as the result of a spatial query to be able
+// to sort them on offset for read optimization
+struct IndexOffset {
+    uint64_t index;
+    uint64_t offset;
+};
+
+// holds feature data to be encoded into flatbuffer
 struct GeometryContext {
     std::vector<double> xy;
     std::vector<double> z;
@@ -76,38 +86,37 @@ class OGRFlatGeobufLayer final : public OGRLayer
         bool m_hasTM = false;
         uint64_t m_featuresCount = 0;
         OGREnvelope m_sExtent;
-
         OGRFeatureDefn *m_poFeatureDefn = nullptr;
         OGRSpatialReference *m_poSRS = nullptr;
 
         // iteration
-        uint64_t m_featuresPos = 0;
-        uint64_t m_featuresSize = 0;
-        uint64_t m_offset = 0;
-        uint64_t m_offsetFeatures = 0;
-        uint64_t m_offsetIndices = 0;
-        std::vector<uint64_t> m_foundFeatureIndices;
+        size_t m_featuresPos = 0; // current iteration position
+        uint64_t m_offset = 0; // current read offset
+        uint64_t m_offsetFeatures = 0; // offset of feature data
+        uint64_t m_offsetIndices = 0; // offset of feature indices
+        std::vector<IndexOffset> m_indexOffsets; // found feature index and offset in spatial index search
         bool m_queriedSpatialIndex = false;
         bool m_ignoreSpatialFilter = false;
         bool m_ignoreAttributeFilter = false;
 
         // creation
         bool m_create = false;
-        std::vector<std::shared_ptr<Item>> m_featureItems;
-        GByte *m_featureBuf = nullptr;
-        uint32_t m_featureSize = 0;
-        uint32_t m_featureBufSize = 0;
+        std::vector<std::shared_ptr<Item>> m_featureItems; // feature item description used to create spatial index
         bool m_bCreateSpatialIndexAtClose = true;
         bool m_bVerifyBuffers = true;
         bool m_bCanCreate = true;
         VSILFILE *m_poFpWrite = nullptr;
-        uint64_t m_writeOffset = 0;
+        uint64_t m_writeOffset = 0; // current write offset
         uint16_t m_indexNodeSize = 0;
-        std::string m_oTempFile;
+        std::string m_oTempFile; // holds generated temp file name for two pass writing
+
+        // shared
+        GByte *m_featureBuf = nullptr; // reusable/resizable feature data buffer
+        uint32_t m_featureBufSize = 0; // current feature buffer size
 
         // deserialize
         void ensurePadfBuffers(size_t count);
-        OGRErr ensureFeatureBuf();
+        OGRErr ensureFeatureBuf(uint32_t featureSize);
         OGRErr parseFeature(OGRFeature *poFeature);
         OGRPoint *readPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t offset = 0);
         OGRMultiPoint *readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len);
