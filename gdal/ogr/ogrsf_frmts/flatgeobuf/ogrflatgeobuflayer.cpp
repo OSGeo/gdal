@@ -39,7 +39,7 @@ using namespace flatbuffers;
 using namespace FlatGeobuf;
 
 static std::nullptr_t CPLErrorInvalidPointer(const char *message) {
-    CPLError(CE_Failure, CPLE_AppDefined, "Unexpected nullptr %s", message);
+    CPLError(CE_Failure, CPLE_AppDefined, "Unexpected nullptr: %s", message);
     return nullptr;
 }
 
@@ -843,7 +843,7 @@ OGRPoint *OGRFlatGeobufLayer::readPoint(const Feature *feature, const flatbuffer
 OGRMultiPoint *OGRFlatGeobufLayer::readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len)
 {
     if (len >= feature_max_buffer_size)
-        return CPLErrorInvalidLength("for MultiPoint");
+        return CPLErrorInvalidLength("MultiPoint");
     const auto mp = new OGRMultiPoint();
     for (uint32_t i = 0; i < len; i++) {
         const auto p = readPoint(feature, pXy, i);
@@ -1025,7 +1025,7 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, co
         if (p == nullptr) {
             delete p;
             delete mp;
-            return CPLErrorInvalidPointer("on attempt to parse MultiPolygon part");
+            return CPLErrorInvalidPointer("MultiPolygon part result");
         }
         mp->addGeometryDirectly(p);
         return mp;
@@ -1386,6 +1386,7 @@ void OGRFlatGeobufLayer::ResetReading()
     CPLDebug("FlatGeobuf", "ResetReading");
     m_offset = m_offsetFeatures;
     m_featuresPos = 0;
+    m_indexOffsets.clear();
     m_featuresCount = m_poHeader ? m_poHeader->features_count() : 0;
     m_queriedSpatialIndex = false;
     m_ignoreSpatialFilter = false;
