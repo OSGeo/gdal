@@ -108,7 +108,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         // deserialize
         void ensurePadfBuffers(size_t count);
         OGRErr ensureFeatureBuf();
-        OGRErr parseFeature(OGRFeature *poFeature, OGRGeometry **ogrGeometry);
+        OGRErr parseFeature(OGRFeature *poFeature);
         OGRPoint *readPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t offset = 0);
         OGRMultiPoint *readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len);
         OGRErr readSimpleCurve(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset, OGRSimpleCurve *c);

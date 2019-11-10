@@ -547,7 +547,6 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
         }
 
         if (readIndex() != OGRERR_NONE) {
-            ResetReading();
             return nullptr;
         }
 
@@ -557,10 +556,8 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
         }
 
         auto poFeature = std::unique_ptr<OGRFeature>(new OGRFeature(m_poFeatureDefn));
-        OGRGeometry *ogrGeometry = nullptr;
-        if (parseFeature(poFeature.get(), &ogrGeometry) != OGRERR_NONE) {
+        if (parseFeature(poFeature.get()) != OGRERR_NONE) {
             CPLError(CE_Failure, CPLE_AppDefined, "Fatal error parsing feature");
-            ResetReading();
             return nullptr;
         }
 
@@ -571,7 +568,7 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
 
         m_featuresPos++;
 
-        if ((m_poFilterGeom == nullptr || m_ignoreSpatialFilter || FilterGeometry(ogrGeometry)) &&
+        if ((m_poFilterGeom == nullptr || m_ignoreSpatialFilter || FilterGeometry(poFeature->GetGeometryRef())) &&
             (m_poAttrQuery == nullptr || m_ignoreAttributeFilter || m_poAttrQuery->Evaluate(poFeature.get())))
             return poFeature.release();
     }
@@ -595,7 +592,7 @@ OGRErr OGRFlatGeobufLayer::ensureFeatureBuf() {
     return OGRERR_NONE;
 }
 
-OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogrGeometry) {
+OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     GIntBig fid;
     auto seek = false;
     if (m_queriedSpatialIndex && !m_ignoreSpatialFilter) {
@@ -653,14 +650,14 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
 
     auto feature = GetRoot<Feature>(m_featureBuf);
     if (!m_poFeatureDefn->IsGeometryIgnored()) {
-        *ogrGeometry = readGeometry(feature);
-        if (*ogrGeometry == nullptr) {
+        auto ogrGeometry = readGeometry(feature);
+        if (ogrGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
         }
         if (m_poSRS != nullptr)
-            (*ogrGeometry)->assignSpatialReference(m_poSRS);
-        poFeature->SetGeometryDirectly(*ogrGeometry);
+            ogrGeometry->assignSpatialReference(m_poSRS);
+        poFeature->SetGeometryDirectly(ogrGeometry);
     }
     #ifdef DEBUG
         //char *wkt;
@@ -697,6 +694,11 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature, OGRGeometry **ogr
             auto type = column->type();
             auto isIgnored = poFeature->GetFieldDefnRef(i)->IsIgnored();
             auto ogrField = poFeature->GetRawFieldRef(i);
+            if( !OGR_RawField_IsUnset(ogrField) ) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %d set more than once", i);
+                return OGRERR_CORRUPT_DATA;
+            }
             switch (type) {
                 case ColumnType::Int:
                     if (offset + sizeof(int32_t) > size)
