@@ -1139,19 +1139,19 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         const auto field = poNewFeature->GetRawFieldRef(i);
         switch (fieldType) {
             case OGRFieldType::OFTInteger: {
-                const auto nVal = field->Integer;
+                int nVal = field->Integer;
                 CPL_LSBPTR32(&nVal);
                 std::copy(reinterpret_cast<const uint8_t *>(&nVal), reinterpret_cast<const uint8_t *>(&nVal + 1), std::back_inserter(properties));
                 break;
             }
             case OGRFieldType::OFTInteger64: {
-                const auto nVal = field->Integer64;
+                GIntBig nVal = field->Integer64;
                 CPL_LSBPTR64(&nVal);
                 std::copy(reinterpret_cast<const uint8_t *>(&nVal), reinterpret_cast<const uint8_t *>(&nVal + 1), std::back_inserter(properties));
                 break;
             }
             case OGRFieldType::OFTReal: {
-                const auto dfVal = field->Real;
+                double dfVal = field->Real;
                 CPL_LSBPTR64(&dfVal);
                 std::copy(reinterpret_cast<const uint8_t *>(&dfVal), reinterpret_cast<const uint8_t *>(&dfVal + 1), std::back_inserter(properties));
                 break;
