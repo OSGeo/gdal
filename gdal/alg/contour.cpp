@@ -564,6 +564,14 @@ CPLErr GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
     if ( opt ) {
         useNoData = true;
         noDataValue = CPLAtof( opt );
+        if( GDALGetRasterDataType(hBand) == GDT_Float32 )
+        {
+            int bClamped = FALSE;
+            int bRounded = FALSE;
+            noDataValue = GDALAdjustValueToDataType(GDT_Float32,
+                                                    noDataValue,
+                                                    &bClamped, &bRounded );
+        }
     }
 
     int idField = -1;
