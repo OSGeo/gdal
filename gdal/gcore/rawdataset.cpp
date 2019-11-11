@@ -202,14 +202,16 @@ void RawRasterBand::Initialize()
     vsi_l_offset nLargestOffset = nImgOffset;
     if( nLineOffset < 0 )
     {
-        if( static_cast<vsi_l_offset>(-nLineOffset) * (nRasterYSize - 1) > nImgOffset )
+        const auto nDelta = static_cast<vsi_l_offset>(
+            -static_cast<GIntBig>(nLineOffset)) * (nRasterYSize - 1);
+        if( nDelta > nImgOffset )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Inconsistent nLineOffset, nRasterYSize and nImgOffset");
             pLineBuffer = nullptr;
             return;
         }
-        nSmallestOffset -= static_cast<vsi_l_offset>(-nLineOffset) * (nRasterYSize - 1);
+        nSmallestOffset -= nDelta;
     }
     else
     {
@@ -225,7 +227,8 @@ void RawRasterBand::Initialize()
     }
     if( nPixelOffset < 0 )
     {
-        if( static_cast<vsi_l_offset>(-nPixelOffset) * (nRasterXSize - 1) > nSmallestOffset )
+        if( static_cast<vsi_l_offset>(-static_cast<GIntBig>(nPixelOffset)) *
+                                        (nRasterXSize - 1) > nSmallestOffset )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Inconsistent nPixelOffset, nRasterXSize and nImgOffset");
