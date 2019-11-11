@@ -687,7 +687,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
         // a single column index and smallest value type
         if (size > 0 && size < (sizeof(uint16_t) + sizeof(uint8_t)))
             return CPLErrorInvalidSize("property value");
-        while (offset < (size - 1)) {
+        while (offset + 1 < size) {
             if (offset + sizeof(uint16_t) > size)
                 return CPLErrorInvalidSize("property value");
             uint16_t i = *((uint16_t *)(data + offset));
@@ -876,6 +876,11 @@ OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Feature *featu
     uint32_t offset = 0;
     for (uint32_t i = 0; i < pEnds->size(); i++) {
         const auto e = pEnds->Get(i);
+        if( e < offset )
+        {
+            delete mls;
+            return CPLErrorInvalidLength("MultiLineString");
+        }
         const auto ls = readLineString(feature, pXy, e - offset, offset);
         if (ls == nullptr) {
             delete mls;
