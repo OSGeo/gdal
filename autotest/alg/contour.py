@@ -268,6 +268,24 @@ def test_contour_3():
     ogr_ds.ReleaseResultSet(lyr)
     ogr_ds.Destroy()
 
+
+# Check behaviour when the nodata value as a double isn't exactly the Float32 pixel value
+def test_contour_nodata_precision_issue_float32():
+
+    ogr_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/contour.shp')
+    ogr_lyr = ogr_ds.CreateLayer('contour', geom_type=ogr.wkbLineString)
+    field_defn = ogr.FieldDefn('ID', ogr.OFTInteger)
+    ogr_lyr.CreateField(field_defn)
+
+    ds = gdal.Open('data/nodata_precision_issue_float32.tif')
+    gdal.ContourGenerateEx(ds.GetRasterBand(1), ogr_lyr, options = [ "LEVEL_INTERVAL=0.1",
+                                                                     "ID_FIELD=0",
+                                                                     "NODATA=%.19g" % ds.GetRasterBand(1).GetNoDataValue()] )
+    ds = None
+    assert ogr_lyr.GetFeatureCount() == 0
+    ogr_ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/contour.shp')
+
 ###############################################################################
 # Cleanup
 
