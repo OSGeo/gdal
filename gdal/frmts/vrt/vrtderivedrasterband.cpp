@@ -85,6 +85,7 @@ static PyThreadState* (*PyEval_SaveThread)(void) = nullptr;
 static void (*PyEval_RestoreThread)(PyThreadState*) = nullptr;
 static void (*Py_Finalize)(void) = nullptr;
 static PyObject* (*Py_CompileString)(const char*, const char*, int) = nullptr;
+static PyObject* (*Py_CompileStringExFlags)(const char*, const char*, int, void*, int) = nullptr;
 static PyObject* (*PyImport_ExecCodeModule)(const char*, PyObject*) = nullptr;
 static PyObject* (*PyObject_GetAttrString)(PyObject*, const char*) = nullptr;
 static int (*PyTuple_SetItem)(PyObject *, size_t, PyObject *) = nullptr;
@@ -104,6 +105,14 @@ static const char* (*Py_GetVersion)(void) = nullptr;
 typedef int PyGILState_STATE;
 static PyGILState_STATE (*PyGILState_Ensure)(void) = nullptr;
 static void (*PyGILState_Release)(PyGILState_STATE) = nullptr;
+
+// Emulate Py_CompileString with Py_CompileStringExFlags
+// Probably just a temporary measure for a bug of Python 3.8.0 on Windows
+// https://bugs.python.org/issue37633
+static PyObject* GDAL_Py_CompileString(const char *str, const char *filename, int start)
+{
+    return Py_CompileStringExFlags(str, filename, start, nullptr, -1);
+}
 
 /* Flags for getting buffers */
 #define PyBUF_WRITABLE 0x0001
@@ -460,6 +469,7 @@ static bool LoadPythonAPI()
                                                 "libpython3.5m." SO_EXT,
                                                 "libpython3.6m." SO_EXT,
                                                 "libpython3.7m." SO_EXT,
+                                                "libpython3.8m." SO_EXT,
                                                 "libpython3.3." SO_EXT,
                                                 "libpython3.2." SO_EXT };
         for( size_t i = 0; libHandle == nullptr &&
@@ -593,6 +603,7 @@ static bool LoadPythonAPI()
                                 ++papszFileIter )
                     {
                         if( STARTS_WITH_CI(*papszFileIter, "python") &&
+                            !EQUAL(*papszFileIter, "python3.dll") &&
                             EQUAL(CPLGetExtension(*papszFileIter), "dll") )
                         {
                             osDLLName = CPLFormFilename(*papszIter,
@@ -658,6 +669,7 @@ static bool LoadPythonAPI()
                                             "python35.dll",
                                             "python36.dll",
                                             "python37.dll",
+                                            "python38.dll",
                                             "python33.dll",
                                             "python32.dll" };
         UINT        uOldErrorMode;
@@ -723,7 +735,14 @@ static bool LoadPythonAPI()
     LOAD(libHandle, PyEval_SaveThread);
     LOAD(libHandle, PyEval_RestoreThread);
     LOAD(libHandle, Py_Finalize);
-    LOAD(libHandle, Py_CompileString);
+    LOAD_NOCHECK(libHandle, Py_CompileString);
+    if( Py_CompileString == nullptr )
+    {
+        // Probably just a temporary measure for a bug of Python 3.8.0 on Windows
+        // https://bugs.python.org/issue37633
+        LOAD(libHandle, Py_CompileStringExFlags);
+        Py_CompileString = GDAL_Py_CompileString;
+    }
     LOAD(libHandle, PyImport_ExecCodeModule);
     LOAD(libHandle, PyObject_GetAttrString);
     LOAD(libHandle, PyTuple_SetItem);
