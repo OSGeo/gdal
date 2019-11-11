@@ -37,7 +37,7 @@ of the command line, or put in a text file (one filename per line) for very long
 or it can be a MapServer tileindex (see \ref gdaltindex utility). In the later case, all
 entries in the tile index will be added to the VRT.
 
-With -separate, each files goes into a separate band in the VRT band. Otherwise,
+With -separate, each files goes into a separate band in the VRT dataset. Otherwise,
 the files are considered as tiles of a larger mosaic and the VRT file has as many bands as one
 of the input files.
 
