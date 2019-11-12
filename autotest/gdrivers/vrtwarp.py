@@ -434,3 +434,13 @@ def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
     ref_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     ref_ds.GetRasterBand(1).Fill(127)
     assert data == ref_ds.ReadRaster()
+
+###############################################################################
+# Test reading a warped VRT that has blocks pointing to spce.
+# https://github.com/OSGeo/gdal/issues/1985
+
+
+def test_vrtwarp_read_blocks_in_space():
+
+    ds = gdal.Open('data/geos_vrtwarp.vrt')
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
