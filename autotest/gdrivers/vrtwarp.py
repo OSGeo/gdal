@@ -412,8 +412,11 @@ def test_vrtwarp_read_vrt_of_warped_vrt():
     assert cs == 4672
 
 ###############################################################################
-# Test different nodata values on bands and partial blocks (#6581)
+# Test reading a warped VRT that has blocks pointing to spce.
+# https://github.com/OSGeo/gdal/issues/1985
 
 
+def test_vrtwarp_read_blocks_in_space():
 
-
+    ds = gdal.Open('data/geos_vrtwarp.vrt')
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
