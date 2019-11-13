@@ -836,6 +836,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_SetTOWGS84(self, *args)
 
 
+    def HasTOWGS84(self, *args):
+        """HasTOWGS84(SpatialReference self) -> bool"""
+        return _osr.SpatialReference_HasTOWGS84(self, *args)
+
+
     def GetTOWGS84(self, *args):
         """GetTOWGS84(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_GetTOWGS84(self, *args)
