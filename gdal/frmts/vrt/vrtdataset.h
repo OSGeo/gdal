@@ -817,6 +817,11 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL: public VRTRasterBand
 
     void           ClearRawLink();
 
+    CPLVirtualMem *GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                      int *pnPixelSpace,
+                                      GIntBig *pnLineSpace,
+                                      char **papszOptions ) override;
+
     virtual void   GetFileList( char*** ppapszFileList, int *pnSize,
                                 int *pnMaxSize, CPLHashSet* hSetFiles ) override;
 };
@@ -1357,7 +1362,7 @@ public:
                                                 const CPLXMLNode* psNode);
 
     std::shared_ptr<GDALMDArray> GetIndexingVariable() const override;
-   
+
     bool SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable) override;
 
     void Serialize(CPLXMLNode* psParent) const;
