@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <map>
 #include <new>
 #include <vector>
 
