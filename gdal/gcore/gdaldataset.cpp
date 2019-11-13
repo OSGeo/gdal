@@ -7272,8 +7272,20 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
                      CPLGetPID(), GetDescription());
 #endif
             CPLCreateOrAcquireMutex(&(m_poPrivate->hMutex), 1000.0);
-            // Not sure if we can have recursive calls, so...
-            m_poPrivate->oMapThreadToMutexTakenCount[CPLGetPID()]++;
+
+            const int nCountMutex = m_poPrivate->oMapThreadToMutexTakenCount[CPLGetPID()]++;
+            if( nCountMutex == 0 && eRWFlag == GF_Read )
+            {
+                CPLReleaseMutex(m_poPrivate->hMutex);
+                for( int i = 0; i < nBands; i++ )
+                {
+                    auto blockCache = papoBands[i]->poBandBlockCache;
+                    if( blockCache )
+                        blockCache->WaitCompletionPendingTasks();
+                }
+                CPLCreateOrAcquireMutex(&(m_poPrivate->hMutex), 1000.0);
+            }
+
             return TRUE;
         }
     }

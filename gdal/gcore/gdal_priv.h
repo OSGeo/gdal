@@ -1029,7 +1029,6 @@ class GDALAbstractBandBlockCache
 
         void              FreeDanglingBlocks();
         void              UnreferenceBlockBase();
-        void              WaitKeepAliveCounter();
 
         void              StartDirtyBlockFlushingLog();
         void              UpdateDirtyBlockFlushingLog();
@@ -1042,6 +1041,7 @@ class GDALAbstractBandBlockCache
             GDALRasterBlock* CreateBlock(int nXBlockOff, int nYBlockOff);
             void             AddBlockToFreeList( GDALRasterBlock * );
             void             IncDirtyBlocks(int nInc);
+            void             WaitCompletionPendingTasks();
 
             virtual bool             Init() = 0;
             virtual bool             IsInitOK() = 0;
@@ -1071,6 +1071,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     friend class GDALArrayBandBlockCache;
     friend class GDALHashSetBandBlockCache;
     friend class GDALRasterBlock;
+    friend class GDALDataset;
 
     CPLErr eFlushBlockErr = CE_None;
     GDALAbstractBandBlockCache* poBandBlockCache = nullptr;
@@ -1106,7 +1107,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     void        InvalidateMaskBand();
 
-    friend class GDALDataset;
     friend class GDALProxyRasterBand;
     friend class GDALDefaultOverviews;
 
