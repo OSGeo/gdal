@@ -28,7 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -511,4 +511,70 @@ def test_tiff_srs_proj4(proj4):
     _test_tiff_srs(sr, False)
 
 
+def test_tiff_srs_towgs84_from_epsg_do_not_write_it():
 
+    filename = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+    srs_in = osr.SpatialReference()
+    srs_in.ImportFromEPSG(31468)
+    assert srs_in.HasTOWGS84()
+    ds.SetSpatialRef(srs_in)
+    ds = None
+
+    ds = gdal.Open(filename)
+    with gdaltest.config_option('OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG', 'NO'):
+        srs = ds.GetSpatialRef()
+    assert not srs.HasTOWGS84()
+
+
+def test_tiff_srs_towgs84_from_epsg_force_write_it():
+
+    filename = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+    srs_in = osr.SpatialReference()
+    srs_in.ImportFromEPSG(31468)
+    assert srs_in.HasTOWGS84()
+    with gdaltest.config_option('GTIFF_WRITE_TOWGS84', 'YES'):
+        ds.SetSpatialRef(srs_in)
+        ds = None
+
+    ds = gdal.Open(filename)
+    with gdaltest.config_option('OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG', 'NO'):
+        srs = ds.GetSpatialRef()
+    assert srs.HasTOWGS84()
+
+
+def test_tiff_srs_towgs84_with_epsg_code_but_non_default_TOWGS84():
+
+    filename = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+    srs_in = osr.SpatialReference()
+    srs_in.SetFromUserInput("""PROJCS["DHDN / 3-degree Gauss-Kruger zone 4",
+    GEOGCS["DHDN",
+        DATUM["Deutsches_Hauptdreiecksnetz",
+            SPHEROID["Bessel 1841",6377397.155,299.1528128,
+                AUTHORITY["EPSG","7004"]],
+            TOWGS84[1,2,3,4,5,6,7],
+            AUTHORITY["EPSG","6314"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4314"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",12],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",4500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Northing",NORTH],
+    AXIS["Easting",EAST],
+    AUTHORITY["EPSG","31468"]]""")
+    ds.SetSpatialRef(srs_in)
+    ds = None
+
+    ds = gdal.Open(filename)
+    srs = ds.GetSpatialRef()
+    assert srs.GetTOWGS84() == (1,2,3,4,5,6,7)

@@ -900,6 +900,11 @@ public:
     return OSRSetTOWGS84( self, p1, p2, p3, p4, p5, p6, p7 );
   }
 
+  bool HasTOWGS84() {
+    double ignored[7];
+    return OSRGetTOWGS84( self, ignored, 7 ) == OGRERR_NONE;
+  }
+
   OGRErr GetTOWGS84( double argout[7] ) {
     return OSRGetTOWGS84( self, argout, 7 );
   }

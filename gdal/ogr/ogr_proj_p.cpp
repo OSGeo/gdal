@@ -60,8 +60,9 @@ struct OSRPJContextHolder
 {
     unsigned searchPathGenerationCounter = 0;
     PJ_CONTEXT* context = nullptr;
+    OSRProjTLSCache oCache{};
 
-    OSRPJContextHolder();
+    OSRPJContextHolder() = default;
     ~OSRPJContextHolder();
 
     void init();
@@ -71,12 +72,6 @@ private:
     OSRPJContextHolder(const OSRPJContextHolder&) = delete;
     OSRPJContextHolder& operator=(const OSRPJContextHolder&) = delete;
 };
-
-
-OSRPJContextHolder::OSRPJContextHolder()
-{
-    init();
-}
 
 void OSRPJContextHolder::init()
 {
@@ -95,6 +90,9 @@ OSRPJContextHolder::~OSRPJContextHolder()
 
 void OSRPJContextHolder::deinit()
 {
+    oCache.clear();
+
+    // Destroy context in last
     proj_context_destroy(context);
     context = nullptr;
 }
@@ -144,7 +142,7 @@ PJ_CONTEXT* OSRGetProjTLSContext()
     auto& l_projContext = GetProjTLSContextHolder();
     l_projContext.init();
     {
-        // If OSRSetPROJSearchPaths() has been called since we created the mutex,
+        // If OSRSetPROJSearchPaths() has been called since we created the context,
         // set the new search paths on the context.
         std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
         if( l_projContext.searchPathGenerationCounter !=
@@ -159,6 +157,67 @@ PJ_CONTEXT* OSRGetProjTLSContext()
         }
     }
     return l_projContext.context;
+}
+
+/************************************************************************/
+/*                         OSRGetProjTLSCache()                         */
+/************************************************************************/
+
+OSRProjTLSCache* OSRGetProjTLSCache()
+{
+    auto& l_projContext = GetProjTLSContextHolder();
+    return &l_projContext.oCache;
+}
+
+struct OSRPJDeleter
+{
+    void operator()(PJ* pj) const { proj_destroy(pj); }
+};
+
+void OSRProjTLSCache::clear()
+{
+    m_oCacheEPSG.clear();
+    m_oCacheWKT.clear();
+}
+
+PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84)
+{
+    try
+    {
+        const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
+        const auto& cached = m_oCacheEPSG.get(key);
+        return proj_clone(OSRGetProjTLSContext(), cached.get());
+    }
+    catch( const lru11::KeyNotFound& )
+    {
+        return nullptr;
+    }
+}
+
+void OSRProjTLSCache::CachePJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84, PJ* pj)
+{
+    const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
+    m_oCacheEPSG.insert(key, std::shared_ptr<PJ>(
+                    proj_clone(OSRGetProjTLSContext(), pj), OSRPJDeleter()));
+}
+
+PJ* OSRProjTLSCache::GetPJForWKT(const std::string& wkt)
+{
+    try
+    {
+        const auto& cached = m_oCacheWKT.get(wkt);
+        return proj_clone(OSRGetProjTLSContext(), cached.get());
+    }
+    catch( const lru11::KeyNotFound& )
+    {
+        return nullptr;
+    }
+}
+
+void OSRProjTLSCache::CachePJForWKT(const std::string& wkt, PJ* pj)
+{
+    m_oCacheWKT.insert(wkt, std::shared_ptr<PJ>(
+                    proj_clone(OSRGetProjTLSContext(), pj), OSRPJDeleter()));
 }
 
 /************************************************************************/
