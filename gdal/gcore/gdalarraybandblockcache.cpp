@@ -318,7 +318,7 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
         }
     }
 
-    WaitKeepAliveCounter();
+    WaitCompletionPendingTasks();
 
     return( eGlobalErr );
 }

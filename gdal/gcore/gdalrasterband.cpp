@@ -536,6 +536,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
+
     int bCallLeaveReadWrite = EnterReadWrite(GF_Read);
     CPLErr eErr = IReadBlock( nXBlockOff, nYBlockOff, pImage );
     if( bCallLeaveReadWrite) LeaveReadWrite();

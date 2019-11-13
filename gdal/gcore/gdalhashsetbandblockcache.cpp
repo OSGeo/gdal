@@ -181,7 +181,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
         }
     }
 
-    WaitKeepAliveCounter();
+    WaitCompletionPendingTasks();
 
     return( eGlobalErr );
 }
