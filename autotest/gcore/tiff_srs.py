@@ -398,13 +398,16 @@ def _test_tiff_srs(sr, expect_fail):
     This is not a test by itself; it gets called by the tests below.
     """
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/TestTiffSRS.tif', 1, 1)
-    ds.SetProjection(sr.ExportToWkt())
+    ds.SetSpatialRef(sr)
     ds = None
 
     ds = gdal.Open('/vsimem/TestTiffSRS.tif')
     wkt = ds.GetProjectionRef()
     sr2 = osr.SpatialReference()
     sr2.SetFromUserInput(wkt)
+    if 'Miller' in wkt:
+        # Trick so that the EXTENSION node with a PROJ string including +R_A is added
+        sr2.ImportFromProj4(sr2.ExportToProj4())
     ds = None
 
     gdal.Unlink('/vsimem/TestTiffSRS.tif')
@@ -489,7 +492,7 @@ def test_tiff_srs(use_epsg_code, epsg_code, epsg_proj4_broken):
     'proj4',
     [
         '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4, 5, 6),
-        '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1, 2, 3, 4),
+        '+proj=mill +R_A +lon_0=2 +x_0=3 +y_0=4 +datum=WGS84 +units=m +no_defs',
         '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3, 4),
         '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3),
         '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1, 2, 3),
