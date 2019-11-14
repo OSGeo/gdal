@@ -708,6 +708,14 @@ the default behaviour of the GTiff driver.
    LZMA. Will be ignored for JPEG. Default is compression in the main
    thread. Note: this configuration option also apply to other parts to
    GDAL (warping, gridding, ...).
+-  GTIFF_WRITE_TOWGS84=AUTO/YES/NO: (GDAL >= 3.0.3). When set to AUTO, a
+   GeogTOWGS84GeoKey geokey will be written with TOWGS84 3 or 7-parameter
+   Helmert transformation, if the CRS has no EPSG code attached to it, or if
+   the TOWGS84 transformation attached to the CRS doesn't match the one imported
+   from the EPSG code.
+   If set to YES, then the TOWGS84 transformation attached to the CRS will be
+   always written. If set to NO, then the transformation will not be written in
+   any situation.
 
 See Also
 --------

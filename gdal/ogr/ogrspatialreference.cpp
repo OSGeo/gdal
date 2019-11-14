@@ -10156,18 +10156,18 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
 /************************************************************************/
 
 /**
- * \brief Initialize SRS based on EPSG CRS code.
+ * \brief  Initialize SRS based on EPSG geographic, projected or vertical CRS code.
  *
  * This method will initialize the spatial reference based on the
- * passed in EPSG CRS code.
+ * passed in EPSG CRS code found in the PROJ database.
  *
- * This method is similar to importFromEPSG() except that EPSG preferred axis
- * ordering *will* be applied for geographic and projected coordinate systems.
- * EPSG normally defines geographic coordinate systems to use lat/long, and also
- * there are also a few projected coordinate systems that use northing/easting
- * order contrary to typical GIS use).  See
- * OGRSpatialReference::importFromEPSG() for more details on operation of this
- * method.
+ * Since GDAL 3.0, this method is identical to importFromEPSG().
+ *
+ * This method try to attach a 3-parameter or 7-parameter Helmert transformation
+ * to WGS84 when there is one and only one such method available for the CRS.
+ * This behaviour might not always be desirable, so starting with GDAL 3.0.3,
+ * the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG configuration option can be set to
+ * NO to disable this behaviour.
  *
  * This method is the same as the C function OSRImportFromEPSGA().
  *
@@ -10183,10 +10183,12 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
     const bool bUseNonDeprecated = CPLTestBool(
                 CPLGetConfigOption("OSR_USE_NON_DEPRECATED", "YES"));
-    auto tlsCache = bUseNonDeprecated ? OSRGetProjTLSCache() : nullptr;
+    const bool bAddTOWGS84 = CPLTestBool(
+            CPLGetConfigOption("OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG", "YES"));
+    auto tlsCache = OSRGetProjTLSCache();
     if( tlsCache )
     {
-        auto cachedObj = tlsCache->GetPJForEPSGCode(nCode);
+        auto cachedObj = tlsCache->GetPJForEPSGCode(nCode, bUseNonDeprecated, bAddTOWGS84);
         if( cachedObj )
         {
             d->setPjCRS(cachedObj);
@@ -10223,19 +10225,22 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
         proj_list_destroy(list);
     }
 
-    auto boundCRS = proj_crs_create_bound_crs_to_WGS84(
-        d->getPROJContext(), obj, nullptr);
-    if( boundCRS )
+    if( bAddTOWGS84 )
     {
-        proj_destroy(obj);
-        obj = boundCRS;
+        auto boundCRS = proj_crs_create_bound_crs_to_WGS84(
+            d->getPROJContext(), obj, nullptr);
+        if( boundCRS )
+        {
+            proj_destroy(obj);
+            obj = boundCRS;
+        }
     }
 
     d->setPjCRS(obj);
 
     if( tlsCache )
     {
-        tlsCache->CachePJForEPSGCode(nCode, obj);
+        tlsCache->CachePJForEPSGCode(nCode, bUseNonDeprecated, bAddTOWGS84, obj);
     }
 
     return OGRERR_NONE;
@@ -10246,7 +10251,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 /************************************************************************/
 
 /**
- * \brief  Initialize SRS based on EPSG CRS code.
+ * \brief  Initialize SRS based on EPSG geographic, projected or vertical CRS code.
  *
  * This function is the same as OGRSpatialReference::importFromEPSGA().
  */
@@ -10265,30 +10270,18 @@ OGRErr CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH hSRS, int nCode )
 /************************************************************************/
 
 /**
- * \brief Initialize SRS based on EPSG GCS or PCS code.
+ * \brief  Initialize SRS based on EPSG geographic, projected or vertical CRS code.
  *
  * This method will initialize the spatial reference based on the
- * passed in EPSG GCS or PCS code.  The coordinate system definitions
- * are normally read from the EPSG derived support files such as
- * pcs.csv, gcs.csv, pcs.override.csv, gcs.override.csv and falling
- * back to search for a PROJ.4 epsg init file or a definition in epsg.wkt.
- *
- * These support files are normally searched for in /usr/local/share/gdal
- * or in the directory identified by the GDAL_DATA configuration option.
- * See CPLFindFile() for details.
- *
- * This method is relatively expensive, and generally involves quite a bit
- * of text file scanning.  Reasonable efforts should be made to avoid calling
- * it many times for the same coordinate system.
- *
- * This method is similar to importFromEPSGA() except that EPSG preferred
- * axis ordering will *not* be applied for geographic coordinate systems.
- * EPSG normally defines geographic coordinate systems to use lat/long
- * contrary to typical GIS use). Since OGR 1.10.0, EPSG preferred
- * axis ordering will also *not* be applied for projected coordinate systems
- * that use northing/easting order.
+ * passed in EPSG CRS code found in the PROJ database.
  *
  * This method is the same as the C function OSRImportFromEPSG().
+ *
+ * This method try to attach a 3-parameter or 7-parameter Helmert transformation
+ * to WGS84 when there is one and only one such method available for the CRS.
+ * This behaviour might not always be desirable, so starting with GDAL 3.0.3,
+ * the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG configuration option can be set to
+ * NO to disable this behaviour.
  *
  * @param nCode a GCS or PCS code from the horizontal coordinate system table.
  *
@@ -10306,7 +10299,7 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 /************************************************************************/
 
 /**
- * \brief  Initialize SRS based on EPSG GCS or PCS code.
+ * \brief  Initialize SRS based on EPSG geographic, projected or vertical CRS code.
  *
  * This function is the same as OGRSpatialReference::importFromEPSG().
  */
