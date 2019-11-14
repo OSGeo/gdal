@@ -1888,6 +1888,38 @@ void VRTDataset::BuildVirtualOverviews()
             nOverviews = nOvrCount;
     }
 
+    if( m_poMaskBand )
+    {
+        if( !m_poMaskBand->IsSourcedRasterBand())
+            return;
+
+        VRTSourcedRasterBand* poVRTBand
+            = cpl::down_cast<VRTSourcedRasterBand *>( m_poMaskBand );
+        if( poVRTBand->nSources != 1 )
+            return;
+        if( !poVRTBand->papoSources[0]->IsSimpleSource() )
+            return;
+
+        VRTSimpleSource* poSource
+            = cpl::down_cast<VRTSimpleSource *>( poVRTBand->papoSources[0] );
+        if( !EQUAL(poSource->GetType(), "SimpleSource") &&
+            !EQUAL(poSource->GetType(), "ComplexSource") )
+            return;
+        GDALRasterBand* poSrcBand = poSource->GetBand();
+        if( poSrcBand == nullptr )
+            return;
+
+        // To prevent recursion
+        m_apoOverviewsBak.push_back(nullptr);
+        const int nOvrCount = poSrcBand->GetOverviewCount();
+        m_apoOverviewsBak.resize(0);
+
+        if( nOvrCount == 0 )
+            return;
+        if( nOvrCount < nOverviews )
+            nOverviews = nOvrCount;
+    }
+
     for( int j = 0; j < nOverviews; j++)
     {
         auto poOvrBand = poFirstBand->GetOverview(j);
@@ -1928,6 +1960,43 @@ void VRTDataset::BuildVirtualOverviews()
             {
               poNewSource = new VRTComplexSource(
                   reinterpret_cast<VRTComplexSource *>( poSrcSource ),
+                  dfXRatio, dfYRatio );
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+            if( poNewSource )
+            {
+                if( poNewSource->GetBand()->GetDataset() )
+                    poNewSource->GetBand()->GetDataset()->Reference();
+                poOvrVRTBand->AddSource(poNewSource);
+            }
+        }
+
+        if( m_poMaskBand )
+        {
+            VRTSourcedRasterBand* poVRTBand
+                = cpl::down_cast<VRTSourcedRasterBand *>(m_poMaskBand );
+            VRTSourcedRasterBand* poOvrVRTBand = new VRTSourcedRasterBand(
+                poOvrVDS,
+                0,
+                poVRTBand->GetRasterDataType(),
+                nOvrXSize, nOvrYSize);
+            poOvrVDS->SetMaskBand( poOvrVRTBand );
+
+            VRTSimpleSource* poSrcSource = cpl::down_cast<VRTSimpleSource *>(
+                poVRTBand->papoSources[0] );
+            VRTSimpleSource* poNewSource = nullptr;
+            if( EQUAL(poSrcSource->GetType(), "SimpleSource") )
+            {
+                poNewSource =
+                    new VRTSimpleSource(poSrcSource, dfXRatio, dfYRatio);
+            }
+            else if( EQUAL(poSrcSource->GetType(), "ComplexSource") )
+            {
+              poNewSource = new VRTComplexSource(
+                  cpl::down_cast<VRTComplexSource *>( poSrcSource ),
                   dfXRatio, dfYRatio );
             }
             else
