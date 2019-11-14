@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 from osgeo import gdal
 
 
@@ -495,6 +496,28 @@ def test_vrtmisc_histogram():
     assert hist == (1.0, 2.0, 2, [3000000000, 4])
 
     gdal.Unlink(tmpfile)
+
+
+###############################################################################
+# complex scenario involving masks and implicit overviews
+
+def test_vrtmisc_mask_implicit_overviews():
+
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ds = gdal.Translate('/vsimem/cog.tif', 'data/stefan_full_rgba.tif', options = '-outsize 2048 0 -b 1 -b 2 -b 3 -mask 4')
+        ds.BuildOverviews('NEAR', [2, 4])
+        ds = None
+    gdal.Translate('/vsimem/cog.vrt', '/vsimem/cog.tif')
+    gdal.Translate('/vsimem/out.tif', '/vsimem/cog.vrt', options = '-b mask -outsize 10% 0')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/cog.tif')
+    gdal.Unlink('/vsimem/cog.vrt')
+    ds = gdal.Open('/vsimem/out.tif')
+    histo = ds.GetRasterBand(1).GetDefaultHistogram()[3]
+    # Check that there are only 0 and 255 in the histogram
+    assert histo[0] + histo[255] == ds.RasterXSize * ds.RasterYSize, histo
+    assert ds.GetRasterBand(1).Checksum() == 46885
+    ds = None
+    gdal.Unlink('/vsimem/out.tif')
 
 ###############################################################################
 # Cleanup.
