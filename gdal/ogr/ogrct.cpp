@@ -840,6 +840,32 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     }
     else if( !bWebMercatorToWGS84LongLat )
     {
+        const auto CanUseAuthorityDef = [](const OGRSpatialReference* poSRS1,
+                                           const OGRSpatialReference* poSRS2,
+                                           const char* pszAuth)
+        {
+            if( EQUAL(pszAuth, "EPSG") )
+            {
+                // We don't want by default to honour 'default' TOWGS84 terms that come with the EPSG code
+                // because there might be a better transformation from that
+                // Typical case if EPSG:31468 "DHDN / 3-degree Gauss-Kruger zone 4"
+                // where the DHDN->TOWGS84 transformation can use the BETA2007.gsb grid
+                // instead of TOWGS84[598.1,73.7,418.2,0.202,0.045,-2.455,6.7]
+                // But if the user really wants it, it can set the
+                // OSR_CT_USE_DEFAULT_EPSG_TOWGS84 configuration option to YES
+                double adfTOWGS84_1[7];
+                double adfTOWGS84_2[7];
+                if( poSRS1->GetTOWGS84(adfTOWGS84_1) == OGRERR_NONE &&
+                    poSRS2->GetTOWGS84(adfTOWGS84_2) == OGRERR_NONE &&
+                    memcmp(adfTOWGS84_1, adfTOWGS84_2, sizeof(adfTOWGS84_1)) == 0 &&
+                    CPLTestBool(CPLGetConfigOption("OSR_CT_USE_DEFAULT_EPSG_TOWGS84", "NO")) )
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+
         const char* const apszOptions[] = { "FORMAT=WKT2_2018", nullptr };
         char* pszSrcSRS = nullptr;
         {
@@ -857,7 +883,10 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                 oTmpSRS.SetDataAxisToSRSAxisMapping(poSRSSource->GetDataAxisToSRSAxisMapping());
                 if( oTmpSRS.IsSame(poSRSSource) )
                 {
-                    pszSrcSRS = CPLStrdup(osAuthCode);
+                    if( CanUseAuthorityDef(poSRSSource, &oTmpSRS, pszAuth) )
+                    {
+                        pszSrcSRS = CPLStrdup(osAuthCode);
+                    }
                 }
             }
             if( pszSrcSRS == nullptr )
@@ -882,7 +911,10 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                 oTmpSRS.SetDataAxisToSRSAxisMapping(poSRSTarget->GetDataAxisToSRSAxisMapping());
                 if( oTmpSRS.IsSame(poSRSTarget) )
                 {
-                    pszTargetSRS = CPLStrdup(osAuthCode);
+                    if( CanUseAuthorityDef(poSRSTarget, &oTmpSRS, pszAuth) )
+                    {
+                        pszTargetSRS = CPLStrdup(osAuthCode);
+                    }
                 }
             }
             if( pszTargetSRS == nullptr )
