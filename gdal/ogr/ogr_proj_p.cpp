@@ -248,6 +248,28 @@ void OSRSetPROJSearchPaths( const char* const * papszPaths )
 }
 
 /************************************************************************/
+/*                        OSRGetPROJSearchPaths()                       */
+/************************************************************************/
+
+/** \brief Get the search path(s) for PROJ resource files.
+ *
+ * @return NULL terminated list of directory paths. To be freed with CSLDestroy()
+ * @since GDAL 3.0.3
+ */
+char** OSRGetPROJSearchPaths()
+{
+    std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
+    const char* pszSep =
+#ifdef _WIN32
+                        ";"
+#else
+                        ":"
+#endif
+    ;
+    return CSLTokenizeString2( proj_info().searchpath, pszSep, 0);
+}
+
+/************************************************************************/
 /*                         OSRGetPROJVersion()                          */
 /************************************************************************/
 
