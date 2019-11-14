@@ -1425,6 +1425,15 @@ void SetPROJSearchPaths( char** paths )
 %}
 %clear (char **);
 
+%apply (char **CSL) {(char **)};
+%inline %{
+char** GetPROJSearchPaths()
+{
+    return OSRGetPROJSearchPaths();
+}
+%}
+%clear (char **);
+
 %inline %{
 int GetPROJVersionMajor()
 {
@@ -1437,6 +1446,13 @@ int GetPROJVersionMinor()
 {
     int num;
     OSRGetPROJVersion(NULL, &num, NULL);
+    return num;
+}
+
+int GetPROJVersionMicro()
+{
+    int num;
+    OSRGetPROJVersion(NULL, NULL, &num);
     return num;
 }
 %}

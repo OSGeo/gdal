@@ -101,9 +101,9 @@ transform_list = [
      'EPSG:4328', (-3748031.46884168, -3144971.82314589, 4077985.57220038), 0.1,
      'Geocentric', None, None),
 
-    # Test Vertical Datum Shift with a change of horizontal and vert units.
+    # Test Vertical Datum Shift with a change of horizontal units.
     ('+proj=utm +zone=11 +datum=WGS84', (100000.0, 3500000.0, 0.0), 0.1,
-     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467, 11482916.6665952, 136.055454832886), 0.01,
+     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467, 11482916.6665952, 41.4697855726348), 0.01,
      'EGM 96 Conversion', None, "GRID:egm96_15.gtx"),
 
     # Test optimization in case of identical projections (projected)
@@ -136,15 +136,19 @@ def test_proj(src_srs, src_xyz, src_error,
              dst_srs, dst_xyz, dst_error, unit_name, options, requirements):
 
     if requirements is not None and requirements[:5] == 'GRID:':
-        proj_lib = os.getenv('PROJ_LIB')
-        if proj_lib is None:
-            # print( 'PROJ_LIB unset, skipping test.' )
+        grid_name = requirements[5:]
+        if grid_name == 'egm96_15.gtx' and \
+           osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 + osr.GetPROJVersionMicro() < 60201:
+            # Issues before PROJ 6.2.1
             pytest.skip()
-
-        try:
-            open(proj_lib + '/' + requirements[5:])
-        except IOError:
-            # print( 'Did not find GRID:%s' % requirements[5:] )
+        search_paths = osr.GetPROJSearchPaths()
+        found = False
+        for path in search_paths:
+            if os.path.exists(os.path.join(path, grid_name)):
+                found = True
+                break
+        if not found:
+            #print( 'Did not find GRID:%s' % grid_name )
             pytest.skip()
 
     src = osr.SpatialReference()

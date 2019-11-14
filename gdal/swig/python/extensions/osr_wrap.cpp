@@ -4644,6 +4644,12 @@ void SetPROJSearchPaths( char** paths )
 }
 
 
+char** GetPROJSearchPaths()
+{
+    return OSRGetPROJSearchPaths();
+}
+
+
 int GetPROJVersionMajor()
 {
     int num;
@@ -4655,6 +4661,13 @@ int GetPROJVersionMinor()
 {
     int num;
     OSRGetPROJVersion(NULL, &num, NULL);
+    return num;
+}
+
+int GetPROJVersionMicro()
+{
+    int num;
+    OSRGetPROJVersion(NULL, NULL, &num);
     return num;
 }
 
@@ -17309,6 +17322,49 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetPROJSearchPaths(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJSearchPaths")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char **)GetPROJSearchPaths();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GetPROJVersionMajor(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   int result;
@@ -17346,6 +17402,33 @@ SWIGINTERN PyObject *_wrap_GetPROJVersionMinor(PyObject *SWIGUNUSEDPARM(self), P
       ClearErrorState();
     }
     result = (int)GetPROJVersionMinor();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetPROJVersionMicro(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJVersionMicro")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (int)GetPROJVersionMicro();
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17564,8 +17647,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetCRSInfoListFromDatabase", _wrap_GetCRSInfoListFromDatabase, METH_VARARGS, (char *)"GetCRSInfoListFromDatabase(char const * authName)"},
 	 { (char *)"SetPROJSearchPath", _wrap_SetPROJSearchPath, METH_VARARGS, (char *)"SetPROJSearchPath(char const * utf8_path)"},
 	 { (char *)"SetPROJSearchPaths", _wrap_SetPROJSearchPaths, METH_VARARGS, (char *)"SetPROJSearchPaths(char ** paths)"},
+	 { (char *)"GetPROJSearchPaths", _wrap_GetPROJSearchPaths, METH_VARARGS, (char *)"GetPROJSearchPaths() -> char **"},
 	 { (char *)"GetPROJVersionMajor", _wrap_GetPROJVersionMajor, METH_VARARGS, (char *)"GetPROJVersionMajor() -> int"},
 	 { (char *)"GetPROJVersionMinor", _wrap_GetPROJVersionMinor, METH_VARARGS, (char *)"GetPROJVersionMinor() -> int"},
+	 { (char *)"GetPROJVersionMicro", _wrap_GetPROJVersionMicro, METH_VARARGS, (char *)"GetPROJVersionMicro() -> int"},
 	 { NULL, NULL, 0, NULL }
 };
 

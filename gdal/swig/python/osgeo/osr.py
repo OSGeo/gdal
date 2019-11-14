@@ -1212,6 +1212,10 @@ def SetPROJSearchPaths(*args):
     """SetPROJSearchPaths(char ** paths)"""
     return _osr.SetPROJSearchPaths(*args)
 
+def GetPROJSearchPaths(*args):
+    """GetPROJSearchPaths() -> char **"""
+    return _osr.GetPROJSearchPaths(*args)
+
 def GetPROJVersionMajor(*args):
     """GetPROJVersionMajor() -> int"""
     return _osr.GetPROJVersionMajor(*args)
@@ -1219,6 +1223,10 @@ def GetPROJVersionMajor(*args):
 def GetPROJVersionMinor(*args):
     """GetPROJVersionMinor() -> int"""
     return _osr.GetPROJVersionMinor(*args)
+
+def GetPROJVersionMicro(*args):
+    """GetPROJVersionMicro() -> int"""
+    return _osr.GetPROJVersionMicro(*args)
 # This file is compatible with both classic and new-style classes.
 
 
