@@ -526,6 +526,9 @@ def test_vrtmisc_mask_implicit_overviews():
         ds.BuildOverviews('NEAR', [2, 4])
         ds = None
     gdal.Translate('/vsimem/cog.vrt', '/vsimem/cog.tif')
+    ds = gdal.Open('/vsimem/cog.vrt')
+    assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_PER_DATASET
+    ds = None
     gdal.Translate('/vsimem/out.tif', '/vsimem/cog.vrt', options = '-b mask -outsize 10% 0')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/cog.tif')
     gdal.Unlink('/vsimem/cog.vrt')
