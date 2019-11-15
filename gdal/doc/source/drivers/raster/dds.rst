@@ -6,14 +6,17 @@ DDS -- DirectDraw Surface
 
 .. shortname:: DDS
 
-Supported for writing and creation. The DirectDraw Surface file format
+The DirectDraw Surface file format
 (uses the filename extension DDS), from Microsoft, is a standard for
 storing data compressed with the lossy S3 Texture Compression (S3TC)
 algorithm. The DDS format and compression are provided by the crunch
 library.
 
-The driver supports the following texture formats: DXT1. DXT1A, DXT3
-(default) and DXT5. You can set the texture format using the creation
+Support for reading has been added in GDAL 3.1. Previous versions have write-only
+support.
+
+The driver supports the following texture formats: DXT1, DXT1A, DXT3
+(default), DXT5 and ETC1. You can set the texture format using the creation
 option FORMAT.
 
 The driver supports the following compression quality: SUPERFAST, FAST,
