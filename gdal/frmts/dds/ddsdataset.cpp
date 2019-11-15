@@ -736,7 +736,7 @@ void GDALRegister_DDS()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "DirectDraw Surface");
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#DDS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/dds.html" );
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "dds");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/dds");
 

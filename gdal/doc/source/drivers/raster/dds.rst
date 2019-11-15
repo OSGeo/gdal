@@ -23,7 +23,7 @@ The driver supports the following compression quality: SUPERFAST, FAST,
 NORMAL (default), BETTER and UBER. You can set the compression quality
 using the creation option QUALITY.
 
-More information about `Crunch Lib <http://code.google.com/p/crunch/>`__
+More information about `Crunch Lib <https://github.com/BinomialLLC/crunch>`__
 
 NOTE: Implemented as ``gdal/frmts/dds/ddsdataset.cpp``.
 
@@ -32,4 +32,57 @@ Driver capabilities
 
 .. supports_createcopy::
 
-.. supports_create::
+
+Build instructions
+------------------
+
+Building crunch can be a bit difficult. The `build_fixes` branch of
+https://github.com/rouault/crunch/ includes a CMake build system, as well as
+a few fixes that are not found in the upstream respository
+
+Build crunch
+++++++++++++
+
+Linux
+*****
+
+.. code-block::
+
+    git clone -b build_fixes https://github.com/rouault/crunch
+    cd crunch
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/install-crunch -DCMAKE_BUILD_TYPE=Release
+    make -j8 install
+
+Windows
+*******
+
+.. code-block::
+
+    git clone -b build_fixes https://github.com/rouault/crunch
+    cd crunch
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=c:\dev\install-crunch -G "Visual Studio 15 2017 Win64"
+    cmake --build . --config Release --target install
+
+Build GDAL against crunch
++++++++++++++++++++++++++
+
+Linux
+*****
+
+.. code-block::
+
+    ./configure --with-dds=$HOME/install-crunch
+
+Windows
+*******
+
+In nmake.local, add the following lines:
+
+.. code-block::
+
+    CRUNCH_INC = -Ic:\dev\install-crunch\include\crunch
+    CRUNCH_LIB = c:\dev\install-crunch\lib\crunch.lib
