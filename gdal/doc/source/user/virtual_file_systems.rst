@@ -558,4 +558,4 @@ The default size of caching for each file is 25 MB (25 MB for each file that is 
 
 /vsicrypt/ is a special file handler is installed that allows reading/creating/update encrypted files on the fly, with random access capabilities.
 
-Refert to :cpp:func:`VSIInstallCryptFileHandler` for more details.
+Refer to :cpp:func:`VSIInstallCryptFileHandler` for more details.
