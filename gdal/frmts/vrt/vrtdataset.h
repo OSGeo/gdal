@@ -924,6 +924,7 @@ public:
     virtual CPLErr FlushCache() override;
 
     GDALRasterBand* GetBand();
+    GDALRasterBand* GetMaskBandMainBand() { return m_poMaskBandMainBand; }
     int             IsSameExceptBandNumber( VRTSimpleSource* poOtherSource );
     CPLErr          DatasetRasterIO(
                                GDALDataType eBandDataType,

@@ -1784,7 +1784,8 @@ void VRTDataset::BuildVirtualOverviews()
         if( !EQUAL(poSource->GetType(), "SimpleSource") &&
             !EQUAL(poSource->GetType(), "ComplexSource") )
             return false;
-        GDALRasterBand* poSrcBand = poSource->GetBand();
+        GDALRasterBand* poSrcBand =
+            poBand->GetBand() == 0 ? poSource->GetMaskBandMainBand() : poSource->GetBand();
         if( poSrcBand == nullptr )
             return false;
 
@@ -1864,8 +1865,13 @@ void VRTDataset::BuildVirtualOverviews()
             }
             if( poNewSource )
             {
-                if( poNewSource->GetBand()->GetDataset() )
-                    poNewSource->GetBand()->GetDataset()->Reference();
+                auto poNewSourceBand = poBand->GetBand() == 0 ?
+                    poNewSource->GetMaskBandMainBand() :
+                    poNewSource->GetBand();
+                CPLAssert(poNewSourceBand);
+                auto poNewSourceBandDS = poNewSourceBand->GetDataset();
+                if( poNewSourceBandDS )
+                    poNewSourceBandDS->Reference();
                 poOvrVRTBand->AddSource(poNewSource);
             }
 
