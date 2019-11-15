@@ -1200,7 +1200,10 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
             || iOverview >= static_cast<int>( poVRTDS->m_apoOverviews.size() ) )
             return nullptr;
 
-        return poVRTDS->m_apoOverviews[iOverview]->GetRasterBand(nBand ? nBand : 1);
+        auto poOvrBand = poVRTDS->m_apoOverviews[iOverview]->GetRasterBand(nBand ? nBand : 1);
+        if( m_bIsMaskBand )
+            return poOvrBand->GetMaskBand();
+        return poOvrBand;
     }
 
     return nullptr;
