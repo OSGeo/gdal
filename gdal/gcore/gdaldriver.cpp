@@ -60,12 +60,14 @@ CPL_C_END
 GDALDriver::GDALDriver() :
     pfnOpen(nullptr),
     pfnCreate(nullptr),
+    pfnCreateEx(nullptr),
     pfnCreateMultiDimensional(nullptr),
     pfnDelete(nullptr),
     pfnCreateCopy(nullptr),
     pDriverData(nullptr),
     pfnUnloadDriver(nullptr),
     pfnIdentify(nullptr),
+    pfnIdentifyEx(nullptr),
     pfnRename(nullptr),
     pfnCopyFiles(nullptr),
     pfnOpenWithDriverArg(nullptr),
@@ -168,7 +170,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Does this format support creation.                              */
 /* -------------------------------------------------------------------- */
-    if( pfnCreate == nullptr && pfnCreateVectorOnly == nullptr )
+    if( pfnCreate == nullptr && pfnCreateEx == nullptr && pfnCreateVectorOnly == nullptr )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "GDALDriver::Create() ... no create method implemented"
@@ -268,7 +270,12 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
               papszOptions );
 
     GDALDataset *poDS = nullptr;
-    if( pfnCreate != nullptr )
+    if( pfnCreateEx != nullptr )
+    {
+        poDS = pfnCreateEx( this, pszFilename, nXSize, nYSize, nBands, eType,
+                          papszOptions );
+    }
+    else if( pfnCreate != nullptr )
     {
         poDS = pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
                           papszOptions );
@@ -2202,7 +2209,7 @@ GDALIdentifyDriverEx( const char* pszFilename,
 
         VALIDATE_POINTER1( poDriver, "GDALIdentifyDriver", nullptr );
 
-        if( poDriver->pfnIdentify == nullptr )
+        if( poDriver->pfnIdentify == nullptr && poDriver->pfnIdentifyEx == nullptr)
         {
             continue;
         }
@@ -2220,8 +2227,16 @@ GDALIdentifyDriverEx( const char* pszFilename,
             poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr )
             continue;
 
-        if( poDriver->pfnIdentify( &oOpenInfo ) > 0 )
-            return poDriver;
+        if( poDriver->pfnIdentifyEx )
+        {
+            if( poDriver->pfnIdentifyEx( poDriver, &oOpenInfo ) > 0 )
+                return poDriver;
+        }
+        else
+        {
+            if( poDriver->pfnIdentify( &oOpenInfo ) > 0 )
+                return poDriver;
+        }
     }
 
     // Second pass: slow method.
@@ -2251,7 +2266,12 @@ GDALIdentifyDriverEx( const char* pszFilename,
             poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr )
             continue;
 
-        if( poDriver->pfnIdentify != nullptr )
+        if( poDriver->pfnIdentifyEx != nullptr )
+        {
+            if( poDriver->pfnIdentifyEx( poDriver, &oOpenInfo ) == 0 )
+                continue;
+        }
+        else if( poDriver->pfnIdentify != nullptr )
         {
             if( poDriver->pfnIdentify( &oOpenInfo ) == 0 )
                 continue;

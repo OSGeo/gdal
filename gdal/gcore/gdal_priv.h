@@ -1499,6 +1499,11 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                        GDALDataType eType,
                                        char ** papszOptions );
 
+    GDALDataset         *(*pfnCreateEx)( GDALDriver*, const char * pszName,
+                                       int nXSize, int nYSize, int nBands,
+                                       GDALDataType eType,
+                                       char ** papszOptions );
+
     GDALDataset         *(*pfnCreateMultiDimensional)( const char * pszName,
                                                        CSLConstList papszRootGroupOptions,
                                                        CSLConstList papszOptions );
@@ -1522,14 +1527,17 @@ class CPL_DLL GDALDriver : public GDALMajorObject
        and that a potentially costly test must be done with pfnOpen.
     */
     int                 (*pfnIdentify)( GDALOpenInfo * );
+    int                 (*pfnIdentifyEx)( GDALDriver*, GDALOpenInfo * );
 
     CPLErr              (*pfnRename)( const char * pszNewName,
                                       const char * pszOldName );
     CPLErr              (*pfnCopyFiles)( const char * pszNewName,
                                          const char * pszOldName );
 
-    /* For legacy OGR drivers */
+    // Used for legacy OGR drivers, and Python drivers
     GDALDataset         *(*pfnOpenWithDriverArg)( GDALDriver*, GDALOpenInfo * );
+
+    /* For legacy OGR drivers */
     GDALDataset         *(*pfnCreateVectorOnly)( GDALDriver*,
                                                  const char * pszName,
                                                  char ** papszOptions );
@@ -1613,6 +1621,10 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     GDALDriver  *GetDriverByName_unlocked( const char * pszName )
             { return oMapNameToDrivers[CPLString(pszName).toupper()]; }
 
+    static char** GetSearchPaths(const char* pszGDAL_DRIVER_PATH);
+
+    static void   CleanupPythonDrivers();
+
     CPL_DISALLOW_COPY_ASSIGN(GDALDriverManager)
 
  public:
@@ -1629,6 +1641,8 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     static void        AutoLoadDrivers();
     void        AutoSkipDrivers();
+
+    static void        AutoLoadPythonDrivers();
 };
 
 CPL_C_START
