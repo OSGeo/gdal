@@ -1059,7 +1059,7 @@ end:
     CPLFree(pszSQLStatement);
     CPLFree(pszWHERE);
 
-    OGRCleanupAll();
+    GDALDestroy();
 
     return nRet;
 }
