@@ -42,7 +42,7 @@ using namespace crnlib;
 enum { DDS_COLOR_TYPE_RGB,
        DDS_COLOR_TYPE_RGB_ALPHA };
 
-constexpr uint cDXTBlockSize = 4;
+constexpr uint32_t cDXTBlockSize = 4;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -57,8 +57,8 @@ class DDSDataset final: public GDALPamDataset
     VSILFILE           *fp = nullptr;
     int                 nCurrentYBlock = -1;
     crn_format          nFormat = cCRNFmtInvalid;
-    uint                nBytesPerBlock = 0;
-    uint                nCompressedSizePerStripe = 0;
+    uint32_t            nBytesPerBlock = 0;
+    uint32_t            nCompressedSizePerStripe = 0;
     void               *pCompressedBuffer = nullptr;
     void               *pUncompressedBuffer = nullptr;
 
@@ -172,12 +172,12 @@ CPLErr DDSRasterBand::IReadBlock(int, int nYBlock, void* pImage)
             return CE_Failure;
         }
 
-        const uint num_blocks_x = (nRasterXSize + cDXTBlockSize - 1) / cDXTBlockSize;
+        const uint32_t num_blocks_x = (nRasterXSize + cDXTBlockSize - 1) / cDXTBlockSize;
         const GByte* pabySrc = static_cast<const GByte*>(poGDS->pCompressedBuffer);
         crn_uint32 anDstPixels[cDXTBlockSize * cDXTBlockSize]; // A << 24 | B << 16 | G << 8 | R
         GByte* pabyDst = static_cast<GByte*>(poGDS->pUncompressedBuffer);
         const bool bHasAlpha = poGDS->nBands == 4;
-        for( uint block_x = 0; block_x < num_blocks_x; block_x++ )
+        for( uint32_t block_x = 0; block_x < num_blocks_x; block_x++ )
         {
             const void* pSrc_block = pabySrc +
                 static_cast<size_t>(block_x) * poGDS->nBytesPerBlock;
@@ -186,12 +186,12 @@ CPLErr DDSRasterBand::IReadBlock(int, int nYBlock, void* pImage)
                 return CE_Failure;
             }
             const crn_uint32* pUncompressedPixels = anDstPixels;
-            for (uint y = 0; y < cDXTBlockSize; y++)
+            for (uint32_t y = 0; y < cDXTBlockSize; y++)
             {
-                for (uint x = 0; x < cDXTBlockSize; x++)
+                for (uint32_t x = 0; x < cDXTBlockSize; x++)
                 {
-                    const uint actual_x = block_x * cDXTBlockSize + x;
-                    if( actual_x < static_cast<uint>(nRasterXSize) )
+                    const uint32_t actual_x = block_x * cDXTBlockSize + x;
+                    if( actual_x < static_cast<uint32_t>(nRasterXSize) )
                     {
                         const auto nRGBAPixel = *pUncompressedPixels;
                         const auto offsetInBand =
@@ -320,10 +320,10 @@ GDALDataset* DDSDataset::Open(GDALOpenInfo* poOpenInfo)
         }
     }
 
-    const uint bytesPerBlock = crn_get_bytes_per_dxt_block(fmt);
-    const uint num_blocks_x = (ddsDesc.dwWidth + cDXTBlockSize - 1) / cDXTBlockSize;
-    const uint num_blocks_y = (ddsDesc.dwHeight + cDXTBlockSize - 1) / cDXTBlockSize;
-    const uint compressed_size_per_row = num_blocks_x * bytesPerBlock;
+    const uint32_t bytesPerBlock = crn_get_bytes_per_dxt_block(fmt);
+    const uint32_t num_blocks_x = (ddsDesc.dwWidth + cDXTBlockSize - 1) / cDXTBlockSize;
+    const uint32_t num_blocks_y = (ddsDesc.dwHeight + cDXTBlockSize - 1) / cDXTBlockSize;
+    const uint32_t compressed_size_per_row = num_blocks_x * bytesPerBlock;
     const vsi_l_offset nCompressedDataSize = static_cast<vsi_l_offset>(compressed_size_per_row) * num_blocks_y;
 
     VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
@@ -431,7 +431,7 @@ GDALDataset* DDSDatasetAllDecoded::Open(GDALOpenInfo* poOpenInfo)
     pImages.resize(cCRNMaxFaces * cCRNMaxLevels);
     crn_texture_desc tex_desc;
     const bool bRet = crn_decompress_dds_to_images(
-        data.data(), data.size(), &pImages[0], tex_desc);
+        data.data(), static_cast<crn_uint32>(data.size()), &pImages[0], tex_desc);
 #ifdef DEBUG
     CPLDebug("DDS", "w=%u h=%u faces=%u levels=%u fourCC=%c%c%c%c",
              tex_desc.m_width, tex_desc.m_height,
@@ -611,7 +611,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     ddsDesc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
 
     // Set pitch/linearsize field (some DDS readers require this field to be non-zero).
-    uint bits_per_pixel = crn_get_format_bits_per_texel(fmt);
+    uint32_t bits_per_pixel = crn_get_format_bits_per_texel(fmt);
     ddsDesc.lPitch = (((ddsDesc.dwWidth + 3) & ~3U) * ((ddsDesc.dwHeight + 3) & ~3U) * bits_per_pixel) >> 3;
     ddsDesc.dwFlags |= DDSD_LINEARSIZE;
 
@@ -629,11 +629,11 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Loop over image, compressing image data.                        */
     /* -------------------------------------------------------------------- */
-    const uint bytesPerBlock = crn_get_bytes_per_dxt_block(fmt);
+    const uint32_t bytesPerBlock = crn_get_bytes_per_dxt_block(fmt);
     CPLErr eErr = CE_None;
-    const uint nYNumBlocks = (nYSize + cDXTBlockSize - 1) / cDXTBlockSize;
-    const uint num_blocks_x = (nXSize + cDXTBlockSize - 1) / cDXTBlockSize;
-    const uint total_compressed_size = num_blocks_x * bytesPerBlock;
+    const uint32_t nYNumBlocks = (nYSize + cDXTBlockSize - 1) / cDXTBlockSize;
+    const uint32_t num_blocks_x = (nXSize + cDXTBlockSize - 1) / cDXTBlockSize;
+    const uint32_t total_compressed_size = num_blocks_x * bytesPerBlock;
 
     void *pCompressed_data = CPLMalloc(total_compressed_size);
     GByte* pabyScanlines = (GByte *) CPLMalloc(nBands * nXSize * cDXTBlockSize);
@@ -642,10 +642,10 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     if (nColorType == DDS_COLOR_TYPE_RGB)
         src_image = (crn_uint32*) CPLMalloc(sizeof(crn_uint32)*nXSize*cDXTBlockSize);
 
-    for (uint iLine = 0; iLine < nYNumBlocks && eErr == CE_None; iLine++)
+    for (uint32_t iLine = 0; iLine < nYNumBlocks && eErr == CE_None; iLine++)
     {
-        const uint size_y = (iLine*cDXTBlockSize+cDXTBlockSize) < (uint)nYSize ?
-                           cDXTBlockSize : (cDXTBlockSize-((iLine*cDXTBlockSize+cDXTBlockSize)-(uint)nYSize));
+        const uint32_t size_y = (iLine*cDXTBlockSize+cDXTBlockSize) < (uint32_t)nYSize ?
+                           cDXTBlockSize : (cDXTBlockSize-((iLine*cDXTBlockSize+cDXTBlockSize)-(uint32_t)nYSize));
 
         eErr = poSrcDS->RasterIO(GF_Read, 0, iLine*cDXTBlockSize, nXSize, size_y,
                                  pabyScanlines, nXSize, size_y, GDT_Byte,
@@ -677,12 +677,12 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             // Exact block from image, clamping at the sides of non-divisible by
             // 4 images to avoid artifacts.
             crn_uint32 *pDst_pixels = pixels;
-            for (uint y = 0; y < cDXTBlockSize; y++)
+            for (uint32_t y = 0; y < cDXTBlockSize; y++)
             {
-                const uint actual_y = std::min(y, size_y - 1U);
-                for (uint x = 0; x < cDXTBlockSize; x++)
+                const uint32_t actual_y = std::min(y, size_y - 1U);
+                for (uint32_t x = 0; x < cDXTBlockSize; x++)
                 {
-                    const uint actual_x =
+                    const uint32_t actual_x =
                         std::min(nXSize - 1U, (block_x * cDXTBlockSize) + x);
                     *pDst_pixels++ = pSrc_image[actual_x + actual_y * nXSize];
                 }
