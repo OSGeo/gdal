@@ -155,7 +155,7 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  * @param dfOutOfRangeVal The value to be set for the cells that fall outside of the
  * range specified by dfMaxDistance.
  *
- * @param dfNoDataVal The value to be set for the cells that has no data.
+ * @param dfNoDataVal The value to be set for the cells that have no data.
  *
  * @param dfCurvCoeff Coefficient to consider the effect of the curvature and refraction.
  * The height of the DEM is corrected according to the following formula:
