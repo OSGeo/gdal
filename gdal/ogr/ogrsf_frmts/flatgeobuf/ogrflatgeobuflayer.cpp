@@ -1007,6 +1007,11 @@ OGRPolygon *OGRFlatGeobufLayer::readPolygon(const Feature *feature, const flatbu
     } else {
         for (uint32_t i = 0; i < pEnds->size(); i++) {
             const auto e = pEnds->Get(i);
+            if( e < offset )
+            {
+                delete p;
+                return CPLErrorInvalidLength("Polygon");
+            }
             const auto lr = readLinearRing(feature, pXy, e - offset, offset);
             offset = e;
             if (lr == nullptr)
@@ -1051,6 +1056,12 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Feature *feature, co
                     return CPLErrorInvalidLength("MultiPolygon ends data");
                 }
                 uint32_t e = pEnds->Get(roffset++);
+                if( e < offset )
+                {
+                    delete p;
+                    delete mp;
+                    return CPLErrorInvalidLength("MultiPolygon");
+                }
                 const auto lr = readLinearRing(feature, pXy, e - offset, offset);
                 offset = e;
                 if (lr == nullptr)
