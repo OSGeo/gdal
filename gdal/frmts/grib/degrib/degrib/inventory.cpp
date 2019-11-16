@@ -729,6 +729,22 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       }
    }
 
+   uChar derivedFcst = (uChar)-1; // not determined
+   switch (templat) {
+       case GS4_DERIVED:
+       case GS4_DERIVED_CLUSTER_RECTANGULAR_AREA:
+       case GS4_DERIVED_CLUSTER_CIRCULAR_AREA:
+       case GS4_DERIVED_INTERVAL:
+       case GS4_DERIVED_INTERVAL_CLUSTER_RECTANGULAR_AREA:
+       case GS4_DERIVED_INTERVAL_CLUSTER_CIRCULAR_AREA:
+           if( secLen >= 35 ) {
+               derivedFcst = (uChar) (*buffer)[35 - 5];
+           }
+           break;
+       default:
+           break;
+   }
+
    if (timeRangeUnit == 255) {
       timeRangeUnit = 1;
       lenTime = DoubleToSInt4Clamp(
@@ -860,7 +876,9 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    /* Find out what the name of this variable is. */
    ParseElemName (mstrVersion, center, subcenter, prodType, templat, cat, subcat,
                   lenTime, timeRangeUnit, statProcessID, timeIncrType, genID, probType, lowerProb,
-                  upperProb, &(inv->element), &(inv->comment),
+                  upperProb,
+                  derivedFcst,
+                  &(inv->element), &(inv->comment),
                   &(inv->unitName), &convert, percentile, genProcess,
                   f_fstValue, fstSurfValue, f_sndValue, sndSurfValue);
 
