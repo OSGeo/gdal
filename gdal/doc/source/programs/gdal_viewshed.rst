@@ -102,7 +102,7 @@ Compute the visibility of an elevation raster data source with defaults
 
 .. code-block::
 
-    gdal_viewshed -md 500 -x "-10147017".0 -y "5108065" source.tif destination.tif
+    gdal_viewshed -md 500 -ox -10147017 -oy 5108065 source.tif destination.tif
 
 
 
