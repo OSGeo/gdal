@@ -25,7 +25,14 @@ help:
 
 .PHONY: html latexpdf
 html: .doxygen_up_to_date
+	python "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
+	python "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	# Hack to hide the TOC
+	sed 's/<div class="toctree-wrapper compound">/<div class="toctree-wrapper compound" hidden=1>/' < "$(BUILDDIR)/html/drivers/raster/index.html" > "$(BUILDDIR)/html/drivers/raster/index.html.mod"
+	mv "$(BUILDDIR)/html/drivers/raster/index.html.mod" "$(BUILDDIR)/html/drivers/raster/index.html"
+	sed 's/<div class="toctree-wrapper compound">/<div class="toctree-wrapper compound" hidden=1>/' < "$(BUILDDIR)/html/drivers/vector/index.html" > "$(BUILDDIR)/html/drivers/vector/index.html.mod"
+	mv "$(BUILDDIR)/html/drivers/vector/index.html.mod" "$(BUILDDIR)/html/drivers/vector/index.html"
 	rm -rf build/html/doxygen
 	cp -r build/doxygen_html build/html/doxygen
 	ln -sf ../latex/gdal.pdf build/html
@@ -34,6 +41,8 @@ man: .doxygen_up_to_date
 	$(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 latexpdf: .doxygen_up_to_date
+	python "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
+	python "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
 	$(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:

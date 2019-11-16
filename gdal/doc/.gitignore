@@ -1,2 +1,4 @@
 build/
+source/drivers/raster/driver_summary.rst
+source/drivers/vector/driver_summary.rst
 .doxygen_up_to_date

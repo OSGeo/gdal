@@ -4,6 +4,13 @@
 Vector drivers
 ================================================================================
 
+.. include:: driver_summary.rst
+
+..
+    Developer comment: make html includes a hack to hide the table from
+    the index.html file. We need to keep it visible so that the top-level
+    index.html lists those pages.
+
 .. toctree::
    :maxdepth: 1
 
