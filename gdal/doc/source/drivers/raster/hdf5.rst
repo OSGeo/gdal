@@ -1,7 +1,7 @@
 .. _raster.hdf5:
 
 ================================================================================
-HDF5 --- Hierarchical Data Format Release 5 (HDF5)
+HDF5 -- Hierarchical Data Format Release 5 (HDF5)
 ================================================================================
 
 .. shortname:: HDF5

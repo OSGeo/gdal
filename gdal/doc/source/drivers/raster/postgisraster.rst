@@ -1,7 +1,7 @@
 .. _raster.postgisraster:
 
 ================================================================================
-PostGISRaster --- PostGIS Raster driver
+PostGISRaster -- PostGIS Raster driver
 ================================================================================
 
 .. shortname:: PostGISRaster

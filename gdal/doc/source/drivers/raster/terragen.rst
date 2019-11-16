@@ -1,7 +1,7 @@
 .. _raster.terragen:
 
 ================================================================================
-Terragen --- Terragen™ Terrain File
+Terragen -- Terragen™ Terrain File
 ================================================================================
 
 .. shortname:: Terragen

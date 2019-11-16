@@ -1,7 +1,7 @@
 .. _raster.leveller:
 
 ================================================================================
-Leveller --- Daylon Leveller Heightfield
+Leveller -- Daylon Leveller Heightfield
 ================================================================================
 
 .. shortname:: Leveller

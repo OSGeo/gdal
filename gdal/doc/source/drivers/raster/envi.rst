@@ -26,8 +26,8 @@ header file.
 Creation Options:
 
 -  **INTERLEAVE=BSQ/BIP/BIL**: Force the generation specified type of
-   interleaving. **BSQ** --- band sequential (default), **BIP** --- data
-   interleaved by pixel, **BIL** --- data interleaved by line.
+   interleaving. **BSQ** -- band sequential (default), **BIP** --- data
+   interleaved by pixel, **BIL** -- data interleaved by line.
 -  **SUFFIX=REPLACE/ADD**: Force adding ".hdr" suffix to supplied
    filename, e.g. if user selects "file.bin" name for output dataset,
    "file.bin.hdr" header file will be created. By default header file

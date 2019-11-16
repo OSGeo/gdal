@@ -1,7 +1,7 @@
 .. _raster.bmp:
 
 ================================================================================
-BMP --- Microsoft Windows Device Independent Bitmap
+BMP -- Microsoft Windows Device Independent Bitmap
 ================================================================================
 
 .. shortname:: BMP

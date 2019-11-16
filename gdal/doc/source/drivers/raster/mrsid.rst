@@ -1,7 +1,7 @@
 .. _raster.mrsid:
 
 ================================================================================
-MrSID --- Multi-resolution Seamless Image Database
+MrSID -- Multi-resolution Seamless Image Database
 ================================================================================
 
 .. shortname:: MrSID

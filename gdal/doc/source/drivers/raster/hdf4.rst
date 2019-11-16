@@ -1,7 +1,7 @@
 .. _raster.hdf4:
 
 ================================================================================
-HDF4 --- Hierarchical Data Format Release 4 (HDF4)
+HDF4 -- Hierarchical Data Format Release 4 (HDF4)
 ================================================================================
 
 .. shortname:: HDF4

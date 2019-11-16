@@ -1,7 +1,7 @@
 .. _raster.intergraphraster:
 
 ================================================================================
-INGR --- Intergraph Raster Format
+INGR -- Intergraph Raster Format
 ================================================================================
 
 .. shortname:: INGR
