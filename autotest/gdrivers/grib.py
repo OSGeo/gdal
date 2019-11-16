@@ -1241,6 +1241,25 @@ def test_grib_online_grib2_jpeg2000_single_line():
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], 'Did not get expected metadata'
 
-    
 
 
+###############################################################################
+# Template 4.12 with Derived forecast = spread. Do not do unit conversion !
+
+def test_grib_grib2_derived_forecast_spread():
+
+    if gdaltest.grib_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/grib/template_4_12_spread.grb2')
+    band = ds.GetRasterBand(1)
+    assert band.GetMetadataItem('GRIB_UNIT') == '[spread]'
+    assert band.ComputeRasterMinMax() == (0.24296024441719055, 0.24296024441719055)
+
+    out_ds = gdaltest.grib_drv.CreateCopy('/vsimem/out.grb2', ds)
+    band = out_ds.GetRasterBand(1)
+    assert band.GetMetadataItem('GRIB_UNIT') == '[spread]'
+    assert band.ComputeRasterMinMax() == (0.24296024441719055, 0.24296024441719055)
+    out_ds = None
+
+    gdal.Unlink('/vsimem/out.grb2')

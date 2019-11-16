@@ -3138,7 +3138,9 @@ void ParseElemName (CPL_UNUSED uChar mstrVersion, uShort2 center, uShort2 subcen
                     int templat, int cat, int subcat, sInt4 lenTime,
                     uChar timeRangeUnit, CPL_UNUSED uChar statProcessID,
                     uChar timeIncrType, uChar genID, uChar probType,
-                    double lowerProb, double upperProb, char **name,
+                    double lowerProb, double upperProb,
+                    uChar derivedFcst,
+                    char **name,
                     char **comment, char **unit, int *convert,
                     sChar percentile, uChar genProcess,
                     sChar f_fstValue, double fstSurfValue,
@@ -3172,6 +3174,34 @@ void ParseElemName (CPL_UNUSED uChar mstrVersion, uShort2 center, uShort2 subcen
                     upperProb, name, comment, unit, convert, f_fstValue, fstSurfValue,
                        f_sndValue, sndSurfValue);
    }
+
+   // https://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-7.shtml
+   if( derivedFcst == 2 // Standard Deviation with respect to Cluster Mean
+       || derivedFcst == 3 // Standard Deviation with respect to Cluster Mean, Normalized
+       || derivedFcst == 4 // Spread of All Members
+       || derivedFcst == 5 // Large Anomaly Index of All Members
+       || derivedFcst == 7 // Interquartile Range (Range between the 25th and 75th quantile)
+   )
+   {
+        const char* overrideUnit = nullptr;
+        switch( derivedFcst )
+        {
+            case 2: overrideUnit = "[stddev]"; break;
+            case 3: overrideUnit = "[stddev normalized]"; break;
+            case 4: overrideUnit = "[spread]"; break;
+            case 5: overrideUnit = "[large anomaly index]"; break;
+            case 7: overrideUnit = "[interquantile range]"; break;
+            default: break;
+        }
+        if( overrideUnit )
+        {
+            free(*unit);
+            *unit = (char *) malloc (strlen (overrideUnit) + 1);
+            strcpy (*unit, overrideUnit);
+        }
+        *convert = UC_NONE;
+   }
+
    if ((genProcess == 6) || (genProcess == 7)) {
       *convert = UC_NONE;
       reallocSprintf (name, "ERR");

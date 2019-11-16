@@ -268,10 +268,17 @@ typedef struct {  /* See Template 4.30. */
                                 band. */
 } sect4_BandType;
 
-enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
+enum { GS4_ANALYSIS = 0,
+       GS4_ENSEMBLE = 1,
+       GS4_DERIVED = 2,
+       GS4_DERIVED_CLUSTER_RECTANGULAR_AREA = 3,
+       GS4_DERIVED_CLUSTER_CIRCULAR_AREA = 4,
+       GS4_PROBABIL_PNT = 5,
        GS4_PERCENT_PNT = 6, GS4_ERROR = 7, GS4_STATISTIC = 8,
        GS4_PROBABIL_TIME = 9, GS4_PERCENT_TIME = 10, GS4_ENSEMBLE_STAT = 11,
        GS4_DERIVED_INTERVAL = 12,
+       GS4_DERIVED_INTERVAL_CLUSTER_RECTANGULAR_AREA = 13,
+       GS4_DERIVED_INTERVAL_CLUSTER_CIRCULAR_AREA = 14,
        GS4_STATISTIC_SPATIAL_AREA = 15, // TODO; partially supported. Should fetch specific fields in metaparse.cpp
        GS4_RADAR = 20,
        GS4_SATELLITE = 30,
