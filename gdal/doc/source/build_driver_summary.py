@@ -65,13 +65,17 @@ with open(outfile, "wt") as f:
     f.write('  Do not put in git !!!\n')
     f.write('..\n')
     f.write(".. list-table::\n")
-    f.write("   :widths: 10 35 10 10 10 25\n")
+    if anchor == 'raster_driver_summary':
+        f.write("   :widths: 10 35 10 10 10 25\n")
+    else:
+        f.write("   :widths: 10 20 10 10 20\n")
     f.write("   :header-rows: 1\n")
     f.write("\n")
     f.write("   * - Short name\n")
     f.write("     - Long name\n")
     f.write("     - Creation\n")
-    f.write("     - Copy\n")
+    if anchor == 'raster_driver_summary':
+        f.write("     - Copy\n")
     f.write("     - Geo-referencing\n")
     #f.write("     - Virtual I/O\n")
     f.write("     - Build requirements\n")
@@ -79,7 +83,8 @@ with open(outfile, "wt") as f:
         f.write("   * - :ref:`%s <%s>`\n" % (shortname, link))
         f.write("     - %s\n" % longname)
         f.write("     - %s\n" % ('**Yes**' if supports_create else 'No'))
-        f.write("     - %s\n" % ('**Yes**' if supports_createcopy else 'No'))
+        if anchor == 'raster_driver_summary':
+            f.write("     - %s\n" % ('**Yes**' if supports_createcopy else 'No'))
         f.write("     - %s\n" % ('**Yes**' if supports_georeferencing else 'No'))
         #f.write("     - %s\n" % ('**Yes**' if supports_virtualio else 'No'))
         if built_in_by_default:
