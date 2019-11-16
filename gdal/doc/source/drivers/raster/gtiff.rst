@@ -6,6 +6,8 @@ GTiff -- GeoTIFF File Format
 
 .. shortname:: GTiff
 
+.. built_in_by_default::
+
 Most forms of TIFF and GeoTIFF files are supported by GDAL for reading,
 and somewhat less varieties can be written.
 

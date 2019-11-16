@@ -6,11 +6,10 @@ JP2OpenJPEG -- JPEG2000 driver based on OpenJPEG library
 
 .. shortname:: JP2OpenJPEG
 
+.. build_dependencies:: openjpeg >= 2.1
+
 This driver is an implementation of a JPEG2000 reader/writer based on
 OpenJPEG library **v2**.
-
-For GDAL 1.11 or later, use openjpeg 2.X. For GDAL 2.3, use openjpeg >=
-2.1
 
 The driver uses the VSI Virtual File API, so it can read JPEG2000
 compressed NITF files.
