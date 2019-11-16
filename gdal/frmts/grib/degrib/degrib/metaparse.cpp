@@ -1601,7 +1601,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
    meta->pds2.sect4.typeEnsemble = 0;
    meta->pds2.sect4.perturbNum = 0;
    meta->pds2.sect4.numberFcsts = 0;
-   meta->pds2.sect4.derivedFcst = 0;
+   meta->pds2.sect4.derivedFcst = (uChar)-1;
    meta->pds2.sect4.validTime = meta->pds2.refTime;
 
    if (meta->pds2.sect4.templat == GS4_SATELLITE) {
@@ -1794,6 +1794,20 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          meta->pds2.sect4.derivedFcst = (uChar) is4[34];
          meta->pds2.sect4.numberFcsts = (uChar) is4[35];
          break;
+      case GS4_DERIVED_CLUSTER_RECTANGULAR_AREA: /* 4.3 */
+         if (ns4 < 68) {
+            return -1;
+         }
+         meta->pds2.sect4.derivedFcst = (uChar) is4[34];
+         meta->pds2.sect4.numberFcsts = (uChar) is4[35];
+         break;
+      case GS4_DERIVED_CLUSTER_CIRCULAR_AREA: /* 4.4 */
+         if (ns4 < 64) {
+            return -1;
+         }
+         meta->pds2.sect4.derivedFcst = (uChar) is4[34];
+         meta->pds2.sect4.numberFcsts = (uChar) is4[35];
+         break;
       case GS4_DERIVED_INTERVAL: /* 4.12 */
          if (ns4 < 45) {
             return -1;
@@ -1858,6 +1872,14 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
 #endif
             meta->pds2.sect4.numMissing = is4[44];
          }
+         break;
+      case GS4_DERIVED_INTERVAL_CLUSTER_RECTANGULAR_AREA: /* 4.13 */
+      case GS4_DERIVED_INTERVAL_CLUSTER_CIRCULAR_AREA: /* 4.14 */
+         if (ns4 < 36) {
+            return -1;
+         }
+         meta->pds2.sect4.derivedFcst = (uChar) is4[34];
+         meta->pds2.sect4.numberFcsts = (uChar) is4[35];
          break;
       case GS4_STATISTIC: /* 4.8 */
          if (ns4 < 43) {
@@ -2430,6 +2452,7 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
                   meta->pds2.sect4.templat, meta->pds2.sect4.cat,
                   meta->pds2.sect4.subcat, lenTime, timeRangeUnit, statProcessID,
                   incrType, meta->pds2.sect4.genID, probType, lowerProb, upperProb,
+                  meta->pds2.sect4.derivedFcst,
                   &(meta->element), &(meta->comment), &(meta->unitName),
                   &(meta->convert), meta->pds2.sect4.percentile,
                   meta->pds2.sect4.genProcess,

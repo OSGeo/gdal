@@ -2584,24 +2584,48 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 #if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     double adfTOWGS84[7] = { 0.0 };
 
-    if( poSRS->GetTOWGS84( adfTOWGS84 ) == OGRERR_NONE &&
-        CPLTestBool(CPLGetConfigOption("GTIFF_WRITE_TOWGS84", "YES")) )
+    if( poSRS->GetTOWGS84( adfTOWGS84 ) == OGRERR_NONE )
     {
-        if( adfTOWGS84[3] == 0.0 && adfTOWGS84[4] == 0.0
-            && adfTOWGS84[5] == 0.0 && adfTOWGS84[6] == 0.0 )
+        // If we are writing a SRS with a EPSG code, and that the EPSG code
+        // of the current SRS object and the one coming from the EPSG code
+        // are the same, then by default, do not write them.
+        bool bUseReferenceTOWGS84 = false;
+        const char* pszAuthName = poSRS->GetAuthorityName(nullptr);
+        const char* pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        if( pszAuthName && EQUAL(pszAuthName, "EPSG") && pszAuthCode )
         {
-            if( nGCS == GCS_WGS_84 && adfTOWGS84[0] == 0.0
-                && adfTOWGS84[1] == 0.0 && adfTOWGS84[2] == 0.0 )
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            OGRSpatialReference oRefSRS;
+            double adfRefTOWGS84[7] = { 0.0 };
+            if( oRefSRS.importFromEPSG(atoi(pszAuthCode)) == OGRERR_NONE &&
+                oRefSRS.GetTOWGS84(adfRefTOWGS84) == OGRERR_NONE &&
+                memcmp(adfRefTOWGS84, adfTOWGS84, sizeof(adfTOWGS84)) == 0 )
             {
-                ; // Do nothing.
+                bUseReferenceTOWGS84 = true;
+            }
+        }
+        const char* pszWriteTOWGS84 =
+            CPLGetConfigOption("GTIFF_WRITE_TOWGS84", "AUTO");
+        if( (EQUAL(pszWriteTOWGS84, "YES") || EQUAL(pszWriteTOWGS84, "TRUE") ||
+             EQUAL(pszWriteTOWGS84, "ON")) ||
+            (!bUseReferenceTOWGS84 && EQUAL(pszWriteTOWGS84, "AUTO") ) )
+        {
+            if( adfTOWGS84[3] == 0.0 && adfTOWGS84[4] == 0.0
+                && adfTOWGS84[5] == 0.0 && adfTOWGS84[6] == 0.0 )
+            {
+                if( nGCS == GCS_WGS_84 && adfTOWGS84[0] == 0.0
+                    && adfTOWGS84[1] == 0.0 && adfTOWGS84[2] == 0.0 )
+                {
+                    ; // Do nothing.
+                }
+                else
+                    GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 3,
+                                adfTOWGS84 );
             }
             else
-                GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 3,
+                GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 7,
                             adfTOWGS84 );
         }
-        else
-            GTIFKeySet( psGTIF, GeogTOWGS84GeoKey, TYPE_DOUBLE, 7,
-                        adfTOWGS84 );
     }
 #endif
 

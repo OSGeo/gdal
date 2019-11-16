@@ -4076,7 +4076,13 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLMutexHolderD(&hGlobalParamsMutex);
         /* poppler global variable */
         if (globalParams == nullptr)
+        {
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 83
+            globalParams.reset(new GlobalParams());
+#else
             globalParams = new GlobalParams();
+#endif
+        }
 
         globalParams->setPrintCommands(CPLTestBool(
             CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));

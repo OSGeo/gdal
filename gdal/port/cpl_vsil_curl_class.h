@@ -304,7 +304,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     bool            bEOF = false;
 
-    virtual bool            DownloadRegion(vsi_l_offset startOffset, int nBlocks);
+    virtual std::string DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
     bool                m_bUseHead = false;
 

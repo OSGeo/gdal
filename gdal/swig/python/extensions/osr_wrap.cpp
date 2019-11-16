@@ -4120,6 +4120,17 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetTOWGS84(OSRSpatialReferenceShadow
 
     return OSRSetTOWGS84( self, p1, p2, p3, p4, p5, p6, p7 );
   }
+SWIGINTERN bool OSRSpatialReferenceShadow_HasTOWGS84(OSRSpatialReferenceShadow *self){
+    double ignored[7];
+    return OSRGetTOWGS84( self, ignored, 7 ) == OGRERR_NONE;
+  }
+
+SWIGINTERNINLINE PyObject*
+  SWIG_From_bool  (bool value)
+{
+  return PyBool_FromLong(value ? 1 : 0);
+}
+
 
 static PyObject *
 CreateTupleFromDoubleArray( double *first, unsigned int size ) {
@@ -4244,13 +4255,6 @@ SWIGINTERN bool OGRCoordinateTransformationOptions_SetAreaOfInterest(OGRCoordina
         westLongitudeDeg, southLatitudeDeg,
         eastLongitudeDeg, northLatitudeDeg);
   }
-
-SWIGINTERNINLINE PyObject*
-  SWIG_From_bool  (bool value)
-{
-  return PyBool_FromLong(value ? 1 : 0);
-}
-
 SWIGINTERN bool OGRCoordinateTransformationOptions_SetOperation(OGRCoordinateTransformationOptions *self,char const *operation){
     return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
   }
@@ -4509,6 +4513,12 @@ void SetPROJSearchPaths( char** paths )
 }
 
 
+char** GetPROJSearchPaths()
+{
+    return OSRGetPROJSearchPaths();
+}
+
+
 int GetPROJVersionMajor()
 {
     int num;
@@ -4520,6 +4530,13 @@ int GetPROJVersionMinor()
 {
     int num;
     OSRGetPROJVersion(NULL, &num, NULL);
+    return num;
+}
+
+int GetPROJVersionMicro()
+{
+    int num;
+    OSRGetPROJVersion(NULL, NULL, &num);
     return num;
 }
 
@@ -14040,6 +14057,42 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_HasTOWGS84(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_HasTOWGS84",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_HasTOWGS84" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)OSRSpatialReferenceShadow_HasTOWGS84(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_GetTOWGS84(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -19084,6 +19137,49 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetPROJSearchPaths(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJSearchPaths")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char **)GetPROJSearchPaths();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GetPROJVersionMajor(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   int result;
@@ -19121,6 +19217,33 @@ SWIGINTERN PyObject *_wrap_GetPROJVersionMinor(PyObject *SWIGUNUSEDPARM(self), P
       ClearErrorState();
     }
     result = (int)GetPROJVersionMinor();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetPROJVersionMicro(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJVersionMicro")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (int)GetPROJVersionMicro();
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19427,6 +19550,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_SetFromUserInput", _wrap_SpatialReference_SetFromUserInput, METH_VARARGS, (char *)"SpatialReference_SetFromUserInput(SpatialReference self, char const * name) -> OGRErr"},
 	 { (char *)"SpatialReference_CopyGeogCSFrom", _wrap_SpatialReference_CopyGeogCSFrom, METH_VARARGS, (char *)"SpatialReference_CopyGeogCSFrom(SpatialReference self, SpatialReference rhs) -> OGRErr"},
 	 { (char *)"SpatialReference_SetTOWGS84", _wrap_SpatialReference_SetTOWGS84, METH_VARARGS, (char *)"SpatialReference_SetTOWGS84(SpatialReference self, double p1, double p2, double p3, double p4=0.0, double p5=0.0, double p6=0.0, double p7=0.0) -> OGRErr"},
+	 { (char *)"SpatialReference_HasTOWGS84", _wrap_SpatialReference_HasTOWGS84, METH_VARARGS, (char *)"SpatialReference_HasTOWGS84(SpatialReference self) -> bool"},
 	 { (char *)"SpatialReference_GetTOWGS84", _wrap_SpatialReference_GetTOWGS84, METH_VARARGS, (char *)"SpatialReference_GetTOWGS84(SpatialReference self) -> OGRErr"},
 	 { (char *)"SpatialReference_SetLocalCS", _wrap_SpatialReference_SetLocalCS, METH_VARARGS, (char *)"SpatialReference_SetLocalCS(SpatialReference self, char const * pszName) -> OGRErr"},
 	 { (char *)"SpatialReference_SetGeogCS", _wrap_SpatialReference_SetGeogCS, METH_VARARGS, (char *)"SpatialReference_SetGeogCS(SpatialReference self, char const * pszGeogName, char const * pszDatumName, char const * pszEllipsoidName, double dfSemiMajor, double dfInvFlattening, char const * pszPMName, double dfPMOffset=0.0, char const * pszUnits, double dfConvertToRadians=0.0174532925199433) -> OGRErr"},
@@ -19516,8 +19640,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetCRSInfoListFromDatabase", _wrap_GetCRSInfoListFromDatabase, METH_VARARGS, (char *)"GetCRSInfoListFromDatabase(char const * authName)"},
 	 { (char *)"SetPROJSearchPath", _wrap_SetPROJSearchPath, METH_VARARGS, (char *)"SetPROJSearchPath(char const * utf8_path)"},
 	 { (char *)"SetPROJSearchPaths", _wrap_SetPROJSearchPaths, METH_VARARGS, (char *)"SetPROJSearchPaths(char ** paths)"},
+	 { (char *)"GetPROJSearchPaths", _wrap_GetPROJSearchPaths, METH_VARARGS, (char *)"GetPROJSearchPaths() -> char **"},
 	 { (char *)"GetPROJVersionMajor", _wrap_GetPROJVersionMajor, METH_VARARGS, (char *)"GetPROJVersionMajor() -> int"},
 	 { (char *)"GetPROJVersionMinor", _wrap_GetPROJVersionMinor, METH_VARARGS, (char *)"GetPROJVersionMinor() -> int"},
+	 { (char *)"GetPROJVersionMicro", _wrap_GetPROJVersionMicro, METH_VARARGS, (char *)"GetPROJVersionMicro() -> int"},
 	 { NULL, NULL, 0, NULL }
 };
 
