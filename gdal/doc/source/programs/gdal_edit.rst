@@ -40,7 +40,7 @@ It works only with raster formats that support update access to existing dataset
     through the GDAL API. This is for example the case of the :ref:`raster.gtiff`
     format (this is not a exhaustive list).
 
-.. option:: –help-general
+.. option:: --help-general
 
     Gives a brief usage message for the generic GDAL commandline options and exit.
 
