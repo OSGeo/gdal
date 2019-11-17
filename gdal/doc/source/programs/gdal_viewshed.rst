@@ -73,11 +73,12 @@ raster elevation model (DEM).
 
    Coefficient to consider the effect of the curvature and refraction.
    The height of the DEM is corrected according to the following formula:
-   
-   .. math::
-      [Height] -= dfCurvCoeff * [Target Distance]^2 / [Sphere Diameter]
 
-   For atmospheric refraction we can use 0.85714‬.
+   .. math::
+
+      Height_{Corrected}=Height_{DEM}-{CurvCoeff}\frac{{TargetDistance}^2}{SphereDiameter}
+
+   For atmospheric refraction we can use 0.85714
 
 .. option:: -iv <value>
 
