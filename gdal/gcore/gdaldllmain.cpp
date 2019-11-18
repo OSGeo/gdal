@@ -29,6 +29,7 @@
 
 #include "cpl_port.h"
 #include "gdal.h"
+#include "gdalpython.h"
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -85,6 +86,7 @@ void GDALDestroy(void)
     GDALDestroyDriverManager();
 
     OGRCleanupAll();
+    GDALPythonFinalize();
     bInGDALGlobalDestructor = false;
 
     /* See corresponding bug reports: */

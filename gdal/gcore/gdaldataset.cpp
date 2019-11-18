@@ -3358,6 +3358,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         }
 
         const bool bIdentifyRes =
+            poDriver->pfnIdentifyEx ?
+                poDriver->pfnIdentifyEx(poDriver, &oOpenInfo) > 0:
             poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0;
         if( bIdentifyRes )
         {
@@ -3378,8 +3380,11 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             poDS = poDriver->pfnOpen(&oOpenInfo);
             // If we couldn't determine for sure with Identify() (it returned
             // -1), but Open() managed to open the file, post validate options.
-            if( poDS != nullptr && poDriver->pfnIdentify && !bIdentifyRes )
+            if( poDS != nullptr &&
+                (poDriver->pfnIdentify || poDriver->pfnIdentifyEx) && !bIdentifyRes )
+            {
                 GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
+            }
         }
         else if( poDriver->pfnOpenWithDriverArg != nullptr )
         {

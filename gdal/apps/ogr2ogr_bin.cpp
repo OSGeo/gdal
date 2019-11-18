@@ -426,7 +426,7 @@ MAIN_START( nArgc, papszArgv )
 
 exit:
     CSLDestroy(papszArgv);
-    OGRCleanupAll();
+    GDALDestroy();
 
     return nRetCode;
 }
