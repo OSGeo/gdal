@@ -544,9 +544,10 @@ not need it.
     class Driver(BaseDriver):
 
         def _identify(self, filename):
-            if not filename.startswith(# gdal: DRIVER_DMD_CONNECTION_PREFIX):
+            prefix = 'PASSTHROUGH:'
+            if not filename.startswith(prefix):
                 return None
-            return gdal.OpenEx(filename[len(# gdal: DRIVER_DMD_CONNECTION_PREFIX):], gdal.OF_VECTOR)
+            return gdal.OpenEx(filename[len(prefix):], gdal.OF_VECTOR)
 
         def identify(self, filename, first_bytes, open_flags, open_options={}):
             return self._identify(filename) is not None
