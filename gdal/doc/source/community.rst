@@ -81,8 +81,8 @@ assured of responsible project operation and continuity of the project. In parti
 
 .. _psc:
 
-Project Steering Committe
-+++++++++++++++++++++++++
+Project Steering Committee
+++++++++++++++++++++++++++
 
 As of April 2006 (following the GDAL/OGR 1.3.2 release) the project has been
 placed in the hands of a Project Steering Committee. This project steering

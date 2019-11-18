@@ -1563,7 +1563,7 @@ void VICARDataset::BuildLabel()
         oLabel = CPLJSONObject();
     }
 
-    oLabel.Set("LBLSIZE", 0); // to be overriden later
+    oLabel.Set("LBLSIZE", 0); // to be overridden later
 
     if( !oLabel.GetObj("TYPE").IsValid() )
         oLabel.Set("TYPE", "IMAGE");

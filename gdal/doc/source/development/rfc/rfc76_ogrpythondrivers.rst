@@ -140,7 +140,7 @@ Example of such a driver
 
 Note that the prefixing by the driver name in the connection string is absolutely
 not a requirement, but something specific to this particular driver which is a
-bit artifical. The CityJSON driver mentioned below does not need it.
+bit artificial. The CityJSON driver mentioned below does not need it.
 
 .. code-block:: python
 

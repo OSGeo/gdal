@@ -410,7 +410,7 @@ SWIG Python GDAL API.
 The connection strings recognized by the drivers are
 "PASSHTROUGH:connection_string_supported_by_non_python_drivers". Note that
 the prefixing by the driver name is absolutely not a requirement, but something
-specific to this particular driver which is a bit artifical (without the prefix,
+specific to this particular driver which is a bit artificial (without the prefix,
 the connection string would go directly to the native driver). The CityJSON
 driver mentionned in the :ref:`Other examples <other_examples>` paragraph does
 not need it.
@@ -478,7 +478,7 @@ not need it.
             return False
 
         def extent(self, force_computation):
-            # Impedence mismatch between SWIG GetExtent() and the Python
+            # Impedance mismatch between SWIG GetExtent() and the Python
             # driver API
             minx, maxx, miny, maxy = self.gdal_layer.GetExtent(force_computation)
             return [minx, miny, maxx, maxy]
