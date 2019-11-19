@@ -19,7 +19,7 @@ Synopsis
             [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]
             [-unsetstats] [-stats] [-approx_stats]
             [-setstats min max mean stddev]
-            [-scale value] [-offset value]
+            [-scale value] [-offset value] [-units value]
             [-colorinterp_X red|green|blue|alpha|gray|undefined]*
             [-gcp pixel line easting northing [elevation]]*
             [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname
@@ -142,6 +142,12 @@ It works only with raster formats that support update access to existing dataset
     For more see scale.
 
     .. versionadded:: 2.2
+
+.. option:: -units <value>
+
+    Assign a unit to output band(s).
+
+    .. versionadded:: 3.1
 
 -.. option:: colorinterp_X red|green|blue|alpha|gray|undefined
 
