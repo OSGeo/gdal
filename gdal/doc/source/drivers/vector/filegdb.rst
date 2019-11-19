@@ -152,12 +152,6 @@ Layer Creation Options
    : (GDAL >= 2.0) Customize how data is stored. By default text in
    UTF-8 and data up to 1TB
 
-Examples
---------
-
--  Read layer from FileGDB and load into PostGIS:
--  Get detailed info for FileGDB:
-
 Building Notes
 --------------
 
