@@ -15,9 +15,9 @@ The GDAL project is made of contributions from various individuals and
 organizations, each with their own focus. The issue you are facing is
 not necessarily in the priority list of those contributors and consequently
 there is no guarantee that it will be addressed in a timely manner.
-If this bug report or feature request is high-priority for you,
-we suggest engaging a GDAL developer or support organisation and
-financially sponsoring a fix.
+If this bug report or feature request is high-priority for you, and you
+cannot address it yourself, we suggest engaging a GDAL developer or support
+organisation and financially sponsoring a fix.
 
 -->
 
