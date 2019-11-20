@@ -1508,7 +1508,7 @@ class GDAL2Tiles(object):
             if not in_srs:
                 exit_with_error(
                     "Input file has unknown SRS.",
-                    "Use --s_srs ESPG:xyz (or similar) to provide source reference system.")
+                    "Use --s_srs EPSG:xyz (or similar) to provide source reference system.")
 
             if not has_georeference(input_dataset):
                 exit_with_error(

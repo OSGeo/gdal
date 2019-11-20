@@ -134,7 +134,7 @@ standard.
 
        OGRErr      importFromEPSGA( int );
 
-This works like importFromEPSG() but will assign the ESPG defined AXIS
+This works like importFromEPSG() but will assign the EPSG defined AXIS
 definition.
 
 Note that OGRSpatialReference::StripNodes( "AXIS" ); can be used to

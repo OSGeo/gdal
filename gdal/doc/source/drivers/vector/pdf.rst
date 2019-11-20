@@ -9,7 +9,7 @@ PDF -- Geospatial PDF
 .. build_dependencies:: none for write support, Poppler/PoDoFo/PDFium for read support
 
 Refer to the :ref:`PDF raster <raster.pdf>` documentation page for common
-dcumentation of the raster and vector sides of the driver.
+documentation of the raster and vector sides of the driver.
 
 Driver capabilities
 -------------------
