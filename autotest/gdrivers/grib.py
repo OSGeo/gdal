@@ -1264,3 +1264,19 @@ def test_grib_grib2_derived_forecast_spread():
     out_ds = None
 
     gdal.Unlink('/vsimem/out.grb2')
+
+
+
+###############################################################################
+# Template 4.48 with Optical Properties of Aerosol
+
+def test_grib_grib2_template_4_48():
+
+    if gdaltest.grib_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/grib/template_4_48.grb2')
+    band = ds.GetRasterBand(1)
+    assert band.GetMetadataItem('GRIB_UNIT') == '[1/kg]'
+    assert band.GetMetadataItem('GRIB_ELEMENT') == 'ASNCON'
+    assert band.GetMetadataItem('GRIB_SHORT_NAME') == '0-EATM'

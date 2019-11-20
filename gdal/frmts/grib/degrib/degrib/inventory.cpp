@@ -524,9 +524,10 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        && (templat != GS4_RADAR) && (templat != GS4_SATELLITE)
        && (templat != GS4_SATELLITE_SYNTHETIC)
        && (templat != GS4_DERIVED_INTERVAL)
-       && (templat != GS4_ANALYSIS_CHEMICAL) ) {
+       && (templat != GS4_ANALYSIS_CHEMICAL)
+       && (templat != GS4_OPTICAL_PROPERTIES_AEROSOL) ) {
       errSprintf ("This was only designed for templates 0, 1, 2, 5, 6, 7, 8, 9, "
-                  "10, 11, 12, 15, 20, 30, 32, 40. Template found = %d\n", templat);
+                  "10, 11, 12, 15, 20, 30, 32, 40, 48. Template found = %d\n", templat);
 
       inv->validTime = 0;
       inv->foreSec = 0;
@@ -567,6 +568,12 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             return -8;
         genProcess = (*buffer)[14 - 5];
    }
+   else if( templat == GS4_OPTICAL_PROPERTIES_AEROSOL )
+   {
+        if( secLen < 36 - 5 + 1 )
+            return -8;
+        genProcess = (*buffer)[36 - 5];
+   }
    else
         genProcess = (*buffer)[12 - 5];
    genID = 0;
@@ -583,7 +590,11 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    } else {
       int nOffset = 0;
       if( templat == GS4_ANALYSIS_CHEMICAL ) {
-          nOffset = 2;
+          nOffset = 16 - 14;
+      }
+      else if( templat == GS4_OPTICAL_PROPERTIES_AEROSOL )
+      {
+          nOffset = 38 - 14;
       }
       genID = (*buffer)[nOffset + 14 - 5];
       /* Compute forecast time. */
@@ -838,7 +849,11 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    } else {
       unsigned int nOffset = 0;
       if( templat == GS4_ANALYSIS_CHEMICAL ) {
-          nOffset = 2;
+          nOffset = 16 - 14;
+      }
+      else if( templat == GS4_OPTICAL_PROPERTIES_AEROSOL )
+      {
+          nOffset = 38 - 14;
       }
 
       if( secLen < nOffset + 31 - 5 + 4)
