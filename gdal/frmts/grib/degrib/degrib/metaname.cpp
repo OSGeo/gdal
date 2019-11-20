@@ -1637,7 +1637,7 @@ static const GRIB2ParmTable SpaceQuantitative[] = {
 /* 25 */ {"", "Reserved", "-", UC_NONE},
 /* 26 */ {"", "Reserved", "-", UC_NONE},
 /* 27 */ {"BRFLF", "Bidirectional Reflecance Factor", "Numeric", UC_NONE},
-/* 28 */ {"SPBRT", "Brightness Temperture", "K", UC_NONE},
+/* 28 */ {"SPBRT", "Brightness Temperature", "K", UC_NONE},
 /* 29 */ {"SRAD", "Scaled Radiance", "Numeric", UC_NONE},
 };
 
