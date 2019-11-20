@@ -1558,7 +1558,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
        (is4[7] != GS4_PERCENT_TIME) && (is4[7] != GS4_ENSEMBLE_STAT) &&
        (is4[7] != GS4_SATELLITE) && (is4[7] != GS4_SATELLITE_SYNTHETIC) &&
        (is4[7] != GS4_DERIVED_INTERVAL) && (is4[7] != GS4_STATISTIC_SPATIAL_AREA) &&
-       (is4[7] != GS4_ANALYSIS_CHEMICAL)) {
+       (is4[7] != GS4_ANALYSIS_CHEMICAL) && (is4[7] != GS4_OPTICAL_PROPERTIES_AEROSOL)) {
 #ifdef DEBUG
       //printf ("Un-supported Template. %d\n", is4[7]);
 #endif
@@ -1575,7 +1575,16 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
    }
    meta->pds2.sect4.cat = (uChar) is4[9];
    meta->pds2.sect4.subcat = (uChar) is4[10];
-   int nOffset = (is4[7] != GS4_ANALYSIS_CHEMICAL) ? 0 : 2;
+   int nOffset = 0;
+   if( is4[7] == GS4_ANALYSIS_CHEMICAL ) {
+        nOffset = 16 - 14;
+   }
+   else if( is4[7] == GS4_OPTICAL_PROPERTIES_AEROSOL ) {
+        nOffset = 38 - 14;
+   }
+   if (ns4 < 34 + nOffset) {
+      return -1;
+   }
    meta->pds2.sect4.genProcess = (uChar) is4[11 + nOffset];
 
    /* Initialize variables prior to parsing the specific templates. */
@@ -2071,6 +2080,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             // 37 Number of data points used in spatial processing defined in octet 36
             break;
       case GS4_ANALYSIS_CHEMICAL: /* 4.40 */
+            // TODO
+            break;
+      case GS4_OPTICAL_PROPERTIES_AEROSOL: /* 4.48 */
             // TODO
             break;
       default:
