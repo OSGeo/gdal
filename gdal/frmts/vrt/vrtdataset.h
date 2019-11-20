@@ -194,6 +194,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
 
     VRTRasterBand*      InitBand(const char* pszSubclass, int nBand,
                                  bool bAllowPansharpened);
+    static GDALDataset *OpenVRTProtocol( const char* pszSpec );
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 

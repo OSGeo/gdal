@@ -33,15 +33,17 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "gdal_utils.h"
 
 #include <algorithm>
 #include <typeinfo>
 #include "gdal_proxy.h"
 
-
 /*! @cond Doxygen_Suppress */
 
 CPL_CVSID("$Id$")
+
+#define VRT_PROTOCOL_PREFIX "vrt://"
 
 /************************************************************************/
 /*                            VRTDataset()                             */
@@ -737,6 +739,9 @@ int VRTDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( strstr(poOpenInfo->pszFilename,"<VRTDataset") != nullptr )
         return TRUE;
 
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, VRT_PROTOCOL_PREFIX) )
+        return TRUE;
+
     return FALSE;
 }
 
@@ -753,6 +758,9 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( !Identify( poOpenInfo ) )
         return nullptr;
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, VRT_PROTOCOL_PREFIX) )
+        return OpenVRTProtocol(poOpenInfo->pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Try to read the whole file into memory.                         */
@@ -903,6 +911,103 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->m_poRootGroup->SetFilename(poOpenInfo->pszFilename);
     }
 
+    return poDS;
+}
+
+/************************************************************************/
+/*                         OpenVRTProtocol()                            */
+/*                                                                      */
+/*      Create an open VRTDataset from a vrt:// string.                 */
+/************************************************************************/
+
+GDALDataset *VRTDataset::OpenVRTProtocol( const char* pszSpec )
+
+{
+    CPLAssert( STARTS_WITH_CI(pszSpec, VRT_PROTOCOL_PREFIX) );
+    CPLString osFilename(pszSpec + strlen(VRT_PROTOCOL_PREFIX) );
+    const auto nPosQuotationMark = osFilename.find('?');
+    CPLString osQueryString;
+    if( nPosQuotationMark != std::string::npos )
+    {
+        osQueryString = osFilename.substr(nPosQuotationMark+1);
+        osFilename.resize(nPosQuotationMark);
+    }
+    auto poSrcDS =
+        GDALDataset::Open(osFilename, GDAL_OF_RASTER | GDAL_OF_SHARED,
+                          nullptr, nullptr, nullptr);
+    if( poSrcDS == nullptr )
+    {
+        return nullptr;
+    }
+
+    // Parse query string
+    CPLStringList aosTokens(CSLTokenizeString2(osQueryString, "&", 0));
+    std::vector<int> anBands;
+    for( int i = 0; i < aosTokens.size(); i++ )
+    {
+        char* pszKey = nullptr;
+        const char* pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
+        if( pszKey && pszValue )
+        {
+            if( EQUAL(pszKey, "bands") )
+            {
+                CPLStringList aosBands(CSLTokenizeString2(pszValue, ",", 0));
+                for( int j = 0; j < aosBands.size(); j++ )
+                {
+                    if( EQUAL(aosBands[j], "mask") )
+                    {
+                        anBands.push_back(0);
+                    }
+                    else
+                    {
+                        const int nBand = atoi(aosBands[j]);
+                        if( nBand <= 0 || nBand > poSrcDS->GetRasterCount() )
+                        {
+                            CPLError(CE_Failure, CPLE_IllegalArg,
+                                    "Invalid band number: %s", aosBands[j]);
+                            poSrcDS->ReleaseRef();
+                            return nullptr;
+                        }
+                        anBands.push_back(nBand);
+                    }
+                }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unknown option: %s", pszKey);
+                poSrcDS->ReleaseRef();
+                return nullptr;
+            }
+        }
+        CPLFree(pszKey);
+    }
+
+    CPLStringList argv;
+    argv.AddString("-of");
+    argv.AddString("VRT");
+
+    for( const int nBand: anBands )
+    {
+        argv.AddString("-b");
+        argv.AddString(nBand == 0 ? "mask" : CPLSPrintf("%d", nBand));
+    }
+
+    GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(argv.List(), nullptr);
+
+    auto hRet = GDALTranslate("", GDALDataset::ToHandle(poSrcDS),
+                              psOptions, nullptr);
+
+    GDALTranslateOptionsFree( psOptions );
+
+    poSrcDS->ReleaseRef();
+
+    auto poDS = cpl::down_cast<VRTDataset*>(GDALDataset::FromHandle(hRet));
+    if( poDS )
+    {
+        poDS->SetDescription(pszSpec);
+        poDS->SetWritable(false);
+    }
     return poDS;
 }
 
