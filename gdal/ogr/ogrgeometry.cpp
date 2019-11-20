@@ -1778,9 +1778,9 @@ std::string OGRGeometry::wktTypeString(OGRwkbVariant variant) const
  *                    to the passed pointer. After use, *ppszDstText should be
  *                    freed with CPLFree().
  * @param variant the specification that must be conformed too :
- *                    - wbkVariantOgc for old-style 99-402 extended
+ *                    - wkbVariantOgc for old-style 99-402 extended
  *                      dimension (Z) WKB types
- *                    - wbkVariantIso for SFSQL 1.2 and ISO SQL/MM Part 3
+ *                    - wkbVariantIso for SFSQL 1.2 and ISO SQL/MM Part 3
  *
  * @return Currently OGRERR_NONE is always returned.
  */
