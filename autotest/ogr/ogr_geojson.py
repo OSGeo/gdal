@@ -3134,7 +3134,16 @@ def test_ogr_geojson_62():
     ds = gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name", "properties":{"name": "urn:ogc:def:crs:EPSG::32631"} }, "features":[] }""")
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
-    assert srs.ExportToWkt().find('32631') >= 0
+    assert srs.GetAuthorityCode(None) == '32631'
+    assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
+
+
+    # See https://github.com/OSGeo/gdal/issues/2035
+    ds = gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name", "properties":{"name": "urn:ogc:def:crs:OGC:1.3:CRS84"} }, "features":[] }""")
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '4326'
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
 
     # crs type=EPSG (not even documented in GJ2008 spec!) tests. Just for coverage completeness
     gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG" }, "features":[] }""")
