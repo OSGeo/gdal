@@ -82,6 +82,7 @@ Vector drivers
    openair
    openfilegdb
    osm
+   pdf
    pds
    pgdump
    pgeo
