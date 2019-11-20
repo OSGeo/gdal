@@ -4009,51 +4009,55 @@ static int ComputeUnit2 (int prodType, int templat, int cat, int subcat,
 
 /* GRIB2 Code Table 4.5 */
 /* *INDENT-OFF* */
-static const GRIB2SurfTable Surface[] = {
-   /* 0 */ {"RESERVED", "Reserved", "-"},
-   /* 1 */ {"SFC", "Ground or water surface", "-"},
-   /* 2 */ {"CBL", "Cloud base level", "-"},
-   /* 3 */ {"CTL", "Level of cloud tops", "-"},
-   /* 4 */ {"0DEG", "Level of 0 degree C isotherm", "-"},
-   /* 5 */ {"ADCL", "Level of adiabatic condensation lifted from the surface", "-"},
-   /* 6 */ {"MWSL", "Maximum wind level", "-"},
-   /* 7 */ {"TRO", "Tropopause", "-"},
-   /* 8 */ {"NTAT", "Nominal top of atmosphere", "-"},
-   /* 9 */ {"SEAB", "Sea bottom", "-"},
-   /* 10: 10-19 */ {"RESERVED", "Reserved", "-"},
-   /* 11: 20 */ {"TMPL", "Isothermal level", "K"},
-   /* 12: 21-99 */ {"RESERVED", "Reserved", "-"},
-   /* 13: 100 */ {"ISBL", "Isobaric surface", "Pa"},
-   /* 14: 101 */ {"MSL", "Mean sea level", "-"},
-   /* 15: 102 */ {"GPML", "Specific altitude above mean sea level", "m"},
-   /* 16: 103 */ {"HTGL", "Specified height level above ground", "m"},
-   /* 17: 104 */ {"SIGL", "Sigma level", "'sigma' value"},
-   /* 18: 105 */ {"HYBL", "Hybrid level", "-"},
-   /* 19: 106 */ {"DBLL", "Depth below land surface", "m"},
-   /* 20: 107 */ {"THEL", "Isentropic (theta) level", "K"},
-   /* 21: 108 */ {"SPDL", "Level at specified pressure difference from ground to level", "Pa"},
-   /* 22: 109 */ {"PVL", "Potential vorticity surface", "(K m^2)/(kg s)"},
-   /* 23: 110 */ {"RESERVED", "Reserved", "-"},
-   /* 24: 111 */ {"EtaL", "Eta* level", "-"},
-   /* 25: 112-113 */ {"RESERVED", "Reserved", "-"},
-   /* 26: 114 */ {"SNOWLVL", "Snow Level", "m"},
-   /* 27: 115-116 */ {"RESERVED", "Reserved", "-"},
-   /* 28: 117 */ {"unknown", "Mixed layer depth", "m"}, /* unknown abbrev */
-   /* 29: 118-159 */ {"RESERVED", "Reserved", "-"},
-   /* 30: 160 */ {"DBSL", "Depth below sea level", "m"},
-   /* 31: 161-191 */ {"RESERVED", "Reserved", "-"},
-   /* 32: 192-254 */ {"RESERVED", "Reserved Local use", "-"},
-   /* 33: 255 */ {"MISSING", "Missing", "-"},
-};
+
 
 typedef struct {
    int index;
    GRIB2SurfTable surface;
-} GRIB2LocalSurface;
+} GRIB2SurfTableWithIdx;
 
-/* based on http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table4-5.shtml
- * updated last on 3/14/2006 */
-static const GRIB2LocalSurface NCEP_Surface[] = {
+// Substantially changed by GDAL
+static const GRIB2SurfTableWithIdx Surface[] = {
+   {0, {"RESERVED", "Reserved", "-"}},
+   {1, {"SFC", "Ground or water surface", "-"}},
+   {2, {"CBL", "Cloud base level", "-"}},
+   {3, {"CTL", "Level of cloud tops", "-"}},
+   {4, {"0DEG", "Level of 0 degree C isotherm", "-"}},
+   {5, {"ADCL", "Level of adiabatic condensation lifted from the surface", "-"}},
+   {6, {"MWSL", "Maximum wind level", "-"}},
+   {7, {"TRO", "Tropopause", "-"}},
+   {8, {"NTAT", "Nominal top of atmosphere", "-"}},
+   {9, {"SEAB", "Sea bottom", "-"}},
+   {10, {"EATM", "Entire Atmosphere", "-"}},
+   {11, {"CB", "Cumulonimbus Base", "m"}},
+   {12, {"CT", "Cumulonimbus Top", "m"}},
+   {13, {"unknown", "Lowest level where vertically integrated cloud cover exceeds the specified percentage (cloud base for a given percentage cloud cover)", "%"}},
+   {14, {"LFC", "Level of free convection", "-"}},
+   {15, {"CCL", "Convection condensation level", "-"}},
+   {16, {"LNB", "Level of neutral buoyancy or equilibrium", "-"}},
+   {17, {"RESERVED", "Reserved", "-"}},
+   {20, {"TMPL", "Isothermal level", "K"}},
+   {21, {"RESERVED", "Reserved", "-"}},
+   {100, {"ISBL", "Isobaric surface", "Pa"}},
+   {101, {"MSL", "Mean sea level", "-"}},
+   {102, {"GPML", "Specific altitude above mean sea level", "m"}},
+   {103, {"HTGL", "Specified height level above ground", "m"}},
+   {104, {"SIGL", "Sigma level", "'sigma' value"}},
+   {105, {"HYBL", "Hybrid level", "-"}},
+   {106, {"DBLL", "Depth below land surface", "m"}},
+   {107, {"THEL", "Isentropic (theta) level", "K"}},
+   {108, {"SPDL", "Level at specified pressure difference from ground to level", "Pa"}},
+   {109, {"PVL", "Potential vorticity surface", "(K m^2)/(kg s)"}},
+   {110, {"RESERVED", "Reserved", "-"}},
+   {111, {"EtaL", "Eta* level", "-"}},
+   {112, {"RESERVED", "Reserved", "-"}},
+   {114, {"SNOWLVL", "Snow Level", "m"}},
+   {115, {"RESERVED", "Reserved", "-"}},
+   {117, {"unknown", "Mixed layer depth", "m"}}, /* unknown abbrev */
+   {118, {"RESERVED", "Reserved", "-"}},
+   {160, {"DBSL", "Depth below sea level", "m"}},
+   {161, {"RESERVED", "Reserved", "-"}},
+   {192, {"RESERVED", "Reserved Local use", "-"}},
    {200, {"EATM", "Entire atmosphere (considered as a single layer)", "-"}},
    {201, {"EOCN", "Entire ocean (considered as a single layer)", "-"}},
    {204, {"HTFL", "Highest tropospheric freezing level", "-"}},
@@ -4088,6 +4092,7 @@ static const GRIB2LocalSurface NCEP_Surface[] = {
    {252, {"DCTL", "Deep convective cloud top level", "-"}},
    {253, {"LBLSW", "Lowest bottom level of supercooled liquid water layer", "-"}},
    {254, {"HTLSW", "Highest top level of supercooled liquid water layer", "-"}},
+   {255, {"MISSING", "Missing", "-"}},
 };
 /* *INDENT-ON* */
 
@@ -4126,65 +4131,33 @@ GRIB2SurfTable Table45Index (int i,
 #ifdef DEBUG
       printf ("Surface index is out of 0..255 range?\n");
 #endif
-      return Surface[0];
+      return Surface[0].surface;
    }
-   if (i == 255)
-      return Surface[33];
-   if (i > 191) {
-      if (center == 7) {
-         for (j = 0; j < sizeof (NCEP_Surface) / sizeof (NCEP_Surface[0]);
-              j++) {
-            if (i == NCEP_Surface[j].index) {
-               *f_reserved = 0;
-               return (NCEP_Surface[j].surface);
-            }
-         }
-      }
-      return Surface[32];
+
+   // Substantially changed by GDAL
+   *f_reserved = 0;
+   if( i > 191 && i < 255 &&center != 7) {
+        *f_reserved = 1;
+        return Surface[0].surface;
    }
-   if (i > 160)
-      return Surface[31];
-   if (i == 160) {
-      *f_reserved = 0;
-      return Surface[30];
+   for( j = sizeof(Surface) / sizeof(Surface[0]); j > 0; )
+   {
+       --j;
+       if( i >= Surface[j].index )
+       {
+           if( i > 191 && i < 255 )
+           {
+               if( i != Surface[j].index )
+               {
+                   *f_reserved = 1;
+                    return Surface[0].surface;
+               }
+           }
+           return Surface[j].surface;
+       }
    }
-   if (i > 117)
-      return Surface[29];
-   if (i == 117) {
-      *f_reserved = 0;
-      return Surface[28];
-   }
-   if (i > 114)
-      return Surface[27];
-   if (i == 114){
-      *f_reserved = 0;
-      return Surface[26];
-   }  
-   if (i > 111)
-      return Surface[25];
-   if (i == 111) {
-      *f_reserved = 0;
-      return Surface[i - 87];
-   }
-   if (i == 110)
-      return Surface[i - 87];
-   if (i > 99) {
-      *f_reserved = 0;
-      return Surface[i - 87];
-   }
-   if (i > 20)
-      return Surface[12];
-   if (i == 20) {
-      *f_reserved = 0;
-      return Surface[11];
-   }
-   if (i > 9)
-      return Surface[10];
-   if (i > 0) {
-      *f_reserved = 0;
-      return Surface[i];
-   }
-   return Surface[0];
+   myAssert(false);
+   return Surface[0].surface;
 }
 
 void ParseLevelName (unsigned short int center, unsigned short int subcenter,
