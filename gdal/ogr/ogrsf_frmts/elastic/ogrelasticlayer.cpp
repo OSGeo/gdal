@@ -2676,7 +2676,7 @@ static int OGRESGetFieldIndexFromSQL(const swq_expr_node* poNode)
 
     if( poNode->eNodeType == SNT_OPERATION &&
         poNode->nOperation == SWQ_CAST &&
-        poNode->nSubExprCount == 2 &&
+        poNode->nSubExprCount >= 1 &&
         poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN )
         return poNode->papoSubExpr[0]->field_index;
 
