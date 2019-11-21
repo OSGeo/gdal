@@ -277,8 +277,10 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
 
     const auto featuresCount = header->features_count();
 
-    if (featuresCount > std::numeric_limits<size_t>::max() / 8) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too many features for this architecture");
+    if (featuresCount > std::min(
+            static_cast<uint64_t>(std::numeric_limits<size_t>::max() / 8),
+            static_cast<uint64_t>(100) * 1000 * 1000 * 1000)) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too many features");
         return false;
     }
 
