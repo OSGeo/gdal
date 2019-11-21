@@ -2654,6 +2654,24 @@ json_object* OGRElasticLayer::GetValue( int nFieldIdx,
 }
 
 /************************************************************************/
+/*                      OGRESGetFieldIndexFromSQL()                     */
+/************************************************************************/
+
+static int OGRESGetFieldIndexFromSQL(const swq_expr_node* poNode)
+{
+    if( poNode->eNodeType == SNT_COLUMN )
+        return poNode->field_index;
+
+    if( poNode->eNodeType == SNT_OPERATION &&
+        poNode->nOperation == SWQ_CAST &&
+        poNode->nSubExprCount == 2 &&
+        poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN )
+        return poNode->papoSubExpr[0]->field_index;
+
+    return -1;
+}
+
+/************************************************************************/
 /*                        TranslateSQLToFilter()                        */
 /************************************************************************/
 
@@ -2661,6 +2679,7 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
 {
     if( poNode->eNodeType == SNT_OPERATION )
     {
+        int nFieldIdx;
         if( poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2 )
         {
             // For AND, we can deal with a failure in one of the branch
@@ -2710,8 +2729,6 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
             if( poNode->papoSubExpr[0]->eNodeType == SNT_OPERATION &&
                 poNode->papoSubExpr[0]->nOperation == SWQ_ISNULL &&
                 poNode->papoSubExpr[0]->nSubExprCount == 1 &&
-                poNode->papoSubExpr[0]->papoSubExpr[0]->eNodeType ==
-                                                            SNT_COLUMN &&
                 poNode->papoSubExpr[0]->papoSubExpr[0]->field_index != 0 &&
                 poNode->papoSubExpr[0]->papoSubExpr[0]->field_index <
                                         m_poFeatureDefn->GetFieldCount() )
@@ -2746,15 +2763,13 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
         }
         else if( poNode->nOperation == SWQ_ISNULL &&
                  poNode->nSubExprCount == 1 &&
-                 poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
-                 poNode->papoSubExpr[0]->field_index != 0 &&
-                 poNode->papoSubExpr[0]->field_index <
-                                        m_poFeatureDefn->GetFieldCount() )
+                 (nFieldIdx = OGRESGetFieldIndexFromSQL(poNode->papoSubExpr[0])) > 0 &&
+                 nFieldIdx < m_poFeatureDefn->GetFieldCount() )
         {
             json_object* poRet = json_object_new_object();
             json_object* poExists = json_object_new_object();
             CPLString osFieldName(BuildPathFromArray(
-                m_aaosFieldPaths[ poNode->papoSubExpr[0]->field_index]));
+                m_aaosFieldPaths[nFieldIdx]));
             json_object_object_add(poExists, "field",
                                     json_object_new_string(osFieldName));
             json_object* poBool = json_object_new_object();
@@ -2783,19 +2798,18 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
             }
         }
         else if( poNode->nOperation == SWQ_EQ && poNode->nSubExprCount == 2 &&
-                 poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
                  poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
-                 poNode->papoSubExpr[0]->field_index <
-                                        m_poFeatureDefn->GetFieldCount() )
+                 (nFieldIdx = OGRESGetFieldIndexFromSQL(poNode->papoSubExpr[0])) >= 0 &&
+                 nFieldIdx < m_poFeatureDefn->GetFieldCount() )
         {
-            json_object* poVal = GetValue(poNode->papoSubExpr[0]->field_index,
+            json_object* poVal = GetValue(nFieldIdx,
                                           poNode->papoSubExpr[1]);
             if( poVal == nullptr )
             {
                 return nullptr;
             }
             json_object* poRet = json_object_new_object();
-            if( poNode->papoSubExpr[0]->field_index == 0 )
+            if( nFieldIdx == 0 )
             {
                 json_object* poIds = json_object_new_object();
                 json_object* poValues = json_object_new_array();
@@ -2807,13 +2821,13 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
             {
                 json_object* poTerm = json_object_new_object();
                 CPLString osPath(BuildPathFromArray(
-                        m_aaosFieldPaths[ poNode->papoSubExpr[0]->field_index]));
+                        m_aaosFieldPaths[ nFieldIdx]));
                 bool bNotAnalyzed = true;
                 if( poNode->papoSubExpr[1]->field_type == SWQ_STRING )
                 {
                     const char* pszFieldName =
                         m_poFeatureDefn->GetFieldDefn(
-                            poNode->papoSubExpr[0]->field_index)->GetNameRef();
+                            nFieldIdx)->GetNameRef();
                     bNotAnalyzed = CSLFindString(m_papszNotAnalyzedFields,
                                                  pszFieldName) >= 0;
                     if( !bNotAnalyzed )
@@ -2850,14 +2864,13 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
         else if( (poNode->nOperation == SWQ_LT ||
                   poNode->nOperation == SWQ_LE ||
                   poNode->nOperation == SWQ_GT ||
-                  poNode->nOperation == SWQ_GE) && poNode->nSubExprCount == 2 &&
-                  poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+                  poNode->nOperation == SWQ_GE) &&
+                  poNode->nSubExprCount == 2 &&
                   poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
-                  poNode->papoSubExpr[0]->field_index != 0 &&
-                  poNode->papoSubExpr[0]->field_index <
-                                            m_poFeatureDefn->GetFieldCount() )
+                  (nFieldIdx = OGRESGetFieldIndexFromSQL(poNode->papoSubExpr[0])) > 0 &&
+                  nFieldIdx < m_poFeatureDefn->GetFieldCount() )
         {
-            json_object* poVal = GetValue(poNode->papoSubExpr[0]->field_index,
+            json_object* poVal = GetValue(nFieldIdx,
                                           poNode->papoSubExpr[1]);
             if( poVal == nullptr )
             {
@@ -2868,7 +2881,7 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
             json_object_object_add(poRet, "range", poRange);
             json_object* poFieldConstraint = json_object_new_object();
             CPLString osFieldName(BuildPathFromArray(
-                    m_aaosFieldPaths[ poNode->papoSubExpr[0]->field_index]));
+                    m_aaosFieldPaths[nFieldIdx]));
             json_object_object_add(poRange, osFieldName, poFieldConstraint);
             const char* pszOp = (poNode->nOperation == SWQ_LT) ? "lt" :
                                 (poNode->nOperation == SWQ_LE) ? "lte" :
@@ -2879,20 +2892,18 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
         }
         else if( poNode->nOperation == SWQ_BETWEEN &&
                  poNode->nSubExprCount == 3 &&
-                 poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
                  poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
                  poNode->papoSubExpr[2]->eNodeType == SNT_CONSTANT &&
-                 poNode->papoSubExpr[0]->field_index != 0 &&
-                 poNode->papoSubExpr[0]->field_index <
-                                            m_poFeatureDefn->GetFieldCount() )
+                 (nFieldIdx = OGRESGetFieldIndexFromSQL(poNode->papoSubExpr[0])) > 0 &&
+                 nFieldIdx < m_poFeatureDefn->GetFieldCount() )
         {
-            json_object* poVal1 = GetValue(poNode->papoSubExpr[0]->field_index,
+            json_object* poVal1 = GetValue(nFieldIdx,
                                           poNode->papoSubExpr[1]);
             if( poVal1 == nullptr )
             {
                 return nullptr;
             }
-            json_object* poVal2 = GetValue(poNode->papoSubExpr[0]->field_index,
+            json_object* poVal2 = GetValue(nFieldIdx,
                                           poNode->papoSubExpr[2]);
             if( poVal2 == nullptr )
             {
@@ -2905,7 +2916,7 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
             json_object_object_add(poRet, "range", poRange);
             json_object* poFieldConstraint = json_object_new_object();
             CPLString osFieldName(BuildPathFromArray(
-                    m_aaosFieldPaths[ poNode->papoSubExpr[0]->field_index]));
+                    m_aaosFieldPaths[nFieldIdx]));
             json_object_object_add(poRange, osFieldName, poFieldConstraint);
             json_object_object_add(poFieldConstraint, "gte", poVal1);
             json_object_object_add(poFieldConstraint, "lte", poVal2);
@@ -2913,9 +2924,8 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
         }
         else if( poNode->nOperation == SWQ_IN &&
                  poNode->nSubExprCount > 1 &&
-                 poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
-                 poNode->papoSubExpr[0]->field_index <
-                                            m_poFeatureDefn->GetFieldCount() )
+                 (nFieldIdx = OGRESGetFieldIndexFromSQL(poNode->papoSubExpr[0])) >= 0 &&
+                 nFieldIdx < m_poFeatureDefn->GetFieldCount() )
         {
             bool bAllConstant = true;
             for( int i=1; i< poNode->nSubExprCount; i++ )
@@ -2929,7 +2939,7 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
             if( bAllConstant )
             {
                 json_object* poRet = json_object_new_object();
-                if( poNode->papoSubExpr[0]->field_index == 0 )
+                if( nFieldIdx == 0 )
                 {
                     json_object* poIds = json_object_new_object();
                     json_object* poValues = json_object_new_array();
@@ -2938,7 +2948,7 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
                         for( int i=1; i< poNode->nSubExprCount; i++ )
                     {
                         json_object* poVal = GetValue(
-                                            poNode->papoSubExpr[0]->field_index,
+                                            nFieldIdx,
                                             poNode->papoSubExpr[i]);
                         if( poVal == nullptr )
                         {
@@ -2952,12 +2962,11 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
                 {
                     bool bNotAnalyzed = true;
                     CPLString osPath(BuildPathFromArray(
-                        m_aaosFieldPaths[ poNode->papoSubExpr[0]->field_index]));
+                        m_aaosFieldPaths[nFieldIdx]));
                     if( poNode->papoSubExpr[1]->field_type == SWQ_STRING )
                     {
                         const char* pszFieldName =
-                            m_poFeatureDefn->GetFieldDefn(
-                                poNode->papoSubExpr[0]->field_index)->
+                            m_poFeatureDefn->GetFieldDefn(nFieldIdx)->
                                                                 GetNameRef();
                         bNotAnalyzed = CSLFindString(m_papszNotAnalyzedFields,
                                                      pszFieldName) >= 0;
@@ -2990,7 +2999,7 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
                         for( int i=1; i< poNode->nSubExprCount; i++ )
                         {
                             json_object* poVal = GetValue(
-                                        poNode->papoSubExpr[0]->field_index,
+                                        nFieldIdx,
                                         poNode->papoSubExpr[i]);
                             if( poVal == nullptr )
                             {
@@ -3009,7 +3018,7 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
                         for( int i=1; i< poNode->nSubExprCount; i++ )
                         {
                             json_object* poVal = GetValue(
-                                        poNode->papoSubExpr[0]->field_index,
+                                        nFieldIdx,
                                         poNode->papoSubExpr[i]);
                             if( poVal == nullptr )
                             {
@@ -3039,21 +3048,19 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
         }
         else if( poNode->nOperation == SWQ_LIKE &&
                  poNode->nSubExprCount >= 2 &&
-                 poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
-                 poNode->papoSubExpr[0]->field_index != 0 &&
-                 poNode->papoSubExpr[0]->field_index <
-                                            m_poFeatureDefn->GetFieldCount() )
+                 (nFieldIdx = OGRESGetFieldIndexFromSQL(poNode->papoSubExpr[0])) > 0 &&
+                 nFieldIdx < m_poFeatureDefn->GetFieldCount() )
         {
             char chEscape = '\0';
             if( poNode->nSubExprCount == 3 )
                 chEscape = poNode->papoSubExpr[2]->string_value[0];
             const char* pszPattern = poNode->papoSubExpr[1]->string_value;
             const char* pszFieldName = m_poFeatureDefn->GetFieldDefn(
-                    poNode->papoSubExpr[0]->field_index)->GetNameRef();
+                    nFieldIdx)->GetNameRef();
             bool bNotAnalyzed = CSLFindString(m_papszNotAnalyzedFields,
                                               pszFieldName) >= 0;
             CPLString osPath(BuildPathFromArray(
-                    m_aaosFieldPaths[ poNode->papoSubExpr[0]->field_index]));
+                    m_aaosFieldPaths[nFieldIdx]));
             if( !bNotAnalyzed && CSLFindString(m_papszFieldsWithRawValue,
                                                         pszFieldName) >= 0 )
             {
