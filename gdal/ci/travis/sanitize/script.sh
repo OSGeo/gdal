@@ -45,7 +45,7 @@ chmod +x pytest_wrapper.sh
 
 find \
     ogr gcore gdrivers osr alg gnm utilities pyscripts \
-    -name '*.py' ! -name netcdf_cfchecks.py ! -name "__init__.py" \
+    -name '*.py' ! -name netcdf_cfchecks.py ! -name "__init__.py" ! -path 'ogr/data/*' \
     -print \
     -exec ./pytest_wrapper.sh {} \; \
     | tee ./test-output.txt
