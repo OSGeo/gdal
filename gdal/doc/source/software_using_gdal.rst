@@ -38,7 +38,7 @@ Software using GDAL
 - `GeoView Pro  <http://www.geoviewpro.com>`_  IOS mobile mapping application.
 - `Geoweb3d  <http://www.geoweb3d.com>`_  A 3D virtual globe that provides on-the-fly, game-quality visualization of GIS data.
 - `GMT (Generic Mapping Tools)  <http://gmt.soest.hawaii.edu>`_  an open source collection of tools for processing and displaying xy and xyz datasets.
-- `Geoogle Earth  <http://earth.google.com>`_  A 3D world viewer.
+- `Google Earth  <http://earth.google.com>`_  A 3D world viewer.
 - `GPSeismic  <http://www.gpseismic.com>`_  A suite of applications for seismic survey.
 - `GRASS GIS  <http://grass.osgeo.org>`_  A raster/vector open source GIS that uses GDAL for raster/vector import and export (via r.in.gdal/r.out.gdal)
 - `gstat  <http://www.gstat.org>`_  a geostatistical modelling package.
