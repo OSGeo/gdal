@@ -16,7 +16,7 @@ Synopsis
 .. code-block::
 
     gdal_polygonize.py [-8] [-nomask] [-mask filename] <raster_file> [-b band]
-                       [-q] [-f ogr_format] <out_file< [layer] [fieldname]
+                       [-q] [-f ogr_format] <out_file> [layer] [fieldname]
 
 Description
 -----------
