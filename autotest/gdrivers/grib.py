@@ -224,7 +224,8 @@ def test_grib_grib2_read_template_4_32():
     # First band extracted from http://nomads.ncep.noaa.gov/pub/data/nccf/com/hur/prod/hwrf.2017102006/twenty-se27w.2017102006.hwrfsat.core.0p02.f000.grb2
     ds = gdal.Open('data/grib/twenty-se27w.2017102006.hwrfsat.core.0p02.f000_truncated.grb2')
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 19911, 'Could not open file'
+    assert cs == 48230, 'Could not open file'
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx((-9.765,2.415), 1e-3) # Reasonable range for Celcius
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {'GRIB_REF_TIME': '  1508479200 sec UTC', 'GRIB_VALID_TIME': '  1508479200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217', 'GRIB_PDS_PDTN': '32', 'GRIB_COMMENT': 'Brightness Temperature [C]', 'GRIB_SHORT_NAME': '0 undefined', 'GRIB_ELEMENT': 'BRTEMP', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145'}
     for k in expected_md:
@@ -1263,3 +1264,19 @@ def test_grib_grib2_derived_forecast_spread():
     out_ds = None
 
     gdal.Unlink('/vsimem/out.grb2')
+
+
+
+###############################################################################
+# Template 4.48 with Optical Properties of Aerosol
+
+def test_grib_grib2_template_4_48():
+
+    if gdaltest.grib_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/grib/template_4_48.grb2')
+    band = ds.GetRasterBand(1)
+    assert band.GetMetadataItem('GRIB_UNIT') == '[1/kg]'
+    assert band.GetMetadataItem('GRIB_ELEMENT') == 'ASNCON'
+    assert band.GetMetadataItem('GRIB_SHORT_NAME') == '0-EATM'
