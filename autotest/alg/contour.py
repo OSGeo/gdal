@@ -34,6 +34,7 @@ import os
 
 from osgeo import gdal
 from osgeo import ogr
+import gdaltest
 import ogrtest
 import pytest
 
@@ -283,6 +284,50 @@ def test_contour_nodata_precision_issue_float32():
                                                                      "NODATA=%.19g" % ds.GetRasterBand(1).GetNoDataValue()] )
     ds = None
     assert ogr_lyr.GetFeatureCount() == 0
+    ogr_ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/contour.shp')
+
+
+
+def test_contour_too_many_levels():
+
+    ogr_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/contour.shp')
+    ogr_lyr = ogr_ds.CreateLayer('contour', geom_type=ogr.wkbLineString)
+    field_defn = ogr.FieldDefn('ID', ogr.OFTInteger)
+    ogr_lyr.CreateField(field_defn)
+
+    content1 = """ncols        2
+nrows        2
+xllcorner    0
+yllcorner    0
+cellsize     1
+ 1e30 0
+ 0 0"""
+
+    content2 = """ncols        2
+nrows        2
+xllcorner    0
+yllcorner    0
+cellsize     1
+ 1e6 0
+ 0 0"""
+    for content in (content1, content2):
+
+        with gdaltest.tempfile('/vsimem/test.asc', content):
+            ds = gdal.Open('/vsimem/test.asc')
+            with gdaltest.error_handler():
+                assert gdal.ContourGenerateEx(ds.GetRasterBand(1), ogr_lyr,
+                                                options = [ "LEVEL_INTERVAL=1",
+                                                            "ID_FIELD=0"] ) != 0
+
+        with gdaltest.tempfile('/vsimem/test.asc', content):
+            ds = gdal.Open('/vsimem/test.asc')
+            with gdaltest.error_handler():
+                assert gdal.ContourGenerateEx(ds.GetRasterBand(1), ogr_lyr,
+                                                options = [ "LEVEL_INTERVAL=1",
+                                                            "LEVEL_EXP_BASE=1.0001",
+                                                            "ID_FIELD=0"] ) != 0
+
     ogr_ds = None
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/contour.shp')
 
