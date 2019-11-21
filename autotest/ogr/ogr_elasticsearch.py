@@ -1584,6 +1584,27 @@ def test_ogr_elasticsearch_10():
     f = lyr.GetNextFeature()
     assert f is not None
 
+    lyr.SetAttributeFilter("CAST(text_field AS CHARACTER) = 'foo_cast'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "match": { "properties.text_field": "foo_cast" } } } } }""",
+                           """{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field": "foo_cast"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    assert f is not None
+
     lyr.SetAttributeFilter("text_field_with_raw = 'foo'")
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "term": { "properties.text_field_with_raw.raw": "foo" } } } } }""",
                            """{
