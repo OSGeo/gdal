@@ -575,7 +575,7 @@ static const GRIB2ParmTable MeteoTemp[] = {
    /* 4 */ {"TMAX", "Maximum temperature", "K", UC_K2F}, /* Need NDFD override MaxT */
    /* 5 */ {"TMIN", "Minimum temperature", "K", UC_K2F}, /* Need NDFD override MinT */
    /* 6 */ {"DPT", "Dew point temperature", "K", UC_K2F}, /* Need NDFD override Td */
-   /* 7 */ {"DEPR", "Dew point depression", "K", UC_K2F},
+   /* 7 */ {"DEPR", "Dew point depression", "K", UC_NONE}, // Changed by GDAL to UC_NONE
    /* 8 */ {"LAPR", "Lapse rate", "K/m", UC_NONE},
    /* 9 */ {"TMPA", "Temperature anomaly", "K", UC_K2F},
    /* 10 */ {"LHTFL", "Latent heat net flux", "W/(m^2)", UC_NONE},
