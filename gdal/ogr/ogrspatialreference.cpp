@@ -160,18 +160,36 @@ OGRSpatialReference::Private::Private():
 
 OGRSpatialReference::Private::~Private()
 {
+    // In case we destroy the object not in the thread that created it,
+    // we need to reassign the PROJ context. Having the context bundled inside
+    // PJ* deeply sucks...
+    auto ctxt = getPROJContext();
+
+    proj_assign_context( m_pj_crs, ctxt );
     proj_destroy(m_pj_crs);
+
+    proj_assign_context( m_pj_geod_base_crs_temp, ctxt );
     proj_destroy(m_pj_geod_base_crs_temp);
+
+    proj_assign_context( m_pj_proj_crs_cs_temp, ctxt );
     proj_destroy(m_pj_proj_crs_cs_temp);
+
+    proj_assign_context( m_pj_bound_crs_target, ctxt );
     proj_destroy(m_pj_bound_crs_target);
+
+    proj_assign_context( m_pj_bound_crs_co, ctxt );
     proj_destroy(m_pj_bound_crs_co);
+
+    proj_assign_context( m_pj_crs_backup, ctxt );
     proj_destroy(m_pj_crs_backup);
+
     delete m_poRootBackup;
     delete m_poRoot;
 }
 
 void OGRSpatialReference::Private::clear()
 {
+    proj_assign_context( m_pj_crs, getPROJContext() );
     proj_destroy(m_pj_crs);
     m_pj_crs = nullptr;
 
@@ -211,6 +229,7 @@ void OGRSpatialReference::Private::setRoot(OGR_SRSNode* poRoot)
 void OGRSpatialReference::Private::setPjCRS(PJ* pj_crsIn,
                                             bool doRefreshAxisMapping)
 {
+    proj_assign_context( m_pj_crs, getPROJContext() );
     proj_destroy(m_pj_crs);
     m_pj_crs = pj_crsIn;
     if( m_pj_crs )
@@ -530,18 +549,21 @@ PJ *OGRSpatialReference::Private::getGeodBaseCRS()
         return m_pj_crs;
     }
 
+    auto ctxt = getPROJContext();
     if( m_pjType == PJ_TYPE_PROJECTED_CRS ) {
+        proj_assign_context(m_pj_geod_base_crs_temp, ctxt);
         proj_destroy(m_pj_geod_base_crs_temp);
         m_pj_geod_base_crs_temp = proj_crs_get_geodetic_crs(
-            getPROJContext(), m_pj_crs);
+            ctxt, m_pj_crs);
         return m_pj_geod_base_crs_temp;
     }
 
+    proj_assign_context(m_pj_geod_base_crs_temp, ctxt);
     proj_destroy(m_pj_geod_base_crs_temp);
     auto cs = proj_create_ellipsoidal_2D_cs(
-        getPROJContext(), PJ_ELLPS2D_LATITUDE_LONGITUDE, nullptr, 0);
+        ctxt, PJ_ELLPS2D_LATITUDE_LONGITUDE, nullptr, 0);
     m_pj_geod_base_crs_temp = proj_create_geographic_crs(
-        getPROJContext(),
+        ctxt,
         "WGS 84", "World Geodetic System 1984", "WGS 84", SRS_WGS84_SEMIMAJOR,
         SRS_WGS84_INVFLATTENING, SRS_PM_GREENWICH, 0.0,
         SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV), cs);
@@ -552,16 +574,19 @@ PJ *OGRSpatialReference::Private::getGeodBaseCRS()
 
 PJ *OGRSpatialReference::Private::getProjCRSCoordSys()
 {
+    auto ctxt = getPROJContext();
     if( m_pjType == PJ_TYPE_PROJECTED_CRS ) {
+        proj_assign_context(m_pj_proj_crs_cs_temp, ctxt);
         proj_destroy(m_pj_proj_crs_cs_temp);
         m_pj_proj_crs_cs_temp = proj_crs_get_coordinate_system(
             getPROJContext(), m_pj_crs);
         return m_pj_proj_crs_cs_temp;
     }
 
+    proj_assign_context(m_pj_proj_crs_cs_temp, ctxt);
     proj_destroy(m_pj_proj_crs_cs_temp);
     m_pj_proj_crs_cs_temp =  proj_create_cartesian_2D_cs(
-        getPROJContext(), PJ_CART2D_EASTING_NORTHING, nullptr, 0);
+        ctxt, PJ_CART2D_EASTING_NORTHING, nullptr, 0);
     return m_pj_proj_crs_cs_temp;
 }
 
