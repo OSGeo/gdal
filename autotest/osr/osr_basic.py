@@ -1569,3 +1569,18 @@ def test_SetPROJSearchPath():
 
     sr = osr.SpatialReference()
     assert sr.ImportFromEPSG(32631) == 0
+
+
+def test_osr_create_in_one_thread_destroy_in_other():
+    def threaded_function(arg):
+        sr = osr.SpatialReference()
+        sr.ImportFromEPSG(32631)
+        arg[0] = sr
+
+    arg = [ None ]
+
+    thread = Thread(target = threaded_function, args = (arg, ))
+    thread.start()
+    thread.join()
+    assert arg[0]
+    del arg[0]
