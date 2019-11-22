@@ -1624,3 +1624,18 @@ def test_osr_SetVerticalPerspective():
         assert sr.GetAttrValue('PROJECTION') in 'Vertical Perspective'
         assert sr.GetNormProjParm('Longitude of topocentric origin') == 2
 
+
+def test_osr_create_in_one_thread_destroy_in_other():
+    def threaded_function(arg):
+        sr = osr.SpatialReference()
+        sr.ImportFromEPSG(32631)
+        arg[0] = sr
+
+    arg = [ None ]
+
+    thread = Thread(target = threaded_function, args = (arg, ))
+    thread.start()
+    thread.join()
+    assert arg[0]
+    del arg[0]
+
