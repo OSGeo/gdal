@@ -462,9 +462,11 @@ typedef struct {
  * Definition Section. In GRIB2 the GDS was in section 3, in GRIB1 it was in
  * section 2.
  */
-enum { GS3_LATLON = 0, GS3_MERCATOR = 10, GS3_TRANSVERSE_MERCATOR = 12, GS3_POLAR = 20,
+enum { GS3_LATLON = 0,
+       GS3_ROTATED_LATLON = 1,
+       GS3_MERCATOR = 10, GS3_TRANSVERSE_MERCATOR = 12, GS3_POLAR = 20,
        GS3_LAMBERT = 30, GS3_ALBERS_EQUAL_AREA = 31, GS3_GAUSSIAN_LATLON = 40, GS3_ORTHOGRAPHIC = 90,
-       GS3_ROTATED_LATLON = 100, GS3_EQUATOR_EQUIDIST = 110, GS3_AZIMUTH_RANGE = 120, GS3_LAMBERT_AZIMUTHAL = 140};
+       GS3_EQUATOR_EQUIDIST = 110, GS3_AZIMUTH_RANGE = 120, GS3_LAMBERT_AZIMUTHAL = 140};
 
 /* Note: It appears that compilers break up a struct based on the largest
    element type.  In this case a double.  So to avoid wasted memory, we need
