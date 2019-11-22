@@ -1414,14 +1414,43 @@ See the dedicated :ref:`vrt_multidimensional` page.
 
    vrt_multidimensional
 
+vrt:// connection string
+------------------------
+
+.. versionadded:: 3.1
+
+In some contexts, it might be useful to benefit from features of VRT without
+having to create a file or to provide the rather verbose VRT XML content as
+the connection string. For that purpose, the following URI syntax is supported for
+the dataset name since GDAL 3.1
+
+::
+
+    vrt://{path_to_gdal_dataset}?[bands=num1,...,numN]
+
+For example:
+
+::
+
+    vrt://my.tif?bands=3,2,1
+
+The only supported option currently is bands. Other may be added in the future.
+
+The effect of this option is to change the band composition. The values specified
+are the source band numbers (between 1 and N), possibly out-of-order or with repetitions.
+The ``mask`` value can be used to specify the global mask band. This can also
+be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
+
 Multi-threading issues
 ----------------------
 
-The below section applies to GDAL <= 2.2. Starting with GDAL 2.3, the use
-of VRT datasets is subject to the standard GDAL dataset multi-threaded rules
-(that is a VRT dataset handle may only be used by a same thread at a time,
-but you may open several dataset handles on the same VRT file and use them
-in different threads)
+.. warning::
+
+    The below section applies to GDAL <= 2.2. Starting with GDAL 2.3, the use
+    of VRT datasets is subject to the standard GDAL dataset multi-threaded rules
+    (that is a VRT dataset handle may only be used by a same thread at a time,
+    but you may open several dataset handles on the same VRT file and use them
+    in different threads)
 
 When using VRT datasets in a multi-threading environment, you should be
 careful to open the VRT dataset by the thread that will use it afterwards. The
