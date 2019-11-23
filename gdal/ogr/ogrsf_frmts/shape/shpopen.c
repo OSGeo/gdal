@@ -1589,7 +1589,8 @@ int SHPAPI_CALL
 SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 
 {
-    unsigned int	       	nRecordOffset, nRecordSize=0;
+    SAOffset nRecordOffset;
+    unsigned int nRecordSize=0;
     int i;
     uchar	*pabyRec;
     int32	i32;
@@ -1933,18 +1934,25 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Write out record.                                               */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
-    {
-        char szErrorMsg[200];
 
-        snprintf( szErrorMsg, sizeof(szErrorMsg),
-                 "Error in psSHP->sHooks.FSeek() while writing object to .shp file: %s",
-                  strerror(errno) );
-        szErrorMsg[sizeof(szErrorMsg)-1] = '\0';
-        psSHP->sHooks.Error( szErrorMsg );
+/* -------------------------------------------------------------------- */
+/*      Guard FSeek with check for whether we're already at position;   */
+/*      no-op FSeeks defeat network filesystems' write buffering.       */
+/* -------------------------------------------------------------------- */
+    if ( psSHP->sHooks.FTell( psSHP->fpSHP ) != nRecordOffset ) {
+        if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
+        {
+            char szErrorMsg[200];
 
-        free( pabyRec );
-        return -1;
+            snprintf( szErrorMsg, sizeof(szErrorMsg),
+                     "Error in psSHP->sHooks.FSeek() while writing object to .shp file: %s",
+                      strerror(errno) );
+            szErrorMsg[sizeof(szErrorMsg)-1] = '\0';
+            psSHP->sHooks.Error( szErrorMsg );
+
+            free( pabyRec );
+            return -1;
+        }
     }
     if( psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
     {
