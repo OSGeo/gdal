@@ -126,7 +126,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         OGRLinearRing *readLinearRing(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
         OGRPolygon *readPolygon(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
         OGRMultiPolygon *readMultiPolygon(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len);
-        OGRGeometry *readGeometry(const Geometry *geometry);
+        OGRGeometry *readGeometry(const Geometry *geometry, GeometryType geometryType);
         ColumnType toColumnType(OGRFieldType fieldType, OGRFieldSubType subType);
         static OGRFieldType toOGRFieldType(ColumnType type);
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
@@ -136,7 +136,9 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         // serialize
         void Create();
-        void WriteHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector);
+        void writeHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector);
+        void writeGeometries(flatbuffers::FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<flatbuffers::Offset<Geometry>> &geometries, std::vector<uint8_t> &geometryTypes);
+        const flatbuffers::Offset<Geometry> writeGeometry(flatbuffers::FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, GeometryType geometryType);
         void writePoint(OGRPoint *p, GeometryContext &gc);
         void writeMultiPoint(OGRMultiPoint *mp, GeometryContext &gc);
         uint32_t writeLineString(OGRLineString *ls, GeometryContext &gc);
@@ -144,7 +146,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         uint32_t writePolygon(OGRPolygon *p, GeometryContext &gc, bool isMulti, uint32_t end);
         void writeMultiPolygon(OGRMultiPolygon *mp, GeometryContext &gc);
 
-        bool translateOGRwkbGeometryType();
+        GeometryType translateOGRwkbGeometryType(OGRwkbGeometryType eGType);
         OGRwkbGeometryType getOGRwkbGeometryType();
     public:
         OGRFlatGeobufLayer(const Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset, uint64_t offsetIndices);

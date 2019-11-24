@@ -156,8 +156,13 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
         m_osLayerName = pszLayerName;
     if (pszFilename)
         m_osFilename = pszFilename;
-    if (!translateOGRwkbGeometryType())
+    m_geometryType = translateOGRwkbGeometryType(eGType);
+    if (m_geometryType == GeometryType::Unknown)
         m_bCanCreate = false;
+    if wkbHasZ(eGType)
+        m_hasZ = true;
+    if wkbHasM(eGType)
+        m_hasM = true;
     if (poSpatialRef)
         m_poSRS = poSpatialRef->Clone();
 
@@ -171,25 +176,22 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     m_poFeatureDefn->Reference();
 }
 
-bool OGRFlatGeobufLayer::translateOGRwkbGeometryType()
+GeometryType OGRFlatGeobufLayer::translateOGRwkbGeometryType(OGRwkbGeometryType eGType)
 {
-    const auto flatType = wkbFlatten(m_eGType);
+    const auto flatType = wkbFlatten(eGType);
+    GeometryType geometryType = GeometryType::Unknown;
     switch (flatType) {
-        case OGRwkbGeometryType::wkbPoint: m_geometryType = GeometryType::Point; break;
-        case OGRwkbGeometryType::wkbMultiPoint: m_geometryType = GeometryType::MultiPoint; break;
-        case OGRwkbGeometryType::wkbLineString: m_geometryType = GeometryType::LineString; break;
-        case OGRwkbGeometryType::wkbMultiLineString: m_geometryType = GeometryType::MultiLineString; break;
-        case OGRwkbGeometryType::wkbPolygon: m_geometryType = GeometryType::Polygon; break;
-        case OGRwkbGeometryType::wkbMultiPolygon: m_geometryType = GeometryType::MultiPolygon; break;
+        case OGRwkbGeometryType::wkbPoint: geometryType = GeometryType::Point; break;
+        case OGRwkbGeometryType::wkbMultiPoint: geometryType = GeometryType::MultiPoint; break;
+        case OGRwkbGeometryType::wkbLineString: geometryType = GeometryType::LineString; break;
+        case OGRwkbGeometryType::wkbMultiLineString: geometryType = GeometryType::MultiLineString; break;
+        case OGRwkbGeometryType::wkbPolygon: geometryType = GeometryType::Polygon; break;
+        case OGRwkbGeometryType::wkbMultiPolygon: geometryType = GeometryType::MultiPolygon; break;
+        case OGRwkbGeometryType::wkbGeometryCollection: geometryType = GeometryType::GeometryCollection; break;
         default:
-            CPLError(CE_Failure, CPLE_NotSupported, "toGeometryType: Unknown OGRwkbGeometryType %d", (int) m_eGType);
-            return false;
+            CPLError(CE_Failure, CPLE_NotSupported, "toGeometryType: Unknown OGRwkbGeometryType %d", (int) eGType);
     }
-    if wkbHasZ(m_eGType)
-        m_hasZ = true;
-    if wkbHasM(m_eGType)
-        m_hasM = true;
-    return true;
+    return geometryType;
 }
 
 OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
@@ -202,6 +204,7 @@ OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
         case GeometryType::MultiLineString: ogrType = OGRwkbGeometryType::wkbMultiLineString; break;
         case GeometryType::Polygon: ogrType = OGRwkbGeometryType::wkbPolygon; break;
         case GeometryType::MultiPolygon: ogrType = OGRwkbGeometryType::wkbMultiPolygon; break;
+        case GeometryType::GeometryCollection: ogrType = OGRwkbGeometryType::wkbGeometryCollection; break;
         default:
             CPLError(CE_Failure, CPLE_NotSupported, "toOGRwkbGeometryType: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
     }
@@ -268,7 +271,7 @@ void OGRFlatGeobufLayer::readColumns()
     }
 }
 
-void OGRFlatGeobufLayer::WriteHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector) {
+void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector) {
     size_t c;
     c = VSIFWriteL(&magicbytes, sizeof(magicbytes), 1, poFp);
     CPLDebug("FlatGeobuf", "Wrote magicbytes (%lu bytes)", static_cast<long unsigned int>(c * sizeof(magicbytes)));
@@ -344,7 +347,7 @@ void OGRFlatGeobufLayer::Create() {
     // check if something has been written, if not write empty layer and bail
     if (m_writeOffset == 0 || m_featuresCount == 0) {
         CPLDebug("FlatGeobuf", "Writing empty layer");
-        WriteHeader(m_poFp, 0, nullptr);
+        writeHeader(m_poFp, 0, nullptr);
         return;
     }
 
@@ -363,7 +366,7 @@ void OGRFlatGeobufLayer::Create() {
     Rect extent = calcExtent(m_featureItems);
     auto extentVector = extent.toVector();
 
-    WriteHeader(m_poFp, m_featuresCount, &extentVector);
+    writeHeader(m_poFp, m_featuresCount, &extentVector);
 
     CPLDebug("FlatGeobuf", "Sorting items for Packed R-tree");
     hilbertSort(m_featureItems);
@@ -662,16 +665,30 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     }
 
     const auto feature = GetRoot<Feature>(m_featureBuf);
-    if (!m_poFeatureDefn->IsGeometryIgnored()) {
-        auto geometry = feature->geometries()->Get(0);
-        auto ogrGeometry = readGeometry(geometry);
-        if (ogrGeometry == nullptr) {
+    auto geometries = feature->geometries();
+    if (!m_poFeatureDefn->IsGeometryIgnored() && geometries != nullptr) {
+        auto geometriesLength = geometries->Length();
+        OGRGeometry *poOGRGeometry = nullptr;
+        if (m_geometryType == GeometryType::GeometryCollection) {
+            auto gc = new OGRGeometryCollection();
+            for (uoffset_t i = 0; i < geometriesLength; i++) {
+                auto geometry = geometries->Get(i);
+                auto geometryType = feature->geometry_types()->GetEnum<GeometryType>(i);
+                auto poOGRGeometryPart = readGeometry(geometry, geometryType);
+                gc->addGeometryDirectly(poOGRGeometryPart);
+            }
+            poOGRGeometry = gc;
+        } else {
+            auto geometry = geometries->Get(0);
+            poOGRGeometry = readGeometry(geometry, m_geometryType);
+        }
+        if (poOGRGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
         }
         if (m_poSRS != nullptr)
-            ogrGeometry->assignSpatialReference(m_poSRS);
-        poFeature->SetGeometryDirectly(ogrGeometry);
+            poOGRGeometry->assignSpatialReference(m_poSRS);
+        poFeature->SetGeometryDirectly(poOGRGeometry);
     }
     #ifdef DEBUG
         //char *wkt;
@@ -1080,7 +1097,7 @@ OGRMultiPolygon *OGRFlatGeobufLayer::readMultiPolygon(const Geometry *geometry, 
     }
 }
 
-OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Geometry *geometry)
+OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Geometry *geometry, GeometryType geometryType)
 {
     const auto pXy = geometry->xy();
     if (pXy == nullptr)
@@ -1092,7 +1109,7 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Geometry *geometry)
     const auto xySize = pXy->size();
     if (xySize >= (feature_max_buffer_size / sizeof(OGRRawPoint)))
         return CPLErrorInvalidLength("XY data");
-    switch (m_geometryType) {
+    switch (geometryType) {
         case GeometryType::Point:
             return readPoint(geometry, *pXy);
         case GeometryType::MultiPoint:
@@ -1106,7 +1123,7 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Geometry *geometry)
         case GeometryType::MultiPolygon:
             return readMultiPolygon(geometry, *pXy, xySize);
         default:
-            CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
+            CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) geometryType);
     }
     return nullptr;
 }
@@ -1216,41 +1233,13 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         return OGRERR_FAILURE;
     }
 
-    GeometryContext gc;
-    switch (m_geometryType) {
-        case GeometryType::Point:
-            writePoint(ogrGeometry->toPoint(), gc);
-            break;
-        case GeometryType::MultiPoint:
-            writeMultiPoint(ogrGeometry->toMultiPoint(), gc);
-            break;
-        case GeometryType::LineString:
-            writeLineString(ogrGeometry->toLineString(), gc);
-            break;
-        case GeometryType::MultiLineString:
-            writeMultiLineString(ogrGeometry->toMultiLineString(), gc);
-            break;
-        case GeometryType::Polygon:
-            writePolygon(ogrGeometry->toPolygon(), gc, false, 0);
-            break;
-        case GeometryType::MultiPolygon:
-            writeMultiPolygon(ogrGeometry->toMultiPolygon(), gc);
-            break;
-        default:
-            CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
-            return OGRERR_FAILURE;
-    }
-    const auto pEnds = gc.ends.empty() ? nullptr : &gc.ends;
-    const auto pLengths = gc.lengths.empty() ? nullptr : &gc.lengths;
-    const auto pXy = gc.xy.empty() ? nullptr : &gc.xy;
-    const auto pZ = gc.z.empty() ? nullptr : &gc.z;
-    const auto pM = gc.m.empty() ? nullptr : &gc.m;
-    const auto geometryOffset = CreateGeometryDirect(fbb, pEnds, pLengths, pXy, pZ, pM, nullptr, nullptr);
-    std::vector<flatbuffers::Offset<Geometry>> geometries;
-    geometries.push_back(geometryOffset);
+    std::vector<Offset<Geometry>> geometries;
+    std::vector<uint8_t> geometryTypes;
+    writeGeometries(fbb, ogrGeometry, geometries, geometryTypes);
     const auto pGeometries = geometries.empty() ? nullptr : &geometries;
     const auto pProperties = properties.empty() ? nullptr : &properties;
-    const auto feature = CreateFeatureDirect(fbb, pGeometries, pProperties);
+    const auto pGeometryTypes = geometryTypes.empty() ? nullptr : &geometryTypes;
+    const auto feature = CreateFeatureDirect(fbb, pGeometries, pProperties, pGeometryTypes);
     fbb.FinishSizePrefixed(feature);
 
     OGREnvelope psEnvelope;
@@ -1261,7 +1250,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             CPLErrorInvalidPointer("output file handler");
             return OGRERR_FAILURE;
         }
-        WriteHeader(m_poFpWrite, 0, nullptr);
+        writeHeader(m_poFpWrite, 0, nullptr);
         CPLDebug("FlatGeobuf", "Writing first feature at offset: %lu", static_cast<long unsigned int>(m_writeOffset));
     }
 
@@ -1285,6 +1274,60 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     m_featuresCount++;
 
     return OGRERR_NONE;
+}
+
+void OGRFlatGeobufLayer::writeGeometries(FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<Offset<Geometry>> &geometries, std::vector<uint8_t> &geometryTypes)
+{
+    switch (m_geometryType) {
+        case GeometryType::GeometryCollection: {
+            auto gc = ogrGeometry->toGeometryCollection();
+            for (auto i = 0; i < gc->getNumGeometries(); i++) {
+                auto gcPart = gc->getGeometryRef(i);
+                auto eGType = gcPart->getGeometryType();
+                auto geometryType = translateOGRwkbGeometryType(eGType);
+                geometries.push_back(writeGeometry(fbb, gcPart, geometryType));
+                geometryTypes.push_back((uint8_t) geometryType);
+            }
+            break;
+        }
+        default:
+            geometries.push_back(writeGeometry(fbb, ogrGeometry, m_geometryType));
+    }
+}
+
+const Offset<Geometry> OGRFlatGeobufLayer::writeGeometry(FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, GeometryType geometryType)
+{
+    GeometryContext gc;
+    switch (geometryType) {
+        case GeometryType::Point:
+            writePoint(ogrGeometry->toPoint(), gc);
+            break;
+        case GeometryType::MultiPoint:
+            writeMultiPoint(ogrGeometry->toMultiPoint(), gc);
+            break;
+        case GeometryType::LineString:
+            writeLineString(ogrGeometry->toLineString(), gc);
+            break;
+        case GeometryType::MultiLineString:
+            writeMultiLineString(ogrGeometry->toMultiLineString(), gc);
+            break;
+        case GeometryType::Polygon:
+            writePolygon(ogrGeometry->toPolygon(), gc, false, 0);
+            break;
+        case GeometryType::MultiPolygon:
+            writeMultiPolygon(ogrGeometry->toMultiPolygon(), gc);
+            break;
+        default:
+            CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Unknown FlatGeobuf::GeometryType %d", (int) geometryType);
+            return 0;
+    }
+    const auto pEnds = gc.ends.empty() ? nullptr : &gc.ends;
+    const auto pLengths = gc.lengths.empty() ? nullptr : &gc.lengths;
+    const auto pXy = gc.xy.empty() ? nullptr : &gc.xy;
+    const auto pZ = gc.z.empty() ? nullptr : &gc.z;
+    const auto pM = gc.m.empty() ? nullptr : &gc.m;
+    const auto geometryOffset = CreateGeometryDirect(fbb, pEnds, pLengths, pXy, pZ, pM, nullptr, nullptr);
+    return geometryOffset;
 }
 
 void OGRFlatGeobufLayer::writePoint(OGRPoint *p, GeometryContext &gc)

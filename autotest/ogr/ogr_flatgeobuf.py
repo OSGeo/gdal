@@ -267,6 +267,8 @@ def test_ogr_flatgeobuf_3():
     wktRoundtrip('MULTIPOLYGON M (((35 10 1,45 45 2,15 40 3,10 20 4,35 10 5),(20 30 1,35 35 2,30 20 3,20 30 4)))')
     wktRoundtrip('MULTIPOLYGON ZM (((35 10 1 5,45 45 2 4,15 40 3 3,10 20 4 2,35 10 1 1),(20 30 4 1,35 35 3 2,30 20 2 3,20 30 1 4)))')
 
+    wktRoundtrip('GEOMETRYCOLLECTION (POINT (4 6),LINESTRING (4 6,7 10))')
+
 # Run test_ogrsf
 def test_ogr_flatgeobuf_8():
 
