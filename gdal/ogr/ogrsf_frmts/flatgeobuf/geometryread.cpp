@@ -102,26 +102,6 @@ OGRMultiPoint *ogr_flatgeobuf::readMultiPoint(GeometryReadContext &gc)
     return mp;
 }
 
-OGRLineString *ogr_flatgeobuf::readLineString(GeometryReadContext &gc)
-{
-    const auto ls = new OGRLineString();
-    if (readSimpleCurve(gc, ls) != OGRERR_NONE) {
-        delete ls;
-        return nullptr;
-    }
-    return ls;
-}
-
-OGRCircularString *ogr_flatgeobuf::readCircularString(GeometryReadContext &gc)
-{
-    const auto cs = new OGRCircularString();
-    if (readSimpleCurve(gc, cs) != OGRERR_NONE) {
-        delete cs;
-        return nullptr;
-    }
-    return cs;
-}
-
 OGRMultiLineString *ogr_flatgeobuf::readMultiLineString(GeometryReadContext &gc)
 {
     const auto pEnds = gc.geometry->ends();
@@ -136,7 +116,7 @@ OGRMultiLineString *ogr_flatgeobuf::readMultiLineString(GeometryReadContext &gc)
             return CPLErrorInvalidLength("MultiLineString");
         }
         gc.length = e - gc.offset;
-        const auto ls = readLineString(gc);
+        const auto ls = readSimpleCurve<OGRLineString>(gc);
         if (ls == nullptr) {
             delete mls;
             return nullptr;
@@ -145,16 +125,6 @@ OGRMultiLineString *ogr_flatgeobuf::readMultiLineString(GeometryReadContext &gc)
         gc.offset = e;
     }
     return mls;
-}
-
-OGRLinearRing *ogr_flatgeobuf::readLinearRing(GeometryReadContext &gc)
-{
-    const auto lr = new OGRLinearRing();
-    if (readSimpleCurve(gc, lr) != OGRERR_NONE) {
-        delete lr;
-        return nullptr;
-    }
-    return lr;
 }
 
 OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *sc)
@@ -254,7 +224,7 @@ OGRPolygon *ogr_flatgeobuf::readPolygon(GeometryReadContext &gc)
     const auto p = new OGRPolygon();
     if (pEnds == nullptr || pEnds->size() < 2) {
         gc.length = gc.length / 2;
-        const auto lr = readLinearRing(gc);
+        const auto lr = readSimpleCurve<OGRLinearRing>(gc);
         if (lr == nullptr) {
             delete p;
             return nullptr;
@@ -268,7 +238,7 @@ OGRPolygon *ogr_flatgeobuf::readPolygon(GeometryReadContext &gc)
                 return CPLErrorInvalidLength("Polygon");
             }
             gc.length = e - gc.offset;
-            const auto lr = readLinearRing(gc);
+            const auto lr = readSimpleCurve<OGRLinearRing>(gc);
             gc.offset = e;
             if (lr == nullptr)
                 continue;
@@ -318,7 +288,7 @@ OGRMultiPolygon *ogr_flatgeobuf::readMultiPolygon(GeometryReadContext &gc)
                     return CPLErrorInvalidLength("MultiPolygon");
                 }
                 gc.length = e - gc.offset;
-                const auto lr = readLinearRing(gc);
+                const auto lr = readSimpleCurve<OGRLinearRing>(gc);
                 gc.offset = e;
                 if (lr == nullptr)
                     continue;
@@ -355,7 +325,7 @@ OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
             return readMultiPoint(gc);
         case GeometryType::LineString:
             gc.length = xySize / 2;
-            return readLineString(gc);
+            return readSimpleCurve<OGRLineString>(gc);
         case GeometryType::MultiLineString:
             return readMultiLineString(gc);
         case GeometryType::Polygon:
@@ -366,7 +336,7 @@ OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
             return readMultiPolygon(gc);
         case GeometryType::CircularString:
             gc.length = xySize / 2;
-            return readCircularString(gc);
+            return readSimpleCurve<OGRCircularString>(gc);
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) gc.geometryType);
     }

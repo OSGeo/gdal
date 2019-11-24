@@ -48,13 +48,21 @@ struct GeometryReadContext {
 OGRPoint *readPoint(GeometryReadContext &gc);
 OGRMultiPoint *readMultiPoint(GeometryReadContext &gc);
 OGRErr readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *c);
-OGRLineString *readLineString(GeometryReadContext &gc);
-OGRCircularString *readCircularString(GeometryReadContext &gc);
 OGRMultiLineString *readMultiLineString(GeometryReadContext &gc);
-OGRLinearRing *readLinearRing(GeometryReadContext &gc);
 OGRPolygon *readPolygon(GeometryReadContext &gc);
 OGRMultiPolygon *readMultiPolygon(GeometryReadContext &gc);
 OGRGeometry *readGeometry(GeometryReadContext &gc);
+
+template <class T>
+T *readSimpleCurve(GeometryReadContext &gc)
+{
+    const auto csc = new T();
+    if (readSimpleCurve(gc, csc) != OGRERR_NONE) {
+        delete csc;
+        return nullptr;
+    }
+    return csc;
+};
 
 }
 
