@@ -179,35 +179,13 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
 GeometryType OGRFlatGeobufLayer::translateOGRwkbGeometryType(OGRwkbGeometryType eGType)
 {
     const auto flatType = wkbFlatten(eGType);
-    GeometryType geometryType = GeometryType::Unknown;
-    switch (flatType) {
-        case OGRwkbGeometryType::wkbPoint: geometryType = GeometryType::Point; break;
-        case OGRwkbGeometryType::wkbMultiPoint: geometryType = GeometryType::MultiPoint; break;
-        case OGRwkbGeometryType::wkbLineString: geometryType = GeometryType::LineString; break;
-        case OGRwkbGeometryType::wkbMultiLineString: geometryType = GeometryType::MultiLineString; break;
-        case OGRwkbGeometryType::wkbPolygon: geometryType = GeometryType::Polygon; break;
-        case OGRwkbGeometryType::wkbMultiPolygon: geometryType = GeometryType::MultiPolygon; break;
-        case OGRwkbGeometryType::wkbGeometryCollection: geometryType = GeometryType::GeometryCollection; break;
-        default:
-            CPLError(CE_Failure, CPLE_NotSupported, "toGeometryType: Unknown OGRwkbGeometryType %d", (int) eGType);
-    }
+    GeometryType geometryType = (GeometryType) flatType;
     return geometryType;
 }
 
 OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
 {
-    OGRwkbGeometryType ogrType = OGRwkbGeometryType::wkbUnknown;
-    switch (m_geometryType) {
-        case GeometryType::Point: ogrType = OGRwkbGeometryType::wkbPoint; break;
-        case GeometryType::MultiPoint: ogrType = OGRwkbGeometryType::wkbMultiPoint; break;
-        case GeometryType::LineString: ogrType = OGRwkbGeometryType::wkbLineString; break;
-        case GeometryType::MultiLineString: ogrType = OGRwkbGeometryType::wkbMultiLineString; break;
-        case GeometryType::Polygon: ogrType = OGRwkbGeometryType::wkbPolygon; break;
-        case GeometryType::MultiPolygon: ogrType = OGRwkbGeometryType::wkbMultiPolygon; break;
-        case GeometryType::GeometryCollection: ogrType = OGRwkbGeometryType::wkbGeometryCollection; break;
-        default:
-            CPLError(CE_Failure, CPLE_NotSupported, "toOGRwkbGeometryType: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
-    }
+    OGRwkbGeometryType ogrType = (OGRwkbGeometryType) m_geometryType;
     if (m_hasZ)
         ogrType = wkbSetZ(ogrType);
     if (m_hasM)
@@ -885,6 +863,16 @@ OGRLineString *OGRFlatGeobufLayer::readLineString(const Geometry *geometry, cons
     return ls;
 }
 
+OGRCircularString *OGRFlatGeobufLayer::readCircularString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset)
+{
+    const auto cs = new OGRCircularString();
+    if (readSimpleCurve(geometry, pXy, len, offset, cs) != OGRERR_NONE) {
+        delete cs;
+        return nullptr;
+    }
+    return cs;
+}
+
 OGRMultiLineString *OGRFlatGeobufLayer::readMultiLineString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy)
 {
     const auto pEnds = geometry->ends();
@@ -1122,6 +1110,8 @@ OGRGeometry *OGRFlatGeobufLayer::readGeometry(const Geometry *geometry, Geometry
             return readPolygon(geometry, *pXy, xySize);
         case GeometryType::MultiPolygon:
             return readMultiPolygon(geometry, *pXy, xySize);
+        case GeometryType::CircularString:
+            return readCircularString(geometry, *pXy, xySize / 2);
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) geometryType);
     }
@@ -1291,7 +1281,9 @@ void OGRFlatGeobufLayer::writeGeometries(FlatBufferBuilder &fbb, OGRGeometry *og
             break;
         }
         default:
-            geometries.push_back(writeGeometry(fbb, ogrGeometry, m_geometryType));
+            auto geometryOffset = writeGeometry(fbb, ogrGeometry, m_geometryType);
+            if (!geometryOffset.IsNull())
+                geometries.push_back(geometryOffset);
     }
 }
 
@@ -1306,7 +1298,7 @@ const Offset<Geometry> OGRFlatGeobufLayer::writeGeometry(FlatBufferBuilder &fbb,
             writeMultiPoint(ogrGeometry->toMultiPoint(), gc);
             break;
         case GeometryType::LineString:
-            writeLineString(ogrGeometry->toLineString(), gc);
+            writeSimpleCurve(ogrGeometry->toSimpleCurve(), gc);
             break;
         case GeometryType::MultiLineString:
             writeMultiLineString(ogrGeometry->toMultiLineString(), gc);
@@ -1316,6 +1308,9 @@ const Offset<Geometry> OGRFlatGeobufLayer::writeGeometry(FlatBufferBuilder &fbb,
             break;
         case GeometryType::MultiPolygon:
             writeMultiPolygon(ogrGeometry->toMultiPolygon(), gc);
+            break;
+        case GeometryType::CircularString:
+            writeSimpleCurve(ogrGeometry->toSimpleCurve(), gc);
             break;
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Unknown FlatGeobuf::GeometryType %d", (int) geometryType);
@@ -1346,9 +1341,9 @@ void OGRFlatGeobufLayer::writeMultiPoint(OGRMultiPoint *mp, GeometryContext &gc)
         writePoint(mp->getGeometryRef(i)->toPoint(), gc);
 }
 
-uint32_t OGRFlatGeobufLayer::writeLineString(OGRLineString *ls, GeometryContext &gc)
+uint32_t OGRFlatGeobufLayer::writeSimpleCurve(OGRSimpleCurve *sc, GeometryContext &gc)
 {
-    uint32_t numPoints = ls->getNumPoints();
+    uint32_t numPoints = sc->getNumPoints();
     const auto xyLength = gc.xy.size();
     gc.xy.resize(xyLength + (numPoints * 2));
     const auto zLength = gc.z.size();
@@ -1363,7 +1358,7 @@ uint32_t OGRFlatGeobufLayer::writeLineString(OGRLineString *ls, GeometryContext 
         gc.m.resize(mLength + numPoints);
         padfMOut = gc.m.data() + mLength;
     }
-    ls->getPoints(reinterpret_cast<double*>(reinterpret_cast<OGRRawPoint *>(gc.xy.data() + xyLength)), sizeof(OGRRawPoint),
+    sc->getPoints(reinterpret_cast<double*>(reinterpret_cast<OGRRawPoint *>(gc.xy.data() + xyLength)), sizeof(OGRRawPoint),
                   reinterpret_cast<double*>(reinterpret_cast<OGRRawPoint *>(gc.xy.data() + xyLength)) + 1, sizeof(OGRRawPoint),
                   padfZOut, sizeof(double),
                   padfMOut, sizeof(double));
@@ -1376,7 +1371,7 @@ void OGRFlatGeobufLayer::writeMultiLineString(OGRMultiLineString *mls, GeometryC
     const auto numGeometries = mls->getNumGeometries();
     for (int i = 0; i < numGeometries; i++)
     {
-        e += writeLineString(mls->getGeometryRef(i)->toLineString(), gc);
+        e += writeSimpleCurve(mls->getGeometryRef(i)->toLineString(), gc);
         gc.ends.push_back(e);
     }
 }
@@ -1385,12 +1380,12 @@ uint32_t OGRFlatGeobufLayer::writePolygon(OGRPolygon *p, GeometryContext &gc, bo
 {
     const auto exteriorRing = p->getExteriorRing();
     const auto numInteriorRings = p->getNumInteriorRings();
-    e += writeLineString(exteriorRing, gc);
+    e += writeSimpleCurve(exteriorRing, gc);
     if (numInteriorRings > 0 || isMulti) {
         gc.ends.push_back(e);
         for (int i = 0; i < numInteriorRings; i++)
         {
-            e += writeLineString(p->getInteriorRing(i), gc);
+            e += writeSimpleCurve(p->getInteriorRing(i), gc);
             gc.ends.push_back(e);
         }
     }
@@ -1421,11 +1416,7 @@ OGRErr OGRFlatGeobufLayer::GetExtent(OGREnvelope* psExtent, int bForce)
 
 int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
 {
-    if (EQUAL(pszCap, ODrCCreateDataSource))
-        return m_create;
-    else if (EQUAL(pszCap, ODsCCreateLayer))
-        return m_create;
-    else if (EQUAL(pszCap, OLCCreateField))
+    if (EQUAL(pszCap, OLCCreateField))
         return m_create;
     else if (EQUAL(pszCap, OLCSequentialWrite))
         return m_create;
@@ -1433,7 +1424,9 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
         return m_create;
     else if (EQUAL(pszCap, OLCIgnoreFields))
         return true;
-    else if (EQUAL(pszCap, ODsCMeasuredGeometries))
+    else if (EQUAL(pszCap, OLCMeasuredGeometries))
+        return true;
+    else if (EQUAL(pszCap, OLCCurveGeometries))
         return true;
     else if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;

@@ -361,17 +361,9 @@ int OGRFlatGeobufDataset::TestCapability( const char * pszCap )
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return m_bCreate && (m_bIsDir || m_apoLayers.empty());
-    else if (EQUAL(pszCap, OLCSequentialWrite))
-        return m_bCreate;
-    else if (EQUAL(pszCap, OLCCreateGeomField))
-        return m_bCreate;
+    else if (EQUAL(pszCap, ODsCCurveGeometries))
+        return true;
     else if (EQUAL(pszCap, ODsCMeasuredGeometries))
-        return true;
-    else if (EQUAL(pszCap, OLCFastFeatureCount))
-        return true;
-    else if (EQUAL(pszCap, OLCFastGetExtent))
-        return true;
-    else if (EQUAL(pszCap, OLCFastSpatialFilter))
         return true;
     else
         return false;

@@ -269,6 +269,8 @@ def test_ogr_flatgeobuf_3():
 
     wktRoundtrip('GEOMETRYCOLLECTION (POINT (4 6),LINESTRING (4 6,7 10))')
 
+    wktRoundtrip('CIRCULARSTRING (0 0,1 1,1 0)')
+
 # Run test_ogrsf
 def test_ogr_flatgeobuf_8():
 

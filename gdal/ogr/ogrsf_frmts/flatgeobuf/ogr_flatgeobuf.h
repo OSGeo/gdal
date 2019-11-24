@@ -120,8 +120,10 @@ class OGRFlatGeobufLayer final : public OGRLayer
         OGRErr parseFeature(OGRFeature *poFeature);
         OGRPoint *readPoint(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t offset = 0);
         OGRMultiPoint *readMultiPoint(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len);
+
         OGRErr readSimpleCurve(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset, OGRSimpleCurve *c);
         OGRLineString *readLineString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
+        OGRCircularString *readCircularString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
         OGRMultiLineString *readMultiLineString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy);
         OGRLinearRing *readLinearRing(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
         OGRPolygon *readPolygon(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
@@ -141,7 +143,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         const flatbuffers::Offset<Geometry> writeGeometry(flatbuffers::FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, GeometryType geometryType);
         void writePoint(OGRPoint *p, GeometryContext &gc);
         void writeMultiPoint(OGRMultiPoint *mp, GeometryContext &gc);
-        uint32_t writeLineString(OGRLineString *ls, GeometryContext &gc);
+        uint32_t writeSimpleCurve(OGRSimpleCurve *sc, GeometryContext &gc);
         void writeMultiLineString(OGRMultiLineString *mls, GeometryContext &gc);
         uint32_t writePolygon(OGRPolygon *p, GeometryContext &gc, bool isMulti, uint32_t end);
         void writeMultiPolygon(OGRMultiPolygon *mp, GeometryContext &gc);
