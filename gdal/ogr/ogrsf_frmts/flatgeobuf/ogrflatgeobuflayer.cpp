@@ -179,13 +179,17 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
 GeometryType OGRFlatGeobufLayer::translateOGRwkbGeometryType(OGRwkbGeometryType eGType)
 {
     const auto flatType = wkbFlatten(eGType);
-    GeometryType geometryType = (GeometryType) flatType;
+    GeometryType geometryType = GeometryType::Unknown;
+    if (flatType >= 0 && flatType <= 17)
+        geometryType = (GeometryType) flatType;
     return geometryType;
 }
 
 OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
 {
-    OGRwkbGeometryType ogrType = (OGRwkbGeometryType) m_geometryType;
+    OGRwkbGeometryType ogrType = OGRwkbGeometryType::wkbUnknown;
+    if (static_cast<int>(m_geometryType) <= 17)
+        ogrType = (OGRwkbGeometryType) m_geometryType;
     if (m_hasZ)
         ogrType = wkbSetZ(ogrType);
     if (m_hasM)
