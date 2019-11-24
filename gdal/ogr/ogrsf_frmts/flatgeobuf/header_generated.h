@@ -28,6 +28,8 @@ enum class GeometryType : uint8_t {
   CurvePolygon = 10,
   MultiCurve = 11,
   MultiSurface = 12,
+  Curve = 13,
+  Surface = 14,
   PolyhedralSurface = 15,
   TIN = 16,
   Triangle = 17,
@@ -35,7 +37,7 @@ enum class GeometryType : uint8_t {
   MAX = Triangle
 };
 
-inline const GeometryType (&EnumValuesGeometryType())[16] {
+inline const GeometryType (&EnumValuesGeometryType())[18] {
   static const GeometryType values[] = {
     GeometryType::Unknown,
     GeometryType::Point,
@@ -50,6 +52,8 @@ inline const GeometryType (&EnumValuesGeometryType())[16] {
     GeometryType::CurvePolygon,
     GeometryType::MultiCurve,
     GeometryType::MultiSurface,
+    GeometryType::Curve,
+    GeometryType::Surface,
     GeometryType::PolyhedralSurface,
     GeometryType::TIN,
     GeometryType::Triangle
@@ -72,8 +76,8 @@ inline const char * const *EnumNamesGeometryType() {
     "CurvePolygon",
     "MultiCurve",
     "MultiSurface",
-    "",
-    "",
+    "Curve",
+    "Surface",
     "PolyhedralSurface",
     "TIN",
     "Triangle",
