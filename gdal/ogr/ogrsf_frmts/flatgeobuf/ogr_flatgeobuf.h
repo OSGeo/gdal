@@ -40,7 +40,7 @@ using namespace FlatGeobuf;
 
 class OGRFlatGeobufDataset;
 
-static constexpr uint8_t magicbytes[8] = { 0x66, 0x67, 0x62, 0x00, 0x66, 0x67, 0x62, 0x00 };
+static constexpr uint8_t magicbytes[8] = { 0x66, 0x67, 0x62, 0x02, 0x66, 0x67, 0x62, 0x00 };
 
 static constexpr uint32_t header_max_buffer_size = 1048576;
 static constexpr uint32_t feature_max_buffer_size = 2147483648 - 1;
@@ -118,15 +118,15 @@ class OGRFlatGeobufLayer final : public OGRLayer
         void ensurePadfBuffers(size_t count);
         OGRErr ensureFeatureBuf(uint32_t featureSize);
         OGRErr parseFeature(OGRFeature *poFeature);
-        OGRPoint *readPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t offset = 0);
-        OGRMultiPoint *readMultiPoint(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len);
-        OGRErr readSimpleCurve(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset, OGRSimpleCurve *c);
-        OGRLineString *readLineString(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
-        OGRMultiLineString *readMultiLineString(const Feature *feature, const flatbuffers::Vector<double> &pXy);
-        OGRLinearRing *readLinearRing(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
-        OGRPolygon *readPolygon(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
-        OGRMultiPolygon *readMultiPolygon(const Feature *feature, const flatbuffers::Vector<double> &pXy, uint32_t len);
-        OGRGeometry *readGeometry(const Feature *feature);
+        OGRPoint *readPoint(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t offset = 0);
+        OGRMultiPoint *readMultiPoint(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len);
+        OGRErr readSimpleCurve(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset, OGRSimpleCurve *c);
+        OGRLineString *readLineString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
+        OGRMultiLineString *readMultiLineString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy);
+        OGRLinearRing *readLinearRing(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
+        OGRPolygon *readPolygon(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
+        OGRMultiPolygon *readMultiPolygon(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len);
+        OGRGeometry *readGeometry(const Geometry *geometry);
         ColumnType toColumnType(OGRFieldType fieldType, OGRFieldSubType subType);
         static OGRFieldType toOGRFieldType(ColumnType type);
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);

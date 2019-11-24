@@ -15,24 +15,42 @@ struct Crs;
 struct Header;
 
 enum class GeometryType : uint8_t {
-  Point = 0,
-  MultiPoint = 1,
+  Point = 1,
   LineString = 2,
-  MultiLineString = 3,
-  Polygon = 4,
-  MultiPolygon = 5,
+  Polygon = 3,
+  MultiPoint = 4,
+  MultiLineString = 5,
+  MultiPolygon = 6,
+  GeometryCollection = 7,
+  CircularString = 8,
+  CompoundCurve = 9,
+  CurvePolygon = 10,
+  MultiCurve = 11,
+  MultiSurface = 12,
+  PolyhedralSurface = 15,
+  TIN = 16,
+  Triangle = 17,
   MIN = Point,
-  MAX = MultiPolygon
+  MAX = Triangle
 };
 
-inline const GeometryType (&EnumValuesGeometryType())[6] {
+inline const GeometryType (&EnumValuesGeometryType())[15] {
   static const GeometryType values[] = {
     GeometryType::Point,
-    GeometryType::MultiPoint,
     GeometryType::LineString,
-    GeometryType::MultiLineString,
     GeometryType::Polygon,
-    GeometryType::MultiPolygon
+    GeometryType::MultiPoint,
+    GeometryType::MultiLineString,
+    GeometryType::MultiPolygon,
+    GeometryType::GeometryCollection,
+    GeometryType::CircularString,
+    GeometryType::CompoundCurve,
+    GeometryType::CurvePolygon,
+    GeometryType::MultiCurve,
+    GeometryType::MultiSurface,
+    GeometryType::PolyhedralSurface,
+    GeometryType::TIN,
+    GeometryType::Triangle
   };
   return values;
 }
@@ -40,19 +58,30 @@ inline const GeometryType (&EnumValuesGeometryType())[6] {
 inline const char * const *EnumNamesGeometryType() {
   static const char * const names[] = {
     "Point",
-    "MultiPoint",
     "LineString",
-    "MultiLineString",
     "Polygon",
+    "MultiPoint",
+    "MultiLineString",
     "MultiPolygon",
+    "GeometryCollection",
+    "CircularString",
+    "CompoundCurve",
+    "CurvePolygon",
+    "MultiCurve",
+    "MultiSurface",
+    "",
+    "",
+    "PolyhedralSurface",
+    "TIN",
+    "Triangle",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameGeometryType(GeometryType e) {
-  if (e < GeometryType::Point || e > GeometryType::MultiPolygon) return "";
-  const size_t index = static_cast<size_t>(e);
+  if (e < GeometryType::Point || e > GeometryType::Triangle) return "";
+  const size_t index = static_cast<size_t>(e) - static_cast<size_t>(GeometryType::Point);
   return EnumNamesGeometryType()[index];
 }
 
@@ -71,11 +100,12 @@ enum class ColumnType : uint8_t {
   String = 11,
   Json = 12,
   DateTime = 13,
+  Binary = 14,
   MIN = Byte,
-  MAX = DateTime
+  MAX = Binary
 };
 
-inline const ColumnType (&EnumValuesColumnType())[14] {
+inline const ColumnType (&EnumValuesColumnType())[15] {
   static const ColumnType values[] = {
     ColumnType::Byte,
     ColumnType::UByte,
@@ -90,7 +120,8 @@ inline const ColumnType (&EnumValuesColumnType())[14] {
     ColumnType::Double,
     ColumnType::String,
     ColumnType::Json,
-    ColumnType::DateTime
+    ColumnType::DateTime,
+    ColumnType::Binary
   };
   return values;
 }
@@ -111,13 +142,14 @@ inline const char * const *EnumNamesColumnType() {
     "String",
     "Json",
     "DateTime",
+    "Binary",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameColumnType(ColumnType e) {
-  if (e < ColumnType::Byte || e > ColumnType::DateTime) return "";
+  if (e < ColumnType::Byte || e > ColumnType::Binary) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesColumnType()[index];
 }
@@ -316,7 +348,7 @@ struct Header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return GetPointer<const flatbuffers::Vector<double> *>(VT_ENVELOPE);
   }
   GeometryType geometry_type() const {
-    return static_cast<GeometryType>(GetField<uint8_t>(VT_GEOMETRY_TYPE, 0));
+    return static_cast<GeometryType>(GetField<uint8_t>(VT_GEOMETRY_TYPE, 1));
   }
   bool hasZ() const {
     return GetField<uint8_t>(VT_HASZ, 0) != 0;
@@ -374,7 +406,7 @@ struct HeaderBuilder {
     fbb_.AddOffset(Header::VT_ENVELOPE, envelope);
   }
   void add_geometry_type(GeometryType geometry_type) {
-    fbb_.AddElement<uint8_t>(Header::VT_GEOMETRY_TYPE, static_cast<uint8_t>(geometry_type), 0);
+    fbb_.AddElement<uint8_t>(Header::VT_GEOMETRY_TYPE, static_cast<uint8_t>(geometry_type), 1);
   }
   void add_hasZ(bool hasZ) {
     fbb_.AddElement<uint8_t>(Header::VT_HASZ, static_cast<uint8_t>(hasZ), 0);

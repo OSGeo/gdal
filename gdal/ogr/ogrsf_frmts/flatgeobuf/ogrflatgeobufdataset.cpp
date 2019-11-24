@@ -50,7 +50,7 @@ static int OGRFlatGeobufDriverIdentify(GDALOpenInfo* poOpenInfo){
     if( pabyHeader[0] == 0x66 &&
         pabyHeader[1] == 0x67 &&
         pabyHeader[2] == 0x62 ) {
-        if (pabyHeader[3] == 0x00) {
+        if (pabyHeader[3] == 0x02) {
             CPLDebug("FlatGeobuf", "Verified magicbytes");
             return TRUE;
         } else {
