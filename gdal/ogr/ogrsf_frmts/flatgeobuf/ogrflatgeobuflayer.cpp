@@ -636,25 +636,9 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     }
 
     const auto feature = GetRoot<Feature>(m_featureBuf);
-    auto geometries = feature->geometries();
-    if (!m_poFeatureDefn->IsGeometryIgnored() && geometries != nullptr) {
-        auto geometriesLength = geometries->Length();
-        OGRGeometry *poOGRGeometry = nullptr;
-        if (m_geometryType == GeometryType::GeometryCollection) {
-            auto geometryCollection = new OGRGeometryCollection();
-            for (uoffset_t i = 0; i < geometriesLength; i++) {
-                auto geometry = geometries->Get(i);
-                auto geometryType = feature->geometry_types()->GetEnum<GeometryType>(i);
-                GeometryReadContext gc { geometry, geometryType, m_hasZ, m_hasM };
-                auto poOGRGeometryPart = readGeometry(gc);
-                geometryCollection->addGeometryDirectly(poOGRGeometryPart);
-            }
-            poOGRGeometry = geometryCollection;
-        } else {
-            auto geometry = geometries->Get(0);
-            GeometryReadContext gc { geometry, m_geometryType, m_hasZ, m_hasM };
-            poOGRGeometry = readGeometry(gc);
-        }
+    if (!m_poFeatureDefn->IsGeometryIgnored()) {
+        GeometryReadContext gc { nullptr, m_geometryType, m_hasZ, m_hasM };
+        OGRGeometry *poOGRGeometry = readGeometry(feature, gc);
         if (poOGRGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
@@ -892,13 +876,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         return OGRERR_FAILURE;
     }
 
-    std::vector<Offset<Geometry>> geometries;
-    std::vector<uint8_t> geometryTypes;
-    writeGeometries(fbb, ogrGeometry, geometries, geometryTypes);
-    const auto pGeometries = geometries.empty() ? nullptr : &geometries;
-    const auto pProperties = properties.empty() ? nullptr : &properties;
-    const auto pGeometryTypes = geometryTypes.empty() ? nullptr : &geometryTypes;
-    const auto feature = CreateFeatureDirect(fbb, pGeometries, pProperties, pGeometryTypes);
+    const auto feature = writeFeature(fbb, ogrGeometry, properties);
     fbb.FinishSizePrefixed(feature);
 
     OGREnvelope psEnvelope;
@@ -935,9 +913,24 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     return OGRERR_NONE;
 }
 
-void OGRFlatGeobufLayer::writeGeometries(FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<Offset<Geometry>> &geometries, std::vector<uint8_t> &geometryTypes)
+Offset<Feature> OGRFlatGeobufLayer::writeFeature(FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<uint8_t> &properties)
 {
+    std::vector<Offset<Geometry>> geometries;
+    std::vector<uint8_t> geometryTypes;
+    // TODO: see about generalizing this...
     switch (m_geometryType) {
+        case GeometryType::CompoundCurve: {
+            auto compoundCurve = ogrGeometry->toCompoundCurve();
+            for (auto i = 0; i < compoundCurve->getNumCurves(); i++) {
+                auto gcPart = compoundCurve->getCurve(i);
+                auto eGType = gcPart->getGeometryType();
+                auto geometryType = translateOGRwkbGeometryType(eGType);
+                GeometryWriteContext gc { geometryType, m_hasZ, m_hasM };
+                geometries.push_back(writeGeometry(fbb, gcPart, gc));
+                geometryTypes.push_back((uint8_t) gc.geometryType);
+            }
+            break;
+        }
         case GeometryType::GeometryCollection: {
             auto geometryCollection = ogrGeometry->toGeometryCollection();
             for (auto i = 0; i < geometryCollection->getNumGeometries(); i++) {
@@ -956,6 +949,8 @@ void OGRFlatGeobufLayer::writeGeometries(FlatBufferBuilder &fbb, OGRGeometry *og
             if (!geometryOffset.IsNull())
                 geometries.push_back(geometryOffset);
     }
+    const auto feature = CreateFeatureDirect(fbb, &geometries, &properties, &geometryTypes);
+    return feature;
 }
 
 OGRErr OGRFlatGeobufLayer::GetExtent(OGREnvelope* psExtent, int bForce)

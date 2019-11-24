@@ -36,8 +36,6 @@
 #include "feature_generated.h"
 #include "packedrtree.h"
 
-using namespace FlatGeobuf;
-
 class OGRFlatGeobufDataset;
 
 static constexpr uint8_t magicbytes[8] = { 0x66, 0x67, 0x62, 0x02, 0x66, 0x67, 0x62, 0x00 };
@@ -46,7 +44,7 @@ static constexpr uint32_t header_max_buffer_size = 1048576;
 static constexpr uint32_t feature_max_buffer_size = 2147483648 - 1;
 
 // holds feature meta needed to build spatial index
-struct FeatureItem : Item {
+struct FeatureItem : FlatGeobuf::Item {
     uint32_t size;
     uint64_t offset;
 };
@@ -67,10 +65,10 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         VSILFILE *m_poFp = nullptr;
 
-        const Header *m_poHeader = nullptr;
+        const FlatGeobuf::Header *m_poHeader = nullptr;
         GByte *m_headerBuf = nullptr;
         OGRwkbGeometryType m_eGType;
-        GeometryType m_geometryType;
+        FlatGeobuf::GeometryType m_geometryType;
         bool m_hasM = false;
         bool m_hasZ = false;
         bool m_hasT = false;
@@ -92,7 +90,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         // creation
         bool m_create = false;
-        std::vector<std::shared_ptr<Item>> m_featureItems; // feature item description used to create spatial index
+        std::vector<std::shared_ptr<FlatGeobuf::Item>> m_featureItems; // feature item description used to create spatial index
         bool m_bCreateSpatialIndexAtClose = true;
         bool m_bVerifyBuffers = true;
         bool m_bCanCreate = true;
@@ -109,9 +107,9 @@ class OGRFlatGeobufLayer final : public OGRLayer
         void ensurePadfBuffers(size_t count);
         OGRErr ensureFeatureBuf(uint32_t featureSize);
         OGRErr parseFeature(OGRFeature *poFeature);
-        ColumnType toColumnType(OGRFieldType fieldType, OGRFieldSubType subType);
-        static OGRFieldType toOGRFieldType(ColumnType type);
-        const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
+        FlatGeobuf::ColumnType toColumnType(OGRFieldType fieldType, OGRFieldSubType subType);
+        static OGRFieldType toOGRFieldType(FlatGeobuf::ColumnType type);
+        const std::vector<flatbuffers::Offset<FlatGeobuf::Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
         void readColumns();
         OGRErr readIndex();
         OGRErr readFeatureOffset(uint64_t index, uint64_t &featureOffset);
@@ -119,12 +117,12 @@ class OGRFlatGeobufLayer final : public OGRLayer
         // serialize
         void Create();
         void writeHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector);
-        void writeGeometries(flatbuffers::FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<flatbuffers::Offset<Geometry>> &geometries, std::vector<uint8_t> &geometryTypes);
+        flatbuffers::Offset<FlatGeobuf::Feature> writeFeature(flatbuffers::FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<uint8_t> &properties);
 
-        GeometryType translateOGRwkbGeometryType(OGRwkbGeometryType eGType);
+        FlatGeobuf::GeometryType translateOGRwkbGeometryType(OGRwkbGeometryType eGType);
         OGRwkbGeometryType getOGRwkbGeometryType();
     public:
-        OGRFlatGeobufLayer(const Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset, uint64_t offsetIndices);
+        OGRFlatGeobufLayer(const FlatGeobuf::Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset, uint64_t offsetIndices);
         OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, VSILFILE *poFpWrite, std::string oTempFile, bool bCreateSpatialIndexAtClose);
         virtual ~OGRFlatGeobufLayer();
 

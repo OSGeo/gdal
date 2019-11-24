@@ -32,6 +32,8 @@
 
 #include "header_generated.h"
 
+using namespace FlatGeobuf;
+
 static int OGRFlatGeobufDriverIdentify(GDALOpenInfo* poOpenInfo){
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "FGB:") )
         return TRUE;

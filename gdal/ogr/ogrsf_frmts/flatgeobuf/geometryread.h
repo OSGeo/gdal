@@ -29,9 +29,6 @@
 #ifndef FLATGEOBUF_GEOMETRYREAD_H_INCLUDED
 #define FLATGEOBUF_GEOMETRYREAD_H_INCLUDED
 
-#include "ogrsf_frmts.h"
-#include "ogr_p.h"
-
 #include "feature_generated.h"
 
 namespace ogr_flatgeobuf {
@@ -52,6 +49,7 @@ OGRMultiLineString *readMultiLineString(GeometryReadContext &gc);
 OGRPolygon *readPolygon(GeometryReadContext &gc);
 OGRMultiPolygon *readMultiPolygon(GeometryReadContext &gc);
 OGRGeometry *readGeometry(GeometryReadContext &gc);
+OGRGeometry *readGeometry(const FlatGeobuf::Feature *feature, GeometryReadContext &gc);
 
 template <class T>
 T *readSimpleCurve(GeometryReadContext &gc)

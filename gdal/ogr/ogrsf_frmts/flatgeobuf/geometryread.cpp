@@ -26,10 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "ogrsf_frmts.h"
+#include "ogr_p.h"
+
 #include "geometryread.h"
 #include "cplerrors.h"
 #include "ogr_flatgeobuf.h"
 
+using namespace flatbuffers;
 using namespace FlatGeobuf;
 using namespace ogr_flatgeobuf;
 
@@ -341,4 +345,43 @@ OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
             CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) gc.geometryType);
     }
     return nullptr;
+}
+
+OGRGeometry *ogr_flatgeobuf::readGeometry(const FlatGeobuf::Feature *feature, GeometryReadContext &gc)
+{
+    auto geometries = feature->geometries();
+    if (geometries == nullptr)
+        return nullptr;
+
+    auto geometriesLength = geometries->Length();
+
+    OGRGeometry *poOGRGeometry = nullptr;
+
+    // TODO: see about generalizing this..
+    if (gc.geometryType == GeometryType::CompoundCurve) {
+        auto compoundCurve = new OGRCompoundCurve();
+        for (uoffset_t i = 0; i < geometriesLength; i++) {
+            auto geometry = geometries->Get(i);
+            auto geometryType = feature->geometry_types()->GetEnum<GeometryType>(i);
+            GeometryReadContext gcPart { geometry, geometryType, gc.hasZ, gc.hasM };
+            auto poOGRGeometryPart = readGeometry(gcPart);
+            compoundCurve->addCurveDirectly(poOGRGeometryPart->toCurve());
+        }
+        poOGRGeometry = compoundCurve;
+    } else if (gc.geometryType == GeometryType::GeometryCollection) {
+        auto geometryCollection = new OGRGeometryCollection();
+        for (uoffset_t i = 0; i < geometriesLength; i++) {
+            auto geometry = geometries->Get(i);
+            auto geometryType = feature->geometry_types()->GetEnum<GeometryType>(i);
+            GeometryReadContext gcPart { geometry, geometryType, gc.hasZ, gc.hasM };
+            auto poOGRGeometryPart = readGeometry(gcPart);
+            geometryCollection->addGeometryDirectly(poOGRGeometryPart);
+        }
+        poOGRGeometry = geometryCollection;
+    } else {
+        auto geometry = geometries->Get(0);
+        gc.geometry = geometry;
+        poOGRGeometry = readGeometry(gc);
+    }
+    return poOGRGeometry;
 }
