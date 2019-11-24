@@ -59,15 +59,6 @@ struct IndexOffset {
     uint64_t offset;
 };
 
-// holds feature data to be encoded into flatbuffer
-struct GeometryContext {
-    std::vector<double> xy;
-    std::vector<double> z;
-    std::vector<double> m;
-    std::vector<uint32_t> ends;
-    std::vector<uint32_t> lengths;
-};
-
 class OGRFlatGeobufLayer final : public OGRLayer
 {
     private:
@@ -118,17 +109,6 @@ class OGRFlatGeobufLayer final : public OGRLayer
         void ensurePadfBuffers(size_t count);
         OGRErr ensureFeatureBuf(uint32_t featureSize);
         OGRErr parseFeature(OGRFeature *poFeature);
-        OGRPoint *readPoint(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t offset = 0);
-        OGRMultiPoint *readMultiPoint(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len);
-
-        OGRErr readSimpleCurve(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset, OGRSimpleCurve *c);
-        OGRLineString *readLineString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
-        OGRCircularString *readCircularString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
-        OGRMultiLineString *readMultiLineString(const Geometry *geometry, const flatbuffers::Vector<double> &pXy);
-        OGRLinearRing *readLinearRing(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
-        OGRPolygon *readPolygon(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len, uint32_t offset = 0);
-        OGRMultiPolygon *readMultiPolygon(const Geometry *geometry, const flatbuffers::Vector<double> &pXy, uint32_t len);
-        OGRGeometry *readGeometry(const Geometry *geometry, GeometryType geometryType);
         ColumnType toColumnType(OGRFieldType fieldType, OGRFieldSubType subType);
         static OGRFieldType toOGRFieldType(ColumnType type);
         const std::vector<flatbuffers::Offset<Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
@@ -140,13 +120,6 @@ class OGRFlatGeobufLayer final : public OGRLayer
         void Create();
         void writeHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector);
         void writeGeometries(flatbuffers::FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<flatbuffers::Offset<Geometry>> &geometries, std::vector<uint8_t> &geometryTypes);
-        const flatbuffers::Offset<Geometry> writeGeometry(flatbuffers::FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, GeometryType geometryType);
-        void writePoint(OGRPoint *p, GeometryContext &gc);
-        void writeMultiPoint(OGRMultiPoint *mp, GeometryContext &gc);
-        uint32_t writeSimpleCurve(OGRSimpleCurve *sc, GeometryContext &gc);
-        void writeMultiLineString(OGRMultiLineString *mls, GeometryContext &gc);
-        uint32_t writePolygon(OGRPolygon *p, GeometryContext &gc, bool isMulti, uint32_t end);
-        void writeMultiPolygon(OGRMultiPolygon *mp, GeometryContext &gc);
 
         GeometryType translateOGRwkbGeometryType(OGRwkbGeometryType eGType);
         OGRwkbGeometryType getOGRwkbGeometryType();
@@ -204,6 +177,7 @@ class OGRFlatGeobufDataset final: public GDALDataset
         virtual int GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
         char** GetFileList() override;
 };
+
 
 #endif /* ndef OGR_FLATGEOBUF_H_INCLUDED */
 
