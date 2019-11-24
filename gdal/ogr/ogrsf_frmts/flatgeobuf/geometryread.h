@@ -52,8 +52,10 @@ OGRGeometry *readGeometry(GeometryReadContext &gc);
 OGRGeometry *readGeometry(const FlatGeobuf::Feature *feature, GeometryReadContext &gc);
 
 template <class T>
-T *readSimpleCurve(GeometryReadContext &gc)
+T *readSimpleCurve(GeometryReadContext &gc, bool halfLength = false)
 {
+    if (halfLength)
+        gc.length = gc.length / 2;
     const auto csc = new T();
     if (readSimpleCurve(gc, csc) != OGRERR_NONE) {
         delete csc;

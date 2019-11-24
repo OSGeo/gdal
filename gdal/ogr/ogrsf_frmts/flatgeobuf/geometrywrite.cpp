@@ -28,6 +28,8 @@
 
 #include "geometrywrite.h"
 
+using namespace FlatGeobuf;
+
 void ogr_flatgeobuf::writePoint(OGRPoint *p, GeometryWriteContext &gc)
 {
     gc.xy.push_back(p->getX());
@@ -112,26 +114,38 @@ const flatbuffers::Offset<FlatGeobuf::Geometry> ogr_flatgeobuf::writeGeometry(
     OGRGeometry *ogrGeometry, GeometryWriteContext &gc)
 {
     switch (gc.geometryType) {
-        case FlatGeobuf::GeometryType::Point:
+        case GeometryType::Point:
             writePoint(ogrGeometry->toPoint(), gc);
             break;
-        case FlatGeobuf::GeometryType::MultiPoint:
+        case GeometryType::MultiPoint:
             writeMultiPoint(ogrGeometry->toMultiPoint(), gc);
             break;
-        case FlatGeobuf::GeometryType::LineString:
-            writeSimpleCurve(ogrGeometry->toSimpleCurve(), gc);
+        case GeometryType::LineString:
+            writeSimpleCurve(ogrGeometry->toLineString(), gc);
             break;
-        case FlatGeobuf::GeometryType::MultiLineString:
+        case GeometryType::MultiLineString:
             writeMultiLineString(ogrGeometry->toMultiLineString(), gc);
             break;
-        case FlatGeobuf::GeometryType::Polygon:
+        case GeometryType::Polygon:
             writePolygon(ogrGeometry->toPolygon(), gc, false, 0);
             break;
-        case FlatGeobuf::GeometryType::MultiPolygon:
+        case GeometryType::MultiPolygon:
             writeMultiPolygon(ogrGeometry->toMultiPolygon(), gc);
             break;
-        case FlatGeobuf::GeometryType::CircularString:
-            writeSimpleCurve(ogrGeometry->toSimpleCurve(), gc);
+        case GeometryType::CircularString:
+            writeSimpleCurve(ogrGeometry->toCircularString(), gc);
+            break;
+        case GeometryType::CurvePolygon:
+            // TODO: implement
+            break;
+        case GeometryType::PolyhedralSurface:
+            writeMultiPolygon(OGRPolyhedralSurface::CastToMultiPolygon(ogrGeometry->toPolyhedralSurface()), gc);
+            break;
+        case GeometryType::Triangle:
+            writePolygon(ogrGeometry->toTriangle(), gc, false, 0);
+            break;
+        case GeometryType::TIN:
+            writeMultiPolygon(OGRPolyhedralSurface::CastToMultiPolygon(ogrGeometry->toTriangulatedSurface()), gc);
             break;
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Unknown FlatGeobuf::GeometryType %d", (int) gc.geometryType);

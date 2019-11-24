@@ -90,6 +90,7 @@ OGRPoint *ogr_flatgeobuf::readPoint(GeometryReadContext &gc)
 
 OGRMultiPoint *ogr_flatgeobuf::readMultiPoint(GeometryReadContext &gc)
 {
+    gc.length = gc.length / 2;
     if (gc.length >= feature_max_buffer_size)
         return CPLErrorInvalidLength("MultiPoint");
     const auto mp = new OGRMultiPoint();
@@ -309,6 +310,19 @@ OGRMultiPolygon *ogr_flatgeobuf::readMultiPolygon(GeometryReadContext &gc)
     }
 }
 
+static OGRTriangle *readTriangle(GeometryReadContext &gc)
+{
+    const auto t = new OGRTriangle();
+    gc.length = gc.length / 2;
+    const auto lr = readSimpleCurve<OGRLinearRing>(gc);
+    if (lr == nullptr) {
+        delete t;
+        return nullptr;
+    }
+    t->addRingDirectly(lr);
+    return t;
+}
+
 OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
 {
     const auto pXy = gc.geometry->xy();
@@ -321,26 +335,18 @@ OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
     const auto xySize = pXy->size();
     if (xySize >= (feature_max_buffer_size / sizeof(OGRRawPoint)))
         return CPLErrorInvalidLength("XY data");
+    gc.length = xySize;
     switch (gc.geometryType) {
-        case GeometryType::Point:
-            return readPoint(gc);
-        case GeometryType::MultiPoint:
-            gc.length = xySize / 2;
-            return readMultiPoint(gc);
-        case GeometryType::LineString:
-            gc.length = xySize / 2;
-            return readSimpleCurve<OGRLineString>(gc);
-        case GeometryType::MultiLineString:
-            return readMultiLineString(gc);
-        case GeometryType::Polygon:
-            gc.length = xySize;
-            return readPolygon(gc);
-        case GeometryType::MultiPolygon:
-            gc.length = xySize;
-            return readMultiPolygon(gc);
-        case GeometryType::CircularString:
-            gc.length = xySize / 2;
-            return readSimpleCurve<OGRCircularString>(gc);
+        case GeometryType::Point: return readPoint(gc);
+        case GeometryType::MultiPoint: return readMultiPoint(gc);
+        case GeometryType::LineString: return readSimpleCurve<OGRLineString>(gc, true);
+        case GeometryType::MultiLineString: return readMultiLineString(gc);
+        case GeometryType::Polygon: return readPolygon(gc);
+        case GeometryType::MultiPolygon: return readMultiPolygon(gc);
+        case GeometryType::CircularString: return readSimpleCurve<OGRCircularString>(gc, true);
+        case GeometryType::PolyhedralSurface: return readMultiPolygon(gc);
+        case GeometryType::TIN: return readMultiPolygon(gc);
+        case GeometryType::Triangle: return readTriangle(gc);
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) gc.geometryType);
     }
