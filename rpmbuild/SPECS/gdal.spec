@@ -98,7 +98,7 @@ BuildRequires:	fontconfig-devel
 BuildRequires:	hdf5-devel
 
 # No libwebp in EL 5 and 6
-BuildRequires:	proj-devel
+#BuildRequires:	proj-devel
 
 # Run time dependency for gpsbabel driver
 Requires:	gpsbabel
@@ -290,7 +290,7 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 	--without-msg \
 	--with-png \
 	--with-threads \
-        --with-proj=/home/nielson/build/PROJ6 \
+        --with-proj=/usr/local/proj6 \
 %if 0%{?rhel} > 6
         --with-xerces \
 %endif
