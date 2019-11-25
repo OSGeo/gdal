@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  FlatGeobuf driver
- * Purpose:  Geometry read functions declarations.
+ * Purpose:  Geometry write functions declarations.
  * Author:   Björn Harrtell <bjorn at wololo dot org>
  *
  ******************************************************************************
@@ -26,59 +26,55 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef FLATGEOBUF_GEOMETRYREADER_H_INCLUDED
-#define FLATGEOBUF_GEOMETRYREADER_H_INCLUDED
+#ifndef FLATGEOBUF_GEOMETRYWRITER_H_INCLUDED
+#define FLATGEOBUF_GEOMETRYWRITER_H_INCLUDED
+
+#include "ogrsf_frmts.h"
+#include "ogr_p.h"
 
 #include "feature_generated.h"
-#include "ogr_p.h"
 
 namespace ogr_flatgeobuf {
 
-class GeometryReader {
+class GeometryWriter {
     private:
-        const FlatGeobuf::Geometry *m_geometry;
+        flatbuffers::FlatBufferBuilder &m_fbb;
+        OGRGeometry *m_ogrGeometry;
         FlatGeobuf::GeometryType m_geometryType;
         bool m_hasZ;
         bool m_hasM;
-        uint32_t m_length = 0;
-        uint32_t m_offset = 0;
+        std::vector<double> m_xy;
+        std::vector<double> m_z;
+        std::vector<double> m_m;
+        std::vector<uint32_t> m_ends;
 
-        OGRPoint *readPoint();
-        OGRMultiPoint *readMultiPoint();
-        OGRErr readSimpleCurve(OGRSimpleCurve *c);
-        OGRMultiLineString *readMultiLineString();
-        OGRPolygon *readPolygon();
-        OGRMultiPolygon *readMultiPolygon();
-        OGRGeometryCollection *readGeometryCollection();
-        OGRCompoundCurve *readCompoundCurve();
-        OGRTriangle *readTriangle();
+        void writePoint(OGRPoint *p);
+        void writeMultiPoint(OGRMultiPoint *mp);
+        uint32_t writeSimpleCurve(OGRSimpleCurve *sc);
+        void writeMultiLineString(OGRMultiLineString *mls);
+        void writePolygon(OGRPolygon *p);
+        flatbuffers::Offset<FlatGeobuf::Geometry> writeMultiPolygon(OGRMultiPolygon *mp);
+        flatbuffers::Offset<FlatGeobuf::Geometry> writeGeometryCollection(OGRGeometryCollection *ogrGC);
+        flatbuffers::Offset<FlatGeobuf::Geometry> writeCompoundCurve(OGRCompoundCurve *cc);
+        //void writePolyhedralSurface(OGRPolyhedralSurface *mp, GeometryWriteContext &gc);
 
-        template <class T>
-        T *readSimpleCurve(bool halfLength = false)
-        {
-            if (halfLength)
-                m_length = m_length / 2;
-            const auto csc = new T();
-            if (readSimpleCurve(csc) != OGRERR_NONE) {
-                delete csc;
-                return nullptr;
-            }
-            return csc;
-        };
     public:
-        GeometryReader(
-            const FlatGeobuf::Geometry *geometry,
+        GeometryWriter(
+            flatbuffers::FlatBufferBuilder &fbb,
+            OGRGeometry *ogrGeometry,
             FlatGeobuf::GeometryType geometryType,
             bool hasZ,
             bool hasM) :
-            m_geometry (geometry),
+            m_fbb (fbb),
+            m_ogrGeometry (ogrGeometry),
             m_geometryType (geometryType),
             m_hasZ (hasZ),
             m_hasM (hasM)
             { }
-        OGRGeometry *read();
+        const flatbuffers::Offset<FlatGeobuf::Geometry> write();
+        static FlatGeobuf::GeometryType translateOGRwkbGeometryType(OGRwkbGeometryType eGType);
 };
 
 }
 
-#endif /* ndef FLATGEOBUF_GEOMETRYREADER_H_INCLUDED */
+#endif /* ndef FLATGEOBUF_GEOMETRYWRITER_H_INCLUDED */

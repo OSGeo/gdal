@@ -35,8 +35,8 @@
 
 #include "ogr_flatgeobuf.h"
 #include "cplerrors.h"
-#include "geometryread.h"
-#include "geometrywrite.h"
+#include "geometryreader.h"
+#include "geometrywriter.h"
 
 using namespace flatbuffers;
 using namespace FlatGeobuf;
@@ -145,7 +145,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
         m_osLayerName = pszLayerName;
     if (pszFilename)
         m_osFilename = pszFilename;
-    m_geometryType = translateOGRwkbGeometryType(eGType);
+    m_geometryType = GeometryWriter::translateOGRwkbGeometryType(eGType);
     if (m_geometryType == GeometryType::Unknown)
         m_bCanCreate = false;
     if wkbHasZ(eGType)
@@ -629,10 +629,10 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     }
 
     const auto feature = GetRoot<Feature>(m_featureBuf);
-    if (!m_poFeatureDefn->IsGeometryIgnored()) {
-        const auto geometry = feature->geometry();
-        GeometryReadContext gc { geometry, m_geometryType, m_hasZ, m_hasM };
-        OGRGeometry *poOGRGeometry = readGeometry(gc);
+    const auto geometry = feature->geometry();
+    if (!m_poFeatureDefn->IsGeometryIgnored() && geometry != nullptr) {
+        GeometryReader reader { geometry, m_geometryType, m_hasZ, m_hasM };
+        OGRGeometry *poOGRGeometry = reader.read();
         if (poOGRGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
@@ -909,8 +909,8 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 
 Offset<Feature> OGRFlatGeobufLayer::writeFeature(FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<uint8_t> &properties)
 {
-    GeometryWriteContext gc { m_geometryType, m_hasZ, m_hasM };
-    auto geometryOffset = writeGeometry(fbb, ogrGeometry, gc);
+    GeometryWriter writer { fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM };
+    auto geometryOffset = writer.write();
     const auto feature = CreateFeatureDirect(fbb, geometryOffset, &properties);
     return feature;
 }

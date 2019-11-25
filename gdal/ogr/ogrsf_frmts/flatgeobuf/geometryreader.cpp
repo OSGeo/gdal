@@ -265,10 +265,40 @@ OGRMultiPolygon *GeometryReader::readMultiPolygon()
     for (uoffset_t i = 0; i < partsLength; i++) {
         auto part = parts->Get(i);
         GeometryReader reader { part, GeometryType::Polygon, m_hasZ, m_hasM };
-        auto poOGRPolygon = reader.read()->toPolygon();
-        mp->addGeometry(poOGRPolygon);
+        auto p = reader.read()->toPolygon();
+        mp->addGeometry(p);
     }
     return mp;
+}
+
+OGRCompoundCurve *GeometryReader::readCompoundCurve()
+{
+    auto parts = m_geometry->parts();
+    auto partsLength = parts->Length();
+    auto compoundCurve = new OGRCompoundCurve();
+    for (uoffset_t i = 0; i < partsLength; i++) {
+        auto part = parts->Get(i);
+        auto type = part->type();
+        GeometryReader reader { part, type, m_hasZ, m_hasM };
+        auto poOGRGeometryPart = reader.read();
+        compoundCurve->addCurveDirectly(poOGRGeometryPart->toCurve());
+    }
+    return compoundCurve;
+}
+
+OGRGeometryCollection *GeometryReader::readGeometryCollection()
+{
+    auto parts = m_geometry->parts();
+    auto partsLength = parts->Length();
+    auto geometryCollection = new OGRGeometryCollection();
+    for (uoffset_t i = 0; i < partsLength; i++) {
+        auto part = parts->Get(i);
+        auto type = part->type();
+        GeometryReader reader { part, type, m_hasZ, m_hasM };
+        auto poOGRGeometryPart = reader.read();
+        geometryCollection->addGeometryDirectly(poOGRGeometryPart);
+    }
+    return geometryCollection;
 }
 
 OGRTriangle *GeometryReader::readTriangle()
@@ -287,32 +317,8 @@ OGRTriangle *GeometryReader::readTriangle()
 OGRGeometry *GeometryReader::read()
 {
     switch (m_geometryType) {
-        case GeometryType::CompoundCurve: {
-            auto parts = m_geometry->parts();
-            auto partsLength = parts->Length();
-            auto compoundCurve = new OGRCompoundCurve();
-            for (uoffset_t i = 0; i < partsLength; i++) {
-                auto part = parts->Get(i);
-                auto type = part->type();
-                GeometryReader reader { part, type, m_hasZ, m_hasM };
-                auto poOGRGeometryPart = reader.read();
-                compoundCurve->addCurveDirectly(poOGRGeometryPart->toCurve());
-            }
-            return compoundCurve;
-        }
-        case GeometryType::GeometryCollection: {
-            auto parts = m_geometry->parts();
-            auto partsLength = parts->Length();
-            auto geometryCollection = new OGRGeometryCollection();
-            for (uoffset_t i = 0; i < partsLength; i++) {
-                auto part = parts->Get(i);
-                auto type = part->type();
-                GeometryReader reader { part, type, m_hasZ, m_hasM };
-                auto poOGRGeometryPart = reader.read();
-                geometryCollection->addGeometryDirectly(poOGRGeometryPart);
-            }
-            return geometryCollection;
-        }
+        case GeometryType::CompoundCurve: return readCompoundCurve();
+        case GeometryType::GeometryCollection: return readGeometryCollection();
         case GeometryType::MultiPolygon: return readMultiPolygon();
         default: break;
     }
@@ -328,6 +334,7 @@ OGRGeometry *GeometryReader::read()
     if (xySize >= (feature_max_buffer_size / sizeof(OGRRawPoint)))
         return CPLErrorInvalidLength("XY data");
     m_length = xySize;
+
     switch (m_geometryType) {
         case GeometryType::Point: return readPoint();
         case GeometryType::MultiPoint: return readMultiPoint();
@@ -335,7 +342,7 @@ OGRGeometry *GeometryReader::read()
         case GeometryType::MultiLineString: return readMultiLineString();
         case GeometryType::Polygon: return readPolygon();
         case GeometryType::CircularString: return readSimpleCurve<OGRCircularString>(true);
-        case GeometryType::PolyhedralSurface: return readMultiPolygon();
+        //case GeometryType::PolyhedralSurface: return readMultiPolygon();
         //case GeometryType::TIN: return readMultiPolygon();
         case GeometryType::Triangle: return readTriangle();
         default:
