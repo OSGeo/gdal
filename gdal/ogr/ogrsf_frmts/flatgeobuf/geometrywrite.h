@@ -45,19 +45,24 @@ struct GeometryWriteContext {
     std::vector<double> m;
     std::vector<uint32_t> ends;
     std::vector<uint32_t> lengths;
+    std::vector<GeometryWriteContext> parts;
 };
 
+FlatGeobuf::GeometryType translateOGRwkbGeometryType(OGRwkbGeometryType eGType);
 void writePoint(OGRPoint *p, GeometryWriteContext &gc);
 void writeMultiPoint(OGRMultiPoint *mp, GeometryWriteContext &gc);
 uint32_t writeSimpleCurve(OGRSimpleCurve *sc, GeometryWriteContext &gc);
 void writeMultiLineString(OGRMultiLineString *mls, GeometryWriteContext &gc);
 uint32_t writePolygon(OGRPolygon *p, GeometryWriteContext &gc, bool isMulti, uint32_t e);
-void writeMultiPolygon(OGRMultiPolygon *mp, GeometryWriteContext &gc);
+flatbuffers::Offset<FlatGeobuf::Geometry> writeMultiPolygon(flatbuffers::FlatBufferBuilder &fbb, OGRMultiPolygon *mp, GeometryWriteContext &gc);
+flatbuffers::Offset<FlatGeobuf::Geometry> writeCompoundCurve(flatbuffers::FlatBufferBuilder &fbb, OGRCompoundCurve *cc, GeometryWriteContext &gc);
+flatbuffers::Offset<FlatGeobuf::Geometry> writeGeometryCollection(flatbuffers::FlatBufferBuilder &fbb, OGRGeometryCollection *ogrGC, GeometryWriteContext &gc);
 //void writePolyhedralSurface(OGRPolyhedralSurface *mp, GeometryWriteContext &gc);
 
 const flatbuffers::Offset<FlatGeobuf::Geometry> writeGeometry(
     flatbuffers::FlatBufferBuilder &fbb,
     OGRGeometry *ogrGeometry, GeometryWriteContext &gc);
+
 }
 
 #endif /* ndef FLATGEOBUF_GEOMETRYWRITE_H_INCLUDED */

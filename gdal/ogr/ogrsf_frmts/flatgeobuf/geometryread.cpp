@@ -259,55 +259,16 @@ OGRPolygon *ogr_flatgeobuf::readPolygon(GeometryReadContext &gc)
 
 OGRMultiPolygon *ogr_flatgeobuf::readMultiPolygon(GeometryReadContext &gc)
 {
-    const auto pLengths = gc.geometry->lengths();
-    if (pLengths == nullptr || pLengths->size() < 2) {
-        const auto mp = new OGRMultiPolygon();
-        const auto p = readPolygon(gc);
-        if (p == nullptr) {
-            delete p;
-            delete mp;
-            return CPLErrorInvalidPointer("MultiPolygon part result");
-        }
-        mp->addGeometryDirectly(p);
-        return mp;
-    } else {
-        const auto pEnds = gc.geometry->ends();
-        if (pEnds == nullptr)
-            return CPLErrorInvalidPointer("MultiPolygon ends data");
-        gc.offset = 0;
-        uint32_t roffset = 0;
-        const auto mp = new OGRMultiPolygon();
-        for (uint32_t i = 0; i < pLengths->size(); i++) {
-            const auto p = new OGRPolygon();
-            uint32_t ringCount = pLengths->Get(i);
-            for (uint32_t j = 0; j < ringCount; j++) {
-                if (roffset >= pEnds->size()) {
-                    delete p;
-                    delete mp;
-                    return CPLErrorInvalidLength("MultiPolygon ends data");
-                }
-                uint32_t e = pEnds->Get(roffset++);
-                if (e < gc.offset) {
-                    delete p;
-                    delete mp;
-                    return CPLErrorInvalidLength("MultiPolygon");
-                }
-                gc.length = e - gc.offset;
-                const auto lr = readSimpleCurve<OGRLinearRing>(gc);
-                gc.offset = e;
-                if (lr == nullptr)
-                    continue;
-                p->addRingDirectly(lr);
-            }
-            if (p->IsEmpty()) {
-                delete p;
-                delete mp;
-                return CPLErrorInvalidLength("MultiPolygon part");
-            }
-            mp->addGeometryDirectly(p);
-        }
-        return mp;
+    auto parts = gc.geometry->parts();
+    auto partsLength = parts->Length();
+    const auto mp = new OGRMultiPolygon();
+    for (uoffset_t i = 0; i < partsLength; i++) {
+        auto part = parts->Get(i);
+        GeometryReadContext gcPart { part, GeometryType::Polygon, gc.hasZ, gc.hasM };
+        auto poOGRPolygon = readGeometry(gcPart)->toPolygon();
+        mp->addGeometry(poOGRPolygon);
     }
+    return mp;
 }
 
 static OGRTriangle *readTriangle(GeometryReadContext &gc)
@@ -325,6 +286,37 @@ static OGRTriangle *readTriangle(GeometryReadContext &gc)
 
 OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
 {
+    switch (gc.geometryType) {
+        case GeometryType::CompoundCurve: {
+            auto parts = gc.geometry->parts();
+            auto partsLength = parts->Length();
+            auto compoundCurve = new OGRCompoundCurve();
+            for (uoffset_t i = 0; i < partsLength; i++) {
+                auto part = parts->Get(i);
+                auto type = part->type();
+                GeometryReadContext gcPart { part, type, gc.hasZ, gc.hasM };
+                auto poOGRGeometryPart = readGeometry(gcPart);
+                compoundCurve->addCurveDirectly(poOGRGeometryPart->toCurve());
+            }
+            return compoundCurve;
+        }
+        case GeometryType::GeometryCollection: {
+            auto parts = gc.geometry->parts();
+            auto partsLength = parts->Length();
+            auto geometryCollection = new OGRGeometryCollection();
+            for (uoffset_t i = 0; i < partsLength; i++) {
+                auto part = parts->Get(i);
+                auto type = part->type();
+                GeometryReadContext gcPart { part, type, gc.hasZ, gc.hasM };
+                auto poOGRGeometryPart = readGeometry(gcPart);
+                geometryCollection->addGeometryDirectly(poOGRGeometryPart);
+            }
+            return geometryCollection;
+        }
+        case GeometryType::MultiPolygon: return readMultiPolygon(gc);
+        default: break;
+    }
+
     const auto pXy = gc.geometry->xy();
     if (pXy == nullptr)
         return CPLErrorInvalidPointer("XY data");
@@ -342,7 +334,6 @@ OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
         case GeometryType::LineString: return readSimpleCurve<OGRLineString>(gc, true);
         case GeometryType::MultiLineString: return readMultiLineString(gc);
         case GeometryType::Polygon: return readPolygon(gc);
-        case GeometryType::MultiPolygon: return readMultiPolygon(gc);
         case GeometryType::CircularString: return readSimpleCurve<OGRCircularString>(gc, true);
         case GeometryType::PolyhedralSurface: return readMultiPolygon(gc);
         case GeometryType::TIN: return readMultiPolygon(gc);
@@ -351,43 +342,4 @@ OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
             CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) gc.geometryType);
     }
     return nullptr;
-}
-
-OGRGeometry *ogr_flatgeobuf::readGeometry(const FlatGeobuf::Feature *feature, GeometryReadContext &gc)
-{
-    auto geometries = feature->geometries();
-    if (geometries == nullptr)
-        return nullptr;
-
-    auto geometriesLength = geometries->Length();
-
-    OGRGeometry *poOGRGeometry = nullptr;
-
-    // TODO: see about generalizing this..
-    if (gc.geometryType == GeometryType::CompoundCurve) {
-        auto compoundCurve = new OGRCompoundCurve();
-        for (uoffset_t i = 0; i < geometriesLength; i++) {
-            auto geometry = geometries->Get(i);
-            auto geometryType = feature->geometry_types()->GetEnum<GeometryType>(i);
-            GeometryReadContext gcPart { geometry, geometryType, gc.hasZ, gc.hasM };
-            auto poOGRGeometryPart = readGeometry(gcPart);
-            compoundCurve->addCurveDirectly(poOGRGeometryPart->toCurve());
-        }
-        poOGRGeometry = compoundCurve;
-    } else if (gc.geometryType == GeometryType::GeometryCollection) {
-        auto geometryCollection = new OGRGeometryCollection();
-        for (uoffset_t i = 0; i < geometriesLength; i++) {
-            auto geometry = geometries->Get(i);
-            auto geometryType = feature->geometry_types()->GetEnum<GeometryType>(i);
-            GeometryReadContext gcPart { geometry, geometryType, gc.hasZ, gc.hasM };
-            auto poOGRGeometryPart = readGeometry(gcPart);
-            geometryCollection->addGeometryDirectly(poOGRGeometryPart);
-        }
-        poOGRGeometry = geometryCollection;
-    } else {
-        auto geometry = geometries->Get(0);
-        gc.geometry = geometry;
-        poOGRGeometry = readGeometry(gc);
-    }
-    return poOGRGeometry;
 }

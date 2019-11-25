@@ -17,19 +17,16 @@ struct Feature;
 struct Geometry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ENDS = 4,
-    VT_LENGTHS = 6,
-    VT_XY = 8,
-    VT_Z = 10,
-    VT_M = 12,
-    VT_T = 14,
-    VT_TM = 16,
-    VT_GEOMETRY_TYPES = 18
+    VT_XY = 6,
+    VT_Z = 8,
+    VT_M = 10,
+    VT_T = 12,
+    VT_TM = 14,
+    VT_TYPE = 16,
+    VT_PARTS = 18
   };
   const flatbuffers::Vector<uint32_t> *ends() const {
     return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_ENDS);
-  }
-  const flatbuffers::Vector<uint32_t> *lengths() const {
-    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_LENGTHS);
   }
   const flatbuffers::Vector<double> *xy() const {
     return GetPointer<const flatbuffers::Vector<double> *>(VT_XY);
@@ -46,15 +43,16 @@ struct Geometry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<uint64_t> *tm() const {
     return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_TM);
   }
-  const flatbuffers::Vector<uint8_t> *geometry_types() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_GEOMETRY_TYPES);
+  FlatGeobuf::GeometryType type() const {
+    return static_cast<FlatGeobuf::GeometryType>(GetField<uint8_t>(VT_TYPE, 0));
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<FlatGeobuf::Geometry>> *parts() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<FlatGeobuf::Geometry>> *>(VT_PARTS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_ENDS) &&
            verifier.VerifyVector(ends()) &&
-           VerifyOffset(verifier, VT_LENGTHS) &&
-           verifier.VerifyVector(lengths()) &&
            VerifyOffset(verifier, VT_XY) &&
            verifier.VerifyVector(xy()) &&
            VerifyOffset(verifier, VT_Z) &&
@@ -65,8 +63,10 @@ struct Geometry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(t()) &&
            VerifyOffset(verifier, VT_TM) &&
            verifier.VerifyVector(tm()) &&
-           VerifyOffset(verifier, VT_GEOMETRY_TYPES) &&
-           verifier.VerifyVector(geometry_types()) &&
+           VerifyField<uint8_t>(verifier, VT_TYPE) &&
+           VerifyOffset(verifier, VT_PARTS) &&
+           verifier.VerifyVector(parts()) &&
+           verifier.VerifyVectorOfTables(parts()) &&
            verifier.EndTable();
   }
 };
@@ -76,9 +76,6 @@ struct GeometryBuilder {
   flatbuffers::uoffset_t start_;
   void add_ends(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> ends) {
     fbb_.AddOffset(Geometry::VT_ENDS, ends);
-  }
-  void add_lengths(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> lengths) {
-    fbb_.AddOffset(Geometry::VT_LENGTHS, lengths);
   }
   void add_xy(flatbuffers::Offset<flatbuffers::Vector<double>> xy) {
     fbb_.AddOffset(Geometry::VT_XY, xy);
@@ -95,8 +92,11 @@ struct GeometryBuilder {
   void add_tm(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> tm) {
     fbb_.AddOffset(Geometry::VT_TM, tm);
   }
-  void add_geometry_types(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> geometry_types) {
-    fbb_.AddOffset(Geometry::VT_GEOMETRY_TYPES, geometry_types);
+  void add_type(FlatGeobuf::GeometryType type) {
+    fbb_.AddElement<uint8_t>(Geometry::VT_TYPE, static_cast<uint8_t>(type), 0);
+  }
+  void add_parts(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<FlatGeobuf::Geometry>>> parts) {
+    fbb_.AddOffset(Geometry::VT_PARTS, parts);
   }
   explicit GeometryBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -113,79 +113,78 @@ struct GeometryBuilder {
 inline flatbuffers::Offset<Geometry> CreateGeometry(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<uint32_t>> ends = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> lengths = 0,
     flatbuffers::Offset<flatbuffers::Vector<double>> xy = 0,
     flatbuffers::Offset<flatbuffers::Vector<double>> z = 0,
     flatbuffers::Offset<flatbuffers::Vector<double>> m = 0,
     flatbuffers::Offset<flatbuffers::Vector<double>> t = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> tm = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> geometry_types = 0) {
+    FlatGeobuf::GeometryType type = FlatGeobuf::GeometryType::Unknown,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<FlatGeobuf::Geometry>>> parts = 0) {
   GeometryBuilder builder_(_fbb);
-  builder_.add_geometry_types(geometry_types);
+  builder_.add_parts(parts);
   builder_.add_tm(tm);
   builder_.add_t(t);
   builder_.add_m(m);
   builder_.add_z(z);
   builder_.add_xy(xy);
-  builder_.add_lengths(lengths);
   builder_.add_ends(ends);
+  builder_.add_type(type);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<Geometry> CreateGeometryDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint32_t> *ends = nullptr,
-    const std::vector<uint32_t> *lengths = nullptr,
     const std::vector<double> *xy = nullptr,
     const std::vector<double> *z = nullptr,
     const std::vector<double> *m = nullptr,
     const std::vector<double> *t = nullptr,
     const std::vector<uint64_t> *tm = nullptr,
-    const std::vector<uint8_t> *geometry_types = nullptr) {
+    FlatGeobuf::GeometryType type = FlatGeobuf::GeometryType::Unknown,
+    const std::vector<flatbuffers::Offset<FlatGeobuf::Geometry>> *parts = nullptr) {
   auto ends__ = ends ? _fbb.CreateVector<uint32_t>(*ends) : 0;
-  auto lengths__ = lengths ? _fbb.CreateVector<uint32_t>(*lengths) : 0;
   auto xy__ = xy ? _fbb.CreateVector<double>(*xy) : 0;
   auto z__ = z ? _fbb.CreateVector<double>(*z) : 0;
   auto m__ = m ? _fbb.CreateVector<double>(*m) : 0;
   auto t__ = t ? _fbb.CreateVector<double>(*t) : 0;
   auto tm__ = tm ? _fbb.CreateVector<uint64_t>(*tm) : 0;
-  auto geometry_types__ = geometry_types ? _fbb.CreateVector<uint8_t>(*geometry_types) : 0;
+  auto parts__ = parts ? _fbb.CreateVector<flatbuffers::Offset<FlatGeobuf::Geometry>>(*parts) : 0;
   return FlatGeobuf::CreateGeometry(
       _fbb,
       ends__,
-      lengths__,
       xy__,
       z__,
       m__,
       t__,
       tm__,
-      geometry_types__);
+      type,
+      parts__);
 }
 
 struct Feature FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_GEOMETRIES = 4,
+    VT_GEOMETRY = 4,
     VT_PROPERTIES = 6,
-    VT_GEOMETRY_TYPES = 8
+    VT_COLUMNS = 8
   };
-  const flatbuffers::Vector<flatbuffers::Offset<Geometry>> *geometries() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Geometry>> *>(VT_GEOMETRIES);
+  const FlatGeobuf::Geometry *geometry() const {
+    return GetPointer<const FlatGeobuf::Geometry *>(VT_GEOMETRY);
   }
   const flatbuffers::Vector<uint8_t> *properties() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_PROPERTIES);
   }
-  const flatbuffers::Vector<uint8_t> *geometry_types() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_GEOMETRY_TYPES);
+  const flatbuffers::Vector<flatbuffers::Offset<FlatGeobuf::Column>> *columns() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<FlatGeobuf::Column>> *>(VT_COLUMNS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_GEOMETRIES) &&
-           verifier.VerifyVector(geometries()) &&
-           verifier.VerifyVectorOfTables(geometries()) &&
+           VerifyOffset(verifier, VT_GEOMETRY) &&
+           verifier.VerifyTable(geometry()) &&
            VerifyOffset(verifier, VT_PROPERTIES) &&
            verifier.VerifyVector(properties()) &&
-           VerifyOffset(verifier, VT_GEOMETRY_TYPES) &&
-           verifier.VerifyVector(geometry_types()) &&
+           VerifyOffset(verifier, VT_COLUMNS) &&
+           verifier.VerifyVector(columns()) &&
+           verifier.VerifyVectorOfTables(columns()) &&
            verifier.EndTable();
   }
 };
@@ -193,14 +192,14 @@ struct Feature FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct FeatureBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_geometries(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Geometry>>> geometries) {
-    fbb_.AddOffset(Feature::VT_GEOMETRIES, geometries);
+  void add_geometry(flatbuffers::Offset<FlatGeobuf::Geometry> geometry) {
+    fbb_.AddOffset(Feature::VT_GEOMETRY, geometry);
   }
   void add_properties(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> properties) {
     fbb_.AddOffset(Feature::VT_PROPERTIES, properties);
   }
-  void add_geometry_types(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> geometry_types) {
-    fbb_.AddOffset(Feature::VT_GEOMETRY_TYPES, geometry_types);
+  void add_columns(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<FlatGeobuf::Column>>> columns) {
+    fbb_.AddOffset(Feature::VT_COLUMNS, columns);
   }
   explicit FeatureBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -216,29 +215,28 @@ struct FeatureBuilder {
 
 inline flatbuffers::Offset<Feature> CreateFeature(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Geometry>>> geometries = 0,
+    flatbuffers::Offset<FlatGeobuf::Geometry> geometry = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> properties = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> geometry_types = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<FlatGeobuf::Column>>> columns = 0) {
   FeatureBuilder builder_(_fbb);
-  builder_.add_geometry_types(geometry_types);
+  builder_.add_columns(columns);
   builder_.add_properties(properties);
-  builder_.add_geometries(geometries);
+  builder_.add_geometry(geometry);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<Feature> CreateFeatureDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<Geometry>> *geometries = nullptr,
+    flatbuffers::Offset<FlatGeobuf::Geometry> geometry = 0,
     const std::vector<uint8_t> *properties = nullptr,
-    const std::vector<uint8_t> *geometry_types = nullptr) {
-  auto geometries__ = geometries ? _fbb.CreateVector<flatbuffers::Offset<Geometry>>(*geometries) : 0;
+    std::vector<flatbuffers::Offset<FlatGeobuf::Column>> *columns = nullptr) {
   auto properties__ = properties ? _fbb.CreateVector<uint8_t>(*properties) : 0;
-  auto geometry_types__ = geometry_types ? _fbb.CreateVector<uint8_t>(*geometry_types) : 0;
+  auto columns__ = columns ? _fbb.CreateVectorOfSortedTables<FlatGeobuf::Column>(columns) : 0;
   return FlatGeobuf::CreateFeature(
       _fbb,
-      geometries__,
+      geometry,
       properties__,
-      geometry_types__);
+      columns__);
 }
 
 inline const FlatGeobuf::Feature *GetFeature(const void *buf) {

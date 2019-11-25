@@ -28,7 +28,17 @@
 
 #include "geometrywrite.h"
 
+using namespace flatbuffers;
 using namespace FlatGeobuf;
+
+GeometryType ogr_flatgeobuf::translateOGRwkbGeometryType(OGRwkbGeometryType eGType)
+{
+    const auto flatType = wkbFlatten(eGType);
+    GeometryType geometryType = GeometryType::Unknown;
+    if (flatType >= 0 && flatType <= 17)
+        geometryType = (GeometryType) flatType;
+    return geometryType;
+}
 
 void ogr_flatgeobuf::writePoint(OGRPoint *p, GeometryWriteContext &gc)
 {
@@ -97,22 +107,63 @@ uint32_t ogr_flatgeobuf::writePolygon(OGRPolygon *p, GeometryWriteContext &gc, b
     return e;
 }
 
-void ogr_flatgeobuf::writeMultiPolygon(OGRMultiPolygon *mp, GeometryWriteContext &gc)
+Offset<Geometry> ogr_flatgeobuf::writeMultiPolygon(FlatBufferBuilder &fbb, OGRMultiPolygon *mp, GeometryWriteContext &gc)
 {
-    uint32_t e = 0;
-    const auto isMulti = mp->getNumGeometries() > 1;
+    std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < mp->getNumGeometries(); i++) {
         const auto p = mp->getGeometryRef(i)->toPolygon();
-        e = writePolygon(p, gc, isMulti, e);
-        if (isMulti)
-            gc.lengths.push_back(p->getNumInteriorRings() + 1);
+        GeometryWriteContext gcPart { GeometryType::Polygon, gc.hasZ, gc.hasM };
+        parts.push_back(writeGeometry(fbb, p, gcPart));
     }
+    const auto geometryOffset = CreateGeometryDirect(fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, gc.geometryType, &parts);
+    return geometryOffset;
 }
 
-const flatbuffers::Offset<FlatGeobuf::Geometry> ogr_flatgeobuf::writeGeometry(
-    flatbuffers::FlatBufferBuilder &fbb,
+Offset<Geometry> ogr_flatgeobuf::writeCompoundCurve(FlatBufferBuilder &fbb, OGRCompoundCurve *cc, GeometryWriteContext &gc)
+{
+    std::vector<Offset<Geometry>> parts;
+    for (int i = 0; i < cc->getNumCurves(); i++) {
+        auto part = cc->getCurve(i);
+        auto eGType = part->getGeometryType();
+        auto geometryType = translateOGRwkbGeometryType(eGType);
+        GeometryWriteContext gcPart { geometryType, gc.hasZ, gc.hasM };
+        parts.push_back(writeGeometry(fbb, part, gcPart));
+    }
+    const auto geometryOffset = CreateGeometryDirect(fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, gc.geometryType, &parts);
+    return geometryOffset;
+}
+
+Offset<Geometry> ogr_flatgeobuf::writeGeometryCollection(FlatBufferBuilder &fbb, OGRGeometryCollection *ogrGC, GeometryWriteContext &gc)
+{
+    std::vector<Offset<Geometry>> parts;
+    for (int i = 0; i < ogrGC->getNumGeometries(); i++) {
+        auto part = ogrGC->getGeometryRef(i);
+        auto eGType = part->getGeometryType();
+        auto geometryType = translateOGRwkbGeometryType(eGType);
+        GeometryWriteContext gcPart { geometryType, gc.hasZ, gc.hasM };
+        parts.push_back(writeGeometry(fbb, part, gcPart));
+    }
+    const auto geometryOffset = CreateGeometryDirect(fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, gc.geometryType, &parts);
+    return geometryOffset;
+}
+
+const Offset<Geometry> ogr_flatgeobuf::writeGeometry(
+    FlatBufferBuilder &fbb,
     OGRGeometry *ogrGeometry, GeometryWriteContext &gc)
 {
+    switch (gc.geometryType) {
+        case GeometryType::MultiPolygon:
+            return writeMultiPolygon(fbb, ogrGeometry->toMultiPolygon(), gc);
+        case GeometryType::GeometryCollection:
+            return writeGeometryCollection(fbb, ogrGeometry->toGeometryCollection(), gc);
+        case GeometryType::CompoundCurve:
+            return writeCompoundCurve(fbb, ogrGeometry->toCompoundCurve(), gc);
+        default:
+            break;
+    }
+
+    std::vector<Offset<Geometry>> parts;
+    // TODO: see about generalizing this...
     switch (gc.geometryType) {
         case GeometryType::Point:
             writePoint(ogrGeometry->toPoint(), gc);
@@ -129,33 +180,26 @@ const flatbuffers::Offset<FlatGeobuf::Geometry> ogr_flatgeobuf::writeGeometry(
         case GeometryType::Polygon:
             writePolygon(ogrGeometry->toPolygon(), gc, false, 0);
             break;
-        case GeometryType::MultiPolygon:
-            writeMultiPolygon(ogrGeometry->toMultiPolygon(), gc);
-            break;
         case GeometryType::CircularString:
             writeSimpleCurve(ogrGeometry->toCircularString(), gc);
             break;
-        case GeometryType::CurvePolygon:
-            // TODO: implement
-            break;
         case GeometryType::PolyhedralSurface:
-            writeMultiPolygon(OGRPolyhedralSurface::CastToMultiPolygon(ogrGeometry->toPolyhedralSurface()), gc);
+            // TODO: implement
             break;
         case GeometryType::Triangle:
             writePolygon(ogrGeometry->toTriangle(), gc, false, 0);
             break;
         case GeometryType::TIN:
-            writeMultiPolygon(OGRPolyhedralSurface::CastToMultiPolygon(ogrGeometry->toTriangulatedSurface()), gc);
+            // TODO: implement
             break;
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Unknown FlatGeobuf::GeometryType %d", (int) gc.geometryType);
             return 0;
     }
     const auto pEnds = gc.ends.empty() ? nullptr : &gc.ends;
-    const auto pLengths = gc.lengths.empty() ? nullptr : &gc.lengths;
     const auto pXy = gc.xy.empty() ? nullptr : &gc.xy;
     const auto pZ = gc.z.empty() ? nullptr : &gc.z;
     const auto pM = gc.m.empty() ? nullptr : &gc.m;
-    const auto geometryOffset = FlatGeobuf::CreateGeometryDirect(fbb, pEnds, pLengths, pXy, pZ, pM, nullptr, nullptr);
+    const auto geometryOffset = FlatGeobuf::CreateGeometryDirect(fbb, pEnds, pXy, pZ, pM, nullptr, nullptr, gc.geometryType, &parts);
     return geometryOffset;
 }

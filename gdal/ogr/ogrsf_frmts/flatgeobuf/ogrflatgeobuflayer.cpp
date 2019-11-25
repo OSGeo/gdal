@@ -165,15 +165,6 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     m_poFeatureDefn->Reference();
 }
 
-GeometryType OGRFlatGeobufLayer::translateOGRwkbGeometryType(OGRwkbGeometryType eGType)
-{
-    const auto flatType = wkbFlatten(eGType);
-    GeometryType geometryType = GeometryType::Unknown;
-    if (flatType >= 0 && flatType <= 17)
-        geometryType = (GeometryType) flatType;
-    return geometryType;
-}
-
 OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
 {
     OGRwkbGeometryType ogrType = OGRwkbGeometryType::wkbUnknown;
@@ -225,6 +216,7 @@ const std::vector<Offset<Column>> OGRFlatGeobufLayer::writeColumns(FlatBufferBui
         const auto column = CreateColumnDirect(fbb, name, columnType);
         columns.push_back(column);
     }
+    CPLDebug("FlatGeobuf", "Created %lu columns for writing", static_cast<long unsigned int>(columns.size()));
     return columns;
 }
 
@@ -240,6 +232,7 @@ void OGRFlatGeobufLayer::readColumns()
         OGRFieldDefn field(name, type);
         m_poFeatureDefn->AddFieldDefn(&field);
     }
+    CPLDebug("FlatGeobuf", "Read %lu columns and added to feature definition", static_cast<long unsigned int>(columns->size()));
 }
 
 void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector) {
@@ -249,7 +242,7 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount, std
     m_writeOffset += sizeof(magicbytes);
 
     FlatBufferBuilder fbb;
-    const auto columns = writeColumns(fbb);
+    auto columns = writeColumns(fbb);
 
     flatbuffers::Offset<Crs> crs = 0;
     if (m_poSRS) {
@@ -637,8 +630,9 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
 
     const auto feature = GetRoot<Feature>(m_featureBuf);
     if (!m_poFeatureDefn->IsGeometryIgnored()) {
-        GeometryReadContext gc { nullptr, m_geometryType, m_hasZ, m_hasM };
-        OGRGeometry *poOGRGeometry = readGeometry(feature, gc);
+        const auto geometry = feature->geometry();
+        GeometryReadContext gc { geometry, m_geometryType, m_hasZ, m_hasM };
+        OGRGeometry *poOGRGeometry = readGeometry(gc);
         if (poOGRGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
@@ -671,11 +665,11 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
             //CPLDebug("FlatGeobuf", "i: %d", i);
             const auto columns = m_poHeader->columns();
             if (columns == nullptr) {
-                CPLError(CE_Failure, CPLE_AppDefined, "Unexpected undefined columns");
+                CPLErrorInvalidPointer("columns");
                 return OGRERR_CORRUPT_DATA;
             }
             if (i >= columns->size()) {
-                CPLError(CE_Failure, CPLE_AppDefined, "Column index out of range");
+                CPLError(CE_Failure, CPLE_AppDefined, "Column index %hu out of range", i);
                 return OGRERR_CORRUPT_DATA;
             }
             const auto column = columns->Get(i);
@@ -915,41 +909,9 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 
 Offset<Feature> OGRFlatGeobufLayer::writeFeature(FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<uint8_t> &properties)
 {
-    std::vector<Offset<Geometry>> geometries;
-    std::vector<uint8_t> geometryTypes;
-    // TODO: see about generalizing this...
-    switch (m_geometryType) {
-        case GeometryType::CompoundCurve: {
-            auto compoundCurve = ogrGeometry->toCompoundCurve();
-            for (auto i = 0; i < compoundCurve->getNumCurves(); i++) {
-                auto gcPart = compoundCurve->getCurve(i);
-                auto eGType = gcPart->getGeometryType();
-                auto geometryType = translateOGRwkbGeometryType(eGType);
-                GeometryWriteContext gc { geometryType, m_hasZ, m_hasM };
-                geometries.push_back(writeGeometry(fbb, gcPart, gc));
-                geometryTypes.push_back((uint8_t) gc.geometryType);
-            }
-            break;
-        }
-        case GeometryType::GeometryCollection: {
-            auto geometryCollection = ogrGeometry->toGeometryCollection();
-            for (auto i = 0; i < geometryCollection->getNumGeometries(); i++) {
-                auto gcPart = geometryCollection->getGeometryRef(i);
-                auto eGType = gcPart->getGeometryType();
-                auto geometryType = translateOGRwkbGeometryType(eGType);
-                GeometryWriteContext gc { geometryType, m_hasZ, m_hasM };
-                geometries.push_back(writeGeometry(fbb, gcPart, gc));
-                geometryTypes.push_back((uint8_t) gc.geometryType);
-            }
-            break;
-        }
-        default:
-            GeometryWriteContext gc { m_geometryType, m_hasZ, m_hasM };
-            auto geometryOffset = writeGeometry(fbb, ogrGeometry, gc);
-            if (!geometryOffset.IsNull())
-                geometries.push_back(geometryOffset);
-    }
-    const auto feature = CreateFeatureDirect(fbb, &geometries, &properties, &geometryTypes);
+    GeometryWriteContext gc { m_geometryType, m_hasZ, m_hasM };
+    auto geometryOffset = writeGeometry(fbb, ogrGeometry, gc);
+    const auto feature = CreateFeatureDirect(fbb, geometryOffset, &properties);
     return feature;
 }
 
@@ -999,4 +961,3 @@ void OGRFlatGeobufLayer::ResetReading()
     m_ignoreAttributeFilter = false;
     return;
 }
-

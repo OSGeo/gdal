@@ -190,8 +190,6 @@ def test_ogr_flatgeobuf_2():
     else:
         assert c == 5
 
-
-
     # check that ResetReading does not affect subsequent enumeration or filtering
     num = len(list([x for x in fgb_lyr]))
     if ogrtest.have_geos():
@@ -281,7 +279,6 @@ def test_ogr_flatgeobuf_3():
 
 # Run test_ogrsf
 def test_ogr_flatgeobuf_8():
-
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()

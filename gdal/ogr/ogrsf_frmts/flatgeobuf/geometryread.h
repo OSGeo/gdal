@@ -49,7 +49,6 @@ OGRMultiLineString *readMultiLineString(GeometryReadContext &gc);
 OGRPolygon *readPolygon(GeometryReadContext &gc);
 OGRMultiPolygon *readMultiPolygon(GeometryReadContext &gc);
 OGRGeometry *readGeometry(GeometryReadContext &gc);
-OGRGeometry *readGeometry(const FlatGeobuf::Feature *feature, GeometryReadContext &gc);
 
 template <class T>
 T *readSimpleCurve(GeometryReadContext &gc, bool halfLength = false)
