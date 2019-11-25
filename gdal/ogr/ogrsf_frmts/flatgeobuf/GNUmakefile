@@ -2,7 +2,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=  geometryread.o geometrywrite.o ogrflatgeobufdataset.o ogrflatgeobuflayer.o packedrtree.o
+OBJ	=  geometryreader.o geometrywrite.o ogrflatgeobufdataset.o ogrflatgeobuflayer.o packedrtree.o
 
 CPPFLAGS	:=	-I. -I.. -I../..  $(CPPFLAGS)
 

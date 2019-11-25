@@ -1,5 +1,5 @@
 
-OBJ =	geometryread.obj geometrywrite.obj ogrflatgeobufdataset.obj ogrflatgeobuflayer.obj packedrtree.obj
+OBJ =	geometryreader.obj geometrywrite.obj ogrflatgeobufdataset.obj ogrflatgeobuflayer.obj packedrtree.obj
 EXTRAFLAGS =	-I. -I.. -I..\..
 
 GDAL_ROOT	=	..\..\..

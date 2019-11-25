@@ -29,7 +29,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
 
-#include "geometryread.h"
+#include "geometryreader.h"
 #include "cplerrors.h"
 #include "ogr_flatgeobuf.h"
 
@@ -42,61 +42,61 @@ static std::nullptr_t CPLErrorInvalidLength(const char *message) {
     return nullptr;
 };
 
-OGRPoint *ogr_flatgeobuf::readPoint(GeometryReadContext &gc)
+OGRPoint *GeometryReader::readPoint()
 {
-    const auto xy = gc.geometry->xy();
-    const auto offsetXy = gc.offset * 2;
+    const auto xy = m_geometry->xy();
+    const auto offsetXy = m_offset * 2;
     const auto aXy = xy->data();
     if (offsetXy >= xy->size())
         return CPLErrorInvalidLength("XY data");
-    if (gc.hasZ) {
-        const auto z = gc.geometry->z();
+    if (m_hasZ) {
+        const auto z = m_geometry->z();
         if (z == nullptr)
             return CPLErrorInvalidPointer("Z data");
-        if (gc.offset >= z->size())
+        if (m_offset >= z->size())
             return CPLErrorInvalidLength("Z data");
         const auto aZ = z->data();
-        if (gc.hasM) {
-            const auto pM = gc.geometry->m();
+        if (m_hasM) {
+            const auto pM = m_geometry->m();
             if (pM == nullptr)
                 return CPLErrorInvalidPointer("M data");
-            if (gc.offset >= pM->size())
+            if (m_offset >= pM->size())
                 return CPLErrorInvalidLength("M data");
             const auto aM = pM->data();
             return new OGRPoint { flatbuffers::EndianScalar(aXy[offsetXy + 0]),
                                   flatbuffers::EndianScalar(aXy[offsetXy + 1]),
-                                  flatbuffers::EndianScalar(aZ[gc.offset]),
-                                  flatbuffers::EndianScalar(aM[gc.offset]) };
+                                  flatbuffers::EndianScalar(aZ[m_offset]),
+                                  flatbuffers::EndianScalar(aM[m_offset]) };
         } else {
             return new OGRPoint { flatbuffers::EndianScalar(aXy[offsetXy + 0]),
                                   flatbuffers::EndianScalar(aXy[offsetXy + 1]),
-                                  flatbuffers::EndianScalar(aZ[gc.offset]) };
+                                  flatbuffers::EndianScalar(aZ[m_offset]) };
         }
-    } else if (gc.hasM) {
-        const auto pM = gc.geometry->m();
+    } else if (m_hasM) {
+        const auto pM = m_geometry->m();
         if (pM == nullptr)
             return CPLErrorInvalidPointer("M data");
-        if (gc.offset >= pM->size())
+        if (m_offset >= pM->size())
             return CPLErrorInvalidLength("M data");
         const auto aM = pM->data();
         return OGRPoint::createXYM( flatbuffers::EndianScalar(aXy[offsetXy + 0]),
                                     flatbuffers::EndianScalar(aXy[offsetXy + 1]),
-                                    flatbuffers::EndianScalar(aM[gc.offset]) );
+                                    flatbuffers::EndianScalar(aM[m_offset]) );
     } else {
         return new OGRPoint { flatbuffers::EndianScalar(aXy[offsetXy + 0]),
                               flatbuffers::EndianScalar(aXy[offsetXy + 1]) };
     }
 }
 
-OGRMultiPoint *ogr_flatgeobuf::readMultiPoint(GeometryReadContext &gc)
+OGRMultiPoint *GeometryReader::readMultiPoint()
 {
-    gc.length = gc.length / 2;
-    if (gc.length >= feature_max_buffer_size)
+    m_length = m_length / 2;
+    if (m_length >= feature_max_buffer_size)
         return CPLErrorInvalidLength("MultiPoint");
     const auto mp = new OGRMultiPoint();
-    for (uint32_t i = 0; i < gc.length; i++) {
-        gc.offset = i;
-        const auto p = readPoint(gc);
+    for (uint32_t i = 0; i < m_length; i++) {
+        m_offset = i;
+        const auto p = readPoint();
         if (p == nullptr) {
             delete mp;
             return nullptr;
@@ -107,42 +107,42 @@ OGRMultiPoint *ogr_flatgeobuf::readMultiPoint(GeometryReadContext &gc)
     return mp;
 }
 
-OGRMultiLineString *ogr_flatgeobuf::readMultiLineString(GeometryReadContext &gc)
+OGRMultiLineString *GeometryReader::readMultiLineString()
 {
-    const auto pEnds = gc.geometry->ends();
+    const auto pEnds = m_geometry->ends();
     if (pEnds == nullptr)
         return CPLErrorInvalidPointer("MultiLineString ends data");
     const auto mls = new OGRMultiLineString();
-    gc.offset = 0;
+    m_offset = 0;
     for (uint32_t i = 0; i < pEnds->size(); i++) {
         const auto e = pEnds->Get(i);
-        if (e < gc.offset) {
+        if (e < m_offset) {
             delete mls;
             return CPLErrorInvalidLength("MultiLineString");
         }
-        gc.length = e - gc.offset;
-        const auto ls = readSimpleCurve<OGRLineString>(gc);
+        m_length = e - m_offset;
+        const auto ls = readSimpleCurve<OGRLineString>();
         if (ls == nullptr) {
             delete mls;
             return nullptr;
         }
         mls->addGeometryDirectly(ls);
-        gc.offset = e;
+        m_offset = e;
     }
     return mls;
 }
 
-OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *sc)
+OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
 {
-    if (gc.offset > feature_max_buffer_size || gc.length > feature_max_buffer_size - gc.offset)
+    if (m_offset > feature_max_buffer_size || m_length > feature_max_buffer_size - m_offset)
         return CPLErrorInvalidSize("curve offset max");
-    const uint32_t offsetLen = gc.length + gc.offset;
-    if (offsetLen > gc.geometry->xy()->size() / 2)
+    const uint32_t offsetLen = m_length + m_offset;
+    if (offsetLen > m_geometry->xy()->size() / 2)
         return CPLErrorInvalidSize("curve XY offset");
-    const auto aXy = gc.geometry->xy()->data();
-    const auto ogrXY = reinterpret_cast<const OGRRawPoint *>(aXy) + gc.offset;
-    if (gc.hasZ) {
-        const auto pZ = gc.geometry->z();
+    const auto aXy = m_geometry->xy()->data();
+    const auto ogrXY = reinterpret_cast<const OGRRawPoint *>(aXy) + m_offset;
+    if (m_hasZ) {
+        const auto pZ = m_geometry->z();
         if (pZ == nullptr) {
             CPLErrorInvalidPointer("Z data");
             return OGRERR_CORRUPT_DATA;
@@ -150,8 +150,8 @@ OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *
         if (offsetLen > pZ->size())
             return CPLErrorInvalidSize("curve Z offset");
         const auto aZ = pZ->data();
-        if (gc.hasM) {
-            const auto pM = gc.geometry->m();
+        if (m_hasM) {
+            const auto pM = m_geometry->m();
             if (pM == nullptr) {
                 CPLErrorInvalidPointer("M data");
                 return OGRERR_CORRUPT_DATA;
@@ -160,7 +160,7 @@ OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *
                 return CPLErrorInvalidSize("curve M offset");
             const auto aM = pM->data();
 #if CPL_IS_LSB
-            sc->setPoints(gc.length, ogrXY, aZ + gc.offset, aM + gc.offset);
+            sc->setPoints(m_length, ogrXY, aZ + m_offset, aM + m_offset);
 #else
             sc->setNumPoints(len, false);
             for( uint32_t i = 0; i < len; i++ )
@@ -174,7 +174,7 @@ OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *
 #endif
         } else {
 #if CPL_IS_LSB
-            sc->setPoints(gc.length, ogrXY, aZ + gc.offset);
+            sc->setPoints(m_length, ogrXY, aZ + m_offset);
 #else
             sc->setNumPoints(len, false);
             for( uint32_t i = 0; i < len; i++ )
@@ -186,8 +186,8 @@ OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *
             }
 #endif
         }
-    } else if (gc.hasM) {
-        const auto pM = gc.geometry->m();
+    } else if (m_hasM) {
+        const auto pM = m_geometry->m();
         if (pM == nullptr) {
             CPLErrorInvalidPointer("M data");
             return OGRERR_CORRUPT_DATA;
@@ -196,7 +196,7 @@ OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *
             return CPLErrorInvalidSize("curve M offset");
         const auto aM = pM->data();
 #if CPL_IS_LSB
-        sc->setPointsM(gc.length, ogrXY, aM + gc.offset);
+        sc->setPointsM(m_length, ogrXY, aM + m_offset);
 #else
             sc->setNumPoints(len, false);
             for( uint32_t i = 0; i < len; i++ )
@@ -209,7 +209,7 @@ OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *
 #endif
     } else {
 #if CPL_IS_LSB
-        sc->setPoints(gc.length, ogrXY);
+        sc->setPoints(m_length, ogrXY);
 #else
         sc->setNumPoints(len, false);
         for( uint32_t i = 0; i < len; i++ )
@@ -223,13 +223,13 @@ OGRErr ogr_flatgeobuf::readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *
     return OGRERR_NONE;
 }
 
-OGRPolygon *ogr_flatgeobuf::readPolygon(GeometryReadContext &gc)
+OGRPolygon *GeometryReader::readPolygon()
 {
-    const auto pEnds = gc.geometry->ends();
+    const auto pEnds = m_geometry->ends();
     const auto p = new OGRPolygon();
     if (pEnds == nullptr || pEnds->size() < 2) {
-        gc.length = gc.length / 2;
-        const auto lr = readSimpleCurve<OGRLinearRing>(gc);
+        m_length = m_length / 2;
+        const auto lr = readSimpleCurve<OGRLinearRing>();
         if (lr == nullptr) {
             delete p;
             return nullptr;
@@ -238,13 +238,13 @@ OGRPolygon *ogr_flatgeobuf::readPolygon(GeometryReadContext &gc)
     } else {
         for (uint32_t i = 0; i < pEnds->size(); i++) {
             const auto e = pEnds->Get(i);
-            if (e < gc.offset) {
+            if (e < m_offset) {
                 delete p;
                 return CPLErrorInvalidLength("Polygon");
             }
-            gc.length = e - gc.offset;
-            const auto lr = readSimpleCurve<OGRLinearRing>(gc);
-            gc.offset = e;
+            m_length = e - m_offset;
+            const auto lr = readSimpleCurve<OGRLinearRing>();
+            m_offset = e;
             if (lr == nullptr)
                 continue;
             p->addRingDirectly(lr);
@@ -257,25 +257,25 @@ OGRPolygon *ogr_flatgeobuf::readPolygon(GeometryReadContext &gc)
     return p;
 }
 
-OGRMultiPolygon *ogr_flatgeobuf::readMultiPolygon(GeometryReadContext &gc)
+OGRMultiPolygon *GeometryReader::readMultiPolygon()
 {
-    auto parts = gc.geometry->parts();
+    auto parts = m_geometry->parts();
     auto partsLength = parts->Length();
     const auto mp = new OGRMultiPolygon();
     for (uoffset_t i = 0; i < partsLength; i++) {
         auto part = parts->Get(i);
-        GeometryReadContext gcPart { part, GeometryType::Polygon, gc.hasZ, gc.hasM };
-        auto poOGRPolygon = readGeometry(gcPart)->toPolygon();
+        GeometryReader reader { part, GeometryType::Polygon, m_hasZ, m_hasM };
+        auto poOGRPolygon = reader.read()->toPolygon();
         mp->addGeometry(poOGRPolygon);
     }
     return mp;
 }
 
-static OGRTriangle *readTriangle(GeometryReadContext &gc)
+OGRTriangle *GeometryReader::readTriangle()
 {
     const auto t = new OGRTriangle();
-    gc.length = gc.length / 2;
-    const auto lr = readSimpleCurve<OGRLinearRing>(gc);
+    m_length = m_length / 2;
+    const auto lr = readSimpleCurve<OGRLinearRing>();
     if (lr == nullptr) {
         delete t;
         return nullptr;
@@ -284,62 +284,62 @@ static OGRTriangle *readTriangle(GeometryReadContext &gc)
     return t;
 }
 
-OGRGeometry *ogr_flatgeobuf::readGeometry(GeometryReadContext &gc)
+OGRGeometry *GeometryReader::read()
 {
-    switch (gc.geometryType) {
+    switch (m_geometryType) {
         case GeometryType::CompoundCurve: {
-            auto parts = gc.geometry->parts();
+            auto parts = m_geometry->parts();
             auto partsLength = parts->Length();
             auto compoundCurve = new OGRCompoundCurve();
             for (uoffset_t i = 0; i < partsLength; i++) {
                 auto part = parts->Get(i);
                 auto type = part->type();
-                GeometryReadContext gcPart { part, type, gc.hasZ, gc.hasM };
-                auto poOGRGeometryPart = readGeometry(gcPart);
+                GeometryReader reader { part, type, m_hasZ, m_hasM };
+                auto poOGRGeometryPart = reader.read();
                 compoundCurve->addCurveDirectly(poOGRGeometryPart->toCurve());
             }
             return compoundCurve;
         }
         case GeometryType::GeometryCollection: {
-            auto parts = gc.geometry->parts();
+            auto parts = m_geometry->parts();
             auto partsLength = parts->Length();
             auto geometryCollection = new OGRGeometryCollection();
             for (uoffset_t i = 0; i < partsLength; i++) {
                 auto part = parts->Get(i);
                 auto type = part->type();
-                GeometryReadContext gcPart { part, type, gc.hasZ, gc.hasM };
-                auto poOGRGeometryPart = readGeometry(gcPart);
+                GeometryReader reader { part, type, m_hasZ, m_hasM };
+                auto poOGRGeometryPart = reader.read();
                 geometryCollection->addGeometryDirectly(poOGRGeometryPart);
             }
             return geometryCollection;
         }
-        case GeometryType::MultiPolygon: return readMultiPolygon(gc);
+        case GeometryType::MultiPolygon: return readMultiPolygon();
         default: break;
     }
 
-    const auto pXy = gc.geometry->xy();
+    const auto pXy = m_geometry->xy();
     if (pXy == nullptr)
         return CPLErrorInvalidPointer("XY data");
-    if (gc.hasZ && gc.geometry->z() == nullptr)
+    if (m_hasZ && m_geometry->z() == nullptr)
         return CPLErrorInvalidPointer("Z data");
-    if (gc.hasM && gc.geometry->m() == nullptr)
+    if (m_hasM && m_geometry->m() == nullptr)
         return CPLErrorInvalidPointer("M data");
     const auto xySize = pXy->size();
     if (xySize >= (feature_max_buffer_size / sizeof(OGRRawPoint)))
         return CPLErrorInvalidLength("XY data");
-    gc.length = xySize;
-    switch (gc.geometryType) {
-        case GeometryType::Point: return readPoint(gc);
-        case GeometryType::MultiPoint: return readMultiPoint(gc);
-        case GeometryType::LineString: return readSimpleCurve<OGRLineString>(gc, true);
-        case GeometryType::MultiLineString: return readMultiLineString(gc);
-        case GeometryType::Polygon: return readPolygon(gc);
-        case GeometryType::CircularString: return readSimpleCurve<OGRCircularString>(gc, true);
-        case GeometryType::PolyhedralSurface: return readMultiPolygon(gc);
-        case GeometryType::TIN: return readMultiPolygon(gc);
-        case GeometryType::Triangle: return readTriangle(gc);
+    m_length = xySize;
+    switch (m_geometryType) {
+        case GeometryType::Point: return readPoint();
+        case GeometryType::MultiPoint: return readMultiPoint();
+        case GeometryType::LineString: return readSimpleCurve<OGRLineString>(true);
+        case GeometryType::MultiLineString: return readMultiLineString();
+        case GeometryType::Polygon: return readPolygon();
+        case GeometryType::CircularString: return readSimpleCurve<OGRCircularString>(true);
+        case GeometryType::PolyhedralSurface: return readMultiPolygon();
+        //case GeometryType::TIN: return readMultiPolygon();
+        case GeometryType::Triangle: return readTriangle();
         default:
-            CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) gc.geometryType);
+            CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
     }
     return nullptr;
 }

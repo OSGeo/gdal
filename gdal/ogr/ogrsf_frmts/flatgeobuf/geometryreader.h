@@ -26,43 +26,57 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef FLATGEOBUF_GEOMETRYREAD_H_INCLUDED
-#define FLATGEOBUF_GEOMETRYREAD_H_INCLUDED
+#ifndef FLATGEOBUF_GEOMETRYREADER_H_INCLUDED
+#define FLATGEOBUF_GEOMETRYREADER_H_INCLUDED
 
 #include "feature_generated.h"
+#include "ogr_p.h"
 
 namespace ogr_flatgeobuf {
 
-struct GeometryReadContext {
-    const FlatGeobuf::Geometry *geometry;
-    FlatGeobuf::GeometryType geometryType;
-    bool hasZ;
-    bool hasM;
-    uint32_t length;
-    uint32_t offset;
-};
+class GeometryReader {
+    private:
+        const FlatGeobuf::Geometry *m_geometry;
+        FlatGeobuf::GeometryType m_geometryType;
+        bool m_hasZ;
+        bool m_hasM;
+        uint32_t m_length = 0;
+        uint32_t m_offset = 0;
 
-OGRPoint *readPoint(GeometryReadContext &gc);
-OGRMultiPoint *readMultiPoint(GeometryReadContext &gc);
-OGRErr readSimpleCurve(GeometryReadContext &gc, OGRSimpleCurve *c);
-OGRMultiLineString *readMultiLineString(GeometryReadContext &gc);
-OGRPolygon *readPolygon(GeometryReadContext &gc);
-OGRMultiPolygon *readMultiPolygon(GeometryReadContext &gc);
-OGRGeometry *readGeometry(GeometryReadContext &gc);
+        OGRPoint *readPoint();
+        OGRMultiPoint *readMultiPoint();
+        OGRErr readSimpleCurve(OGRSimpleCurve *c);
+        OGRMultiLineString *readMultiLineString();
+        OGRPolygon *readPolygon();
+        OGRMultiPolygon *readMultiPolygon();
+        OGRTriangle *readTriangle();
 
-template <class T>
-T *readSimpleCurve(GeometryReadContext &gc, bool halfLength = false)
-{
-    if (halfLength)
-        gc.length = gc.length / 2;
-    const auto csc = new T();
-    if (readSimpleCurve(gc, csc) != OGRERR_NONE) {
-        delete csc;
-        return nullptr;
-    }
-    return csc;
+        template <class T>
+        T *readSimpleCurve(bool halfLength = false)
+        {
+            if (halfLength)
+                m_length = m_length / 2;
+            const auto csc = new T();
+            if (readSimpleCurve(csc) != OGRERR_NONE) {
+                delete csc;
+                return nullptr;
+            }
+            return csc;
+        };
+    public:
+        GeometryReader(
+            const FlatGeobuf::Geometry *geometry,
+            FlatGeobuf::GeometryType geometryType,
+            bool hasZ,
+            bool hasM) :
+            m_geometry (geometry),
+            m_geometryType (geometryType),
+            m_hasZ (hasZ),
+            m_hasM (hasM)
+            { }
+        OGRGeometry *read();
 };
 
 }
 
-#endif /* ndef FLATGEOBUF_GEOMETRYREAD_H_INCLUDED */
+#endif /* ndef FLATGEOBUF_GEOMETRYREADER_H_INCLUDED */
