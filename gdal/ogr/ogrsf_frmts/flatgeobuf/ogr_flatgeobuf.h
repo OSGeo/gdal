@@ -117,7 +117,6 @@ class OGRFlatGeobufLayer final : public OGRLayer
         // serialize
         void Create();
         void writeHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector);
-        flatbuffers::Offset<FlatGeobuf::Feature> writeFeature(flatbuffers::FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<uint8_t> &properties);
 
         OGRwkbGeometryType getOGRwkbGeometryType();
     public:

@@ -637,15 +637,16 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
             return OGRERR_CORRUPT_DATA;
         }
+// #ifdef DEBUG
+//             char *wkt;
+//             poOGRGeometry->exportToWkt(&wkt);
+//             CPLDebug("FlatGeobuf", "readGeometry as wkt: %s", wkt);
+// #endif
         if (m_poSRS != nullptr)
             poOGRGeometry->assignSpatialReference(m_poSRS);
         poFeature->SetGeometryDirectly(poOGRGeometry);
     }
-    #ifdef DEBUG
-        //char *wkt;
-        //ogrGeometry->exportToWkt(&wkt);
-        //CPLDebug("FlatGeobuf", "readGeometry as wkt: %s", wkt);
-    #endif
+
     const auto properties = feature->properties();
     if (properties != nullptr) {
         const auto data = properties->data();
@@ -870,7 +871,9 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         return OGRERR_FAILURE;
     }
 
-    const auto feature = writeFeature(fbb, ogrGeometry, properties);
+    GeometryWriter writer { fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM };
+    auto geometryOffset = writer.write();
+    const auto feature = CreateFeatureDirect(fbb, geometryOffset, &properties);
     fbb.FinishSizePrefixed(feature);
 
     OGREnvelope psEnvelope;
@@ -905,14 +908,6 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     m_featuresCount++;
 
     return OGRERR_NONE;
-}
-
-Offset<Feature> OGRFlatGeobufLayer::writeFeature(FlatBufferBuilder &fbb, OGRGeometry *ogrGeometry, std::vector<uint8_t> &properties)
-{
-    GeometryWriter writer { fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM };
-    auto geometryOffset = writer.write();
-    const auto feature = CreateFeatureDirect(fbb, geometryOffset, &properties);
-    return feature;
 }
 
 OGRErr OGRFlatGeobufLayer::GetExtent(OGREnvelope* psExtent, int bForce)
