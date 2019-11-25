@@ -7326,7 +7326,7 @@ OGRErr OGRSpatialReference::SetVerticalPerspective( double dfTopoOriginLat,
                                                     double dfFalseEasting,
                                                     double dfFalseNorthing )
 {
-#if PROJ_VERSION_MAJOR >= 7
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     return d->replaceConversionAndUnref(
         proj_create_conversion_vertical_perspective(
             d->getPROJContext(),
@@ -11130,15 +11130,11 @@ void OGRSpatialReference::UpdateCoordinateSystemFromGeogCRS()
  *
  * @param pszName New name for the CRS. If set to NULL, the previous name will be used.
  * @return OGRERR_NONE if no error occurred.
- * @since GDAL 3.1 and PROJ 7.0
+ * @since GDAL 3.1 and PROJ 6.3
  */
 OGRErr OGRSpatialReference::PromoteTo3D(const char* pszName)
 {
-#if PROJ_VERSION_MAJOR < 7
-    CPL_IGNORE_RET_VAL(pszName);
-    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 7 required");
-    return OGRERR_UNSUPPORTED_OPERATION;
-#else
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     d->refreshProjObj();
     if( !d->m_pj_crs )
         return OGRERR_FAILURE;
@@ -11147,6 +11143,10 @@ OGRErr OGRSpatialReference::PromoteTo3D(const char* pszName)
         return OGRERR_FAILURE;
     d->setPjCRS(newPj);
     return OGRERR_NONE;
+#else
+    CPL_IGNORE_RET_VAL(pszName);
+    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 6.3 required");
+    return OGRERR_UNSUPPORTED_OPERATION;
 #endif
 }
 
@@ -11158,7 +11158,7 @@ OGRErr OGRSpatialReference::PromoteTo3D(const char* pszName)
  *
  * See OGRSpatialReference::PromoteTo3D()
  *
- * @since GDAL 3.1 and PROJ 7.0
+ * @since GDAL 3.1 and PROJ 6.3
  */
 OGRErr OSRPromoteTo3D( OGRSpatialReferenceH hSRS, const char* pszName  )
 {
