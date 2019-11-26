@@ -6,6 +6,8 @@ OZI -- OZF2/OZFX3 raster
 
 .. shortname:: OZI
 
+.. built_in_by_default:: 
+
 GDAL supports reading OZF2/OZFX3 raster datasets.
 
 Either the image file or the .map file can be passed to GDAL. To

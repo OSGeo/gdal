@@ -6,6 +6,8 @@ Terragen -- Terragen™ Terrain File
 
 .. shortname:: Terragen
 
+.. built_in_by_default::
+
 Terragen terrain files store 16-bit elevation values with optional
 gridspacing (but not positioning). The file extension for Terragen
 heightfields is "TER" or "TERRAIN" (which in the former case is the same

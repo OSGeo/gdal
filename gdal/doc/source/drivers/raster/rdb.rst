@@ -8,6 +8,8 @@ RDB - *RIEGL* Database
 
 .. versionadded:: 3.1
 
+.. build_dependencies:: rdblib >= 2.2.0.
+
 GDAL can read \*.mpx files in the RDB format, the in-house format used by `RIEGL Laser Measurement Systems GmbH <http://www.riegl.com>`__ through the RDB library.
 
 The driver relies on the RDB library, which can be downloaded `here <http://riegl.com/members-area/>`__. The minimum version required of the rdblib is 2.2.0.

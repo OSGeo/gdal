@@ -8,6 +8,8 @@ COG -- Cloud Optimized GeoTIFF generator
 
 .. shortname:: COG
 
+.. built_in_by_default:: 
+
 This driver supports the creation of Cloud Optimized GeoTIFF (COG)
 
 It essentially relies upon the :ref:`raster.gtiff` driver with the

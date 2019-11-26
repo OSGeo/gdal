@@ -6,6 +6,8 @@ MSG -- Meteosat Second Generation
 
 .. shortname:: MSG
 
+.. build_dependencies:: msg library
+
 This driver implements reading support for Meteosat Second Generation
 files. These are files with names like
 H-000-MSG1\_\_-MSG1\_\_\_\_\_\_\_\_-HRV\_\_\_\_\_\_-000007\_\_\_-200405311115-C\_, commonly

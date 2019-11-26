@@ -6,6 +6,8 @@ USGSDEM -- USGS ASCII DEM (and CDED)
 
 .. shortname:: USGSDEM
 
+.. built_in_by_default::
+
 GDAL includes support for reading USGS ASCII DEM files. This is the
 traditional format used by USGS before being replaced by SDTS, and is
 the format used for CDED DEM data products from the Canada. Most popular

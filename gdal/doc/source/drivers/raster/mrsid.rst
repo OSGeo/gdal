@@ -6,6 +6,8 @@ MrSID -- Multi-resolution Seamless Image Database
 
 .. shortname:: MrSID
 
+.. build_dependencies:: MrSID SDK
+
 MrSID is a wavelet-based image compression technology which can utilize
 both lossy and lossless encoding. This technology was acquired in its
 original form from Los Alamos National Laboratories (LANL), where it was

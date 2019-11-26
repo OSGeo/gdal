@@ -8,6 +8,8 @@ TileDB - TileDB
 
 .. versionadded:: 3.0
 
+.. build_dependencies:: TileDB
+
 GDAL can read and write TileDB arrays through the TileDB library.
 
 The driver relies on the Open Source TileDB

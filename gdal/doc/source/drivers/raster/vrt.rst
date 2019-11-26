@@ -6,6 +6,8 @@ VRT -- GDAL Virtual Format
 
 .. shortname:: VRT
 
+.. built_in_by_default::
+
 Introduction
 ------------
 

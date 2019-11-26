@@ -8,6 +8,8 @@ RDA (DigitalGlobe Raster Data Access)
 
 .. versionadded:: 2.3
 
+.. build_dependencies:: libcurl
+
 This driver can connect to DigitalGlobe RDA REST API. GDAL/OGR must be
 built with Curl support in order for the RDA driver to be compiled.
 

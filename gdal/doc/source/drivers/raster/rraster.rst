@@ -8,6 +8,8 @@ RRASTER -- R Raster
 
 .. versionadded:: 2.2
 
+.. built_in_by_default::
+
 This is a read-only reader for the datasets handled by the `R Raster
 package <https://cran.r-project.org/web/packages/raster/index.html>`__.
 Those datasets are made of a .grd file, which is a text header file, and

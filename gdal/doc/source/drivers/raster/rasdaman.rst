@@ -6,6 +6,8 @@ Rasdaman GDAL driver
 
 .. shortname:: Rasdaman
 
+.. build_dependencies:: raslib
+
 Rasdaman is a raster database middleware offering an SQL-style query
 language on multi-dimensional arrays of unlimited size, stored in a
 relational database. See `www.rasdaman.org <http://www.rasdaman.org>`__

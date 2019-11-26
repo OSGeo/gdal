@@ -6,6 +6,8 @@ R -- R Object Data Store
 
 .. shortname:: R
 
+.. built_in_by_default::
+
 The R Object File Format is supported for write access, and limited read
 access by GDAL. This format is the native format R uses for objects
 saved with the *save* command and loaded with the *load* command. GDAL

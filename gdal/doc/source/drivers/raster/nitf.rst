@@ -6,6 +6,8 @@ NITF -- National Imagery Transmission Format
 
 .. shortname:: NITF
 
+.. built_in_by_default::
+
 .. toctree::
    :maxdepth: 1
    :hidden:
