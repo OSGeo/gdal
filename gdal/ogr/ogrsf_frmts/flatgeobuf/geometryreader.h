@@ -51,6 +51,7 @@ class GeometryReader {
         OGRMultiPolygon *readMultiPolygon();
         OGRGeometryCollection *readGeometryCollection();
         OGRCompoundCurve *readCompoundCurve();
+        OGRCurvePolygon *readCurvePolygon();
         OGRTriangle *readTriangle();
 
         template <class T>
@@ -73,6 +74,15 @@ class GeometryReader {
             bool hasM) :
             m_geometry (geometry),
             m_geometryType (geometryType),
+            m_hasZ (hasZ),
+            m_hasM (hasM)
+            { }
+        GeometryReader(
+            const FlatGeobuf::Geometry *geometry,
+            bool hasZ,
+            bool hasM) :
+            m_geometry (geometry),
+            m_geometryType (geometry->type()),
             m_hasZ (hasZ),
             m_hasM (hasM)
             { }

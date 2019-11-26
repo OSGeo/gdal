@@ -54,8 +54,9 @@ class GeometryWriter {
         void writeMultiLineString(OGRMultiLineString *mls);
         void writePolygon(OGRPolygon *p);
         flatbuffers::Offset<FlatGeobuf::Geometry> writeMultiPolygon(OGRMultiPolygon *mp);
-        flatbuffers::Offset<FlatGeobuf::Geometry> writeGeometryCollection(OGRGeometryCollection *ogrGC);
+        flatbuffers::Offset<FlatGeobuf::Geometry> writeGeometryCollection(OGRGeometryCollection *gc);
         flatbuffers::Offset<FlatGeobuf::Geometry> writeCompoundCurve(OGRCompoundCurve *cc);
+        flatbuffers::Offset<FlatGeobuf::Geometry> writeCurvePolygon(OGRCurvePolygon *cp);
         //void writePolyhedralSurface(OGRPolyhedralSurface *mp, GeometryWriteContext &gc);
 
     public:
@@ -68,6 +69,17 @@ class GeometryWriter {
             m_fbb (fbb),
             m_ogrGeometry (ogrGeometry),
             m_geometryType (geometryType),
+            m_hasZ (hasZ),
+            m_hasM (hasM)
+            { }
+        GeometryWriter(
+            flatbuffers::FlatBufferBuilder &fbb,
+            OGRGeometry *ogrGeometry,
+            bool hasZ,
+            bool hasM) :
+            m_fbb (fbb),
+            m_ogrGeometry (ogrGeometry),
+            m_geometryType (GeometryWriter::translateOGRwkbGeometryType(ogrGeometry->getGeometryType())),
             m_hasZ (hasZ),
             m_hasM (hasM)
             { }

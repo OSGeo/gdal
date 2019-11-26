@@ -86,10 +86,7 @@ void GeometryWriter::writeMultiLineString(OGRMultiLineString *mls)
     uint32_t e = 0;
     const auto numGeometries = mls->getNumGeometries();
     for (int i = 0; i < numGeometries; i++)
-    {
-        e += writeSimpleCurve(mls->getGeometryRef(i)->toLineString());
-        m_ends.push_back(e);
-    }
+        m_ends.push_back(e += writeSimpleCurve(mls->getGeometryRef(i)->toLineString()));
 }
 
 void GeometryWriter::writePolygon(OGRPolygon *p)
@@ -97,13 +94,11 @@ void GeometryWriter::writePolygon(OGRPolygon *p)
     const auto exteriorRing = p->getExteriorRing();
     const auto numInteriorRings = p->getNumInteriorRings();
     uint32_t e = writeSimpleCurve(exteriorRing);
+    // NOTE: do not have to write ends if only exterior ring
     if (numInteriorRings > 0) {
         m_ends.push_back(e);
         for (int i = 0; i < numInteriorRings; i++)
-        {
-            e += writeSimpleCurve(p->getInteriorRing(i));
-            m_ends.push_back(e);
-        }
+            m_ends.push_back(e += writeSimpleCurve(p->getInteriorRing(i)));
     }
 }
 
@@ -118,27 +113,37 @@ Offset<Geometry> GeometryWriter::writeMultiPolygon(OGRMultiPolygon *mp)
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-Offset<Geometry> GeometryWriter::writeCompoundCurve(OGRCompoundCurve *cc)
+Offset<Geometry> GeometryWriter::writeGeometryCollection(OGRGeometryCollection *gc)
 {
     std::vector<Offset<Geometry>> parts;
-    for (int i = 0; i < cc->getNumCurves(); i++) {
-        const auto part = cc->getCurve(i);
-        const auto eGType = part->getGeometryType();
-        const auto geometryType = translateOGRwkbGeometryType(eGType);
-        GeometryWriter writer { m_fbb, part, geometryType, m_hasZ, m_hasM };
+    for (int i = 0; i < gc->getNumGeometries(); i++) {
+        auto part = gc->getGeometryRef(i);
+        GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
         parts.push_back(writer.write());
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-Offset<Geometry> GeometryWriter::writeGeometryCollection(OGRGeometryCollection *ogrGC)
+Offset<Geometry> GeometryWriter::writeCompoundCurve(OGRCompoundCurve *cc)
 {
     std::vector<Offset<Geometry>> parts;
-    for (int i = 0; i < ogrGC->getNumGeometries(); i++) {
-        auto part = ogrGC->getGeometryRef(i);
-        const auto eGType = part->getGeometryType();
-        const auto geometryType = translateOGRwkbGeometryType(eGType);
-        GeometryWriter writer { m_fbb, part, geometryType, m_hasZ, m_hasM };
+    for (int i = 0; i < cc->getNumCurves(); i++) {
+        const auto part = cc->getCurve(i);
+        GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
+        parts.push_back(writer.write());
+    }
+    return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
+}
+
+Offset<Geometry> GeometryWriter::writeCurvePolygon(OGRCurvePolygon *cp)
+{
+    std::vector<OGRCurve *> curves;
+    std::vector<Offset<Geometry>> parts;
+    curves.push_back(cp->getExteriorRingCurve());
+    for (int i = 0; i < cp->getNumInteriorRings(); i++)
+        curves.push_back(cp->getInteriorRingCurve(i));
+    for (auto curve : curves) {
+        GeometryWriter writer { m_fbb, curve, m_hasZ, m_hasM };
         parts.push_back(writer.write());
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
@@ -147,12 +152,6 @@ Offset<Geometry> GeometryWriter::writeGeometryCollection(OGRGeometryCollection *
 const Offset<Geometry> GeometryWriter::write()
 {
     switch (m_geometryType) {
-        case GeometryType::MultiPolygon:
-            return writeMultiPolygon(m_ogrGeometry->toMultiPolygon());
-        case GeometryType::GeometryCollection:
-            return writeGeometryCollection(m_ogrGeometry->toGeometryCollection());
-        case GeometryType::CompoundCurve:
-            return writeCompoundCurve(m_ogrGeometry->toCompoundCurve());
         case GeometryType::Point:
             writePoint(m_ogrGeometry->toPoint()); break;
         case GeometryType::MultiPoint:
@@ -163,6 +162,14 @@ const Offset<Geometry> GeometryWriter::write()
             writeMultiLineString(m_ogrGeometry->toMultiLineString()); break;
         case GeometryType::Polygon:
             writePolygon(m_ogrGeometry->toPolygon()); break;
+        case GeometryType::MultiPolygon:
+            return writeMultiPolygon(m_ogrGeometry->toMultiPolygon());
+        case GeometryType::GeometryCollection:
+            return writeGeometryCollection(m_ogrGeometry->toGeometryCollection());
+        case GeometryType::CompoundCurve:
+            return writeCompoundCurve(m_ogrGeometry->toCompoundCurve());
+        case GeometryType::CurvePolygon:
+            return writeCurvePolygon(m_ogrGeometry->toCurvePolygon());
         case GeometryType::CircularString:
             writeSimpleCurve(m_ogrGeometry->toCircularString()); break;
         //case GeometryType::PolyhedralSurface:
@@ -170,7 +177,7 @@ const Offset<Geometry> GeometryWriter::write()
             writePolygon(m_ogrGeometry->toTriangle()); break;
         //case GeometryType::TIN:
         default:
-            CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
+            CPLError(CE_Failure, CPLE_AppDefined, "GeometryWriter::write: Unknown type %d", (int) m_geometryType);
             return 0;
     }
     // TODO: only write m_geometryType if needed (heterogenous collections, depth > 0, feature specific type)

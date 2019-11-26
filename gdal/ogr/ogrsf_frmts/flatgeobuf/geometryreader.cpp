@@ -271,34 +271,42 @@ OGRMultiPolygon *GeometryReader::readMultiPolygon()
     return mp;
 }
 
-OGRCompoundCurve *GeometryReader::readCompoundCurve()
-{
-    auto parts = m_geometry->parts();
-    auto partsLength = parts->Length();
-    auto compoundCurve = new OGRCompoundCurve();
-    for (uoffset_t i = 0; i < partsLength; i++) {
-        auto part = parts->Get(i);
-        auto type = part->type();
-        GeometryReader reader { part, type, m_hasZ, m_hasM };
-        auto poOGRGeometryPart = reader.read();
-        compoundCurve->addCurveDirectly(poOGRGeometryPart->toCurve());
-    }
-    return compoundCurve;
-}
-
 OGRGeometryCollection *GeometryReader::readGeometryCollection()
 {
     auto parts = m_geometry->parts();
-    auto partsLength = parts->Length();
-    auto geometryCollection = new OGRGeometryCollection();
-    for (uoffset_t i = 0; i < partsLength; i++) {
+    auto gc = new OGRGeometryCollection();
+    for (uoffset_t i = 0; i < parts->Length(); i++) {
         auto part = parts->Get(i);
-        auto type = part->type();
-        GeometryReader reader { part, type, m_hasZ, m_hasM };
+        GeometryReader reader { part, m_hasZ, m_hasM };
         auto poOGRGeometryPart = reader.read();
-        geometryCollection->addGeometryDirectly(poOGRGeometryPart);
+        gc->addGeometryDirectly(poOGRGeometryPart);
     }
-    return geometryCollection;
+    return gc;
+}
+
+OGRCompoundCurve *GeometryReader::readCompoundCurve()
+{
+    auto parts = m_geometry->parts();
+    auto cc = new OGRCompoundCurve();
+    for (uoffset_t i = 0; i < parts->Length(); i++) {
+        auto part = parts->Get(i);
+        GeometryReader reader { part, m_hasZ, m_hasM };
+        auto poOGRGeometryPart = reader.read();
+        cc->addCurveDirectly(poOGRGeometryPart->toCurve());
+    }
+    return cc;
+}
+
+OGRCurvePolygon *GeometryReader::readCurvePolygon()
+{
+    auto parts = m_geometry->parts();
+    auto cp = new OGRCurvePolygon();
+    for (uoffset_t i = 0; i < parts->Length(); i++) {
+        auto part = parts->Get(i);
+        GeometryReader reader { part, m_hasZ, m_hasM };
+        cp->addRingDirectly(reader.read()->toCurve());
+    }
+    return cp;
 }
 
 OGRTriangle *GeometryReader::readTriangle()
@@ -316,13 +324,16 @@ OGRTriangle *GeometryReader::readTriangle()
 
 OGRGeometry *GeometryReader::read()
 {
+    // nested types
     switch (m_geometryType) {
-        case GeometryType::CompoundCurve: return readCompoundCurve();
         case GeometryType::GeometryCollection: return readGeometryCollection();
         case GeometryType::MultiPolygon: return readMultiPolygon();
+        case GeometryType::CompoundCurve: return readCompoundCurve();
+        case GeometryType::CurvePolygon: return readCurvePolygon();
         default: break;
     }
 
+    // if not nested must have geometry data
     const auto pXy = m_geometry->xy();
     if (pXy == nullptr)
         return CPLErrorInvalidPointer("XY data");
@@ -346,7 +357,7 @@ OGRGeometry *GeometryReader::read()
         //case GeometryType::TIN: return readMultiPolygon();
         case GeometryType::Triangle: return readTriangle();
         default:
-            CPLError(CE_Failure, CPLE_AppDefined, "readGeometry: Unknown FlatGeobuf::GeometryType %d", (int) m_geometryType);
+            CPLError(CE_Failure, CPLE_AppDefined, "GeometryReader::read: Unknown type %d", (int) m_geometryType);
     }
     return nullptr;
 }
