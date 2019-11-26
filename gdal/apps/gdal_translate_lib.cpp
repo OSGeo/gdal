@@ -593,7 +593,7 @@ static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
 /**
  * Converts raster data between different formats.
  *
- * This is the equivalent of the <a href="gdal_translate.html">gdal_translate</a> utility.
+ * This is the equivalent of the <a href="/programs/gdal_translate.html">gdal_translate</a> utility.
  *
  * GDALTranslateOptions* must be allocated and freed with GDALTranslateOptionsNew()
  * and GDALTranslateOptionsFree() respectively.
@@ -2214,7 +2214,7 @@ static int GetColorInterp( const char* pszStr )
  * Allocates a GDALTranslateOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="gdal_translate.html">gdal_translate</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdal_translate.html">gdal_translate</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALTranslateOptionsForBinaryNew() prior to this function. Will be

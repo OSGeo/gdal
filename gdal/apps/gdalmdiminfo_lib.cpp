@@ -858,7 +858,7 @@ static void WriteToStdout(const char* pszText, void*)
 /**
  * Lists various information about a GDAL multidimensional dataset.
  *
- * This is the equivalent of the gdalmdiminfo utility.
+ * This is the equivalent of the <a href="/programs/gdalmdiminfo.html">gdalmdiminfo</a>utility.
  *
  * GDALMultiDimInfoOptions* must be allocated and freed with GDALMultiDimInfoOptionsNew()
  * and GDALMultiDimInfoOptionsFree() respectively.
@@ -950,7 +950,7 @@ char *GDALMultiDimInfo( GDALDatasetH hDataset,
  * Allocates a GDALMultiDimInfo struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the gdalmdiminfo utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdalmdiminfo.html">gdalmdiminfo</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdalmultidiminfo_bin.cpp use case) must be allocated with
  *                           GDALMultiDimInfoOptionsForBinaryNew() prior to this function. Will be

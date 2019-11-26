@@ -1618,7 +1618,7 @@ static GDALDatasetH CopyToNonMultiDimensionalDriver(
 /**
  * Converts raster data between different formats.
  *
- * This is the equivalent of the gdalmdimtranslate utility.
+ * This is the equivalent of the <a href="/programs/gdalmdimtranslate.html">gdalmdimtranslate</a> utility.
  *
  * GDALMultiDimTranslateOptions* must be allocated and freed with GDALMultiDimTranslateOptionsNew()
  * and GDALMultiDimTranslateOptionsFree() respectively.
@@ -1784,7 +1784,7 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
  * Allocates a GDALMultiDimTranslateOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the gdalmdimtranslate utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdalmdimtranslate.html">gdalmdimtranslate</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdalmultidimtranslate_bin.cpp use case) must be allocated with
  *                           GDALTranslateOptionsForBinaryNew() prior to this function. Will be

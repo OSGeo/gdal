@@ -557,7 +557,7 @@ struct GDALRasterizeOptions
 /**
  * Burns vector geometries into a raster
  *
- * This is the equivalent of the <a href="gdal_rasterize.html">gdal_rasterize</a> utility.
+ * This is the equivalent of the <a href="/programs/gdal_rasterize.html">gdal_rasterize</a> utility.
  *
  * GDALRasterizeOptions* must be allocated and freed with GDALRasterizeOptionsNew()
  * and GDALRasterizeOptionsFree() respectively.
@@ -808,7 +808,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
  * Allocates a GDALRasterizeOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="gdal_rasterize.html">gdal_rasterize</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdal_rasterize.html">gdal_rasterize</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALRasterizeOptionsForBinaryNew() prior to this function. Will be
