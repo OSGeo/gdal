@@ -6,6 +6,8 @@ COSAR -- TerraSAR-X Complex SAR Data Product
 
 .. shortname:: COSAR
 
+.. built_in_by_default::
+
 This driver provides the capability to read TerraSAR-X complex data.
 While most users will receive products in GeoTIFF format (representing
 detected radiation reflected from the targets, or geocoded data),

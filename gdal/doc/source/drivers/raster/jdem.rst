@@ -6,6 +6,8 @@ JDEM -- Japanese DEM (.mem)
 
 .. shortname:: JDEM
 
+.. built_in_by_default::
+
 GDAL includes read support for Japanese DEM files, normally having the
 extension .mem. These files are a product of the Japanese Geographic
 Survey Institute.

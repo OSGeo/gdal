@@ -6,6 +6,8 @@ KRO -- KOLOR Raw format
 
 .. shortname:: KRO
 
+.. built_in_by_default::
+
 Supported for read access, update and creation. This format is a binary
 raw format, that supports data of several depths ( 8 bit, unsigned
 integer 16 bit and floating point 32 bit) and with several band number

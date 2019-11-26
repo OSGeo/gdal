@@ -6,6 +6,8 @@ AAIGrid -- Arc/Info ASCII Grid
 
 .. shortname:: AAIGrid
 
+.. built_in_by_default::
+
 Supported for read and write access, including reading of an affine
 georeferencing transform and some projections. This format is the ASCII
 interchange format for Arc/Info Grid, and takes the form of an ASCII

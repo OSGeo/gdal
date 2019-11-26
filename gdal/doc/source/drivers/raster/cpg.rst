@@ -6,6 +6,8 @@ CPG -- Convair PolGASP data
 
 .. shortname:: CPG
 
+.. built_in_by_default::
+
 NOTE: Implemented as ``gdal/frmts/raw/cpgdataset.cpp``.
 
 Driver capabilities

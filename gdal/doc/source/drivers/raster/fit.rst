@@ -6,6 +6,8 @@ FIT -- FIT
 
 .. shortname:: FIT
 
+.. built_in_by_default::
+
 NOTE: Implemented as ``gdal/frmts/fit/fitdataset.cpp``.
 
 Driver capabilities

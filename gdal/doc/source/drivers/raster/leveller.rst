@@ -6,6 +6,8 @@ Leveller -- Daylon Leveller Heightfield
 
 .. shortname:: Leveller
 
+.. built_in_by_default::
+
 Leveller heightfields store 32-bit elevation values. Format versions 4
 through 9 are supported with various caveats (see below). The file
 extension for Leveller heightfields is "TER" (which is the same as
