@@ -11,6 +11,8 @@ RasterLite2 - Rasters in SQLite DB
 .. note:: The above short name is not a typo.
           The RasterLite2 functionality is part of the :ref:`vector.sqlite` driver.
 
+.. build_dependencies:: libsqlite3, librasterlite2, libspatialite
+
 The SQLite driver allows reading and writing
 SQLite databases containing RasterLite2 coverages.
 

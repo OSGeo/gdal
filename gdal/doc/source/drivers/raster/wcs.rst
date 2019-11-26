@@ -6,6 +6,8 @@ WCS -- OGC Web Coverage Service
 
 .. shortname:: WCS
 
+.. build_dependencies:: libcurl
+
 The optional GDAL WCS driver allows use of a coverage in a WCS server as
 a raster dataset. GDAL acts as a client to the WCS server.
 

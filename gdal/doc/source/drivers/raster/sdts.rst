@@ -6,6 +6,8 @@ SDTS -- USGS SDTS DEM
 
 .. shortname:: SDTS
 
+.. built_in_by_default::
+
 GDAL includes support for reading USGS SDTS formatted DEMs. USGS DEMs
 are always returned with a data type of signed sixteen bit integer, or
 32bit float. Projection and georeferencing information is also returned.

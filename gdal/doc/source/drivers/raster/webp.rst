@@ -6,6 +6,8 @@ WEBP - WEBP
 
 .. shortname:: WEBP
 
+.. build_dependencies:: libwebp
+
 GDAL can read and write WebP images through
 the WebP library.
 

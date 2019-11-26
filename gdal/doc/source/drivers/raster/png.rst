@@ -6,6 +6,8 @@ PNG -- Portable Network Graphics
 
 .. shortname:: PNG
 
+.. built_in_by_default:: internal libpng provided
+
 GDAL includes support for reading, and creating .png files. Greyscale,
 pseudo-colored, Paletted, RGB and RGBA PNG files are supported as well
 as precisions of eight and sixteen bits per sample.

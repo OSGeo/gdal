@@ -6,6 +6,8 @@ VICAR -- VICAR
 
 .. shortname:: VICAR
 
+.. built_in_by_default::
+
 Driver capabilities
 -------------------
 
