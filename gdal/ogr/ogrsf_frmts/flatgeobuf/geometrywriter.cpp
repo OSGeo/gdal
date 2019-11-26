@@ -36,7 +36,7 @@ GeometryType GeometryWriter::translateOGRwkbGeometryType(OGRwkbGeometryType eGTy
 {
     const auto flatType = wkbFlatten(eGType);
     GeometryType geometryType = GeometryType::Unknown;
-    if (flatType >= 0 && flatType <= 17)
+    if (flatType <= 17)
         geometryType = (GeometryType) flatType;
     return geometryType;
 }

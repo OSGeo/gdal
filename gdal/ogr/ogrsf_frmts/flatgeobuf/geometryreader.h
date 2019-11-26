@@ -69,7 +69,7 @@ class GeometryReader {
                 return nullptr;
             }
             return csc;
-        };
+        }
     public:
         GeometryReader(
             const FlatGeobuf::Geometry *geometry,
