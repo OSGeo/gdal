@@ -86,7 +86,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 /**
  * Convert nearly black/white borders to exact value.
  *
- * This is the equivalent of the <a href="nearblack.html">nearblack</a> utility.
+ * This is the equivalent of the <a href="/programs/nearblack.html">nearblack</a> utility.
  *
  * GDALNearblackOptions* must be allocated and freed with GDALNearblackOptionsNew()
  * and GDALNearblackOptionsFree() respectively.
@@ -751,7 +751,7 @@ static bool IsInt( const char *pszArg )
  * Allocates a GDALNearblackOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="nearblack.html">nearblack</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/nearblack.html">nearblack</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALNearblackOptionsForBinaryNew() prior to this function. Will be
