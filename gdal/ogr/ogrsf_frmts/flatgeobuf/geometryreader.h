@@ -52,6 +52,8 @@ class GeometryReader {
         OGRGeometryCollection *readGeometryCollection();
         OGRCompoundCurve *readCompoundCurve();
         OGRCurvePolygon *readCurvePolygon();
+        OGRMultiCurve *readMultiCurve();
+        OGRMultiSurface *readMultiSurface();
         OGRTriangle *readTriangle();
 
         template <class T>

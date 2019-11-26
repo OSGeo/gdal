@@ -166,12 +166,16 @@ const Offset<Geometry> GeometryWriter::write()
             return writeMultiPolygon(m_ogrGeometry->toMultiPolygon());
         case GeometryType::GeometryCollection:
             return writeGeometryCollection(m_ogrGeometry->toGeometryCollection());
+        case GeometryType::CircularString:
+            writeSimpleCurve(m_ogrGeometry->toCircularString()); break;
         case GeometryType::CompoundCurve:
             return writeCompoundCurve(m_ogrGeometry->toCompoundCurve());
         case GeometryType::CurvePolygon:
             return writeCurvePolygon(m_ogrGeometry->toCurvePolygon());
-        case GeometryType::CircularString:
-            writeSimpleCurve(m_ogrGeometry->toCircularString()); break;
+        case GeometryType::MultiCurve:
+            return writeGeometryCollection(m_ogrGeometry->toMultiCurve());
+        case GeometryType::MultiSurface:
+            return writeGeometryCollection(m_ogrGeometry->toMultiSurface());
         //case GeometryType::PolyhedralSurface:
         case GeometryType::Triangle:
             writePolygon(m_ogrGeometry->toTriangle()); break;

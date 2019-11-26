@@ -309,6 +309,32 @@ OGRCurvePolygon *GeometryReader::readCurvePolygon()
     return cp;
 }
 
+OGRMultiCurve *GeometryReader::readMultiCurve()
+{
+    auto parts = m_geometry->parts();
+    auto mc = new OGRMultiCurve();
+    for (uoffset_t i = 0; i < parts->Length(); i++) {
+        auto part = parts->Get(i);
+        GeometryReader reader { part, m_hasZ, m_hasM };
+        auto poOGRGeometryPart = reader.read();
+        mc->addGeometryDirectly(poOGRGeometryPart);
+    }
+    return mc;
+}
+
+OGRMultiSurface *GeometryReader::readMultiSurface()
+{
+    auto parts = m_geometry->parts();
+    auto ms = new OGRMultiSurface();
+    for (uoffset_t i = 0; i < parts->Length(); i++) {
+        auto part = parts->Get(i);
+        GeometryReader reader { part, m_hasZ, m_hasM };
+        auto poOGRGeometryPart = reader.read();
+        ms->addGeometryDirectly(poOGRGeometryPart);
+    }
+    return ms;
+}
+
 OGRTriangle *GeometryReader::readTriangle()
 {
     const auto t = new OGRTriangle();
@@ -330,6 +356,8 @@ OGRGeometry *GeometryReader::read()
         case GeometryType::MultiPolygon: return readMultiPolygon();
         case GeometryType::CompoundCurve: return readCompoundCurve();
         case GeometryType::CurvePolygon: return readCurvePolygon();
+        case GeometryType::MultiCurve: return readMultiCurve();
+        case GeometryType::MultiSurface: return readMultiSurface();
         default: break;
     }
 
