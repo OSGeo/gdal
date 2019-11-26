@@ -6,7 +6,7 @@ BSB -- Maptech/NOAA BSB Nautical Chart Format
 
 .. shortname:: BSB
 
-.. built_in_by_default:: (can be disabled)
+.. built_in_by_default::
 
 BSB Nautical Chart format is supported for read access, including
 reading the colour table and the reference points (as GCPs). Note that
