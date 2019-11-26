@@ -233,15 +233,15 @@ int CPL_STDCALL GDALTermProgress( double dfComplete,
     {
         ++nLastTick;
         if( nLastTick % 4 == 0 )
-            fprintf( stdout, "%d", (nLastTick / 4) * 10 );
+            fprintf( stderr, "%d", (nLastTick / 4) * 10 );
         else
-            fprintf( stdout, "." );
+            fprintf( stderr, "." );
     }
 
     if( nThisTick == 40 )
-        fprintf( stdout, " - done.\n" );
+        fprintf( stderr, " - done.\n" );
     else
-        fflush( stdout );
+        fflush( stderr );
 
     return TRUE;
 }
