@@ -6,7 +6,7 @@ OZI -- OZF2/OZFX3 raster
 
 .. shortname:: OZI
 
-.. build_dependencies:: (does not build by default)
+.. built_in_by_default:: 
 
 GDAL supports reading OZF2/OZFX3 raster datasets.
 
