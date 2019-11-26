@@ -240,8 +240,6 @@ int CPL_STDCALL GDALTermProgress( double dfComplete,
 
     if( nThisTick == 40 )
         fprintf( stderr, " - done.\n" );
-    else
-        fflush( stderr );
 
     return TRUE;
 }
