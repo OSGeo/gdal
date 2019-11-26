@@ -36,7 +36,7 @@ namespace ogr_flatgeobuf {
 static std::nullptr_t CPLErrorInvalidPointer(const char *message) {
     CPLError(CE_Failure, CPLE_AppDefined, "Unexpected nullptr: %s", message);
     return nullptr;
-};
+}
 
 static OGRErr CPLErrorInvalidSize(const char *message) {
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid size detected: %s", message);

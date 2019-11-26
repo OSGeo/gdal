@@ -40,7 +40,7 @@ using namespace ogr_flatgeobuf;
 static std::nullptr_t CPLErrorInvalidLength(const char *message) {
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid length detected: %s", message);
     return nullptr;
-};
+}
 
 OGRPoint *GeometryReader::readPoint()
 {
