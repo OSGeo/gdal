@@ -54,6 +54,8 @@ class GeometryReader {
         OGRCurvePolygon *readCurvePolygon();
         OGRMultiCurve *readMultiCurve();
         OGRMultiSurface *readMultiSurface();
+        OGRPolyhedralSurface *readPolyhedralSurface();
+        OGRTriangulatedSurface *readTIN();
         OGRTriangle *readTriangle();
 
         template <class T>

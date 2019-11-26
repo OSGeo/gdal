@@ -149,6 +149,32 @@ Offset<Geometry> GeometryWriter::writeCurvePolygon(OGRCurvePolygon *cp)
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
+Offset<Geometry> GeometryWriter::writePolyhedralSurface(OGRPolyhedralSurface *p)
+{
+    std::vector<Offset<Geometry>> parts;
+    for (int i = 0; i < p->getNumGeometries(); i++) {
+        auto part = p->getGeometryRef(i);
+        GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
+        parts.push_back(writer.write());
+    }
+    return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
+}
+
+void GeometryWriter::writeTIN(OGRTriangulatedSurface *ts)
+{
+    auto numGeometries = ts->getNumGeometries();
+    if (numGeometries == 1) {
+        auto lr = ts->getGeometryRef(0)->toTriangle()->getExteriorRing();
+        writeSimpleCurve(lr);
+        return;
+    }
+    uint32_t e = 0;
+    for (int i = 0; i < numGeometries; i++) {
+        auto lr = ts->getGeometryRef(i)->toTriangle()->getExteriorRing();
+        m_ends.push_back(e += writeSimpleCurve(lr));
+    }
+}
+
 const Offset<Geometry> GeometryWriter::write()
 {
     switch (m_geometryType) {
@@ -176,10 +202,12 @@ const Offset<Geometry> GeometryWriter::write()
             return writeGeometryCollection(m_ogrGeometry->toMultiCurve());
         case GeometryType::MultiSurface:
             return writeGeometryCollection(m_ogrGeometry->toMultiSurface());
-        //case GeometryType::PolyhedralSurface:
+        case GeometryType::PolyhedralSurface:
+            return writePolyhedralSurface(m_ogrGeometry->toPolyhedralSurface());
         case GeometryType::Triangle:
             writePolygon(m_ogrGeometry->toTriangle()); break;
-        //case GeometryType::TIN:
+        case GeometryType::TIN:
+            writeTIN(m_ogrGeometry->toTriangulatedSurface()); break;
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "GeometryWriter::write: Unknown type %d", (int) m_geometryType);
             return 0;

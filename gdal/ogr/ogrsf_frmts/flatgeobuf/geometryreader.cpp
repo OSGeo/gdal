@@ -335,6 +335,57 @@ OGRMultiSurface *GeometryReader::readMultiSurface()
     return ms;
 }
 
+OGRPolyhedralSurface *GeometryReader::readPolyhedralSurface()
+{
+    auto parts = m_geometry->parts();
+    auto ps = new OGRPolyhedralSurface();
+    for (uoffset_t i = 0; i < parts->Length(); i++) {
+        auto part = parts->Get(i);
+        GeometryReader reader { part, m_hasZ, m_hasM };
+        auto poOGRGeometryPart = reader.read();
+        ps->addGeometryDirectly(poOGRGeometryPart);
+    }
+    return ps;
+}
+
+OGRTriangulatedSurface *GeometryReader::readTIN()
+{
+    const auto pEnds = m_geometry->ends();
+    const auto ts = new OGRTriangulatedSurface();
+    if (pEnds == nullptr || pEnds->size() < 2) {
+        m_length = m_length / 2;
+        const auto lr = readSimpleCurve<OGRLinearRing>();
+        if (lr == nullptr) {
+            delete ts;
+            return nullptr;
+        }
+        auto t = new OGRTriangle();
+        t->addRingDirectly(lr);
+        ts->addGeometryDirectly(t);
+    } else {
+        for (uint32_t i = 0; i < pEnds->size(); i++) {
+            const auto e = pEnds->Get(i);
+            if (e < m_offset) {
+                delete ts;
+                return CPLErrorInvalidLength("TIN");
+            }
+            m_length = e - m_offset;
+            const auto lr = readSimpleCurve<OGRLinearRing>();
+            m_offset = e;
+            if (lr == nullptr)
+                continue;
+            auto t = new OGRTriangle();
+            t->addRingDirectly(lr);
+            ts->addGeometryDirectly(t);
+        }
+        if (ts->IsEmpty()) {
+            delete ts;
+            return nullptr;
+        }
+    }
+    return ts;
+}
+
 OGRTriangle *GeometryReader::readTriangle()
 {
     const auto t = new OGRTriangle();
@@ -358,6 +409,7 @@ OGRGeometry *GeometryReader::read()
         case GeometryType::CurvePolygon: return readCurvePolygon();
         case GeometryType::MultiCurve: return readMultiCurve();
         case GeometryType::MultiSurface: return readMultiSurface();
+        case GeometryType::PolyhedralSurface: return readPolyhedralSurface();
         default: break;
     }
 
@@ -381,9 +433,8 @@ OGRGeometry *GeometryReader::read()
         case GeometryType::MultiLineString: return readMultiLineString();
         case GeometryType::Polygon: return readPolygon();
         case GeometryType::CircularString: return readSimpleCurve<OGRCircularString>(true);
-        //case GeometryType::PolyhedralSurface: return readMultiPolygon();
-        //case GeometryType::TIN: return readMultiPolygon();
         case GeometryType::Triangle: return readTriangle();
+        case GeometryType::TIN: return readTIN();
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "GeometryReader::read: Unknown type %d", (int) m_geometryType);
     }

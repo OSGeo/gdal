@@ -57,7 +57,8 @@ class GeometryWriter {
         flatbuffers::Offset<FlatGeobuf::Geometry> writeGeometryCollection(OGRGeometryCollection *gc);
         flatbuffers::Offset<FlatGeobuf::Geometry> writeCompoundCurve(OGRCompoundCurve *cc);
         flatbuffers::Offset<FlatGeobuf::Geometry> writeCurvePolygon(OGRCurvePolygon *cp);
-        //void writePolyhedralSurface(OGRPolyhedralSurface *mp, GeometryWriteContext &gc);
+        flatbuffers::Offset<FlatGeobuf::Geometry> writePolyhedralSurface(OGRPolyhedralSurface *p);
+        void writeTIN(OGRTriangulatedSurface *p);
 
     public:
         GeometryWriter(
