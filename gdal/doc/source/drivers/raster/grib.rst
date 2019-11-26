@@ -6,7 +6,7 @@ GRIB -- WMO General Regularly-distributed Information in Binary form
 
 .. shortname:: GRIB
 
-.. built_in_by_default:: (can be disabled)
+.. built_in_by_default::
 
 GDAL supports GRIB1 (reading) and GRIB2 (reading and writing) format
 raster data, with support for common coordinate system, georeferencing
