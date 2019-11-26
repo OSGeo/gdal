@@ -6,6 +6,8 @@ ISIS3 -- USGS Astrogeology ISIS Cube (Version 3)
 
 .. shortname:: ISIS3
 
+.. built_in_by_default::
+
 ISIS3 is a format used by the USGS Planetary Cartography group to store
 and distribute planetary imagery data. GDAL provides
 read/creation/update access to ISIS3 formatted imagery data.

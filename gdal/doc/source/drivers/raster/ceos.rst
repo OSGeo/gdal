@@ -6,6 +6,8 @@ CEOS -- CEOS Image
 
 .. shortname:: CEOS
 
+.. built_in_by_default::
+
 This is a simple, read-only reader for ceos image files. To use, select
 the main imagery file. This driver reads only the image data, and does
 not capture any metadata, or georeferencing.

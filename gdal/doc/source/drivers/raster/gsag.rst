@@ -6,6 +6,8 @@ GSAG -- Golden Software ASCII Grid File Format
 
 .. shortname:: GSAG
 
+.. built_in_by_default::
+
 This is the ASCII-based (human-readable) version of one of the raster
 formats used by Golden Software products (such as the Surfer series).
 This format is supported for both reading and writing (including create,

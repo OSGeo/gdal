@@ -6,6 +6,8 @@ JP2MrSID -- JPEG2000 via MrSID SDK
 
 .. shortname:: JP2MrSID
 
+.. build_dependencies:: MrSID SDK
+
 JPEG2000 file format is supported for reading with the MrSID DSDK. It is
 also supported for writing with the MrSID ESDK.
 

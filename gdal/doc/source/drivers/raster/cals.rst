@@ -8,6 +8,8 @@ CALS -- CALS Type 1
 
 .. versionadded:: 2.1
 
+.. built_in_by_default::
+
 CALS Type 1 rasters are untiled back and white rasters made of a
 2048-byte text header in the MIL-STD-1840 standard, followed by a single
 datastream compressed with CCITT/ITU-T Recommendation 6, aka Group 6,

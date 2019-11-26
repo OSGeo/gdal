@@ -6,6 +6,8 @@ MFF -- Vexcel MFF Raster
 
 .. shortname:: MFF
 
+.. built_in_by_default::
+
 GDAL includes read, update, and creation support for Vexcel's MFF raster
 format. MFF dataset consist of a header file (typically with the
 extension .hdr) and a set of data files with extensions like .x00, .b00

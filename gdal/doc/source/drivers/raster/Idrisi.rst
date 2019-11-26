@@ -6,6 +6,8 @@ RST -- Idrisi Raster Format
 
 .. shortname:: RST
 
+.. built_in_by_default::
+
 This format is basically a raw one. There is just one band per files,
 except in the RGB24 data type where the Red, Green and Blue bands are
 store interleaved by pixels in the order Blue, Green and Red. The others

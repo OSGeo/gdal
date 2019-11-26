@@ -8,6 +8,8 @@ HDF5 -- Hierarchical Data Format Release 5 (HDF5)
 
 .. shortname:: HDF5Image
 
+.. build_dependencies:: libhdf5
+
 This driver intended for HDF5 file formats importing.
 
 Driver capabilities

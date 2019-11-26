@@ -6,6 +6,8 @@ FAST -- EOSAT FAST Format
 
 .. shortname:: FAST
 
+.. built_in_by_default::
+
 Supported reading from FAST-L7A format (Landsat TM data) and EOSAT Fast
 Format Rev. C (IRS-1C/1D data). If you want to read other datasets in
 this format (SPOT), write to me (Andrey Kiselev, dron@ak4719.spb.edu).

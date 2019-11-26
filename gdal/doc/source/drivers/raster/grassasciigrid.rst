@@ -6,6 +6,8 @@ GRASSASCIIGrid -- GRASS ASCII Grid
 
 .. shortname:: GRASSASCIIGrid
 
+.. built_in_by_default::
+
 Supports reading GRASS ASCII grid format (similar to Arc/Info ASCIIGRID
 command).
 

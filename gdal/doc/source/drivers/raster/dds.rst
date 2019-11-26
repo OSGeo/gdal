@@ -6,6 +6,8 @@ DDS -- DirectDraw Surface
 
 .. shortname:: DDS
 
+.. build_dependencies:: Crunch Lib
+
 The DirectDraw Surface file format
 (uses the filename extension DDS), from Microsoft, is a standard for
 storing data compressed with the lossy S3 Texture Compression (S3TC)

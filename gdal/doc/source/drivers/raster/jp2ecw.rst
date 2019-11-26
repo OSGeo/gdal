@@ -6,6 +6,8 @@ JP2ECW -- ERDAS JPEG2000 (.jp2)
 
 .. shortname:: JP2ECW
 
+.. build_dependencies:: ECW SDK
+
 GDAL supports reading and writing JPEG2000 files using the ERDAS ECW/JP2
 SDK developed by Hexagon Geospatial (formerly Intergraph, ERDAS,
 ERMapper). Support is optional and requires linking in the libraries

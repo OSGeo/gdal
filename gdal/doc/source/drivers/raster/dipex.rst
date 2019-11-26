@@ -6,6 +6,8 @@ DIPEx -- ELAS DIPEx
 
 .. shortname:: DIPEx
 
+.. built_in_by_default::
+
 NOTE: Implemented as ``gdal/frmts/raw/dipxdataset.cpp``.
 
 Driver capabilities

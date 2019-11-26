@@ -6,6 +6,8 @@ ENVI -- ENVI .hdr Labelled Raster
 
 .. shortname:: ENVI
 
+.. built_in_by_default::
+
 GDAL supports some variations of raw raster files with associated ENVI
 style .hdr files describing the format. To select an existing ENVI
 raster file select the binary file containing the data (as opposed to

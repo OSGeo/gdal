@@ -6,6 +6,8 @@ MFF2 -- Vexcel MFF2 Image
 
 .. shortname:: MFF2
 
+.. built_in_by_default::
+
 GDAL supports MFF2 Image raster file format for read, update, and
 creation. The MFF2 (Multi-File Format 2) format was designed to fit into
 Vexcel Hierarchical Key-Value (HKV) databases, which can store binary

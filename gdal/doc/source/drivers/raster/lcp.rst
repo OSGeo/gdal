@@ -6,6 +6,8 @@ LCP -- FARSITE v.4 LCP Format
 
 .. shortname:: LCP
 
+.. built_in_by_default::
+
 FARSITE v. 4 landscape file (LCP) is a multi-band raster format used by
 wildland fire behavior and fire effect simulation models such as
 FARSITE, FLAMMAP, and FBAT (`www.fire.org <http://www.fire.org>`__). The
