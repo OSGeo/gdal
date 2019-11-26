@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  FlatGeobuf driver
- * Purpose:  Implements OGRFlatGeobufLayer class
+ * Purpose:  Implements OGRFlatGeobufLayer class.
  * Author:   Björn Harrtell <bjorn at wololo dot org>
  *
  ******************************************************************************

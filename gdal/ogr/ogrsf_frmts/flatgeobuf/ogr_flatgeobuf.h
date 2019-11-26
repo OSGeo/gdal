@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  FlatGeobuf driver
- * Purpose:  Definition of classes for OGR FlatGeobuf driver.
+ * Purpose:  Declaration of classes for OGR FlatGeobuf driver.
  * Author:   Björn Harrtell <bjorn at wololo dot org>
  *
  ******************************************************************************

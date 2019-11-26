@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  FlatGeobuf driver
- * Purpose:  Geometry read functions.
+ * Purpose:  Implements GeometryReader class.
  * Author:   Björn Harrtell <bjorn at wololo dot org>
  *
  ******************************************************************************
@@ -45,6 +45,8 @@ static std::nullptr_t CPLErrorInvalidLength(const char *message) {
 OGRPoint *GeometryReader::readPoint()
 {
     const auto xy = m_geometry->xy();
+    if (xy == nullptr)
+        return CPLErrorInvalidPointer("XY data");
     const auto offsetXy = m_offset * 2;
     const auto aXy = xy->data();
     if (offsetXy >= xy->size())
@@ -137,9 +139,14 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
     if (m_offset > feature_max_buffer_size || m_length > feature_max_buffer_size - m_offset)
         return CPLErrorInvalidSize("curve offset max");
     const uint32_t offsetLen = m_length + m_offset;
-    if (offsetLen > m_geometry->xy()->size() / 2)
+    auto xy = m_geometry->xy();
+    if (xy == nullptr) {
+        CPLErrorInvalidPointer("XY data");
+        return OGRERR_CORRUPT_DATA;
+    }
+    if (offsetLen > xy->size() / 2)
         return CPLErrorInvalidSize("curve XY offset");
-    const auto aXy = m_geometry->xy()->data();
+    const auto aXy = xy->data();
     const auto ogrXY = reinterpret_cast<const OGRRawPoint *>(aXy) + m_offset;
     if (m_hasZ) {
         const auto pZ = m_geometry->z();
@@ -162,27 +169,27 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
 #if CPL_IS_LSB
             sc->setPoints(m_length, ogrXY, aZ + m_offset, aM + m_offset);
 #else
-            sc->setNumPoints(len, false);
-            for( uint32_t i = 0; i < len; i++ )
+            sc->setNumPoints(m_length, false);
+            for( uint32_t i = 0; i < m_length; i++ )
             {
                 sc->setPoint(i,
                              flatbuffers::EndianScalar(ogrXY[i].x),
                              flatbuffers::EndianScalar(ogrXY[i].y),
-                             flatbuffers::EndianScalar(aZ[offset + i]),
-                             flatbuffers::EndianScalar(aM[offset + i]));
+                             flatbuffers::EndianScalar(aZ[m_offset + i]),
+                             flatbuffers::EndianScalar(aM[m_offset + i]));
             }
 #endif
         } else {
 #if CPL_IS_LSB
             sc->setPoints(m_length, ogrXY, aZ + m_offset);
 #else
-            sc->setNumPoints(len, false);
-            for( uint32_t i = 0; i < len; i++ )
+            sc->setNumPoints(m_length, false);
+            for( uint32_t i = 0; i < m_length; i++ )
             {
                 sc->setPoint(i,
                              flatbuffers::EndianScalar(ogrXY[i].x),
                              flatbuffers::EndianScalar(ogrXY[i].y),
-                             flatbuffers::EndianScalar(aZ[offset + i]));
+                             flatbuffers::EndianScalar(aZ[m_offset + i]));
             }
 #endif
         }
@@ -198,21 +205,21 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
 #if CPL_IS_LSB
         sc->setPointsM(m_length, ogrXY, aM + m_offset);
 #else
-            sc->setNumPoints(len, false);
-            for( uint32_t i = 0; i < len; i++ )
+            sc->setNumPoints(m_length, false);
+            for( uint32_t i = 0; i < m_length; i++ )
             {
                 sc->setPointM(i,
                              flatbuffers::EndianScalar(ogrXY[i].x),
                              flatbuffers::EndianScalar(ogrXY[i].y),
-                             flatbuffers::EndianScalar(aM[offset + i]));
+                             flatbuffers::EndianScalar(aM[m_offset + i]));
             }
 #endif
     } else {
 #if CPL_IS_LSB
         sc->setPoints(m_length, ogrXY);
 #else
-        sc->setNumPoints(len, false);
-        for( uint32_t i = 0; i < len; i++ )
+        sc->setNumPoints(m_length, false);
+        for( uint32_t i = 0; i < m_length; i++ )
         {
             sc->setPoint(i,
                          flatbuffers::EndianScalar(ogrXY[i].x),

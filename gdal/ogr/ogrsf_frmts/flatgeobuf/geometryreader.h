@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  FlatGeobuf driver
- * Purpose:  Geometry read functions declarations.
+ * Purpose:  GeometryReader class declarations.
  * Author:   Björn Harrtell <bjorn at wololo dot org>
  *
  ******************************************************************************

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  FlatGeobuf driver
- * Purpose:  Geometry write functions.
+ * Purpose:  Implements GeometryWriter class.
  * Author:   Björn Harrtell <bjorn at wololo dot org>
  *
  ******************************************************************************
