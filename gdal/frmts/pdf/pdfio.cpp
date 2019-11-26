@@ -170,6 +170,9 @@ getStart_ret_type VSIPDFFileStream::getStart()
 /************************************************************************/
 
 StreamKind VSIPDFFileStream::getKind()
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 83
+                                        const
+#endif
 {
     return strFile;
 }
