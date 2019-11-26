@@ -4069,11 +4069,12 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poUserPwd = new GooString(pszUserPwd);
 
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
-        poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, std::move(oObj)), nullptr, poUserPwd);
+        auto poStream = new VSIPDFFileStream(fp, pszFilename, std::move(oObj));
 #else
         oObj.getObj()->initNull();
-        poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, oObj.getObj()), nullptr, poUserPwd);
+        auto poStream = new VSIPDFFileStream(fp, pszFilename, oObj.getObj());
 #endif
+        poDocPoppler = new PDFDoc(poStream, nullptr, poUserPwd);
         delete poUserPwd;
 
         if ( !poDocPoppler->isOk() || poDocPoppler->getNumPages() == 0 )
@@ -4111,8 +4112,25 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
             return nullptr;
         }
+        else if( poDocPoppler->isLinearized() &&
+                 !poStream->FoundLinearizedHint() )
+        {
+            // This is a likely defect of poppler Linearization.cc file that
+            // recognizes a file as linearized if the /Linearized hint is missing,
+            // but the content of this dictionary are present.
+            // But given the hacks of PDFFreeDoc() and VSIPDFFileStream::FillBuffer()
+            // opening such a file will result in a null-ptr deref at closing if
+            // we try to access a page and build the page cache, so just exit now
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
+
+            PDFFreeDoc(poDocPoppler);
+
+            return nullptr;
+        }
         else
+        {
             break;
+        }
     }
 
     poCatalogPoppler = poDocPoppler->getCatalog();

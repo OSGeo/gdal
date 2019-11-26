@@ -223,6 +223,7 @@ int VSIPDFFileStream::FillBuffer()
             if( memcmp(abyBuffer + i, "/Linearized ",
                        strlen("/Linearized ")) == 0 )
             {
+                bFoundLinearizedHint = true;
                 memcpy(abyBuffer + i, "/XXXXXXXXXX ", strlen("/Linearized "));
                 break;
             }

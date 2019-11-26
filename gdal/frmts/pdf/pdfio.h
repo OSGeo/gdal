@@ -92,6 +92,8 @@ class VSIPDFFileStream final: public BaseStream
         virtual void       unfilteredReset () override;
         virtual void       close() override;
 
+        bool               FoundLinearizedHint() const { return bFoundLinearizedHint; }
+
     private:
         virtual GBool hasGetChars() override;
         virtual int getChars(int nChars, Guchar *buffer) override;
@@ -110,6 +112,8 @@ class VSIPDFFileStream final: public BaseStream
         GByte              abyBuffer[BUFFER_SIZE];
         int                nPosInBuffer;
         int                nBufferLength;
+
+        bool               bFoundLinearizedHint = false;
 
         int                FillBuffer();
 };
