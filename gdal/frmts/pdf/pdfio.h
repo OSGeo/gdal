@@ -81,7 +81,12 @@ class VSIPDFFileStream final: public BaseStream
         virtual void       setPos(setPos_offset_type pos, int dir = 0) override;
         virtual void       moveStart(moveStart_delta_type delta) override;
 
-        virtual StreamKind getKind() override;
+        virtual StreamKind getKind()
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 83
+            const
+#endif
+            override;
+
         virtual GooString *getFileName() override;
 
         virtual int        getChar() override;
