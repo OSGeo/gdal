@@ -215,6 +215,7 @@ const std::vector<Offset<Column>> OGRFlatGeobufLayer::writeColumns(FlatBufferBui
         //CPLDebug("FlatGeobuf", "Create column %s (index %d)", name, i);
         const auto column = CreateColumnDirect(fbb, name, columnType);
         columns.push_back(column);
+        //CPLDebug("FlatGeobuf", "DEBUG writeColumns: Created column %s added as index %d", name, i);
     }
     CPLDebug("FlatGeobuf", "Created %lu columns for writing", static_cast<long unsigned int>(columns.size()));
     return columns;
@@ -231,6 +232,7 @@ void OGRFlatGeobufLayer::readColumns()
         const auto type = toOGRFieldType(column->type());
         OGRFieldDefn field(name, type);
         m_poFeatureDefn->AddFieldDefn(&field);
+        //CPLDebug("FlatGeobuf", "DEBUG readColumns: Read column %s added as index %d", name, i);
     }
     CPLDebug("FlatGeobuf", "Read %lu columns and added to feature definition", static_cast<long unsigned int>(columns->size()));
 }
@@ -651,6 +653,9 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     if (properties != nullptr) {
         const auto data = properties->data();
         const auto size = properties->size();
+
+        //CPLDebug("FlatGeobuf", "DEBUG parseFeature: size: %lu", static_cast<long unsigned int>(size));
+
         //CPLDebug("FlatGeobuf", "properties->size: %d", size);
         uoffset_t offset = 0;
         // size must be at least large enough to contain
@@ -662,8 +667,9 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                 return CPLErrorInvalidSize("property value");
             uint16_t i = *((uint16_t *)(data + offset));
             CPL_LSBPTR16(&i);
+            //CPLDebug("FlatGeobuf", "DEBUG parseFeature: i: %hu", i);
             offset += sizeof(uint16_t);
-            //CPLDebug("FlatGeobuf", "i: %d", i);
+            //CPLDebug("FlatGeobuf", "DEBUG parseFeature: offset: %du", offset);
             const auto columns = m_poHeader->columns();
             if (columns == nullptr) {
                 CPLErrorInvalidPointer("columns");
@@ -798,6 +804,8 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     properties.reserve(1024 * 4);
     FlatBufferBuilder fbb;
 
+    //CPLDebug("FlatGeobuf", "DEBUG ICreateFeature: fieldCount: %d", fieldCount);
+
     for (int i = 0; i < fieldCount; i++) {
         const auto fieldDef = m_poFeatureDefn->GetFieldDefn(i);
         if (!poNewFeature->IsFieldSetAndNotNull(i))
@@ -805,6 +813,9 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 
         uint16_t column_index_le = static_cast<uint16_t>(i);
         CPL_LSBPTR16(&column_index_le);
+
+        //CPLDebug("FlatGeobuf", "DEBUG ICreateFeature: column_index_le: %hu", column_index_le);
+
         std::copy(reinterpret_cast<const uint8_t *>(&column_index_le), reinterpret_cast<const uint8_t *>(&column_index_le + 1), std::back_inserter(properties));
 
         const auto fieldType = fieldDef->GetType();
@@ -857,6 +868,8 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
                 return OGRERR_FAILURE;
         }
     }
+
+    //CPLDebug("FlatGeobuf", "DEBUG ICreateFeature: properties.size(): %lu", static_cast<long unsigned int>(properties.size()));
 
     const auto ogrGeometry = poNewFeature->GetGeometryRef();
 #ifdef DEBUG

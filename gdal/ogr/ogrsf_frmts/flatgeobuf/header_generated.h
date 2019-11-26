@@ -169,12 +169,6 @@ struct Column FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
   }
-  bool KeyCompareLessThan(const Column *o) const {
-    return *name() < *o->name();
-  }
-  int KeyCompareWithValue(const char *val) const {
-    return strcmp(name()->c_str(), val);
-  }
   FlatGeobuf::ColumnType type() const {
     return static_cast<FlatGeobuf::ColumnType>(GetField<uint8_t>(VT_TYPE, 0));
   }
@@ -488,13 +482,13 @@ inline flatbuffers::Offset<Header> CreateHeaderDirect(
     bool hasM = false,
     bool hasT = false,
     bool hasTM = false,
-    std::vector<flatbuffers::Offset<FlatGeobuf::Column>> *columns = nullptr,
+    const std::vector<flatbuffers::Offset<FlatGeobuf::Column>> *columns = nullptr,
     uint64_t features_count = 0,
     uint16_t index_node_size = 16,
     flatbuffers::Offset<FlatGeobuf::Crs> crs = 0) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto envelope__ = envelope ? _fbb.CreateVector<double>(*envelope) : 0;
-  auto columns__ = columns ? _fbb.CreateVectorOfSortedTables<FlatGeobuf::Column>(columns) : 0;
+  auto columns__ = columns ? _fbb.CreateVector<flatbuffers::Offset<FlatGeobuf::Column>>(*columns) : 0;
   return FlatGeobuf::CreateHeader(
       _fbb,
       name__,

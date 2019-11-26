@@ -229,9 +229,9 @@ inline flatbuffers::Offset<Feature> CreateFeatureDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<FlatGeobuf::Geometry> geometry = 0,
     const std::vector<uint8_t> *properties = nullptr,
-    std::vector<flatbuffers::Offset<FlatGeobuf::Column>> *columns = nullptr) {
+    const std::vector<flatbuffers::Offset<FlatGeobuf::Column>> *columns = nullptr) {
   auto properties__ = properties ? _fbb.CreateVector<uint8_t>(*properties) : 0;
-  auto columns__ = columns ? _fbb.CreateVectorOfSortedTables<FlatGeobuf::Column>(columns) : 0;
+  auto columns__ = columns ? _fbb.CreateVector<flatbuffers::Offset<FlatGeobuf::Column>>(*columns) : 0;
   return FlatGeobuf::CreateFeature(
       _fbb,
       geometry,
