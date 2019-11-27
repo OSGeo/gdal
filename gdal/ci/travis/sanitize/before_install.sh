@@ -2,10 +2,7 @@
 
 set -e
 
-
-if [ -f /etc/apt/sources.list.d/pgdg* ]; then
-   sudo mv /etc/apt/sources.list.d/pgdg* /tmp
-fi
+sudo mv /etc/apt/sources.list.d/pgdg* /tmp
 sudo apt-get update
 sudo apt-get install -y software-properties-common python-software-properties
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
