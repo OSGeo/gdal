@@ -37,9 +37,10 @@ namespace ogr_flatgeobuf {
 class GeometryReader {
     private:
         const FlatGeobuf::Geometry *m_geometry;
-        FlatGeobuf::GeometryType m_geometryType;
-        bool m_hasZ;
-        bool m_hasM;
+        const FlatGeobuf::GeometryType m_geometryType;
+        const bool m_hasZ;
+        const bool m_hasM;
+
         uint32_t m_length = 0;
         uint32_t m_offset = 0;
 

@@ -65,14 +65,14 @@ OGRPoint *GeometryReader::readPoint()
             if (m_offset >= pM->size())
                 return CPLErrorInvalidLength("M data");
             const auto aM = pM->data();
-            return new OGRPoint { flatbuffers::EndianScalar(aXy[offsetXy + 0]),
-                                  flatbuffers::EndianScalar(aXy[offsetXy + 1]),
-                                  flatbuffers::EndianScalar(aZ[m_offset]),
-                                  flatbuffers::EndianScalar(aM[m_offset]) };
+            return new OGRPoint { EndianScalar(aXy[offsetXy + 0]),
+                                  EndianScalar(aXy[offsetXy + 1]),
+                                  EndianScalar(aZ[m_offset]),
+                                  EndianScalar(aM[m_offset]) };
         } else {
-            return new OGRPoint { flatbuffers::EndianScalar(aXy[offsetXy + 0]),
-                                  flatbuffers::EndianScalar(aXy[offsetXy + 1]),
-                                  flatbuffers::EndianScalar(aZ[m_offset]) };
+            return new OGRPoint { EndianScalar(aXy[offsetXy + 0]),
+                                  EndianScalar(aXy[offsetXy + 1]),
+                                  EndianScalar(aZ[m_offset]) };
         }
     } else if (m_hasM) {
         const auto pM = m_geometry->m();
@@ -81,12 +81,12 @@ OGRPoint *GeometryReader::readPoint()
         if (m_offset >= pM->size())
             return CPLErrorInvalidLength("M data");
         const auto aM = pM->data();
-        return OGRPoint::createXYM( flatbuffers::EndianScalar(aXy[offsetXy + 0]),
-                                    flatbuffers::EndianScalar(aXy[offsetXy + 1]),
-                                    flatbuffers::EndianScalar(aM[m_offset]) );
+        return OGRPoint::createXYM( EndianScalar(aXy[offsetXy + 0]),
+                                    EndianScalar(aXy[offsetXy + 1]),
+                                    EndianScalar(aM[m_offset]) );
     } else {
-        return new OGRPoint { flatbuffers::EndianScalar(aXy[offsetXy + 0]),
-                              flatbuffers::EndianScalar(aXy[offsetXy + 1]) };
+        return new OGRPoint { EndianScalar(aXy[offsetXy + 0]),
+                              EndianScalar(aXy[offsetXy + 1]) };
     }
 }
 
@@ -105,7 +105,6 @@ OGRMultiPoint *GeometryReader::readMultiPoint()
         }
         mp->addGeometryDirectly(p);
     }
-
     return mp;
 }
 
@@ -173,10 +172,10 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
             for( uint32_t i = 0; i < m_length; i++ )
             {
                 sc->setPoint(i,
-                             flatbuffers::EndianScalar(ogrXY[i].x),
-                             flatbuffers::EndianScalar(ogrXY[i].y),
-                             flatbuffers::EndianScalar(aZ[m_offset + i]),
-                             flatbuffers::EndianScalar(aM[m_offset + i]));
+                             EndianScalar(ogrXY[i].x),
+                             EndianScalar(ogrXY[i].y),
+                             EndianScalar(aZ[m_offset + i]),
+                             EndianScalar(aM[m_offset + i]));
             }
 #endif
         } else {
@@ -187,9 +186,9 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
             for( uint32_t i = 0; i < m_length; i++ )
             {
                 sc->setPoint(i,
-                             flatbuffers::EndianScalar(ogrXY[i].x),
-                             flatbuffers::EndianScalar(ogrXY[i].y),
-                             flatbuffers::EndianScalar(aZ[m_offset + i]));
+                             EndianScalar(ogrXY[i].x),
+                             EndianScalar(ogrXY[i].y),
+                             EndianScalar(aZ[m_offset + i]));
             }
 #endif
         }
@@ -205,14 +204,14 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
 #if CPL_IS_LSB
         sc->setPointsM(m_length, ogrXY, aM + m_offset);
 #else
-            sc->setNumPoints(m_length, false);
-            for( uint32_t i = 0; i < m_length; i++ )
-            {
-                sc->setPointM(i,
-                             flatbuffers::EndianScalar(ogrXY[i].x),
-                             flatbuffers::EndianScalar(ogrXY[i].y),
-                             flatbuffers::EndianScalar(aM[m_offset + i]));
-            }
+        sc->setNumPoints(m_length, false);
+        for( uint32_t i = 0; i < m_length; i++ )
+        {
+            sc->setPointM(i,
+                            EndianScalar(ogrXY[i].x),
+                            EndianScalar(ogrXY[i].y),
+                            EndianScalar(aM[m_offset + i]));
+        }
 #endif
     } else {
 #if CPL_IS_LSB
@@ -222,8 +221,8 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
         for( uint32_t i = 0; i < m_length; i++ )
         {
             sc->setPoint(i,
-                         flatbuffers::EndianScalar(ogrXY[i].x),
-                         flatbuffers::EndianScalar(ogrXY[i].y));
+                         EndianScalar(ogrXY[i].x),
+                         EndianScalar(ogrXY[i].y));
         }
 #endif
     }
@@ -270,10 +269,8 @@ OGRMultiPolygon *GeometryReader::readMultiPolygon()
     auto partsLength = parts->Length();
     const auto mp = new OGRMultiPolygon();
     for (uoffset_t i = 0; i < partsLength; i++) {
-        auto part = parts->Get(i);
-        GeometryReader reader { part, GeometryType::Polygon, m_hasZ, m_hasM };
-        auto p = reader.read()->toPolygon();
-        mp->addGeometry(p);
+        GeometryReader reader { parts->Get(i), GeometryType::Polygon, m_hasZ, m_hasM };
+        mp->addGeometry(reader.read()->toPolygon());
     }
     return mp;
 }
@@ -283,10 +280,8 @@ OGRGeometryCollection *GeometryReader::readGeometryCollection()
     auto parts = m_geometry->parts();
     auto gc = new OGRGeometryCollection();
     for (uoffset_t i = 0; i < parts->Length(); i++) {
-        auto part = parts->Get(i);
-        GeometryReader reader { part, m_hasZ, m_hasM };
-        auto poOGRGeometryPart = reader.read();
-        gc->addGeometryDirectly(poOGRGeometryPart);
+        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
+        gc->addGeometryDirectly(reader.read());
     }
     return gc;
 }
@@ -296,10 +291,8 @@ OGRCompoundCurve *GeometryReader::readCompoundCurve()
     auto parts = m_geometry->parts();
     auto cc = new OGRCompoundCurve();
     for (uoffset_t i = 0; i < parts->Length(); i++) {
-        auto part = parts->Get(i);
-        GeometryReader reader { part, m_hasZ, m_hasM };
-        auto poOGRGeometryPart = reader.read();
-        cc->addCurveDirectly(poOGRGeometryPart->toCurve());
+        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
+        cc->addCurveDirectly(reader.read()->toCurve());
     }
     return cc;
 }
@@ -309,8 +302,7 @@ OGRCurvePolygon *GeometryReader::readCurvePolygon()
     auto parts = m_geometry->parts();
     auto cp = new OGRCurvePolygon();
     for (uoffset_t i = 0; i < parts->Length(); i++) {
-        auto part = parts->Get(i);
-        GeometryReader reader { part, m_hasZ, m_hasM };
+        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
         cp->addRingDirectly(reader.read()->toCurve());
     }
     return cp;
@@ -321,10 +313,8 @@ OGRMultiCurve *GeometryReader::readMultiCurve()
     auto parts = m_geometry->parts();
     auto mc = new OGRMultiCurve();
     for (uoffset_t i = 0; i < parts->Length(); i++) {
-        auto part = parts->Get(i);
-        GeometryReader reader { part, m_hasZ, m_hasM };
-        auto poOGRGeometryPart = reader.read();
-        mc->addGeometryDirectly(poOGRGeometryPart);
+        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
+        mc->addGeometryDirectly(reader.read());
     }
     return mc;
 }
@@ -334,10 +324,8 @@ OGRMultiSurface *GeometryReader::readMultiSurface()
     auto parts = m_geometry->parts();
     auto ms = new OGRMultiSurface();
     for (uoffset_t i = 0; i < parts->Length(); i++) {
-        auto part = parts->Get(i);
-        GeometryReader reader { part, m_hasZ, m_hasM };
-        auto poOGRGeometryPart = reader.read();
-        ms->addGeometryDirectly(poOGRGeometryPart);
+        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
+        ms->addGeometryDirectly(reader.read());
     }
     return ms;
 }
@@ -347,10 +335,8 @@ OGRPolyhedralSurface *GeometryReader::readPolyhedralSurface()
     auto parts = m_geometry->parts();
     auto ps = new OGRPolyhedralSurface();
     for (uoffset_t i = 0; i < parts->Length(); i++) {
-        auto part = parts->Get(i);
-        GeometryReader reader { part, m_hasZ, m_hasM };
-        auto poOGRGeometryPart = reader.read();
-        ps->addGeometryDirectly(poOGRGeometryPart);
+        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
+        ps->addGeometryDirectly(reader.read());
     }
     return ps;
 }

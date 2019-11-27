@@ -32,7 +32,7 @@ using namespace flatbuffers;
 using namespace FlatGeobuf;
 using namespace ogr_flatgeobuf;
 
-GeometryType GeometryWriter::translateOGRwkbGeometryType(OGRwkbGeometryType eGType)
+GeometryType GeometryWriter::translateOGRwkbGeometryType(const OGRwkbGeometryType eGType)
 {
     const auto flatType = wkbFlatten(eGType);
     GeometryType geometryType = GeometryType::Unknown;
@@ -41,7 +41,7 @@ GeometryType GeometryWriter::translateOGRwkbGeometryType(OGRwkbGeometryType eGTy
     return geometryType;
 }
 
-void GeometryWriter::writePoint(OGRPoint *p)
+void GeometryWriter::writePoint(const OGRPoint *p)
 {
     m_xy.push_back(p->getX());
     m_xy.push_back(p->getY());
@@ -51,13 +51,13 @@ void GeometryWriter::writePoint(OGRPoint *p)
         m_m.push_back(p->getM());
 }
 
-void GeometryWriter::writeMultiPoint(OGRMultiPoint *mp)
+void GeometryWriter::writeMultiPoint(const OGRMultiPoint *mp)
 {
     for (int i = 0; i < mp->getNumGeometries(); i++)
         writePoint(mp->getGeometryRef(i)->toPoint());
 }
 
-uint32_t GeometryWriter::writeSimpleCurve(OGRSimpleCurve *sc)
+uint32_t GeometryWriter::writeSimpleCurve(const OGRSimpleCurve *sc)
 {
     uint32_t numPoints = sc->getNumPoints();
     const auto xyLength = m_xy.size();
@@ -81,7 +81,7 @@ uint32_t GeometryWriter::writeSimpleCurve(OGRSimpleCurve *sc)
     return numPoints;
 }
 
-void GeometryWriter::writeMultiLineString(OGRMultiLineString *mls)
+void GeometryWriter::writeMultiLineString(const OGRMultiLineString *mls)
 {
     uint32_t e = 0;
     const auto numGeometries = mls->getNumGeometries();
@@ -89,7 +89,7 @@ void GeometryWriter::writeMultiLineString(OGRMultiLineString *mls)
         m_ends.push_back(e += writeSimpleCurve(mls->getGeometryRef(i)->toLineString()));
 }
 
-void GeometryWriter::writePolygon(OGRPolygon *p)
+void GeometryWriter::writePolygon(const OGRPolygon *p)
 {
     const auto exteriorRing = p->getExteriorRing();
     const auto numInteriorRings = p->getNumInteriorRings();
@@ -102,7 +102,7 @@ void GeometryWriter::writePolygon(OGRPolygon *p)
     }
 }
 
-Offset<Geometry> GeometryWriter::writeMultiPolygon(OGRMultiPolygon *mp)
+const Offset<Geometry> GeometryWriter::writeMultiPolygon(const OGRMultiPolygon *mp)
 {
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < mp->getNumGeometries(); i++) {
@@ -113,7 +113,7 @@ Offset<Geometry> GeometryWriter::writeMultiPolygon(OGRMultiPolygon *mp)
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-Offset<Geometry> GeometryWriter::writeGeometryCollection(OGRGeometryCollection *gc)
+const Offset<Geometry> GeometryWriter::writeGeometryCollection(const OGRGeometryCollection *gc)
 {
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < gc->getNumGeometries(); i++) {
@@ -124,7 +124,7 @@ Offset<Geometry> GeometryWriter::writeGeometryCollection(OGRGeometryCollection *
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-Offset<Geometry> GeometryWriter::writeCompoundCurve(OGRCompoundCurve *cc)
+const Offset<Geometry> GeometryWriter::writeCompoundCurve(const OGRCompoundCurve *cc)
 {
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < cc->getNumCurves(); i++) {
@@ -135,9 +135,9 @@ Offset<Geometry> GeometryWriter::writeCompoundCurve(OGRCompoundCurve *cc)
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-Offset<Geometry> GeometryWriter::writeCurvePolygon(OGRCurvePolygon *cp)
+const Offset<Geometry> GeometryWriter::writeCurvePolygon(const OGRCurvePolygon *cp)
 {
-    std::vector<OGRCurve *> curves;
+    std::vector<const OGRCurve *> curves;
     std::vector<Offset<Geometry>> parts;
     curves.push_back(cp->getExteriorRingCurve());
     for (int i = 0; i < cp->getNumInteriorRings(); i++)
@@ -149,7 +149,7 @@ Offset<Geometry> GeometryWriter::writeCurvePolygon(OGRCurvePolygon *cp)
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-Offset<Geometry> GeometryWriter::writePolyhedralSurface(OGRPolyhedralSurface *p)
+const Offset<Geometry> GeometryWriter::writePolyhedralSurface(const OGRPolyhedralSurface *p)
 {
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < p->getNumGeometries(); i++) {
@@ -160,7 +160,7 @@ Offset<Geometry> GeometryWriter::writePolyhedralSurface(OGRPolyhedralSurface *p)
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-void GeometryWriter::writeTIN(OGRTriangulatedSurface *ts)
+void GeometryWriter::writeTIN(const OGRTriangulatedSurface *ts)
 {
     auto numGeometries = ts->getNumGeometries();
     if (numGeometries == 1) {

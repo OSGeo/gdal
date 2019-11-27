@@ -32,6 +32,7 @@
 
 #include "header_generated.h"
 
+using namespace flatbuffers;
 using namespace FlatGeobuf;
 
 static int OGRFlatGeobufDriverIdentify(GDALOpenInfo* poOpenInfo){
@@ -266,7 +267,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
         return false;
     }
     if (bVerifyBuffers) {
-        flatbuffers::Verifier v(buf.get(), headerSize);
+        Verifier v(buf.get(), headerSize);
         const auto ok = VerifyHeaderBuffer(v);
         if (!ok) {
             CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
