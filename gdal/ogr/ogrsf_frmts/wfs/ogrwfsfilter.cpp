@@ -301,9 +301,9 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
         CPLString osVal;
         char firstCh = 0;
         if (psOptions->nVersion == 100)
-            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escape='!'>", psOptions->pszNSPrefix);
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escape='!' matchCase='false'>", psOptions->pszNSPrefix);
         else
-            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escapeChar='!'>", psOptions->pszNSPrefix);
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escapeChar='!' matchCase='false'>", psOptions->pszNSPrefix);
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
             return false;
         if (poExpr->papoSubExpr[1]->eNodeType != SNT_CONSTANT &&
