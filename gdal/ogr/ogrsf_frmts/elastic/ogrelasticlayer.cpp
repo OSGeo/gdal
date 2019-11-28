@@ -3093,7 +3093,8 @@ json_object* OGRElasticLayer::TranslateSQLToFilter(swq_expr_node* poNode)
                 return poRet;
             }
         }
-        else if( poNode->nOperation == SWQ_LIKE &&
+        else if( (poNode->nOperation == SWQ_LIKE ||
+                  poNode->nOperation == SWQ_ILIKE ) && // ES actual semantics doesn't match exactly either...
                  poNode->nSubExprCount >= 2 &&
                  (nFieldIdx = OGRESGetFieldIndexFromSQL(poNode->papoSubExpr[0])) > 0 &&
                  nFieldIdx < m_poFeatureDefn->GetFieldCount() )

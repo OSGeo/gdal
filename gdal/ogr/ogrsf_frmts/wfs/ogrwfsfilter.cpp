@@ -296,14 +296,20 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
         return true;
     }
 
-    if( poExpr->nOperation == SWQ_LIKE )
+    if( poExpr->nOperation == SWQ_LIKE ||
+        poExpr->nOperation == SWQ_ILIKE )
     {
         CPLString osVal;
         char firstCh = 0;
+        const char* pszMatchCase =
+            poExpr->nOperation == SWQ_LIKE &&
+                !CPLTestBool(CPLGetConfigOption("OGR_SQL_LIKE_AS_ILIKE", "FALSE")) ? "true" : "false";
         if (psOptions->nVersion == 100)
-            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escape='!'>", psOptions->pszNSPrefix);
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escape='!' matchCase='%s'>",
+                                   psOptions->pszNSPrefix, pszMatchCase);
         else
-            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escapeChar='!'>", psOptions->pszNSPrefix);
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escapeChar='!' matchCase='%s'>",
+                                   psOptions->pszNSPrefix, pszMatchCase);
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
             return false;
         if (poExpr->papoSubExpr[1]->eNodeType != SNT_CONSTANT &&
