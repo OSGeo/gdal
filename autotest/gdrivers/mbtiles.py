@@ -300,7 +300,7 @@ def test_mbtiles_5():
     got_gt = ds.GetGeoTransform()
     expected_gt = (-13095853.550435878, 76.437028285176254, 0.0, 4015708.8887064462, 0.0, -76.437028285176254)
     for i in range(6):
-        assert expected_gt[i] == pytest.approx(got_gt[i], abs=1e-6)
+        assert expected_gt[i] == pytest.approx(got_gt[i], rel=1e-6)
     got_cs = ds.GetRasterBand(1).Checksum()
     assert got_cs == 4118
     got_cs = ds.GetRasterBand(2).Checksum()
@@ -493,7 +493,7 @@ def test_mbtiles_10():
 
     ds = gdal.Open('/vsimem/mbtiles_10.mbtiles')
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 29925
+    assert cs in (29925, 30092) # 30092 on Mac
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_10.mbtiles')
