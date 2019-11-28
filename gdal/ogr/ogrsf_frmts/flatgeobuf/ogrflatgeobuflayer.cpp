@@ -86,9 +86,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
         m_sExtent.MaxY = (*envelope)[3];
     }
 
-    CPLDebug("FlatGeobuf", "m_hasZ: %d", m_hasZ);
-    CPLDebug("FlatGeobuf", "m_hasM: %d", m_hasM);
-    CPLDebug("FlatGeobuf", "m_hasT: %d", m_hasT);
+    CPLDebug("FlatGeobuf", "geometryType: %d, hasZ: %d, hasM: %d, hasT: %d", (int) m_geometryType, m_hasZ, m_hasM, m_hasT);
 
     const auto crs = m_poHeader->crs();
     if (crs != nullptr) {
