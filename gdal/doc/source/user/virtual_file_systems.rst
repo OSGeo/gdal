@@ -237,6 +237,8 @@ On writing, the file is uploaded using the S3 multipart upload API. The size of 
 
 Since GDAL 2.4, when listing a directory, files with GLACIER storage class are ignored unless the ``CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE`` configuration option is set to ``NO``.
 
+Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
+
 .. versionadded:: 2.1
 
 .. _`/vsis3_streaming/`:
@@ -275,6 +277,8 @@ Several authentication methods are possible, and are attempted in the following 
 6. (GDAL >= 2.3) An alternate way of providing credentials similar to what the "gsutil" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the :file:`~/.boto` or :file:`UserProfile%/.boto` file will be read (or the file pointed by ``CPL_GS_CREDENTIALS_FILE``) for the gs_secret_access_key and gs_access_key_id entries for AWS style authentication. If not found, it will look for the gs_oauth2_refresh_token (and optionally client_id and client_secret) entry for OAuth2 client authentication.
 7. (GDAL >= 2.3) Finally if none of the above method succeeds, the code will check if the current machine is a Google Compute Engine instance, and if so will use the permissions associated to it (using the default service account associated with the VM). To force a machine to be detected as a GCE instance (for example for code running in a container with no access to the boot logs), you can set ``CPL_MACHINE_IS_GCE`` to ``YES``.
 
+Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
+
 .. versionadded:: 2.2
 
 .. _`/vsigs_streaming/`:
@@ -309,6 +313,8 @@ Two authentication methods are possible, and are attempted in the following orde
 
 1. The ``AZURE_STORAGE_CONNECTION_STRING`` configuration option, given in the access key section of the administration interface. It contains both the account name and a secret key.
 2. The ``AZURE_STORAGE_ACCOUNT`` and ``AZURE_STORAGE_ACCESS_KEY`` configuration options pointing respectively to the account name and a secret key.
+
+Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
 
 .. versionadded:: 2.3
 

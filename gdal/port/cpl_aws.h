@@ -109,6 +109,8 @@ public:
 
         virtual const CPLString& GetURL() const = 0;
 
+        virtual CPLString GetCopySourceHeader() const { return std::string(); }
+
         static bool GetBucketAndObjectKey(const char* pszURI,
                                           const char* pszFSPrefix,
                                           bool bAllowNoObject,
@@ -204,6 +206,8 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
         void SetRegion(const CPLString &osStr);
         void SetRequestPayer(const CPLString &osStr);
         void SetVirtualHosting(bool b);
+
+        CPLString GetCopySourceHeader() const override { return "x-amz-copy-source"; }
 
         CPLString GetSignedURL(CSLConstList papszOptions);
 

@@ -458,6 +458,40 @@ def test_vsigs_write_retry():
             gdal.VSIFCloseL(f)
 
 ###############################################################################
+# Test rename
+
+def test_vsigs_fake_rename():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test/source.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3' }, "foo")
+
+    def method(request):
+        if request.headers['Content-Length'] != '0':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            return
+        if request.headers['x-goog-copy-source'] != '/test/source.txt':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/test/target.txt', custom_method=method)
+    handler.add('DELETE', '/test/source.txt', 204)
+
+    with webserver.install_http_handler(handler):
+        assert gdal.Rename( '/vsigs/test/source.txt', '/vsigs/test/target.txt') == 0
+
+###############################################################################
 # Read credentials with OAuth2 refresh_token
 
 
@@ -1177,9 +1211,17 @@ def test_vsigs_extra_1():
         assert data == 'hello'
         gdal.VSIFCloseL(f)
 
-        ret = gdal.Unlink(subpath + '/test.txt')
+        assert gdal.Rename(subpath + '/test.txt', subpath + '/test2.txt') == 0
+
+        f = gdal.VSIFOpenL(subpath + '/test2.txt', 'rb')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
+        assert data == 'hello'
+        gdal.VSIFCloseL(f)
+
+        ret = gdal.Unlink(subpath + '/test2.txt')
         assert ret >= 0, \
-            ('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
+            ('Unlink(%s) should not return an error' % (subpath + '/test2.txt'))
 
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
