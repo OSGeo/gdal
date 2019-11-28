@@ -94,7 +94,7 @@ def test_gdal_contour_1():
 
     ds = None
 
-    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_contour_path() + ' -a elev -i 10 tmp/gdal_contour.tif tmp/contour.shp')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_contour_path() + ' -q -a elev -i 10 tmp/gdal_contour.tif tmp/contour.shp')
     assert (err is None or err == ''), 'got error/warning'
 
     ds = ogr.Open('tmp/contour.shp')

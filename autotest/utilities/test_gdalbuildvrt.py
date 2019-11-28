@@ -99,7 +99,7 @@ def test_gdalbuildvrt_1():
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
-    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalbuildvrt_path() + ' -q tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif')
     assert (err is None or err == ''), 'got error/warning'
 
     return gdalbuildvrt_check()

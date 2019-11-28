@@ -474,8 +474,8 @@ def test_ogr2ogr_17():
     except (OSError, AttributeError):
         pass
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -progress tmp/poly.shp ../ogr/data/poly.shp')
-    assert ret.find('0...10...20...30...40...50...60...70...80...90...100 - done.') != -1
+    (_, err) = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -progress tmp/poly.shp ../ogr/data/poly.shp')
+    assert err.find('0...10...20...30...40...50...60...70...80...90...100 - done.') != -1
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10

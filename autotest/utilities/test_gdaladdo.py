@@ -49,7 +49,7 @@ def test_gdaladdo_1():
     shutil.copy('../gcore/data/mfloat32.vrt', 'tmp/mfloat32.vrt')
     shutil.copy('../gcore/data/float32.tif', 'tmp/float32.tif')
 
-    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaladdo_path() + ' tmp/mfloat32.vrt 2 4')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaladdo_path() + ' -q tmp/mfloat32.vrt 2 4')
     assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/mfloat32.vrt')

@@ -683,13 +683,13 @@ def test_gdalwarp_31():
     cs1 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -t_srs EPSG:4326")
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -q -t_srs EPSG:4326")
 
     ds = gdal.Open('tmp/testgdalwarp31.tif')
     cs2 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    (_, err2) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -t_srs EPSG:4326 -overwrite")
+    (_, err2) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -q -t_srs EPSG:4326 -overwrite")
 
     ds = gdal.Open('tmp/testgdalwarp31.tif')
     cs3 = ds.GetRasterBand(1).Checksum()

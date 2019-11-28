@@ -45,7 +45,7 @@ def test_gdal_translate_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test1.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -q ../gcore/data/byte.tif tmp/test1.tif')
     assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/test1.tif')
@@ -626,7 +626,7 @@ def test_gdal_translate_29():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.tif -outsize 50% 50% -r cubic')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte.tif tmp/test_gdal_translate_29.tif -q -outsize 50% 50% -r cubic')
     assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/test_gdal_translate_29.tif')

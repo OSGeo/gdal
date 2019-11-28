@@ -46,7 +46,7 @@ def test_nearblack_1():
     if test_cli_utilities.get_nearblack_path() is None:
         pytest.skip()
 
-    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -nb 0 -of GTiff -o tmp/nearblack1.tif')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -q -nb 0 -of GTiff -o tmp/nearblack1.tif')
     assert (err is None or err == ''), 'got error/warning'
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
@@ -195,7 +195,7 @@ def test_nearblack_8():
     gdal.GetDriverByName('GTiff').CreateCopy('tmp/nearblack8.tif', src_ds)
     src_ds = None
 
-    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' tmp/nearblack8.tif -nb 0')
+    (_, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_nearblack_path() + ' tmp/nearblack8.tif -q -nb 0')
     assert (err is None or err == ''), 'got error/warning'
 
     ds = gdal.Open('tmp/nearblack8.tif')
