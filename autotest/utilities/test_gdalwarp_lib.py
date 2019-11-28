@@ -1861,7 +1861,6 @@ def test_gdalwarp_lib_bug_4326_to_3857():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4672
 
-
 ###############################################################################
 # Cleanup
 
