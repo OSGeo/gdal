@@ -275,6 +275,12 @@ MAIN_START(argc, argv)
         Usage("Missing destination filename.");
     }
 
+    if( strcmp(pszDstFilename, "/vsistdout/") == 0 ||
+        strcmp(pszDstFilename, "/dev/stdout") == 0 )
+    {
+        bQuiet = true;
+    }
+
     if (!bQuiet)
         pfnProgress = GDALTermProgress;
 
