@@ -12,8 +12,9 @@ sudo apt-get update
 sudo apt-get install -y --allow-unauthenticated python-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libsqlite3-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libmysqlclient-dev libogdi3.2-dev libcfitsio-dev openjdk-8-jdk couchdb libzstd1-dev ccache curl autoconf automake sqlite3 libspatialite-dev
 sudo apt-get install -y doxygen texlive-latex-base
 sudo apt-get install -y make
-sudo apt-get install -y python-dev
+sudo apt-get install -y python-dev python-pip
 sudo apt-get install -y g++
+sudo apt-get install -y libssl-dev
 sudo apt-get install -y --allow-unauthenticated libsfcgal-dev
 sudo apt-get install -y --allow-unauthenticated fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev
 
