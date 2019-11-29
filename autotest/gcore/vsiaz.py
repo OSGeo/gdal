@@ -808,11 +808,44 @@ def test_vsiaz_fake_test_BlobEndpointInConnectionString():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING',
-                         'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/myaccount' % gdaltest.webserver_port)
+    with gdaltest.config_option('AZURE_STORAGE_CONNECTION_STRING',
+                                'DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/myaccount' % gdaltest.webserver_port):
 
-    signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource')
-    assert 'http://127.0.0.1:%d/myaccount/az_fake_bucket/resource' % gdaltest.webserver_port in signed_url
+        signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource')
+        assert 'http://127.0.0.1:%d/myaccount/az_fake_bucket/resource' % gdaltest.webserver_port in signed_url
+
+###############################################################################
+# Test rename
+
+def test_vsiaz_fake_rename():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/azure/blob/myaccount/test/source.txt', 200,
+                {'Content-Length': '3'})
+    def method(request):
+        if request.headers['Content-Length'] != '0':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            return
+        expected = 'http://127.0.0.1:%d/azure/blob/myaccount/test/source.txt' % gdaltest.webserver_port
+        if request.headers['x-ms-copy-source'] != expected:
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            return
+
+        request.send_response(202)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/azure/blob/myaccount/test/target.txt', custom_method=method)
+    handler.add('DELETE', '/azure/blob/myaccount/test/source.txt', 202)
+
+    with webserver.install_http_handler(handler):
+        assert gdal.Rename( '/vsiaz/test/source.txt', '/vsiaz/test/target.txt') == 0
 
 
 ###############################################################################
@@ -896,9 +929,17 @@ def test_vsiaz_extra_1():
         assert data == 'hello'
         gdal.VSIFCloseL(f)
 
-        ret = gdal.Unlink(subpath + '/test.txt')
+        assert gdal.Rename(subpath + '/test.txt', subpath + '/test2.txt') == 0
+
+        f = gdal.VSIFOpenL(subpath + '/test2.txt', 'rb')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
+        assert data == 'hello'
+        gdal.VSIFCloseL(f)
+
+        ret = gdal.Unlink(subpath + '/test2.txt')
         assert ret >= 0, \
-            ('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
+            ('Unlink(%s) should not return an error' % (subpath + '/test2.txt'))
 
         ret = gdal.Rmdir(subpath)
         assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)

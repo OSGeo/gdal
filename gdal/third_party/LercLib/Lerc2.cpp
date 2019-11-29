@@ -335,8 +335,16 @@ bool Lerc2::ReadMask(const Byte** ppByte, size_t& nBytesRemainingInOut)
   ptr += sizeof(int);
   nBytesRemaining -= sizeof(int);
 
-  if ((numValid == 0 || numValid == w * h) && (numBytesMask != 0))
-    return false;
+  if (numValid == 0 || numValid == w * h)
+  {
+    if (numBytesMask != 0)
+      return false;
+  }
+  else
+  {
+    if (numBytesMask <= 0)
+      return false;
+  }
 
   if (!m_bitMask.SetSize(w, h))
     return false;

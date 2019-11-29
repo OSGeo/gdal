@@ -97,6 +97,9 @@ class VSIOSSHandleHelper final: public IVSIS3LikeHandleHelper
         const CPLString& GetObjectKey() const { return m_osObjectKey; }
         const CPLString& GetEndpoint()const  { return m_osEndpoint; }
         bool GetVirtualHosting() const { return m_bUseVirtualHosting; }
+
+        CPLString GetCopySourceHeader() const override { return "x-oss-copy-source"; }
+
         void SetEndpoint(const CPLString &osStr);
         void SetVirtualHosting(bool b);
 
