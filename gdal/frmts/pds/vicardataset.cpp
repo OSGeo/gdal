@@ -879,15 +879,15 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
         GUInt32 nSize;
         VSIFReadL( &nSize, 1, sizeof(nSize), poGDS->fpImage);
         CPL_LSBPTR32(&nSize);
-        if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC)
+        if( (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC &&
+             nSize < sizeof(GUInt32)) ||
+            (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 &&
+             nSize == 0) )
         {
-            if( nSize < sizeof(GUInt32) )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Wrong size at record %d",
-                        poGDS->m_nLastRecordOffset);
-                return CE_Failure;
-            }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Wrong size at record %d",
+                    poGDS->m_nLastRecordOffset);
+            return CE_Failure;
         }
 
         poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset+1] =
