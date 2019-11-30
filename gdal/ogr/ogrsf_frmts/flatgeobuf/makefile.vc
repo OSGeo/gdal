@@ -1,5 +1,5 @@
 
-OBJ =	ogrflatgeobufdataset.obj ogrflatgeobuflayer.obj packedrtree.obj
+OBJ =	geometryreader.obj geometrywriter.obj ogrflatgeobufdataset.obj ogrflatgeobuflayer.obj packedrtree.obj
 EXTRAFLAGS =	-I. -I.. -I..\..
 
 GDAL_ROOT	=	..\..\..
@@ -7,6 +7,6 @@ GDAL_ROOT	=	..\..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
-	
+
 clean:
 	-del *.obj *.pdb
