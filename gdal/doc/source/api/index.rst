@@ -76,11 +76,12 @@ API
 
        gnm_cpp
 
-   `Python API <../python/index.html>`_
-   ------------------------------------
+   Python API <../python/index.html>`_
+   -----------------------------------
 
    `Java API <../java/index.html>`_
    --------------------------------
+   
 
 .. only:: latex
 
