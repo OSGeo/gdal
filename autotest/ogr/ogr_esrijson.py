@@ -667,3 +667,26 @@ def test_ogr_esrijson_create_geometry_from_esri_json():
 
     g = ogr.CreateGeometryFromEsriJson('{ "x": 2, "y": 49 }')
     assert g.ExportToWkt() == 'POINT (2 49)'
+
+
+###############################################################################
+# Test for https://github.com/OSGeo/gdal/issues/2007
+
+def test_ogr_esrijson_identify_srs():
+
+    data = """
+        {
+        "objectIdFieldName" : "objectid",
+        "geometryType" : "esriGeometryPoint",
+        "spatialReference":{"wkt":"PROJCS[\\"NAD_1983_StatePlane_Arizona_Central_FIPS_0202_IntlFeet\\",GEOGCS[\\"GCS_North_American_1983\\",DATUM[\\"D_North_American_1983\\",SPHEROID[\\"GRS_1980\\",6378137.0,298.257222101]],PRIMEM[\\"Greenwich\\",0.0],UNIT[\\"Degree\\",0.0174532925199433]],PROJECTION[\\"Transverse_Mercator\\"],PARAMETER[\\"False_Easting\\",700000.0],PARAMETER[\\"False_Northing\\",0.0],PARAMETER[\\"Central_Meridian\\",-111.9166666666667],PARAMETER[\\"Scale_Factor\\",0.9999],PARAMETER[\\"Latitude_Of_Origin\\",31.0],UNIT[\\"Foot\\",0.3048]]"},
+        "fields" : [],
+        "features" : []
+        }
+        """
+
+    ds = ogr.Open(data)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    assert sr
+    assert sr.GetAuthorityCode(None) == '2223'
