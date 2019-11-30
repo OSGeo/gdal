@@ -233,7 +233,7 @@ def wktRoundtrip(expected):
 def test_ogr_flatgeobuf_3():
     if gdaltest.flatgeobuf_drv is None:
         pytest.skip()
-    wkts = ogrtest.get_wkt_data_series(True, True, True, True, True)
+    wkts = ogrtest.get_wkt_data_series(with_z=True, with_m=True, with_gc=True, with_circular=True, with_surface=True)
     for wkt in wkts:
         wktRoundtrip(wkt)
 
