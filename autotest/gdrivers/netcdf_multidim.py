@@ -31,6 +31,7 @@
 from osgeo import gdal
 from osgeo import osr
 from gdrivers.netcdf import netcdf_setup  # noqa
+netcdf_setup; # to please pyflakes
 
 import gdaltest
 import pytest

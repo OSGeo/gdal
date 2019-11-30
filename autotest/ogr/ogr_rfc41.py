@@ -36,6 +36,7 @@ from osgeo import gdal
 import pytest
 
 from ogr.ogr_sql_sqlite import require_ogr_sql_sqlite  # noqa
+require_ogr_sql_sqlite; # to make pyflakes happy
 
 ###############################################################################
 # Test OGRGeomFieldDefn class

@@ -216,7 +216,7 @@ def test_ogr_geojson_2():
     ds = ogr.Open('data/point.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('point')
     assert lyr is not None, 'Missing layer called point'
@@ -237,7 +237,7 @@ def test_ogr_geojson_3():
     ds = ogr.Open('data/linestring.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('linestring')
     assert lyr is not None, 'Missing layer called linestring'
@@ -258,7 +258,7 @@ def test_ogr_geojson_4():
     ds = ogr.Open('data/polygon.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('polygon')
     assert lyr is not None, 'Missing layer called polygon'
@@ -279,7 +279,7 @@ def test_ogr_geojson_5():
     ds = ogr.Open('data/geometrycollection.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('geometrycollection')
     assert lyr is not None, 'Missing layer called geometrycollection'
@@ -300,7 +300,7 @@ def test_ogr_geojson_6():
     ds = ogr.Open('data/multipoint.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('multipoint')
     assert lyr is not None, 'Missing layer called multipoint'
@@ -321,7 +321,7 @@ def test_ogr_geojson_7():
     ds = ogr.Open('data/multilinestring.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('multilinestring')
     assert lyr is not None, 'Missing layer called multilinestring'
@@ -342,7 +342,7 @@ def test_ogr_geojson_8():
     ds = ogr.Open('data/multipolygon.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('multipolygon')
     assert lyr is not None, 'Missing layer called multipolygon'
@@ -418,7 +418,7 @@ def test_ogr_geojson_11():
     ds = ogr.Open('data/srs_name.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('srs_name')
     assert lyr is not None, 'Missing layer called srs_name'
@@ -1841,7 +1841,7 @@ def test_ogr_geojson_52():
     ds = ogr.Open('data/nullvalues.geojson')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('nullvalues')
     assert lyr is not None, 'Missing layer called nullvalues'

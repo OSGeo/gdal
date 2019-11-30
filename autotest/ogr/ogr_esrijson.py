@@ -92,7 +92,7 @@ def test_ogr_esrijson_read_point():
     ds = ogr.Open('data/esripoint.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayerByName('esripoint')
     assert lyr is not None, 'Missing layer called esripoint'
@@ -141,7 +141,7 @@ def test_ogr_esrijson_read_linestring():
     ds = ogr.Open('data/esrilinestring.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -191,7 +191,7 @@ def test_ogr_esrijson_read_polygon():
     ds = ogr.Open('data/esripolygon.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -229,7 +229,7 @@ def test_ogr_esrijson_read_multipoint():
     ds = ogr.Open('data/esrimultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -256,7 +256,7 @@ def test_ogr_esrijson_read_pointz():
     ds = ogr.Open('data/esrizpoint.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -305,7 +305,7 @@ def test_ogr_esrijson_read_linestringz():
     ds = ogr.Open('data/esrizlinestring.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -333,7 +333,7 @@ def test_ogr_esrijson_read_multipointz():
     ds = ogr.Open('data/esrizmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -361,7 +361,7 @@ def test_ogr_esrijson_read_polygonz():
     ds = ogr.Open('data/esrizpolygon.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -389,7 +389,7 @@ def test_ogr_esrijson_read_multipointm():
     ds = ogr.Open('data/esrihasmnozmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -416,7 +416,7 @@ def test_ogr_esrijson_read_pointz_withou_z():
     ds = ogr.Open('data/esriinvalidhaszmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 
@@ -443,7 +443,7 @@ def test_ogr_esrijson_read_multipointzm():
     ds = ogr.Open('data/esrizmmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
-    assert ds.GetLayerCount() is 1, 'Wrong number of layers'
+    assert ds.GetLayerCount() == 1, 'Wrong number of layers'
 
     lyr = ds.GetLayer(0)
 

@@ -37,6 +37,7 @@ import gdaltest
 import pytest
 
 from gcore.testnonboundtoswig import setup as testnonboundtoswig_setup  # noqa
+testnonboundtoswig_setup; # to please pyflakes
 
 ###############################################################################
 # Use common test for /vsicrypt
