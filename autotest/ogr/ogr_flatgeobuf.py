@@ -233,50 +233,9 @@ def wktRoundtrip(expected):
 def test_ogr_flatgeobuf_3():
     if gdaltest.flatgeobuf_drv is None:
         pytest.skip()
-    wktRoundtrip('POINT (1 1)')
-    wktRoundtrip('POINT (1.1234 1.4321)')
-    wktRoundtrip('POINT (1.12345678901234 1.4321)') # max precision 15 decimals
-    #wktRoundtrip('POINT (1.123456789012341 1.4321)') # 16 decimals, will not pass
-    wktRoundtrip('POINT (1.2 -2.1)')
-    wktRoundtrip('MULTIPOINT ((10 40),(40 30),(20 20),(30 10))')
-    wktRoundtrip('LINESTRING (1.2 -2.1,2.4 -4.8)')
-    wktRoundtrip('MULTILINESTRING ((10 10,20 20,10 40),(40 40,30 30,40 20,30 10),(50 50,60 60,50 90))')
-    wktRoundtrip('MULTILINESTRING ((1.2 -2.1,2.4 -4.8))')
-    wktRoundtrip('POLYGON ((30 10,40 40,20 40,10 20,30 10))')
-    wktRoundtrip('POLYGON ((35 10,45 45,15 40,10 20,35 10),(20 30,35 35,30 20,20 30))')
-    wktRoundtrip('MULTIPOLYGON (((30 20,45 40,10 40,30 20)),((15 5,40 10,10 20,5 10,15 5)))')
-    wktRoundtrip('MULTIPOLYGON (((40 40,20 45,45 30,40 40)),((20 35,10 30,10 10,30 5,45 20,20 35),(30 20,20 15,20 25,30 20)))')
-    wktRoundtrip('MULTIPOLYGON (((30 20,45 40,10 40,30 20)))')
-    wktRoundtrip('MULTIPOLYGON (((35 10,45 45,15 40,10 20,35 10),(20 30,35 35,30 20,20 30)))')
-
-    wktRoundtrip('POINT Z (1 2 3)')
-    wktRoundtrip('POINT M (1 2 3)')
-    wktRoundtrip('POINT ZM (1 2 3 4)')
-    wktRoundtrip('MULTIPOINT Z ((10 40 1),(40 30 2),(20 20 3),(30 10 4))')
-    wktRoundtrip('MULTIPOINT M ((10 40 1),(40 30 2),(20 20 3),(30 10 4))')
-    wktRoundtrip('MULTIPOINT ZM ((10 40 1 4),(40 30 2 3),(20 20 3 2),(30 10 4 1))')
-    wktRoundtrip('LINESTRING Z (1 2 3,2 3 4)')
-    wktRoundtrip('LINESTRING M (1 2 3,2 3 4)')
-    wktRoundtrip('LINESTRING ZM (1 2 3 4,2 3 4 5)')
-    wktRoundtrip('POLYGON Z ((30 10 1,40 40 2,20 40 3,10 20 4,30 10 5))')
-    wktRoundtrip('POLYGON M ((30 10 1,40 40 2,20 40 3,10 20 4,30 10 5))')
-    wktRoundtrip('POLYGON ZM ((30 10 1 5,40 40 2 4,20 40 3 3,10 20 4 2,30 10 5 1))')
-    wktRoundtrip('MULTIPOLYGON Z (((35 10 1,45 45 2,15 40 3,10 20 4,35 10 5),(20 30 1,35 35 2,30 20 3,20 30 4)))')
-    wktRoundtrip('MULTIPOLYGON M (((35 10 1,45 45 2,15 40 3,10 20 4,35 10 5),(20 30 1,35 35 2,30 20 3,20 30 4)))')
-    wktRoundtrip('MULTIPOLYGON ZM (((35 10 1 5,45 45 2 4,15 40 3 3,10 20 4 2,35 10 1 1),(20 30 4 1,35 35 3 2,30 20 2 3,20 30 1 4)))')
-
-    wktRoundtrip('GEOMETRYCOLLECTION (POINT (4 6),LINESTRING (4 6,7 10))')
-
-    wktRoundtrip('CIRCULARSTRING (0 0,1 1,1 0)')
-    wktRoundtrip('COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 0),(1 0,0 1))')
-    wktRoundtrip('CURVEPOLYGON (CIRCULARSTRING (0 0,4 0,4 4,0 4,0 0),(1 1,3 3,3 1,1 1))')
-    wktRoundtrip('MULTICURVE ((0 0,5 5),CIRCULARSTRING (4 0,4 4,8 4))')
-    wktRoundtrip('MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,4 0,4 4,0 4,0 0),(1 1,3 3,3 1,1 1)),((10 10,14 12,11 10,10 10),(11 11,11.5 11.0,11.0 11.5,11 11)))')
-
-    wktRoundtrip('POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))')
-    wktRoundtrip('TRIANGLE ((0 0,0 9,9 0,0 0))')
-    wktRoundtrip('TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)))')
-    wktRoundtrip('TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))')
+    wkts = ogrtest.get_wkt_data_series(True, True, True, True, True)
+    for wkt in wkts:
+        wktRoundtrip(wkt)
 
 # Run test_ogrsf
 def test_ogr_flatgeobuf_8():
