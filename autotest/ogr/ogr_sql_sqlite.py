@@ -380,10 +380,10 @@ def test_ogr_sql_sqlite_2():
     ds.ReleaseResultSet(sql_lyr)
 
 ###############################################################################
-# Test that involves a join
+# Test that involves a left join
 
 
-def test_ogr_sql_sqlite_3():
+def test_ogr_sql_sqlite_left_join():
 
     ds = ogr.Open('data')
 
@@ -404,6 +404,48 @@ def test_ogr_sql_sqlite_3():
     assert count == 10
 
     ds = None
+
+###############################################################################
+# Test that involves a join on layers without fast feature count
+
+
+def test_ogr_sql_sqlite_join_layers_without_fast_feature_count():
+
+    gdal.FileFromMemBuffer('/vsimem/tblmain.csv', """id,attr1
+1,one
+2,two
+3,three
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/tblaux.csv', """id,attr2
+1,ipsum
+2,lorem
+3,amet
+""")
+
+    ds = ogr.Open('/vsimem/tblmain.csv')
+    sql_lyr = ds.ExecuteSQL("SELECT tblmain.id, tblmain.attr1, tblaux.attr2 FROM tblmain JOIN '/vsimem/tblaux.csv'.tblaux AS tblaux USING (id) ORDER BY id", dialect='SQLite')
+    count = sql_lyr.GetFeatureCount()
+    sql_lyr.ResetReading()
+    f = sql_lyr.GetNextFeature()
+    assert f['id'] == '1'
+    assert f['attr1'] == 'one'
+    assert f['attr2'] == 'ipsum'
+    f = sql_lyr.GetNextFeature()
+    assert f['id'] == '2'
+    assert f['attr1'] == 'two'
+    assert f['attr2'] == 'lorem'
+    f = sql_lyr.GetNextFeature()
+    assert f['id'] == '3'
+    assert f['attr1'] == 'three'
+    assert f['attr2'] == 'amet'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/tblmain.csv')
+    gdal.Unlink('/vsimem/tblaux.csv')
+
+    assert count == 3
 
 ###############################################################################
 # Test that involves a self-join (to check that we can open twice the same table)
