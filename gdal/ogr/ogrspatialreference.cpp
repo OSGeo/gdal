@@ -1405,6 +1405,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
         return d->m_poRoot->exportToWkt(ppszResult);
     }
 
+    auto ctxt = d->getPROJContext();
     auto wktFormat = d->m_bMorphToESRI ? PJ_WKT1_ESRI : PJ_WKT1_GDAL;
     const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT",
                                     CPLGetConfigOption("OSR_WKT_FORMAT", ""));
@@ -1430,6 +1431,14 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     }
     else if( pszFormat[0] == '\0' )
     {
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+        if( d->m_pjType == PJ_TYPE_GEOGRAPHIC_2D_CRS &&
+            proj_is_derived_crs(ctxt, d->m_pj_crs) )
+        {
+            wktFormat = PJ_WKT2_2018;
+        }
+        else
+#endif
         if( (IsGeographic() || IsProjected()) &&
             !IsCompound() && GetAxesCount() == 3 )
         {
@@ -1452,7 +1461,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
                     CSLFetchNameValueDef(papszOptions, "MULTILINE", "NO"));
 
     const char* pszWKT = proj_as_wkt(
-        d->getPROJContext(), d->m_pj_crs,
+        ctxt, d->m_pj_crs,
         wktFormat, aosOptions.List());
 
     if( !pszWKT )
@@ -7367,6 +7376,56 @@ OGRErr OSRSetVerticalPerspective( OGRSpatialReferenceH hSRS,
     return ToPointer(hSRS)->SetVerticalPerspective(
         dfTopoOriginLat, dfTopoOriginLon, dfTopoOriginHeight,
         dfViewPointHeight, dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
+/*             SetDerivedGeogCRSWithPoleRotationGRIBConvention()        */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetDerivedGeogCRSWithPoleRotationGRIBConvention(
+                                                           const char* pszCRSName,
+                                                           double dfSouthPoleLat,
+                                                           double dfSouthPoleLon,
+                                                           double dfAxisRotation )
+{
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+        return OGRERR_FAILURE;
+    if( d->m_pjType != PJ_TYPE_GEOGRAPHIC_2D_CRS )
+        return OGRERR_FAILURE;
+    auto ctxt = d->getPROJContext();
+    auto conv = proj_create_conversion_pole_rotation_grib_convention(
+        ctxt,
+        dfSouthPoleLat,
+        dfSouthPoleLon,
+        dfAxisRotation,
+        nullptr, 0);
+    auto cs = proj_crs_get_coordinate_system(ctxt, d->m_pj_crs);
+    d->setPjCRS(
+        proj_create_derived_geographic_crs(
+            ctxt,
+            pszCRSName,
+            d->m_pj_crs,
+            conv,
+            cs));
+    proj_destroy(conv);
+    proj_destroy(cs);
+    return OGRERR_NONE;
+#else
+    (void)pszCRSName;
+    SetProjection( "Rotated_pole" );
+    SetExtension(
+        "PROJCS", "PROJ4",
+        CPLSPrintf("+proj=ob_tran +lon_0=%.18g +o_proj=longlat +o_lon_p=%.18g "
+                   "+o_lat_p=%.18g +a=%.18g +b=%.18g +to_meter=0.0174532925199 +wktext",
+                   dfSouthPoleLon,
+                   dfAxisRotation == 0 ? 0 : -dfAxisRotation,
+                   dfSouthPoleLat == 0 ? 0 : -dfSouthPoleLat,
+                   GetSemiMajor(nullptr),
+                   GetSemiMinor(nullptr)));
+    return OGRERR_NONE;
+#endif
 }
 
 /************************************************************************/
