@@ -79,10 +79,15 @@ API
    Python API <../python/index.html>`_
    -----------------------------------
 
+   .. toctree::
+       :maxdepth: 1
+
+       python_gotchas
+
+
    `Java API <../java/index.html>`_
    --------------------------------
    
-
 .. only:: latex
 
     API is omitted in this PDF document. You can consult it on
