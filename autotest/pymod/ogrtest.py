@@ -223,21 +223,29 @@ def get_wkt_data_series(with_z, with_m, with_gc, with_circular, with_surface):
     wkts = basic_wkts
     wkts_with_z = []
     wkts_with_m = []
+    wkts_with_zm = []
     if with_gc:
         wkts.extend(gc_wkts)
     if with_circular:
         wkts.extend(circular_wkts)
     if with_z or with_m:
         for i, wkt in enumerate(wkts):
-            g = ogr.CreateGeometryFromWkt(wkt)
             if with_z:
+                g = ogr.CreateGeometryFromWkt(wkt)
                 g.Set3D(True)
                 wkts_with_z.extend([g.ExportToIsoWkt()])
             if with_z:
+                g = ogr.CreateGeometryFromWkt(wkt)
                 g.SetMeasured(True)
                 wkts_with_m.extend([g.ExportToIsoWkt()])
+            if with_z and with_m:
+                g = ogr.CreateGeometryFromWkt(wkt)
+                g.Set3D(True)
+                g.SetMeasured(True)
+                wkts_with_zm.extend([g.ExportToIsoWkt()])
     wkts.extend(wkts_with_z)
     wkts.extend(wkts_with_m)
+    wkts.extend(wkts_with_zm)
     if with_surface:
         wkts.extend(surface_wkts)
     return wkts
