@@ -288,8 +288,6 @@ OGRGeometryCollection *GeometryReader::readGeometryCollection()
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
     auto gc = new OGRGeometryCollection();
-    if (parts == nullptr)
-        return gc;
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
         auto geom = reader.read();
