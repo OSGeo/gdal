@@ -221,7 +221,7 @@ int VSIPDFFileStream::FillBuffer()
     // and liberation of VSIPDFFileStream as PDFDoc::str member.
     if( nCurrentPos == 0 || nCurrentPos == VSI_L_OFFSET_MAX )
     {
-        for(int i=0;i<nToRead-(int)strlen("/Linearized ");i++)
+        for(int i=0;i<nBufferLength-(int)strlen("/Linearized ");i++)
         {
             if( memcmp(abyBuffer + i, "/Linearized ",
                        strlen("/Linearized ")) == 0 )
