@@ -653,7 +653,8 @@ def test_ogr_pds4_create_table_delimited_with_srs_no_vrt():
 
     ds = ogr.Open('/vsimem/test.xml')
     lyr = ds.GetLayerByName('foo')
-    assert lyr.GetSpatialRef().ExportToWkt() == 'PROJCS["Transverse Mercator target",GEOGCS["GCS_target",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+    wkt = lyr.GetSpatialRef().ExportToWkt()
+    assert wkt.replace('D_WGS_1984', 'WGS_1984') == 'PROJCS["Transverse Mercator target",GEOGCS["GCS_target",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'.replace('D_WGS_1984', 'WGS_1984'), wkt
 
     ds = None
 
