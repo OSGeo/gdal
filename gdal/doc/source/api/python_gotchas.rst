@@ -8,9 +8,9 @@ This page lists aspects of GDAL's and OGR's Python bindings that may catch Pytho
 If you find something new, feel free to add it to the list, but consider discussing it on the `gdal-dev mailing list <https://lists.osgeo.org/mailman/listinfo/gdal-dev>`__  first,
 to make sure you fully understand the issue and that others agree that it is unexpected, "non-Pythonic",
 or something that would catch many Python programmers by surprise.
-Be sure to reference email threads, Trac tickets, and other sources of additional information.
+Be sure to reference email threads, GitHub tickets, and other sources of additional information.
 
-This list is not the place to report bugs. If you believe something is a bug, please `open a ticket <https://trac.osgeo.org/gdal/newticket>`__ and report the problem to gdal-dev.
+This list is not the place to report bugs. If you believe something is a bug, please `open a ticket <https://github.com/OSGeo/gdal/issues>`__ and report the problem to gdal-dev.
 Then consider listing it here if it is something related to Python specifically. Do not list it here if it relates to GDAL or OGR generally, and not the Python bindings specifically.
 
 Not all items listed here are bugs. Some of these are just how GDAL and OGR work and cannot be fixed easily without breaking existing code.
@@ -341,7 +341,7 @@ Much of GDAL's Python bindings are implemented in C++. Much of the core of numpy
 This requires GDAL's Python bindings to be compiled using numpy header files that define numpy C data structures. Those data structures sometimes change between numpy versions. When this happens, the new version of numpy is not be compatible at the binary level with the old version, and the GDAL Python bindings must be recompiled before they will work with the new verison of numpy. 
 And when they are recompiled, they probably won't work with the old version.
 
-If you obtained a precompiled version of GDAL's Python bindings, such as the Windows packages from `http://vbkto.dyndns.org/sdk/ <http://vbkto.dyndns.org/sdk/>`__ be sure you look up what version of numpy was used to compile them, and install that version of numpy on your machine.
+If you obtained a precompiled version of GDAL's Python bindings, such as the Windows packages from `http://gisinternals.com/sdk.php <http://gisinternals.com/sdk.php>`__ be sure you look up what version of numpy was used to compile them, and install that version of numpy on your machine.
 
 Python bindings cannot be used successfully from ArcGIS in-process geoprocessing tools (ArcGIS 9.3 and later)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
