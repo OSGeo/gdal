@@ -34,6 +34,8 @@ html: .doxygen_up_to_date
 	mv "$(BUILDDIR)/html/drivers/raster/index.html.mod" "$(BUILDDIR)/html/drivers/raster/index.html"
 	sed 's/<div class="toctree-wrapper compound">/<div class="toctree-wrapper compound" hidden=1>/' < "$(BUILDDIR)/html/drivers/vector/index.html" > "$(BUILDDIR)/html/drivers/vector/index.html.mod"
 	mv "$(BUILDDIR)/html/drivers/vector/index.html.mod" "$(BUILDDIR)/html/drivers/vector/index.html"
+	sed "s/python_api_ref\.html/\.\.\/python\/index\.html/" < "$(BUILDDIR)/html/api/index.html" > "$(BUILDDIR)/html/api/index.html.mod"
+	mv "$(BUILDDIR)/html/api/index.html.mod" "$(BUILDDIR)/html/api/index.html"
 	rm -rf build/html/doxygen
 	cp -r build/doxygen_html build/html/doxygen
 	ln -sf ../latex/gdal.pdf build/html

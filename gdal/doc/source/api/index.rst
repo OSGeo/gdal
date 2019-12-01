@@ -76,12 +76,13 @@ API
 
        gnm_cpp
 
-   Python API <../python/index.html>`_
-   -----------------------------------
+   Python API
+   ----------
 
    .. toctree::
        :maxdepth: 1
 
+       python_api_ref
        python_gotchas
 
 
