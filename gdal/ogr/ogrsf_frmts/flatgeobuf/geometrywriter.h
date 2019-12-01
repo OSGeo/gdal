@@ -40,7 +40,7 @@ class GeometryWriter {
     private:
         flatbuffers::FlatBufferBuilder &m_fbb;
         const OGRGeometry *m_ogrGeometry;
-        const FlatGeobuf::GeometryType m_geometryType;
+        FlatGeobuf::GeometryType m_geometryType;
         const bool m_hasZ;
         const bool m_hasM;
         std::vector<double> m_xy;
@@ -53,18 +53,18 @@ class GeometryWriter {
         uint32_t writeSimpleCurve(const OGRSimpleCurve *sc);
         void writeMultiLineString(const OGRMultiLineString *mls);
         void writePolygon(const OGRPolygon *p);
-        const flatbuffers::Offset<FlatGeobuf::Geometry> writeMultiPolygon(const OGRMultiPolygon *mp);
-        const flatbuffers::Offset<FlatGeobuf::Geometry> writeGeometryCollection(const OGRGeometryCollection *gc);
-        const flatbuffers::Offset<FlatGeobuf::Geometry> writeCompoundCurve(const OGRCompoundCurve *cc);
-        const flatbuffers::Offset<FlatGeobuf::Geometry> writeCurvePolygon(const OGRCurvePolygon *cp);
-        const flatbuffers::Offset<FlatGeobuf::Geometry> writePolyhedralSurface(const OGRPolyhedralSurface *p);
+        const flatbuffers::Offset<FlatGeobuf::Geometry> writeMultiPolygon(const OGRMultiPolygon *mp, int depth);
+        const flatbuffers::Offset<FlatGeobuf::Geometry> writeGeometryCollection(const OGRGeometryCollection *gc, int depth);
+        const flatbuffers::Offset<FlatGeobuf::Geometry> writeCompoundCurve(const OGRCompoundCurve *cc, int depth);
+        const flatbuffers::Offset<FlatGeobuf::Geometry> writeCurvePolygon(const OGRCurvePolygon *cp, int depth);
+        const flatbuffers::Offset<FlatGeobuf::Geometry> writePolyhedralSurface(const OGRPolyhedralSurface *p, int depth);
         void writeTIN(const OGRTriangulatedSurface *p);
 
     public:
         GeometryWriter(
             flatbuffers::FlatBufferBuilder &fbb,
             const  OGRGeometry *ogrGeometry,
-            const FlatGeobuf::GeometryType geometryType,
+            FlatGeobuf::GeometryType geometryType,
             const bool hasZ,
             const bool hasM) :
             m_fbb (fbb),
@@ -84,7 +84,7 @@ class GeometryWriter {
             m_hasZ (hasZ),
             m_hasM (hasM)
             { }
-        const flatbuffers::Offset<FlatGeobuf::Geometry> write();
+        const flatbuffers::Offset<FlatGeobuf::Geometry> write(int depth);
         static FlatGeobuf::GeometryType translateOGRwkbGeometryType(const OGRwkbGeometryType eGType);
 };
 

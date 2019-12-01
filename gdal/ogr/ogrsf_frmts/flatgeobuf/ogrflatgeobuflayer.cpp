@@ -883,8 +883,9 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     }
 
     GeometryWriter writer { fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM };
-    auto geometryOffset = writer.write();
-    const auto feature = CreateFeatureDirect(fbb, geometryOffset, &properties);
+    auto geometryOffset = writer.write(0);
+    const auto pProperties = properties.empty() ? nullptr : &properties;
+    const auto feature = CreateFeatureDirect(fbb, geometryOffset, pProperties);
     fbb.FinishSizePrefixed(feature);
 
     OGREnvelope psEnvelope;

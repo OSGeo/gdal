@@ -102,40 +102,40 @@ void GeometryWriter::writePolygon(const OGRPolygon *p)
     }
 }
 
-const Offset<Geometry> GeometryWriter::writeMultiPolygon(const OGRMultiPolygon *mp)
+const Offset<Geometry> GeometryWriter::writeMultiPolygon(const OGRMultiPolygon *mp, int depth)
 {
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < mp->getNumGeometries(); i++) {
         const auto part = mp->getGeometryRef(i)->toPolygon();
         GeometryWriter writer { m_fbb, part, GeometryType::Polygon, m_hasZ, m_hasM };
-        parts.push_back(writer.write());
+        parts.push_back(writer.write(depth + 1));
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-const Offset<Geometry> GeometryWriter::writeGeometryCollection(const OGRGeometryCollection *gc)
+const Offset<Geometry> GeometryWriter::writeGeometryCollection(const OGRGeometryCollection *gc, int depth)
 {
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < gc->getNumGeometries(); i++) {
         auto part = gc->getGeometryRef(i);
         GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
-        parts.push_back(writer.write());
+        parts.push_back(writer.write(depth + 1));
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-const Offset<Geometry> GeometryWriter::writeCompoundCurve(const OGRCompoundCurve *cc)
+const Offset<Geometry> GeometryWriter::writeCompoundCurve(const OGRCompoundCurve *cc, int depth)
 {
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < cc->getNumCurves(); i++) {
         const auto part = cc->getCurve(i);
         GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
-        parts.push_back(writer.write());
+        parts.push_back(writer.write(depth + 1));
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-const Offset<Geometry> GeometryWriter::writeCurvePolygon(const OGRCurvePolygon *cp)
+const Offset<Geometry> GeometryWriter::writeCurvePolygon(const OGRCurvePolygon *cp, int depth)
 {
     std::vector<const OGRCurve *> curves;
     std::vector<Offset<Geometry>> parts;
@@ -144,18 +144,18 @@ const Offset<Geometry> GeometryWriter::writeCurvePolygon(const OGRCurvePolygon *
         curves.push_back(cp->getInteriorRingCurve(i));
     for (auto curve : curves) {
         GeometryWriter writer { m_fbb, curve, m_hasZ, m_hasM };
-        parts.push_back(writer.write());
+        parts.push_back(writer.write(depth + 1));
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
 
-const Offset<Geometry> GeometryWriter::writePolyhedralSurface(const OGRPolyhedralSurface *p)
+const Offset<Geometry> GeometryWriter::writePolyhedralSurface(const OGRPolyhedralSurface *p, int depth)
 {
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < p->getNumGeometries(); i++) {
         auto part = p->getGeometryRef(i);
         GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
-        parts.push_back(writer.write());
+        parts.push_back(writer.write(depth + 1));
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
@@ -175,8 +175,13 @@ void GeometryWriter::writeTIN(const OGRTriangulatedSurface *ts)
     }
 }
 
-const Offset<Geometry> GeometryWriter::write()
+const Offset<Geometry> GeometryWriter::write(int depth)
 {
+    bool unknownGeometryType = false;
+    if (depth == 0 && m_geometryType == GeometryType::Unknown) {
+        m_geometryType = translateOGRwkbGeometryType(m_ogrGeometry->getGeometryType());
+        unknownGeometryType = true;
+    }
     switch (m_geometryType) {
         case GeometryType::Point:
             writePoint(m_ogrGeometry->toPoint()); break;
@@ -189,21 +194,21 @@ const Offset<Geometry> GeometryWriter::write()
         case GeometryType::Polygon:
             writePolygon(m_ogrGeometry->toPolygon()); break;
         case GeometryType::MultiPolygon:
-            return writeMultiPolygon(m_ogrGeometry->toMultiPolygon());
+            return writeMultiPolygon(m_ogrGeometry->toMultiPolygon(), depth);
         case GeometryType::GeometryCollection:
-            return writeGeometryCollection(m_ogrGeometry->toGeometryCollection());
+            return writeGeometryCollection(m_ogrGeometry->toGeometryCollection(), depth);
         case GeometryType::CircularString:
             writeSimpleCurve(m_ogrGeometry->toCircularString()); break;
         case GeometryType::CompoundCurve:
-            return writeCompoundCurve(m_ogrGeometry->toCompoundCurve());
+            return writeCompoundCurve(m_ogrGeometry->toCompoundCurve(), depth);
         case GeometryType::CurvePolygon:
-            return writeCurvePolygon(m_ogrGeometry->toCurvePolygon());
+            return writeCurvePolygon(m_ogrGeometry->toCurvePolygon(), depth);
         case GeometryType::MultiCurve:
-            return writeGeometryCollection(m_ogrGeometry->toMultiCurve());
+            return writeGeometryCollection(m_ogrGeometry->toMultiCurve(), depth);
         case GeometryType::MultiSurface:
-            return writeGeometryCollection(m_ogrGeometry->toMultiSurface());
+            return writeGeometryCollection(m_ogrGeometry->toMultiSurface(), depth);
         case GeometryType::PolyhedralSurface:
-            return writePolyhedralSurface(m_ogrGeometry->toPolyhedralSurface());
+            return writePolyhedralSurface(m_ogrGeometry->toPolyhedralSurface(), depth);
         case GeometryType::Triangle:
             writePolygon(m_ogrGeometry->toTriangle()); break;
         case GeometryType::TIN:
@@ -212,6 +217,10 @@ const Offset<Geometry> GeometryWriter::write()
             CPLError(CE_Failure, CPLE_AppDefined, "GeometryWriter::write: Unknown type %d", (int) m_geometryType);
             return 0;
     }
-    // TODO: only write m_geometryType if needed (heterogenous collections, depth > 0, feature specific type)
-    return FlatGeobuf::CreateGeometryDirect(m_fbb, &m_ends, &m_xy, &m_z, &m_m, nullptr, nullptr, m_geometryType);
+    const auto pEnds = m_ends.empty() ? nullptr : &m_ends;
+    const auto pXy = m_xy.empty() ? nullptr : &m_xy;
+    const auto pZ = m_z.empty() ? nullptr : &m_z;
+    const auto pM = m_m.empty() ? nullptr : &m_m;
+    const auto geometryType = depth > 0 || unknownGeometryType ? m_geometryType : GeometryType::Unknown;
+    return FlatGeobuf::CreateGeometryDirect(m_fbb, pEnds, pXy, pZ, pM, nullptr, nullptr, geometryType);
 }
