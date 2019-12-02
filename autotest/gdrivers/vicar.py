@@ -32,6 +32,7 @@
 from osgeo import gdal
 from osgeo import ogr
 import json
+import struct
 
 import gdaltest
 import pytest
@@ -419,3 +420,34 @@ def test_vicar_write_compression_errors():
     assert gdal.GetLastErrorMsg() != ''
     ds = None
     gdal.Unlink(filename)
+
+
+def test_vicar_open_from_pds3():
+
+    gdal.FileFromMemBuffer('/vsimem/test',
+                           """PDS_VERSION_ID                       = "PDS3"
+RECORD_BYTES                         = 1
+^IMAGE_HEADER                        = 489
+^IMAGE                               = 757
+OBJECT                               = IMAGE
+    BANDS                            = 1
+    BAND_STORAGE_TYPE                = "BAND SEQUENTIAL"
+    LINES                            = 1
+    LINE_SAMPLES                     = 1
+    SAMPLE_BITS                      = 8
+END_OBJECT                           = IMAGE
+END
+LBLSIZE=268             FORMAT='BYTE'  TYPE='IMAGE'  BUFSIZ=20480  DIM=3  EOL=0  RECSIZE=1  ORG='BSQ'  NL=1  NS=1  NB=1  N1=1  N2=1  N3=1  N4=0  NBB=0  NLB=0  HOST='X86-64-LINX'  INTFMT='LOW'  REALFMT='RIEEE'  BHOST='VAX-VMS'  BINTFMT='LOW'  BREALFMT='VAX'  BLTYPE=''
+x
+""")
+
+    ds = gdal.Open('/vsimem/test')
+    assert ds
+    assert ds.GetDriver().ShortName == 'PDS'
+    assert struct.unpack('B', ds.GetRasterBand(1).ReadRaster())[0] == ord('x')
+
+    with gdaltest.config_option('GDAL_TRY_PDS3_WITH_VICAR', 'YES'):
+        ds = gdal.Open('/vsimem/test')
+    assert ds
+    assert ds.GetDriver().ShortName == 'VICAR'
+    assert struct.unpack('B', ds.GetRasterBand(1).ReadRaster())[0] == ord('x')

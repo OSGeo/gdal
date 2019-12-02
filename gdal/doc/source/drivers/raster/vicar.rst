@@ -8,6 +8,12 @@ VICAR -- VICAR
 
 .. built_in_by_default::
 
+.. note::
+    PDS3 datasets can incorporate a VICAR header. By default, GDAL will use the
+    :ref:`PDS <raster.pds>` driver in that situation. Starting with GDAL 3.1, if
+    the :decl_configoption:`GDAL_TRY_PDS3_WITH_VICAR` configuration option is
+    set to YES, the dataset will be opened by the VICAR driver.
+
 Driver capabilities
 -------------------
 

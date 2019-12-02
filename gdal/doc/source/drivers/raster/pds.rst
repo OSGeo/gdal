@@ -23,6 +23,12 @@ selected other header metadata.
 Implementation of this driver was supported by the United States
 Geological Survey.
 
+.. note::
+    PDS3 datasets can incorporate a VICAR header. By default, GDAL will use the
+    PDS driver in that situation. Starting with GDAL 3.1, if the
+    :decl_configoption:`GDAL_TRY_PDS3_WITH_VICAR` configuration option is set
+    to YES, the dataset will be opened by the :ref:`VICAR <raster.vicar>` driver.
+
 Driver capabilities
 -------------------
 

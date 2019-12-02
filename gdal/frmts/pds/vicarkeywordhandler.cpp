@@ -68,7 +68,7 @@ VICARKeywordHandler::~VICARKeywordHandler()
 /*                               Ingest()                               */
 /************************************************************************/
 
-bool VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
+bool VICARKeywordHandler::Ingest( VSILFILE *fp, const GByte *pabyHeader )
 
 {
 /* -------------------------------------------------------------------- */
@@ -78,7 +78,7 @@ bool VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return false;
 
     // Find LBLSIZE Entry
-    const char* pszLBLSIZE = strstr(reinterpret_cast<char *>( pabyHeader ), "LBLSIZE");
+    const char* pszLBLSIZE = strstr(reinterpret_cast<const char *>( pabyHeader ), "LBLSIZE");
     if( !pszLBLSIZE )
         return false;
 
