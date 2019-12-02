@@ -1,30 +1,30 @@
 include GDALmake.opt
 
-GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
-			$(GDAL_ROOT)/gcore/*.o \
-			$(GDAL_ROOT)/port/*.o \
-			$(GDAL_ROOT)/alg/*.o \
-			$(GDAL_ROOT)/apps/commonutils.o \
-			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
-			$(GDAL_ROOT)/apps/gdalmdiminfo_lib.o \
-			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
-			$(GDAL_ROOT)/apps/gdalmdimtranslate_lib.o \
-			$(GDAL_ROOT)/apps/gdalwarp_lib.o \
-			$(GDAL_ROOT)/apps/ogr2ogr_lib.o \
-			$(GDAL_ROOT)/apps/gdaldem_lib.o \
-			$(GDAL_ROOT)/apps/nearblack_lib.o \
-			$(GDAL_ROOT)/apps/gdal_grid_lib.o \
-			$(GDAL_ROOT)/apps/gdal_rasterize_lib.o \
-			$(GDAL_ROOT)/apps/gdalbuildvrt_lib.o
+GDAL_OBJ	=	frmts/o/*.o \
+			gcore/*.o \
+			port/*.o \
+			alg/*.o \
+			apps/commonutils.o \
+			apps/gdalinfo_lib.o \
+			apps/gdalmdiminfo_lib.o \
+			apps/gdal_translate_lib.o \
+			apps/gdalmdimtranslate_lib.o \
+			apps/gdalwarp_lib.o \
+			apps/ogr2ogr_lib.o \
+			apps/gdaldem_lib.o \
+			apps/nearblack_lib.o \
+			apps/gdal_grid_lib.o \
+			apps/gdal_rasterize_lib.o \
+			apps/gdalbuildvrt_lib.o
 
-GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
+GDAL_OBJ += ogr/ogrsf_frmts/o/*.o
 
 ifeq ($(GNM_ENABLED),yes)
-   GDAL_OBJ += $(GDAL_ROOT)/gnm/*.o $(GDAL_ROOT)/gnm/gnm_frmts/o/*.o
+   GDAL_OBJ += gnm/*.o gnm/gnm_frmts/o/*.o
 endif
 
 ifeq ($(HAVE_LERC),yes)
-   GDAL_OBJ += $(GDAL_ROOT)/third_party/o/*.o
+   GDAL_OBJ += third_party/o/*.o
 endif
 
 include ./ogr/file.lst
