@@ -61,4 +61,11 @@ NO, FALSE or OFF to turn it off.
 List of configuration options and where they apply
 --------------------------------------------------
 
+.. note::
+    This list is known to be incomplete. It depends on proper annotation of configuration
+    options where they are mentionned elsewhere in the documentation.
+    If you want to help to extend it, use the ``:decl_configoption:`NAME```
+    syntax in places where a configuration option is mentionned.
+
+
 .. include:: configoptions_index_generated.rst
