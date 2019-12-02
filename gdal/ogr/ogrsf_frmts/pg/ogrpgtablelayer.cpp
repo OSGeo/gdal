@@ -913,9 +913,6 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
     if( pszQueryStatement == nullptr )
         ResetReading();
 
-    if( pszQueryStatement == nullptr )
-        ResetReading();
-
     OGRPGGeomFieldDefn* poGeomFieldDefn = nullptr;
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
         poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(m_iGeomFieldFilter);
