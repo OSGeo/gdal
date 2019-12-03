@@ -6,7 +6,7 @@ JPEG -- JPEG JFIF File Format
 
 .. shortname:: JPEG
 
-.. built_in_by_default:: (internal libjpeg provided)
+.. build_dependencies:: (internal libjpeg provided)
 
 The JPEG JFIF format is supported for reading, and batch writing, but
 not update in place. JPEG files are represented as one band (greyscale)

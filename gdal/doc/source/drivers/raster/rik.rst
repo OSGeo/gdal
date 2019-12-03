@@ -6,7 +6,7 @@ RIK -- Swedish Grid Maps
 
 .. shortname:: RIK
 
-.. built_in_by_default:: (internal zlib is used if necessary)
+.. build_dependencies:: (internal zlib is used if necessary)
 
 Supported by GDAL for read access. This format is used in maps issued by
 the swedish organization Lantmäteriet. Supports versions 1, 2 and 3 of
