@@ -1913,7 +1913,8 @@ CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node* poNode)
               poNode->nOperation == SWQ_GE ||
               poNode->nOperation == SWQ_LT ||
               poNode->nOperation == SWQ_LE ||
-              poNode->nOperation == SWQ_LIKE) &&
+              poNode->nOperation == SWQ_LIKE ||
+              poNode->nOperation == SWQ_ILIKE) &&
              poNode->nSubExprCount == 2 &&
              poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
              poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT )
@@ -1941,6 +1942,7 @@ CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node* poNode)
                 case SWQ_LT: osRet += " < "; break;
                 case SWQ_LE: osRet += " <= "; break;
                 case SWQ_LIKE: osRet += " LIKE "; break;
+                case SWQ_ILIKE: osRet += " ILIKE "; break;
                 default: CPLAssert(false); break;
             }
             if( poNode->papoSubExpr[1]->field_type == SWQ_STRING )

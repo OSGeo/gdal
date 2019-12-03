@@ -282,9 +282,13 @@ The available logical operators are
 ``IN``.
 Most of the operators are self explanatory, but it is worth noting that ``!=``
 is the same as ``<>``, the string equality is
-case insensitive, but the ``<``, ``>``, ``<=`` and ``>=`` operators *are* case sensitive.  Both the LIKE and ILIKE operators are case insensitive.
+case insensitive, but the ``<``, ``>``, ``<=`` and ``>=`` operators *are* case sensitive. 
 
-The value argument to the ``LIKE`` operator is a pattern against which
+Starting with GDAL 3.1, LIKE is case sensitive, and ILIKE is case insensitive.
+In previous versions, LIKE was also case insensitive. If the old behaviour is
+wished in GDAL 3.1, the :decl_configoption:`OGR_SQL_LIKE_AS_ILIKE` can be set to ``YES``.
+
+The value argument to the ``LIKE`` and ``ILIKE`` operators is a pattern against which
 the value string is matched.  In this pattern percent (%) matches any number of
 characters, and underscore ( _ ) matches any one character. An optional ESCAPE escape_char
 clause can be added so that the percent or underscore characters can be searched

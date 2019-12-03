@@ -1,3 +1,11 @@
+MIGRATION GUIDE FROM GDAL 3.0 to GDAL 3.1
+-----------------------------------------
+
+- OGR SQL: the 'LIKE' operator is now case sensitive by default. ILIKE (supported
+  in previous versions) must be used for case insensitive comparison. The
+  OGR_SQL_LIKE_AS_ILIKE configuration option can be set to YES to make LIKE behave
+  in a case insensitive way as in previous versions.
+
 MIGRATION GUIDE FROM GDAL 2.4 to GDAL 3.0
 -----------------------------------------
 

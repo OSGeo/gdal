@@ -54,6 +54,7 @@ static const swq_operation swq_apsOperations[] =
     { "<", SWQ_LT , SWQGeneralEvaluator, SWQGeneralChecker },
     { ">", SWQ_GT , SWQGeneralEvaluator, SWQGeneralChecker },
     { "LIKE", SWQ_LIKE , SWQGeneralEvaluator, SWQGeneralChecker },
+    { "ILIKE", SWQ_ILIKE , SWQGeneralEvaluator, SWQGeneralChecker },
     { "IS NULL", SWQ_ISNULL , SWQGeneralEvaluator, SWQGeneralChecker },
     { "IN", SWQ_IN , SWQGeneralEvaluator, SWQGeneralChecker },
     { "BETWEEN", SWQ_BETWEEN , SWQGeneralEvaluator, SWQGeneralChecker },
