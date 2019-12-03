@@ -456,17 +456,16 @@ OGRTriangulatedSurface *GeometryReader::readTIN()
 
 OGRTriangle *GeometryReader::readTriangle()
 {
-    const auto t = new OGRTriangle();
     m_length = m_length / 2;
     if( m_length != 4 )
     {
         return CPLErrorInvalidLength("readTriangle");
     }
-    const auto lr = readSimpleCurve<OGRLinearRing>();
+    auto lr = readSimpleCurve<OGRLinearRing>();
     if (lr == nullptr) {
-        delete t;
         return nullptr;
     }
+    auto t = new OGRTriangle();
     t->addRingDirectly(lr);
     return t;
 }
