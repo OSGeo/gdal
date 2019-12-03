@@ -5,6 +5,8 @@ U.S. Census TIGER/Line
 
 .. shortname:: TIGER
 
+.. built_in_by_default::
+
 TIGER/Line file sets are support for read access.
 
 TIGER/Line files are a digital database of geographic features, such as

@@ -7,6 +7,7 @@
 
 .. shortname:: INTERLIS 2
 
+.. build_dependencies:: Xerces
 
 | OGR has support for INTERLIS reading and writing.
 | `INTERLIS <http://www.interlis.ch/>`__ is a standard which has been

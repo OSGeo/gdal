@@ -7,6 +7,8 @@ Google Earth Engine Data API
 
 .. shortname:: EEDA
 
+.. build_dependencies:: libcurl
+
 The driver supports read-only operations to list images and their
 metadata as a vector layer, using Google Earth Engine REST API.
 

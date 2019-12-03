@@ -5,6 +5,8 @@ ODS - Open Document Spreadsheet
 
 .. shortname:: ODS
 
+.. build_dependencies:: libexpat
+
 This driver can read, write and update spreadsheets in Open Document
 Spreadsheet format, used by applications like OpenOffice / LibreOffice /
 KSpread / etc...

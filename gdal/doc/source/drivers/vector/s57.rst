@@ -5,6 +5,8 @@ IHO S-57 (ENC)
 
 .. shortname:: S57
 
+.. built_in_by_default::
+
 International Hydrographic Organisation (IHO) S-57 Electronic Navigation
 Charts (ENC) datasets are supported for read access.
 

@@ -5,6 +5,8 @@ AutoCAD DWG
 
 .. shortname:: DWG
 
+.. build_dependencies:: Open Design Alliance Teigha library
+
 OGR supports reading most versions of AutoCAD DWG when built with the
 Open Design Alliance Teiga library. DWG is an binary working format used
 for AutoCAD drawings. A reasonable effort has been made to make the OGR

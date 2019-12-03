@@ -6,6 +6,8 @@ ESRI ArcObjects
 
 .. shortname:: AO
 
+.. build_dependencies:: ESRI ArcObjects
+
 Overview
 --------
 

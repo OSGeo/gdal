@@ -5,6 +5,8 @@ LIBKML Driver (.kml .kmz)
 
 .. shortname:: LIBKML
 
+.. build_dependencies:: libkml
+
 The LIBKML driver is a client of
 `Libkml <https://github.com/google/libkml>`__ from Google, a reference
 implementation of `KML <http://www.opengeospatial.org/standards/kml/>`__

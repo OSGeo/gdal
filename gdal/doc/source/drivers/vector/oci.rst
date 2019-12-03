@@ -5,6 +5,8 @@ Oracle Spatial
 
 .. shortname:: OCI
 
+.. build_dependencies:: OCI library
+
 This driver supports reading and writing data in Oracle Spatial (8.1.7
 or later) Object-Relational format. The Oracle Spatial driver is not
 normally built into OGR, but may be built in on platforms where the

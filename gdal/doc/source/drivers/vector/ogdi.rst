@@ -5,6 +5,8 @@ OGDI Vectors
 
 .. shortname:: OGDI
 
+.. build_dependencies:: OGDI library
+
 OGDI vector support is optional in OGR, and is normally only configured
 if OGDI is installed on the build system. If available OGDI vectors are
 supported for read access for the following family types:

@@ -5,6 +5,8 @@ KML - Keyhole Markup Language
 
 .. shortname:: KML
 
+.. built_in_by_default:: (read support needs libexpat) 
+
 Keyhole Markup Language (KML) is an XML-based language for managing the
 display of 3D geospatial data. KML has been accepted as an OGC standard,
 and is supported in one way or another on the major GeoBrowsers. Note

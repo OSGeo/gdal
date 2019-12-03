@@ -5,6 +5,8 @@ Access MDB databases
 
 .. shortname:: MDB
 
+.. build_dependencies:: JDK/JRE and Jackcess
+
 OGR optionally supports reading access .mdb files by using the Java
 `Jackcess <http://jackcess.sourceforge.net/>`__ library.
 

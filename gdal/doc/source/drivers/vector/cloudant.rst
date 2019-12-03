@@ -5,6 +5,8 @@ Cloudant -- Cloudant
 
 .. shortname:: Cloudant
 
+.. build_dependencies:: libcurl
+
 Cloudant and CouchDB are API compatible and based on the same core
 technology. The geospatial extension for Cloudant is separate to
 GeoCouch. This driver can connect to the a Cloudant service, potentially

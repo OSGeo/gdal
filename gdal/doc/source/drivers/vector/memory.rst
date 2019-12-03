@@ -5,6 +5,8 @@ Memory
 
 .. shortname:: Memory
 
+.. built_in_by_default::
+
 This driver implements read and write access layers of features
 contained entirely in memory. This is primarily useful as a high
 performance, and highly malleable working data store. All update

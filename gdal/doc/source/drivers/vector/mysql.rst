@@ -5,6 +5,8 @@ MySQL
 
 .. shortname:: MySQL
 
+.. build_dependencies:: MySQL library
+
 This driver implements read and write access for spatial data in
 `MySQL <http://www.mysql.org/>`__ tables.
 
