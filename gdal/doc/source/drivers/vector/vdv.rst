@@ -7,6 +7,8 @@ VDV - VDV-451/VDV-452/INTREST Data Format
 
 .. shortname:: VDV
 
+.. built_in_by_default::
+
 This driver can read and create text files following the VDV-451 file
 format, which is a text format similar to CSV files, potentially
 containing several layers within the same file.

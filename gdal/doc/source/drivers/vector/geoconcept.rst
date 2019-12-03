@@ -5,6 +5,8 @@ GeoConcept text export
 
 .. shortname:: Geoconcept
 
+.. built_in_by_default::
+
 GeoConcept text export files should be available for writing and
 reading.
 

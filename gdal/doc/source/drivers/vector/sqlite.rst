@@ -5,6 +5,8 @@ SQLite / Spatialite RDBMS
 
 .. shortname:: SQLite
 
+.. build_dependencies:: libsqlite3 or libspatialite
+
 OGR optionally supports spatial and non-spatial tables stored in SQLite
 3.x database files. SQLite is a "light weight" single file based RDBMS
 engine with fairly complete SQL semantics and respectable performance.

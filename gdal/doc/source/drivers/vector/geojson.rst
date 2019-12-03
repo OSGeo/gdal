@@ -5,6 +5,8 @@ GeoJSON
 
 .. shortname:: GeoJSON
 
+.. built_in_by_default::
+
 This driver implements read/write support for access to features encoded
 in `GeoJSON <http://geojson.org/>`__ format. GeoJSON is a dialect based
 on the `JavaScript Object Notation (JSON) <http://json.org/>`__. JSON is

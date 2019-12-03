@@ -7,6 +7,8 @@ OGC API - Features
 
 .. shortname:: OAPIF
 
+.. build_dependencies:: libcurl
+
 This driver can connect to a OGC API - Features service. It assumes that the
 service supports OpenAPI 3.0/JSON/GeoJSON encoding for respectively API
 description, feature collection metadata and feature collection data.

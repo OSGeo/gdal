@@ -5,6 +5,8 @@ ODBC RDBMS
 
 .. shortname:: ODBC
 
+.. build_dependencies:: ODBC library
+
 OGR optionally supports spatial and non-spatial tables accessed via
 ODBC. ODBC is a generic access layer for access to many database
 systems, and data that can be represented as a database (collection of

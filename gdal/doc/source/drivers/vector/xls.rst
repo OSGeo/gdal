@@ -5,6 +5,8 @@ XLS - MS Excel format
 
 .. shortname:: XLS
 
+.. build_dependencies:: libfreexl
+
 This driver reads spreadsheets in MS Excel format. GDAL/OGR must be
 built against the FreeXL library (GPL/LPL/MPL licensed), and the driver
 has the same restrictions as the FreeXL library itself as far as which

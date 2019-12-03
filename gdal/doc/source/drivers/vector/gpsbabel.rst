@@ -5,6 +5,8 @@ GPSBabel
 
 .. shortname:: GPSBabel
 
+.. build_dependencies:: (read support needs GPX driver and libexpat) 
+
 The GPSBabel driver for now that relies on the
 `GPSBabel <http://www.gpsbabel.org>`__ utility to access various GPS
 file formats.

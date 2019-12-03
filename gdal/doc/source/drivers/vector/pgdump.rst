@@ -5,6 +5,8 @@ PostgreSQL SQL Dump
 
 .. shortname:: PGDump
 
+.. built_in_by_default::
+
 This write-only driver implements support for generating a SQL dump file
 that can later be injected into a live PostgreSQL instance. It supports
 PostgreSQL extended with the `PostGIS <http://postgis.net/>`__

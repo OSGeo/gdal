@@ -5,6 +5,8 @@ ESRI Shapefile / DBF
 
 .. shortname:: ESRI Shapefile
 
+.. built_in_by_default::
+
 All varieties of ESRI Shapefiles should be available for reading, creation and
 editing. The driver can also handle standalone
 DBF files without associated .shp files.

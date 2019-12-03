@@ -7,6 +7,8 @@ Microstation DGN v8
 
 .. shortname:: DGNv8
 
+.. build_dependencies:: Open Design Alliance Teigha library
+
 Microstation DGN files from Microstation version 8.0 are supported for
 reading and writing. Each model of the file is represented by a OGR
 layer.

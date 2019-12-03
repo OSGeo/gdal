@@ -5,6 +5,8 @@ VRT -- Virtual Format
 
 .. shortname:: VRT
 
+.. built_in_by_default::
+
 OGR Virtual Format is a driver that transforms features read from other
 drivers based on criteria specified in an XML control file. It is
 primarily used to derive spatial layers from flat tables with spatial
