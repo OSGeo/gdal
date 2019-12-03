@@ -7,7 +7,7 @@ MongoDBv3
 
 .. shortname:: MongoDBv3
 
-.. build_dependencies:: needs Mongo CXX >= 3.4.0 client library
+.. build_dependencies:: Mongo CXX >= 3.4.0 client library
 
 This driver can connect to the a MongoDB service.
 
