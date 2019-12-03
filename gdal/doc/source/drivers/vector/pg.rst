@@ -5,7 +5,7 @@ PostgreSQL / PostGIS
 
 .. shortname:: PostgreSQL
 
-.. build_dependencies:: needs PostgreSQL client library (libpq)
+.. build_dependencies:: PostgreSQL client library (libpq)
 
 This driver implements support for access to spatial tables in
 PostgreSQL extended with the `PostGIS <http://postgis.net/>`__ spatial
