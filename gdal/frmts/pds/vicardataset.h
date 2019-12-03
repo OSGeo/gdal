@@ -119,6 +119,7 @@ public:
         return (m_poLayer && i == 0) ? m_poLayer.get() : nullptr; }
 
     static int          Identify( GDALOpenInfo * );
+    static int          GetLabelOffset( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -138,6 +139,10 @@ public:
                                     GUInt64& nImageOffsetWithoutNBB,
                                     GUInt64& nNBB,
                                     GUInt64& nImageSize);
+
+    static vsi_l_offset GetVICARLabelOffsetFromPDS3(const char* pszHdr,
+                                                    VSILFILE* fp,
+                                                    std::string& osVICARHeader);
 };
 
 #endif // VICARDATASET_H
