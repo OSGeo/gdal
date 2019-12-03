@@ -7,7 +7,7 @@ MVT: Mapbox Vector Tiles
 
 .. shortname:: MVT
 
-.. built_in_by_default:: (requires SQLite and GEOS for write support)
+.. build_dependencies:: (requires SQLite and GEOS for write support)
 
 The MVT driver can read and write Mapbox Vector
 Tile files, as standalone files, uncompressed or gzip-compressed

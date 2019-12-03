@@ -5,7 +5,7 @@ GeoRSS : Geographically Encoded Objects for RSS feeds
 
 .. shortname:: GeoRSS
 
-.. built_in_by_default:: (read support needs libexpat)
+.. build_dependencies:: (read support needs libexpat)
 
 GeoRSS is a way of encoding location in RSS or Atom feeds.
 

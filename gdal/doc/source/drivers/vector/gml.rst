@@ -5,7 +5,7 @@ GML - Geography Markup Language
 
 .. shortname:: GML
 
-.. built_in_by_default:: (read support needs Xerces or libexpat) 
+.. build_dependencies:: (read support needs Xerces or libexpat) 
 
 OGR has limited support for GML reading and writing. Update of existing
 files is not supported.
