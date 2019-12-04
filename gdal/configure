@@ -1105,7 +1105,6 @@ enable_driver_cloudant
 enable_driver_couchdb
 enable_driver_csw
 enable_driver_elastic
-enable_driver_gft
 enable_driver_ngw
 enable_driver_plscenes
 enable_driver_wfs
@@ -2046,8 +2045,6 @@ Optional Features:
                           requires curl)
   --disable-driver-elastic
                           disable elastic driver support (enabled by default,
-                          requires curl)
-  --disable-driver-gft    disable gft driver support (enabled by default,
                           requires curl)
   --disable-driver-ngw    disable ngw driver support (enabled by default,
                           requires curl)
@@ -27981,33 +27978,6 @@ else
   INTERNAL_FORMAT_elastic_ENABLED=no
 fi
 
-# Check whether --enable-driver-gft was given.
-if test "${enable_driver_gft+set}" = set; then :
-  enableval=$enable_driver_gft;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_gft
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  INTERNAL_FORMAT_gft_ENABLED=yes
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED gft"
-  INTERNAL_FORMAT_gft_ENABLED=no
-fi
-
 # Check whether --enable-driver-ngw was given.
 if test "${enable_driver_ngw+set}" = set; then :
   enableval=$enable_driver_ngw;
@@ -36430,12 +36400,6 @@ if test "$CURL_SETTING" = "yes" ; then
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED elastic"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DELASTIC_ENABLED"
-  fi
-
-  driver_enabled=$INTERNAL_FORMAT_gft_ENABLED
-  if test "x$driver_enabled" = "xyes"; then
-    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED gft"
-    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DGFT_ENABLED"
   fi
 
   driver_enabled=$INTERNAL_FORMAT_ngw_ENABLED

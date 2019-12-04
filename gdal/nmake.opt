@@ -635,7 +635,7 @@ GRIB_SETTING=yes
 
 
 # Uncomment to use libcurl (DLL by default)
-# The cURL library is used for WCS, WMS, GeoJSON, SRS call importFromUrl(), WFS, GFT, CouchDB, /vsicurl/ etc.
+# The cURL library is used for WCS, WMS, GeoJSON, SRS call importFromUrl(), WFS, CouchDB, /vsicurl/ etc.
 #CURL_DIR=C:\curl-7.15.0
 #CURL_INC = -I$(CURL_DIR)/include
 # Uncomment following line to use libcurl as dynamic library
