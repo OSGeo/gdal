@@ -1559,7 +1559,7 @@ def test_ogr_sql_sqlite_25():
     geomA = ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))')
     val_ogr = geomA.GetArea()
 
-    assert abs(val_sql - val_ogr) <= 1e-5
+    assert val_sql == pytest.approx(val_ogr, abs=1e-5)
 
     assert val1_sql is None
 
@@ -1606,7 +1606,7 @@ def test_ogr_sql_sqlite_26():
             b_geos = op()
             if b_sql != b_geos:
                 if wkt == 'POLYGON EMPTY':
-                    print('difference wit op = %s and wkt = POLYGON EMPTY' % op_str)
+                    print('difference with op = %s and wkt = POLYGON EMPTY' % op_str)
                 else:
                     print(wkt)
                     print(b_sql)
@@ -1657,8 +1657,15 @@ def test_ogr_sql_sqlite_26():
                     print(geomB_wkt)
                     print(geom_geos.ExportToWkt())
                     pytest.fail('fail with %s' % op_str)
+            elif geom_sql.IsEmpty() and geom_geos.IsEmpty():
+                # geom_sql might be a POLYGON made of an empty ring
+                # while geom_geos is a POLYGON without a ring
+                #import struct
+                #print struct.unpack('B' * len(geom_sql.ExportToWkb()), geom_sql.ExportToWkb())
+                #print struct.unpack('B' * len(geom_geos.ExportToWkb()), geom_geos.ExportToWkb())
+                pass
             else:
-                assert geom_sql.Equals(geom_geos) != 0, ('fail with %s' % op_str)
+                assert geom_sql.Equals(geom_geos) != 0, ('fail with %s: %s %s %s %s' % (op_str, geomA_wkt, geomB_wkt, geom_sql.ExportToWkt(), geom_geos.ExportToWkt()))
 
     # Error cases
     op_str = 'Intersects'
