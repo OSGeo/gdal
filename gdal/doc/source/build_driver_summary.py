@@ -30,7 +30,9 @@ for filename in glob.glob(os.path.join(dirname, '*.rst')):
                 assert l.startswith('.. _') and l.endswith(':')
                 link = l[len('.. _'):-1]
             elif l.startswith('.. shortname:: '):
-                shortnames.append(l[len('.. shortname:: '):])
+                shortname = l[len('.. shortname:: '):]
+                if shortname not in ('HDF4Image', 'HDF5Image'):
+                    shortnames.append(shortname)
             elif longname is None and last_line != '' and l.startswith('=' * len(last_line)):
                 longname = last_line
                 pos = longname.find(' -- ')
