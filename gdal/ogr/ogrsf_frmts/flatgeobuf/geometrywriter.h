@@ -64,7 +64,7 @@ class GeometryWriter {
         GeometryWriter(
             flatbuffers::FlatBufferBuilder &fbb,
             const  OGRGeometry *ogrGeometry,
-            FlatGeobuf::GeometryType geometryType,
+            const FlatGeobuf::GeometryType geometryType,
             const bool hasZ,
             const bool hasM) :
             m_fbb (fbb),

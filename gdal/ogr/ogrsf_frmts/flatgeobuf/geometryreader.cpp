@@ -95,17 +95,15 @@ OGRMultiPoint *GeometryReader::readMultiPoint()
     m_length = m_length / 2;
     if (m_length >= feature_max_buffer_size)
         return CPLErrorInvalidLength("MultiPoint");
-    const auto mp = new OGRMultiPoint();
+    auto mp = std::unique_ptr<OGRMultiPoint>(new OGRMultiPoint());
     for (uint32_t i = 0; i < m_length; i++) {
         m_offset = i;
         const auto p = readPoint();
-        if (p == nullptr) {
-            delete mp;
+        if (p == nullptr)
             return nullptr;
-        }
         mp->addGeometryDirectly(p);
     }
-    return mp;
+    return mp.release();
 }
 
 OGRMultiLineString *GeometryReader::readMultiLineString()
@@ -113,24 +111,20 @@ OGRMultiLineString *GeometryReader::readMultiLineString()
     const auto pEnds = m_geometry->ends();
     if (pEnds == nullptr)
         return CPLErrorInvalidPointer("MultiLineString ends data");
-    const auto mls = new OGRMultiLineString();
+    auto mls = std::unique_ptr<OGRMultiLineString>(new OGRMultiLineString());
     m_offset = 0;
     for (uint32_t i = 0; i < pEnds->size(); i++) {
         const auto e = pEnds->Get(i);
-        if (e < m_offset) {
-            delete mls;
+        if (e < m_offset)
             return CPLErrorInvalidLength("MultiLineString");
-        }
         m_length = e - m_offset;
         const auto ls = readSimpleCurve<OGRLineString>();
-        if (ls == nullptr) {
-            delete mls;
+        if (ls == nullptr)
             return nullptr;
-        }
         mls->addGeometryDirectly(ls);
         m_offset = e;
     }
-    return mls;
+    return mls.release();
 }
 
 OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
@@ -232,22 +226,18 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
 OGRPolygon *GeometryReader::readPolygon()
 {
     const auto ends = m_geometry->ends();
-    const auto p = new OGRPolygon();
+    auto p = std::unique_ptr<OGRPolygon>(new OGRPolygon());
     if (ends == nullptr || ends->size() < 2) {
         m_length = m_length / 2;
         const auto lr = readSimpleCurve<OGRLinearRing>();
-        if (lr == nullptr) {
-            delete p;
+        if (lr == nullptr)
             return nullptr;
-        }
         p->addRingDirectly(lr);
     } else {
         for (uint32_t i = 0; i < ends->size(); i++) {
             const auto e = ends->Get(i);
-            if (e < m_offset) {
-                delete p;
+            if (e < m_offset)
                 return CPLErrorInvalidLength("Polygon");
-            }
             m_length = e - m_offset;
             const auto lr = readSimpleCurve<OGRLinearRing>();
             m_offset = e;
@@ -255,12 +245,10 @@ OGRPolygon *GeometryReader::readPolygon()
                 continue;
             p->addRingDirectly(lr);
         }
-        if (p->IsEmpty()) {
-            delete p;
+        if (p->IsEmpty())
             return nullptr;
-        }
     }
-    return p;
+    return p.release();
 }
 
 OGRMultiPolygon *GeometryReader::readMultiPolygon()
@@ -268,18 +256,15 @@ OGRMultiPolygon *GeometryReader::readMultiPolygon()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    const auto mp = new OGRMultiPolygon();
+    auto mp = std::unique_ptr<OGRMultiPolygon>(new OGRMultiPolygon());
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), GeometryType::Polygon, m_hasZ, m_hasM };
-        auto poly = reader.read()->toPolygon();
-        if( poly == nullptr )
-        {
-            delete mp;
+        auto p = std::unique_ptr<OGRPolygon>(reader.read()->toPolygon());
+        if (p == nullptr)
             return nullptr;
-        }
-        mp->addGeometryDirectly(poly);
+        mp->addGeometryDirectly(p.release());
     }
-    return mp;
+    return mp.release();
 }
 
 OGRGeometryCollection *GeometryReader::readGeometryCollection()
@@ -287,18 +272,15 @@ OGRGeometryCollection *GeometryReader::readGeometryCollection()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto gc = new OGRGeometryCollection();
+    auto gc = std::unique_ptr<OGRGeometryCollection>(new OGRGeometryCollection());
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto geom = reader.read();
-        if( geom == nullptr )
-        {
-            delete gc;
+        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        if (g == nullptr)
             return nullptr;
-        }
-        gc->addGeometryDirectly(geom);
+        gc->addGeometryDirectly(g.release());
     }
-    return gc;
+    return gc.release();
 }
 
 OGRCompoundCurve *GeometryReader::readCompoundCurve()
@@ -306,20 +288,15 @@ OGRCompoundCurve *GeometryReader::readCompoundCurve()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto cc = new OGRCompoundCurve();
+    auto cc = std::unique_ptr<OGRCompoundCurve>(new OGRCompoundCurve());
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto geom = reader.read();
-        auto curve = dynamic_cast<OGRCurve*>(geom);
-        if( curve == nullptr ||
-            cc->addCurveDirectly(curve) != OGRERR_NONE )
-        {
-            delete geom;
-            delete cc;
+        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
-        }
+        cc->addCurveDirectly(g.release()->toCurve());
     }
-    return cc;
+    return cc.release();
 }
 
 OGRCurvePolygon *GeometryReader::readCurvePolygon()
@@ -327,20 +304,15 @@ OGRCurvePolygon *GeometryReader::readCurvePolygon()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto cp = new OGRCurvePolygon();
+    auto cp = std::unique_ptr<OGRCurvePolygon>(new OGRCurvePolygon());
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto geom = reader.read();
-        auto curve = dynamic_cast<OGRCurve*>(geom);
-        if( curve == nullptr )
-        {
-            delete geom;
-            delete cp;
+        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
-        }
-        cp->addRingDirectly(curve);
+        cp->addRingDirectly(g.release()->toCurve());
     }
-    return cp;
+    return cp.release();
 }
 
 OGRMultiCurve *GeometryReader::readMultiCurve()
@@ -348,20 +320,15 @@ OGRMultiCurve *GeometryReader::readMultiCurve()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto mc = new OGRMultiCurve();
+    auto mc = std::unique_ptr<OGRMultiCurve>(new OGRMultiCurve());
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto geom = reader.read();
-        auto curve = dynamic_cast<OGRCurve*>(geom);
-        if( curve == nullptr )
-        {
-            delete geom;
-            delete mc;
+        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
-        }
-        mc->addGeometryDirectly(curve);
+        mc->addGeometryDirectly(g.release());
     }
-    return mc;
+    return mc.release();
 }
 
 OGRMultiSurface *GeometryReader::readMultiSurface()
@@ -369,20 +336,15 @@ OGRMultiSurface *GeometryReader::readMultiSurface()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto ms = new OGRMultiSurface();
+    auto ms = std::unique_ptr<OGRMultiSurface>(new OGRMultiSurface());
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto geom = reader.read();
-        auto surf = dynamic_cast<OGRSurface*>(geom);
-        if( surf == nullptr )
-        {
-            delete surf;
-            delete ms;
+        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        if (dynamic_cast<OGRSurface *>(g.get()) == nullptr)
             return nullptr;
-        }
-        ms->addGeometryDirectly(surf);
+        ms->addGeometryDirectly(g.release());
     }
-    return ms;
+    return ms.release();
 }
 
 OGRPolyhedralSurface *GeometryReader::readPolyhedralSurface()
@@ -390,54 +352,39 @@ OGRPolyhedralSurface *GeometryReader::readPolyhedralSurface()
     auto parts = m_geometry->parts();
     if (parts == nullptr)
         return CPLErrorInvalidPointer("parts data");
-    auto ps = new OGRPolyhedralSurface();
+    auto ps = std::unique_ptr<OGRPolyhedralSurface>(new OGRPolyhedralSurface());
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto geom = reader.read();
-        auto surf = dynamic_cast<OGRSurface*>(geom);
-        if( surf == nullptr )
-        {
-            delete surf;
-            delete ps;
+        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        if (dynamic_cast<OGRSurface *>(g.get()) == nullptr)
             return nullptr;
-        }
-        ps->addGeometryDirectly(surf);
+        ps->addGeometryDirectly(g.release());
     }
-    return ps;
+    return ps.release();
 }
 
 OGRTriangulatedSurface *GeometryReader::readTIN()
 {
     const auto ends = m_geometry->ends();
-    const auto ts = new OGRTriangulatedSurface();
+    auto ts = std::unique_ptr<OGRTriangulatedSurface>(new OGRTriangulatedSurface());
     if (ends == nullptr || ends->size() < 2) {
         m_length = m_length / 2;
-        if( m_length != 4 )
-        {
-            delete ts;
+        if (m_length != 4)
             return CPLErrorInvalidLength("TIN");
-        }
         const auto lr = readSimpleCurve<OGRLinearRing>();
-        if (lr == nullptr) {
-            delete ts;
+        if (lr == nullptr)
             return nullptr;
-        }
         auto t = new OGRTriangle();
         t->addRingDirectly(lr);
         ts->addGeometryDirectly(t);
     } else {
         for (uint32_t i = 0; i < ends->size(); i++) {
             const auto e = ends->Get(i);
-            if (e < m_offset) {
-                delete ts;
+            if (e < m_offset)
                 return CPLErrorInvalidLength("TIN");
-            }
             m_length = e - m_offset;
-            if( m_length != 4 )
-            {
-                delete ts;
+            if (m_length != 4)
                 return CPLErrorInvalidLength("TIN");
-            }
             const auto lr = readSimpleCurve<OGRLinearRing>();
             m_offset = e;
             if (lr == nullptr)
@@ -446,25 +393,20 @@ OGRTriangulatedSurface *GeometryReader::readTIN()
             t->addRingDirectly(lr);
             ts->addGeometryDirectly(t);
         }
-        if (ts->IsEmpty()) {
-            delete ts;
+        if (ts->IsEmpty())
             return nullptr;
-        }
     }
-    return ts;
+    return ts.release();
 }
 
 OGRTriangle *GeometryReader::readTriangle()
 {
     m_length = m_length / 2;
-    if( m_length != 4 )
-    {
+    if (m_length != 4)
         return CPLErrorInvalidLength("readTriangle");
-    }
     auto lr = readSimpleCurve<OGRLinearRing>();
-    if (lr == nullptr) {
+    if (lr == nullptr)
         return nullptr;
-    }
     auto t = new OGRTriangle();
     t->addRingDirectly(lr);
     return t;
