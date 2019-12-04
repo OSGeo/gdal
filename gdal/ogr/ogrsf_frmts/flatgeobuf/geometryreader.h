@@ -60,7 +60,7 @@ class GeometryReader {
         OGRTriangle *readTriangle();
 
         template <class T>
-        T *readSimpleCurve(bool halfLength = false)
+        T *readSimpleCurve(const bool halfLength = false)
         {
             if (halfLength)
                 m_length = m_length / 2;
@@ -74,9 +74,9 @@ class GeometryReader {
     public:
         GeometryReader(
             const FlatGeobuf::Geometry *geometry,
-            FlatGeobuf::GeometryType geometryType,
-            bool hasZ,
-            bool hasM) :
+            const FlatGeobuf::GeometryType geometryType,
+            const bool hasZ,
+            const bool hasM) :
             m_geometry (geometry),
             m_geometryType (geometryType),
             m_hasZ (hasZ),
@@ -84,8 +84,8 @@ class GeometryReader {
             { }
         GeometryReader(
             const FlatGeobuf::Geometry *geometry,
-            bool hasZ,
-            bool hasM) :
+            const bool hasZ,
+            const bool hasM) :
             m_geometry (geometry),
             m_geometryType (geometry->type()),
             m_hasZ (hasZ),
