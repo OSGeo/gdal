@@ -51,7 +51,6 @@ Vector drivers
    geojsonseq
    geomedia
    georss
-   gft
    gmlas
    gml
    gmt
