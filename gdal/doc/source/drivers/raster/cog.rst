@@ -177,6 +177,18 @@ Reprojection related creation options
 - **ADD_ALPHA=YES/NO**: Whether an alpha band is added in case of reprojection.
   Defaults to YES.
 
+-  **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: (GDAL >= 3.1.0) Select the vesion of
+   the GeoTIFF standard used to encode georeferencing information. ``1.0``
+   corresponds to the original
+   `1995, GeoTIFF Revision 1.0, by Ritter & Ruth <http://geotiff.maptools.org/spec/geotiffhome.html>`_.
+   ``1.1`` corresponds to the OGC standard 19-008, which is an evolution of 1.0,
+   which clear ambiguities and fix inconsistencies mostly in the processing of
+   the vertical part of a CRS.
+   ``AUTO`` mode (default value) will generally select 1.0, unless the CRS to
+   encode has a vertical component or is a 3D CRS, in which case 1.1 is used.
+
+   .. note:: Write support for GeoTIFF 1.1 requires libgeotiff 1.6.0 or later.
+
 File format details
 -------------------
 
