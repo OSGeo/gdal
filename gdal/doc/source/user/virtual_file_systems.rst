@@ -229,6 +229,8 @@ Starting with GDAL 2.2, the ``AWS_REQUEST_PAYER`` configuration option may be se
 
 The ``AWS_S3_ENDPOINT`` configuration option defaults to s3.amazonaws.com.
 
+The ``AWS_HTTPS`` configuration option defaults to ``YES``.
+
 The ``AWS_VIRTUAL_HOSTING`` configuration option defaults to ``TRUE``. This allows you to configure the two ways to access the buckets, see Bucket and Host Name for more details.
 - ``TRUE`` value, identifies the bucket via a virtual bucket host name, e.g.: mybucket.cname.domain.com
 - ``FALSE`` value, identifies the bucket as the top-level directory in the URI, e.g.: cname.domain.com/mybucket
