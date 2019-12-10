@@ -209,6 +209,49 @@ def test_ogr_flatgeobuf_2():
     else:
         assert num == 5
 
+def test_ogr_flatgeobuf_2_1():
+    fgb_ds = ogr.Open('data/testfgb/poly_no_index.fgb')
+    fgb_lyr = fgb_ds.GetLayer(0)
+
+    assert fgb_lyr.TestCapability(ogr.OLCFastGetExtent) is False
+    assert fgb_lyr.GetExtent() == (478315.53125, 481645.3125, 4762880.5, 4765610.5)
+
+    # test expected spatial filter feature count consistency
+    assert fgb_lyr.TestCapability(ogr.OLCFastFeatureCount) is False
+    c = fgb_lyr.GetFeatureCount()
+    assert c == 10
+    c = fgb_lyr.SetSpatialFilterRect(478315.531250, 4762880.500000, 481645.312500, 4765610.500000)
+    c = fgb_lyr.GetFeatureCount()
+    assert c == 10
+    c = fgb_lyr.SetSpatialFilterRect(878315.531250, 4762880.500000, 881645.312500, 4765610.500000)
+    c = fgb_lyr.GetFeatureCount()
+    assert c == 0
+    c = fgb_lyr.SetSpatialFilterRect(479586.0,4764618.6,479808.2,4764797.8)
+    c = fgb_lyr.GetFeatureCount()
+    if ogrtest.have_geos():
+        assert c == 4
+    else:
+        assert c == 5
+
+    # check that ResetReading does not affect subsequent enumeration or filtering
+    num = len(list([x for x in fgb_lyr]))
+    if ogrtest.have_geos():
+        assert num == 4
+    else:
+        assert num == 5
+    fgb_lyr.ResetReading()
+    c = fgb_lyr.GetFeatureCount()
+    if ogrtest.have_geos():
+        assert c == 4
+    else:
+        assert c == 5
+    fgb_lyr.ResetReading()
+    num = len(list([x for x in fgb_lyr]))
+    if ogrtest.have_geos():
+        assert num == 4
+    else:
+        assert num == 5
+
 def wktRoundtrip(expected):
     ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
     g = ogr.CreateGeometryFromWkt(expected)

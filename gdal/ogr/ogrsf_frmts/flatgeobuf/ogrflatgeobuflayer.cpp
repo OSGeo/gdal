@@ -457,7 +457,7 @@ OGRErr OGRFlatGeobufLayer::readIndex()
     if (indexNodeSize == 0)
         return OGRERR_NONE;
     const auto featuresCount = m_poHeader->features_count();
-    if (indexNodeSize == 0)
+    if (featuresCount == 0)
         return OGRERR_NONE;
 
     if (VSIFSeekL(m_poFp, sizeof(magicbytes), SEEK_SET) == -1) // skip magic bytes
@@ -512,7 +512,7 @@ OGRErr OGRFlatGeobufLayer::readIndex()
 
 GIntBig OGRFlatGeobufLayer::GetFeatureCount(int bForce)
 {
-    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
+    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr || m_featuresCount == 0)
         return OGRLayer::GetFeatureCount(bForce);
     else
         return m_featuresCount;
@@ -947,7 +947,7 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCCurveGeometries))
         return true;
     else if (EQUAL(pszCap, OLCFastFeatureCount))
-        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr && m_featuresCount > 0;
     else if (EQUAL(pszCap, OLCFastGetExtent))
         return m_sExtent.IsInit();
     else if (EQUAL(pszCap, OLCFastSpatialFilter))
