@@ -624,7 +624,7 @@ def test_rmf_31c():
     ds = gdal.Open(ds_name)
     assert ds is not None, ('Can\'t open ' + ds_name)
     expected_cs1 = [25789, 27405, 31974]
-    expected_cs2 = [23764, 25264, 33585] # osx
+    expected_cs2 = [23764, 25265, 33585] # osx
     cs = [ds.GetRasterBand(1).Checksum(),
           ds.GetRasterBand(2).Checksum(),
           ds.GetRasterBand(3).Checksum()]

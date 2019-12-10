@@ -6,6 +6,8 @@ PLMosaic (Planet Labs Mosaics API)
 
 .. shortname:: PLMosaic
 
+.. build_dependencies:: libcurl
+
 This driver can connect to Planet Labs Mosaics API. GDAL/OGR must be
 built with Curl support in order for the PLMosaic driver to be compiled.
 

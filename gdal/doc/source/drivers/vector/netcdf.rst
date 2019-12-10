@@ -7,6 +7,8 @@ NetCDF: Network Common Data Form - Vector
 
 .. shortname:: netCDF
 
+.. build_dependencies:: libnetcdf
+
 The netCDF driver supports read and write
 (creation from scratch and in some cases append operations) to vector datasets (you
 can find documentation for the :ref:`raster side <raster.netcdf>`)
@@ -136,7 +138,7 @@ In the CF-1.8 compliant driver, a single layer corresponds to a single
 the CF-1.8 specification, is referred to by another variable
 (presumably a data variable) through the **geometry** attribute. When reading
 a CF-1.8 compliant netCDF file, all geometry containers within the netCDF file
-will be present in the opened dataset as separate layers. Similarily, when writing to
+will be present in the opened dataset as separate layers. Similarly, when writing to
 a CF-1.8 dataset, each layer will be written to a geometry container whose variable
 name is that of the source layer. When writing to a CF-1.8 dataset specifically, multiple layers are always
 enabled and are always in a single netCDF file, regardless of the `MULTIPLE_LAYERS <#MULTIPLE_LAYERS>`__ option.

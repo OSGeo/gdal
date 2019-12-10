@@ -6,6 +6,8 @@ KMLSuperoverlay -- KMLSuperoverlay
 
 .. shortname:: KMLSuperoverlay
 
+.. built_in_by_default::
+
 NOTE: Implemented as ``gdal/frmts/kmlsuperoverlay/kmlsuperoverlay.cpp``.
 
 

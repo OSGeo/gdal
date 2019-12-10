@@ -8,6 +8,8 @@ AmigoCloud
 
 .. shortname:: AmigoCloud
 
+.. build_dependencies:: libcurl
+
 This driver can connect to the AmigoCloud API services. GDAL/OGR must be built
 with Curl support in order for the AmigoCloud driver to be compiled.
 

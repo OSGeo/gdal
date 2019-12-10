@@ -1932,7 +1932,7 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
 /**
  * Converts vector data between file formats.
  *
- * This is the equivalent of the <a href="ogr2ogr.html">ogr2ogr</a> utility.
+ * This is the equivalent of the <a href="/programs/ogr2ogr.html">ogr2ogr</a> utility.
  *
  * GDALVectorTranslateOptions* must be allocated and freed with GDALVectorTranslateOptionsNew()
  * and GDALVectorTranslateOptionsFree() respectively.
@@ -4989,7 +4989,7 @@ static void RemoveSQLComments(char*& pszSQL)
  * allocates a GDALVectorTranslateOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="ogr2ogr.html">ogr2ogr</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/ogr2ogr.html">ogr2ogr</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALVectorTranslateOptionsForBinaryNew() prior to this function. Will be

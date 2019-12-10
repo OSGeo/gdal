@@ -210,6 +210,10 @@ if test "${RELEASE}" = "yes"; then
 
     check_image "${IMAGE_NAME}"
 
+    if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
+        docker push "${IMAGE_NAME}"
+    fi
+
 else
 
     OLD_BUILDER_ID=$(docker image ls "${BUILDER_IMAGE_NAME}" -q)
@@ -283,8 +287,15 @@ EOF
 
     check_image "${IMAGE_NAME}"
 
+    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
+        docker image tag "${IMAGE_NAME}" "osgeo/gdal:latest"
+    fi
+
     if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
         docker push "${IMAGE_NAME}"
+        if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
+            docker push osgeo/gdal:latest
+        fi
     fi
 
     # Cleanup previous images

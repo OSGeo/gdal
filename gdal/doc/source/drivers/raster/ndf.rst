@@ -6,6 +6,8 @@ NDF -- NLAPS Data Format
 
 .. shortname:: NDF
 
+.. built_in_by_default::
+
 GDAL has limited support for reading NLAPS Data Format files. This is a
 format primarily used by the Eros Data Center for distribution of
 Landsat data. NDF datasets consist of a header file (often with the

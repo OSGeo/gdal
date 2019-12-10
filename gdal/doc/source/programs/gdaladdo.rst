@@ -111,18 +111,19 @@ in TIFF format.  By default, the GeoTIFF driver stores overviews internally to t
 operated on (if it is writable), unless the -ro flag is specified.
 
 Most drivers also support an alternate overview format using Erdas Imagine
-format.  To trigger this use the USE_RRD=YES configuration option.  This will
+format.  To trigger this use the :decl_configoption:`USE_RRD` =YES configuration option.  This will
 place the overviews in an associated .aux file suitable for direct use with
 Imagine or ArcGIS as well as GDAL applications.  (e.g. --config USE_RRD YES)
 
 External overviews in GeoTIFF format
 ------------------------------------
 
-External overviews created in TIFF format may be compressed using the COMPRESS_OVERVIEW
+External overviews created in TIFF format may be compressed using the :decl_configoption:`COMPRESS_OVERVIEW`
 configuration option.  All compression methods, supported by the GeoTIFF
 driver, are available here. (e.g. --config COMPRESS_OVERVIEW DEFLATE).
-The photometric interpretation can be set with --config PHOTOMETRIC_OVERVIEW {RGB,YCBCR,...},
-and the interleaving with --config INTERLEAVE_OVERVIEW {PIXEL|BAND}.
+The photometric interpretation can be set with the :decl_configoption:`PHOTOMETRIC_OVERVIEW`
+=RGB/YCBCR/... configuration option,
+and the interleaving with the :decl_configoption:`INTERLEAVE_OVERVIEW` =PIXEL/BAND configuration option.
 
 For JPEG compressed external overviews, the JPEG quality can be set with
 "--config JPEG_QUALITY_OVERVIEW value"

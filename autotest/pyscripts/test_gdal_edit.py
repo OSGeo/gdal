@@ -46,7 +46,7 @@ import pytest
 
 
 ###############################################################################
-# Test -a_srs, -a_ullr, -a_nodata, -mo
+# Test -a_srs, -a_ullr, -a_nodata, -mo, -unit
 
 def test_gdal_edit_py_1():
 
@@ -67,13 +67,14 @@ def test_gdal_edit_py_1():
         exec("val = u'\\u00e9ven'")
         val_encoded = val.encode('utf-8')
 
-    test_py_scripts.run_py_script(script_path, 'gdal_edit', 'tmp/test_gdal_edit_py.tif -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 123 -mo FOO=BAR -mo UTF8=' + val_encoded + ' -mo ' + val_encoded + '=UTF8')
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', 'tmp/test_gdal_edit_py.tif -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 123 -mo FOO=BAR -units metre -mo UTF8=' + val_encoded + ' -mo ' + val_encoded + '=UTF8')
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
     nd = ds.GetRasterBand(1).GetNoDataValue()
     md = ds.GetMetadata()
+    units = ds.GetRasterBand(1).GetUnitType()
     ds = None
 
     assert wkt.find('4326') != -1
@@ -89,6 +90,8 @@ def test_gdal_edit_py_1():
     assert md['UTF8'] == val
 
     assert md[val] == 'UTF8'
+
+    assert units == 'metre'
 
 ###############################################################################
 # Test -unsetgt

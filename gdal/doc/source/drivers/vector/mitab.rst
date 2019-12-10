@@ -5,6 +5,8 @@ MapInfo TAB and MIF/MID
 
 .. shortname:: MITAB
 
+.. built_in_by_default::
+
 MapInfo datasets in native (TAB) format and in interchange (MIF/MID)
 format are supported for reading and writing. Starting with GDAL 2.0,
 update of existing TAB files is supported (append of new features,

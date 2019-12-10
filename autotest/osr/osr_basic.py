@@ -1606,7 +1606,7 @@ def test_osr_promote_to_3D():
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
 
-    if osr.GetPROJVersionMajor() < 7:
+    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 3):
         with gdaltest.error_handler():
             sr.PromoteTo3D()
         pytest.skip()
@@ -1620,7 +1620,22 @@ def test_osr_SetVerticalPerspective():
     sr = osr.SpatialReference()
     sr.SetVerticalPerspective(1, 2, 0, 3, 4, 5)
     assert sr.ExportToProj4() == '+proj=nsper +lat_0=1 +lon_0=2 +h=3 +x_0=4 +y_0=5 +datum=WGS84 +units=m +no_defs'
-    if osr.GetPROJVersionMajor() >= 7:
+    if osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 3:
         assert sr.GetAttrValue('PROJECTION') in 'Vertical Perspective'
         assert sr.GetNormProjParm('Longitude of topocentric origin') == 2
+
+
+def test_osr_create_in_one_thread_destroy_in_other():
+    def threaded_function(arg):
+        sr = osr.SpatialReference()
+        sr.ImportFromEPSG(32631)
+        arg[0] = sr
+
+    arg = [ None ]
+
+    thread = Thread(target = threaded_function, args = (arg, ))
+    thread.start()
+    thread.join()
+    assert arg[0]
+    del arg[0]
 

@@ -6,6 +6,8 @@ MG4Lidar -- MrSID/MG4 LiDAR Compression / Point Cloud View files
 
 .. shortname:: MG4Lidar
 
+.. build_dependencies:: LIDAR SDK
+
 This driver provides a way to view MrSID/MG4 compressed LiDAR file as a
 raster DEM. The specifics of the conversion depend on the desired
 cellsize, filter criteria, aggregation methods and possibly several

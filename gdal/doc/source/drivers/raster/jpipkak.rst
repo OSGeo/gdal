@@ -6,6 +6,8 @@ JPIPKAK - JPIP Streaming
 
 .. shortname:: JPIPKAK
 
+.. build_dependencies:: Kakadu library
+
 JPEG 2000 Interactive Protocol (JPIP) flexibility with respect to random
 access, code stream reordering and incremental decoding is highly
 exploitable in a networked environment allowing access to remote large

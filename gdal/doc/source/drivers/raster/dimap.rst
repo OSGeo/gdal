@@ -6,6 +6,8 @@ DIMAP -- Spot DIMAP
 
 .. shortname:: DIMAP
 
+.. built_in_by_default::
+
 This is a read-only read for Spot DIMAP described images. To use, select
 the METADATA.DIM file in a product directory, or the product directory
 itself.

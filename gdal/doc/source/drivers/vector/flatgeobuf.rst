@@ -5,7 +5,9 @@ FlatGeobuf
 
 .. versionadded:: 3.1
 
-.. shortname:: ``FlatGeobuf``
+.. shortname:: FlatGeobuf
+
+.. built_in_by_default::
 
 This driver implements read/write support for access to features encoded
 in `FlatGeobuf <https://github.com/bjornharrtell/flatgeobuf>`__ format, a

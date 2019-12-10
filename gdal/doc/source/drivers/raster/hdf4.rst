@@ -1,12 +1,14 @@
 .. _raster.hdf4:
 
 ================================================================================
-HDF4 --- Hierarchical Data Format Release 4 (HDF4)
+HDF4 -- Hierarchical Data Format Release 4 (HDF4)
 ================================================================================
 
 .. shortname:: HDF4
 
 .. shortname:: HDF4Image
+
+.. build_dependencies:: libdf
 
 There are two HDF formats, HDF4 (4.x and previous releases) and HDF5.
 These formats are completely different and NOT compatible. This driver

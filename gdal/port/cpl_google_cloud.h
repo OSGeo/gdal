@@ -90,6 +90,8 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
 
         const CPLString& GetURL() const override { return m_osURL; }
 
+        CPLString GetCopySourceHeader() const override { return "x-goog-copy-source"; }
+
         CPLString GetSignedURL(CSLConstList papszOptions);
 
         static void CleanMutex();

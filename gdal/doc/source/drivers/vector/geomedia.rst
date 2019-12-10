@@ -5,6 +5,8 @@ Geomedia MDB database
 
 .. shortname:: Geomedia
 
+.. build_dependencies:: ODBC library
+
 OGR optionally supports reading Geomedia .mdb files via ODBC. Geomedia
 is a Microsoft Access database with a set of tables defined by
 Intergraph for holding geodatabase metadata, and with geometry for

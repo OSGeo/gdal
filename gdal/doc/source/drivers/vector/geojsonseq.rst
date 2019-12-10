@@ -7,6 +7,8 @@ GeoJSONSeq: sequence of GeoJSON features
 
 .. shortname:: GeoJSONSeq
 
+.. built_in_by_default::
+
 This driver implements read/creation support for features encoded
 individually as `GeoJSON <http://geojson.org/>`__ Feature objects,
 separated by newline (LF) (`Newline Delimited

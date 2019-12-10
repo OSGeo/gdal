@@ -7,6 +7,8 @@ MongoDB
 
 .. shortname:: MongoDB
 
+.. build_dependencies:: Mongo C++ client legacy library
+
 This driver can connect to the a MongoDB service.
 
 The driver supports read, creation, update and delete operations of

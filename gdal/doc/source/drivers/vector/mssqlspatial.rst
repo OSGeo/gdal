@@ -5,6 +5,8 @@ MSSQLSpatial - Microsoft SQL Server Spatial Database
 
 .. shortname:: MSSQLSpatial
 
+.. build_dependencies:: ODBC library
+
 This driver implements support for access to spatial tables in Microsoft
 SQL Server 2008+ which contains the geometry and geography data types to
 represent the geometry columns.

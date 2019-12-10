@@ -8,6 +8,8 @@ MRF -- Meta Raster Format
 
 .. versionadded:: 2.1
 
+.. built_in_by_default::
+
 Access to a indexed heap of regular tiles (blocks). Controlled by an xml
 file, usually organized as a pyramid of overviews, with level zero being
 the full resolution image. None, PNG, JPEG, ZLIB tile packing are

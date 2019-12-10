@@ -180,11 +180,12 @@ void OSRProjTLSCache::clear()
     m_oCacheWKT.clear();
 }
 
-PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode)
+PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84)
 {
     try
     {
-        const auto& cached = m_oCacheEPSG.get(nCode);
+        const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
+        const auto& cached = m_oCacheEPSG.get(key);
         return proj_clone(OSRGetProjTLSContext(), cached.get());
     }
     catch( const lru11::KeyNotFound& )
@@ -193,9 +194,10 @@ PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode)
     }
 }
 
-void OSRProjTLSCache::CachePJForEPSGCode(int nCode, PJ* pj)
+void OSRProjTLSCache::CachePJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84, PJ* pj)
 {
-    m_oCacheEPSG.insert(nCode, std::shared_ptr<PJ>(
+    const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
+    m_oCacheEPSG.insert(key, std::shared_ptr<PJ>(
                     proj_clone(OSRGetProjTLSContext(), pj), OSRPJDeleter()));
 }
 
@@ -243,6 +245,28 @@ void OSRSetPROJSearchPaths( const char* const * papszPaths )
     std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
     g_searchPathGenerationCounter ++;
     g_aosSearchpaths.Assign(CSLDuplicate(papszPaths), true);
+}
+
+/************************************************************************/
+/*                        OSRGetPROJSearchPaths()                       */
+/************************************************************************/
+
+/** \brief Get the search path(s) for PROJ resource files.
+ *
+ * @return NULL terminated list of directory paths. To be freed with CSLDestroy()
+ * @since GDAL 3.0.3
+ */
+char** OSRGetPROJSearchPaths()
+{
+    std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
+    const char* pszSep =
+#ifdef _WIN32
+                        ";"
+#else
+                        ":"
+#endif
+    ;
+    return CSLTokenizeString2( proj_info().searchpath, pszSep, 0);
 }
 
 /************************************************************************/

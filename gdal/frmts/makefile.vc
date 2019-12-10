@@ -211,6 +211,10 @@ EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_tiledb
 EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_rdb
 !ENDIF
 
+!IFDEF CRUNCH_INC
+EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_dds
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:

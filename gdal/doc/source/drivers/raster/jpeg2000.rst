@@ -6,6 +6,8 @@ JPEG2000 -- Implementation of the JPEG-2000 part 1
 
 .. shortname:: JPEG2000
 
+.. build_dependencies:: libjasper
+
 This implementation based on JasPer software (see below).
 
 XMP metadata can be extracted from JPEG2000

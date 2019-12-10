@@ -124,7 +124,7 @@ matrix:
       env:
         - BUILD_NAME=trusty_32bit
         - DETAILS=""
-    - osx_image: xcode8
+    - os: osx
       language: objective-c
       compiler: clang
       cache:

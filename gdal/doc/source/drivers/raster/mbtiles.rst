@@ -6,6 +6,8 @@ MBTiles
 
 .. shortname:: MBTiles
 
+.. build_dependencies:: libsqlite3
+
 The MBTiles driver allows reading rasters in
 the MBTiles format, which is a specification for storing tiled map data
 in SQLite databases.

@@ -5,6 +5,8 @@ SVG - Scalable Vector Graphics
 
 .. shortname:: SVG
 
+.. build_dependencies:: libexpat
+
 OGR has support for SVG reading (if GDAL is built with *expat* library
 support).
 

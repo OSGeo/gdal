@@ -351,7 +351,7 @@ MAIN_START(argc, argv)
         GDALTranslateOptionsFree(psOptions);
         GDALTranslateOptionsForBinaryFree(psOptionsForBinary);
 
-        GDALDestroyDriverManager();
+        GDALDestroy();
         return 0;
     }
 
@@ -369,7 +369,7 @@ MAIN_START(argc, argv)
     GDALTranslateOptionsFree(psOptions);
     GDALTranslateOptionsForBinaryFree(psOptionsForBinary);
 
-    GDALDestroyDriverManager();
+    GDALDestroy();
 
     return nRetCode;
 }

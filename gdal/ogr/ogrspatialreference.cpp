@@ -160,18 +160,36 @@ OGRSpatialReference::Private::Private():
 
 OGRSpatialReference::Private::~Private()
 {
+    // In case we destroy the object not in the thread that created it,
+    // we need to reassign the PROJ context. Having the context bundled inside
+    // PJ* deeply sucks...
+    auto ctxt = getPROJContext();
+
+    proj_assign_context( m_pj_crs, ctxt );
     proj_destroy(m_pj_crs);
+
+    proj_assign_context( m_pj_geod_base_crs_temp, ctxt );
     proj_destroy(m_pj_geod_base_crs_temp);
+
+    proj_assign_context( m_pj_proj_crs_cs_temp, ctxt );
     proj_destroy(m_pj_proj_crs_cs_temp);
+
+    proj_assign_context( m_pj_bound_crs_target, ctxt );
     proj_destroy(m_pj_bound_crs_target);
+
+    proj_assign_context( m_pj_bound_crs_co, ctxt );
     proj_destroy(m_pj_bound_crs_co);
+
+    proj_assign_context( m_pj_crs_backup, ctxt );
     proj_destroy(m_pj_crs_backup);
+
     delete m_poRootBackup;
     delete m_poRoot;
 }
 
 void OGRSpatialReference::Private::clear()
 {
+    proj_assign_context( m_pj_crs, getPROJContext() );
     proj_destroy(m_pj_crs);
     m_pj_crs = nullptr;
 
@@ -211,6 +229,7 @@ void OGRSpatialReference::Private::setRoot(OGR_SRSNode* poRoot)
 void OGRSpatialReference::Private::setPjCRS(PJ* pj_crsIn,
                                             bool doRefreshAxisMapping)
 {
+    proj_assign_context( m_pj_crs, getPROJContext() );
     proj_destroy(m_pj_crs);
     m_pj_crs = pj_crsIn;
     if( m_pj_crs )
@@ -530,18 +549,21 @@ PJ *OGRSpatialReference::Private::getGeodBaseCRS()
         return m_pj_crs;
     }
 
+    auto ctxt = getPROJContext();
     if( m_pjType == PJ_TYPE_PROJECTED_CRS ) {
+        proj_assign_context(m_pj_geod_base_crs_temp, ctxt);
         proj_destroy(m_pj_geod_base_crs_temp);
         m_pj_geod_base_crs_temp = proj_crs_get_geodetic_crs(
-            getPROJContext(), m_pj_crs);
+            ctxt, m_pj_crs);
         return m_pj_geod_base_crs_temp;
     }
 
+    proj_assign_context(m_pj_geod_base_crs_temp, ctxt);
     proj_destroy(m_pj_geod_base_crs_temp);
     auto cs = proj_create_ellipsoidal_2D_cs(
-        getPROJContext(), PJ_ELLPS2D_LATITUDE_LONGITUDE, nullptr, 0);
+        ctxt, PJ_ELLPS2D_LATITUDE_LONGITUDE, nullptr, 0);
     m_pj_geod_base_crs_temp = proj_create_geographic_crs(
-        getPROJContext(),
+        ctxt,
         "WGS 84", "World Geodetic System 1984", "WGS 84", SRS_WGS84_SEMIMAJOR,
         SRS_WGS84_INVFLATTENING, SRS_PM_GREENWICH, 0.0,
         SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV), cs);
@@ -552,16 +574,19 @@ PJ *OGRSpatialReference::Private::getGeodBaseCRS()
 
 PJ *OGRSpatialReference::Private::getProjCRSCoordSys()
 {
+    auto ctxt = getPROJContext();
     if( m_pjType == PJ_TYPE_PROJECTED_CRS ) {
+        proj_assign_context(m_pj_proj_crs_cs_temp, ctxt);
         proj_destroy(m_pj_proj_crs_cs_temp);
         m_pj_proj_crs_cs_temp = proj_crs_get_coordinate_system(
             getPROJContext(), m_pj_crs);
         return m_pj_proj_crs_cs_temp;
     }
 
+    proj_assign_context(m_pj_proj_crs_cs_temp, ctxt);
     proj_destroy(m_pj_proj_crs_cs_temp);
     m_pj_proj_crs_cs_temp =  proj_create_cartesian_2D_cs(
-        getPROJContext(), PJ_CART2D_EASTING_NORTHING, nullptr, 0);
+        ctxt, PJ_CART2D_EASTING_NORTHING, nullptr, 0);
     return m_pj_proj_crs_cs_temp;
 }
 
@@ -1380,6 +1405,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
         return d->m_poRoot->exportToWkt(ppszResult);
     }
 
+    auto ctxt = d->getPROJContext();
     auto wktFormat = d->m_bMorphToESRI ? PJ_WKT1_ESRI : PJ_WKT1_GDAL;
     const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT",
                                     CPLGetConfigOption("OSR_WKT_FORMAT", ""));
@@ -1405,6 +1431,14 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     }
     else if( pszFormat[0] == '\0' )
     {
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+        if( d->m_pjType == PJ_TYPE_GEOGRAPHIC_2D_CRS &&
+            proj_is_derived_crs(ctxt, d->m_pj_crs) )
+        {
+            wktFormat = PJ_WKT2_2018;
+        }
+        else
+#endif
         if( (IsGeographic() || IsProjected()) &&
             !IsCompound() && GetAxesCount() == 3 )
         {
@@ -1427,7 +1461,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
                     CSLFetchNameValueDef(papszOptions, "MULTILINE", "NO"));
 
     const char* pszWKT = proj_as_wkt(
-        d->getPROJContext(), d->m_pj_crs,
+        ctxt, d->m_pj_crs,
         wktFormat, aosOptions.List());
 
     if( !pszWKT )
@@ -7301,7 +7335,7 @@ OGRErr OGRSpatialReference::SetVerticalPerspective( double dfTopoOriginLat,
                                                     double dfFalseEasting,
                                                     double dfFalseNorthing )
 {
-#if PROJ_VERSION_MAJOR >= 7
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     return d->replaceConversionAndUnref(
         proj_create_conversion_vertical_perspective(
             d->getPROJContext(),
@@ -7342,6 +7376,56 @@ OGRErr OSRSetVerticalPerspective( OGRSpatialReferenceH hSRS,
     return ToPointer(hSRS)->SetVerticalPerspective(
         dfTopoOriginLat, dfTopoOriginLon, dfTopoOriginHeight,
         dfViewPointHeight, dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
+/*             SetDerivedGeogCRSWithPoleRotationGRIBConvention()        */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetDerivedGeogCRSWithPoleRotationGRIBConvention(
+                                                           const char* pszCRSName,
+                                                           double dfSouthPoleLat,
+                                                           double dfSouthPoleLon,
+                                                           double dfAxisRotation )
+{
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+        return OGRERR_FAILURE;
+    if( d->m_pjType != PJ_TYPE_GEOGRAPHIC_2D_CRS )
+        return OGRERR_FAILURE;
+    auto ctxt = d->getPROJContext();
+    auto conv = proj_create_conversion_pole_rotation_grib_convention(
+        ctxt,
+        dfSouthPoleLat,
+        dfSouthPoleLon,
+        dfAxisRotation,
+        nullptr, 0);
+    auto cs = proj_crs_get_coordinate_system(ctxt, d->m_pj_crs);
+    d->setPjCRS(
+        proj_create_derived_geographic_crs(
+            ctxt,
+            pszCRSName,
+            d->m_pj_crs,
+            conv,
+            cs));
+    proj_destroy(conv);
+    proj_destroy(cs);
+    return OGRERR_NONE;
+#else
+    (void)pszCRSName;
+    SetProjection( "Rotated_pole" );
+    SetExtension(
+        "PROJCS", "PROJ4",
+        CPLSPrintf("+proj=ob_tran +lon_0=%.18g +o_proj=longlat +o_lon_p=%.18g "
+                   "+o_lat_p=%.18g +a=%.18g +b=%.18g +to_meter=0.0174532925199 +wktext",
+                   dfSouthPoleLon,
+                   dfAxisRotation == 0 ? 0 : -dfAxisRotation,
+                   dfSouthPoleLat == 0 ? 0 : -dfSouthPoleLat,
+                   GetSemiMajor(nullptr),
+                   GetSemiMinor(nullptr)));
+    return OGRERR_NONE;
+#endif
 }
 
 /************************************************************************/
@@ -10156,18 +10240,18 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
 /************************************************************************/
 
 /**
- * \brief Initialize SRS based on EPSG CRS code.
+ * \brief  Initialize SRS based on EPSG geographic, projected or vertical CRS code.
  *
  * This method will initialize the spatial reference based on the
- * passed in EPSG CRS code.
+ * passed in EPSG CRS code found in the PROJ database.
  *
- * This method is similar to importFromEPSG() except that EPSG preferred axis
- * ordering *will* be applied for geographic and projected coordinate systems.
- * EPSG normally defines geographic coordinate systems to use lat/long, and also
- * there are also a few projected coordinate systems that use northing/easting
- * order contrary to typical GIS use).  See
- * OGRSpatialReference::importFromEPSG() for more details on operation of this
- * method.
+ * Since GDAL 3.0, this method is identical to importFromEPSG().
+ *
+ * This method try to attach a 3-parameter or 7-parameter Helmert transformation
+ * to WGS84 when there is one and only one such method available for the CRS.
+ * This behaviour might not always be desirable, so starting with GDAL 3.0.3,
+ * the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG configuration option can be set to
+ * NO to disable this behaviour.
  *
  * This method is the same as the C function OSRImportFromEPSGA().
  *
@@ -10183,10 +10267,12 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
     const bool bUseNonDeprecated = CPLTestBool(
                 CPLGetConfigOption("OSR_USE_NON_DEPRECATED", "YES"));
-    auto tlsCache = bUseNonDeprecated ? OSRGetProjTLSCache() : nullptr;
+    const bool bAddTOWGS84 = CPLTestBool(
+            CPLGetConfigOption("OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG", "YES"));
+    auto tlsCache = OSRGetProjTLSCache();
     if( tlsCache )
     {
-        auto cachedObj = tlsCache->GetPJForEPSGCode(nCode);
+        auto cachedObj = tlsCache->GetPJForEPSGCode(nCode, bUseNonDeprecated, bAddTOWGS84);
         if( cachedObj )
         {
             d->setPjCRS(cachedObj);
@@ -10223,19 +10309,22 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
         proj_list_destroy(list);
     }
 
-    auto boundCRS = proj_crs_create_bound_crs_to_WGS84(
-        d->getPROJContext(), obj, nullptr);
-    if( boundCRS )
+    if( bAddTOWGS84 )
     {
-        proj_destroy(obj);
-        obj = boundCRS;
+        auto boundCRS = proj_crs_create_bound_crs_to_WGS84(
+            d->getPROJContext(), obj, nullptr);
+        if( boundCRS )
+        {
+            proj_destroy(obj);
+            obj = boundCRS;
+        }
     }
 
     d->setPjCRS(obj);
 
     if( tlsCache )
     {
-        tlsCache->CachePJForEPSGCode(nCode, obj);
+        tlsCache->CachePJForEPSGCode(nCode, bUseNonDeprecated, bAddTOWGS84, obj);
     }
 
     return OGRERR_NONE;
@@ -10246,7 +10335,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 /************************************************************************/
 
 /**
- * \brief  Initialize SRS based on EPSG CRS code.
+ * \brief  Initialize SRS based on EPSG geographic, projected or vertical CRS code.
  *
  * This function is the same as OGRSpatialReference::importFromEPSGA().
  */
@@ -10265,30 +10354,18 @@ OGRErr CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH hSRS, int nCode )
 /************************************************************************/
 
 /**
- * \brief Initialize SRS based on EPSG GCS or PCS code.
+ * \brief  Initialize SRS based on EPSG geographic, projected or vertical CRS code.
  *
  * This method will initialize the spatial reference based on the
- * passed in EPSG GCS or PCS code.  The coordinate system definitions
- * are normally read from the EPSG derived support files such as
- * pcs.csv, gcs.csv, pcs.override.csv, gcs.override.csv and falling
- * back to search for a PROJ.4 epsg init file or a definition in epsg.wkt.
- *
- * These support files are normally searched for in /usr/local/share/gdal
- * or in the directory identified by the GDAL_DATA configuration option.
- * See CPLFindFile() for details.
- *
- * This method is relatively expensive, and generally involves quite a bit
- * of text file scanning.  Reasonable efforts should be made to avoid calling
- * it many times for the same coordinate system.
- *
- * This method is similar to importFromEPSGA() except that EPSG preferred
- * axis ordering will *not* be applied for geographic coordinate systems.
- * EPSG normally defines geographic coordinate systems to use lat/long
- * contrary to typical GIS use). Since OGR 1.10.0, EPSG preferred
- * axis ordering will also *not* be applied for projected coordinate systems
- * that use northing/easting order.
+ * passed in EPSG CRS code found in the PROJ database.
  *
  * This method is the same as the C function OSRImportFromEPSG().
+ *
+ * This method try to attach a 3-parameter or 7-parameter Helmert transformation
+ * to WGS84 when there is one and only one such method available for the CRS.
+ * This behaviour might not always be desirable, so starting with GDAL 3.0.3,
+ * the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG configuration option can be set to
+ * NO to disable this behaviour.
  *
  * @param nCode a GCS or PCS code from the horizontal coordinate system table.
  *
@@ -10306,7 +10383,7 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 /************************************************************************/
 
 /**
- * \brief  Initialize SRS based on EPSG GCS or PCS code.
+ * \brief  Initialize SRS based on EPSG geographic, projected or vertical CRS code.
  *
  * This function is the same as OGRSpatialReference::importFromEPSG().
  */
@@ -11112,15 +11189,11 @@ void OGRSpatialReference::UpdateCoordinateSystemFromGeogCRS()
  *
  * @param pszName New name for the CRS. If set to NULL, the previous name will be used.
  * @return OGRERR_NONE if no error occurred.
- * @since GDAL 3.1 and PROJ 7.0
+ * @since GDAL 3.1 and PROJ 6.3
  */
 OGRErr OGRSpatialReference::PromoteTo3D(const char* pszName)
 {
-#if PROJ_VERSION_MAJOR < 7
-    CPL_IGNORE_RET_VAL(pszName);
-    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 7 required");
-    return OGRERR_UNSUPPORTED_OPERATION;
-#else
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     d->refreshProjObj();
     if( !d->m_pj_crs )
         return OGRERR_FAILURE;
@@ -11129,6 +11202,10 @@ OGRErr OGRSpatialReference::PromoteTo3D(const char* pszName)
         return OGRERR_FAILURE;
     d->setPjCRS(newPj);
     return OGRERR_NONE;
+#else
+    CPL_IGNORE_RET_VAL(pszName);
+    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 6.3 required");
+    return OGRERR_UNSUPPORTED_OPERATION;
 #endif
 }
 
@@ -11140,7 +11217,7 @@ OGRErr OGRSpatialReference::PromoteTo3D(const char* pszName)
  *
  * See OGRSpatialReference::PromoteTo3D()
  *
- * @since GDAL 3.1 and PROJ 7.0
+ * @since GDAL 3.1 and PROJ 6.3
  */
 OGRErr OSRPromoteTo3D( OGRSpatialReferenceH hSRS, const char* pszName  )
 {

@@ -5,6 +5,8 @@ ElasticSearch: Geographically Encoded Objects for ElasticSearch
 
 .. shortname:: ElasticSearch
 
+.. build_dependencies:: libcurl
+
 | Driver is read-write starting with GDAL 2.1 (was write only in GDAL
   2.0 or earlier)
 | As of GDAL 2.1, ElasticSearch 1.X and, partially, 2.X versions are

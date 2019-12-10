@@ -323,6 +323,27 @@ void VRTRawRasterBand::ClearRawLink()
 }
 
 /************************************************************************/
+/*                            GetVirtualMemAuto()                       */
+/************************************************************************/
+
+CPLVirtualMem * VRTRawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                                     int *pnPixelSpace,
+                                                     GIntBig *pnLineSpace,
+                                                     char **papszOptions )
+
+{
+    // check the pointer to RawRasterBand
+    if( m_poRawRaster == nullptr )
+    {
+        // use the super class method
+        return VRTRasterBand::GetVirtualMemAuto(eRWFlag, pnPixelSpace, pnLineSpace, papszOptions);
+    }
+    // if available, use the RawRasterBand method (use mmap if available)
+    return m_poRawRaster->GetVirtualMemAuto(eRWFlag, pnPixelSpace, pnLineSpace, papszOptions);
+}
+
+
+/************************************************************************/
 /*                              XMLInit()                               */
 /************************************************************************/
 

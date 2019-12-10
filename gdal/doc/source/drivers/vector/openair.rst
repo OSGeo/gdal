@@ -5,6 +5,8 @@ OpenAir - OpenAir Special Use Airspace Format
 
 .. shortname:: OpenAir
 
+.. built_in_by_default::
+
 This driver reads files describing Special Use Airspaces in the OpenAir
 format
 

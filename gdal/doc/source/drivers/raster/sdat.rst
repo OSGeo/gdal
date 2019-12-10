@@ -6,6 +6,8 @@ SAGA -- SAGA GIS Binary Grid File Format
 
 .. shortname:: SAGA
 
+.. built_in_by_default::
+
 The driver supports both reading and writing (including create, delete,
 and copy) SAGA GIS binary grids. SAGA binary grid datasets are made of
 an ASCII header (.SGRD) and a binary data (.SDAT) file with a common

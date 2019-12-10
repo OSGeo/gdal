@@ -6,6 +6,8 @@ X-Plane/Flightgear aeronautical data
 
 .. shortname:: XPlane
 
+.. built_in_by_default::
+
 The X-Plane aeronautical data is supported for read access. This data is
 for example used by the X-Plane and Flightgear software.
 

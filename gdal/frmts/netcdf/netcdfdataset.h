@@ -379,7 +379,7 @@ static const oNetcdfSRS_PP poGenericMappings[] = {
 //
 // grid_mapping_name = albers_conical_equal_area
 // WKT: Albers_Conic_Equal_Area
-// ESPG:9822
+// EPSG:9822
 //
 // Map parameters:
 //

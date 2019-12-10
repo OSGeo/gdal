@@ -8,6 +8,8 @@ WMTS -- OGC Web Map Tile Service
 
 .. versionadded:: 2.1
 
+.. build_dependencies:: libcurl
+
 Access to WMTS layers is possible with the GDAL WMTS
 client driver (needs Curl support). It support both RESTful and KVP
 protocols.

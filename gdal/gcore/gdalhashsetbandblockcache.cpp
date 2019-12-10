@@ -186,7 +186,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
     }
     EndDirtyBlockFlushingLog();
 
-    WaitKeepAliveCounter();
+    WaitCompletionPendingTasks();
 
     return( eGlobalErr );
 }

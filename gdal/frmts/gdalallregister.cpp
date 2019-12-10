@@ -613,6 +613,8 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HTTP();
 #endif
 
+    GetGDALDriverManager()->AutoLoadPythonDrivers();
+
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as suppressed by the   */
 /*      GDAL_SKIP environment variable.                                 */

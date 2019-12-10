@@ -1520,7 +1520,7 @@ GDALBuildVRTOptions* GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptio
 /**
  * Build a VRT from a list of datasets.
  *
- * This is the equivalent of the <a href="gdalbuildvrt.html">gdalbuildvrt</a> utility.
+ * This is the equivalent of the <a href="/programs/gdalbuildvrt.html">gdalbuildvrt</a> utility.
  *
  * GDALBuildVRTOptions* must be allocated and freed with GDALBuildVRTOptionsNew()
  * and GDALBuildVRTOptionsFree() respectively.
@@ -1668,7 +1668,7 @@ static char *SanitizeSRS( const char *pszUserInput )
  * Allocates a GDALBuildVRTOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="gdalbuildvrt.html">gdalbuildvrt</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdalbuildvrt.html">gdalbuildvrt</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALBuildVRTOptionsForBinaryNew() prior to this function. Will be

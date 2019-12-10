@@ -6,6 +6,8 @@ NetCDF: Network Common Data Form
 
 .. shortname:: netCDF
 
+.. build_dependencies:: libnetcdf
+
 This format is supported for read and write access. This page only
 describes the raster support (you can find documentation for the :ref:`vector
 side <vector.netcdf>`) NetCDF is an interface for

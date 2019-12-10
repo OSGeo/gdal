@@ -121,22 +121,22 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
 /**
  * Create viewshed from raster DEM.
  *
- * This algorithm will generate contour vectors for the input raster band
- * on the requested set of contour levels.  The vector contours are written
- * to the passed in OGR vector layer.  Also, a NODATA value may be specified
- * to identify pixels that should not be considered in contour line generation.
- *
+ * This algorithm will generate a viewshed raster from an input DEM raster
+ * by using a modified algorithm of "Generating Viewsheds without Using Sightlines" 
+ * published at https://www.asprs.org/wp-content/uploads/pers/2000journal/january/2000_jan_87-90.pdf
+ * This appoach provides a relatively fast calculation, since the output raster is
+ * generated in a single scan.
  * The gdal/apps/gdal_viewshed.cpp mainline can be used as an example of
  * how to use this function.
  *
  * ALGORITHM RULES
  *
- * @param hBand The band to read raster data from.  The whole band will be
- * processed.
+ * @param hBand The band to read the DEM data from. Only the part of the raster
+ * within the specified maxdistance around the observer point is processed.
  *
  * @param pszDriverName Driver name (GTiff if set to NULL)
  *
- * @param pszTargetRasterName target raster datasource name. Must not be NULL
+ * @param pszTargetRasterName The name of the target raster to be generated. Must not be NULL
  *
  * @param papszCreationOptions creation options.
  *
@@ -144,21 +144,26 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  *
  * @param dfObserverY observer Y value (in SRS units)
  *
- * @param dfObserverHeight observer height
+ * @param dfObserverHeight The height of the observer above the DEM surface.
  *
- * @param dfTargetHeight target height. (default 0)
+ * @param dfTargetHeight The height of the target above the DEM surface. (default 0)
  *
  * @param  dfVisibleVal pixel value for visibility (default 0)
  *
  * @param dfInvisibleVal pixel value for invisibility (default 255)
  *
- * @param dfOutOfRangeVal Out of range value
+ * @param dfOutOfRangeVal The value to be set for the cells that fall outside of the
+ * range specified by dfMaxDistance.
  *
- * @param dfNoDataVal NODATA value to use
+ * @param dfNoDataVal The value to be set for the cells that have no data.
  *
- * @param dfCurvCoeff curvature coefficient
+ * @param dfCurvCoeff Coefficient to consider the effect of the curvature and refraction.
+ * The height of the DEM is corrected according to the following formula:
+ * [Height] -= dfCurvCoeff * [Target Distance]^2 / [Earth Diameter]
+ * For the effect of the atmospheric refraction we can use 0.85714‬.
  *
- * @param eMode which GDALViewshedMode to use
+ * @param eMode The mode of the viewshed calculation.
+ * Possible values GVM_Diagonal = 1, GVM_Edge = 2 (default), GVM_Max = 3, GVM_Min = 4.
  *
  * @param dfMaxDistance maximum distance range to compute viewshed
  *
@@ -313,7 +318,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         padfFirstLineVal, nXSize, 1, GDT_Float64, 0, 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-            "RasterIO error when reading DEM");
+            "RasterIO error when reading DEM at position(%d, %d), size(%d, %d)", nXStart, nY, nXSize, 1);
         return nullptr;
     }
 
@@ -431,7 +436,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         pabyResult, nXSize, 1, GDT_Byte, 0, 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-            "RasterIO error when writing target raster");
+            "RasterIO error when writing target raster at position (%d,%d), size (%d,%d)", 0, nY - nYStart, nXSize, 1);
         return nullptr;
     }
 
@@ -445,7 +450,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
             padfThisLineVal, nXSize, 1, GDT_Float64, 0, 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                "RasterIO error when reading DEM");
+                "RasterIO error when reading DEM at position (%d,%d), size (%d,%d)", nXStart, iLine, nXSize, 1);
             return nullptr;
         }
 
@@ -473,9 +478,6 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         else
         {
             pabyResult[nX] = byOutOfRangeVal;
-            --iLine;
-            for (; iLine >= nYStart && eErr == CE_None; iLine--)
-                pabyResult[nX] = byOutOfRangeVal;
         }
 
         /* process left direction */
@@ -582,7 +584,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
             pabyResult, nXSize, 1, GDT_Byte, 0, 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                "RasterIO error when writing target raster");
+                "RasterIO error when writing target raster at position (%d,%d), size (%d,%d)", 0, iLine - nYStart, nXSize, 1);
             return nullptr;
         }
 
@@ -603,7 +605,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
             padfThisLineVal, nXStop - nXStart, 1, GDT_Float64, 0, 0 ))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                "RasterIO error when reading DEM");
+                "RasterIO error when reading DEM at position (%d,%d), size (%d,%d)", nXStart, iLine, nXStop - nXStart, 1);
             return nullptr;
         }
 
@@ -630,8 +632,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         }
         else
         {
-            for (; iLine < nYStop; iLine++)
-                pabyResult[iPixel] = byOutOfRangeVal;
+            pabyResult[iPixel] = byOutOfRangeVal;
         }
 
         /* process left direction */
@@ -735,7 +736,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
             pabyResult, nXSize, 1, GDT_Byte, 0, 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                "RasterIO error when writing target raster");
+                "RasterIO error when writing target raster at position (%d,%d), size (%d,%d)", 0, iLine - nYStart, nXSize, 1);
             return nullptr;
         }
 

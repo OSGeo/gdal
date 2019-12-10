@@ -14,3 +14,4 @@ User oriented documentation
    ogr_sql_sqlite_dialect
    GDAL Virtual File Systems <virtual_file_systems>
    ogr_feature_style
+   configoptions

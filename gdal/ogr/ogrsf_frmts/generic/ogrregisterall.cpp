@@ -236,9 +236,6 @@ void OGRRegisterAllInternal()
 #ifdef EDIGEO_ENABLED
     RegisterOGREDIGEO();
 #endif
-#ifdef GFT_ENABLED
-    RegisterOGRGFT();
-#endif
 #ifdef SVG_ENABLED
     RegisterOGRSVG();
 #endif

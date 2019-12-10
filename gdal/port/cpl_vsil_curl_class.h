@@ -304,7 +304,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     bool            bEOF = false;
 
-    virtual bool            DownloadRegion(vsi_l_offset startOffset, int nBlocks);
+    virtual std::string DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
     bool                m_bUseHead = false;
 
@@ -373,6 +373,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
             const char* pszURI, bool bAllowNoObject) = 0;
 
+    virtual int      CopyObject( const char *oldpath, const char *newpath );
+
     IVSIS3LikeFSHandler() = default;
 
   public:
@@ -381,6 +383,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     int Rmdir( const char *pszDirname ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
+    int Rename( const char *oldpath, const char *newpath ) override;
 
     virtual int      DeleteObject( const char *pszFilename );
 

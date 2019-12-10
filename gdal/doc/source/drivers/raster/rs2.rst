@@ -6,6 +6,8 @@ RS2 -- RadarSat 2 XML Product
 
 .. shortname:: RS2
 
+.. built_in_by_default::
+
 This driver will read some RadarSat 2 XML polarimetric products. In
 particular complex products, and 16bit magnitude detected products.
 

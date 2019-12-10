@@ -6,6 +6,8 @@ PNM -- Netpbm (.pgm, .ppm)
 
 .. shortname:: PNM
 
+.. built_in_by_default::
+
 GDAL includes support for reading, and creating .pgm (greyscale), and
 .ppm (RGB color) files compatible with the Netpbm tools. Only the binary
 (raw) formats are supported.

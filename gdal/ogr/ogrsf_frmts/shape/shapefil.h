@@ -492,6 +492,8 @@ typedef struct
     int         nUpdateDay; /* 1-31 */
 
     int         bWriteEndOfFileChar; /* defaults to TRUE */
+
+    int         bRequireNextWriteSeek;
 } DBFInfo;
 
 typedef DBFInfo * DBFHandle;

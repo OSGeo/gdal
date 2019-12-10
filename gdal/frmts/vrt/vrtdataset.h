@@ -194,6 +194,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
 
     VRTRasterBand*      InitBand(const char* pszSubclass, int nBand,
                                  bool bAllowPansharpened);
+    static GDALDataset *OpenVRTProtocol( const char* pszSpec );
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
@@ -817,6 +818,11 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL: public VRTRasterBand
 
     void           ClearRawLink();
 
+    CPLVirtualMem *GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                      int *pnPixelSpace,
+                                      GIntBig *pnLineSpace,
+                                      char **papszOptions ) override;
+
     virtual void   GetFileList( char*** ppapszFileList, int *pnSize,
                                 int *pnMaxSize, CPLHashSet* hSetFiles ) override;
 };
@@ -947,6 +953,7 @@ public:
     virtual CPLErr FlushCache() override;
 
     GDALRasterBand* GetBand();
+    GDALRasterBand* GetMaskBandMainBand() { return m_poMaskBandMainBand; }
     int             IsSameExceptBandNumber( VRTSimpleSource* poOtherSource );
     CPLErr          DatasetRasterIO(
                                GDALDataType eBandDataType,
@@ -1357,7 +1364,7 @@ public:
                                                 const CPLXMLNode* psNode);
 
     std::shared_ptr<GDALMDArray> GetIndexingVariable() const override;
-   
+
     bool SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable) override;
 
     void Serialize(CPLXMLNode* psParent) const;

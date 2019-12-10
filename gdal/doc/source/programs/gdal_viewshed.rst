@@ -6,8 +6,7 @@ gdal_viewshed
 
 .. only:: html
 
-    Calculates viewshed using method defined in [Wang2000]_ for a user defined
-    point.
+    Calculates a viewshed raster from an input raster DEM using method defined in [Wang2000]_ for a user defined point.
 
 .. Index:: gdal_viewshed
 
@@ -29,7 +28,7 @@ Synopsis
 Description
 -----------
 
-The :program:`gdal_viewshed` generates a 0-1 visibility raster band from the input
+The :program:`gdal_viewshed` generates a 0-1 visibility raster with 1 band from the input
 raster elevation model (DEM).
 
 
@@ -42,28 +41,29 @@ raster elevation model (DEM).
 
 .. option:: -b <band>
 
-   Select an input band **band** for output. Bands are numbered from 1.
-   Only a single band can be used.
+   Select an input band **band** containing the DEM data. Bands are numbered from 1.
+   Only a single band can be used. Only the part of the raster within the specified 
+   maximum distance around the observer point is processed.
 
 .. option:: -a_nodata <value>
 
-   Assign a specified nodata value to output band.
+   The value to be set for the cells in the output raster that has no data.
 
 .. option:: -ox <value>
 
-   Observer X (in SRS units).
+   The X position of the observer (in SRS units).
 
 .. option:: -oy <value>
 
-   Observer Y (in SRS units).
+   The Y position of the observer (in SRS units).
 
 .. option:: -oz <value>
 
-   Observer height.
+   The height of the observer above the DEM surface in the height unit of the DEM. Default: 2
 
 .. option:: -tz <value>
 
-   Target height.
+   The height of the target above the DEM surface in the height unit of the DEM. Default: 0
 
 .. option:: -md <value>
 
@@ -71,19 +71,27 @@ raster elevation model (DEM).
 
 .. option:: -cc <value>
 
-   Curvature coefficient as described in [Wang2000]_. Default: 0
+   Coefficient to consider the effect of the curvature and refraction.
+   The height of the DEM is corrected according to the following formula:
+
+   .. math::
+
+      Height_{Corrected}=Height_{DEM}-{CurvCoeff}\frac{{TargetDistance}^2}{SphereDiameter}
+
+   For atmospheric refraction we can use 0.85714
 
 .. option:: -iv <value>
 
-   Pixel value to set for invisibility. Default: -1
+   Pixel value to set for invisible areas. Default: -1
 
 .. option:: -ov <value>
 
-   Pixel value to set for out-of-range. Default: 0
+   Pixel value to set for the cells that fall outside of the range specified by 
+   the observer location and the maximum distance. Default: 0
 
 .. option:: -vv <value>
 
-   Pixel value to set for visibilty. Default: 255
+   Pixel value to set for visible areas. Default: 255
 
 C API
 -----
@@ -102,7 +110,7 @@ Compute the visibility of an elevation raster data source with defaults
 
 .. code-block::
 
-    gdal_viewshed -md 500 -x "-10147017".0 -y "5108065" source.tif destination.tif
+    gdal_viewshed -md 500 -ox -10147017 -oy 5108065 source.tif destination.tif
 
 
 

@@ -41,7 +41,7 @@ import pytest
 # Test forked gdalserver
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def gdalserver_path():
     import test_cli_utilities
     gdalserver_path = test_cli_utilities.get_cli_utility_path('gdalserver')
@@ -413,19 +413,19 @@ if __name__ == '__main__':
 
         gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
         if sys.platform == 'win32':
-            gdalserver_path = sys.argv[1]  # noqa
-            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', gdalserver_path)
+            arg_gdalserver_path = sys.argv[1]  # noqa
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', arg_gdalserver_path)
 
         gdaltest.api_proxy_server_p = None
         gdaltest_list = [_gdal_api_proxy_sub]
 
     elif len(sys.argv) >= 3 and sys.argv[2] == '-2':
 
-        gdalserver_path = sys.argv[1]
+        arg_gdalserver_path = sys.argv[1]
 
         p = None
         for port in [8080, 8081, 8082]:
-            p = subprocess.Popen([gdalserver_path, '-tcpserver', '%d' % port])
+            p = subprocess.Popen([arg_gdalserver_path, '-tcpserver', '%d' % port])
             time.sleep(1)
             if p.poll() is None:
                 break
@@ -447,9 +447,9 @@ if __name__ == '__main__':
 
     elif len(sys.argv) >= 3 and sys.argv[2] == '-3':
 
-        gdalserver_path = sys.argv[1]
+        arg_gdalserver_path = sys.argv[1]
 
-        p = subprocess.Popen([gdalserver_path, '-unixserver', 'tmp/gdalapiproxysocket'])
+        p = subprocess.Popen([arg_gdalserver_path, '-unixserver', 'tmp/gdalapiproxysocket'])
         time.sleep(1)
         if p.poll() is None:
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
@@ -466,9 +466,9 @@ if __name__ == '__main__':
 
     elif len(sys.argv) >= 3 and sys.argv[2] == '-4':
 
-        gdalserver_path = sys.argv[1]
+        arg_gdalserver_path = sys.argv[1]
 
-        p = subprocess.Popen([gdalserver_path, '-nofork', '-unixserver', 'tmp/gdalapiproxysocket'])
+        p = subprocess.Popen([arg_gdalserver_path, '-nofork', '-unixserver', 'tmp/gdalapiproxysocket'])
         time.sleep(1)
         if p.poll() is None:
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')

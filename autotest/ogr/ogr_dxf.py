@@ -1052,7 +1052,7 @@ def test_ogr_dxf_22():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString('Text') != '\A1;test^Itext\~\pt0.2;{\H0.7x;\Sab\/c\~d%%p^ ef\^ g.h\#i;} j{\L\Ok\ol}m':
+    if feat.GetFieldAsString('Text') != r'\A1;test^Itext\~\pt0.2;{\H0.7x;\Sab\/c\~d%%p^ ef\^ g.h\#i;} j{\L\Ok\ol}m':
         feat.DumpReadable()
         pytest.fail('bad attribute with DXF_TRANSLATE_ESCAPE_SEQUENCES = FALSE')
 

@@ -6,6 +6,8 @@ PAux -- PCI .aux Labelled Raw Format
 
 .. shortname:: PAux
 
+.. built_in_by_default::
+
 GDAL includes a partial implementation of the PCI .aux labelled raw
 raster file for read, write and creation. To open a PCI labelled file,
 select the raw data file itself. The .aux file (which must have a common

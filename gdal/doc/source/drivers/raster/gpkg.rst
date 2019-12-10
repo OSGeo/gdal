@@ -6,6 +6,8 @@ GPKG -- GeoPackage raster
 
 .. shortname:: GPKG
 
+.. build_dependencies:: libsqlite3 (and any or all of PNG, JPEG, WEBP drivers)
+
 Starting with GDAL 2.0, this driver implements full read/creation/update
 of tables containing raster tiles in the `OGC GeoPackage format
 standard <http://www.geopackage.org/spec/>`__. The GeoPackage standard

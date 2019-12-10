@@ -1508,7 +1508,7 @@ class GDAL2Tiles(object):
             if not in_srs:
                 exit_with_error(
                     "Input file has unknown SRS.",
-                    "Use --s_srs ESPG:xyz (or similar) to provide source reference system.")
+                    "Use --s_srs EPSG:xyz (or similar) to provide source reference system.")
 
             if not has_georeference(input_dataset):
                 exit_with_error(
@@ -2883,8 +2883,8 @@ def single_threaded_tiling(input_file, output_folder, options):
 def multi_threaded_tiling(input_file, output_folder, options):
     nb_processes = options.nb_processes or 1
 
-    # Make sure that all processes do not consume more than GDAL_CACHEMAX
-    os.environ['GDAL_CACHEMAX'] = '%d' % int(gdal.GetCacheMax() / nb_processes)
+    # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
+    os.environ['GDAL_CACHEMAX'] = '%d' % max(1, int(gdal.GetCacheMax() / 1024 / 1024 / nb_processes))
 
     pool = Pool(processes=nb_processes)
 

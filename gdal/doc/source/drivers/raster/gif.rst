@@ -6,6 +6,8 @@ GIF -- Graphics Interchange Format
 
 .. shortname:: GIF
 
+.. build_dependencies:: (internal GIF library provided)
+
 GDAL supports reading and writing of normal, and interlaced GIF files.
 Gif files always appear as having one colormapped eight bit band. GIF
 files have no support for georeferencing.

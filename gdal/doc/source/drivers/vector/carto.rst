@@ -6,6 +6,8 @@ Carto
 
 .. shortname:: CARTO
 
+.. build_dependencies:: libcurl
+
 This driver can connect to the services implementing the Carto API. GDAL/OGR
 must be built with Curl support in order for the Carto driver to be compiled.
 

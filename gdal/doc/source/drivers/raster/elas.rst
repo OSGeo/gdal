@@ -6,6 +6,8 @@ ELAS - Earth Resources Laboratory Applications Software
 
 .. shortname:: ELAS
 
+.. built_in_by_default::
+
 ELAS is an old remote sensing system still used for a variety of
 research projects within NASA. The ELAS format support can be found in
 gdal/frmts/elas.

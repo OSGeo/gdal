@@ -454,9 +454,11 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
         if( bSleepsForBockCacheDebug )
         {
             // coverity[tainted_data]
-            CPLSleep(CPLAtof(
+            const double dfDelay = CPLAtof(
                 CPLGetConfigOption(
-                    "GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", "0")));
+                    "GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", "0"));
+            if( dfDelay > 0 )
+                CPLSleep(dfDelay);
         }
 
         poTarget->Detach_unlocked();
@@ -466,8 +468,10 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
     if( bSleepsForBockCacheDebug )
     {
         // coverity[tainted_data]
-        CPLSleep(CPLAtof(
-            CPLGetConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_RB_LOCK", "0")));
+        const double dfDelay = CPLAtof(
+            CPLGetConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_RB_LOCK", "0"));
+        if( dfDelay > 0 )
+            CPLSleep(dfDelay);
     }
 
     if( poTarget->GetDirty() )
@@ -951,6 +955,7 @@ CPLErr GDALRasterBlock::Internalize()
 /* -------------------------------------------------------------------- */
     bool bFirstIter = true;
     bool bLoopAgain = false;
+    GDALDataset* poThisDS = poBand->GetDataset();
     do
     {
         bLoopAgain = false;
@@ -964,16 +969,60 @@ CPLErr GDALRasterBlock::Internalize()
             GDALRasterBlock *poTarget = poOldest;
             while( nCacheUsed > nCurCacheMax )
             {
+                GDALRasterBlock* poDirtyBlockOtherDataset = nullptr;
+                // In this first pass, only discard dirty blocks of this
+                // dataset. We do this to decrease significantly the likelihood
+                // of the following weakness of the block cache design:
+                // 1. Thread 1 fills block B with ones
+                // 2. Thread 2 evicts this dirty block, while thread 1 almost
+                //    at the same time (but slightly after) tries to reacquire
+                //    this block. As it has been removed from the block cache
+                //    array/set, thread 1 now tries to read block B from disk,
+                //    so gets the old value.
                 while( poTarget != nullptr )
                 {
-                    if( !poTarget->GetDirty() ||
-                        nDisableDirtyBlockFlushCounter == 0 )
+                    if( !poTarget->GetDirty() )
                     {
                         if( CPLAtomicCompareAndExchange(
                                 &(poTarget->nLockCount), 0, -1) )
                             break;
                     }
+                    else if (nDisableDirtyBlockFlushCounter == 0)
+                    {
+                        if( poTarget->poBand->GetDataset() == poThisDS )
+                        {
+                            if( CPLAtomicCompareAndExchange(
+                                    &(poTarget->nLockCount), 0, -1) )
+                                break;
+                        }
+                        else if( poDirtyBlockOtherDataset == nullptr )
+                        {
+                            poDirtyBlockOtherDataset = poTarget;
+                        }
+                    }
                     poTarget = poTarget->poPrevious;
+                }
+                if( poTarget == nullptr && poDirtyBlockOtherDataset )
+                {
+                    if( CPLAtomicCompareAndExchange(
+                            &(poDirtyBlockOtherDataset->nLockCount), 0, -1) )
+                    {
+                        CPLDebug("GDAL", "Evicting dirty block of another dataset");
+                        poTarget = poDirtyBlockOtherDataset;
+                    }
+                    else
+                    {
+                        poTarget = poOldest;
+                        while( poTarget != nullptr )
+                        {
+                            if( CPLAtomicCompareAndExchange(
+                                &(poTarget->nLockCount), 0, -1) )
+                            {
+                                CPLDebug("GDAL", "Evicting dirty block of another dataset");
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 if( poTarget != nullptr )
@@ -981,10 +1030,12 @@ CPLErr GDALRasterBlock::Internalize()
                     if( bSleepsForBockCacheDebug )
                     {
                         // coverity[tainted_data]
-                        CPLSleep(CPLAtof(
+                        const double dfDelay = CPLAtof(
                             CPLGetConfigOption(
                                 "GDAL_RB_INTERNALIZE_SLEEP_AFTER_DROP_LOCK",
-                                "0")));
+                                "0"));
+                        if( dfDelay > 0 )
+                            CPLSleep(dfDelay);
                     }
 
                     GDALRasterBlock* _poPrevious = poTarget->poPrevious;
@@ -1031,6 +1082,17 @@ CPLErr GDALRasterBlock::Internalize()
 
             if( poBlock->GetDirty() )
             {
+                if( bSleepsForBockCacheDebug )
+                {
+                    // coverity[tainted_data]
+                    const double dfDelay = CPLAtof(
+                        CPLGetConfigOption(
+                            "GDAL_RB_INTERNALIZE_SLEEP_AFTER_DETACH_BEFORE_WRITE",
+                            "0"));
+                    if( dfDelay > 0 )
+                        CPLSleep(dfDelay);
+                }
+
                 CPLErr eErr = poBlock->Write();
                 if( eErr != CE_None )
                 {
@@ -1146,8 +1208,10 @@ int GDALRasterBlock::TakeLock()
     if( bSleepsForBockCacheDebug )
     {
         // coverity[tainted_data]
-        CPLSleep(CPLAtof(
-            CPLGetConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0")));
+        const double dfDelay = CPLAtof(
+            CPLGetConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0"));
+        if( dfDelay > 0 )
+            CPLSleep(dfDelay);
     }
     if( nLockVal == 0 )
     {

@@ -6,6 +6,8 @@ DB2 raster
 
 .. shortname:: DB2
 
+.. build_dependencies:: ODBC (and any or all of PNG, JPEG, WEBP drivers)
+
 .. note::
 
     The DB2 driver is based largely on the source code for the OGR/DB2

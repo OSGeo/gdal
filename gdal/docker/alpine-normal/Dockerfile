@@ -51,7 +51,7 @@ RUN if test "${XERCESC_VERSION}" != ""; then ( \
     ); fi
 
 # Build geos
-ARG GEOS_VERSION=3.7.1
+ARG GEOS_VERSION=3.8.0
 RUN if test "${GEOS_VERSION}" != ""; then ( \
     wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
@@ -99,7 +99,7 @@ RUN if test "${HDF5_VERSION}" != ""; then ( \
     ); fi
 
 # Build netCDF
-ARG NETCDF_VERSION=4.6.3
+ARG NETCDF_VERSION=4.7.2
 RUN if test "${NETCDF_VERSION}" != ""; then ( \
     wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
     && tar xzf v${NETCDF_VERSION}.tar.gz \

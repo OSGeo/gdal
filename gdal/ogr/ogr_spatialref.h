@@ -358,6 +358,7 @@ class CPL_DLL OGRSpatialReference
                                const OGRSpatialReference *poHorizSRS,
                                const OGRSpatialReference *poVertSRS );
 
+    // cppcheck-suppress functionStatic
     OGRErr      PromoteTo3D( const char* pszName );
 
     OGRErr      SetFromUserInput( const char * );
@@ -646,6 +647,13 @@ class CPL_DLL OGRSpatialReference
                                         double dfViewPointHeight,
                                         double dfFalseEasting,
                                         double dfFalseNorthing);
+
+    /** Pole rotation (GRIB convention) */
+    OGRErr      SetDerivedGeogCRSWithPoleRotationGRIBConvention(
+                                               const char* pszCRSName,
+                                               double dfSouthPoleLat,
+                                               double dfSouthPoleLon,
+                                               double dfAxisRotation );
 
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,

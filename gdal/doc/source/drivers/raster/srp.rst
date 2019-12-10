@@ -6,6 +6,8 @@ SRP -- Standard Product Format (ASRP/USRP) (.gen)
 
 .. shortname:: SRP
 
+.. built_in_by_default::
+
 The ASRP and USRP raster products (as defined by DGIWG) are variations
 on a common standard product format and are supported for reading by
 GDAL. ASRP and USRP datasets are made of several files - typically a

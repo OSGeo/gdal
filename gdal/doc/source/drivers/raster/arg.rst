@@ -6,6 +6,8 @@ ARG -- Azavea Raster Grid
 
 .. shortname:: ARG
 
+.. built_in_by_default::
+
 Driver implementation for a raw format that is used in
 `GeoTrellis <http://geotrellis.io/>`__ and called ARG. `ARG format
 specification <http://geotrellis.io/documentation/0.9.0/geotrellis/io/arg/>`__.
