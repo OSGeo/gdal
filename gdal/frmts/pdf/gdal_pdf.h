@@ -189,6 +189,7 @@ class PDFDataset final: public GDALPamDataset
     friend class PDFRasterBand;
     friend class PDFImageRasterBand;
 
+    VSILFILE    *m_fp = nullptr;
     PDFDataset*  poParentDS;
 
     CPLString    osFilename;
