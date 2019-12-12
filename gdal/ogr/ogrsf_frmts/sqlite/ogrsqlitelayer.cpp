@@ -2484,6 +2484,16 @@ static const SpliteOGRGeometryTypeTuple anTypesMap[] = {
 { OGRSpliteComprGeometryCollectionXYZM, wkbGeometryCollectionZM },
 };
 
+static bool QuickCheckForSpatialiteGeometryValidity( const GByte *pabyData,
+                                                     int nBytes )
+{
+    return nBytes >= 44
+        && pabyData[0] == 0
+        && (pabyData[1] == wkbXDR || pabyData[1] == wkbNDR)
+        && pabyData[38] == 0x7C
+        && pabyData[nBytes-1] == 0xFE;
+}
+
 OGRErr OGRSQLiteLayer::GetSpatialiteGeometryHeader( const GByte *pabyData,
                                                     int nBytes,
                                                     int* pnSRID,
@@ -2494,13 +2504,10 @@ OGRErr OGRSQLiteLayer::GetSpatialiteGeometryHeader( const GByte *pabyData,
                                                     double* pdfMaxX,
                                                     double* pdfMaxY )
 {
-    if( nBytes < 44
-        || pabyData[0] != 0
-        || pabyData[38] != 0x7C
-        || pabyData[nBytes-1] != 0xFE )
+    if( !QuickCheckForSpatialiteGeometryValidity(pabyData, nBytes) )
         return OGRERR_CORRUPT_DATA;
 
-    OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder) pabyData[1];
+    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(pabyData[1]);
 
     if( pnSRID != nullptr )
     {
@@ -2605,17 +2612,12 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
                                                  int* pnSRID )
 
 {
-    OGRwkbByteOrder eByteOrder;
-
     *ppoGeometry = nullptr;
 
-    if( nBytes < 44
-        || pabyData[0] != 0
-        || pabyData[38] != 0x7C
-        || pabyData[nBytes-1] != 0xFE )
+    if( !QuickCheckForSpatialiteGeometryValidity(pabyData, nBytes) )
         return OGRERR_CORRUPT_DATA;
 
-    eByteOrder = (OGRwkbByteOrder) pabyData[1];
+    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(pabyData[1]);
 
 /* -------------------------------------------------------------------- */
 /*      Decode the geometry type.                                       */
