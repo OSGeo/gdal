@@ -2960,6 +2960,27 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
 }
 
 /************************************************************************/
+/*                        collectSimpleGeometries()                     */
+/************************************************************************/
+
+static void collectSimpleGeometries(const OGRGeometryCollection* poGeomCollection,
+                                    std::vector<const OGRGeometry*>& simpleGeometries)
+{
+    const int nParts = poGeomCollection->getNumGeometries();
+    simpleGeometries.reserve(simpleGeometries.size() + nParts);
+    for( int i = 0; i < nParts; i++ )
+    {
+        const OGRGeometry* poSubGeom = poGeomCollection->getGeometryRef(i);
+        const OGRGeometryCollection* poSubGeomColl =
+            dynamic_cast<const OGRGeometryCollection*>(poSubGeom);
+        if( poSubGeomColl )
+            collectSimpleGeometries(poSubGeomColl, simpleGeometries);
+        else
+            simpleGeometries.push_back(poSubGeom);
+    }
+}
+
+/************************************************************************/
 /*                    ExportSpatiaLiteGeometryInternal()                */
 /************************************************************************/
 
@@ -2969,7 +2990,8 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                                                      int bUseComprGeom,
                                                      GByte* pabyData )
 {
-    switch (wkbFlatten(poGeometry->getGeometryType()))
+    const auto eFGeomType = wkbFlatten(poGeometry->getGeometryType());
+    switch (eFGeomType)
     {
         case wkbPoint:
         {
@@ -3169,7 +3191,11 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
         {
             const OGRGeometryCollection* poGeomCollection = poGeometry->toGeometryCollection();
             int nTotalSize = 4;
-            int nParts = poGeomCollection->getNumGeometries();
+
+            std::vector<const OGRGeometry*> simpleGeometries;
+            collectSimpleGeometries(poGeomCollection, simpleGeometries);
+
+            int nParts = static_cast<int>(simpleGeometries.size());
             memcpy(pabyData, &nParts, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( pabyData );
@@ -3179,16 +3205,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                 pabyData[nTotalSize] = 0x69;
                 nTotalSize ++;
 
-                const OGRGeometry* poPart = poGeomCollection->getGeometryRef(i);
-                if( OGR_GT_IsSubClassOf(poPart->getGeometryType(),
-                                        wkbGeometryCollection) )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                        "Unexpected geometry type %s as part of %s",
-                        OGRToOGCGeomType(poPart->getGeometryType()),
-                        OGRToOGCGeomType(poGeometry->getGeometryType()));
-                    return 0;
-                }
+                const OGRGeometry* poPart = simpleGeometries[i];
                 int nCode = GetSpatialiteGeometryCode(poPart,
                                                       bSpatialite2D,
                                                       bUseComprGeom, FALSE);
