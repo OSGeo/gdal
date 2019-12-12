@@ -2629,6 +2629,10 @@ PDFDataset::~PDFDataset()
     for(int i=0;i<nLayers;i++)
         delete papoLayers[i];
     CPLFree( papoLayers );
+
+    // Do that only after having destroyed Poppler objects
+    if( m_fp )
+        VSIFCloseL(m_fp);
 }
 
 /************************************************************************/
@@ -4255,6 +4259,17 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
     int nPages = 0;
 
+    struct FilePointerKeeper
+    {
+        VSILFILE* m_fp;
+
+        FilePointerKeeper(VSILFILE* fp = nullptr): m_fp(fp) {}
+        ~FilePointerKeeper() { if( m_fp ) VSIFCloseL(m_fp); }
+        void reset(VSILFILE* fp) { if( m_fp ) VSIFCloseL(m_fp); m_fp = fp; }
+        VSILFILE* release() { VSILFILE* ret = m_fp; m_fp = nullptr; return ret; }
+    };
+    FilePointerKeeper fpKeeper;
+
 #ifdef HAVE_POPPLER
   if(bUseLib.test(PDFLIB_POPPLER))
   {
@@ -4279,14 +4294,16 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));
     }
 
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
+    if (fp == nullptr)
+        return nullptr;
+
+    fp = (VSILFILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
+    fpKeeper.reset(fp);
+
     while( true )
     {
-        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-        if (fp == nullptr)
-            return nullptr;
-
-        fp = (VSILFILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
-
+        VSIFSeekL(fp, 0, SEEK_SET);
         if (pszUserPwd)
             poUserPwd = new GooString(pszUserPwd);
 
@@ -4337,7 +4354,6 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             PDFFreeDoc(poDocPoppler);
-
             return nullptr;
         }
         else if( poDocPoppler->isLinearized() &&
@@ -4352,7 +4368,6 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
 
             PDFFreeDoc(poDocPoppler);
-
             return nullptr;
         }
         else
@@ -4589,6 +4604,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     PDFDataset* poDS = new PDFDataset();
+    poDS->m_fp = fpKeeper.release();
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
     poDS->bUseLib = bUseLib;
     poDS->osFilename = pszFilename;
