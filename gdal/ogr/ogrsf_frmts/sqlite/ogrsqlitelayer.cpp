@@ -2712,6 +2712,27 @@ int OGRSQLiteLayer::CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeome
 }
 
 /************************************************************************/
+/*                        collectSimpleGeometries()                     */
+/************************************************************************/
+
+static void collectSimpleGeometries(const OGRGeometryCollection* poGeomCollection,
+                                    std::vector<const OGRGeometry*>& simpleGeometries)
+{
+    const int nParts = poGeomCollection->getNumGeometries();
+    simpleGeometries.reserve(simpleGeometries.size() + nParts);
+    for( int i = 0; i < nParts; i++ )
+    {
+        const OGRGeometry* poSubGeom = poGeomCollection->getGeometryRef(i);
+        const OGRGeometryCollection* poSubGeomColl =
+            dynamic_cast<const OGRGeometryCollection*>(poSubGeom);
+        if( poSubGeomColl )
+            collectSimpleGeometries(poSubGeomColl, simpleGeometries);
+        else
+            simpleGeometries.push_back(poSubGeom);
+    }
+}
+
+/************************************************************************/
 /*                  ComputeSpatiaLiteGeometrySize()                     */
 /************************************************************************/
 
@@ -2779,9 +2800,13 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
         {
             int nSize = 4;
             const OGRGeometryCollection* poGeomCollection = poGeometry->toGeometryCollection();
-            int nParts = poGeomCollection->getNumGeometries();
+
+            std::vector<const OGRGeometry*> simpleGeometries;
+            collectSimpleGeometries(poGeomCollection, simpleGeometries);
+
+            int nParts = static_cast<int>(simpleGeometries.size());
             for(int i=0;i<nParts;i++)
-                nSize += 5 + ComputeSpatiaLiteGeometrySize(poGeomCollection->getGeometryRef(i),
+                nSize += 5 + ComputeSpatiaLiteGeometrySize(simpleGeometries[i],
                                                            bSpatialite2D, bUseComprGeom );
             return nSize;
         }
@@ -2956,27 +2981,6 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type");
             return 0;
-    }
-}
-
-/************************************************************************/
-/*                        collectSimpleGeometries()                     */
-/************************************************************************/
-
-static void collectSimpleGeometries(const OGRGeometryCollection* poGeomCollection,
-                                    std::vector<const OGRGeometry*>& simpleGeometries)
-{
-    const int nParts = poGeomCollection->getNumGeometries();
-    simpleGeometries.reserve(simpleGeometries.size() + nParts);
-    for( int i = 0; i < nParts; i++ )
-    {
-        const OGRGeometry* poSubGeom = poGeomCollection->getGeometryRef(i);
-        const OGRGeometryCollection* poSubGeomColl =
-            dynamic_cast<const OGRGeometryCollection*>(poSubGeom);
-        if( poSubGeomColl )
-            collectSimpleGeometries(poSubGeomColl, simpleGeometries);
-        else
-            simpleGeometries.push_back(poSubGeom);
     }
 }
 
