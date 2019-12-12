@@ -250,7 +250,7 @@ RUN date
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libsqlite3-0 \
-        curl unzip
+        curl unzip ca-certificates
 
 # GDAL dependencies
 RUN apt-get update; \
