@@ -259,7 +259,10 @@ bool Lerc2::ReadHeader(const Byte** ppByte, size_t& nBytesRemainingInOut, struct
   hd.numValidPixel  = intVec[i++];
   hd.microBlockSize = intVec[i++];
   hd.blobSize       = intVec[i++];
-  hd.dt             = static_cast<DataType>(intVec[i++]);
+  const int dt      = intVec[i++];
+  if( dt < DT_Char || dt > DT_Undefined )
+    return false;
+  hd.dt             = static_cast<DataType>(dt);
 
   hd.maxZError      = dblVec[0];
   hd.zMin           = dblVec[1];
