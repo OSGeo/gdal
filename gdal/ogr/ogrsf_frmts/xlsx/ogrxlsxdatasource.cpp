@@ -732,26 +732,6 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 
         if (poCurLayer)
         {
-            /* Ensure that any fields still with an unknown type are set to String.
-             * This will only be the case if the field has no values */
-       
-            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
-            {
-                OGRFieldType eFieldType =
-                    poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
-
-                if (eFieldType == OGRUnknownType)
-                {
-                    OGRFieldDefn oNewFieldDefn(
-                        poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
-
-                    oNewFieldDefn.SetType(OFTString);
-                    poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
-                                                ALTER_TYPE_FLAG);
-
-                }
-            }
-
             ((OGRMemLayer*)poCurLayer)->SetUpdatable(CPL_TO_BOOL(bUpdatable));
             ((OGRMemLayer*)poCurLayer)->SetAdvertizeUTF8(true);
             ((OGRXLSXLayer*)poCurLayer)->SetUpdated(false);
@@ -875,16 +855,23 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                     const char* pszFieldName = apoFirstLineValues[i].c_str();
                     if (pszFieldName[0] == '\0')
                         pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
-                    OGRFieldType eType = OGRUnknownType;
+                    bool bUnknownType = true;
+                    OGRFieldType eType = OFTString;
                     OGRFieldSubType eSubType = OFSTNone;
                     if (i < apoCurLineValues.size() && !apoCurLineValues[i].empty())
                     {
                         eType = GetOGRFieldType(apoCurLineValues[i].c_str(),
                                                 apoCurLineTypes[i].c_str(),
                                                 eSubType);
+                        bUnknownType = false;
                     }
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
                     oFieldDefn.SetSubType(eSubType);
+                    if( bUnknownType)
+                    {
+                        poCurLayer->oSetFieldsOfUnknownType.insert(
+                            poCurLayer->GetLayerDefn()->GetFieldCount());
+                    }
                     if( poCurLayer->CreateField(&oFieldDefn) != OGRERR_NONE )
                     {
                         return;
@@ -973,17 +960,13 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                         OGRFieldDefn* poFieldDefn =
                             poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i));
                         const OGRFieldType eFieldType = poFieldDefn->GetType();
-                        if (eFieldType == OGRUnknownType)
+                        auto oIter = poCurLayer->oSetFieldsOfUnknownType.find(static_cast<int>(i));
+                        if (oIter != poCurLayer->oSetFieldsOfUnknownType.end() )
                         {
-                            /* If the field type is unknown we have not encountered a value in the field yet so
-                             * set the field type to this elements type */
-                            OGRFieldDefn oNewFieldDefn(poFieldDefn);
+                            poCurLayer->oSetFieldsOfUnknownType.erase(oIter);
 
-                            oNewFieldDefn.SetType(eValType);
-                            oNewFieldDefn.SetSubType(eValSubType);
-                            poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
-                                                       ALTER_TYPE_FLAG);
-
+                            poFieldDefn->SetType(eValType);
+                            poFieldDefn->SetSubType(eValSubType);
                         }
                         else if (eFieldType == OFTDateTime &&
                             (eValType == OFTDate || eValType == OFTTime) )
