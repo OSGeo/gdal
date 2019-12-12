@@ -171,6 +171,13 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
         // or do we have a binary type indicator? (is it binary)
         else
         {
+            if( pszFormatString[1] < '0' || pszFormatString[1] > '5' )
+            {
+                 CPLError( CE_Failure, CPLE_AppDefined,
+                           "Binary format = %c is invalid.",
+                           pszFormatString[1] );
+                return FALSE;
+            }
             eBinaryFormat = (DDFBinaryFormat) (pszFormatString[1] - '0');
             nFormatWidth = atoi(pszFormatString+2);
             if( nFormatWidth < 0 )
