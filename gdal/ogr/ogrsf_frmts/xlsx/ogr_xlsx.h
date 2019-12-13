@@ -38,6 +38,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 
 namespace OGRXLSX {
 
