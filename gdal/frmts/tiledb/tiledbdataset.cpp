@@ -510,7 +510,11 @@ CPLErr TileDBDataset::TrySaveXML()
         if( psTree == nullptr )
         {
             /* If we have unset all metadata, we have to delete the PAM file */
+#if TILEDB_VERSION_MAJOR == 1 && TILEDB_VERSION_MINOR < 7
             vfs.remove_file(psPam->pszPamFilename);
+#else
+            m_array->delete_metadata("_gdal");
+#endif
             return CE_None;
         }
 
@@ -575,22 +579,45 @@ CPLErr TileDBDataset::TrySaveXML()
 /* -------------------------------------------------------------------- */
 /*      Try saving the auxiliary metadata.                               */
 /* -------------------------------------------------------------------- */
-        vfs.touch( psPam->pszPamFilename );
-        tiledb::VFS::filebuf fbuf( vfs );
-        fbuf.open( psPam->pszPamFilename, std::ios::out );
-        std::ostream os(&fbuf);
-
         bool bSaved = false;
-        if (os.good())
+        CPLErrorHandlerPusher oQuietError( CPLQuietErrorHandler );
+        char* pszTree = CPLSerializeXMLTree( psTree );
+
+#if TILEDB_VERSION_MAJOR >= 1 && TILEDB_VERSION_MINOR >= 7
+
+        if ( eAccess == GA_ReadOnly )
         {
-            CPLErrorHandlerPusher oQuietError( CPLQuietErrorHandler );
-            char* pszTree = CPLSerializeXMLTree( psTree );
-            os.write( pszTree, strlen(pszTree));
-            CPLFree( pszTree );
-            bSaved = true;
+            auto oMeta = std::unique_ptr<tiledb::Array>( 
+                new tiledb::Array( *m_ctx, m_array->uri(), TILEDB_WRITE )
+            );
+            oMeta->put_metadata("_gdal", TILEDB_UINT8, strlen( pszTree ), pszTree);
+            oMeta->close();
+        }
+        else
+        {
+            m_array->put_metadata("_gdal", TILEDB_UINT8, strlen( pszTree ), pszTree);
         }
 
-        fbuf.close();
+        bSaved = true;
+#endif
+
+        if (!bSaved)
+        {
+            vfs.touch( psPam->pszPamFilename );
+            tiledb::VFS::filebuf fbuf( vfs );
+            fbuf.open( psPam->pszPamFilename, std::ios::out );
+            std::ostream os(&fbuf);
+
+            if (os.good())
+            {
+                os.write( pszTree, strlen(pszTree));
+                bSaved = true;
+            }
+
+            fbuf.close();
+        }
+
+        CPLFree( pszTree );
 
 /* -------------------------------------------------------------------- */
 /*      If it fails, check if we have a proxy directory for auxiliary    */
@@ -664,7 +691,6 @@ CPLErr TileDBDataset::TryLoadCachedXML( char ** /*papszSiblingFiles*/, bool bRel
     try
     {
         PamInitialize();
-
         tiledb::VFS vfs( *m_ctx, m_ctx->config() );
 
 /* -------------------------------------------------------------------- */
@@ -696,24 +722,51 @@ CPLErr TileDBDataset::TryLoadCachedXML( char ** /*papszSiblingFiles*/, bool bRel
         {
             CPLErrorHandlerPusher oQuietError( CPLQuietErrorHandler );
 
-            if ( vfs.is_file( psPam->pszPamFilename ) )
+#if TILEDB_VERSION_MAJOR >= 1 && TILEDB_VERSION_MINOR >= 7
+            if ( bReload )
             {
-                if ( bReload )
+                tiledb_datatype_t v_type = TILEDB_UINT8; // CPLSerializeXMLTree returns char*
+                const void* v_r;
+                uint32_t v_num;
+                if ( eAccess == GA_Update )
                 {
-                    auto nBytes = vfs.file_size( psPam->pszPamFilename );
-                    tiledb::VFS::filebuf fbuf( vfs );
-                    fbuf.open( psPam->pszPamFilename, std::ios::in );
-                    std::istream is ( &fbuf );
-                    osMetaDoc.resize(nBytes);
-                    is.read( ( char* ) osMetaDoc.data(), nBytes );
-                    fbuf.close();
-                    psTree = CPLParseXMLString( osMetaDoc );
+                    auto oMeta = std::unique_ptr<tiledb::Array>( 
+                        new tiledb::Array( *m_ctx, m_array->uri(), TILEDB_READ )
+                    );
+                    oMeta->get_metadata("_gdal", &v_type, &v_num, &v_r);
+                    if ( v_r != NULL )
+                    {
+                        osMetaDoc = static_cast<const char*>( v_r );
+                    }
                 }
                 else
                 {
-                    psTree = CPLParseXMLString( osMetaDoc );
+                    m_array->get_metadata("_gdal", &v_type, &v_num, &v_r);
+                    if ( v_r != NULL )
+                    {
+                        osMetaDoc = static_cast<const char*>( v_r );
+                    }
                 }
-                
+                psTree = CPLParseXMLString( osMetaDoc );
+            }
+#endif
+            if ( bReload &&
+                 psTree == nullptr &&
+                 vfs.is_file( psPam->pszPamFilename ) )
+            {
+                auto nBytes = vfs.file_size( psPam->pszPamFilename );
+                tiledb::VFS::filebuf fbuf( vfs );
+                fbuf.open( psPam->pszPamFilename, std::ios::in );
+                std::istream is ( &fbuf );
+                osMetaDoc.resize(nBytes);
+                is.read( ( char* ) osMetaDoc.data(), nBytes );
+                fbuf.close();
+                psTree = CPLParseXMLString( osMetaDoc );
+            }
+
+            if ( !bReload )
+            {
+                psTree = CPLParseXMLString( osMetaDoc );
             }
         }
         CPLErrorReset();
@@ -905,32 +958,18 @@ int TileDBDataset::Identify( GDALOpenInfo * poOpenInfo )
     {
         const char* pszConfig = CSLFetchNameValue( 
             poOpenInfo->papszOpenOptions, "TILEDB_CONFIG" );
+
         if ( pszConfig != nullptr )
         {
-            tiledb::Config cfg( pszConfig );
-            tiledb::Context ctx( cfg );
-            tiledb::VFS vfs( ctx, cfg );
-            if ( ( vfs.is_bucket(poOpenInfo->pszFilename ) ) && 
-                ( tiledb::Object::object( ctx, poOpenInfo->pszFilename ).type() == tiledb::Object::Type::Array ) )
-                return TRUE;
+            return TRUE;
         }
-        else if( poOpenInfo->bIsDirectory )
+
+        if( poOpenInfo->bIsDirectory )
         {
-            char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
-            const char* pszArrayName = CPLGetBasename( poOpenInfo->pszFilename );
-            CPLString osAux;
-            osAux.Printf( "%s.tdb.aux.xml", pszArrayName );
-            if( papszSiblingFiles )
-            {
-                return CSLFindString( papszSiblingFiles, osAux ) != -1;
-            }
-            else
-            {
-                VSIStatBufL sStat;
-                const char* pszAuxFilename = CPLFormFilename(poOpenInfo->pszFilename, osAux, nullptr);
-                return VSIStatL( pszAuxFilename, &sStat ) == 0;
-            }
+            tiledb::Context ctx;
+            return tiledb::Object::object( ctx, poOpenInfo->pszFilename ).type() == tiledb::Object::Type::Array;
         }
+
         return FALSE;
     }
     catch( ... )
@@ -978,7 +1017,8 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
             poOpenInfo->papszOpenOptions,
             "TILEDB_ATTRIBUTE" );
 
-        if( STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB:") )
+        if( STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB:") &&
+            !STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB://") )
         {
             // form required read attributes and open file
             // Create a corresponding GDALDataset.
@@ -1012,11 +1052,14 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetPhysicalFilename( CPLFormFilename( osArrayPath, osAux, nullptr ) );
         // Initialize any PAM information.
         poDS->SetDescription( osArrayPath );
-        // dependent on PAM metadata for information about array
-        poDS->TryLoadXML();
 
         poDS->m_array.reset(
             new tiledb::Array( *poDS->m_ctx, osArrayPath, eMode ) );
+
+        poDS->eAccess = poOpenInfo->eAccess;
+
+        // dependent on PAM metadata for information about array
+        poDS->TryLoadXML();
 
         tiledb::ArraySchema schema = poDS->m_array->schema();
 
@@ -1091,8 +1134,6 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->eDataType = eDT;
             }
         }
-
-        poDS->eAccess = poOpenInfo->eAccess;
 
         poDS->nBlocksX = DIV_ROUND_UP( poDS->nRasterXSize, poDS->nBlockXSize );
         poDS->nBlocksY = DIV_ROUND_UP( poDS->nRasterYSize, poDS->nBlockYSize );
@@ -1178,16 +1219,17 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
 
         // reload metadata now that bands are created to populate band metadata
         poDS->TryLoadCachedXML( nullptr, false );
-        
+
         tiledb::VFS vfs( *poDS->m_ctx, poDS->m_ctx->config() );
 
-        if ( vfs.is_dir( osArrayPath ) )
+        if ( !STARTS_WITH_CI(osArrayPath, "TILEDB:")
+                &&  vfs.is_dir( osArrayPath ) )
             poDS->oOvManager.Initialize( poDS.get(), ":::VIRTUAL:::" );
         else 
             CPLError( CE_Warning, CPLE_AppDefined,
                 "Overviews not supported for network writes." );
 
-        return poDS.release();
+      return poDS.release();
     }
     catch(const tiledb::TileDBError& e)
     {
