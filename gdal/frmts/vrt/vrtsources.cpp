@@ -620,9 +620,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     CPLXMLNode* psSrcProperties = CPLGetXMLNode(psSrc,"SourceProperties");
     int nRasterXSize = 0;
     int nRasterYSize = 0;
-    // TODO(schwehr): What is the difference between 0 (GDT_Unknown) and -1?
-    // Does there need to be a GDT_Uninitialized?
-    GDALDataType eDataType = static_cast<GDALDataType>(-1);
+    GDALDataType eDataType = GDT_Unknown;
     int nBlockXSize = 0;
     int nBlockYSize = 0;
     if( psSrcProperties )
@@ -666,7 +664,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     bool bAddToMapIfOk = false;
     GDALDataset *poSrcDS = nullptr;
     if( nRasterXSize == 0 || nRasterYSize == 0 ||
-        eDataType == static_cast<GDALDataType>(-1) ||
+        eDataType == GDT_Unknown ||
         nBlockXSize == 0 || nBlockYSize == 0 )
     {
         /* ----------------------------------------------------------------- */
