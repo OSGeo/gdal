@@ -728,7 +728,7 @@ CPLErr TileDBDataset::TryLoadCachedXML( char ** /*papszSiblingFiles*/, bool bRel
             if ( bReload )
             {
                 tiledb_datatype_t v_type = TILEDB_UINT8; // CPLSerializeXMLTree returns char*
-                const void* v_r = NULL;
+                const void* v_r = nullptr;
                 uint32_t v_num = 0;
                 if ( eAccess == GA_Update )
                 {
