@@ -468,7 +468,9 @@ TileDBDataset::~TileDBDataset()
     try
     {
         if( m_array )
+        {
             m_array->close();
+        }
     }
     catch(const tiledb::TileDBError& e)
     {
@@ -726,15 +728,15 @@ CPLErr TileDBDataset::TryLoadCachedXML( char ** /*papszSiblingFiles*/, bool bRel
             if ( bReload )
             {
                 tiledb_datatype_t v_type = TILEDB_UINT8; // CPLSerializeXMLTree returns char*
-                const void* v_r;
-                uint32_t v_num;
+                const void* v_r = NULL;
+                uint32_t v_num = 0;
                 if ( eAccess == GA_Update )
                 {
                     auto oMeta = std::unique_ptr<tiledb::Array>( 
                         new tiledb::Array( *m_ctx, m_array->uri(), TILEDB_READ )
                     );
                     oMeta->get_metadata("_gdal", &v_type, &v_num, &v_r);
-                    if ( v_r != NULL )
+                    if ( v_r )
                     {
                         osMetaDoc = static_cast<const char*>( v_r );
                     }
@@ -742,7 +744,7 @@ CPLErr TileDBDataset::TryLoadCachedXML( char ** /*papszSiblingFiles*/, bool bRel
                 else
                 {
                     m_array->get_metadata("_gdal", &v_type, &v_num, &v_r);
-                    if ( v_r != NULL )
+                    if ( v_r )
                     {
                         osMetaDoc = static_cast<const char*>( v_r );
                     }
