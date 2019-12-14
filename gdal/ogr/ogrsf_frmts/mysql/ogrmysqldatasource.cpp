@@ -1032,6 +1032,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
     const bool bHasSI = ( eType != wkbNone && (pszSI == nullptr || CPLTestBool(pszSI)) );
+    int nSRSId = GetUnknownSRID();
 
     if( wkbFlatten(eType) == wkbNone )
     {
@@ -1042,12 +1043,22 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     }
     else
     {
-        osCommand.Printf(
-                 "CREATE TABLE `%s` ( "
-                 "   %s %s UNIQUE NOT NULL AUTO_INCREMENT, "
-                 "   %s GEOMETRY %s)",
-                 pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName,
-                 bHasSI ? "NOT NULL" : "");
+        // when using mysql8 and SRS is specified, use SRID option for geometry.
+        if( GetMajorVersion() < 8 || IsMariaDB() || poSRS == nullptr ||
+            (nSRSId = FetchSRSId( poSRS )) == GetUnknownSRID() )
+            osCommand.Printf(
+                    "CREATE TABLE `%s` ( "
+                    "   %s %s UNIQUE NOT NULL AUTO_INCREMENT, "
+                    "   %s GEOMETRY %s)",
+                    pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName,
+                    bHasSI ? "NOT NULL" : "");
+        else
+            osCommand.Printf(
+                    "CREATE TABLE `%s` ( "
+                    "   %s %s UNIQUE NOT NULL AUTO_INCREMENT, "
+                    "   %s GEOMETRY %s /*!80003 SRID %d */)",
+                    pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName,
+                    bHasSI ? "NOT NULL" : "", nSRSId);
     }
 
     if( CSLFetchNameValue( papszOptions, "ENGINE" ) != nullptr )
@@ -1083,12 +1094,14 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the SRS Id of this spatial reference system,         */
-/*      adding tot the srs table if needed.                             */
+/*      adding to the srs table if needed.                             */
 /* -------------------------------------------------------------------- */
-    int nSRSId = GetUnknownSRID();
-
-    if( poSRS != nullptr )
-        nSRSId = FetchSRSId( poSRS );
+    if( GetMajorVersion() < 8 || IsMariaDB() )
+    {
+        nSRSId = GetUnknownSRID();
+        if (poSRS != nullptr)
+            nSRSId = FetchSRSId(poSRS);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Sometimes there is an old crufty entry in the geometry_columns  */
