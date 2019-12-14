@@ -40,6 +40,9 @@
 
 CPL_CVSID("$Id$")
 
+// Specification at
+// https://www.nrcan.gc.ca/sites/www.nrcan.gc.ca/files/earthsciences/pdf/gpshgrid_e.pdf
+
 const static BYNEllipsoids EllipsoidTable[] = {
     { "GRS80",       6378137.0,  298.257222101 },
     { "WGS84",       6378137.0,  298.257223564 },
@@ -87,7 +90,9 @@ double BYNRasterBand::GetNoDataValue( int *pbSuccess )
     {
         return dfNoData;
     }
-    return eDataType == GDT_Int16 ? 32767.0 : 9999.0 * GetScale();
+    const double dfFactor =
+        reinterpret_cast<BYNDataset*>(poDS)->hHeader.dfFactor;
+    return eDataType == GDT_Int16 ? 32767.0 : 9999.0 * dfFactor;
 }
 
 /************************************************************************/
