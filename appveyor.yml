@@ -79,7 +79,7 @@ install:
       cinst -y --no-progress --version 3.0.12 --force swig
       cinst -y --no-progress vcpython27
       Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
-      exec { pip install numpy }
+      exec { pip install numpy==1.16.5 }
       $env:SDK_ZIP="$env:SDK"+"-dev.zip"
       $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
       if(-Not (Test-Path -Path downloads)) { mkdir downloads }
