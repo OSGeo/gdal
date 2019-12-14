@@ -1471,7 +1471,7 @@ def WarpOptions(options=None, format=None,
           workingType --- working type (gdalconst.GDT_Byte, etc...)
           warpOptions --- list of warping options
           errorThreshold --- error threshold for approximation transformer (in pixels)
-          warpMemoryLimit --- size of working buffer in bytes
+          warpMemoryLimit --- size of working buffer in MB
           resampleAlg --- resampling mode
           creationOptions --- list of creation options
           srcNodata --- source nodata value(s)
