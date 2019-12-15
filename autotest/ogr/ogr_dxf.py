@@ -3500,6 +3500,23 @@ def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
     ds = None
     gdal.Unlink(tmpfile)
 
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/1969
+# with a SPLINE whose first knot is a very close to zero negative value.
+
+def test_ogr_dxf_very_close_neg_to_zero_knot():
+
+    ds = ogr.Open('data/spline_with_very_close_neg_to_zero_knot.dxf')
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    extent = g.GetEnvelope()
+    assert extent == pytest.approx((163.0306017054786, 166.6530957511469,
+                                    78.40469559017359, 81.82569418640966), abs=1e-5)
+
+
 ###############################################################################
 # cleanup
 
