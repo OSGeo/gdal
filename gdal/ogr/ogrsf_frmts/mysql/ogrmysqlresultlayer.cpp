@@ -235,9 +235,18 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         poDefn->SetGeomType( wkbUnknown );
         poDefn->GetGeomFieldDefn(0)->SetName( pszGeomColumn );
 
-        osCommand.Printf(
-                "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
-                pszGeomColumnTable );
+        if( poDS->GetMajorVersion() < 8 || poDS->IsMariaDB() ) {
+            osCommand.Printf(
+                    "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
+                    pszGeomColumnTable);
+        }
+        else
+        {
+            osCommand.Printf(
+                    "SELECT GEOMETRY_TYPE_NAME FROM INFORMATION_SCHEMA.ST_GEOMETRY_COLUMNS "
+                    "WHERE TABLE_NAME = '%s'",
+                    pszGeomColumnTable);
+        }
 
         if( hResultSet != nullptr )
             mysql_free_result( hResultSet );

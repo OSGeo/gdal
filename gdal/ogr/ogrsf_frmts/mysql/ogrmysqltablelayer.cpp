@@ -383,9 +383,13 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         poDefn->SetGeomType( wkbUnknown );
         poDefn->GetGeomFieldDefn(0)->SetName( pszGeomColumn );
 
-        osCommand = "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='";
-        osCommand += pszTable;
-        osCommand += "'";
+        if( poDS->GetMajorVersion() < 8 || poDS->IsMariaDB() )
+            osCommand.Printf("SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
+                             pszTable);
+
+        else
+            osCommand.Printf("SELECT GEOMETRY_TYPE_NAME FROM INFORMATION_SCHEMA.ST_GEOMETRY_COLUMNS "
+                             "WHERE TABLE_NAME = '%s'", pszTable);
 
         hResult = nullptr;
         if( !mysql_query( poDS->GetConn(), osCommand ) )
