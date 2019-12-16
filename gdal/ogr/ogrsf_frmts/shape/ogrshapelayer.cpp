@@ -2175,7 +2175,7 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
                 int* panConfidence = nullptr;
                 OGRSpatialReferenceH* pahSRS =
                     poSRS->FindMatches(nullptr, &nEntries, &panConfidence);
-                if( nEntries == 1 && panConfidence[0] == 100 )
+                if( nEntries == 1 && panConfidence[0] >= 90 )
                 {
                     poSRS->Release();
                     poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
