@@ -484,6 +484,13 @@ def exit_with_error(message, details=""):
     sys.exit(2)
 
 
+def set_cache_max(cache_in_bytes):
+    # We set the maximum using `SetCacheMax` and `GDAL_CACHEMAX` to support both fork and spawn as multiprocessing start methods.
+    # https://github.com/OSGeo/gdal/pull/2112
+    os.environ['GDAL_CACHEMAX'] = '%d' % int(cache_in_bytes / 1024 / 1024)
+    gdal.SetCacheMax(cache_in_bytes)
+
+
 def generate_kml(tx, ty, tz, tileext, tile_size, tileswne, options, children=None, **args):
     """
     Template for the KML. Returns filled string.
@@ -2868,7 +2875,9 @@ def multi_threaded_tiling(input_file, output_folder, options):
     nb_processes = options.nb_processes or 1
 
     # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
-    os.environ['GDAL_CACHEMAX'] = '%d' % max(1, int(gdal.GetCacheMax() / 1024 / 1024 / nb_processes))
+    gdal_cache_max = gdal.GetCacheMax()
+    gdal_cache_max_per_process = max(1024 * 1024, math.floor(gdal_cache_max / nb_processes))
+    set_cache_max(gdal_cache_max_per_process)
 
     (conf_receiver, conf_sender) = Pipe(False)
 
@@ -2903,6 +2912,9 @@ def multi_threaded_tiling(input_file, output_folder, options):
     pool.join()     # Jobs finished
     if not options.verbose and not options.quiet:
         p.join()        # Traces done
+
+    # Set the maximum cache back to the original value
+    set_cache_max(gdal_cache_max)
 
     create_overview_tiles(conf, output_folder, options)
 
