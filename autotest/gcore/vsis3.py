@@ -2002,6 +2002,42 @@ def test_vsis3_sync_timestamp():
     gdal.Unlink('/vsimem/testsync.txt')
 
 ###############################################################################
+# Test vsisync() with source and target in /vsis3
+
+
+def test_vsis3_sync_source_target_in_vsis3():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/in/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
+    handler.add('GET', '/out/', 200)
+
+    def method(request):
+        if request.headers['Content-Length'] != '0':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            return
+        if request.headers['x-amz-copy-source'] != '/in/testsync.txt':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/out/testsync.txt', custom_method=method)
+
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync( '/vsis3/in/testsync.txt', '/vsis3/out/')
+
+###############################################################################
 # Test rename
 
 def test_vsis3_fake_rename():
