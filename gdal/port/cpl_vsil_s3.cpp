@@ -2164,7 +2164,10 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath )
         return -1;
     }
     osSourceHeader += ": /";
-    osSourceHeader += (oldpath + GetFSPrefix().size());
+    if( STARTS_WITH(oldpath, "/vsis3/") )
+        osSourceHeader += CPLAWSURLEncode(oldpath + GetFSPrefix().size(), false);
+    else
+        osSourceHeader += (oldpath + GetFSPrefix().size());
 
     UpdateHandleFromMap(poS3HandleHelper);
 
@@ -2771,6 +2774,12 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                 }
             }
         }
+    }
+
+    if( STARTS_WITH(pszSource, GetFSPrefix()) &&
+        STARTS_WITH(pszTarget, GetFSPrefix()) )
+    {
+        return CopyObject(osSourceWithoutSlash, osTarget) == 0;
     }
 
     if( fpIn == nullptr )

@@ -550,8 +550,13 @@ int VSIRename( const char * oldpath, const char * newpath )
  * the timestamps of the files (or optionally the ETag/MD5Sum) to avoid
  * unneeded copy operations.
  *
- * Note: currently only implemented efficiently for local filesystem <-->
- * remote filesystem.
+ * This is only implemented efficiently for:
+ * <ul>
+ * <li> local filesystem <--> remote filesystem.</li>
+ * <li> remote filesystem <--> remote filesystem (starting with GDAL 3.1).
+ * Where the source and target remote filesystems are the same and one of
+ * /vsis3/, /vsigs/ or /vsiaz/</li>
+ * </ul>
  *
  * Similarly to rsync behaviour, if the source filename ends with a slash,
  * it means that the content of the directory must be copied, but not the
