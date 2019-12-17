@@ -12646,29 +12646,12 @@ void GTiffDataset::LookForProjection()
 
         if( GTIFGetDefn( hGTIF, psGTIFDefn ) )
         {
-            char* pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
-            if( pszProjection )
+            OGRSpatialReferenceH hSRS = GTIFGetOGISDefnAsOSR( hGTIF, psGTIFDefn );
+            if( hSRS )
             {
-                oSRS.SetFromUserInput(pszProjection);
-                double adfTOWGS84[7];
-                bool bHasTOWGS84 = oSRS.GetTOWGS84(&adfTOWGS84[0], 7) == OGRERR_NONE;
-                const char* pszCode = oSRS.GetAuthorityCode(nullptr);
-                if( pszCode )
-                {
-                    oSRS.importFromEPSG(atoi(pszCode));
-                    if( bHasTOWGS84 )
-                    {
-                        oSRS.SetTOWGS84(adfTOWGS84[0],
-                                        adfTOWGS84[1],
-                                        adfTOWGS84[2],
-                                        adfTOWGS84[3],
-                                        adfTOWGS84[4],
-                                        adfTOWGS84[5],
-                                        adfTOWGS84[6]);
-                    }
-                }
+                oSRS = *(OGRSpatialReference::FromHandle(hSRS));
+                OSRDestroySpatialReference(hSRS);
             }
-            CPLFree(pszProjection);
 
             if( oSRS.IsCompound() )
             {

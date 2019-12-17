@@ -821,10 +821,11 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     else if( !bWebMercatorToWGS84LongLat )
     {
         const auto CanUseAuthorityDef = [](const OGRSpatialReference* poSRS1,
-                                           const OGRSpatialReference* poSRS2,
+                                           OGRSpatialReference* poSRSFromAuth,
                                            const char* pszAuth)
         {
-            if( EQUAL(pszAuth, "EPSG") )
+            if( EQUAL(pszAuth, "EPSG") &&
+                CPLTestBool(CPLGetConfigOption("OSR_CT_USE_DEFAULT_EPSG_TOWGS84", "NO")) )
             {
                 // We don't want by default to honour 'default' TOWGS84 terms that come with the EPSG code
                 // because there might be a better transformation from that
@@ -835,10 +836,12 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                 // OSR_CT_USE_DEFAULT_EPSG_TOWGS84 configuration option to YES
                 double adfTOWGS84_1[7];
                 double adfTOWGS84_2[7];
+
+                poSRSFromAuth->AddGuessedTOWGS84();
+
                 if( poSRS1->GetTOWGS84(adfTOWGS84_1) == OGRERR_NONE &&
-                    poSRS2->GetTOWGS84(adfTOWGS84_2) == OGRERR_NONE &&
-                    memcmp(adfTOWGS84_1, adfTOWGS84_2, sizeof(adfTOWGS84_1)) == 0 &&
-                    CPLTestBool(CPLGetConfigOption("OSR_CT_USE_DEFAULT_EPSG_TOWGS84", "NO")) )
+                    poSRSFromAuth->GetTOWGS84(adfTOWGS84_2) == OGRERR_NONE &&
+                    memcmp(adfTOWGS84_1, adfTOWGS84_2, sizeof(adfTOWGS84_1)) == 0 )
                 {
                     return false;
                 }

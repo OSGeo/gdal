@@ -566,6 +566,7 @@ OGRErr CPL_DLL OSRSetTOWGS84( OGRSpatialReferenceH hSRS,
                               double, double, double,
                               double, double, double, double );
 OGRErr CPL_DLL OSRGetTOWGS84( OGRSpatialReferenceH hSRS, double *, int );
+OGRErr CPL_DLL OSRAddGuessedTOWGS84( OGRSpatialReferenceH hSRS);
 
 OGRErr CPL_DLL OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
                                  const char *pszName,
