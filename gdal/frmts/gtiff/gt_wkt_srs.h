@@ -32,6 +32,7 @@
 #define GT_WKT_SRS_H_INCLUDED
 
 #include "cpl_port.h"
+#include "ogr_srs_api.h"
 
 #include "geo_normalize.h"
 #include "geotiff.h"
@@ -52,6 +53,8 @@ typedef enum
     GEOTIFF_VERSION_1_0,
     GEOTIFF_VERSION_1_1
 } GeoTIFFVersionEnum;
+
+OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *, GTIFDefn * );
 
 int GTIFSetFromOGISDefnEx( GTIF *, const char *, GTIFFKeysFlavorEnum,
                            GeoTIFFVersionEnum );

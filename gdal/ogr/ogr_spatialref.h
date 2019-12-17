@@ -367,6 +367,7 @@ class CPL_DLL OGRSpatialReference
                             double = 0.0, double = 0.0, double = 0.0,
                             double = 0.0 );
     OGRErr      GetTOWGS84( double *padfCoef, int nCoeff = 7 ) const;
+    OGRErr      AddGuessedTOWGS84();
 
     double      GetSemiMajor( OGRErr * = nullptr ) const;
     double      GetSemiMinor( OGRErr * = nullptr ) const;

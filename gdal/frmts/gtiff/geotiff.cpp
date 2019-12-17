@@ -12714,29 +12714,12 @@ void GTiffDataset::LookForProjection()
 
         if( GTIFGetDefn( hGTIF, psGTIFDefn ) )
         {
-            char* pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
-            if( pszProjection )
+            OGRSpatialReferenceH hSRS = GTIFGetOGISDefnAsOSR( hGTIF, psGTIFDefn );
+            if( hSRS )
             {
-                m_oSRS.SetFromUserInput(pszProjection);
-                double adfTOWGS84[7];
-                bool bHasTOWGS84 = m_oSRS.GetTOWGS84(&adfTOWGS84[0], 7) == OGRERR_NONE;
-                const char* pszCode = m_oSRS.GetAuthorityCode(nullptr);
-                if( pszCode )
-                {
-                    m_oSRS.importFromEPSG(atoi(pszCode));
-                    if( bHasTOWGS84 )
-                    {
-                        m_oSRS.SetTOWGS84(adfTOWGS84[0],
-                                        adfTOWGS84[1],
-                                        adfTOWGS84[2],
-                                        adfTOWGS84[3],
-                                        adfTOWGS84[4],
-                                        adfTOWGS84[5],
-                                        adfTOWGS84[6]);
-                    }
-                }
+                m_oSRS = *(OGRSpatialReference::FromHandle(hSRS));
+                OSRDestroySpatialReference(hSRS);
             }
-            CPLFree(pszProjection);
 
             if( m_oSRS.IsCompound() )
             {

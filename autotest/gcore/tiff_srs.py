@@ -650,6 +650,7 @@ def test_tiff_srs_towgs84_from_epsg_do_not_write_it():
     ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
     srs_in = osr.SpatialReference()
     srs_in.ImportFromEPSG(31468)
+    srs_in.AddGuessedTOWGS84()
     assert srs_in.HasTOWGS84()
     ds.SetSpatialRef(srs_in)
     ds = None
@@ -666,6 +667,7 @@ def test_tiff_srs_towgs84_from_epsg_force_write_it():
     ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
     srs_in = osr.SpatialReference()
     srs_in.ImportFromEPSG(31468)
+    srs_in.AddGuessedTOWGS84()
     assert srs_in.HasTOWGS84()
     with gdaltest.config_option('GTIFF_WRITE_TOWGS84', 'YES'):
         ds.SetSpatialRef(srs_in)
