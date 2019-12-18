@@ -132,13 +132,6 @@ Layer Creation Options
    internally converted to MapInfo charsets names. Default value is ''
    that equals to 'Neutral' MapInfo charset.
 
-Compatibility
-~~~~~~~~~~~~~
-
-Before v1.8.0 , the driver was incorrectly using a "." as the delimiter
-for id: parameters and starting with v1.8.0 the driver uses a comma as
-the delimiter was per the OGR Feature Style Specification.
-
 See Also
 ~~~~~~~~
 
