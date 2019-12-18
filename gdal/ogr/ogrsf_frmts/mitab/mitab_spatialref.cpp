@@ -1271,13 +1271,16 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
 
     if( psDatumInfo != nullptr )
     {
-        poSpatialRef->SetTOWGS84( psDatumInfo->dfShiftX,
-                                    psDatumInfo->dfShiftY,
-                                    psDatumInfo->dfShiftZ,
-                                    psDatumInfo->dfDatumParm0 == 0 ? 0 : -psDatumInfo->dfDatumParm0, /* avoids 0 to be transformed into -0 */
-                                    psDatumInfo->dfDatumParm1 == 0 ? 0 : -psDatumInfo->dfDatumParm1,
-                                    psDatumInfo->dfDatumParm2 == 0 ? 0 : -psDatumInfo->dfDatumParm2,
-                                    psDatumInfo->dfDatumParm3 );
+        if( CPLTestBool(CPLGetConfigOption("MITAB_SET_TOWGS84_ON_KNOWN_DATUM", "NO")) )
+        {
+            poSpatialRef->SetTOWGS84( psDatumInfo->dfShiftX,
+                                        psDatumInfo->dfShiftY,
+                                        psDatumInfo->dfShiftZ,
+                                        psDatumInfo->dfDatumParm0 == 0 ? 0 : -psDatumInfo->dfDatumParm0, /* avoids 0 to be transformed into -0 */
+                                        psDatumInfo->dfDatumParm1 == 0 ? 0 : -psDatumInfo->dfDatumParm1,
+                                        psDatumInfo->dfDatumParm2 == 0 ? 0 : -psDatumInfo->dfDatumParm2,
+                                        psDatumInfo->dfDatumParm3 );
+        }
     }
     else
     {
