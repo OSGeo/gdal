@@ -260,7 +260,7 @@ RUN apt-get update; \
         libcurl4 libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler73 libspatialite7 gpsbabel \
         libhdf4-0-alt libhdf5-100 libhdf5-cpp-100 poppler-utils libfreexl1 unixodbc libwebp6 \
-        libepsilon1 liblcms2-2 libpcre3 libcrypto++ libdap25 libdapclient6v5 libfyba0 \
+        libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libdap25 libdapclient6v5 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient20 libogdi3.2 libcfitsio5 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \

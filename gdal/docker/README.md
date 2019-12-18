@@ -63,7 +63,7 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
 ## Full: `osgeo/gdal:ubuntu-full-latest`
 
-* Image size: ~ 1.8 GB
+* Image size: ~ 1.5 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
 * Vector drivers: all based on almost all possible free and open-source dependencies
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,
