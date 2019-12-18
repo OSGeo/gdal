@@ -3272,8 +3272,10 @@ def test_ogr_geom_create_from_wkt_polyhedrasurface():
     assert g.ExportToWkt() == 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))'
 
 ###############################################################################
-# cleanup
 
 
-def test_ogr_geom_cleanup():
-    pass
+def test_ogr_geom_force_multipolygon_z_to_compound_curve():
+
+    g = ogr.CreateGeometryFromWkt('MULTIPOLYGON Z (((0 0 0,0 1 0,1 1 0,0 0 0)))')
+    g = ogr.ForceTo(g, ogr.wkbCompoundCurve)
+    assert g.ExportToIsoWkt() == 'COMPOUNDCURVE Z ((0 0 0,0 1 0,1 1 0,0 0 0))'
