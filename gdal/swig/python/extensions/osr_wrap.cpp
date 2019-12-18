@@ -4271,6 +4271,9 @@ CreateTupleFromDoubleArray( const double *first, size_t size ) {
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_GetTOWGS84(OSRSpatialReferenceShadow *self,double argout[7]){
     return OSRGetTOWGS84( self, argout, 7 );
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_AddGuessedTOWGS84(OSRSpatialReferenceShadow *self){
+    return OSRAddGuessedTOWGS84( self );
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetLocalCS(OSRSpatialReferenceShadow *self,char const *pszName){
     return OSRSetLocalCS( self, pszName );
   }
@@ -12477,6 +12480,58 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_AddGuessedTOWGS84(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_AddGuessedTOWGS84",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_AddGuessedTOWGS84" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_AddGuessedTOWGS84(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_SetLocalCS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -17564,6 +17619,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_SetTOWGS84", _wrap_SpatialReference_SetTOWGS84, METH_VARARGS, (char *)"SpatialReference_SetTOWGS84(SpatialReference self, double p1, double p2, double p3, double p4=0.0, double p5=0.0, double p6=0.0, double p7=0.0) -> OGRErr"},
 	 { (char *)"SpatialReference_HasTOWGS84", _wrap_SpatialReference_HasTOWGS84, METH_VARARGS, (char *)"SpatialReference_HasTOWGS84(SpatialReference self) -> bool"},
 	 { (char *)"SpatialReference_GetTOWGS84", _wrap_SpatialReference_GetTOWGS84, METH_VARARGS, (char *)"SpatialReference_GetTOWGS84(SpatialReference self) -> OGRErr"},
+	 { (char *)"SpatialReference_AddGuessedTOWGS84", _wrap_SpatialReference_AddGuessedTOWGS84, METH_VARARGS, (char *)"SpatialReference_AddGuessedTOWGS84(SpatialReference self) -> OGRErr"},
 	 { (char *)"SpatialReference_SetLocalCS", _wrap_SpatialReference_SetLocalCS, METH_VARARGS, (char *)"SpatialReference_SetLocalCS(SpatialReference self, char const * pszName) -> OGRErr"},
 	 { (char *)"SpatialReference_SetGeogCS", _wrap_SpatialReference_SetGeogCS, METH_VARARGS, (char *)"SpatialReference_SetGeogCS(SpatialReference self, char const * pszGeogName, char const * pszDatumName, char const * pszEllipsoidName, double dfSemiMajor, double dfInvFlattening, char const * pszPMName, double dfPMOffset=0.0, char const * pszUnits, double dfConvertToRadians=0.0174532925199433) -> OGRErr"},
 	 { (char *)"SpatialReference_SetProjCS", _wrap_SpatialReference_SetProjCS, METH_VARARGS, (char *)"SpatialReference_SetProjCS(SpatialReference self, char const * name) -> OGRErr"},

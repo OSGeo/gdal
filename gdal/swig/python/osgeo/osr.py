@@ -846,6 +846,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_GetTOWGS84(self, *args)
 
 
+    def AddGuessedTOWGS84(self, *args):
+        """AddGuessedTOWGS84(SpatialReference self) -> OGRErr"""
+        return _osr.SpatialReference_AddGuessedTOWGS84(self, *args)
+
+
     def SetLocalCS(self, *args):
         """SetLocalCS(SpatialReference self, char const * pszName) -> OGRErr"""
         return _osr.SpatialReference_SetLocalCS(self, *args)
