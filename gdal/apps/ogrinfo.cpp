@@ -349,7 +349,11 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
             }
             else
             {
-                poSRS->exportToPrettyWkt(&pszWKT);
+                CPLString osWKTFormat("FORMAT=");
+                osWKTFormat += pszWKTFormat;
+                const char* const apszWKTOptions[] =
+                    { osWKTFormat.c_str(), "MULTILINE=YES", nullptr };
+                poSRS->exportToWkt(&pszWKT, apszWKTOptions);
             }
 
             printf("Layer SRS WKT:\n%s\n", pszWKT);
