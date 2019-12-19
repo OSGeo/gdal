@@ -2134,6 +2134,12 @@ int IVSIS3LikeFSHandler::Rename( const char *oldpath, const char *newpath )
     }
     else
     {
+        if( VSIStatL(newpath, &sStat) == 0 && sStat.st_mode == S_IFDIR )
+        {
+            CPLDebug(GetDebugKey(), "%s already exists and is a directory", newpath);
+            errno = ENOTEMPTY;
+            return -1;
+        }
         if( CopyObject(oldpath, newpath) != 0 )
         {
             return -1;

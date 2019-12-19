@@ -2136,6 +2136,24 @@ def test_vsis3_fake_rename_dir():
     with webserver.install_http_handler(handler):
         assert gdal.Rename( '/vsis3/test/source_dir', '/vsis3/test/target_dir') == 0
 
+###############################################################################
+# Test rename onto existing dir is not allowed
+
+def test_vsis3_fake_rename_on_existing_dir():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test/source.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3' }, "foo")
+    handler.add('GET', '/test_target_dir/', 200)
+
+    with webserver.install_http_handler(handler):
+        assert gdal.Rename( '/vsis3/test/source.txt', '/vsis3/test_target_dir') == -1
+
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials
