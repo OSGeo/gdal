@@ -178,7 +178,6 @@ def test_osr_compd_5():
             DATUM["North_American_Datum_1983",
                 SPHEROID["GRS 1980",6378137,298.257222101,
                     AUTHORITY["EPSG","7019"]],
-                TOWGS84[0,0,0,0,0,0,0],
                 AUTHORITY["EPSG","6269"]],
             PRIMEM["Greenwich",0,
                 AUTHORITY["EPSG","8901"]],
@@ -211,7 +210,7 @@ def test_osr_compd_5():
         print('warning they are equivalent, but not completely the same')
         print(wkt)
 
-    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +vunits=m +no_defs'
+    exp_proj4 = '+proj=utm +zone=11 +datum=NAD83 +units=m +vunits=m +no_defs'
     proj4 = srs.ExportToProj4()
     assert proj4 == exp_proj4, ('Did not get expected proj.4 string, got:' + proj4)
 

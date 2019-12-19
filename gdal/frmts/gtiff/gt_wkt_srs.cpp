@@ -305,10 +305,10 @@ int GDALGTIFKeyGetDOUBLE( GTIF *hGTIF, geokey_t key,
 }
 
 /************************************************************************/
-/*                          GTIFGetOGISDefn()                           */
+/*                      GTIFGetOGISDefnAsOSR()                          */
 /************************************************************************/
 
-char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
+OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 
 {
     OGRSpatialReference oSRS;
@@ -335,7 +335,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         && psDefn->Model != ModelTypeGeographic
         && psDefn->Model != ModelTypeGeocentric )
     {
-        char *pszWKT = nullptr;
         char szPeStr[2400] = { '\0' };
 
         /** check if there is a pe string citation key **/
@@ -343,24 +342,20 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                                  0, sizeof(szPeStr) ) &&
             strstr(szPeStr, "ESRI PE String = " ) )
         {
-            pszWKT = CPLStrdup( szPeStr + strlen("ESRI PE String = ") );
+            const char* pszWKT = szPeStr + strlen("ESRI PE String = ");
+            oSRS.importFromWkt(pszWKT);
 
             if( strstr( pszWKT,
                         "PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\"" ) )
             {
-                oSRS.importFromWkt(pszWKT);
                 oSRS.SetExtension(
                     "PROJCS", "PROJ4",
                     "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 "
                     "+x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null "
                     "+wktext  +no_defs" );  // TODO(schwehr): Why 2 spaces?
-
-                CPLFree(pszWKT);
-                pszWKT = nullptr;
-                oSRS.exportToWkt(&pszWKT);
             }
 
-            return pszWKT;
+            return OGRSpatialReference::ToHandle(oSRS.Clone());
         }
         else
         {
@@ -408,9 +403,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
                 GTIFFreeMemory( pszUnitsName );
             }
-            oSRS.exportToWkt( &pszWKT );
-
-            return pszWKT;
+            return OGRSpatialReference::ToHandle(oSRS.Clone());
         }
     }
 
@@ -582,10 +575,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         if( CheckCitationKeyForStatePlaneUTM( hGTIF, psDefn, &oSRS,
                                               &linearUnitIsSet ) )
         {
-            oSRS.morphFromESRI();
-            char *pszWKT = nullptr;
-            if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
-                return pszWKT;
+            return OGRSpatialReference::ToHandle(oSRS.Clone());
         }
 
         /* Handle ESRI PE string in citation */
@@ -673,7 +663,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                               &(psDefn->PMLongToGreenwich), 0, 1 );
     }
 
-    bool aUnitGot = false;
     if( !pszAngularUnits )
     {
 #if LIBGEOTIFF_VERSION >= 1600 || defined(INTERNAL_LIBGEOTIFF)
@@ -681,7 +670,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 #else
         GTIFGetUOMAngleInfo(
 #endif
-            psDefn->UOMAngle, &pszAngularUnits, nullptr );
+            psDefn->UOMAngle, &pszAngularUnits, &psDefn->UOMAngleInDegrees );
         if( pszAngularUnits == nullptr )
             pszAngularUnits = CPLStrdup("unknown");
         else
@@ -693,7 +682,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         if( GDALGTIFKeyGetDOUBLE(hGTIF, GeogAngularUnitSizeGeoKey, &dfRadians,
                                  0, 1) )
         {
-            aUnitGot = true;
             psDefn->UOMAngleInDegrees = dfRadians / CPLAtof(SRS_UA_DEGREE_CONV);
         }
     }
@@ -908,14 +896,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
         for( ; i < 10; i++ )
             adfParm[i] = 0.0;
-
-        if(!aUnitGot)
-        {
-            adfParm[0] *= psDefn->UOMAngleInDegrees;
-            adfParm[1] *= psDefn->UOMAngleInDegrees;
-            adfParm[2] *= psDefn->UOMAngleInDegrees;
-            adfParm[3] *= psDefn->UOMAngleInDegrees;
-        }
 
 /* -------------------------------------------------------------------- */
 /*      Translation the fundamental projection.                         */
@@ -1315,14 +1295,41 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             ->AddChild( new OGR_SRSNode( "UP" ) );
     }
 
-/* ==================================================================== */
-/*      Return the WKT serialization of the object.                     */
-/* ==================================================================== */
+    // Hack for tiff_read.py:test_tiff_grads so as to normalize angular
+    // parameters to grad
+    if( psDefn->UOMAngleInDegrees != 1.0 )
+    {
+        char *pszWKT = nullptr;
+        const char* const apszOptions[] = {
+            "FORMAT=WKT1", "ADD_TOWGS84_ON_EXPORT_TO_WKT1=NO", nullptr };
+        if( oSRS.exportToWkt( &pszWKT, apszOptions ) == OGRERR_NONE )
+        {
+            oSRS.importFromWkt(pszWKT);
+        }
+        CPLFree(pszWKT);
+    }
+
+    return OGRSpatialReference::ToHandle(oSRS.Clone());
+}
+
+
+/************************************************************************/
+/*                          GTIFGetOGISDefn()                           */
+/************************************************************************/
+
+char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
+{
+    OGRSpatialReferenceH hSRS = GTIFGetOGISDefnAsOSR( hGTIF, psDefn );
 
     char *pszWKT = nullptr;
-    if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
+    if( hSRS &&
+        OGRSpatialReference::FromHandle(hSRS)->exportToWkt( &pszWKT ) == OGRERR_NONE )
+    {
+        OSRDestroySpatialReference(hSRS);
         return pszWKT;
+    }
     CPLFree(pszWKT);
+    OSRDestroySpatialReference(hSRS);
 
     return nullptr;
 }
@@ -2597,11 +2604,14 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
             CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
             OGRSpatialReference oRefSRS;
             double adfRefTOWGS84[7] = { 0.0 };
-            if( oRefSRS.importFromEPSG(atoi(pszAuthCode)) == OGRERR_NONE &&
-                oRefSRS.GetTOWGS84(adfRefTOWGS84) == OGRERR_NONE &&
-                memcmp(adfRefTOWGS84, adfTOWGS84, sizeof(adfTOWGS84)) == 0 )
+            if( oRefSRS.importFromEPSG(atoi(pszAuthCode)) == OGRERR_NONE )
             {
-                bUseReferenceTOWGS84 = true;
+                oRefSRS.AddGuessedTOWGS84();
+                if( oRefSRS.GetTOWGS84(adfRefTOWGS84) == OGRERR_NONE &&
+                    memcmp(adfRefTOWGS84, adfTOWGS84, sizeof(adfTOWGS84)) == 0 )
+                {
+                    bUseReferenceTOWGS84 = true;
+                }
             }
         }
         const char* pszWriteTOWGS84 =

@@ -3813,7 +3813,6 @@ def test_ogr_shape_99():
         DATUM["CH1903",
             SPHEROID["Bessel 1841",6377397.155,299.1528128,
                 AUTHORITY["EPSG","7004"]],
-            TOWGS84[674.374,15.056,405.346,0,0,0,0],
             AUTHORITY["EPSG","6149"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
