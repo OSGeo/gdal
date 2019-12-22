@@ -229,7 +229,9 @@ endif
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)
 endif
+ifdef INST_BASH_COMPLETION
 	(cd scripts; $(MAKE) install)
+endif
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig
