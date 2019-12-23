@@ -1188,6 +1188,24 @@ if test "$am_func_iconv" = "yes"; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Bash completions
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([bash-completion],
+  AS_HELP_STRING([--with-bash-completion[=ARG]],
+    [Install Bash completions (ARG=yes or path)]),,)
+
+if test "x$with_bash_completion" = "xno" -o "x$with_bash_completion" = "x"; then
+  AC_MSG_NOTICE([Bash completions not requested])
+elif test "x$with_bash_completion" = "xyes"; then
+  PKG_CHECK_VAR(bashcompdir, [bash-completion], [completionsdir], ,
+    bashcompdir="${sysconfdir}/bash_completion.d")
+  AC_SUBST(bashcompdir)
+else
+  AC_SUBST(bashcompdir, $with_bash_completion)
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl PROJ.6 related stuff
 dnl ---------------------------------------------------------------------------
 
