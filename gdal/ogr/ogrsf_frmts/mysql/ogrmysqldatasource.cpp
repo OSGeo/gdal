@@ -1098,7 +1098,6 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     if( GetMajorVersion() < 8 || IsMariaDB() )
     {
-        nSRSId = GetUnknownSRID();
         if (poSRS != nullptr)
             nSRSId = FetchSRSId(poSRS);
     }
