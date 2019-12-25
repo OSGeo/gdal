@@ -91,7 +91,7 @@ def test_ogr_mysql_2():
     ######################################################
     # Create Layer
     gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer('tpoly', srs=shp_lyr.GetSpatialRef(),
-                                                       options=['ENGINE=MyISAM'])
+                                                       options=[])
 
     ######################################################
     # Setup Schema
@@ -543,7 +543,7 @@ def test_ogr_mysql_20():
     if gdaltest.mysql_ds is None:
         pytest.skip()
 
-    layer = gdaltest.mysql_ds.CreateLayer('select', options=['ENGINE=MyISAM'])
+    layer = gdaltest.mysql_ds.CreateLayer('select', options=[])
     ogrtest.quick_create_layer_def(layer,
                                    [('desc', ogr.OFTString),
                                     ('select', ogr.OFTString)])
@@ -572,7 +572,7 @@ def test_ogr_mysql_21():
     if gdaltest.mysql_ds is None:
         pytest.skip()
 
-    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
+    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type=ogr.wkbPoint, options=[])
     ogrtest.quick_create_layer_def(layer, [('name', ogr.OFTString)])
     dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
     dst_feat.SetField('name', 'name')
@@ -598,7 +598,7 @@ def test_ogr_mysql_22():
         pytest.skip()
 
     layer = gdaltest.mysql_ds.CreateLayer('tablewithoutspatialindex', geom_type=ogr.wkbPoint,
-                                          options=['SPATIAL_INDEX=NO', 'ENGINE=MyISAM'])
+                                          options=['SPATIAL_INDEX=NO'])
     ogrtest.quick_create_layer_def(layer, [('name', ogr.OFTString)])
     dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
     dst_feat.SetField('name', 'name')
@@ -713,7 +713,7 @@ def test_ogr_mysql_25():
     if gdaltest.mysql_ds is None:
         pytest.skip()
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type=ogr.wkbPoint, options=[])
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
     field_defn.SetNullable(0)
     lyr.CreateField(field_defn)
@@ -762,7 +762,7 @@ def test_ogr_mysql_26():
     if gdaltest.mysql_ds is None:
         pytest.skip()
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type=ogr.wkbPoint, options=['ENGINE=MyISAM'])
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type=ogr.wkbPoint, options=[])
 
     field_defn = ogr.FieldDefn('field_string', ogr.OFTString)
     field_defn.SetDefault("'a''b'")
@@ -833,6 +833,36 @@ def test_ogr_mysql_26():
     gdal.Unlink('/vsimem/ogr_gpkg_24.gpkg')
 
 ###############################################################################
+# Test created table indecs
+
+def test_ogr_mysql_27():
+
+    if gdaltest.mysql_ds is None:
+        pytest.skip()
+
+    if not gdaltest.is_mysql_8_or_later:
+        pytest.skip()
+
+    layer = gdaltest.mysql_ds.GetLayerByName('tpoly')
+    if layer is None:
+        pytest.skip('did not get tpoly layer')
+
+    sql_lyr = gdaltest.mysql_ds.ExecuteSQL('SHOW CREATE TABLE tpoly')
+    f = sql_lyr.GetNextFeature()
+    field = f.GetField(1)
+    res = False
+    for line in field.splitlines():
+        if 'geometry' in line:
+            if "SRID" in line:
+                res = True
+            else:
+                res = False
+    if not res:
+        print('{}'.format(field))
+        pytest.fail("Not found SRID definition with GEOMETORY field.")
+    gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
 #
 
 
@@ -842,11 +872,11 @@ def test_ogr_mysql_longlat():
         pytest.skip()
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput('WGS84')
+    srs.SetFromUserInput('EPSG:4326')
     lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_longlat',
                                         geom_type=ogr.wkbPoint,
                                         srs=srs,
-                                        options=['ENGINE=MyISAM'])
+                                        options=[])
     f = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POINT(150 2)')
     f.SetGeometry(geom)
@@ -868,6 +898,21 @@ def test_ogr_mysql_longlat():
         print(extent)
         pytest.fail('Extents do not match')
 
+    if gdaltest.is_mysql_8_or_later:
+        sql_lyr = gdaltest.mysql_ds.ExecuteSQL('SHOW CREATE TABLE ogr_mysql_longlat')
+        f = sql_lyr.GetNextFeature()
+        field = f.GetField(1)
+        res = False
+        for line in field.splitlines():
+            if 'geometry' in line:
+                if "SRID" in line:
+                    res = True
+                else:
+                    res = False
+        if not res:
+            print('{}'.format(field))
+            pytest.fail("Not found SRID definition with GEOMETORY field.")
+        gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
     
 ###############################################################################
