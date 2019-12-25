@@ -1032,7 +1032,18 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
     const bool bHasSI = ( eType != wkbNone && (pszSI == nullptr || CPLTestBool(pszSI)) );
+
+    // Calling this does no harm
+    InitializeMetadataTables();
+
+/* -------------------------------------------------------------------- */
+/*      Try to get the SRS Id of this spatial reference system,         */
+/*      adding to the srs table if needed.                             */
+/* -------------------------------------------------------------------- */
+
     int nSRSId = GetUnknownSRID();
+    if (poSRS != nullptr)
+        nSRSId = FetchSRSId(poSRS);
 
     if( wkbFlatten(eType) == wkbNone )
     {
@@ -1044,8 +1055,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     else
     {
         // when using mysql8 and SRS is specified, use SRID option for geometry.
-        if( GetMajorVersion() < 8 || IsMariaDB() || poSRS == nullptr ||
-            (nSRSId = FetchSRSId( poSRS )) == GetUnknownSRID() )
+        if( GetMajorVersion() < 8 || IsMariaDB() || nSRSId == GetUnknownSRID() )
             osCommand.Printf(
                     "CREATE TABLE `%s` ( "
                     "   %s %s UNIQUE NOT NULL AUTO_INCREMENT, "
@@ -1088,19 +1098,6 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     if( hResult != nullptr )
         mysql_free_result( hResult );
     hResult = nullptr;
-
-    // Calling this does no harm
-    InitializeMetadataTables();
-
-/* -------------------------------------------------------------------- */
-/*      Try to get the SRS Id of this spatial reference system,         */
-/*      adding to the srs table if needed.                             */
-/* -------------------------------------------------------------------- */
-    if( GetMajorVersion() < 8 || IsMariaDB() )
-    {
-        if (poSRS != nullptr)
-            nSRSId = FetchSRSId(poSRS);
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Sometimes there is an old crufty entry in the geometry_columns  */
