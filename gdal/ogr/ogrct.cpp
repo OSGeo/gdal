@@ -492,17 +492,22 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  * allowed if a custom coordinate operation is set through the hOptions argument.
  *
  * Starting with GDAL 3.0.3, the OGR_CT_OP_SELECTION configuration option can be
- * set to PROJ (default if PROJ >= 6.3), BEST_ACCURACY or FIRST_MATCHING to decide of the strategy to
- * select the operation to use among candidates, whose area of use is compatible with
- * the points to transform.
+ * set to PROJ (default if PROJ >= 6.3), BEST_ACCURACY or FIRST_MATCHING to decide
+ * of the strategy to select the operation to use among candidates, whose area of
+ * use is compatible with the points to transform. It is only taken into account
+ * if no user defined coordinate transformation pipeline has been specified.
  * <ul>
- * <li>PROJ means the default used by PROJ proj_create_crs_to_crs().</li>
- * <li>BEST_ACCURACY means the operation whose accuracy is best. It is evaluated
+ * <li>PROJ means the default behaviour used by PROJ proj_create_crs_to_crs().
+ *     In particular the operation to use among several initial candidates is
+ *     evaluated for each point to transform.</li>
+ * <li>BEST_ACCURACY means the operation whose accuracy is best. It should be
+ *     close to PROJ behaviour, except that the operation to select is decided
  *     for the average point of the coordinates passed in a single Transform() call.</li>
  * <li>FIRST_MATCHING is the operation ordered first in the list of candidates:
  *     it will not necessarily have the best accuracy, but generally a larger area of
  *     use.  It is evaluated for the average point of the coordinates passed in a
- *     single Transform() call.</li>
+ *     single Transform() call. This was the default behaviour for GDAL 3.0.0 to
+ *     3.0.2</li>
  * </ul>
  *
  * If options contains a user defined coordinate transformation pipeline, it
