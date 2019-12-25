@@ -50,6 +50,10 @@ static void osr_proj_logger(void * /* user_data */,
     {
         CPLDebug("PROJ", "%s", message);
     }
+    else if( level == PJ_LOG_TRACE )
+    {
+        CPLDebug("PROJ_TRACE", "%s", message);
+    }
 }
 
 static unsigned g_searchPathGenerationCounter = 0;
