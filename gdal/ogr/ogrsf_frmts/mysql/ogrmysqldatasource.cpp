@@ -467,6 +467,91 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
     return eErr;
 }
 
+OGRErr OGRMySQLDataSource::UpdateMetadataTables(const char *pszLayerName,
+                                                OGRwkbGeometryType eType,
+                                                const char *pszGeomColumnName,
+                                                const int nSRSId)
+
+{
+    MYSQL_RES *hResult = nullptr;
+    CPLString osCommand;
+    const char *pszGeometryType;
+
+    if (GetMajorVersion() < 8 || IsMariaDB())
+    {
+/* -------------------------------------------------------------------- */
+/*      Sometimes there is an old crufty entry in the geometry_columns  */
+/*      table if things were not properly cleaned up before.  We make   */
+/*      an effort to clean out such cruft.                              */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+        osCommand.Printf(
+                "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
+                pszLayerName);
+
+        if (mysql_query(GetConn(), osCommand))
+        {
+                ReportError(osCommand);
+                return OGRERR_FAILURE;
+        }
+
+        // make sure to attempt to free results of successful queries
+        hResult = mysql_store_result(GetConn());
+        if (hResult != nullptr)
+            mysql_free_result(hResult);
+        hResult = nullptr;
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to add this table to the geometry_columns table, if     */
+/*      it is a spatial layer.                                          */
+/* -------------------------------------------------------------------- */
+        if (eType != wkbNone) {
+            const int nCoordDimension = eType == wkbFlatten(eType) ? 2 : 3;
+
+            pszGeometryType = OGRToOGCGeomType(eType);
+
+            if (nSRSId == GetUnknownSRID())
+                osCommand.Printf(
+                        "INSERT INTO geometry_columns "
+                        " (F_TABLE_NAME, "
+                        "  F_GEOMETRY_COLUMN, "
+                        "  COORD_DIMENSION, "
+                        "  TYPE) values "
+                        "  ('%s', '%s', %d, '%s')",
+                        pszLayerName,
+                        pszGeomColumnName,
+                        nCoordDimension,
+                        pszGeometryType);
+            else
+                osCommand.Printf(
+                        "INSERT INTO geometry_columns "
+                        " (F_TABLE_NAME, "
+                        "  F_GEOMETRY_COLUMN, "
+                        "  COORD_DIMENSION, "
+                        "  SRID, "
+                        "  TYPE) values "
+                        "  ('%s', '%s', %d, %d, '%s')",
+                        pszLayerName,
+                        pszGeomColumnName,
+                        nCoordDimension,
+                        nSRSId,
+                        pszGeometryType);
+
+            if (mysql_query(GetConn(), osCommand)) {
+                ReportError(osCommand);
+                return OGRERR_FAILURE;
+            }
+
+            // make sure to attempt to free results of successful queries
+            hResult = mysql_store_result(GetConn());
+            if (hResult != nullptr)
+                mysql_free_result(hResult);
+            hResult = nullptr;
+        }
+    }
+    return OGRERR_NONE;
+}
+
 /* =====================================================================*/
 
 /************************************************************************/
@@ -971,7 +1056,6 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 {
     MYSQL_RES  *hResult=nullptr;
     CPLString   osCommand;
-    const char *pszGeometryType;
     const char *pszGeomColumnName;
     const char *pszExpectedFIDName;
     char       *pszLayerName;
@@ -1105,85 +1189,8 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
         mysql_free_result( hResult );
     hResult = nullptr;
 
-/* =====================================================================*/
-/*  Handle spatial id and index separately for older MySQL and MariaDB  */
-/* -------------------------------------------------------------------- */
-
-    if( GetMajorVersion() < 8 || IsMariaDB() )
-    {
-/* -------------------------------------------------------------------- */
-/*      Sometimes there is an old crufty entry in the geometry_columns  */
-/*      table if things were not properly cleaned up before.  We make   */
-/*      an effort to clean out such cruft.                              */
-/*                                                                      */
-/* -------------------------------------------------------------------- */
-        osCommand.Printf(
-                 "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
-                 pszLayerName );
-
-        if( mysql_query(GetConn(), osCommand ) )
-        {
-            ReportError( osCommand );
-            return nullptr;
-        }
-
-        // make sure to attempt to free results of successful queries
-        hResult = mysql_store_result( GetConn() );
-        if( hResult != nullptr )
-            mysql_free_result( hResult );
-        hResult = nullptr;
-
-/* -------------------------------------------------------------------- */
-/*      Attempt to add this table to the geometry_columns table, if     */
-/*      it is a spatial layer.                                          */
-/* -------------------------------------------------------------------- */
-        if( eType != wkbNone )
-        {
-            const int nCoordDimension = eType == wkbFlatten(eType) ? 2 : 3;
-
-            pszGeometryType = OGRToOGCGeomType(eType);
-
-            if( nSRSId == GetUnknownSRID() )
-                osCommand.Printf(
-                         "INSERT INTO geometry_columns "
-                         " (F_TABLE_NAME, "
-                         "  F_GEOMETRY_COLUMN, "
-                         "  COORD_DIMENSION, "
-                         "  TYPE) values "
-                         "  ('%s', '%s', %d, '%s')",
-                         pszLayerName,
-                         pszGeomColumnName,
-                         nCoordDimension,
-                         pszGeometryType );
-            else
-                osCommand.Printf(
-                         "INSERT INTO geometry_columns "
-                         " (F_TABLE_NAME, "
-                         "  F_GEOMETRY_COLUMN, "
-                         "  COORD_DIMENSION, "
-                         "  SRID, "
-                         "  TYPE) values "
-                         "  ('%s', '%s', %d, %d, '%s')",
-                         pszLayerName,
-                         pszGeomColumnName,
-                         nCoordDimension,
-                         nSRSId,
-                         pszGeometryType );
-
-            if( mysql_query(GetConn(), osCommand ) )
-            {
-                ReportError( osCommand );
-                return nullptr;
-            }
-
-            // make sure to attempt to free results of successful queries
-            hResult = mysql_store_result( GetConn() );
-            if( hResult != nullptr )
-                mysql_free_result( hResult );
-            hResult = nullptr;
-        }
-    }
-/* =====================================================================*/
+    if( UpdateMetadataTables(pszLayerName, eType, pszGeomColumnName, nSRSId) != OGRERR_NONE )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create the spatial index.                                       */

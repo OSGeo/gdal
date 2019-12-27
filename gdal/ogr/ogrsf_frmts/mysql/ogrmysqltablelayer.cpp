@@ -406,8 +406,9 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
             OGRwkbGeometryType l_nGeomType = OGRFromOGCGeomType(pszType);
 
-            if( papszRow[1] != nullptr && atoi(papszRow[1]) == 3 )
-                l_nGeomType = wkbSetZ(l_nGeomType);
+            if( poDS->GetMajorVersion() < 8 || poDS->IsMariaDB() )
+                if( papszRow[1] != nullptr && atoi(papszRow[1]) == 3 )
+                    l_nGeomType = wkbSetZ(l_nGeomType);
 
             poDefn->SetGeomType( l_nGeomType );
         }
