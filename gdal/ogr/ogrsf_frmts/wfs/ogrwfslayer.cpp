@@ -754,6 +754,63 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         }
     }
 
+    /* Try streaming when the output format is FlatGeobuf */
+    if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")) &&
+        (osOutputFormat.empty() || osOutputFormat.ifind("flatgeobuf") != std::string::npos) &&
+        VSIStatL(osXSDFileName, &sBuf) == 0 && GDALGetDriverByName("FlatGeobuf") != nullptr)
+    {
+        const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
+                                                    osURL.c_str());
+        if( STARTS_WITH(osURL, "/vsimem/") &&
+            CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+        {
+            pszStreamingName = osURL.c_str();
+        }
+
+        const char* const apszAllowedDrivers[] = { "FlatGeobuf", nullptr };
+
+        GDALDataset* poFlatGeobuf_DS = (GDALDataset*)
+                GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+                           nullptr, nullptr);
+        if( poFlatGeobuf_DS )
+        {
+            bStreamingDS = true;
+            return poFlatGeobuf_DS;
+        }
+
+        /* In case of failure, read directly the content to examine */
+        /* it, if it is XML error content */
+        char szBuffer[2048];
+        int nRead = 0;
+        VSILFILE* fp = VSIFOpenL(pszStreamingName, "rb");
+        if (fp)
+        {
+            nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
+            szBuffer[nRead] = '\0';
+            VSIFCloseL(fp);
+        }
+
+        if (nRead != 0)
+        {
+            if( MustRetryIfNonCompliantServer(szBuffer) )
+                return FetchGetFeature(nRequestMaxFeatures);
+
+            if (strstr(szBuffer, "<ServiceExceptionReport") != nullptr ||
+                strstr(szBuffer, "<ows:ExceptionReport") != nullptr)
+            {
+                if( poDS->IsOldDeegree(szBuffer) )
+                {
+                    return FetchGetFeature(nRequestMaxFeatures);
+                }
+
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Error returned by server : %s",
+                         szBuffer);
+                return nullptr;
+            }
+        }
+    }
+
     bStreamingDS = false;
     psResult = poDS->HTTPFetch( osURL, nullptr);
     if (psResult == nullptr)
