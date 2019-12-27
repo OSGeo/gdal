@@ -811,6 +811,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     bool bCSV = false;
     bool bKML = false;
     bool bKMZ = false;
+    bool bFlatGeobuf = false;
     bool bZIP = false;
     bool bGZIP = false;
 
@@ -835,6 +836,11 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
              FindSubStringInsensitive(pszOutputFormat, "kmz"))
     {
         bKMZ = true;
+    }
+    else if (FindSubStringInsensitive(pszContentType, "flatgeobuf") ||
+             FindSubStringInsensitive(pszOutputFormat, "flatgeobuf"))
+    {
+        bFlatGeobuf = true;
     }
     else if (strstr(pszContentType, "application/zip") != nullptr)
     {
@@ -880,6 +886,8 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             osTmpFileName = osTmpDirName + "/file.kml";
         else if( bKMZ )
             osTmpFileName = osTmpDirName + "/file.kmz";
+        else if( bFlatGeobuf )
+            osTmpFileName = osTmpDirName + "/file.fgb";
         /* GML is a special case. It needs the .xsd file that has been saved */
         /* as file.xsd, so we cannot used the attachment filename */
         else if (pszAttachmentFilename &&
