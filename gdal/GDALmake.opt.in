@@ -58,6 +58,7 @@ OSX_VERSION_FRAMEWORK_PREFIX = ${OSX_FRAMEWORK_PREFIX}/Versions/@GDAL_VERSION_MA
 
 prefix		=	@prefix@
 exec_prefix	=	@exec_prefix@
+datarootdir	=	@datarootdir@
 INST_PREFIX	=	@exec_prefix@
 INST_INCLUDE	=	@includedir@
 INST_DATA 	=	@datadir@
