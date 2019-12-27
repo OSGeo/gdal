@@ -918,6 +918,7 @@ build_os
 build_vendor
 build_cpu
 build
+PACKAGE
 target_alias
 host_alias
 build_alias
@@ -3427,6 +3428,8 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+
+PACKAGE=gdal
 
 
 ac_config_headers="$ac_config_headers port/cpl_config.h:port/cpl_config.h.in"
@@ -40662,17 +40665,6 @@ export BINTRUE
 
 BINTRUE=$BINTRUE
 
-
-if test "$datadir" = '${prefix}/share' ; then
-  datadir='${prefix}/share/gdal'
-fi
-
-if test "$datadir" = '${datarootdir}' \
-     -a "$datarootdir" = '${prefix}/share' ; then
-  datarootdir='${prefix}/share/gdal'
-fi
-
-mandir='${prefix}/man'
 
 
 if test "$prefix" = "NONE" ; then
