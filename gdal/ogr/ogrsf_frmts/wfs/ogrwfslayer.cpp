@@ -672,141 +672,111 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
 
     CPLString osOutputFormat = CPLURLGetValue(osURL, "OUTPUTFORMAT");
 
-    /* Try streaming when the output format is GML and that we have a .xsd */
-    /* that we are able to understand */
-    CPLString osXSDFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
-    VSIStatBufL sBuf;
-    if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")) &&
-        (osOutputFormat.empty() || osOutputFormat.ifind("GML") != std::string::npos) &&
-        VSIStatL(osXSDFileName, &sBuf) == 0 && GDALGetDriverByName("GML") != nullptr)
-    {
+    if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES"))) {
         const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
-                                                    osURL.c_str());
+                                                        osURL.c_str());
         if( STARTS_WITH(osURL, "/vsimem/") &&
-            CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+                CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
         {
             pszStreamingName = osURL.c_str();
         }
 
-        const char* const apszAllowedDrivers[] = { "GML", nullptr };
-        const char* apszOpenOptions[6] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
-        apszOpenOptions[0] = CPLSPrintf("XSD=%s", osXSDFileName.c_str());
-        apszOpenOptions[1] = CPLSPrintf("EMPTY_AS_NULL=%s", poDS->IsEmptyAsNull() ? "YES" : "NO");
-        int iGMLOOIdex = 2;
-        if( CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", nullptr) == nullptr )
-        {
-            apszOpenOptions[iGMLOOIdex] = CPLSPrintf("INVERT_AXIS_ORDER_IF_LAT_LONG=%s",
-                                    poDS->InvertAxisOrderIfLatLong() ? "YES" : "NO");
-            iGMLOOIdex ++;
-        }
-        if( CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", nullptr) == nullptr )
-        {
-            apszOpenOptions[iGMLOOIdex] = CPLSPrintf("CONSIDER_EPSG_AS_URN=%s",
-                                            poDS->GetConsiderEPSGAsURN().c_str());
-            iGMLOOIdex ++;
-        }
-        if( CPLGetConfigOption("GML_EXPOSE_GML_ID", nullptr) == nullptr )
-        {
-            apszOpenOptions[iGMLOOIdex] = CPLSPrintf("EXPOSE_GML_ID=%s",
-                                            poDS->ExposeGMLId() ? "YES" : "NO");
-            iGMLOOIdex ++;
-        }
+        GDALDataset* poOutputDS = nullptr;
 
-        GDALDataset* poGML_DS = (GDALDataset*)
-                GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
-                           apszOpenOptions, nullptr);
-        if( poGML_DS )
+        /* Try streaming when the output format is GML and that we have a .xsd */
+        /* that we are able to understand */
+        CPLString osXSDFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+        VSIStatBufL sBuf;
+        if ((osOutputFormat.empty() || osOutputFormat.ifind("GML") != std::string::npos) &&
+            VSIStatL(osXSDFileName, &sBuf) == 0 && GDALGetDriverByName("GML") != nullptr)
         {
             bStreamingDS = true;
-            return poGML_DS;
-        }
-
-        /* In case of failure, read directly the content to examine */
-        /* it, if it is XML error content */
-        char szBuffer[2048];
-        int nRead = 0;
-        VSILFILE* fp = VSIFOpenL(pszStreamingName, "rb");
-        if (fp)
-        {
-            nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
-            szBuffer[nRead] = '\0';
-            VSIFCloseL(fp);
-        }
-
-        if (nRead != 0)
-        {
-            if( MustRetryIfNonCompliantServer(szBuffer) )
-                return FetchGetFeature(nRequestMaxFeatures);
-
-            if (strstr(szBuffer, "<ServiceExceptionReport") != nullptr ||
-                strstr(szBuffer, "<ows:ExceptionReport") != nullptr)
+            const char* const apszAllowedDrivers[] = { "GML", nullptr };
+            const char* apszOpenOptions[6] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+            apszOpenOptions[0] = CPLSPrintf("XSD=%s", osXSDFileName.c_str());
+            apszOpenOptions[1] = CPLSPrintf("EMPTY_AS_NULL=%s", poDS->IsEmptyAsNull() ? "YES" : "NO");
+            int iGMLOOIdex = 2;
+            if( CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", nullptr) == nullptr )
             {
-                if( poDS->IsOldDeegree(szBuffer) )
-                {
-                    return FetchGetFeature(nRequestMaxFeatures);
-                }
+                apszOpenOptions[iGMLOOIdex] = CPLSPrintf("INVERT_AXIS_ORDER_IF_LAT_LONG=%s",
+                                        poDS->InvertAxisOrderIfLatLong() ? "YES" : "NO");
+                iGMLOOIdex ++;
+            }
+            if( CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", nullptr) == nullptr )
+            {
+                apszOpenOptions[iGMLOOIdex] = CPLSPrintf("CONSIDER_EPSG_AS_URN=%s",
+                                                poDS->GetConsiderEPSGAsURN().c_str());
+                iGMLOOIdex ++;
+            }
+            if( CPLGetConfigOption("GML_EXPOSE_GML_ID", nullptr) == nullptr )
+            {
+                apszOpenOptions[iGMLOOIdex] = CPLSPrintf("EXPOSE_GML_ID=%s",
+                                                poDS->ExposeGMLId() ? "YES" : "NO");
+                iGMLOOIdex ++;
+            }
 
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Error returned by server : %s",
-                         szBuffer);
-                return nullptr;
+            poOutputDS = (GDALDataset*)
+                    GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+                            apszOpenOptions, nullptr);
+
+        }
+        /* Try streaming when the output format is FlatGeobuf */
+        else if ((osOutputFormat.empty() || osOutputFormat.ifind("flatgeobuf") != std::string::npos) &&
+            VSIStatL(osXSDFileName, &sBuf) == 0 && GDALGetDriverByName("FlatGeobuf") != nullptr)
+        {
+            bStreamingDS = true;
+            const char* const apszAllowedDrivers[] = { "FlatGeobuf", nullptr };
+
+            GDALDataset* poFlatGeobuf_DS = (GDALDataset*)
+                    GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+                            nullptr, nullptr);
+            if( poFlatGeobuf_DS )
+            {
+                bStreamingDS = true;
+                return poFlatGeobuf_DS;
             }
         }
-    }
-
-    /* Try streaming when the output format is FlatGeobuf */
-    if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")) &&
-        (osOutputFormat.empty() || osOutputFormat.ifind("flatgeobuf") != std::string::npos) &&
-        VSIStatL(osXSDFileName, &sBuf) == 0 && GDALGetDriverByName("FlatGeobuf") != nullptr)
-    {
-        const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
-                                                    osURL.c_str());
-        if( STARTS_WITH(osURL, "/vsimem/") &&
-            CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+        else
         {
-            pszStreamingName = osURL.c_str();
+            bStreamingDS = false;
         }
 
-        const char* const apszAllowedDrivers[] = { "FlatGeobuf", nullptr };
-
-        GDALDataset* poFlatGeobuf_DS = (GDALDataset*)
-                GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
-                           nullptr, nullptr);
-        if( poFlatGeobuf_DS )
+        if( poOutputDS )
         {
-            bStreamingDS = true;
-            return poFlatGeobuf_DS;
+            return poOutputDS;
         }
 
-        /* In case of failure, read directly the content to examine */
-        /* it, if it is XML error content */
-        char szBuffer[2048];
-        int nRead = 0;
-        VSILFILE* fp = VSIFOpenL(pszStreamingName, "rb");
-        if (fp)
-        {
-            nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
-            szBuffer[nRead] = '\0';
-            VSIFCloseL(fp);
-        }
-
-        if (nRead != 0)
-        {
-            if( MustRetryIfNonCompliantServer(szBuffer) )
-                return FetchGetFeature(nRequestMaxFeatures);
-
-            if (strstr(szBuffer, "<ServiceExceptionReport") != nullptr ||
-                strstr(szBuffer, "<ows:ExceptionReport") != nullptr)
+        if  (bStreamingDS) {
+            /* In case of failure, read directly the content to examine */
+            /* it, if it is XML error content */
+            char szBuffer[2048];
+            int nRead = 0;
+            VSILFILE* fp = VSIFOpenL(pszStreamingName, "rb");
+            if (fp)
             {
-                if( poDS->IsOldDeegree(szBuffer) )
-                {
-                    return FetchGetFeature(nRequestMaxFeatures);
-                }
+                nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
+                szBuffer[nRead] = '\0';
+                VSIFCloseL(fp);
+            }
 
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Error returned by server : %s",
-                         szBuffer);
-                return nullptr;
+            if (nRead != 0)
+            {
+                if( MustRetryIfNonCompliantServer(szBuffer) )
+                    return FetchGetFeature(nRequestMaxFeatures);
+
+                if (strstr(szBuffer, "<ServiceExceptionReport") != nullptr ||
+                    strstr(szBuffer, "<ows:ExceptionReport") != nullptr)
+                {
+                    if( poDS->IsOldDeegree(szBuffer) )
+                    {
+                        return FetchGetFeature(nRequestMaxFeatures);
+                    }
+
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Error returned by server : %s",
+                            szBuffer);
+                    return nullptr;
+                }
             }
         }
     }
