@@ -29,6 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except ImportError:
+    from http.server import BaseHTTPRequestHandler
 
 import os
 
@@ -39,6 +43,7 @@ from osgeo import gdal
 import gdaltest
 import ogrtest
 import pytest
+import webserver
 
 ### utils
 
@@ -410,3 +415,99 @@ def test_ogr_flatgeobuf_datatypes():
     assert f['double'] == 1.25
     assert f['string'] == 'my string'
     assert f['datetime'] == '2019/10/15 12:34:56.789+00'
+
+
+###############################################################################
+do_log = False
+
+class WFSHTTPHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        pass
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
+
+            if self.path.find('/fakewfs') != -1:
+
+                if self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities' or \
+                        self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities&ACCEPTVERSIONS=1.1.0,1.0.0':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    f = open('data/testfgb/wfs/get_capabilities.xml', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
+
+                if self.path == '/fakewfs?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=topp:tasmania_water_bodies':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    f = open('data/testfgb/wfs/describe_feature_type.xml', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
+
+                if self.path == '/fakewfs?OUTPUTFORMAT=application/flatgeobuf&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=topp:tasmania_water_bodies':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/flatgeobuf')
+                    self.end_headers()
+                    f = open('data/testfgb/wfs/get_feature.fgb', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
+
+            return
+        except IOError:
+            pass
+
+        self.send_error(404, 'File Not Found: %s' % self.path)
+
+
+@pytest.fixture(autouse=True, scope='module')
+def ogr_wfs_init():
+    gdaltest.wfs_drv = ogr.GetDriverByName('WFS')
+
+def test_ogr_wfs_fake_wfs_server():
+    if gdaltest.wfs_drv is None:
+        pytest.skip()
+
+    (process, port) = webserver.launch(handler=WFSHTTPHandler)
+    if port == 0:
+        pytest.skip()
+
+    gdal.SetConfigOption('OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN', 'NO')
+    ds = ogr.Open("WFS:http://127.0.0.1:%d/fakewfs?OUTPUTFORMAT=application/flatgeobuf" % port)
+    gdal.SetConfigOption('OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN', None)
+    if ds is None:
+        webserver.server_stop(process, port)
+        pytest.fail('did not managed to open WFS datastore')
+
+    lyr = ds.GetLayerByName('topp:tasmania_water_bodies')
+    if lyr == None:
+        webserver.server_stop(process, port)
+        pytest.fail('did not get expected layer')
+    name = lyr.GetName()
+    if name != 'topp:tasmania_water_bodies':
+        print(name)
+        webserver.server_stop(process, port)
+        pytest.fail('did not get expected layer name (got %s)' % name)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('CONTINENT') != 'Australia' or \
+       ogrtest.check_feature_geometry(feat, 'MULTIPOLYGON (((-42.157501 146.232727,-42.16111 146.238007,-42.169724 146.24411,-42.193329 146.257202,-42.209442 146.272217,-42.214165 146.274689,-42.21833 146.27832,-42.228882 146.282471,-42.241943 146.282745,-42.255836 146.291351,-42.261948 146.290253,-42.267502 146.288025,-42.269997 146.282471,-42.271111 146.274994,-42.270279 146.266663,-42.262505 146.251373,-42.258057 146.246918,-42.256111 146.241333,-42.257782 146.23468,-42.269165 146.221344,-42.274445 146.210785,-42.27417 146.20163,-42.271385 146.196075,-42.258057 146.186646,-42.252785 146.188568,-42.249443 146.193298,-42.248055 146.200806,-42.249168 146.209137,-42.248611 146.217468,-42.245277 146.222473,-42.240555 146.22525,-42.22805 146.224121,-42.221382 146.224396,-42.217216 146.228302,-42.212502 146.231354,-42.205559 146.231628,-42.186943 146.219421,-42.17028 146.21637,-42.16333 146.216644,-42.158607 146.219696,-42.156105 146.225525,-42.157501 146.232727)))',
+                                      max_error=0.00001) != 0:
+        feat.DumpReadable()
+        webserver.server_stop(process, port)
+        pytest.fail('did not get expected feature')
+
+    webserver.server_stop(process, port)

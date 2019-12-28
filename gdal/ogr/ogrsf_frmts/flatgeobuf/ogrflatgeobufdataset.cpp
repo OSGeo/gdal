@@ -301,7 +301,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     }
 
     uint64_t offsetIndices = 0;
-    if (featuresCount > 0) {
+    if (featuresCount > 0 && index_node_size > 0) {
         CPLDebug("FlatGeobuf", "Feature indices start at offset (%lu)", static_cast<long unsigned int>(offset));
         offsetIndices = offset;
         offset += featuresCount * 8;
