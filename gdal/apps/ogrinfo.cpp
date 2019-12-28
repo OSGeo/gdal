@@ -243,7 +243,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
     if( !bSuperQuiet )
     {
         printf("\n");
-        printf("Layer name: %s\n", poLayer->GetName());
+        printf("Layer Name: %s\n", poLayer->GetName());
     }
 
     GDALInfoReportMetadata(static_cast<GDALMajorObjectH>(poLayer),
