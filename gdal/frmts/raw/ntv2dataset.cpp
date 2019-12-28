@@ -653,6 +653,7 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffsetIn )
     {
         GetRasterBand(1)->SetDescription( "Latitude Offset (arc seconds)" );
         GetRasterBand(2)->SetDescription( "Longitude Offset (arc seconds)" );
+        GetRasterBand(2)->SetMetadataItem("positive_value", "west");
         GetRasterBand(3)->SetDescription( "Latitude Error" );
         GetRasterBand(4)->SetDescription( "Longitude Error" );
     }

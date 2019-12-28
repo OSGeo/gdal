@@ -223,6 +223,16 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
                               CPL_IS_LSB,
                               RawRasterBand::OwnFP::NO ) );
 
+    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"las") )
+    {
+        poDS->GetRasterBand(1)->SetDescription( "Latitude Offset (arc seconds)" );
+    }
+    else
+    {
+        poDS->GetRasterBand(1)->SetDescription( "Longitude Offset (arc seconds)" );
+        poDS->GetRasterBand(1)->SetMetadataItem("positive_value", "west");
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Setup georeferencing.                                           */
 /* -------------------------------------------------------------------- */
