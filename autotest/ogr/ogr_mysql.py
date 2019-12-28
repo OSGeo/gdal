@@ -914,10 +914,66 @@ def test_ogr_mysql_longlat():
             pytest.fail("Not found SRID definition with GEOMETORY field.")
         gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
-    
+###############################################################################
+# Test writing and reading back geometries
+
+def test_ogr_mysql_28():
+
+    if gdaltest.mysql_ds is None:
+        pytest.skip()
+
+    wkts = ogrtest.get_wkt_data_series(with_z=True, with_m=True, with_gc=True, with_circular=True, with_surface=False)
+    print('ogr_mysql_28: total %d geometries' % len(wkts))
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    for i, wkt in enumerate(wkts):
+        gdaltest.num_mysql_28 = i + 1
+        geom = ogr.CreateGeometryFromWkt(wkt)
+        lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_28_%d' % i, geom_type=geom.GetGeometryType(), srs=srs)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(geom)
+        lyr.CreateFeature(f)
+        f = None
+        #
+        layer = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_28_%d' % i)
+        if layer is None:
+            pytest.fail('did not get ogr_mysql_28_%d layer' % i)
+        feat = layer.GetNextFeature()
+        assert feat is not None
+        feat = None
+
+
+@pytest.mark.xfail(reason='MySQL does not support POLYHEDRALSURFACE.')
+def test_ogr_mysql_29():
+
+    if gdaltest.mysql_ds is None:
+        pytest.skip()
+
+    wkts = ogrtest.get_wkt_data_series(with_z=False, with_m=False, with_gc=False, with_circular=False, with_surface=True)
+    print('ogr_mysql_29: total %d geometries' % len(wkts))
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    for i, wkt in enumerate(wkts):
+        gdaltest.num_mysql_29 = i + 1
+        geom = ogr.CreateGeometryFromWkt(wkt)
+        lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_29_%d' % i, geom_type=geom.GetGeometryType(), srs=srs)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(geom)
+        lyr.CreateFeature(f)
+        f = None
+        #
+        layer = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_29_%d' % i)
+        if layer is None:
+            pytest.fail('did not get ogr_mysql_29_%d layer' % i)
+        feat = layer.GetNextFeature()
+        assert feat is not None
+        feat = None
+
+
 ###############################################################################
 #
-
 
 def test_ogr_mysql_cleanup():
 
@@ -936,7 +992,10 @@ def test_ogr_mysql_cleanup():
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_25')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_26')
     gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_longlat')
-
+    for i in range(gdaltest.num_mysql_28):
+        gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_28_%d' % i)
+    for i in range(gdaltest.num_mysql_29):
+        gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_29_%d' % i)
     gdaltest.mysql_ds.Destroy()
     gdaltest.mysql_ds = None
 
