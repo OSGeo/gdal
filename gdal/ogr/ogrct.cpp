@@ -878,6 +878,15 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
             CPLError(CE_Warning, CPLE_NotSupported,
                      "OGR_CT_OP_SELECTION=%s not supported", pszCTOpSelection);
     }
+    if( m_eStrategy == Strategy::PROJ )
+    {
+        const char* pszUseApproxTMERC = CPLGetConfigOption("OSR_USE_APPROX_TMERC", nullptr);
+        if( pszUseApproxTMERC && CPLTestBool(pszUseApproxTMERC) )
+        {
+            CPLDebug("OSRCT", "Using OGR_CT_OP_SELECTION=BEST_ACCURACY as OSR_USE_APPROX_TMERC is set");
+            m_eStrategy = Strategy::BEST_ACCURACY;
+        }
+    }
 
     if( !options.d->osCoordOperation.empty() )
     {
