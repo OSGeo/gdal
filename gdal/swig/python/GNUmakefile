@@ -48,7 +48,7 @@ ogr_wrap.cpp: ../include/python/ogr_python.i
 osr_wrap.cpp: ../include/python/osr_python.i
 
 gdal_array_wrap.cpp:  ../include/gdal_array.i ../include/python/typemaps_python.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ gdal_array.i
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/gdal_array.i
 
 generate: ${WRAPPERS} gdal_array_wrap.cpp
 	# Following is to prevent Coverity Scan to warn about Dereference before null check (REVERSE_INULL)
