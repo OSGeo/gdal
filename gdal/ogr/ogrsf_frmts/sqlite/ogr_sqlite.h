@@ -42,29 +42,23 @@
 #include "ogrsf_frmts.h"
 #include "ogrsf_frmts.h"
 #include "rasterlite2_header.h"
-#include "sqlite3.h"
 
-#ifdef HAVE_SPATIALITE
-  #ifdef SPATIALITE_AMALGAMATION
-    /*
-    / using an AMALGAMATED version of SpatiaLite
-    / a private internal copy of SQLite is included:
-    / so we are required including the SpatiaLite's
-    / own header
-    /
-    / IMPORTANT NOTICE: using AMALAGATION is only
-    / useful on Windows (to skip DLL hell related oddities)
-    */
-    #include <spatialite/sqlite3.h>
-  #else
-    /*
-    / You MUST NOT use AMALGAMATION on Linux or any
-    / other "sane" operating system !!!!
-    */
-    #include "sqlite3.h"
-  #endif
+#ifdef SPATIALITE_AMALGAMATION
+/*
+/ using an AMALGAMATED version of SpatiaLite
+/ a private internal copy of SQLite is included:
+/ so we are required including the SpatiaLite's
+/ own header
+/
+/ IMPORTANT NOTICE: using AMALAGATION is only
+/ useful on Windows (to skip DLL hell related oddities)
+/
+/ You MUST NOT use AMALGAMATION on Linux or any
+/ other "sane" operating system !!!!
+*/
+#include <spatialite/sqlite3.h>
 #else
-#include "sqlite3.h"
+#include <sqlite3.h>
 #endif
 
 #ifndef DO_NOT_INCLUDE_SQLITE_CLASSES
