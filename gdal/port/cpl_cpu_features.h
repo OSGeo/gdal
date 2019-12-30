@@ -56,8 +56,8 @@ static bool inline CPLHaveRuntimeSSSE3()
 }
 #else
 #if defined(__GNUC__) && !defined(DEBUG)
-extern bool bCPLHasSSE3;
-static bool inline CPLHaveRuntimeSSSE3() { return bCPLHasSSE3; }
+extern bool bCPLHasSSSE3;
+static bool inline CPLHaveRuntimeSSSE3() { return bCPLHasSSSE3; }
 #else
 bool CPLHaveRuntimeSSSE3();
 #endif
