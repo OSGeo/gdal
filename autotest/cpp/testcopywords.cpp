@@ -630,7 +630,7 @@ int main(int /* argc */, char* /* argv */ [])
             memset(pIn, 0xff, 256);
             for(int i=0;i<17;i++)
             {
-                pIn[spacing*i] = (GByte)i;
+                pIn[spacing*i] = (GByte)(17-i);
             }
             memset(pOut, 0xff, 256);
             GDALCopyWords(pIn, GDT_Byte, spacing,
@@ -638,21 +638,21 @@ int main(int /* argc */, char* /* argv */ [])
                         17);
             for(int i=0;i<17;i++)
             {
-                AssertRes(GDT_Byte, i, GDT_Byte, i, pOut[i], __LINE__);
+                AssertRes(GDT_Byte, 17-i, GDT_Byte, 17-i, pOut[i], __LINE__);
             }
 
             memset(pIn, 0xff, 256);
             memset(pOut, 0xff, 256);
             for(int i=0;i<17;i++)
             {
-                pIn[i] = (GByte)i;
+                pIn[i] = (GByte)(17-i);
             }
             GDALCopyWords(pIn, GDT_Byte, 1,
                         pOut, GDT_Byte, spacing,
                         17);
             for(int i=0;i<17;i++)
             {
-                AssertRes(GDT_Byte, i, GDT_Byte, i, pOut[i*spacing], __LINE__);
+                AssertRes(GDT_Byte, 17-i, GDT_Byte, 17-i, pOut[i*spacing], __LINE__);
                 for(int j=1;j<spacing;j++)
                 {
                     AssertRes(GDT_Byte, 0xff, GDT_Byte, 0xff, pOut[i*spacing+j], __LINE__);
