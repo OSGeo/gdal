@@ -11,7 +11,8 @@ OBJ		=	netcdfdataset.obj \
 			netcdflayersg.obj \
 			netcdfsgwriterutil.obj \
 			netcdfmultidim.obj \
-			netcdfvirtual.obj
+			netcdfvirtual.obj \
+			netcdf_sentinel3_sral_mwr.obj
 
 PLUGIN_DLL 	=	gdal_netCDF.dll
 

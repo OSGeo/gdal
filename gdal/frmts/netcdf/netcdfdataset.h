@@ -878,7 +878,7 @@ class netCDFDataset final: public GDALPamDataset
     int          nCreateMode;
     bool         bSignedData;
 
-    std::vector<std::shared_ptr<netCDFLayer>> papoLayers;
+    std::vector<std::shared_ptr<OGRLayer>> papoLayers;
 
     netCDFWriterConfiguration oWriterConfig;
 
@@ -919,6 +919,10 @@ class netCDFDataset final: public GDALPamDataset
     static bool CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4, int nLayerId,
                          int nDimIdToGrow, size_t nNewSize);
     bool GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize);
+
+#ifdef NETCDF_HAS_NC4
+    void   ProcessSentinel3_SRAL_MWR();
+#endif
 
     CPLErr FilterVars( int nCdfId, bool bKeepRasters, bool bKeepVectors,
                        char **papszIgnoreVars, int *pnRasterVars,

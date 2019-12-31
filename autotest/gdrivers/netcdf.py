@@ -4805,6 +4805,85 @@ def test_netcdf_uint16_netcdf4_without_fill():
     ds = gdal.Open('data/uint16_netcdf4_without_fill.nc')
     assert not ds.GetRasterBand(1).GetNoDataValue()
 
+
+def test_netcdf_sen3_sral_mwr_fake_standard_measurement():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.OpenEx('data/sen3_sral_mwr_fake_standard_measurement.nc', gdal.OF_RASTER)
+    assert not ds
+
+    ds = gdal.OpenEx('data/sen3_sral_mwr_fake_standard_measurement.nc', gdal.OF_VECTOR)
+    assert ds
+    assert ds.GetLayerCount() == 3
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'sen3_sral_mwr_fake_standard_measurement_time_01'
+    assert lyr.GetSpatialRef() is not None
+    assert lyr.GetLayerDefn().GetFieldCount() == 5
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+    assert lyr.TestCapability(ogr.OLCRandomRead) == 1
+    assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+    assert lyr.GetFeatureCount() == 2
+    assert lyr.GetMetadata_Dict() == {
+        'alt_01_comment': 'Altitude of satellite above the reference ellipsoid',
+        'alt_01_long_name': 'altitude of the satellite : 1 Hz',
+        'alt_01_standard_name': 'height_above_reference_ellipsoid',
+        'alt_01_units': 'm',
+        'orb_alt_rate_01_comment': 'The reference surface for the orbital altitude rate is the combined mean_sea_surface/geoid surface. It is used to compute the Doppler correction on the altimeter range',
+        'orb_alt_rate_01_long_name': 'orbital altitude rate : 1 Hz',
+        'orb_alt_rate_01_units': 'm/s',
+        'surf_type_01_flag_meanings': 'ocean_or_semi_enclosed_sea enclosed_sea_or_lake continental_ice land',
+        'surf_type_01_flag_values': '{0,1,2,3}',
+        'surf_type_01_long_name': 'surface type : 1 Hz',
+        'time_01_calendar': 'gregorian',
+        'time_01_long_name': 'UTC: 1 Hz',
+        'time_01_standard_name': 'time',
+        'time_01_units': 'seconds since 2000-01-01 00:00:00.0',
+        'total_electron_content_01_long_name': 'Altimeter-derived total electron content (TECU) : 1 Hz',
+        'total_electron_content_01_units': 'count'
+    }
+    assert lyr.GetMetadataItem('alt_01_units') == 'm'
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().GetX() == pytest.approx(2.234567, 1e-7)
+    assert f.GetGeometryRef().GetY() == pytest.approx(49.234567, 1e-7)
+    assert f['time_01'] == 1.25
+    assert not f.IsFieldSet("surf_type_01")
+    assert not f.IsFieldSet("orb_alt_rate_01")
+    assert not f.IsFieldSet("total_electron_content_01")
+    f = lyr.GetNextFeature()
+    assert f['time_01'] == 2.25
+    assert f['surf_type_01'] == 1
+    assert f['orb_alt_rate_01'] == 0.01
+    assert f['total_electron_content_01'] == 10000000000.0
+    assert lyr.GetNextFeature() is None
+    assert lyr.GetNextFeature() is None
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is not None
+
+    lyr.SetSpatialFilterRect(-50,-50,-50,-50)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+    assert lyr.GetFeatureCount() == 0
+    lyr.SetSpatialFilter(None)
+
+    lyr.SetAttributeFilter('0 = 1')
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+
+    assert lyr.GetFeature(0) is None
+    assert lyr.GetFeature(1).GetFID() == 1
+    assert lyr.GetFeature(3) is None
+
+    lyr = ds.GetLayer(1)
+    assert lyr.GetName() == 'sen3_sral_mwr_fake_standard_measurement_time_20_ku'
+    f = lyr.GetNextFeature()
+    assert not f.IsFieldSet('nb_stack_20_ku')
+    f = lyr.GetNextFeature()
+    assert f['nb_stack_20_ku'] == 1
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
