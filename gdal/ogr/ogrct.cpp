@@ -87,6 +87,37 @@ OGRCoordinateTransformationOptions::OGRCoordinateTransformationOptions():
 /*                  OGRCoordinateTransformationOptions()                */
 /************************************************************************/
 
+/** \brief Copy constructor
+ *
+ * @since GDAL 3.1
+ */
+OGRCoordinateTransformationOptions::OGRCoordinateTransformationOptions(
+    const OGRCoordinateTransformationOptions& other):
+        d(new Private(*(other.d)))
+{}
+
+/************************************************************************/
+/*                          operator =()                                */
+/************************************************************************/
+
+/** \brief Assignment operator
+ *
+ * @since GDAL 3.1
+ */
+OGRCoordinateTransformationOptions&
+    OGRCoordinateTransformationOptions::operator= (const OGRCoordinateTransformationOptions& other)
+{
+    if( this != &other )
+    {
+        *d = *(other.d);
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                  OGRCoordinateTransformationOptions()                */
+/************************************************************************/
+
 /** \brief Destroys a OGRCoordinateTransformationOptions.
  *
  * @since GDAL 3.0
@@ -277,8 +308,6 @@ int OCTCoordinateTransformationOptionsSetOperation(
 //! @cond Doxygen_Suppress
 class OGRProjCT : public OGRCoordinateTransformation
 {
-    CPL_DISALLOW_COPY_ASSIGN(OGRProjCT)
-
     OGRSpatialReference *poSRSSource = nullptr;
     bool        bSourceLatLong = false;
     bool        bSourceWrap = false;
@@ -371,6 +400,13 @@ class OGRProjCT : public OGRCoordinateTransformation
     };
     std::vector<Transformation> m_oTransformations{};
     int m_iCurTransformation = -1;
+    OGRCoordinateTransformationOptions m_options{};
+
+    OGRProjCT(const OGRProjCT& other)
+    {
+        Initialize(other.poSRSSource, other.poSRSTarget, other.m_options);
+    }
+    OGRProjCT& operator= (const OGRProjCT& ) = delete;
 
 public:
     OGRProjCT();
@@ -390,6 +426,10 @@ public:
     bool GetEmitErrors() const override { return m_bEmitErrors; }
     void SetEmitErrors( bool bEmitErrors ) override
         { m_bEmitErrors = bEmitErrors; }
+
+    OGRCoordinateTransformation* Clone() const override {
+        return new OGRProjCT(*this);
+    }
 };
 //! @endcond
 
@@ -683,6 +723,8 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                            const OGRCoordinateTransformationOptions& options )
 
 {
+    m_options = options;
+
     if( poSourceIn == nullptr || poTargetIn == nullptr )
     {
         if( options.d->osCoordOperation.empty() )

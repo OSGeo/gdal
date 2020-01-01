@@ -3701,8 +3701,8 @@ OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
 
 /** Transform a geometry.
  * @param poSrcGeom source geometry
- * @param poCT coordinate transformation object.
- * @param papszOptions options. Including WRAPDATELINE=YES.
+ * @param poCT coordinate transformation object, or NULL.
+ * @param papszOptions options. Including WRAPDATELINE=YES and DATELINEOFFSET=.
  * @param cache Cache. May increase performance if persisted between invokations
  * @return (new) transformed geometry.
  */
@@ -3858,6 +3858,102 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
     }
 
     return poDstGeom;
+}
+
+/************************************************************************/
+/*                         OGRGeomTransformer()                         */
+/************************************************************************/
+
+struct OGRGeomTransformer
+{
+    std::unique_ptr<OGRCoordinateTransformation> poCT{};
+    OGRGeometryFactory::TransformWithOptionsCache cache{};
+    CPLStringList aosOptions{};
+
+    OGRGeomTransformer() = default;
+    OGRGeomTransformer(const OGRGeomTransformer&) = delete;
+    OGRGeomTransformer& operator=(const OGRGeomTransformer&) = delete;
+};
+
+/************************************************************************/
+/*                     OGR_GeomTransformer_Create()                     */
+/************************************************************************/
+
+/** Create a geometry transformer.
+ *
+ * This is a enhanced version of OGR_G_Transform().
+ *
+ * When reprojecting geometries from a Polar Stereographic projection or a
+ * projection naturally crossing the antimeridian (like UTM Zone 60) to a
+ * geographic CRS, it will cut geometries along the antimeridian. So a
+ * LineString might be returned as a MultiLineString.
+ *
+ * The WRAPDATELINE=YES option might be specified for circumstances to correct
+ * geometries that incorrectly go from a longitude on a side of the antimeridian
+ * to the other side, like a LINESTRING(-179 0,179 0) will be transformed to
+ * a MULTILINESTRING ((-179 0,-180 0),(180 0,179 0)). For that use case, hCT
+ * might be NULL.
+ *
+ * @param hCT Coordinate transformation object (will be cloned) or NULL.
+ * @param papszOptions NULL terminated list of options, or NULL.
+ *                     Supported options are:
+ *                     <ul>
+ *                         <li>WRAPDATELINE=YES</li>
+ *                         <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults to 10.</li>
+ *                     </ul>
+ * @return transformer object to free with OGR_GeomTransformer_Destroy()
+ * @since GDAL 3.1
+ */
+OGRGeomTransformerH OGR_GeomTransformer_Create( OGRCoordinateTransformationH hCT,
+                                                CSLConstList papszOptions )
+{
+    OGRGeomTransformer* transformer = new OGRGeomTransformer;
+    if( hCT )
+    {
+        transformer->poCT.reset(
+            OGRCoordinateTransformation::FromHandle(hCT)->Clone());
+    }
+    transformer->aosOptions.Assign(CSLDuplicate(papszOptions));
+    return transformer;
+}
+
+/************************************************************************/
+/*                     OGR_GeomTransformer_Transform()                  */
+/************************************************************************/
+
+/** Transforms a geometry.
+ *
+ * @param hTransformer transformer object.
+ * @param hGeom Source geometry.
+ * @return a new geometry (or NULL) to destroy with OGR_G_DestroyGeometry()
+ * @since GDAL 3.1
+ */
+OGRGeometryH OGR_GeomTransformer_Transform(OGRGeomTransformerH hTransformer,
+                                           OGRGeometryH hGeom)
+{
+    VALIDATE_POINTER1( hTransformer, "OGR_GeomTransformer_Transform", nullptr );
+    VALIDATE_POINTER1( hGeom, "OGR_GeomTransformer_Transform", nullptr );
+
+    return OGRGeometry::ToHandle(
+        OGRGeometryFactory::transformWithOptions(
+            OGRGeometry::FromHandle(hGeom),
+            hTransformer->poCT.get(),
+            hTransformer->aosOptions.List(),
+            hTransformer->cache));
+}
+
+/************************************************************************/
+/*                      OGR_GeomTransformer_Destroy()                   */
+/************************************************************************/
+
+/** Destroy a geometry transformer allocated with OGR_GeomTransformer_Create()
+ *
+ * @param hTransformer transformer object.
+ * @since GDAL 3.1
+ */
+void OGR_GeomTransformer_Destroy(OGRGeomTransformerH hTransformer)
+{
+    delete hTransformer;
 }
 
 /************************************************************************/

@@ -3017,22 +3017,23 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_OGRFeatureShadow swig_types[6]
 #define SWIGTYPE_p_OGRFieldDefnShadow swig_types[7]
 #define SWIGTYPE_p_OGRGeomFieldDefnShadow swig_types[8]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[9]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[10]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[11]
-#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[12]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[13]
-#define SWIGTYPE_p_char swig_types[14]
-#define SWIGTYPE_p_double swig_types[15]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[16]
-#define SWIGTYPE_p_float swig_types[17]
-#define SWIGTYPE_p_int swig_types[18]
-#define SWIGTYPE_p_p_GIntBig swig_types[19]
-#define SWIGTYPE_p_p_char swig_types[20]
-#define SWIGTYPE_p_p_double swig_types[21]
-#define SWIGTYPE_p_p_int swig_types[22]
-static swig_type_info *swig_types[24];
-static swig_module_info swig_module = {swig_types, 23, 0, 0, 0, 0};
+#define SWIGTYPE_p_OGRGeomTransformerShadow swig_types[9]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[10]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[11]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[12]
+#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[13]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[14]
+#define SWIGTYPE_p_char swig_types[15]
+#define SWIGTYPE_p_double swig_types[16]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[17]
+#define SWIGTYPE_p_float swig_types[18]
+#define SWIGTYPE_p_int swig_types[19]
+#define SWIGTYPE_p_p_GIntBig swig_types[20]
+#define SWIGTYPE_p_p_char swig_types[21]
+#define SWIGTYPE_p_p_double swig_types[22]
+#define SWIGTYPE_p_p_int swig_types[23]
+static swig_type_info *swig_types[25];
+static swig_module_info swig_module = {swig_types, 24, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3168,7 +3169,6 @@ typedef struct OGRFeatureHS OGRFeatureShadow;
 typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
 typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
-typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
 typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
 #else
 typedef void OSRSpatialReferenceShadow;
@@ -3185,6 +3185,7 @@ typedef void OGRFieldDefnShadow;
 #endif
 typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
+typedef struct OGRGeomTransformer OGRGeomTransformerShadow;
 
 
 SWIGINTERNINLINE PyObject*
@@ -5423,7 +5424,7 @@ SWIGINTERN bool OGRGeometryShadow_Overlaps(OGRGeometryShadow *self,OGRGeometrySh
 SWIGINTERN OGRErr OGRGeometryShadow_TransformTo(OGRGeometryShadow *self,OSRSpatialReferenceShadow *reference){
     return OGR_G_TransformTo(self, reference);
   }
-SWIGINTERN OGRErr OGRGeometryShadow_Transform(OGRGeometryShadow *self,OSRCoordinateTransformationShadow *trans){
+SWIGINTERN OGRErr OGRGeometryShadow_Transform__SWIG_0(OGRGeometryShadow *self,OSRCoordinateTransformationShadow *trans){
     return OGR_G_Transform(self, trans);
   }
 SWIGINTERN OSRSpatialReferenceShadow *OGRGeometryShadow_GetSpatialReference(OGRGeometryShadow *self){
@@ -5496,6 +5497,18 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetCurveGeometry(OGRGeometryShad
   }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Value(OGRGeometryShadow *self,double dfDistance){
     return OGR_G_Value(self, dfDistance);
+  }
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Transform__SWIG_1(OGRGeometryShadow *self,OGRGeomTransformerShadow *transformer){
+    return (OGRGeometryShadow*)OGR_GeomTransformer_Transform(transformer, self);
+  }
+SWIGINTERN OGRGeomTransformerShadow *new_OGRGeomTransformerShadow(OSRCoordinateTransformationShadow *ct,char **options=NULL){
+    return OGR_GeomTransformer_Create(ct, options);
+  }
+SWIGINTERN void delete_OGRGeomTransformerShadow(OGRGeomTransformerShadow *self){
+    OGR_GeomTransformer_Destroy( self );
+  }
+SWIGINTERN OGRGeometryShadow *OGRGeomTransformerShadow_Transform(OGRGeomTransformerShadow *self,OGRGeometryShadow *src_geom){
+    return (OGRGeometryShadow*)OGR_GeomTransformer_Transform(self, src_geom);
   }
 
 char const *OGRDriverShadow_get_name( OGRDriverShadow *h ) {
@@ -25884,7 +25897,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Geometry_Transform(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Geometry_Transform__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OSRCoordinateTransformationShadow *arg2 = (OSRCoordinateTransformationShadow *) 0 ;
@@ -25918,7 +25931,7 @@ SWIGINTERN PyObject *_wrap_Geometry_Transform(PyObject *SWIGUNUSEDPARM(self), Py
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
+      result = (OGRErr)OGRGeometryShadow_Transform__SWIG_0(arg1,arg2);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -26973,10 +26986,275 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_Transform__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  OGRGeomTransformerShadow *arg2 = (OGRGeomTransformerShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Geometry_Transform",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Transform" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRGeomTransformerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Transform" "', argument " "2"" of type '" "OGRGeomTransformerShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRGeomTransformerShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Transform__SWIG_1(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_Transform(PyObject *self, PyObject *args) {
+  Py_ssize_t argc;
+  PyObject *argv[3] = {
+    0
+  };
+  Py_ssize_t ii;
+  
+  if (args == NULL || !PyTuple_Check(args)) SWIG_fail;
+  argc = args ? PyObject_Length(args) : 0;
+  for (ii = 0; (ii < 2) && (ii < argc); ii++) {
+    argv[ii] = PyTuple_GET_ITEM(args,ii);
+  }
+  if (argc == 2) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_OGRGeometryShadow, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      void *vptr = 0;
+      int res = SWIG_ConvertPtr(argv[1], &vptr, SWIGTYPE_p_OSRCoordinateTransformationShadow, 0);
+      _v = SWIG_CheckState(res);
+      if (_v) {
+        return _wrap_Geometry_Transform__SWIG_0(self, args);
+      }
+    }
+  }
+  if (argc == 2) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_OGRGeometryShadow, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      void *vptr = 0;
+      int res = SWIG_ConvertPtr(argv[1], &vptr, SWIGTYPE_p_OGRGeomTransformerShadow, 0);
+      _v = SWIG_CheckState(res);
+      if (_v) {
+        return _wrap_Geometry_Transform__SWIG_1(self, args);
+      }
+    }
+  }
+  
+fail:
+  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'Geometry_Transform'.\n"
+    "  Possible C/C++ prototypes are:\n"
+    "    OGRGeometryShadow::Transform(OSRCoordinateTransformationShadow *)\n"
+    "    OGRGeometryShadow::Transform(OGRGeomTransformerShadow *)\n");
+  return 0;
+}
+
+
 SWIGINTERN PyObject *Geometry_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char *)"O:swigregister", &obj)) return NULL;
   SWIG_TypeNewClientData(SWIGTYPE_p_OGRGeometryShadow, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_new_GeomTransformer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCoordinateTransformationShadow *arg1 = (OSRCoordinateTransformationShadow *) 0 ;
+  char **arg2 = (char **) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRGeomTransformerShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O|O:new_GeomTransformer",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_GeomTransformer" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
+  if (obj1) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(obj1, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeomTransformerShadow *)new_OGRGeomTransformerShadow(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeomTransformerShadow, SWIG_POINTER_NEW |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_GeomTransformer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeomTransformerShadow *arg1 = (OGRGeomTransformerShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_GeomTransformer",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeomTransformerShadow, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_GeomTransformer" "', argument " "1"" of type '" "OGRGeomTransformerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeomTransformerShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_OGRGeomTransformerShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GeomTransformer_Transform(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeomTransformerShadow *arg1 = (OGRGeomTransformerShadow *) 0 ;
+  OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:GeomTransformer_Transform",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeomTransformerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GeomTransformer_Transform" "', argument " "1"" of type '" "OGRGeomTransformerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeomTransformerShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "GeomTransformer_Transform" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeomTransformerShadow_Transform(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *GeomTransformer_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char *)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_OGRGeomTransformerShadow, SWIG_NewClientData(obj));
   return SWIG_Py_Void();
 }
 
@@ -33465,38 +33743,6 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OGRERR_NONE on success, or an error code. \n"
 		""},
-	 { (char *)"Geometry_Transform", _wrap_Geometry_Transform, METH_VARARGS, (char *)"\n"
-		"Geometry_Transform(Geometry self, CoordinateTransformation trans) -> OGRErr\n"
-		"\n"
-		"OGRErr OGR_G_Transform(OGRGeometryH\n"
-		"hGeom, OGRCoordinateTransformationH hTransform)\n"
-		"\n"
-		"Apply arbitrary coordinate transformation to geometry.\n"
-		"\n"
-		"This function will transform the coordinates of a geometry from their\n"
-		"current spatial reference system to a new target spatial reference\n"
-		"system. Normally this means reprojecting the vectors, but it could\n"
-		"include datum shifts, and changes of units.\n"
-		"\n"
-		"Note that this function does not require that the geometry already\n"
-		"have a spatial reference system. It will be assumed that they can be\n"
-		"treated as having the source spatial reference system of the\n"
-		"OGRCoordinateTransformation object, and the actual SRS of the geometry\n"
-		"will be ignored. On successful completion the output\n"
-		"OGRSpatialReference of the OGRCoordinateTransformation will be\n"
-		"assigned to the geometry.\n"
-		"\n"
-		"This function is the same as the CPP method OGRGeometry::transform.\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to apply the transform to.\n"
-		"\n"
-		"hTransform:  handle on the transformation to apply.\n"
-		"\n"
-		"OGRERR_NONE on success or an error code. \n"
-		""},
 	 { (char *)"Geometry_GetSpatialReference", _wrap_Geometry_GetSpatialReference, METH_VARARGS, (char *)"\n"
 		"Geometry_GetSpatialReference(Geometry self) -> SpatialReference\n"
 		"\n"
@@ -33899,7 +34145,44 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_GetLinearGeometry", (PyCFunction) _wrap_Geometry_GetLinearGeometry, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetLinearGeometry(Geometry self, double dfMaxAngleStepSizeDegrees=0.0, char ** options=None) -> Geometry"},
 	 { (char *)"Geometry_GetCurveGeometry", (PyCFunction) _wrap_Geometry_GetCurveGeometry, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_GetCurveGeometry(Geometry self, char ** options=None) -> Geometry"},
 	 { (char *)"Geometry_Value", _wrap_Geometry_Value, METH_VARARGS, (char *)"Geometry_Value(Geometry self, double dfDistance) -> Geometry"},
+	 { (char *)"Geometry_Transform", _wrap_Geometry_Transform, METH_VARARGS, (char *)"\n"
+		"Transform(CoordinateTransformation trans) -> OGRErr\n"
+		"Geometry_Transform(Geometry self, GeomTransformer transformer) -> Geometry\n"
+		"\n"
+		"OGRErr OGR_G_Transform(OGRGeometryH\n"
+		"hGeom, OGRCoordinateTransformationH hTransform)\n"
+		"\n"
+		"Apply arbitrary coordinate transformation to geometry.\n"
+		"\n"
+		"This function will transform the coordinates of a geometry from their\n"
+		"current spatial reference system to a new target spatial reference\n"
+		"system. Normally this means reprojecting the vectors, but it could\n"
+		"include datum shifts, and changes of units.\n"
+		"\n"
+		"Note that this function does not require that the geometry already\n"
+		"have a spatial reference system. It will be assumed that they can be\n"
+		"treated as having the source spatial reference system of the\n"
+		"OGRCoordinateTransformation object, and the actual SRS of the geometry\n"
+		"will be ignored. On successful completion the output\n"
+		"OGRSpatialReference of the OGRCoordinateTransformation will be\n"
+		"assigned to the geometry.\n"
+		"\n"
+		"This function is the same as the CPP method OGRGeometry::transform.\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hGeom:  handle on the geometry to apply the transform to.\n"
+		"\n"
+		"hTransform:  handle on the transformation to apply.\n"
+		"\n"
+		"OGRERR_NONE on success or an error code. \n"
+		""},
 	 { (char *)"Geometry_swigregister", Geometry_swigregister, METH_VARARGS, NULL},
+	 { (char *)"new_GeomTransformer", _wrap_new_GeomTransformer, METH_VARARGS, (char *)"new_GeomTransformer(CoordinateTransformation ct, char ** options=None) -> GeomTransformer"},
+	 { (char *)"delete_GeomTransformer", _wrap_delete_GeomTransformer, METH_VARARGS, (char *)"delete_GeomTransformer(GeomTransformer self)"},
+	 { (char *)"GeomTransformer_Transform", _wrap_GeomTransformer_Transform, METH_VARARGS, (char *)"GeomTransformer_Transform(GeomTransformer self, Geometry src_geom) -> Geometry"},
+	 { (char *)"GeomTransformer_swigregister", GeomTransformer_swigregister, METH_VARARGS, NULL},
 	 { (char *)"GetDriverCount", _wrap_GetDriverCount, METH_VARARGS, (char *)"GetDriverCount() -> int"},
 	 { (char *)"GetOpenDSCount", _wrap_GetOpenDSCount, METH_VARARGS, (char *)"GetOpenDSCount() -> int"},
 	 { (char *)"SetGenerate_DB2_V72_BYTE_ORDER", _wrap_SetGenerate_DB2_V72_BYTE_ORDER, METH_VARARGS, (char *)"SetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER) -> OGRErr"},
@@ -33953,6 +34236,7 @@ static swig_type_info _swigt__p_OGRFeatureDefnShadow = {"_p_OGRFeatureDefnShadow
 static swig_type_info _swigt__p_OGRFeatureShadow = {"_p_OGRFeatureShadow", "OGRFeatureShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRFieldDefnShadow = {"_p_OGRFieldDefnShadow", "OGRFieldDefnShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRGeomFieldDefnShadow = {"_p_OGRGeomFieldDefnShadow", "OGRGeomFieldDefnShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_OGRGeomTransformerShadow = {"_p_OGRGeomTransformerShadow", "OGRGeomTransformerShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRGeometryShadow = {"_p_OGRGeometryShadow", "OGRGeometryShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRStyleTableShadow = {"_p_OGRStyleTableShadow", "OGRStyleTableShadow *", 0, 0, (void*)0, 0};
@@ -33978,6 +34262,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_OGRFeatureShadow,
   &_swigt__p_OGRFieldDefnShadow,
   &_swigt__p_OGRGeomFieldDefnShadow,
+  &_swigt__p_OGRGeomTransformerShadow,
   &_swigt__p_OGRGeometryShadow,
   &_swigt__p_OGRLayerShadow,
   &_swigt__p_OGRStyleTableShadow,
@@ -34003,6 +34288,7 @@ static swig_cast_info _swigc__p_OGRFeatureDefnShadow[] = {  {&_swigt__p_OGRFeatu
 static swig_cast_info _swigc__p_OGRFeatureShadow[] = {  {&_swigt__p_OGRFeatureShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRFieldDefnShadow[] = {  {&_swigt__p_OGRFieldDefnShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRGeomFieldDefnShadow[] = {  {&_swigt__p_OGRGeomFieldDefnShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_OGRGeomTransformerShadow[] = {  {&_swigt__p_OGRGeomTransformerShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRGeometryShadow[] = {  {&_swigt__p_OGRGeometryShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRLayerShadow[] = {  {&_swigt__p_OGRLayerShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRStyleTableShadow[] = {  {&_swigt__p_OGRStyleTableShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -34028,6 +34314,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_OGRFeatureShadow,
   _swigc__p_OGRFieldDefnShadow,
   _swigc__p_OGRGeomFieldDefnShadow,
+  _swigc__p_OGRGeomTransformerShadow,
   _swigc__p_OGRGeometryShadow,
   _swigc__p_OGRLayerShadow,
   _swigc__p_OGRStyleTableShadow,

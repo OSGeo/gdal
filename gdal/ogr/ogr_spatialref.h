@@ -781,6 +781,11 @@ public:
      */
     static inline OGRCoordinateTransformation* FromHandle(OGRCoordinateTransformationH hCT)
         { return reinterpret_cast<OGRCoordinateTransformation*>(hCT); }
+
+    /** Clone
+     * @since GDAL 3.1
+     */
+    virtual OGRCoordinateTransformation* Clone() const = 0;
 };
 
 OGRCoordinateTransformation CPL_DLL *
@@ -805,6 +810,8 @@ private:
 
 public:
     OGRCoordinateTransformationOptions();
+    OGRCoordinateTransformationOptions(const OGRCoordinateTransformationOptions&);
+    OGRCoordinateTransformationOptions& operator= (const OGRCoordinateTransformationOptions&);
     ~OGRCoordinateTransformationOptions();
 
     bool SetAreaOfInterest(double dfWestLongitudeDeg,

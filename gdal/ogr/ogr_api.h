@@ -155,6 +155,13 @@ OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference( OGRGeometryH );
 OGRErr CPL_DLL OGR_G_Transform( OGRGeometryH, OGRCoordinateTransformationH );
 OGRErr CPL_DLL OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
 
+/** Opaque type for a geometry transformer. */
+typedef struct OGRGeomTransformer* OGRGeomTransformerH;
+OGRGeomTransformerH CPL_DLL OGR_GeomTransformer_Create( OGRCoordinateTransformationH,
+                                                        CSLConstList papszOptions ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_GeomTransformer_Transform(OGRGeomTransformerH hTransformer, OGRGeometryH hGeom ) CPL_WARN_UNUSED_RESULT;
+void CPL_DLL OGR_GeomTransformer_Destroy(OGRGeomTransformerH hTransformer);
+
 OGRGeometryH CPL_DLL OGR_G_Simplify( OGRGeometryH hThis, double tolerance ) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_SimplifyPreserveTopology( OGRGeometryH hThis, double tolerance ) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_DelaunayTriangulation( OGRGeometryH hThis, double dfTolerance, int bOnlyEdges ) CPL_WARN_UNUSED_RESULT;

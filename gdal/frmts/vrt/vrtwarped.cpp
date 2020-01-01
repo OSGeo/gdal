@@ -555,6 +555,10 @@ public:
         }
         return TRUE;
     }
+
+    virtual OGRCoordinateTransformation* Clone() const override {
+        return new GDALWarpCoordRescaler(*this); }
+
 };
 
 /************************************************************************/
