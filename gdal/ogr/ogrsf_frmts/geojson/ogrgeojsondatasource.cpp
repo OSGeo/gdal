@@ -798,7 +798,9 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
             if( !ReadFromFile( poOpenInfo, pszUnprefixed ) )
                 return;
         }
-        OGRErr err = reader.Parse( pszGeoData_ );
+        OGRErr err = reader.Parse( pszGeoData_,
+            nSrcType == eGeoJSONSourceService &&
+            !STARTS_WITH_CI(poOpenInfo->pszFilename, "TopoJSON:") );
         if( OGRERR_NONE == err )
         {
             reader.ReadLayers( this );
