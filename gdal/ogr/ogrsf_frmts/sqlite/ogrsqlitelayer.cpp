@@ -138,7 +138,7 @@ bool OGRGetDateTimeFieldType( const char* pszValue,
                               OGRFieldType* pFieldType )
 {
     bool bSuccess = FALSE;
-    size_t nValueLength = strnlen( pszValue, 16 );
+    size_t nValueLength = CPLStrnlen( pszValue, 16 );
 
     if( nValueLength >= 5 )
     {
