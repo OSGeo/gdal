@@ -69,7 +69,7 @@ def test_gdal_viewshed_all_options():
     ds = None
     gdal.Unlink('tmp/test_gdal_viewshed_in.tif')
     gdal.Unlink('tmp/test_gdal_viewshed_out.tif')
-    assert cs == 24413
+    assert cs == 24412
     assert nodata == 0
 
 

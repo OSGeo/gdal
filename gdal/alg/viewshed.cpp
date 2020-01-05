@@ -332,10 +332,9 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         return nullptr;
     }
 
-    double dfZObserver = dfObserverHeight + padfFirstLineVal[nX];
+    const double dfZObserver = dfObserverHeight + padfFirstLineVal[nX];
     double dfZ = 0.0;
-    int iPixel, iLine;
-    double dfDistance2 = dfMaxDistance * dfMaxDistance;
+    const double dfDistance2 = dfMaxDistance * dfMaxDistance;
 
     /* If we can't get a SemiMajor axis from the SRS, it will be
      * SRS_WGS84_SEMIMAJOR
@@ -383,7 +382,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     }
 
     /* process left direction */
-    for (iPixel = nX - 2; iPixel >= 0; iPixel--)
+    for (int iPixel = nX - 2; iPixel >= 0; iPixel--)
     {
         bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             nX - iPixel,
@@ -412,7 +411,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         }
     }
     /* process right direction */
-    for (iPixel = nX + 2; iPixel < nXSize; iPixel++)
+    for (int iPixel = nX + 2; iPixel < nXSize; iPixel++)
     {
         bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             iPixel - nX,
@@ -454,7 +453,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     std::copy(vFirstLineVal.begin(),
               vFirstLineVal.end(),
               vLastLineVal.begin());
-    for (iLine = nY - 1; iLine >= nYStart && eErr == CE_None; iLine--)
+    for (int iLine = nY - 1; iLine >= nYStart && eErr == CE_None; iLine--)
     {
         if (GDALRasterIO(hBand, GF_Read, nXStart, iLine, nXSize, 1,
             padfThisLineVal, nXSize, 1, GDT_Float64, 0, 0))
@@ -491,7 +490,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         }
 
         /* process left direction */
-        for (iPixel = nX - 1; iPixel >= 0; iPixel--)
+        for (int iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
             bool left_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                      nX - iPixel,
@@ -540,7 +539,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
             }
         }
         /* process right direction */
-        for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
+        for (int iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
             bool right_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                       iPixel - nX,
@@ -609,7 +608,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     }
     /* scan downwards */
     memcpy(padfLastLineVal, padfFirstLineVal, nXSize * sizeof(double));
-    for(iLine = nY + 1; iLine < nYStop && eErr == CE_None; iLine++ )
+    for(int iLine = nY + 1; iLine < nYStop && eErr == CE_None; iLine++ )
     {
         if (GDALRasterIO( hBand, GF_Read, nXStart, iLine, nXStop - nXStart, 1,
             padfThisLineVal, nXStop - nXStart, 1, GDT_Float64, 0, 0 ))
@@ -642,11 +641,11 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         }
         else
         {
-            pabyResult[iPixel] = byOutOfRangeVal;
+            pabyResult[nX] = byOutOfRangeVal;
         }
 
         /* process left direction */
-        for (iPixel = nX - 1; iPixel >= 0; iPixel--)
+        for (int iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
             bool left_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                      nX - iPixel,
@@ -692,7 +691,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
             }
         }
         /* process right direction */
-        for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
+        for (int iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
             bool right_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                       iPixel - nX,
