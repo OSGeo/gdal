@@ -8,7 +8,7 @@
 ################################################################################
 #  The MIT License (MIT)
 #
-#  Copyright (c) 2018-2019, NextGIS <info@nextgis.com>
+#  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to deal
@@ -535,6 +535,17 @@ def test_ogr_ngw_12():
     fc = lyr.GetFeatureCount()
     assert fc == 2, 'Expected feature count is 2, got {}.'.format(fc)
 
+    lyr.SetAttributeFilter("DECFIELD < 321")
+    fc = lyr.GetFeatureCount()
+    assert fc == 2, 'Expected feature count is 2, got {}.'.format(fc)
+
+    lyr.SetAttributeFilter('NGW:fld_REALFIELD__gt=1.5')
+    fc = lyr.GetFeatureCount()
+    assert fc == 1, 'Expected feature count is 1, got {}.'.format(fc)
+
+    lyr.SetAttributeFilter("STRFIELD ILIKE '%O_O'")
+    fc = lyr.GetFeatureCount()
+    assert fc == 2, 'Expected feature count is 2, got {}.'.format(fc)
 
 ###############################################################################
 # Check spatial filter.

@@ -6,7 +6,7 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018-2019, NextGIS
+ *  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -326,7 +326,7 @@ static bool CheckFieldNameUnique( OGRFeatureDefn *poFeatureDefn, int iField,
 }
 
 static std::string GetUniqueFieldName( OGRFeatureDefn *poFeatureDefn, int iField,
-    const char *pszBaseName, int nAdd, int nMax = 100 )
+    const char *pszBaseName, int nAdd = 0, int nMax = 100 )
 {
     const char *pszNewName = CPLSPrintf("%s%d", pszBaseName, nAdd);
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
@@ -361,16 +361,13 @@ static void NormalizeFieldName( OGRFeatureDefn *poFeatureDefn, int iField,
     {
         std::string osNewFieldName = GetUniqueFieldName(poFeatureDefn, iField,
             poFieldDefn->GetNameRef(), 0);
-        if( !EQUAL(osNewFieldName.c_str(), "id") )
-        {
-            CPLError( CE_Warning, CPLE_NotSupported,
-                      "Normalized/laundered field name: '%s' to '%s'",
-                      poFieldDefn->GetNameRef(),
-                      osNewFieldName.c_str() );
+        CPLError( CE_Warning, CPLE_NotSupported,
+                    "Normalized/laundered field name: '%s' to '%s'",
+                    poFieldDefn->GetNameRef(),
+                    osNewFieldName.c_str() );
 
-            // Set field name with normalized value.
-            poFieldDefn->SetName( osNewFieldName.c_str() );
-        }
+        // Set field name with normalized value.
+        poFieldDefn->SetName( osNewFieldName.c_str() );
     }
 }
 
@@ -397,7 +394,11 @@ std::string OGRNGWLayer::TranslateSQLToFilter( swq_expr_node *poNode )
             }
             return osFilter1 + "&" + osFilter2;
         }
-        else if ( poNode->nOperation == SWQ_EQ && poNode->nSubExprCount == 2 &&
+        else if ( (poNode->nOperation == SWQ_EQ || poNode->nOperation == SWQ_NE ||
+            poNode->nOperation == SWQ_GE || poNode->nOperation == SWQ_LE ||
+            poNode->nOperation == SWQ_LT || poNode->nOperation == SWQ_GT ||
+            poNode->nOperation == SWQ_LIKE || poNode->nOperation == SWQ_ILIKE) &&
+            poNode->nSubExprCount == 2 &&
             poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
             poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT )
         {
@@ -409,6 +410,34 @@ std::string OGRNGWLayer::TranslateSQLToFilter( swq_expr_node *poNode )
                 poNode->papoSubExpr[0]->string_value, -1, CPLES_URL);
             std::string osFieldName = "fld_" + std::string(pszNameEncoded);
             CPLFree(pszNameEncoded);
+
+            switch(poNode->nOperation)
+            {
+            case SWQ_EQ:
+                osFieldName += "__eq";
+                break;
+            case SWQ_NE:
+                osFieldName += "__ne";
+                break;
+            case SWQ_GE:
+                osFieldName += "__ge";
+                break;
+            case SWQ_LE:
+                osFieldName += "__le";
+                break;
+            case SWQ_LT:
+                osFieldName += "__lt";
+                break;
+            case SWQ_GT:
+                osFieldName += "__gt";
+                break;
+            case SWQ_LIKE:
+                osFieldName += "__like";
+                break;
+            case SWQ_ILIKE:
+                osFieldName += "__ilike";
+                break;
+            }
 
             std::string osVal;
             switch(poNode->papoSubExpr[1]->field_type)
@@ -1067,7 +1096,7 @@ OGRErr OGRNGWLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
  */
 void OGRNGWLayer::FetchPermissions()
 {
-    if(bFetchedPermissions)
+    if( bFetchedPermissions || osResourceId == "-1" )
     {
         return;
     }
@@ -1341,6 +1370,7 @@ OGRErr OGRNGWLayer::SyncToDisk()
         }
         osResourceId = osResourceIdInt;
         OGRLayer::SetMetadataItem( "id", osResourceId.c_str() );
+        FetchPermissions();
         bNeedSyncStructure = false;
     }
     else if( bNeedSyncStructure ) // Update vector layer at NextGIS Web.

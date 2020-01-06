@@ -8,7 +8,7 @@
 # Author:   Dmitry Baryshnikov <polimax@mail.ru>
 #
 ###############################################################################
-# Copyright (c) 2018, NextGIS <info@nextgis.com>
+# Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -154,13 +154,27 @@ def test_ngw_4():
     resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + resource_id + '/rgbsmall'
     ds = gdaltest.ngw_drv.CreateCopy(url, src_ds, options=['DESCRIPTION=Test raster create'])
+    src_ds = None
+
     assert ds is not None, 'Raster create failed'
 
     ds_resource_id = ds.GetMetadataItem('id', '')
     gdaltest.raster_id = ds_resource_id
     gdaltest.group_id = resource_id
+
     ds = None
 
+    # Upload 16bit raster
+    src_ds = gdal.Open('data/int16.tif')
+    url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + resource_id + '/int16'
+    ds = gdaltest.ngw_drv.CreateCopy(url, src_ds, options=[
+        'DESCRIPTION=Test 16bit raster create',
+        'RASTER_QML_PATH=data/96.qml'
+    ])
+    src_ds = None
+
+    assert ds is not None, 'Raster create failed'
+    ds = None
 
 ###############################################################################
 # Open the NGW dataset

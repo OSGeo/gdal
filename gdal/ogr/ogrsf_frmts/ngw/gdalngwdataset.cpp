@@ -6,7 +6,7 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018-2019, NextGIS
+ *  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -276,6 +276,7 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
             else if( osResourceType == "mapserver_style" ||
                 osResourceType == "qgis_vector_style" ||
                 osResourceType == "raster_style" ||
+                osResourceType == "qgis_raster_style" ||
                 osResourceType == "wmsclient_layer" )
             {
                 // GetExtent from parent.
@@ -317,7 +318,8 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
                         {
                             nEPSG = oParentRoot.GetInteger("vector_layer/srs/id", nEPSG);
                         }
-                        else if( osResourceType == "raster_style")
+                        else if( osResourceType == "raster_style" ||
+                                 osResourceType == "qgis_raster_style")
                         {
                             nEPSG = oParentRoot.GetInteger("raster_layer/srs/id", nEPSG);
                         }
@@ -498,6 +500,7 @@ void OGRNGWDataset::AddRaster( const CPLJSONObject &oRasterJsonObj,
     if( osResourceType == "mapserver_style" ||
         osResourceType == "qgis_vector_style" ||
         osResourceType == "raster_style" ||
+        osResourceType == "qgis_raster_style" ||
         osResourceType == "wmsclient_layer" )
     {
         osOutResourceId = oRasterJsonObj.GetString( "resource/id" );
@@ -517,7 +520,8 @@ void OGRNGWDataset::AddRaster( const CPLJSONObject &oRasterJsonObj,
             {
                 CPLJSONObject oChild = oChildren[i];
                 osResourceType = oChild.GetString("resource/cls");
-                if( osResourceType == "raster_style" )
+                if( osResourceType == "raster_style" ||
+                    osResourceType == "qgis_raster_style" )
                 {
                     AddRaster( oChild, papszOptions );
                 }
