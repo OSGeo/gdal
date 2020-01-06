@@ -418,5 +418,16 @@ def test_hfa_create_compress(filename, checksum, testfunction):
     getattr(ut, testfunction)()
 
 
+def test_hfa_create_compress_big_block():
+    src_ds = gdal.GetDriverByName('MEM').Create('/vsimem/big_block.img', 128, 128, 1, gdal.GDT_UInt32)
+    src_ds.GetRasterBand(1).Fill(4 * 1000 * 1000 * 1000)
+    src_ds.GetRasterBand(1).WriteRaster(0,0,1,1,b'\0')
+    gdal.GetDriverByName('HFA').CreateCopy('/vsimem/big_block.img', src_ds, options=['COMPRESS=YES', 'BLOCKSIZE=128'])
+    ds = gdal.Open('/vsimem/big_block.img')
+    got_data = ds.GetRasterBand(1).ReadRaster()
+    ds = None
+    gdal.Unlink('/vsimem/big_block.img')
+    assert got_data == src_ds.GetRasterBand(1).ReadRaster()
+
 
 
