@@ -318,6 +318,6 @@ int OGRGeoJSONWriteLayer::TestCapability( const char* pszCap )
     else if( EQUAL(pszCap, OLCSequentialWrite) )
         return TRUE;
     else if( EQUAL(pszCap, OLCStringsAsUTF8) )
-	return TRUE;
+        return TRUE;
     return FALSE;
 }
