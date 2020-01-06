@@ -254,3 +254,11 @@ def get_gnmmanage_path():
 
 def get_gnmanalyse_path():
     return get_cli_utility_path('gnmanalyse')
+
+
+###############################################################################
+#
+
+
+def get_gdal_viewshed_path():
+    return get_cli_utility_path('gdal_viewshed')

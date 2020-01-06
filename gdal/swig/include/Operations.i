@@ -575,7 +575,7 @@ int ContourGenerateEx( GDALRasterBandShadow *srcBand,
 
 %rename (ViewshedMode) GDALViewshedMode;
 typedef enum {
-	GVM_Diagonal = 1,
+    GVM_Diagonal = 1,
     GVM_Edge = 2,
     GVM_Max = 3,
     GVM_Min = 4
