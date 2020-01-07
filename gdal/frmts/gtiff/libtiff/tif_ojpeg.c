@@ -1064,6 +1064,8 @@ OJPEGReadHeaderInfo(TIFF* tif)
 	{
 		sp->strile_width=sp->image_width;
 		sp->strile_length=tif->tif_dir.td_rowsperstrip;
+                if( sp->strile_length == (uint32)-1 )
+                    sp->strile_length = sp->image_length;
 		sp->strile_length_total=sp->image_length;
 	}
 	if (tif->tif_dir.td_samplesperpixel==1)
