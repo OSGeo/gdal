@@ -60,6 +60,9 @@ import org.gdal.gdal.MajorObject;
 %typemap(javaimports) OGRGeomFieldDefnShadow %{
 import org.gdal.osr.SpatialReference;
 %}
+%typemap(javaimports) OGRGeomTransformerShadow %{
+import org.gdal.osr.CoordinateTransformation;
+%}
 
 %typemap(javacode) OGRDataSourceShadow %{
 

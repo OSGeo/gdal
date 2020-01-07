@@ -54,6 +54,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
@@ -928,6 +929,15 @@ OGRFeatureDefn* OGRSplitListFieldLayer::GetLayerDefn()
 
 class GCPCoordTransformation : public OGRCoordinateTransformation
 {
+    GCPCoordTransformation(const GCPCoordTransformation& other):
+        hTransformArg(GDALCloneTransformer(other.hTransformArg)),
+        bUseTPS(other.bUseTPS),
+        poSRS(other.poSRS)
+    {
+        if( poSRS)
+            poSRS->Reference();
+    }
+
 public:
 
     void               *hTransformArg;
@@ -956,16 +966,17 @@ public:
             poSRS->Reference();
     }
 
+    OGRCoordinateTransformation* Clone() const override {
+        return new GCPCoordTransformation(*this);
+    }
+
     bool IsValid() const { return hTransformArg != nullptr; }
 
     virtual ~GCPCoordTransformation()
     {
         if( hTransformArg != nullptr )
         {
-            if( bUseTPS )
-                GDALDestroyTPSTransformer(hTransformArg);
-            else
-                GDALDestroyGCPTransformer(hTransformArg);
+            GDALDestroyTransformer(hTransformArg);
         }
         if( poSRS)
             poSRS->Dereference();
@@ -994,6 +1005,12 @@ public:
 
 class CompositeCT : public OGRCoordinateTransformation
 {
+    CompositeCT(const CompositeCT& other):
+        poCT1(other.poCT1 ? other.poCT1->Clone(): nullptr),
+        bOwnCT1(true),
+        poCT2(other.poCT2 ? other.poCT2->Clone(): nullptr),
+        bOwnCT2(true) {}
+
 public:
 
     OGRCoordinateTransformation* poCT1;
@@ -1015,6 +1032,10 @@ public:
             delete poCT1;
         if( bOwnCT2 )
             delete poCT2;
+    }
+
+    OGRCoordinateTransformation* Clone() const override {
+        return new CompositeCT(*this);
     }
 
     virtual OGRSpatialReference *GetSourceCS() override
@@ -1075,6 +1096,11 @@ public:
 
     ~AxisMappingCoordinateTransformation() override
     {
+    }
+
+    virtual OGRCoordinateTransformation *Clone() const override
+    {
+        return new AxisMappingCoordinateTransformation(*this);
     }
 
     virtual OGRSpatialReference *GetSourceCS() override
