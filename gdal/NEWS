@@ -1,3 +1,11 @@
+= Release Notes =
+
+== GDAL drivers ==
+
+GeoJSON driver:
+ * Advertise UTF-8 encoding of strings. In other words: the StringsAsUTF8 flag is TRUE (#2151).
+
+
 = GDAL/OGR 3.0.2 Release Notes =
 
 The 3.0.2 release is a bug fix release.
