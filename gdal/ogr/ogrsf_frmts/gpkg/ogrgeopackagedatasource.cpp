@@ -946,7 +946,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
         int nCount = CSLCount(papszTokens);
-        if( nCount != 3 && nCount != 4 )
+        if( nCount < 3 )
         {
             CSLDestroy(papszTokens);
             return FALSE;
@@ -961,6 +961,18 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                   (papszTokens[2][0] == '/' || papszTokens[2][0] == '\\') )
         {
             osFilename = CPLString(papszTokens[1]) + ":" + papszTokens[2];
+        }
+        // GPKG:/vsicurl/http[s]://[user:passwd@]example.com[:8080]/foo.gpkg:bar
+        else if ( nCount >= 4 &&
+                  (EQUAL(papszTokens[1], "/vsicurl/http") ||
+                   EQUAL(papszTokens[1], "/vsicurl/https")) )
+        {
+            osFilename = CPLString(papszTokens[1]);
+            for( int i = 2; i < nCount - 1; i++ )
+            {
+                osFilename += ':';
+                osFilename += papszTokens[i];
+            }
         }
         osSubdatasetTableName = papszTokens[nCount-1];
 
