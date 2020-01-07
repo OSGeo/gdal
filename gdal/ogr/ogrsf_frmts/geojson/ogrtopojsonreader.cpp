@@ -442,7 +442,7 @@ static void EstablishLayerDefn( OGRFeatureDefn* poDefn,
         json_object_object_foreachC( poObjProps, it )
         {
             OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val,
-                                             false, 0, false,
+                                             false, 0, false, false,
                                              aoSetUndeterminedTypeFields);
         }
     }

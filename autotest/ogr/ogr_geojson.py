@@ -1566,7 +1566,14 @@ def test_ogr_geojson_38():
         f.DumpReadable()
         pytest.fail()
 
-    
+    ds = gdal.OpenEx("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "properties": { "dt": "2014-11-20 12:34:56+0100", "dt2": "2014\/11\/20", "date":"2014\/11\/20", "time":"12:34:56", "no_dt": "2014-11-20 12:34:56+0100", "no_dt2": "2014-11-20 12:34:56+0100" }, "geometry": null }
+] }""", open_options = ['DATE_AS_STRING=YES'])
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    for i in range(feat_defn.GetFieldCount()):
+        assert feat_defn.GetFieldDefn(i).GetType() == ogr.OFTString
+
 ###############################################################################
 # Test id top-object level
 
