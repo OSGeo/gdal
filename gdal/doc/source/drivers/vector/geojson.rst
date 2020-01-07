@@ -175,6 +175,12 @@ Open options
    arrays of strings, integers or reals as a OGR String. Default is NO.
    Can also be set with the OGR_GEOJSON_ARRAY_AS_STRING configuration
    option.
+-  **DATE_AS_STRING** = YES/NO: (GDAL >= 3.0.3) Whether to expose
+   date/time/date-time content using dedicated OGR date/time/date-time types
+   or as a OGR String. Default is NO (that is date/time/date-time are
+   detected as such).
+   Can also be set with the OGR_GEOJSON_DATE_AS_STRING configuration
+   option.
 
 To explain FLATTEN_NESTED_ATTRIBUTES, consider the following GeoJSON
 fragment:
