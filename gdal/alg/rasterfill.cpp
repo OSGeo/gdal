@@ -875,7 +875,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         GDALFlushRasterCache( hMaskBand );
 
         void *pScaledProgress =
-            GDALCreateScaledProgress( dfProgressRatio, 1.0, pfnProgress, nullptr );
+            GDALCreateScaledProgress( dfProgressRatio, 1.0, pfnProgress, pProgressArg );
 
         eErr = GDALMultiFilter( hTargetBand, hMaskBand, hFiltMaskBand,
                                 nSmoothingIterations,
