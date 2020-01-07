@@ -641,6 +641,7 @@ void RegisterOGRGeoJSON()
 "  <Option name='FEATURE_SERVER_PAGING' type='boolean' description='Whether to automatically scroll through results with a ArcGIS Feature Service endpoint'/>"
 "  <Option name='NATIVE_DATA' type='boolean' description='Whether to store the native JSon representation at FeatureCollection and Feature level' default='NO'/>"
 "  <Option name='ARRAY_AS_STRING' type='boolean' description='Whether to expose JSon arrays of strings, integers or reals as a OGR String' default='NO'/>"
+"  <Option name='DATE_AS_STRING' type='boolean' description='Whether to expose date/time/date-time content using dedicated OGR date/time/date-time types or as a OGR String' default='NO'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

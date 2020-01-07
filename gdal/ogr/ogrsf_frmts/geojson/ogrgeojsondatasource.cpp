@@ -946,6 +946,10 @@ void OGRGeoJSONDataSource::SetOptionsOnReader(GDALOpenInfo* poOpenInfo,
     poReader->SetArrayAsString(
         CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "ARRAY_AS_STRING",
                 CPLGetConfigOption("OGR_GEOJSON_ARRAY_AS_STRING", "NO"))));
+
+    poReader->SetDateAsString(
+        CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "DATE_AS_STRING",
+                CPLGetConfigOption("OGR_GEOJSON_DATE_AS_STRING", "NO"))));
 }
 
 /************************************************************************/
