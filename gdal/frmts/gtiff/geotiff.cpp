@@ -9943,6 +9943,20 @@ void GTiffDataset::FlushDirectory()
                 TIFFRewriteDirectory( m_hTIFF );
 
                 TIFFSetSubDirectory( m_hTIFF, m_nDirOffset );
+
+                if( m_bLayoutIFDSBeforeData &&
+                    m_bBlockOrderRowMajor &&
+                    m_bLeaderSizeAsUInt4 &&
+                    m_bTrailerRepeatedLast4BytesRepeated &&
+                    !m_bKnownIncompatibleEdition &&
+                    !m_bWriteKnownIncompatibleEdition )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                                "The IFD has been rewritten at the end of "
+                                "the file, which breaks COG layout.");
+                    m_bKnownIncompatibleEdition = true;
+                    m_bWriteKnownIncompatibleEdition = true;
+                }
             }
             m_bNeedsRewrite = false;
         }

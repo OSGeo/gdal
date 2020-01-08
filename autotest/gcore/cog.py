@@ -534,7 +534,7 @@ def test_cog_overviews_co():
 # Test editing and invalidating a COG file
 
 
-def test_cog_invalidation():
+def test_cog_invalidation_by_data_change():
 
     filename = '/vsimem/cog.tif'
     src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100)
@@ -558,6 +558,30 @@ def test_cog_invalidation():
 
     with pytest.raises(AssertionError, match='KNOWN_INCOMPATIBLE_EDITION=YES is declared in the file'):
         _check_cog(filename)
+
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('GTiff').Delete(filename)
+
+###############################################################################
+# Test editing and invalidating a COG file
+
+
+def test_cog_invalidation_by_metadata_change():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                options = ['COMPRESS=DEFLATE'])
+    ds = None
+
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('LAYOUT', 'IMAGE_STRUCTURE') is None
+    ds = None
 
     with gdaltest.error_handler():
         gdal.GetDriverByName('GTiff').Delete(filename)
