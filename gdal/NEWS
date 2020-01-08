@@ -1,3 +1,93 @@
+= GDAL/OGR 2.4.4 Release Notes =
+
+The 2.4.4 release is a bug fix release.
+
+== Build ==
+
+ * Fix build against Poppler 0.82 and 0.83
+ * MacOSX builds: Removed unnecessary header include and changed strnlen to CPLStrnlen (#1920)
+
+== Port ==
+
+ * /vsicurl (and derived filesystems): fix concurrency issue with multithreaded reads (#1244)
+
+== Algorithms ==
+
+ * Contour algorithm: fix (over) precision issue when comparing pixel value to NoData on Float32 rasters (#1987)
+ * Multithreaded warper: make sure a transformer object is used by the thread which created it (#1989). This workarounds a PROJ bug also fixed per https://github.com/OSGeo/PROJ/pull/1726
+ * GDALFillNodata: fix crash when smooth_iterations is used, and with some progress functions such as the one used by Python (#1184)
+ * RPC transformer: test success code of GDALRPCTransform() in GDALCreateRPCTransformer()
+
+== GDAL core ==
+
+ * Block cache: fix corruption on multithreaded write on datasets (#2011)
+ * GDALUnrolledCopy<GByte,2,1>: fix SSE2-only implementation (when SSSE3 is not available)
+
+== GDAL utilities ==
+
+ * gdal2tiles: update cache calculation (#2020)
+
+== GDAL drivers ==
+
+COASP driver:
+ * fix crash on invalid filename. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19740
+
+IRIS driver:
+ * make identification more restrictive to avoid false-positive identification of raw binary formats such as ENVI (#1961)
+
+GRIB driver:
+ * do not do erroneous K->C unit conversion for derived forecasts whose content is not a temperature, but a derived quantity, such as spread
+ * update GRIB tables to degrib 2.24
+ * add missing entries in MeteoAtmoChem table
+ * add more values from Table 4.5 in Surface type table
+ * add support for template 4.48 Optical Properties of Aerosol
+ * avoid erroneous K->C conversion for Dew point depression
+
+GTiff driver:
+ * internal libtiff: tif_ojpeg.c: fix regression of https://gitlab.com/libtiff/libtiff/issues/172
+
+HFA driver:
+ * fix writing of compressed file when a RLE run count is in the [0x4000,0x8000[ range or [0x400000, 0x800000[ (#2150)
+
+PDF driver:
+ * fix crash on corrupted file. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19098
+ * fix use-after-free on some corrupted PDF files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19400
+
+PDS driver:
+ * fix opening of datasets with BSQ organization (or single band), where one band is larger than 2 GB (2.3 regression)
+ * nasakeywordhandler: fixes to be able to read some labels with metadata items whose value is a list on several lines
+
+VRT driver:
+ * VRT warp: do not fail if a block has no corresponding source pixels (#1985)
+ * fix requesting a downsampling version of the mask band of a source that has masks and overviews
+ * avoid Invalid-enum-value behaviour. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19391
+
+== OGR core ==
+
+ * OGRLinearRing::isPointOnRingBoundary(): fix incomplete test that could falsely return true if the point was aligned with a segment, but not between the nodes. Impact correct reconstruction of holes in shapefile driver
+ * OGRGeometryFactory::ForceTo(): fix crash when forcing a MultiPolygon Z/M/ZM to a CompoundCurve (#2120)
+ * SQLite dialect: fix issue when using JOIN on a layer without fast filter count capability
+
+== OGR drivers ==
+
+CAD driver:
+ * Fix read ellipse and arc (fix #1886)
+
+DXF driver:
+ * fix handling of SPLINE whose first knot is at a very very close to zero negative (#1969)
+
+ElasticSearch driver:
+ * translate constructs like CAST(field_name AS CHARACTER[(x)]) = 'foo' to ES query language
+
+GeoJSONSeq & TopoJSON drivers:
+ * avoid false positive detection and errors on unrelated http[s]:// filenames
+
+XLSX driver:
+ * avoid Invalid-enum-value error. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19337
+
+WFS driver:
+ * skip silently GeoServer EPSG:404000 dummy CRS
+
 = GDAL/OGR 2.4.3 Release Notes =
 
 The 2.4.3 release is a bug fix release.
