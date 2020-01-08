@@ -4884,6 +4884,25 @@ def test_netcdf_sen3_sral_mwr_fake_standard_measurement():
     assert f['nb_stack_20_ku'] == 1
 
 
+def test_netcdf_chunked_multiple():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/byte_chunked_multiple.nc')
+    assert ds.GetRasterBand(1).GetBlockSize() == [10, 10]
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_netcdf_chunked_not_multiple():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/byte_chunked_not_multiple.nc')
+    assert ds.GetRasterBand(1).GetBlockSize() == [15, 6]
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
