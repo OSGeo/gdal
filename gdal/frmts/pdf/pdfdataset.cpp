@@ -2762,7 +2762,10 @@ static void PDFDatasetErrorFunctionCommon(const CPLString& osError)
 static int g_nPopplerErrors = 0;
 constexpr int MAX_POPPLER_ERRORS = 1000;
 
-static void PDFDatasetErrorFunction(void* /* userData*/,
+static void PDFDatasetErrorFunction(
+#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 85)
+                                    void* /* userData*/,
+#endif
                                     ErrorCategory /* eErrCategory */,
                                     Goffset nPos,
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 71
@@ -4276,7 +4279,11 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     GooString* poUserPwd = nullptr;
 
     /* Set custom error handler for poppler errors */
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 85
+    setErrorCallback(PDFDatasetErrorFunction);
+#else
     setErrorCallback(PDFDatasetErrorFunction, nullptr);
+#endif
 
     {
         CPLMutexHolderD(&hGlobalParamsMutex);
