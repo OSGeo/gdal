@@ -84,8 +84,13 @@ General creation options
         Overview generation by itself, which can take most of the
         total processing time, is not multithreaded currently.
 
--  **PREDICTOR=[YES/NO]**: Set the predictor for LZW, DEFLATE and ZSTD
-   compression. The default is NO.
+-  **PREDICTOR=[YES/NO/STANDARD/FLOATING_POINT]**: Set the predictor for LZW,
+   DEFLATE and ZSTD compression. The default is NO. If YES is specified, then
+   standard predictor (Predictor=2) is used for integer data type,
+   and floating-point predictor (Predictor=3) for floating point data type (in
+   some circumstances, the standard predictor might perform better than the
+   floating-point one on floating-point data). STANDARD or FLOATING_POINT can
+   also be used to select the precise algorithm wished.
 
 -  **BIGTIFF=YES/NO/IF_NEEDED/IF_SAFER**: Control whether the created
    file is a BigTIFF or a classic TIFF.
