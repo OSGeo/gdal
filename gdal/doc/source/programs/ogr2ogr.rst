@@ -337,7 +337,7 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -explodecollections
 
     Produce one feature for each geometry in any kind of geometry collection in
-    the source file
+    the source file, applied after any ``-sql`` option.
 
 .. option:: -zfield <field_name>
 
