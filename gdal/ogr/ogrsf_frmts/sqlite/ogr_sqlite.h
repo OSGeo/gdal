@@ -888,6 +888,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     void                ReloadLayers();
 
 #ifdef HAVE_RASTERLITE2
+    void*               GetRL2Context() const { return m_hRL2Ctxt; }
     rl2CoveragePtr      GetRL2CoveragePtr() const { return m_pRL2Coverage; }
     GIntBig             GetSectionId() const { return m_nSectionId; }
     const double*       GetGeoTransform() const { return m_adfGeoTransform; }
