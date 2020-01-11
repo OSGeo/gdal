@@ -310,7 +310,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         virtual int                     IGetRasterCount() override { return nBands; }
         virtual GDALRasterBand*         IGetRasterBand(int nBand) override { return GetRasterBand(nBand); }
         virtual sqlite3                *IGetDB() override { return GetDB(); }
-        virtual bool                    IGetUpdate() override { return bUpdate != FALSE; }
+        virtual bool                    IGetUpdate() override { return GetUpdate(); }
         virtual bool                    ICanIWriteBlock() override;
         virtual OGRErr                  IStartTransaction() override { return SoftStartTransaction(); }
         virtual OGRErr                  ICommitTransaction() override { return SoftCommitTransaction(); }
