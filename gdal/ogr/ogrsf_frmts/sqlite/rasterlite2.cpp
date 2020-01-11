@@ -2280,7 +2280,9 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     memcpy( &cbk_data.adfGeoTransform, adfGeoTransform,
             sizeof(adfGeoTransform) );
 
-    if( rl2_load_raw_tiles_into_dbms(poDS->GetDB(), cvg,
+    if( rl2_load_raw_tiles_into_dbms(poDS->GetDB(),
+                                     poDS->GetRL2Context(),
+                                     cvg,
                                      osSectionName,
                                      poSrcDS->GetRasterXSize(),
                                      poSrcDS->GetRasterYSize(),
@@ -2370,7 +2372,6 @@ CPLErr OGRSQLiteDataSource::IBuildOverviews(
             }
         }
 
-        const int nMaxThreads = 1;
         const int bForcedRebuild = 1;
         const int bVerbose = 0;
         const int bVirtualLevels = 1;
@@ -2379,13 +2380,14 @@ CPLErr OGRSQLiteDataSource::IBuildOverviews(
         {
             if( m_nSectionId >= 0 )
             {
-                ret = rl2_build_section_pyramid( hDB, nMaxThreads,
+                ret = rl2_build_section_pyramid( hDB, GetRL2Context(),
                                            m_osCoverageName, m_nSectionId,
                                            bForcedRebuild, bVerbose);
             }
             else
             {
-                ret = rl2_build_monolithic_pyramid (hDB, m_osCoverageName,
+                ret = rl2_build_monolithic_pyramid (hDB, GetRL2Context(),
+                                                    m_osCoverageName,
                                                     bVirtualLevels,
                                                     bVerbose);
 
@@ -2393,7 +2395,9 @@ CPLErr OGRSQLiteDataSource::IBuildOverviews(
         }
         else
         {
-            ret = rl2_build_monolithic_pyramid (hDB, m_osCoverageName,
+            ret = rl2_build_monolithic_pyramid (hDB,
+                                                GetRL2Context(),
+                                                m_osCoverageName,
                                                 bVirtualLevels,
                                                 bVerbose);
         }
