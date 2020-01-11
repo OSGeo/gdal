@@ -5866,7 +5866,9 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
     OGRCompoundCurve* poCC = nullptr;
     OGRCircularString* poCS = nullptr;
     OGRLineString* poLSNew = nullptr;
-    for( int i = 0; i < poLS->getNumPoints(); /* nothing */ )
+    const int nLSNumPoints = poLS->getNumPoints();
+    const bool bIsClosed = nLSNumPoints >= 4 && poLS->get_IsClosed();
+    for( int i = 0; i < nLSNumPoints; /* nothing */ )
     {
         const int iNewI = OGRGF_DetectArc(poLS, i, poCC, poCS, poLSNew);
         if( iNewI == -2 )
@@ -5898,10 +5900,12 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
         {
             double dfScale = std::max(1.0, fabs(p.getX()));
             dfScale = std::max(dfScale, fabs(p.getY()));
-            if( fabs(poLSNew->getX(poLSNew->getNumPoints()-1) -
-                     p.getX()) / dfScale > 1e-8 ||
-                fabs(poLSNew->getY(poLSNew->getNumPoints()-1) -
-                     p.getY()) / dfScale > 1e-8 )
+            if (bIsClosed && i == nLSNumPoints - 1)
+                dfScale = 0;
+            if( fabs(poLSNew->getX(poLSNew->getNumPoints()-1) - p.getX()) >
+                    1e-8 * dfScale ||
+                fabs(poLSNew->getY(poLSNew->getNumPoints()-1) - p.getY()) >
+                    1e-8 * dfScale )
             {
                 poLSNew->addPoint(&p);
             }
