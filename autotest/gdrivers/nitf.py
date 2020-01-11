@@ -1472,8 +1472,8 @@ def test_nitf_52():
     gt = ds.GetGeoTransform()
     ds = None
 
-    assert wkt == """PROJCS["unnamed",GEOGCS["EUROPEAN 1950, Mean (3 Param)",DATUM["EUROPEAN_1950_Mean_3_Param",SPHEROID["International 1924",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["latitude_of_center",0],PARAMETER["longitude_of_center",0],PARAMETER["standard_parallel_1",0],PARAMETER["standard_parallel_2",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]""", \
-        'did not get expected SRS'
+    expected_wkt ="""PROJCS["unnamed",GEOGCS["EUROPEAN 1950, Mean (3 Param)",DATUM["EUROPEAN_1950_Mean_3_Param",SPHEROID["International 1924",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["latitude_of_center",0],PARAMETER["longitude_of_center",0],PARAMETER["standard_parallel_1",0],PARAMETER["standard_parallel_2",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
+    assert wkt in (expected_wkt, expected_wkt.replace('EUROPEAN_1950_Mean_3_Param', 'EUROPEAN 1950, Mean (3 Param)'))
 
     assert gt == (100000.0, 10.0, 0.0, 5000000.0, 0.0, -10.0), \
         'did not get expected geotransform'
