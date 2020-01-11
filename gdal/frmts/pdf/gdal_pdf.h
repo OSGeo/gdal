@@ -340,7 +340,7 @@ private:
     void                ExploreTree(GDALPDFObject* poObj,
                                     std::set< std::pair<int,int> > aoSetAlreadyVisited,
                                     int nRecLevel);
-    void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources);
+    void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources, int nDepth, int& nVisited, bool& bStop);
 
     void                ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
                                                              GDALPDFObject* poResources,
