@@ -694,7 +694,6 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
     bool                m_bCallUndeclareFileNotToOpen = false;
 
     sqlite3             *hDB;
-    int                 bUpdate;
 
     sqlite3_vfs*        pMyVFS;
 
@@ -730,7 +729,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
                         virtual ~OGRSQLiteBaseDataSource();
 
     sqlite3            *GetDB() { return hDB; }
-    int                 GetUpdate() const { return bUpdate; }
+    inline bool         GetUpdate() const { return eAccess == GA_Update; }
 
     void                NotifyFileOpened (const char* pszFilename,
                                           VSILFILE* fp);
@@ -868,7 +867,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     int                 FetchSRSId( const OGRSpatialReference * poSRS );
     OGRSpatialReference*FetchSRS( int nSRID );
 
-    void                SetUpdate(int bUpdateIn) { bUpdate = bUpdateIn; }
+    void                DisableUpdate() { eAccess = GA_ReadOnly; }
 
     void                SetName(const char* pszNameIn);
 
