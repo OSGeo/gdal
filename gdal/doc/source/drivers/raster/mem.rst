@@ -77,3 +77,10 @@ Driver capabilities
 .. supports_create::
 
 .. supports_georeferencing::
+
+Multidimensional API support
+----------------------------
+
+.. versionadded:: 3.1
+
+The MEM driver supports the :ref:`multidim_raster_data_model`.

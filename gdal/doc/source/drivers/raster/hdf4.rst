@@ -218,6 +218,14 @@ All HDF4 attributes are transparently translated as GDAL metadata. In
 the HDF file attributes may be assigned assigned to the whole file as
 well as to particular subdatasets.
 
+Multidimensional API support
+----------------------------
+
+.. versionadded:: 3.1
+
+The HDF4 driver supports the :ref:`multidim_raster_data_model` for reading
+operations.
+
 Driver building
 ---------------
 
