@@ -3345,16 +3345,26 @@ void PDFDataset::AddLayer(const char* pszLayerName)
 /************************************************************************/
 
 void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
+                               CPLString osTopLayer,
                                int nRecLevel,
-                               CPLString osTopLayer)
+                               int& nVisited,
+                               bool& bStop)
 {
-    if( nRecLevel == 16 )
+    if( nRecLevel == 16 || nVisited == 1000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ExploreLayersPoppler(): too deep exploration or too many items");
+        bStop = true;
+        return;
+    }
+    if( bStop )
         return;
 
     int nLength = poArray->GetLength();
     CPLString osCurLayer;
     for(int i=0;i<nLength;i++)
     {
+        nVisited++;
         GDALPDFObject* poObj = poArray->Get(i);
         if( poObj == nullptr )
             continue;
@@ -3371,7 +3381,9 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
         }
         else if (poObj->GetType() == PDFObjectType_Array)
         {
-            ExploreLayersPoppler(poObj->GetArray(), nRecLevel + 1, osCurLayer);
+            ExploreLayersPoppler(poObj->GetArray(), osCurLayer, nRecLevel + 1, nVisited, bStop);
+            if( bStop )
+                return;
             osCurLayer = "";
         }
         else if (poObj->GetType() == PDFObjectType_Dictionary)
@@ -3419,7 +3431,9 @@ void PDFDataset::FindLayersPoppler()
     if (array)
     {
         GDALPDFArray* poArray = GDALPDFCreateArray(array);
-        ExploreLayersPoppler(poArray, 0);
+        int nVisited = 0;
+        bool bStop = false;
+        ExploreLayersPoppler(poArray, CPLString(), 0, nVisited, bStop);
         delete poArray;
     }
     else

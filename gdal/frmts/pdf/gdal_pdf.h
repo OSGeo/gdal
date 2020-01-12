@@ -266,7 +266,7 @@ class PDFDataset final: public GDALPamDataset
 #endif
 
 #if defined(HAVE_POPPLER)
-    void         ExploreLayersPoppler(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
+    void         ExploreLayersPoppler(GDALPDFArray* poArray, CPLString osTopLayer, int nRecLevel, int& nVisited, bool& bStop);
     void         FindLayersPoppler();
     void         TurnLayersOnOffPoppler();
     std::vector<std::pair<CPLString, OptionalContentGroup*> > oLayerOCGListPoppler;
